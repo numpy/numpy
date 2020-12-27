@@ -327,7 +327,7 @@ The first version of this proposal suggested the implementation above as one
 viable solution for NumPy functions implemented in C. However, due to the
 downsides pointed out above we have decided to discard any changes on the Python
 side and resolve those issues with a pure-C implementation. Please refer to
-[implementation]_ for details.
+[7]_ for details.
 
 Reading the Reference Array Downstream
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -344,6 +344,7 @@ An example of such use is to create a new Dask array while preserving its
 backend type:
 
 .. code:: python
+
     # Returns dask.array<array, shape=(3,), dtype=int64, chunksize=(3,), chunktype=cupy.ndarray>
     np.asarray([1, 2, 3], like=da.array(cp.array(())))
 
@@ -357,6 +358,7 @@ not use the ``like=`` argument via the ``self`` attribute from
 instead:
 
 .. code:: python
+
     # Returns dask.array<array, shape=(3,), dtype=int64, chunksize=(3,), chunktype=numpy.ndarray>
     np.asarray([1, 2, 3], like=da.array(cp.array(())))
 
@@ -379,6 +381,7 @@ implemented in Dask. The current relevant part of ``__array_function__``
 definition in Dask is seen below:
 
 .. code:: python
+
     def __array_function__(self, func, types, args, kwargs):
         # Code not relevant for this example here
 
@@ -388,6 +391,7 @@ definition in Dask is seen below:
 And this is how the updated code would look like:
 
 .. code:: python
+
     def __array_function__(self, func, types, args, kwargs):
         # Code not relevant for this example here
 
@@ -419,8 +423,7 @@ by downstream libraries is beyond the scope of the present proposal.
 Discussion
 ----------
 
-.. [implementation] `Implementation's pull request on GitHub <https://github.com/numpy/numpy/pull/16935>`_
-.. [discussion] `Further discussion on implementation and the NEP's content <https://mail.python.org/pipermail/numpy-discussion/2020-August/080919.html>`_
+- `Further discussion on implementation and the NEP's content <https://mail.python.org/pipermail/numpy-discussion/2020-August/080919.html>`_
 
 References
 ----------
@@ -436,6 +439,8 @@ References
 .. [5] `Array creation routines <https://docs.scipy.org/doc/numpy-1.17.0/reference/routines.array-creation.html>`_.
 
 .. [6] `NEP 37 — A dispatch protocol for NumPy-like modules <https://numpy.org/neps/nep-0037-array-module.html>`_.
+
+.. [7] `Implementation's pull request on GitHub <https://github.com/numpy/numpy/pull/16935>`_
 
 Copyright
 ---------
