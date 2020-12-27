@@ -245,7 +245,8 @@ def parse_setuppy_commands():
                      '--maintainer', '--maintainer-email', '--contact',
                      '--contact-email', '--url', '--license', '--description',
                      '--long-description', '--platforms', '--classifiers',
-                     '--keywords', '--provides', '--requires', '--obsoletes']
+                     '--keywords', '--provides', '--requires', '--obsoletes',
+                     'version',]
 
     for command in info_commands:
         if command in args:
@@ -256,8 +257,7 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src',
-                     'version')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src',)
 
     for command in good_commands:
         if command in args:
@@ -345,17 +345,13 @@ def parse_setuppy_commands():
 
     # Commands that do more than print info, but also don't need Cython and
     # template parsing.
-    other_commands = ['egg_info', 'install_egg_info', 'rotate']
+    other_commands = ['egg_info', 'install_egg_info', 'rotate', 'dist_info']
     for command in other_commands:
         if command in args:
             return False
 
     # If we got here, we didn't detect what setup.py command was given
-    import warnings
-    warnings.warn("Unrecognized setuptools command, proceeding with "
-                  "generating Cython sources and expanding templates",
-                  stacklevel=2)
-    return True
+    raise RuntimeError("Unrecognized setuptools command: {}".format(args))
 
 
 def get_docs_url():
@@ -421,7 +417,7 @@ def setup_package():
         # Raise errors for unsupported commands, improve help output, etc.
         run_build = parse_setuppy_commands()
 
-    if run_build and 'version' not in sys.argv:
+    if run_build:
         # patches distutils, even though we don't use it
         #from setuptools import setup
         from numpy.distutils.core import setup
