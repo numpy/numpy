@@ -207,8 +207,11 @@ def unique(ar, return_index=False, return_inverse=False,
     effect that we end up with a 1-D array of structured types that can be
     treated in the same way as any other 1-D array. The result is that the
     flattened subarrays are sorted in lexicographic order starting with the
-    first element. If nan values are in the input array, a single nan is put
-    to the end of the sorted unique values.
+    first element.
+
+    .. versionchanged: NumPy 1.21
+        If nan values are in the input array, a single nan is put
+        to the end of the sorted unique values.
 
     Examples
     --------
@@ -326,9 +329,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
     if aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
-        # Ensure that `NaT` is used for time-like dtypes
-        nan = np.array(np.nan).astype(aux.dtype)
-        aux_firstnan = np.searchsorted(aux, nan, side='left')
+        aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
         mask[1:aux_firstnan] = (aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
         mask[aux_firstnan] = True
         mask[aux_firstnan + 1:] = False
