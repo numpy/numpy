@@ -13,7 +13,7 @@ import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
-from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
+from numpy.linalg import matrix_power, sqnorm, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
@@ -684,7 +684,7 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
             axes = list(range(mat.ndim))
             axes[-1], axes[-2] = axes[-2], axes[-1]
             return np.conj(np.transpose(mat, axes=axes))
-        
+
         assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
         assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
         assert_equal(np.sort(s)[..., ::-1], s)
@@ -981,7 +981,7 @@ class TestLstsq(LstsqCases):
             linalg.lstsq(A, y, rcond=None)
 
 
-@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
+@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO'])
 class TestMatrixPower:
 
     rshft_0 = np.eye(4)
@@ -1010,7 +1010,7 @@ class TestMatrixPower:
             mz = matrix_power(M, 0)
             assert_equal(mz, identity_like_generalized(M))
             assert_equal(mz.dtype, M.dtype)
-        
+
         for mat in self.rshft_all:
             tz(mat.astype(dt))
             if dt != object:
@@ -1215,6 +1215,346 @@ class TestEigh:
         assert_equal((0,), res.shape)
         # This is just for documentation, it might make sense to change:
         assert_(isinstance(a, np.ndarray))
+
+
+class _TestSqNormBase:
+    dt = None
+    dec = None
+
+
+class _TestSqNormGeneral(_TestSqNormBase):
+
+    def test_empty(self):
+        assert_equal(sqnorm([]), 0.0)
+        assert_equal(sqnorm(array([], dtype=self.dt)), 0.0)
+        assert_equal(sqnorm(atleast_2d(array([], dtype=self.dt))), 0.0)
+
+    def test_vector_return_type(self):
+        a = np.array([1, 0, 1])
+
+        exact_types = np.typecodes['AllInteger']
+        inexact_types = np.typecodes['AllFloat']
+
+        all_types = exact_types + inexact_types
+
+        for each_inexact_types in all_types:
+            at = a.astype(each_inexact_types)
+
+            an = sqnorm(at, -np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 0.0)
+
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, "divide by zero encountered")
+                an = sqnorm(at, -1)
+                assert_(issubclass(an.dtype.type, np.floating))
+                assert_almost_equal(an, np.inf)
+
+            an = sqnorm(at, 0)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2)
+
+            an = sqnorm(at, 1)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            an = sqnorm(at, 2)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, an.dtype.type(2.0))
+
+            an = sqnorm(at, 4)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, an.dtype.type(2.0))
+
+            an = sqnorm(at, np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 1.0)
+
+    def test_vector(self):
+        a = [1, 2, 3, 4]
+        b = [-1, -2, -3, -4]
+        c = [-1, 2, -3, 4]
+
+        def _test(v):
+            np.testing.assert_almost_equal(sqnorm(v), 30,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(sqnorm(v, inf), 4.0,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(sqnorm(v, -inf), 1.0,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(sqnorm(v, 1), 10.0,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(sqnorm(v, -1), 25.0 / 12,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(sqnorm(v, 2), 30,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(sqnorm(v, -2), 205. / 144,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(sqnorm(v, 0), 4,
+                                           decimal=self.dec)
+
+        for v in (a, b, c,):
+            _test(v)
+
+        for v in (array(a, dtype=self.dt), array(b, dtype=self.dt),
+                  array(c, dtype=self.dt)):
+            _test(v)
+
+    def test_axis(self):
+        # Vector sqnorms.
+        # Compare the use of `axis` with computing the sqnorm of each row
+        # or column separately.
+        A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
+        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+            expected0 = [sqnorm(A[:, k], ord=order) for k in range(A.shape[1])]
+            assert_almost_equal(sqnorm(A, ord=order, axis=0), expected0)
+            expected1 = [sqnorm(A[k, :], ord=order) for k in range(A.shape[0])]
+            assert_almost_equal(sqnorm(A, ord=order, axis=1), expected1)
+
+        # Matrix sqnorms.
+        B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
+        nd = B.ndim
+        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro']:
+            for axis in itertools.combinations(range(-nd, nd), 2):
+                row_axis, col_axis = axis
+                if row_axis < 0:
+                    row_axis += nd
+                if col_axis < 0:
+                    col_axis += nd
+                if row_axis == col_axis:
+                    assert_raises(ValueError, sqnorm, B, ord=order, axis=axis)
+                else:
+                    n = sqnorm(B, ord=order, axis=axis)
+
+                    # The logic using k_index only works for nd = 3.
+                    # This has to be changed if nd is increased.
+                    k_index = nd - (row_axis + col_axis)
+                    if row_axis < col_axis:
+                        expected = [sqnorm(B[:].take(k, axis=k_index), ord=order)
+                                    for k in range(B.shape[k_index])]
+                    else:
+                        expected = [sqnorm(B[:].take(k, axis=k_index).T, ord=order)
+                                    for k in range(B.shape[k_index])]
+                    assert_almost_equal(n, expected, single_decimal=4)
+
+    def test_keepdims(self):
+        A = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
+
+        allclose_err = 'order {0}, axis = {1}'
+        shape_err = 'Shape mismatch found {0}, expected {1}, order={2}, axis={3}'
+
+        # check the order=None, axis=None case
+        expected = sqnorm(A, ord=None, axis=None)
+        found = sqnorm(A, ord=None, axis=None, keepdims=True)
+        assert_allclose(np.squeeze(found), expected,
+                        err_msg=allclose_err.format(None, None))
+        expected_shape = (1, 1, 1)
+        assert_(found.shape == expected_shape,
+                shape_err.format(found.shape, expected_shape, None, None))
+
+        # Vector sqnorms.
+        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+            for k in range(A.ndim):
+                expected = sqnorm(A, ord=order, axis=k)
+                found = sqnorm(A, ord=order, axis=k, keepdims=True)
+                assert_allclose(np.squeeze(found), expected,
+                                err_msg=allclose_err.format(order, k))
+                expected_shape = list(A.shape)
+                expected_shape[k] = 1
+                expected_shape = tuple(expected_shape)
+                assert_(found.shape == expected_shape,
+                        shape_err.format(found.shape, expected_shape, order, k))
+
+        # Matrix sqnorms.
+        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro', 'nuc']:
+            for k in itertools.permutations(range(A.ndim), 2):
+                expected = sqnorm(A, ord=order, axis=k)
+                found = sqnorm(A, ord=order, axis=k, keepdims=True)
+                assert_allclose(np.squeeze(found), expected,
+                                err_msg=allclose_err.format(order, k))
+                expected_shape = list(A.shape)
+                expected_shape[k[0]] = 1
+                expected_shape[k[1]] = 1
+                expected_shape = tuple(expected_shape)
+                assert_(found.shape == expected_shape,
+                        shape_err.format(found.shape, expected_shape, order, k))
+
+
+class _TestSqNorm2D(_TestSqNormBase):
+    # Define the part for 2d arrays separately, so we can subclass this
+    # and run the tests using np.matrix in matrixlib.tests.test_matrix_linalg.
+    array = np.array
+
+    def test_matrix_empty(self):
+        assert_equal(sqnorm(self.array([[]], dtype=self.dt)), 0.0)
+
+    def test_matrix_return_type(self):
+        a = self.array([[1, 0, 1], [0, 1, 1]])
+
+        exact_types = np.typecodes['AllInteger']
+
+        # float32, complex64, float64, complex128 types are the only types
+        # allowed by `linalg`, which performs the matrix operations used
+        # within `sqnorm`.
+        inexact_types = 'fdFD'
+
+        all_types = exact_types + inexact_types
+
+        for each_inexact_types in all_types:
+            at = a.astype(each_inexact_types)
+
+            an = sqnorm(at, -np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, "divide by zero encountered")
+                an = sqnorm(at, -1)
+                assert_(issubclass(an.dtype.type, np.floating))
+                assert_almost_equal(an, 1.0)
+
+            an = sqnorm(at, 1)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            an = sqnorm(at, 2)
+            assert_(issubclass(an.dtype.type, np.floating))
+            old_assert_almost_equal(an, 3.0)
+
+            an = sqnorm(at, -2)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 1.0)
+
+            an = sqnorm(at, np.inf)
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 2.0)
+
+            an = sqnorm(at, 'fro')
+            assert_(issubclass(an.dtype.type, np.floating))
+            assert_almost_equal(an, 4.0)
+
+            an = sqnorm(at, 'nuc')
+            assert_(issubclass(an.dtype.type, np.floating))
+            # Lower bar needed to support low precision floats.
+            # They end up being off by 1 in the 7th place.
+            assert_almost_equal(an, 2.7320508075688772, single_decimal=6)
+
+    def test_matrix_2x2(self):
+        A = self.array([[1, 3], [5, 7]], dtype=self.dt)
+        assert_almost_equal(sqnorm(A), 84.0)
+        assert_almost_equal(sqnorm(A, 'fro'), 84.0)
+        assert_almost_equal(sqnorm(A, 'nuc'), 10.0)
+        assert_almost_equal(sqnorm(A, inf), 12.0)
+        assert_almost_equal(sqnorm(A, -inf), 4.0)
+        assert_almost_equal(sqnorm(A, 1), 10.0)
+        assert_almost_equal(sqnorm(A, -1), 6.0)
+        old_assert_almost_equal(sqnorm(A, 2), 83.23105625617659, decimal=4)
+        assert_almost_equal(sqnorm(A, -2), 0.7689437438233962, double_decimal=7)
+
+        assert_raises(ValueError, sqnorm, A, 'nofro')
+        assert_raises(ValueError, sqnorm, A, -3)
+        assert_raises(ValueError, sqnorm, A, 0)
+
+    def test_matrix_3x3(self):
+        # This test has been added because the 2x2 example
+        # happened to have equal nuclear sqnorm and induced 1-sqnorm.
+        # used in assert_almost_equal.
+        A = self.array([[1, 2, 3], [6, 0, 5], [3, 2, 1]], dtype=self.dt)
+        assert_almost_equal(sqnorm(A), 89.0)
+        assert_almost_equal(sqnorm(A, 'fro'), 89.0)
+        assert_almost_equal(sqnorm(A, 'nuc'), 13.366836911774836, single_decimal=5)
+        assert_almost_equal(sqnorm(A, inf), 11.0)
+        assert_almost_equal(sqnorm(A, -inf), 6.0)
+        assert_almost_equal(sqnorm(A, 1), 10.0)
+        assert_almost_equal(sqnorm(A, -1), 4.0)
+        old_assert_almost_equal(sqnorm(A, 2), 78.71760139640471, decimal=5)
+        old_assert_almost_equal(sqnorm(A, -2), 3.785586917092082, decimal=6)
+
+    def test_bad_args(self):
+        # Check that bad arguments raise the appropriate exceptions.
+
+        A = self.array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
+        B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
+
+        # Using `axis=<integer>` or passing in a 1-D array implies vector
+        # sqnorms are being computed, so also using `ord='fro'`
+        # or `ord='nuc'` or any other string raises a ValueError.
+        assert_raises(ValueError, sqnorm, A, 'fro', 0)
+        assert_raises(ValueError, sqnorm, A, 'nuc', 0)
+        assert_raises(ValueError, sqnorm, [3, 4], 'fro', None)
+        assert_raises(ValueError, sqnorm, [3, 4], 'nuc', None)
+        assert_raises(ValueError, sqnorm, [3, 4], 'test', None)
+
+        # Similarly, sqnorm should raise an exception when ord is any finite
+        # number other than 1, 2, -1 or -2 when computing matrix sqnorms.
+        for order in [0, 3]:
+            assert_raises(ValueError, sqnorm, A, order, None)
+            assert_raises(ValueError, sqnorm, A, order, (0, 1))
+            assert_raises(ValueError, sqnorm, B, order, (1, 2))
+
+        # Invalid axis
+        assert_raises(np.AxisError, sqnorm, B, None, 3)
+        assert_raises(np.AxisError, sqnorm, B, None, (2, 3))
+        assert_raises(ValueError, sqnorm, B, None, (0, 1, 2))
+
+
+class _TestSqNorm(_TestSqNorm2D, _TestSqNormGeneral):
+    pass
+
+
+class TestSqNorm_NonSystematic:
+
+    def test_longdouble_sqnorm(self):
+        # Non-regression test: p-sqnorm of longdouble would previously raise
+        # UnboundLocalError.
+        x = np.arange(10, dtype=np.longdouble)
+        old_assert_almost_equal(sqnorm(x, ord=3), 2025., decimal=2)
+
+    def test_intmin(self):
+        # Non-regression test: p-sqnorm of signed integer would previously do
+        # float cast and abs in the wrong order.
+        x = np.array([-2 ** 31], dtype=np.int32)
+        old_assert_almost_equal(sqnorm(x, ord=3), 8 ** 31, decimal=5)
+
+    def test_complex_high_ord(self):
+        # gh-4156
+        d = np.empty((2,), dtype=np.clongdouble)
+        d[0] = 6 + 7j
+        d[1] = -6 + 7j
+        res = 1567.322557739790842
+        old_assert_almost_equal(np.linalg.sqnorm(d, ord=3), res, decimal=10)
+        d = d.astype(np.complex128)
+        old_assert_almost_equal(np.linalg.sqnorm(d, ord=3), res, decimal=9)
+        d = d.astype(np.complex64)
+        old_assert_almost_equal(np.linalg.sqnorm(d, ord=3), res, decimal=4)
+
+
+# Separate definitions so we can use them for matrix tests.
+class _TestSqNormDoubleBase(_TestSqNormBase):
+    dt = np.double
+    dec = 12
+
+
+class _TestSqNormSingleBase(_TestSqNormBase):
+    dt = np.float32
+    dec = 6
+
+
+class _TestSqNormInt64Base(_TestSqNormBase):
+    dt = np.int64
+    dec = 12
+
+
+class TestSqNormDouble(_TestSqNorm, _TestSqNormDoubleBase):
+    pass
+
+
+class TestSqNormSingle(_TestSqNorm, _TestSqNormSingleBase):
+    pass
+
+
+class TestSqNormInt64(_TestSqNorm, _TestSqNormInt64Base):
+    pass
 
 
 class _TestNormBase:
