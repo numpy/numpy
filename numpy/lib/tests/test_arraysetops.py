@@ -542,6 +542,17 @@ class TestUnique:
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
+        # test for ticket 2111 - complex
+        a = [2.0-1j, np.nan, 1.0+1j, complex(0.0, np.nan), complex(1.0, np.nan)]
+        ua = [1.0+1j, 2.0-1j, complex(0.0, np.nan)]
+        ua_idx = [2, 0, 3]
+        ua_inv = [1, 2, 0, 2, 2]
+        ua_cnt = [1, 1, 3]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
         # test for ticket 2111 - datetime64
         nat = np.datetime64('nat')
         a = [np.datetime64('2020-12-26'), nat, np.datetime64('2020-12-24'), nat]

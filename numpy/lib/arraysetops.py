@@ -213,6 +213,12 @@ def unique(ar, return_index=False, return_inverse=False,
         If nan values are in the input array, a single nan is put
         to the end of the sorted unique values.
 
+        Also for complex arrays all NaN values are considered equivalent
+        (no matter whether the NaN is in the real or imaginary part).
+        As the representant for the returned array the smallest one in the
+        lexicographical order is chosen - see np.sort for how the lexicographical
+        order is defined for complex arrays.
+
     Examples
     --------
     >>> np.unique([1, 1, 2, 2, 3, 3])
@@ -329,7 +335,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
     if aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
-        aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
+        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+        else:
+            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
         mask[1:aux_firstnan] = (aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
         mask[aux_firstnan] = True
         mask[aux_firstnan + 1:] = False
