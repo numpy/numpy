@@ -511,7 +511,7 @@ def run_compile():
         remove_build_dir = 1
         build_dir = tempfile.mkdtemp()
 
-    _reg1 = re.compile(r'[-][-]link[-]')
+    _reg1 = re.compile(r'--link-')
     sysinfo_flags = [_m for _m in sys.argv[1:] if _reg1.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in sysinfo_flags]
     if sysinfo_flags:
@@ -569,7 +569,7 @@ def run_compile():
             del flib_flags[i]
         assert len(flib_flags) <= 2, repr(flib_flags)
 
-    _reg5 = re.compile(r'[-][-](verbose)')
+    _reg5 = re.compile(r'--(verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in setup_flags]
 

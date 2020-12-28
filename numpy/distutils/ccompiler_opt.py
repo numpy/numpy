@@ -1770,7 +1770,7 @@ class _Parse:
         tokens = tokens[start_pos:end_pos]
         return self._parse_target_tokens(tokens)
 
-    _parse_regex_arg = re.compile(r'\s|[,]|([+-])')
+    _parse_regex_arg = re.compile(r'\s|,|([+-])')
     def _parse_arg_features(self, arg_name, req_features):
         if not isinstance(req_features, str):
             self.dist_fatal("expected a string in '%s'" % arg_name)
