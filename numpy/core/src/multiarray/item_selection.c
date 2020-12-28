@@ -2245,7 +2245,7 @@ count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const
             count += count_nonzero_bytes((const npy_uint8 *)d, stride);
             d += stride;
 #else
-            if (!NPY_STRONG_ALIGNMENT ||
+            if (!NPY_STRONG_ALIGNMENT_REQUIRED ||
                     npy_is_aligned(d, sizeof(npy_uint64))) {
                 npy_uintp stride = 6 * sizeof(npy_uint64);
                 for (; d < e - (shape[0] % stride); d += stride) {
