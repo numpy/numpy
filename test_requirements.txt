@@ -1,9 +1,9 @@
 cython==0.29.21
 wheel<0.36.3
 setuptools<49.2.0
-hypothesis==5.43.3
+hypothesis==5.43.4
 pytest==6.2.1
-pytz==2020.4
+pytz==2020.5
 pytest-cov==2.10.1
 pickle5; python_version == '3.7' and platform_python_implementation != 'PyPy'
 # for numpy.random.test.test_extending

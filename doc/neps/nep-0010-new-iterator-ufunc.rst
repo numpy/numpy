@@ -575,12 +575,16 @@ ndim, and niter will produce slightly different layouts.
             intp shape;
             /* The current coordinate along this axis */
             intp coord;
-            /* The operand and index strides for this axis
+            /* The operand and index strides for this axis */
             intp stride[niter];
-            {intp indexstride;} #if (flags&FLAGS_HASINDEX);
+            #if (flags&FLAGS_HASINDEX)
+                intp indexstride;
+            #endif
             /* The operand pointers and index values for this axis */
             char* ptr[niter];
-            {intp index;} #if (flags&FLAGS_HASINDEX);
+            #if (flags&FLAGS_HASINDEX)
+                intp index;
+            #endif
         }[ndim];
     };
 

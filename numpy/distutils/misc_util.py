@@ -428,9 +428,9 @@ def msvc_runtime_major():
 #########################
 
 #XXX need support for .C that is also C++
-cxx_ext_match = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
-fortran_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z', re.I).match
-f90_ext_match = re.compile(r'.*[.](f90|f95)\Z', re.I).match
+cxx_ext_match = re.compile(r'.*\.(cpp|cxx|cc)\Z', re.I).match
+fortran_ext_match = re.compile(r'.*\.(f90|f95|f77|for|ftn|f)\Z', re.I).match
+f90_ext_match = re.compile(r'.*\.(f90|f95)\Z', re.I).match
 f90_module_name_match = re.compile(r'\s*module\s*(?P<name>[\w_]+)', re.I).match
 def _get_f90_modules(source):
     """Return a list of Fortran f90 module names that
