@@ -1037,7 +1037,7 @@ def polydiv(u, v):
         return poly1d(q), poly1d(r)
     return q, r
 
-_poly_mat = re.compile(r"[*][*]([0-9]*)")
+_poly_mat = re.compile(r"\*\*([0-9]*)")
 def _raise_power(astr, wrap=70):
     n = 0
     line1 = ''
