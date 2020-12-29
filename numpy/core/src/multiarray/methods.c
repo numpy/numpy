@@ -1019,7 +1019,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 }
 
 /*
- * Check whether any of a set of input and output args have a non-default
+ * Check whether any of the input and output args have a non-default
  * __array_ufunc__ method. Return 1 if so, 0 if not, and -1 on error.
  *
  * This function primarily exists to help ndarray.__array_ufunc__ determine

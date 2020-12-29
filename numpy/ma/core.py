@@ -7339,9 +7339,9 @@ def where(condition, x=_NoValue, y=_NoValue):
 
 def choose(indices, choices, out=None, mode='raise'):
     """
-    Use an index array to construct a new array from a set of choices.
+    Use an index array to construct a new array from a list of choices.
 
-    Given an array of integers and a set of n choice arrays, this method
+    Given an array of integers and a list of n choice arrays, this method
     will create a new array that merges each of the choice arrays.  Where a
     value in `a` is i, the new array will have the value that choices[i]
     contains in the same place.

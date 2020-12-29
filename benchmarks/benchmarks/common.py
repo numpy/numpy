@@ -14,7 +14,7 @@ nx, ny = 1000, 1000
 # time-consuming functions (ufunc, linalg, etc)
 nxs, nys = 100, 100
 
-# a set of interesting types to test
+# a list of interesting types to test
 TYPES1 = [
     'int16', 'float16',
     'int32', 'float32',

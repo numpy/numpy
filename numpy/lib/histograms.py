@@ -678,7 +678,7 @@ def _histogram_dispatcher(
 def histogram(a, bins=10, range=None, normed=None, weights=None,
               density=None):
     r"""
-    Compute the histogram of a set of data.
+    Compute the histogram of a dataset.
 
     Parameters
     ----------
