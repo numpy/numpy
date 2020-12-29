@@ -43,11 +43,9 @@ General principles:
 - When assessing the costs, keep in mind that most users do not read the mailing
   list, do not look at deprecation warnings, and sometimes wait more than one or
   two years before upgrading from their old version.  And that NumPy has
-  many hundreds of thousands or even a couple of million users, so "no one will
-  do or use this" is very likely incorrect.
-- Benefits include improved functionality, usability and performance (in order
-  of importance), as well as lower maintenance cost and improved future
-  extensibility.
+  millions of users, so "no one will do or use this" is very likely incorrect.
+- Benefits include improved functionality, usability and performance,
+  as well as lower maintenance cost and improved future extensibility.
 - Bug fixes are exempt from the backwards compatibility policy.  However in case
   of serious impact on users (e.g. a downstream library doesn't build anymore),
   even bug fixes may have to be delayed for one or more releases.
@@ -89,21 +87,6 @@ forces users to change their code more than once, which is almost never the
 right thing to do.  Instead, a better approach here would have been to
 deprecate ``histogram`` and introduce a new function ``hist`` in its place.
 
-**Returning a view rather than a copy**
-
-The ``ndarray.diag`` method used to return a copy.  A view would be better for
-both performance and design consistency.  This change was warned about
-(``FutureWarning``) in v.8.0, and in v1.9.0 ``diag`` was changed to return
-a *read-only* view.  The planned change to a writeable view in v1.10.0 was
-postponed due to backwards compatibility concerns, and is still an open issue
-(gh-7661).
-
-What should have happened instead: nothing.  This change resulted in a lot of
-discussions and wasted effort, did not achieve its final goal, and was not that
-important in the first place.  Finishing the change to a *writeable* view in
-the future is not desired, because it will result in users silently getting
-different results if they upgraded multiple versions or simply missed the
-warnings.
 
 **Disallowing indexing with floats**
 
@@ -120,75 +103,29 @@ scikit-learn.  Overall the change was worth the cost, and introducing it in
 master first to allow testing, then removing it again before a release, is a
 useful strategy.
 
-Similar recent deprecations also look like good examples of
+Similar deprecations that also look like good examples of
 cleanups/improvements:
 
-- removing deprecated boolean indexing (gh-8312)
-- deprecating truth testing on empty arrays (gh-9718)
-- deprecating ``np.sum(generator)`` (gh-10670, one issue with this one is that
-  its warning message is wrong - this should error in the future).
+- removing deprecated boolean indexing (in 2016, see `gh-8312 <https://github.com/numpy/numpy/pull/8312>`__)
+- deprecating truth testing on empty arrays (in 2017, see `gh-9718 <https://github.com/numpy/numpy/pull/9718>`__)
+
 
 **Removing the financial functions**
 
-The financial functions (e.g. ``np.pmt``) are badly named, are present in the
-main NumPy namespace, and don't really fit well within NumPy's scope.
-They were added in 2008 after
+The financial functions (e.g. ``np.pmt``) had short non-descriptive names, were
+present in the main NumPy namespace, and didn't really fit well within NumPy's
+scope.  They were added in 2008 after
 `a discussion <https://mail.python.org/pipermail/numpy-discussion/2008-April/032353.html>`_
 on the mailing list where opinion was divided (but a majority in favor).
-At the moment these functions don't cause a lot of overhead, however there are
-multiple issues and PRs a year for them which cost maintainer time to deal
-with.  And they clutter up the ``numpy`` namespace.  Discussion in 2013 happened
-on removing them again (gh-2880).
+The financial functions didn't cause a lot of overhead, however there were
+still multiple issues and PRs a year for them which cost maintainer time to
+deal with.  And they cluttered up the ``numpy`` namespace.  Discussion on
+removing them happened in 2013 (gh-2880, rejected) and then again in 2019
+(:ref:`NEP32`, accepted without significant complaints).
 
-This case is borderline, but given that they're clearly out of scope,
-deprecation and removal out of at least the main ``numpy`` namespace can be
-proposed.  Alternatively, document clearly that new features for financial
-functions are unwanted, to keep the maintenance costs to a minimum.
-
-**Examples of features not added because of backwards compatibility**
-
-TODO: do we have good examples here? Possibly subclassing related?
-
-
-Removing complete submodules
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This year there have been suggestions to consider removing some or all of
-``numpy.distutils``, ``numpy.f2py``, ``numpy.linalg``, and ``numpy.random``.
-The motivation was that all these cost maintenance effort, and that they slow
-down work on the core of NumPy (ndarrays, dtypes and ufuncs).
-
-The impact on downstream libraries and users would be very large, and
-maintenance of these modules would still have to happen.  Therefore this is
-simply not a good idea; removing these submodules should not happen even for
-a new major version of NumPy.
-
-
-Subclassing of ndarray
-^^^^^^^^^^^^^^^^^^^^^^
-
-Subclassing of ``ndarray`` is a pain point.  ``ndarray`` was not (or at least
-not well) designed to be subclassed.  Despite that, a lot of subclasses have
-been created even within the NumPy code base itself, and some of those (e.g.
-``MaskedArray``, ``astropy.units.Quantity``) are quite popular.  The main
-problems with subclasses are:
-
-- They make it hard to change ``ndarray`` in ways that would otherwise be
-  backwards compatible.
-- Some of them change the behavior of ndarray methods, making it difficult to
-  write code that accepts array duck-types.
-
-Subclassing ``ndarray`` has been officially discouraged for a long time.  Of
-the most important subclasses, ``np.matrix`` will be deprecated (see gh-10142)
-and ``MaskedArray`` will be kept in NumPy (`NEP 17
-<http://www.numpy.org/neps/nep-0017-split-out-maskedarray.html>`_).
-``MaskedArray`` will ideally be rewritten in a way such that it uses only
-public NumPy APIs.  For subclasses outside of NumPy, more work is needed to
-provide alternatives (e.g. mixins, see gh-9016 and gh-10446) or better support
-for custom dtypes (see gh-2899).  Until that is done, subclasses need to be
-taken into account when making change to the NumPy code base.  A future change
-in NumPy to not support subclassing will certainly need a major version
-increase.
+Given that they were clearly outside of NumPy's scope, moving them to a
+separate ``numpy-financial`` package and removing them from NumPy after a
+deprecation period made sense.
 
 
 Policy
@@ -270,21 +207,16 @@ confusing than helpful. gh-10156 contains more discussion on this alternative.
 Discussion
 ----------
 
-TODO
-
-This section may just be a bullet list including links to any discussions
-regarding the NEP:
-
-- This includes links to mailing list threads or relevant GitHub issues.
+- `Mailing list discussion on the first version of this NEP in 2018 <https://mail.python.org/pipermail/numpy-discussion/2018-July/078432.html>`__
 
 
 References and Footnotes
 ------------------------
 
-.. [1] TODO
+None
 
 
 Copyright
 ---------
 
-This document has been placed in the public domain. [1]_
+This document has been placed in the public domain.
