@@ -307,7 +307,7 @@ def getstrlength(var):
             len = a['*']
         elif 'len' in a:
             len = a['len']
-    if re.match(r'\(\s*([*]|[:])\s*\)', len) or re.match(r'([*]|[:])', len):
+    if re.match(r'\(\s*(\*|:)\s*\)', len) or re.match(r'(\*|:)', len):
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
                 repr(var)))
