@@ -869,6 +869,8 @@ def appenddecl(decl, decl2, force=1):
 
 selectpattern = re.compile(
     r'\s*(?P<this>(@\(@.*?@\)@|[*][\d*]+|[*]\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
+typedefpattern = re.compile(
+    r'\s*(?:,\s*(?P<attributes>[\w@\(\),\s]+)\s*::)?\s*(?P<name>\b[\w$]+\b)\s*(?:\((?P<params>[\w,\s]*)\))?\Z', re.I)
 nameargspattern = re.compile(
     r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>.*)\s*@\)@))*\s*\Z', re.I)
 callnameargspattern = re.compile(
@@ -886,6 +888,16 @@ def _is_intent_callback(vdecl):
         if _intentcallbackpattern.match(a):
             return 1
     return 0
+
+
+def _resolvetypedefpattern(line):
+    line = markouterparen(line)
+    m1 = typedefpattern.match(line)
+    if m1:
+        attributes = m1.group('attributes')
+        attributes = [a.strip().lower() for a in attributes.split(',')] if attributes is not None else []
+        return m1.group('name'), attributes, m1.group('params')
+    return None, [], None
 
 
 def _resolvenameargspattern(line):
@@ -930,7 +942,17 @@ def analyzeline(m, case, line):
             block = 'block data'
         if re.match(r'python\s*module', block, re.I):
             block = 'python module'
-        name, args, result, bind = _resolvenameargspattern(m.group('after'))
+        if block == 'type':
+            name, attributes, params = _resolvetypedefpattern(m.group('after'))
+            for att in attributes:
+                if att == 'public' or att == 'private':
+                    groupcache[groupcounter]['vars'][name] = {'attrspec': [att, ]}
+                else:
+                    outmess('analyzeline: ignored type definition attribute "%s"\n' % att.replace('@',''))
+            args = []
+            result = None
+        else:
+            name, args, result, bind = _resolvenameargspattern(m.group('after'))
         if name is None:
             if block == 'block data':
                 name = '_BLOCK_DATA_'

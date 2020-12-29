@@ -86,3 +86,26 @@ class TestPublicPrivate():
         assert 'public' not in mod['vars']['a']['attrspec']
         assert 'private' not in mod['vars']['seta']['attrspec']
         assert 'public' in mod['vars']['seta']['attrspec']
+
+    def test_inlineDefinition(self, tmp_path):
+        f_path = tmp_path / "mod.f90"
+        with f_path.open('w') as ff:
+            ff.write(textwrap.dedent("""\
+            module foo
+              public
+              type, private, bind(c) :: a
+                integer :: i
+              end type a
+              type, bind(c) :: b
+                integer :: j
+              end type b
+              public :: b
+            end module foo
+            """))
+        mod = crackfortran.crackfortran([str(f_path)])
+        assert len(mod) == 1
+        tt = mod[0]['vars']
+        assert 'private' in tt['a']['attrspec']
+        assert 'public' not in tt['a']['attrspec']
+        assert 'public' in tt['b']['attrspec']
+        assert 'private' not in tt['b']['attrspec']
