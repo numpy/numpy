@@ -339,7 +339,7 @@ class parameterized:
                             "'@parameterized.expand' instead.")
 
     def _terrible_magic_get_defining_classes(self):
-        """ Returns the set of parent classes of the class currently being defined.
+        """ Returns the list of parent classes of the class currently being defined.
             Will likely only work if called from the ``parameterized`` decorator.
             This function is entirely @brandon_rhodes's fault, as he suggested
             the implementation: http://stackoverflow.com/a/8793684/71522

@@ -308,7 +308,7 @@ def _choose_dispatcher(a, choices, out=None, mode=None):
 @array_function_dispatch(_choose_dispatcher)
 def choose(a, choices, out=None, mode='raise'):
     """
-    Construct an array from an index array and a set of arrays to choose from.
+    Construct an array from an index array and a list of arrays to choose from.
 
     First of all, if confused or uncertain, definitely look at the Examples -
     in its full generality, this function is less simple than it might

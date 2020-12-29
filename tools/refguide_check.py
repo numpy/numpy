@@ -305,7 +305,7 @@ def compare(all_dict, others, names, module_name):
         List of non deprecated sub modules for module_name
     others : list
         List of sub modules for module_name
-    names :  set
+    names : set
         Set of function names or special directives present in
         docstring of module_name
     module_name : ModuleType
@@ -780,7 +780,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
     Parameters
     ----------
-    tests: list
+    tests : list
 
     full_name : str
 

@@ -694,7 +694,7 @@ class ABCPolyBase(abc.ABC):
         Returns
         -------
         new_series : series
-            Contains the new set of coefficients.
+            New instance of series with trimmed coefficients.
 
         """
         coef = pu.trimcoef(self.coef, tol)

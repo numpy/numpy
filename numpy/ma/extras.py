@@ -1322,7 +1322,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
-        form as `x`.
+        shape as `x`.
     rowvar : bool, optional
         If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
