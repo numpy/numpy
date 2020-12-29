@@ -161,13 +161,7 @@ Removal of deprecated functionality:
   impact of the removal is such that a major version number increase is
   warranted.
 - shall be listed in the release notes of the release where the removal happened.
-
-Versioning:
-
-- removal of deprecated code can be done in any minor (but not bugfix) release.
-- for heavily used functionality (e.g. removal of ``np.matrix``, of a whole submodule,
-  or significant changes to behavior for subclasses) the major version number shall
-  be increased.
+- can be done in any minor (but not bugfix) release.
 
 In concrete cases where this policy needs to be applied, decisions are made according
 to the `NumPy governance model
@@ -194,15 +188,6 @@ ecosystem - being fairly conservative is required in order to not increase the
 extra maintenance for downstream libraries and end users to an unacceptable
 level.
 
-**Semantic versioning.**
-
-This would change the versioning scheme for code removals; those could then
-only be done when the major version number is increased.  Rationale for
-rejection: semantic versioning is relatively common in software engineering,
-however it is not at all common in the Python world.  Also, it would mean that
-NumPy's version number simply starts to increase faster, which would be more
-confusing than helpful. gh-10156 contains more discussion on this alternative.
-
 
 Discussion
 ----------
@@ -213,7 +198,7 @@ Discussion
 References and Footnotes
 ------------------------
 
-None
+- `Issue requesting semantic versioning <https://github.com/numpy/numpy/issues/10156>`__
 
 
 Copyright
