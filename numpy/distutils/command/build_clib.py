@@ -118,12 +118,15 @@ class build_clib(old_build_clib):
         self.compiler.show_customization()
 
         if not self.disable_optimization:
+            dispatch_hpath = os.path.join("numpy", "distutils", "include", "npy_cpu_dispatch_config.h")
+            dispatch_hpath = os.path.join(self.get_finalized_command("build_src").build_src, dispatch_hpath)
             opt_cache_path = os.path.abspath(
-                os.path.join(self.build_temp, 'ccompiler_opt_cache_clib.py'
-            ))
+                os.path.join(self.build_temp, 'ccompiler_opt_cache_clib.py')
+            )
             self.compiler_opt = new_ccompiler_opt(
-                compiler=self.compiler, cpu_baseline=self.cpu_baseline,
-                cpu_dispatch=self.cpu_dispatch, cache_path=opt_cache_path
+                compiler=self.compiler, dispatch_hpath=dispatch_hpath,
+                cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
+                cache_path=opt_cache_path
             )
             if not self.compiler_opt.is_cached():
                 log.info("Detected changes on compiler optimizations, force rebuilding")
@@ -271,7 +274,12 @@ class build_clib(old_build_clib):
         copt_baseline_flags = []
         copt_macros = []
         if not self.disable_optimization:
-            copt_build_src = None if self.inplace else self.get_finalized_command("build_src").build_src
+            bsrc_dir = self.get_finalized_command("build_src").build_src
+            dispatch_hpath = os.path.join("numpy", "distutils", "include")
+            dispatch_hpath = os.path.join(bsrc_dir, dispatch_hpath)
+            include_dirs.append(dispatch_hpath)
+
+            copt_build_src = None if self.inplace else bsrc_dir
             copt_c_sources = [
                 c_sources.pop(c_sources.index(src))
                 for src in c_sources[:] if src.endswith(".dispatch.c")
