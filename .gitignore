@@ -219,3 +219,4 @@ numpy/core/src/_simd/_simd_inc.h
 numpy/core/src/umath/loops_unary_fp.dispatch.c
 numpy/core/src/umath/loops_arithm_fp.dispatch.c
 numpy/core/src/umath/loops_trigonometric.dispatch.c
+numpy/core/src/umath/loops_exponent_log.dispatch.c

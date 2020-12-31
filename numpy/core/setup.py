@@ -920,6 +920,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
+            join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h.src'),
@@ -929,7 +931,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
-            join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
             ]
 
     umath_deps = [
