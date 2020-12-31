@@ -181,6 +181,7 @@ def get_build_overrides():
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
+    from distutils.version import LooseVersion
 
     def _needs_gcc_c99_flag(obj):
         if obj.compiler.compiler_type != 'unix':
