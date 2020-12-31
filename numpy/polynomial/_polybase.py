@@ -547,8 +547,8 @@ class ABCPolyBase(abc.ABC):
         othercoef = self._get_coefficients(other)
         try:
             quo, rem = self._div(self.coef, othercoef)
-        except ZeroDivisionError as e:
-            raise e
+        except ZeroDivisionError:
+            raise
         except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
@@ -605,8 +605,8 @@ class ABCPolyBase(abc.ABC):
     def __rdivmod__(self, other):
         try:
             quo, rem = self._div(other, self.coef)
-        except ZeroDivisionError as e:
-            raise e
+        except ZeroDivisionError:
+            raise
         except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
@@ -694,7 +694,7 @@ class ABCPolyBase(abc.ABC):
         Returns
         -------
         new_series : series
-            Contains the new set of coefficients.
+            New instance of series with trimmed coefficients.
 
         """
         coef = pu.trimcoef(self.coef, tol)
@@ -940,7 +940,7 @@ class ABCPolyBase(abc.ABC):
             also returned.
         w : array_like, shape (M,), optional
             Weights. If not None the contribution of each point
-            ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+            ``(x[i],y[i])`` to the fit is weighted by ``w[i]``. Ideally the
             weights are chosen so that the errors of the products
             ``w[i]*y[i]`` all have the same variance.  The default value is
             None.

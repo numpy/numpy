@@ -1,9 +1,9 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = [
-    "setuptools",
-    "wheel",
-    "Cython>=0.29.14",  # Note: keep in sync with tools/cythonize.py
+    "setuptools<49.2.0",
+    "wheel<=0.35.1",
+    "Cython>=0.29.21,<3.0",  # Note: keep in sync with tools/cythonize.py
 ]
 
 
@@ -62,6 +62,11 @@ requires = [
     [[tool.towncrier.type]]
         directory = "improvement"
         name = "Improvements"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "performance"
+        name = "Performance improvements and changes"
         showcontent = true
 
     [[tool.towncrier.type]]

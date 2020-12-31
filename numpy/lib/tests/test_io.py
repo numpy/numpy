@@ -13,17 +13,19 @@ from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
-from multiprocessing import Process
+from multiprocessing import Process, Value
+from ctypes import c_bool
 
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes
+from numpy.compat import asbytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
+    break_cycles
     )
 from numpy.testing._private.utils import requires_memory
 
@@ -574,16 +576,29 @@ class TestSaveTxt:
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
-        def check_large_zip():
-            # The test takes at least 6GB of memory, writes a file larger than 4GB
-            test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                                   for i in range(800000)], dtype=object)
-            with tempdir() as tmpdir:
-                np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        def check_large_zip(memoryerror_raised):
+            memoryerror_raised.value = False
+            try:
+                # The test takes at least 6GB of memory, writes a file larger
+                # than 4GB
+                test_data = np.asarray([np.random.rand(
+                                        np.random.randint(50,100),4)
+                                        for i in range(800000)], dtype=object)
+                with tempdir() as tmpdir:
+                    np.savez(os.path.join(tmpdir, 'test.npz'),
+                             test_data=test_data)
+            except MemoryError:
+                memoryerror_raised.value = True
+                raise
         # run in a subprocess to ensure memory is released on PyPy, see gh-15775
-        p = Process(target=check_large_zip)
+        # Use an object in shared memory to re-raise the MemoryError exception
+        # in our process if needed, see gh-16889
+        memoryerror_raised = Value(c_bool)
+        p = Process(target=check_large_zip, args=(memoryerror_raised,))
         p.start()
         p.join()
+        if memoryerror_raised.value:
+            raise MemoryError("Child process raised a MemoryError exception")
         assert p.exitcode == 0
 
 class LoadTxtBase:
@@ -1011,7 +1026,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([b'start ', b'  ', b''])
         assert_array_equal(x['comment'], a)
 
-    def test_structure_unpack(self):
+    def test_unpack_structured(self):
         txt = TextIO("M 21 72\nF 35 58")
         dt = {'names': ('a', 'b', 'c'), 'formats': ('|S1', '<i4', '<f4')}
         a, b, c = np.loadtxt(txt, dtype=dt, unpack=True)
@@ -2343,6 +2358,51 @@ M   33  21.99
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
 
+    def test_unpack_structured(self):
+        # Regression test for gh-4341
+        # Unpacking should work on structured arrays
+        txt = TextIO("M 21 72\nF 35 58")
+        dt = {'names': ('a', 'b', 'c'), 'formats': ('S1', 'i4', 'f4')}
+        a, b, c = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_equal(a.dtype, np.dtype('S1'))
+        assert_equal(b.dtype, np.dtype('i4'))
+        assert_equal(c.dtype, np.dtype('f4'))
+        assert_array_equal(a, np.array([b'M', b'F']))
+        assert_array_equal(b, np.array([21, 35]))
+        assert_array_equal(c, np.array([72.,  58.]))
+
+    def test_unpack_auto_dtype(self):
+        # Regression test for gh-4341
+        # Unpacking should work when dtype=None
+        txt = TextIO("M 21 72.\nF 35 58.")
+        expected = (np.array(["M", "F"]), np.array([21, 35]), np.array([72., 58.]))
+        test = np.genfromtxt(txt, dtype=None, unpack=True, encoding="utf-8")
+        for arr, result in zip(expected, test):
+            assert_array_equal(arr, result)
+            assert_equal(arr.dtype, result.dtype)
+
+    def test_unpack_single_name(self):
+        # Regression test for gh-4341
+        # Unpacking should work when structured dtype has only one field
+        txt = TextIO("21\n35")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array([21, 35], dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal(expected.dtype, test.dtype)
+
+    def test_squeeze_scalar(self):
+        # Regression test for gh-4341
+        # Unpacking a scalar should give zero-dim output,
+        # even if dtype is structured
+        txt = TextIO("1")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array((1,), dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal((), test.shape)
+        assert_equal(expected.dtype, test.dtype)
+
 
 class TestPathUsage:
     # Test that pathlib.Path can be used
@@ -2373,6 +2433,9 @@ class TestPathUsage:
             assert_array_equal(data, a)
             # close the mem-mapped file
             del data
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
 
     def test_save_load_memmap_readwrite(self):
         # Test that pathlib.Path instances can be written mem-mapped.
@@ -2384,6 +2447,9 @@ class TestPathUsage:
             a[0][0] = 5
             b[0][0] = 5
             del b  # closes the file
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
             data = np.load(path)
             assert_array_equal(data, a)
 

@@ -19,6 +19,15 @@
 
 #endif
 
+/* Disable broken functions on z/OS */
+#if defined (__MVS__)
+
+#undef HAVE_POWF
+#undef HAVE_EXPF
+#undef HAVE___THREAD
+
+#endif
+
 /* Disable broken MS math functions */
 #if (defined(_MSC_VER) && (_MSC_VER < 1900)) || defined(__MINGW32_VERSION)
 

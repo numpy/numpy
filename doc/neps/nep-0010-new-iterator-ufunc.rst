@@ -393,7 +393,9 @@ The proposed ‘order=’ flags become as follows:
 ‘K’  a layout equivalent to ‘C’ followed by some permutation of the axes, as close to the layout of the input(s) as possible (“Keep Layout”)
 ===  =====================================================================================
 
-Or as an enum::
+Or as an enum:
+
+.. code-block:: c
 
     /* For specifying array memory layout or iteration order */
     typedef enum {
@@ -416,7 +418,9 @@ parameter to control the layout of their output(s).
 
 The iterator can do automatic casting, and I have created a sequence
 of progressively more permissive casting rules.  Perhaps for 2.0, NumPy
-could adopt this enum as its preferred way of dealing with casting.::
+could adopt this enum as its preferred way of dealing with casting.
+
+.. code-block:: c
 
     /* For specifying allowed casting in operations which support it */
     typedef enum {
@@ -496,7 +500,9 @@ Proposed Iterator Memory Layout
 
 The following struct describes the iterator memory.  All items
 are packed together, which means that different values of the flags,
-ndim, and niter will produce slightly different layouts.  ::
+ndim, and niter will produce slightly different layouts.
+
+.. code-block:: c
 
     struct {
         /* Flags indicate what optimizations have been applied, and
@@ -569,12 +575,16 @@ ndim, and niter will produce slightly different layouts.  ::
             intp shape;
             /* The current coordinate along this axis */
             intp coord;
-            /* The operand and index strides for this axis
+            /* The operand and index strides for this axis */
             intp stride[niter];
-            {intp indexstride;} #if (flags&FLAGS_HASINDEX);
+            #if (flags&FLAGS_HASINDEX)
+                intp indexstride;
+            #endif
             /* The operand pointers and index values for this axis */
             char* ptr[niter];
-            {intp index;} #if (flags&FLAGS_HASINDEX);
+            #if (flags&FLAGS_HASINDEX)
+                intp index;
+            #endif
         }[ndim];
     };
 
@@ -710,13 +720,17 @@ Construction and Destruction
     Returns NULL if there is an error, otherwise returns the allocated
     iterator.
 
-    To make an iterator similar to the old iterator, this should work.::
+    To make an iterator similar to the old iterator, this should work.
+
+    .. code-block:: c
 
         iter = NpyIter_New(op, NPY_ITER_READWRITE,
                             NPY_CORDER, NPY_NO_CASTING, NULL, 0, NULL);
 
     If you want to edit an array with aligned ``double`` code,
-    but the order doesn't matter, you would use this.::
+    but the order doesn't matter, you would use this.
+
+    .. code-block:: c
 
         dtype = PyArray_DescrFromType(NPY_DOUBLE);
         iter = NpyIter_New(op, NPY_ITER_READWRITE |
@@ -764,7 +778,9 @@ Construction and Destruction
     In ``op_axes[j][i]`` is stored either a valid axis of ``op[j]``, or
     -1 which means ``newaxis``.  Within each ``op_axes[j]`` array, axes
     may not be repeated.  The following example is how normal broadcasting
-    applies to a 3-D array, a 2-D array, a 1-D array and a scalar.::
+    applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
+
+    .. code-block:: c
 
         npy_intp oa_ndim = 3;               /* # iteration axes */
         npy_intp op0_axes[] = {0, 1, 2};    /* 3-D operand */
@@ -1139,7 +1155,9 @@ Construction and Destruction
     If you want to reset both the ``iterindex`` range and the base
     pointers at the same time, you can do the following to avoid
     extra buffer copying (be sure to add the return code error checks
-    when you copy this code).::
+    when you copy this code).
+
+    .. code-block:: c
 
         /* Set to a trivial empty range */
         NpyIter_ResetToIterIndexRange(iter, 0, 0);
@@ -1190,7 +1208,9 @@ Construction and Destruction
     is used as the source for ``baseptrs``, it will point into a small buffer
     instead of the array and the inner iteration will be invalid.
 
-    The pattern for using nested iterators is as follows.::
+    The pattern for using nested iterators is as follows:
+
+    .. code-block:: c
 
         NpyIter *iter1, *iter1;
         NpyIter_IterNext_Fn iternext1, iternext2;
@@ -1412,7 +1432,9 @@ Functions For Iteration
     non-NULL, the function may be safely called without holding
     the Python GIL.
 
-    The typical looping construct is as follows.::
+    The typical looping construct is as follows:
+
+    .. code-block:: c
 
         NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
         char **dataptr = NpyIter_GetDataPtrArray(iter);
@@ -1422,7 +1444,9 @@ Functions For Iteration
         } while(iternext(iter));
 
     When ``NPY_ITER_NO_INNER_ITERATION`` is specified, the typical
-    inner loop construct is as follows.::
+    inner loop construct is as follows:
+
+    .. code-block:: c
 
         NpyIter_IterNext_Fn iternext = NpyIter_GetIterNext(iter, NULL);
         char **dataptr = NpyIter_GetDataPtrArray(iter);
@@ -1451,7 +1475,9 @@ Functions For Iteration
     to become zero when ``iternext()`` returns false, enabling the
     following loop construct.  Note that if you use this construct,
     you should not pass ``NPY_ITER_GROWINNER`` as a flag, because it
-    will cause larger sizes under some circumstances.::
+    will cause larger sizes under some circumstances:
+
+    .. code-block:: c
 
         /* The constructor should have buffersize passed as this value */
         #define FIXED_BUFFER_SIZE 1024
@@ -1571,7 +1597,9 @@ result.
 
 If the input is a reference type, this function will fail.
 To fix this, the code must be changed to specially handle writeable
-references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags.::
+references, and add ``NPY_ITER_WRITEABLE_REFERENCES`` to the flags:
+
+.. code-block:: c
 
     /* NOTE: This code has not been compiled/tested */
     PyObject *CopyArray(PyObject *arr, NPY_ORDER order)

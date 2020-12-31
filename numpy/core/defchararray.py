@@ -114,8 +114,8 @@ def equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -140,8 +140,8 @@ def not_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -167,8 +167,8 @@ def greater_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -193,8 +193,8 @@ def less_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -219,8 +219,8 @@ def greater(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -245,8 +245,8 @@ def less(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------

@@ -193,7 +193,32 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
-deprecate_with_doc = lambda msg: _Deprecate(message=msg)
+
+def deprecate_with_doc(msg):
+    """
+    Deprecates a function and includes the deprecation in its docstring.
+    
+    This function is used as a decorator. It returns an object that can be 
+    used to issue a DeprecationWarning, by passing the to-be decorated 
+    function as argument, this adds warning to the to-be decorated function's 
+    docstring and returns the new function object.
+    
+    See Also
+    --------
+    deprecate : Decorate a function such that it issues a `DeprecationWarning` 
+    
+    Parameters
+    ----------
+    msg : str
+        Additional explanation of the deprecation. Displayed in the 
+        docstring after the warning.
+
+    Returns
+    -------
+    obj : object
+
+    """
+    return _Deprecate(message=msg)  
 
 
 #--------------------------------------------
@@ -587,11 +612,11 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
             print(inspect.getdoc(object), file=output)
 
         methods = pydoc.allmethods(object)
-        if methods != []:
+
+        public_methods = [meth for meth in methods if meth[0] != '_']
+        if public_methods:
             print("\n\nMethods:\n", file=output)
-            for meth in methods:
-                if meth[0] == '_':
-                    continue
+            for meth in public_methods:
                 thisobj = getattr(object, meth, None)
                 if thisobj is not None:
                     methstr, other = pydoc.splitdoc(

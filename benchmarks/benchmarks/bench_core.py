@@ -165,6 +165,9 @@ class PackBits(Benchmark):
     def time_packbits(self, dtype):
         np.packbits(self.d)
 
+    def time_packbits_little(self, dtype):
+        np.packbits(self.d, bitorder="little")
+
     def time_packbits_axis0(self, dtype):
         np.packbits(self.d2, axis=0)
 

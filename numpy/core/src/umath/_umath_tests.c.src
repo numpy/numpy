@@ -461,6 +461,15 @@ addUfuncs(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "cross1d", f);
     Py_DECREF(f);
 
+    f = PyUFunc_FromFuncAndDataAndSignature(NULL, NULL,
+            NULL, 0, 0, 0, PyUFunc_None, "_pickleable_module_global.ufunc",
+            "A dotted name for pickle testing, does nothing.", 0, NULL);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "_pickleable_module_global_ufunc", f);
+    Py_DECREF(f);
+
     return 0;
 }
 
@@ -480,7 +489,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    if (PyString_Check(signature)) {
+    if (PyBytes_Check(signature)) {
         sig_str = signature;
     } else if (PyUnicode_Check(signature)) {
         sig_str = PyUnicode_AsUTF8String(signature);
@@ -493,7 +502,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
         "doc:none",
-        1, PyString_AS_STRING(sig_str));
+        1, PyBytes_AS_STRING(sig_str));
     if (sig_str != signature) {
         Py_DECREF(sig_str);
     }
@@ -588,11 +597,11 @@ static PyObject *
 UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dummy2))
 {
     const char *highest_func, *highest_var;
-    NPY_CPU_DISPATCH_CALL(highest_func = _umath_tests_dispatch_func, ())
-    NPY_CPU_DISPATCH_CALL(highest_var  = _umath_tests_dispatch_var)
+    NPY_CPU_DISPATCH_CALL(highest_func = _umath_tests_dispatch_func, ());
+    NPY_CPU_DISPATCH_CALL(highest_var  = _umath_tests_dispatch_var);
     const char *highest_func_xb = "nobase", *highest_var_xb = "nobase";
-    NPY_CPU_DISPATCH_CALL_XB(highest_func_xb = _umath_tests_dispatch_func, ())
-    NPY_CPU_DISPATCH_CALL_XB(highest_var_xb  = _umath_tests_dispatch_var)
+    NPY_CPU_DISPATCH_CALL_XB(highest_func_xb = _umath_tests_dispatch_func, ());
+    NPY_CPU_DISPATCH_CALL_XB(highest_var_xb  = _umath_tests_dispatch_var);
 
     PyObject *dict = PyDict_New(), *item;
     if (dict == NULL) {
@@ -610,7 +619,7 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
     if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {
         goto err;
     }
-    NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item))
+    NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
     if (PyErr_Occurred()) {
         goto err;
     }
@@ -671,7 +680,7 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     d = PyModule_GetDict(m);
 
-    version = PyString_FromString("0.1");
+    version = PyUnicode_FromString("0.1");
     PyDict_SetItemString(d, "__version__", version);
     Py_DECREF(version);
 

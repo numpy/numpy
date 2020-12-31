@@ -6,7 +6,7 @@ boiler plate for doing that is to put the following in the module
 ``__init__.py`` file::
 
     from numpy._pytesttester import PytestTester
-    test = PytestTester(__name__).test
+    test = PytestTester(__name__)
     del PytestTester
 
 
@@ -201,7 +201,6 @@ class PytestTester:
             tests = [self.module_name]
 
         pytest_args += ["--pyargs"] + list(tests)
-
 
         # run tests.
         _show_numpy_info()

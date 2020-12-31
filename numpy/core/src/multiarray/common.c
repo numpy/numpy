@@ -9,13 +9,14 @@
 #include "npy_pycompat.h"
 #include "common.h"
 
+#include "abstractdtypes.h"
 #include "usertypes.h"
 
-#include "common.h"
 #include "npy_buffer.h"
 
 #include "get_attr_string.h"
 #include "mem_overlap.h"
+#include "array_coercion.h"
 
 /*
  * The casting to use for implicit assignment operations resulting from
@@ -44,88 +45,19 @@ _array_find_python_scalar_type(PyObject *op)
     else if (PyComplex_Check(op)) {
         return PyArray_DescrFromType(NPY_CDOUBLE);
     }
-    else if (PyInt_Check(op)) {
-        /* bools are a subclass of int */
-        if (PyBool_Check(op)) {
-            return PyArray_DescrFromType(NPY_BOOL);
-        }
-        else {
-            return  PyArray_DescrFromType(NPY_LONG);
-        }
-    }
     else if (PyLong_Check(op)) {
-        /* check to see if integer can fit into a longlong or ulonglong
-           and return that --- otherwise return object */
-        if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
-            PyErr_Clear();
-        }
-        else {
-            return PyArray_DescrFromType(NPY_LONGLONG);
-        }
-
-        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1)
-            && PyErr_Occurred()){
-            PyErr_Clear();
-        }
-        else {
-            return PyArray_DescrFromType(NPY_ULONGLONG);
-        }
-
-        return PyArray_DescrFromType(NPY_OBJECT);
+        return PyArray_PyIntAbstractDType.discover_descr_from_pyobject(
+                    &PyArray_PyIntAbstractDType, op);
     }
     return NULL;
 }
 
-/*
- * These constants are used to signal that the recursive dtype determination in
- * PyArray_DTypeFromObject encountered a string type, and that the recursive
- * search must be restarted so that string representation lengths can be
- * computed for all scalar types.
- */
-#define RETRY_WITH_STRING 1
-#define RETRY_WITH_UNICODE 2
-
-/*
- * Recursively examines the object to determine an appropriate dtype
- * to use for converting to an ndarray.
- *
- * 'obj' is the object to be converted to an ndarray.
- *
- * 'maxdims' is the maximum recursion depth.
- *
- * 'out_dtype' should be either NULL or a minimal starting dtype when
- * the function is called. It is updated with the results of type
- * promotion. This dtype does not get updated when processing NA objects.
- * This is reset to NULL on failure.
- *
- * Returns 0 on success, -1 on failure.
- */
- NPY_NO_EXPORT int
-PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
-{
-    int res;
-
-    res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_dtype, 0);
-    if (res == RETRY_WITH_STRING) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims,
-                                            out_dtype, NPY_STRING);
-        if (res == RETRY_WITH_UNICODE) {
-            res = PyArray_DTypeFromObjectHelper(obj, maxdims,
-                                                out_dtype, NPY_UNICODE);
-        }
-    }
-    else if (res == RETRY_WITH_UNICODE) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims,
-                                            out_dtype, NPY_UNICODE);
-    }
-    return res;
-}
 
 /*
  * Get a suitable string dtype by calling `__str__`.
  * For `np.bytes_`, this assumes an ASCII encoding.
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type)
 {
@@ -159,8 +91,8 @@ PyArray_DTypeFromObjectStringDiscovery(
         return NULL;
     }
     if (last_dtype != NULL &&
-            last_dtype->type_num == string_type &&
-            last_dtype->elsize >= itemsize) {
+        last_dtype->type_num == string_type &&
+        last_dtype->elsize >= itemsize) {
         Py_INCREF(last_dtype);
         return last_dtype;
     }
@@ -172,367 +104,27 @@ PyArray_DTypeFromObjectStringDiscovery(
     return dtype;
 }
 
+
+/*
+ * This function is now identical to the new PyArray_DiscoverDTypeAndShape
+ * but only returns the the dtype. It should in most cases be slowly phased
+ * out. (Which may need some refactoring to PyArray_FromAny to make it simpler)
+ */
 NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
-                              PyArray_Descr **out_dtype, int string_type)
+PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
 {
-    int i, size;
-    PyArray_Descr *dtype = NULL;
-    PyObject *ip;
-    Py_buffer buffer_view;
-    /* types for sequence handling */
-    PyObject ** objects;
-    PyObject * seq;
-    PyTypeObject * common_type;
+    coercion_cache_obj *cache = NULL;
+    npy_intp shape[NPY_MAXDIMS];
+    int ndim;
 
-    /* Check if it's an ndarray */
-    if (PyArray_Check(obj)) {
-        dtype = PyArray_DESCR((PyArrayObject *)obj);
-        Py_INCREF(dtype);
-        goto promote_types;
+    ndim = PyArray_DiscoverDTypeAndShape(
+            obj, maxdims, shape, &cache, NULL, NULL, out_dtype);
+    if (ndim < 0) {
+        return -1;
     }
-
-    /* See if it's a python None */
-    if (obj == Py_None) {
-        dtype = PyArray_DescrFromType(NPY_OBJECT);
-        if (dtype == NULL) {
-            goto fail;
-        }
-        goto promote_types;
-    }
-    /* Check if it's a NumPy scalar */
-    else if (PyArray_IsScalar(obj, Generic)) {
-        if (!string_type) {
-            dtype = PyArray_DescrFromScalar(obj);
-            if (dtype == NULL) {
-                goto fail;
-            }
-        }
-        else {
-            dtype = PyArray_DTypeFromObjectStringDiscovery(
-                    obj, *out_dtype, string_type);
-            if (dtype == NULL) {
-                goto fail;
-            }
-
-            /* nothing to do, dtype is already correct */
-            if (dtype == *out_dtype){
-                Py_DECREF(dtype);
-                return 0;
-            }
-        }
-        goto promote_types;
-    }
-
-    /* Check if it's a Python scalar */
-    dtype = _array_find_python_scalar_type(obj);
-    if (dtype != NULL) {
-        if (string_type) {
-            /* dtype is not used in this (string discovery) branch */
-            Py_DECREF(dtype);
-            dtype = PyArray_DTypeFromObjectStringDiscovery(
-                    obj, *out_dtype, string_type);
-            if (dtype == NULL) {
-                goto fail;
-            }
-
-            /* nothing to do, dtype is already correct */
-            if (dtype == *out_dtype){
-                Py_DECREF(dtype);
-                return 0;
-            }
-        }
-        goto promote_types;
-    }
-
-    /* Check if it's an ASCII string */
-    if (PyBytes_Check(obj)) {
-        int itemsize = PyString_GET_SIZE(obj);
-
-        /* If it's already a big enough string, don't bother type promoting */
-        if (*out_dtype != NULL &&
-                        (*out_dtype)->type_num == NPY_STRING &&
-                        (*out_dtype)->elsize >= itemsize) {
-            return 0;
-        }
-        dtype = PyArray_DescrNewFromType(NPY_STRING);
-        if (dtype == NULL) {
-            goto fail;
-        }
-        dtype->elsize = itemsize;
-        goto promote_types;
-    }
-
-    /* Check if it's a Unicode string */
-    if (PyUnicode_Check(obj)) {
-        int itemsize = PyUnicode_GetLength(obj);
-        if (itemsize < 0) {
-            goto fail;
-        }
-        itemsize *= 4;
-
-        /*
-         * If it's already a big enough unicode object,
-         * don't bother type promoting
-         */
-        if (*out_dtype != NULL &&
-                        (*out_dtype)->type_num == NPY_UNICODE &&
-                        (*out_dtype)->elsize >= itemsize) {
-            return 0;
-        }
-        dtype = PyArray_DescrNewFromType(NPY_UNICODE);
-        if (dtype == NULL) {
-            goto fail;
-        }
-        dtype->elsize = itemsize;
-        goto promote_types;
-    }
-
-    /* PEP 3118 buffer interface */
-    if (PyObject_CheckBuffer(obj) == 1) {
-        memset(&buffer_view, 0, sizeof(Py_buffer));
-        if (PyObject_GetBuffer(obj, &buffer_view,
-                               PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-            PyObject_GetBuffer(obj, &buffer_view,
-                               PyBUF_FORMAT|PyBUF_SIMPLE) == 0) {
-
-            PyErr_Clear();
-            dtype = _descriptor_from_pep3118_format(buffer_view.format);
-            PyBuffer_Release(&buffer_view);
-            if (dtype) {
-                goto promote_types;
-            }
-        }
-        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-                 PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-
-            PyErr_Clear();
-            dtype = PyArray_DescrNewFromType(NPY_VOID);
-            dtype->elsize = buffer_view.itemsize;
-            PyBuffer_Release(&buffer_view);
-            goto promote_types;
-        }
-        else {
-            PyErr_Clear();
-        }
-    }
-
-    /* The array interface */
-    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
-    if (ip != NULL) {
-        if (PyDict_Check(ip)) {
-            PyObject *typestr;
-            PyObject *tmp = NULL;
-            typestr = _PyDict_GetItemStringWithError(ip, "typestr");
-            if (typestr == NULL && PyErr_Occurred()) {
-                goto fail;
-            }
-            /* Allow unicode type strings */
-            if (typestr && PyUnicode_Check(typestr)) {
-                tmp = PyUnicode_AsASCIIString(typestr);
-                typestr = tmp;
-            }
-            if (typestr && PyBytes_Check(typestr)) {
-                dtype =_array_typedescr_fromstr(PyBytes_AS_STRING(typestr));
-                if (tmp == typestr) {
-                    Py_DECREF(tmp);
-                }
-                Py_DECREF(ip);
-                if (dtype == NULL) {
-                    goto fail;
-                }
-                goto promote_types;
-            }
-        }
-        Py_DECREF(ip);
-    }
-    else if (PyErr_Occurred()) {
-        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
-    }
-
-
-    /* The array struct interface */
-    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
-    if (ip != NULL) {
-        PyArrayInterface *inter;
-        char buf[40];
-
-        if (NpyCapsule_Check(ip)) {
-            inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(ip);
-            if (inter->two == 2) {
-                PyOS_snprintf(buf, sizeof(buf),
-                        "|%c%d", inter->typekind, inter->itemsize);
-                dtype = _array_typedescr_fromstr(buf);
-                Py_DECREF(ip);
-                if (dtype == NULL) {
-                    goto fail;
-                }
-                goto promote_types;
-            }
-        }
-        Py_DECREF(ip);
-    }
-    else if (PyErr_Occurred()) {
-        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
-    }
-
-    /* The __array__ attribute */
-    ip = PyArray_LookupSpecial_OnInstance(obj, "__array__");
-    if (ip != NULL) {
-        Py_DECREF(ip);
-        ip = PyObject_CallMethod(obj, "__array__", NULL);
-        if(ip && PyArray_Check(ip)) {
-            dtype = PyArray_DESCR((PyArrayObject *)ip);
-            Py_INCREF(dtype);
-            Py_DECREF(ip);
-            goto promote_types;
-        }
-        Py_XDECREF(ip);
-        if (PyErr_Occurred()) {
-            goto fail;
-        }
-    }
-    else if (PyErr_Occurred()) {
-        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
-    }
-
-    /*
-     * If we reached the maximum recursion depth without hitting one
-     * of the above cases, and obj isn't a sequence-like object, the output
-     * dtype should be either OBJECT or a user-defined type.
-     *
-     * Note that some libraries define sequence-like classes but want them to
-     * be treated as objects, and they expect numpy to treat it as an object if
-     * __len__ is not defined.
-     */
-    if (maxdims == 0 || !PySequence_Check(obj) || PySequence_Size(obj) < 0) {
-        /* clear any PySequence_Size error which corrupts further calls */
-        PyErr_Clear();
-
-        if (*out_dtype == NULL || (*out_dtype)->type_num != NPY_OBJECT) {
-            Py_XDECREF(*out_dtype);
-            *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
-            if (*out_dtype == NULL) {
-                return -1;
-            }
-        }
-        return 0;
-    }
-
-    /*
-     * The C-API recommends calling PySequence_Fast before any of the other
-     * PySequence_Fast* functions. This is required for PyPy
-     */
-    seq = PySequence_Fast(obj, "Could not convert object to sequence");
-    if (seq == NULL) {
-        goto fail;
-    }
-
-    /* Recursive case, first check the sequence contains only one type */
-    size = PySequence_Fast_GET_SIZE(seq);
-    /* objects is borrowed, do not release seq */
-    objects = PySequence_Fast_ITEMS(seq);
-    common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
-    for (i = 1; i < size; ++i) {
-        if (Py_TYPE(objects[i]) != common_type) {
-            common_type = NULL;
-            break;
-        }
-    }
-
-    /* all types are the same and scalar, one recursive call is enough */
-    if (common_type != NULL && !string_type &&
-            (common_type == &PyFloat_Type ||
-/* TODO: we could add longs if we add a range check */
-             common_type == &PyBool_Type ||
-             common_type == &PyComplex_Type)) {
-        size = 1;
-    }
-
-    /* Recursive call for each sequence item */
-    for (i = 0; i < size; ++i) {
-        int res = PyArray_DTypeFromObjectHelper(objects[i], maxdims - 1,
-                                                out_dtype, string_type);
-        if (res < 0) {
-            Py_DECREF(seq);
-            goto fail;
-        }
-        else if (res > 0) {
-            Py_DECREF(seq);
-            return res;
-        }
-    }
-
-    Py_DECREF(seq);
-
+    npy_free_coercion_cache(cache);
     return 0;
-
-
-promote_types:
-    /* Set 'out_dtype' if it's NULL */
-    if (*out_dtype == NULL) {
-        if (!string_type && dtype->type_num == NPY_STRING) {
-            Py_DECREF(dtype);
-            return RETRY_WITH_STRING;
-        }
-        if (!string_type && dtype->type_num == NPY_UNICODE) {
-            Py_DECREF(dtype);
-            return RETRY_WITH_UNICODE;
-        }
-        *out_dtype = dtype;
-        return 0;
-    }
-    /* Do type promotion with 'out_dtype' */
-    else {
-        PyArray_Descr *res_dtype = PyArray_PromoteTypes(dtype, *out_dtype);
-        Py_DECREF(dtype);
-        if (res_dtype == NULL) {
-            goto fail;
-        }
-        if (!string_type &&
-                res_dtype->type_num == NPY_UNICODE &&
-                (*out_dtype)->type_num != NPY_UNICODE) {
-            Py_DECREF(res_dtype);
-            return RETRY_WITH_UNICODE;
-        }
-        if (!string_type &&
-                res_dtype->type_num == NPY_STRING &&
-                (*out_dtype)->type_num != NPY_STRING) {
-            Py_DECREF(res_dtype);
-            return RETRY_WITH_STRING;
-        }
-        Py_DECREF(*out_dtype);
-        *out_dtype = res_dtype;
-        return 0;
-    }
-
-fail:
-    Py_XDECREF(*out_dtype);
-    *out_dtype = NULL;
-    return -1;
 }
-
-#undef RETRY_WITH_STRING
-#undef RETRY_WITH_UNICODE
-
-/* new reference */
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *c_str)
-{
-    PyArray_Descr *descr = NULL;
-    PyObject *stringobj = PyString_FromString(c_str);
-
-    if (stringobj == NULL) {
-        return NULL;
-    }
-    if (PyArray_DescrConverter(stringobj, &descr) != NPY_SUCCEED) {
-        Py_DECREF(stringobj);
-        return NULL;
-    }
-    Py_DECREF(stringobj);
-    return descr;
-}
-
 
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
@@ -556,7 +148,7 @@ NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
 {
     if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyObject *zero = PyInt_FromLong(0);
+        PyObject *zero = PyLong_FromLong(0);
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
         if (PyErr_Occurred()) {
@@ -641,7 +233,6 @@ NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 {
     npy_intp i;
-    PyObject *ret, *tmp;
 
     /*
      * Negative dimension indicates "newaxis", which can
@@ -651,40 +242,40 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
     for (i = 0; i < n && vals[i] < 0; i++);
 
     if (i == n) {
-        return PyUString_FromFormat("()%s", ending);
-    }
-    else {
-        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
-        if (ret == NULL) {
-            return NULL;
-        }
+        return PyUnicode_FromFormat("()%s", ending);
     }
 
+    PyObject *ret = PyUnicode_FromFormat("%" NPY_INTP_FMT, vals[i++]);
+    if (ret == NULL) {
+        return NULL;
+    }
     for (; i < n; ++i) {
+        PyObject *tmp;
+
         if (vals[i] < 0) {
-            tmp = PyUString_FromString(",newaxis");
+            tmp = PyUnicode_FromString(",newaxis");
         }
         else {
-            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+            tmp = PyUnicode_FromFormat(",%" NPY_INTP_FMT, vals[i]);
         }
         if (tmp == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
 
-        PyUString_ConcatAndDel(&ret, tmp);
+        Py_SETREF(ret, PyUnicode_Concat(ret, tmp));
+        Py_DECREF(tmp);
         if (ret == NULL) {
             return NULL;
         }
     }
 
     if (i == 1) {
-        tmp = PyUString_FromFormat(",)%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S,)%s", ret, ending));
     }
     else {
-        tmp = PyUString_FromFormat(")%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S)%s", ret, ending));
     }
-    PyUString_ConcatAndDel(&ret, tmp);
     return ret;
 }
 
@@ -697,7 +288,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
              *shape1 = NULL, *shape2 = NULL,
              *shape1_i = NULL, *shape2_j = NULL;
 
-    format = PyUString_FromString("shapes %s and %s not aligned:"
+    format = PyUnicode_FromString("shapes %s and %s not aligned:"
                                   " %d (dim %d) != %d (dim %d)");
 
     shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
@@ -720,7 +311,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
         goto end;
     }
 
-    errmsg = PyUString_Format(format, fmt_args);
+    errmsg = PyUnicode_Format(format, fmt_args);
     if (errmsg != NULL) {
         PyErr_SetObject(PyExc_ValueError, errmsg);
     }
@@ -760,10 +351,7 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
     off  = PyTuple_GET_ITEM(value, 1);
 
-    if (PyInt_Check(off)) {
-        *offset = PyInt_AsSsize_t(off);
-    }
-    else if (PyLong_Check(off)) {
+    if (PyLong_Check(off)) {
         *offset = PyLong_AsSsize_t(off);
     }
     else {

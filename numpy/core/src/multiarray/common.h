@@ -2,7 +2,6 @@
 #define _NPY_PRIVATE_COMMON_H_
 #include "structmember.h"
 #include <numpy/npy_common.h>
-#include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
 #include "npy_import.h"
@@ -19,6 +18,11 @@
 #else
 #define NPY_BEGIN_THREADS_NDITER(iter)
 #endif
+
+
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_DTypeFromObjectStringDiscovery(
+        PyObject *obj, PyArray_Descr *last_dtype, int string_type);
 
 /*
  * Recursively examines the object to determine an appropriate dtype
@@ -286,43 +290,6 @@ npy_memchr(char * haystack, char needle,
 
     return p;
 }
-
-/*
- * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
- * (BLAS won't handle negative or zero strides the way we want).
- */
-static NPY_INLINE int
-blas_stride(npy_intp stride, unsigned itemsize)
-{
-    /*
-     * Should probably check pointer alignment also, but this may cause
-     * problems if we require complex to be 16 byte aligned.
-     */
-    if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
-        stride /= itemsize;
-#ifndef HAVE_BLAS_ILP64
-        if (stride <= INT_MAX) {
-#else
-        if (stride <= NPY_MAX_INT64) {
-#endif
-            return stride;
-        }
-    }
-    return 0;
-}
-
-/*
- * Define a chunksize for CBLAS. CBLAS counts in integers.
- */
-#if NPY_MAX_INTP > INT_MAX
-# ifndef HAVE_BLAS_ILP64
-#  define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
-# else
-#  define NPY_CBLAS_CHUNK  (NPY_MAX_INT64 / 2 + 1)
-# endif
-#else
-# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
-#endif
 
 #include "ucsnarrow.h"
 

@@ -8,9 +8,16 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/ndarraytypes.h>
+#include <numpy/arrayscalars.h>
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "dtypemeta.h"
+#include "_datetime.h"
+#include "array_coercion.h"
+#include "scalartypes.h"
+#include "convert_datatype.h"
+#include "usertypes.h"
 
 
 static void
@@ -20,6 +27,7 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
 
     Py_XDECREF(self->scalar_type);
     Py_XDECREF(self->singleton);
+    Py_XDECREF(self->castingimpls);
     PyType_Type.tp_dealloc((PyObject *) self);
 }
 
@@ -104,6 +112,340 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
     return (PyObject *)self->singleton;
 }
 
+
+static PyArray_Descr *
+nonparametric_discover_descr_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *obj)
+{
+    /* If the object is of the correct scalar type return our singleton */
+    assert(!cls->parametric);
+    Py_INCREF(cls->singleton);
+    return cls->singleton;
+}
+
+
+static PyArray_Descr *
+string_discover_descr_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *obj)
+{
+    npy_intp itemsize = -1;
+    if (PyBytes_Check(obj)) {
+        itemsize = PyBytes_Size(obj);
+    }
+    else if (PyUnicode_Check(obj)) {
+        itemsize = PyUnicode_GetLength(obj);
+    }
+    if (itemsize != -1) {
+        if (cls->type_num == NPY_UNICODE) {
+            itemsize *= 4;
+        }
+        if (itemsize > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_TypeError,
+                    "string to large to store inside array.");
+        }
+        PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+        res->elsize = (int)itemsize;
+        return res;
+    }
+    return PyArray_DTypeFromObjectStringDiscovery(obj, NULL, cls->type_num);
+}
+
+
+static PyArray_Descr *
+void_discover_descr_from_pyobject(
+        PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
+{
+    if (PyArray_IsScalar(obj, Void)) {
+        PyVoidScalarObject *void_obj = (PyVoidScalarObject *)obj;
+        Py_INCREF(void_obj->descr);
+        return void_obj->descr;
+    }
+    if (PyBytes_Check(obj)) {
+        PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
+        Py_ssize_t itemsize = (int)PyBytes_Size(obj);
+        if (itemsize > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_TypeError,
+                    "byte-like to large to store inside array.");
+        }
+        descr->elsize = itemsize;
+        return descr;
+    }
+    PyErr_Format(PyExc_TypeError,
+            "A bytes-like object is required, not '%s'", Py_TYPE(obj)->tp_name);
+    return NULL;
+}
+
+
+static PyArray_Descr *
+discover_datetime_and_timedelta_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *obj) {
+    if (PyArray_IsScalar(obj, Datetime) ||
+            PyArray_IsScalar(obj, Timedelta)) {
+        PyArray_DatetimeMetaData *meta;
+        PyArray_Descr *descr = PyArray_DescrFromScalar(obj);
+        meta = get_datetime_metadata_from_dtype(descr);
+        if (meta == NULL) {
+            return NULL;
+        }
+        PyArray_Descr *new_descr = create_datetime_dtype(cls->type_num, meta);
+        Py_DECREF(descr);
+        return new_descr;
+    }
+    else {
+        return find_object_datetime_type(obj, cls->type_num);
+    }
+}
+
+
+static PyArray_Descr *
+nonparametric_default_descr(PyArray_DTypeMeta *cls)
+{
+    Py_INCREF(cls->singleton);
+    return cls->singleton;
+}
+
+
+/* Ensure a copy of the singleton (just in case we do adapt it somewhere) */
+static PyArray_Descr *
+datetime_and_timedelta_default_descr(PyArray_DTypeMeta *cls)
+{
+    return PyArray_DescrNew(cls->singleton);
+}
+
+
+static PyArray_Descr *
+void_default_descr(PyArray_DTypeMeta *cls)
+{
+    PyArray_Descr *res = PyArray_DescrNew(cls->singleton);
+    if (res == NULL) {
+        return NULL;
+    }
+    /*
+     * The legacy behaviour for `np.array([], dtype="V")` is to use "V8".
+     * This is because `[]` uses `float64` as dtype, and then that is used
+     * for the size of the requested void.
+     */
+    res->elsize = 8;
+    return res;
+}
+
+static PyArray_Descr *
+string_and_unicode_default_descr(PyArray_DTypeMeta *cls)
+{
+    PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+    if (res == NULL) {
+        return NULL;
+    }
+    res->elsize = 1;
+    if (cls->type_num == NPY_UNICODE) {
+        res->elsize *= 4;
+    }
+    return res;
+}
+
+
+static PyArray_Descr *
+string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
+{
+    if (descr1->elsize >= descr2->elsize) {
+        return ensure_dtype_nbo(descr1);
+    }
+    else {
+        return ensure_dtype_nbo(descr2);
+    }
+}
+
+
+static PyArray_Descr *
+void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
+{
+    /*
+     * We currently do not support promotion of void types unless they
+     * are equivalent.
+     */
+    if (!PyArray_CanCastTypeTo(descr1, descr2, NPY_EQUIV_CASTING)) {
+        if (descr1->subarray == NULL && descr1->names == NULL &&
+                descr2->subarray == NULL && descr2->names == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Invalid type promotion with void datatypes of different "
+                    "lengths. Use the `np.bytes_` datatype instead to pad the "
+                    "shorter value with trailing zero bytes.");
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                    "invalid type promotion with structured datatype(s).");
+        }
+        return NULL;
+    }
+    Py_INCREF(descr1);
+    return descr1;
+}
+
+static int
+python_builtins_are_known_scalar_types(
+        PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
+{
+    /*
+     * Always accept the common Python types, this ensures that we do not
+     * convert pyfloat->float64->integers. Subclasses are hopefully rejected
+     * as being discovered.
+     * This is necessary only for python scalar classes which we discover
+     * as valid DTypes.
+     */
+    if (pytype == &PyFloat_Type) {
+        return 1;
+    }
+    if (pytype == &PyLong_Type) {
+        return 1;
+    }
+    if (pytype == &PyBool_Type) {
+        return 1;
+    }
+    if (pytype == &PyComplex_Type) {
+        return 1;
+    }
+    if (pytype == &PyUnicode_Type) {
+        return 1;
+    }
+    if (pytype == &PyBytes_Type) {
+        return 1;
+    }
+    return 0;
+}
+
+
+static int
+signed_integers_is_known_scalar_types(
+        PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+{
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
+        return 1;
+    }
+    /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
+    return PyType_IsSubtype(pytype, &PyGenericArrType_Type);
+}
+
+
+static int
+datetime_known_scalar_types(
+        PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+{
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
+        return 1;
+    }
+    /*
+     * To be able to identify the descriptor from e.g. any string, datetime
+     * must take charge. Otherwise we would attempt casting which does not
+     * truly support this. Only object arrays are special cased in this way.
+     */
+    return (PyType_IsSubtype(pytype, &PyBytes_Type) ||
+            PyType_IsSubtype(pytype, &PyUnicode_Type));
+}
+
+
+static int
+string_known_scalar_types(
+        PyArray_DTypeMeta *cls, PyTypeObject *pytype) {
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
+        return 1;
+    }
+    if (PyType_IsSubtype(pytype, &PyDatetimeArrType_Type)) {
+        /*
+         * TODO: This should likely be deprecated or otherwise resolved.
+         *       Deprecation has to occur in `String->setitem` unfortunately.
+         *
+         * Datetime currently do not cast to shorter strings, but string
+         * coercion for arbitrary values uses `str(obj)[:len]` so it works.
+         * This means `np.array(np.datetime64("2020-01-01"), "U9")`
+         * and `np.array(np.datetime64("2020-01-01")).astype("U9")` behave
+         * differently.
+         */
+        return 1;
+    }
+    return 0;
+}
+
+
+/*
+ * The following set of functions define the common dtype operator for
+ * the builtin types.
+ */
+static PyArray_DTypeMeta *
+default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
+{
+    assert(cls->type_num < NPY_NTYPES);
+    if (!other->legacy || other->type_num > cls->type_num) {
+        /* Let the more generic (larger type number) DType handle this */
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_DTypeMeta *)Py_NotImplemented;
+    }
+
+    /*
+     * Note: The use of the promotion table should probably be revised at
+     *       some point. It may be most useful to remove it entirely and then
+     *       consider adding a fast path/cache `PyArray_CommonDType()` itself.
+     */
+    int common_num = _npy_type_promotion_table[cls->type_num][other->type_num];
+    if (common_num < 0) {
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_DTypeMeta *)Py_NotImplemented;
+    }
+    return PyArray_DTypeFromTypeNum(common_num);
+}
+
+
+static PyArray_DTypeMeta *
+string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
+{
+    assert(cls->type_num < NPY_NTYPES);
+    if (!other->legacy || other->type_num > cls->type_num ||
+        other->type_num == NPY_OBJECT) {
+        /* Let the more generic (larger type number) DType handle this */
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_DTypeMeta *)Py_NotImplemented;
+    }
+    /*
+     * The builtin types are ordered by complexity (aside from object) here.
+     * Arguably, we should not consider numbers and strings "common", but
+     * we currently do.
+     */
+    Py_INCREF(cls);
+    return cls;
+}
+
+static PyArray_DTypeMeta *
+datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
+{
+    if (cls->type_num == NPY_DATETIME && other->type_num == NPY_TIMEDELTA) {
+        /*
+         * TODO: We actually currently do allow promotion here. This is
+         *       currently relied on within `np.add(datetime, timedelta)`,
+         *       while for concatenation the cast step will fail.
+         */
+        Py_INCREF(cls);
+        return cls;
+    }
+    return default_builtin_common_dtype(cls, other);
+}
+
+
+
+static PyArray_DTypeMeta *
+object_common_dtype(
+        PyArray_DTypeMeta *cls, PyArray_DTypeMeta *NPY_UNUSED(other))
+{
+    /*
+     * The object DType is special in that it can represent everything,
+     * including all potential user DTypes.
+     * One reason to defer (or error) here might be if the other DType
+     * does not support scalars so that e.g. `arr1d[0]` returns a 0-D array
+     * and `arr.astype(object)` would fail. But object casts are special.
+     */
+    Py_INCREF(cls);
+    return cls;
+}
+
+
 /**
  * This function takes a PyArray_Descr and replaces its base class with
  * a newly created dtype subclass (DTypeMeta instances).
@@ -135,10 +477,28 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 {
-    if (Py_TYPE(descr) != &PyArrayDescr_Type) {
+    int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
+
+    if (!has_type_set) {
+        /* Accept if the type was filled in from an existing builtin dtype */
+        for (int i = 0; i < NPY_NTYPES; i++) {
+            PyArray_Descr *builtin = PyArray_DescrFromType(i);
+            has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
+            Py_DECREF(builtin);
+            if (has_type_set) {
+                break;
+            }
+        }
+    }
+    if (!has_type_set) {
         PyErr_Format(PyExc_RuntimeError,
                 "During creation/wrapping of legacy DType, the original class "
-                "was not PyArrayDescr_Type (it is replaced in this step).");
+                "was not of PyArrayDescr_Type (it is replaced in this step). "
+                "The extension creating a custom DType for type %S must be "
+                "modified to ensure `Py_TYPE(descr) == &PyArrayDescr_Type` or "
+                "that of an existing dtype (with the assumption it is just "
+                "copied over and can be replaced).",
+                descr->typeobj, Py_TYPE(descr));
         return -1;
     }
 
@@ -206,6 +566,12 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 
     /* Let python finish the initialization (probably unnecessary) */
     if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
+        Py_DECREF(dtype_class);
+        return -1;
+    }
+    dtype_class->castingimpls = PyDict_New();
+    if (dtype_class->castingimpls == NULL) {
+        Py_DECREF(dtype_class);
         return -1;
     }
 
@@ -221,12 +587,59 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->f = descr->f;
     dtype_class->kind = descr->kind;
 
-    if (PyTypeNum_ISDATETIME(descr->type_num)) {
+    /* Set default functions (correct for most dtypes, override below) */
+    dtype_class->default_descr = nonparametric_default_descr;
+    dtype_class->discover_descr_from_pyobject = (
+            nonparametric_discover_descr_from_pyobject);
+    dtype_class->is_known_scalar_type = python_builtins_are_known_scalar_types;
+    dtype_class->common_dtype = default_builtin_common_dtype;
+    dtype_class->common_instance = NULL;
+
+    if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
+        /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
+        dtype_class->is_known_scalar_type = signed_integers_is_known_scalar_types;
+    }
+
+    if (PyTypeNum_ISUSERDEF(descr->type_num)) {
+        dtype_class->common_dtype = legacy_userdtype_common_dtype_function;
+    }
+    else if (descr->type_num == NPY_OBJECT) {
+        dtype_class->common_dtype = object_common_dtype;
+    }
+    else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
         dtype_class->parametric = NPY_TRUE;
+        dtype_class->default_descr = datetime_and_timedelta_default_descr;
+        dtype_class->discover_descr_from_pyobject = (
+                discover_datetime_and_timedelta_from_pyobject);
+        dtype_class->common_dtype = datetime_common_dtype;
+        dtype_class->common_instance = datetime_type_promotion;
+        if (descr->type_num == NPY_DATETIME) {
+            dtype_class->is_known_scalar_type = datetime_known_scalar_types;
+        }
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->parametric = NPY_TRUE;
+        if (descr->type_num == NPY_VOID) {
+            dtype_class->default_descr = void_default_descr;
+            dtype_class->discover_descr_from_pyobject = (
+                    void_discover_descr_from_pyobject);
+            dtype_class->common_instance = void_common_instance;
+        }
+        else {
+            dtype_class->default_descr = string_and_unicode_default_descr;
+            dtype_class->is_known_scalar_type = string_known_scalar_types;
+            dtype_class->discover_descr_from_pyobject = (
+                    string_discover_descr_from_pyobject);
+            dtype_class->common_dtype = string_unicode_common_dtype;
+            dtype_class->common_instance = string_unicode_common_instance;
+        }
+    }
+
+    if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
+            PyTypeNum_ISUSERDEF(dtype_class->type_num)) < 0) {
+        Py_DECREF(dtype_class);
+        return -1;
     }
 
     /* Finally, replace the current class of the descr */

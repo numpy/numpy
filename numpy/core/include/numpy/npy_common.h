@@ -10,13 +10,34 @@
 #include <npy_config.h>
 #endif
 
+// int*, int64* should be propertly aligned on ARMv7 to avoid bus error
+#if !defined(NPY_STRONG_ALIGNMENT) && defined(__arm__) && !(defined(__aarch64__) || defined(_M_ARM64))
+#define NPY_STRONG_ALIGNMENT 1
+#endif
+#if !defined(NPY_STRONG_ALIGNMENT)
+#define NPY_STRONG_ALIGNMENT 0
+#endif
+
+// compile time environment variables
+#ifndef NPY_RELAXED_STRIDES_CHECKING
+    #define NPY_RELAXED_STRIDES_CHECKING 0
+#endif
+#ifndef NPY_RELAXED_STRIDES_DEBUG
+    #define NPY_RELAXED_STRIDES_DEBUG 0
+#endif
+#ifndef NPY_USE_NEW_CASTINGIMPL
+    #define NPY_USE_NEW_CASTINGIMPL 0
+#endif
+
 /*
  * using static inline modifiers when defining npy_math functions
  * allows the compiler to make optimizations when possible
  */
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
 #ifndef NPY_INLINE_MATH
-#define NPY_INLINE_MATH 1
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    #define NPY_INLINE_MATH 1
+#else
+    #define NPY_INLINE_MATH 0
 #endif
 #endif
 
@@ -141,6 +162,14 @@
     #define NPY_INLINE
 #endif
 
+#ifdef _MSC_VER
+    #define NPY_FINLINE static __forceinline
+#elif defined(__GNUC__)
+    #define NPY_FINLINE static NPY_INLINE __attribute__((always_inline))
+#else
+    #define NPY_FINLINE static
+#endif
+
 #ifdef HAVE___THREAD
     #define NPY_TLS __thread
 #else
@@ -254,11 +283,10 @@ typedef Py_uintptr_t npy_uintp;
 #define constchar char
 
 /* NPY_INTP_FMT Note:
- *      Unlike the other NPY_*_FMT macros which are used with
- *      PyOS_snprintf, NPY_INTP_FMT is used with PyErr_Format and
- *      PyString_Format. These functions use different formatting
- *      codes which are portably specified according to the Python
- *      documentation. See ticket #1795.
+ *      Unlike the other NPY_*_FMT macros, which are used with PyOS_snprintf,
+ *      NPY_INTP_FMT is used with PyErr_Format and PyUnicode_FromFormat. Those
+ *      functions use different formatting codes that are portably specified
+ *      according to the Python documentation. See issue gh-2388.
  */
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT

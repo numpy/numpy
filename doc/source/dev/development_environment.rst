@@ -207,6 +207,8 @@ repo, use one of::
     $ git reset --hard
 
 
+.. _debugging:
+
 Debugging
 ---------
 
@@ -273,7 +275,7 @@ pull requests aren't perfect, the community is always happy to help. As a
 volunteer project, things do sometimes get dropped and it's totally fine to
 ping us if something has sat without a response for about two to four weeks.
 
-So go ahead and pick something that annoys or confuses you about numpy,
+So go ahead and pick something that annoys or confuses you about NumPy,
 experiment with the code, hang around for discussions or go through the
 reference documents to try to fix it. Things will fall in place and soon
 you'll have a pretty good understanding of the project as a whole. Good Luck!

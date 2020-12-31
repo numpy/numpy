@@ -205,7 +205,7 @@ def default_doc_func(func, num, p):
     all_args_with_values = parameterized_argument_value_pairs(func, p)
 
     # Assumes that the function passed is a bound method.
-    descs = ["%s=%s" %(n, short_repr(v)) for n, v in all_args_with_values]
+    descs = [f'{n}={short_repr(v)}' for n, v in all_args_with_values]
 
     # The documentation might be a multiline string, so split it
     # and just work with the first string, ignoring the period
@@ -339,7 +339,7 @@ class parameterized:
                             "'@parameterized.expand' instead.")
 
     def _terrible_magic_get_defining_classes(self):
-        """ Returns the set of parent classes of the class currently being defined.
+        """ Returns the list of parent classes of the class currently being defined.
             Will likely only work if called from the ``parameterized`` decorator.
             This function is entirely @brandon_rhodes's fault, as he suggested
             the implementation: http://stackoverflow.com/a/8793684/71522

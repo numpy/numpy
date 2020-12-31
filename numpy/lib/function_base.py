@@ -431,10 +431,13 @@ def asarray_chkfinite(a, dtype=None, order=None):
         of lists and ndarrays.  Success requires no NaNs or Infs.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-         Whether to use row-major (C-style) or
-         column-major (Fortran-style) memory representation.
-         Defaults to 'C'.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'C'.
 
     Returns
     -------
@@ -843,7 +846,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     Returns
     -------
     gradient : ndarray or list of ndarray
-        A set of ndarrays (or a single ndarray if there is only one dimension)
+        A list of ndarrays (or a single ndarray if there is only one dimension)
         corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.
 
@@ -1287,7 +1290,7 @@ def _interp_dispatcher(x, xp, fp, left=None, right=None, period=None):
 @array_function_dispatch(_interp_dispatcher)
 def interp(x, xp, fp, left=None, right=None, period=None):
     """
-    One-dimensional linear interpolation.
+    One-dimensional linear interpolation for monotonically increasing sample points.
 
     Returns the one-dimensional piecewise linear interpolant to a function
     with given discrete data points (`xp`, `fp`), evaluated at `x`.
@@ -1334,8 +1337,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     --------
     scipy.interpolate
 
-    Notes
-    -----
+    Warnings
+    --------
     The x-coordinate sequence is expected to be increasing, but this is not
     explicitly enforced.  However, if the sequence `xp` is non-increasing,
     interpolation results are meaningless.
@@ -1447,7 +1450,7 @@ def angle(z, deg=False):
         The counterclockwise angle from the positive real axis on the complex
         plane in the range ``(-pi, pi]``, with dtype as numpy.float64.
 
-        ..versionchanged:: 1.16.0
+        .. versionchanged:: 1.16.0
             This function works on subclasses of ndarray like `ma.array`.
 
     See Also
@@ -1622,6 +1625,7 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
+
     first = 0
     trim = trim.upper()
     if 'F' in trim:
@@ -1931,8 +1935,8 @@ class vectorize:
         .. versionadded:: 1.7.0
 
     cache : bool, optional
-       If `True`, then cache the first function call that determines the number
-       of outputs if `otypes` is not provided.
+        If `True`, then cache the first function call that determines the number
+        of outputs if `otypes` is not provided.
 
         .. versionadded:: 1.7.0
 
@@ -2264,13 +2268,13 @@ class vectorize:
 
 
 def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
-                    fweights=None, aweights=None):
+                    fweights=None, aweights=None, *, dtype=None):
     return (m, y, fweights, aweights)
 
 
 @array_function_dispatch(_cov_dispatcher)
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
-        aweights=None):
+        aweights=None, *, dtype=None):
     """
     Estimate a covariance matrix, given data and weights.
 
@@ -2321,6 +2325,11 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         weights can be used to assign probabilities to observation vectors.
 
         .. versionadded:: 1.10
+    dtype : data-type, optional
+        Data-type of the result. By default, the return data-type will have
+        at least `numpy.float64` precision.
+
+        .. versionadded:: 1.20
 
     Returns
     -------
@@ -2396,13 +2405,16 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if m.ndim > 2:
         raise ValueError("m has more than 2 dimensions")
 
-    if y is None:
-        dtype = np.result_type(m, np.float64)
-    else:
+    if y is not None:
         y = np.asarray(y)
         if y.ndim > 2:
             raise ValueError("y has more than 2 dimensions")
-        dtype = np.result_type(m, y, np.float64)
+
+    if dtype is None:
+        if y is None:
+            dtype = np.result_type(m, np.float64)
+        else:
+            dtype = np.result_type(m, y, np.float64)
 
     X = array(m, ndmin=2, dtype=dtype)
     if not rowvar and X.shape[0] != 1:
@@ -2482,12 +2494,14 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None):
+def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
+                         dtype=None):
     return (x, y)
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
+             dtype=None):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -2521,6 +2535,11 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
         Has no effect, do not use.
 
         .. deprecated:: 1.10.0
+    dtype : data-type, optional
+        Data-type of the result. By default, the return data-type will have
+        at least `numpy.float64` precision.
+
+        .. versionadded:: 1.20
 
     Returns
     -------
@@ -2544,12 +2563,75 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
 
+    Examples
+    --------
+    In this example we generate two random arrays, ``xarr`` and ``yarr``, and
+    compute the row-wise and column-wise Pearson correlation coefficients,
+    ``R``. Since ``rowvar`` is  true by  default, we first find the row-wise
+    Pearson correlation coefficients between the variables of ``xarr``.
+
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(seed=42)
+    >>> xarr = rng.random((3, 3))
+    >>> xarr
+    array([[0.77395605, 0.43887844, 0.85859792],
+           [0.69736803, 0.09417735, 0.97562235],
+           [0.7611397 , 0.78606431, 0.12811363]])
+    >>> R1 = np.corrcoef(xarr)
+    >>> R1
+    array([[ 1.        ,  0.99256089, -0.68080986],
+           [ 0.99256089,  1.        , -0.76492172],
+           [-0.68080986, -0.76492172,  1.        ]])
+
+    If we add another set of variables and observations ``yarr``, we can
+    compute the row-wise Pearson correlation coefficients between the
+    variables in ``xarr`` and ``yarr``.
+
+    >>> yarr = rng.random((3, 3))
+    >>> yarr
+    array([[0.45038594, 0.37079802, 0.92676499],
+           [0.64386512, 0.82276161, 0.4434142 ],
+           [0.22723872, 0.55458479, 0.06381726]])
+    >>> R2 = np.corrcoef(xarr, yarr)
+    >>> R2
+    array([[ 1.        ,  0.99256089, -0.68080986,  0.75008178, -0.934284  ,
+            -0.99004057],
+           [ 0.99256089,  1.        , -0.76492172,  0.82502011, -0.97074098,
+            -0.99981569],
+           [-0.68080986, -0.76492172,  1.        , -0.99507202,  0.89721355,
+             0.77714685],
+           [ 0.75008178,  0.82502011, -0.99507202,  1.        , -0.93657855,
+            -0.83571711],
+           [-0.934284  , -0.97074098,  0.89721355, -0.93657855,  1.        ,
+             0.97517215],
+           [-0.99004057, -0.99981569,  0.77714685, -0.83571711,  0.97517215,
+             1.        ]])
+
+    Finally if we use the option ``rowvar=False``, the columns are now
+    being treated as the variables and we will find the column-wise Pearson
+    correlation coefficients between variables in ``xarr`` and ``yarr``.
+
+    >>> R3 = np.corrcoef(xarr, yarr, rowvar=False)
+    >>> R3
+    array([[ 1.        ,  0.77598074, -0.47458546, -0.75078643, -0.9665554 ,
+             0.22423734],
+           [ 0.77598074,  1.        , -0.92346708, -0.99923895, -0.58826587,
+            -0.44069024],
+           [-0.47458546, -0.92346708,  1.        ,  0.93773029,  0.23297648,
+             0.75137473],
+           [-0.75078643, -0.99923895,  0.93773029,  1.        ,  0.55627469,
+             0.47536961],
+           [-0.9665554 , -0.58826587,  0.23297648,  0.55627469,  1.        ,
+            -0.46666491],
+           [ 0.22423734, -0.44069024,  0.75137473,  0.47536961, -0.46666491,
+             1.        ]])
+
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=3)
-    c = cov(x, y, rowvar)
+    c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
     except ValueError:
@@ -2666,8 +2748,8 @@ def blackman(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.42 - 0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
 
 @set_module('numpy')
@@ -2775,8 +2857,8 @@ def bartlett(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0 - 2.0*n/(M-1))
+    n = arange(1-M, M, 2)
+    return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
 
 @set_module('numpy')
@@ -2879,8 +2961,8 @@ def hanning(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.5 - 0.5*cos(2.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.5 + 0.5*cos(pi*n/(M-1))
 
 
 @set_module('numpy')
@@ -2979,8 +3061,8 @@ def hamming(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.54 - 0.46*cos(2.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.54 + 0.46*cos(pi*n/(M-1))
 
 
 ## Code from cephes for i0
@@ -3076,24 +3158,17 @@ def i0(x):
     """
     Modified Bessel function of the first kind, order 0.
 
-    Usually denoted :math:`I_0`.  This function does broadcast, but will *not*
-    "up-cast" int dtype arguments unless accompanied by at least one float or
-    complex dtype argument (see Raises below).
+    Usually denoted :math:`I_0`.
 
     Parameters
     ----------
-    x : array_like, dtype float or complex
+    x : array_like of float
         Argument of the Bessel function.
 
     Returns
     -------
-    out : ndarray, shape = x.shape, dtype = x.dtype
+    out : ndarray, shape = x.shape, dtype = float
         The modified Bessel function evaluated at each of the elements of `x`.
-
-    Raises
-    ------
-    TypeError: array cannot be safely cast to required type
-        If argument consists exclusively of int dtypes.
 
     See Also
     --------
@@ -3124,12 +3199,16 @@ def i0(x):
     Examples
     --------
     >>> np.i0(0.)
-    array(1.0)  # may vary
-    >>> np.i0([0., 1. + 2j])
-    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
+    array(1.0)
+    >>> np.i0([0, 1, 2, 3])
+    array([1.        , 1.26606588, 2.2795853 , 4.88079259])
 
     """
     x = np.asanyarray(x)
+    if x.dtype.kind == 'c':
+        raise TypeError("i0 not supported for complex values")
+    if x.dtype.kind != 'f':
+        x = x.astype(float)
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 
@@ -4165,10 +4244,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     See Also
     --------
-    index_tricks.mgrid : Construct a multi-dimensional "meshgrid"
-                     using indexing notation.
-    index_tricks.ogrid : Construct an open multi-dimensional "meshgrid"
-                     using indexing notation.
+    mgrid : Construct a multi-dimensional "meshgrid" using indexing notation.
+    ogrid : Construct an open multi-dimensional "meshgrid" using indexing 
+            notation.
 
     Examples
     --------

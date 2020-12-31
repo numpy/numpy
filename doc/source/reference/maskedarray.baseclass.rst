@@ -242,8 +242,8 @@ Comparison operators:
    MaskedArray.__eq__
    MaskedArray.__ne__
 
-Truth value of an array (:func:`bool()`):
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Truth value of an array (:class:`bool() <bool>`):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: generated/

@@ -901,11 +901,11 @@ def compress_rows(a):
     Suppress whole rows of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
@@ -918,11 +918,11 @@ def compress_cols(a):
     Suppress whole columns of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
@@ -1322,7 +1322,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
-        form as `x`.
+        shape as `x`.
     rowvar : bool, optional
         If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
@@ -1641,7 +1641,7 @@ def flatnotmasked_contiguous(a):
     slice_list : list
         A sorted sequence of `slice` objects (start index, end index).
 
-        ..versionchanged:: 1.15.0
+        .. versionchanged:: 1.15.0
             Now returns an empty list instead of None for a fully masked array
 
     See Also

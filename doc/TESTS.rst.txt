@@ -136,42 +136,23 @@ modules and develop tests for it.
 Labeling tests
 --------------
 
-As an alternative to ``pytest.mark.<label>``, there are a number of labels you
-can use.
-
 Unlabeled tests like the ones above are run in the default
 ``numpy.test()`` run.  If you want to label your test as slow - and
 therefore reserved for a full ``numpy.test(label='full')`` run, you
-can label it with a decorator::
+can label it with ``pytest.mark.slow``::
 
-  # numpy.testing module includes 'import decorators as dec'
-  from numpy.testing import dec, assert_
+  import pytest
 
-  @dec.slow
+  @pytest.mark.slow
   def test_big(self):
-      print 'Big, slow test'
+      print('Big, slow test')
 
 Similarly for methods::
 
   class test_zzz:
-      @dec.slow
+      @pytest.mark.slow
       def test_simple(self):
           assert_(zzz() == 'Hello from zzz')
-
-Available labels are:
-
-- ``slow``: marks a test as taking a long time
-- ``setastest(tf)``: work-around for test discovery when the test name is
-  non conformant
-- ``skipif(condition, msg=None)``: skips the test when ``eval(condition)`` is
-  ``True``
-- ``knownfailureif(fail_cond, msg=None)``: will avoid running the test if
-  ``eval(fail_cond)`` is ``True``, useful for tests that conditionally segfault
-- ``deprecated(conditional=True)``: filters deprecation warnings emitted in the
-  test
-- ``paramaterize(var, input)``: an alternative to
-  `pytest.mark.paramaterized
-  <https://docs.pytest.org/en/latest/parametrize.html>`_
 
 Easier setup and teardown functions / methods
 ---------------------------------------------
@@ -181,21 +162,21 @@ name; thus::
 
   def setup():
       """Module-level setup"""
-      print 'doing setup'
+      print('doing setup')
 
   def teardown():
       """Module-level teardown"""
-      print 'doing teardown'
+      print('doing teardown')
 
 
   class TestMe:
       def setup():
           """Class-level setup"""
-          print 'doing setup'
+          print('doing setup')
 
       def teardown():
           """Class-level teardown"""
-          print 'doing teardown'
+          print('doing teardown')
 
 
 Setup and teardown functions to functions and methods are known as "fixtures",

@@ -111,6 +111,8 @@ means that g77 has been used (note: g77 is no longer supported for building NumP
 If libgfortran.so is a dependency, gfortran has been used. If both are dependencies,
 this means both have been used, which is almost always a very bad idea.
 
+.. _accelerated-blas-lapack-libraries:
+
 Accelerated BLAS/LAPACK libraries
 ---------------------------------
 
@@ -140,6 +142,16 @@ will prefer to use ATLAS, then BLIS, then OpenBLAS and as a last resort MKL.
 If neither of these exists the build will fail (names are compared
 lower case).
 
+Alternatively one may use ``!`` or ``^`` to negate all items::
+
+        NPY_BLAS_ORDER='^blas,atlas' python setup.py build
+
+will allow using anything **but** NetLIB BLAS and ATLAS libraries, the order of the above
+list is retained.
+
+One cannot mix negation and positives, nor have multiple negations, such cases will
+raise an error.
+
 LAPACK
 ~~~~~~
 
@@ -162,6 +174,17 @@ for instance::
 will prefer to use ATLAS, then OpenBLAS and as a last resort MKL.
 If neither of these exists the build will fail (names are compared
 lower case).
+
+Alternatively one may use ``!`` or ``^`` to negate all items::
+
+        NPY_LAPACK_ORDER='^lapack' python setup.py build
+
+will allow using anything **but** the NetLIB LAPACK library, the order of the above
+list is retained.
+
+One cannot mix negation and positives, nor have multiple negations, such cases will
+raise an error.
+
 
 .. deprecated:: 1.20
   The native libraries on macOS, provided by Accelerate, are not fit for use

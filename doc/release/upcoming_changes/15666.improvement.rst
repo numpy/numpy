@@ -1,8 +1,0 @@
-Improved string representation for polynomials (__str__)
---------------------------------------------------------
-
-The string representation (``__str__``) of all six polynomial types in
-`numpy.polynomial` has been updated to give the polynomial as a mathematical
-expression instead of an array of coefficients. Two package-wide formats for
-the polynomial expressions are available - one using Unicode characters for
-superscripts and subscripts, and another using only ASCII characters.

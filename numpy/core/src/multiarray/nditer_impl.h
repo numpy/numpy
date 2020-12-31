@@ -269,7 +269,7 @@ struct NpyIter_AD {
 #define NAD_STRIDES(axisdata) ( \
         &(axisdata)->ad_flexdata + 0)
 #define NAD_PTRS(axisdata) ((char **) \
-        &(axisdata)->ad_flexdata + 1*(nop+1))
+        (&(axisdata)->ad_flexdata + 1*(nop+1)))
 
 #define NAD_NSTRIDES() \
         ((nop) + ((itflags&NPY_ITFLAG_HASINDEX) ? 1 : 0))
@@ -342,10 +342,11 @@ NPY_NO_EXPORT int
 npyiter_allocate_buffers(NpyIter *iter, char **errmsg);
 NPY_NO_EXPORT void
 npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex);
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 npyiter_copy_from_buffers(NpyIter *iter);
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
-
+NPY_NO_EXPORT void
+npyiter_clear_buffers(NpyIter *iter);
 
 #endif

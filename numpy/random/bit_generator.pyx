@@ -507,7 +507,7 @@ cdef class BitGenerator():
         lock.
 
     See Also
-    -------
+    --------
     SeedSequence
     """
 

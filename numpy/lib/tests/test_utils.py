@@ -4,7 +4,7 @@ import pytest
 
 from numpy.core import arange
 from numpy.testing import assert_, assert_equal, assert_raises_regex
-from numpy.lib import deprecate
+from numpy.lib import deprecate, deprecate_with_doc
 import numpy.lib.utils as utils
 
 from io import StringIO
@@ -60,6 +60,11 @@ def old_func6(self, x):
 new_func6 = deprecate(old_func6)
 
 
+@deprecate_with_doc(msg="Rather use new_func7")
+def old_func7(self,x):
+    return x
+
+
 def test_deprecate_decorator():
     assert_('deprecated' in old_func.__doc__)
 
@@ -71,6 +76,10 @@ def test_deprecate_decorator_message():
 def test_deprecate_fn():
     assert_('old_func3' in new_func3.__doc__)
     assert_('new_func3' in new_func3.__doc__)
+
+
+def test_deprecate_with_doc_decorator_message():
+    assert_('Rather use new_func7' in old_func7.__doc__)
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="-OO discards docstrings")
@@ -140,3 +149,22 @@ class TestByteBounds:
 def test_assert_raises_regex_context_manager():
     with assert_raises_regex(ValueError, 'no deprecation warning'):
         raise ValueError('no deprecation warning')
+
+
+def test_info_method_heading():
+    # info(class) should only print "Methods:" heading if methods exist
+
+    class NoPublicMethods:
+        pass
+
+    class WithPublicMethods:
+        def first_method():
+            pass
+            
+    def _has_method_heading(cls):
+        out = StringIO()
+        utils.info(cls, output=out)
+        return 'Methods:' in out.getvalue()
+
+    assert _has_method_heading(WithPublicMethods)
+    assert not _has_method_heading(NoPublicMethods)

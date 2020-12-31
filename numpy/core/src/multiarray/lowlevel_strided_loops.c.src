@@ -110,7 +110,7 @@
  * if not it can decrease performance
  * tested to improve performance on intel xeon 5x/7x, core2duo, amd phenom x4
  */
-static void
+static int
 #if @is_aligned@ && @is_swap@ == 0 && @elsize@ <= NPY_SIZEOF_INTP
     NPY_GCC_UNROLL_LOOPS
 #endif
@@ -171,6 +171,7 @@ static void
 
         --N;
     }
+    return 0;
 }
 #endif
 
@@ -182,7 +183,7 @@ static void
  * but it profits from vectorization enabled with -O3
  */
 #if (@src_contig@ == 0) && @is_aligned@
-static NPY_GCC_OPT_3 void
+static NPY_GCC_OPT_3 int
 @prefix@_@oper@_size@elsize@_srcstride0(char *dst,
                         npy_intp dst_stride,
                         char *src, npy_intp NPY_UNUSED(src_stride),
@@ -197,7 +198,7 @@ static NPY_GCC_OPT_3 void
     npy_uint64 temp0, temp1;
 #endif
     if (N == 0) {
-        return;
+        return 0;
     }
 #if @is_aligned@ && @elsize@ != 16
     /* sanity check */
@@ -238,6 +239,7 @@ static NPY_GCC_OPT_3 void
         --N;
     }
 #endif/* @elsize == 1 && @dst_contig@ -- else */
+    return 0;
 }
 #endif/* (@src_contig@ == 0) && @is_aligned@ */
 
@@ -247,7 +249,7 @@ static NPY_GCC_OPT_3 void
 /**end repeat1**/
 /**end repeat**/
 
-static void
+static int
 _strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -259,9 +261,10 @@ _strided_to_strided(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _swap_strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -284,9 +287,10 @@ _swap_strided_to_strided(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -319,15 +323,17 @@ _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _contig_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp src_itemsize,
                         NpyAuxData *NPY_UNUSED(data))
 {
     memmove(dst, src, src_itemsize*N);
+    return 0;
 }
 
 
@@ -787,7 +793,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 
 #endif
 
-static NPY_GCC_OPT_3 void
+static NPY_GCC_OPT_3 int
 @prefix@_cast_@name1@_to_@name2@(
                         char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
@@ -873,6 +879,7 @@ static NPY_GCC_OPT_3 void
         src += src_stride;
 #endif
     }
+    return 0;
 }
 
 #undef _CONVERT_FN
@@ -989,10 +996,14 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     src_stride0 = src_strides[0];
     N = shape0 - coord0;
     if (N >= count) {
-        stransfer(dst, dst_stride, src, src_stride0, count, src_itemsize, data);
-        return 0;
+        return stransfer(dst, dst_stride, src, src_stride0,
+                         count, src_itemsize, data);
     }
-    stransfer(dst, dst_stride, src, src_stride0, N, src_itemsize, data);
+    int res = stransfer(dst, dst_stride, src, src_stride0,
+                        N, src_itemsize, data);
+    if (res < 0) {
+        return -1;
+    }
     count -= N;
 
     /* If it's 1-dimensional, there's no more to copy */
@@ -1012,13 +1023,15 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     N = shape0*M;
     for (i = 0; i < M; ++i) {
         if (shape0 >= count) {
-            stransfer(dst, dst_stride, src, src_stride0,
-                        count, src_itemsize, data);
-            return 0;
+            return stransfer(dst, dst_stride, src, src_stride0,
+                             count, src_itemsize, data);
         }
         else {
-            stransfer(dst, dst_stride, src, src_stride0,
-                        shape0, src_itemsize, data);
+            res = stransfer(dst, dst_stride, src, src_stride0,
+                            shape0, src_itemsize, data);
+            if (res < 0) {
+                return -1;
+            }
         }
         count -= shape0;
         src += src_stride1;
@@ -1073,13 +1086,15 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
             /* A loop for dimensions 0 and 1 */
             for (i = 0; i < shape1; ++i) {
                 if (shape0 >= count) {
-                    stransfer(dst, dst_stride, src, src_stride0,
-                                count, src_itemsize, data);
-                    return 0;
+                    return stransfer(dst, dst_stride, src, src_stride0,
+                                     count, src_itemsize, data);
                 }
                 else {
-                    stransfer(dst, dst_stride, src, src_stride0,
-                                shape0, src_itemsize, data);
+                    res = stransfer(dst, dst_stride, src, src_stride0,
+                                    shape0, src_itemsize, data);
+                    if (res < 0) {
+                        return -1;
+                    }
                 }
                 count -= shape0;
                 src += src_stride1;
@@ -1108,10 +1123,14 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
     dst_stride0 = dst_strides[0];
     N = shape0 - coord0;
     if (N >= count) {
-        stransfer(dst, dst_stride0, src, src_stride, count, src_itemsize, data);
-        return 0;
+        return stransfer(dst, dst_stride0, src, src_stride,
+                         count, src_itemsize, data);
     }
-    stransfer(dst, dst_stride0, src, src_stride, N, src_itemsize, data);
+    int res = stransfer(dst, dst_stride0, src, src_stride,
+                        N, src_itemsize, data);
+    if (res < 0) {
+        return -1;
+    }
     count -= N;
 
     /* If it's 1-dimensional, there's no more to copy */
@@ -1131,13 +1150,15 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
     N = shape0*M;
     for (i = 0; i < M; ++i) {
         if (shape0 >= count) {
-            stransfer(dst, dst_stride0, src, src_stride,
-                        count, src_itemsize, data);
-            return 0;
+            return stransfer(dst, dst_stride0, src, src_stride,
+                             count, src_itemsize, data);
         }
         else {
-            stransfer(dst, dst_stride0, src, src_stride,
-                        shape0, src_itemsize, data);
+            res = stransfer(dst, dst_stride0, src, src_stride,
+                            shape0, src_itemsize, data);
+            if (res < 0) {
+                return -1;
+            }
         }
         count -= shape0;
         dst += dst_stride1;
@@ -1192,13 +1213,15 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
             /* A loop for dimensions 0 and 1 */
             for (i = 0; i < shape1; ++i) {
                 if (shape0 >= count) {
-                    stransfer(dst, dst_stride0, src, src_stride,
-                                count, src_itemsize, data);
-                    return 0;
+                    return stransfer(dst, dst_stride0, src, src_stride,
+                                     count, src_itemsize, data);
                 }
                 else {
-                    stransfer(dst, dst_stride0, src, src_stride,
-                                shape0, src_itemsize, data);
+                    res = stransfer(dst, dst_stride0, src, src_stride,
+                                    shape0, src_itemsize, data);
+                    if (res < 0) {
+                        return -1;
+                    }
                 }
                 count -= shape0;
                 dst += dst_stride1;
@@ -1228,16 +1251,18 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
     dst_stride0 = dst_strides[0];
     N = shape0 - coord0;
     if (N >= count) {
-        stransfer(dst, dst_stride0,
-                    src, src_stride,
-                    mask, mask_stride,
-                    count, src_itemsize, data);
-        return 0;
-    }
-    stransfer(dst, dst_stride0,
-                src, src_stride,
+        return stransfer(
+                dst, dst_stride0, src, src_stride,
                 mask, mask_stride,
-                N, src_itemsize, data);
+                count, src_itemsize, data);
+    }
+    int res = stransfer(
+            dst, dst_stride0, src, src_stride,
+            mask, mask_stride,
+            N, src_itemsize, data);
+    if (res < 0) {
+        return -1;
+    }
     count -= N;
 
     /* If it's 1-dimensional, there's no more to copy */
@@ -1258,17 +1283,19 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
     N = shape0*M;
     for (i = 0; i < M; ++i) {
         if (shape0 >= count) {
-            stransfer(dst, dst_stride0,
-                        src, src_stride,
-                        mask, mask_stride,
-                        count, src_itemsize, data);
-            return 0;
+            return stransfer(
+                    dst, dst_stride0, src, src_stride,
+                    mask, mask_stride,
+                    count, src_itemsize, data);
         }
         else {
-            stransfer(dst, dst_stride0,
-                        src, src_stride,
-                        mask, mask_stride,
-                        shape0, src_itemsize, data);
+            int res = stransfer(
+                    dst, dst_stride0, src, src_stride,
+                    mask, mask_stride,
+                    shape0, src_itemsize, data);
+            if (res < 0) {
+                return -1;
+            }
         }
         count -= shape0;
         dst += dst_stride1;
@@ -1324,17 +1351,19 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
             /* A loop for dimensions 0 and 1 */
             for (i = 0; i < shape1; ++i) {
                 if (shape0 >= count) {
-                    stransfer(dst, dst_stride0,
-                                src, src_stride,
-                                mask, mask_stride,
-                                count, src_itemsize, data);
-                    return 0;
+                    return stransfer(
+                            dst, dst_stride0, src, src_stride,
+                            mask, mask_stride,
+                            count, src_itemsize, data);
                 }
                 else {
-                    stransfer(dst, dst_stride0,
-                                src, src_stride,
-                                mask, mask_stride,
-                                shape0, src_itemsize, data);
+                    res = stransfer(
+                            dst, dst_stride0, src, src_stride,
+                            mask, mask_stride,
+                            shape0, src_itemsize, data);
+                    if (res < 0) {
+                        return -1;
+                    }
                 }
                 count -= shape0;
                 dst += dst_stride1;
@@ -1760,13 +1789,23 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                 do {
 
 #if @isget@
-                    stransfer(subspace_ptrs[1], subspace_strides[1],
-                              subspace_ptrs[0], subspace_strides[0],
-                              *counter, src_itemsize, transferdata);
+                    if (NPY_UNLIKELY(stransfer(
+                            subspace_ptrs[1], subspace_strides[1],
+                            subspace_ptrs[0], subspace_strides[0],
+                            *counter, src_itemsize, transferdata) < 0)) {
+                        NPY_END_THREADS;
+                        NPY_AUXDATA_FREE(transferdata);
+                        return -1;
+                    }
 #else
-                    stransfer(subspace_ptrs[0], subspace_strides[0],
-                              subspace_ptrs[1], subspace_strides[1],
-                              *counter, src_itemsize, transferdata);
+                    if (NPY_UNLIKELY(stransfer(
+                            subspace_ptrs[0], subspace_strides[0],
+                            subspace_ptrs[1], subspace_strides[1],
+                            *counter, src_itemsize, transferdata) < 0)) {
+                        NPY_END_THREADS;
+                        NPY_AUXDATA_FREE(transferdata);
+                        return -1;
+                    }
 #endif
                 } while (mit->subspace_next(mit->subspace_iter));
 

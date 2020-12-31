@@ -17,7 +17,7 @@
  * NumPy module's attributes `__cpu_baseline__` and `__cpu_dispaٍtch__`.
  */
 /**
- * Note: Always gaurd the genreated headers within 'NPY_DISABLE_OPTIMIZATION',
+ * Note: Always guard the generated headers within 'NPY_DISABLE_OPTIMIZATION',
  * due the nature of command argument '--disable-optimization',
  * which is explicitly disabling the module ccompiler_opt.
  */
@@ -29,7 +29,7 @@
          * It's better anyway to take them off and use built-in types(__vector, __pixel, __bool) instead,
          * since c99 supports bool variables which may lead to ambiguous errors.
         */
-        // backup 'bool' before including '_cpu_dispatch.h', since it may not defiend as a compiler token.
+        // backup 'bool' before including '_cpu_dispatch.h', since it may not defined as a compiler token.
         #define NPY__DISPATCH_DEFBOOL
         typedef bool npy__dispatch_bkbool;
     #endif
@@ -134,10 +134,10 @@
  *    NPY_CPU_DISPATCH_DECLARE(void dispatch_me, (const int*, int*))
  *    NPY_CPU_DISPATCH_DECLARE(extern cb_type callback_tab, [TAB_SIZE])
  *
- * By assuming the provided config header drived from a dispatch-able source,
+ * By assuming the provided config header derived from a dispatch-able source,
  * that configured with "@targets baseline sse41 vsx3 asimdhp",
  * they supported by the compiler and enabled via '--cpu-dspatch',
- * then the prototype declrations at the above example will equlivent to the follows:
+ * then the prototype declrations at the above example will equivalent to the follows:
  *
  * - x86:
  *      void dispatch_me(const int*, int*); // baseline
@@ -179,7 +179,7 @@
 /**
  * Macro NPY_CPU_DISPATCH_DECLARE_XB(LEFT, ...)
  *
- * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declration even
+ * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declaration even
  * if it was provided within the configration statments.
  */
 #define NPY_CPU_DISPATCH_DECLARE_XB(...) \
@@ -206,7 +206,7 @@
  *  In order to call or to assign the pointer of it from outside the dispatch-able source,
  *  you have to use this Macro as follows:
  *
- *    // bring the genreated config header of the dispatch-abel source
+ *    // bring the generated config header of the dispatch-able source
  *    #ifndef NPY_DISABLE_OPTIMIZATION
  *        #include "dispatchable_source_name.dispatch.h"
  *    #endif
@@ -217,44 +217,49 @@
  *    func_type the_callee(const int *src, int *dst, func_type *cb)
  *    {
  *        // direct call
- *        NPY_CPU_DISPATCH_CALL(dispatch_me, (src, dst))
+ *        NPY_CPU_DISPATCH_CALL(dispatch_me, (src, dst));
  *        // assign the pointer
- *        NPY_CPU_DISPATCH_CALL(*cb = dispatch_me)
+ *        *cb = NPY_CPU_DISPATCH_CALL(dispatch_me);
+ *        // or
+ *        NPY_CPU_DISPATCH_CALL(*cb = dispatch_me);
  *        // return the pointer
- *        NPY_CPU_DISPATCH_CALL(return dispatch_me)
+ *        return NPY_CPU_DISPATCH_CALL(dispatch_me);
  *    }
  */
 #define NPY_CPU_DISPATCH_CALL(...) \
-    if (0) {/*DUMMY*/} \
     NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_CB_, __VA_ARGS__) \
     NPY__CPU_DISPATCH_BASELINE_CALL(NPY_CPU_DISPATCH_CALL_BASE_CB_, __VA_ARGS__)
 // Preprocessor callbacks
 #define NPY_CPU_DISPATCH_CALL_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
-    else if (TESTED_FEATURES) { NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__; }
+    (TESTED_FEATURES) ? (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) :
 #define NPY_CPU_DISPATCH_CALL_BASE_CB_(LEFT, ...) \
-    else { LEFT __VA_ARGS__; }
+    (LEFT __VA_ARGS__)
 /**
  * Macro NPY_CPU_DISPATCH_CALL_XB(LEFT, ...)
  *
- * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declration even
- * if it was provided within the configration statments.
+ * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declaration even
+ * if it was provided within the configration statements.
+ * Returns void.
  */
+#define NPY_CPU_DISPATCH_CALL_XB_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
+    (TESTED_FEATURES) ? (void) (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) :
 #define NPY_CPU_DISPATCH_CALL_XB(...) \
-    if (0) {/*DUMMY*/} \
-    NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_CB_, __VA_ARGS__)
+    NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_XB_CB_, __VA_ARGS__) \
+    ((void) 0 /* discarded expression value */)
 /**
  * Macro NPY_CPU_DISPATCH_CALL_ALL(LEFT, ...)
  *
  * Same as `NPY_CPU_DISPATCH_CALL` but dispatching all the required optimizations for
  * the exported functions and variables instead of highest interested one.
+ * Returns void.
  */
 #define NPY_CPU_DISPATCH_CALL_ALL(...) \
-    NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_ALL_CB_, __VA_ARGS__) \
-    NPY__CPU_DISPATCH_BASELINE_CALL(NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_, __VA_ARGS__)
+    (NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_ALL_CB_, __VA_ARGS__) \
+    NPY__CPU_DISPATCH_BASELINE_CALL(NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_, __VA_ARGS__))
 // Preprocessor callbacks
 #define NPY_CPU_DISPATCH_CALL_ALL_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
-    if (TESTED_FEATURES) { NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__; }
+    ((TESTED_FEATURES) ? (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) : (void) 0),
 #define NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_(LEFT, ...) \
-    { LEFT __VA_ARGS__; }
+    ( LEFT __VA_ARGS__ )
 
 #endif // NPY_CPU_DISPATCH_H_

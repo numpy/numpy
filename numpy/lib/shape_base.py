@@ -452,7 +452,7 @@ def apply_over_axes(func, a, axes):
         Apply a function to 1-D slices of an array along the given axis.
 
     Notes
-    ------
+    -----
     This function is equivalent to tuple axis arguments to reorderable ufuncs
     with keepdims=True. Tuple axis arguments to ufuncs have been available since
     version 1.7.0.
@@ -756,11 +756,11 @@ def array_split(ary, indices_or_sections, axis=0):
     --------
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
 
-    >>> x = np.arange(7.0)
-    >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.]), array([5.,  6.])]
+    >>> x = np.arange(9)
+    >>> np.array_split(x, 4)
+    [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
 
     """
     try:
@@ -870,7 +870,7 @@ def split(ary, indices_or_sections, axis=0):
         N = ary.shape[axis]
         if N % sections:
             raise ValueError(
-                'array split does not result in an equal division')
+                'array split does not result in an equal division') from None
     return array_split(ary, indices_or_sections, axis)
 
 
@@ -1088,8 +1088,8 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If `a.shape = (r0,r1,..,rN)` and `b.shape = (s0,s1,...,sN)`,
-    the Kronecker product has shape `(r0*s0, r1*s1, ..., rN*SN)`.
+    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::
 

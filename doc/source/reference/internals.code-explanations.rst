@@ -147,7 +147,8 @@ an iterator for each of the arrays being broadcast.
 The :c:func:`PyArray_Broadcast` function takes the iterators that have already
 been defined and uses them to determine the broadcast shape in each
 dimension (to create the iterators at the same time that broadcasting
-occurs then use the :c:func:`PyMultiIter_New` function). Then, the iterators are
+occurs then use the :c:func:`PyArray_MultiIterNew` function).
+Then, the iterators are
 adjusted so that each iterator thinks it is iterating over an array
 with the broadcast size. This is done by adjusting the iterators
 number of dimensions, and the shape in each dimension. This works
@@ -162,7 +163,7 @@ for the extended dimensions. It is done in exactly the same way in
 NumPy. The big difference is that now the array of strides is kept
 track of in a :c:type:`PyArrayIterObject`, the iterators involved in a
 broadcast result are kept track of in a :c:type:`PyArrayMultiIterObject`,
-and the :c:func:`PyArray_BroadCast` call implements the broad-casting rules.
+and the :c:func:`PyArray_Broadcast` call implements the broad-casting rules.
 
 
 Array Scalars
@@ -368,7 +369,7 @@ The output arguments (if any) are then processed and any missing
 return arrays are constructed. If any provided output array doesn't
 have the correct type (or is mis-aligned) and is smaller than the
 buffer size, then a new output array is constructed with the special
-:c:data:`WRITEBACKIFCOPY` flag set. At the end of the function,
+:c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag set. At the end of the function,
 :c:func:`PyArray_ResolveWritebackIfCopy` is called so that 
 its contents will be copied back into the output array.
 Iterators for the output arguments are then processed.

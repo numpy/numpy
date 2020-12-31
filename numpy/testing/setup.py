@@ -6,6 +6,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('_private')
     config.add_subpackage('tests')
+    config.add_data_files('*.pyi')
     return config
 
 if __name__ == '__main__':

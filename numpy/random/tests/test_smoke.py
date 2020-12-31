@@ -129,7 +129,7 @@ class RNG:
             assert_(not comp_state(state, self.rg.bit_generator.state))
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
-            pytest.skip('Advance is not supported by {0}'.format(bitgen_name))
+            pytest.skip(f'Advance is not supported by {bitgen_name}')
 
     def test_jump(self):
         state = self.rg.bit_generator.state
@@ -145,8 +145,8 @@ class RNG:
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
             if bitgen_name not in ('SFC64',):
-                raise AttributeError('no "jumped" in %s' % bitgen_name)
-            pytest.skip('Jump is not supported by {0}'.format(bitgen_name))
+                raise AttributeError(f'no "jumped" in {bitgen_name}')
+            pytest.skip(f'Jump is not supported by {bitgen_name}')
 
     def test_uniform(self):
         r = self.rg.uniform(-1.0, 0.0, size=10)
@@ -447,8 +447,7 @@ class RNG:
     def test_seed_array(self):
         if self.seed_vector_bits is None:
             bitgen_name = self.bit_generator.__name__
-            pytest.skip('Vector seeding is not supported by '
-                        '{0}'.format(bitgen_name))
+            pytest.skip(f'Vector seeding is not supported by {bitgen_name}')
 
         if self.seed_vector_bits == 32:
             dtype = np.uint32

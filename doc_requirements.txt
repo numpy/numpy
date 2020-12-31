@@ -1,4 +1,7 @@
-sphinx>=2.2.0,<3.0
+sphinx==3.4.1
+numpydoc==1.1.0
 ipython
 scipy
 matplotlib
+pandas
+pydata-sphinx-theme==0.4.1

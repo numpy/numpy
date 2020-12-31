@@ -124,17 +124,21 @@ if __NUMPY_SETUP__:
 else:
     try:
         from numpy.__config__ import show as show_config
-    except ImportError:
+    except ImportError as e:
         msg = """Error importing numpy: you should not try to import numpy from
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
-        raise ImportError(msg)
-
-    from .version import git_revision as __git_revision__
-    from .version import version as __version__
+        raise ImportError(msg) from e
 
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
+
+    # get the version using versioneer
+    from ._version import get_versions
+    vinfo = get_versions()
+    __version__ = vinfo.get("closest-tag", vinfo["version"])
+    __git_version__ = vinfo.get("full-revisionid")
+    del get_versions, vinfo
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
@@ -214,6 +218,18 @@ else:
     __all__.remove('Arrayterator')
     del Arrayterator
 
+    # These names were removed in NumPy 1.20.  For at least one release,
+    # attempts to access these names in the numpy namespace will trigger
+    # a warning, and calling the function will raise an exception.
+    _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
+                        'ppmt', 'pv', 'rate']
+    __expired_functions__ = {
+        name: (f'In accordance with NEP 32, the function {name} was removed '
+               'from NumPy version 1.20.  A replacement for this function '
+               'is available in the numpy_financial library: '
+               'https://pypi.org/project/numpy-financial')
+        for name in _financial_names}
+
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
@@ -228,6 +244,20 @@ else:
         # module level getattr is only supported in 3.7 onwards
         # https://www.python.org/dev/peps/pep-0562/
         def __getattr__(attr):
+            # Warn for expired attributes, and return a dummy function
+            # that always raises an exception.
+            try:
+                msg = __expired_functions__[attr]
+            except KeyError:
+                pass
+            else:
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
+                def _expired(*args, **kwds):
+                    raise RuntimeError(msg)
+
+                return _expired
+
             # Emit warnings for deprecated attributes
             try:
                 val, msg = __deprecated_attrs__[attr]
@@ -295,7 +325,7 @@ else:
                    "by incorrect BLAS library being linked in, or by mixing "
                    "package managers (pip, conda, apt, ...). Search closed "
                    "numpy issues for similar problems.")
-            raise RuntimeError(msg.format(__file__))
+            raise RuntimeError(msg.format(__file__)) from None
 
     _sanity_check()
     del _sanity_check
@@ -358,3 +388,13 @@ else:
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
+
+    # Give a warning if NumPy is reloaded or imported on a sub-interpreter
+    # We do this from python, since the C-module may not be reloaded and
+    # it is tidier organized.
+    core.multiarray._multiarray_umath._reload_guard()
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+

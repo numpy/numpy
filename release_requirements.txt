@@ -1,0 +1,17 @@
+# These packages are needed for a release in addition to those needed
+# for building, testing, and the creation of documentation.
+
+# download-wheels.py
+urllib3
+beautifulsoup4
+
+# changelog.py
+pygithub
+gitpython
+
+# uploading wheels
+twine
+
+# building and notes
+Paver
+git+https://github.com/hawkowl/towncrier.git@master

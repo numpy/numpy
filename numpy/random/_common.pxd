@@ -77,6 +77,8 @@ cdef object wrap_int(object val, object bits)
 
 cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size)
 
+cdef validate_output_shape(iter_shape, np.ndarray output)
+
 cdef object cont(void *func, void *state, object size, object lock, int narg,
                  object a, object a_name, constraint_type a_constraint,
                  object b, object b_name, constraint_type b_constraint,

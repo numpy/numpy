@@ -34,7 +34,7 @@ Basic Slicing and Indexing
 Basic slicing extends Python's basic concept of slicing to N
 dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
 (constructed by ``start:stop:step`` notation inside of brackets), an
-integer, or a tuple of slice objects and integers. :const:`Ellipsis`
+integer, or a tuple of slice objects and integers. :py:data:`Ellipsis`
 and :const:`newaxis` objects can be interspersed with these as
 well.
 
@@ -43,7 +43,7 @@ well.
   In order to remain backward compatible with a common usage in
   Numeric, basic slicing is also initiated if the selection object is
   any non-ndarray and non-tuple sequence (such as a :class:`list`) containing
-  :class:`slice` objects, the :const:`Ellipsis` object, or the :const:`newaxis`
+  :class:`slice` objects, the :py:data:`Ellipsis` object, or the :const:`newaxis`
   object, but not for integer arrays or other embedded sequences.
 
 .. index::
@@ -129,7 +129,7 @@ concepts to remember include:
               [5],
               [6]]])
 
-- :const:`Ellipsis` expands to the number of ``:`` objects needed for the
+- :py:data:`Ellipsis` expands to the number of ``:`` objects needed for the
   selection tuple to index all dimensions. In most cases, this means that
   length of the expanded selection tuple is ``x.ndim``. There may only be a
   single ellipsis present.
@@ -198,6 +198,7 @@ concepts to remember include:
    create an axis of length one. :const:`newaxis` is an alias for
    'None', and 'None' can be used in place of this with the same result.
 
+.. _advanced-indexing:
 
 Advanced Indexing
 -----------------
@@ -304,6 +305,8 @@ understood with an example.
     most important thing to remember about indexing with multiple advanced
     indexes.
 
+.. _combining-advanced-and-basic-indexing:
+
 Combining advanced and basic indexing
 """""""""""""""""""""""""""""""""""""
 
@@ -330,7 +333,7 @@ the subspace defined by the basic indexing (excluding integers) and the
 subspace from the advanced indexing part. Two cases of index combination
 need to be distinguished:
 
-* The advanced indexes are separated by a slice, :const:`Ellipsis` or :const:`newaxis`.
+* The advanced indexes are separated by a slice, :py:data:`Ellipsis` or :const:`newaxis`.
   For example ``x[arr1, :, arr2]``.
 * The advanced indexes are all next to each other.
   For example ``x[..., arr1, arr2, :]`` but *not* ``x[arr1, :, 1]``
@@ -377,15 +380,15 @@ type, such as may be returned from comparison operators. A single
 boolean index array is practically identical to ``x[obj.nonzero()]`` where,
 as described above, :meth:`obj.nonzero() <ndarray.nonzero>` returns a
 tuple (of length :attr:`obj.ndim <ndarray.ndim>`) of integer index
-arrays showing the :const:`True` elements of *obj*. However, it is
+arrays showing the :py:data:`True` elements of *obj*. However, it is
 faster when ``obj.shape == x.shape``.
 
 If ``obj.ndim == x.ndim``, ``x[obj]`` returns a 1-dimensional array
-filled with the elements of *x* corresponding to the :const:`True`
+filled with the elements of *x* corresponding to the :py:data:`True`
 values of *obj*.  The search order will be :term:`row-major`,
-C-style. If *obj* has :const:`True` values at entries that are outside
+C-style. If *obj* has :py:data:`True` values at entries that are outside
 of the bounds of *x*, then an index error will be raised. If *obj* is
-smaller than *x* it is identical to filling it with :const:`False`.
+smaller than *x* it is identical to filling it with :py:data:`False`.
 
 .. admonition:: Example
 
@@ -450,7 +453,7 @@ also supports boolean arrays and will work without any surprises.
     array([[ 3,  5],
            [ 9, 11]])
 
-    Without the ``np.ix_`` call or only the diagonal elements would be
+    Without the ``np.ix_`` call, only the diagonal elements would be
     selected.
 
     Or without ``np.ix_`` (compare the integer array examples):

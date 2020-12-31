@@ -20,8 +20,6 @@ from numpy.testing import temppath
 from numpy.testing._private.utils import IS_32BIT_CYGWIN
 from importlib import import_module
 
-from hashlib import md5
-
 #
 # Maintaining a temporary module directory
 #

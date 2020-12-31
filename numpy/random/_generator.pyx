@@ -5,6 +5,7 @@ import warnings
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 cimport cython
 import numpy as np
@@ -25,7 +26,15 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+            validate_output_shape
         )
+
+cdef extern from "numpy/arrayobject.h":
+    int PyArray_ResolveWritebackIfCopy(np.ndarray)
+    object PyArray_FromArray(np.PyArrayObject *, np.PyArray_Descr *, int)
+
+    enum:
+        NPY_ARRAY_WRITEBACKIFCOPY
 
 np.import_array()
 
@@ -45,6 +54,77 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
             return -1
         sum += colors[i]
     return sum
+
+
+cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
+                                   np.npy_intp first, np.npy_intp itemsize,
+                                   np.npy_intp stride,
+                                   char* data, char* buf) nogil:
+    # We trick gcc into providing a specialized implementation for
+    # the most common case, yielding a ~33% performance improvement.
+    # Note that apparently, only one branch can ever be specialized.
+    if itemsize == sizeof(np.npy_intp):
+        _shuffle_raw(bitgen, n, first, sizeof(np.npy_intp), stride, data, buf)
+    else:
+        _shuffle_raw(bitgen, n, first, itemsize, stride, data, buf)
+
+
+cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
+                              np.npy_intp first, np.npy_intp itemsize,
+                              np.npy_intp stride,
+                              char* data, char* buf) nogil:
+    """
+    Parameters
+    ----------
+    bitgen
+        Pointer to a bitgen_t instance.
+    n
+        Number of elements in data
+    first
+        First observation to shuffle.  Shuffles n-1,
+        n-2, ..., first, so that when first=1 the entire
+        array is shuffled
+    itemsize
+        Size in bytes of item
+    stride
+        Array stride
+    data
+        Location of data
+    buf
+        Location of buffer (itemsize)
+    """
+    cdef np.npy_intp i, j
+
+    for i in reversed(range(first, n)):
+        j = random_interval(bitgen, i)
+        string.memcpy(buf, data + j * stride, itemsize)
+        string.memcpy(data + j * stride, data + i * stride, itemsize)
+        string.memcpy(data + i * stride, buf, itemsize)
+
+
+cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
+                              np.npy_intp first, int64_t* data) nogil:
+    """
+    Parameters
+    ----------
+    bitgen
+        Pointer to a bitgen_t instance.
+    n
+        Number of elements in data
+    first
+        First observation to shuffle.  Shuffles n-1,
+        n-2, ..., first, so that when first=1 the entire
+        array is shuffled
+    data
+        Location of data
+    """
+    cdef np.npy_intp i, j
+    cdef int64_t temp
+    for i in reversed(range(first, n)):
+        j = random_bounded_uint64(bitgen, 0, i, 0, 0)
+        temp = data[j]
+        data[j] = data[i]
+        data[i] = temp
 
 
 cdef bint _check_bit_generator(object bitgen):
@@ -707,8 +787,8 @@ cdef class Generator:
                     idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
                     with self.lock, nogil:
-                        self._shuffle_int(pop_size_i, max(pop_size_i - size_i, 1),
-                                          idx_data)
+                        _shuffle_int(&self._bitgen, pop_size_i,
+                                     max(pop_size_i - size_i, 1), idx_data)
                     # Copy to allow potentially large array backing idx to be gc
                     idx = idx[(pop_size - size):].copy()
                 else:
@@ -736,7 +816,7 @@ cdef class Generator:
                                 hash_set[loc] = j
                                 idx_data[j - pop_size_i + size_i] = j
                         if shuffle:
-                            self._shuffle_int(size_i, 1, idx_data)
+                            _shuffle_int(&self._bitgen, size_i, 1, idx_data)
                 idx.shape = shape
 
         if is_scalar and isinstance(idx, np.ndarray):
@@ -779,7 +859,8 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The default value is 1.0.
+            less than high.  high - low must be non-negative.  The default value
+            is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -805,10 +886,6 @@ cdef class Generator:
         anywhere within the interval ``[a, b)``, and zero elsewhere.
 
         When ``high`` == ``low``, values of ``low`` will be returned.
-        If ``high`` < ``low``, the results are officially undefined
-        and may eventually raise an error, i.e. do not rely on this
-        function to behave when passed arguments satisfying that
-        inequality condition.
 
         Examples
         --------
@@ -834,7 +911,7 @@ cdef class Generator:
         """
         cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
-        cdef double _low, _high, range
+        cdef double _low, _high, rng
         cdef object temp
 
         alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ALIGNED)
@@ -843,13 +920,13 @@ cdef class Generator:
         if np.PyArray_NDIM(alow) == np.PyArray_NDIM(ahigh) == 0:
             _low = PyFloat_AsDouble(low)
             _high = PyFloat_AsDouble(high)
-            range = _high - _low
-            if not np.isfinite(range):
-                raise OverflowError('Range exceeds valid bounds')
+            rng = _high - _low
+            if not np.isfinite(rng):
+                raise OverflowError('high - low range exceeds valid bounds')
 
             return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                         _low, '', CONS_NONE,
-                        range, '', CONS_NONE,
+                        rng, 'high - low', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         None)
 
@@ -863,7 +940,7 @@ cdef class Generator:
             raise OverflowError('Range exceeds valid bounds')
         return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                     alow, '', CONS_NONE,
-                    arange, '', CONS_NONE,
+                    arange, 'high - low', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     None)
 
@@ -2809,6 +2886,7 @@ cdef class Generator:
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
+            validate_output_shape(it.shape, randoms)
             with self.lock, nogil:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -3606,7 +3684,7 @@ cdef class Generator:
         Now, do one experiment throwing the dice 10 time, and 10 times again,
         and another throwing the dice 20 times, and 20 times again:
 
-        >>> rng.multinomial([[10], [20]], [1/6.]*6, size=2)
+        >>> rng.multinomial([[10], [20]], [1/6.]*6, size=(2, 2))
         array([[[2, 4, 0, 1, 2, 1],
                 [1, 3, 0, 3, 1, 2]],
                [[1, 4, 4, 4, 4, 3],
@@ -3661,6 +3739,7 @@ cdef class Generator:
                 temp = np.empty(size, dtype=np.int8)
                 temp_arr = <np.ndarray>temp
                 it = np.PyArray_MultiIterNew2(on, temp_arr)
+                validate_output_shape(it.shape, temp_arr)
             shape = it.shape + (d,)
             multin = np.zeros(shape, dtype=np.int64)
             mnarr = <np.ndarray>multin
@@ -3941,7 +4020,7 @@ cdef class Generator:
             The drawn samples, of shape ``(size, k)``.
 
         Raises
-        -------
+        ------
         ValueError
             If any value in ``alpha`` is less than or equal to zero
 
@@ -4111,7 +4190,159 @@ cdef class Generator:
 
         return diric
 
-    # Shuffling and permutations:
+    def permuted(self, object x, *, axis=None, out=None):
+        """
+        permuted(x, axis=None, out=None)
+
+        Randomly permute `x` along axis `axis`.
+
+        Unlike `shuffle`, each slice along the given axis is shuffled
+        independently of the others.
+
+        Parameters
+        ----------
+        x : array_like, at least one-dimensional
+            Array to be shuffled.
+        axis : int, optional
+            Slices of `x` in this axis are shuffled. Each slice
+            is shuffled independently of the others.  If `axis` is
+            None, the flattened array is shuffled.
+        out : ndarray, optional
+            If given, this is the destinaton of the shuffled array.
+            If `out` is None, a shuffled copy of the array is returned.
+
+        Returns
+        -------
+        ndarray
+            If `out` is None, a shuffled copy of `x` is returned.
+            Otherwise, the shuffled array is stored in `out`,
+            and `out` is returned
+
+        See Also
+        --------
+        shuffle
+        permutation
+
+        Examples
+        --------
+        Create a `numpy.random.Generator` instance:
+
+        >>> rng = np.random.default_rng()
+
+        Create a test array:
+
+        >>> x = np.arange(24).reshape(3, 8)
+        >>> x
+        array([[ 0,  1,  2,  3,  4,  5,  6,  7],
+               [ 8,  9, 10, 11, 12, 13, 14, 15],
+               [16, 17, 18, 19, 20, 21, 22, 23]])
+
+        Shuffle the rows of `x`:
+
+        >>> y = rng.permuted(x, axis=1)
+        >>> y
+        array([[ 4,  3,  6,  7,  1,  2,  5,  0],  # random
+               [15, 10, 14,  9, 12, 11,  8, 13],
+               [17, 16, 20, 21, 18, 22, 23, 19]])
+
+        `x` has not been modified:
+
+        >>> x
+        array([[ 0,  1,  2,  3,  4,  5,  6,  7],
+               [ 8,  9, 10, 11, 12, 13, 14, 15],
+               [16, 17, 18, 19, 20, 21, 22, 23]])
+
+        To shuffle the rows of `x` in-place, pass `x` as the `out`
+        parameter:
+
+        >>> y = rng.permuted(x, axis=1, out=x)
+        >>> x
+        array([[ 3,  0,  4,  7,  1,  6,  2,  5],  # random
+               [ 8, 14, 13,  9, 12, 11, 15, 10],
+               [17, 18, 16, 22, 19, 23, 20, 21]])
+
+        Note that when the ``out`` parameter is given, the return
+        value is ``out``:
+
+        >>> y is x
+        True
+        """
+
+        cdef int ax
+        cdef np.npy_intp axlen, axstride, itemsize
+        cdef void *buf
+        cdef np.flatiter it
+        cdef np.ndarray to_shuffle
+        cdef int status
+        cdef int flags
+
+        x = np.asarray(x)
+
+        if out is None:
+            out = x.copy(order='K')
+        else:
+            if type(out) is not np.ndarray:
+                raise TypeError('out must be a numpy array')
+            if out.shape != x.shape:
+                raise ValueError('out must have the same shape as x')
+            np.copyto(out, x, casting='safe')
+
+        if axis is None:
+            if x.ndim > 1:
+                if not (np.PyArray_FLAGS(out) & (np.NPY_ARRAY_C_CONTIGUOUS |
+                                                 np.NPY_ARRAY_F_CONTIGUOUS)): 
+                    flags = (np.NPY_ARRAY_C_CONTIGUOUS |
+                             NPY_ARRAY_WRITEBACKIFCOPY)
+                    to_shuffle = PyArray_FromArray(<np.PyArrayObject *>out,
+                                                   <np.PyArray_Descr *>NULL, flags)
+                    self.shuffle(to_shuffle.ravel(order='K'))
+                    # Because we only execute this block if out is not
+                    # contiguous, we know this call will always result in a
+                    # copy of to_shuffle back to out. I.e. status will be 1.
+                    status = PyArray_ResolveWritebackIfCopy(to_shuffle)
+                    assert status == 1
+                else:
+                    # out is n-d with n > 1, but is either C- or F-contiguous,
+                    # so we know out.ravel(order='A') is a view.
+                    self.shuffle(out.ravel(order='A'))
+            else:
+                # out is 1-d
+                self.shuffle(out)
+            return out
+
+        ax = normalize_axis_index(axis, np.ndim(out))
+        itemsize = out.itemsize
+        axlen = out.shape[ax]
+        axstride = out.strides[ax]
+
+        it = np.PyArray_IterAllButAxis(out, &ax)
+
+        buf = PyMem_Malloc(itemsize)
+        if buf == NULL:
+            raise MemoryError('memory allocation failed in permuted')
+
+        if out.dtype.hasobject:
+            # Keep the GIL when shuffling an object array.
+            with self.lock:
+                while np.PyArray_ITER_NOTDONE(it):
+                    _shuffle_raw_wrap(&self._bitgen, axlen, 0, itemsize,
+                                      axstride,
+                                      <char *>np.PyArray_ITER_DATA(it),
+                                      <char *>buf)
+                    np.PyArray_ITER_NEXT(it)
+        else:
+            # out is not an object array, so we can release the GIL.
+            with self.lock, nogil:
+                while np.PyArray_ITER_NOTDONE(it):
+                    _shuffle_raw_wrap(&self._bitgen, axlen, 0, itemsize,
+                                      axstride,
+                                      <char *>np.PyArray_ITER_DATA(it),
+                                      <char *>buf)
+                    np.PyArray_ITER_NEXT(it)
+
+        PyMem_Free(buf)
+        return out
+
     def shuffle(self, object x, axis=0):
         """
         shuffle(x, axis=0)
@@ -4174,14 +4405,15 @@ cdef class Generator:
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
             buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
-            with self.lock:
-                # We trick gcc into providing a specialized implementation for
-                # the most common case, yielding a ~33% performance improvement.
-                # Note that apparently, only one branch can ever be specialized.
-                if itemsize == sizeof(np.npy_intp):
-                    self._shuffle_raw(n, 1, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
-                else:
-                    self._shuffle_raw(n, 1, itemsize, stride, x_ptr, buf_ptr)
+            if x.dtype.hasobject:
+                with self.lock:
+                    _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
+                                      x_ptr, buf_ptr)
+            else:
+                # Same as above, but the GIL is released.
+                with self.lock, nogil:
+                    _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
+                                      x_ptr, buf_ptr)
         elif isinstance(x, np.ndarray) and x.ndim and x.size:
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
@@ -4203,56 +4435,6 @@ cdef class Generator:
                 for i in reversed(range(1, n)):
                     j = random_interval(&self._bitgen, i)
                     x[i], x[j] = x[j], x[i]
-
-    cdef inline _shuffle_raw(self, np.npy_intp n, np.npy_intp first,
-                             np.npy_intp itemsize, np.npy_intp stride,
-                             char* data, char* buf):
-        """
-        Parameters
-        ----------
-        n
-            Number of elements in data
-        first
-            First observation to shuffle.  Shuffles n-1,
-            n-2, ..., first, so that when first=1 the entire
-            array is shuffled
-        itemsize
-            Size in bytes of item
-        stride
-            Array stride
-        data
-            Location of data
-        buf
-            Location of buffer (itemsize)
-        """
-        cdef np.npy_intp i, j
-        for i in reversed(range(first, n)):
-            j = random_interval(&self._bitgen, i)
-            string.memcpy(buf, data + j * stride, itemsize)
-            string.memcpy(data + j * stride, data + i * stride, itemsize)
-            string.memcpy(data + i * stride, buf, itemsize)
-
-    cdef inline void _shuffle_int(self, np.npy_intp n, np.npy_intp first,
-                             int64_t* data) nogil:
-        """
-        Parameters
-        ----------
-        n
-            Number of elements in data
-        first
-            First observation to shuffle.  Shuffles n-1,
-            n-2, ..., first, so that when first=1 the entire
-            array is shuffled
-        data
-            Location of data
-        """
-        cdef np.npy_intp i, j
-        cdef int64_t temp
-        for i in reversed(range(first, n)):
-            j = random_bounded_uint64(&self._bitgen, 0, i, 0, 0)
-            temp = data[j]
-            data[j] = data[i]
-            data[i] = temp
 
     def permutation(self, object x, axis=0):
         """
@@ -4336,7 +4518,7 @@ def default_rng(seed=None):
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in a`SeedSequence` instance
+        pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
 
@@ -4349,6 +4531,59 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
+    
+    Examples
+    --------
+    ``default_rng`` is the reccomended constructor for the random number class
+    ``Generator``. Here are several ways we can construct a random 
+    number generator using ``default_rng`` and the ``Generator`` class. 
+    
+    Here we use ``default_rng`` to generate a random float:
+ 
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(12345)
+    >>> print(rng)
+    Generator(PCG64)
+    >>> rfloat = rng.random()
+    >>> rfloat
+    0.22733602246716966
+    >>> type(rfloat)
+    <class 'float'>
+     
+    Here we use ``default_rng`` to generate 3 random integers between 0 
+    (inclusive) and 10 (exclusive):
+        
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(12345)
+    >>> rints = rng.integers(low=0, high=10, size=3)
+    >>> rints
+    array([6, 2, 7])
+    >>> type(rints[0])
+    <class 'numpy.int64'>
+    
+    Here we specify a seed so that we have reproducible results:
+    
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(seed=42)
+    >>> print(rng)
+    Generator(PCG64)
+    >>> arr1 = rng.random((3, 3))
+    >>> arr1
+    array([[0.77395605, 0.43887844, 0.85859792],
+           [0.69736803, 0.09417735, 0.97562235],
+           [0.7611397 , 0.78606431, 0.12811363]])
+
+    If we exit and restart our Python interpreter, we'll see that we
+    generate the same random numbers again:
+
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(seed=42)
+    >>> arr2 = rng.random((3, 3))
+    >>> arr2
+    array([[0.77395605, 0.43887844, 0.85859792],
+           [0.69736803, 0.09417735, 0.97562235],
+           [0.7611397 , 0.78606431, 0.12811363]])
+
     """
     if _check_bit_generator(seed):
         # We were passed a BitGenerator, so just wrap it up.
