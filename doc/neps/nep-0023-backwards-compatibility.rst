@@ -25,7 +25,7 @@ Motivation and Scope
 NumPy has a very large user base.  Those users rely on NumPy being stable
 and the code they write that uses NumPy functionality to keep working.
 NumPy is also actively maintained and improved -- and sometimes improvements
-require, or are made much easier by, breaking backwards compatibility.
+require or are made easier by breaking backwards compatibility.
 Finally, there are trade-offs in stability for existing users vs. avoiding
 errors or having a better user experience for new users.  These competing
 needs often give rise to long debates and to delays in accepting or rejecting
@@ -89,7 +89,7 @@ that can be used to assess such impact include:
   often turns up issues quickly.
 
 If the impact is unclear or significant, it is often good to consider
-alternatives to deprecations. For example discouraging use in documentation
+alternatives to deprecations. For example, discouraging use in documentation
 only, or moving the documentation for the functionality to a less prominent
 place or even removing it completely. Commenting on open issues related to it
 that they are low-prio or labeling them as "wontfix" will also be a signal to
@@ -118,29 +118,40 @@ Deprecations:
   expect this from all users.*
 - shall be listed in the release notes of the release where the deprecation is
   first present.
+- shall not be introduced in micro (or bug fix) releases.
 - shall set a ``stacklevel``, so the warning appears to come from the correct
   place.
 - shall be mentioned in the documentation for the functionality. A
   ``.. deprecated::`` directive can be used for this.
 
-Examples of good deprecation warnings:
+Examples of good deprecation warnings (also note standard form of the comments
+above the warning, helps when grepping):
 
 .. code-block:: python
 
+    # NumPy 1.15.0, 2018-09-02
     warnings.warn('np.asscalar(a) is deprecated since NumPy 1.16.0, use '
                   'a.item() instead', DeprecationWarning, stacklevel=3)
 
+    # NumPy 1.15.0, 2018-02-10
     warnings.warn("Importing from numpy.testing.utils is deprecated "
                   "since 1.15.0, import from numpy.testing instead.",
                   DeprecationWarning, stacklevel=2)
 
-    # A change in NumPy 1.14.0 for Python 3 loadtxt/genfromtext, slightly
-    # tweaked in this NEP (original didn't have version number).
+    # NumPy 1.14.0, 2017-07-14
     warnings.warn(
         "Reading unicode strings without specifying the encoding "
         "argument is deprecated since NumPy 1.14.0. Set the encoding, "
         "use None for the system default.",
         np.VisibleDeprecationWarning, stacklevel=2)
+
+.. code-block:: C
+
+        /* DEPRECATED 2020-05-13, NumPy 1.20 */
+        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                matrix_deprecation_msg, ufunc->name, "first") < 0) {
+            return NULL;
+        }
 
 Removal of deprecated functionality:
 
@@ -190,7 +201,7 @@ to the `NumPy governance model
 <https://docs.scipy.org/doc/numpy/dev/governance/index.html>`_.
 
 All deprecations must be proposed on the mailing list, in order to give everyone
-with an interest in NumPy development to be able to comment. Removal of
+with an interest in NumPy development a chance to comment. Removal of
 deprecated functionality does not need discussion on the mailing list.
 
 
@@ -304,12 +315,13 @@ References and Footnotes
 
 - `Issue requesting semantic versioning <https://github.com/numpy/numpy/issues/10156>`__
 
+- `PEP 387 - Backwards Compatibility Policy <https://www.python.org/dev/peps/pep-0387/>`__
+
 .. [1] https://searchcode.com/
 
 .. [2] https://github.com/Quansight-Labs/python-api-inspect
 
 .. [3] https://github.com/data-apis/python-record-api
-
 
 Copyright
 ---------
