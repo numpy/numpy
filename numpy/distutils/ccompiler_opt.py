@@ -2225,8 +2225,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
     def generate_dispatch_header(self, header_path):
         """
-        Generate the dispatch header which containing all definitions
-        and headers of instruction-sets for the enabled CPU baseline and
+        Generate the dispatch header which contains the #definitions and headers
+        for platform-specific instruction-sets for the enabled CPU baseline and
         dispatch-able features.
 
         Its highly recommended to take a look at the generated header
@@ -2243,7 +2243,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         header_dir = os.path.dirname(header_path)
         if not os.path.exists(header_dir):
             self.dist_log(
-                f"dispatch header dir {header_dir} isn't exist, creating it",
+                f"dispatch header dir {header_dir} does not exist, creating it",
                 stderr=True
             )
             os.makedirs(header_dir)
@@ -2515,7 +2515,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 def new_ccompiler_opt(compiler, dispatch_hpath, **kwargs):
     """
     Create a new instance of 'CCompilerOpt' and generate the dispatch header
-    which containing all definitions and headers of instruction-sets for
+    which contains the #definitions and headers of platform-specific instruction-sets for
     the enabled CPU baseline and dispatch-able features.
 
     Parameters
