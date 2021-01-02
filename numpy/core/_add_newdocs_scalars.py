@@ -50,6 +50,8 @@ possible_aliases = numeric_type_aliases([
     ])
 
 
+
+
 def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     # note: `:field: value` is rST syntax which renders as field lists.
     o = getattr(_numerictypes, obj)
@@ -57,7 +59,7 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     character_code = dtype(o).char
     canonical_name_doc = "" if obj == o.__name__ else ":Canonical name: `numpy.{}`\n    ".format(obj)
     alias_doc = ''.join(":Alias: `numpy.{}`\n    ".format(alias) for alias in fixed_aliases)
-    alias_doc += ''.join(":Alias on {} ({}): `numpy.{}`: {}.\n    ".format(platform.system(), platform.machine(), alias, doc)
+    alias_doc += ''.join(":Alias on this platform ({} {}): `numpy.{}`: {}.\n    ".format(platform.system(), platform.machine(), alias, doc)
                          for (alias_type, alias, doc) in possible_aliases if alias_type is o)
     docstring = """
     {doc}
