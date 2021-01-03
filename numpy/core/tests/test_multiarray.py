@@ -8577,22 +8577,15 @@ def test_equal_override():
 
 
 @pytest.mark.parametrize(
-    ["fun", "npfun", "x", "y", "test_dtype"],
+    ["fun", "npfun"],
     [
-        pytest.param(
-            fun, npfun, x, y, test_dtype
-        )
-        for (fun, npfun), x, y, test_dtype in itertools.product(
-                [
-                    (_multiarray_tests.npy_cabs, np.absolute),
-                    (_multiarray_tests.npy_carg, np.angle),
-                ],
-                [1, np.inf, -np.inf, np.nan],
-                [1, np.inf, -np.inf, np.nan],
-                [np.complex64, np.complex128, np.clongdouble],
-        )
-    ],
+        (_multiarray_tests.npy_cabs, np.absolute),
+        (_multiarray_tests.npy_carg, np.angle)
+    ]
 )
+@pytest.mark.parametrize("x", [1, np.inf, -np.inf, np.nan])
+@pytest.mark.parametrize("y", [1, np.inf, -np.inf, np.nan])
+@pytest.mark.parametrize("test_dtype", np.complexfloating.__subclasses__())
 def test_npymath_complex(fun, npfun, x, y, test_dtype):
     # Smoketest npymath functions
     z = test_dtype(complex(x, y))
