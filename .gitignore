@@ -204,9 +204,6 @@ tools/swig/test/Array.py
 
 # SIMD generated files #
 ###################################
-# the main config header, contains all the definitions and
-# headers of instruction-sets
-numpy/core/src/common/_cpu_dispatch.h
 # config headers of dispatchable sources
 *.dispatch.h
 # wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
