@@ -214,3 +214,18 @@ tools/swig/test/Tensor.py
 tools/swig/test/Vector.py
 tools/swig/test/Vector_wrap.cxx
 tools/swig/test/Array.py
+
+# SIMD generated files #
+###################################
+# config headers of dispatchable sources
+*.dispatch.h
+# wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
+*.dispatch.*.c
+# _simd module
+numpy/core/src/_simd/_simd.dispatch.c
+numpy/core/src/_simd/_simd_data.inc
+numpy/core/src/_simd/_simd_inc.h
+# umath module
+numpy/core/src/umath/loops_unary_fp.dispatch.c
+numpy/core/src/umath/loops_arithm_fp.dispatch.c
+numpy/core/src/umath/loops_trigonometric.dispatch.c

@@ -2225,8 +2225,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
     def generate_dispatch_header(self, header_path):
         """
-        Generate the dispatch header which containing all definitions
-        and headers of instruction-sets for the enabled CPU baseline and
+        Generate the dispatch header which contains the #definitions and headers
+        for platform-specific instruction-sets for the enabled CPU baseline and
         dispatch-able features.
 
         Its highly recommended to take a look at the generated header
@@ -2239,6 +2239,14 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         dispatch_names = self.cpu_dispatch_names()
         baseline_len = len(baseline_names)
         dispatch_len = len(dispatch_names)
+
+        header_dir = os.path.dirname(header_path)
+        if not os.path.exists(header_dir):
+            self.dist_log(
+                f"dispatch header dir {header_dir} does not exist, creating it",
+                stderr=True
+            )
+            os.makedirs(header_dir)
 
         with open(header_path, 'w') as f:
             baseline_calls = ' \\\n'.join([
@@ -2504,30 +2512,24 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             ))
         return False
 
-def new_ccompiler_opt(compiler, **kwargs):
+def new_ccompiler_opt(compiler, dispatch_hpath, **kwargs):
     """
     Create a new instance of 'CCompilerOpt' and generate the dispatch header
-    inside NumPy source dir.
+    which contains the #definitions and headers of platform-specific instruction-sets for
+    the enabled CPU baseline and dispatch-able features.
 
     Parameters
     ----------
-    'compiler' : CCompiler instance
-    '**kwargs': passed as-is to `CCompilerOpt(...)`
+    compiler : CCompiler instance
+    dispatch_hpath : str
+        path of the dispatch header
 
+    **kwargs: passed as-is to `CCompilerOpt(...)`
     Returns
     -------
     new instance of CCompilerOpt
     """
     opt = CCompilerOpt(compiler, **kwargs)
-    npy_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    header_dir = os.path.join(npy_path, *("core/src/common".split("/")))
-    header_path = os.path.join(header_dir, "_cpu_dispatch.h")
-    if not os.path.exists(header_path) or not opt.is_cached():
-        if not os.path.exists(header_dir):
-            opt.dist_log(
-                "dispatch header dir '%s' isn't exist, creating it" % header_dir,
-                stderr=True
-            )
-            os.makedirs(header_dir)
-        opt.generate_dispatch_header(header_path)
+    if not os.path.exists(dispatch_hpath) or not opt.is_cached():
+        opt.generate_dispatch_header(dispatch_hpath)
     return opt
