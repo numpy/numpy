@@ -34,12 +34,12 @@
 #define npyv_shr_s64(A, C) vshlq_s64(A, npyv_setall_s64(-(C)))
 
 // right by an immediate constant
-#define npyv_shri_u16(VEC, C) ((C) == 0 ? VEC : vshrq_n_u16(VEC, C))
-#define npyv_shri_s16(VEC, C) ((C) == 0 ? VEC : vshrq_n_s16(VEC, C))
-#define npyv_shri_u32(VEC, C) ((C) == 0 ? VEC : vshrq_n_u32(VEC, C))
-#define npyv_shri_s32(VEC, C) ((C) == 0 ? VEC : vshrq_n_s32(VEC, C))
-#define npyv_shri_u64(VEC, C) ((C) == 0 ? VEC : vshrq_n_u64(VEC, C))
-#define npyv_shri_s64(VEC, C) ((C) == 0 ? VEC : vshrq_n_s64(VEC, C))
+#define npyv_shri_u16 vshrq_n_u16
+#define npyv_shri_s16 vshrq_n_s16
+#define npyv_shri_u32 vshrq_n_u32
+#define npyv_shri_s32 vshrq_n_s32
+#define npyv_shri_u64 vshrq_n_u64
+#define npyv_shri_s64 vshrq_n_s64
 
 /***************************
  * Logical
