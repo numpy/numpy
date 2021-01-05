@@ -7,6 +7,7 @@ Release Notes
 
     1.21.0 <release/1.21.0-notes>
     1.20.0 <release/1.20.0-notes>
+    1.19.5 <release/1.19.5-notes>
     1.19.4 <release/1.19.4-notes>
     1.19.3 <release/1.19.3-notes>
     1.19.2 <release/1.19.2-notes>
