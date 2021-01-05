@@ -593,19 +593,19 @@ where: Any
 who: Any
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
-_DTypeScalar = TypeVar("_DTypeScalar", bound=generic)
+_DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = Literal["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
-class dtype(Generic[_DTypeScalar]):
+class dtype(Generic[_DTypeScalar_co]):
     names: Optional[Tuple[str, ...]]
     # Overload for subclass of generic
     @overload
     def __new__(
         cls,
-        dtype: Type[_DTypeScalar],
+        dtype: Type[_DTypeScalar_co],
         align: bool = ...,
         copy: bool = ...,
-    ) -> dtype[_DTypeScalar]: ...
+    ) -> dtype[_DTypeScalar_co]: ...
     # Overloads for string aliases, Python types, and some assorted
     # other special cases. Order is sometimes important because of the
     # subtype relationships
@@ -720,10 +720,10 @@ class dtype(Generic[_DTypeScalar]):
     @overload
     def __new__(
         cls,
-        dtype: dtype[_DTypeScalar],
+        dtype: dtype[_DTypeScalar_co],
         align: bool = ...,
         copy: bool = ...,
-    ) -> dtype[_DTypeScalar]: ...
+    ) -> dtype[_DTypeScalar_co]: ...
     # TODO: handle _SupportsDType better
     @overload
     def __new__(
@@ -800,7 +800,7 @@ class dtype(Generic[_DTypeScalar]):
     @property
     def str(self) -> builtins.str: ...
     @property
-    def type(self) -> Type[_DTypeScalar]: ...
+    def type(self) -> Type[_DTypeScalar_co]: ...
 
 class _flagsobj:
     aligned: bool
@@ -1328,6 +1328,7 @@ class _ArrayOrScalarCommon:
     ) -> _NdArraySubClass: ...
 
 _DType = TypeVar("_DType", bound=dtype[Any])
+_DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
@@ -1336,7 +1337,7 @@ _ShapeType = TypeVar("_ShapeType", bound=Any)
 _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _Casting = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
 
-class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
+class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @property
     def base(self) -> Optional[ndarray]: ...
     @property
@@ -1361,7 +1362,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
     @overload
-    def __array__(self, __dtype: None = ...) -> ndarray[Any, _DType]: ...
+    def __array__(self, __dtype: None = ...) -> ndarray[Any, _DType_co]: ...
     @overload
     def __array__(self, __dtype: DTypeLike) -> ndarray[Any, dtype[Any]]: ...
     @property
@@ -1592,7 +1593,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
     def __ior__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
-    def dtype(self) -> _DType: ...
+    def dtype(self) -> _DType_co: ...
 
 # NOTE: while `np.generic` is not technically an instance of `ABCMeta`,
 # the `@abstractmethod` decorator is herein used to (forcefully) deny
