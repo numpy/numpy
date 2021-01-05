@@ -109,41 +109,17 @@
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
 #endif
-/*
-Unaligned memory accesses occur when you try to read N bytes of data starting
-from an address that is not evenly divisible by N (i.e. addr % N != 0).
-For example, reading 4 bytes of data from address 0x10004 is fine, but
-reading 4 bytes of data from address 0x10005 would be an unaligned memory
-access.In reality, only a few architectures supports unaligned memory access.
-The effects of performing an unaligned memory access vary from architecture
-to architecture. It would be easy to write a whole document on the differences
-here; a summary of the common scenarios is presented below:
 
- 1. Some architectures are able to perform unaligned memory accesses
-   transparently, but there is usually a significant performance cost.
-   (eg:X86, AMD64, ARM64, powerpc64)
- 2. Some architectures raise processor exceptions when unaligned accesses
-   happen. The exception handler is able to correct the unaligned access,
-   at significant cost to performance.
-   (eg:ARM32, Alpha)
- 3. Some architectures raise processor exceptions when unaligned accesses
-   happen, but the exceptions do not contain enough information for the
-   unaligned access to be corrected.
-   (eg:MIPS, Sparc)
- 4. Some architectures are not capable of unaligned memory access, but will
-   silently perform a different memory access to the one that was requested,
-   resulting in a subtle code bug that is hard to detect!
-   (eg:RISCV, ia64)
-It should be obvious from the above that strong alignment should defined in
-all situations except No.1.
-
-NOTE: in x86 platform this flag can only be enabled if autovectorization is disabled.
+/* 
+ * Except for the following architectures, memory access is limited to the natural
+ * alignment of data types otherwise it may lead to bus error or performance regression.
+ * For more details about unaligned access, see https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt.
 */
 #if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64) || defined(__aarch64__) || defined(__powerpc64__)
-    #define NPY_STRONG_ALIGNMENT_REQUIRED 0
+    #define NPY_ALIGNMENT_REQUIRED 0
 #endif
-#ifndef NPY_STRONG_ALIGNMENT_REQUIRED
-    #define NPY_STRONG_ALIGNMENT_REQUIRED 1
+#ifndef NPY_ALIGNMENT_REQUIRED
+    #define NPY_ALIGNMENT_REQUIRED 1
 #endif
 
 #endif
