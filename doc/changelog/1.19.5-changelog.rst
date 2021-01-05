@@ -1,13 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.19.5 Release Notes
-==========================
-
-NumPy 1.19.5 is a short bugfix release. Apart from fixing several bugs, the
-main improvement is the update to OpenBLAS 0.3.13 that works around the windows
-2004 bug while not breaking execution on other platforms. This release supports
-Python 3.6-3.9 and is planned to be the last release in the 1.19.x cycle.
 
 Contributors
 ============
