@@ -173,14 +173,21 @@ class _SIMD_INT(_Test_Utility):
             # left shift
             shl = self.shl(vdata_a, count)
             assert shl == data_shl_a
-            # left shift by an immediate constant
-            shli = self.shli(vdata_a, count)
-            assert shli == data_shl_a
             # load to cast
             data_shr_a = self.load([a >> count for a in data_a])
             # right shift
             shr = self.shr(vdata_a, count)
             assert shr == data_shr_a
+
+        # shift by zero or max or out-range immediate constant is not applicable and illogical
+        for count in range(1, self._scalar_size()):
+            # load to cast
+            data_shl_a = self.load([a << count for a in data_a])
+            # left shift by an immediate constant
+            shli = self.shli(vdata_a, count)
+            assert shli == data_shl_a
+            # load to cast
+            data_shr_a = self.load([a >> count for a in data_a])
             # right shift by an immediate constant
             shri = self.shri(vdata_a, count)
             assert shri == data_shr_a
