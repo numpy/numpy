@@ -1147,37 +1147,6 @@ class TestFromDTypeAttribute:
         with pytest.raises(RecursionError):
             np.dtype(vdt(1))
 
-    def test_deprecation_dtype_attribute_is_dtype(self):
-        # Deprecated NumPy 1.20, 2020-10-19
-        class dt:
-            dtype = "f8"
-
-        class vdt(np.void):
-            dtype = "f,f"
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("always", DeprecationWarning)
-            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(dt)
-            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(dt())
-            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(vdt)
-            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(vdt(1))
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
-            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(dt)
-            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(dt())
-            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(vdt)
-            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
-                np.dtype(vdt(1))
-
-
 
 class TestDTypeClasses:
     @pytest.mark.parametrize("dtype", list(np.typecodes['All']) + [rational])
