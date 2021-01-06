@@ -1,5 +1,5 @@
 import sys
-from typing import Any, List, Sequence, Tuple, Union, TYPE_CHECKING
+from typing import Any, List, Sequence, Tuple, Union, TypeVar, TYPE_CHECKING
 
 from numpy import dtype
 from ._shape import _ShapeLike
@@ -30,9 +30,12 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         itemsize: int
         aligned: bool
 
+    _DType_co = TypeVar("_DType_co", covariant=True, bound=np.dtype)
+
     # A protocol for anything with the dtype attribute
-    class _SupportsDType(Protocol):
-        dtype: _DTypeLikeNested
+    class _SupportsDType(Protocol[_DType_co]):
+        @property
+        def dtype(self) -> _DType_co: ...
 
 else:
     _DTypeDict = Any
@@ -67,7 +70,7 @@ DTypeLike = Union[
     # array-scalar types and generic types
     type,  # TODO: enumerate these when we add type hints for numpy scalars
     # anything with a dtype attribute
-    _SupportsDType,
+    "_SupportsDType[np.dtype[Any]]",
     # character codes, type strings or comma-separated fields, e.g., 'float64'
     str,
     _VoidDTypeLike,

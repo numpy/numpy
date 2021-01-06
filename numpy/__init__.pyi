@@ -724,14 +724,13 @@ class dtype(Generic[_DTypeScalar_co]):
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[_DTypeScalar_co]: ...
-    # TODO: handle _SupportsDType better
     @overload
     def __new__(
         cls,
-        dtype: _SupportsDType,
+        dtype: _SupportsDType[dtype[_DTypeScalar_co]],
         align: bool = ...,
         copy: bool = ...,
-    ) -> dtype[Any]: ...
+    ) -> dtype[_DTypeScalar_co]: ...
     # Handle strings that can't be expressed as literals; i.e. s1, s2, ...
     @overload
     def __new__(
