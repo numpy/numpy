@@ -3,6 +3,7 @@ import operator
 import pytest
 import ctypes
 import gc
+import warnings
 
 import numpy as np
 from numpy.core._rational_tests import rational
@@ -1106,7 +1107,7 @@ def test_keyword_argument():
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
-            dtype = "f8"
+            dtype = np.dtype("f8")
 
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
@@ -1130,22 +1131,21 @@ class TestFromDTypeAttribute:
             # what this should be useful for. Note that if np.void is used
             # numpy will think we are deallocating a base type [1.17, 2019-02].
             dtype = np.dtype("f,f")
-            pass
 
         np.dtype(dt)
         np.dtype(dt(1))
 
     def test_void_subtype_recursion(self):
-        class dt(np.void):
+        class vdt(np.void):
             pass
 
-        dt.dtype = dt
+        vdt.dtype = vdt
 
         with pytest.raises(RecursionError):
-            np.dtype(dt)
+            np.dtype(vdt)
 
         with pytest.raises(RecursionError):
-            np.dtype(dt(1))
+            np.dtype(vdt(1))
 
 
 class TestDTypeClasses:

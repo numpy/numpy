@@ -329,6 +329,23 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
                                    args=(dt,))
 
 
+class TestDTypeAttributeIsDTypeDeprecation(_DeprecationTestCase):
+    # Deprecated 2021-01-05, NumPy 1.21
+    message = r".*`.dtype` attribute"
+
+    def test_deprecation_dtype_attribute_is_dtype(self):
+        class dt:
+            dtype = "f8"
+
+        class vdt(np.void):
+            dtype = "f,f"
+
+        self.assert_deprecated(lambda: np.dtype(dt))
+        self.assert_deprecated(lambda: np.dtype(dt()))
+        self.assert_deprecated(lambda: np.dtype(vdt))
+        self.assert_deprecated(lambda: np.dtype(vdt(1)))
+
+
 class TestTestDeprecated:
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
