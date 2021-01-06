@@ -297,7 +297,22 @@ from ._scalars import (
     _VoidLike_co,
 )
 from ._shape import _Shape, _ShapeLike
-from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike as DTypeLike
+from ._dtype_like import (
+    DTypeLike as DTypeLike,
+    _SupportsDType,
+    _VoidDTypeLike,
+    _DTypeLikeBool,
+    _DTypeLikeUInt,
+    _DTypeLikeInt,
+    _DTypeLikeFloat,
+    _DTypeLikeComplex,
+    _DTypeLikeTD64,
+    _DTypeLikeDT64,
+    _DTypeLikeObject,
+    _DTypeLikeVoid,
+    _DTypeLikeStr,
+    _DTypeLikeBytes,
+)
 from ._array_like import (
     ArrayLike as ArrayLike,
     _ArrayLike,
