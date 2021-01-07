@@ -23,7 +23,9 @@ It provides:
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
-
+## Installation
+To install NumPy just type the following command in your terminal
+`pip install numpy`
 Testing:
 
 - NumPy versions &ge; 1.15 require `pytest`
