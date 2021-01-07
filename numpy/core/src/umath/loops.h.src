@@ -213,18 +213,6 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 /**end repeat**/
 
-NPY_NO_EXPORT void
-DOUBLE_exp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-DOUBLE_exp_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-DOUBLE_log(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-DOUBLE_log_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "loops_trigonometric.dispatch.h"
 #endif
@@ -236,19 +224,18 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void FLOAT_@func@, (
 ))
 /**end repeat**/
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_exponent_log.dispatch.h"
+#endif
 /**begin repeat
- *  #func = exp, log#
+ *  #TYPE = FLOAT, DOUBLE#
  */
-NPY_NO_EXPORT void
-FLOAT_@func@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
 /**begin repeat1
- * #isa = avx512f, fma#
+ * # kind = exp, log, frexp, ldexp#
  */
-
-NPY_NO_EXPORT void
-FLOAT_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
+  char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)
+))
 /**end repeat1**/
 /**end repeat**/
 
@@ -373,13 +360,7 @@ NPY_NO_EXPORT void
 @TYPE@_frexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@TYPE@_frexp_avx512_skx(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 @TYPE@_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@TYPE@_ldexp_avx512_skx(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @TYPE@_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));

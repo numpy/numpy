@@ -1,6 +1,6 @@
 #ifndef __NPY_SIMD_DATA_H_
 #define __NPY_SIMD_DATA_H_
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+#if defined NPY_HAVE_AVX512F
 #if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
 /*
  * Constants used in vector implementation of float64 exp(x)
@@ -122,11 +122,11 @@ static npy_uint64 EXP_Table_tail[32] = {
 
 /*
  * Lookup table of log(c_k)
- * Reference form: Tang, Ping-Tak Peter. "Table-driven implementation of the 
- *     logarithm function in IEEE floating-point arithmetic." ACM Transactions 
+ * Reference form: Tang, Ping-Tak Peter. "Table-driven implementation of the
+ *     logarithm function in IEEE floating-point arithmetic." ACM Transactions
  *     on Mathematical Software (TOMS) 16.4 (1990): 378-400.
  */
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+#if defined NPY_HAVE_AVX512F
 #if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
 static npy_uint64 LOG_TABLE_TOP[64] = {
     0x0000000000000000,

@@ -10,6 +10,21 @@
 #ifndef _NPY_UMATH_FAST_LOOP_MACROS_H_
 #define _NPY_UMATH_FAST_LOOP_MACROS_H_
 
+/*
+ * MAX_STEP_SIZE is used to determine if we need to use SIMD version of the ufunc.
+ * Very large step size can be as slow as processing it using scalar. The
+ * value of 2097152 ( = 2MB) was chosen using 2 considerations:
+ * 1) Typical linux kernel page size is 4Kb, but sometimes it could also be 2MB
+ *    which is == 2097152 Bytes. For a step size as large as this, surely all
+ *    the loads/stores of gather/scatter instructions falls on 16 different pages
+ *    which one would think would slow down gather/scatter instructions.
+ * 2) It additionally satisfies MAX_STEP_SIZE*16/esize < NPY_MAX_INT32 which
+ *    allows us to use i32 version of gather/scatter (as opposed to the i64 version)
+ *    without problems (step larger than NPY_MAX_INT32*esize/16 would require use of
+ *    i64gather/scatter). esize = element size = 4/8 bytes for float/double.
+ */
+#define MAX_STEP_SIZE 2097152
+
 static NPY_INLINE npy_uintp
 abs_ptrdiff(char *a, char *b)
 {

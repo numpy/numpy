@@ -1658,39 +1658,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 /**end repeat**/
 
 /**begin repeat
- *  #func = exp, log#
- *  #scalarf = npy_expf, npy_logf#
- */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-FLOAT_@func@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP {
-	const npy_float in1 = *(npy_float *)ip1;
-	*(npy_float *)op1 = @scalarf@(in1);
-    }
-}
-
-/**end repeat**/
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-DOUBLE_exp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP {
-        const npy_double in1 = *(npy_double *)ip1;
-        *(npy_double *)op1 = npy_exp(in1);
-    }
-}
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-DOUBLE_log(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP {
-        const npy_double in1 = *(npy_double *)ip1;
-        *(npy_double *)op1 = npy_log(in1);
-    }
-}
-
-/**begin repeat
  * #isa = avx512f, fma#
  * #ISA = AVX512F, FMA#
  * #CHK = HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS#
@@ -1720,58 +1687,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 
 /**end repeat2**/
 /**end repeat1**/
-
-/**begin repeat1
- *  #func = exp, log#
- *  #scalarf = npy_expf, npy_logf#
- */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-FLOAT_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_@func@_FLOAT(args, dimensions, steps)) {
-        UNARY_LOOP {
-            /*
-             * We use the AVX function to compute exp/log for scalar elements as well.
-             * This is needed to ensure the output of strided and non-strided
-             * cases match. SIMD code handles strided input cases, but not
-             * strided output.
-             */
-#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
-            @ISA@_@func@_FLOAT((npy_float *)op1, (npy_float *)ip1, 1, steps[0]);
-#else
-            const npy_float in1 = *(npy_float *)ip1;
-            *(npy_float *)op1 = @scalarf@(in1);
-#endif
-        }
-    }
-}
-
-/**end repeat1**/
-
 /**end repeat**/
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-DOUBLE_exp_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_avx512f_exp_DOUBLE(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const npy_double in1 = *(npy_double *)ip1;
-            *(npy_double *)op1 = npy_exp(in1);
-        }
-    }
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-DOUBLE_log_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_avx512f_log_DOUBLE(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const npy_double in1 = *(npy_double *)ip1;
-            *(npy_double *)op1 = npy_log(in1);
-        }
-    }
-}
 
 /**begin repeat
  * Float types
@@ -2045,41 +1961,6 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
-@TYPE@_frexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_TWO_OUT {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = npy_frexp@c@(in1, (int *)op2);
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_frexp_avx512_skx(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
-{
-    if (!run_unary_two_out_avx512_skx_frexp_@TYPE@(args, dimensions, steps)) {
-        @TYPE@_frexp(args, dimensions, steps, func);
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const int in2 = *(int *)ip2;
-        *((@type@ *)op1) = npy_ldexp@c@(in1, in2);
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_ldexp_avx512_skx(char **args, const npy_intp *dimensions, const npy_intp *steps, void *func)
-{
-    if (!run_binary_avx512_skx_ldexp_@TYPE@(args, dimensions, steps)) {
-        @TYPE@_ldexp(args, dimensions, steps, func);
-    }
-}
-
-NPY_NO_EXPORT void
 @TYPE@_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     /*
@@ -2176,6 +2057,25 @@ LONGDOUBLE_square(char **args, npy_intp const *dimensions, npy_intp const *steps
     UNARY_LOOP {
         const npy_longdouble in1 = *(npy_longdouble *)ip1;
         *((npy_longdouble *)op1) = in1*in1;
+    }
+}
+
+NPY_NO_EXPORT void
+LONGDOUBLE_frexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_TWO_OUT {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+        *((npy_longdouble *)op1) = npy_frexpl(in1, (int *)op2);
+    }
+}
+
+NPY_NO_EXPORT void
+LONGDOUBLE_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+        const int in2 = *(int *)ip2;
+        *((npy_longdouble *)op1) = npy_ldexpl(in1, in2);
     }
 }
 
