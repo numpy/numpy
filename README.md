@@ -26,6 +26,7 @@ It provides:
 ## Installation
 To install NumPy just type the following command in your terminal
 `pip install numpy`
+
 Testing:
 
 - NumPy versions &ge; 1.15 require `pytest`
