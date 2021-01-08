@@ -1039,6 +1039,18 @@ class TestMatrixPower:
             if dt != object:
                 tz(self.stacked.astype(dt))
 
+    def test_power_is_three(self, dt):
+        def tz(mat):
+            mz = matrix_power(mat, 3)
+            mmul = matmul if mat.dtype != object else dot
+            assert_equal(mz, mmul(mat, mmul(mat, mat)))
+            assert_equal(mz.dtype, mat.dtype)
+
+        for mat in self.rshft_all:
+            tz(mat.astype(dt))
+            if dt != object:
+                tz(self.stacked.astype(dt))
+
     def test_power_is_minus_one(self, dt):
         def tz(mat):
             invmat = matrix_power(mat, -1)
