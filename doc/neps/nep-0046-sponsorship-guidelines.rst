@@ -31,7 +31,7 @@ helpful when searching for new support.
 This NEP is aimed at both the NumPy community - who can use it when looking for
 support and acknowledging existing support - and at past, current and
 prospective sponsors, who often want or need to know what they get in return
-for their support (other than a healthier NumPy).
+for their support other than a healthier NumPy.
 
 The scope of this proposal includes:
 
@@ -58,13 +58,26 @@ The minimum level of support given to NumPy to be considered a Sponsor are:
 - $60,000/yr for financial contributions for a particular purpose
 - $100,000/yr for in-kind contributions
 
-The rationale for the above levels is that unrestricted financial contributions
-are typically the most valuable for the project, and the hardest to obtain.
-The opposite is true for in-kind contributions. The dollar value of the levels
-also reflect that NumPy's needs have grown to the point where we need at least
-a few paid developers in order to effectively support our user base and
-continue to move the project forward. Financial support at or above these
-levels is needed to be able to make a significant difference.
+We define support being active as:
+
+- for a one-off donation: it was received within the previous 12 months
+- for a grant or other support with a defined start and end date: the duration
+  of a grant period.
+
+After support moves from "active" to "inactive" status, the acknowledgement
+will be left in its place for at least another 6 months. If appropriate, the
+funding team can discuss opportunities for renewal with the sponsor. After
+those 6 months, acknowledgement may be moved to the historical overview. The
+exact timing of this move is at the discretion of the funding team, because
+there may be reasons to keep it in the more prominent place for longer.
+
+The rationale for the above funding levels is that unrestricted financial
+contributions are typically the most valuable for the project, and the hardest
+to obtain.  The opposite is true for in-kind contributions. The dollar value of
+the levels also reflect that NumPy's needs have grown to the point where we
+need at least a few paid developers in order to effectively support our user
+base and continue to move the project forward. Financial support at or above
+these levels is needed to be able to make a significant difference.
 
 Sponsors will get acknowledged through:
 
