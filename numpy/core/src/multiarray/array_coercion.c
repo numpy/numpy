@@ -1098,6 +1098,11 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return curr_dims + 1;
     }
 
+    /* Allow keyboard interrupts. See gh issue 18117. */
+    if (PyErr_CheckSignals() < 0) {
+        return -1;
+    }
+
     /* Recursive call for each sequence item */
     for (Py_ssize_t i = 0; i < size; i++) {
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
