@@ -21,25 +21,27 @@ financial and in-kind support.
 Motivation and Scope
 --------------------
 
-In the past few years the NumPy project has gotten significant financial
+In the past few years, the NumPy project has gotten significant financial
 support, as well as dedicated work time for maintainers to work on NumPy. There
-is a need to acknowledge that support - funders and organizations expect or require
-it, it's helpful when looking for new funding, and it's the right thing to do.
-Furthermore, having a clear policy for how NumPy acknowledges support is
-helpful when searching for new support.
+is a need to acknowledge that support - it's the right thing to do, it's
+helpful when looking for new funding, and funders and organizations expect or
+require it, Furthermore, having a clear policy for how NumPy acknowledges
+support is helpful when searching for new support. Finally, this policy may
+help set reasonable expectations for potential funders.
 
-This NEP is aimed at both the NumPy community - who can use it when looking for
-support and acknowledging existing support - and at past, current and
-prospective sponsors, who often want or need to know what they get in return
-for their support other than a healthier NumPy.
+This NEP is aimed at both the NumPy community - who can use it as a guideline
+when looking for support on behalf of the project and when acknowledging
+existing support - and at past, current and prospective sponsors, who often
+want or need to know what they get in return for their support other than a
+healthier NumPy.
 
 The scope of this proposal includes:
 
 - direct financial support, employers providing paid time for NumPy maintainers
   and regular contributors, and in-kind support such as free hardware resources or
-  services.
-- where and how NumPy acknowledges support (e.g., logo placement on the website).
-- the amount and duration of support which leads to acknowledgement.
+  services,
+- where and how NumPy acknowledges support (e.g., logo placement on the website),
+- the amount and duration of support which leads to acknowledgement, and
 - who in the NumPy project is responsible for sponsorship related topics, and
   how to contact them.
 
@@ -47,22 +49,21 @@ The scope of this proposal includes:
 How NumPy will acknowledge support
 ----------------------------------
 
-There will be two different ways to acknowledge financial and in-kind support,
+There will be two different ways to acknowledge financial and in-kind support:
 one to recognize significant active support, and another one to recognize
 support received in the past and smaller amounts of support.
 
 Entities who fall under "significant active supporter" we'll call Sponsor.
 The minimum level of support given to NumPy to be considered a Sponsor are:
 
-- $30,000/yr for unrestricted financial contributions
-- $60,000/yr for financial contributions for a particular purpose
-- $100,000/yr for in-kind contributions
+- $30,000/yr for unrestricted financial contributions (e.g., donations)
+- $60,000/yr for financial contributions for a particular purpose (e.g., grants)
+- $100,000/yr for in-kind contributions (e.g., time for employees to contribute)
 
 We define support being active as:
 
-- for a one-off donation: it was received within the previous 12 months
-- for a grant or other support with a defined start and end date: the duration
-  of a grant period.
+- for a one-off donation: it was received within the previous 12 months,
+- for recurring or financial or in-kind contributions: they should be ongoing.
 
 After support moves from "active" to "inactive" status, the acknowledgement
 will be left in its place for at least another 6 months. If appropriate, the
@@ -75,9 +76,9 @@ The rationale for the above funding levels is that unrestricted financial
 contributions are typically the most valuable for the project, and the hardest
 to obtain.  The opposite is true for in-kind contributions. The dollar value of
 the levels also reflect that NumPy's needs have grown to the point where we
-need at least a few paid developers in order to effectively support our user
-base and continue to move the project forward. Financial support at or above
-these levels is needed to be able to make a significant difference.
+need multiple paid developers in order to effectively support our user base and
+continue to move the project forward. Financial support at or above these
+levels is needed to be able to make a significant difference.
 
 Sponsors will get acknowledged through:
 
@@ -97,7 +98,7 @@ Therefore we propose that level here, roughly in line with the sponsorship
 levels:
 
 - 6 person-months/yr of paid work time for one or more NumPy maintainers or
-  regular contributors
+  regular contributors to any NumPy team or activity
 
 Institutional Partners get the same benefits as Sponsors, in addition to what
 is specified in the NumPy governance document.
@@ -106,7 +107,7 @@ Finally, a new page on the website (https://numpy.org/funding/, linked from the
 About page) will be added to acknowledge all current and previous sponsors,
 partners, and any other entities and individuals who provided $5,000 or more of
 financial or in-kind support. This page will include relevant details of
-support (dates, amounts, names and purpose); no logos will be used on this
+support (dates, amounts, names, and purpose); no logos will be used on this
 page. The rationale for the $5,000 minimum level is to keep the amount of work
 maintaining the page reasonable; the level is the equivalent of, e.g., one GSoC
 or a person-week's worth of engineering time in a Western country, which seems
@@ -128,8 +129,8 @@ The following content changes need to be made:
   NumPy project about sponsorship related matters (see next section).
 
 
-A NumPy Funding Team
-~~~~~~~~~~~~~~~~~~~~
+NumPy Funding Team
+~~~~~~~~~~~~~~~~~~
 
 At the moment NumPy has only one official body, the Steering Council, and no
 good way to get in touch with either that body or any person or group
@@ -141,7 +142,7 @@ easy for a potential sponsor to know if they're reaching out to the right
 person in private.
 
 https://numpy.org/about/ already says that NumPy has a "funding and grants"
-team, however that is not the case. We propose to organize this team, name team
+team. However that is not the case. We propose to organize this team, name team
 members on it, and add the names of those team members plus a dedicated email
 address for the team to the About page.
 
@@ -163,8 +164,8 @@ website team. Decisions on which entities to recognize as Institutional Partner
 have been made by the NumPy Steering Council.
 
 
-NumPy governance, decision-making and financial oversight
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+NumPy governance, decision-making, and financial oversight
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *This section is meant as context for the reader, to help put the rest of this
 NEP in perspective, and perhaps answer questions the reader has when reading
@@ -206,7 +207,7 @@ in the future, we should reconsider listing all individual donations.
 Related Work
 ------------
 
-Here we provide a few examples of how other project handle sponsorship
+Here we provide a few examples of how other projects handle sponsorship
 guidelines and acknowledgements.
 
 *Scikit-learn* has a narrow banner with logos at the bottom of
@@ -238,7 +239,7 @@ Mailing list thread(s) discussing this NEP: TODO
 References and Footnotes
 ------------------------
 
-- `Inside NumPy: preparing for the next decade <https://github.com/numpy/archive/blob/master/content/inside_numpy_presentation_SciPy2019.pdf>`__ presentation at SciPy'19 discussing impact of the first NumPy grant.
+- `Inside NumPy: preparing for the next decade <https://github.com/numpy/archive/blob/master/content/inside_numpy_presentation_SciPy2019.pdf>`__ presentation at SciPy'19 discussing the impact of the first NumPy grant.
 - `Issue  <https://github.com/numpy/numpy/issues/13393>`__ and
   `email <https://mail.python.org/pipermail/numpy-discussion/2019-April/079371.html>`__
   where IBM offered a $5,000 bounty for VSX SIMD support
