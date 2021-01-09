@@ -3803,6 +3803,47 @@ time_to_time_resolve_descriptors(
 }
 
 
+static int
+time_to_time_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    int requires_wrap = 0;
+    int inner_aligned = aligned;
+    PyArray_Descr **descrs = context->descriptors;
+    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    if (!PyDataType_ISNOTSWAPPED(descrs[0]) ||
+            !PyDataType_ISNOTSWAPPED(descrs[1])) {
+        inner_aligned = 1;
+        requires_wrap = 1;
+    }
+    if (get_nbo_cast_datetime_transfer_function(
+            inner_aligned, descrs[0], descrs[1],
+            out_loop, out_transferdata) == NPY_FAIL) {
+        return -1;
+    }
+
+    if (!requires_wrap) {
+        return 0;
+    }
+
+    int needs_api = 0;
+    NpyAuxData *castdata = *out_transferdata;
+    if (wrap_aligned_contig_transfer_function_with_copyswapn(
+            aligned, strides[0], strides[1], descrs[0], descrs[1],
+            out_loop, out_transferdata, &needs_api,
+            *out_loop, castdata) == NPY_FAIL) {
+        NPY_AUXDATA_FREE(castdata);
+        return -1;
+    }
+    assert(needs_api == 0);
+    return 0;
+}
+
+
 /* Handles datetime<->timedelta type resolution (both directions) */
 static NPY_CASTING
 datetime_to_timedelta_resolve_descriptors(
@@ -3844,9 +3885,7 @@ time_to_string_resolve_descriptors(
         PyArray_Descr **given_descrs,
         PyArray_Descr **loop_descrs)
 {
-    Py_INCREF(given_descrs[0]);
-    loop_descrs[0] = given_descrs[0];
-    if (given_descrs[1] != NULL) {
+    if (given_descrs[1] != NULL && dtypes[0]->type_num == NPY_DATETIME) {
         /*
          * At the time of writing, NumPy does not check the length here,
          * but will error if filling fails.
@@ -3863,6 +3902,10 @@ time_to_string_resolve_descriptors(
             size = get_datetime_iso_8601_strlen(0, meta->base);
         }
         else {
+            /*
+             * This is arguably missing space for the unit, e.g. for:
+             * `np.timedelta64(1231234342124, 'ms')`
+             */
             size = 21;
         }
         if (dtypes[1]->type_num == NPY_UNICODE) {
@@ -3870,13 +3913,45 @@ time_to_string_resolve_descriptors(
         }
         loop_descrs[1] = PyArray_DescrNewFromType(dtypes[1]->type_num);
         if (loop_descrs[1] == NULL) {
-            Py_DECREF(loop_descrs[0]);
             return -1;
         }
         loop_descrs[1]->elsize = size;
     }
+
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+
     assert(self->casting == NPY_UNSAFE_CASTING);
     return NPY_UNSAFE_CASTING;
+}
+
+static int
+time_to_string_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArray_Descr **descrs = context->descriptors;
+    *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
+
+    if (descrs[1]->type_num == NPY_STRING) {
+        if (get_nbo_datetime_to_string_transfer_function(
+                descrs[0], descrs[1],
+                out_loop, out_transferdata) == NPY_FAIL) {
+            return -1;
+        }
+    }
+    else {
+        assert(descrs[1]->type_num == NPY_UNICODE);
+        int out_needs_api;
+        if (get_datetime_to_unicode_transfer_function(
+                aligned, strides[0], strides[1], descrs[0], descrs[1],
+                out_loop, out_transferdata, &out_needs_api) == NPY_FAIL) {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 
@@ -3908,6 +3983,36 @@ string_to_datetime_cast_resolve_descriptors(
 }
 
 
+static int
+string_to_datetime_cast_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArray_Descr **descrs = context->descriptors;
+    *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
+
+    if (descrs[0]->type_num == NPY_STRING) {
+        if (get_nbo_string_to_datetime_transfer_function(
+                descrs[0], descrs[1], out_loop, out_transferdata) == NPY_FAIL) {
+            return -1;
+        }
+    }
+    else {
+        assert(descrs[0]->type_num == NPY_UNICODE);
+        int out_needs_api;
+        if (get_unicode_to_datetime_transfer_function(
+                aligned, strides[0], strides[1], descrs[0], descrs[1],
+                out_loop, out_transferdata, &out_needs_api) == NPY_FAIL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+
 /*
  * This registers the castingimpl for all datetime related casts.
  */
@@ -3930,7 +4035,7 @@ PyArray_InitializeDatetimeCasts()
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_time_resolve_descriptors;
     slots[1].slot = NPY_METH_get_loop;
-    slots[1].pfunc = NULL;
+    slots[1].pfunc = &time_to_time_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
 
@@ -3955,10 +4060,12 @@ PyArray_InitializeDatetimeCasts()
      * Casting between timedelta and datetime uses legacy casting loops, but
      * custom dtype resolution (to handle copying of the time unit).
      */
+    spec.flags = NPY_METH_REQUIRES_PYAPI;
+
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &datetime_to_timedelta_resolve_descriptors;
     slots[1].slot = NPY_METH_get_loop;
-    slots[1].pfunc = NULL;
+    slots[1].pfunc = &legacy_cast_get_strided_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
 
@@ -4030,7 +4137,7 @@ PyArray_InitializeDatetimeCasts()
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_string_resolve_descriptors;
     slots[1].slot = NPY_METH_get_loop;
-    slots[1].pfunc = NULL;
+    slots[1].pfunc = &time_to_string_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
 
@@ -4070,7 +4177,7 @@ PyArray_InitializeDatetimeCasts()
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &string_to_datetime_cast_resolve_descriptors;
     slots[1].slot = NPY_METH_get_loop;
-    slots[1].pfunc = NULL;
+    slots[1].pfunc = &string_to_datetime_cast_get_loop;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
 

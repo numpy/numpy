@@ -25,6 +25,7 @@
 #include "datetime_strings.h"
 #include "array_method.h"
 #include "usertypes.h"
+#include "dtype_transfer.h"
 
 
 /*
@@ -61,7 +62,7 @@ PyArray_GetObjectToGenericCastingImpl(void);
  * @returns A castingimpl (PyArrayDTypeMethod *), None or NULL with an
  *          error set.
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
     PyObject *res = PyDict_GetItem(from->castingimpls, (PyObject *)to);
@@ -1973,6 +1974,30 @@ legacy_same_dtype_resolve_descriptors(
 }
 
 
+NPY_NO_EXPORT int
+legacy_cast_get_strided_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references, npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArray_Descr **descrs = context->descriptors;
+    int out_needs_api = 0;
+
+    *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
+
+    if (PyArray_GetLegacyDTypeTransferFunction(
+            aligned, strides[0], strides[1], descrs[0], descrs[1],
+            move_references, out_loop, out_transferdata, &out_needs_api, 0) < 0) {
+        return -1;
+    }
+    if (!out_needs_api) {
+        *flags &= ~NPY_METH_REQUIRES_PYAPI;
+    }
+    return 0;
+}
+
+
 /*
  * Simple dtype resolver for casting between two different (non-parametric)
  * (legacy) dtypes.
@@ -2012,10 +2037,77 @@ simple_cast_resolve_descriptors(
 }
 
 
+NPY_NO_EXPORT int
+get_byteswap_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArray_Descr **descrs = context->descriptors;
+    assert(descrs[0]->kind == descrs[1]->kind);
+    assert(descrs[0]->elsize == descrs[1]->elsize);
+    int itemsize = descrs[0]->elsize;
+    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    *out_transferdata = NULL;
+    if (descrs[0]->kind == 'c') {
+        /*
+         * TODO: we have an issue with complex, since the below loops
+         *       use the itemsize, the complex alignment would be too small.
+         *       Using aligned = 0, might cause slow downs in some cases.
+         */
+        aligned = 0;
+    }
+
+    if (PyDataType_ISNOTSWAPPED(descrs[0]) ==
+            PyDataType_ISNOTSWAPPED(descrs[1])) {
+        *out_loop = PyArray_GetStridedCopyFn(
+                aligned, strides[0], strides[1], itemsize);
+    }
+    else if (!PyTypeNum_ISCOMPLEX(descrs[0]->type_num)) {
+        *out_loop = PyArray_GetStridedCopySwapFn(
+                aligned, strides[0], strides[1], itemsize);
+    }
+    else {
+        *out_loop = PyArray_GetStridedCopySwapPairFn(
+                aligned, strides[0], strides[1], itemsize);
+    }
+    if (*out_loop == NULL) {
+        return -1;
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT int
+complex_to_noncomplex_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references, npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    static PyObject *cls = NULL;
+    int ret;
+    npy_cache_import("numpy.core", "ComplexWarning", &cls);
+    if (cls == NULL) {
+        return -1;
+    }
+    ret = PyErr_WarnEx(cls,
+            "Casting complex values to real discards "
+            "the imaginary part", 1);
+    if (ret < 0) {
+        return -1;
+    }
+    return npy_default_get_strided_loop(
+            context, aligned, move_references, strides,
+            out_loop, out_transferdata, flags);
+}
+
+
 static int
 add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
-    PyType_Slot slots[6];
+    PyType_Slot slots[7];
     PyArray_DTypeMeta *dtypes[2] = {from, to};
     PyArrayMethod_Spec spec = {
             .name = "numeric_cast",
@@ -2026,8 +2118,8 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
             .dtypes = dtypes,
     };
 
-    npy_intp from_itemsize = dtypes[0]->singleton->elsize;
-    npy_intp to_itemsize = dtypes[1]->singleton->elsize;
+    npy_intp from_itemsize = from->singleton->elsize;
+    npy_intp to_itemsize = to->singleton->elsize;
 
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &simple_cast_resolve_descriptors;
@@ -2044,8 +2136,24 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     slots[4].slot = NPY_METH_unaligned_contiguous_loop;
     slots[4].pfunc = PyArray_GetStridedNumericCastFn(
             0, from_itemsize, to_itemsize, from->type_num, to->type_num);
-    slots[5].slot = 0;
-    slots[5].pfunc = NULL;
+    if (PyTypeNum_ISCOMPLEX(from->type_num) &&
+            !PyTypeNum_ISCOMPLEX(to->type_num) &&
+            !PyTypeNum_ISBOOL(to->type_num)) {
+        /*
+         * The get_loop function must also give a ComplexWarning. We could
+         * consider moving this warning into the inner-loop at some point
+         * for simplicity (this requires ensuring it is only emitted once).
+         */
+        slots[5].slot = NPY_METH_get_loop;
+        slots[5].pfunc = &complex_to_noncomplex_get_loop;
+        slots[6].slot = 0;
+        slots[6].pfunc = NULL;
+    }
+    else {
+        /* Use the default get loop function. */
+        slots[5].slot = 0;
+        slots[5].pfunc = NULL;
+    }
 
     assert(slots[1].pfunc && slots[2].pfunc && slots[3].pfunc && slots[4].pfunc);
 
@@ -2057,7 +2165,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         slots[0].slot = NPY_METH_resolve_descriptors;
         slots[0].pfunc = &legacy_same_dtype_resolve_descriptors;
         slots[1].slot = NPY_METH_get_loop;
-        slots[1].pfunc = NULL;
+        slots[1].pfunc = &get_byteswap_loop;
         slots[2].slot = 0;
         slots[2].pfunc = NULL;
 
@@ -2240,9 +2348,9 @@ add_other_to_and_from_string_cast(
      */
     PyArray_DTypeMeta *dtypes[2] = {other, string};
     PyType_Slot slots[] = {
-            {NPY_METH_get_loop, NULL},
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
             {NPY_METH_resolve_descriptors, &cast_to_string_resolve_descriptors},
-            {0,                 NULL}};
+            {0, NULL}};
     PyArrayMethod_Spec spec = {
         .name = "legacy_cast_to_string",
         .nin = 1,
@@ -2300,6 +2408,35 @@ string_to_string_resolve_descriptors(
 }
 
 
+NPY_NO_EXPORT int
+string_to_string_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    int unicode_swap = 0;
+    PyArray_Descr **descrs = context->descriptors;
+
+    assert(NPY_DTYPE(descrs[0]) == NPY_DTYPE(descrs[1]));
+    *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
+    if (descrs[0]->type_num == NPY_UNICODE) {
+        if (PyDataType_ISNOTSWAPPED(descrs[0]) !=
+                PyDataType_ISNOTSWAPPED(descrs[1])) {
+            unicode_swap = 1;
+        }
+    }
+
+    if (PyArray_GetStridedZeroPadCopyFn(
+            aligned, unicode_swap, strides[0], strides[1],
+            descrs[0]->elsize, descrs[1]->elsize,
+            out_loop, out_transferdata) == NPY_FAIL) {
+        return -1;
+    }
+    return 0;
+}
+
+
 /*
  * Add string casts. Right now all string casts are just legacy-wrapped ones
  * (except string<->string and unicode<->unicode), but they do require
@@ -2339,9 +2476,9 @@ PyArray_InitializeStringCasts(void)
     /* string<->string and unicode<->unicode have their own specialized casts */
     PyArray_DTypeMeta *dtypes[2];
     PyType_Slot slots[] = {
-            {NPY_METH_get_loop, NULL},
+            {NPY_METH_get_loop, &string_to_string_get_loop},
             {NPY_METH_resolve_descriptors, &string_to_string_resolve_descriptors},
-            {0,                 NULL}};
+            {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "string_to_string_cast",
             .casting = NPY_NO_CASTING,
@@ -2489,6 +2626,61 @@ int give_bad_field_error(PyObject *key)
 }
 
 
+static int
+nonstructured_to_structured_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    if (context->descriptors[1]->names != NULL) {
+        int needs_api = 0;
+        if (get_fields_transfer_function(
+                aligned, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api) == NPY_FAIL) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    else if (context->descriptors[1]->subarray != NULL) {
+        int needs_api = 0;
+        if (get_subarray_transfer_function(
+                aligned, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api) == NPY_FAIL) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    else {
+        /*
+         * TODO: This could be a simple zero padded cast, adding a decref
+         *       in case of `move_references`. But for now use legacy casts
+         *       (which is the behaviour at least up to 1.20).
+         */
+        int needs_api = 0;
+        if (!aligned) {
+            /* We need to wrap if aligned is 0. Use a recursive call */
+
+        }
+        if (PyArray_GetLegacyDTypeTransferFunction(
+                1, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api, 1) < 0) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    return 0;
+}
+
+
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void)
 {
@@ -2508,7 +2700,7 @@ PyArray_GetGenericToVoidCastingImpl(void)
     method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
     method->casting = NPY_SAFE_CASTING;
     method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
-    method->get_strided_loop = NULL;
+    method->get_strided_loop = &nonstructured_to_structured_get_loop;
 
     return (PyObject *)method;
 }
@@ -2578,6 +2770,56 @@ structured_to_nonstructured_resolve_descriptors(
 }
 
 
+static int
+structured_to_nonstructured_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    if (context->descriptors[0]->names != NULL) {
+        int needs_api = 0;
+        if (get_fields_transfer_function(
+                aligned, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api) == NPY_FAIL) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    else if (context->descriptors[0]->subarray != NULL) {
+        int needs_api = 0;
+        if (get_subarray_transfer_function(
+                aligned, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api) == NPY_FAIL) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    else {
+        /*
+         * In general this is currently defined through legacy behaviour via
+         * scalars, and should likely just not be allowed.
+         */
+        int needs_api = 0;
+        if (PyArray_GetLegacyDTypeTransferFunction(
+                aligned, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api, 1) < 0) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    return 0;
+}
+
+
 static PyObject *
 PyArray_GetVoidToGenericCastingImpl(void)
 {
@@ -2597,7 +2839,7 @@ PyArray_GetVoidToGenericCastingImpl(void)
     method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
     method->casting = NPY_UNSAFE_CASTING;
     method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
-    method->get_strided_loop = NULL;
+    method->get_strided_loop = &structured_to_nonstructured_get_loop;
 
     return (PyObject *)method;
 }
@@ -2761,6 +3003,56 @@ void_to_void_resolve_descriptors(
 }
 
 
+NPY_NO_EXPORT int
+void_to_void_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    if (context->descriptors[0]->names != NULL ||
+            context->descriptors[1]->names != NULL) {
+        int needs_api = 0;
+        if (get_fields_transfer_function(
+                aligned, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api) == NPY_FAIL) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    else if (context->descriptors[0]->subarray != NULL ||
+             context->descriptors[1]->subarray != NULL) {
+        int needs_api = 0;
+        if (get_subarray_transfer_function(
+                aligned, strides[0], strides[1],
+                context->descriptors[0], context->descriptors[1],
+                move_references, out_loop, out_transferdata,
+                &needs_api) == NPY_FAIL) {
+            return -1;
+        }
+        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
+    }
+    else {
+        /*
+         * This is a string-like copy of the two bytes (zero padding if
+         * necessary)
+         */
+        if (PyArray_GetStridedZeroPadCopyFn(
+                0, 0, strides[0], strides[1],
+                context->descriptors[0]->elsize, context->descriptors[1]->elsize,
+                out_loop, out_transferdata) == NPY_FAIL) {
+            return -1;
+        }
+        *flags = 0;
+    }
+    return 0;
+}
+
+
 /*
  * This initializes the void to void cast. Voids include structured dtypes,
  * which means that they can cast from and to any other dtype and, in that
@@ -2772,9 +3064,9 @@ PyArray_InitializeVoidToVoidCast(void)
     PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
     PyArray_DTypeMeta *dtypes[2] = {Void, Void};
     PyType_Slot slots[] = {
-            {NPY_METH_get_loop, NULL},
+            {NPY_METH_get_loop, &void_to_void_get_loop},
             {NPY_METH_resolve_descriptors, &void_to_void_resolve_descriptors},
-            {0,                 NULL}};
+            {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "void_to_void_cast",
             .casting = NPY_NO_CASTING,
@@ -2859,7 +3151,7 @@ PyArray_GetObjectToGenericCastingImpl(void)
     method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
     method->casting = NPY_UNSAFE_CASTING;
     method->resolve_descriptors = &object_to_any_resolve_descriptors;
-    method->get_strided_loop = NULL;
+    method->get_strided_loop = &object_to_any_get_loop;
 
     return (PyObject *)method;
 }
@@ -2915,9 +3207,35 @@ PyArray_GetGenericToObjectCastingImpl(void)
     method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
     method->casting = NPY_SAFE_CASTING;
     method->resolve_descriptors = &any_to_object_resolve_descriptors;
-    method->get_strided_loop = NULL;
+    method->get_strided_loop = &any_to_object_get_loop;
 
     return (PyObject *)method;
+}
+
+
+/*
+ * Casts within the object dtype is always just a plain copy/view.
+ * For that reason, this function might remain unimplemented.
+ */
+static int
+object_to_object_get_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        int NPY_UNUSED(aligned), int move_references,
+        npy_intp *NPY_UNUSED(strides),
+        PyArray_StridedUnaryOp **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    if (move_references) {
+        *out_loop = &_strided_to_strided_move_references;
+        *out_transferdata = NULL;
+    }
+    else {
+        *out_loop = &_strided_to_strided_copy_references;
+        *out_transferdata = NULL;
+    }
+    return 0;
 }
 
 
@@ -2931,8 +3249,8 @@ PyArray_InitializeObjectToObjectCast(void)
     PyArray_DTypeMeta *Object = PyArray_DTypeFromTypeNum(NPY_OBJECT);
     PyArray_DTypeMeta *dtypes[2] = {Object, Object};
     PyType_Slot slots[] = {
-            {NPY_METH_get_loop, NULL},
-            {0,                 NULL}};
+            {NPY_METH_get_loop, &object_to_object_get_loop},
+            {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "object_to_object_cast",
             .casting = NPY_NO_CASTING | _NPY_CAST_IS_VIEW,

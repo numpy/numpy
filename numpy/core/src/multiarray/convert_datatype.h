@@ -6,6 +6,9 @@
 extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 
 NPY_NO_EXPORT PyObject *
+PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to);
+
+NPY_NO_EXPORT PyObject *
 _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args);
 
 NPY_NO_EXPORT PyArray_VectorUnaryFunc *
@@ -72,6 +75,13 @@ legacy_same_dtype_resolve_descriptors(
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **given_descrs,
         PyArray_Descr **loop_descrs);
+
+NPY_NO_EXPORT int
+legacy_cast_get_strided_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references, npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT NPY_CASTING
 simple_cast_resolve_descriptors(

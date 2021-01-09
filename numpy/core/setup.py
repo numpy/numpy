@@ -468,14 +468,20 @@ def configuration(parent_package='',top_path=None):
             # Use relaxed stride checking
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+            else:
+                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 0))
 
             # Use bogus stride debug aid when relaxed strides are enabled
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
+            else:
+                moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 0))
 
             # Use the new experimental casting implementation in NumPy 1.20:
             if NPY_USE_NEW_CASTINGIMPL:
                 moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 1))
+            else:
+                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 0))
 
             # Get long double representation
             rep = check_long_double_representation(config_cmd)
@@ -788,6 +794,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
             join('src', 'multiarray', 'dtypemeta.h'),
+            join('src', 'multiarray', 'dtype_transfer.h'),
             join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'einsum_debug.h'),
             join('src', 'multiarray', 'einsum_sumprod.h'),
