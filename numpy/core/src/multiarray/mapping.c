@@ -946,11 +946,25 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
+                #if NPY_SIZEOF_PY_INTPTR_T != NPY_SIZEOF_OFF_T
+                // we should clear all bits in values before passing them
+                start = 0;
+                stop = 0;
+                step = 0;
+                n_steps = 0;
+                #endif
                 if (PySlice_GetIndicesEx(indices[i].object,
                                          PyArray_DIMS(self)[orig_dim],
-                                         &start, &stop, &step, &n_steps) < 0) {
+                                         (Py_ssize_t *)&start,
+                                         (Py_ssize_t *)&stop,
+                                         (Py_ssize_t *)&step,
+                                         (Py_ssize_t *)&n_steps) < 0) {
                     return -1;
                 }
+                #if NPY_SIZEOF_PY_INTPTR_T != NPY_SIZEOF_OFF_T
+                // propogate a sign
+                step = *(Py_ssize_t *)&step;
+                #endif
                 if (n_steps <= 0) {
                     /* TODO: Always points to start then, could change that */
                     n_steps = 0;

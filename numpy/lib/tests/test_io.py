@@ -107,7 +107,7 @@ class RoundtripTest:
             target_file.flush()
             target_file.seek(0)
 
-            if sys.platform == 'win32' and not isinstance(target_file, BytesIO):
+            if sys.platform in ('win32', 'OpenVMS') and not isinstance(target_file, BytesIO):
                 target_file.close()
 
             arr_reloaded = np.load(load_file, **load_kwds)

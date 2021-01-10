@@ -32,6 +32,7 @@ def find_f2py_commands():
         return ['f2py', 'f2py' + major, 'f2py' + major + '.' + minor]
 
 
+@pytest.mark.skipif(sys.platform == 'OpenVMS', reason="Cannot test f2py command on OpenVMS")
 @pytest.mark.skipif(is_inplace, reason="Cannot test f2py command inplace")
 @pytest.mark.xfail(reason="Test is unreliable")
 @pytest.mark.parametrize('f2py_cmd', find_f2py_commands())

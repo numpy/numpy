@@ -2065,7 +2065,8 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
     if (NIT_ITERSIZE(iter) == 1) {
         if (itflags & NPY_ITFLAG_HASINDEX) {
             axisdata = NIT_AXISDATA(iter);
-            NAD_PTRS(axisdata)[nop] = 0;
+            // reset the index, it is just beyond the pointers
+            *(npy_intp*)&(NAD_PTRS(axisdata)[nop]) = 0;
         }
         return;
     }
@@ -2083,7 +2084,8 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
             else {
                 NAD_STRIDES(axisdata)[nop] = indexstride;
             }
-            NAD_PTRS(axisdata)[nop] = 0;
+            // reset the index, it is just beyond the pointers
+            *(npy_intp*)&(NAD_PTRS(axisdata)[nop]) = 0;
             indexstride *= shape;
         }
     }
@@ -2100,7 +2102,8 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
             else {
                 NAD_STRIDES(axisdata)[nop] = indexstride;
             }
-            NAD_PTRS(axisdata)[nop] = 0;
+            // reset the index, it is just beyond the pointers
+            *(npy_intp*)&(NAD_PTRS(axisdata)[nop]) = 0;
             indexstride *= shape;
         }
     }

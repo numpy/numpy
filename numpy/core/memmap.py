@@ -210,6 +210,7 @@ class memmap(ndarray):
         # Import here to minimize 'import numpy' overhead
         import mmap
         import os.path
+        from os import fsync
         try:
             mode = mode_equivalents[mode]
         except KeyError as e:
@@ -253,6 +254,7 @@ class memmap(ndarray):
                 fid.seek(bytes - 1, 0)
                 fid.write(b'\0')
                 fid.flush()
+                fsync(fid.fileno())
 
             if mode == 'c':
                 acc = mmap.ACCESS_COPY

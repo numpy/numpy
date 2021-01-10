@@ -715,6 +715,7 @@ extern int npy_legacy_print_mode;
  * #name = cfloat, cdouble, clongdouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #vms_check_nan = 0, 0, 1#
  * #suff = f, d, l#
  */
 
@@ -730,7 +731,12 @@ legacy_@name@_format@kind@(@type@ val)
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
-    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+    if (
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+        // OpenVMS compiler has a bug: long double Nan is equal to any value
+        (!isnan(val.real)) &&
+#endif
+        val.real == 0.0 && npy_signbit(val.real) == 0) {
         PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
         res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, val.imag, 0);
         if (res == NULL) {
@@ -857,6 +863,7 @@ legacy_@name@_format@kind@(npy_@name@ val){
  * #name = float, double, longdouble#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #vms_check_nan = 0, 0, 1#
  */
 
 /* helper function choose scientific of fractional output, based on a cutoff */
@@ -896,7 +903,12 @@ c@name@type_@kind@(PyObject *self)
         return legacy_c@name@_format@kind@(val);
     }
 
-    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+    if (
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+        // OpenVMS compiler has a bug: long double Nan is equal to any value
+        (!isnan(val.real)) &&
+#endif
+        val.real == 0.0 && npy_signbit(val.real) == 0) {
         istr = @name@type_@kind@_either(val.imag, trim, trim, 0);
         if (istr == NULL) {
             return NULL;
@@ -2417,7 +2429,12 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1; /* assume general (user) scalars are readonly. */
+#else
     view->readonly = 1;  /* assume general (user) scalars are readonly. */
+#endif
     Py_INCREF(self);
     view->obj = self;
     view->buf = scalar_value(self, descr);
@@ -2462,7 +2479,12 @@ static int
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1;
+#else
     view->readonly = 1;
+#endif
     Py_INCREF(self);
     view->obj = self;
     view->buf = &(scalar->obval);
@@ -2501,7 +2523,12 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1;
+#else
     view->readonly = 1;
+#endif
     Py_INCREF(self);
     view->obj = self;
 
@@ -2570,7 +2597,12 @@ static int
     view->shape = &length;
     view->strides = NULL;
     view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1;
+#else
     view->readonly = 1;
+#endif
     Py_INCREF(self);
     view->obj = self;
 

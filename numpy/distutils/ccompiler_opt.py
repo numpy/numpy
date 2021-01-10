@@ -209,7 +209,12 @@ class _Config:
             native = None,
             opt = '/O2',
             werror = '/WX'
-        )
+        ),
+        openvms = dict(
+            native = None,
+            opt = '/OPTIMIZE',
+            werror = '/WARNINGS=ERRORS=ALL'
+        ),
     )
     conf_min_features = dict(
         x86 = "SSE SSE2",

@@ -151,6 +151,13 @@ struct Namelist {
 	};
 typedef struct Namelist Namelist;
 
+#ifdef __VMS
+// OpenVMS has different defines
+#undef abs
+#undef min
+#undef max
+#endif
+
 #ifndef abs
 #define abs(x) ((x) >= 0 ? (x) : -(x))
 #endif

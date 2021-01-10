@@ -1,6 +1,13 @@
+#ifndef __MT19937__DEFINED
+#define __MT19937__DEFINED
+
+#ifndef __VMS
 #pragma once
+#endif
+
 #include <math.h>
 #include <stdint.h>
+
 
 #ifdef _WIN32
 #define inline __forceinline
@@ -59,3 +66,5 @@ static inline double mt19937_next_double(mt19937_state *state) {
 }
 
 void mt19937_jump(mt19937_state *state);
+
+#endif

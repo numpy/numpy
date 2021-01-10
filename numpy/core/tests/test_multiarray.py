@@ -207,7 +207,7 @@ class TestFlags:
             a[2] = 10
             # only warn once
             assert_(len(w) == 1)
-    
+
     @pytest.mark.parametrize(["flag", "flag_value", "writeable"],
             [("writeable", True, True),
              # Delete _warn_on_write after deprecation and simplify
@@ -922,6 +922,7 @@ class TestCreation:
             assert_equal(np.count_nonzero(d), 0)
 
     @pytest.mark.slow
+    @pytest.mark.skipif(sys.platform == 'OpenVMS', reason = 'Too big for OpenVMS')
     def test_zeros_big(self):
         # test big array as they might be allocated different by the system
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
@@ -1418,11 +1419,11 @@ class TestStructured:
         a = np.array([(1,2)], dtype=[('a', 'i4'), ('b', 'i4')])
         a[['a', 'b']] = a[['b', 'a']]
         assert_equal(a[0].item(), (2,1))
-    
+
     def test_scalar_assignment(self):
         with assert_raises(ValueError):
-            arr = np.arange(25).reshape(5, 5)                                                                               
-            arr.itemset(3)  
+            arr = np.arange(25).reshape(5, 5)
+            arr.itemset(3)
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
@@ -4906,6 +4907,7 @@ class TestIO:
         with open(self.filename, "r+b") as f:
             f.seek(d.nbytes)
             d.tofile(f)
+            os.fsync(f.fileno())
             assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
         # check append mode (gh-8329)
         open(self.filename, "w").close() # delete file contents
@@ -8575,7 +8577,7 @@ def test_equal_override():
         assert_equal(my_always_equal != array, 'ne')
         assert_equal(array != my_always_equal, 'ne')
 
-
+@pytest.mark.skipif(sys.platform == 'OpenVMS', reason = 'We should use special func for each type')
 def test_npymath_complex():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
@@ -8595,6 +8597,25 @@ def test_npymath_complex():
                 assert_allclose(got, expected)
 
 
+def test_npymath_complex_by_type():
+    # Smoketest npymath functions
+    from numpy.core._multiarray_tests import (
+        npy_cabsf, npy_cargf, npy_cabs, npy_carg, npy_cabsl, npy_cargl)
+
+    funcs = {np.absolute: (npy_cabsf, npy_cabs, npy_cabsl),
+             np.angle: (npy_cargf, npy_carg, npy_cargl)}
+    vals = (1, np.inf, -np.inf, np.nan)
+    types = (np.complex64, np.complex128, np.clongdouble)
+
+    for x, y in itertools.product(vals, vals):
+        for npfun, funtuple in funcs.items():
+            for t, fun in zip(types, funtuple):
+                z = t(complex(x, y))
+                got = fun(z)
+                expected = npfun(z)
+                assert_allclose(got, expected)
+
+@pytest.mark.skipif(sys.platform == 'OpenVMS', reason = 'We should use special func for each type')
 def test_npymath_real():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
@@ -8615,6 +8636,30 @@ def test_npymath_real():
                 got = fun(z)
                 expected = npfun(z)
                 assert_allclose(got, expected)
+
+def test_npymath_real_by_type():
+    # Smoketest npymath functions
+    from numpy.core._multiarray_tests import (
+        npy_log10f, npy_coshf, npy_sinhf, npy_tanf, npy_tanhf,
+        npy_log10, npy_cosh, npy_sinh, npy_tan, npy_tanh,
+        npy_log10l, npy_coshl, npy_sinhl, npy_tanl, npy_tanhl,)
+
+    funcs = {np.log10: (npy_log10f,npy_log10,npy_log10f),
+             np.cosh: (npy_coshf,npy_cosh,npy_coshl),
+             np.sinh: (npy_sinhf,npy_sinh,npy_sinhl),
+             np.tan: (npy_tanf,npy_tan,npy_tanl),
+             np.tanh: (npy_tanhf,npy_tanh,npy_tanhl)}
+    vals = (1, np.inf, -np.inf, np.nan)
+    types = (np.float32, np.float64, np.longdouble)
+
+    with np.errstate(all='ignore'):
+        for x, t in itertools.product(vals, types):
+            for npfun, funtuple in funcs.items():
+                for t, fun in zip(types, funtuple):
+                    z = t(x)
+                    got = fun(z)
+                    expected = npfun(z)
+                    assert_allclose(got, expected)
 
 def test_uintalignment_and_alignment():
     # alignment code needs to satisfy these requirements:

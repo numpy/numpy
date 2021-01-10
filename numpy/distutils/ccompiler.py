@@ -286,7 +286,10 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
             display.append("Fortran %s compiler: %s" % (fc, ' '.join(fcomp)))
         display = '\n'.join(display)
     else:
-        ccomp = self.compiler_so
+        if self.compiler_type == 'openvms':
+            ccomp = self.compiler_c
+        else:
+            ccomp = self.compiler_so
         display = "C compiler: %s\n" % (' '.join(ccomp),)
     log.info(display)
     macros, objects, extra_postargs, pp_opts, build = \

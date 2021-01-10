@@ -595,7 +595,6 @@ replacing it with the new definition::
 
 which is compatible with all NumPy versions.
 
-
 Size of ``np.ndarray`` and ``np.void_`` changed
 -----------------------------------------------
 The size of the ``PyArrayObject`` and ``PyVoidScalarObject``

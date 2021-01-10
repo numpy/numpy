@@ -552,7 +552,7 @@ PyArray_AssignFromCache_Recursive(
             else {
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
-                if (view < 0) {
+                if ((npy_intp)view < 0) {
                     goto fail;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
@@ -1236,7 +1236,12 @@ _array_from_buffer_3118(PyObject *memoryview)
         }
     }
 
+#ifdef __VMS
+    // 'readonly' is reserved word for OpenVMS compiler
+    flags = NPY_ARRAY_BEHAVED & (view->readonly$ ? ~NPY_ARRAY_WRITEABLE : ~0);
+#else
     flags = NPY_ARRAY_BEHAVED & (view->readonly ? ~NPY_ARRAY_WRITEABLE : ~0);
+#endif
     r = PyArray_NewFromDescrAndBase(
             &PyArray_Type, descr,
             nd, shape, strides, view->buf,

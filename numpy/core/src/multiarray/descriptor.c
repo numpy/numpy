@@ -256,7 +256,7 @@ static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
     if (PyTuple_GET_SIZE(obj) != 2) {
-        PyErr_Format(PyExc_TypeError, 
+        PyErr_Format(PyExc_TypeError,
 	        "Tuple must have size 2, but has size %zd",
 	        PyTuple_GET_SIZE(obj));
         return NULL;
@@ -448,8 +448,8 @@ _convert_from_array_descr(PyObject *obj, int align)
     for (int i = 0; i < n; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
-            PyErr_Format(PyExc_TypeError, 
-			 "Field elements must be 2- or 3-tuples, got '%R'", 
+            PyErr_Format(PyExc_TypeError,
+			 "Field elements must be 2- or 3-tuples, got '%R'",
 			 item);
             goto fail;
         }
@@ -460,7 +460,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
-                PyErr_Format(PyExc_TypeError, 
+                PyErr_Format(PyExc_TypeError,
 				"If a tuple, the first element of a field tuple must have "
 				"two elements, not %zd",
 			       	PyTuple_GET_SIZE(name));
@@ -474,7 +474,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
         }
         else {
-            PyErr_SetString(PyExc_TypeError, 
+            PyErr_SetString(PyExc_TypeError,
 			            "First element of field tuple is "
 			            "neither a tuple nor str");
             goto fail;
@@ -540,11 +540,20 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         if (align) {
+#ifdef __VMS
+            // '_align' is reserved word for OpenVMS compiler
+            int _align$ = conv->alignment;
+            if (_align$ > 1) {
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align$);
+            }
+            maxalign = PyArray_MAX(maxalign, _align$);
+#else
             int _align = conv->alignment;
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = PyArray_MAX(maxalign, _align);
+#endif
         }
         PyObject *tup = PyTuple_New((title == NULL ? 2 : 3));
         if (tup == NULL) {
@@ -668,11 +677,20 @@ _convert_from_list(PyObject *obj, int align)
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         if (align) {
+#ifdef __VMS
+            // '_align' is reserved word for OpenVMS compiler
+            int _align$ = conv->alignment;
+            if (_align$ > 1) {
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align$);
+            }
+            maxalign = PyArray_MAX(maxalign, _align$);
+#else
             int _align = conv->alignment;
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = PyArray_MAX(maxalign, _align);
+#endif
         }
         PyObject *size_obj = PyLong_FromLong((long) totalsize);
         if (!size_obj) {
@@ -1152,11 +1170,20 @@ _convert_from_dict(PyObject *obj, int align)
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
+#ifdef __VMS
+        // '_align' is reserved word for OpenVMS compiler
+        int _align$ = 1;
+        if (align) {
+            _align$ = newdescr->alignment;
+            maxalign = PyArray_MAX(maxalign,_align$);
+        }
+#else
         int _align = 1;
         if (align) {
             _align = newdescr->alignment;
             maxalign = PyArray_MAX(maxalign,_align);
         }
+#endif
         if (offsets) {
             PyObject *off = PyObject_GetItem(offsets, ind);
             if (!off) {
@@ -1201,9 +1228,16 @@ _convert_from_dict(PyObject *obj, int align)
             }
         }
         else {
+#ifdef __VMS
+            // '_align' is reserved word for OpenVMS compiler
+            if (align && _align$ > 1) {
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align$);
+            }
+#else
             if (align && _align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
+#endif
             PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(totalsize));
             totalsize += newdescr->elsize;
         }

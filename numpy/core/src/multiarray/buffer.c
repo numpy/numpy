@@ -493,8 +493,10 @@ _buffer_info_new(PyObject *obj, int flags)
             info->strides = NULL;
         }
         else {
-            info->shape = (npy_intp *)((char *)info + sizeof(_buffer_info_t));
+            info->shape = (Py_ssize_t *)((char *)info + sizeof(_buffer_info_t));
+#ifndef __VMS
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
+#endif
             info->strides = info->shape + PyArray_NDIM(arr);
 
 #if NPY_RELAXED_STRIDES_CHECKING
@@ -807,8 +809,14 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
      * buffer is requested since `PyArray_FailUnlessWriteable` is called above
      * (and clears the `NPY_ARRAY_WARN_ON_WRITE` flag).
      */
+#ifdef __VMS
+    // 'readonly' is reserved word for OpenVMS compiler
+    view->readonly$ = (!PyArray_ISWRITEABLE(self) ||
+                      PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
+#else
     view->readonly = (!PyArray_ISWRITEABLE(self) ||
                       PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
+#endif
     view->internal = NULL;
     view->len = PyArray_NBYTES(self);
     if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
@@ -859,7 +867,12 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->suboffsets = NULL;
     view->len = scalar->descr->elsize;
     view->itemsize = scalar->descr->elsize;
+#ifdef __VMS
+    // 'readonly' is reserved word for OpenVMS compiler
+    view->readonly$ = 1;
+#else
     view->readonly = 1;
+#endif
     view->suboffsets = NULL;
     Py_INCREF(self);
     view->obj = self;

@@ -1,5 +1,6 @@
 import warnings
 import pytest
+import sys
 
 import numpy as np
 from numpy.testing import (
@@ -31,6 +32,8 @@ repr_precision = len(repr(np.longdouble(0.1)))
 # +2 from macro block starting around line 842 in scalartypes.c.src.
 @pytest.mark.skipif(LD_INFO.precision + 2 >= repr_precision,
                     reason="repr precision not enough to show eps")
+@pytest.mark.skipif(sys.platform == 'OpenVMS',
+                    reason="OpenVMS has long double but has no strtold()")
 def test_repr_roundtrip():
     # We will only see eps in repr if within printing precision.
     o = 1 + LD_INFO.eps

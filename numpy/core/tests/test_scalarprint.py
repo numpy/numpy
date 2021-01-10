@@ -204,7 +204,7 @@ class TestRealScalars:
 
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
-        if hasattr(np, 'float128'):
+        if hasattr(np, 'float128') and sys.platform != 'OpenVMS':
             tps.append(np.float128)
 
         fpos = np.format_float_positional

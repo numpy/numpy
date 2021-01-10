@@ -56,6 +56,27 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_PZEROF __npy_pzerof()
 #define NPY_NZEROF __npy_nzerof()
 
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT)
+/* Note: OpenVMS QNAN has a non-zero sign bit */
+extern double decc$gt_dinfinity;
+extern double decc$gt_dqnan;
+extern double decc$gt_dsnan;
+extern long double decc$gx_long_dbl_infinity;
+extern long double decc$gx_long_dbl_qnan;
+extern long double decc$gx_long_dbl_snan;
+
+#define NPY_INFINITY    decc$gt_dinfinity
+#define NPY_NAN         decc$gt_dsnan
+#define NPY_PZERO ((npy_double)NPY_PZEROF)
+#define NPY_NZERO ((npy_double)NPY_NZEROF)
+
+#define NPY_INFINITYL   decc$gx_long_dbl_infinity
+#define NPY_NANL        decc$gx_long_dbl_snan
+#define NPY_PZEROL ((npy_longdouble)NPY_PZEROF)
+#define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
+
+#else
+
 #define NPY_INFINITY ((npy_double)NPY_INFINITYF)
 #define NPY_NAN ((npy_double)NPY_NANF)
 #define NPY_PZERO ((npy_double)NPY_PZEROF)
@@ -65,6 +86,8 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_NANL ((npy_longdouble)NPY_NANF)
 #define NPY_PZEROL ((npy_longdouble)NPY_PZEROF)
 #define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
+
+#endif
 
 /*
  * Useful constants

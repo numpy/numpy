@@ -21,9 +21,14 @@ NPY_FINLINE float c_recip_f32(float a)
 { return 1.0f / a; }
 NPY_FINLINE float c_abs_f32(float a)
 {
+#ifdef __VMS
+    // the trick with 'add 0 ...' does not work in OpenVMS
+    return fabsf(a);
+#else
     const float tmp = a > 0 ? a : -a;
     /* add 0 to clear -0.0 */
     return tmp + 0;
+#endif
 }
 NPY_FINLINE float c_square_f32(float a)
 { return a * a; }
@@ -34,9 +39,14 @@ NPY_FINLINE double c_recip_f64(double a)
 { return 1.0 / a; }
 NPY_FINLINE double c_abs_f64(double a)
 {
+#ifdef __VMS
+    // the trick with 'add 0 ...' does not work in OpenVMS
+    return fabs(a);
+#else
     const double tmp = a > 0 ? a : -a;
     /* add 0 to clear -0.0 */
     return tmp + 0;
+#endif
 }
 NPY_FINLINE double c_square_f64(double a)
 { return a * a; }

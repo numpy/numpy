@@ -6,6 +6,7 @@ from numpy.testing import (
         )
 import threading
 import queue
+import sys
 
 
 def fft1(x):
@@ -286,8 +287,10 @@ class TestFFTThreadSafe:
 
         [x.join() for x in t]
         # Make sure all threads returned the correct value
+        # OpenVMS is too slow
+        timeout = 10 if sys.platform == 'OpenVMS' else 5
         for i in range(self.threads):
-            assert_array_equal(q.get(timeout=5), expected,
+            assert_array_equal(q.get(timeout=timeout), expected,
                 'Function returned wrong value in multithreaded context')
 
     def test_fft(self):

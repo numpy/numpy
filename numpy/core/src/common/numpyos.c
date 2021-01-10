@@ -13,6 +13,11 @@
 
 #include "npy_pycompat.h"
 
+#ifdef __VMS
+__int64 strtoll(const char *__nptr, char **__endptr, int __base);
+unsigned __int64 strtoull(const char *__nptr, char **__endptr, int __base);
+#endif
+
 #ifdef HAVE_STRTOLD_L
 #include <stdlib.h>
 #ifdef HAVE_XLOCALE_H
@@ -550,7 +555,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
         if (endptr != NULL) {
             *endptr = (char*)p;
         }
-        return NPY_NAN;
+        return NPY_NANL;    // long double NaN
     }
     else if (NumPyOS_ascii_strncasecmp(p, "inf", 3) == 0) {
         p += 3;
@@ -560,7 +565,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
         if (endptr != NULL) {
             *endptr = (char*)p;
         }
-        return result*NPY_INFINITY;
+        return result*NPY_INFINITYL;     // long double Inf
     }
     /* End of ##1 */
 

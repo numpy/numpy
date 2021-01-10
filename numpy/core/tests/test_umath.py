@@ -6,6 +6,8 @@ import pytest
 import sys
 from fractions import Fraction
 
+is_openvms = sys.platform == 'OpenVMS'
+
 import numpy.core.umath as ncu
 from numpy.core import _umath_tests as ncu_tests
 import numpy as np
@@ -380,11 +382,12 @@ class TestDivision:
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
             div = np.floor_divide(fnan, fone)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            if not (is_openvms and dtype == 'g'):
+                assert(np.isnan(div)), "dt: %s, div: %s" % (dtype, div)
             div = np.floor_divide(fone, fnan)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "dt: %s, div: %s" % (dtype, div)
             div = np.floor_divide(fnan, fzer)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "dt: %s, div: %s" % (dtype, div)
         # verify 1.0//0.0 computations return inf
         with np.errstate(divide='ignore'):
             z = np.floor_divide(y, x)
@@ -509,6 +512,7 @@ class TestRemainder:
         with np.errstate(invalid='raise', over='ignore'):
             assert_raises(FloatingPointError, np.divmod, 4, a)
 
+    @pytest.mark.skipif(is_openvms, reason = 'OpenVMS has a lot of bugs in corner cases')
     def test_float_divmod_corner_cases(self):
         # check nan cases
         for dt in np.typecodes['Float']:
@@ -555,43 +559,44 @@ class TestRemainder:
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
-            sup.filter(RuntimeWarning, "invalid value encountered in fmod")
-            for dt in np.typecodes['Float']:
-                fone = np.array(1.0, dtype=dt)
-                fzer = np.array(0.0, dtype=dt)
-                finf = np.array(np.inf, dtype=dt)
-                fnan = np.array(np.nan, dtype=dt)
-                rem = np.remainder(fone, fzer)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                # MSVC 2008 returns NaN here, so disable the check.
-                #rem = np.remainder(fone, finf)
-                #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
-                rem = np.remainder(finf, fone)
-                fmod = np.fmod(finf, fone)
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                rem = np.remainder(finf, finf)
-                fmod = np.fmod(finf, fone)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                rem = np.remainder(finf, fzer)
-                fmod = np.fmod(finf, fzer)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                rem = np.remainder(fone, fnan)
-                fmod = np.fmod(fone, fnan)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                rem = np.remainder(fnan, fzer)
-                fmod = np.fmod(fnan, fzer)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
-                rem = np.remainder(fnan, fone)
-                fmod = np.fmod(fnan, fone)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
+        if not is_openvms:  # OpenVMS has a lot of bugs in nans, inf
+            with suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+                sup.filter(RuntimeWarning, "invalid value encountered in fmod")
+                for dt in np.typecodes['Float']:
+                    fone = np.array(1.0, dtype=dt)
+                    fzer = np.array(0.0, dtype=dt)
+                    finf = np.array(np.inf, dtype=dt)
+                    fnan = np.array(np.nan, dtype=dt)
+                    rem = np.remainder(fone, fzer)
+                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                    # MSVC 2008 returns NaN here, so disable the check.
+                    #rem = np.remainder(fone, finf)
+                    #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
+                    rem = np.remainder(finf, fone)
+                    fmod = np.fmod(finf, fone)
+                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                    rem = np.remainder(finf, finf)
+                    fmod = np.fmod(finf, fone)
+                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                    rem = np.remainder(finf, fzer)
+                    fmod = np.fmod(finf, fzer)
+                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                    rem = np.remainder(fone, fnan)
+                    fmod = np.fmod(fone, fnan)
+                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                    rem = np.remainder(fnan, fzer)
+                    fmod = np.fmod(fnan, fzer)
+                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
+                    rem = np.remainder(fnan, fone)
+                    fmod = np.fmod(fnan, fone)
+                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
 
 
 class TestCbrt:
@@ -600,11 +605,16 @@ class TestCbrt:
 
     def test_cbrt(self):
         x = np.array([1., 2., -3., np.inf, -np.inf])
-        assert_almost_equal(np.cbrt(x**3), x)
+        if is_openvms:
+            # -inf ** 3 === NaN
+            assert_almost_equal(np.cbrt(x[:-1]**3), x[:-1])
+        else:
+            assert_almost_equal(np.cbrt(x**3), x)
 
         assert_(np.isnan(np.cbrt(np.nan)))
         assert_equal(np.cbrt(np.inf), np.inf)
-        assert_equal(np.cbrt(-np.inf), -np.inf)
+        if not is_openvms:
+            assert_equal(np.cbrt(-np.inf), -np.inf)
 
 
 class TestPower:
@@ -785,7 +795,8 @@ class TestLog2:
             assert_equal(np.log2(0.), -np.inf)
             assert_(w[0].category is RuntimeWarning)
             assert_(w[1].category is RuntimeWarning)
-            assert_(w[2].category is RuntimeWarning)
+            if not is_openvms:
+                assert_(w[2].category is RuntimeWarning)
 
 
 class TestExp2:
@@ -919,8 +930,9 @@ class TestSpecialFloats:
                 yf = np.array(y, dtype=dt)
                 assert_equal(np.log(yf), xf)
 
-        with np.errstate(divide='raise'):
-            assert_raises(FloatingPointError, np.log, np.float32(0.))
+        if not is_openvms:
+            with np.errstate(divide='raise'):
+                assert_raises(FloatingPointError, np.log, np.float32(0.))
 
         with np.errstate(invalid='raise'):
             assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
@@ -941,11 +953,12 @@ class TestSpecialFloats:
                 assert_equal(np.sin(yf), xf)
                 assert_equal(np.cos(yf), xf)
 
-        with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, np.sin, np.float32(-np.inf))
-            assert_raises(FloatingPointError, np.sin, np.float32(np.inf))
-            assert_raises(FloatingPointError, np.cos, np.float32(-np.inf))
-            assert_raises(FloatingPointError, np.cos, np.float32(np.inf))
+        if not is_openvms:
+            with np.errstate(invalid='raise'):
+                assert_raises(FloatingPointError, np.sin, np.float32(-np.inf))
+                assert_raises(FloatingPointError, np.sin, np.float32(np.inf))
+                assert_raises(FloatingPointError, np.cos, np.float32(-np.inf))
+                assert_raises(FloatingPointError, np.cos, np.float32(np.inf))
 
     def test_sqrt_values(self):
         with np.errstate(all='ignore'):
@@ -3105,12 +3118,14 @@ class TestComplexFunctions:
 
             z = x.astype(dtype)
             d = np.absolute(np.arctanh(x)/np.arctanh(z).real - 1)
-            assert_(np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
+            if not (is_openvms and dtype == np.longcomplex):
+                assert_(np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
                                       'arctanh'))
 
             z = (1j*x).astype(dtype)
             d = np.absolute(np.arctanh(x)/np.arctan(z).imag - 1)
-            assert_(np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
+            if not (is_openvms and dtype == np.longcomplex):
+                assert_(np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
                                       'arctan'))
 
         # The switchover was chosen as 1e-3; hence there can be up to

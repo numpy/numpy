@@ -1,6 +1,7 @@
 import os
 import platform
 import sys
+import re
 from os.path import join
 
 from numpy.distutils.system_info import platform_bits
@@ -8,6 +9,18 @@ from numpy.distutils.system_info import platform_bits
 is_msvc = (platform.platform().startswith('Windows') and
            platform.python_compiler().startswith('MS'))
 
+is_openvms = (platform.platform().startswith('OpenVMS'))
+
+if is_openvms:
+    def get_export_symbols_from_h(header_path):
+        regxp = re.compile(r'DECLDIR ((\S+) )+(\S+?)\s*\(')
+        symbols = []
+        with open(header_path) as fid:
+            for line in fid:
+                m = regxp.search(line)
+                if m:
+                    symbols.append(m[3])
+        return symbols
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
@@ -50,6 +63,16 @@ def configuration(parent_package='', top_path=None):
         # Some bit generators require c99
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
+    if is_openvms:
+        EXTRA_COMPILE_ARGS = [
+            '/WARN=DISABLE=('   \
+                'MACROREDEF,'   \
+                'INTCONSTTRUNC,'\
+                'VOIDRETURN1)'  \
+            '/STAND=C99',
+            '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
+            ]
+
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
     PCG64_DEFS = []
@@ -65,12 +88,22 @@ def configuration(parent_package='', top_path=None):
         'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
+    EXTRA_COMPILE_ARGS = []
+    if is_msvc:
+        EXTRA_COMPILE_ARGS = ['/GL-']
+    elif is_openvms:
+        EXTRA_COMPILE_ARGS = [
+            '/WARN=DISABLE=('\
+            'MACROREDEF,'   \
+            'INTCONSTTRUNC,'\
+            'VOIDRETURN1'\
+            ')']
     config.add_installed_library('npyrandom',
         sources=npyrandom_sources,
         install_dir='lib',
         build_info={
             'include_dirs' : [],  # empty list required for creating npyrandom.h
-            'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+            'extra_compiler_args' : EXTRA_COMPILE_ARGS,
         })
 
     for gen in ['mt19937']:
@@ -114,6 +147,10 @@ def configuration(parent_package='', top_path=None):
         config.add_data_files(f'{gen}.pxd')
     for gen in ['_generator', '_bounded_integers']:
         # gen.pyx, src/distributions/distributions.c
+        export_symbols = []
+        if is_openvms and gen == '_generator':
+            distributions_h_path = os.path.join(os.path.dirname(__file__), '../core/include/numpy/random', 'distributions.h')
+            export_symbols = get_export_symbols_from_h(distributions_h_path)
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
                              libraries=EXTRA_LIBRARIES,
@@ -122,6 +159,7 @@ def configuration(parent_package='', top_path=None):
                              extra_link_args=EXTRA_LINK_ARGS,
                              depends=depends + [f'{gen}.pyx'],
                              define_macros=defs,
+                             export_symbols=export_symbols,
                              )
     config.add_data_files('_bounded_integers.pxd')
     config.add_extension('mtrand',
