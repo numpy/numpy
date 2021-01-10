@@ -259,7 +259,7 @@ class _Config:
         AVX512_SKX = dict(
             interest=42, implies="AVX512CD", group="AVX512VL AVX512BW AVX512DQ",
             detect="AVX512_SKX", implies_detect=False,
-            extra_checks="AVX512BW_MASK"
+            extra_checks="AVX512BW_MASK AVX512DQ_MASK"
         ),
         AVX512_CLX = dict(
             interest=43, implies="AVX512_SKX", group="AVX512VNNI",
