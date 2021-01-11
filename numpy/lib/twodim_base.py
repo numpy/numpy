@@ -894,7 +894,10 @@ def tril_indices(n, k=0, m=None):
            [-10, -10, -10, -10]])
 
     """
-    return nonzero(tri(n, m, k=k, dtype=bool))
+    tri = np.tri(n, m=m, k=k, dtype=bool)
+
+    return tuple(np.broadcast_to(inds, tri.shape)[tri]
+                 for inds in np.indices(tri.shape, sparse=True))
 
 
 def _trilu_indices_form_dispatcher(arr, k=None):
@@ -1010,7 +1013,10 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
-    return nonzero(~tri(n, m, k=k-1, dtype=bool))
+    tri = ~np.tri(n, m, k=k - 1, dtype=bool)
+
+    return tuple(np.broadcast_to(inds, tri.shape)[tri]
+                 for inds in np.indices(tri.shape, sparse=True))
 
 
 @array_function_dispatch(_trilu_indices_form_dispatcher)
