@@ -1,6 +1,7 @@
 def concat(arrays, /, *, axis=0):
-    from .. import concat
-    return concat(arrays, axis=axis)
+    # Note: the function name is different here
+    from .. import concatenate
+    return concatenate(arrays, axis=axis)
 
 def expand_dims(x, axis, /):
     from .. import expand_dims

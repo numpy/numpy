@@ -7,7 +7,8 @@ def cross(x1, x2, /, *, axis=-1):
     return cross(x1, x2, axis=axis)
 
 def det(x, /):
-    from .. import det
+    # Note: this function is being imported from a nondefault namespace
+    from ..linalg import det
     return det(x)
 
 def diagonal(x, /, *, axis1=0, axis2=1, offset=0):
@@ -31,7 +32,8 @@ def diagonal(x, /, *, axis1=0, axis2=1, offset=0):
 #     return einsum()
 
 def inv(x):
-    from .. import inv
+    # Note: this function is being imported from a nondefault namespace
+    from ..linalg import inv
     return inv(x)
 
 # def lstsq():
@@ -51,7 +53,8 @@ def inv(x):
 #     return matrix_rank()
 
 def norm(x, /, *, axis=None, keepdims=False, ord=None):
-    from .. import norm
+    # Note: this function is being imported from a nondefault namespace
+    from ..linalg import norm
     return norm(x, axis=axis, keepdims=keepdims, ord=ord)
 
 def outer(x1, x2, /):

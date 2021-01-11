@@ -3,36 +3,43 @@ def abs(x, /):
     return abs(x)
 
 def acos(x, /):
-    from .. import acos
-    return acos(x)
+    # Note: the function name is different here
+    from .. import arccos
+    return arccos(x)
 
 def acosh(x, /):
-    from .. import acosh
-    return acosh(x)
+    # Note: the function name is different here
+    from .. import arccosh
+    return arccosh(x)
 
 def add(x1, x2, /):
     from .. import add
     return add(x1, x2)
 
 def asin(x, /):
-    from .. import asin
-    return asin(x)
+    # Note: the function name is different here
+    from .. import arcsin
+    return arcsin(x)
 
 def asinh(x, /):
-    from .. import asinh
-    return asinh(x)
+    # Note: the function name is different here
+    from .. import arcsinh
+    return arcsinh(x)
 
 def atan(x, /):
-    from .. import atan
-    return atan(x)
+    # Note: the function name is different here
+    from .. import arctan
+    return arctan(x)
 
 def atan2(x1, x2, /):
-    from .. import atan2
-    return atan2(x1, x2)
+    # Note: the function name is different here
+    from .. import arctan2
+    return arctan2(x1, x2)
 
 def atanh(x, /):
-    from .. import atanh
-    return atanh(x)
+    # Note: the function name is different here
+    from .. import arctanh
+    return arctanh(x)
 
 def bitwise_and(x1, x2, /):
     from .. import bitwise_and
@@ -171,8 +178,9 @@ def positive(x, /):
     return positive(x)
 
 def pow(x1, x2, /):
-    from .. import pow
-    return pow(x1, x2)
+    # Note: the function name is different here
+    from .. import power
+    return power(x1, x2)
 
 def remainder(x1, x2, /):
     from .. import remainder
