@@ -15,9 +15,12 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
+    TYPE_CHECKING,
 )
 
-__all__ = ["_GenericAlias"]
+import numpy as np
+
+__all__ = ["_GenericAlias", "NDArray"]
 
 _T = TypeVar("_T", bound="_GenericAlias")
 
@@ -192,3 +195,14 @@ if sys.version_info >= (3, 9):
     _GENERIC_ALIAS_TYPE = (_GenericAlias, types.GenericAlias)
 else:
     _GENERIC_ALIAS_TYPE = (_GenericAlias,)
+
+ScalarType = TypeVar("ScalarType", bound=np.generic)
+
+if TYPE_CHECKING:
+    NDArray = np.ndarray[Any, np.dtype[ScalarType]]
+elif sys.version_info >= (3, 9):
+    _DType = types.GenericAlias(np.dtype, (ScalarType,))
+    NDArray = types.GenericAlias(np.ndarray, (Any, _DType))
+else:
+    _DType = _GenericAlias(np.dtype, (ScalarType,))
+    NDArray = _GenericAlias(np.ndarray, (Any, _DType))

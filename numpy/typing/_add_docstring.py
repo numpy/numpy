@@ -3,6 +3,8 @@
 import re
 import textwrap
 
+from ._generic_alias import NDArray
+
 _docstrings_list = []
 
 
@@ -90,6 +92,35 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
         >>> def as_dtype(d: npt.DTypeLike) -> np.dtype:
         ...     return np.dtype(d)
+
+    """)
+
+add_newdoc('NDArray', repr(NDArray),
+    """
+    A :term:`generic <generic type>` version of
+    `np.ndarray[Any, np.dtype[~ScalarType]] <numpy.ndarray>`.
+
+    Can be used during runtime for typing arrays with a given dtype
+    and unspecified shape.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> print(npt.NDArray)
+        numpy.ndarray[typing.Any, numpy.dtype[~ScalarType]]
+
+        >>> print(npt.NDArray[np.float64])
+        numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
+
+        >>> NDArrayInt = npt.NDArray[np.int_]
+        >>> a: NDArrayInt = np.arange(10)
+
+        >>> def func(a: npt.ArrayLike) -> npt.NDArray[Any]:
+        ...     return np.array(a)
 
     """)
 
