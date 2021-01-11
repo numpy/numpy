@@ -2737,13 +2737,10 @@ def analyzevars(block):
                     star = '*'
                     if d == ':':
                         star = ':'
-                    if d in params:
+                    if ((d in params) or
+                            (d.find("(") != -1 and d[:d.find("(")] in params)):
                         # the dimension for this variable depends on a
-                        # previously defined (scalar) parameter
-                        d = str(params[d])
-                    if d.find("(") != -1 and d[:d.find("(")] in params:
-                        # the dimension for this variable depends on a
-                        # previously defined (array) parameter
+                        # previously defined parameter
                         d = param_parse(d, params)
                     for p in list(params.keys()):
                         re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
@@ -3066,36 +3063,40 @@ def param_parse(d, params):
 
     * If the line being analyzed is
 
+      `integer, parameter, dimension(pa) :: pb = (/1, 2, 3/)`
+
+      then `d = 'pa'`; since `pa` is a previously parsed parameter,
+      and `pa = 3`, we call `param_parse` recursively, to obtain
+
+    >>> d = 'pa'
+    >>> params = {'pa': 3}
+    >>> param_parse(d, params)
+    3
+
+    * If the line being analyzed is
+
       `integer, parameter, dimension(pa(1)) :: pb = (/1, 2, 3/)`
 
-      then `d = pa(1)`; since `pa` is a previously parsed parameter,
+      then `d = 'pa(1)'`; since `pa` is a previously parsed parameter,
       and `pa(1) = 3`, we call `param_parse` recursively, to obtain
 
     >>> d = 'pa(1)'
     >>> params = dict(pa={1: 3, 2: 5})
     >>> param_parse(d, params)
     3
-
     """
     if d.find("(") != -1:
+        # this dimension expression is an array
         dname = d[:d.find("(")]
         ddims = d[d.find("(")+1:d.rfind(")")]
-    else:
-        return str(d)
-    if '(' in ddims:
-        # this dimension expression is an array element
-        if ddims[:ddims.find("(")] in params:
-            # this dimension expression is also a parameter;
-            # parse it recursively
-            index = int(param_parse(ddims, params))
-            return str(params[dname][index])
-    elif ddims in params:
-        # Reached the bottom of the recursion
-        index = params[ddims]
+        # this dimension expression is also a parameter;
+        # parse it recursively
+        index = int(param_parse(ddims, params))
         return str(params[dname][index])
+    elif d in params:
+        return str(params[d])
     else:
-        # ddims is a scalar. this means we should just parse it.
-        return str(params[dname][int(ddims)])
+        return str(int(d))
 
 
 def expr2name(a, block, args=[]):
