@@ -355,6 +355,7 @@ from ._array_like import (
     _ArrayLikeBytes_co,
 )
 from ._generic_alias import (
+    NDArray as NDArray,
     _GenericAlias,
 )
 
