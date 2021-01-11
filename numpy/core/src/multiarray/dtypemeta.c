@@ -400,9 +400,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES);
+    assert(cls->type_num < NPY_NTYPES && cls != other);
     if (!other->legacy || (!PyTypeNum_ISNUMBER(other->type_num) &&
-            (cls->type_num == NPY_STRING && other->type_num == NPY_UNICODE))) {
+            /* Not numeric so defer unless cls is unicode and other is string */
+            !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
