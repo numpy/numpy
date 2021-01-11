@@ -354,6 +354,9 @@ from ._array_like import (
     _ArrayLikeStr_co,
     _ArrayLikeBytes_co,
 )
+from ._generic_alias import (
+    _GenericAlias,
+)
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings
