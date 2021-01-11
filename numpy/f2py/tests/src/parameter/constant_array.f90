@@ -5,13 +5,14 @@ subroutine foo_array(x, y, z)
   integer, parameter :: pa = 2
   integer, parameter :: intparamarray(2) = (/ 3, 5 /)
   integer, parameter, dimension(pa) :: pb = (/ 2, 10 /)
+  integer, parameter, dimension(intparamarray(1)) :: pc = (/ 2, 10, 20 /)
   real(dp), parameter :: doubleparamarray(3) = (/ 3.14_dp, 4._dp, 6.44_dp /)
   real(dp), intent(inout) :: x(intparamarray(1))
   real(dp), intent(inout) :: y(intparamarray(2))
   real(dp), intent(out) :: z
 
   x = x/pb(2)
-  y = y*pb(2)
+  y = y*pc(2)
   z = doubleparamarray(1)*doubleparamarray(2) + doubleparamarray(3)
 
   return

@@ -2742,13 +2742,6 @@ def analyzevars(block):
                         # the dimension for this variable depends on a
                         # previously defined parameter
                         d = param_parse(d, params)
-                    for p in list(params.keys()):
-                        re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
-                        m = re_1.match(d)
-                        while m:
-                            d = m.group('before') + \
-                                str(params[p]) + m.group('after')
-                            m = re_1.match(d)
                     if d == star:
                         dl = [star]
                     else:
@@ -3096,6 +3089,13 @@ def param_parse(d, params):
     elif d in params:
         return str(params[d])
     else:
+        for p in list(params.keys()):
+            re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
+            m = re_1.match(d)
+            while m:
+                d = m.group('before') + \
+                    str(params[p]) + m.group('after')
+                m = re_1.match(d)
         return str(int(d))
 
 
