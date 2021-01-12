@@ -8,7 +8,7 @@ def cross(x1, x2, /, *, axis=-1):
 
 def det(x, /):
     # Note: this function is being imported from a nondefault namespace
-    return np.det(x)
+    return np.linalg.det(x)
 
 def diagonal(x, /, *, axis1=0, axis2=1, offset=0):
     return np.diagonal(x, axis1=axis1, axis2=axis2, offset=offset)
@@ -27,7 +27,7 @@ def diagonal(x, /, *, axis1=0, axis2=1, offset=0):
 
 def inv(x):
     # Note: this function is being imported from a nondefault namespace
-    return np.inv(x)
+    return np.linalg.inv(x)
 
 # def lstsq():
 #     return np.lstsq()
@@ -46,7 +46,7 @@ def norm(x, /, *, axis=None, keepdims=False, ord=None):
     # Note: this is different from the default behavior
     if axis == None and x.ndim > 2:
         x = x.flatten()
-    return np.norm(x, axis=axis, keepdims=keepdims, ord=ord)
+    return np.linalg.norm(x, axis=axis, keepdims=keepdims, ord=ord)
 
 def outer(x1, x2, /):
     return np.outer(x1, x2)
