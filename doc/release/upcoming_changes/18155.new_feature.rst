@@ -1,0 +1,32 @@
+Added a protocol for representing nested sequences
+--------------------------------------------------
+
+The new `~numpy.typing.NestedSequence` protocol has been added to `numpy.typing`.
+Per its name, the protocol can be used in static type checking for
+representing `sequences <collections.abc.Sequence>` with arbitrary levels of nesting.
+
+For example:
+
+.. code-block:: python
+
+    from __future__ import annotations
+    from typing import Any, List, TYPE_CHECKING
+    import numpy as np
+    import numpy.typing as npt
+
+    def get_dtype(seq: npt.NestedSequence[int]) -> np.dtype[np.int_]:
+        return np.asarray(seq).dtype
+
+    a = func([1])
+    b = func([[1]])
+    c = func([[[1]]])
+    d = func([[[[1]]]])
+
+    if TYPE_CHECKING:
+        reveal_locals()
+        # note: Revealed local types are:
+        # note:     a: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+        # note:     b: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+        # note:     c: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+        # note:     d: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+
