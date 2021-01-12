@@ -46,20 +46,23 @@ def bitwise_and(x1, x2, /):
     return bitwise_and(x1, x2)
 
 def bitwise_left_shift(x1, x2, /):
-    from .. import bitwise_left_shift
-    return bitwise_left_shift(x1, x2)
+    # Note: the function name is different here
+    from .. import left_shift
+    return left_shift(x1, x2)
 
 def bitwise_invert(x, /):
-    from .. import bitwise_invert
-    return bitwise_invert(x)
+    # Note: the function name is different here
+    from .. import invert
+    return invert(x)
 
 def bitwise_or(x1, x2, /):
     from .. import bitwise_or
     return bitwise_or(x1, x2)
 
 def bitwise_right_shift(x1, x2, /):
-    from .. import bitwise_right_shift
-    return bitwise_right_shift(x1, x2)
+    # Note: the function name is different here
+    from .. import right_shift
+    return right_shift(x1, x2)
 
 def bitwise_xor(x1, x2, /):
     from .. import bitwise_xor
