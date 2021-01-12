@@ -16,3 +16,12 @@ reveal_type(add(f8, i8))  # E: {float64}
 reveal_type(add(f4, i8))  # E: {float64}
 reveal_type(add(f8, i4))  # E: {float64}
 reveal_type(add(f4, i4))  # E: {float32}
+
+
+def get_dtype(seq: npt.NestedSequence[int]) -> np.dtype[np.int_]:
+    return np.asarray(seq).dtype
+
+
+reveal_type(get_dtype([1]))  # E: numpy.dtype[{int_}]
+reveal_type(get_dtype([[1]]))  # E: numpy.dtype[{int_}]
+reveal_type(get_dtype([[[1]]]))  # E: numpy.dtype[{int_}]
