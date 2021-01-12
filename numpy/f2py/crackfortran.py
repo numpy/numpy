@@ -2561,6 +2561,7 @@ def get_parameters(vars, global_params={}):
             try:
                 params[n] = param_eval(n, vars[n], v, g_params, params)
             except Exception as msg:
+                params[n] = v
                 outmess('get_parameters: got "%s" on %s\n' % (msg, repr(n)))
 
             if isstring(vars[n]) and isinstance(params[n], int):
@@ -2737,11 +2738,13 @@ def analyzevars(block):
                     star = '*'
                     if d == ':':
                         star = ':'
-                    if ((d in params) or
-                            (d.find("(") != -1 and d[:d.find("(")] in params)):
+                    try:
                         # the dimension for this variable depends on a
                         # previously defined parameter
                         d = param_parse(d, params)
+                    except (ValueError, IndexError, KeyError):
+                        pass
+
                     if d == star:
                         dl = [star]
                     else:
@@ -3096,7 +3099,7 @@ def param_parse(d, params):
                 d = m.group('before') + \
                     str(params[p]) + m.group('after')
                 m = re_1.match(d)
-        return str(int(d))
+        return d
 
 
 def expr2name(a, block, args=[]):
