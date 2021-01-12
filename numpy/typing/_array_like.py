@@ -19,6 +19,8 @@ from numpy import (
     str_,
     bytes_,
 )
+
+from ._nested_sequence import NestedSequence
 from ._dtype_like import DTypeLike
 
 if sys.version_info >= (3, 8):
@@ -45,22 +47,14 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 else:
     _SupportsArray = Any
 
-# TODO: Wait for support for recursive types
-_NestedSequence = Union[
-    _T,
-    Sequence[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
-]
-_RecursiveSequence = Sequence[Sequence[Sequence[Sequence[Sequence[Any]]]]]
-
 # A union representing array-like objects; consists of two typevars:
 # One representing types that can be parametrized w.r.t. `np.dtype`
 # and another one for the rest
 _ArrayLike = Union[
-    _NestedSequence[_SupportsArray[_DType]],
-    _NestedSequence[_T],
+    _SupportsArray[_DType],
+    NestedSequence[_SupportsArray[_DType]],
+    _T,
+    NestedSequence[_T],
 ]
 
 # TODO: support buffer protocols once
@@ -70,12 +64,9 @@ _ArrayLike = Union[
 # is resolved. See also the mypy issue:
 #
 # https://github.com/python/typing/issues/593
-ArrayLike = Union[
-    _RecursiveSequence,
-    _ArrayLike[
-        "dtype[Any]",
-        Union[bool, int, float, complex, str, bytes]
-    ],
+ArrayLike = _ArrayLike[
+    "dtype[Any]",
+    Union[bool, int, float, complex, str, bytes],
 ]
 
 # `ArrayLike<X>`: array-like objects that can be coerced into `X`
@@ -104,10 +95,19 @@ _ArrayLikeTD64 = _ArrayLike[
     "dtype[Union[bool_, integer[Any], timedelta64]]",
     Union[bool, int],
 ]
-_ArrayLikeDT64 = _NestedSequence[_SupportsArray["dtype[datetime64]"]]
-_ArrayLikeObject = _NestedSequence[_SupportsArray["dtype[object_]"]]
+_ArrayLikeDT64 = Union[
+    _SupportsArray["dtype[datetime64]"],
+    NestedSequence[_SupportsArray["dtype[datetime64]"]],
+]
+_ArrayLikeObject = Union[
+    _SupportsArray["dtype[object_]"],
+    NestedSequence[_SupportsArray["dtype[object_]"]],
+]
 
-_ArrayLikeVoid = _NestedSequence[_SupportsArray["dtype[void]"]]
+_ArrayLikeVoid = Union[
+    _SupportsArray["dtype[void]"],
+    NestedSequence[_SupportsArray["dtype[void]"]],
+]
 _ArrayLikeStr = _ArrayLike[
     "dtype[str_]",
     str,
