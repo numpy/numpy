@@ -55,6 +55,9 @@ def inv(x):
 def norm(x, /, *, axis=None, keepdims=False, ord=None):
     # Note: this function is being imported from a nondefault namespace
     from ..linalg import norm
+    # Note: this is different from the default behavior
+    if axis == None and x.ndim > 2:
+        x = x.flatten()
     return norm(x, axis=axis, keepdims=keepdims, ord=ord)
 
 def outer(x1, x2, /):
