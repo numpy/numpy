@@ -6,6 +6,7 @@ def argsort(x, /, *, axis=-1, descending=False, stable=True):
     res = argsort(x, axis=axis, kind=kind)
     if descending:
         res = flip(res, axis=axis)
+    return res
 
 def sort(x, /, *, axis=-1, descending=False, stable=True):
     from .. import sort
@@ -15,3 +16,4 @@ def sort(x, /, *, axis=-1, descending=False, stable=True):
     res = sort(x, axis=axis, kind=kind)
     if descending:
         res = flip(res, axis=axis)
+    return res
