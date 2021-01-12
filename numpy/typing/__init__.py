@@ -229,6 +229,7 @@ class _8Bit(_16Bit): ...  # type: ignore[misc]
 # Clean up the namespace
 del TYPE_CHECKING, final, List
 
+from ._nested_sequence import NestedSequence
 from ._nbit import (
     _NBitByte,
     _NBitShort,
@@ -299,7 +300,6 @@ from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
 from ._array_like import (
     ArrayLike,
     _ArrayLike,
-    _NestedSequence,
     _SupportsArray,
     _ArrayLikeBool,
     _ArrayLikeUInt,
@@ -315,10 +315,16 @@ from ._array_like import (
 )
 
 if __doc__ is not None:
+    import textwrap
     from ._add_docstring import _docstrings
     __doc__ += _docstrings
-    __doc__ += '\n.. autoclass:: numpy.typing.NBitBase\n'
-    del _docstrings
+    __doc__ += textwrap.dedent("""
+    .. autoclass:: numpy.typing.NBitBase
+    .. autoclass:: numpy.typing.NestedSequence
+        :members: __init__
+        :exclude-members: __init__
+    """)
+    del textwrap, _docstrings
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
