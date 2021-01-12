@@ -1,93 +1,73 @@
+import numpy as np
+
 # def cholesky():
-#     from .. import cholesky
-#     return cholesky()
+#     return np.cholesky()
 
 def cross(x1, x2, /, *, axis=-1):
-    from .. import cross
-    return cross(x1, x2, axis=axis)
+    return np.cross(x1, x2, axis=axis)
 
 def det(x, /):
     # Note: this function is being imported from a nondefault namespace
-    from ..linalg import det
-    return det(x)
+    return np.det(x)
 
 def diagonal(x, /, *, axis1=0, axis2=1, offset=0):
-    from .. import diagonal
-    return diagonal(x, axis1=axis1, axis2=axis2, offset=offset)
+    return np.diagonal(x, axis1=axis1, axis2=axis2, offset=offset)
 
 # def dot():
-#     from .. import dot
-#     return dot()
+#     return np.dot()
 #
 # def eig():
-#     from .. import eig
-#     return eig()
+#     return np.eig()
 #
 # def eigvalsh():
-#     from .. import eigvalsh
-#     return eigvalsh()
+#     return np.eigvalsh()
 #
 # def einsum():
-#     from .. import einsum
-#     return einsum()
+#     return np.einsum()
 
 def inv(x):
     # Note: this function is being imported from a nondefault namespace
-    from ..linalg import inv
-    return inv(x)
+    return np.inv(x)
 
 # def lstsq():
-#     from .. import lstsq
-#     return lstsq()
+#     return np.lstsq()
 #
 # def matmul():
-#     from .. import matmul
-#     return matmul()
+#     return np.matmul()
 #
 # def matrix_power():
-#     from .. import matrix_power
-#     return matrix_power()
+#     return np.matrix_power()
 #
 # def matrix_rank():
-#     from .. import matrix_rank
-#     return matrix_rank()
+#     return np.matrix_rank()
 
 def norm(x, /, *, axis=None, keepdims=False, ord=None):
     # Note: this function is being imported from a nondefault namespace
-    from ..linalg import norm
     # Note: this is different from the default behavior
     if axis == None and x.ndim > 2:
         x = x.flatten()
-    return norm(x, axis=axis, keepdims=keepdims, ord=ord)
+    return np.norm(x, axis=axis, keepdims=keepdims, ord=ord)
 
 def outer(x1, x2, /):
-    from .. import outer
-    return outer(x1, x2)
+    return np.outer(x1, x2)
 
 # def pinv():
-#     from .. import pinv
-#     return pinv()
+#     return np.pinv()
 #
 # def qr():
-#     from .. import qr
-#     return qr()
+#     return np.qr()
 #
 # def slogdet():
-#     from .. import slogdet
-#     return slogdet()
+#     return np.slogdet()
 #
 # def solve():
-#     from .. import solve
-#     return solve()
+#     return np.solve()
 #
 # def svd():
-#     from .. import svd
-#     return svd()
+#     return np.svd()
 
 def trace(x, /, *, axis1=0, axis2=1, offset=0):
-    from .. import trace
-    return trace(x, axis1=axis1, axis2=axis2, offset=offset)
+    return np.trace(x, axis1=axis1, axis2=axis2, offset=offset)
 
 def transpose(x, /, *, axes=None):
-    from .. import transpose
-    return transpose(x, axes=axes)
+    return np.transpose(x, axes=axes)

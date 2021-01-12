@@ -1,230 +1,177 @@
+import numpy as np
+
 def abs(x, /):
-    from .. import abs
-    return abs(x)
+    return np.abs(x)
 
 def acos(x, /):
     # Note: the function name is different here
-    from .. import arccos
-    return arccos(x)
+    return np.arccos(x)
 
 def acosh(x, /):
     # Note: the function name is different here
-    from .. import arccosh
-    return arccosh(x)
+    return np.arccosh(x)
 
 def add(x1, x2, /):
-    from .. import add
-    return add(x1, x2)
+    return np.add(x1, x2)
 
 def asin(x, /):
     # Note: the function name is different here
-    from .. import arcsin
-    return arcsin(x)
+    return np.arcsin(x)
 
 def asinh(x, /):
     # Note: the function name is different here
-    from .. import arcsinh
-    return arcsinh(x)
+    return np.arcsinh(x)
 
 def atan(x, /):
     # Note: the function name is different here
-    from .. import arctan
-    return arctan(x)
+    return np.arctan(x)
 
 def atan2(x1, x2, /):
     # Note: the function name is different here
-    from .. import arctan2
-    return arctan2(x1, x2)
+    return np.arctan2(x1, x2)
 
 def atanh(x, /):
     # Note: the function name is different here
-    from .. import arctanh
-    return arctanh(x)
+    return np.arctanh(x)
 
 def bitwise_and(x1, x2, /):
-    from .. import bitwise_and
-    return bitwise_and(x1, x2)
+    return np.bitwise_and(x1, x2)
 
 def bitwise_left_shift(x1, x2, /):
     # Note: the function name is different here
-    from .. import left_shift
-    return left_shift(x1, x2)
+    return np.left_shift(x1, x2)
 
 def bitwise_invert(x, /):
     # Note: the function name is different here
-    from .. import invert
-    return invert(x)
+    return np.invert(x)
 
 def bitwise_or(x1, x2, /):
-    from .. import bitwise_or
-    return bitwise_or(x1, x2)
+    return np.bitwise_or(x1, x2)
 
 def bitwise_right_shift(x1, x2, /):
     # Note: the function name is different here
-    from .. import right_shift
-    return right_shift(x1, x2)
+    return np.right_shift(x1, x2)
 
 def bitwise_xor(x1, x2, /):
-    from .. import bitwise_xor
-    return bitwise_xor(x1, x2)
+    return np.bitwise_xor(x1, x2)
 
 def ceil(x, /):
-    from .. import ceil
-    return ceil(x)
+    return np.ceil(x)
 
 def cos(x, /):
-    from .. import cos
-    return cos(x)
+    return np.cos(x)
 
 def cosh(x, /):
-    from .. import cosh
-    return cosh(x)
+    return np.cosh(x)
 
 def divide(x1, x2, /):
-    from .. import divide
-    return divide(x1, x2)
+    return np.divide(x1, x2)
 
 def equal(x1, x2, /):
-    from .. import equal
-    return equal(x1, x2)
+    return np.equal(x1, x2)
 
 def exp(x, /):
-    from .. import exp
-    return exp(x)
+    return np.exp(x)
 
 def expm1(x, /):
-    from .. import expm1
-    return expm1(x)
+    return np.expm1(x)
 
 def floor(x, /):
-    from .. import floor
-    return floor(x)
+    return np.floor(x)
 
 def floor_divide(x1, x2, /):
-    from .. import floor_divide
-    return floor_divide(x1, x2)
+    return np.floor_divide(x1, x2)
 
 def greater(x1, x2, /):
-    from .. import greater
-    return greater(x1, x2)
+    return np.greater(x1, x2)
 
 def greater_equal(x1, x2, /):
-    from .. import greater_equal
-    return greater_equal(x1, x2)
+    return np.greater_equal(x1, x2)
 
 def isfinite(x, /):
-    from .. import isfinite
-    return isfinite(x)
+    return np.isfinite(x)
 
 def isinf(x, /):
-    from .. import isinf
-    return isinf(x)
+    return np.isinf(x)
 
 def isnan(x, /):
-    from .. import isnan
-    return isnan(x)
+    return np.isnan(x)
 
 def less(x1, x2, /):
-    from .. import less
-    return less(x1, x2)
+    return np.less(x1, x2)
 
 def less_equal(x1, x2, /):
-    from .. import less_equal
-    return less_equal(x1, x2)
+    return np.less_equal(x1, x2)
 
 def log(x, /):
-    from .. import log
-    return log(x)
+    return np.log(x)
 
 def log1p(x, /):
-    from .. import log1p
-    return log1p(x)
+    return np.log1p(x)
 
 def log2(x, /):
-    from .. import log2
-    return log2(x)
+    return np.log2(x)
 
 def log10(x, /):
-    from .. import log10
-    return log10(x)
+    return np.log10(x)
 
 def logical_and(x1, x2, /):
-    from .. import logical_and
-    return logical_and(x1, x2)
+    return np.logical_and(x1, x2)
 
 def logical_not(x, /):
-    from .. import logical_not
-    return logical_not(x)
+    return np.logical_not(x)
 
 def logical_or(x1, x2, /):
-    from .. import logical_or
-    return logical_or(x1, x2)
+    return np.logical_or(x1, x2)
 
 def logical_xor(x1, x2, /):
-    from .. import logical_xor
-    return logical_xor(x1, x2)
+    return np.logical_xor(x1, x2)
 
 def multiply(x1, x2, /):
-    from .. import multiply
-    return multiply(x1, x2)
+    return np.multiply(x1, x2)
 
 def negative(x, /):
-    from .. import negative
-    return negative(x)
+    return np.negative(x)
 
 def not_equal(x1, x2, /):
-    from .. import not_equal
-    return not_equal(x1, x2)
+    return np.not_equal(x1, x2)
 
 def positive(x, /):
-    from .. import positive
-    return positive(x)
+    return np.positive(x)
 
 def pow(x1, x2, /):
     # Note: the function name is different here
-    from .. import power
-    return power(x1, x2)
+    return np.power(x1, x2)
 
 def remainder(x1, x2, /):
-    from .. import remainder
-    return remainder(x1, x2)
+    return np.remainder(x1, x2)
 
 def round(x, /):
-    from .. import round
-    return round(x)
+    return np.round(x)
 
 def sign(x, /):
-    from .. import sign
-    return sign(x)
+    return np.sign(x)
 
 def sin(x, /):
-    from .. import sin
-    return sin(x)
+    return np.sin(x)
 
 def sinh(x, /):
-    from .. import sinh
-    return sinh(x)
+    return np.sinh(x)
 
 def square(x, /):
-    from .. import square
-    return square(x)
+    return np.square(x)
 
 def sqrt(x, /):
-    from .. import sqrt
-    return sqrt(x)
+    return np.sqrt(x)
 
 def subtract(x1, x2, /):
-    from .. import subtract
-    return subtract(x1, x2)
+    return np.subtract(x1, x2)
 
 def tan(x, /):
-    from .. import tan
-    return tan(x)
+    return np.tan(x)
 
 def tanh(x, /):
-    from .. import tanh
-    return tanh(x)
+    return np.tanh(x)
 
 def trunc(x, /):
-    from .. import trunc
-    return trunc(x)
+    return np.trunc(x)

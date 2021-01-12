@@ -1,15 +1,13 @@
+import numpy as np
+
 def argmax(x, /, *, axis=None, keepdims=False):
-    from .. import argmax
-    return argmax(x, axis=axis, keepdims=keepdims)
+    return np.argmax(x, axis=axis, keepdims=keepdims)
 
 def argmin(x, /, *, axis=None, keepdims=False):
-    from .. import argmin
-    return argmin(x, axis=axis, keepdims=keepdims)
+    return np.argmin(x, axis=axis, keepdims=keepdims)
 
 def nonzero(x, /):
-    from .. import nonzero
-    return nonzero(x)
+    return np.nonzero(x)
 
 def where(condition, x1, x2, /):
-    from .. import where
-    return where(condition, x1, x2)
+    return np.where(condition, x1, x2)
