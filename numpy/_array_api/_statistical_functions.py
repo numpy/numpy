@@ -27,5 +27,3 @@ def var(x, /, *, axis=None, correction=0.0, keepdims=False):
     from .. import var
     # Note: the keyword argument correction is different here
     return var(x, axis=axis, ddof=correction, keepdims=keepdims)
-
-__all__ = ['max', 'mean', 'min', 'prod', 'std', 'sum', 'var']

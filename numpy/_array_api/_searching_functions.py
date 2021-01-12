@@ -13,5 +13,3 @@ def nonzero(x, /):
 def where(condition, x1, x2, /):
     from .. import where
     return where(condition, x1, x2)
-
-__all__ = ['argmax', 'argmin', 'nonzero', 'where']

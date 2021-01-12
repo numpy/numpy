@@ -91,7 +91,3 @@ def trace(x, /, *, axis1=0, axis2=1, offset=0):
 def transpose(x, /, *, axes=None):
     from .. import transpose
     return transpose(x, axes=axes)
-
-# __all__ = ['cholesky', 'cross', 'det', 'diagonal', 'dot', 'eig', 'eigvalsh', 'einsum', 'inv', 'lstsq', 'matmul', 'matrix_power', 'matrix_rank', 'norm', 'outer', 'pinv', 'qr', 'slogdet', 'solve', 'svd', 'trace', 'transpose']
-
-__all__ = ['cross', 'det', 'diagonal', 'inv', 'norm', 'outer', 'trace', 'transpose']

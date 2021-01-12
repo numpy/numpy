@@ -15,5 +15,3 @@ def sort(x, /, *, axis=-1, descending=False, stable=True):
     res = sort(x, axis=axis, kind=kind)
     if descending:
         res = flip(res, axis=axis)
-
-__all__ = ['argsort', 'sort']

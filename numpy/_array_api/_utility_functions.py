@@ -5,5 +5,3 @@ def all(x, /, *, axis=None, keepdims=False):
 def any(x, /, *, axis=None, keepdims=False):
     from .. import any
     return any(x, axis=axis, keepdims=keepdims)
-
-__all__ = ['all', 'any']

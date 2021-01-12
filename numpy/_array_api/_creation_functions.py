@@ -74,5 +74,3 @@ def zeros_like(x, /, *, dtype=None, device=None):
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
     return zeros_like(x, dtype=dtype)
-
-__all__ = ['arange', 'empty', 'empty_like', 'eye', 'full', 'full_like', 'linspace', 'ones', 'ones_like', 'zeros', 'zeros_like']
