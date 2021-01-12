@@ -16,7 +16,8 @@ def prod(x, /, *, axis=None, keepdims=False):
 
 def std(x, /, *, axis=None, correction=0.0, keepdims=False):
     from .. import std
-    return std(x, axis=axis, correction=correction, keepdims=keepdims)
+    # Note: the keyword argument correction is different here
+    return std(x, axis=axis, ddof=correction, keepdims=keepdims)
 
 def sum(x, /, *, axis=None, keepdims=False):
     from .. import sum
@@ -24,6 +25,7 @@ def sum(x, /, *, axis=None, keepdims=False):
 
 def var(x, /, *, axis=None, correction=0.0, keepdims=False):
     from .. import var
-    return var(x, axis=axis, correction=correction, keepdims=keepdims)
+    # Note: the keyword argument correction is different here
+    return var(x, axis=axis, ddof=correction, keepdims=keepdims)
 
 __all__ = ['max', 'mean', 'min', 'prod', 'std', 'sum', 'var']
