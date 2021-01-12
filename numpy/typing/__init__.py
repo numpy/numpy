@@ -219,6 +219,7 @@ class _32Bit(_64Bit): ...  # type: ignore[misc]
 class _16Bit(_32Bit): ...  # type: ignore[misc]
 class _8Bit(_16Bit): ...  # type: ignore[misc]
 
+from ._nested_sequence import _NestedSequence
 from ._nbit import (
     _NBitByte,
     _NBitShort,
