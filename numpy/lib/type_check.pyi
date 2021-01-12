@@ -28,7 +28,7 @@ from numpy.typing import (
     _64Bit,
     _SupportsDType,
     _ScalarLike_co,
-    _NestedSequence,
+    _FiniteNestedSequence,
     _SupportsArray,
     _DTypeLikeComplex,
 )
@@ -39,7 +39,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
-_ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 class _SupportsReal(Protocol[_T_co]):
     @property

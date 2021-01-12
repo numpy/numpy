@@ -15,7 +15,7 @@ from numpy.typing import (
     ArrayLike,
     NDArray,
     _ArrayLikeInt,
-    _NestedSequence,
+    _FiniteNestedSequence,
     _SupportsArray,
 )
 
@@ -45,7 +45,7 @@ _ModeKind = L[
     "empty",
 ]
 
-_ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: List[str]
 

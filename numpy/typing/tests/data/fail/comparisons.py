@@ -22,7 +22,7 @@ AR_M > AR_f  # E: Unsupported operand types
 AR_M > AR_m  # E: Unsupported operand types
 
 # Unfortunately `NoReturn` errors are not the most descriptive
-_1 = AR_i > str()  # E: Need type annotation
+_1 = AR_i > str()  # E: No overload variant
 _2 = AR_i > bytes()  # E: Need type annotation
-_3 = str() > AR_M  # E: Need type annotation
+_3 = str() > AR_M  # E: Unsupported operand types
 _4 = bytes() > AR_M  # E: Need type annotation
