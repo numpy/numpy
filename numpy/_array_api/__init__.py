@@ -1,3 +1,69 @@
+"""
+A NumPy sub-namespace that conforms to the Python array API standard.
+
+This is a proof-of-concept namespace that wraps the corresponding NumPy
+functions to give a conforming implementation of the Python array API standard
+(https://data-apis.github.io/array-api/latest/). The standard is currently in
+an RFC phase and comments on it are both welcome and encouraged. Comments
+should be made either at https://github.com/data-apis/array-api or at
+https://github.com/data-apis/consortium-feedback/discussions.
+
+This submodule will be accompanied with a NEP (not yet written) proposing its
+inclusion in NumPy.
+
+NumPy already follows the proposed spec for the most part, so this module
+serves mostly as a thin wrapper around it. However, NumPy also implements a
+lot of behavior that is not included in the spec, so this serves as a
+restricted subset of the API. Only those functions that are part of the spec
+are included in this namespace, and all functions are given with the exact
+signature given in the spec, including the use of position-only arguments, and
+omitting any extra keyword arguments implemented by NumPy but not part of the
+spec. Note that the array object itself is unchanged, as implementing a
+restricted subclass of ndarray seems unnecessarily complex for the purposes of
+this namespace, so the API of array methods and other behaviors of the array
+object will include things that are not part of the spec.
+
+The spec is designed as a "minimal API subset" and explicitly allows libraries
+to include behaviors not specified by it. But users of this module that intend
+to write portable code should be aware that only those behaviors that are
+listed in the spec are guaranteed to be implemented across libraries.
+
+A few notes about the current state of this submodule:
+
+- There is a test suite that tests modules against the array API standard at
+  https://github.com/data-apis/array-api-tests. The test suite is still a work
+  in progress, but the existing tests pass on this module, with a few
+  exceptions:
+
+  - Device support is not yet implemented in NumPy
+    (https://data-apis.github.io/array-api/latest/design_topics/device_support.html).
+    As a result, the `device` attribute of the array object is missing, and
+    array creation functions that take the `device` keyword argument will fail
+    with NotImplementedError.
+
+  - DLPack support (see https://github.com/data-apis/array-api/pull/106) is
+    not included here, as it requires a full implementation in NumPy proper
+    first.
+
+  - np.argmin and np.argmax do not implement the keepdims keyword argument.
+
+  - Some linear algebra functions in the spec are still a work in progress (to
+    be added soon). These will be updated once the spec is.
+
+  - Some tests in the test suite are still not fully correct in that they test
+    all datatypes whereas certain functions are only defined for a subset of
+    datatypes.
+
+  The test suite is yet complete, and even the tests that exist are not
+  guaranteed to give a comprehensive coverage of the spec. Therefore, those
+  reviewing this submodule should refer to the standard documents themselves.
+
+- All places where the implementations in this submodule are known to deviate
+  from their corresponding functions in NumPy are marked with "# Note"
+  comments. Reviewers should make note of these comments.
+
+"""
+
 __all__ = []
 
 from ._constants import e, inf, nan, pi
