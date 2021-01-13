@@ -33,8 +33,13 @@ reveal_type(td > td)  # E: numpy.bool_
 reveal_type(td > i)  # E: numpy.bool_
 reveal_type(td > i4)  # E: numpy.bool_
 reveal_type(td > i8)  # E: numpy.bool_
+
 reveal_type(td > AR)  # E: Union[numpy.bool_, numpy.ndarray[Any, numpy.dtype[numpy.bool_]]]
 reveal_type(td > SEQ)  # E: Union[numpy.bool_, numpy.ndarray[Any, numpy.dtype[numpy.bool_]]]
+reveal_type(AR > SEQ)  # E: Union[numpy.bool_, numpy.ndarray[Any, numpy.dtype[numpy.bool_]]]
+reveal_type(AR > td)  # E: Union[numpy.bool_, numpy.ndarray[Any, numpy.dtype[numpy.bool_]]]
+reveal_type(SEQ > td)  # E: Union[numpy.bool_, numpy.ndarray[Any, numpy.dtype[numpy.bool_]]]
+reveal_type(SEQ > AR)  # E: Union[numpy.bool_, numpy.ndarray[Any, numpy.dtype[numpy.bool_]]]
 
 # boolean
 
