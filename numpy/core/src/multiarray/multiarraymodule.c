@@ -2319,7 +2319,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
     PyObject *v, *a, *o = NULL;
     PyArrayObject *ret;
-    char* kwlist[] = {"a", "b", "out", NULL };
+    static char* kwlist[] = {"a", "b", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matrixproduct",
                                      kwlist, &a, &v, &o)) {

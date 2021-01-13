@@ -934,8 +934,8 @@ NPY_NO_EXPORT PyObject *
 array_busday_offset(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"dates", "offsets", "roll",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates", "offsets", "roll",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *offsets_in = NULL, *out_in = NULL;
 
@@ -1065,8 +1065,8 @@ NPY_NO_EXPORT PyObject *
 array_busday_count(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"begindates", "enddates",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"begindates", "enddates",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_begin_in = NULL, *dates_end_in = NULL, *out_in = NULL;
 
@@ -1210,8 +1210,8 @@ NPY_NO_EXPORT PyObject *
 array_is_busday(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"dates",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *out_in = NULL;
 

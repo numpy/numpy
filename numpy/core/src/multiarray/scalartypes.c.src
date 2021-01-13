@@ -2711,7 +2711,7 @@ static PyObject *
 
     /* TODO: include type name in error message, which is not @name@ */
     PyObject *obj = NULL;
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
         return NULL;
     }
@@ -2799,7 +2799,7 @@ static PyObject *
 object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
 {
     PyObject *obj = Py_None;
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
         return NULL;
     }
@@ -2825,7 +2825,7 @@ static PyObject *
     PyObject *obj = NULL, *meta_obj = NULL;
     Py@Name@ScalarObject *ret;
 
-    char *kwnames[] = {"", "", NULL};  /* positional-only */
+    static char *kwnames[] = {"", "", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &obj, &meta_obj)) {
         return NULL;
     }
@@ -2884,7 +2884,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
         return NULL;
     }
@@ -2995,7 +2995,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     PyObject *obj, *arr;
     PyObject *new = NULL;
 
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:void", kwnames, &obj)) {
         return NULL;
     }
