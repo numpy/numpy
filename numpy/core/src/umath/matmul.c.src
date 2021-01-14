@@ -398,7 +398,6 @@ NPY_NO_EXPORT void
 @TYPE@_matmul(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     npy_intp dOuter = *dimensions++;
-    npy_intp iOuter;
     npy_intp s0 = *steps++;
     npy_intp s1 = *steps++;
     npy_intp s2 = *steps++;
@@ -429,8 +428,7 @@ NPY_NO_EXPORT void
                               is_blasable2d(is2_n, sz, dn, 1, sz));
 #endif
 
-    for (iOuter = 0; iOuter < dOuter; iOuter++,
-                         args[0] += s0, args[1] += s1, args[2] += s2) {
+    while (dOuter > 0) {
         void *ip1=args[0], *ip2=args[1], *op=args[2];
 #if @USEBLAS@ && defined(HAVE_CBLAS)
         /*
@@ -505,6 +503,10 @@ NPY_NO_EXPORT void
                                    op, os_m, os_p, dm, dn, dp);
 
 #endif
+        args[0] += s0;
+        args[1] += s1;
+        args[2] += s2;
+        dOuter--;
     }
 }
 
