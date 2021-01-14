@@ -6,7 +6,7 @@ steps:
     architecture: $(PYTHON_ARCH)
   condition: not(contains(variables['PYTHON_VERSION'], 'PyPy'))
 - powershell: |
-    $url = "http://buildbot.pypy.org/nightly/py3.6/pypy-c-jit-latest-win32.zip"
+    $url = "http://buildbot.pypy.org/nightly/py3.7/pypy-c-jit-latest-win64.zip"
     $output = "pypy.zip"
     $wc = New-Object System.Net.WebClient
     $wc.DownloadFile($url, $output)

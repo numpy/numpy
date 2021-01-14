@@ -206,6 +206,11 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
+          PyPy37-64bit-full:
+            PYTHON_VERSION: 'PyPy3.7'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
           Python38-32bit-fast:
             PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x86'
