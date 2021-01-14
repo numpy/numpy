@@ -60,10 +60,10 @@ _DOC = f"""A protocol for representing nested sequences.
         >>> def get_dtype(seq: npt.NestedSequence[int]) -> np.dtype[np.int_]:
         ...     return np.asarray(seq).dtype
 
-        >>> a = func([1])
-        >>> b = func([[1]])
-        >>> c = func([[[1]]])
-        >>> d = func([[[[1]]]])
+        >>> a = get_dtype([1])
+        >>> b = get_dtype([[1]])
+        >>> c = get_dtype([[[1]]])
+        >>> d = get_dtype([[[[1]]]])
 
         >>> if TYPE_CHECKING:
         ...     reveal_locals()

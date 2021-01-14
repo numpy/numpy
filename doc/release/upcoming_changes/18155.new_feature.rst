@@ -17,10 +17,10 @@ For example:
     def get_dtype(seq: npt.NestedSequence[int]) -> np.dtype[np.int_]:
         return np.asarray(seq).dtype
 
-    a = func([1])
-    b = func([[1]])
-    c = func([[[1]]])
-    d = func([[[[1]]]])
+    a = get_dtype([1])
+    b = get_dtype([[1]])
+    c = get_dtype([[[1]]])
+    d = get_dtype([[[[1]]]])
 
     if TYPE_CHECKING:
         reveal_locals()
@@ -29,4 +29,3 @@ For example:
         # note:     b: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
         # note:     c: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
         # note:     d: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-
