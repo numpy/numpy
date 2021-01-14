@@ -1952,8 +1952,8 @@ def chebpts1(npts):
     if _npts < 1:
         raise ValueError("npts must be >= 1")
 
-    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi/(2*_npts)
-    return np.cos(x)
+    x = 0.5 * np.pi / _npts * np.arange(-_npts+1, _npts+1, 2)
+    return np.sin(x)
 
 
 def chebpts2(npts):
