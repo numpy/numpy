@@ -2020,7 +2020,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
     int n_specified = 0;
     int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
     const char *ufunc_name;
-    int no_castable_output, use_min_scalar;
+    int no_castable_output = 0, use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
