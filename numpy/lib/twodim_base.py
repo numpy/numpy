@@ -6,11 +6,12 @@ import functools
 from numpy.core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
-    nonzero
+    nonzero, indices
     )
 from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
+from numpy.lib.stride_tricks import broadcast_to
 
 
 __all__ = [
@@ -894,10 +895,10 @@ def tril_indices(n, k=0, m=None):
            [-10, -10, -10, -10]])
 
     """
-    tri = np.tri(n, m, k=k, dtype=bool)
+    tri_ = tri(n, m, k=k, dtype=bool)
 
-    return tuple(np.broadcast_to(inds, tri.shape)[tri]
-                 for inds in np.indices(tri.shape, sparse=True))
+    return tuple(broadcast_to(inds, tri_.shape)[tri_]
+                 for inds in indices(tri_.shape, sparse=True))
 
 
 def _trilu_indices_form_dispatcher(arr, k=None):
@@ -1013,10 +1014,10 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
-    tri = ~np.tri(n, m, k=k - 1, dtype=bool)
+    tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
-    return tuple(np.broadcast_to(inds, tri.shape)[tri]
-                 for inds in np.indices(tri.shape, sparse=True))
+    return tuple(broadcast_to(inds, tri_.shape)[tri_]
+                 for inds in indices(tri_.shape, sparse=True))
 
 
 @array_function_dispatch(_trilu_indices_form_dispatcher)
