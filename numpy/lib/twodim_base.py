@@ -894,7 +894,7 @@ def tril_indices(n, k=0, m=None):
            [-10, -10, -10, -10]])
 
     """
-    tri = np.tri(n, m=m, k=k, dtype=bool)
+    tri = np.tri(n, m, k=k, dtype=bool)
 
     return tuple(np.broadcast_to(inds, tri.shape)[tri]
                  for inds in np.indices(tri.shape, sparse=True))
