@@ -185,7 +185,7 @@ class NBitBase:
     .. code-block:: python
 
         >>> from __future__ import annotations
-        >>> from typing import TypeVar, TYPE_CHECKING
+        >>> from typing import TypeVar, Union, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
 
