@@ -2,6 +2,7 @@ import importlib.util
 import itertools
 import os
 import re
+import shutil
 from collections import defaultdict
 from typing import Optional, IO, Dict, List
 
@@ -23,6 +24,15 @@ FAIL_DIR = os.path.join(DATA_DIR, "fail")
 REVEAL_DIR = os.path.join(DATA_DIR, "reveal")
 MYPY_INI = os.path.join(DATA_DIR, "mypy.ini")
 CACHE_DIR = os.path.join(DATA_DIR, ".mypy_cache")
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
+@pytest.fixture(scope="session", autouse=True)
+def clear_cache() -> None:
+    """Clears the mypy cache before running any of the typing tests."""
+    if os.path.isdir(CACHE_DIR):
+        shutil.rmtree(CACHE_DIR)
 
 
 def get_test_cases(directory):
