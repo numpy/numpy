@@ -184,13 +184,15 @@ class NBitBase:
 
     .. code-block:: python
 
+        >>> from __future__ import annotations
         >>> from typing import TypeVar, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
 
-        >>> T = TypeVar("T", bound=npt.NBitBase)
+        >>> T1 = TypeVar("T1", bound=npt.NBitBase)
+        >>> T2 = TypeVar("T2", bound=npt.NBitBase)
 
-        >>> def add(a: "np.floating[T]", b: "np.integer[T]") -> "np.floating[T]":
+        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[Union[T1, T2]]:
         ...     return a + b
 
         >>> a = np.float16()
