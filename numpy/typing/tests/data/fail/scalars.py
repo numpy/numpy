@@ -1,5 +1,6 @@
 import numpy as np
 
+f2: np.float16
 f8: np.float64
 
 # Construction
@@ -74,3 +75,8 @@ f8.item((0, 1))  # E: incompatible type
 f8.squeeze(axis=1)  # E: incompatible type
 f8.squeeze(axis=(0, 1))  # E: incompatible type
 f8.transpose(1)  # E: incompatible type
+
+def func(a: np.float32) -> None: ...
+
+func(f2)  # E: incompatible type
+func(f8)  # E: incompatible type
