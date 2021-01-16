@@ -733,6 +733,76 @@ class _SIMD_ALL(_Test_Utility):
         div = self.div(vdata_a, vdata_b)
         assert div == data_div
 
+    def test_arithmetic_intdiv(self):
+        """
+        Test integer division intrinics:
+            npyv_divisor_##sfx
+            npyv_divc_##sfx
+        """
+        if self._is_fp():
+            return
+
+        def trunc_div(a, d):
+            """
+            Divide towards zero works with large integers > 2^53,
+            equivalent to int(a/d)
+            """
+            sign_a, sign_d = a < 0, d < 0
+            if a == 0 or sign_a == sign_d:
+                return a // d
+            return (a + sign_d - sign_a) // d + 1
+
+        int_min = self._int_min() if self._is_signed() else 1
+        int_max = self._int_max()
+        rdata = (
+            0, 1, self.nlanes, int_max-self.nlanes,
+            int_min, int_min//2 + 1
+        )
+        divisors = (1, 2, self.nlanes, int_min, int_max, int_max//2)
+
+        for x, d in zip(rdata, divisors):
+            data = self._data(x)
+            vdata = self.load(data)
+            data_divc = [trunc_div(a, d) for a in data]
+            divisor = self.divisor(d)
+            divc = self.divc(vdata, divisor)
+            assert divc == data_divc
+
+        if not self._is_signed():
+            return
+
+        safe_neg = lambda x: -x-1 if -x > int_max else -x
+        # test round divison for signed integers
+        for x, d in zip(rdata, divisors):
+            d_neg = safe_neg(d)
+            data = self._data(x)
+            data_neg = [safe_neg(a) for a in data]
+            vdata = self.load(data)
+            vdata_neg = self.load(data_neg)
+            divisor = self.divisor(d)
+            divisor_neg = self.divisor(d_neg)
+
+            # round towards zero
+            data_divc = [trunc_div(a, d_neg) for a in data]
+            divc = self.divc(vdata, divisor_neg)
+            assert divc == data_divc
+            data_divc = [trunc_div(a, d) for a in data_neg]
+            divc = self.divc(vdata_neg, divisor)
+            assert divc == data_divc
+
+        # test truncate sign if the dividend is zero
+        vzero = self.zero()
+        for d in (-1, -10, -100, int_min//2, int_min):
+            divisor = self.divisor(d)
+            divc = self.divc(vzero, divisor)
+            assert divc == vzero
+
+        # test overflow
+        vmin = self.setall(int_min)
+        divisor = self.divisor(-1)
+        divc = self.divc(vmin, divisor)
+        assert divc == vmin
+
     def test_arithmetic_reduce_sum(self):
         """
         Test reduce sum intrinics:
