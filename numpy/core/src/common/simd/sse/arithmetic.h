@@ -86,6 +86,181 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
 // TODO: after implment Packs intrins
 
 /***************************
+ * Integer Division
+ ***************************/
+// See simd/intdiv.h for more clarification
+// divide each unsigned 8-bit element by a precomputed divisor
+NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
+{
+    const __m128i bmask = _mm_set1_epi32(0xFF00FF00);
+    const __m128i shf1b = _mm_set1_epi8(0xFFU >> _mm_cvtsi128_si32(divisor.val[1]));
+    const __m128i shf2b = _mm_set1_epi8(0xFFU >> _mm_cvtsi128_si32(divisor.val[2]));
+    // high part of unsigned multiplication
+    __m128i mulhi_odd   = _mm_mulhi_epu16(a, divisor.val[0]);
+    __m128i mulhi_even  = _mm_mulhi_epu16(_mm_slli_epi16(a, 8), divisor.val[0]);
+            mulhi_even  = _mm_srli_epi16(mulhi_even, 8);
+    __m128i mulhi       = npyv_select_u8(bmask, mulhi_odd, mulhi_even);
+    // floor(a/d)       = (mulhi + ((a-mulhi) >> sh1)) >> sh2
+    __m128i q           = _mm_sub_epi8(a, mulhi);
+            q           = _mm_and_si128(_mm_srl_epi16(q, divisor.val[1]), shf1b);
+            q           = _mm_add_epi8(mulhi, q);
+            q           = _mm_and_si128(_mm_srl_epi16(q, divisor.val[2]), shf2b);
+    return  q;
+}
+// divide each signed 8-bit element by a precomputed divisor (round towards zero)
+NPY_FINLINE npyv_s16 npyv_divc_s16(npyv_s16 a, const npyv_s16x3 divisor);
+NPY_FINLINE npyv_s8 npyv_divc_s8(npyv_s8 a, const npyv_s8x3 divisor)
+{
+    const __m128i bmask = _mm_set1_epi32(0x00FF00FF);
+    // instead of _mm_cvtepi8_epi16/_mm_packs_epi16 to wrap around overflow
+    __m128i divc_even = npyv_divc_s16(_mm_srai_epi16(_mm_slli_epi16(a, 8), 8), divisor);
+    __m128i divc_odd  = npyv_divc_s16(_mm_srai_epi16(a, 8), divisor);
+            divc_odd  = _mm_slli_epi16(divc_odd, 8);
+    return npyv_select_u8(bmask, divc_even, divc_odd);
+}
+// divide each unsigned 16-bit element by a precomputed divisor
+NPY_FINLINE npyv_u16 npyv_divc_u16(npyv_u16 a, const npyv_u16x3 divisor)
+{
+    // high part of unsigned multiplication
+    __m128i mulhi = _mm_mulhi_epu16(a, divisor.val[0]);
+    // floor(a/d) = (mulhi + ((a-mulhi) >> sh1)) >> sh2
+    __m128i q     = _mm_sub_epi16(a, mulhi);
+            q     = _mm_srl_epi16(q, divisor.val[1]);
+            q     = _mm_add_epi16(mulhi, q);
+            q     = _mm_srl_epi16(q, divisor.val[2]);
+    return  q;
+}
+// divide each signed 16-bit element by a precomputed divisor (round towards zero)
+NPY_FINLINE npyv_s16 npyv_divc_s16(npyv_s16 a, const npyv_s16x3 divisor)
+{
+    // high part of signed multiplication
+    __m128i mulhi = _mm_mulhi_epi16(a, divisor.val[0]);
+    // q          = ((a + mulhi) >> sh1) - XSIGN(a)
+    // trunc(a/d) = (q ^ dsign) - dsign
+    __m128i q     = _mm_sra_epi16(_mm_add_epi16(a, mulhi), divisor.val[1]);
+            q     = _mm_sub_epi16(q, _mm_srai_epi16(a, 15));
+            q     = _mm_sub_epi16(_mm_xor_si128(q, divisor.val[2]), divisor.val[2]);
+    return  q;
+}
+// divide each unsigned 32-bit element by a precomputed divisor
+NPY_FINLINE npyv_u32 npyv_divc_u32(npyv_u32 a, const npyv_u32x3 divisor)
+{
+    // high part of unsigned multiplication
+    __m128i mulhi_even = _mm_srli_epi64(_mm_mul_epu32(a, divisor.val[0]), 32);
+    __m128i mulhi_odd  = _mm_mul_epu32(_mm_srli_epi64(a, 32), divisor.val[0]);
+#ifdef NPY_HAVE_SSE41
+    __m128i mulhi      = _mm_blend_epi16(mulhi_even, mulhi_odd, 0xCC);
+#else
+    __m128i mask_13    = _mm_setr_epi32(0, -1, 0, -1);
+           mulhi_odd   = _mm_and_si128(mulhi_odd, mask_13);
+    __m128i mulhi      = _mm_or_si128(mulhi_even, mulhi_odd);
+#endif
+    // floor(a/d)      = (mulhi + ((a-mulhi) >> sh1)) >> sh2
+    __m128i q          = _mm_sub_epi32(a, mulhi);
+            q          = _mm_srl_epi32(q, divisor.val[1]);
+            q          = _mm_add_epi32(mulhi, q);
+            q          = _mm_srl_epi32(q, divisor.val[2]);
+    return  q;
+}
+// divide each signed 32-bit element by a precomputed divisor (round towards zero)
+NPY_FINLINE npyv_s32 npyv_divc_s32(npyv_s32 a, const npyv_s32x3 divisor)
+{
+    __m128i asign      = _mm_srai_epi32(a, 31);
+#ifdef NPY_HAVE_SSE41
+    // high part of signed multiplication
+    __m128i mulhi_even = _mm_srli_epi64(_mm_mul_epi32(a, divisor.val[0]), 32);
+    __m128i mulhi_odd  = _mm_mul_epi32(_mm_srli_epi64(a, 32), divisor.val[0]);
+    __m128i mulhi      = _mm_blend_epi16(mulhi_even, mulhi_odd, 0xCC);
+#else  // not SSE4.1
+    // high part of "unsigned" multiplication
+    __m128i mulhi_even = _mm_srli_epi64(_mm_mul_epu32(a, divisor.val[0]), 32);
+    __m128i mulhi_odd  = _mm_mul_epu32(_mm_srli_epi64(a, 32), divisor.val[0]);
+    __m128i mask_13    = _mm_setr_epi32(0, -1, 0, -1);
+            mulhi_odd  = _mm_and_si128(mulhi_odd, mask_13);
+    __m128i mulhi      = _mm_or_si128(mulhi_even, mulhi_odd);
+    // convert unsigned to signed high multiplication
+    // mulhi - ((a < 0) ? m : 0) - ((m < 0) ? a : 0);
+    const __m128i msign= _mm_srai_epi32(divisor.val[0], 31);
+    __m128i m_asign    = _mm_and_si128(divisor.val[0], asign);
+    __m128i a_msign    = _mm_and_si128(a, msign);
+            mulhi      = _mm_sub_epi32(mulhi, m_asign);
+            mulhi      = _mm_sub_epi32(mulhi, a_msign);
+#endif
+    // q               = ((a + mulhi) >> sh1) - XSIGN(a)
+    // trunc(a/d)      = (q ^ dsign) - dsign
+    __m128i q          = _mm_sra_epi32(_mm_add_epi32(a, mulhi), divisor.val[1]);
+            q          = _mm_sub_epi32(q, asign);
+            q          = _mm_sub_epi32(_mm_xor_si128(q, divisor.val[2]), divisor.val[2]);
+    return  q;
+}
+// returns the high 64 bits of unsigned 64-bit multiplication
+// xref https://stackoverflow.com/a/28827013
+NPY_FINLINE npyv_u64 npyv__mullhi_u64(npyv_u64 a, npyv_u64 b)
+{
+    __m128i lomask = npyv_setall_s64(0xffffffff);
+    __m128i a_hi   = _mm_srli_epi64(a, 32);        // a0l, a0h, a1l, a1h
+    __m128i b_hi   = _mm_srli_epi64(b, 32);        // b0l, b0h, b1l, b1h
+    // compute partial products
+    __m128i w0     = _mm_mul_epu32(a, b);          // a0l*b0l, a1l*b1l
+    __m128i w1     = _mm_mul_epu32(a, b_hi);       // a0l*b0h, a1l*b1h
+    __m128i w2     = _mm_mul_epu32(a_hi, b);       // a0h*b0l, a1h*b0l
+    __m128i w3     = _mm_mul_epu32(a_hi, b_hi);    // a0h*b0h, a1h*b1h
+    // sum partial products
+    __m128i w0h    = _mm_srli_epi64(w0, 32);
+    __m128i s1     = _mm_add_epi64(w1, w0h);
+    __m128i s1l    = _mm_and_si128(s1, lomask);
+    __m128i s1h    = _mm_srli_epi64(s1, 32);
+
+    __m128i s2     = _mm_add_epi64(w2, s1l);
+    __m128i s2h    = _mm_srli_epi64(s2, 32);
+
+    __m128i hi     = _mm_add_epi64(w3, s1h);
+            hi     = _mm_add_epi64(hi, s2h);
+    return hi;
+}
+// divide each unsigned 64-bit element by a precomputed divisor
+NPY_FINLINE npyv_u64 npyv_divc_u64(npyv_u64 a, const npyv_u64x3 divisor)
+{
+    // high part of unsigned multiplication
+    __m128i mulhi = npyv__mullhi_u64(a, divisor.val[0]);
+    // floor(a/d) = (mulhi + ((a-mulhi) >> sh1)) >> sh2
+    __m128i q     = _mm_sub_epi64(a, mulhi);
+            q     = _mm_srl_epi64(q, divisor.val[1]);
+            q     = _mm_add_epi64(mulhi, q);
+            q     = _mm_srl_epi64(q, divisor.val[2]);
+    return  q;
+}
+// divide each signed 64-bit element by a precomputed divisor (round towards zero)
+NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
+{
+    // high part of unsigned multiplication
+    __m128i mulhi      = npyv__mullhi_u64(a, divisor.val[0]);
+    // convert unsigned to signed high multiplication
+    // mulhi - ((a < 0) ? m : 0) - ((m < 0) ? a : 0);
+#ifdef NPY_HAVE_SSE42
+    const __m128i msign= _mm_cmpgt_epi64(_mm_setzero_si128(), divisor.val[0]);
+    __m128i asign      = _mm_cmpgt_epi64(_mm_setzero_si128(), a);
+#else
+    const __m128i msign= _mm_srai_epi32(_mm_shuffle_epi32(divisor.val[0], _MM_SHUFFLE(3, 3, 1, 1)), 31);
+    __m128i asign      = _mm_srai_epi32(_mm_shuffle_epi32(a, _MM_SHUFFLE(3, 3, 1, 1)), 31);
+#endif
+    __m128i m_asign    = _mm_and_si128(divisor.val[0], asign);
+    __m128i a_msign    = _mm_and_si128(a, msign);
+            mulhi      = _mm_sub_epi64(mulhi, m_asign);
+            mulhi      = _mm_sub_epi64(mulhi, a_msign);
+    // q               = (a + mulhi) >> sh
+    __m128i q          = _mm_add_epi64(a, mulhi);
+    // emulate arithmetic right shift
+    const __m128i sigb = npyv_setall_s64(1LL << 63);
+            q          = _mm_srl_epi64(_mm_add_epi64(q, sigb), divisor.val[1]);
+            q          = _mm_sub_epi64(q, _mm_srl_epi64(sigb, divisor.val[1]));
+    // q               = q - XSIGN(a)
+    // trunc(a/d)      = (q ^ dsign) - dsign
+            q          = _mm_sub_epi64(q, asign);
+            q          = _mm_sub_epi64(_mm_xor_si128(q, divisor.val[2]), divisor.val[2]);
+    return  q;
+}
+/***************************
  * Division
  ***************************/
 // TODO: emulate integer division
@@ -175,7 +350,7 @@ NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
     __m128 t2 = _mm_add_ps(a, t1);
     __m128 t3 = _mm_shuffle_ps(t2, t2, 1);
     __m128 t4 = _mm_add_ss(t2, t3);
-    return _mm_cvtss_f32(t4); 
+    return _mm_cvtss_f32(t4);
 #endif
 }
 
