@@ -549,7 +549,8 @@ cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
 #elif defined(__STDC_VERSION__) \\
       && (__STDC_VERSION__ >= 201112L) \\
-      && !defined(__STDC_NO_THREADS__)
+      && !defined(__STDC_NO_THREADS__) \\
+      && (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 28)
 #include <threads.h>
 #define F2PY_THREAD_LOCAL_DECL thread_local
 #elif defined(__GNUC__) \\
