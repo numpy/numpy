@@ -1611,6 +1611,10 @@ def updatevars(typespec, selector, attrspec, entitydecl):
             edecl['charselector'] = copy.copy(charselect)
             edecl['typename'] = typename
             edecl['attrspec'] = copy.copy(attrspec)
+        if 'external' in (edecl.get('attrspec') or []) and e in groupcache[groupcounter]['args']:
+            if 'externals' not in groupcache[groupcounter]:
+                groupcache[groupcounter]['externals'] = []
+            groupcache[groupcounter]['externals'].append(e)
         if m.group('after'):
             m1 = lenarraypattern.match(markouterparen(m.group('after')))
             if m1:
