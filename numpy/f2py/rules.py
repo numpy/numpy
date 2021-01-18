@@ -76,7 +76,7 @@ from .auxfuncs import (
     issubroutine, issubroutine_wrap, isthreadsafe, isunsigned,
     isunsigned_char, isunsigned_chararray, isunsigned_long_long,
     isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
-    l_and, l_not, l_or, outmess, replace, stripcomma,
+    l_and, l_not, l_or, outmess, replace, stripcomma, requiresf90wrapper
 )
 
 from . import capi_maps
@@ -1187,9 +1187,12 @@ def buildmodule(m, um):
                 nb1['args'] = a
                 nb_list.append(nb1)
         for nb in nb_list:
+            # requiresf90wrapper must be called before buildapi as it
+            # rewrites assumed shape arrays as automatic arrays.
+            isf90 = requiresf90wrapper(nb)
             api, wrap = buildapi(nb)
             if wrap:
-                if ismoduleroutine(nb) or issubroutine_wrap(nb):
+                if isf90:
                     funcwrappers2.append(wrap)
                 else:
                     funcwrappers.append(wrap)
@@ -1291,7 +1294,11 @@ def buildmodule(m, um):
                 'C     It contains Fortran 77 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
-                if l and l[0] == ' ':
+                i = l.find('!')
+                if i >= 0 and i < 66:
+                    # don't split comment lines
+                    lines.append(l + '\n')
+                elif l and l[0] == ' ':
                     while len(l) >= 66:
                         lines.append(l[:66] + '\n     &')
                         l = l[66:]

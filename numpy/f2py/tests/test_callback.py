@@ -211,3 +211,27 @@ class TestF77CallbackPythonTLS(TestF77Callback):
     compiler-provided
     """
     options = ["-DF2PY_USE_PYTHON_TLS"]
+
+
+class TestF90Callback(util.F2PyTest):
+
+    suffix = '.f90'
+
+    code = """
+function gh17797(f, y) result(r)
+  external f
+  integer(8) :: r, f
+  integer(8), dimension(:) :: y
+  r = f(0)
+  r = r + sum(y)
+end function gh17797
+    """
+
+    def test_gh17797(self):
+
+        def incr(x):
+            return x + 123
+
+        y = np.array([1, 2, 3], dtype=np.int64)
+        r = self.module.gh17797(incr, y)
+        assert r == 123 + 1 + 2 + 3
