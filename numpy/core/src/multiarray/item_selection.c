@@ -2131,18 +2131,22 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 
 #if NPY_SIMD
 
+/*
+
+*/
+
 /* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */
 static NPY_INLINE NPY_GCC_OPT_3 npyv_u8
 count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end, npy_uint8 max_count)
 {
-    const npyv_u8 vone = npyv_setall_u8(1);
-    const npyv_u8 vzero = npyv_zero_u8();
+    const npyv_u8 vone = npyv_setall_u8(1); 
+    const npyv_u8 vzero = npyv_zero_u8();   
 
-    npy_intp lane_max = 0;
-    npyv_u8 vsum8 = npyv_zero_u8();
+    npy_intp lane_max = 0; 
+    npyv_u8 vsum8 = npyv_zero_u8(); 
     while (*d < end && lane_max <= max_count - 1) {
         // we count zeros because `cmpeq` cheaper than `cmpneq` for most archs
-        npyv_u8 vt = npyv_cvt_u8_b8(npyv_cmpeq_u8(npyv_load_u8(*d), vzero));
+        npyv_u8 vt = npyv_cvt_u8_b8(npyv_cmpeq_u8(npyv_load_u8(*d), vzero)); 
         vt = npyv_and_u8(vt, vone);
         vsum8 = npyv_add_u8(vsum8, vt);
         *d += npyv_nlanes_u8;
@@ -2155,8 +2159,8 @@ static NPY_INLINE NPY_GCC_OPT_3 npyv_u16x2
 count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end, npy_uint16 max_count)
 {
     npyv_u16x2 vsum16;
-    vsum16.val[0] = vsum16.val[1] = npyv_zero_u16();
-    npy_intp lane_max = 0;
+    vsum16.val[0] = vsum16.val[1] = npyv_zero_u16(); // Setting a vector of 0s (16 maybe)
+    npy_intp lane_max = 0; // scalar 0
     while (*d < end && lane_max <= max_count - NPY_MAX_UINT8) {
         npyv_u8 vsum8 = count_zero_bytes_u8(d, end, NPY_MAX_UINT8);
         npyv_u16x2 part = npyv_expand_u16_u8(vsum8);
@@ -2202,7 +2206,252 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
     return unrollx - zero_count;
 }
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
+count_nonzero_int16_simd(npy_int16 *d, npy_uintp unrollx)
+{
+    npy_uintp zero_count = 0;
+    const npy_uintp innerloop_jump = NPY_MAX_UINT16;
+    const npy_int16 *end = d + unrollx;
+
+    const npyv_u16 vone = npyv_setall_u16(1); 
+    const npyv_u16 vzero = npyv_zero_u16();   
+
+    npy_int16 *target = d;
+    npy_uint16 sums[npyv_nlanes_u16];
+
+    while (d<end) {
+        npyv_u16 vsum16 = npyv_zero_u16(); 
+        target = MIN(target+innerloop_jump, end);
+        for (; d<target; d+=npyv_nlanes_u16) {
+            npyv_u16 vt = npyv_cvt_u16_b16(npyv_cmpeq_u16(npyv_load_u16(d), vzero)); 
+            vt = npyv_and_u16(vt, vone);
+            vsum16 = npyv_add_u16(vsum16, vt);
+        }
+
+        npyv_store_u16(sums, vsum16);
+        for (int i=0; i<npyv_nlanes_u16; ++i) {
+            zero_count += sums[i];
+        }
+    }
+
+    return unrollx - zero_count;
+}
+
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
+count_nonzero_int32_simd(npy_int32 *d, npy_uintp unrollx)
+{
+    npy_uintp zero_count = 0;
+    const npy_uintp innerloop_jump = NPY_MAX_UINT32;
+    const npy_int32 *end = d + unrollx;
+
+    const npyv_u32 vone = npyv_setall_u32(1); 
+    const npyv_u32 vzero = npyv_zero_u32();   
+
+    npy_int32 *target = d;
+    while (d<end) {
+        npyv_u32 vsum32 = npyv_zero_u32(); 
+        target = MIN(target+innerloop_jump, end);
+        for (; d<target; d+=npyv_nlanes_u32) {
+            npyv_u32 vt = npyv_cvt_u32_b32(npyv_cmpeq_u32(npyv_load_u32(d), vzero)); 
+            vt = npyv_and_u32(vt, vone);
+            vsum32 = npyv_add_u32(vsum32, vt);
+        }
+        zero_count += npyv_sum_u32(vsum32);    
+    }
+
+    return unrollx - zero_count;
+}
+
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
+count_nonzero_int64_simd(npy_int64 *d, npy_uintp unrollx)
+{
+    npy_uintp zero_count = 0;
+    const npy_int64 *end = d + unrollx;
+    const npyv_u64 vone = npyv_setall_u64(1); 
+    const npyv_u64 vzero = npyv_zero_u64();   
+    npyv_u64 vsum64 = npyv_zero_u64(); 
+
+    for (; d<end; d+=npyv_nlanes_u64) {
+        npyv_u64 vt = npyv_cvt_u64_b64(npyv_cmpeq_u64(npyv_load_u64(d), vzero)); 
+        vt = npyv_and_u64(vt, vone);
+        vsum64 = npyv_add_u64(vsum64, vt);
+    }
+
+    npy_uint64 sums[npyv_nlanes_u64];
+    npyv_store_u64(sums, vsum64);
+    for (int i=0; i<npyv_nlanes_u64; ++i) {
+        zero_count += sums[i];
+    }
+
+    return unrollx - zero_count;
+}
+
 #endif
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_int16(int ndim, const npy_int16 *data, const npy_intp *ashape, const npy_intp *astrides)
+{
+    int idim;
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp coord[NPY_MAXDIMS];
+    npy_intp count = 0;
+    NPY_BEGIN_THREADS_DEF;
+
+    /* Use raw iteration with no heap memory allocation */
+    if (PyArray_PrepareOneRawArrayIter(
+                    ndim, ashape,
+                    data, astrides,
+                    &ndim, shape,
+                    &data, strides) < 0) {
+        return -1;
+    }
+
+    /* Handle zero-sized array */
+    if (shape[0] == 0) {
+        return 0;
+    }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
+    if (strides[0] == 2) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+            /* Process the innermost dimension */
+            const npy_int16 *d = data;
+            const npy_int16 *e = data + shape[0];
+            npy_uintp stride = shape[0] & -npyv_nlanes_u16;
+            count += count_nonzero_int16_simd(d, stride);
+            d += stride;
+            for (; d < e; ++d) {
+                count += (*d != 0);
+            }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+    } else {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+            npy_int16 *d = data;
+            /* Process the innermost dimension */
+            for (npy_intp i = 0; i < shape[0]; ++i, d = ((npy_int8*) d) + strides[0]) {
+                count += (*d != 0);
+            }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+    }
+
+    NPY_END_THREADS;
+
+    return count;
+}
+
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_int32(int ndim, const npy_int32 *data, const npy_intp *ashape, const npy_intp *astrides)
+{
+    int idim;
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp coord[NPY_MAXDIMS];
+    npy_intp count = 0;
+    NPY_BEGIN_THREADS_DEF;
+
+    /* Use raw iteration with no heap memory allocation */
+    if (PyArray_PrepareOneRawArrayIter(
+                    ndim, ashape,
+                    data, astrides,
+                    &ndim, shape,
+                    &data, strides) < 0) {
+        return -1;
+    }
+
+    /* Handle zero-sized array */
+    if (shape[0] == 0) {
+        return 0;
+    }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
+    if (strides[0] == 4) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+            /* Process the innermost dimension */
+            const npy_int32 *d = data;
+            const npy_int32 *e = data + shape[0];
+            npy_uintp stride = shape[0] & -npyv_nlanes_u32;
+            count += count_nonzero_int32_simd(d, stride);
+            d += stride;
+            for (; d < e; ++d) {
+                count += (*d != 0);
+            }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+    } else {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+            npy_int32 *d = data;
+            /* Process the innermost dimension */
+            for (npy_intp i = 0; i < shape[0]; ++i, d = ((npy_int8*) d) + strides[0]) {
+                count += (*d != 0);
+            }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+    }
+
+    NPY_END_THREADS;
+
+    return count;
+}
+
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_int64(int ndim, const npy_int64 *data, const npy_intp *ashape, const npy_intp *astrides)
+{
+    int idim;
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp coord[NPY_MAXDIMS];
+    npy_intp count = 0;
+    NPY_BEGIN_THREADS_DEF;
+
+    /* Use raw iteration with no heap memory allocation */
+    if (PyArray_PrepareOneRawArrayIter(
+                    ndim, ashape,
+                    data, astrides,
+                    &ndim, shape,
+                    &data, strides) < 0) {
+        return -1;
+    }
+
+    /* Handle zero-sized array */
+    if (shape[0] == 0) {
+        return 0;
+    }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
+
+    if (strides[0] == 8) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+            /* Process the innermost dimension */
+            const npy_int64 *d = data;
+            const npy_int64 *e = data + shape[0];
+            npy_uintp stride = shape[0] & -npyv_nlanes_u64;
+            count += count_nonzero_int64_simd(d, stride);
+            d += stride;
+            for (; d < e; ++d) {
+                count += (*d != 0);
+            }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+    } else {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+            npy_int64 *d = data;
+            /* Process the innermost dimension */
+            for (npy_intp i = 0; i < shape[0]; ++i, d = ((npy_int8*) d) + strides[0]) {
+                count += (*d != 0);
+            }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+    }
+
+    NPY_END_THREADS;
+
+    return count;
+}
+
+
+
 /*
  * Counts the number of True values in a raw boolean array. This
  * is a low-overhead function which does no heap allocations.
@@ -2212,7 +2461,6 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
 NPY_NO_EXPORT npy_intp
 count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const *astrides)
 {
-    
     int idim;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp i, coord[NPY_MAXDIMS];
@@ -2297,10 +2545,31 @@ PyArray_CountNonzero(PyArrayObject *self)
 
     /* Special low-overhead version specific to the boolean type */
     dtype = PyArray_DESCR(self);
-    if (dtype->type_num == NPY_BOOL) {
+
+
+#if NPY_SIMD
+    if (dtype->type_num == NPY_INT16 || dtype->type_num == NPY_UINT16) {
+        return count_nonzero_int16(PyArray_NDIM(self), (npy_int16 *) PyArray_DATA(self),
+                        PyArray_DIMS(self), PyArray_STRIDES(self));
+    }
+
+    if (dtype->type_num == NPY_INT32 || dtype->type_num == NPY_UINT32) {
+        return count_nonzero_int32(PyArray_NDIM(self), (npy_int32 *) PyArray_DATA(self),
+                        PyArray_DIMS(self), PyArray_STRIDES(self));
+    }
+
+    if (dtype->type_num == NPY_INT64 || dtype->type_num == NPY_UINT64) {
+        return count_nonzero_int64(PyArray_NDIM(self), (npy_int64 *) PyArray_DATA(self),
+                        PyArray_DIMS(self), PyArray_STRIDES(self));
+    }
+
+#endif
+
+    if (dtype->type_num == NPY_BOOL || dtype->type_num == NPY_INT8 || dtype->type_num == NPY_UINT8) {
         return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
                         PyArray_DIMS(self), PyArray_STRIDES(self));
     }
+
     nonzero = PyArray_DESCR(self)->f->nonzero;
 
     /* If it's a trivial one-dimensional loop, don't use an iterator */
