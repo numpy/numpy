@@ -109,8 +109,7 @@ Exceptions to this rule are documented.
 import sys
 import warnings
 
-from ._globals import ModuleDeprecationWarning, VisibleDeprecationWarning
-from ._globals import _NoValue
+from ._globals import ModuleDeprecationWarning, VisibleDeprecationWarning , _NoValue
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
