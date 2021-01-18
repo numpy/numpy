@@ -1257,20 +1257,30 @@ class TestNonzero:
         assert_equal(np.count_nonzero(x), 4)
         assert_equal(np.nonzero(x), ([0, 2, 3, 6],))
 
-        x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
-                     dtype=[('a', 'i4'), ('b', 'i2')])
+        # x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
+        #              dtype=[('a', 'i4'), ('b', 'i2')])
+        x = np.array([(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
+                     dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')])
         assert_equal(np.count_nonzero(x['a']), 3)
         assert_equal(np.count_nonzero(x['b']), 4)
+        assert_equal(np.count_nonzero(x['c']), 3)
+        assert_equal(np.count_nonzero(x['d']), 4)
         assert_equal(np.nonzero(x['a']), ([0, 2, 3],))
         assert_equal(np.nonzero(x['b']), ([0, 2, 3, 4],))
 
     def test_nonzero_twodim(self):
         x = np.array([[0, 1, 0], [2, 0, 3]])
-        assert_equal(np.count_nonzero(x), 3)
+        assert_equal(np.count_nonzero(x.astype('i1')), 3)
+        assert_equal(np.count_nonzero(x.astype('i2')), 3)
+        assert_equal(np.count_nonzero(x.astype('i4')), 3)
+        assert_equal(np.count_nonzero(x.astype('i8')), 3)
         assert_equal(np.nonzero(x), ([0, 1, 1], [1, 0, 2]))
 
         x = np.eye(3)
-        assert_equal(np.count_nonzero(x), 3)
+        assert_equal(np.count_nonzero(x.astype('i1')), 3)
+        assert_equal(np.count_nonzero(x.astype('i2')), 3)
+        assert_equal(np.count_nonzero(x.astype('i4')), 3)
+        assert_equal(np.count_nonzero(x.astype('i8')), 3)
         assert_equal(np.nonzero(x), ([0, 1, 2], [0, 1, 2]))
 
         x = np.array([[(0, 1), (0, 0), (1, 11)],
