@@ -1186,7 +1186,7 @@ def buildmodule(m, um):
         for nb in nb_list:
             api, wrap = buildapi(nb)
             if wrap:
-                if ismoduleroutine(nb):
+                if ismoduleroutine(nb) or issubroutine_wrap(nb):
                     funcwrappers2.append(wrap)
                 else:
                     funcwrappers.append(wrap)
@@ -1310,7 +1310,11 @@ def buildmodule(m, um):
                 '!     It contains Fortran 90 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
-                if len(l) > 72 and l[0] == ' ':
+                i = l.find('!')
+                if i >= 0 and i < 72:
+                    # don't split comment lines
+                    lines.append(l + '\n')
+                elif len(l) > 72 and l[0] == ' ':
                     lines.append(l[:72] + '&\n     &')
                     l = l[72:]
                     while len(l) > 66:
