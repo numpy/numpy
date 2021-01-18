@@ -7,10 +7,19 @@ from contextlib import ContextDecorator
 
 from numpy.core._internal import _ctypes
 from numpy.typing import (
+    # Arrays
     ArrayLike,
+
+    # DTypes
     DTypeLike,
+    _SupportsDType,
+    _VoidDTypeLike,
+
+    # Shapes
     _Shape,
     _ShapeLike,
+
+    # Scalars
     _CharLike_co,
     _BoolLike_co,
     _IntLike_co,
@@ -18,8 +27,8 @@ from numpy.typing import (
     _ComplexLike_co,
     _FloatLike_co,
     _NumberLike_co,
-    _SupportsDType,
-    _VoidDTypeLike,
+
+    # `number` precision
     NBitBase,
     _256Bit,
     _128Bit,
@@ -39,8 +48,8 @@ from numpy.typing import (
     _NBitSingle,
     _NBitDouble,
     _NBitLongDouble,
-)
-from numpy.typing import (
+
+    # Character codes
     _BoolCodes,
     _UInt8Codes,
     _UInt16Codes,
