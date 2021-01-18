@@ -24,7 +24,6 @@ from numpy.typing import (
     _ShapeLike,
     _Shape,
     _IntLike_co,
-    _BoolLike_co,
     _NumberLike_co,
 )
 
@@ -98,7 +97,7 @@ def choose(
 ) -> _ScalarIntOrBool: ...
 @overload
 def choose(
-    a: Union[_IntLike_co, _BoolLike_co], choices: ArrayLike, out: Optional[ndarray] = ..., mode: _ModeKind = ...
+    a: _IntLike_co, choices: ArrayLike, out: Optional[ndarray] = ..., mode: _ModeKind = ...
 ) -> Union[integer, bool_]: ...
 @overload
 def choose(

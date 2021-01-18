@@ -37,11 +37,11 @@ from numpy import (
 )
 from ._nbit import _NBitInt
 from ._scalars import (
-    _BoolLike,
-    _IntLike,
-    _FloatLike,
-    _ComplexLike,
-    _NumberLike,
+    _BoolLike_co,
+    _IntLike_co,
+    _FloatLike_co,
+    _ComplexLike_co,
+    _NumberLike_co,
 )
 from . import NBitBase
 from ._array_like import ArrayLike
@@ -72,7 +72,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 
     class _BoolOp(Protocol[_GenericType_co]):
         @overload
-        def __call__(self, __other: _BoolLike) -> _GenericType_co: ...
+        def __call__(self, __other: _BoolLike_co) -> _GenericType_co: ...
         @overload  # platform dependent
         def __call__(self, __other: int) -> int_: ...
         @overload
@@ -84,7 +84,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 
     class _BoolBitOp(Protocol[_GenericType_co]):
         @overload
-        def __call__(self, __other: _BoolLike) -> _GenericType_co: ...
+        def __call__(self, __other: _BoolLike_co) -> _GenericType_co: ...
         @overload  # platform dependent
         def __call__(self, __other: int) -> int_: ...
         @overload
@@ -105,7 +105,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 
     class _BoolTrueDiv(Protocol):
         @overload
-        def __call__(self, __other: Union[float, _IntLike]) -> float64: ...
+        def __call__(self, __other: Union[float, _IntLike_co]) -> float64: ...
         @overload
         def __call__(self, __other: complex) -> complex128: ...
         @overload
@@ -113,7 +113,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 
     class _BoolMod(Protocol):
         @overload
-        def __call__(self, __other: _BoolLike) -> int8: ...
+        def __call__(self, __other: _BoolLike_co) -> int8: ...
         @overload  # platform dependent
         def __call__(self, __other: int) -> int_: ...
         @overload
@@ -125,7 +125,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 
     class _BoolDivMod(Protocol):
         @overload
-        def __call__(self, __other: _BoolLike) -> _2Tuple[int8]: ...
+        def __call__(self, __other: _BoolLike_co) -> _2Tuple[int8]: ...
         @overload  # platform dependent
         def __call__(self, __other: int) -> _2Tuple[int_]: ...
         @overload
@@ -139,7 +139,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: timedelta64) -> _NumberType_co: ...
         @overload
-        def __call__(self, __other: _FloatLike) -> timedelta64: ...
+        def __call__(self, __other: _FloatLike_co) -> timedelta64: ...
 
     class _IntTrueDiv(Protocol[_NBit_co]):
         @overload
@@ -314,7 +314,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         ) -> complexfloating[Union[_NBit_co, _NBit], Union[_NBit_co, _NBit]]: ...
 
     class _NumberOp(Protocol):
-        def __call__(self, __other: _NumberLike) -> number: ...
+        def __call__(self, __other: _NumberLike_co) -> number: ...
 
     class _ComparisonOp(Protocol[_T]):
         @overload
