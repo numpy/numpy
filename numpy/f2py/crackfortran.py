@@ -3228,11 +3228,11 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
             outmess('vars2fortran: No definition for argument "%s".\n' % a)
             continue
         if a == block['name']:
-            if block['block'] == 'function':
-                if block.get('result'):
-                    # skip declaring function if its result is already declared
-                    continue
-            else:
+            if block['block'] != 'function' or block.get('result'):
+                # 1) skip declaring a variable that name matches with
+                #    subroutine name
+                # 2) skip declaring function when its type is
+                #    declared via `result` construction
                 continue
         if 'typespec' not in vars[a]:
             if 'attrspec' in vars[a] and 'external' in vars[a]['attrspec']:
