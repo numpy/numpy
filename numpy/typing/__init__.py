@@ -295,9 +295,9 @@ from ._scalars import (
     _VoidLike,
 )
 from ._shape import _Shape, _ShapeLike
-from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
+from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike as DTypeLike
 from ._array_like import (
-    ArrayLike,
+    ArrayLike as ArrayLike,
     _ArrayLike,
     _NestedSequence,
     _SupportsArray,
