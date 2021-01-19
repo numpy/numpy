@@ -217,15 +217,16 @@ class TestF90Callback(util.F2PyTest):
 
     suffix = '.f90'
 
-    code = textwrap.dedent("""
-    function gh17797(f, y) result(r)
-      external f
-      integer(8) :: r, f
-      integer(8), dimension(:) :: y
-      r = f(0)
-      r = r + sum(y)
-    end function gh17797
-    """)
+    code = textwrap.dedent(
+        """
+        function gh17797(f, y) result(r)
+          external f
+          integer(8) :: r, f
+          integer(8), dimension(:) :: y
+          r = f(0)
+          r = r + sum(y)
+        end function gh17797
+        """)
 
     def test_gh17797(self):
 
