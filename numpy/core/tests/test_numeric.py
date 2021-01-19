@@ -2983,6 +2983,9 @@ class TestConvolve:
         with assert_raises(ValueError):
             np.convolve(d, k, mode=-1)
         assert_array_equal(np.convolve(d, k, mode=2), full_mode)
+        # illegal arguments
+        with assert_raises(TypeError):
+            np.convolve(d, k, mode=None)
 
 class TestArgwhere:
 
