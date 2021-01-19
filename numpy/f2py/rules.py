@@ -1294,8 +1294,7 @@ def buildmodule(m, um):
                 'C     It contains Fortran 77 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
-                i = l.find('!')
-                if i >= 0 and i < 66:
+                if 0 <= l.find('!') < 66:
                     # don't split comment lines
                     lines.append(l + '\n')
                 elif l and l[0] == ' ':
@@ -1320,8 +1319,7 @@ def buildmodule(m, um):
                 '!     It contains Fortran 90 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
-                i = l.find('!')
-                if i >= 0 and i < 72:
+                if 0 <= l.find('!') < 72:
                     # don't split comment lines
                     lines.append(l + '\n')
                 elif len(l) > 72 and l[0] == ' ':
