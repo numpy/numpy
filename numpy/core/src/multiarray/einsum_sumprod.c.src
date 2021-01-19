@@ -20,28 +20,6 @@
 #include "simd/simd.h"
 #include "common.h"
 
-#ifdef NPY_HAVE_SSE_INTRINSICS
-#define EINSUM_USE_SSE1 1
-#else
-#define EINSUM_USE_SSE1 0
-#endif
-
-#ifdef NPY_HAVE_SSE2_INTRINSICS
-#define EINSUM_USE_SSE2 1
-#else
-#define EINSUM_USE_SSE2 0
-#endif
-
-#if EINSUM_USE_SSE1
-#include <xmmintrin.h>
-#endif
-
-#if EINSUM_USE_SSE2
-#include <emmintrin.h>
-#endif
-
-#define EINSUM_IS_SSE_ALIGNED(x) ((((npy_intp)x)&0xf) == 0)
-
 // ARM/Neon don't have instructions for aligned memory access
 #ifdef NPY_HAVE_NEON
     #define EINSUM_IS_ALIGNED(x) 0
@@ -311,6 +289,77 @@ finish_after_unrolled_loop:
 
 #elif @nop@ == 2 && !@complex@
 
+// calculate the multiply and add operation such as dataout = data*scalar+dataout
+static NPY_GCC_OPT_3 void
+@name@_sum_of_products_muladd(@type@ *data, @type@ *data_out, @temptype@ scalar, npy_intp count)
+{
+#if @NPYV_CHK@ // NPYV check for @type@
+    /* Use aligned instructions if possible */
+    const int is_aligned = EINSUM_IS_ALIGNED(data) && EINSUM_IS_ALIGNED(data_out);
+    const int vstep = npyv_nlanes_@sfx@;
+    const npyv_@sfx@ v_scalar = npyv_setall_@sfx@(scalar);
+    /**begin repeat2
+     * #cond = if(is_aligned), else#
+     * #ld = loada, load#
+     * #st = storea, store#
+     */
+    @cond@ {
+        const npy_intp vstepx4 = vstep * 4;
+        for (; count >= vstepx4; count -= vstepx4, data += vstepx4, data_out += vstepx4) {
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data + vstep * @i@);
+            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(v_scalar, b@i@, c@i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
+            /**end repeat3**/
+        }
+    }
+    /**end repeat2**/
+    for (; count > 0; count -= vstep, data += vstep, data_out += vstep) {
+        npyv_@sfx@ a = npyv_load_tillz_@sfx@(data, count);
+        npyv_@sfx@ b = npyv_load_tillz_@sfx@(data_out, count);
+        npyv_store_till_@sfx@(data_out, count, npyv_muladd_@sfx@(a, v_scalar, b));
+    }
+    npyv_cleanup();
+#else
+#ifndef NPY_DISABLE_OPTIMIZATION
+    for (; count >= 4; count -= 4, data += 4, data_out += 4) {
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        const @type@ b@i@ = @from@(data[@i@]);
+        const @type@ c@i@ = @from@(data_out[@i@]);
+        /**end repeat2**/
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        const @type@ abc@i@ = scalar * b@i@ + c@i@;
+        /**end repeat2**/
+        /**begin repeat2
+         * #i = 0, 1, 2, 3#
+         */
+        data_out[@i@] = @to@(abc@i@);
+        /**end repeat2**/
+    }
+#endif // !NPY_DISABLE_OPTIMIZATION
+    for (; count > 0; --count, ++data, ++data_out) {
+        const @type@ b = @from@(*data);
+        const @type@ c = @from@(*data_out);
+        *data_out = @to@(scalar * b + c);
+    }
+#endif // NPYV check for @type@
+}
+
 static void
 @name@_sum_of_products_contig_two(int nop, char **dataptr,
                                 npy_intp const *NPY_UNUSED(strides), npy_intp count)
@@ -403,242 +452,23 @@ static void
     @type@ *data1 = (@type@ *)dataptr[1];
     @type@ *data_out = (@type@ *)dataptr[2];
 
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, b, value0_sse;
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, b, value0_sse;
-#endif
-
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
                                                     (int)count);
-
-/* This is placed before the main loop to make small counts faster */
-finish_after_unrolled_loop:
-    switch (count) {
-/**begin repeat2
- * #i = 6, 5, 4, 3, 2, 1, 0#
- */
-        case @i@+1:
-            data_out[@i@] = @to@(value0 *
-                                 @from@(data1[@i@]) +
-                                 @from@(data_out[@i@]));
-/**end repeat2**/
-        case 0:
-            return;
-    }
-
-#if EINSUM_USE_SSE1 && @float32@
-    value0_sse = _mm_set_ps1(value0);
-
-    /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data1) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
-
-/**begin repeat2
- * #i = 0, 4#
- */
-            a = _mm_mul_ps(value0_sse, _mm_load_ps(data1+@i@));
-            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
-            _mm_store_ps(data_out+@i@, b);
-/**end repeat2**/
-            data1 += 8;
-            data_out += 8;
-        }
-
-        /* Finish off the loop */
-        if (count > 0) {
-            goto finish_after_unrolled_loop;
-        }
-        else {
-            return;
-        }
-    }
-#elif EINSUM_USE_SSE2 && @float64@
-    value0_sse = _mm_set1_pd(value0);
-
-    /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data1) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
-
-/**begin repeat2
- * #i = 0, 2, 4, 6#
- */
-            a = _mm_mul_pd(value0_sse, _mm_load_pd(data1+@i@));
-            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
-            _mm_store_pd(data_out+@i@, b);
-/**end repeat2**/
-            data1 += 8;
-            data_out += 8;
-        }
-
-        /* Finish off the loop */
-        if (count > 0) {
-            goto finish_after_unrolled_loop;
-        }
-        else {
-            return;
-        }
-    }
-#endif
-
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-#if EINSUM_USE_SSE1 && @float32@
-/**begin repeat2
- * #i = 0, 4#
- */
-        a = _mm_mul_ps(value0_sse, _mm_loadu_ps(data1+@i@));
-        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
-        _mm_storeu_ps(data_out+@i@, b);
-/**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
-/**begin repeat2
- * #i = 0, 2, 4, 6#
- */
-        a = _mm_mul_pd(value0_sse, _mm_loadu_pd(data1+@i@));
-        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
-        _mm_storeu_pd(data_out+@i@, b);
-/**end repeat2**/
-#else
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7#
- */
-        data_out[@i@] = @to@(value0 *
-                             @from@(data1[@i@]) +
-                             @from@(data_out[@i@]));
-/**end repeat2**/
-#endif
-        data1 += 8;
-        data_out += 8;
-    }
-
-    /* Finish off the loop */
-    if (count > 0) {
-        goto finish_after_unrolled_loop;
-    }
+    @name@_sum_of_products_muladd(data1, data_out, value0, count);
+    
 }
 
 static void
 @name@_sum_of_products_contig_stride0_outcontig_two(int nop, char **dataptr,
                                 npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
-    @type@ *data0 = (@type@ *)dataptr[0];
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
+    @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data_out = (@type@ *)dataptr[2];
-
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, b, value1_sse;
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, b, value1_sse;
-#endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
                                                     (int)count);
-
-/* This is placed before the main loop to make small counts faster */
-finish_after_unrolled_loop:
-    switch (count) {
-/**begin repeat2
- * #i = 6, 5, 4, 3, 2, 1, 0#
- */
-        case @i@+1:
-            data_out[@i@] = @to@(@from@(data0[@i@])*
-                                 value1  +
-                                 @from@(data_out[@i@]));
-/**end repeat2**/
-        case 0:
-            return;
-    }
-
-#if EINSUM_USE_SSE1 && @float32@
-    value1_sse = _mm_set_ps1(value1);
-
-    /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
-
-/**begin repeat2
- * #i = 0, 4#
- */
-            a = _mm_mul_ps(_mm_load_ps(data0+@i@), value1_sse);
-            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
-            _mm_store_ps(data_out+@i@, b);
-/**end repeat2**/
-            data0 += 8;
-            data_out += 8;
-        }
-
-        /* Finish off the loop */
-        goto finish_after_unrolled_loop;
-    }
-#elif EINSUM_USE_SSE2 && @float64@
-    value1_sse = _mm_set1_pd(value1);
-
-    /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
-
-/**begin repeat2
- * #i = 0, 2, 4, 6#
- */
-            a = _mm_mul_pd(_mm_load_pd(data0+@i@), value1_sse);
-            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
-            _mm_store_pd(data_out+@i@, b);
-/**end repeat2**/
-            data0 += 8;
-            data_out += 8;
-        }
-
-        /* Finish off the loop */
-        goto finish_after_unrolled_loop;
-    }
-#endif
-
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-#if EINSUM_USE_SSE1 && @float32@
-/**begin repeat2
- * #i = 0, 4#
- */
-        a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), value1_sse);
-        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
-        _mm_storeu_ps(data_out+@i@, b);
-/**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
-/**begin repeat2
- * #i = 0, 2, 4, 6#
- */
-        a = _mm_mul_pd(_mm_loadu_pd(data0+@i@), value1_sse);
-        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
-        _mm_storeu_pd(data_out+@i@, b);
-/**end repeat2**/
-#else
-/**begin repeat2
- * #i = 0, 1, 2, 3, 4, 5, 6, 7#
- */
-        data_out[@i@] = @to@(@from@(data0[@i@])*
-                             value1  +
-                             @from@(data_out[@i@]));
-/**end repeat2**/
-#endif
-        data0 += 8;
-        data_out += 8;
-    }
-
-    /* Finish off the loop */
-    goto finish_after_unrolled_loop;
+    @name@_sum_of_products_muladd(data0, data_out, value1, count);
 }
 
 static NPY_GCC_OPT_3 void
