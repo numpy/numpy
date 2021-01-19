@@ -296,6 +296,7 @@ class TestNonarrayArgs:
         B[0] = 1j
         assert_almost_equal(np.var(B), 0.25)
 
+
 class TestIsscalar:
     def test_isscalar(self):
         assert_(np.isscalar(3.1))
@@ -2362,8 +2363,8 @@ class TestClip:
                 base_shape=shape,
                 # Commenting out the min_dims line allows zero-dimensional arrays,
                 # and zero-dimensional arrays containing NaN make the test fail.
-                min_dims=1  
-                            
+                min_dims=1
+  
             )
         )
         amin = data.draw(
@@ -2896,10 +2897,10 @@ class TestCorrelate:
         self.x = np.array([1, 2, 3, 4, 5], dtype=dt)
         self.xs = np.arange(1, 20)[::3]
         self.y = np.array([-1, -2, -3], dtype=dt)
-        self.z1 = np.array([ -3.,  -8., -14., -20., -26., -14.,  -5.], dtype=dt)
+        self.z1 = np.array([-3., -8., -14., -20., -26., -14., -5.], dtype=dt)
         self.z1_4 = np.array([-2., -5., -8., -11., -14., -5.], dtype=dt)
-        self.z1r = np.array([-15., -22., -22., -16., -10.,  -4.,  -1.], dtype=dt)
-        self.z2 = np.array([-5., -14., -26., -20., -14., -8.,  -3.], dtype=dt)
+        self.z1r = np.array([-15., -22., -22., -16., -10., -4., -1.], dtype=dt)
+        self.z2 = np.array([-5., -14., -26., -20., -14., -8., -3.], dtype=dt)
         self.z2r = np.array([-1., -4., -10., -16., -22., -22., -15.], dtype=dt)
         self.zs = np.array([-3., -14., -30., -48., -66., -84.,
                            -102., -54., -19.], dtype=dt)
