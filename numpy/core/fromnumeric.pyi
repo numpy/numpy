@@ -23,9 +23,8 @@ from numpy.typing import (
     ArrayLike,
     _ShapeLike,
     _Shape,
-    _IntLike,
-    _BoolLike,
-    _NumberLike,
+    _IntLike_co,
+    _NumberLike_co,
 )
 
 if sys.version_info >= (3, 8):
@@ -98,7 +97,7 @@ def choose(
 ) -> _ScalarIntOrBool: ...
 @overload
 def choose(
-    a: Union[_IntLike, _BoolLike], choices: ArrayLike, out: Optional[ndarray] = ..., mode: _ModeKind = ...
+    a: _IntLike_co, choices: ArrayLike, out: Optional[ndarray] = ..., mode: _ModeKind = ...
 ) -> Union[integer, bool_]: ...
 @overload
 def choose(
@@ -250,7 +249,7 @@ def sum(
     dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> _Number: ...
 @overload
@@ -260,7 +259,7 @@ def sum(
     dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
 @overload
@@ -324,7 +323,7 @@ def amax(
     axis: Optional[_ShapeLike] = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> _Number: ...
 @overload
@@ -333,7 +332,7 @@ def amax(
     axis: None = ...,
     out: Optional[ndarray] = ...,
     keepdims: Literal[False] = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> number: ...
 @overload
@@ -342,7 +341,7 @@ def amax(
     axis: Optional[_ShapeLike] = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
 @overload
@@ -351,7 +350,7 @@ def amin(
     axis: Optional[_ShapeLike] = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> _Number: ...
 @overload
@@ -360,7 +359,7 @@ def amin(
     axis: None = ...,
     out: Optional[ndarray] = ...,
     keepdims: Literal[False] = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> number: ...
 @overload
@@ -369,7 +368,7 @@ def amin(
     axis: Optional[_ShapeLike] = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
 
@@ -387,7 +386,7 @@ def prod(
     dtype: DTypeLike = ...,
     out: None = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> _Number: ...
 @overload
@@ -397,7 +396,7 @@ def prod(
     dtype: DTypeLike = ...,
     out: None = ...,
     keepdims: Literal[False] = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> number: ...
 @overload
@@ -407,7 +406,7 @@ def prod(
     dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
-    initial: _NumberLike = ...,
+    initial: _NumberLike_co = ...,
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
 def cumprod(
@@ -424,7 +423,7 @@ def around(
 ) -> _Number: ...
 @overload
 def around(
-    a: _NumberLike, decimals: int = ..., out: Optional[ndarray] = ...
+    a: _NumberLike_co, decimals: int = ..., out: Optional[ndarray] = ...
 ) -> number: ...
 @overload
 def around(
