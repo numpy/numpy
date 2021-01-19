@@ -2467,25 +2467,6 @@ PyArray_CountNonzero(PyArrayObject *self)
     /* Special low-overhead version specific to the boolean type */
     dtype = PyArray_DESCR(self);
 
-
-// #if NPY_SIMD
-//     if (dtype->type_num == NPY_INT16 || dtype->type_num == NPY_UINT16) {
-//         return count_nonzero_int16(PyArray_NDIM(self), (npy_int16 *) PyArray_DATA(self),
-//                         PyArray_DIMS(self), PyArray_STRIDES(self));
-//     }
-
-//     if (dtype->type_num == NPY_INT32 || dtype->type_num == NPY_UINT32) {
-//         return count_nonzero_int32(PyArray_NDIM(self), (npy_int32 *) PyArray_DATA(self),
-//                         PyArray_DIMS(self), PyArray_STRIDES(self));
-//     }
-
-//     if (dtype->type_num == NPY_INT64 || dtype->type_num == NPY_UINT64) {
-//         return count_nonzero_int64(PyArray_NDIM(self), (npy_int64 *) PyArray_DATA(self),
-//                         PyArray_DIMS(self), PyArray_STRIDES(self));
-//     }
-
-// #endif
-
     if (dtype->type_num >= NPY_INT16 && dtype->type_num <= NPY_UINT64) {
         return count_nonzero_int(PyArray_NDIM(self), (void *) PyArray_DATA(self),
                         PyArray_DIMS(self), PyArray_STRIDES(self), dtype->type_num);
