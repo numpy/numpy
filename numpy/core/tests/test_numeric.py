@@ -2958,6 +2958,10 @@ class TestCorrelate:
         with assert_raises(ValueError):
             np.correlate(d, k, mode=-1)
         assert_array_equal(np.correlate(d, k, mode=0), valid_mode)
+        # illegal arguments
+        with assert_raises(TypeError):
+            np.correlate(d, k, mode=None)
+
 
 class TestConvolve:
     def test_object(self):
@@ -2986,6 +2990,7 @@ class TestConvolve:
         # illegal arguments
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
+
 
 class TestArgwhere:
 
