@@ -743,6 +743,7 @@ static int correlatemode_parser(char const *str, Py_ssize_t length, void *data)
      * match inputs and other inputs and outputs DeprecationWarning
      */
     if (!is_exact) {
+        /* Numpy 1.21, 2021-01-19 */
         if (DEPRECATE("inexact matches and case insensitive matches for "
                       "convolve/correlate mode are deprecated, please "
                       "use one of 'valid', 'same', or 'full' instead.") < 0) {
