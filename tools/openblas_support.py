@@ -13,7 +13,7 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
 OPENBLAS_V = '0.3.13'
-OPENBLAS_LONG = 'v0.3.13'
+OPENBLAS_LONG = 'v0.3.13-62-gaf2b0d02'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64',
