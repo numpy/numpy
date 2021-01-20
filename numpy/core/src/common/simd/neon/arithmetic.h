@@ -133,10 +133,33 @@
 
 // Horizontal add: Calculates the sum of all vector elements.
 #if NPY_SIMD_F64
+    #define npyv_sum_u8 vaddvq_u8
+    #define npyv_sum_u16 vaddvq_u16
     #define npyv_sum_u32 vaddvq_u32
+    #define npyv_sum_u16 vaddvq_u64
     #define npyv_sum_f32 vaddvq_f32
     #define npyv_sum_f64 vaddvq_f64
 #else
+
+    NPY_FINLINE npy_uint32 npyv_sum_u8(npyv_u8 a)
+    {
+        uint32x4_t t0 = vpaddlq_u16(vpaddlq_u8(a));
+        uint32x2_t t1 = vpadd_u32(vget_low_u32(t0), vget_high_u32(t0));
+        return vget_lane_u32(vpadd_u32(t1, t1), 0);
+    }
+
+    NPY_FINLINE npy_uint32 npyv_sum_u16(npyv_u16 a)
+    {
+        uint32x4_t t0 = vpaddlq_u16(a);
+        uint32x2_t t1 = vpadd_u32(vget_low_u32(t0), vget_high_u32(t0));
+        return vget_lane_u32(vpadd_u32(t1, t1), 0);
+    }
+
+    NPY_FINLINE npy_uint64 npyv_sum_u64(npyv_u64 a)
+    {
+        return vget_lane_u64(vadd_u64(vget_low_u64(a), vget_high_u64(a)),0);
+    }
+
     NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
     {
         uint32x2_t a0 = vpadd_u32(vget_low_u32(a), vget_high_u32(a)); 

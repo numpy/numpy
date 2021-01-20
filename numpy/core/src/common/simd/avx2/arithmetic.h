@@ -118,6 +118,14 @@
 #endif // !NPY_HAVE_FMA3
 
 // Horizontal add: Calculates the sum of all vector elements.
+
+NPY_FINLINE npy_uint32 npyv_sum_u8(__m256i a)
+{
+    __m256i half = _mm256_sad_epu8(a, _mm256_setzero_si256());
+    __m128i quarter = _mm_add_epi32(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1));
+    return (unsigned)_mm_cvtsi128_si32(_mm_add_epi32(quarter, _mm_unpackhi_epi64(quarter, quarter)));
+}
+
 NPY_FINLINE npy_uint32 npyv_sum_u32(__m256i a)
 {
     __m256i s0 = _mm256_hadd_epi32(a, a);
@@ -125,6 +133,19 @@ NPY_FINLINE npy_uint32 npyv_sum_u32(__m256i a)
     __m128i s1 = _mm256_extracti128_si256(s0, 1);;
             s1 = _mm_add_epi32(_mm256_castsi256_si128(s0), s1);
     return _mm_cvtsi128_si32(s1);
+}
+
+NPY_FINLINE npy_uint32 npyv_sum_u16(__m256i a)
+{
+    npyv_u32x2 res = npyv_expand_u32_u16(a);
+    return (unsigned)npyv_sum_u32(_mm256_add_epi32(res.val[0], res.val[1]));
+}
+
+NPY_FINLINE npy_uint64 npyv_sum_u64(__m256i a)
+{
+    npy_uint64 NPY_DECL_ALIGNED(32) idx[2];
+    _mm_store_si128((__m128i*)idx, _mm_add_epi64(_mm256_castsi256_si128(a), _mm256_extracti128_si256(a, 1)));
+    return idx[0] + idx[1];
 }
 
 NPY_FINLINE float npyv_sum_f32(__m256 a)
