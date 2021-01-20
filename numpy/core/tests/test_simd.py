@@ -736,11 +736,14 @@ class _SIMD_ALL(_Test_Utility):
     def test_arithmetic_reduce_sum(self):
         """
         Test reduce sum intrinics:
+            npyv_sum_u8
+            npyv_sum_u16
             npyv_sum_u32
+            npyv_sum_u64
             npyv_sum_f32
             npyv_sum_f64
         """
-        if self.sfx not in ("u32", "f32", "f64"):
+        if self.sfx not in ("u8", "u16", "u32", "u64", "f32", "f64"):
             return
         # reduce sum
         data = self._data()

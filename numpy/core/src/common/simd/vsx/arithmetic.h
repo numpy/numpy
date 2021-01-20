@@ -118,6 +118,25 @@
 
 // Horizontal add: Calculates the sum of all vector elements.
 
+NPY_FINLINE npy_uint32 npyv_sum_u8(npyv_u8 a)
+{
+    const npyv_u32 zero4 = npyv_zero_u32();
+    npyv_u32 sum4 = vec_sum4s(a, zero4);
+    return (npy_uint32)vec_extract(vec_sums(sum4, zero4), 3);
+}
+
+NPY_FINLINE npy_uint32 npyv_sum_u16(npyv_u16 a)
+{
+    const npyv_u32 zero4 = npyv_zero_u32();
+    const npyv_u32 v4 = vec_mergeh(vec_adds(a, vec_sld(a, a, 8)), zero4);
+    return vec_extract(vec_sums(v4, zero4), 3);
+}
+
+NPY_FINLINE npy_uint64 npyv_sum_u64(npyv_u64 a)
+{
+    return vec_extract(vec_add(a, vec_permi(a, a, 3)), 0);
+}
+
 NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
 {
     const npyv_u32 rs = vec_add(a, vec_sld(a, a, 8));

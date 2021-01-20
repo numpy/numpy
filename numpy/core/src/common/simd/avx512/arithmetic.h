@@ -145,12 +145,37 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
  * intel compiler/GCC 7.1/Clang 4, we still need to support older GCC.
  ***************************/
 
+NPY_FINLINE npy_uint32 npyv_sum_u8(__m512i a)
+{
+    __m512i a16 = _mm512_add_epi16(_mm512_cvtepu8_epi16(npyv512_lower_si256(a)),
+                                       _mm512_cvtepu8_epi16(npyv512_higher_si256(a)));
+    a16 = _mm512_cvtepi16_epi32(_mm256_add_epi16(npyv512_lower_si256(a16), npyv512_higher_si256(a16)));
+    __m256i a8 = _mm256_add_epi32(npyv512_lower_si256(a16), npyv512_higher_si256(a16));
+    __m128i a4 = _mm_add_epi32(_mm256_castsi256_si128(a8), _mm256_extracti128_si256(a8, 1));
+    a4 = _mm_hadd_epi32(a4, a4);
+    return (npy_uint32)_mm_cvtsi128_si32(_mm_hadd_epi32(a4, a4));
+}
+
 NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
 {
     __m256i half = _mm256_add_epi32(npyv512_lower_si256(a), npyv512_higher_si256(a));
     __m128i quarter = _mm_add_epi32(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1));
     quarter = _mm_hadd_epi32(quarter, quarter);
     return _mm_cvtsi128_si32(_mm_hadd_epi32(quarter, quarter));
+}
+
+NPY_FINLINE npy_uint32 npyv_sum_u16(__m512i a)
+{
+    npyv_u32x2 res = npyv_expand_u32_u16(a);
+    return (unsigned)npyv_sum_u32(_mm512_add_epi32(res.val[0], res.val[1]));
+}
+
+NPY_FINLINE npy_uint64 npyv_sum_u64(__m512i a)
+{
+    npy_uint64 NPY_DECL_ALIGNED(64) idx[2];
+    __m256i half = _mm256_add_epi64(npyv512_lower_si256(a), npyv512_higher_si256(a));
+    _mm_store_si128((__m128i*)idx, _mm_add_epi64(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1)));
+    return idx[0] + idx[1];
 }
 
 #ifdef NPY_HAVE_AVX512F_REDUCE
