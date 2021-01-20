@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from ._types import Literal, Optional, Tuple, Union, array
+
 import numpy as np
 
 # def cholesky():
@@ -8,7 +12,7 @@ import numpy as np
 #     """
 #     return np.cholesky()
 
-def cross(x1, x2, /, *, axis=-1):
+def cross(x1: array, x2: array, /, *, axis: int = -1) -> array:
     """
     Array API compatible wrapper for :py:func:`np.cross <numpy.cross>`.
 
@@ -16,7 +20,7 @@ def cross(x1, x2, /, *, axis=-1):
     """
     return np.cross(x1, x2, axis=axis)
 
-def det(x, /):
+def det(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.det <numpy.linalg.det>`.
 
@@ -25,7 +29,7 @@ def det(x, /):
     # Note: this function is being imported from a nondefault namespace
     return np.linalg.det(x)
 
-def diagonal(x, /, *, axis1=0, axis2=1, offset=0):
+def diagonal(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.diagonal <numpy.diagonal>`.
 
@@ -65,7 +69,7 @@ def diagonal(x, /, *, axis1=0, axis2=1, offset=0):
 #     """
 #     return np.einsum()
 
-def inv(x):
+def inv(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.inv <numpy.linalg.inv>`.
 
@@ -106,7 +110,7 @@ def inv(x):
 #     """
 #     return np.matrix_rank()
 
-def norm(x, /, *, axis=None, keepdims=False, ord=None):
+def norm(x: array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = None) -> array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
 
@@ -118,7 +122,7 @@ def norm(x, /, *, axis=None, keepdims=False, ord=None):
     # Note: this function is being imported from a nondefault namespace
     return np.linalg.norm(x, axis=axis, keepdims=keepdims, ord=ord)
 
-def outer(x1, x2, /):
+def outer(x1: array, x2: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.outer <numpy.outer>`.
 
@@ -166,7 +170,7 @@ def outer(x1, x2, /):
 #     """
 #     return np.svd()
 
-def trace(x, /, *, axis1=0, axis2=1, offset=0):
+def trace(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.trace <numpy.trace>`.
 
@@ -174,7 +178,7 @@ def trace(x, /, *, axis1=0, axis2=1, offset=0):
     """
     return np.trace(x, axis1=axis1, axis2=axis2, offset=offset)
 
-def transpose(x, /, *, axes=None):
+def transpose(x: array, /, *, axes: Optional[Tuple[int, ...]] = None) -> array:
     """
     Array API compatible wrapper for :py:func:`np.transpose <numpy.transpose>`.
 

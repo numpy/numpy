@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+from ._types import Optional, Tuple, Union, array
+
 import numpy as np
 
-def concat(arrays, /, *, axis=0):
+def concat(arrays: Tuple[array], /, *, axis: Optional[int] = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.concatenate <numpy.concatenate>`.
 
@@ -9,7 +13,7 @@ def concat(arrays, /, *, axis=0):
     # Note: the function name is different here
     return np.concatenate(arrays, axis=axis)
 
-def expand_dims(x, axis, /):
+def expand_dims(x: array, axis: int, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.expand_dims <numpy.expand_dims>`.
 
@@ -17,7 +21,7 @@ def expand_dims(x, axis, /):
     """
     return np.expand_dims(x, axis)
 
-def flip(x, /, *, axis=None):
+def flip(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
     """
     Array API compatible wrapper for :py:func:`np.flip <numpy.flip>`.
 
@@ -25,7 +29,7 @@ def flip(x, /, *, axis=None):
     """
     return np.flip(x, axis=axis)
 
-def reshape(x, shape, /):
+def reshape(x: array, shape: Tuple[int, ...], /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.reshape <numpy.reshape>`.
 
@@ -33,7 +37,7 @@ def reshape(x, shape, /):
     """
     return np.reshape(x, shape)
 
-def roll(x, shift, /, *, axis=None):
+def roll(x: array, shift: Union[int, Tuple[int, ...]], /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
     """
     Array API compatible wrapper for :py:func:`np.roll <numpy.roll>`.
 
@@ -41,7 +45,7 @@ def roll(x, shift, /, *, axis=None):
     """
     return np.roll(x, shift, axis=axis)
 
-def squeeze(x, /, *, axis=None):
+def squeeze(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
     """
     Array API compatible wrapper for :py:func:`np.squeeze <numpy.squeeze>`.
 
@@ -49,7 +53,7 @@ def squeeze(x, /, *, axis=None):
     """
     return np.squeeze(x, axis=axis)
 
-def stack(arrays, /, *, axis=0):
+def stack(arrays: Tuple[array], /, *, axis: Optional[int] = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.stack <numpy.stack>`.
 
