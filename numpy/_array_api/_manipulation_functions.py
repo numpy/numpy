@@ -53,7 +53,7 @@ def squeeze(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) 
     """
     return np.squeeze(x, axis=axis)
 
-def stack(arrays: Tuple[array], /, *, axis: Optional[int] = 0) -> array:
+def stack(arrays: Tuple[array], /, *, axis: int = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.stack <numpy.stack>`.
 

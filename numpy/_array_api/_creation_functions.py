@@ -70,7 +70,7 @@ def full_like(x: array, fill_value: Union[int, float], /, *, dtype: Optional[dty
         raise NotImplementedError("Device support is not yet implemented")
     return np.full_like(x, fill_value, dtype=dtype)
 
-def linspace(start: Union[int, float], stop: Union[int, float], num: int, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None, endpoint: Optional[bool] = True) -> array:
+def linspace(start: Union[int, float], stop: Union[int, float], num: int, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None, endpoint: bool = True) -> array:
     """
     Array API compatible wrapper for :py:func:`np.linspace <numpy.linspace>`.
 
