@@ -176,7 +176,7 @@ def trace(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> ar
 
     See its docstring for more information.
     """
-    return np.trace(x, axis1=axis1, axis2=axis2, offset=offset)
+    return np.asarray(np.trace(x, axis1=axis1, axis2=axis2, offset=offset))
 
 def transpose(x: array, /, *, axes: Optional[Tuple[int, ...]] = None) -> array:
     """
