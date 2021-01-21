@@ -58,6 +58,20 @@ A few notes about the current state of this submodule:
   guaranteed to give a comprehensive coverage of the spec. Therefore, those
   reviewing this submodule should refer to the standard documents themselves.
 
+- All functions include type annotations, corresponding to those given in the
+  spec (see _types.py for definitions of the types 'array', 'device', and
+  'dtype'). These do not currently fully pass mypy due to some limitations in
+  mypy.
+
+- The array object is not modified at all. That means that functions return
+  np.ndarray, which has methods and attributes that aren't part of the spec.
+  Modifying/subclassing ndarray for the purposes of the array API namespace
+  was considered too complex for this initial implementation.
+
+- All functions that would otherwise accept array-like input have been wrapped
+  to only accept ndarray (with the exception of methods on the array object,
+  which are not modified).
+
 - All places where the implementations in this submodule are known to deviate
   from their corresponding functions in NumPy are marked with "# Note"
   comments. Reviewers should make note of these comments.
