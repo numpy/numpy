@@ -25,14 +25,39 @@ REVEAL_DIR = os.path.join(DATA_DIR, "reveal")
 MYPY_INI = os.path.join(DATA_DIR, "mypy.ini")
 CACHE_DIR = os.path.join(DATA_DIR, ".mypy_cache")
 
+#: A dictionary with file names as keys and lists of the mypy stdout as values.
+#: To-be populated by `run_mypy`.
+OUTPUT_MYPY: Dict[str, List[str]] = {}
+
 
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
-@pytest.fixture(scope="session", autouse=True)
-def clear_cache() -> None:
-    """Clears the mypy cache before running any of the typing tests."""
+@pytest.fixture(scope="module", autouse=True)
+def run_mypy() -> None:
+    """Clears the cache and run mypy before running any of the typing tests.
+
+    The mypy results are cached in `OUTPUT_MYPY` for further use.
+
+    """
     if os.path.isdir(CACHE_DIR):
         shutil.rmtree(CACHE_DIR)
+
+    for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR):
+        # Run mypy
+        stdout, stderr, _ = api.run([
+            "--config-file",
+            MYPY_INI,
+            "--cache-dir",
+            CACHE_DIR,
+            directory,
+        ])
+        assert not stderr, directory
+        stdout = stdout.replace('*', '')
+
+        # Parse the output
+        key = lambda n: n.split(':', 1)[0]
+        iterator = itertools.groupby(stdout.split("\n"), key=key)
+        OUTPUT_MYPY.update((os.path.abspath(k), list(v)) for k, v in iterator)
 
 
 def get_test_cases(directory):
@@ -54,15 +79,7 @@ def get_test_cases(directory):
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_success(path):
-    stdout, stderr, exitcode = api.run([
-        "--config-file",
-        MYPY_INI,
-        "--cache-dir",
-        CACHE_DIR,
-        path,
-    ])
-    assert exitcode == 0, stdout
-    assert re.match(r"Success: no issues found in \d+ source files?", stdout.strip())
+    assert path not in OUTPUT_MYPY
 
 
 @pytest.mark.slow
@@ -71,29 +88,12 @@ def test_success(path):
 def test_fail(path):
     __tracebackhide__ = True
 
-    stdout, stderr, exitcode = api.run([
-        "--config-file",
-        MYPY_INI,
-        "--cache-dir",
-        CACHE_DIR,
-        path,
-    ])
-    assert exitcode != 0
-
     with open(path) as fin:
         lines = fin.readlines()
 
     errors = defaultdict(lambda: "")
-    error_lines = stdout.rstrip("\n").split("\n")
-    assert re.match(
-        r"Found \d+ errors? in \d+ files? \(checked \d+ source files?\)",
-        error_lines[-1].strip(),
-    )
-    for error_line in error_lines[:-1]:
-        error_line = error_line.strip()
-        if not error_line:
-            continue
-
+    assert path in OUTPUT_MYPY
+    for error_line in OUTPUT_MYPY[path]:
         match = re.match(
             r"^.+\.py:(?P<lineno>\d+): (error|note): .+$",
             error_line,
@@ -215,23 +215,11 @@ def _parse_reveals(file: IO[str]) -> List[str]:
 def test_reveal(path):
     __tracebackhide__ = True
 
-    stdout, stderr, exitcode = api.run([
-        "--config-file",
-        MYPY_INI,
-        "--cache-dir",
-        CACHE_DIR,
-        path,
-    ])
-
     with open(path) as fin:
         lines = _parse_reveals(fin)
 
-    stdout_list = stdout.replace('*', '').split("\n")
-    for error_line in stdout_list:
-        error_line = error_line.strip()
-        if not error_line:
-            continue
-
+    assert path in OUTPUT_MYPY
+    for error_line in OUTPUT_MYPY[path]:
         match = re.match(
             r"^.+\.py:(?P<lineno>\d+): note: .+$",
             error_line,
