@@ -381,7 +381,7 @@ def round(x: array, /) -> array:
 
     See its docstring for more information.
     """
-    return np.round(x)
+    return np.round._implementation(x)
 
 def sign(x: array, /) -> array:
     """

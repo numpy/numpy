@@ -11,7 +11,7 @@ def argmax(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
     See its docstring for more information.
     """
     # Note: this currently fails as np.argmax does not implement keepdims
-    return np.asarray(np.argmax(x, axis=axis, keepdims=keepdims))
+    return np.asarray(np.argmax._implementation(x, axis=axis, keepdims=keepdims))
 
 def argmin(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
     """
@@ -20,7 +20,7 @@ def argmin(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
     See its docstring for more information.
     """
     # Note: this currently fails as np.argmin does not implement keepdims
-    return np.asarray(np.argmin(x, axis=axis, keepdims=keepdims))
+    return np.asarray(np.argmin._implementation(x, axis=axis, keepdims=keepdims))
 
 def nonzero(x: array, /) -> Tuple[array, ...]:
     """
@@ -28,7 +28,7 @@ def nonzero(x: array, /) -> Tuple[array, ...]:
 
     See its docstring for more information.
     """
-    return np.nonzero(x)
+    return np.nonzero._implementation(x)
 
 def where(condition: array, x1: array, x2: array, /) -> array:
     """
@@ -36,4 +36,4 @@ def where(condition: array, x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
-    return np.where(condition, x1, x2)
+    return np.where._implementation(condition, x1, x2)

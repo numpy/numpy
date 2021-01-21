@@ -19,7 +19,7 @@ def expand_dims(x: array, axis: int, /) -> array:
 
     See its docstring for more information.
     """
-    return np.expand_dims(x, axis)
+    return np.expand_dims._implementation(x, axis)
 
 def flip(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
     """
@@ -27,7 +27,7 @@ def flip(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> 
 
     See its docstring for more information.
     """
-    return np.flip(x, axis=axis)
+    return np.flip._implementation(x, axis=axis)
 
 def reshape(x: array, shape: Tuple[int, ...], /) -> array:
     """
@@ -35,7 +35,7 @@ def reshape(x: array, shape: Tuple[int, ...], /) -> array:
 
     See its docstring for more information.
     """
-    return np.reshape(x, shape)
+    return np.reshape._implementation(x, shape)
 
 def roll(x: array, shift: Union[int, Tuple[int, ...]], /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
     """
@@ -43,7 +43,7 @@ def roll(x: array, shift: Union[int, Tuple[int, ...]], /, *, axis: Optional[Unio
 
     See its docstring for more information.
     """
-    return np.roll(x, shift, axis=axis)
+    return np.roll._implementation(x, shift, axis=axis)
 
 def squeeze(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
     """
@@ -51,7 +51,7 @@ def squeeze(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) 
 
     See its docstring for more information.
     """
-    return np.squeeze(x, axis=axis)
+    return np.squeeze._implementation(x, axis=axis)
 
 def stack(arrays: Tuple[array], /, *, axis: int = 0) -> array:
     """
@@ -59,4 +59,4 @@ def stack(arrays: Tuple[array], /, *, axis: int = 0) -> array:
 
     See its docstring for more information.
     """
-    return np.stack(arrays, axis=axis)
+    return np.stack._implementation(arrays, axis=axis)
