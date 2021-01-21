@@ -136,7 +136,7 @@
     #define npyv_sum_u8 vaddvq_u8
     #define npyv_sum_u16 vaddvq_u16
     #define npyv_sum_u32 vaddvq_u32
-    #define npyv_sum_u16 vaddvq_u64
+    #define npyv_sum_u64 vaddvq_u64
     #define npyv_sum_f32 vaddvq_f32
     #define npyv_sum_f64 vaddvq_f64
 #else
