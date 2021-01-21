@@ -9,8 +9,16 @@ from numpy.core._internal import _ctypes
 from numpy.typing import (
     # Arrays
     ArrayLike,
+    _ArrayND,
+    _ArrayOrScalar,
+    _NestedSequence,
+    _RecursiveSequence,
+    _ArrayLikeNumber_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeDT64_co,
 
     # DTypes
+
     DTypeLike,
     _SupportsDType,
     _VoidDTypeLike,
@@ -127,6 +135,7 @@ from typing import (
     Iterable,
     List,
     Mapping,
+    NoReturn,
     Optional,
     overload,
     Sequence,
@@ -584,19 +593,19 @@ where: Any
 who: Any
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
-_DTypeScalar = TypeVar("_DTypeScalar", bound=generic)
+_DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = Literal["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
-class dtype(Generic[_DTypeScalar]):
+class dtype(Generic[_DTypeScalar_co]):
     names: Optional[Tuple[str, ...]]
     # Overload for subclass of generic
     @overload
     def __new__(
         cls,
-        dtype: Type[_DTypeScalar],
+        dtype: Type[_DTypeScalar_co],
         align: bool = ...,
         copy: bool = ...,
-    ) -> dtype[_DTypeScalar]: ...
+    ) -> dtype[_DTypeScalar_co]: ...
     # Overloads for string aliases, Python types, and some assorted
     # other special cases. Order is sometimes important because of the
     # subtype relationships
@@ -711,10 +720,10 @@ class dtype(Generic[_DTypeScalar]):
     @overload
     def __new__(
         cls,
-        dtype: dtype[_DTypeScalar],
+        dtype: dtype[_DTypeScalar_co],
         align: bool = ...,
         copy: bool = ...,
-    ) -> dtype[_DTypeScalar]: ...
+    ) -> dtype[_DTypeScalar_co]: ...
     # TODO: handle _SupportsDType better
     @overload
     def __new__(
@@ -791,7 +800,7 @@ class dtype(Generic[_DTypeScalar]):
     @property
     def str(self) -> builtins.str: ...
     @property
-    def type(self) -> Type[_DTypeScalar]: ...
+    def type(self) -> Type[_DTypeScalar_co]: ...
 
 class _flagsobj:
     aligned: bool
@@ -1319,6 +1328,7 @@ class _ArrayOrScalarCommon:
     ) -> _NdArraySubClass: ...
 
 _DType = TypeVar("_DType", bound=dtype[Any])
+_DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
@@ -1327,7 +1337,7 @@ _ShapeType = TypeVar("_ShapeType", bound=Any)
 _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _Casting = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
 
-class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
+class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @property
     def base(self) -> Optional[ndarray]: ...
     @property
@@ -1352,7 +1362,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
     @overload
-    def __array__(self, __dtype: None = ...) -> ndarray[Any, _DType]: ...
+    def __array__(self, __dtype: None = ...) -> ndarray[Any, _DType_co]: ...
     @overload
     def __array__(self, __dtype: DTypeLike) -> ndarray[Any, dtype[Any]]: ...
     @property
@@ -1464,10 +1474,77 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
     def __iter__(self) -> Any: ...
     def __contains__(self, key) -> bool: ...
     def __index__(self) -> int: ...
-    def __lt__(self, other: ArrayLike) -> Union[ndarray, bool_]: ...
-    def __le__(self, other: ArrayLike) -> Union[ndarray, bool_]: ...
-    def __gt__(self, other: ArrayLike) -> Union[ndarray, bool_]: ...
-    def __ge__(self, other: ArrayLike) -> Union[ndarray, bool_]: ...
+
+    # The last overload is for catching recursive objects whose
+    # nesting is too deep.
+    # The first overload is for catching `bytes` (as they are a subtype of
+    # `Sequence[int]`) and `str`. As `str` is a recusive sequence of
+    # strings, it will pass through the final overload otherwise
+
+    @overload
+    def __lt__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __lt__(self: _ArrayND[Union[number[Any], bool_]], other: _ArrayLikeNumber_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __lt__(self: _ArrayND[Union[bool_, integer[Any], timedelta64]], other: _ArrayLikeTD64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __lt__(self: _ArrayND[datetime64], other: _ArrayLikeDT64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __lt__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __lt__(
+        self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
+        other: _RecursiveSequence,
+    ) -> _ArrayOrScalar[bool_]: ...
+
+    @overload
+    def __le__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __le__(self: _ArrayND[Union[number[Any], bool_]], other: _ArrayLikeNumber_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __le__(self: _ArrayND[Union[bool_, integer[Any], timedelta64]], other: _ArrayLikeTD64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __le__(self: _ArrayND[datetime64], other: _ArrayLikeDT64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __le__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __le__(
+        self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
+        other: _RecursiveSequence,
+    ) -> _ArrayOrScalar[bool_]: ...
+
+    @overload
+    def __gt__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __gt__(self: _ArrayND[Union[number[Any], bool_]], other: _ArrayLikeNumber_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __gt__(self: _ArrayND[Union[bool_, integer[Any], timedelta64]], other: _ArrayLikeTD64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __gt__(self: _ArrayND[datetime64], other: _ArrayLikeDT64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __gt__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __gt__(
+        self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
+        other: _RecursiveSequence,
+    ) -> _ArrayOrScalar[bool_]: ...
+
+    @overload
+    def __ge__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __ge__(self: _ArrayND[Union[number[Any], bool_]], other: _ArrayLikeNumber_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __ge__(self: _ArrayND[Union[bool_, integer[Any], timedelta64]], other: _ArrayLikeTD64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __ge__(self: _ArrayND[datetime64], other: _ArrayLikeDT64_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __ge__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __ge__(
+        self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
+        other: _RecursiveSequence,
+    ) -> _ArrayOrScalar[bool_]: ...
+
     def __matmul__(self, other: ArrayLike) -> Any: ...
     # NOTE: `ndarray` does not implement `__imatmul__`
     def __rmatmul__(self, other: ArrayLike) -> Any: ...
@@ -1516,7 +1593,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
     def __ior__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
-    def dtype(self) -> _DType: ...
+    def dtype(self) -> _DType_co: ...
 
 # NOTE: while `np.generic` is not technically an instance of `ABCMeta`,
 # the `@abstractmethod` decorator is herein used to (forcefully) deny
@@ -1586,10 +1663,10 @@ class number(generic, Generic[_NBit1]):  # type: ignore
     __rpow__: _NumberOp
     __truediv__: _NumberOp
     __rtruediv__: _NumberOp
-    __lt__: _ComparisonOp[_NumberLike_co]
-    __le__: _ComparisonOp[_NumberLike_co]
-    __gt__: _ComparisonOp[_NumberLike_co]
-    __ge__: _ComparisonOp[_NumberLike_co]
+    __lt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __le__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
 class bool_(generic):
     def __init__(self, __value: object = ...) -> None: ...
@@ -1628,10 +1705,10 @@ class bool_(generic):
     __rmod__: _BoolMod
     __divmod__: _BoolDivMod
     __rdivmod__: _BoolDivMod
-    __lt__: _ComparisonOp[_NumberLike_co]
-    __le__: _ComparisonOp[_NumberLike_co]
-    __gt__: _ComparisonOp[_NumberLike_co]
-    __ge__: _ComparisonOp[_NumberLike_co]
+    __lt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __le__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
+    __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
 class object_(generic):
     def __init__(self, __value: object = ...) -> None: ...
@@ -1660,10 +1737,10 @@ class datetime64(generic):
     @overload
     def __sub__(self, other: _TD64Like_co) -> datetime64: ...
     def __rsub__(self, other: datetime64) -> timedelta64: ...
-    __lt__: _ComparisonOp[datetime64]
-    __le__: _ComparisonOp[datetime64]
-    __gt__: _ComparisonOp[datetime64]
-    __ge__: _ComparisonOp[datetime64]
+    __lt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
+    __le__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
+    __gt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
+    __ge__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
 
 # Support for `__index__` was added in python 3.8 (bpo-20092)
 if sys.version_info >= (3, 8):
@@ -1762,10 +1839,10 @@ class timedelta64(generic):
     def __rmod__(self, other: timedelta64) -> timedelta64: ...
     def __divmod__(self, other: timedelta64) -> Tuple[int64, timedelta64]: ...
     def __rdivmod__(self, other: timedelta64) -> Tuple[int64, timedelta64]: ...
-    __lt__: _ComparisonOp[Union[timedelta64, _IntLike_co, _BoolLike_co]]
-    __le__: _ComparisonOp[Union[timedelta64, _IntLike_co, _BoolLike_co]]
-    __gt__: _ComparisonOp[Union[timedelta64, _IntLike_co, _BoolLike_co]]
-    __ge__: _ComparisonOp[Union[timedelta64, _IntLike_co, _BoolLike_co]]
+    __lt__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
+    __le__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
+    __gt__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
+    __ge__: _ComparisonOp[_TD64Like_co, _ArrayLikeTD64_co]
 
 class unsignedinteger(integer[_NBit1]):
     # NOTE: `uint64 + signedinteger -> float64`

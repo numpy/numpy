@@ -12,6 +12,7 @@ from numpy import (
     integer,
     floating,
     complexfloating,
+    number,
     timedelta64,
     datetime64,
     object_,
@@ -33,15 +34,17 @@ else:
         HAVE_PROTOCOL = True
 
 _T = TypeVar("_T")
+_ScalarType = TypeVar("_ScalarType", bound=generic)
 _DType = TypeVar("_DType", bound="dtype[Any]")
+_DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
     # The `_SupportsArray` protocol only cares about the default dtype
     # (i.e. `dtype=None`) of the to-be returned array.
     # Concrete implementations of the protocol are responsible for adding
     # any and all remaining overloads
-    class _SupportsArray(Protocol[_DType]):
-        def __array__(self, dtype: None = ...) -> ndarray[Any, _DType]: ...
+    class _SupportsArray(Protocol[_DType_co]):
+        def __array__(self, dtype: None = ...) -> ndarray[Any, _DType_co]: ...
 else:
     _SupportsArray = Any
 
@@ -100,6 +103,10 @@ _ArrayLikeComplex_co = _ArrayLike[
     "dtype[Union[bool_, integer[Any], floating[Any], complexfloating[Any, Any]]]",
     Union[bool, int, float, complex],
 ]
+_ArrayLikeNumber_co = _ArrayLike[
+    "dtype[Union[bool_, number[Any]]]",
+    Union[bool, int, float, complex],
+]
 _ArrayLikeTD64_co = _ArrayLike[
     "dtype[Union[bool_, integer[Any], timedelta64]]",
     Union[bool, int],
@@ -116,3 +123,10 @@ _ArrayLikeBytes_co = _ArrayLike[
     "dtype[bytes_]",
     bytes,
 ]
+
+if TYPE_CHECKING:
+    _ArrayND = ndarray[Any, dtype[_ScalarType]]
+    _ArrayOrScalar = Union[_ScalarType, _ArrayND[_ScalarType]]
+else:
+    _ArrayND = Any
+    _ArrayOrScalar = Any

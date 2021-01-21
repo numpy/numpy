@@ -302,18 +302,23 @@ from ._array_like import (
     ArrayLike as ArrayLike,
     _ArrayLike,
     _NestedSequence,
+    _RecursiveSequence,
     _SupportsArray,
+    _ArrayND,
+    _ArrayOrScalar,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeNumber_co,
     _ArrayLikeTD64_co,
     _ArrayLikeDT64_co,
     _ArrayLikeObject_co,
     _ArrayLikeVoid_co,
     _ArrayLikeStr_co,
     _ArrayLikeBytes_co,
+
 )
 
 if __doc__ is not None:
