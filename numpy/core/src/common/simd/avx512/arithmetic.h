@@ -147,8 +147,8 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 
 NPY_FINLINE npy_uint32 npyv_sum_u8(__m512i a)
 {
-    __m512i a16 = _mm512_add_epi16(_mm512_cvtepu8_epi16(npyv512_lower_si256(a)),
-                                       _mm512_cvtepu8_epi16(npyv512_higher_si256(a)));
+    npyv_u16x2 res = npyv_expand_u16_u8(a);
+    __m512i a16 = npyv_add_u16(res.val[0], res.val[1]);
     a16 = _mm512_cvtepi16_epi32(_mm256_add_epi16(npyv512_lower_si256(a16), npyv512_higher_si256(a16)));
     __m256i a8 = _mm256_add_epi32(npyv512_lower_si256(a16), npyv512_higher_si256(a16));
     __m128i a4 = _mm_add_epi32(_mm256_castsi256_si128(a8), _mm256_extracti128_si256(a8, 1));
@@ -156,32 +156,29 @@ NPY_FINLINE npy_uint32 npyv_sum_u8(__m512i a)
     return (npy_uint32)_mm_cvtsi128_si32(_mm_hadd_epi32(a4, a4));
 }
 
-NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
-{
-    __m256i half = _mm256_add_epi32(npyv512_lower_si256(a), npyv512_higher_si256(a));
-    __m128i quarter = _mm_add_epi32(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1));
-    quarter = _mm_hadd_epi32(quarter, quarter);
-    return _mm_cvtsi128_si32(_mm_hadd_epi32(quarter, quarter));
-}
-
-NPY_FINLINE npy_uint32 npyv_sum_u16(__m512i a)
-{
-    npyv_u32x2 res = npyv_expand_u32_u16(a);
-    return (unsigned)npyv_sum_u32(_mm512_add_epi32(res.val[0], res.val[1]));
-}
-
-NPY_FINLINE npy_uint64 npyv_sum_u64(__m512i a)
-{
-    npy_uint64 NPY_DECL_ALIGNED(64) idx[2];
-    __m256i half = _mm256_add_epi64(npyv512_lower_si256(a), npyv512_higher_si256(a));
-    _mm_store_si128((__m128i*)idx, _mm_add_epi64(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1)));
-    return idx[0] + idx[1];
-}
-
 #ifdef NPY_HAVE_AVX512F_REDUCE
+    #define npyv_sum_u32 _mm512_reduce_add_epi32
+    #define npyv_sum_u64 _mm512_reduce_add_epi64
     #define npyv_sum_f32 _mm512_reduce_add_ps
     #define npyv_sum_f64 _mm512_reduce_add_pd
 #else
+
+    NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
+    {
+        __m256i half = _mm256_add_epi32(npyv512_lower_si256(a), npyv512_higher_si256(a));
+        __m128i quarter = _mm_add_epi32(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1));
+        quarter = _mm_hadd_epi32(quarter, quarter);
+        return _mm_cvtsi128_si32(_mm_hadd_epi32(quarter, quarter));
+    }
+
+    NPY_FINLINE npy_uint64 npyv_sum_u64(__m512i a)
+    {
+        npy_uint64 NPY_DECL_ALIGNED(64) idx[2];
+        __m256i half = _mm256_add_epi64(npyv512_lower_si256(a), npyv512_higher_si256(a));
+        _mm_store_si128((__m128i*)idx, _mm_add_epi64(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1)));
+        return idx[0] + idx[1];
+    }
+
     NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
     {
         __m512 h64   = _mm512_shuffle_f32x4(a, a, _MM_SHUFFLE(3, 2, 3, 2));
@@ -194,6 +191,7 @@ NPY_FINLINE npy_uint64 npyv_sum_u64(__m512i a)
         __m512 sum4  = _mm512_add_ps(sum8, h4);
         return _mm_cvtss_f32(_mm512_castps512_ps128(sum4));
     }
+
     NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
     {
         __m512d h64   = _mm512_shuffle_f64x2(a, a, _MM_SHUFFLE(3, 2, 3, 2));
@@ -205,5 +203,11 @@ NPY_FINLINE npy_uint64 npyv_sum_u64(__m512i a)
         return _mm_cvtsd_f64(_mm512_castpd512_pd128(sum8));
     }
 #endif
+
+NPY_FINLINE npy_uint32 npyv_sum_u16(__m512i a)
+{
+    npyv_u32x2 res = npyv_expand_u32_u16(a);
+    return (unsigned)npyv_sum_u32(_mm512_add_epi32(res.val[0], res.val[1]));
+}
 
 #endif // _NPY_SIMD_AVX512_ARITHMETIC_H
