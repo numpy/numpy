@@ -702,17 +702,19 @@ class TestArrayLikes:
 
     @pytest.mark.parametrize("attribute",
         ["__array_interface__", "__array__", "__array_struct__"])
-    def test_bad_array_like_attributes(self, attribute):
-        # Check that errors during attribute retrieval are raised unless
-        # they are Attribute errors.
+    @pytest.mark.parametrize("error", [RecursionError, MemoryError])
+    def test_bad_array_like_attributes(self, attribute, error):
+        # RecursionError and MemoryError are considered fatal. All errors
+        # (except AttributeError) should probably be raised in the future,
+        # but shapely made use of it, so it will require a deprecation.
 
         class BadInterface:
             def __getattr__(self, attr):
                 if attr == attribute:
-                    raise RuntimeError
+                    raise error
                 super().__getattr__(attr)
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(error):
             np.array(BadInterface())
 
     @pytest.mark.parametrize("error", [RecursionError, MemoryError])
