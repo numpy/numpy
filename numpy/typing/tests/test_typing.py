@@ -42,7 +42,6 @@ def run_mypy() -> None:
     if os.path.isdir(CACHE_DIR):
         shutil.rmtree(CACHE_DIR)
 
-    root = os.path.dirname(os.path.dirname(np.__file__))
     for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR):
         # Run mypy
         stdout, stderr, _ = api.run([
@@ -58,9 +57,7 @@ def run_mypy() -> None:
         # Parse the output
         key = lambda n: n.split(':', 1)[0]
         iterator = itertools.groupby(stdout.split("\n"), key=key)
-        OUTPUT_MYPY.update(
-            (os.path.join(root, k), list(v)) for k, v in iterator if k
-        )
+        OUTPUT_MYPY.update((k, list(v)) for k, v in iterator if k)
 
 
 def get_test_cases(directory):
