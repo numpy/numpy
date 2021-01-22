@@ -377,7 +377,7 @@ add_newdoc('numpy.core', 'nditer',
     ...    while not it.finished:
     ...        it[0] = lamdaexpr(*it[1:])
     ...        it.iternext()
-    ...        return it.operands[0]
+    ...    return it.operands[0]
 
     >>> a = np.arange(5)
     >>> b = np.ones(5)
