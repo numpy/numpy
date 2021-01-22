@@ -736,14 +736,12 @@ class _SIMD_ALL(_Test_Utility):
     def test_arithmetic_reduce_sum(self):
         """
         Test reduce sum intrinics:
-            npyv_sum_u8
-            npyv_sum_u16
             npyv_sum_u32
             npyv_sum_u64
             npyv_sum_f32
             npyv_sum_f64
         """
-        if self.sfx not in ("u8", "u16", "u32", "u64", "f32", "f64"):
+        if self.sfx not in ("u32", "u64", "f32", "f64"):
             return
         # reduce sum
         data = self._data()
@@ -752,6 +750,22 @@ class _SIMD_ALL(_Test_Utility):
         data_sum = sum(data)
         vsum = self.sum(vdata)
         assert vsum == data_sum
+
+    def test_arithmetic_reduce_sumup(self):
+        """
+        Test overflow protect reduce sumup intrinics:
+            npyv_sumup_u8
+            npyv_sumup_u16
+        """
+        if self.sfx not in ("u8", "u16"):
+            return
+        rdata = (0, self.nlanes, self._int_min(), self._int_max()-self.nlanes)
+        for r in rdata:
+            data = self._data(r)
+            vdata = self.load(data)
+            data_sum = sum(data)
+            vsum = self.sumup(vdata)
+            assert vsum == data_sum
 
     def test_mask_conditional(self):
         """

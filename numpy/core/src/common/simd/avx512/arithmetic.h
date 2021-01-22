@@ -6,7 +6,7 @@
 #define _NPY_SIMD_AVX512_ARITHMETIC_H
 
 #include "../avx2/utils.h"
-
+#include "../sse/utils.h"
 /***************************
  * Addition
  ***************************/
@@ -145,15 +145,19 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
  * intel compiler/GCC 7.1/Clang 4, we still need to support older GCC.
  ***************************/
 
-NPY_FINLINE npy_uint32 npyv_sum_u8(__m512i a)
+NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
 {
-    npyv_u16x2 res = npyv_expand_u16_u8(a);
-    __m512i a16 = npyv_add_u16(res.val[0], res.val[1]);
-    a16 = _mm512_cvtepi16_epi32(_mm256_add_epi16(npyv512_lower_si256(a16), npyv512_higher_si256(a16)));
-    __m256i a8 = _mm256_add_epi32(npyv512_lower_si256(a16), npyv512_higher_si256(a16));
-    __m128i a4 = _mm_add_epi32(_mm256_castsi256_si128(a8), _mm256_extracti128_si256(a8, 1));
-    a4 = _mm_hadd_epi32(a4, a4);
-    return (npy_uint32)_mm_cvtsi128_si32(_mm_hadd_epi32(a4, a4));
+#ifdef NPY_HAVE_AVX512BW
+    __m512i eight = _mm512_sad_epu8(a, _mm512_setzero_si512());
+    __m256i four  = _mm256_add_epi16(npyv512_lower_si256(eight), npyv512_higher_si256(eight));
+#else
+    __m256i lo_four = _mm256_sad_epu8(npyv512_lower_si256(a), _mm256_setzero_si256());
+    __m256i hi_four = _mm256_sad_epu8(npyv512_higher_si256(a), _mm256_setzero_si256());
+    __m256i four    = _mm256_add_epi16(lo_four, hi_four);
+#endif
+    __m128i two     = _mm_add_epi16(_mm256_castsi256_si128(four), _mm256_extracti128_si256(four, 1));
+    __m128i one     = _mm_add_epi16(two, _mm_unpackhi_epi64(two, two));
+    return (npy_uint16)_mm_cvtsi128_si32(one);
 }
 
 #ifdef NPY_HAVE_AVX512F_REDUCE
@@ -171,12 +175,12 @@ NPY_FINLINE npy_uint32 npyv_sum_u8(__m512i a)
         return _mm_cvtsi128_si32(_mm_hadd_epi32(quarter, quarter));
     }
 
-    NPY_FINLINE npy_uint64 npyv_sum_u64(__m512i a)
+    NPY_FINLINE npy_uint64 npyv_sum_u64(npyv_u64 a)
     {
-        npy_uint64 NPY_DECL_ALIGNED(64) idx[2];
-        __m256i half = _mm256_add_epi64(npyv512_lower_si256(a), npyv512_higher_si256(a));
-        _mm_store_si128((__m128i*)idx, _mm_add_epi64(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1)));
-        return idx[0] + idx[1];
+        __m256i four = _mm256_add_epi64(npyv512_lower_si256(a), npyv512_higher_si256(a));
+        __m256i two = _mm256_add_epi64(four, _mm256_shuffle_epi32(four, _MM_SHUFFLE(1, 0, 3, 2)));
+        __m128i one = _mm_add_epi64(_mm256_castsi256_si128(two), _mm256_extracti128_si256(two, 1));
+        return (npy_uint64)npyv128_cvtsi128_si64(one);
     }
 
     NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
@@ -204,10 +208,13 @@ NPY_FINLINE npy_uint32 npyv_sum_u8(__m512i a)
     }
 #endif
 
-NPY_FINLINE npy_uint32 npyv_sum_u16(__m512i a)
+NPY_FINLINE npy_uint32 npyv_sumup_u16(npyv_u16 a)
 {
-    npyv_u32x2 res = npyv_expand_u32_u16(a);
-    return (unsigned)npyv_sum_u32(_mm512_add_epi32(res.val[0], res.val[1]));
+    const npyv_u16 even_mask = _mm512_set1_epi32(0x0000FFFF);
+    __m512i even = _mm512_and_si512(a, even_mask);
+    __m512i odd  = _mm512_srli_epi32(a, 16);
+    __m512i ff   = _mm512_add_epi32(even, odd);
+    return npyv_sum_u32(ff);
 }
 
 #endif // _NPY_SIMD_AVX512_ARITHMETIC_H
