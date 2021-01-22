@@ -128,7 +128,7 @@ NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
     return (npy_uint16)_mm_cvtsi128_si32(one);
 }
 
-NPY_FINLINE npy_uint32 npyv_sum_u32(__m256i a)
+NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
 {
     __m256i s0 = _mm256_hadd_epi32(a, a);
             s0 = _mm256_hadd_epi32(s0, s0);
@@ -153,7 +153,7 @@ NPY_FINLINE npy_uint64 npyv_sum_u64(npyv_u64 a)
     return (npy_uint64)npyv128_cvtsi128_si64(one);
 }
 
-NPY_FINLINE float npyv_sum_f32(npyv_u32 a)
+NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
     __m256 sum_halves = _mm256_hadd_ps(a, a);
     sum_halves = _mm256_hadd_ps(sum_halves, sum_halves);
@@ -163,7 +163,7 @@ NPY_FINLINE float npyv_sum_f32(npyv_u32 a)
     return _mm_cvtss_f32(sum);
 }
 
-NPY_FINLINE double npyv_sum_f64(__m256d a)
+NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
 {
     __m256d sum_halves = _mm256_hadd_pd(a, a);
     __m128d lo = _mm256_castpd256_pd128(sum_halves);

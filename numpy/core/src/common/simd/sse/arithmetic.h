@@ -176,7 +176,7 @@ NPY_FINLINE npy_uint64 npyv_sum_u64(npyv_u64 a)
     return idx[0] + idx[1];
 }
 
-NPY_FINLINE float npyv_sum_f32(__m128 a)
+NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
 #ifdef NPY_HAVE_SSE3
     __m128 sum_halves = _mm_hadd_ps(a, a);
@@ -190,7 +190,7 @@ NPY_FINLINE float npyv_sum_f32(__m128 a)
 #endif
 }
 
-NPY_FINLINE double npyv_sum_f64(__m128d a)
+NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
 {
 #ifdef NPY_HAVE_SSE3
     return _mm_cvtsd_f64(_mm_hadd_pd(a, a));
