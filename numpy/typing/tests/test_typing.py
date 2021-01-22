@@ -58,7 +58,9 @@ def run_mypy() -> None:
         # Parse the output
         key = lambda n: n.split(':', 1)[0]
         iterator = itertools.groupby(stdout.split("\n"), key=key)
-        OUTPUT_MYPY.update((os.path.join(root, k), list(v)) for k, v in iterator)
+        OUTPUT_MYPY.update(
+            (os.path.join(root, k), list(v)) for k, v in iterator if k
+        )
 
 
 def get_test_cases(directory):
@@ -80,7 +82,9 @@ def get_test_cases(directory):
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_success(path):
-    assert path not in OUTPUT_MYPY
+    # Alias `OUTPUT_MYPY` so that it appears in the local namespace
+    output_mypy = OUTPUT_MYPY
+    assert path not in output_mypy
 
 
 @pytest.mark.slow
@@ -93,8 +97,10 @@ def test_fail(path):
         lines = fin.readlines()
 
     errors = defaultdict(lambda: "")
-    assert path in OUTPUT_MYPY
-    for error_line in OUTPUT_MYPY[path]:
+
+    output_mypy = OUTPUT_MYPY
+    assert path in output_mypy
+    for error_line in output_mypy[path]:
         match = re.match(
             r"^.+\.py:(?P<lineno>\d+): (error|note): .+$",
             error_line,
@@ -219,8 +225,9 @@ def test_reveal(path):
     with open(path) as fin:
         lines = _parse_reveals(fin)
 
-    assert path in OUTPUT_MYPY
-    for error_line in OUTPUT_MYPY[path]:
+    output_mypy = OUTPUT_MYPY
+    assert path in output_mypy
+    for error_line in output_mypy[path]:
         match = re.match(
             r"^.+\.py:(?P<lineno>\d+): note: .+$",
             error_line,
