@@ -30,6 +30,15 @@ CACHE_DIR = os.path.join(DATA_DIR, ".mypy_cache")
 OUTPUT_MYPY: Dict[str, List[str]] = {}
 
 
+def _key_func(key: str) -> str:
+    """Split at the first occurance of the ``:`` character.
+
+    Windows drive-letters (*e.g.* ``C:``) are ignored herein.
+    """
+    drive, tail = os.path.splitdrive(key)
+    return os.path.join(drive, tail.split(":", 1)[0])
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.fixture(scope="module", autouse=True)
@@ -55,8 +64,7 @@ def run_mypy() -> None:
         stdout = stdout.replace('*', '')
 
         # Parse the output
-        key = lambda n: n.split(':', 1)[0]
-        iterator = itertools.groupby(stdout.split("\n"), key=key)
+        iterator = itertools.groupby(stdout.split("\n"), key=_key_func)
         OUTPUT_MYPY.update((k, list(v)) for k, v in iterator if k)
 
 
