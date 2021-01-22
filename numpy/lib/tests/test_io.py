@@ -574,7 +574,7 @@ class TestSaveTxt:
 
     @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
-    @requires_memory(free_bytes=7e9)
+    @requires_memory(free_bytes=8e9)
     def test_large_zip(self):
         def check_large_zip(memoryerror_raised):
             memoryerror_raised.value = False
