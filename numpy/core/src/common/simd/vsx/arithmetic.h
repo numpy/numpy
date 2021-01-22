@@ -122,7 +122,7 @@ NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
 {
     const npyv_u32 zero = npyv_zero_u32();
     npyv_u32 four = vec_sum4s(a, zero);
-    npyv_u32 one  = vec_sums((npyv_s32)sum4, (npyv_s32)zero4);
+    npyv_u32 one  = vec_sums((npyv_s32)four, (npyv_s32)zero);
     return (npy_uint16)vec_extract(one, 3);
 }
 
