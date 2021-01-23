@@ -960,6 +960,14 @@ class TestRandomDist:
         random.shuffle(actual, axis=-1)
         assert_array_equal(actual, desired)
 
+    def test_shuffle_custom_axis_empty(self):
+        random = Generator(MT19937(self.seed))
+        desired = np.array([]).reshape((0, 6))
+        for axis in (0, 1):
+            actual = np.array([]).reshape((0, 6))
+            random.shuffle(actual, axis=axis)
+            assert_array_equal(actual, desired)
+
     def test_shuffle_axis_nonsquare(self):
         y1 = np.arange(20).reshape(2, 10)
         y2 = y1.copy()
@@ -993,6 +1001,11 @@ class TestRandomDist:
         arr = [[1, 2, 3], [4, 5, 6]]
         assert_raises(NotImplementedError, random.shuffle, arr, 1)
 
+        arr = np.array(3)
+        assert_raises(TypeError, random.shuffle, arr)
+        arr = np.ones((3, 2))
+        assert_raises(np.AxisError, random.shuffle, arr, 2)
+
     def test_permutation(self):
         random = Generator(MT19937(self.seed))
         alist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
@@ -1004,7 +1017,7 @@ class TestRandomDist:
         arr_2d = np.atleast_2d([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]).T
         actual = random.permutation(arr_2d)
         assert_array_equal(actual, np.atleast_2d(desired).T)
-        
+
         bad_x_str = "abcd"
         assert_raises(np.AxisError, random.permutation, bad_x_str)
 
