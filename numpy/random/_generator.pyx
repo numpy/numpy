@@ -2,6 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
+from collections.abc import MutableSequence
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -4347,14 +4348,14 @@ cdef class Generator:
         """
         shuffle(x, axis=0)
 
-        Modify a sequence in-place by shuffling its contents.
+        Modify an array or sequence in-place by shuffling its contents.
 
         The order of sub-arrays is changed but their contents remains the same.
 
         Parameters
         ----------
-        x : array_like
-            The array or list to be shuffled.
+        x : ndarray or MutableSequence
+            The array, list or mutable sequence to be shuffled.
         axis : int, optional
             The axis which `x` is shuffled along. Default is 0.
             It is only supported on `ndarray` objects.
@@ -4428,6 +4429,14 @@ cdef class Generator:
                     x[i] = buf
         else:
             # Untyped path.
+            if not isinstance(x, (np.ndarray, MutableSequence)):
+                # See gh-18206. We may decide to deprecate here in the future.
+                warnings.warn(
+                    "`x` isn't a recognized object; `shuffle` is not guaranteed "
+                    "to behave correctly. E.g., non-numpy array/tensor objects "
+                    "with view semantics may contain duplicates after shuffling."
+                )
+
             if axis != 0:
                 raise NotImplementedError("Axis argument is only supported "
                                           "on ndarray objects")
