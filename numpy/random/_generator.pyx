@@ -4419,10 +4419,6 @@ cdef class Generator:
                     _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
                                       x_ptr, buf_ptr)
         elif isinstance(x, np.ndarray):
-            if axis >= x.ndim:
-                raise np.AxisError(f"Cannot shuffle along axis {axis} for "
-                                   f"array of dimension {x.ndim}")
-
             if x.size == 0:
                 # shuffling is a no-op
                 return
