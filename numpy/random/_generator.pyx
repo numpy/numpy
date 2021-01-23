@@ -4418,7 +4418,15 @@ cdef class Generator:
                 with self.lock, nogil:
                     _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
                                       x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+        elif isinstance(x, np.ndarray):
+            if axis >= x.ndim:
+                raise np.AxisError(f"Cannot shuffle along axis {axis} for "
+                                   f"array of dimension {x.ndim}")
+
+            if x.size == 0:
+                # shuffling is a no-op
+                return
+
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
             with self.lock:
@@ -4432,12 +4440,13 @@ cdef class Generator:
                     x[i] = buf
         else:
             # Untyped path.
-            if not isinstance(x, (np.ndarray, MutableSequence)):
+            if not isinstance(x, MutableSequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
                     "`x` isn't a recognized object; `shuffle` is not guaranteed "
                     "to behave correctly. E.g., non-numpy array/tensor objects "
-                    "with view semantics may contain duplicates after shuffling."
+                    "with view semantics may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=2
                 )
 
             if axis != 0:

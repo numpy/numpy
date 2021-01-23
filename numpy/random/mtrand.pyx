@@ -4457,7 +4457,11 @@ cdef class RandomState:
                     self._shuffle_raw(n, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
                 else:
                     self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+        elif isinstance(x, np.ndarray):
+            if x.size == 0:
+                # shuffling is a no-op
+                return
+
             buf = np.empty_like(x[0, ...])
             with self.lock:
                 for i in reversed(range(1, n)):
@@ -4469,12 +4473,13 @@ cdef class RandomState:
                     x[i] = buf
         else:
             # Untyped path.
-            if not isinstance(x, (np.ndarray, MutableSequence)):
+            if not isinstance(x, MutableSequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
                     "`x` isn't a recognized object; `shuffle` is not guaranteed "
                     "to behave correctly. E.g., non-numpy array/tensor objects "
-                    "with view semantics may contain duplicates after shuffling."
+                    "with view semantics may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=2
                 )
 
             with self.lock:
