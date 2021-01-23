@@ -33,12 +33,17 @@ contributions.  This NEP tries to address that by providing a policy as well
 as examples and rationales for when it is or isn't a good idea to break
 backwards compatibility.
 
+In addition, this NEP can serve as documentation for users about how the NumPy
+project treats backwards compatibility, and the speed at which they can expect
+changes to be made.
+
 In scope for this NEP are:
 
 - Principles of NumPy's approach to backwards compatibility.
 - How to deprecate functionality, and when to remove already deprecated
   functionality.
 - Decision making process for deprecations and removals.
+- How to ensure that users are well informed about any change.
 
 Out of scope are:
 
@@ -66,8 +71,9 @@ wait more than one or two years before upgrading from their old version. And
 that NumPy has millions of users, so "no one will do or use this" is very
 likely incorrect.
 
-Benefits include improved functionality, usability and performance, as well as
-lower maintenance cost and improved future extensibility.
+Benefits of proposed changes can include improved functionality, usability and
+performance, as well as lower maintenance cost and improved future
+extensibility.
 
 Fixes for clear bugs are exempt from this backwards compatibility policy.
 However in case of serious impact on users (e.g. a downstream library doesn't
@@ -81,13 +87,14 @@ Strategies related to deprecations
 Getting hard data on the impact of a deprecation of often difficult. Strategies
 that can be used to assess such impact include:
 
-- Use a code search engine ([1]_) or static ([2]_) or dynamic ([3]_) code
+- Use a code search engine ([1]_, [2]_) or static ([3]_) or dynamic ([4]_) code
   analysis tools to determine where and how the functionality is used.
 - Testing prominent downstream libraries against a development build of NumPy
   containing the proposed change to get real-world data on its impact.
 - Making a change in master and reverting it, if needed, before a release. We
-  do encourage other packages to test against NumPy's master branch, so this
-  often turns up issues quickly.
+  do encourage other packages to test against NumPy's master branch (and if
+  that's too burdensome, then at least to test pre-releases), so this often
+  turns up issues quickly.
 
 If the impact is unclear or significant, it is often good to consider
 alternatives to deprecations. For example, discouraging use in documentation
@@ -110,13 +117,11 @@ Deprecations:
 - shall include the version number of the release in which the functionality
   was deprecated.
 - shall include information on alternatives to the deprecated functionality, or a
-  reason for the deprecation if no clear alternative is available.
-- shall use ``VisibleDeprecationWarning`` rather than ``DeprecationWarning``
-  for cases of relevance to end users. For cases only relevant to
-  downstream libraries, a regular ``DeprecationWarning`` is fine.
-  *Rationale: regular deprecation warnings are invisible by default; library
-  authors should be aware how deprecations work and test for them, but we can't
-  expect this from all users.*
+  reason for the deprecation if no clear alternative is available (note that
+  release notes can include longer messages if needed).
+- shall use ``DeprecationWarning`` by default, and ``VisibleDeprecation``
+  for changes that need attention again after already having been deprecated or
+  needing extra attention for some reason.
 - shall be listed in the release notes of the release where the deprecation is
   first present.
 - shall not be introduced in micro (or bug fix) releases.
@@ -166,8 +171,8 @@ For backwards incompatible changes that aren't "deprecate and remove" but for
 which code will start behaving differently, a ``FutureWarning`` should be
 used. Release notes, mentioning version number and using ``stacklevel`` should
 be done in the same way as for deprecation warnings. A ``.. versionchanged::``
-directive can be used in the documentation to indicate when the behavior
-changed:
+directive shall be used in the documentation after the behaviour change was
+made to indicate when the behavior changed:
 
 .. code-block:: python
 
@@ -209,8 +214,9 @@ deprecated functionality does not need discussion on the mailing list.
 Functionality with more strict deprecation policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``numpy.random`` has its own backwards compatibility policy,
-  see `NEP 19 <http://www.numpy.org/neps/nep-0019-rng-policy.html>`_.
+- ``numpy.random`` has its own backwards compatibility policy with additional
+  requirements on top of the ones in this NEP, see
+  `NEP 19 <http://www.numpy.org/neps/nep-0019-rng-policy.html>`_.
 - The file format for ``.npy`` and ``.npz`` files must not be changed in a backwards
   incompatible way.
 
@@ -287,8 +293,9 @@ removing them happened in 2013 (gh-2880, rejected) and then again in 2019
 (:ref:`NEP32`, accepted without significant complaints).
 
 Given that they were clearly outside of NumPy's scope, moving them to a
-separate ``numpy-financial`` package and removing them from NumPy after a
-deprecation period made sense.
+separate ``numpy-financial`` package (which gave users an easy uption to update
+their code - just a simply `pip install numpy-financial`) and removing them
+from NumPy after a deprecation period made sense.
 
 
 Alternatives
@@ -320,9 +327,11 @@ References and Footnotes
 
 .. [1] https://searchcode.com/
 
-.. [2] https://github.com/Quansight-Labs/python-api-inspect
+.. [2] https://sourcegraph.com/search
 
-.. [3] https://github.com/data-apis/python-record-api
+.. [3] https://github.com/Quansight-Labs/python-api-inspect
+
+.. [4] https://github.com/data-apis/python-record-api
 
 Copyright
 ---------
