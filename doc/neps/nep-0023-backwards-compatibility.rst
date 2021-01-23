@@ -82,7 +82,10 @@ to be delayed for one or more releases.
 
 
 Strategies related to deprecations
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Impact assessment
+`````````````````
 
 Getting hard data on the impact of a deprecation of often difficult. Strategies
 that can be used to assess such impact include:
@@ -95,6 +98,9 @@ that can be used to assess such impact include:
   do encourage other packages to test against NumPy's master branch (and if
   that's too burdensome, then at least to test pre-releases), so this often
   turns up issues quickly.
+
+Alternatives to deprecations
+````````````````````````````
 
 If the impact is unclear or significant, it is often good to consider
 alternatives to deprecations. For example, discouraging use in documentation
@@ -109,8 +115,10 @@ Implementing deprecations and removals
 
 Deprecation warnings are necessary in all cases where functionality
 will eventually be removed.  If there is no intent to remove functionality,
-then it should not be deprecated either. A "please don't use this" in the
-documentation or other type of warning should be used instead.
+then it should not be deprecated either. A "please don't use this for new code"
+in the documentation or other type of warning should be used instead, and the
+documentation can be organized such that the preferred alternative is more
+prominently shown.
 
 Deprecations:
 
@@ -200,7 +208,7 @@ made to indicate when the behavior changed:
 
 
 Decision making
-~~~~~~~~~~~~~~~
+---------------
 
 In concrete cases where this policy needs to be applied, decisions are made according
 to the `NumPy governance model
@@ -217,8 +225,9 @@ Functionality with more strict deprecation policies
 - ``numpy.random`` has its own backwards compatibility policy with additional
   requirements on top of the ones in this NEP, see
   `NEP 19 <http://www.numpy.org/neps/nep-0019-rng-policy.html>`_.
-- The file format for ``.npy`` and ``.npz`` files must not be changed in a backwards
-  incompatible way.
+- The file format for ``.npy`` and ``.npz`` files is strictly versioned
+  independent of the NumPy version; existing format versions must remain
+  backwards compatible even if a newer format version is introduced.
 
 
 Example cases
