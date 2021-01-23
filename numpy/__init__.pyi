@@ -1507,6 +1507,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __lt__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
     @overload
+    def __lt__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
     def __lt__(
         self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
         other: _RecursiveSequence,
@@ -1522,6 +1524,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __le__(self: _ArrayND[datetime64], other: _ArrayLikeDT64_co) -> _ArrayOrScalar[bool_]: ...
     @overload
     def __le__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __le__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> _ArrayOrScalar[bool_]: ...
     @overload
     def __le__(
         self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
@@ -1539,6 +1543,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __gt__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
     @overload
+    def __gt__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> _ArrayOrScalar[bool_]: ...
+    @overload
     def __gt__(
         self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
         other: _RecursiveSequence,
@@ -1554,6 +1560,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __ge__(self: _ArrayND[datetime64], other: _ArrayLikeDT64_co) -> _ArrayOrScalar[bool_]: ...
     @overload
     def __ge__(self: _ArrayND[object_], other: Any) -> _ArrayOrScalar[bool_]: ...
+    @overload
+    def __ge__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> _ArrayOrScalar[bool_]: ...
     @overload
     def __ge__(
         self: _ArrayND[Union[number[Any], datetime64, timedelta64, bool_]],
