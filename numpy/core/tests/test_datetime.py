@@ -1557,6 +1557,39 @@ class TestDateTime:
         t[0] = 60*60*24 + 60*60*10
         assert_(t[0].item().hour == 10)
 
+    def test_astype_object_not_ints(self):
+        dts = np.ones(3, dtype=f'M8[ns]')
+        dts[0] = 60*60*24 + 60*60*10
+        assert isinstance(dts[0].item(), np.datetime64)
+
+        obj_dt = dts.astype(object)
+        assert isinstance(obj_dt[0], np.datetime64)
+        assert obj_dt[0].dtype == dts.dtype  # i.e. same resolution
+        assert isinstance(obj_dt[:1].item(), np.datetime64)
+
+        tds = dts.view(f"m8[ns]")
+        obj_td = tds.astype(object)
+        assert isinstance(obj_td[0], np.timedelta64)
+        assert obj_td[0].dtype == tds.dtype  # i.e. same resolution
+        assert isinstance(obj_td[:1].item(), np.timedelta64)
+
+    @pytest.mark.parametrize("unit",
+        ["us", "ms", "s", "m", "h", "D", "W", "M", "Y"]
+    )
+    def test_astype_object_not_ints_oob(self, unit):
+        dts = np.array([11000], dtype="M8[Y]").astype(f"M8[{unit}]")
+
+        res = dts.astype(object)
+        assert isinstance(res[0], np.datetime64)
+        assert res[0].dtype == dts.dtype
+
+        tds = dts - np.datetime64(0, unit)
+        res = tds.astype(object)
+        if not isinstance(res[0], datetime.timedelta):
+            # we just want NOT an integer
+            assert isinstance(res[0], np.timedelta64)
+            assert res[0].dtype == tds.dtype
+
     def test_divisor_conversion_year(self):
         assert_(np.dtype('M8[Y/4]') == np.dtype('M8[3M]'))
         assert_(np.dtype('M8[Y/13]') == np.dtype('M8[4W]'))
