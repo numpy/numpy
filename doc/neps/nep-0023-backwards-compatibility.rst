@@ -52,15 +52,16 @@ General principles
 When considering proposed changes that are backwards incompatible, the
 main principles the NumPy developers use when making a decision are:
 
-1. Changes need to benefit users more than they harm them.
+1. Changes need to benefit more than they harm users.
 2. NumPy is widely used so breaking changes should by default be assumed to be
    fairly harmful.
-3. Decisions should be based on data and actual effects on users and downstream
-   packages rather than, e.g., appealing to the docs or for stylistic reasons.
-4. Silently getting a wrong answer is much worse than getting a loud error.
+3. Decisions should be based on how they affect users and downstream packages.
+   This should be based on usage data where possible. It does not matter whether
+   this use contradicts the documentation or best practices.
+4. The possibility of an incorrect result is much worse than an error or even crash.
 
 When assessing the costs of proposed changes, keep in mind that most users do
-not read the mailing list, do not look at deprecation warnings, and sometimes
+not read the mailing list, do not notice deprecation warnings, and sometimes
 wait more than one or two years before upgrading from their old version. And
 that NumPy has millions of users, so "no one will do or use this" is very
 likely incorrect.
