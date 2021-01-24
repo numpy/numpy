@@ -25,10 +25,10 @@ Motivation and Scope
 NumPy has a very large user base.  Those users rely on NumPy being stable
 and the code they write that uses NumPy functionality to keep working.
 NumPy is also actively maintained and improved -- and sometimes improvements
-require or are made easier by breaking backwards compatibility.
+require, or are made easier, by breaking backwards compatibility.
 Finally, there are trade-offs in stability for existing users vs. avoiding
 errors or having a better user experience for new users.  These competing
-needs often give rise to long debates and to delays in accepting or rejecting
+needs often give rise to long debates and delay accepting or rejecting
 contributions.  This NEP tries to address that by providing a policy as well
 as examples and rationales for when it is or isn't a good idea to break
 backwards compatibility.
@@ -58,27 +58,27 @@ When considering proposed changes that are backwards incompatible, the
 main principles the NumPy developers use when making a decision are:
 
 1. Changes need to benefit more than they harm users.
-2. NumPy is widely used so breaking changes should by default be assumed to be
-   fairly harmful.
-3. Decisions should be based on how they affect users and downstream packages.
-   This should be based on usage data where possible. It does not matter whether
+2. NumPy is widely used, so breaking changes should be assumed by default to be
+   harmful.
+3. Decisions should be based on how they affect users and downstream packages
+   and should be based on usage data where possible. It does not matter whether
    this use contradicts the documentation or best practices.
-4. The possibility of an incorrect result is much worse than an error or even crash.
+4. The possibility of an incorrect result is worse than an error or even crash.
 
 When assessing the costs of proposed changes, keep in mind that most users do
 not read the mailing list, do not notice deprecation warnings, and sometimes
 wait more than one or two years before upgrading from their old version. And
-that NumPy has millions of users, so "no one will do or use this" is very
-likely incorrect.
+that NumPy has millions of users, so "no one will do or use this" is likely
+incorrect.
 
 Benefits of proposed changes can include improved functionality, usability and
 performance, as well as lower maintenance cost and improved future
 extensibility.
 
 Fixes for clear bugs are exempt from this backwards compatibility policy.
-However in case of serious impact on users (e.g. a downstream library doesn't
-build anymore or would start giving incorrect results), even bug fixes may have
-to be delayed for one or more releases.
+However, in case of serious impact on users even bug fixes may have to be
+delayed for one or more releases. For example, if a downstream library would no
+longer build or would give incorrect results."
 
 
 Strategies related to deprecations
@@ -92,11 +92,11 @@ that can be used to assess such impact include:
 
 - Use a code search engine ([1]_, [2]_) or static ([3]_) or dynamic ([4]_) code
   analysis tools to determine where and how the functionality is used.
-- Testing prominent downstream libraries against a development build of NumPy
+- Test prominent downstream libraries against a development build of NumPy
   containing the proposed change to get real-world data on its impact.
-- Making a change in master and reverting it, if needed, before a release. We
-  do encourage other packages to test against NumPy's master branch (and if
-  that's too burdensome, then at least to test pre-releases), so this often
+- Make a change in master and revert it before release if it causes problems.
+  We encourage other packages to test against NumPy's master branch and if
+  that's too burdensome, then at least to test pre-releases. This often
   turns up issues quickly.
 
 Alternatives to deprecations
@@ -115,7 +115,7 @@ Implementing deprecations and removals
 
 Deprecation warnings are necessary in all cases where functionality
 will eventually be removed.  If there is no intent to remove functionality,
-then it should not be deprecated either. A "please don't use this for new code"
+then it should not be deprecated. A "please don't use this for new code"
 in the documentation or other type of warning should be used instead, and the
 documentation can be organized such that the preferred alternative is more
 prominently shown.
@@ -125,14 +125,14 @@ Deprecations:
 - shall include the version number of the release in which the functionality
   was deprecated.
 - shall include information on alternatives to the deprecated functionality, or a
-  reason for the deprecation if no clear alternative is available (note that
-  release notes can include longer messages if needed).
+  reason for the deprecation if no clear alternative is available. Note that
+  release notes can include longer messages if needed.
 - shall use ``DeprecationWarning`` by default, and ``VisibleDeprecation``
   for changes that need attention again after already having been deprecated or
   needing extra attention for some reason.
 - shall be listed in the release notes of the release where the deprecation is
   first present.
-- shall not be introduced in micro (or bug fix) releases.
+- shall not be introduced in micro (bug fix) releases.
 - shall set a ``stacklevel``, so the warning appears to come from the correct
   place.
 - shall be mentioned in the documentation for the functionality. A
@@ -169,11 +169,11 @@ above the warning, helps when grepping):
 
 Removal of deprecated functionality:
 
-- shall be done after at least 2 releases (assuming the current 6-monthly
+- shall be done after at least 2 releases assuming the current 6-monthly
   release cycle; if that changes, there shall be at least 1 year between
-  deprecation and removal).
+  deprecation and removal.
 - shall be listed in the release notes of the release where the removal happened.
-- can be done in any minor (but not bugfix) release.
+- can be done in any minor, but not bugfix, release.
 
 For backwards incompatible changes that aren't "deprecate and remove" but for
 which code will start behaving differently, a ``FutureWarning`` should be
@@ -214,7 +214,7 @@ In concrete cases where this policy needs to be applied, decisions are made acco
 to the `NumPy governance model
 <https://docs.scipy.org/doc/numpy/dev/governance/index.html>`_.
 
-All deprecations must be proposed on the mailing list, in order to give everyone
+All deprecations must be proposed on the mailing list in order to give everyone
 with an interest in NumPy development a chance to comment. Removal of
 deprecated functionality does not need discussion on the mailing list.
 
@@ -225,7 +225,7 @@ Functionality with more strict deprecation policies
 - ``numpy.random`` has its own backwards compatibility policy with additional
   requirements on top of the ones in this NEP, see
   `NEP 19 <http://www.numpy.org/neps/nep-0019-rng-policy.html>`_.
-- The file format for ``.npy`` and ``.npz`` files is strictly versioned
+- The file format of ``.npy`` and ``.npz`` files is strictly versioned
   independent of the NumPy version; existing format versions must remain
   backwards compatible even if a newer format version is introduced.
 
@@ -298,13 +298,13 @@ on the mailing list where opinion was divided (but a majority in favor).
 The financial functions didn't cause a lot of overhead, however there were
 still multiple issues and PRs a year for them which cost maintainer time to
 deal with.  And they cluttered up the ``numpy`` namespace.  Discussion on
-removing them happened in 2013 (gh-2880, rejected) and then again in 2019
+removing them was discussed in 2013 (gh-2880, rejected) and in 2019
 (:ref:`NEP32`, accepted without significant complaints).
 
 Given that they were clearly outside of NumPy's scope, moving them to a
-separate ``numpy-financial`` package (which gave users an easy uption to update
-their code - just a simply `pip install numpy-financial`) and removing them
-from NumPy after a deprecation period made sense.
+separate ``numpy-financial`` package and removing them from NumPy after a
+deprecation period made sense.  That also gave users an easy way to update
+their code by doing `pip install numpy-financial`.
 
 
 Alternatives
