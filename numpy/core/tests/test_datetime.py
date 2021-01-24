@@ -1316,13 +1316,13 @@ class TestDateTime:
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
             # m8 / m8
-            assert_equal(tda / tdb, 6.0 / 9.0)
-            assert_equal(np.divide(tda, tdb), 6.0 / 9.0)
-            assert_equal(np.true_divide(tda, tdb), 6.0 / 9.0)
-            assert_equal(tdb / tda, 9.0 / 6.0)
+            assert_equal(tda / tdb, 6 / 9)
+            assert_equal(np.divide(tda, tdb), 6 / 9)
+            assert_equal(np.true_divide(tda, tdb), 6 / 9)
+            assert_equal(tdb / tda, 9 / 6)
             assert_equal((tda / tdb).dtype, np.dtype('f8'))
-            assert_equal(tda / tdd, 60.0)
-            assert_equal(tdd / tda, 1.0 / 60.0)
+            assert_equal(tda / tdd, 60)
+            assert_equal(tdd / tda, 1 / 60)
 
             # int / m8
             assert_raises(TypeError, np.divide, 2, tdb)

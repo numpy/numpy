@@ -2585,15 +2585,15 @@ class TestStdVar:
 
     def test_ddof1(self):
         assert_almost_equal(np.var(self.A, ddof=1),
-                            self.real_var*len(self.A)/float(len(self.A)-1))
+                            self.real_var * len(self.A) / (len(self.A) - 1))
         assert_almost_equal(np.std(self.A, ddof=1)**2,
-                            self.real_var*len(self.A)/float(len(self.A)-1))
+                            self.real_var*len(self.A) / (len(self.A) - 1))
 
     def test_ddof2(self):
         assert_almost_equal(np.var(self.A, ddof=2),
-                            self.real_var*len(self.A)/float(len(self.A)-2))
+                            self.real_var * len(self.A) / (len(self.A) - 2))
         assert_almost_equal(np.std(self.A, ddof=2)**2,
-                            self.real_var*len(self.A)/float(len(self.A)-2))
+                            self.real_var * len(self.A) / (len(self.A) - 2))
 
     def test_out_scalar(self):
         d = np.arange(10)
