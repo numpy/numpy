@@ -33,6 +33,18 @@ import os
 extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.intersphinx',
+    'sphinx_affiliates',
+]
+
+
+# Canonical URL (including the '/') so searching from numpy docs finds these
+affiliate_options = {
+    'canonical_url': "https://www.numpy.org/neps/",
+}
+
+# Other sites to add to the search of this site
+sphinx_affiliates = [
+    'https://www.numpy.org/devdocs/affiliate_searchindex.js',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
