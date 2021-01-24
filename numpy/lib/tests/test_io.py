@@ -574,13 +574,13 @@ class TestSaveTxt:
 
     @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
-    @requires_memory(free_bytes=8e9)
+    @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
         def check_large_zip(memoryerror_raised):
             memoryerror_raised.value = False
             try:
                 # The test takes at least 6GB of memory, writes a file larger
-                # than 4GB
+                # than 4GB. This tests the ``allowZip64`` kwarg to ``zipfile``
                 test_data = np.asarray([np.random.rand(
                                         np.random.randint(50,100),4)
                                         for i in range(800000)], dtype=object)
@@ -599,6 +599,9 @@ class TestSaveTxt:
         p.join()
         if memoryerror_raised.value:
             raise MemoryError("Child process raised a MemoryError exception")
+        # -9 indicates a SIGKILL, probably an OOM.
+        if p.exitcode == -9:
+            pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
         assert p.exitcode == 0
 
 class LoadTxtBase:
