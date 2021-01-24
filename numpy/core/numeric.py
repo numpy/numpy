@@ -299,7 +299,7 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
         Fill value.
     dtype : data-type, optional
         The desired data-type for the array  The default, None, means
-         `np.array(fill_value).dtype`.
+         ``np.array(fill_value).dtype``.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
