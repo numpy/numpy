@@ -18,6 +18,7 @@ NumPy is the fundamental package needed for scientific computing with Python.
 - **Report a security vulnerability:** https://tidelift.com/docs/security
 
 It provides:
+-Few important changes
 
 - a powerful N-dimensional array object
 - sophisticated (broadcasting) functions
