@@ -821,7 +821,7 @@ add_newdoc('numpy.core.multiarray', 'array',
         ===== ========= ===================================================
 
         When ``copy=False`` and a copy is made for other reasons, the result is
-        the same as if ``copy=True``, with some exceptions for `A`, see the
+        the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
