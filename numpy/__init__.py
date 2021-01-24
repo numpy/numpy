@@ -109,7 +109,9 @@ Exceptions to this rule are documented.
 import sys
 import warnings
 
-from ._globals import ModuleDeprecationWarning, VisibleDeprecationWarning , _NoValue
+from ._globals import (
+    ModuleDeprecationWarning, VisibleDeprecationWarning, _NoValue
+)
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
@@ -396,4 +398,3 @@ else:
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
-
