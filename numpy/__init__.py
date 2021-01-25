@@ -161,33 +161,58 @@ else:
 
     # Deprecations introduced in NumPy 1.20.0, 2020-06-06
     import builtins as _builtins
-    __deprecated_attrs__.update({
-        n: (
-            getattr(_builtins, n),
-            "`np.{n}` is a deprecated alias for the builtin `{n}`. "
-            "Use `{n}` by itself, which is identical in behavior, to silence "
-            "this warning. "
-            "If you specifically wanted the numpy scalar type, use `np.{n}_` "
-            "here."
-            .format(n=n)
-        )
-        for n in ["bool", "int", "float", "complex", "object", "str"]
-    })
-    __deprecated_attrs__.update({
-        n: (
-            getattr(compat, n),
-            "`np.{n}` is a deprecated alias for `np.compat.{n}`. "
-            "Use `np.compat.{n}` by itself, which is identical in behavior, "
-            "to silence this warning. "
-            "In the likely event your code does not need to work on Python 2 "
-            "you can use the builtin ``{n2}`` for which ``np.compat.{n}`` is "
-            "itself an alias. "
-            "If you specifically wanted the numpy scalar type, use `np.{n2}_` "
-            "here."
-            .format(n=n, n2=n2)
-        )
-        for n, n2 in [("long", "int"), ("unicode", "str")]
-    })
+
+    _msg = (
+        "`np.{n}` is a deprecated alias for the builtin `{n}`. "
+        "To silence this warning, use `{n}` by itself. Doing this will not "
+        "modify any behavior and is safe. {extended_msg}\n"
+        "Deprecated in NumPy 1.20; for more details and guidance: "
+        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+
+    _specific_msg = (
+        "If you specifically wanted the numpy scalar type, use `np.{}` here.")
+
+    _int_extended_msg = (
+        "When replacing `np.{}`, you may wish to use e.g. `np.int64` "
+        "or `np.int32` to specify the precision. If you wish to review "
+        "your current use check the release note link for "
+        "additional information.")
+
+    _type_info = [
+        ("object", ""),  # The NumPy scalar only exists by name.
+        ("bool", _specific_msg.format("bool_")),
+        ("float", _specific_msg.format("float64")),
+        ("complex", _specific_msg.format("complex128")),
+        ("str", _specific_msg.format("str_")),
+        ("int", _int_extended_msg.format("int"))]
+
+    for n, extended_msg in _type_info:
+        __deprecated_attrs__[n] = (getattr(_builtins, n),
+                                   _msg.format(n=n, extended_msg=extended_msg))
+
+    del n, extended_msg
+
+    _msg = (
+        "`np.{n}` is a deprecated alias for `np.compat.{n}`. "
+        "To silence this warning, use `np.compat.{n}` by itself. "
+        "In the likely event your code does not need to work on Python 2 "
+        "you can use the builtin `{n2}` for which `np.compat.{n}` is itself "
+        "an alias. Doing this will not modify any behaviour and is safe. "
+        "{extended_msg}\n"
+        "Deprecated in NumPy 1.20; for more details and guidance: "
+        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+
+    __deprecated_attrs__["long"] = (
+        getattr(compat, "long"),
+        _msg.format(n="long", n2="int",
+                    extended_msg=_int_extended_msg.format("long")))
+
+    __deprecated_attrs__["unicode"] = (
+        getattr(compat, "long"),
+        _msg.format(n="unciode", n2="str",
+                    extended_msg=_specific_msg.format("str_")))
+
+    del _msg, _specific_msg, _int_extended_msg, _type_info, _builtins
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits
