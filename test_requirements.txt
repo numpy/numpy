@@ -4,7 +4,7 @@ setuptools<49.2.0
 hypothesis==6.0.2
 pytest==6.2.1
 pytz==2020.5
-pytest-cov==2.10.1
+pytest-cov==2.11.1
 pickle5; python_version == '3.7' and platform_python_implementation != 'PyPy'
 # for numpy.random.test.test_extending
 cffi
