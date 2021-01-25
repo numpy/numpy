@@ -18,3 +18,11 @@ reveal_type(np.version)  # E: ModuleType
 
 # TODO: Remove when annotations have been added to `np.testing.assert_equal`
 reveal_type(np.testing.assert_equal)  # E: Any
+
+reveal_type(np.__all__)  # E: list[builtins.str]
+reveal_type(np.__path__)  # E: list[builtins.str]
+reveal_type(np.__version__)  # E: str
+reveal_type(np.__git_version__)  # E: str
+reveal_type(np.__NUMPY_SETUP__)  # E: bool
+reveal_type(np.__deprecated_attrs__)  # E: dict[builtins.str, Tuple[builtins.type, builtins.str]]
+reveal_type(np.__expired_functions__)  # E: dict[builtins.str, builtins.str]

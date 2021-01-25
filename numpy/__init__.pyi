@@ -311,6 +311,13 @@ from numpy.core.shape_base import (
     vstack as vstack,
 )
 
+__all__: List[str]
+__path__: List[str]
+__version__: str
+__git_version__: str
+__NUMPY_SETUP__: bool
+__deprecated_attrs__: Dict[str, Tuple[type, str]]
+__expired_functions__: Dict[str, str]
 
 DataSource: Any
 MachAr: Any
