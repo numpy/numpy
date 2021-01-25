@@ -599,7 +599,7 @@ cdef class Generator:
         """
         choice(a, size=None, replace=True, p=None, axis=0, shuffle=True)
 
-        Generates a random sample from a given 1-D array
+        Generates a random sample from a given array
 
         Parameters
         ----------
