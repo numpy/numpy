@@ -11,6 +11,7 @@ from numpy.typing import (
     ArrayLike,
     _ArrayND,
     _ArrayOrScalar,
+    _SupportsArray,
     _NestedSequence,
     _RecursiveSequence,
     _ArrayLikeBool_co,
@@ -1839,22 +1840,333 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         other: _RecursiveSequence,
     ) -> Any: ...
 
-    def __floordiv__(self, other: ArrayLike) -> Any: ...
-    def __rfloordiv__(self, other: ArrayLike) -> Any: ...
-    def __pow__(self, other: ArrayLike) -> Any: ...
-    def __rpow__(self, other: ArrayLike) -> Any: ...
-    def __truediv__(self, other: ArrayLike) -> Any: ...
-    def __rtruediv__(self, other: ArrayLike) -> Any: ...
-    def __lshift__(self, other: ArrayLike) -> Any: ...
-    def __rlshift__(self, other: ArrayLike) -> Any: ...
-    def __rshift__(self, other: ArrayLike) -> Any: ...
-    def __rrshift__(self, other: ArrayLike) -> Any: ...
-    def __and__(self, other: ArrayLike) -> Any: ...
-    def __rand__(self, other: ArrayLike) -> Any: ...
-    def __xor__(self, other: ArrayLike) -> Any: ...
-    def __rxor__(self, other: ArrayLike) -> Any: ...
-    def __or__(self, other: ArrayLike) -> Any: ...
-    def __ror__(self, other: ArrayLike) -> Any: ...
+    @overload
+    def __floordiv__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __floordiv__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __floordiv__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __floordiv__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __floordiv__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __floordiv__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> _ArrayOrScalar[complexfloating[Any, Any]]: ...  # type: ignore[misc]
+    @overload
+    def __floordiv__(self: _ArrayND[timedelta64], other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> _ArrayOrScalar[int64]: ...
+    @overload
+    def __floordiv__(self: _ArrayND[timedelta64], other: _ArrayLikeBool_co) -> NoReturn: ...
+    @overload
+    def __floordiv__(self: _ArrayND[timedelta64], other: _ArrayLikeFloat_co) -> _ArrayOrScalar[timedelta64]: ...
+    @overload
+    def __floordiv__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __floordiv__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __floordiv__(
+        self: _ArrayND[Union[bool_, number[Any], timedelta64]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rfloordiv__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rfloordiv__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __rfloordiv__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rfloordiv__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rfloordiv__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rfloordiv__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> _ArrayOrScalar[complexfloating[Any, Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rfloordiv__(self: _ArrayND[timedelta64], other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> _ArrayOrScalar[int64]: ...
+    @overload
+    def __rfloordiv__(self: _ArrayND[bool_], other: _ArrayLikeTD64_co) -> NoReturn: ...
+    @overload
+    def __rfloordiv__(self: _ArrayFloat_co, other: _ArrayLikeTD64_co) -> _ArrayOrScalar[timedelta64]: ...
+    @overload
+    def __rfloordiv__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rfloordiv__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rfloordiv__(
+        self: _ArrayND[Union[bool_, number[Any], timedelta64]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __pow__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __pow__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __pow__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __pow__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __pow__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __pow__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> _ArrayOrScalar[complexfloating[Any, Any]]: ...
+    @overload
+    def __pow__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __pow__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __pow__(
+        self: _ArrayND[Union[bool_, number[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rpow__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rpow__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __rpow__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rpow__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rpow__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rpow__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> _ArrayOrScalar[complexfloating[Any, Any]]: ...
+    @overload
+    def __rpow__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rpow__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rpow__(
+        self: _ArrayND[Union[bool_, number[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __truediv__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __truediv__(self: _ArrayInt_co, other: _ArrayInt_co) -> _ArrayOrScalar[float64]: ...  # type: ignore[misc]
+    @overload
+    def __truediv__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __truediv__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> _ArrayOrScalar[complexfloating[Any, Any]]: ...  # type: ignore[misc]
+    @overload
+    def __truediv__(self: _ArrayND[timedelta64], other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> _ArrayOrScalar[float64]: ...
+    @overload
+    def __truediv__(self: _ArrayND[timedelta64], other: _ArrayLikeBool_co) -> NoReturn: ...
+    @overload
+    def __truediv__(self: _ArrayND[timedelta64], other: _ArrayLikeFloat_co) -> _ArrayOrScalar[timedelta64]: ...
+    @overload
+    def __truediv__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __truediv__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __truediv__(
+        self: _ArrayND[Union[bool_, number[Any], timedelta64]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rtruediv__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rtruediv__(self: _ArrayInt_co, other: _ArrayInt_co) -> _ArrayOrScalar[float64]: ...  # type: ignore[misc]
+    @overload
+    def __rtruediv__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rtruediv__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> _ArrayOrScalar[complexfloating[Any, Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rtruediv__(self: _ArrayND[timedelta64], other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> _ArrayOrScalar[float64]: ...
+    @overload
+    def __rtruediv__(self: _ArrayND[bool_], other: _ArrayLikeTD64_co) -> NoReturn: ...
+    @overload
+    def __rtruediv__(self: _ArrayFloat_co, other: _ArrayLikeTD64_co) -> _ArrayOrScalar[timedelta64]: ...
+    @overload
+    def __rtruediv__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rtruediv__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rtruediv__(
+        self: _ArrayND[Union[bool_, number[Any], timedelta64]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __lshift__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __lshift__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __lshift__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __lshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __lshift__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __lshift__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __lshift__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rlshift__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rlshift__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __rlshift__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rlshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __rlshift__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rlshift__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rlshift__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rshift__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rshift__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __rshift__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __rshift__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rshift__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rshift__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rrshift__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rrshift__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[int8]: ...  # type: ignore[misc]
+    @overload
+    def __rrshift__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rrshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __rrshift__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rrshift__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rrshift__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __and__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __and__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[bool_]: ...  # type: ignore[misc]
+    @overload
+    def __and__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __and__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __and__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __and__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __and__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rand__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rand__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[bool_]: ...  # type: ignore[misc]
+    @overload
+    def __rand__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rand__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __rand__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rand__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rand__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __xor__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __xor__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[bool_]: ...  # type: ignore[misc]
+    @overload
+    def __xor__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __xor__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __xor__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __xor__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __xor__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __rxor__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __rxor__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[bool_]: ...  # type: ignore[misc]
+    @overload
+    def __rxor__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __rxor__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __rxor__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __rxor__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __rxor__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __or__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __or__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[bool_]: ...  # type: ignore[misc]
+    @overload
+    def __or__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __or__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __or__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __or__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __or__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
+
+    @overload
+    def __ror__(self: _ArrayND[Any], other: _NestedSequence[Union[str, bytes]]) -> NoReturn: ...
+    @overload
+    def __ror__(self: _ArrayND[bool_], other: _ArrayLikeBool_co) -> _ArrayOrScalar[bool_]: ...  # type: ignore[misc]
+    @overload
+    def __ror__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> _ArrayOrScalar[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __ror__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> _ArrayOrScalar[signedinteger[Any]]: ...
+    @overload
+    def __ror__(self: _ArrayND[object_], other: Any) -> Any: ...
+    @overload
+    def __ror__(self: _ArrayND[Any], other: _ArrayLikeObject_co) -> Any: ...
+    @overload
+    def __ror__(
+        self: _ArrayND[Union[bool_, integer[Any]]],
+        other: _RecursiveSequence,
+    ) -> Any: ...
 
     # `np.generic` does not support inplace operations
     def __iadd__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
