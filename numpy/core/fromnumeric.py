@@ -319,34 +319,34 @@ def choose(a, choices, out=None, mode='raise'):
 
     But this omits some subtleties.  Here is a fully general summary:
 
-    Given an "index" array (`a`) of integers and a sequence of `n` arrays
+    Given an "index" array (`a`) of integers and a sequence of ``n`` arrays
     (`choices`), `a` and each choice array are first broadcast, as necessary,
     to arrays of a common shape; calling these *Ba* and *Bchoices[i], i =
     0,...,n-1* we have that, necessarily, ``Ba.shape == Bchoices[i].shape``
-    for each `i`.  Then, a new array with shape ``Ba.shape`` is created as
+    for each ``i``.  Then, a new array with shape ``Ba.shape`` is created as
     follows:
 
-    * if ``mode=raise`` (the default), then, first of all, each element of
-      `a` (and thus `Ba`) must be in the range `[0, n-1]`; now, suppose that
-      `i` (in that range) is the value at the `(j0, j1, ..., jm)` position
-      in `Ba` - then the value at the same position in the new array is the
-      value in `Bchoices[i]` at that same position;
+    * if ``mode='raise'`` (the default), then, first of all, each element of
+      ``a`` (and thus ``Ba``) must be in the range ``[0, n-1]``; now, suppose
+      that ``i`` (in that range) is the value at the ``(j0, j1, ..., jm)``
+      position in ``Ba`` - then the value at the same position in the new array
+      is the value in ``Bchoices[i]`` at that same position;
 
-    * if ``mode=wrap``, values in `a` (and thus `Ba`) may be any (signed)
+    * if ``mode='wrap'``, values in `a` (and thus `Ba`) may be any (signed)
       integer; modular arithmetic is used to map integers outside the range
       `[0, n-1]` back into that range; and then the new array is constructed
       as above;
 
-    * if ``mode=clip``, values in `a` (and thus `Ba`) may be any (signed)
-      integer; negative integers are mapped to 0; values greater than `n-1`
-      are mapped to `n-1`; and then the new array is constructed as above.
+    * if ``mode='clip'``, values in `a` (and thus ``Ba``) may be any (signed)
+      integer; negative integers are mapped to 0; values greater than ``n-1``
+      are mapped to ``n-1``; and then the new array is constructed as above.
 
     Parameters
     ----------
     a : int array
-        This array must contain integers in `[0, n-1]`, where `n` is the number
-        of choices, unless ``mode=wrap`` or ``mode=clip``, in which cases any
-        integers are permissible.
+        This array must contain integers in ``[0, n-1]``, where ``n`` is the
+        number of choices, unless ``mode=wrap`` or ``mode=clip``, in which
+        cases any integers are permissible.
     choices : sequence of arrays
         Choice arrays. `a` and all of the choices must be broadcastable to the
         same shape.  If `choices` is itself an array (not recommended), then
@@ -355,12 +355,12 @@ def choose(a, choices, out=None, mode='raise'):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype. Note that `out` is always
-        buffered if `mode='raise'`; use other modes for better performance.
+        buffered if ``mode='raise'``; use other modes for better performance.
     mode : {'raise' (default), 'wrap', 'clip'}, optional
-        Specifies how indices outside `[0, n-1]` will be treated:
+        Specifies how indices outside ``[0, n-1]`` will be treated:
 
           * 'raise' : an exception is raised
-          * 'wrap' : value becomes value mod `n`
+          * 'wrap' : value becomes value mod ``n``
           * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
 
     Returns
