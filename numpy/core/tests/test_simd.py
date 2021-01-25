@@ -736,10 +736,7 @@ class _SIMD_ALL(_Test_Utility):
     def test_arithmetic_reduce_sum(self):
         """
         Test reduce sum intrinics:
-            npyv_sum_u32
-            npyv_sum_u64
-            npyv_sum_f32
-            npyv_sum_f64
+            npyv_sum_##sfx
         """
         if self.sfx not in ("u32", "u64", "f32", "f64"):
             return
@@ -754,8 +751,7 @@ class _SIMD_ALL(_Test_Utility):
     def test_arithmetic_reduce_sumup(self):
         """
         Test overflow protect reduce sumup intrinics:
-            npyv_sumup_u8
-            npyv_sumup_u16
+            npyv_sumup_##sfx
         """
         if self.sfx not in ("u8", "u16"):
             return

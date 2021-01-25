@@ -116,25 +116,10 @@
 #define npyv_nmulsub_f32 vec_nmadd // equivalent to -(a*b + c)
 #define npyv_nmulsub_f64 vec_nmadd
 
-// Horizontal add: Calculates the sum of all vector elements.
-
-NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
-{
-    const npyv_u32 zero = npyv_zero_u32();
-    npyv_u32 four = vec_sum4s(a, zero);
-    npyv_u32 one  = vec_sums((npyv_s32)four, (npyv_s32)zero);
-    return (npy_uint16)vec_extract(one, 3);
-}
-
-NPY_FINLINE npy_uint32 npyv_sumup_u16(npyv_u16 a)
-{
-    const npyv_s32 zero = npyv_zero_s32();
-    npyv_u32x2 eight = npyv_expand_u32_u16(a);
-    npyv_u32   four  = vec_add(eight.val[0], eight.val[1]);
-    npyv_s32   one   = vec_sums((npyv_s32)four, zero);
-    return (npy_uint32)vec_extract(one, 3);
-}
-
+/***************************
+ * Summation
+ ***************************/
+// reduce sum across vector
 NPY_FINLINE npy_uint64 npyv_sum_u64(npyv_u64 a)
 {
     return vec_extract(vec_add(a, vec_mergel(a, a)), 0);
@@ -155,6 +140,24 @@ NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
 {
     return vec_extract(a, 0) + vec_extract(a, 1);
+}
+
+// extend sum across vector
+NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
+{
+    const npyv_u32 zero = npyv_zero_u32();
+    npyv_u32 four = vec_sum4s(a, zero);
+    npyv_s32 one  = vec_sums((npyv_s32)four, (npyv_s32)zero);
+    return (npy_uint16)vec_extract(one, 3);
+}
+
+NPY_FINLINE npy_uint32 npyv_sumup_u16(npyv_u16 a)
+{
+    const npyv_s32 zero = npyv_zero_s32();
+    npyv_u32x2 eight = npyv_expand_u32_u16(a);
+    npyv_u32   four  = vec_add(eight.val[0], eight.val[1]);
+    npyv_s32   one   = vec_sums((npyv_s32)four, zero);
+    return (npy_uint32)vec_extract(one, 3);
 }
 
 #endif // _NPY_SIMD_VSX_ARITHMETIC_H

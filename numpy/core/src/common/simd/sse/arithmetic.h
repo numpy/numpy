@@ -148,14 +148,10 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
     }
 #endif // !NPY_HAVE_FMA3
 
-// Horizontal add: Calculates the sum of all vector elements.
-
-NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
-{
-    __m128i half = _mm_sad_epu8(a, _mm_setzero_si128());
-    return (unsigned)_mm_cvtsi128_si32(_mm_add_epi32(half, _mm_unpackhi_epi64(half, half)));
-}
-
+/***************************
+ * Summation
+ ***************************/
+// reduce sum across vector
 NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
 {
     __m128i t = _mm_add_epi32(a, _mm_srli_si128(a, 8));
@@ -163,17 +159,10 @@ NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
     return (unsigned)_mm_cvtsi128_si32(t);
 }
 
-NPY_FINLINE npy_uint32 npyv_sumup_u16(npyv_u16 a)
-{
-    npyv_u32x2 res = npyv_expand_u32_u16(a);
-    return (unsigned)npyv_sum_u32(_mm_add_epi32(res.val[0], res.val[1]));
-}
-
 NPY_FINLINE npy_uint64 npyv_sum_u64(npyv_u64 a)
 {
-    npy_uint64 NPY_DECL_ALIGNED(32) idx[2];
-    npyv_storea_u64(idx, a);
-    return idx[0] + idx[1];
+    __m128i one = _mm_add_epi64(a, _mm_unpackhi_epi64(a, a));
+    return (npy_uint64)npyv128_cvtsi128_si64(one);
 }
 
 NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
@@ -197,6 +186,23 @@ NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
 #else
     return _mm_cvtsd_f64(_mm_add_pd(a, _mm_unpackhi_pd(a, a)));
 #endif
+}
+
+// extend sum across vector
+NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
+{
+    __m128i two = _mm_sad_epu8(a, _mm_setzero_si128());
+    __m128i one = _mm_add_epi16(two, _mm_unpackhi_epi64(two, two));
+    return (npy_uint16)_mm_cvtsi128_si32(one);
+}
+
+NPY_FINLINE npy_uint32 npyv_sumup_u16(npyv_u16 a)
+{
+    const __m128i even_mask = _mm_set1_epi32(0x0000FFFF);
+    __m128i even = _mm_and_si128(a, even_mask);
+    __m128i odd  = _mm_srli_epi32(a, 16);
+    __m128i four = _mm_add_epi32(even, odd);
+    return npyv_sum_u32(four);
 }
 
 #endif // _NPY_SIMD_SSE_ARITHMETIC_H
