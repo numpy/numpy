@@ -665,6 +665,13 @@ cdef class Generator:
         array([3,1,0]) # random
         >>> #This is equivalent to rng.permutation(np.arange(5))[:3]
 
+        Generate a uniform random sample from a 2-D array, without
+        replacement:
+
+        >>> rng.choice([[0, 1, 2], [3, 4, 5], [6, 7, 8]], 2, replace=False)
+        array([[3, 4, 5],
+               [0, 1, 2]])
+
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
 
