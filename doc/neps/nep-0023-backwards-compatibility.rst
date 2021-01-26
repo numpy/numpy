@@ -5,10 +5,11 @@ NEP 23 — Backwards compatibility and deprecation policy
 =======================================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
-:Status: Draft
+:Status: Accepted
 :Type: Process
 :Created: 2018-07-14
-:Resolution: <url> (required for Accepted | Rejected | Withdrawn)
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-January/081423.html
+
 
 Abstract
 --------
@@ -325,6 +326,8 @@ Discussion
 ----------
 
 - `Mailing list discussion on the first version of this NEP in 2018 <https://mail.python.org/pipermail/numpy-discussion/2018-July/078432.html>`__
+- `Mailing list discussion on the Dec 2020 update of this NEP <https://mail.python.org/pipermail/numpy-discussion/2020-December/081358.html>`__
+- `PR with review comments on the the Dec 2020 update of this NEP <https://github.com/numpy/numpy/pull/18097>`__
 
 
 References and Footnotes
