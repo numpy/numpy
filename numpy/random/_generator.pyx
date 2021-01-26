@@ -599,7 +599,7 @@ cdef class Generator:
         """
         choice(a, size=None, replace=True, p=None, axis=0, shuffle=True)
 
-        Generates a random sample from a given 1-D array
+        Generates a random sample from a given array
 
         Parameters
         ----------
@@ -664,6 +664,13 @@ cdef class Generator:
         >>> rng.choice(5, 3, replace=False)
         array([3,1,0]) # random
         >>> #This is equivalent to rng.permutation(np.arange(5))[:3]
+
+        Generate a uniform random sample from a 2-D array along the first
+        axis (the default), without replacement:
+
+        >>> rng.choice([[0, 1, 2], [3, 4, 5], [6, 7, 8]], 2, replace=False)
+        array([[3, 4, 5], # random
+               [0, 1, 2]])
 
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
