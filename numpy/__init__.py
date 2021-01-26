@@ -175,7 +175,7 @@ else:
     _int_extended_msg = (
         "When replacing `np.{}`, you may wish to use e.g. `np.int64` "
         "or `np.int32` to specify the precision. If you wish to review "
-        "your current use check the release note link for "
+        "your current use, check the release note link for "
         "additional information.")
 
     _type_info = [
