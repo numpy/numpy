@@ -38,8 +38,7 @@ respectively. Lists and tuples can define ndarray creation::
  >>> a1D = np.array([1, 2, 3, 4])
  >>> a2D = np.array([[1, 2], [3, 4]])
  >>> a3D = np.array([[[1, 2], [3, 4]],
-                    [[5, 6], [7, 8]]
-                    ])
+                     [[5, 6], [7, 8]]])
 
 When you use :func:`numpy.array` to define a new array, consider the
 :doc:`dtype <basics.types>` of the elements in the array. You should
