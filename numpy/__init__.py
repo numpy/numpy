@@ -190,11 +190,10 @@ else:
         ("str", _specific_msg.format("str_")),
         ("int", _int_extended_msg.format("int"))]
 
-    for n, extended_msg in _type_info:
-        __deprecated_attrs__[n] = (getattr(_builtins, n),
-                                   _msg.format(n=n, extended_msg=extended_msg))
-
-    del n, extended_msg
+    __deprecated_attrs__.update({
+        n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
+        for n, extended_msg in _type_info
+    })
 
     _msg = (
         "`np.{n}` is a deprecated alias for `np.compat.{n}`. "
@@ -422,4 +421,3 @@ else:
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
-
