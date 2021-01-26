@@ -22,15 +22,16 @@ There are 6 general mechanisms for creating arrays:
 You can use these methods to create  ndarrays or :ref:`structured_arrays`.
 This document will cover general methods for ndarray creation. 
 
-1) Converting Python structures to NumPy Arrays
+1) Converting Python sequences to NumPy Arrays
 ===============================================
 
-NumPy arrays can be defined using Python structures such as lists and
+NumPy arrays can be defined using Python sequences such as lists and
 tuples. Lists and tuples are defined using ``[...]`` and ``(...)``,
-respectively. Lists and tuples can define ndarray creation:
+respectively. Lists and tuples can define ndarray creation::
 * a list of numbers will create a 1D array, 
 * a list of lists will create a 2D array, 
-* further nested lists will create ndarrays
+* further nested lists will create higher-dimensional arrays. In general,
+  any array object is called an **ndarray** in NumPy.
 
 ::
 
@@ -98,8 +99,7 @@ There are three categories of NumPy array creation functions:
 
 The 1D array creation functions e.g. :func:`numpy.linspace` and
 :func:`numpy.arange` generally need at least two inputs, ``start`` and
-``stop``, where ``start`` is the first value in the array and ``stop``
-specifies the value of the last element in the array. 
+``stop``. 
 
 :func:`numpy.arange` creates arrays with regularly incrementing values.
 Check the docstring for complete information and examples. A few
@@ -188,13 +188,13 @@ routine is helpful in generating linear least squares models, as such::
         [27,  9,  3,  1],
         [64, 16,  4,  1]])
  
-3 - ndarray creation functions
+3 - general ndarray creation functions
 -----------------------------
 
-The ndarray creation functions e.g. :func:`numpy.ones`, :func:`numpy.zeros`, and
-:func:`default_rng.random` define arrays based upon the desired
-shape. The  
-ndarray creation functions can create arrays with any dimension by
+The ndarray creation functions e.g. :func:`numpy.ones`,
+:func:`numpy.zeros`, and `default_rng().random
+<random.Generator.random>` define arrays based upon the desired shape.
+The  ndarray creation functions can create arrays with any dimension by
 specifying how many dimensions and length along that dimension in a
 tuple or list. 
 
@@ -249,7 +249,7 @@ pseudorandom numbers::
 
 :func:`numpy.indices` will create a set of arrays (stacked as a one-higher
 dimensioned array), one per dimension with each representing variation in that
-dimension.  An example illustrates much better than a verbal description: ::
+dimension: ::
 
  >>> np.indices((3,3))
  array([[[0, 0, 0], [1, 1, 1], [2, 2, 2]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
@@ -264,7 +264,7 @@ Once you have created arrays, you can replicate, join, or mutate those
 existing arrays to create new arrays. When you assign an array or its
 elements to a new variable, you have to explicitly :func:`numpy.copy` the array,
 otherwise the variable is a view into the original array. Consider the
-following example, ::
+following example::
 
  >>> a = np.array([1, 2, 3, 4, 5, 6])
  >>> b = a[:2]
@@ -371,6 +371,7 @@ knowledge to interface with C or C++.
 6) Use of special library functions (e.g., SciPy, Pandas, and OpenCV)
 =====================================================================
 
-NumPy is a fundamental library in the Python Scientific Computing stack. 
-Many Python libraries, including SciPy, Pandas, and OpenCV, can create,
+NumPy is the fundamental library for array containers in the Python Scientific Computing
+stack. Many Python libraries, including SciPy, Pandas, and OpenCV, use NumPy ndarrays
+as the common format for data exchange, These libraries can create,
 operate on, and work with NumPy arrays. 
