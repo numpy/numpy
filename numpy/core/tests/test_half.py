@@ -71,8 +71,10 @@ class TestHalf:
     def test_half_conversion_to_string(self, string_dt):
         # Currently uses S/U32 (which is sufficient for float32)
         expected_dt = np.dtype(f"{string_dt}32")
-        assert np.promote_types(np.float16, string_dt) == expected_dt
-        assert np.promote_types(string_dt, np.float16) == expected_dt
+        with pytest.warns(FutureWarning):
+            assert np.promote_types(np.float16, string_dt) == expected_dt
+        with pytest.warns(FutureWarning):
+            assert np.promote_types(string_dt, np.float16) == expected_dt
 
         arr = np.ones(3, dtype=np.float16).astype(string_dt)
         assert arr.dtype == expected_dt

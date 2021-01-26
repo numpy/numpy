@@ -407,6 +407,19 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
+    if (other->type_num != NPY_STRING && other->type_num != NPY_UNICODE) {
+        /* Deprecated 2020-12-19, NumPy 1.21. */
+        if (DEPRECATE_FUTUREWARNING(
+                "Promotion of numbers and bools to strings is deprecated. "
+                "In the future, code such as `np.concatenate((['string'], [0]))` "
+                "will raise an error, while `np.asarray(['string', 0])` will "
+                "return an array with `dtype=object`.  To avoid the warning "
+                "while retaining a string result use `dtype='U'` (or 'S').  "
+                "To get an array of Python objects use `dtype=object`. "
+                "(Warning added in NumPy 1.21)") < 0) {
+            return NULL;
+        }
+    }
     /*
      * The builtin types are ordered by complexity (aside from object) here.
      * Arguably, we should not consider numbers and strings "common", but

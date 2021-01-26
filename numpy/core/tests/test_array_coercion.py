@@ -234,6 +234,7 @@ class TestScalarDiscovery:
 
     # Additionally to string this test also runs into a corner case
     # with datetime promotion (the difference is the promotion order).
+    @pytest.mark.filterwarnings("ignore:Promotion of numbers:FutureWarning")
     def test_scalar_promotion(self):
         for sc1, sc2 in product(scalar_instances(), scalar_instances()):
             sc1, sc2 = sc1.values[0], sc2.values[0]
