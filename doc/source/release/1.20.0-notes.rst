@@ -106,7 +106,8 @@ For ``float`` and ``complex`` you can use ``float64`` and ``complex128``
 if you wish to be more explicit about the precision.
 
 For ``np.int`` a direct replacement with ``np.int_`` or ``int`` is also
-good, but the precision depends on the computer and operating system.
+good and will not change behavior, but the precision will continue to depend
+on the computer and operating system.
 If you want to be more explicit and review the current use, you have the
 following alternatives:
 
@@ -998,6 +999,5 @@ The former result can still be obtained with::
     array([-3, -2, -1, -1,  0,  0,  0,  1])
 
 (`gh-16841 <https://github.com/numpy/numpy/pull/16841>`__)
-
 
 
