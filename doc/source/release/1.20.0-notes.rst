@@ -75,32 +75,60 @@ Using the aliases of builtin types like ``np.int`` is deprecated
 ----------------------------------------------------------------
 
 For a long time, ``np.int`` has been an alias of the builtin ``int``. This is
-repeatedly a cause of confusion for newcomers, and is also simply not useful.
+repeatedly a cause of confusion for newcomers, and existed mainly for historic
+reasons.
 
 These aliases have been deprecated. The table below shows the full list of
 deprecated aliases, along with their exact meaning. Replacing uses of items in
 the first column with the contents of the second column will work identically
 and silence the deprecation warning.
 
-In many cases, it may have been intended to use the types from the third column.
-Be aware that use of these types may result in subtle but desirable behavior
-changes.
+The third column lists alternative NumPy names which may occasionally be
+preferential. See also :ref:`basics.types` for additional details.
 
-==================  =================================  ==================================================================
-Deprecated name     Identical to                       Possibly intended numpy type
-==================  =================================  ==================================================================
-``numpy.bool``      ``bool``                           `numpy.bool_`
-``numpy.int``       ``int``                            `numpy.int_` (default int dtype), `numpy.cint` (C ``int``)
-``numpy.float``     ``float``                          `numpy.float_`, `numpy.double` (equivalent)
-``numpy.complex``   ``complex``                        `numpy.complex_`, `numpy.cdouble` (equivalent)
-``numpy.object``    ``object``                         `numpy.object_`
-``numpy.str``       ``str``                            `numpy.str_`
-``numpy.long``      ``int`` (``long`` on Python 2)     `numpy.int_` (C ``long``), `numpy.longlong` (largest integer type)
-``numpy.unicode``   ``str`` (``unicode`` on Python 2)  `numpy.unicode_`
-==================  =================================  ==================================================================
+=================  ============  ==================================================================
+Deprecated name    Identical to  NumPy scalar type names
+=================  ============  ==================================================================
+``numpy.bool``     ``bool``      `numpy.bool_`
+``numpy.int``      ``int``       `numpy.int_` (default), ``numpy.int64``, or ``numpy.int32``
+``numpy.float``    ``float``     `numpy.float64`, `numpy.float_`, `numpy.double` (equivalent)
+``numpy.complex``  ``complex``   `numpy.complex128`, `numpy.complex_`, `numpy.cdouble` (equivalent)
+``numpy.object``   ``object``    `numpy.object_`
+``numpy.str``      ``str``       `numpy.str_`
+``numpy.long``     ``int``       `numpy.int_` (C ``long``), `numpy.longlong` (largest integer type)
+``numpy.unicode``  ``str``       `numpy.unicode_`
+=================  ============  ==================================================================
 
-Note that for technical reasons these deprecation warnings will only be emitted
-on Python 3.7 and above.
+To give a clear guideline for the vast majority of cases, for the types
+``bool``, ``object``, ``str`` (and ``unicode``) using the plain version
+is shorter and clear, and generally a good replacement.
+For ``float`` and ``complex`` you can use ``float64`` and ``complex128``
+if you wish to be more explicit about the precision.
+
+For ``np.int`` a direct replacement with ``np.int_`` or ``int`` is also
+good and will not change behavior, but the precision will continue to depend
+on the computer and operating system.
+If you want to be more explicit and review the current use, you have the
+following alternatives:
+
+* ``np.int64`` or ``np.int32`` to specify the precision exactly.
+  This ensures that results cannot depend on the computer or operating system.
+* ``np.int_`` or ``int`` (the default), but be aware that it depends on
+  the computer and operating system.
+* The C types: ``np.cint`` (int), ``np.int_`` (long), ``np.longlong``.
+* ``np.intp`` which is 32bit on 32bit machines 64bit on 64bit machines.
+  This can be the best type to use for indexing.
+
+When used with ``np.dtype(...)`` or ``dtype=...`` changing it to the
+NumPy name as mentioned above will have no effect on the output.
+If used as a scalar with::
+
+    np.float(123)
+
+changing it can subtly change the result.  In this case, the Python version
+``float(123)`` or ``int(12.)`` is normally preferable, although the NumPy
+version may be useful for consistency with NumPy arrays (for example,
+NumPy behaves differently for things like division by zero).
 
 (`gh-14882 <https://github.com/numpy/numpy/pull/14882>`__)
 
@@ -971,6 +999,4 @@ The former result can still be obtained with::
     array([-3, -2, -1, -1,  0,  0,  0,  1])
 
 (`gh-16841 <https://github.com/numpy/numpy/pull/16841>`__)
-
-
 
