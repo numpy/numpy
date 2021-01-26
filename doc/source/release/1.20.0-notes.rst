@@ -84,7 +84,7 @@ the first column with the contents of the second column will work identically
 and silence the deprecation warning.
 
 The third column lists alternative NumPy names which may occasionally be
-preferential. See also :doc:`user/basics.types` for additional details.
+preferential. See also :ref:`basics.types` for additional details.
 
 =================  ============  ==================================================================
 Deprecated name    Identical to  NumPy scalar type names
