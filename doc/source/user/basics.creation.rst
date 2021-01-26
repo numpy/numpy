@@ -40,9 +40,9 @@ respectively. Lists and tuples can define ndarray creation::
  >>> a3D = np.array([[[1, 2], [3, 4]],
                      [[5, 6], [7, 8]]])
 
-When you use :func:`numpy.array` to define a new array, consider the
-:doc:`dtype <basics.types>` of the elements in the array. You should
-specify the ``dtype`` for elements in the array. This feature gives you
+When you use :func:`numpy.array` to define a new array, you should
+consider the :doc:`dtype <basics.types>` of the elements in the array,
+which can be specified explicitly. This feature gives you
 more control over the underlying data structures and how the elements
 are handled in C/C++ functions. If you are not careful with ``dtype``
 assignments, you can get unwanted overflow, as such 
@@ -50,8 +50,8 @@ assignments, you can get unwanted overflow, as such
 ::
 
  >>> a = np.array([127, 128, 129], dtype=np.int8)
- >>> print(a)
- [ 127 -128 -127 ]
+ >>> a
+ array([ 127, -128, -127], dtype=int8)
 
 An 8-bit signed integer represents integers from -128 to 127.
 Assigning the ``int8`` array to integers outside of this range results
@@ -198,11 +198,11 @@ specifying how many dimensions and length along that dimension in a
 tuple or list. 
 
 :func:`numpy.zeros` will create an array filled with 0 values with the specified
-shape. The default dtype is ``float64``. ::
+shape. The default dtype is ``float64``::
 
  >>> np.zeros((2, 3))
- array([[ 0., 0., 0.], 
-        [ 0., 0., 0.]])
+ array([[0., 0., 0.], 
+        [0., 0., 0.]])
  >>> np.zeros((2, 3, 2))
  array([[[0., 0.],
          [0., 0.],
@@ -213,7 +213,7 @@ shape. The default dtype is ``float64``. ::
          [0., 0.]]])
 
 :func:`numpy.ones` will create an array filled with 1 values. It is identical to
-``zeros`` in all other respects as such, ::
+``zeros`` in all other respects as such::
 
  >>> np.ones((2, 3))
  array([[ 1., 1., 1.], 
