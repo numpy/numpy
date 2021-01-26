@@ -690,7 +690,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
-    kind : {'introselect', 'floydselect'}, optional
+    kind : {'introselect', 'floydrivest'}, optional
         Selection algorithm. Default is 'introselect'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
