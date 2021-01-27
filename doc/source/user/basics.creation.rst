@@ -101,7 +101,7 @@ The 1D array creation functions e.g. :func:`numpy.linspace` and
 ``stop``. 
 
 :func:`numpy.arange` creates arrays with regularly incrementing values.
-Check the docstring for complete information and examples. A few
+Check the documentation for complete information and examples. A few
 examples are shown::
 
  >>> np.arange(10)
