@@ -30,8 +30,7 @@ tuples. Lists and tuples are defined using ``[...]`` and ``(...)``,
 respectively. Lists and tuples can define ndarray creation::
 * a list of numbers will create a 1D array, 
 * a list of lists will create a 2D array, 
-* further nested lists will create higher-dimensional arrays. In general,
-    any array object is called an **ndarray** in NumPy.
+* further nested lists will create higher-dimensional arrays. In general, any array object is called an **ndarray** in NumPy.
 
 ::
 
