@@ -88,7 +88,8 @@ then you need to specify the ``dtype`` while you create the array.
 
 NumPy has over 40 built-in functions for creating arrays as laid
 out in the :ref:`Array creation routines <routines.array-creation>`.
-There are three categories of NumPy array creation functions:
+These functions can be split into roughly three categories, based on the
+dimension of the array they create::
 
 1) 1D arrays
 2) 2D arrays
@@ -192,14 +193,13 @@ routine is helpful in generating linear least squares models, as such::
 --------------------------------------
 
 The ndarray creation functions e.g. :func:`numpy.ones`,
-:func:`numpy.zeros`, and `default_rng().random
-<random.Generator.random>` define arrays based upon the desired shape.
-The  ndarray creation functions can create arrays with any dimension by
-specifying how many dimensions and length along that dimension in a
-tuple or list. 
+:func:`numpy.zeros`, and :meth:`~numpy.random.Generator.random` define
+arrays based upon the desired shape.  The  ndarray creation functions
+can create arrays with any dimension by specifying how many dimensions
+and length along that dimension in a tuple or list. 
 
-:func:`numpy.zeros` will create an array filled with 0 values with the specified
-shape. The default dtype is ``float64``::
+:func:`numpy.zeros` will create an array filled with 0 values with the
+specified shape. The default dtype is ``float64``::
 
  >>> np.zeros((2, 3))
  array([[0., 0., 0.], 
@@ -228,7 +228,8 @@ shape. The default dtype is ``float64``::
          [1., 1.],
          [1., 1.]]])
 
-The :meth:`~numpy.random.Generator.random` method of the result of :func:`default_rng` will create an array filled with random
+The :meth:`~numpy.random.Generator.random` method of the result of
+``default_rng`` will create an array filled with random
 values between 0 and 1. It is included with the :func:`numpy.random`
 library. Below, two arrays are created with shapes (2,3) and (2,3,2),
 respectively. The seed is set to 42 so you can reproduce these
@@ -251,7 +252,12 @@ dimensioned array), one per dimension with each representing variation in that
 dimension: ::
 
  >>> np.indices((3,3))
- array([[[0, 0, 0], [1, 1, 1], [2, 2, 2]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
+ array([[[0, 0, 0], 
+         [1, 1, 1], 
+         [2, 2, 2]], 
+        [[0, 1, 2], 
+         [0, 1, 2], 
+         [0, 1, 2]]])
 
 This is particularly useful for evaluating functions of multiple dimensions on
 a regular grid.
