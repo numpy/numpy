@@ -31,7 +31,7 @@ respectively. Lists and tuples can define ndarray creation::
 * a list of numbers will create a 1D array, 
 * a list of lists will create a 2D array, 
 * further nested lists will create higher-dimensional arrays. In general,
-  any array object is called an **ndarray** in NumPy.
+    any array object is called an **ndarray** in NumPy.
 
 ::
 
@@ -89,7 +89,7 @@ then you need to specify the ``dtype`` while you create the array.
 NumPy has over 40 built-in functions for creating arrays as laid
 out in the :ref:`Array creation routines <routines.array-creation>`.
 These functions can be split into roughly three categories, based on the
-dimension of the array they create::
+dimension of the array they create:
 
 1) 1D arrays
 2) 2D arrays
@@ -149,7 +149,7 @@ and the rest are 0, as such::
         [0., 0., 1., 0., 0.]])
 
 :func:`numpy.diag` can define either a square 2D array with given values along
-the diagonal _or_ if given a 2D array returns a 1D array that is
+the diagonal *or* if given a 2D array returns a 1D array that is
 only the diagonal elements. The two array creation functions can be helpful while
 doing linear algebra, as such::
  
@@ -280,7 +280,7 @@ following example::
 In this example, you did not create a new array. You created a variable,
 ``b`` that viewed the first 2 elements of ``a``. When you added 1 to ``b`` you
 would get the same result by adding 1 to ``a[:2]``. If you want to create a
-_new_ array, use the :func:`numpy.copy` array creation routine as such::
+*new* array, use the :func:`numpy.copy` array creation routine as such::
 
  >>> a = np.array([1, 2, 3, 4])
  >>> b = a[:2].copy()
