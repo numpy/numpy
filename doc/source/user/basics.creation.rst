@@ -228,7 +228,7 @@ shape. The default dtype is ``float64``::
          [1., 1.],
          [1., 1.]]])
 
-:func:`default_rng.random` will create an array filled with random
+The :meth:`~numpy.random.Generator.random` method of the result of :func:`default_rng` will create an array filled with random
 values between 0 and 1. It is included with the :func:`numpy.random`
 library. Below, two arrays are created with shapes (2,3) and (2,3,2),
 respectively. The seed is set to 42 so you can reproduce these
