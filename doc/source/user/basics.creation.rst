@@ -23,7 +23,7 @@ You can use these methods to create  ndarrays or :ref:`structured_arrays`.
 This document will cover general methods for ndarray creation. 
 
 1) Converting Python sequences to NumPy Arrays
-===============================================
+==============================================
 
 NumPy arrays can be defined using Python sequences such as lists and
 tuples. Lists and tuples are defined using ``[...]`` and ``(...)``,
@@ -35,10 +35,10 @@ respectively. Lists and tuples can define ndarray creation::
 
 ::
 
- >>> a1D = np.array([1, 2, 3, 4])
- >>> a2D = np.array([[1, 2], [3, 4]])
- >>> a3D = np.array([[[1, 2], [3, 4]],
-                     [[5, 6], [7, 8]]])
+  >>> a1D = np.array([1, 2, 3, 4])
+  >>> a2D = np.array([[1, 2], [3, 4]])
+  >>> a3D = np.array([[[1, 2], [3, 4]],
+                      [[5, 6], [7, 8]]])
 
 When you use :func:`numpy.array` to define a new array, you should
 consider the :doc:`dtype <basics.types>` of the elements in the array,
@@ -49,9 +49,9 @@ assignments, you can get unwanted overflow, as such
 
 ::
 
- >>> a = np.array([127, 128, 129], dtype=np.int8)
- >>> a
- array([ 127, -128, -127], dtype=int8)
+  >>> a = np.array([127, 128, 129], dtype=np.int8)
+  >>> a
+  array([ 127, -128, -127], dtype=int8)
 
 An 8-bit signed integer represents integers from -128 to 127.
 Assigning the ``int8`` array to integers outside of this range results
@@ -81,7 +81,7 @@ integers or double precision floating point numbers, ``int64`` and
 then you need to specify the ``dtype`` while you create the array. 
 
 2) Intrinsic NumPy array creation functions
-=========================================
+===========================================
 ..
   40 functions seems like a small number, but the routies.array-creation
   has ~47. I'm sure there are more. 
@@ -89,12 +89,13 @@ then you need to specify the ``dtype`` while you create the array.
 NumPy has over 40 built-in functions for creating arrays as laid
 out in the :ref:`Array creation routines <routines.array-creation>`.
 There are three categories of NumPy array creation functions:
+
 1) 1D arrays
 2) 2D arrays
 3) ndarrays
 
 1 - 1D array creation functions
------------------------------
+-------------------------------
 
 The 1D array creation functions e.g. :func:`numpy.linspace` and
 :func:`numpy.arange` generally need at least two inputs, ``start`` and
@@ -129,7 +130,7 @@ number of elements and the starting and end point. The previous
 ``arange(start, stop, step)`` will not include the value ``stop``.
 
 2 - 2D array creation functions
------------------------------
+-------------------------------
 
 The 2D array creation functions e.g. :func:`numpy.eye`, :func:`numpy.diag`, and :func:`numpy.vander`
 define properties of special matrices represented as 2D arrays. 
@@ -153,8 +154,8 @@ doing linear algebra, as such::
  
  >>> np.diag([1, 2, 3])
  array([[1, 0, 0],
-       [0, 2, 0],
-       [0, 0, 3]])
+        [0, 2, 0],
+        [0, 0, 3]])
  >>> np.diag([1, 2, 3], 1)
  array([[0, 1, 0, 0],
         [0, 0, 2, 0],
@@ -188,7 +189,7 @@ routine is helpful in generating linear least squares models, as such::
         [64, 16,  4,  1]])
  
 3 - general ndarray creation functions
------------------------------
+--------------------------------------
 
 The ndarray creation functions e.g. :func:`numpy.ones`,
 :func:`numpy.zeros`, and `default_rng().random
@@ -239,12 +240,11 @@ pseudorandom numbers::
         [0.69736803, 0.09417735, 0.97562235]])
  >>> default_rng(42).random((2,3,2))
  array([[[0.77395605, 0.43887844],
-		 [0.85859792, 0.69736803],
-		 [0.09417735, 0.97562235]],
-
-		 [[0.7611397 , 0.78606431],
-		 [0.12811363, 0.45038594],
-		 [0.37079802, 0.92676499]]])
+         [0.85859792, 0.69736803],
+         [0.09417735, 0.97562235]],
+        [[0.7611397 , 0.78606431],
+         [0.12811363, 0.45038594],
+         [0.37079802, 0.92676499]]])
 
 :func:`numpy.indices` will create a set of arrays (stacked as a one-higher
 dimensioned array), one per dimension with each representing variation in that
@@ -309,7 +309,7 @@ routine's documentation for further examples and syntax.
 This is the most common case of large array creation. The details depend
 greatly on the format of data on disk. This section gives general pointers on
 how to handle various formats. For more detailed examples of IO look at
-:ref:`How to Read and Write files <user.how-to-io>`. 
+:ref:`How to Read and Write files <how-to-io>`. 
 
 Standard Binary Formats
 -----------------------
@@ -361,7 +361,7 @@ More generic ASCII files can be read using `scipy.io` and `Pandas
 
 There are a variety of approaches one can use. If the file has a relatively
 simple format then one can write a simple I/O library and use the NumPy
-`fromfile()` function and `.tofile()` method to read and write NumPy arrays
+``fromfile()`` function and ``.tofile()`` method to read and write NumPy arrays
 directly (mind your byteorder though!) If a good C or C++ library exists that
 read the data, one can wrap that library with a variety of techniques though
 that certainly is much more work and requires significantly more advanced
