@@ -18,6 +18,3 @@ np.__all__
 np.__path__
 np.__version__
 np.__git_version__
-np.__NUMPY_SETUP__
-np.__deprecated_attrs__
-np.__expired_functions__
