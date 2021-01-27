@@ -19,7 +19,7 @@ There are 6 general mechanisms for creating arrays:
 5) Creating arrays from raw bytes through the use of strings or buffers
 6) Use of special library functions (e.g., random)
 
-You can use these methods to create  ndarrays or :ref:`structured_arrays`.
+You can use these methods to create ndarrays or :ref:`structured_arrays`.
 This document will cover general methods for ndarray creation. 
 
 1) Converting Python sequences to NumPy Arrays
@@ -136,7 +136,7 @@ number of elements and the starting and end point. The previous
 The 2D array creation functions e.g. :func:`numpy.eye`, :func:`numpy.diag`, and :func:`numpy.vander`
 define properties of special matrices represented as 2D arrays. 
 
-``np.eye(n, m)`` defines a 2D identity matrix. The elements where i=j are 1
+``np.eye(n, m)`` defines a 2D identity matrix. The elements where i=j (row index and column index are equal) are 1
 and the rest are 0, as such::
 
  >>> np.eye(3)
@@ -288,8 +288,8 @@ _new_ array, use the :func:`numpy.copy` array creation routine as such::
  >>> print('a = ', a, 'b = ', b)
  a =  [1 2 3 4 5 6] b =  [2 3]
 
-For more information and examples ook at :ref:`Copies and Views
-<quickstart.copies-and-views>.
+For more information and examples look at :ref:`Copies and Views
+<quickstart.copies-and-views>`.
 
 There are a number of routines to join existing arrays e.g. :func:`numpy.vstack`,
 :func:`numpy.hstack`, and :func:`numpy.block`. Here is an example of joining four 2-by-2
