@@ -210,6 +210,7 @@ typedef enum {
 
 /* For specifying allowed casting in operations which support it */
 typedef enum {
+        _NPY_ERROR_OCCURRED_IN_CAST = -1,
         /* Only allow identical types */
         NPY_NO_CASTING=0,
         /* Allow identical and byte swapped types */
@@ -219,7 +220,14 @@ typedef enum {
         /* Allow safe casts or casts within the same kind */
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
-        NPY_UNSAFE_CASTING=4
+        NPY_UNSAFE_CASTING=4,
+        /*
+         * Flag to allow signalling that a cast is a view, this flag is not
+         * valid when requesting a cast of specific safety.
+         * _NPY_CAST_IS_VIEW|NPY_EQUIV_CASTING means the same as NPY_NO_CASTING.
+         */
+        // TODO-DTYPES: Needs to be documented.
+        _NPY_CAST_IS_VIEW = 1 << 16,
 } NPY_CASTING;
 
 typedef enum {
@@ -701,6 +709,7 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
+    void *_buffer_info;  /* private buffer info, tagged to allow warning */
 } PyArrayObject_fields;
 
 /*
@@ -720,7 +729,18 @@ typedef struct tagPyArrayObject {
 } PyArrayObject;
 #endif
 
-#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
+/*
+ * Removed 2020-Nov-25, NumPy 1.20
+ * #define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
+ *
+ * The above macro was removed as it gave a false sense of a stable ABI
+ * with respect to the structures size.  If you require a runtime constant,
+ * you can use `PyArray_Type.tp_basicsize` instead.  Otherwise, please
+ * see the PyArrayObject documentation or ask the NumPy developers for
+ * information on how to correctly replace the macro in a way that is
+ * compatible with multiple NumPy versions.
+ */
+
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
@@ -1900,6 +1920,12 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         default_descr_function *default_descr;
         common_dtype_function *common_dtype;
         common_instance_function *common_instance;
+        /*
+         * Dictionary of ArrayMethods representing most possible casts
+         * (structured and object are exceptions).
+         * This should potentially become a weak mapping in the future.
+         */
+        PyObject *castingimpls;
     };
 
 #endif  /* NPY_INTERNAL_BUILD */

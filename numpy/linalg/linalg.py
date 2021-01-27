@@ -361,13 +361,13 @@ def solve(a, b):
 
     Examples
     --------
-    Solve the system of equations ``3 * x0 + x1 = 9`` and ``x0 + 2 * x1 = 8``:
+    Solve the system of equations ``x0 + 2 * x1 = 1`` and ``3 * x0 + 5 * x1 = 2``:
 
-    >>> a = np.array([[3,1], [1,2]])
-    >>> b = np.array([9,8])
+    >>> a = np.array([[1, 2], [3, 5]])
+    >>> b = np.array([1, 2])
     >>> x = np.linalg.solve(a, b)
     >>> x
-    array([2.,  3.])
+    array([-1.,  1.])
 
     Check that the solution is correct:
 
@@ -2171,13 +2171,14 @@ def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Computes the vector x that approximatively solves the equation
+    Computes the vector `x` that approximatively solves the equation
     ``a @ x = b``. The equation may be under-, well-, or over-determined
     (i.e., the number of linearly independent rows of `a` can be less than,
     equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
     is the "exact" solution of the equation. Else, `x` minimizes the
-    Euclidean 2-norm :math:`|| b - a x ||`.
+    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing 
+    solutions, the one with the smallest 2-norm :math:`||x||` is returned.
 
     Parameters
     ----------

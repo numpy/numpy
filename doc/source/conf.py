@@ -4,7 +4,7 @@ import re
 import sys
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '2.2.0'
+needs_sphinx = '3.2.0'
 
 
 # This is a nasty hack to use platform-agnostic names for types in the
@@ -145,6 +145,14 @@ def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
     app.add_lexer('NumPyC', NumPyLexer)
+
+# While these objects do have type `module`, the names are aliases for modules
+# elsewhere. Sphinx does not support referring to modules by an aliases name,
+# so we make the alias look like a "real" module for it.
+# If we deemed it desirable, we could in future make these real modules, which
+# would make `from numpy.char import split` work.
+sys.modules['numpy.char'] = numpy.char
+sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 # -----------------------------------------------------------------------------
 # HTML output

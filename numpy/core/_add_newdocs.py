@@ -377,7 +377,7 @@ add_newdoc('numpy.core', 'nditer',
     ...    while not it.finished:
     ...        it[0] = lamdaexpr(*it[1:])
     ...        it.iternext()
-    ...        return it.operands[0]
+    ...    return it.operands[0]
 
     >>> a = np.arange(5)
     >>> b = np.ones(5)
@@ -821,7 +821,7 @@ add_newdoc('numpy.core.multiarray', 'array',
         ===== ========= ===================================================
 
         When ``copy=False`` and a copy is made for other reasons, the result is
-        the same as if ``copy=True``, with some exceptions for `A`, see the
+        the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
@@ -1147,13 +1147,13 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
-    fromiter(iterable, dtype, count=-1, *, like=None)
+    fromiter(iter, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
 
     Parameters
     ----------
-    iterable : iterable object
+    iter : iterable object
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.
@@ -2570,7 +2570,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     """
-    a.all(axis=None, out=None, keepdims=False)
+    a.all(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if all elements evaluate to True.
 
@@ -2585,7 +2585,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """
-    a.any(axis=None, out=None, keepdims=False)
+    a.any(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -3242,7 +3242,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
     """
-    a.mean(axis=None, dtype=None, out=None, keepdims=False)
+    a.mean(axis=None, dtype=None, out=None, keepdims=False, *, where=True)
 
     Returns the average of the array elements along given axis.
 
@@ -3813,7 +3813,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4100,7 +4100,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the variance of the array elements, along given axis.
 

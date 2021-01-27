@@ -1019,7 +1019,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 }
 
 /*
- * Check whether any of a set of input and output args have a non-default
+ * Check whether any of the input and output args have a non-default
  * __array_ufunc__ method. Return 1 if so, 0 if not, and -1 on error.
  *
  * This function primarily exists to help ndarray.__array_ufunc__ determine
@@ -2180,7 +2180,7 @@ static PyObject *
 array_sizeof(PyArrayObject *self)
 {
     /* object + dimension and strides */
-    Py_ssize_t nbytes = NPY_SIZEOF_PYARRAYOBJECT +
+    Py_ssize_t nbytes = Py_TYPE(self)->tp_basicsize +
         PyArray_NDIM(self) * sizeof(npy_intp) * 2;
     if (PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
         nbytes += PyArray_NBYTES(self);

@@ -6,7 +6,7 @@ defaults:
   run:
     shell: bash
 
-env: 
+env:
   DOWNLOAD_OPENBLAS: 1
   PYTHON_VERSION: 3.7
 
@@ -22,7 +22,7 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
- 
+
   basic:
     needs: smoke_test
     runs-on: ubuntu-latest
@@ -36,12 +36,12 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@v2
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: ${{ matrix.python-version }}
     - uses: ./.github/actions
 
   debug:
     needs: smoke_test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       USE_DEBUG: 1
     steps:
@@ -184,7 +184,7 @@ jobs:
         fetch-depth: 0
     - name: get_pypy
       run: |
-        wget -q https://downloads.python.org/pypy/pypy3.6-v7.3.2-linux64.tar.bz2 -O pypy.tar.bz2
+        wget -q https://downloads.python.org/pypy/pypy3.7-v7.3.3-linux64.tar.bz2 -O pypy.tar.bz2
         mkdir -p pypy3
         (cd pypy3; tar --strip-components=1 -xf ../pypy.tar.bz2)
         pypy3/bin/pypy3 -mensurepip
@@ -196,7 +196,21 @@ jobs:
             popd
         fi
         echo $PWD/pypy3/bin >> $GITHUB_PATH
- 
+
     - uses: ./.github/actions
 
-       
+  sdist:
+    needs: smoke_test
+    runs-on: ubuntu-latest
+    env:
+      USE_SDIST: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+

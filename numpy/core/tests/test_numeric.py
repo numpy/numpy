@@ -847,10 +847,12 @@ class TestTypes:
         assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))
         assert_equal(np.promote_types('>i8', '>i8'), np.dtype('i8'))
 
-        assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U21'))
-        assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U21'))
-        assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U21'))
-        assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U21'))
+        with pytest.warns(FutureWarning,
+                match="Promotion of numbers and bools to strings"):
+            assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U21'))
+            assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U21'))
+            assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U21'))
+            assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U21'))
 
         assert_equal(np.promote_types('<S5', '<U8'), np.dtype('U8'))
         assert_equal(np.promote_types('>S5', '>U8'), np.dtype('U8'))
@@ -888,39 +890,66 @@ class TestTypes:
         assert np.can_cast(rational_dt, double_dt)
         assert np.promote_types(double_dt, rational_dt) is double_dt
 
-    def test_promote_types_strings(self):
-        assert_equal(np.promote_types('bool', 'S'), np.dtype('S5'))
-        assert_equal(np.promote_types('b', 'S'), np.dtype('S4'))
-        assert_equal(np.promote_types('u1', 'S'), np.dtype('S3'))
-        assert_equal(np.promote_types('u2', 'S'), np.dtype('S5'))
-        assert_equal(np.promote_types('u4', 'S'), np.dtype('S10'))
-        assert_equal(np.promote_types('u8', 'S'), np.dtype('S20'))
-        assert_equal(np.promote_types('i1', 'S'), np.dtype('S4'))
-        assert_equal(np.promote_types('i2', 'S'), np.dtype('S6'))
-        assert_equal(np.promote_types('i4', 'S'), np.dtype('S11'))
-        assert_equal(np.promote_types('i8', 'S'), np.dtype('S21'))
-        assert_equal(np.promote_types('bool', 'U'), np.dtype('U5'))
-        assert_equal(np.promote_types('b', 'U'), np.dtype('U4'))
-        assert_equal(np.promote_types('u1', 'U'), np.dtype('U3'))
-        assert_equal(np.promote_types('u2', 'U'), np.dtype('U5'))
-        assert_equal(np.promote_types('u4', 'U'), np.dtype('U10'))
-        assert_equal(np.promote_types('u8', 'U'), np.dtype('U20'))
-        assert_equal(np.promote_types('i1', 'U'), np.dtype('U4'))
-        assert_equal(np.promote_types('i2', 'U'), np.dtype('U6'))
-        assert_equal(np.promote_types('i4', 'U'), np.dtype('U11'))
-        assert_equal(np.promote_types('i8', 'U'), np.dtype('U21'))
-        assert_equal(np.promote_types('bool', 'S1'), np.dtype('S5'))
-        assert_equal(np.promote_types('bool', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('b', 'S1'), np.dtype('S4'))
-        assert_equal(np.promote_types('b', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u1', 'S1'), np.dtype('S3'))
-        assert_equal(np.promote_types('u1', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u2', 'S1'), np.dtype('S5'))
-        assert_equal(np.promote_types('u2', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u4', 'S1'), np.dtype('S10'))
-        assert_equal(np.promote_types('u4', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u8', 'S1'), np.dtype('S20'))
-        assert_equal(np.promote_types('u8', 'S30'), np.dtype('S30'))
+    @pytest.mark.parametrize("swap", ["", "swap"])
+    @pytest.mark.parametrize("string_dtype", ["U", "S"])
+    def test_promote_types_strings(self, swap, string_dtype):
+        if swap == "swap":
+            promote_types = lambda a, b: np.promote_types(b, a)
+        else:
+            promote_types = np.promote_types
+
+        S = string_dtype
+        
+        with pytest.warns(FutureWarning,
+                match="Promotion of numbers and bools to strings") as record:
+            # Promote numeric with unsized string:
+            assert_equal(promote_types('bool', S), np.dtype(S+'5'))
+            assert_equal(promote_types('b', S), np.dtype(S+'4'))
+            assert_equal(promote_types('u1', S), np.dtype(S+'3'))
+            assert_equal(promote_types('u2', S), np.dtype(S+'5'))
+            assert_equal(promote_types('u4', S), np.dtype(S+'10'))
+            assert_equal(promote_types('u8', S), np.dtype(S+'20'))
+            assert_equal(promote_types('i1', S), np.dtype(S+'4'))
+            assert_equal(promote_types('i2', S), np.dtype(S+'6'))
+            assert_equal(promote_types('i4', S), np.dtype(S+'11'))
+            assert_equal(promote_types('i8', S), np.dtype(S+'21'))
+            # Promote numeric with sized string:
+            assert_equal(promote_types('bool', S+'1'), np.dtype(S+'5'))
+            assert_equal(promote_types('bool', S+'30'), np.dtype(S+'30'))
+            assert_equal(promote_types('b', S+'1'), np.dtype(S+'4'))
+            assert_equal(promote_types('b', S+'30'), np.dtype(S+'30'))
+            assert_equal(promote_types('u1', S+'1'), np.dtype(S+'3'))
+            assert_equal(promote_types('u1', S+'30'), np.dtype(S+'30'))
+            assert_equal(promote_types('u2', S+'1'), np.dtype(S+'5'))
+            assert_equal(promote_types('u2', S+'30'), np.dtype(S+'30'))
+            assert_equal(promote_types('u4', S+'1'), np.dtype(S+'10'))
+            assert_equal(promote_types('u4', S+'30'), np.dtype(S+'30'))
+            assert_equal(promote_types('u8', S+'1'), np.dtype(S+'20'))
+            assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
+            # Promote with object:
+            assert_equal(promote_types('O', S+'30'), np.dtype('O'))
+
+        assert len(record) == 22  # each string promotion gave one warning
+
+
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V6"), np.dtype("V10")],
+             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
+             [np.dtype("i8,i8"), np.dtype("i4,i4")],
+            ])
+    def test_invalid_void_promotion(self, dtype1, dtype2):
+        # Mainly test structured void promotion, which currently allows
+        # byte-swapping, but nothing else:
+        with pytest.raises(TypeError):
+            np.promote_types(dtype1, dtype2)
+
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V10"), np.dtype("V10")],
+             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
+             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
+            ])
+    def test_valid_void_promotion(self, dtype1, dtype2):
+        assert np.promote_types(dtype1, dtype2) is dtype1
 
     @pytest.mark.parametrize("dtype",
            list(np.typecodes["All"]) +
@@ -951,6 +980,7 @@ class TestTypes:
             assert res.isnative
 
     @pytest.mark.slow
+    @pytest.mark.filterwarnings('ignore:Promotion of numbers:FutureWarning')
     @pytest.mark.parametrize(["dtype1", "dtype2"],
             itertools.product(
                 list(np.typecodes["All"]) +

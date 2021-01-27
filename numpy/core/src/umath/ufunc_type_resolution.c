@@ -12,6 +12,11 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+// printif debug tracing
+#ifndef NPY_UF_DBG_TRACING
+    #define NPY_UF_DBG_TRACING 0
+#endif
+
 #include <stdbool.h>
 
 #include "Python.h"
@@ -106,14 +111,18 @@ raise_no_loop_found_error(
         return -1;
     }
     for (i = 0; i < ufunc->nargs; ++i) {
-        Py_INCREF(dtypes[i]);
-        PyTuple_SET_ITEM(dtypes_tup, i, (PyObject *)dtypes[i]);
+        PyObject *tmp = Py_None;
+        if (dtypes[i] != NULL) {
+            tmp = (PyObject *)dtypes[i];
+        }
+        Py_INCREF(tmp);
+        PyTuple_SET_ITEM(dtypes_tup, i, tmp);
     }
 
     /* produce an error object */
     exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
     Py_DECREF(dtypes_tup);
-    if (exc_value == NULL){
+    if (exc_value == NULL) {
         return -1;
     }
     PyErr_SetObject(exc_type, exc_value);
@@ -324,10 +333,23 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (type_tup == NULL) {
-        /* Input types are the result type */
-        out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
-        if (out_dtypes[0] == NULL) {
-            return -1;
+        /*
+         * DEPRECATED NumPy 1.20, 2020-12.
+         * This check is required to avoid the FutureWarning that
+         * ResultType will give for number->string promotions.
+         * (We never supported flexible dtypes here.)
+         */
+        if (!PyArray_ISFLEXIBLE(operands[0]) &&
+                !PyArray_ISFLEXIBLE(operands[1])) {
+            out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+        }
+        else {
+            /* Not doing anything will lead to a loop no found error. */
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
         }
         out_dtypes[1] = out_dtypes[0];
         Py_INCREF(out_dtypes[1]);
@@ -483,6 +505,30 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
         }
         else {
+            int iop;
+            npy_bool has_flexible = 0;
+            npy_bool has_object = 0;
+            for (iop = 0; iop < ufunc->nin; iop++) {
+                if (PyArray_ISOBJECT(operands[iop])) {
+                    has_object = 1;
+                }
+                if (PyArray_ISFLEXIBLE(operands[iop])) {
+                    has_flexible = 1;
+                }
+            }
+            if (NPY_UNLIKELY(has_flexible && !has_object)) {
+                /*
+                 * DEPRECATED NumPy 1.20, 2020-12.
+                 * This check is required to avoid the FutureWarning that
+                 * ResultType will give for number->string promotions.
+                 * (We never supported flexible dtypes here.)
+                 */
+                for (iop = 0; iop < ufunc->nin; iop++) {
+                    out_dtypes[iop] = PyArray_DESCR(operands[iop]);
+                    Py_INCREF(out_dtypes[iop]);
+                }
+                return raise_no_loop_found_error(ufunc, out_dtypes);
+            }
             out_dtypes[0] = PyArray_ResultType(ufunc->nin, operands, 0, NULL);
         }
         if (out_dtypes[0] == NULL) {
@@ -2015,7 +2061,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
     int n_specified = 0;
     int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
     const char *ufunc_name;
-    int no_castable_output, use_min_scalar;
+    int no_castable_output = 0, use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';

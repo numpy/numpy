@@ -269,7 +269,7 @@ class TestSystemInfoReading:
             # But if we copy the values to a '[mkl]' section the value
             # is correct
             with open(cfg, 'r') as fid:
-                mkl = fid.read().replace('ALL', 'mkl')
+                mkl = fid.read().replace('[ALL]', '[mkl]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(mkl)
             info = mkl_info()
@@ -277,7 +277,7 @@ class TestSystemInfoReading:
 
             # Also, the values will be taken from a section named '[DEFAULT]'
             with open(cfg, 'r') as fid:
-                dflt = fid.read().replace('mkl', 'DEFAULT')
+                dflt = fid.read().replace('[mkl]', '[DEFAULT]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(dflt)
             info = mkl_info()

@@ -2,6 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
+from collections.abc import MutableSequence
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -598,7 +599,7 @@ cdef class Generator:
         """
         choice(a, size=None, replace=True, p=None, axis=0, shuffle=True)
 
-        Generates a random sample from a given 1-D array
+        Generates a random sample from a given array
 
         Parameters
         ----------
@@ -663,6 +664,13 @@ cdef class Generator:
         >>> rng.choice(5, 3, replace=False)
         array([3,1,0]) # random
         >>> #This is equivalent to rng.permutation(np.arange(5))[:3]
+
+        Generate a uniform random sample from a 2-D array along the first
+        axis (the default), without replacement:
+
+        >>> rng.choice([[0, 1, 2], [3, 4, 5], [6, 7, 8]], 2, replace=False)
+        array([[3, 4, 5], # random
+               [0, 1, 2]])
 
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
@@ -859,7 +867,8 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The default value is 1.0.
+            less than high.  high - low must be non-negative.  The default value
+            is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -885,10 +894,6 @@ cdef class Generator:
         anywhere within the interval ``[a, b)``, and zero elsewhere.
 
         When ``high`` == ``low``, values of ``low`` will be returned.
-        If ``high`` < ``low``, the results are officially undefined
-        and may eventually raise an error, i.e. do not rely on this
-        function to behave when passed arguments satisfying that
-        inequality condition.
 
         Examples
         --------
@@ -914,7 +919,7 @@ cdef class Generator:
         """
         cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
-        cdef double _low, _high, range
+        cdef double _low, _high, rng
         cdef object temp
 
         alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ALIGNED)
@@ -923,13 +928,13 @@ cdef class Generator:
         if np.PyArray_NDIM(alow) == np.PyArray_NDIM(ahigh) == 0:
             _low = PyFloat_AsDouble(low)
             _high = PyFloat_AsDouble(high)
-            range = _high - _low
-            if not np.isfinite(range):
-                raise OverflowError('Range exceeds valid bounds')
+            rng = _high - _low
+            if not np.isfinite(rng):
+                raise OverflowError('high - low range exceeds valid bounds')
 
             return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                         _low, '', CONS_NONE,
-                        range, '', CONS_NONE,
+                        rng, 'high - low', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         None)
 
@@ -943,7 +948,7 @@ cdef class Generator:
             raise OverflowError('Range exceeds valid bounds')
         return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                     alow, '', CONS_NONE,
-                    arange, '', CONS_NONE,
+                    arange, 'high - low', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     None)
 
@@ -1095,7 +1100,7 @@ cdef class Generator:
         0.0  # may vary
 
         >>> abs(sigma - np.std(s, ddof=1))
-        0.1  # may vary
+        0.0  # may vary
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -4023,7 +4028,7 @@ cdef class Generator:
             The drawn samples, of shape ``(size, k)``.
 
         Raises
-        -------
+        ------
         ValueError
             If any value in ``alpha`` is less than or equal to zero
 
@@ -4350,14 +4355,14 @@ cdef class Generator:
         """
         shuffle(x, axis=0)
 
-        Modify a sequence in-place by shuffling its contents.
+        Modify an array or sequence in-place by shuffling its contents.
 
         The order of sub-arrays is changed but their contents remains the same.
 
         Parameters
         ----------
-        x : array_like
-            The array or list to be shuffled.
+        x : ndarray or MutableSequence
+            The array, list or mutable sequence to be shuffled.
         axis : int, optional
             The axis which `x` is shuffled along. Default is 0.
             It is only supported on `ndarray` objects.
@@ -4417,7 +4422,11 @@ cdef class Generator:
                 with self.lock, nogil:
                     _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
                                       x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+        elif isinstance(x, np.ndarray):
+            if x.size == 0:
+                # shuffling is a no-op
+                return
+
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
             with self.lock:
@@ -4431,6 +4440,15 @@ cdef class Generator:
                     x[i] = buf
         else:
             # Untyped path.
+            if not isinstance(x, MutableSequence):
+                # See gh-18206. We may decide to deprecate here in the future.
+                warnings.warn(
+                    "`x` isn't a recognized object; `shuffle` is not guaranteed "
+                    "to behave correctly. E.g., non-numpy array/tensor objects "
+                    "with view semantics may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=2
+                )
+
             if axis != 0:
                 raise NotImplementedError("Axis argument is only supported "
                                           "on ndarray objects")

@@ -56,7 +56,7 @@ array([[2., 0., 0., 0., 0.],
 
 Notice that the return type is a standard ``numpy.ndarray``.
 
->>> type(arr)
+>>> type(np.multiply(arr, 2))
 numpy.ndarray
 
 How can we pass our custom array type through this function? Numpy allows a

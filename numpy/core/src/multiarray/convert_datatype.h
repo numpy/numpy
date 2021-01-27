@@ -1,6 +1,16 @@
 #ifndef _NPY_ARRAY_CONVERT_DATATYPE_H_
 #define _NPY_ARRAY_CONVERT_DATATYPE_H_
 
+#include "array_method.h"
+
+extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
+
+NPY_NO_EXPORT PyObject *
+PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to);
+
+NPY_NO_EXPORT PyObject *
+_get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args);
+
 NPY_NO_EXPORT PyArray_VectorUnaryFunc *
 PyArray_GetCastFunc(PyArray_Descr *descr, int type_num);
 
@@ -15,6 +25,9 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
 
 NPY_NO_EXPORT int
 PyArray_ValidType(int type);
+
+NPY_NO_EXPORT int
+dtype_kind_to_ordering(char kind);
 
 /* Like PyArray_CanCastArrayTo */
 NPY_NO_EXPORT npy_bool
@@ -36,26 +49,48 @@ npy_set_invalid_cast_error(
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
         NPY_CASTING casting, npy_bool scalar);
 
-/*
- * This function calls Py_DECREF on flex_dtype, and replaces it with
- * a new dtype that has been adapted based on the values in data_dtype
- * and data_obj. If the flex_dtype is not flexible, it returns it as-is.
- *
- * Usually, if data_obj is not an array, dtype should be the result
- * given by the PyArray_GetArrayParamsFromObject function.
- *
- * The data_obj may be NULL if just a dtype is known for the source.
- *
- * If *flex_dtype is NULL, returns immediately, without setting an
- * exception, leaving any previous error handling intact.
- *
- * The current flexible dtypes include NPY_STRING, NPY_UNICODE, NPY_VOID,
- * and NPY_DATETIME with generic units.
- */
-NPY_NO_EXPORT PyArray_Descr *
-PyArray_AdaptFlexibleDType(PyArray_Descr *data_dtype, PyArray_Descr *flex_dtype);
-
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType);
+
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_FindConcatenationDescriptor(
+        npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype);
+
+NPY_NO_EXPORT int
+PyArray_AddCastingImplmentation(PyBoundArrayMethodObject *meth);
+
+NPY_NO_EXPORT int
+PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private);
+
+NPY_NO_EXPORT NPY_CASTING
+PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2);
+
+NPY_NO_EXPORT NPY_CASTING
+PyArray_GetCastSafety(
+        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
+
+NPY_NO_EXPORT NPY_CASTING
+legacy_same_dtype_resolve_descriptors(
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta **dtypes,
+        PyArray_Descr **given_descrs,
+        PyArray_Descr **loop_descrs);
+
+NPY_NO_EXPORT int
+legacy_cast_get_strided_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references, npy_intp *strides,
+        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
+
+NPY_NO_EXPORT NPY_CASTING
+simple_cast_resolve_descriptors(
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta **dtypes,
+        PyArray_Descr **input_descrs,
+        PyArray_Descr **loop_descrs);
+
+NPY_NO_EXPORT int
+PyArray_InitializeCasts(void);
 
 #endif

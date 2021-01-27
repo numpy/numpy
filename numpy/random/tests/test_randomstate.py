@@ -642,7 +642,7 @@ class TestRandomDist:
         a = np.array([42, 1, 2])
         p = [None, None, None]
         assert_raises(ValueError, random.choice, a, p=p)
-    
+
     def test_choice_p_non_contiguous(self):
         p = np.ones(10) / 5
         p[1::2] = 3.0
@@ -698,6 +698,10 @@ class TestRandomDist:
             random.shuffle(b)
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
+
+        def test_shuffle_invalid_objects(self):
+            x = np.array(3)
+            assert_raises(TypeError, random.shuffle, x)
 
     def test_permutation(self):
         random.seed(self.seed)

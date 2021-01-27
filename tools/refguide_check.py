@@ -19,11 +19,12 @@ another function, or deprecated, or ...)
 Another use of this helper script is to check validity of code samples
 in docstrings::
 
-    $ python refguide_check.py --doctests ma
+    $ python tools/refguide_check.py --doctests ma
 
 or in RST-based documentations::
 
-    $ python refguide_check.py --rst docs
+    $ python tools/refguide_check.py --rst doc/source
+
 """
 import copy
 import doctest
@@ -304,7 +305,7 @@ def compare(all_dict, others, names, module_name):
         List of non deprecated sub modules for module_name
     others : list
         List of sub modules for module_name
-    names :  set
+    names : set
         Set of function names or special directives present in
         docstring of module_name
     module_name : ModuleType
@@ -779,7 +780,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
     Parameters
     ----------
-    tests: list
+    tests : list
 
     full_name : str
 

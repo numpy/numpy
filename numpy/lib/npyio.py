@@ -24,7 +24,7 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, os_fspath, os_PathLike,
-    pickle, contextlib_nullcontext
+    pickle
     )
 
 
@@ -517,7 +517,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     # [1 2] [1 3]
     """
     if hasattr(file, 'write'):
-        file_ctx = contextlib_nullcontext(file)
+        file_ctx = contextlib.nullcontext(file)
     else:
         file = os_fspath(file)
         if not file.endswith('.npy'):
@@ -539,10 +539,11 @@ def _savez_dispatcher(file, *args, **kwds):
 def savez(file, *args, **kwds):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
-    If arguments are passed in with no keywords, the corresponding variable
-    names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword
-    arguments are given, the corresponding variable names, in the ``.npz``
-    file will match the keyword names.
+    Provide arrays as keyword arguments to store them under the
+    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+
+    If arrays are specified as positional arguments, i.e., ``savez(fn,
+    x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
@@ -552,13 +553,12 @@ def savez(file, *args, **kwds):
         ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
-        Arrays to save to the file. Since it is not possible for Python to
-        know the names of the arrays outside `savez`, the arrays will be saved
-        with names "arr_0", "arr_1", and so on. These arguments can be any
-        expression.
+        Arrays to save to the file. Please use keyword arguments (see
+        `kwds` below) to assign names to arrays.  Arrays specified as
+        args will be named "arr_0", "arr_1", and so on.
     kwds : Keyword arguments, optional
-        Arrays to save to the file. Arrays will be saved in the file with the
-        keyword names.
+        Arrays to save to the file. Each array will be saved to the
+        output file with its corresponding keyword name.
 
     Returns
     -------
@@ -613,6 +613,7 @@ def savez(file, *args, **kwds):
     ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
     """
     _savez(file, args, kwds, False)
 
@@ -627,9 +628,11 @@ def savez_compressed(file, *args, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
-    If keyword arguments are given, then filenames are taken from the keywords.
-    If arguments are passed in with no keywords, then stored filenames are
-    arr_0, arr_1, etc.
+    Provide arrays as keyword arguments to store them under the
+    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+
+    If arrays are specified as positional arguments, i.e., ``savez(fn,
+    x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
@@ -639,13 +642,12 @@ def savez_compressed(file, *args, **kwds):
         ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
-        Arrays to save to the file. Since it is not possible for Python to
-        know the names of the arrays outside `savez`, the arrays will be saved
-        with names "arr_0", "arr_1", and so on. These arguments can be any
-        expression.
+        Arrays to save to the file. Please use keyword arguments (see
+        `kwds` below) to assign names to arrays.  Arrays specified as
+        args will be named "arr_0", "arr_1", and so on.
     kwds : Keyword arguments, optional
-        Arrays to save to the file. Arrays will be saved in the file with the
-        keyword names.
+        Arrays to save to the file. Each array will be saved to the
+        output file with its corresponding keyword name.
 
     Returns
     -------
@@ -1792,7 +1794,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid_ctx = contextlib.closing(fid)
         else:
             fid = fname
-            fid_ctx = contextlib_nullcontext(fid)
+            fid_ctx = contextlib.nullcontext(fid)
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(

@@ -1,5 +1,7 @@
 import numpy as np
 
+dtype_obj = np.dtype(np.str_)
+
 np.dtype(dtype=np.int64)
 np.dtype(int)
 np.dtype("int")
@@ -29,7 +31,13 @@ np.dtype((np.float_, float))
 
 
 class Test:
-    dtype = float
+    dtype = np.dtype(float)
 
 
 np.dtype(Test())
+
+# Methods and attributes
+dtype_obj.base
+dtype_obj.subdtype
+dtype_obj.newbyteorder()
+dtype_obj.type

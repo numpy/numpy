@@ -56,6 +56,10 @@
 #define npyv_and_s64 vec_and
 #define npyv_and_f32 vec_and
 #define npyv_and_f64 vec_and
+#define npyv_and_b8  vec_and
+#define npyv_and_b16 vec_and
+#define npyv_and_b32 vec_and
+#define npyv_and_b64 vec_and
 
 // OR
 #define npyv_or_u8  vec_or
@@ -68,6 +72,10 @@
 #define npyv_or_s64 vec_or
 #define npyv_or_f32 vec_or
 #define npyv_or_f64 vec_or
+#define npyv_or_b8  vec_or
+#define npyv_or_b16 vec_or
+#define npyv_or_b32 vec_or
+#define npyv_or_b64 vec_or
 
 // XOR
 #define npyv_xor_u8  vec_xor
@@ -80,6 +88,10 @@
 #define npyv_xor_s64 vec_xor
 #define npyv_xor_f32 vec_xor
 #define npyv_xor_f64 vec_xor
+#define npyv_xor_b8  vec_xor
+#define npyv_xor_b16 vec_xor
+#define npyv_xor_b32 vec_xor
+#define npyv_xor_b64 vec_xor
 
 // NOT
 // note: we implement npyv_not_b*(boolen types) for internal use*/
@@ -212,5 +224,11 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 #define npyv_cmple_s64(A, B) npyv_cmpge_s64(B, A)
 #define npyv_cmple_f32(A, B) npyv_cmpge_f32(B, A)
 #define npyv_cmple_f64(A, B) npyv_cmpge_f64(B, A)
+
+// check special cases
+NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
+{ return vec_cmpeq(a, a); }
+NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
+{ return vec_cmpeq(a, a); }
 
 #endif // _NPY_SIMD_VSX_OPERATORS_H

@@ -196,6 +196,88 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api);
 
+
+/* Same as above, but only wraps copyswapn or legacy cast functions */
+NPY_NO_EXPORT int
+PyArray_GetLegacyDTypeTransferFunction(int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata,
+        int *out_needs_api, int wrap_if_unaligned);
+
+/* Specialized dtype transfer functions */
+NPY_NO_EXPORT int
+get_nbo_cast_datetime_transfer_function(int aligned,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata);
+
+NPY_NO_EXPORT int
+get_nbo_datetime_to_string_transfer_function(
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata);
+
+NPY_NO_EXPORT int
+get_datetime_to_unicode_transfer_function(int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata,
+        int *out_needs_api);
+
+NPY_NO_EXPORT int
+get_nbo_string_to_datetime_transfer_function(
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata);
+
+NPY_NO_EXPORT int
+get_unicode_to_datetime_transfer_function(int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata,
+        int *out_needs_api);
+
+NPY_NO_EXPORT int
+get_fields_transfer_function(int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata,
+        int *out_needs_api);
+
+NPY_NO_EXPORT int
+get_subarray_transfer_function(int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata,
+        int *out_needs_api);
+
+NPY_NO_EXPORT int
+_strided_to_strided_move_references(char *dst, npy_intp dst_stride,
+        char *src, npy_intp src_stride,
+        npy_intp N, npy_intp src_itemsize,
+        NpyAuxData *data);
+
+NPY_NO_EXPORT int
+_strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
+        char *src, npy_intp src_stride,
+        npy_intp N, npy_intp src_itemsize,
+        NpyAuxData *data);
+
+NPY_NO_EXPORT int
+wrap_aligned_contig_transfer_function_with_copyswapn(
+        int aligned, npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata,
+        int *out_needs_api,
+        PyArray_StridedUnaryOp *caststransfer, NpyAuxData *castdata);
+
 /*
  * This is identical to PyArray_GetDTypeTransferFunction, but returns a
  * transfer function which also takes a mask as a parameter.  The mask is used

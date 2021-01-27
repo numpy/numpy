@@ -430,25 +430,27 @@ class TestNumPyFunctions:
 
 
 class TestArrayLike:
+    def setup(self):
+        class MyArray():
+            def __init__(self, function=None):
+                self.function = function
 
-    class MyArray():
+            def __array_function__(self, func, types, args, kwargs):
+                try:
+                    my_func = getattr(self, func.__name__)
+                except AttributeError:
+                    return NotImplemented
+                return my_func(*args, **kwargs)
 
-        def __init__(self, function=None):
-            self.function = function
+        self.MyArray = MyArray
 
-        def __array_function__(self, func, types, args, kwargs):
-            try:
-                my_func = getattr(TestArrayLike.MyArray, func.__name__)
-            except AttributeError:
-                return NotImplemented
-            return my_func(*args, **kwargs)
+        class MyNoArrayFunctionArray():
+            def __init__(self, function=None):
+                self.function = function
 
-    class MyNoArrayFunctionArray():
+        self.MyNoArrayFunctionArray = MyNoArrayFunctionArray
 
-        def __init__(self, function=None):
-            self.function = function
-
-    def add_method(name, arr_class, enable_value_error=False):
+    def add_method(self, name, arr_class, enable_value_error=False):
         def _definition(*args, **kwargs):
             # Check that `like=` isn't propagated downstream
             assert 'like' not in kwargs
@@ -464,9 +466,9 @@ class TestArrayLike:
 
     @requires_array_function
     def test_array_like_not_implemented(self):
-        TestArrayLike.add_method('array', TestArrayLike.MyArray)
+        self.add_method('array', self.MyArray)
 
-        ref = TestArrayLike.MyArray.array()
+        ref = self.MyArray.array()
 
         with assert_raises_regex(TypeError, 'no implementation found'):
             array_like = np.asarray(1, like=ref)
@@ -497,15 +499,15 @@ class TestArrayLike:
     @pytest.mark.parametrize('numpy_ref', [True, False])
     @requires_array_function
     def test_array_like(self, function, args, kwargs, numpy_ref):
-        TestArrayLike.add_method('array', TestArrayLike.MyArray)
-        TestArrayLike.add_method(function, TestArrayLike.MyArray)
+        self.add_method('array', self.MyArray)
+        self.add_method(function, self.MyArray)
         np_func = getattr(np, function)
-        my_func = getattr(TestArrayLike.MyArray, function)
+        my_func = getattr(self.MyArray, function)
 
         if numpy_ref is True:
             ref = np.array(1)
         else:
-            ref = TestArrayLike.MyArray.array()
+            ref = self.MyArray.array()
 
         like_args = tuple(a() if callable(a) else a for a in args)
         array_like = np_func(*like_args, **kwargs, like=ref)
@@ -523,47 +525,36 @@ class TestArrayLike:
 
             assert_equal(array_like, np_arr)
         else:
-            assert type(array_like) is TestArrayLike.MyArray
+            assert type(array_like) is self.MyArray
             assert array_like.function is my_func
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
-    @pytest.mark.parametrize('numpy_ref', [True, False])
+    @pytest.mark.parametrize('ref', [1, [1], "MyNoArrayFunctionArray"])
     @requires_array_function
-    def test_no_array_function_like(self, function, args, kwargs, numpy_ref):
-        TestArrayLike.add_method('array', TestArrayLike.MyNoArrayFunctionArray)
-        TestArrayLike.add_method(function, TestArrayLike.MyNoArrayFunctionArray)
+    def test_no_array_function_like(self, function, args, kwargs, ref):
+        self.add_method('array', self.MyNoArrayFunctionArray)
+        self.add_method(function, self.MyNoArrayFunctionArray)
         np_func = getattr(np, function)
-        my_func = getattr(TestArrayLike.MyNoArrayFunctionArray, function)
 
-        if numpy_ref is True:
-            ref = np.array(1)
-        else:
-            ref = TestArrayLike.MyNoArrayFunctionArray.array()
+        # Instantiate ref if it's the MyNoArrayFunctionArray class
+        if ref == "MyNoArrayFunctionArray":
+            ref = self.MyNoArrayFunctionArray.array()
 
         like_args = tuple(a() if callable(a) else a for a in args)
-        array_like = np_func(*like_args, **kwargs, like=ref)
 
-        assert type(array_like) is np.ndarray
-        if numpy_ref is True:
-            np_args = tuple(a() if callable(a) else a for a in args)
-            np_arr = np_func(*np_args, **kwargs)
-
-            # Special-case np.empty to ensure values match
-            if function == "empty":
-                np_arr.fill(1)
-                array_like.fill(1)
-
-            assert_equal(array_like, np_arr)
+        with assert_raises_regex(TypeError,
+                'The `like` argument must be an array-like that implements'):
+            np_func(*like_args, **kwargs, like=ref)
 
     @pytest.mark.parametrize('numpy_ref', [True, False])
     def test_array_like_fromfile(self, numpy_ref):
-        TestArrayLike.add_method('array', TestArrayLike.MyArray)
-        TestArrayLike.add_method("fromfile", TestArrayLike.MyArray)
+        self.add_method('array', self.MyArray)
+        self.add_method("fromfile", self.MyArray)
 
         if numpy_ref is True:
             ref = np.array(1)
         else:
-            ref = TestArrayLike.MyArray.array()
+            ref = self.MyArray.array()
 
         data = np.random.random(5)
 
@@ -577,18 +568,14 @@ class TestArrayLike:
             assert_equal(np_res, data)
             assert_equal(array_like, np_res)
         else:
-            assert type(array_like) is TestArrayLike.MyArray
-            assert array_like.function is TestArrayLike.MyArray.fromfile
+            assert type(array_like) is self.MyArray
+            assert array_like.function is self.MyArray.fromfile
 
     @requires_array_function
     def test_exception_handling(self):
-        TestArrayLike.add_method(
-            'array',
-            TestArrayLike.MyArray,
-            enable_value_error=True,
-        )
+        self.add_method('array', self.MyArray, enable_value_error=True)
 
-        ref = TestArrayLike.MyArray.array()
+        ref = self.MyArray.array()
 
         with assert_raises(ValueError):
             np.array(1, value_error=True, like=ref)

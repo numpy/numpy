@@ -67,8 +67,11 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
     const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
 
     obj = (PyObject *)PyObject_Malloc(size);
+    if (obj == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
     /*
-     * Fixme. Need to check for no memory.
      * If we don't need to zero memory, we could use
      * PyObject_{New, NewVar} for this whole function.
      */
@@ -1742,13 +1745,8 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         if (arr == NULL) {
             return NULL;
         }
-        /* arr.item() */
-        PyObject *val = PyArray_GETITEM(arr, PyArray_DATA(arr));
-        Py_DECREF(arr);
-        if (val == NULL) {
-            return NULL;
-        }
-        PyObject *tup = Py_BuildValue("NN", obj, val);
+        /* Use the whole array which handles sturctured void correctly */
+        PyObject *tup = Py_BuildValue("NN", obj, arr);
         if (tup == NULL) {
             return NULL;
         }
@@ -2397,6 +2395,10 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
                 self);
         return -1;
     }
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
+        return -1;
+    }
     PyArray_Descr *descr = PyArray_DescrFromScalar(self);
     if (descr == NULL) {
         return -1;
@@ -2415,6 +2417,7 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+    view->readonly = 1;  /* assume general (user) scalars are readonly. */
     Py_INCREF(self);
     view->obj = self;
     view->buf = scalar_value(self, descr);
@@ -2446,6 +2449,7 @@ static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
     Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
@@ -2458,6 +2462,7 @@ static int
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+    view->readonly = 1;
     Py_INCREF(self);
     view->obj = self;
     view->buf = &(scalar->obval);
@@ -2484,6 +2489,7 @@ static int
 unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
     PyUnicodeScalarObject *scalar = (PyUnicodeScalarObject *)self;
@@ -2495,6 +2501,7 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+    view->readonly = 1;
     Py_INCREF(self);
     view->obj = self;
 
@@ -2524,7 +2531,7 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
         view->format = scalar->buffer_fmt;
     }
     else {
-        scalar->buffer_fmt = PyObject_Malloc(22);
+        scalar->buffer_fmt = PyMem_Malloc(22);
         if (scalar->buffer_fmt == NULL) {
             Py_SETREF(view->obj, NULL);
             return -1;
@@ -2551,6 +2558,7 @@ static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
     Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
@@ -2562,6 +2570,7 @@ static int
     view->shape = &length;
     view->strides = NULL;
     view->suboffsets = NULL;
+    view->readonly = 1;
     Py_INCREF(self);
     view->obj = self;
 
@@ -2601,16 +2610,18 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     .tp_basicsize = sizeof(PyObject),
 };
 
+
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
-    _dealloc_cached_buffer_info((PyObject *)v);
-
     if (v->flags & NPY_ARRAY_OWNDATA) {
         npy_free_cache(v->obval, Py_SIZE(v));
     }
     Py_XDECREF(v->descr);
     Py_XDECREF(v->base);
+    if (_buffer_info_free(v->_buffer_info, (PyObject *)v) < 0) {
+        PyErr_WriteUnraisable(NULL);
+    }
     Py_TYPE(v)->tp_free(v);
 }
 
@@ -2651,6 +2662,7 @@ unicode_arrtype_dealloc(PyObject *v)
 {
     /* note: may be null if it was never requested */
     PyMem_Free(PyArrayScalar_VAL(v, Unicode));
+    PyMem_Free(((PyUnicodeScalarObject *)v)->buffer_fmt);
     /* delegate to the base class */
     PyUnicode_Type.tp_dealloc(v);
 }

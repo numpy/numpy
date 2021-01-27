@@ -481,7 +481,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
               instead of this function for more consistent floating point
               comparisons.
 
-    The test verifies that the elements of ``actual`` and ``desired`` satisfy.
+    The test verifies that the elements of `actual` and `desired` satisfy.
 
         ``abs(desired-actual) < 1.5 * 10**(-decimal)``
 
@@ -745,7 +745,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # flag as it everywhere, so we should return the scalar flag.
         if isinstance(x_id, bool) or x_id.ndim == 0:
             return bool_(x_id)
-        elif isinstance(x_id, bool) or y_id.ndim == 0:
+        elif isinstance(y_id, bool) or y_id.ndim == 0:
             return bool_(y_id)
         else:
             return y_id

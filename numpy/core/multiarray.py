@@ -90,14 +90,14 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
-        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        'F' means F-order, 'A' means 'F' if `prototype` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
 
         .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
+        type of `prototype`, otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
         Overrides the shape of the result. If order='K' and the number of
@@ -259,12 +259,16 @@ def inner(a, b):
     Returns
     -------
     out : ndarray
-        `out.shape = a.shape[:-1] + b.shape[:-1]`
+        If `a` and `b` are both
+        scalars or both 1-D arrays then a scalar is returned; otherwise
+        an array is returned.
+        ``out.shape = (*a.shape[:-1], *b.shape[:-1])``
 
     Raises
     ------
     ValueError
-        If the last dimension of `a` and `b` has different size.
+        If both `a` and `b` are nonscalar and their last dimensions have
+        different sizes.
 
     See Also
     --------
@@ -284,8 +288,8 @@ def inner(a, b):
 
     or explicitly::
 
-        np.inner(a, b)[i0,...,ir-1,j0,...,js-1]
-             = sum(a[i0,...,ir-1,:]*b[j0,...,js-1,:])
+        np.inner(a, b)[i0,...,ir-2,j0,...,js-2]
+             = sum(a[i0,...,ir-2,:]*b[j0,...,js-2,:])
 
     In addition `a` or `b` may be scalars, in which case::
 
@@ -300,13 +304,24 @@ def inner(a, b):
     >>> np.inner(a, b)
     2
 
-    A multidimensional example:
+    Some multidimensional examples:
 
     >>> a = np.arange(24).reshape((2,3,4))
     >>> b = np.arange(4)
-    >>> np.inner(a, b)
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (2, 3)
+    >>> c
     array([[ 14,  38,  62],
            [ 86, 110, 134]])
+
+    >>> a = np.arange(2).reshape((1,1,2))
+    >>> b = np.arange(6).reshape((3,2))
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (1, 1, 3)
+    >>> c
+    array([[[1, 3, 5]]])
 
     An example where `b` is a scalar:
 
@@ -999,7 +1014,7 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
-def unravel_index(indices, shape=None, order=None, dims=None):
+def unravel_index(indices, shape=None, order=None):
     """
     unravel_index(indices, shape, order='C')
 
@@ -1045,9 +1060,6 @@ def unravel_index(indices, shape=None, order=None, dims=None):
     (3, 1, 4, 1)
 
     """
-    if dims is not None:
-        warnings.warn("'shape' argument should be used instead of 'dims'",
-                      DeprecationWarning, stacklevel=3)
     return (indices,)
 
 

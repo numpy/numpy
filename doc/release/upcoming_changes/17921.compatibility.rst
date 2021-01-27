@@ -1,0 +1,6 @@
+Validate input values in ``Generator.uniform``
+----------------------------------------------
+Checked that ``high - low >= 0`` in ``np.random.Generator.uniform``. Raises
+``ValueError`` if ``low > high``. Previously out-of-order inputs were accepted
+and silently swapped, so that if ``low > high``, the value generated was
+``high + (low - high) * random()``.

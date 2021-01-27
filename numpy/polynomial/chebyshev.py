@@ -1586,7 +1586,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         information from the singular value decomposition is also returned.
     w : array_like, shape (`M`,), optional
         Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        ``(x[i],y[i])`` to the fit is weighted by ``w[i]``. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
@@ -1952,8 +1952,8 @@ def chebpts1(npts):
     if _npts < 1:
         raise ValueError("npts must be >= 1")
 
-    x = np.linspace(-np.pi, 0, _npts, endpoint=False) + np.pi/(2*_npts)
-    return np.cos(x)
+    x = 0.5 * np.pi / _npts * np.arange(-_npts+1, _npts+1, 2)
+    return np.sin(x)
 
 
 def chebpts2(npts):

@@ -39,6 +39,10 @@ maintainer email:  oliphant.travis@ieee.org
 #include "usertypes.h"
 #include "dtypemeta.h"
 #include "scalartypes.h"
+#include "array_method.h"
+#include "convert_datatype.h"
+#include "legacy_dtype_implementation.h"
+
 
 NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
 
@@ -487,4 +491,66 @@ legacy_userdtype_common_dtype_function(
 
     Py_INCREF(Py_NotImplemented);
     return (PyArray_DTypeMeta *)Py_NotImplemented;
+}
+
+
+/**
+ * This function wraps a legacy cast into an array-method. This is mostly
+ * used for legacy user-dtypes, but for example numeric to/from datetime
+ * casts were only defined that way as well.
+ *
+ * @param from
+ * @param to
+ * @param casting If `NPY_NO_CASTING` will check the legacy registered cast,
+ *        otherwise uses the provided cast.
+ */
+NPY_NO_EXPORT int
+PyArray_AddLegacyWrapping_CastingImpl(
+        PyArray_DTypeMeta *from, PyArray_DTypeMeta *to, NPY_CASTING casting)
+{
+    if (casting < 0) {
+        if (from == to) {
+            casting = NPY_NO_CASTING;
+        }
+        else if (PyArray_LegacyCanCastTypeTo(
+                from->singleton, to->singleton, NPY_SAFE_CASTING)) {
+            casting = NPY_SAFE_CASTING;
+        }
+        else if (PyArray_LegacyCanCastTypeTo(
+                from->singleton, to->singleton, NPY_SAME_KIND_CASTING)) {
+            casting = NPY_SAME_KIND_CASTING;
+        }
+        else {
+            casting = NPY_UNSAFE_CASTING;
+        }
+    }
+
+    PyArray_DTypeMeta *dtypes[2] = {from, to};
+    PyArrayMethod_Spec spec = {
+            /* Name is not actually used, but allows identifying these. */
+            .name = "legacy_cast",
+            .nin = 1,
+            .nout = 1,
+            .casting = casting,
+            .dtypes = dtypes,
+    };
+
+    if (from == to) {
+        spec.flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED;
+        PyType_Slot slots[] = {
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {NPY_METH_resolve_descriptors, &legacy_same_dtype_resolve_descriptors},
+            {0, NULL}};
+        spec.slots = slots;
+        return PyArray_AddCastingImplementation_FromSpec(&spec, 1);
+    }
+    else {
+        spec.flags = NPY_METH_REQUIRES_PYAPI;
+        PyType_Slot slots[] = {
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {NPY_METH_resolve_descriptors, &simple_cast_resolve_descriptors},
+            {0, NULL}};
+        spec.slots = slots;
+        return PyArray_AddCastingImplementation_FromSpec(&spec, 1);
+    }
 }

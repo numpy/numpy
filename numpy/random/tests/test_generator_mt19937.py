@@ -960,6 +960,14 @@ class TestRandomDist:
         random.shuffle(actual, axis=-1)
         assert_array_equal(actual, desired)
 
+    def test_shuffle_custom_axis_empty(self):
+        random = Generator(MT19937(self.seed))
+        desired = np.array([]).reshape((0, 6))
+        for axis in (0, 1):
+            actual = np.array([]).reshape((0, 6))
+            random.shuffle(actual, axis=axis)
+            assert_array_equal(actual, desired)
+
     def test_shuffle_axis_nonsquare(self):
         y1 = np.arange(20).reshape(2, 10)
         y2 = y1.copy()
@@ -993,6 +1001,11 @@ class TestRandomDist:
         arr = [[1, 2, 3], [4, 5, 6]]
         assert_raises(NotImplementedError, random.shuffle, arr, 1)
 
+        arr = np.array(3)
+        assert_raises(TypeError, random.shuffle, arr)
+        arr = np.ones((3, 2))
+        assert_raises(np.AxisError, random.shuffle, arr, 2)
+
     def test_permutation(self):
         random = Generator(MT19937(self.seed))
         alist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
@@ -1004,7 +1017,7 @@ class TestRandomDist:
         arr_2d = np.atleast_2d([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]).T
         actual = random.permutation(arr_2d)
         assert_array_equal(actual, np.atleast_2d(desired).T)
-        
+
         bad_x_str = "abcd"
         assert_raises(np.AxisError, random.permutation, bad_x_str)
 
@@ -1665,6 +1678,21 @@ class TestRandomDist:
         # account for i386 extended precision DBL_MAX / 1e17 + DBL_MAX >
         # DBL_MAX by increasing fmin a bit
         random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
+
+    def test_uniform_zero_range(self):
+        func = random.uniform
+        result = func(1.5, 1.5)
+        assert_allclose(result, 1.5)
+        result = func([0.0, np.pi], [0.0, np.pi])
+        assert_allclose(result, [0.0, np.pi])
+        result = func([[2145.12], [2145.12]], [2145.12, 2145.12])
+        assert_allclose(result, 2145.12 + np.zeros((2, 2)))
+
+    def test_uniform_neg_range(self):
+        func = random.uniform
+        assert_raises(ValueError, func, 2, 1)
+        assert_raises(ValueError, func,  [1, 2], [1, 1])
+        assert_raises(ValueError, func,  [[0, 1],[2, 3]], 2)
 
     def test_scalar_exception_propagation(self):
         # Tests that exceptions are correctly propagated in distributions

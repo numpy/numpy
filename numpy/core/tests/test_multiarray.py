@@ -1634,6 +1634,47 @@ class TestMethods:
 
     sort_kinds = ['quicksort', 'heapsort', 'stable']
 
+    def test_all_where(self):
+        a = np.array([[True, False, True],
+                      [False, False, False],
+                      [True, True, True]])
+        wh_full = np.array([[True, False, True],
+                            [False, False, False],
+                            [True, False, True]])
+        wh_lower = np.array([[False],
+                             [False],
+                             [True]])
+        for _ax in [0, None]:
+            assert_equal(a.all(axis=_ax, where=wh_lower),
+                        np.all(a[wh_lower[:,0],:], axis=_ax))
+            assert_equal(np.all(a, axis=_ax, where=wh_lower),
+                         a[wh_lower[:,0],:].all(axis=_ax))
+
+        assert_equal(a.all(where=wh_full), True)
+        assert_equal(np.all(a, where=wh_full), True)
+        assert_equal(a.all(where=False), True)
+        assert_equal(np.all(a, where=False), True)
+
+    def test_any_where(self):
+        a = np.array([[True, False, True],
+                      [False, False, False],
+                      [True, True, True]])
+        wh_full = np.array([[False, True, False],
+                            [True, True, True],
+                            [False, False, False]])
+        wh_middle = np.array([[False],
+                              [True],
+                              [False]])
+        for _ax in [0, None]:
+            assert_equal(a.any(axis=_ax, where=wh_middle),
+                         np.any(a[wh_middle[:,0],:], axis=_ax))
+            assert_equal(np.any(a, axis=_ax, where=wh_middle),
+                         a[wh_middle[:,0],:].any(axis=_ax))
+        assert_equal(a.any(where=wh_full), False)
+        assert_equal(np.any(a, where=wh_full), False)
+        assert_equal(a.any(where=False), False)
+        assert_equal(np.any(a, where=False), False)
+
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)
@@ -4602,6 +4643,13 @@ class TestPutmask:
         np.putmask(x[1:4], x[:3], [True, False, True])
         assert_equal(x, np.array([True, True, True, True]))
 
+    def test_writeable(self):
+        a = np.arange(5)
+        a.flags.writeable = False
+
+        with pytest.raises(ValueError):
+            np.putmask(a, a >= 2, 3)
+
 
 class TestTake:
     def tst_basic(self, x):
@@ -5113,6 +5161,33 @@ class TestIO:
             # binary fromstring is deprecated
             res = np.fromstring(x_str, dtype="(3,4)i4")
             assert_array_equal(x, res)
+
+    def test_parsing_subarray_unsupported(self):
+        # We currently do not support parsing subarray dtypes
+        data = "12,42,13," * 50
+        with pytest.raises(ValueError):
+            expected = np.fromstring(data, dtype="(3,)i", sep=",")
+
+        with open(self.filename, "w") as f:
+            f.write(data)
+
+        with pytest.raises(ValueError):
+            np.fromfile(self.filename, dtype="(3,)i", sep=",")
+
+    def test_read_shorter_than_count_subarray(self):
+        # Test that requesting more values does not cause any problems
+        # in conjuction with subarray dimensions being absored into the
+        # array dimension.
+        expected = np.arange(511 * 10, dtype="i").reshape(-1, 10)
+
+        binary = expected.tobytes()
+        with pytest.raises(ValueError):
+            with pytest.warns(DeprecationWarning):
+                np.fromstring(binary, dtype="(10,)i", count=10000)
+
+        expected.tofile(self.filename)
+        res = np.fromfile(self.filename, dtype="(10,)i", count=10000)
+        assert_array_equal(res, expected)
 
 
 class TestFromBuffer:
@@ -5626,6 +5701,33 @@ class TestStats:
         with assert_raises(np.core._exceptions.AxisError):
             np.arange(10).mean(axis=2)
 
+    def test_mean_where(self):
+        a = np.arange(16).reshape((4, 4))
+        wh_full = np.array([[False, True, False, True],
+                            [True, False, True, False],
+                            [True, True, False, False],
+                            [False, False, True, True]])
+        wh_partial = np.array([[False],
+                               [True],
+                               [True],
+                               [False]])
+        _cases = [(1, True, [1.5, 5.5, 9.5, 13.5]),
+                  (0, wh_full, [6., 5., 10., 9.]),
+                  (1, wh_full, [2., 5., 8.5, 14.5]),
+                  (0, wh_partial, [6., 7., 8., 9.])]
+        for _ax, _wh, _res in _cases:
+            assert_allclose(a.mean(axis=_ax, where=_wh),
+                            np.array(_res))
+            assert_allclose(np.mean(a, axis=_ax, where=_wh),
+                            np.array(_res))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_allclose(a.mean(axis=1, where=wh_partial),
+                            np.array([np.nan, 5.5, 9.5, np.nan]))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(a.mean(where=False), np.nan)
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(np.mean(a, where=False), np.nan)
+
     def test_var_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
@@ -5674,12 +5776,76 @@ class TestStats:
         with assert_raises(np.core._exceptions.AxisError):
             np.arange(10).var(axis=2)
 
+    def test_var_where(self):
+        a = np.arange(25).reshape((5, 5))
+        wh_full = np.array([[False, True, False, True, True],
+                            [True, False, True, True, False],
+                            [True, True, False, False, True],
+                            [False, True, True, False, True],
+                            [True, False, True, True, False]])
+        wh_partial = np.array([[False],
+                               [True],
+                               [True],
+                               [False],
+                               [True]])
+        _cases = [(0, True, [50., 50., 50., 50., 50.]),
+                  (1, True, [2., 2., 2., 2., 2.])]
+        for _ax, _wh, _res in _cases:
+            assert_allclose(a.var(axis=_ax, where=_wh),
+                            np.array(_res))
+            assert_allclose(np.var(a, axis=_ax, where=_wh),
+                            np.array(_res))
+        assert_allclose(np.var(a, axis=1, where=wh_full),
+                        np.var(a[wh_full].reshape((5, 3)), axis=1))
+        assert_allclose(np.var(a, axis=0, where=wh_partial),
+                        np.var(a[wh_partial[:,0]], axis=0))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(a.var(where=False), np.nan)
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(np.var(a, where=False), np.nan)
+
     def test_std_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
                 tgt = np.sqrt(_var(mat, axis=axis))
                 res = _std(mat, axis=axis)
                 assert_almost_equal(res, tgt)
+
+    def test_std_where(self):
+        a = np.arange(25).reshape((5,5))[::-1]
+        whf = np.array([[False, True, False, True, True],
+                        [True, False, True, False, True],
+                        [True, True, False, True, False],
+                        [True, False, True, True, False],
+                        [False, True, False, True, True]])
+        whp = np.array([[False],
+                        [False],
+                        [True],
+                        [True],
+                        [False]])
+        _cases = [
+            (0, True, 7.07106781*np.ones((5))),
+            (1, True, 1.41421356*np.ones((5))),
+            (0, whf,
+             np.array([4.0824829 , 8.16496581, 5., 7.39509973, 8.49836586])),
+            (0, whp, 2.5*np.ones((5)))
+        ]
+        for _ax, _wh, _res in _cases:
+            assert_allclose(a.std(axis=_ax, where=_wh), _res)
+            assert_allclose(np.std(a, axis=_ax, where=_wh), _res)
+
+        assert_allclose(a.std(axis=1, where=whf),
+                        np.std(a[whf].reshape((5,3)), axis=1))
+        assert_allclose(np.std(a, axis=1, where=whf),
+                        (a[whf].reshape((5,3))).std(axis=1))
+        assert_allclose(a.std(axis=0, where=whp),
+                        np.std(a[whp[:,0]], axis=0))
+        assert_allclose(np.std(a, axis=0, where=whp),
+                        (a[whp[:,0]]).std(axis=0))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(a.std(where=False), np.nan)
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(np.std(a, where=False), np.nan)
 
     def test_subclass(self):
         class TestArray(np.ndarray):
@@ -7191,9 +7357,9 @@ class TestNewBufferProtocol:
     def test_export_and_pickle_user_dtype(self, obj, error):
         # User dtypes should export successfully when FORMAT was not requested.
         with pytest.raises(error):
-            _multiarray_tests.get_buffer_info(obj, ("STRIDED", "FORMAT"))
+            _multiarray_tests.get_buffer_info(obj, ("STRIDED_RO", "FORMAT"))
 
-        _multiarray_tests.get_buffer_info(obj, ("STRIDED",))
+        _multiarray_tests.get_buffer_info(obj, ("STRIDED_RO",))
 
         # This is currently also necessary to implement pickling:
         pickle_obj = pickle.dumps(obj)
@@ -7366,6 +7532,25 @@ class TestNewBufferProtocol:
         assert_equal(arr['b'], 2)
         f.a = 3
         assert_equal(arr['a'], 3)
+
+    @pytest.mark.parametrize("obj", [np.ones(3), np.ones(1, dtype="i,i")[()]])
+    def test_error_if_stored_buffer_info_is_corrupted(self, obj):
+        """
+        If a user extends a NumPy array before 1.20 and then runs it
+        on NumPy 1.20+. A C-subclassed array might in theory modify
+        the new buffer-info field. This checks that an error is raised
+        if this happens (for buffer export), an error is written on delete.
+        This is a sanity check to help users transition to safe code, it
+        may be deleted at any point.
+        """
+        # corrupt buffer info:
+        _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
+        name = type(obj)
+        with pytest.raises(RuntimeError,
+                    match=f".*{name} appears to be C subclassed"):
+            memoryview(obj)
+        # Fix buffer info again before we delete (or we lose the memory)
+        _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
 
 
 class TestArrayAttributeDeletion:
@@ -8295,6 +8480,22 @@ class TestArange:
         assert_raises(ZeroDivisionError, np.arange, 0, 0, 0)
         assert_raises(ZeroDivisionError, np.arange, 0.0, 0.0, 0.0)
 
+    def test_require_range(self):
+        assert_raises(TypeError, np.arange)
+        assert_raises(TypeError, np.arange, step=3)
+        assert_raises(TypeError, np.arange, dtype='int64')
+        assert_raises(TypeError, np.arange, start=4)
+
+    def test_start_stop_kwarg(self):
+        keyword_stop = np.arange(stop=3)
+        keyword_zerotostop = np.arange(start=0, stop=3)
+        keyword_start_stop = np.arange(start=3, stop=9)
+
+        assert len(keyword_stop) == 3
+        assert len(keyword_zerotostop) == 3
+        assert len(keyword_start_stop) == 6
+        assert_array_equal(keyword_stop, keyword_zerotostop)
+
 
 class TestArrayFinalize:
     """ Tests __array_finalize__ """
@@ -8375,23 +8576,22 @@ def test_equal_override():
         assert_equal(array != my_always_equal, 'ne')
 
 
-def test_npymath_complex():
+@pytest.mark.parametrize(
+    ["fun", "npfun"],
+    [
+        (_multiarray_tests.npy_cabs, np.absolute),
+        (_multiarray_tests.npy_carg, np.angle)
+    ]
+)
+@pytest.mark.parametrize("x", [1, np.inf, -np.inf, np.nan])
+@pytest.mark.parametrize("y", [1, np.inf, -np.inf, np.nan])
+@pytest.mark.parametrize("test_dtype", np.complexfloating.__subclasses__())
+def test_npymath_complex(fun, npfun, x, y, test_dtype):
     # Smoketest npymath functions
-    from numpy.core._multiarray_tests import (
-        npy_cabs, npy_carg)
-
-    funcs = {npy_cabs: np.absolute,
-             npy_carg: np.angle}
-    vals = (1, np.inf, -np.inf, np.nan)
-    types = (np.complex64, np.complex128, np.clongdouble)
-
-    for fun, npfun in funcs.items():
-        for x, y in itertools.product(vals, vals):
-            for t in types:
-                z = t(complex(x, y))
-                got = fun(z)
-                expected = npfun(z)
-                assert_allclose(got, expected)
+    z = test_dtype(complex(x, y))
+    got = fun(z)
+    expected = npfun(z)
+    assert_allclose(got, expected)
 
 
 def test_npymath_real():

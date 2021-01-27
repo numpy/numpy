@@ -19,6 +19,8 @@
 
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
+#include "array_method.h"
+#include "usertypes.h"
 
 
 /*
@@ -29,7 +31,7 @@
  * instructions (16 byte).
  * So this flag can only be enabled if autovectorization is disabled.
  */
-#if NPY_CPU_HAVE_UNALIGNED_ACCESS
+#if NPY_ALIGNMENT_REQUIRED
 #  define NPY_USE_UNALIGNED_ACCESS 0
 #else
 #  define NPY_USE_UNALIGNED_ACCESS 0
@@ -1292,7 +1294,7 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
             int res = stransfer(
                     dst, dst_stride0, src, src_stride,
                     mask, mask_stride,
-                    N, src_itemsize, data);
+                    shape0, src_itemsize, data);
             if (res < 0) {
                 return -1;
             }

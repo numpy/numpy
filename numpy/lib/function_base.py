@@ -846,7 +846,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     Returns
     -------
     gradient : ndarray or list of ndarray
-        A set of ndarrays (or a single ndarray if there is only one dimension)
+        A list of ndarrays (or a single ndarray if there is only one dimension)
         corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.
 
@@ -1290,7 +1290,7 @@ def _interp_dispatcher(x, xp, fp, left=None, right=None, period=None):
 @array_function_dispatch(_interp_dispatcher)
 def interp(x, xp, fp, left=None, right=None, period=None):
     """
-    One-dimensional linear interpolation.
+    One-dimensional linear interpolation for monotonically increasing sample points.
 
     Returns the one-dimensional piecewise linear interpolant to a function
     with given discrete data points (`xp`, `fp`), evaluated at `x`.
@@ -1337,8 +1337,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     --------
     scipy.interpolate
 
-    Notes
-    -----
+    Warnings
+    --------
     The x-coordinate sequence is expected to be increasing, but this is not
     explicitly enforced.  However, if the sequence `xp` is non-increasing,
     interpolation results are meaningless.

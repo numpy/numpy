@@ -23,6 +23,11 @@ NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
 
+# Set to True to use the new casting implementation as much as implemented.
+# Allows running the full test suit to exercise the new machinery until
+# it is used as default and the old version is eventually deleted.
+NPY_USE_NEW_CASTINGIMPL = os.environ.get('NPY_USE_NEW_CASTINGIMPL', "0") != "0"
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -463,10 +468,20 @@ def configuration(parent_package='',top_path=None):
             # Use relaxed stride checking
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+            else:
+                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 0))
 
             # Use bogus stride debug aid when relaxed strides are enabled
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
+            else:
+                moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 0))
+
+            # Use the new experimental casting implementation in NumPy 1.20:
+            if NPY_USE_NEW_CASTINGIMPL:
+                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 1))
+            else:
+                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 0))
 
             # Get long double representation
             rep = check_long_double_representation(config_cmd)
@@ -769,6 +784,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arraytypes.h'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
             join('src', 'multiarray', 'array_coercion.h'),
+            join('src', 'multiarray', 'array_method.h'),
             join('src', 'multiarray', 'npy_buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
@@ -778,12 +794,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
             join('src', 'multiarray', 'dtypemeta.h'),
+            join('src', 'multiarray', 'dtype_transfer.h'),
             join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'einsum_debug.h'),
             join('src', 'multiarray', 'einsum_sumprod.h'),
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
             join('src', 'multiarray', 'iterators.h'),
+            join('src', 'multiarray', 'legacy_dtype_implementation.h'),
             join('src', 'multiarray', 'mapping.h'),
             join('src', 'multiarray', 'methods.h'),
             join('src', 'multiarray', 'multiarraymodule.h'),
@@ -824,6 +842,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
             join('src', 'multiarray', 'array_coercion.c'),
+            join('src', 'multiarray', 'array_method.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'arrayfunction_override.c'),
@@ -850,6 +869,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'hashdescr.c'),
             join('src', 'multiarray', 'item_selection.c'),
             join('src', 'multiarray', 'iterators.c'),
+            join('src', 'multiarray', 'legacy_dtype_implementation.c'),
             join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
@@ -903,8 +923,12 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.h.src'),
+            join('src', 'umath', 'loops_utils.h.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
+            join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h.src'),

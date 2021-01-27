@@ -153,8 +153,9 @@ stages:
         CC: /usr/bin/clang
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python setup.py build -j 4 build_ext --inplace install
-      displayName: 'Build NumPy without OpenBLAS'
+      displayName: 'Build NumPy without OpenBLAS and new casting'
       env:
+        NPY_USE_NEW_CASTINGIMPL: 1
         BLAS: None
         LAPACK: None
         ATLAS: None
@@ -204,6 +205,11 @@ stages:
             PYTHON_VERSION: '3.7'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
+            BITS: 64
+          PyPy37-64bit-full:
+            PYTHON_VERSION: 'PyPy3.7'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: fast
             BITS: 64
           Python38-32bit-fast:
             PYTHON_VERSION: '3.8'
@@ -257,3 +263,28 @@ stages:
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for gcc 4.8'
 
+  # Native build is based on gcc flag `-march=native`
+  - job: Linux_baseline_native
+    pool:
+      vmImage: 'ubuntu-20.04'
+    steps:
+    - script: |
+            if ! `gcc 2>/dev/null`; then
+                sudo apt install gcc
+            fi
+            sudo apt install python3
+            sudo apt install python3-dev
+            # python3 has no setuptools, so install one to get us going
+            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
+            python3 -m pip install --user -r test_requirements.txt
+      displayName: 'install python/requirements'
+    - script: |
+            python3 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run native baseline Build / Tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for baseline/native'

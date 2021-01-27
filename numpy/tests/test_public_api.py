@@ -40,7 +40,7 @@ def test_numpy_namespace():
         'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.<lambda>',
+        'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
         'disp': 'numpy.lib.function_base.disp',
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
@@ -170,6 +170,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "random",
     "testing",
     "typing",
+    "typing.mypy_plugin",
     "version",
 ]]
 
@@ -243,6 +244,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.fcompiler.nv",
     "distutils.fcompiler.sun",
     "distutils.fcompiler.vast",
+    "distutils.fcompiler.fujitsu",
     "distutils.from_template",
     "distutils.intelccompiler",
     "distutils.lib2def",

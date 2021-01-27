@@ -48,3 +48,5 @@ global-exclude *.pyc *.pyo *.pyd *.swp *.bak *~
 # Exclude license file that we append to the main license when running
 # `python setup.py sdist`
 exclude LICENSES_bundled.txt
+include versioneer.py
+include numpy/_version.py

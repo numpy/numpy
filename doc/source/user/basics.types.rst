@@ -1,3 +1,5 @@
+.. _basics.types:
+
 **********
 Data types
 **********
@@ -260,6 +262,8 @@ available, e.g. ``int16``).  Therefore, the use of array scalars ensures
 identical behaviour between arrays and scalars, irrespective of whether the
 value is inside an array or not.  NumPy scalars also have many of the same
 methods arrays do.
+
+.. _overflow-errors:
 
 Overflow Errors
 ===============

@@ -9,19 +9,22 @@
 #include "_simd_arg.inc"
 #include "_simd_easyintrin.inc"
 
-/*************************************************************************
- * Defining NPYV intrinsics as module functions
- *************************************************************************/
+//#########################################################################
+//## Defining NPYV intrinsics as module functions
+//#########################################################################
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #esfx      = u16, s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #expand_sup =1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
- * #sum_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   0,   0,   1,   1#
+ * #rev64_sup = 1,  1,  1,   1,   1,   1,   0,   0,   1,   0#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
@@ -227,7 +230,6 @@ err:
 /**end repeat1**/
 #endif // @ncont_sup@
 
-
 /***************************
  * Misc
  ***************************/
@@ -289,6 +291,10 @@ SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@x2, v@sfx@, v@sfx@)
 /**end repeat1**/
 
+#if @rev64_sup@
+SIMD_IMPL_INTRIN_1(rev64_@sfx@, v@sfx@, v@sfx@)
+#endif
+
 /***************************
  * Operators
  ***************************/
@@ -319,7 +325,9 @@ SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
  ***************************/
 SIMD_IMPL_INTRIN_1(cvt_@sfx@_@bsfx@, v@sfx@,  v@bsfx@)
 SIMD_IMPL_INTRIN_1(cvt_@bsfx@_@sfx@, v@bsfx@, v@sfx@)
-
+#if @expand_sup@
+SIMD_IMPL_INTRIN_1(expand_@esfx@_@sfx@, v@esfx@x2, v@sfx@)
+#endif // expand_sup
 /***************************
  * Arithmetic
  ***************************/
@@ -368,27 +376,84 @@ SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 #endif
 
+/***************************
+ * Mask operations
+ ***************************/
+/**begin repeat1
+ * #intrin = ifadd, ifsub#
+ */
+ SIMD_IMPL_INTRIN_4(@intrin@_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
 #endif // simd_sup
 /**end repeat**/
-/***************************
+/*************************************************************************
  * Variant
- ***************************/
+ ************************************************************************/
 SIMD_IMPL_INTRIN_0N(cleanup)
 
 /*************************************************************************
- * Attach module functions
- *************************************************************************/
+ * A special section for f32/f64 intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// check special cases
+SIMD_IMPL_INTRIN_1(notnan_f32, vb32, vf32)
+#if NPY_SIMD_F64
+    SIMD_IMPL_INTRIN_1(notnan_f64, vb64, vf64)
+#endif
+/***************************
+ * Conversions
+ ***************************/
+// round to nearest integer (assume even)
+SIMD_IMPL_INTRIN_1(round_s32_f32, vs32, vf32)
+#if NPY_SIMD_F64
+    SIMD_IMPL_INTRIN_2(round_s32_f64, vs32, vf64, vf64)
+#endif
+
+/*************************************************************************
+ * A special section for boolean intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// Logical
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_IMPL_INTRIN_2(and_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(or_@bsfx@,  v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(xor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
+/**end repeat**/
+/***************************
+ * Conversions
+ ***************************/
+// Convert mask vector to integer bitfield
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_IMPL_INTRIN_1(tobits_@bsfx@, u64, v@bsfx@)
+/**end repeat**/
+
+//#########################################################################
+//## Attach module functions
+//#########################################################################
 static PyMethodDef simd__intrinsics_methods[] = {
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #esfx      = u16, s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #expand_sup =1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
- * #sum_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   0,   0,   1,   1#
+ * #rev64_sup = 1,  1,  1,   1,   1,   1,   0,   0,   1,   0#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
@@ -415,7 +480,6 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif // ncont_sup
-
 
 /***************************
  * Misc
@@ -444,8 +508,9 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 
-SIMD_INTRIN_DEF(cvt_@sfx@_@bsfx@)
-SIMD_INTRIN_DEF(cvt_@bsfx@_@sfx@)
+#if @rev64_sup@
+SIMD_INTRIN_DEF(rev64_@sfx@)
+#endif
 
 /***************************
  * Operators
@@ -469,7 +534,9 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
  ***************************/
 SIMD_INTRIN_DEF(cvt_@sfx@_@bsfx@)
 SIMD_INTRIN_DEF(cvt_@bsfx@_@sfx@)
-
+#if @expand_sup@
+SIMD_INTRIN_DEF(expand_@esfx@_@sfx@)
+#endif // expand_sup
 /***************************
  * Arithmetic
  ***************************/
@@ -518,22 +585,76 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif
 
+/***************************
+ * Mask operations
+ ***************************/
+/**begin repeat1
+ * #intrin = ifadd, ifsub#
+ */
+ SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
 #endif // simd_sup
 /**end repeat**/
-
-/***************************
+/*************************************************************************
  * Variant
- ***************************/
+ ************************************************************************/
 SIMD_INTRIN_DEF(cleanup)
-/***************************/
+
+/*************************************************************************
+ * A special section for f32/f64 intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// check special cases
+SIMD_INTRIN_DEF(notnan_f32)
+#if NPY_SIMD_F64
+    SIMD_INTRIN_DEF(notnan_f64)
+#endif
+/***************************
+ * Conversions
+ ***************************/
+// round to nearest integer (assume even)
+SIMD_INTRIN_DEF(round_s32_f32)
+#if NPY_SIMD_F64
+    SIMD_INTRIN_DEF(round_s32_f64)
+#endif
+
+/*************************************************************************
+ * A special section for boolean intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// Logical
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_INTRIN_DEF(and_@bsfx@)
+SIMD_INTRIN_DEF(or_@bsfx@)
+SIMD_INTRIN_DEF(xor_@bsfx@)
+SIMD_INTRIN_DEF(not_@bsfx@)
+/**end repeat**/
+/***************************
+ * Conversions
+ ***************************/
+// Convert mask vector to integer bitfield
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_INTRIN_DEF(tobits_@bsfx@)
+/**end repeat**/
+
+/************************************************************************/
 {NULL, NULL, 0, NULL}
 }; // PyMethodDef
 
 #endif // NPY_SIMD
 
-/*************************************************************************
- * Defining a separate module for each target
- *************************************************************************/
+//#########################################################################
+//## Defining a separate module for each target
+//#########################################################################
 NPY_VISIBILITY_HIDDEN PyObject *
 NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
 {
@@ -559,6 +680,9 @@ NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
         goto err;
     }
     if (PyModule_AddIntConstant(m, "simd_f64", NPY_SIMD_F64)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_fma3", NPY_SIMD_FMA3)) {
         goto err;
     }
     if (PyModule_AddIntConstant(m, "simd_width", NPY_SIMD_WIDTH)) {

@@ -69,13 +69,13 @@ def take_along_axis(arr, indices, axis):
 
     Parameters
     ----------
-    arr: ndarray (Ni..., M, Nk...)
+    arr : ndarray (Ni..., M, Nk...)
         Source array
-    indices: ndarray (Ni..., J, Nk...)
+    indices : ndarray (Ni..., J, Nk...)
         Indices to take along each 1d slice of `arr`. This must match the
         dimension of arr, but dimensions Ni and Nj only need to broadcast
         against `arr`.
-    axis: int
+    axis : int
         The axis to take 1d slices along. If axis is None, the input array is
         treated as if it had first been flattened to 1d, for consistency with
         `sort` and `argsort`.
@@ -190,16 +190,16 @@ def put_along_axis(arr, indices, values, axis):
 
     Parameters
     ----------
-    arr: ndarray (Ni..., M, Nk...)
+    arr : ndarray (Ni..., M, Nk...)
         Destination array.
-    indices: ndarray (Ni..., J, Nk...)
+    indices : ndarray (Ni..., J, Nk...)
         Indices to change along each 1d slice of `arr`. This must match the
         dimension of arr, but dimensions in Ni and Nj may be 1 to broadcast
         against `arr`.
-    values: array_like (Ni..., J, Nk...)
+    values : array_like (Ni..., J, Nk...)
         values to insert at those indices. Its shape and dimension are
         broadcast to match that of `indices`.
-    axis: int
+    axis : int
         The axis to take 1d slices along. If axis is None, the destination
         array is treated as if a flattened 1d view had been created of it.
 
@@ -1088,8 +1088,8 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If `a.shape = (r0,r1,..,rN)` and `b.shape = (s0,s1,...,sN)`,
-    the Kronecker product has shape `(r0*s0, r1*s1, ..., rN*SN)`.
+    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::
 

@@ -5439,7 +5439,7 @@ class MaskedArray(ndarray):
             When the array contains unmasked values at the same extremes of the
             datatype, the ordering of these values and the masked values is
             undefined.
-        fill_value : {var}, optional
+        fill_value : scalar or None, optional
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
 
@@ -5497,7 +5497,7 @@ class MaskedArray(ndarray):
         axis : {None, integer}
             If None, the index is into the flattened array, otherwise along
             the specified axis
-        fill_value : {var}, optional
+        fill_value : scalar or None, optional
             Value used to fill in the masked values.  If None, the output of
             minimum_fill_value(self._data) is used instead.
         out : {None, array}, optional
@@ -5543,7 +5543,7 @@ class MaskedArray(ndarray):
         axis : {None, integer}
             If None, the index is into the flattened array, otherwise along
             the specified axis
-        fill_value : {var}, optional
+        fill_value : scalar or None, optional
             Value used to fill in the masked values.  If None, the output of
             maximum_fill_value(self._data) is used instead.
         out : {None, array}, optional
@@ -5594,7 +5594,7 @@ class MaskedArray(ndarray):
             When the array contains unmasked values sorting at the same extremes of the
             datatype, the ordering of these values and the masked values is
             undefined.
-        fill_value : {var}, optional
+        fill_value : scalar or None, optional
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
 
@@ -5665,7 +5665,7 @@ class MaskedArray(ndarray):
         out : array_like, optional
             Alternative output array in which to place the result.  Must be of
             the same shape and buffer length as the expected output.
-        fill_value : {var}, optional
+        fill_value : scalar or None, optional
             Value used to fill in the masked values.
             If None, use the output of `minimum_fill_value`.
         keepdims : bool, optional
@@ -5799,7 +5799,7 @@ class MaskedArray(ndarray):
         out : array_like, optional
             Alternative output array in which to place the result.  Must
             be of the same shape and buffer length as the expected output.
-        fill_value : {var}, optional
+        fill_value : scalar or None, optional
             Value used to fill in the masked values.
             If None, use the output of maximum_fill_value().
         keepdims : bool, optional
@@ -5876,7 +5876,7 @@ class MaskedArray(ndarray):
             Alternative output array in which to place the result. It must
             have the same shape and buffer length as the expected output
             but the type will be cast if necessary.
-        fill_value : {var}, optional
+        fill_value : scalar or None, optional
             Value used to fill in the masked values.
         keepdims : bool, optional
             If this is set to True, the axes which are reduced are left
@@ -7339,9 +7339,9 @@ def where(condition, x=_NoValue, y=_NoValue):
 
 def choose(indices, choices, out=None, mode='raise'):
     """
-    Use an index array to construct a new array from a set of choices.
+    Use an index array to construct a new array from a list of choices.
 
-    Given an array of integers and a set of n choice arrays, this method
+    Given an array of integers and a list of n choice arrays, this method
     will create a new array that merges each of the choice arrays.  Where a
     value in `a` is i, the new array will have the value that choices[i]
     contains in the same place.

@@ -129,7 +129,7 @@ Fair play rules
    discussion on the mailing list before monkeypatching NumPy.
 
 Questions and answers
--------------------
+---------------------
 
 **Q:** We would like to distribute an optimized version of NumPy that
 utilizes special instructions for our company's CPU.  You recommend

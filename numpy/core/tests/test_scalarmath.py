@@ -276,6 +276,10 @@ class TestModulus:
         # Check nans, inf
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
+            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -290,6 +294,9 @@ class TestModulus:
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
+                for op in [floordiv_and_mod, divmod]:
+                    div, mod = op(fone, fzer)
+                    assert_(np.isinf(div)) and assert_(np.isnan(mod))
 
     def test_inplace_floordiv_handling(self):
         # issue gh-12927
@@ -646,33 +653,33 @@ class TestSubtract:
 
 
 class TestAbs:
-    def _test_abs_func(self, absfunc):
-        for tp in floating_types + complex_floating_types:
-            x = tp(-1.5)
-            assert_equal(absfunc(x), 1.5)
-            x = tp(0.0)
-            res = absfunc(x)
-            # assert_equal() checks zero signedness
-            assert_equal(res, 0.0)
-            x = tp(-0.0)
-            res = absfunc(x)
-            assert_equal(res, 0.0)
+    def _test_abs_func(self, absfunc, test_dtype):
+        x = test_dtype(-1.5)
+        assert_equal(absfunc(x), 1.5)
+        x = test_dtype(0.0)
+        res = absfunc(x)
+        # assert_equal() checks zero signedness
+        assert_equal(res, 0.0)
+        x = test_dtype(-0.0)
+        res = absfunc(x)
+        assert_equal(res, 0.0)
 
-            x = tp(np.finfo(tp).max)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).max)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).tiny)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).tiny)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).min)
-            assert_equal(absfunc(x), -x.real)
+        x = test_dtype(np.finfo(test_dtype).min)
+        assert_equal(absfunc(x), -x.real)
 
-    def test_builtin_abs(self):
-        self._test_abs_func(abs)
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_builtin_abs(self, dtype):
+        self._test_abs_func(abs, dtype)
 
-    def test_numpy_abs(self):
-        self._test_abs_func(np.abs)
-
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_numpy_abs(self, dtype):
+        self._test_abs_func(np.abs, dtype)
 
 class TestBitShifts:
 

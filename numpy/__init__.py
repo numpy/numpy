@@ -109,8 +109,9 @@ Exceptions to this rule are documented.
 import sys
 import warnings
 
-from ._globals import ModuleDeprecationWarning, VisibleDeprecationWarning
-from ._globals import _NoValue
+from ._globals import (
+    ModuleDeprecationWarning, VisibleDeprecationWarning, _NoValue
+)
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
@@ -130,11 +131,15 @@ else:
         your python interpreter from there."""
         raise ImportError(msg) from e
 
-    from .version import git_revision as __git_revision__
-    from .version import version as __version__
-
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
+
+    # get the version using versioneer
+    from ._version import get_versions
+    vinfo = get_versions()
+    __version__ = vinfo.get("closest-tag", vinfo["version"])
+    __git_version__ = vinfo.get("full-revisionid")
+    del get_versions, vinfo
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
@@ -161,33 +166,57 @@ else:
 
     # Deprecations introduced in NumPy 1.20.0, 2020-06-06
     import builtins as _builtins
+
+    _msg = (
+        "`np.{n}` is a deprecated alias for the builtin `{n}`. "
+        "To silence this warning, use `{n}` by itself. Doing this will not "
+        "modify any behavior and is safe. {extended_msg}\n"
+        "Deprecated in NumPy 1.20; for more details and guidance: "
+        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+
+    _specific_msg = (
+        "If you specifically wanted the numpy scalar type, use `np.{}` here.")
+
+    _int_extended_msg = (
+        "When replacing `np.{}`, you may wish to use e.g. `np.int64` "
+        "or `np.int32` to specify the precision. If you wish to review "
+        "your current use, check the release note link for "
+        "additional information.")
+
+    _type_info = [
+        ("object", ""),  # The NumPy scalar only exists by name.
+        ("bool", _specific_msg.format("bool_")),
+        ("float", _specific_msg.format("float64")),
+        ("complex", _specific_msg.format("complex128")),
+        ("str", _specific_msg.format("str_")),
+        ("int", _int_extended_msg.format("int"))]
+
     __deprecated_attrs__.update({
-        n: (
-            getattr(_builtins, n),
-            "`np.{n}` is a deprecated alias for the builtin `{n}`. "
-            "Use `{n}` by itself, which is identical in behavior, to silence "
-            "this warning. "
-            "If you specifically wanted the numpy scalar type, use `np.{n}_` "
-            "here."
-            .format(n=n)
-        )
-        for n in ["bool", "int", "float", "complex", "object", "str"]
+        n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
+        for n, extended_msg in _type_info
     })
-    __deprecated_attrs__.update({
-        n: (
-            getattr(compat, n),
-            "`np.{n}` is a deprecated alias for `np.compat.{n}`. "
-            "Use `np.compat.{n}` by itself, which is identical in behavior, "
-            "to silence this warning. "
-            "In the likely event your code does not need to work on Python 2 "
-            "you can use the builtin ``{n2}`` for which ``np.compat.{n}`` is "
-            "itself an alias. "
-            "If you specifically wanted the numpy scalar type, use `np.{n2}_` "
-            "here."
-            .format(n=n, n2=n2)
-        )
-        for n, n2 in [("long", "int"), ("unicode", "str")]
-    })
+
+    _msg = (
+        "`np.{n}` is a deprecated alias for `np.compat.{n}`. "
+        "To silence this warning, use `np.compat.{n}` by itself. "
+        "In the likely event your code does not need to work on Python 2 "
+        "you can use the builtin `{n2}` for which `np.compat.{n}` is itself "
+        "an alias. Doing this will not modify any behaviour and is safe. "
+        "{extended_msg}\n"
+        "Deprecated in NumPy 1.20; for more details and guidance: "
+        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+
+    __deprecated_attrs__["long"] = (
+        getattr(compat, "long"),
+        _msg.format(n="long", n2="int",
+                    extended_msg=_int_extended_msg.format("long")))
+
+    __deprecated_attrs__["unicode"] = (
+        getattr(compat, "long"),
+        _msg.format(n="unciode", n2="str",
+                    extended_msg=_specific_msg.format("str_")))
+
+    del _msg, _specific_msg, _int_extended_msg, _type_info, _builtins
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits
@@ -384,3 +413,12 @@ else:
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
+
+    # Give a warning if NumPy is reloaded or imported on a sub-interpreter
+    # We do this from python, since the C-module may not be reloaded and
+    # it is tidier organized.
+    core.multiarray._multiarray_umath._reload_guard()
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
