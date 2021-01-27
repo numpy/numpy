@@ -142,7 +142,7 @@ NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
     return vec_extract(a, 0) + vec_extract(a, 1);
 }
 
-// extend sum across vector
+// expand the source vector and performs sum reduce
 NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
 {
     const npyv_u32 zero = npyv_zero_u32();

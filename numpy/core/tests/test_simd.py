@@ -750,7 +750,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_reduce_sumup(self):
         """
-        Test overflow protect reduce sumup intrinics:
+        Test extend reduce sum intrinics:
             npyv_sumup_##sfx
         """
         if self.sfx not in ("u8", "u16"):

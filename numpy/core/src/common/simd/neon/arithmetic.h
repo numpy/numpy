@@ -159,7 +159,7 @@
     }
 #endif
 
-// extend sum across vector
+// expand the source vector and performs sum reduce
 #if NPY_SIMD_F64
     #define npyv_sumup_u8  vaddlvq_u8
     #define npyv_sumup_u16 vaddlvq_u16

@@ -188,7 +188,7 @@ NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
 #endif
 }
 
-// extend sum across vector
+// expand the source vector and performs sum reduce
 NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
 {
     __m128i two = _mm_sad_epu8(a, _mm_setzero_si128());

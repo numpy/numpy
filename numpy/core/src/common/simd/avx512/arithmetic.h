@@ -192,7 +192,7 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
     }
 #endif
 
-// extend sum across vector
+// expand the source vector and performs sum reduce
 NPY_FINLINE npy_uint16 npyv_sumup_u8(npyv_u8 a)
 {
 #ifdef NPY_HAVE_AVX512BW
