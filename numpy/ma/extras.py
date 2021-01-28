@@ -1217,7 +1217,7 @@ def union1d(ar1, ar2):
 
     The output is always a masked array. See `numpy.union1d` for more details.
 
-    See also
+    See Also
     --------
     numpy.union1d : Equivalent function for ndarrays.
 

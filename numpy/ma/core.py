@@ -399,10 +399,10 @@ def _recursive_set_fill_value(fillvalue, dt):
 
     Parameters
     ----------
-    fillvalue: scalar or array_like
+    fillvalue : scalar or array_like
         Scalar or array representing the fill value. If it is of shorter
         length than the number of fields in dt, it will be resized.
-    dt: dtype
+    dt : dtype
         The structured dtype for which to create the fill value.
 
     Returns
@@ -5220,7 +5220,7 @@ class MaskedArray(ndarray):
         --------
         numpy.ndarray.mean : corresponding function for ndarrays
         numpy.mean : Equivalent function
-        numpy.ma.average: Weighted average.
+        numpy.ma.average : Weighted average.
 
         Examples
         --------
@@ -6913,8 +6913,7 @@ def compressed(x):
 
     See Also
     --------
-    ma.MaskedArray.compressed
-        Equivalent method.
+    ma.MaskedArray.compressed : Equivalent method.
 
     """
     return asanyarray(x).compressed()
@@ -7343,12 +7342,12 @@ def choose(indices, choices, out=None, mode='raise'):
 
     Given an array of integers and a list of n choice arrays, this method
     will create a new array that merges each of the choice arrays.  Where a
-    value in `a` is i, the new array will have the value that choices[i]
+    value in `index` is i, the new array will have the value that choices[i]
     contains in the same place.
 
     Parameters
     ----------
-    a : ndarray of ints
+    indices : ndarray of ints
         This array must contain integers in ``[0, n-1]``, where n is the
         number of choices.
     choices : sequence of arrays
