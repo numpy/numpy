@@ -1441,7 +1441,7 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     busday_offset : Applies an offset counted in valid days.
     busday_count : Counts how many valid days are in a half-open date range.
 
@@ -1516,7 +1516,7 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     is_busday : Returns a boolean array indicating valid days.
     busday_count : Counts how many valid days are in a half-open date range.
 
@@ -1598,7 +1598,7 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     is_busday : Returns a boolean array indicating valid days.
     busday_offset : Applies an offset counted in valid days.
 

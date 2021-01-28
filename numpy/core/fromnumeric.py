@@ -1381,7 +1381,7 @@ def resize(a, new_shape):
     --------
     np.reshape : Reshape an array without changing the total size.
     np.pad : Enlarge and pad an array.
-    np.repeat: Repeat elements of an array.
+    np.repeat : Repeat elements of an array.
     ndarray.resize : resize an array in-place.
 
     Notes
@@ -2007,7 +2007,7 @@ def compress(condition, a, axis=None, out=None):
     --------
     take, choose, diag, diagonal, select
     ndarray.compress : Equivalent method in ndarray
-    extract: Equivalent method when working on 1-D arrays
+    extract : Equivalent method when working on 1-D arrays
     :ref:`ufuncs-output-type`
 
     Examples
@@ -2475,14 +2475,11 @@ def cumsum(a, axis=None, dtype=None, out=None):
         result has the same size as `a`, and the same shape as `a` if
         `axis` is not None or `a` is a 1-d array.
 
-
     See Also
     --------
     sum : Sum array elements.
-
     trapz : Integration of array values using the composite trapezoidal rule.
-
-    diff :  Calculate the n-th discrete difference along given axis.
+    diff : Calculate the n-th discrete difference along given axis.
 
     Notes
     -----
