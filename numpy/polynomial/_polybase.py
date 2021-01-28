@@ -757,9 +757,6 @@ class ABCPolyBase(abc.ABC):
         Conversion between domains and class types can result in
         numerically ill defined series.
 
-        Examples
-        --------
-
         """
         if kind is None:
             kind = self.__class__
