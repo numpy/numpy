@@ -2371,8 +2371,6 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
 
         /* Before contunuing, ensure that there are not too fancy indices */
         if (indices[i].type & HAS_FANCY) {
-            assert(indices[i].type == HAS_FANCY ||
-                   indices[i].type == HAS_0D_BOOL);
             if (NPY_UNLIKELY(j >= NPY_MAXDIMS)) {
                 PyErr_Format(PyExc_IndexError,
                         "too many advanced (array) indices. This probably "
