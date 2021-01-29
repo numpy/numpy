@@ -3,6 +3,8 @@ import warnings
 import functools
 import operator
 
+import pytest
+
 import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
@@ -546,6 +548,21 @@ class TestIndexing:
         arr[0] = np.str_("asdfg")  # must assign as a sequence
         assert_array_equal(arr[0], np.array("asdfg", dtype="c"))
         assert arr[0, 1] == b"s"  # make sure not all were set to "a" for both
+
+    @pytest.mark.parametrize("index",
+            [True, False, np.array([0])])
+    @pytest.mark.parametrize("num", [32, 40])
+    @pytest.mark.parametrize("original_ndim", [1, 32])
+    def test_too_many_advanced_indices(self, index, num, original_ndim):
+        # These are limitations based on the number of arguments we can process.
+        # For `num=32` (and all boolean cases), the result is actually define;
+        # but the use of NpyIter (NPY_MAXARGS) limits it for technical reasons.
+        arr = np.ones((1,) * original_ndim)
+        with pytest.raises(IndexError):
+            arr[(index,) * num]
+        with pytest.raises(IndexError):
+            arr[(index,) * num] = 1.
+
 
 class TestFieldIndexing:
     def test_scalar_return_type(self):
