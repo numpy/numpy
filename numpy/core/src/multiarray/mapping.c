@@ -1037,8 +1037,6 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *op[2] = {self, bmask};
         npy_uint32 flags, op_flags[2];
         npy_intp fixed_strides[3];
-        PyArray_StridedUnaryOp *stransfer = NULL;
-        NpyAuxData *transferdata = NULL;
 
         NpyIter_IterNextFunc *iternext;
         npy_intp innersize, *innerstrides;
@@ -1063,12 +1061,13 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        NPY_cast_info cast_info;
         if (PyArray_GetDTypeTransferFunction(
                         IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
-                        &stransfer, &transferdata,
+                        &cast_info,
                         &needs_api) != NPY_SUCCEED) {
             Py_DECREF(ret);
             NpyIter_Deallocate(iter);
@@ -1080,7 +1079,7 @@ array_boolean_subscript(PyArrayObject *self,
         if (iternext == NULL) {
             Py_DECREF(ret);
             NpyIter_Deallocate(iter);
-            NPY_AUXDATA_FREE(transferdata);
+            NPY_cast_info_xfree(&cast_info);
             return NULL;
         }
 
@@ -1091,6 +1090,8 @@ array_boolean_subscript(PyArrayObject *self,
 
         self_stride = innerstrides[0];
         bmask_stride = innerstrides[1];
+        npy_intp strides[2] = {self_stride, itemsize};
+
         int res = 0;
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
@@ -1106,8 +1107,9 @@ array_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                res = stransfer(ret_data, itemsize, self_data, self_stride,
-                                subloopsize, itemsize, transferdata);
+                char *args[2] = {self_data, ret_data};
+                res = cast_info.func(&cast_info.context,
+                        args, &subloopsize, strides, cast_info.auxdata);
                 if (res < 0) {
                     break;
                 }
@@ -1122,7 +1124,7 @@ array_boolean_subscript(PyArrayObject *self,
         if (!NpyIter_Deallocate(iter)) {
             res = -1;
         }
-        NPY_AUXDATA_FREE(transferdata);
+        NPY_cast_info_xfree(&cast_info);
         if (res < 0) {
             /* Should be practically impossible, since there is no cast */
             Py_DECREF(ret);
@@ -1164,7 +1166,7 @@ NPY_NO_EXPORT int
 array_assign_boolean_subscript(PyArrayObject *self,
                     PyArrayObject *bmask, PyArrayObject *v, NPY_ORDER order)
 {
-    npy_intp size, src_itemsize, v_stride;
+    npy_intp size, v_stride;
     char *v_data;
     int needs_api = 0;
     npy_intp bmask_size;
@@ -1216,7 +1218,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
         v_stride = 0;
     }
 
-    src_itemsize = PyArray_DESCR(v)->elsize;
     v_data = PyArray_DATA(v);
 
     /* Create an iterator for the data */
@@ -1231,8 +1232,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
         npy_intp innersize, *innerstrides;
         char **dataptrs;
 
-        PyArray_StridedUnaryOp *stransfer = NULL;
-        NpyAuxData *transferdata = NULL;
         npy_intp self_stride, bmask_stride, subloopsize;
         char *self_data;
         char *bmask_data;
@@ -1264,13 +1263,14 @@ array_assign_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        NPY_cast_info cast_info;
         if (PyArray_GetDTypeTransferFunction(
                  IsUintAligned(self) && IsAligned(self) &&
                         IsUintAligned(v) && IsAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
-                        &stransfer, &transferdata,
+                        &cast_info,
                         &needs_api) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
             return -1;
@@ -1279,6 +1279,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
         if (!needs_api) {
             NPY_BEGIN_THREADS_NDITER(iter);
         }
+
+        npy_intp strides[2] = {v_stride, self_stride};
 
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
@@ -1294,8 +1296,10 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                res = stransfer(self_data, self_stride, v_data, v_stride,
-                        subloopsize, src_itemsize, transferdata);
+
+                char *args[2] = {v_data, self_data};
+                res = cast_info.func(&cast_info.context,
+                        args, &subloopsize, strides, cast_info.auxdata);
                 if (res < 0) {
                     break;
                 }
@@ -1309,7 +1313,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
             NPY_END_THREADS;
         }
 
-        NPY_AUXDATA_FREE(transferdata);
+        NPY_cast_info_xfree(&cast_info);
         if (!NpyIter_Deallocate(iter)) {
             res = -1;
         }
