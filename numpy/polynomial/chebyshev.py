@@ -1149,9 +1149,6 @@ def chebval(x, c, tensor=True):
     -----
     The evaluation uses Clenshaw recursion, aka synthetic division.
 
-    Examples
-    --------
-
     """
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':

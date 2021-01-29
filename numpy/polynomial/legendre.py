@@ -605,9 +605,6 @@ def legpow(c, pow, maxpower=16):
     --------
     legadd, legsub, legmulx, legmul, legdiv
 
-    Examples
-    --------
-
     """
     return pu._pow(legmul, c, pow, maxpower)
 
@@ -889,9 +886,6 @@ def legval(x, c, tensor=True):
     Notes
     -----
     The evaluation uses Clenshaw recursion, aka synthetic division.
-
-    Examples
-    --------
 
     """
     c = np.array(c, ndmin=1, copy=False)
