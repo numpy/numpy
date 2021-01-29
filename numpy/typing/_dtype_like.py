@@ -154,7 +154,7 @@ _DTypeLikeInt = Union[
     Type[np.signedinteger],
     "np.dtype[np.signedinteger]",
     "_SupportsDType[np.dtype[np.signedinteger]]",
-    _UInt8Codes,
+    _Int8Codes,
     _Int16Codes,
     _Int32Codes,
     _Int64Codes,
