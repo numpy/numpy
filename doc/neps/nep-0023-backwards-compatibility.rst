@@ -79,7 +79,7 @@ extensibility.
 Fixes for clear bugs are exempt from this backwards compatibility policy.
 However, in case of serious impact on users even bug fixes may have to be
 delayed for one or more releases. For example, if a downstream library would no
-longer build or would give incorrect results."
+longer build or would give incorrect results.
 
 
 Strategies related to deprecations
