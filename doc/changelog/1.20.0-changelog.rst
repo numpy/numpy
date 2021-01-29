@@ -193,7 +193,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 670 pull requests were merged for this release.
+A total of 684 pull requests were merged for this release.
 
 * `#13516 <https://github.com/numpy/numpy/pull/13516>`__: ENH: enable multi-platform SIMD compiler optimizations
 * `#14779 <https://github.com/numpy/numpy/pull/14779>`__: NEP 36 (fair play)
@@ -865,3 +865,17 @@ A total of 670 pull requests were merged for this release.
 * `#18063 <https://github.com/numpy/numpy/pull/18063>`__: BUG: Fix concatenation when the output is "S" or "U"
 * `#18064 <https://github.com/numpy/numpy/pull/18064>`__: BLD, BUG: Fix detecting aarch64 on macOS
 * `#18068 <https://github.com/numpy/numpy/pull/18068>`__: REL: Prepare for 1.20.0rc2 release.
+* `#18108 <https://github.com/numpy/numpy/pull/18108>`__: BUG, BLD: Generate the main dispatcher config header into the...
+* `#18120 <https://github.com/numpy/numpy/pull/18120>`__: BUG, SIMD: Fix _simd module build for 64bit ARM/NEON clang
+* `#18127 <https://github.com/numpy/numpy/pull/18127>`__: REL: Update 1.20.x after 1.19.5 release.
+* `#18130 <https://github.com/numpy/numpy/pull/18130>`__: BUG: Fix promotion of half and string
+* `#18146 <https://github.com/numpy/numpy/pull/18146>`__: BUG, MAINT: improve avx512 mask logical operations
+* `#18154 <https://github.com/numpy/numpy/pull/18154>`__: BUG: Promotion between strings and objects was assymetric
+* `#18192 <https://github.com/numpy/numpy/pull/18192>`__: MAINT: Use explicit reexports for numpy.typing objects
+* `#18201 <https://github.com/numpy/numpy/pull/18201>`__: BUG: Keep ignoring most errors during array-protocol lookup
+* `#18219 <https://github.com/numpy/numpy/pull/18219>`__: MAINT: random shuffle: warn on unrecognized objects, fix empty...
+* `#18231 <https://github.com/numpy/numpy/pull/18231>`__: BLD: update OpenBLAS to af2b0d02
+* `#18237 <https://github.com/numpy/numpy/pull/18237>`__: DOC: Clarify the type alias deprecation message
+* `#18257 <https://github.com/numpy/numpy/pull/18257>`__: BUG: Ensure too many advanced indices raises an exception
+* `#18258 <https://github.com/numpy/numpy/pull/18258>`__: MAINT: add an 'apt update'
+* `#18259 <https://github.com/numpy/numpy/pull/18259>`__: DOC: Prepare for the NumPy 1.20.0 release.
