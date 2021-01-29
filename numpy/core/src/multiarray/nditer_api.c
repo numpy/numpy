@@ -2009,8 +2009,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                         dst_coords, axisdata_incr,
                         dst_shape, axisdata_incr,
                         op_transfersize, dtypes[iop]->elsize,
-                        (PyArray_MaskedStridedUnaryOp *)transferinfo[iop].write.func,
-                        transferinfo[iop].write.auxdata) < 0) {
+                        &transferinfo[iop].write) < 0) {
                     return -1;
                 }
             }
@@ -2022,15 +2021,14 @@ npyiter_copy_from_buffers(NpyIter *iter)
                         dst_coords, axisdata_incr,
                         dst_shape, axisdata_incr,
                         op_transfersize, dtypes[iop]->elsize,
-                        transferinfo[iop].write.func,
-                        transferinfo[iop].write.auxdata) < 0) {
+                        &transferinfo[iop].write) < 0) {
                     return -1;
                 }
             }
         }
         /* If there's no copy back, we may have to decrement refs.  In
-         * this case, the transfer function has a 'decsrcref' transfer
-         * function, so we can use it to do the decrement.
+         * this case, the transfer is instead a function which clears
+         * (DECREFs) the single input.
          *
          * The flag USINGBUFFER is set when the buffer was used, so
          * only decrement refs when this flag is on.
@@ -2040,9 +2038,10 @@ npyiter_copy_from_buffers(NpyIter *iter)
             NPY_IT_DBG_PRINT1("Iterator: Freeing refs and zeroing buffer "
                                 "of operand %d\n", (int)iop);
             /* Decrement refs */
+            npy_intp buf_stride = dtypes[iop]->elsize;
             if (transferinfo[iop].write.func(
-                    NULL, 0, buffer, dtypes[iop]->elsize,
-                    transfersize, dtypes[iop]->elsize,
+                    &transferinfo[iop].write.context,
+                    &buffer, &transfersize, &buf_stride,
                     transferinfo[iop].write.auxdata) < 0) {
                 /* Since this should only decrement, it should never error */
                 assert(0);
@@ -2550,8 +2549,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         src_coords, axisdata_incr,
                         src_shape, axisdata_incr,
                         op_transfersize, src_itemsize,
-                        transferinfo[iop].read.func,
-                        transferinfo[iop].read.auxdata) < 0) {
+                        &transferinfo[iop].read) < 0) {
                     return -1;
                 }
             }

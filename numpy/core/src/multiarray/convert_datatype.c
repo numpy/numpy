@@ -8,6 +8,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
+#include "lowlevel_strided_loops.h"
 
 #include "npy_pycompat.h"
 #include "numpy/npy_math.h"
@@ -1978,7 +1979,7 @@ NPY_NO_EXPORT int
 legacy_cast_get_strided_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references, npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArray_Descr **descrs = context->descriptors;
@@ -1986,7 +1987,7 @@ legacy_cast_get_strided_loop(
 
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
 
-    if (PyArray_GetLegacyDTypeTransferFunction(
+    if (get_wrapped_legacy_cast_function(
             aligned, strides[0], strides[1], descrs[0], descrs[1],
             move_references, out_loop, out_transferdata, &out_needs_api, 0) < 0) {
         return -1;
@@ -2041,7 +2042,7 @@ NPY_NO_EXPORT int
 get_byteswap_loop(
         PyArrayMethod_Context *context,
         int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArray_Descr **descrs = context->descriptors;
@@ -2083,7 +2084,7 @@ NPY_NO_EXPORT int
 complex_to_noncomplex_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references, npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     static PyObject *cls = NULL;
@@ -2412,7 +2413,7 @@ NPY_NO_EXPORT int
 string_to_string_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     int unicode_swap = 0;
@@ -2631,7 +2632,7 @@ nonstructured_to_structured_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
         npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop,
+        PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -2664,11 +2665,7 @@ nonstructured_to_structured_get_loop(
          *       (which is the behaviour at least up to 1.20).
          */
         int needs_api = 0;
-        if (!aligned) {
-            /* We need to wrap if aligned is 0. Use a recursive call */
-
-        }
-        if (PyArray_GetLegacyDTypeTransferFunction(
+        if (get_wrapped_legacy_cast_function(
                 1, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
@@ -2775,7 +2772,7 @@ structured_to_nonstructured_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
         npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop,
+        PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -2807,7 +2804,7 @@ structured_to_nonstructured_get_loop(
          * scalars, and should likely just not be allowed.
          */
         int needs_api = 0;
-        if (PyArray_GetLegacyDTypeTransferFunction(
+        if (get_wrapped_legacy_cast_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
@@ -3008,7 +3005,7 @@ void_to_void_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
         npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop,
+        PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -3222,7 +3219,7 @@ object_to_object_get_loop(
         PyArrayMethod_Context *NPY_UNUSED(context),
         int NPY_UNUSED(aligned), int move_references,
         npy_intp *NPY_UNUSED(strides),
-        PyArray_StridedUnaryOp **out_loop,
+        PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
