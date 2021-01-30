@@ -37,7 +37,7 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/source/release/1.20.0-notes.rst'
+RELEASE_NOTES = 'doc/source/release/1.20.1-notes.rst'
 
 
 #-------------------------------------------------------
