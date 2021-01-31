@@ -166,9 +166,8 @@ def short_path(path, cwd=None):
 
     Parameters
     ----------
-    path: str or None
-
-    cwd: str or None
+    path : str or None
+    cwd : str or None
 
     Returns
     -------
@@ -344,8 +343,8 @@ def is_deprecated(f):
     """
     Check if module `f` is deprecated
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     f : ModuleType
 
     Returns
@@ -785,8 +784,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
     full_name : str
 
     verbose : bool
-
-    doctest_warning : bool
+    doctest_warnings : bool
 
     Returns
     -------
