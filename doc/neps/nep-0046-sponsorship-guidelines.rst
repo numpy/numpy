@@ -5,10 +5,10 @@ NEP 46 — NumPy Sponsorship Guidelines
 =====================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
-:Status: Draft
+:Status: Accepted
 :Type: Process
 :Created: 2020-12-27
-:Resolution: <url> (required for Accepted | Rejected | Withdrawn)
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-January/081424.html
 
 
 Abstract
@@ -233,7 +233,8 @@ as how that helps NumFOCUS-affiliated projects (including NumPy).
 Discussion
 ----------
 
-Mailing list thread(s) discussing this NEP: TODO
+- `Mailing list thread discussing this NEP <https://mail.python.org/pipermail/numpy-discussion/2020-December/081353.html>`__
+- `PR with review of the NEP draft <https://github.com/numpy/numpy/pull/18084>`__
 
 
 References and Footnotes
