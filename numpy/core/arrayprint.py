@@ -92,8 +92,8 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         # forbid the bad precision arg as suggested by issue #18254
         try:
             options['precision'] = index(precision)
-        except TypeError:
-            raise TypeError('precision must be an integer')
+        except TypeError as e:
+            raise TypeError('precision must be an integer') from e
 
     return options
 
