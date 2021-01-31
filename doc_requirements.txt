@@ -5,3 +5,4 @@ scipy
 matplotlib
 pandas
 pydata-sphinx-theme==0.4.3
+sphinx-last-updated-by-git
