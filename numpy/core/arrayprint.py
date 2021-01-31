@@ -41,7 +41,7 @@ from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
-from operator import index
+import operator
 import warnings
 import contextlib
 
@@ -91,7 +91,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if precision is not None:
         # forbid the bad precision arg as suggested by issue #18254
         try:
-            options['precision'] = index(precision)
+            options['precision'] = operator.index(precision)
         except TypeError as e:
             raise TypeError('precision must be an integer') from e
 
