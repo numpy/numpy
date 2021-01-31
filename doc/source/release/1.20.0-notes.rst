@@ -3,8 +3,8 @@
 ==========================
 NumPy 1.20.0 Release Notes
 ==========================
-This NumPy release is the largest so made to date, some 648 PRs contributed by
-182 people have been merged. See the list of highlights below for more details.
+This NumPy release is the largest so made to date, some 684 PRs contributed by
+184 people have been merged. See the list of highlights below for more details.
 The Python versions supported for this release are 3.7-3.9, support for Python
 3.6 has been dropped. Highlights are
 
