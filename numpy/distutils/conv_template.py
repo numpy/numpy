@@ -216,9 +216,9 @@ def parse_string(astr, env, level, line) :
         name = match.group(1)
         try :
             val = env[name]
-        except KeyError:
+        except KeyError from e:
             msg = 'line %d: no definition of key "%s"'%(line, name)
-            raise ValueError(msg)
+            raise ValueError(msg) from e
         return val
 
     code = [lineno]
