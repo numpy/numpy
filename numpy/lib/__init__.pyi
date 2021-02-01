@@ -177,3 +177,4 @@ nanquantile: Any
 histogram: Any
 histogramdd: Any
 histogram_bin_edges: Any
+NumpyVersion: Any
