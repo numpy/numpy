@@ -335,7 +335,6 @@ bincount: Any
 bitwise_not: Any
 blackman: Any
 bmat: Any
-bool8: Any
 broadcast: Any
 broadcast_arrays: Any
 broadcast_to: Any
@@ -343,7 +342,6 @@ busday_count: Any
 busday_offset: Any
 busdaycalendar: Any
 byte_bounds: Any
-bytes0: Any
 c_: Any
 can_cast: Any
 cast: Any
@@ -351,7 +349,6 @@ chararray: Any
 column_stack: Any
 common_type: Any
 compare_chararrays: Any
-complex256: Any
 concatenate: Any
 conj: Any
 copy: Any
@@ -387,7 +384,6 @@ fix: Any
 flip: Any
 fliplr: Any
 flipud: Any
-float128: Any
 format_parser: Any
 frombuffer: Any
 fromfile: Any
@@ -471,7 +467,6 @@ nditer: Any
 nested_iters: Any
 newaxis: Any
 numarray: Any
-object0: Any
 ogrid: Any
 packbits: Any
 pad: Any
@@ -522,7 +517,6 @@ sinc: Any
 sort_complex: Any
 source: Any
 split: Any
-string_: Any
 take_along_axis: Any
 tile: Any
 trapz: Any
@@ -545,7 +539,6 @@ unwrap: Any
 vander: Any
 vdot: Any
 vectorize: Any
-void0: Any
 vsplit: Any
 where: Any
 who: Any
@@ -1667,12 +1660,16 @@ class bool_(generic):
     __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
+bool8 = bool_
+
 class object_(generic):
     def __init__(self, __value: object = ...) -> None: ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
+
+object0 = object_
 
 class datetime64(generic):
     @overload
@@ -1869,6 +1866,7 @@ class floating(inexact[_NBit1]):
 float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 float64 = floating[_64Bit]
+float128 = floating[_128Bit]
 
 half = floating[_NBitHalf]
 single = floating[_NBitSingle]
@@ -1903,6 +1901,7 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
 
 complex64 = complexfloating[_32Bit, _32Bit]
 complex128 = complexfloating[_64Bit, _64Bit]
+complex256 = complexfloating[_128Bit, _128Bit]
 
 csingle = complexfloating[_NBitSingle, _NBitSingle]
 singlecomplex = complexfloating[_NBitSingle, _NBitSingle]
@@ -1925,6 +1924,8 @@ class void(flexible):
         self, val: ArrayLike, dtype: DTypeLike, offset: int = ...
     ) -> None: ...
 
+void0 = void
+
 class character(flexible):  # type: ignore
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
@@ -1939,6 +1940,9 @@ class bytes_(character, bytes):
     def __init__(
         self, __value: str, encoding: str = ..., errors: str = ...
     ) -> None: ...
+
+string_ = bytes_
+bytes0 = bytes_
 
 class str_(character, str):
     @overload

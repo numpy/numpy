@@ -30,6 +30,11 @@ reveal_type(np.str0('foo'))  # E: numpy.str_
 # Aliases
 reveal_type(np.unicode_())  # E: numpy.str_
 reveal_type(np.str0())  # E: numpy.str_
+reveal_type(np.bool8())  # E: numpy.bool_
+reveal_type(np.bytes0())  # E: numpy.bytes_
+reveal_type(np.string_())  # E: numpy.bytes_
+reveal_type(np.object0())  # E: numpy.object_
+reveal_type(np.void0(0))  # E: numpy.void
 
 reveal_type(np.byte())  # E: {byte}
 reveal_type(np.short())  # E: {short}
