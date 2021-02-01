@@ -24,9 +24,9 @@ from numpy import (
 from numpy.typing import ArrayLike, _CharLike_co, _FloatLike_co
 
 if sys.version_info > (3, 8):
-    from typing import Literal, TypedDict
+    from typing import Literal, TypedDict, SupportsIndex
 else:
-    from typing_extensions import Literal, TypedDict
+    from typing_extensions import Literal, TypedDict, SupportsIndex
 
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 
@@ -62,7 +62,7 @@ class _FormatOptions(TypedDict):
     legacy: Literal[False, "1.13"]
 
 def set_printoptions(
-    precision: Optional[int] = ...,
+    precision: Optional[SupportsIndex] = ...,
     threshold: Optional[int] = ...,
     edgeitems: Optional[int] = ...,
     linewidth: Optional[int] = ...,
@@ -79,7 +79,7 @@ def get_printoptions() -> _FormatOptions: ...
 def array2string(
     a: ndarray[Any, Any],
     max_line_width: Optional[int] = ...,
-    precision: Optional[int] = ...,
+    precision: Optional[SupportsIndex] = ...,
     suppress_small: Optional[bool] = ...,
     separator: str = ...,
     prefix: str = ...,
@@ -117,20 +117,20 @@ def format_float_positional(
 def array_repr(
     arr: ndarray[Any, Any],
     max_line_width: Optional[int] = ...,
-    precision: Optional[int] = ...,
+    precision: Optional[SupportsIndex] = ...,
     suppress_small: Optional[bool] = ...,
 ) -> str: ...
 def array_str(
     a: ndarray[Any, Any],
     max_line_width: Optional[int] = ...,
-    precision: Optional[int] = ...,
+    precision: Optional[SupportsIndex] = ...,
     suppress_small: Optional[bool] = ...,
 ) -> str: ...
 def set_string_function(
     f: Optional[Callable[[ndarray[Any, Any]], str]], repr: bool = ...
 ) -> None: ...
 def printoptions(
-    precision: Optional[int] = ...,
+    precision: Optional[SupportsIndex] = ...,
     threshold: Optional[int] = ...,
     edgeitems: Optional[int] = ...,
     linewidth: Optional[int] = ...,
