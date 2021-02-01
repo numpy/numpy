@@ -91,6 +91,32 @@
 #endif
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
+#ifdef __CYGWIN__
+
+/* cabsl(1.1e4932+0j) = inf */
+#undef HAVE_CABSL
+
+/* log2(2. ** 29) != 29. */
+#undef HAVE_LOG2
+
+/* casinh(1e-20 + 0j) == 0 */
+#undef HAVE_CASINH
+#undef HAVE_CASINHL
+#undef HAVE_CASINHF
+
+/* Does not raise FPE "overflow" on 2 ** big */
+#undef HAVE_CPOWL
+
+/* sqrtl(-inf) == -inf */
+#undef HAVE_SQRTL
+
+/* Branch cut tests fail, I think usually with sqrt */
+#undef HAVE_CSQRT
+#undef HAVE_CSQRTF
+#undef HAVE_CSQRTL
+
+#endif /* __CYGWIN__ */
+
 /* powl gives zero division warning on OS X, see gh-8307 */
 #if defined(HAVE_POWL) && defined(NPY_OS_DARWIN)
 #undef HAVE_POWL
