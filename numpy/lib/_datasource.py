@@ -35,7 +35,6 @@ Example::
 
 """
 import os
-import shutil
 import io
 
 from numpy.core.overrides import set_module
@@ -257,6 +256,8 @@ class DataSource:
     def __del__(self):
         # Remove temp directories
         if hasattr(self, '_istmpdest') and self._istmpdest:
+            import shutil
+
             shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
@@ -319,8 +320,9 @@ class DataSource:
         Creates a copy of the file in the datasource cache.
 
         """
-        # We import these here because importing urllib is slow and
+        # We import these here because importing them is slow and
         # a significant fraction of numpy's total import time.
+        import shutil
         from urllib.request import urlopen
         from urllib.error import URLError
 
