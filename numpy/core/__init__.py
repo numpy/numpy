@@ -75,7 +75,7 @@ from . import fromnumeric
 from .fromnumeric import *
 from . import defchararray as char
 from . import records as rec
-from .records import *
+from .records import record, recarray, format_parser
 from .memmap import *
 from .defchararray import chararray
 from . import function_base
@@ -106,7 +106,7 @@ from . import _methods
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
-__all__ += rec.__all__
+__all__ += ['record', 'recarray', 'format_parser']
 __all__ += ['chararray']
 __all__ += function_base.__all__
 __all__ += machar.__all__
