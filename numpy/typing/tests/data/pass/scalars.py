@@ -166,6 +166,11 @@ c16.transpose()
 
 # Aliases
 np.str0()
+np.bool8()
+np.bytes0()
+np.string_()
+np.object0()
+np.void0(0)
 
 np.byte()
 np.short()
