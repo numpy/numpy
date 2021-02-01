@@ -376,7 +376,7 @@ if ctypes is not None:
         except KeyError as e:
             raise NotImplementedError(
                 "Converting {!r} to a ctypes type".format(dtype)
-            ) from None
+            ) from e
 
         if dtype_with_endian.byteorder == '>':
             ctype = ctype.__ctype_be__
