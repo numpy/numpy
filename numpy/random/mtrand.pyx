@@ -4436,6 +4436,9 @@ cdef class RandomState:
             char* x_ptr
             char* buf_ptr
 
+        if isinstance(x, memoryview):
+            x = np.asarray(x)
+
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
