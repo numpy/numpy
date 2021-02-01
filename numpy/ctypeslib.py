@@ -4,7 +4,7 @@
 ============================
 
 See Also
----------
+--------
 load_library : Load a C library.
 ndpointer : Array restype/argtype with verification.
 as_ctypes : Create a ctypes array from an ndarray.
