@@ -510,6 +510,21 @@ class TestRandomDist:
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
 
+    def test_shuffle_memoryview(self):
+        # gh-18273
+        # allow graceful handling of memoryviews
+        # (treat the same as arrays)
+        np.random.seed(self.seed)
+        a = np.arange(5).data
+        np.random.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 4, 3, 2])
+        rng = np.random.RandomState(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 2, 3, 4])
+        rng = np.random.default_rng(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [4, 1, 0, 3, 2])
+
     def test_beta(self):
         np.random.seed(self.seed)
         actual = np.random.beta(.1, .9, size=(3, 2))

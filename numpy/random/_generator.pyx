@@ -4394,6 +4394,9 @@ cdef class Generator:
             char* x_ptr
             char* buf_ptr
 
+        if isinstance(x, memoryview):
+            x = np.asarray(x)
+
         axis = normalize_axis_index(axis, np.ndim(x))
 
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
