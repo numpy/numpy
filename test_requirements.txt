@@ -10,6 +10,6 @@ pickle5; python_version == '3.7' and platform_python_implementation != 'PyPy'
 cffi
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
-# - Mypy doesn't currently work on Python 3.9
+# - There is no point in installing typing_extensions without mypy
 mypy==0.800; platform_python_implementation != "PyPy"
-typing_extensions
+typing_extensions==3.7.4.3; platform_python_implementation != "PyPy"
