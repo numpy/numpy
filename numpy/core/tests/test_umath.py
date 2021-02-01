@@ -870,20 +870,20 @@ class TestFloat_power:
 
 
 class TestLog2:
-    def test_log2_values(self):
+    @pytest.mark.parametrize('dt', ['f', 'd', 'g'])
+    def test_log2_values(self, dt):
         x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
         y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for dt in ['f', 'd', 'g']:
-            xf = np.array(x, dtype=dt)
-            yf = np.array(y, dtype=dt)
-            assert_almost_equal(np.log2(xf), yf)
+        xf = np.array(x, dtype=dt)
+        yf = np.array(y, dtype=dt)
+        assert_almost_equal(np.log2(xf), yf)
 
-    def test_log2_ints(self):
+    @pytest.mark.parametrize("i", range(1, 65))
+    def test_log2_ints(self, i):
         # a good log2 implementation should provide this,
         # might fail on OS with bad libm
-        for i in range(1, 65):
-            v = np.log2(2.**i)
-            assert_equal(v, float(i), err_msg='at exponent %d' % i)
+        v = np.log2(2.**i)
+        assert_equal(v, float(i), err_msg='at exponent %d' % i)
 
     def test_log2_special(self):
         assert_equal(np.log2(1.), 0.)
@@ -1069,18 +1069,19 @@ class TestSpecialFloats:
             assert_raises(FloatingPointError, np.cos, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.cos, np.float32(np.inf))
 
-    def test_sqrt_values(self):
+    @pytest.mark.parametrize('dt', ['f', 'd', 'g'])
+    def test_sqrt_values(self, dt):
         with np.errstate(all='ignore'):
             x = [np.nan,  np.nan, np.inf, np.nan, 0.]
             y = [np.nan, -np.nan, np.inf, -np.inf, 0.]
-            for dt in ['f', 'd', 'g']:
-                xf = np.array(x, dtype=dt)
-                yf = np.array(y, dtype=dt)
-                assert_equal(np.sqrt(yf), xf)
+            xf = np.array(x, dtype=dt)
+            yf = np.array(y, dtype=dt)
+            assert_equal(np.sqrt(yf), xf)
 
-        #with np.errstate(invalid='raise'):
-        #    for dt in ['f', 'd', 'g']:
-        #        assert_raises(FloatingPointError, np.sqrt, np.array(-100., dtype=dt))
+        # with np.errstate(invalid='raise'):
+        #     assert_raises(
+        #         FloatingPointError, np.sqrt, np.array(-100., dtype=dt)
+        #     )
 
     def test_abs_values(self):
         x = [np.nan,  np.nan, np.inf, np.inf, 0., 0., 1.0, 1.0]
