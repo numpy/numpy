@@ -153,9 +153,7 @@ from typing import (
 if sys.version_info >= (3, 8):
     from typing import Literal, Protocol, SupportsIndex, Final
 else:
-    from typing_extensions import Literal, Protocol, Final
-    class SupportsIndex(Protocol):
-        def __index__(self) -> int: ...
+    from typing_extensions import Literal, Protocol, SupportsIndex, Final
 
 # Ensures that the stubs are picked up
 from numpy import (
