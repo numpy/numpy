@@ -570,13 +570,12 @@ class build_ext (old_build_ext):
         unlinkable_fobjects = list(unlinkable_fobjects)
 
         # Expand possible fake static libraries to objects
-        to_remove = []
-        for lib in libraries:
+        for lib in libraries[:]:
             for libdir in library_dirs:
                 fake_lib = os.path.join(libdir, lib + '.fobjects')
                 if os.path.isfile(fake_lib):
                     # Replace fake static library
-                    to_remove.append(lib)
+                    libraries.remove(lib)
                     with open(fake_lib, 'r') as f:
                         unlinkable_fobjects.extend(f.read().splitlines())
 
@@ -584,9 +583,6 @@ class build_ext (old_build_ext):
                     c_lib = os.path.join(libdir, lib + '.cobjects')
                     with open(c_lib, 'r') as f:
                         objects.extend(f.read().splitlines())
-
-        for lib in to_remove:
-            libraries.remove(lib)
 
         # Wrap unlinkable objects to a linkable one
         if unlinkable_fobjects:
