@@ -271,6 +271,9 @@ __all__ = [
     "var",
 ]
 
+__path__: List[str]
+__version__: str
+
 DataSource: Any
 MachAr: Any
 ScalarType: Any
