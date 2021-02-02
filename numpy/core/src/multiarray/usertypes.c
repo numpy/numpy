@@ -235,7 +235,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
             !PyDict_CheckExact(descr->fields)) {
             PyErr_Format(PyExc_ValueError,
                     "Failed to register dtype for %S: Legacy user dtypes "
-                    "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are"
+                    "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are "
                     "unsupported.  It is possible to create such a dtype only "
                     "if it is a structured dtype with names and fields "
                     "hardcoded at registration time.\n"
