@@ -18,3 +18,17 @@ reveal_type(np.version)  # E: ModuleType
 
 # TODO: Remove when annotations have been added to `np.testing.assert_equal`
 reveal_type(np.testing.assert_equal)  # E: Any
+
+reveal_type(np.__path__)  # E: list[builtins.str]
+reveal_type(np.__version__)  # E: str
+
+reveal_type(np.__all__)  # E: list[builtins.str]
+reveal_type(np.char.__all__)  # E: list[builtins.str]
+reveal_type(np.ctypeslib.__all__)  # E: list[builtins.str]
+reveal_type(np.emath.__all__)  # E: list[builtins.str]
+reveal_type(np.lib.__all__)  # E: list[builtins.str]
+reveal_type(np.ma.__all__)  # E: list[builtins.str]
+reveal_type(np.random.__all__)  # E: list[builtins.str]
+reveal_type(np.rec.__all__)  # E: list[builtins.str]
+reveal_type(np.testing.__all__)  # E: list[builtins.str]
+reveal_type(f2py.__all__)  # E: list[builtins.str]
