@@ -239,6 +239,8 @@ struct _transferdata {
 struct NpyIter_TransferInfo_tag {
     struct _transferdata read;
     struct _transferdata write;
+    /* Probably unnecessary, but make sure what follows is intp aligned: */
+    npy_intp _unused_ensure_alignment[];
 };
 
 struct NpyIter_BufferData_tag {
@@ -263,7 +265,6 @@ struct NpyIter_BufferData_tag {
         (&(bufferdata)->bd_flexdata + 3*(nop)))
 #define NBF_BUFFERS(bufferdata) ((char **) \
         (&(bufferdata)->bd_flexdata + 4*(nop)))
-/* NOTE: We assume that transferdata is a multiple of npy_intp in size. */
 #define NBF_TRANSFERINFO(bufferdata) ((NpyIter_TransferInfo *) \
         (&(bufferdata)->bd_flexdata + 5*(nop)))
 
