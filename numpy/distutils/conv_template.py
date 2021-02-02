@@ -218,7 +218,7 @@ def parse_string(astr, env, level, line) :
             val = env[name]
         except KeyError:
             msg = 'line %d: no definition of key "%s"'%(line, name)
-            raise ValueError(msg)
+            raise ValueError(msg) from None
         return val
 
     code = [lineno]
