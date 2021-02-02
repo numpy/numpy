@@ -7,3 +7,4 @@ ndpointer: Any
 c_intp: Any
 as_ctypes: Any
 as_array: Any
+as_ctypes_type: Any

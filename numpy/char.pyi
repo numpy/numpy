@@ -53,3 +53,4 @@ isnumeric: Any
 isdecimal: Any
 array: Any
 asarray: Any
+chararray: Any
