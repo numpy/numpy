@@ -127,6 +127,9 @@ from numpy.typing._callable import (
     _NumberOp,
     _ComparisonOp,
 )
+
+# NOTE: Numpy's mypy plugin is used for removing the types unavailable
+# to the specific platform
 from numpy.typing._extended_precision import (
     uint128 as uint128,
     uint256 as uint256,
