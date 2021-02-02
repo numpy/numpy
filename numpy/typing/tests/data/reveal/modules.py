@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import f2py
 
 reveal_type(np)  # E: ModuleType
 
