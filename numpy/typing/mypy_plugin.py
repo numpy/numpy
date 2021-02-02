@@ -1,5 +1,7 @@
 """A module containing `numpy`-specific plugins for mypy."""
 
+from __future__ import annotations
+
 import typing as t
 
 import numpy as np
@@ -39,10 +41,10 @@ def _get_precision_dict() -> t.Dict[str, str]:
 
 #: A dictionary mapping type-aliases in `numpy.typing._nbit` to
 #: concrete `numpy.typing.NBitBase` subclasses.
-_PRECISION_DICT = _get_precision_dict()
+_PRECISION_DICT: t.Final = _get_precision_dict()
 
 
-def _hook(ctx: "AnalyzeTypeContext") -> "Type":
+def _hook(ctx: AnalyzeTypeContext) -> Type:
     """Replace a type-alias with a concrete ``NBitBase`` subclass."""
     typ, _, api = ctx
     name = typ.name.split(".")[-1]
@@ -50,7 +52,7 @@ def _hook(ctx: "AnalyzeTypeContext") -> "Type":
     return api.named_type(name_new)
 
 
-if MYPY_EX is None:
+if t.TYPE_CHECKING or MYPY_EX is None:
     class _NumpyPlugin(Plugin):
         """A plugin for assigning platform-specific `numpy.number` precisions."""
 
@@ -64,6 +66,6 @@ if MYPY_EX is None:
         return _NumpyPlugin
 
 else:
-    def plugin(version: str) -> t.Type["_NumpyPlugin"]:
+    def plugin(version: str) -> t.Type[_NumpyPlugin]:
         """An entry-point for mypy."""
         raise MYPY_EX
