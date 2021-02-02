@@ -1,6 +1,10 @@
 #ifndef _RANDOMDGEN__DISTRIBUTIONS_H_
 #define _RANDOMDGEN__DISTRIBUTIONS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "Python.h"
 #include "numpy/npy_common.h"
 #include <stddef.h>
@@ -196,5 +200,9 @@ double random_loggam(double x);
 static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
     return bitgen_state->next_double(bitgen_state->state);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
