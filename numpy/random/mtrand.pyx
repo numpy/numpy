@@ -2,7 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
-from collections.abc import MutableSequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -4436,9 +4436,6 @@ cdef class RandomState:
             char* x_ptr
             char* buf_ptr
 
-        if isinstance(x, memoryview):
-            x = np.asarray(x)
-
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
@@ -4476,7 +4473,7 @@ cdef class RandomState:
                     x[i] = buf
         else:
             # Untyped path.
-            if not isinstance(x, MutableSequence):
+            if not isinstance(x, Sequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
                     "`x` isn't a recognized object; `shuffle` is not guaranteed "
