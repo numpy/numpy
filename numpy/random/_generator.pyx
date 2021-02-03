@@ -2,7 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
-from collections.abc import MutableSequence
+from collections.abc import Sequence
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -4440,7 +4440,7 @@ cdef class Generator:
                     x[i] = buf
         else:
             # Untyped path.
-            if not isinstance(x, MutableSequence):
+            if not isinstance(x, Sequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
                     "`x` isn't a recognized object; `shuffle` is not guaranteed "
