@@ -670,16 +670,16 @@ class TestDeprecatedGlobals(_DeprecationTestCase):
         reason='module-level __getattr__ not supported')
     def test_type_aliases(self):
         # from builtins
-        self.assert_deprecated(lambda: np.bool)
-        self.assert_deprecated(lambda: np.int)
-        self.assert_deprecated(lambda: np.float)
-        self.assert_deprecated(lambda: np.complex)
-        self.assert_deprecated(lambda: np.object)
-        self.assert_deprecated(lambda: np.str)
+        self.assert_deprecated(lambda: np.bool(True))
+        self.assert_deprecated(lambda: np.int(1))
+        self.assert_deprecated(lambda: np.float(1))
+        self.assert_deprecated(lambda: np.complex(1))
+        self.assert_deprecated(lambda: np.object())
+        self.assert_deprecated(lambda: np.str('abc'))
 
         # from np.compat
-        self.assert_deprecated(lambda: np.long)
-        self.assert_deprecated(lambda: np.unicode)
+        self.assert_deprecated(lambda: np.long(1))
+        self.assert_deprecated(lambda: np.unicode('abc'))
 
 
 class TestMatrixInOuter(_DeprecationTestCase):

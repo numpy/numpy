@@ -207,8 +207,8 @@ else:
                     extended_msg=_int_extended_msg.format("long")))
 
     __deprecated_attrs__["unicode"] = (
-        getattr(compat, "long"),
-        _msg.format(n="unciode", n2="str",
+        getattr(compat, "unicode"),
+        _msg.format(n="unicode", n2="str",
                     extended_msg=_specific_msg.format("str_")))
 
     del _msg, _specific_msg, _int_extended_msg, _type_info, _builtins
