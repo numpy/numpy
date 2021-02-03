@@ -1,5 +1,25 @@
 from typing import Any, List
 
+from numpy import (
+    ndenumerate as ndenumerate,
+    ndindex as ndindex,
+)
+
+from numpy.lib.index_tricks import (
+    ravel_multi_index as ravel_multi_index,
+    unravel_index as unravel_index,
+    mgrid as mgrid,
+    ogrid as ogrid,
+    r_ as r_,
+    c_ as c_,
+    s_ as s_,
+    index_exp as index_exp,
+    ix_ as ix_,
+    fill_diagonal as fill_diagonal,
+    diag_indices as diag_indices,
+    diag_indices_from as diag_indices_from,
+)
+
 from numpy.lib.ufunclike import (
     fix as fix,
     isposinf as isposinf,
@@ -25,20 +45,6 @@ asfarray: Any
 mintypecode: Any
 asscalar: Any
 common_type: Any
-ravel_multi_index: Any
-unravel_index: Any
-mgrid: Any
-ogrid: Any
-r_: Any
-c_: Any
-s_: Any
-index_exp: Any
-ix_: Any
-ndenumerate: Any
-ndindex: Any
-fill_diagonal: Any
-diag_indices: Any
-diag_indices_from: Any
 select: Any
 piecewise: Any
 trim_zeros: Any

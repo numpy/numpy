@@ -338,6 +338,21 @@ from numpy.core.shape_base import (
     vstack as vstack,
 )
 
+from numpy.lib.index_tricks import (
+    ravel_multi_index as ravel_multi_index,
+    unravel_index as unravel_index,
+    mgrid as mgrid,
+    ogrid as ogrid,
+    r_ as r_,
+    c_ as c_,
+    s_ as s_,
+    index_exp as index_exp,
+    ix_ as ix_,
+    fill_diagonal as fill_diagonal,
+    diag_indices as diag_indices,
+    diag_indices_from as diag_indices_from,
+)
+
 from numpy.lib.ufunclike import (
     fix as fix,
     isposinf as isposinf,
@@ -375,7 +390,6 @@ busday_count: Any
 busday_offset: Any
 busdaycalendar: Any
 byte_bounds: Any
-c_: Any
 can_cast: Any
 cast: Any
 chararray: Any
@@ -395,8 +409,6 @@ delete: Any
 deprecate: Any
 deprecate_with_doc: Any
 diag: Any
-diag_indices: Any
-diag_indices_from: Any
 diagflat: Any
 diff: Any
 digitize: Any
@@ -417,7 +429,6 @@ def eye(
     *,
     like: Optional[ArrayLike] = ...
 ) -> ndarray[Any, Any]: ...
-fill_diagonal: Any
 finfo: Any
 flip: Any
 fliplr: Any
@@ -444,7 +455,6 @@ i0: Any
 iinfo: Any
 imag: Any
 in1d: Any
-index_exp: Any
 info: Any
 inner: Any
 insert: Any
@@ -457,7 +467,6 @@ isin: Any
 isreal: Any
 isrealobj: Any
 iterable: Any
-ix_: Any
 kaiser: Any
 kron: Any
 lexsort: Any
@@ -474,7 +483,6 @@ may_share_memory: Any
 median: Any
 memmap: Any
 meshgrid: Any
-mgrid: Any
 min: Any
 min_scalar_type: Any
 mintypecode: Any
@@ -501,7 +509,6 @@ nditer: Any
 nested_iters: Any
 newaxis: Any
 numarray: Any
-ogrid: Any
 packbits: Any
 pad: Any
 percentile: Any
@@ -522,8 +529,6 @@ promote_types: Any
 put_along_axis: Any
 putmask: Any
 quantile: Any
-r_: Any
-ravel_multi_index: Any
 real: Any
 real_if_close: Any
 recarray: Any
@@ -536,7 +541,6 @@ rot90: Any
 round: Any
 round_: Any
 row_stack: Any
-s_: Any
 save: Any
 savetxt: Any
 savez: Any
@@ -568,7 +572,6 @@ typename: Any
 union1d: Any
 unique: Any
 unpackbits: Any
-unravel_index: Any
 unwrap: Any
 vander: Any
 vdot: Any
