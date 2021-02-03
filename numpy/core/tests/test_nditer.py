@@ -1963,10 +1963,45 @@ def test_iter_buffered_cast_structured_type():
     sdt2 = [('b', 'O'), ('a', 'f8')]
     a = np.array([(1, 2, 3), (4, 5, 6)], dtype=sdt1)
 
-    assert_raises(ValueError, lambda : (
-        nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
-               casting='unsafe',
-               op_dtypes=sdt2)))
+    for intent in ["readwrite", "readonly", "writeonly"]:
+        # If the following assert fails, the place where the error is raised
+        # within nditer may change. That is fine, but it may make sense for
+        # a new (hard to design) test to replace it:
+        assert np.can_cast(a.dtype, sdt2, casting="unsafe")
+        simple_arr = np.array([1, 2], dtype="i")  # succeeds but needs clean up
+        with pytest.raises(ValueError):
+            nditer((simple_arr, a), ['buffered', 'refs_ok'], [intent, intent],
+                   casting='unsafe', op_dtypes=["f", sdt2])
+
+
+def test_buffered_cast_error_paths():
+    with pytest.raises(ValueError):
+        # The input is cast into an `S3` buffer
+        np.nditer((np.array("a", dtype="S1"),), op_dtypes=["i"],
+                  casting="unsafe", flags=["buffered"])
+
+    # The `M8[ns]` is cast into the `S3` output
+    it = np.nditer((np.array(1, dtype="i"),), op_dtypes=["S1"],
+                   op_flags=["writeonly"], casting="unsafe", flags=["buffered"])
+    with pytest.raises(ValueError):
+        with it:
+            buf = next(it)
+            buf[...] = "a"  # cannot be converted to int.
+
+    # The following gives an unraisable error, there are probably better
+    # ways to test that:
+    code = textwrap.dedent("""
+    import numpy as np
+
+    it = np.nditer((np.array(1, dtype="i"),), op_dtypes=["S1"],
+                   op_flags=["writeonly"], casting="unsafe", flags=["buffered"])
+    buf = next(it)
+    buf[...] = "a"
+    del buf, it  # Flushing only happens during deallocate right now.
+    """)
+    res = subprocess.check_output([sys.executable, "-c", code],
+                                  stderr=subprocess.STDOUT, text=True)
+    assert "ValueError" in res
 
 
 def test_iter_buffered_cast_subarray():
