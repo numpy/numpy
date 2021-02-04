@@ -1,7 +1,8 @@
 import sys
 import pytest
 
-import textwrap, subprocess
+import textwrap
+import subprocess
 
 import numpy as np
 import numpy.core._multiarray_tests as _multiarray_tests
@@ -1988,17 +1989,21 @@ def test_buffered_cast_error_paths():
             buf = next(it)
             buf[...] = "a"  # cannot be converted to int.
 
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="PyPy seems to not hit this.")
+def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that
-    # (depending on version). So this can probably be cleaned out in the future:
+    # (depending python and/or pytest version). So with Python>=3.8 this can
+    # probably be cleaned out in the future to check for
+    # pytest.PytestUnraisableExceptionWarning:
     code = textwrap.dedent("""
-    import numpy as np
-
-    it = np.nditer((np.array(1, dtype="i"),), op_dtypes=["S1"],
-                   op_flags=["writeonly"], casting="unsafe", flags=["buffered"])
-    buf = next(it)
-    buf[...] = "a"
-    del buf, it  # Flushing only happens during deallocate right now.
-    """)
+        import numpy as np
+    
+        it = np.nditer((np.array(1, dtype="i"),), op_dtypes=["S1"],
+                       op_flags=["writeonly"], casting="unsafe", flags=["buffered"])
+        buf = next(it)
+        buf[...] = "a"
+        del buf, it  # Flushing only happens during deallocate right now.
+        """)
     res = subprocess.check_output([sys.executable, "-c", code],
                                   stderr=subprocess.STDOUT, text=True)
     assert "ValueError" in res
