@@ -1,7 +1,6 @@
 '''Tests for numpy.distutils.build_ext.'''
 
 import os
-import shutil
 import subprocess
 import sys
 from textwrap import indent, dedent
@@ -13,6 +12,14 @@ def test_multi_fortran_libs_link(tmp_path):
     Ensures multiple "fake" static libraries are correctly linked.
     see gh-18295
     '''
+
+    # We need to make sure we actually have an f77 compiler.
+    # This is nontrivial, so we'll borrow the utilities
+    # from f2py tests:
+    from numpy.f2py.tests.util import has_f77_compiler
+    if not has_f77_compiler():
+        pytest.skip('No F77 compiler found')
+
     # make some dummy sources
     with open(tmp_path / '_dummy1.f', 'w') as fid:
         fid.write(indent(dedent('''\
