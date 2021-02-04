@@ -2569,6 +2569,15 @@ class TestIsclose:
         assert_(np.isclose(0, np.inf) is np.False_)
         assert_(type(np.isclose(0, np.inf)) is np.bool_)
 
+    def test_timedelta(self):
+        # Allclose currently works for timedelta64 as long as `atol` is
+        # an integer or also a timedelta64
+        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+        assert np.isclose(a, a, atol=0, equal_nan=True).all()
+        assert np.isclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True).all()
+        assert np.allclose(a, a, atol=0, equal_nan=True)
+        assert np.allclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True)
+
 
 class TestStdVar:
     def setup(self):

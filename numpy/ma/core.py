@@ -7870,9 +7870,14 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
 
     # make sure y is an inexact type to avoid abs(MIN_INT); will cause
     # casting of x later.
-    dtype = np.result_type(y, 1.)
-    if y.dtype != dtype:
-        y = masked_array(y, dtype=dtype, copy=False)
+    # NOTE: We explicitly allow timedelta, which used to work. This could
+    #       possibly be deprecated. See also gh-18286.
+    #       timedelta works if `atol` is an integer or also a timedelta.
+    #       Although, the default tolerances are unlikely to be useful
+    if y.dtype.kind != "m":
+        dtype = np.result_type(y, 1.)
+        if y.dtype != dtype:
+            y = masked_array(y, dtype=dtype, copy=False)
 
     m = mask_or(getmask(x), getmask(y))
     xinf = np.isinf(masked_array(x, copy=False, mask=m)).filled(False)
