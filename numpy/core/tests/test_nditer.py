@@ -1958,6 +1958,8 @@ def test_iter_buffered_cast_structured_type():
                  [np.array((1, 2, 3), dtype=sdt2),
                   np.array((4, 5, 6), dtype=sdt2)])
 
+
+def test_iter_buffered_cast_structured_type_failure_with_cleanup():
     # make sure struct type -> struct type with different
     # number of fields fails
     sdt1 = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
@@ -1967,12 +1969,13 @@ def test_iter_buffered_cast_structured_type():
     for intent in ["readwrite", "readonly", "writeonly"]:
         # If the following assert fails, the place where the error is raised
         # within nditer may change. That is fine, but it may make sense for
-        # a new (hard to design) test to replace it:
+        # a new (hard to design) test to replace it. The `simple_arr` is
+        # designed to require a multi-step cast (due to having fields).
         assert np.can_cast(a.dtype, sdt2, casting="unsafe")
-        simple_arr = np.array([1, 2], dtype="i")  # succeeds but needs clean up
+        simple_arr = np.array([1, 2], dtype="i,i")  # requires clean up
         with pytest.raises(ValueError):
             nditer((simple_arr, a), ['buffered', 'refs_ok'], [intent, intent],
-                   casting='unsafe', op_dtypes=["f", sdt2])
+                   casting='unsafe', op_dtypes=["f,f", sdt2])
 
 
 def test_buffered_cast_error_paths():
