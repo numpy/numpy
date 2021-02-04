@@ -1,0 +1,22 @@
+Let the mypy plugin manage extended-precision `numpy.number` subclasses
+-----------------------------------------------------------------------
+
+The mypy_ plugin, introduced in `numpy/numpy#17843`_, has been expanded:
+the plugin now removes annotations for platform-specific extended-precision
+types that are not available to the platform in question.
+For example, it will remove `~numpy.float128` when not available.
+
+Without the plugin *all* extended-precision types will, as far as mypy is concerned,
+be available on all platforms.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+.. _`numpy/numpy#17843`: https://github.com/numpy/numpy/pull/17843
