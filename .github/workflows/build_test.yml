@@ -1,6 +1,14 @@
 name: Build_Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - maintenance/**
+  pull_request:
+    branches:
+      - master
+      - maintenance/**
 
 defaults:
   run:
@@ -12,6 +20,7 @@ env:
 
 jobs:
   smoke_test:
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
