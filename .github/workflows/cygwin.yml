@@ -1,0 +1,28 @@
+name: Test on Cygwin
+on:
+  push:
+    branches:
+      - master
+      - add-cygwin-build-to-ci
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Cygwin
+        uses: egor-tensin/setup-cygwin@v3
+        with:
+          platform: x64
+          install-dir: 'C:\tools\cygwin'
+          packages: python38-devel python38-pytest python38-hypothesis python38-cython python38-pip python38-wheel python38-setuptools liblapack-devel libopenblas gcc-fortran
+      - name: Set Windows PATH
+        uses: egor-tensin/cleanup-path@v1
+        with:
+          dirs: 'C:\tools\cygwin'
+      - name: Run tests
+        run: |
+          bash -c "python3.8 runtests.py"
+      
