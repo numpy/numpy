@@ -3037,6 +3037,13 @@ class TestMaskedArrayMethods:
         a = masked_array([np.iinfo(np.int_).min], dtype=np.int_)
         assert_(allclose(a, a))
 
+    def test_allclose_timedelta(self):
+        # Allclose currently works for timedelta64 as long as `atol` is
+        # an integer or also a timedelta64
+        a = np.array([[1, 2, 3, 4]], dtype="m8[ns]")
+        assert allclose(a, a, atol=0)
+        assert allclose(a, a, atol=np.timedelta64(1, "ns"))
+
     def test_allany(self):
         # Checks the any/all methods/functions.
         x = np.array([[0.13, 0.26, 0.90],
