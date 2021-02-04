@@ -3100,9 +3100,9 @@ def test_debug_print(capfd):
     |   REDUCE Outer Strides: 40 0
     |   REDUCE Outer Ptrs:
     |   ReadTransferFn:
-    |   ReadTransferData: (nil) (nil)
-    |   WriteTransferFn: (nil)
-    |   WriteTransferData: (nil) (nil)
+    |   ReadTransferData:
+    |   WriteTransferFn:
+    |   WriteTransferData:
     |   Buffers:
     |
     | AxisData[0]:
