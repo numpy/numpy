@@ -24,7 +24,7 @@ jobs:
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
-          dirs: 'C:\tools\cygwin'
+          dirs: 'C:\tools\cygwin\bin'
       - name: Update with Cygwin git
         # fetch-depth=0 above should make this short.
         run: |
@@ -33,15 +33,14 @@ jobs:
         # Make sure it's the Cygwin one, not a Windows one
         run: |
           bash -c "type python3.8; python3.8 --version -V"
-      - name: Build NumPy sources
-        run: |
-          bash -c "python3.8 setup.py build_src --verbose-cfg"
-      - name: Build NumPy extensions
-        run: |
-          bash -c "python3.8 setup.py build_ext"
-      - name: Build a wheel
+      - name: Build NumPy wheel
         run: |
           bash -c "python3.8 setup.py bdist_wheel"
-      - name: Run NumPy tests
+      - name: Install new NumPy
         run: |
-          bash -c "python3.8 runtests.py"
+          bash -c "python3.8 -m pip install dist/numpy-*cp38*.whl"
+      - name: Run NumPy test suite
+        run: |
+          bash -c "mkdir empty"
+          bash -c "cd empty; python3.8 -c 'import numpy as np; np.test()'; cd .."
+          bash -c "rmdir empty"
