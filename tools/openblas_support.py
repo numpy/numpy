@@ -17,7 +17,6 @@ OPENBLAS_V = '0.3.13'
 OPENBLAS_LONG = 'v0.3.13-62-gaf2b0d02'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
-ARCHITECTURES = ['arm64', 'aarch64', 'x86_64', 'i686', 'ppc64le', 's390x']
 SUPPORTED_PLATFORMS = [
     'linux-aarch64',
     'linux-x86_64',
