@@ -89,7 +89,8 @@ def get_test_cases(directory):
 def test_success(path):
     # Alias `OUTPUT_MYPY` so that it appears in the local namespace
     output_mypy = OUTPUT_MYPY
-    assert path not in output_mypy
+    if path in output_mypy:
+        raise AssertionError("\n".join(v for v in output_mypy[path].values()))
 
 
 @pytest.mark.slow
