@@ -2,6 +2,7 @@ import glob
 import hashlib
 import os
 import platform
+import sysconfig
 import sys
 import shutil
 import tarfile
@@ -16,24 +17,32 @@ OPENBLAS_V = '0.3.13'
 OPENBLAS_LONG = 'v0.3.13-62-gaf2b0d02'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
-ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64',
-                 'i686', 'ppc64le', 's390x']
+SUPPORTED_PLATFORMS = [
+    'linux-aarch64',
+    'linux-x86_64',
+    'linux-i686',
+    'linux-ppc64le',
+    'linux-s390x',
+    'win-amd64',
+    'win-32',
+    'macosx-x86_64',
+    'macosx-arm64',
+]
 IS_32BIT = sys.maxsize < 2**32
 
 
-def get_arch():
-    if platform.system() == 'Windows':
-        ret = 'windows'
-    elif platform.system() == 'Darwin':
-        ret = 'darwin'
-    else:
-        ret = platform.uname().machine
-        # What do 32 bit machines report?
-        # If they are a docker, they can report x86_64
-        if 'x86' in ret and IS_32BIT:
-            ret = 'i686'
-    assert ret in ARCHITECTURES, f'invalid architecture {ret}'
-    return ret
+def get_plat():
+    plat = sysconfig.get_platform()
+    plat_split = plat.split("-")
+    arch = plat_split[-1]
+    if arch == "win32":
+        plat = "win-32"
+    elif arch in ["universal2", "intel"]:
+        plat = f"macosx-{platform.uname().machine}"
+    elif len(plat_split) > 2:
+        plat = f"{plat_split[0]}-{arch}"
+    assert plat in SUPPORTED_PLATFORMS,  f'invalid platform {plat}'
+    return plat
 
 
 def get_ilp64():
@@ -55,30 +64,34 @@ def get_manylinux(arch):
     return ret
 
 
-def download_openblas(target, arch, ilp64, is_32bit):
-    ml_ver = get_manylinux(arch)
+def download_openblas(target, plat, ilp64):
+    osname, arch = plat.split("-")
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
     headers = {'User-Agent':
                ('Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 ; '
                 '(KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3')}
-    if arch in ('aarch64', 'ppc64le', 's390x', 'x86_64', 'i686'):
+    suffix = None
+    if osname == "linux":
+        ml_ver = get_manylinux(arch)
         suffix = f'manylinux{ml_ver}_{arch}.tar.gz'
-        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
-    elif arch == 'darwin':
+    elif plat == 'macosx-x86_64':
         suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
-        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
-    elif arch == 'windows':
-        if is_32bit:
+    elif plat == 'macosx-arm64':
+        suffix = 'macosx_11_0_arm64-gf_f10e307.tar.gz'
+        typ = 'tar.gz'
+    elif osname == 'win':
+        if plat == "win-32":
             suffix = 'win32-gcc_8_1_0.zip'
         else:
             suffix = 'win_amd64-gcc_8_1_0.zip'
-        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'zip'
-    if not filename:
+
+    if not suffix:
         return None
+    filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
     req = Request(url=filename, headers=headers)
     try:
         response = urlopen(req)
@@ -99,7 +112,7 @@ def download_openblas(target, arch, ilp64, is_32bit):
     return typ
 
 
-def setup_openblas(arch=get_arch(), ilp64=get_ilp64(), is_32bit=IS_32BIT):
+def setup_openblas(plat=get_plat(), ilp64=get_ilp64()):
     '''
     Download and setup an openblas library for building. If successful,
     the configuration script will find it automatically.
@@ -111,12 +124,13 @@ def setup_openblas(arch=get_arch(), ilp64=get_ilp64(), is_32bit=IS_32BIT):
         To determine success, do ``os.path.exists(msg)``
     '''
     _, tmp = mkstemp()
-    if not arch:
-        raise ValueError('unknown architecture')
-    typ = download_openblas(tmp, arch, ilp64, is_32bit)
+    if not plat:
+        raise ValueError('unknown platform')
+    typ = download_openblas(tmp, plat, ilp64)
     if not typ:
         return ''
-    if arch == 'windows':
+    osname, arch = plat.split("-")
+    if osname == 'win':
         if not typ == 'zip':
             return f'expecting to download zipfile on windows, not {typ}'
         return unpack_windows_zip(tmp)
@@ -216,23 +230,22 @@ def make_init(dirname):
     """))
 
 
-def test_setup(arches):
+def test_setup(plats):
     '''
     Make sure all the downloadable files exist and can be opened
     '''
     def items():
-        """ yields all combinations of arch, ilp64, is_32bit
+        """ yields all combinations of arch, ilp64
         """
-        for arch in arches:
-            yield arch, None, False
-            if arch not in ('i686',):
-                yield arch, '64_', False
-            if arch in ('windows',):
-                yield arch, None, True
-            if arch in ('i686', 'x86_64'):
+        for plat in plats:
+            yield plat, None
+            osname, arch = plat.split("-")
+            if arch not in ('i686', 'arm64', '32'):
+                yield plat, '64_'
+            if osname == "linux" and arch in ('i686', 'x86_64'):
                 oldval = os.environ.get('MB_ML_VER', None)
                 os.environ['MB_ML_VER'] = '1'
-                yield arch, None, False
+                yield plat, None
                 # Once we create x86_64 and i686 manylinux2014 wheels...
                 # os.environ['MB_ML_VER'] = '2014'
                 # yield arch, None, False
@@ -242,25 +255,23 @@ def test_setup(arches):
                     os.environ.pop('MB_ML_VER')
 
     errs = []
-    for arch, ilp64, is_32bit in items():
-        if arch == '':
-            continue
-        if arch not in arches:
+    for plat, ilp64 in items():
+        osname, _ = plat.split("-")
+        if plat not in plats:
             continue
         target = None
         try:
             try:
-                target = setup_openblas(arch, ilp64, is_32bit)
+                target = setup_openblas(plat, ilp64)
             except Exception as e:
-                print(f'Could not setup {arch} with ilp64 {ilp64}, '
-                      f'32bit {is_32bit}:')
+                print(f'Could not setup {plat} with ilp64 {ilp64}, ')
                 print(e)
                 errs.append(e)
                 continue
             if not target:
-                raise RuntimeError(f'Could not setup {arch}')
+                raise RuntimeError(f'Could not setup {plat}')
             print(target)
-            if arch == 'windows':
+            if osname == 'win':
                 if not target.endswith('.a'):
                     raise RuntimeError("Not .a extracted!")
             else:
@@ -311,7 +322,7 @@ if __name__ == '__main__':
                     'architecture')
     parser.add_argument('--test', nargs='*', default=None,
                         help='Test different architectures. "all", or any of '
-                             f'{ARCHITECTURES}')
+                             f'{SUPPORTED_PLATFORMS}')
     parser.add_argument('--check_version', nargs='?', default='',
                         help='Check provided OpenBLAS version string '
                              'against available OpenBLAS')
@@ -322,6 +333,6 @@ if __name__ == '__main__':
         print(setup_openblas())
     else:
         if len(args.test) == 0 or 'all' in args.test:
-            test_setup(ARCHITECTURES)
+            test_setup(SUPPORTED_PLATFORMS)
         else:
             test_setup(args.test)
