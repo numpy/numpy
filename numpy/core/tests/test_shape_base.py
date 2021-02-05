@@ -256,7 +256,7 @@ class TestConcatenate:
         r = np.concatenate((a, b), axis=None)
         assert_equal(r.size, a.size + len(b))
         assert_equal(r.dtype, a.dtype)
-        r = np.concatenate((a, b, c), axis=None)
+        r = np.concatenate((a, b, c), axis=None, dtype="U")
         d = array(['0.0', '1.0', '2.0', '3.0',
                    '0', '1', '2', 'x'])
         assert_array_equal(r, d)
@@ -377,7 +377,8 @@ class TestConcatenate:
         # Note that U0 and S0 should be deprecated eventually and changed to
         # actually give the empty string result (together with `np.array`)
         res = np.concatenate(arrs, axis=axis, dtype=string_dt, casting="unsafe")
-        assert res.dtype == np.promote_types("d", string_dt)
+        # The actual dtype should be identical to a cast (of a double array):
+        assert res.dtype == np.array(1.).astype(string_dt).dtype
 
     @pytest.mark.parametrize("axis", [None, 0])
     def test_string_dtype_does_not_inspect(self, axis):

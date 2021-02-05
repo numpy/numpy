@@ -252,6 +252,10 @@ work::
 
     $ firefox doc/build/merge/index.html
 
+Update the stable link::
+
+    $ ln -sfn 1.19 stable
+
 Once everything seems satisfactory, commit and upload the changes::
 
     $ pushd doc/build/merge

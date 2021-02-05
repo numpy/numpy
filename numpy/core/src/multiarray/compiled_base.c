@@ -1037,7 +1037,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     NpyIter *iter = NULL;
 
-    char *kwlist[] = {"multi_index", "dims", "mode", "order", NULL};
+    static char *kwlist[] = {"multi_index", "dims", "mode", "order", NULL};
 
     memset(op, 0, sizeof(op));
     dtype[0] = NULL;
@@ -1232,7 +1232,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     int i, ret_ndim;
     npy_intp ret_dims[NPY_MAXDIMS], ret_strides[NPY_MAXDIMS];
 
-    char *kwlist[] = {"indices", "shape", "order", NULL};
+    static char *kwlist[] = {"indices", "shape", "order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:unravel_index",
                     kwlist,

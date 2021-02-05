@@ -2289,7 +2289,7 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *a = (PyObject *)self, *b, *o = NULL;
     PyArrayObject *ret;
-    char* kwlist[] = {"b", "out", NULL };
+    static char* kwlist[] = {"b", "out", NULL};
 
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O:dot", kwlist, &b, &o)) {

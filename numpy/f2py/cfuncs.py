@@ -549,7 +549,12 @@ cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
 #elif defined(__STDC_VERSION__) \\
       && (__STDC_VERSION__ >= 201112L) \\
-      && !defined(__STDC_NO_THREADS__)
+      && !defined(__STDC_NO_THREADS__) \\
+      && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12))
+/* __STDC_NO_THREADS__ was first defined in a maintenance release of glibc 2.12,
+   see https://lists.gnu.org/archive/html/commit-hurd/2012-07/msg00180.html,
+   so `!defined(__STDC_NO_THREADS__)` may give false positive for the existence
+   of `threads.h` when using an older release of glibc 2.12 */
 #include <threads.h>
 #define F2PY_THREAD_LOCAL_DECL thread_local
 #elif defined(__GNUC__) \\

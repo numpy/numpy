@@ -41,6 +41,7 @@ from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
+import operator
 import warnings
 import contextlib
 
@@ -78,6 +79,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if legacy not in [None, False, '1.13']:
         warnings.warn("legacy printing option can currently only be '1.13' or "
                       "`False`", stacklevel=3)
+
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
         if not isinstance(threshold, numbers.Number):
@@ -85,6 +87,14 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         if np.isnan(threshold):
             raise ValueError("threshold must be non-NAN, try "
                              "sys.maxsize for untruncated representation")
+
+    if precision is not None:
+        # forbid the bad precision arg as suggested by issue #18254
+        try:
+            options['precision'] = operator.index(precision)
+        except TypeError as e:
+            raise TypeError('precision must be an integer') from e
+
     return options
 
 
@@ -538,7 +548,7 @@ def array2string(a, max_line_width=None, precision=None,
     separator : str, optional
         Inserted between elements.
     prefix : str, optional
-    suffix: str, optional
+    suffix : str, optional
         The length of the prefix and suffix strings are used to respectively
         align and wrap the output. An array is typically printed as::
 

@@ -45,7 +45,10 @@ from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
-__all__ = ['record', 'recarray', 'format_parser']
+__all__ = [
+    'record', 'recarray', 'format_parser',
+    'fromarrays', 'fromrecords', 'fromstring', 'fromfile', 'array',
+]
 
 
 ndarray = sb.ndarray
@@ -962,16 +965,16 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
 
     Parameters
     ----------
-    obj: any
+    obj : any
         Input object. See Notes for details on how various input types are
         treated.
-    dtype: data-type, optional
+    dtype : data-type, optional
         Valid dtype for array.
-    shape: int or tuple of ints, optional
+    shape : int or tuple of ints, optional
         Shape of each array.
-    offset: int, optional
+    offset : int, optional
         Position in the file or buffer to start reading from.
-    strides: tuple of ints, optional
+    strides : tuple of ints, optional
         Buffer (`buf`) is interpreted according to these strides (strides
         define how many bytes each array element, row, column, etc.
         occupy in memory).
@@ -979,7 +982,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         If `dtype` is ``None``, these arguments are passed to
         `numpy.format_parser` to construct a dtype. See that function for
         detailed documentation.
-    copy: bool, optional
+    copy : bool, optional
         Whether to copy the input object (True), or to use a reference instead.
         This option only applies when the input is an ndarray or recarray.
         Defaults to True.

@@ -23,7 +23,8 @@
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
- * #sum_sup   = 0,  0,  0,   0,   1,   0,   0,   0,   1,   1#
+ * #sumup_sup = 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   1,   0,   1,   1#
  * #rev64_sup = 1,  1,  1,   1,   1,   1,   0,   0,   1,   0#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
@@ -365,6 +366,10 @@ SIMD_IMPL_INTRIN_3(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_1(sum_@sfx@, @sfx@, v@sfx@)
 #endif // sum_sup
 
+#if @sumup_sup@
+SIMD_IMPL_INTRIN_1(sumup_@sfx@, @esfx@, v@sfx@)
+#endif // sumup_sup
+
 /***************************
  * Math
  ***************************/
@@ -452,7 +457,8 @@ static PyMethodDef simd__intrinsics_methods[] = {
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
- * #sum_sup   = 0,  0,  0,   0,   1,   0,   0,   0,   1,   1#
+ * #sumup_sup = 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   1,   0,   1,   1#
  * #rev64_sup = 1,  1,  1,   1,   1,   1,   0,   0,   1,   0#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
@@ -574,6 +580,9 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 SIMD_INTRIN_DEF(sum_@sfx@)
 #endif // sum_sup
 
+#if @sumup_sup@
+SIMD_INTRIN_DEF(sumup_@sfx@)
+#endif // sumup_sup
 /***************************
  * Math
  ***************************/

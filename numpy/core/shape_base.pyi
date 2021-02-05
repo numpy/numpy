@@ -7,9 +7,7 @@ from numpy.typing import ArrayLike
 if sys.version_info >= (3, 8):
     from typing import SupportsIndex
 else:
-    from typing_extensions import Protocol
-    class SupportsIndex(Protocol):
-        def __index__(self) -> int: ...
+    from typing_extensions import SupportsIndex
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 

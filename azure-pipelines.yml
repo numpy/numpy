@@ -18,6 +18,35 @@ stages:
 - stage: InitialTests
   jobs:
 
+  # Native build is based on gcc flag `-march=native`
+  - job: Linux_baseline_native
+    pool:
+      vmImage: 'ubuntu-20.04'
+    steps:
+    - script: |
+            if ! `gcc 2>/dev/null`; then
+                sudo apt install gcc
+            fi
+            sudo apt install python3
+            sudo apt install python3-dev
+            # python3 has no setuptools, so install one to get us going
+            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
+            python3 -m pip install --user -r test_requirements.txt
+      displayName: 'install python/requirements'
+    - script: |
+            python3 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run native baseline Build / Tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for baseline/native'
+
+- stage: ComprehensiveTests
+  jobs:
+
 
   - job: WindowsFast
     pool:
@@ -31,11 +60,6 @@ stages:
             BITS: 32
     steps:
     - template: azure-steps-windows.yml
-
-
-- stage: ComprehensiveTests
-  jobs:
-
 
   - job: Linux_Python_38_32bit_full_with_asserts
     pool:
@@ -206,6 +230,11 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
+          PyPy37-64bit-full:
+            PYTHON_VERSION: 'PyPy3.7'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: fast
+            BITS: 64
           Python38-32bit-fast:
             PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x86'
@@ -258,28 +287,4 @@ stages:
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for gcc 4.8'
 
-  # Native build is based on gcc flag `-march=native`
-  - job: Linux_baseline_native
-    pool:
-      vmImage: 'ubuntu-20.04'
-    steps:
-    - script: |
-            if ! `gcc 2>/dev/null`; then
-                sudo apt install gcc
-            fi
-            sudo apt install python3
-            sudo apt install python3-dev
-            # python3 has no setuptools, so install one to get us going
-            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
-            python3 -m pip install --user -r test_requirements.txt
-      displayName: 'install python/requirements'
-    - script: |
-            python3 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
-            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
-      displayName: 'Run native baseline Build / Tests'
-    - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-        testResultsFiles: '**/test-*.xml'
-        failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for baseline/native'
+

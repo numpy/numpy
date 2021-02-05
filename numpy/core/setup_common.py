@@ -317,8 +317,8 @@ def pyod(filename):
     out : seq
         list of lines of od output
 
-    Note
-    ----
+    Notes
+    -----
     We only implement enough to get the necessary information for long double
     representation, this is not intended as a compatible replacement for od.
     """

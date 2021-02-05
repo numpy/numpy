@@ -184,13 +184,15 @@ class NBitBase:
 
     .. code-block:: python
 
-        >>> from typing import TypeVar, TYPE_CHECKING
+        >>> from __future__ import annotations
+        >>> from typing import TypeVar, Union, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
 
-        >>> T = TypeVar("T", bound=npt.NBitBase)
+        >>> T1 = TypeVar("T1", bound=npt.NBitBase)
+        >>> T2 = TypeVar("T2", bound=npt.NBitBase)
 
-        >>> def add(a: "np.floating[T]", b: "np.integer[T]") -> "np.floating[T]":
+        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[Union[T1, T2]]:
         ...     return a + b
 
         >>> a = np.float16()
@@ -283,35 +285,55 @@ from ._char_codes import (
     _ObjectCodes,
 )
 from ._scalars import (
-    _CharLike,
-    _BoolLike,
-    _UIntLike,
-    _IntLike,
-    _FloatLike,
-    _ComplexLike,
-    _TD64Like,
-    _NumberLike,
-    _ScalarLike,
-    _VoidLike,
+    _CharLike_co,
+    _BoolLike_co,
+    _UIntLike_co,
+    _IntLike_co,
+    _FloatLike_co,
+    _ComplexLike_co,
+    _TD64Like_co,
+    _NumberLike_co,
+    _ScalarLike_co,
+    _VoidLike_co,
 )
 from ._shape import _Shape, _ShapeLike
-from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
+from ._dtype_like import (
+    DTypeLike as DTypeLike,
+    _SupportsDType,
+    _VoidDTypeLike,
+    _DTypeLikeBool,
+    _DTypeLikeUInt,
+    _DTypeLikeInt,
+    _DTypeLikeFloat,
+    _DTypeLikeComplex,
+    _DTypeLikeTD64,
+    _DTypeLikeDT64,
+    _DTypeLikeObject,
+    _DTypeLikeVoid,
+    _DTypeLikeStr,
+    _DTypeLikeBytes,
+)
 from ._array_like import (
-    ArrayLike,
+    ArrayLike as ArrayLike,
     _ArrayLike,
     _NestedSequence,
+    _RecursiveSequence,
     _SupportsArray,
-    _ArrayLikeBool,
-    _ArrayLikeUInt,
-    _ArrayLikeInt,
-    _ArrayLikeFloat,
-    _ArrayLikeComplex,
-    _ArrayLikeTD64,
-    _ArrayLikeDT64,
-    _ArrayLikeObject,
-    _ArrayLikeVoid,
-    _ArrayLikeStr,
-    _ArrayLikeBytes,
+    _ArrayND,
+    _ArrayOrScalar,
+    _ArrayLikeBool_co,
+    _ArrayLikeUInt_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeNumber_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeDT64_co,
+    _ArrayLikeObject_co,
+    _ArrayLikeVoid_co,
+    _ArrayLikeStr_co,
+    _ArrayLikeBytes_co,
+
 )
 
 if __doc__ is not None:

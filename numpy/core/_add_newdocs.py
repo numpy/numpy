@@ -377,7 +377,7 @@ add_newdoc('numpy.core', 'nditer',
     ...    while not it.finished:
     ...        it[0] = lamdaexpr(*it[1:])
     ...        it.iternext()
-    ...        return it.operands[0]
+    ...    return it.operands[0]
 
     >>> a = np.arange(5)
     >>> b = np.ones(5)
@@ -821,7 +821,7 @@ add_newdoc('numpy.core.multiarray', 'array',
         ===== ========= ===================================================
 
         When ``copy=False`` and a copy is made for other reasons, the result is
-        the same as if ``copy=True``, with some exceptions for `A`, see the
+        the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise

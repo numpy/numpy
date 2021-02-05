@@ -607,7 +607,7 @@ def _block_info_recursion(arrays, max_depth, result_ndim, depth=0):
         The arrays to check
     max_depth : list of int
         The number of nested lists
-    result_ndim: int
+    result_ndim : int
         The number of dimensions in thefinal array.
 
     Returns

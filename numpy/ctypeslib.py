@@ -4,7 +4,7 @@
 ============================
 
 See Also
----------
+--------
 load_library : Load a C library.
 ndpointer : Array restype/argtype with verification.
 as_ctypes : Create a ctypes array from an ndarray.
@@ -49,7 +49,8 @@ Then, we're ready to call ``foo_func``:
 >>> _lib.foo_func(out, len(out))                #doctest: +SKIP
 
 """
-__all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array']
+__all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
+           'as_ctypes_type']
 
 import os
 from numpy import (
