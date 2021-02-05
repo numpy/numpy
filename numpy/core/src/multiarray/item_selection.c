@@ -2218,8 +2218,6 @@ count_nonzero_int16_simd(npy_int16 *d, npy_uintp unrollx)
     const npyv_u16 vzero = npyv_zero_u16();   
 
     npy_int16 *target = d;
-    npy_uint16 sums[npyv_nlanes_u16];
-
     while (d<end) {
         npyv_u16 vsum16 = npyv_zero_u16(); 
         target = PyArray_MIN(target+innerloop_jump, end);
@@ -2229,10 +2227,7 @@ count_nonzero_int16_simd(npy_int16 *d, npy_uintp unrollx)
             vsum16 = npyv_add_u16(vsum16, vt);
         }
 
-        npyv_store_u16(sums, vsum16);
-        for (int i=0; i<npyv_nlanes_u16; ++i) {
-            zero_count += sums[i];
-        }
+        zero_count += npyv_sumup_u16(vsum16);
     }
 
     return unrollx - zero_count;
@@ -2268,7 +2263,7 @@ count_nonzero_int32_simd(npy_int32 *d, npy_uintp unrollx)
 static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
 count_nonzero_int64_simd(npy_int64 *d, npy_uintp unrollx)
 {
-    npy_uintp zero_count = 0;
+    npy_uintp zero_count;
     const npy_int64 *end = d + unrollx;
     const npyv_u64 vone = npyv_setall_u64(1); 
     const npyv_u64 vzero = npyv_zero_u64();   
@@ -2280,11 +2275,7 @@ count_nonzero_int64_simd(npy_int64 *d, npy_uintp unrollx)
         vsum64 = npyv_add_u64(vsum64, vt);
     }
 
-    npy_uint64 sums[npyv_nlanes_u64];
-    npyv_store_u64(sums, vsum64);
-    for (int i=0; i<npyv_nlanes_u64; ++i) {
-        zero_count += sums[i];
-    }
+    zero_count = npyv_sum_u64(vsum64);
 
     return unrollx - zero_count;
 }
