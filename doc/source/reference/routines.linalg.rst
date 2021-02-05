@@ -43,7 +43,7 @@ The ``@`` operator
 
 Introduced in NumPy 1.10.0, the ``@`` and ``@=`` operators are preferable to
 other methods when computing the matrix product between 2d arrays. The
-:func:`numpy.matmul` function implements the semantics of the ``@`` operator.
+:func:`numpy.matmul` function implements the ``@`` operator.
 
 .. currentmodule:: numpy
 
