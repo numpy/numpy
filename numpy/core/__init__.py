@@ -125,6 +125,7 @@ def _ufunc_reconstruct(module, name):
     mod = __import__(module, fromlist=[name])
     return getattr(mod, name)
 
+
 def _ufunc_reduce(func):
     # Report the `__name__`. pickle will try to find the module. Note that
     # pickle supports for this `__name__` to be a `__qualname__`. It may
@@ -134,12 +135,31 @@ def _ufunc_reduce(func):
     return func.__name__
 
 
+def _DType_reconstruct(scalar_type):
+    # This is a work-around to pickle type(np.dtype(np.float64)), etc.
+    # and it should eventually be replaced with a better solution, e.g. when
+    # DTypes become HeapTypes.
+    return type(dtype(scalar_type))
+
+
+def _DType_reduce(DType):
+    # To pickle a DType without having to add top-level names, pickle the
+    # scalar type for now (and assume that reconstruction will be possible).
+    if DType is dtype:
+        return "dtype"  # must pickle `np.dtype` as a singleton.
+    scalar_type = DType.type  # pickle the scalar type for reconstruction
+    return _DType_reconstruct, (scalar_type,)
+
+
 import copyreg
 
 copyreg.pickle(ufunc, _ufunc_reduce)
-# Unclutter namespace (must keep _ufunc_reconstruct for unpickling)
+copyreg.pickle(type(dtype), _DType_reduce, _DType_reconstruct)
+
+# Unclutter namespace (must keep _*_reconstruct for unpickling)
 del copyreg
 del _ufunc_reduce
+del _DType_reduce
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
