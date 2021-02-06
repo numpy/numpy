@@ -25,6 +25,10 @@ jobs:
         uses: egor-tensin/cleanup-path@v1
         with:
           dirs: 'C:\tools\cygwin\bin'
+      - name: Verify that bash is Cygwin bash
+        run: |
+          command bash
+          bash -c "uname -svrmo"
       - name: Update with Cygwin git
         # fetch-depth=0 above should make this short.
         run: |
@@ -42,5 +46,4 @@ jobs:
       - name: Run NumPy test suite
         run: |
           bash -c "mkdir empty"
-          bash -c "cd empty; python3.8 -c 'import numpy as np; np.test()'; cd .."
-          bash -c "rmdir empty"
+          bash -c "cd empty && python3.8 -c 'import numpy as np; np.test()' && cd .."
