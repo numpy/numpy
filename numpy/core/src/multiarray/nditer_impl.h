@@ -148,8 +148,9 @@ struct NpyIter_InternalOnly {
     char iter_flexdata;
 };
 
-typedef struct NpyIter_AD NpyIter_AxisData;
-typedef struct NpyIter_BD NpyIter_BufferData;
+typedef struct NpyIter_AxisData_tag NpyIter_AxisData;
+typedef struct NpyIter_TransferInfo_tag NpyIter_TransferInfo;
+typedef struct NpyIter_BufferData_tag NpyIter_BufferData;
 
 typedef npy_int16 npyiter_opitflags;
 
@@ -167,7 +168,8 @@ typedef npy_int16 npyiter_opitflags;
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop) \
         (NPY_INTP_ALIGNED(sizeof(npyiter_opitflags) * nop))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
-        ((itflags&NPY_ITFLAG_BUFFER) ? ((NPY_SIZEOF_INTP)*(6 + 9*nop)) : 0)
+        ((itflags&NPY_ITFLAG_BUFFER) ? ( \
+            (NPY_SIZEOF_INTP)*(6 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
 
 /* Byte offsets of the iterator members starting from iter->iter_flexdata */
 #define NIT_PERM_OFFSET() \
@@ -229,11 +231,24 @@ typedef npy_int16 npyiter_opitflags;
         &(iter)->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
 
 /* Internal-only BUFFERDATA MEMBER ACCESS */
-struct NpyIter_BD {
+struct _transferdata {
+    PyArray_StridedUnaryOp *func;
+    NpyAuxData *auxdata;
+};
+
+struct NpyIter_TransferInfo_tag {
+    struct _transferdata read;
+    struct _transferdata write;
+    /* Probably unnecessary, but make sure what follows is intp aligned: */
+    npy_intp _unused_ensure_alignment[];
+};
+
+struct NpyIter_BufferData_tag {
     npy_intp buffersize, size, bufiterend,
              reduce_pos, reduce_outersize, reduce_outerdim;
     npy_intp bd_flexdata;
 };
+
 #define NBF_BUFFERSIZE(bufferdata) ((bufferdata)->buffersize)
 #define NBF_SIZE(bufferdata) ((bufferdata)->size)
 #define NBF_BUFITEREND(bufferdata) ((bufferdata)->bufiterend)
@@ -248,19 +263,13 @@ struct NpyIter_BD {
         (&(bufferdata)->bd_flexdata + 2*(nop)))
 #define NBF_REDUCE_OUTERPTRS(bufferdata) ((char **) \
         (&(bufferdata)->bd_flexdata + 3*(nop)))
-#define NBF_READTRANSFERFN(bufferdata) ((PyArray_StridedUnaryOp **) \
-        (&(bufferdata)->bd_flexdata + 4*(nop)))
-#define NBF_READTRANSFERDATA(bufferdata) ((NpyAuxData **) \
-        (&(bufferdata)->bd_flexdata + 5*(nop)))
-#define NBF_WRITETRANSFERFN(bufferdata) ((PyArray_StridedUnaryOp **) \
-        (&(bufferdata)->bd_flexdata + 6*(nop)))
-#define NBF_WRITETRANSFERDATA(bufferdata) ((NpyAuxData **) \
-        (&(bufferdata)->bd_flexdata + 7*(nop)))
 #define NBF_BUFFERS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 8*(nop)))
+        (&(bufferdata)->bd_flexdata + 4*(nop)))
+#define NBF_TRANSFERINFO(bufferdata) ((NpyIter_TransferInfo *) \
+        (&(bufferdata)->bd_flexdata + 5*(nop)))
 
 /* Internal-only AXISDATA MEMBER ACCESS. */
-struct NpyIter_AD {
+struct NpyIter_AxisData_tag {
     npy_intp shape, index;
     npy_intp ad_flexdata;
 };
