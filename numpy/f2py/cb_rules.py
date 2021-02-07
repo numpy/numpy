@@ -342,6 +342,7 @@ cb_arg_rules = [
             isarray: '#ctype# *',
             isstring: '#ctype#'
         },
+        'need': {l_or(isscalar, isarray, isstring): '#ctype#'},
         # untested with multiple args
         'strarglens': {isstring: ',int #varname_i#_cb_len'},
         'strarglens_td': {isstring: ',int'},  # untested with multiple args
