@@ -636,7 +636,7 @@ def _simplifyargs(argsline):
         a.append(n)
     return ','.join(a)
 
-crackline_re_1 = re.compile(r'\s*(?P<result>\b[a-z]+[\w]*\b)\s*[=].*', re.I)
+crackline_re_1 = re.compile(r'\s*(?P<result>\b[a-z]+\w*\b)\s*=.*', re.I)
 
 
 def crackline(line, reset=0):
@@ -2605,7 +2605,7 @@ def analyzevars(block):
     params = get_parameters(vars, get_useparameters(block))
 
     dep_matches = {}
-    name_match = re.compile(r'\w[\w\d_$]*').match
+    name_match = re.compile(r'[A-Za-z][\w$]*').match
     for v in list(vars.keys()):
         m = name_match(v)
         if m:
