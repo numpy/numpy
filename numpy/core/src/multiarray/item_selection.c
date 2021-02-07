@@ -2279,7 +2279,7 @@ count_nonzero_int64_simd(npy_uint64 *d, npy_uintp unrollx)
 
 
 static NPY_INLINE NPY_GCC_OPT_3 npy_intp
-count_nonzero_int(int ndim, char *data, const npy_intp *ashape, const npy_intp *astrides, int type_num)
+count_nonzero_int(int ndim, char *data, const npy_intp *ashape, const npy_intp *astrides, int elsize)
 {
     int idim;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
@@ -2342,13 +2342,13 @@ count_nonzero_int(int ndim, char *data, const npy_intp *ashape, const npy_intp *
 
     NPY_BEGIN_THREADS_THRESHOLDED(shape[0]); 
 
-    if (type_num == NPY_INT16 || type_num == NPY_UINT16) {
+    if (elsize == 2) {
         _ITERATE_I16;
     }
-    else if (type_num == NPY_INT32 || type_num == NPY_UINT32) {
+    else if (elsize == 4) {
         _ITERATE_I32;
     }
-    else if (type_num == NPY_INT64 || type_num == NPY_UINT64) {
+    else if (elsize == 8) {
         _ITERATE_I64;
     }
 
@@ -2453,15 +2453,54 @@ PyArray_CountNonzero(PyArrayObject *self)
     /* Special low-overhead version specific to the boolean type */
     dtype = PyArray_DESCR(self);
 
-    if (dtype->type_num >= NPY_INT16 && dtype->type_num <= NPY_UINT64) {
-        return count_nonzero_int(PyArray_NDIM(self), (char *) PyArray_DATA(self),
-                        PyArray_DIMS(self), PyArray_STRIDES(self), dtype->type_num);
+    // if (dtype->type_num >= NPY_INT16 && dtype->type_num <= NPY_UINT64) {
+    //     return count_nonzero_int(PyArray_NDIM(self), (char *) PyArray_DATA(self),
+    //                     PyArray_DIMS(self), PyArray_STRIDES(self), dtype->type_num);
+    // }
+
+    // if (dtype->type_num == NPY_BOOL || dtype->type_num == NPY_INT8 || dtype->type_num == NPY_UINT8) {
+    //     return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
+    //                     PyArray_DIMS(self), PyArray_STRIDES(self));
+    // }
+
+    switch(dtype->kind) {
+        case 'u':
+        {
+            if (dtype->elsize == 1) 
+                return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
+                        PyArray_DIMS(self), PyArray_STRIDES(self));
+
+            if (dtype->elsize >=2 && dtype->elsize <= 8)
+                return count_nonzero_int(
+                    PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
+                    PyArray_STRIDES(self), dtype->elsize
+                );
+
+            break;
+        }
+        case 'i':
+        {
+            if (dtype->elsize == 1) 
+                return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
+                        PyArray_DIMS(self), PyArray_STRIDES(self));
+
+            if (dtype->elsize >=2 && dtype->elsize <= 8)
+                return count_nonzero_int(
+                    PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
+                    PyArray_STRIDES(self), dtype->elsize
+                );
+            
+            break;
+        }
+        case 'b':
+        {
+           if (dtype->elsize == 1) 
+                return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
+                        PyArray_DIMS(self), PyArray_STRIDES(self));
+           
+        }
     }
 
-    if (dtype->type_num == NPY_BOOL || dtype->type_num == NPY_INT8 || dtype->type_num == NPY_UINT8) {
-        return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
-                        PyArray_DIMS(self), PyArray_STRIDES(self));
-    }
 
     nonzero = PyArray_DESCR(self)->f->nonzero;
 
