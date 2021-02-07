@@ -43,7 +43,32 @@ jobs:
       - name: Install new NumPy
         run: |
           bash -c "python3.8 -m pip install dist/numpy-*cp38*.whl"
+      - name: Check that pip installed the extensions
+        run: |
+          bash -c "python3.8 -m pip show numpy"
+          bash -c "python3.8 -m pip show -f numpy | grep .dll"
+          echo >list_dlls_dos.sh 'site_packages=$(python3.8 -m pip show numpy | grep Location | cut -d " " -f 2 -);
+          dll_list=$(for name in $(python3.8 -m pip show -f numpy | grep -F .dll); do echo ${site_packages}/${name}; done)
+          ls -l ${dll_list}
+          file ${dll_list}
+          ldd ${dll_list}
+          cygcheck ${dll_list}
+          cd dist/
+          for name in ${dll_list};
+          do
+              echo ${name}
+              python3.7 -c "import "$(echo ${name} | sed -E -e "s/\/+(home|usr).*?site-packages\/+//g" -e "s/\//./g" -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll//g")
+          done
+          '
+          dash -c "tr -d '\r' <list_dlls_dos.sh >list_dlls_unix.sh"
+          bash -c "PATH=/bin:/usr/bin:/usr/lib/lapack bash list_dlls_unix.sh"
       - name: Run NumPy test suite
         run: |
-          bash -c "mkdir empty"
-          bash -c "cd empty && python3.8 -c 'import numpy as np; np.test()' && cd .."
+          dash -c "mkdir empty"
+          bash -c "cd empty && PATH=/bin:/usr/bin:/usr/lib/lapack python3.8 -vv -c 'import numpy as np; np.test()' && cd .."
+      - name: Upload wheel if tests fail
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: numpy-cygwin-wheel
+          path: dist/numpy-*cp38*.whl
