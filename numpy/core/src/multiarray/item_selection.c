@@ -2133,10 +2133,6 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 
 #if NPY_SIMD
 
-/*
-
-*/
-
 /* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */
 static NPY_INLINE NPY_GCC_OPT_3 npyv_u8
 count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end, npy_uint8 max_count)
@@ -2209,23 +2205,37 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
 }
 
 
+#define safe_ptr_addition_uint16(result, ptr, adder) \
+    result = ((((uint64_t) ptr) + (((uint64_t) adder) << 1)) == ((uint64_t) (ptr + adder))) ? (ptr+adder) : (npy_uint16 *) NPY_MAX_UINTP; 
+
+#define safe_ptr_addition_uint32(result, ptr, adder) \
+    result = ((((uint64_t) ptr) + (((uint64_t) adder) << 2)) == ((uint64_t) (ptr + adder))) ? (ptr+adder) : (npy_uint32 *) NPY_MAX_UINTP; 
+
 static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
 count_nonzero_int16_simd(npy_uint16 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
+    uint64_t innerloop_jump = NPY_MAX_UINT16 * npyv_nlanes_u16;
     npy_uint16 *end = d + unrollx;
 
     const npyv_u16 vone = npyv_setall_u16(1); 
     const npyv_u16 vzero = npyv_zero_u16();   
 
+    npy_uint16 *target = d;
     while (d<end) {
         npyv_u16 vsum16 = npyv_zero_u16(); 
-        for (npy_intp i = 0; d < end && i < NPY_MAX_UINT16; ++i, d += npyv_nlanes_u16) {
+        safe_ptr_addition_uint16(target, target, innerloop_jump)
+        target = PyArray_MIN(target, end);
+        for (; d<target; d+=npyv_nlanes_u16) {
             npyv_u16 vt = npyv_cvt_u16_b16(npyv_cmpeq_u16(npyv_load_u16(d), vzero)); 
             vt = npyv_and_u16(vt, vone);
             vsum16 = npyv_add_u16(vsum16, vt);
         }
-        zero_count += npyv_sumup_u16(vsum16);
+
+        const npyv_u16 maskevn = npyv_reinterpret_u16_u32(npyv_setall_u32(0xffff));
+        npyv_u32 odd  = npyv_shri_u32(npyv_reinterpret_u32_u16(vsum16), 16);
+        npyv_u32 even = npyv_reinterpret_u32_u16(npyv_and_u16(vsum16, maskevn));
+        zero_count   += npyv_sum_u32(npyv_add_u32(odd, even));        
     }
 
     return unrollx - zero_count;
@@ -2236,19 +2246,27 @@ static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
 count_nonzero_int32_simd(npy_uint32 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
+    uint64_t innerloop_jump = NPY_MAX_UINT32 * npyv_nlanes_u32;
     npy_uint32 *end = d + unrollx;
 
     const npyv_u32 vone = npyv_setall_u32(1); 
     const npyv_u32 vzero = npyv_zero_u32();   
 
+    npy_uint32 *target = d;
     while (d<end) {
         npyv_u32 vsum32 = npyv_zero_u32(); 
-        for (npy_intp i = 0; d < end && i < NPY_MAX_UINT32; ++i, d += npyv_nlanes_u32) {
+        safe_ptr_addition_uint32(target, target, innerloop_jump)
+        target = PyArray_MIN(target, end);
+        for (; d<target; d+=npyv_nlanes_u32) {
             npyv_u32 vt = npyv_cvt_u32_b32(npyv_cmpeq_u32(npyv_load_u32(d), vzero)); 
             vt = npyv_and_u32(vt, vone);
             vsum32 = npyv_add_u32(vsum32, vt);
         }
-        zero_count += npyv_sum_u32(vsum32);    
+
+        const npyv_u32 maskevn = npyv_reinterpret_u32_u64(npyv_setall_u64(0xffffffffULL));
+        npyv_u64 odd  = npyv_shri_u64(npyv_reinterpret_u64_u32(vsum32), 32);
+        npyv_u64 even = npyv_reinterpret_u64_u32(npyv_and_u32(vsum32, maskevn));
+        zero_count   += npyv_sum_u64(npyv_add_u64(odd, even));        
     }
 
     return unrollx - zero_count;
