@@ -30,6 +30,8 @@
 #include "array_coercion.h"
 #include "simd/simd.h"
 
+#include <stdlib.h>
+
 static NPY_GCC_OPT_3 NPY_INLINE int
 npy_fasttake_impl(
         char *dest, char *src, const npy_intp *indices,
@@ -2206,12 +2208,17 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
     return unrollx - zero_count;
 }
 
+#define safe_ptr_addition_uint16(result, ptr, adder) \
+    result = ((((uint64_t) ptr) + (((uint64_t) adder) << 1)) == ((uint64_t) (ptr + adder))) ? (ptr+adder) : (npy_uint16 *) NPY_MAX_UINTP; 
+
+#define safe_ptr_addition_uint32(result, ptr, adder) \
+    result = ((((uint64_t) ptr) + (((uint64_t) adder) << 2)) == ((uint64_t) (ptr + adder))) ? (ptr+adder) : (npy_uint32 *) NPY_MAX_UINTP; 
 
 static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
 count_nonzero_int16_simd(npy_uint16 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
-    npy_uintp innerloop_jump = NPY_MAX_UINT16 * npyv_nlanes_u16;
+    uint64_t innerloop_jump = NPY_MAX_UINT16 * npyv_nlanes_u16;
     npy_uint16 *end = d + unrollx;
 
     const npyv_u16 vone = npyv_setall_u16(1); 
@@ -2220,7 +2227,8 @@ count_nonzero_int16_simd(npy_uint16 *d, npy_uintp unrollx)
     npy_uint16 *target = d;
     while (d<end) {
         npyv_u16 vsum16 = npyv_zero_u16(); 
-        target = PyArray_MIN(target+innerloop_jump, end);
+        safe_ptr_addition_uint16(target, target, innerloop_jump)
+        target = PyArray_MIN(target, end);
         for (; d<target; d+=npyv_nlanes_u16) {
             npyv_u16 vt = npyv_cvt_u16_b16(npyv_cmpeq_u16(npyv_load_u16(d), vzero)); 
             vt = npyv_and_u16(vt, vone);
@@ -2238,7 +2246,7 @@ static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
 count_nonzero_int32_simd(npy_uint32 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
-    npy_uintp innerloop_jump = NPY_MAX_UINT32 * npyv_nlanes_u32;
+    uint64_t innerloop_jump = NPY_MAX_UINT32 * npyv_nlanes_u32;
     npy_uint32 *end = d + unrollx;
 
     const npyv_u32 vone = npyv_setall_u32(1); 
@@ -2247,7 +2255,8 @@ count_nonzero_int32_simd(npy_uint32 *d, npy_uintp unrollx)
     npy_uint32 *target = d;
     while (d<end) {
         npyv_u32 vsum32 = npyv_zero_u32(); 
-        target = PyArray_MIN(target+innerloop_jump, end);
+        safe_ptr_addition_uint32(target, target, innerloop_jump)
+        target = PyArray_MIN(target, end);
         for (; d<target; d+=npyv_nlanes_u32) {
             npyv_u32 vt = npyv_cvt_u32_b32(npyv_cmpeq_u32(npyv_load_u32(d), vzero)); 
             vt = npyv_and_u32(vt, vone);
