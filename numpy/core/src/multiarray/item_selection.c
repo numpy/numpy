@@ -2213,23 +2213,17 @@ static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
 count_nonzero_int16_simd(npy_uint16 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
-    uint64_t innerloop_jump = NPY_MAX_UINT16;
     npy_uint16 *end = d + unrollx;
 
     const npyv_u16 vone = npyv_setall_u16(1); 
     const npyv_u16 vzero = npyv_zero_u16();   
 
-    npy_uint16 *target = d;
     while (d<end) {
         npyv_u16 vsum16 = npyv_zero_u16(); 
-        for (int i=0; i<npyv_nlanes_u16 && d<end; ++i) {
-            uint64_t target_tmp = ((uint64_t)target)+(innerloop_jump >> 1);
-            target = (npy_uint16*) PyArray_MIN(target_tmp, (uint64_t) end);
-            for (; d<target; d+=npyv_nlanes_u16) {
-                npyv_u16 vt = npyv_cvt_u16_b16(npyv_cmpeq_u16(npyv_load_u16(d), vzero)); 
-                vt = npyv_and_u16(vt, vone);
-                vsum16 = npyv_add_u16(vsum16, vt);
-            }
+        for (npy_intp i = 0; d < end && i < NPY_MAX_UINT16; ++i, d += npyv_nlanes_u16) {
+            npyv_u16 vt = npyv_cvt_u16_b16(npyv_cmpeq_u16(npyv_load_u16(d), vzero)); 
+            vt = npyv_and_u16(vt, vone);
+            vsum16 = npyv_add_u16(vsum16, vt);
         }
         zero_count += npyv_sumup_u16(vsum16);
     }
@@ -2242,23 +2236,17 @@ static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
 count_nonzero_int32_simd(npy_uint32 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
-    uint64_t innerloop_jump = NPY_MAX_UINT32;
     npy_uint32 *end = d + unrollx;
 
     const npyv_u32 vone = npyv_setall_u32(1); 
     const npyv_u32 vzero = npyv_zero_u32();   
 
-    npy_uint32 *target = d;
     while (d<end) {
         npyv_u32 vsum32 = npyv_zero_u32(); 
-        for (int i=0; i<npyv_nlanes_u32 && d<end; ++i) {
-            uint64_t target_tmp = ((uint64_t)target)+(innerloop_jump >> 2);
-            target = (npy_uint32*) PyArray_MIN(target_tmp, (uint64_t) end);
-            for (; d<target; d+=npyv_nlanes_u32) {
-                npyv_u32 vt = npyv_cvt_u32_b32(npyv_cmpeq_u32(npyv_load_u32(d), vzero)); 
-                vt = npyv_and_u32(vt, vone);
-                vsum32 = npyv_add_u32(vsum32, vt);
-            }
+        for (npy_intp i = 0; d < end && i < NPY_MAX_UINT32; ++i, d += npyv_nlanes_u32) {
+            npyv_u32 vt = npyv_cvt_u32_b32(npyv_cmpeq_u32(npyv_load_u32(d), vzero)); 
+            vt = npyv_and_u32(vt, vone);
+            vsum32 = npyv_add_u32(vsum32, vt);
         }
         zero_count += npyv_sum_u32(vsum32);    
     }
