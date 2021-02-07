@@ -4100,9 +4100,12 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Returns
     -------
-    trapz : float
-        Definite integral as approximated by trapezoidal rule.
-
+    trapz : float or ndarray
+        Definite integral of 'y' = n-dimensional array as approximated along
+        a single axis by the trapezoidal rule. If 'y' is a 1-dimensional array,
+        then the result is a float. If 'n' is greater than 1, then the result
+        is an 'n-1' dimensional array.
+        
     See Also
     --------
     sum, cumsum
@@ -4245,7 +4248,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     See Also
     --------
     mgrid : Construct a multi-dimensional "meshgrid" using indexing notation.
-    ogrid : Construct an open multi-dimensional "meshgrid" using indexing 
+    ogrid : Construct an open multi-dimensional "meshgrid" using indexing
             notation.
 
     Examples

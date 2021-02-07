@@ -1549,6 +1549,9 @@ class lapack_info(system_info):
 
 
 class lapack_src_info(system_info):
+    # LAPACK_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'lapack_src'
     dir_env_var = 'LAPACK_SRC'
     notfounderror = LapackSrcNotFoundError
@@ -2468,6 +2471,9 @@ class accelerate_info(system_info):
         return
 
 class blas_src_info(system_info):
+    # BLAS_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'blas_src'
     dir_env_var = 'BLAS_SRC'
     notfounderror = BlasSrcNotFoundError

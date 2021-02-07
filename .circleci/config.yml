@@ -62,6 +62,7 @@ jobs:
 
       - run:
           name: build devdocs
+          no_output_timeout: 30m
           command: |
             . venv/bin/activate
             cd doc
