@@ -232,6 +232,7 @@ class Array:
                                order=self.intent.is_intent('c') and 'C' or 'F')
             assert_(self.pyarr.dtype == typ,
                     repr((self.pyarr.dtype, typ)))
+        self.pyarr.setflags(write=self.arr.flags['WRITEABLE'])
         assert_(self.pyarr.flags['OWNDATA'], (obj, intent))
         self.pyarr_attr = wrap.array_attrs(self.pyarr)
 
@@ -325,6 +326,18 @@ class TestSharedMemory:
                     a.has_shared_memory(), repr((self.type.dtype, t.dtype)))
             else:
                 assert_(not a.has_shared_memory(), repr(t.dtype))
+
+    @pytest.mark.parametrize('write', ['w', 'ro'])
+    @pytest.mark.parametrize('order', ['C', 'F'])
+    @pytest.mark.parametrize('inp', ['2seq', '23seq'])
+    def test_in_nocopy(self, write, order, inp):
+        """Test if intent(in) array can be passed without copies
+        """
+        seq = getattr(self, 'num' + inp)
+        obj = np.array(seq, dtype=self.type.dtype, order=order)
+        obj.setflags(write=(write == 'w'))
+        a = self.array(obj.shape, ((order=='C' and intent.in_.c) or intent.in_), obj)
+        assert a.has_shared_memory()
 
     def test_inout_2seq(self):
         obj = array(self.num2seq, dtype=self.type.dtype)
