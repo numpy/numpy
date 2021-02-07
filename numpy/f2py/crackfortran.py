@@ -3109,7 +3109,7 @@ def crack2fortrangen(block, tab='\n', as_interface=False):
         result = ' result (%s)' % block['result']
         if block['result'] not in argsl:
             argsl.append(block['result'])
-    body = crack2fortrangen(block['body'], tab + tabchar)
+    body = crack2fortrangen(block['body'], tab + tabchar, as_interface=as_interface)
     vars = vars2fortran(
         block, block['vars'], argsl, tab + tabchar, as_interface=as_interface)
     mess = ''
@@ -3227,8 +3227,13 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
             show(vars)
             outmess('vars2fortran: No definition for argument "%s".\n' % a)
             continue
-        if a == block['name'] and not block['block'] == 'function':
-            continue
+        if a == block['name']:
+            if block['block'] != 'function' or block.get('result'):
+                # 1) skip declaring a variable that name matches with
+                #    subroutine name
+                # 2) skip declaring function when its type is
+                #    declared via `result` construction
+                continue
         if 'typespec' not in vars[a]:
             if 'attrspec' in vars[a] and 'external' in vars[a]['attrspec']:
                 if a in args:
