@@ -2159,8 +2159,8 @@ static NPY_INLINE NPY_GCC_OPT_3 npyv_u16x2
 count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end, npy_uint16 max_count)
 {
     npyv_u16x2 vsum16;
-    vsum16.val[0] = vsum16.val[1] = npyv_zero_u16(); // Setting a vector of 0s (16 maybe)
-    npy_intp lane_max = 0; // scalar 0
+    vsum16.val[0] = vsum16.val[1] = npyv_zero_u16(); 
+    npy_intp lane_max = 0; 
     while (*d < end && lane_max <= max_count - NPY_MAX_UINT8) {
         npyv_u8 vsum8 = count_zero_bytes_u8(d, end, NPY_MAX_UINT8);
         npyv_u16x2 part = npyv_expand_u16_u8(vsum8);
@@ -2208,16 +2208,16 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
 
 
 static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
-count_nonzero_int16_simd(npy_int16 *d, npy_uintp unrollx)
+count_nonzero_int16_simd(npy_uint16 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
-    const npy_uintp innerloop_jump = NPY_MAX_UINT16;
-    const npy_int16 *end = d + unrollx;
+    npy_uintp innerloop_jump = NPY_MAX_UINT16 * npyv_nlanes_u16;
+    npy_uint16 *end = d + unrollx;
 
     const npyv_u16 vone = npyv_setall_u16(1); 
     const npyv_u16 vzero = npyv_zero_u16();   
 
-    npy_int16 *target = d;
+    npy_uint16 *target = d;
     while (d<end) {
         npyv_u16 vsum16 = npyv_zero_u16(); 
         target = PyArray_MIN(target+innerloop_jump, end);
@@ -2235,16 +2235,16 @@ count_nonzero_int16_simd(npy_int16 *d, npy_uintp unrollx)
 
 
 static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
-count_nonzero_int32_simd(npy_int32 *d, npy_uintp unrollx)
+count_nonzero_int32_simd(npy_uint32 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count = 0;
-    const npy_uintp innerloop_jump = NPY_MAX_UINT32;
-    const npy_int32 *end = d + unrollx;
+    npy_uintp innerloop_jump = NPY_MAX_UINT32 * npyv_nlanes_u32;
+    npy_uint32 *end = d + unrollx;
 
     const npyv_u32 vone = npyv_setall_u32(1); 
     const npyv_u32 vzero = npyv_zero_u32();   
 
-    npy_int32 *target = d;
+    npy_uint32 *target = d;
     while (d<end) {
         npyv_u32 vsum32 = npyv_zero_u32(); 
         target = PyArray_MIN(target+innerloop_jump, end);
@@ -2261,10 +2261,10 @@ count_nonzero_int32_simd(npy_int32 *d, npy_uintp unrollx)
 
 
 static NPY_INLINE NPY_GCC_OPT_3 npy_uintp
-count_nonzero_int64_simd(npy_int64 *d, npy_uintp unrollx)
+count_nonzero_int64_simd(npy_uint64 *d, npy_uintp unrollx)
 {
     npy_uintp zero_count;
-    const npy_int64 *end = d + unrollx;
+    const npy_uint64 *end = d + unrollx;
     const npyv_u64 vone = npyv_setall_u64(1); 
     const npyv_u64 vzero = npyv_zero_u64();   
     npyv_u64 vsum64 = npyv_zero_u64(); 
@@ -2284,7 +2284,7 @@ count_nonzero_int64_simd(npy_int64 *d, npy_uintp unrollx)
 
 
 static NPY_INLINE NPY_GCC_OPT_3 npy_intp
-count_nonzero_int(int ndim, void *data, const npy_intp *ashape, const npy_intp *astrides, int type_num)
+count_nonzero_int(int ndim, char *data, const npy_intp *ashape, const npy_intp *astrides, int type_num)
 {
     int idim;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
@@ -2311,7 +2311,7 @@ count_nonzero_int(int ndim, void *data, const npy_intp *ashape, const npy_intp *
     npy_int##bits *d = (npy_int##bits *) data; \
     NPY_RAW_ITER_START(idim, ndim, coord, shape) { \
         /* Process the innermost dimension */ \
-        for (npy_intp i = 0; i < shape[0]; ++i, d = ((npy_int8*) d) + strides[0]) { \
+        for (npy_intp i = 0; i < shape[0]; ++i, d = (npy_int##bits *) (((npy_int8*) d) + strides[0])) { \
             count += (*d != 0); \
         } \
         d = (npy_int##bits *) data; \
@@ -2322,8 +2322,8 @@ count_nonzero_int(int ndim, void *data, const npy_intp *ashape, const npy_intp *
         npy_int##bits *d2 = (npy_int##bits *) data; \
         NPY_RAW_ITER_START(idim, ndim, coord, shape) { \
             /* Process the innermost dimension */ \
-            const npy_int##bits *d = (npy_int##bits *) data; \
-            const npy_int##bits *e = ((npy_int##bits *) data) + shape[0]; \
+            npy_uint##bits *d = (npy_uint##bits *) data; \
+            const npy_uint##bits *e = ((npy_uint##bits *) data) + shape[0]; \
             npy_uintp stride = shape[0] & -npyv_nlanes_u##bits; \
             count += count_nonzero_int##bits##_simd(d, stride); \
             d += stride; \
@@ -2459,7 +2459,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     dtype = PyArray_DESCR(self);
 
     if (dtype->type_num >= NPY_INT16 && dtype->type_num <= NPY_UINT64) {
-        return count_nonzero_int(PyArray_NDIM(self), (void *) PyArray_DATA(self),
+        return count_nonzero_int(PyArray_NDIM(self), (char *) PyArray_DATA(self),
                         PyArray_DIMS(self), PyArray_STRIDES(self), dtype->type_num);
     }
 
