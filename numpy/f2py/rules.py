@@ -812,7 +812,7 @@ if (#varname#_cb.capi==Py_None) {
 """,
             {debugcapi: ["""\
         fprintf(stderr,\"debug-capi:Assuming %d arguments; at most #maxnofargs#(-#nofoptargs#) is expected.\\n\",#varname#_cb.nofargs);
-        CFUNCSMESSPY(\"for #varname#=\",#cbname#_capi);""",
+        CFUNCSMESSPY(\"for #varname#=\",#varname#_cb.capi);""",
                          {l_not(isintent_callback): """        fprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
             """\
         CFUNCSMESS(\"Saving callback variables for `#varname#`.\\n\");
