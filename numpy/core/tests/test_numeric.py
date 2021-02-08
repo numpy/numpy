@@ -1273,7 +1273,7 @@ class TestNonzero:
         assert_equal(np.nonzero(x['a']), ([0, 2, 3],))
         assert_equal(np.nonzero(x['b']), ([0, 2, 3, 4],))
 
-        types = [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
+        types = [bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
         idxs = np.arange(100)
         iters = 10
         for _ in range(iters):
@@ -1309,7 +1309,7 @@ class TestNonzero:
         assert_equal(np.nonzero(x['a'].T), ([0, 1, 1, 2], [1, 1, 2, 0]))
         assert_equal(np.nonzero(x['b'].T), ([0, 0, 1, 2, 2], [0, 1, 2, 0, 2]))
 
-        types = [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
+        types = [bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
         idxs = np.arange(100)
         iters = 10
         for _ in range(iters):
@@ -1328,7 +1328,7 @@ class TestNonzero:
 
 
     def test_nonzero_threedim(self):
-        types = [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
+        types = [bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
         idxs = np.arange(300)
         iters = 10
         for _ in range(iters):
