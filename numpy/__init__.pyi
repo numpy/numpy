@@ -129,6 +129,23 @@ from numpy.typing._callable import (
     _ComparisonOp,
 )
 
+# NOTE: Numpy's mypy plugin is used for removing the types unavailable
+# to the specific platform
+from numpy.typing._extended_precision import (
+    uint128 as uint128,
+    uint256 as uint256,
+    int128 as int128,
+    int256 as int256,
+    float80 as float80,
+    float96 as float96,
+    float128 as float128,
+    float256 as float256,
+    complex160 as complex160,
+    complex192 as complex192,
+    complex256 as complex256,
+    complex512 as complex512,
+)
+
 from typing import (
     Any,
     ByteString,
@@ -2507,7 +2524,6 @@ class floating(inexact[_NBit1]):
 float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 float64 = floating[_64Bit]
-float128 = floating[_128Bit]
 
 half = floating[_NBitHalf]
 single = floating[_NBitSingle]
@@ -2542,7 +2558,6 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
 
 complex64 = complexfloating[_32Bit, _32Bit]
 complex128 = complexfloating[_64Bit, _64Bit]
-complex256 = complexfloating[_128Bit, _128Bit]
 
 csingle = complexfloating[_NBitSingle, _NBitSingle]
 singlecomplex = complexfloating[_NBitSingle, _NBitSingle]
@@ -2595,8 +2610,6 @@ class str_(character, str):
 
 unicode_ = str_
 str0 = str_
-
-# TODO: Platform dependent types: float128, complex256, float96
 
 def array(
     object: object,
