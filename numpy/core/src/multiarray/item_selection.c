@@ -2681,7 +2681,10 @@ PyArray_Nonzero(PyArrayObject *self)
             to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
         } else if (dtype->byteorder == '<') {
             to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
+        } else if (dtype->byteorder == '|' && dtype->elsize == 1) {
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
         }
+
         if (to_jmp) {
             added_count = nonzero_count;
             goto finish;
