@@ -2137,6 +2137,9 @@ cdef class RandomState:
                Springer, 2002.
         .. [2] Wikipedia, "Student's t-distribution"
                https://en.wikipedia.org/wiki/Student's_t-distribution
+        .. [3] Walker, Helen M., "Degrees of freedom" in Journal of 
+               Educational Psychology
+               http://www.nohsteachers.info/pcaso/ap_statistics/PDFs/DegreesOfFreedom.pdf
 
         Examples
         --------
@@ -2147,33 +2150,46 @@ cdef class RandomState:
         ...                    7515, 8230, 8770])
 
         Does their energy intake deviate systematically from the recommended
-        value of 7725 kJ?
+        value of 7725 kJ? Our null hypothesis will be the absence of deviation,
+        and the alternate hypothesis will be the presence of an effect that could be
+        either positive or negative, hence making our test 2-tailed. 
 
-        We have 10 degrees of freedom, so is the sample mean within 95% of the
-        recommended value?
+        Because we are estimating the mean and we have N=11 values in our sample,
+        we have N-1=10 degrees of freedom [3]_. We set our signifance level to 95% and 
+        compute the t statistic using the empirical mean and standard deviation
+        of our intake, setting the ddof parameter to the unbiased
+        value so the divisor in the standard deviation will be degrees of
+        freedom.
 
-        >>> s = np.random.standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
         1142.1232221373727
-
-        Calculate the t statistic, setting the ddof parameter to the unbiased
-        value so the divisor in the standard deviation will be degrees of
-        freedom, N-1.
-
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
+        >>> t
+        -2.8207540608310198
+
+        We draw 1000000 samples from Student's t distribution with the adequate
+        degrees of freedom.
+
         >>> import matplotlib.pyplot as plt
+        >>> s = np.random.standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        For a one-sided t-test, how far out in the distribution does the t
-        statistic appear?
+        Does our t statistic land in one of the two critical regions found at 
+        both tails of the distribution?
 
         >>> np.sum(s<t) / float(len(s))
-        0.0090699999999999999  #random
+        0.009159  #random < 0.025, statistic is in critical region
+        >>> 2*0.009159
+        0.018318  #random
 
-        So the p-value is about 0.009, which says the null hypothesis has a
-        probability of about 99% of being true.
+        The probability value for this 2-tailed test is about 1.83%, which is 
+        lower than the 5% pre-determined significance threshold. 
+
+        Therefore, the probability of observing values as extreme as our intake
+        conditionally on the null hypothesis being true is too low, and we reject 
+        the null hypothesis of no deviation. 
 
         """
         return cont(&legacy_standard_t, &self._aug_state, size, self.lock, 1,
