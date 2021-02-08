@@ -2588,6 +2588,7 @@ bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, np
 NPY_NO_EXPORT PyObject *
 PyArray_Nonzero(PyArrayObject *self)
 {
+    // print_original_dims(self);
     int i, ndim = PyArray_NDIM(self);
     PyArrayObject *ret = NULL;
     PyObject *ret_tuple;
@@ -2667,6 +2668,8 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
+    bool used_optimization = false;
+    npy_stride_sort_item out_strideperm[ndim]; // For storing the stride permutation needed for dimension swapped views.
     /* nothing to do */
     if (nonzero_count == 0) {
         goto finish;
@@ -2675,11 +2678,15 @@ PyArray_Nonzero(PyArrayObject *self)
     npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
     char * data = PyArray_BYTES(self);
     int flags = PyArray_FLAGS(self);
+
     if ((flags & NPY_ARRAY_C_CONTIGUOUS) && (flags & NPY_ARRAY_ALIGNED)) {
         bool to_jmp = false;
-        if (PyArray_ISNBO(dtype->byteorder)) // Only apply the optimization if byteorder is not swapped.
+        if (PyArray_ISNBO(dtype->byteorder)) { // Only apply the optimization if byteorder is not swapped.
             to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
-        
+            PyArray_CreateSortedStridePerm(ndim, PyArray_STRIDES(self), out_strideperm);
+            used_optimization = true;
+        }
+
         if (to_jmp) {
             added_count = nonzero_count;
             goto finish;
@@ -2846,7 +2853,12 @@ finish:
     for (i = 0; i < ndim; ++i) {
         npy_intp stride = ndim * NPY_SIZEOF_INTP;
         /* the result is an empty array, the view must point to valid memory */
-        npy_intp data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
+        npy_intp data_offset; 
+        if (used_optimization) {
+            data_offset = nonzero_count == 0 ? 0 : out_strideperm[i].perm * NPY_SIZEOF_INTP;
+        } else {
+            data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
+        }
 
         PyArrayObject *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(ret), PyArray_DescrFromType(NPY_INTP),
