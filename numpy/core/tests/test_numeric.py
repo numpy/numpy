@@ -1273,6 +1273,19 @@ class TestNonzero:
         assert_equal(np.nonzero(x['a']), ([0, 2, 3],))
         assert_equal(np.nonzero(x['b']), ([0, 2, 3, 4],))
 
+        types = [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
+        idxs = np.arange(100)
+        iters = 10
+        for _ in range(iters):
+            for dtype in types:
+                x = ((2**33)*np.random.randn(100)).astype(dtype)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 101)
+                x[idxs[:num_zeros]] = 0
+                idxs = np.nonzero(x)[0]
+                assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
+
+
     def test_nonzero_twodim(self):
         x = np.array([[0, 1, 0], [2, 0, 3]])
         assert_equal(np.count_nonzero(x), 3)
@@ -1295,6 +1308,43 @@ class TestNonzero:
         assert_equal(np.count_nonzero(x['b'].T), 5)
         assert_equal(np.nonzero(x['a'].T), ([0, 1, 1, 2], [1, 1, 2, 0]))
         assert_equal(np.nonzero(x['b'].T), ([0, 0, 1, 2, 2], [0, 1, 2, 0, 2]))
+
+        types = [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
+        idxs = np.arange(100)
+        iters = 10
+        for _ in range(iters):
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10)).astype(dtype)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 101)
+                x.flat[idxs[:num_zeros]] = 0
+                idxs_0, idxs_1 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j in zip(idxs_0, idxs_1):
+                    if x[i,j] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
+
+    def test_nonzero_threedim(self):
+        types = [np.bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
+        idxs = np.arange(300)
+        iters = 10
+        for _ in range(iters):
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10, 3)).astype(dtype)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 301)
+                x.flat[idxs[:num_zeros]] = 0
+                idxs_0, idxs_1, idxs_2 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j,k in zip(idxs_0, idxs_1, idxs_2):
+                    if x[i,j,k] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
 
     def test_sparse(self):
         # test special sparse condition boolean code path

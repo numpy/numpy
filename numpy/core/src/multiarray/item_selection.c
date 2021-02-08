@@ -30,6 +30,8 @@
 #include "array_coercion.h"
 #include "simd/simd.h"
 
+#include "stdbool.h"
+
 static NPY_GCC_OPT_3 NPY_INLINE int
 npy_fasttake_impl(
         char *dest, char *src, const npy_intp *indices,
@@ -2394,6 +2396,190 @@ finish:
     return nonzero_count;
 }
 
+#define ptr_assignment1(ptr1, val1, stride1) *ptr1 = val1; ptr1 += stride1; 
+#define ptr_assignment2(ptr1, val1, stride1, ptr2, val2, stride2) ptr_assignment1(ptr1, val1, stride1) *ptr2 = val2; ptr2 += stride2; 
+
+#define loop_ptr_assignment(start, end, ptr_assignment) \
+    for (npy_intp i = start; i<end; ++i) { \
+        ptr_assignment \
+    }
+
+#define nonzero_idxs_1D(data, idxs, shape, strides, nonzero_count, dtype) \
+    npy_intp stride = strides[0]; \
+    npy_intp added_count = 0; \
+    npy_intp a = 0; \
+    while (added_count < nonzero_count) { \
+        *idxs = a;  \
+        bool to_increment = ((bool) *data); \
+        idxs += ((int) to_increment); \
+        added_count += ((int) to_increment); \
+        data = (dtype *) (((char*) data) + stride); \
+        ++a;\
+    }
+
+
+#define nonzero_idxs_2D(data, idxs, shape, strides, nonzero_count, dtype) \
+    npy_intp idxs_stride = 2; \
+    npy_intp size_1 = shape[1]; \
+    npy_intp stride_1 = strides[1]; \
+    npy_intp* idxs_0 = idxs;\
+    npy_intp* idxs_1 = idxs + 1;    \
+    npy_intp added_count = 0; \
+    npy_intp a = 0; \
+    while (added_count < nonzero_count) { \
+        npy_intp old_added_count = added_count; \
+        npy_intp b = 0;\
+        while (added_count < nonzero_count && b<size_1) { \
+            *idxs_1 = b; \
+            npy_uintp to_increment = (npy_uintp) ((bool) *data); \
+            idxs_1 += (idxs_stride & (-to_increment)); \
+            added_count += to_increment; \
+            data = (dtype *) (((char *) data) + stride_1); \
+            ++b;\
+        } \
+        loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment1(idxs_0, a, idxs_stride)) \
+        ++a;\
+    }
+
+
+#define nonzero_idxs_3D(data, idxs, shape, strides, nonzero_count, dtype) \
+    npy_intp idxs_stride = 3; \
+    npy_intp size_1 = shape[1]; \
+    npy_intp size_2 = shape[2]; \
+    npy_intp stride_2 = strides[2]; \
+    npy_intp* idxs_0 = idxs;\
+    npy_intp* idxs_1 = idxs + 1;    \
+    npy_intp* idxs_2 = idxs + 2;    \
+    npy_intp added_count = 0; \
+    npy_intp a = 0; \
+    while (added_count < nonzero_count) { \
+        npy_intp b = 0;\
+        while (added_count < nonzero_count && b<size_1) { \
+            npy_intp old_added_count = added_count; \
+            npy_intp c = 0;\
+            while (added_count < nonzero_count && c<size_2) { \
+                *idxs_2 = c; \
+                npy_uintp to_increment = (npy_uintp) ((bool) *data); \
+                idxs_2 += (idxs_stride & (-to_increment)); \
+                added_count += to_increment; \
+                data = (dtype *) (((char *) data) + stride_2); \
+                ++c;\
+            }\
+            loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment2(idxs_0, a, idxs_stride, idxs_1, b, idxs_stride)) \
+            ++b;\
+        }\
+        ++a;\
+    }
+
+
+
+#define nonzero_idxs_dispatcher(ndim) \
+bool nonzero_idxs_dispatcher##ndim##D(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count) { \
+    \
+    switch(dtype) { \
+    \
+        case NPY_BOOL: \
+        { \
+            npy_bool* data_ptr = (npy_bool*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_bool); \
+            return true; \
+        } \
+        case NPY_UINT8: \
+        { \
+            npy_byte* data_ptr = (npy_byte*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); \
+            return true; \
+        } \
+        case NPY_INT8: \
+        { \
+            npy_byte* data_ptr = (npy_byte*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); \
+            return true; \
+        } \
+        case NPY_UINT16: \
+        { \
+            npy_uint16* data_ptr = (npy_uint16*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_uint16); \
+            return true; \
+        } \
+        case NPY_INT16: \
+        { \
+            npy_int16* data_ptr = (npy_int16*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_int16); \
+            return true; \
+        } \
+        case NPY_UINT32: \
+        { \
+            npy_uint32* data_ptr = (npy_uint32*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_uint32); \
+            return true; \
+        } \
+        case NPY_INT32: \
+        { \
+            npy_int32* data_ptr = (npy_int32*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_int32); \
+            return true; \
+        } \
+        case NPY_UINT64: \
+        { \
+            npy_uint64* data_ptr = (npy_uint64*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_uint64); \
+            return true; \
+        } \
+        case NPY_INT64: \
+        { \
+            npy_int64* data_ptr = (npy_int64*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_int64); \
+            return true; \
+        } \
+        case NPY_FLOAT32: \
+        { \
+            npy_float* data_ptr = (npy_float*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_float); \
+            return true; \
+        } \
+        case NPY_FLOAT64: \
+        { \
+            npy_double* data_ptr = (npy_double*) data; \
+            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_double); \
+            return true; \
+        } \
+    } \
+    return false; \
+}
+
+nonzero_idxs_dispatcher(1)
+nonzero_idxs_dispatcher(2)
+nonzero_idxs_dispatcher(3)
+
+bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count, int ndims) {
+    bool executed = false;
+    NPY_BEGIN_THREADS_DEF;
+
+    switch(ndims) {
+        case 1:
+        {
+            executed = nonzero_idxs_dispatcher1D(data, idxs, shape, strides, dtype, nonzero_count);
+            break;
+        }
+        case 2:
+        {
+            executed = nonzero_idxs_dispatcher2D(data, idxs, shape, strides, dtype, nonzero_count);
+            break;
+        }
+        case 3:
+        {
+            executed = nonzero_idxs_dispatcher3D(data, idxs, shape, strides, dtype, nonzero_count);
+            break;
+        }
+    }
+
+    NPY_END_THREADS;
+
+    return executed;
+}
+
+
 /*NUMPY_API
  * Nonzero
  *
@@ -2481,18 +2667,33 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
-    /* If it's a one-dimensional result, don't use an iterator */
-    if (ndim == 1) {
-        npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
-        char * data = PyArray_BYTES(self);
-        npy_intp stride = PyArray_STRIDE(self, 0);
-        npy_intp count = PyArray_DIM(self, 0);
-        NPY_BEGIN_THREADS_DEF;
+    /* nothing to do */
+    if (nonzero_count == 0) {
+        goto finish;
+    }
 
-        /* nothing to do */
-        if (nonzero_count == 0) {
+    npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
+    char * data = PyArray_BYTES(self);
+    int flags = PyArray_FLAGS(self);
+    if ((flags & NPY_ARRAY_C_CONTIGUOUS) && (flags & NPY_ARRAY_ALIGNED)) {
+        bool to_jmp = false;
+        if (dtype->byteorder == '=' && PyArray_EquivByteorders(NPY_NATIVE, NPY_LITTLE)) {
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
+        } else if (dtype->byteorder == '<') {
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
+        }
+        if (to_jmp) {
+            added_count = nonzero_count;
             goto finish;
         }
+    }
+
+    /* If it's a one-dimensional result, don't use an iterator */
+    if (ndim == 1) {     
+        npy_intp stride = PyArray_STRIDE(self, 0);
+        npy_intp count = PyArray_DIM(self, 0);
+
+        NPY_BEGIN_THREADS_DEF;
 
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(count);
@@ -2547,6 +2748,7 @@ PyArray_Nonzero(PyArrayObject *self)
         NPY_END_THREADS;
 
         goto finish;
+
     }
 
     /*
@@ -2619,7 +2821,9 @@ PyArray_Nonzero(PyArrayObject *self)
 
     NpyIter_Deallocate(iter);
 
+
 finish:
+
     if (PyErr_Occurred()) {
         Py_DECREF(ret);
         return NULL;
@@ -2661,6 +2865,7 @@ finish:
 
     return ret_tuple;
 }
+
 
 /*
  * Gets a single item from the array, based on a single multi-index
