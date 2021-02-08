@@ -2677,14 +2677,9 @@ PyArray_Nonzero(PyArrayObject *self)
     int flags = PyArray_FLAGS(self);
     if ((flags & NPY_ARRAY_C_CONTIGUOUS) && (flags & NPY_ARRAY_ALIGNED)) {
         bool to_jmp = false;
-        if (dtype->byteorder == '=' && PyArray_EquivByteorders(NPY_NATIVE, NPY_LITTLE)) {
+        if (PyArray_ISNBO(dtype->byteorder)) // Only apply the optimization if byteorder is not swapped.
             to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
-        } else if (dtype->byteorder == '<') {
-            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
-        } else if (dtype->byteorder == '|' && dtype->elsize == 1) {
-            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
-        }
-
+        
         if (to_jmp) {
             added_count = nonzero_count;
             goto finish;
