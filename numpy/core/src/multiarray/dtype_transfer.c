@@ -4625,6 +4625,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
     /* TODO: Special case some important cases so they're fast */
 
     /* Fall back to wrapping a non-masked transfer function */
+    assert(dst_dtype != NULL);
     if (PyArray_GetDTypeTransferFunction(aligned,
                                 src_stride, dst_stride,
                                 src_dtype, dst_dtype,
