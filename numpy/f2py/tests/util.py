@@ -92,7 +92,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     Compile and import a f2py module, built from the given files.
 
     """
-
+    options = options + ['--debug-capi']
     code = ("import sys; sys.path = %s; import numpy.f2py as f2py2e; "
             "f2py2e.main()" % repr(sys.path))
 
