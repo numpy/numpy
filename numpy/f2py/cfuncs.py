@@ -96,11 +96,15 @@ typedefs['string'] = """typedef char * string;"""
 cppmacros['CFUNCSMESS'] = """\
 #ifdef DEBUGCFUNCS
 #define CFUNCSMESS(mess) fprintf(stderr,\"debug-capi:\"mess);
+#define CFUNCSMESS1(mess, arg) fprintf(stderr,\"debug-capi:\"mess, arg);
+#define CFUNCSMESS2(mess, arg1, arg2) fprintf(stderr,\"debug-capi:\"mess, arg1, arg2);
 #define CFUNCSMESSPY(mess,obj) CFUNCSMESS(mess) \\
     PyObject_Print((PyObject *)obj,stderr,Py_PRINT_RAW);\\
     fprintf(stderr,\"\\n\");
 #else
 #define CFUNCSMESS(mess)
+#define CFUNCSMESS1(mess, arg)
+#define CFUNCSMESS2(mess, arg1, arg2)
 #define CFUNCSMESSPY(mess,obj)
 #endif
 """
