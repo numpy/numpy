@@ -1,3 +1,5 @@
+:orphan:
+
 .. _explanations:
 
 ################
@@ -9,6 +11,7 @@ used in NumPy. For the reference documentation of the functions and classes
 contained in the package, see the :ref:`API reference <reference>`.
 
 .. toctree::
-   :maxdepth: 1
+    :hidden:
+    :maxdepth: 1
 
-   basics.broadcasting
+    basics.broadcasting
