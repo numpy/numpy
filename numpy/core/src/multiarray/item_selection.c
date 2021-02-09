@@ -2400,7 +2400,7 @@ finish:
 #define ptr_assignment2(ptr1, val1, stride1, ptr2, val2, stride2) ptr_assignment1(ptr1, val1, stride1) *ptr2 = val2; ptr2 += stride2; 
 
 #define loop_ptr_assignment(start, end, ptr_assignment) \
-    for (npy_intp i = start; i<end; ++i) { \
+    for (npy_intp i=start; i<end; ++i) { \
         ptr_assignment \
     }
 
@@ -2418,7 +2418,7 @@ finish:
     }
 
 
-#define nonzero_idxs_2D(data, idxs, shape, strides, nonzero_count, dtype) \
+#define nonzero_idxs_2D_C(data, idxs, shape, strides, nonzero_count, dtype) \
     npy_intp idxs_stride = 2; \
     npy_intp size_1 = shape[1]; \
     npy_intp stride_1 = strides[1]; \
@@ -2441,8 +2441,31 @@ finish:
         ++a;\
     }
 
+#define nonzero_idxs_2D_F(data, idxs, shape, strides, nonzero_count, dtype) \
+    npy_intp idxs_stride = 2; \
+    npy_intp size_0 = shape[0]; \
+    npy_intp stride_0 = strides[0]; \
+    npy_intp* idxs_0 = idxs;\
+    npy_intp* idxs_1 = idxs + 1;    \
+    npy_intp added_count = 0; \
+    npy_intp b = 0; \
+    while (added_count < nonzero_count) { \
+        npy_intp old_added_count = added_count; \
+        npy_intp a = 0;\
+        while (added_count < nonzero_count && a<size_0) { \
+            *idxs_0 = a; \
+            npy_uintp to_increment = (npy_uintp) ((bool) *data); \
+            idxs_0 += (idxs_stride & (-to_increment)); \
+            added_count += to_increment; \
+            data = (dtype *) (((char *) data) + stride_0); \
+            ++a;\
+        } \
+        loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment1(idxs_1, b, idxs_stride)) \
+        ++b;\
+    }
 
-#define nonzero_idxs_3D(data, idxs, shape, strides, nonzero_count, dtype) \
+
+#define nonzero_idxs_3D_C(data, idxs, shape, strides, nonzero_count, dtype) \
     npy_intp idxs_stride = 3; \
     npy_intp size_1 = shape[1]; \
     npy_intp size_2 = shape[2]; \
@@ -2472,87 +2495,118 @@ finish:
     }
 
 
+#define nonzero_idxs_3D_F(data, idxs, shape, strides, nonzero_count, dtype) \
+    npy_intp idxs_stride = 3; \
+    npy_intp size_0 = shape[0]; \
+    npy_intp size_1 = shape[1]; \
+    npy_intp stride_0 = strides[0]; \
+    npy_intp* idxs_0 = idxs;\
+    npy_intp* idxs_1 = idxs + 1;    \
+    npy_intp* idxs_2 = idxs + 2;    \
+    npy_intp added_count = 0; \
+    npy_intp c = 0; \
+    while (added_count < nonzero_count) { \
+        npy_intp b = 0;\
+        while (added_count < nonzero_count && b<size_1) { \
+            npy_intp old_added_count = added_count; \
+            npy_intp a = 0;\
+            while (added_count < nonzero_count && a<size_0) { \
+                *idxs_0 = a; \
+                npy_uintp to_increment = (npy_uintp) ((bool) *data); \
+                idxs_0 += (idxs_stride & (-to_increment)); \
+                added_count += to_increment; \
+                data = (dtype *) (((char *) data) + stride_0); \
+                ++a;\
+            }\
+            loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment2(idxs_1, b, idxs_stride, idxs_2, c, idxs_stride)) \
+            ++b;\
+        }\
+        ++c;\
+    }
 
-#define nonzero_idxs_dispatcher(ndim) \
-bool nonzero_idxs_dispatcher##ndim##D(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count) { \
+
+#define nonzero_idxs_dispatcher(ndim, layout) \
+bool nonzero_idxs_dispatcher##ndim##D##layout(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count) { \
     \
     switch(dtype) { \
     \
         case NPY_BOOL: \
         { \
             npy_bool* data_ptr = (npy_bool*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_bool); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_bool); \
             return true; \
         } \
         case NPY_UINT8: \
         { \
             npy_byte* data_ptr = (npy_byte*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); \
             return true; \
         } \
         case NPY_INT8: \
         { \
             npy_byte* data_ptr = (npy_byte*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); \
             return true; \
         } \
         case NPY_UINT16: \
         { \
             npy_uint16* data_ptr = (npy_uint16*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_uint16); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_uint16); \
             return true; \
         } \
         case NPY_INT16: \
         { \
             npy_int16* data_ptr = (npy_int16*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_int16); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_int16); \
             return true; \
         } \
         case NPY_UINT32: \
         { \
             npy_uint32* data_ptr = (npy_uint32*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_uint32); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_uint32); \
             return true; \
         } \
         case NPY_INT32: \
         { \
             npy_int32* data_ptr = (npy_int32*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_int32); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_int32); \
             return true; \
         } \
         case NPY_UINT64: \
         { \
             npy_uint64* data_ptr = (npy_uint64*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_uint64); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_uint64); \
             return true; \
         } \
         case NPY_INT64: \
         { \
             npy_int64* data_ptr = (npy_int64*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_int64); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_int64); \
             return true; \
         } \
         case NPY_FLOAT32: \
         { \
             npy_float* data_ptr = (npy_float*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_float); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_float); \
             return true; \
         } \
         case NPY_FLOAT64: \
         { \
             npy_double* data_ptr = (npy_double*) data; \
-            nonzero_idxs_##ndim##D(data_ptr, idxs, shape, strides, nonzero_count, npy_double); \
+            nonzero_idxs_##ndim##D##layout(data_ptr, idxs, shape, strides, nonzero_count, npy_double); \
             return true; \
         } \
     } \
     return false; \
 }
 
-nonzero_idxs_dispatcher(1)
-nonzero_idxs_dispatcher(2)
-nonzero_idxs_dispatcher(3)
+nonzero_idxs_dispatcher(1,)
+nonzero_idxs_dispatcher(2,_C)
+nonzero_idxs_dispatcher(2,_F)
+nonzero_idxs_dispatcher(3,_C)
+nonzero_idxs_dispatcher(3,_F)
 
-bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count, int ndims) {
+bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count, int ndims, bool is_C_layout) {
     bool executed = false;
     NPY_BEGIN_THREADS_DEF;
 
@@ -2564,12 +2618,22 @@ bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, np
         }
         case 2:
         {
-            executed = nonzero_idxs_dispatcher2D(data, idxs, shape, strides, dtype, nonzero_count);
+            if (is_C_layout) {
+                executed = nonzero_idxs_dispatcher2D_C(data, idxs, shape, strides, dtype, nonzero_count);
+            }
+            else {
+                executed = nonzero_idxs_dispatcher2D_F(data, idxs, shape, strides, dtype, nonzero_count);                
+            }
             break;
         }
         case 3:
         {
-            executed = nonzero_idxs_dispatcher3D(data, idxs, shape, strides, dtype, nonzero_count);
+            if (is_C_layout) {
+                executed = nonzero_idxs_dispatcher3D_C(data, idxs, shape, strides, dtype, nonzero_count);
+            }
+            else {
+                executed = nonzero_idxs_dispatcher3D_F(data, idxs, shape, strides, dtype, nonzero_count);                
+            }
             break;
         }
     }
@@ -2588,7 +2652,6 @@ bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, np
 NPY_NO_EXPORT PyObject *
 PyArray_Nonzero(PyArrayObject *self)
 {
-    // print_original_dims(self);
     int i, ndim = PyArray_NDIM(self);
     PyArrayObject *ret = NULL;
     PyObject *ret_tuple;
@@ -2670,25 +2733,49 @@ PyArray_Nonzero(PyArrayObject *self)
 
     bool used_optimization = false;
     npy_stride_sort_item out_strideperm[ndim]; // For storing the stride permutation needed for dimension swapped views.
+    bool is_C_layout = true;
     /* nothing to do */
     if (nonzero_count == 0) {
         goto finish;
     }
 
+
+    PyArrayObject* original_array = self;
+    
+    if (PyArray_BASE(self) != NULL) {
+        original_array = (PyArrayObject*) PyArray_BASE(self);
+    } 
+
     npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
     char * data = PyArray_BYTES(self);
     int flags = PyArray_FLAGS(self);
 
-    if ((flags & NPY_ARRAY_C_CONTIGUOUS) && (flags & NPY_ARRAY_ALIGNED)) {
+    if ((flags & NPY_ARRAY_ALIGNED) && PyArray_ISNOTSWAPPED(original_array)) { // Only apply the optimization if array is aligned and byteorder is not swapped.
         bool to_jmp = false;
-        if (PyArray_ISNBO(dtype->byteorder)) { // Only apply the optimization if byteorder is not swapped.
-            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(self), PyArray_STRIDES(self), dtype->type_num, nonzero_count, ndim);
-            PyArray_CreateSortedStridePerm(ndim, PyArray_STRIDES(self), out_strideperm);
-            used_optimization = true;
+        bool is_slice = false;
+        int original_flags = PyArray_FLAGS(original_array);
+
+        if (!(flags & NPY_ARRAY_C_CONTIGUOUS) && !(flags & NPY_ARRAY_F_CONTIGUOUS)) {
+            is_slice = true;
+        }
+        else if (original_flags & NPY_ARRAY_C_CONTIGUOUS) {
+            is_C_layout = true;
+        }
+        else if (original_flags & NPY_ARRAY_F_CONTIGUOUS) {
+            is_C_layout = false;
+        }
+
+        if (!is_slice && is_C_layout) { 
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(original_array), PyArray_STRIDES(original_array), PyArray_DESCR(original_array)->type_num, nonzero_count, ndim, true);
+        }
+        else if (!is_slice && !is_C_layout) { 
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(original_array), PyArray_STRIDES(original_array), PyArray_DESCR(original_array)->type_num, nonzero_count, ndim, false);
         }
 
         if (to_jmp) {
+            PyArray_CreateSortedStridePerm(ndim, PyArray_STRIDES(self), out_strideperm);
             added_count = nonzero_count;
+            used_optimization = true;
             goto finish;
         }
     }
@@ -2855,7 +2942,10 @@ finish:
         /* the result is an empty array, the view must point to valid memory */
         npy_intp data_offset; 
         if (used_optimization) {
-            data_offset = nonzero_count == 0 ? 0 : out_strideperm[i].perm * NPY_SIZEOF_INTP;
+            if (is_C_layout)
+                data_offset = nonzero_count == 0 ? 0 : out_strideperm[i].perm * NPY_SIZEOF_INTP;
+            else
+                data_offset = nonzero_count == 0 ? 0 : out_strideperm[ndim-i-1].perm * NPY_SIZEOF_INTP;
         } else {
             data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
         }
