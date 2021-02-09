@@ -61,6 +61,21 @@ cf2py  intent(out) a
 
        a = callback(cu, lencu)
        end
+
+       subroutine hidden_callback(a, r)
+       external global_f
+cf2py  intent(callback, hide) global_f
+       integer a, r, global_f
+cf2py  intent(out) r
+       r = global_f(a)
+       end
+
+       subroutine hidden_callback2(a, r)
+       external global_f
+       integer a, r, global_f
+cf2py  intent(out) r
+       r = global_f(a)
+       end
     """
 
     @pytest.mark.parametrize('name', 't,t2'.split(','))
@@ -203,6 +218,39 @@ cf2py  intent(out) a
         errors = "\n\n".join(errors)
         if errors:
             raise AssertionError(errors)
+
+    def test_hidden_callback(self):
+        try:
+            self.module.hidden_callback(2)
+        except Exception as msg:
+            assert_(str(msg).startswith('Callback global_f not defined'))
+
+        try:
+            self.module.hidden_callback2(2)
+        except Exception as msg:
+            assert_(str(msg).startswith('cb: Callback global_f not defined'))
+
+        self.module.global_f = lambda x: x + 1
+        r = self.module.hidden_callback(2)
+        assert_(r == 3)
+
+        self.module.global_f = lambda x: x + 2
+        r = self.module.hidden_callback(2)
+        assert_(r == 4)
+
+        del self.module.global_f
+        try:
+            self.module.hidden_callback(2)
+        except Exception as msg:
+            assert_(str(msg).startswith('Callback global_f not defined'))
+
+        self.module.global_f = lambda x=0: x + 3
+        r = self.module.hidden_callback(2)
+        assert_(r == 5)
+
+        # reproducer of gh18341
+        r = self.module.hidden_callback2(2)
+        assert_(r == 3)
 
 
 class TestF77CallbackPythonTLS(TestF77Callback):

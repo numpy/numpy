@@ -70,7 +70,8 @@ static #name#_t *get_active_#name#(void) {
 
 /*typedef #rctype#(*#name#_typedef)(#optargs_td##args_td##strarglens_td##noargs#);*/
 #static# #rctype# #callbackname# (#optargs##args##strarglens##noargs#) {
-    #name#_t *cb;
+    #name#_t cb_local = { NULL, NULL, 0 };
+    #name#_t *cb = NULL;
     PyTupleObject *capi_arglist = NULL;
     PyObject *capi_return = NULL;
     PyObject *capi_tmp = NULL;
@@ -82,12 +83,17 @@ static #name#_t *get_active_#name#(void) {
 f2py_cb_start_clock();
 #endif
     cb = get_active_#name#();
+    if (cb == NULL) {
+        capi_longjmp_ok = 0;
+        cb = &cb_local;
+    }
     capi_arglist = cb->args_capi;
     CFUNCSMESS(\"cb:Call-back function #name# (maxnofargs=#maxnofargs#(-#nofoptargs#))\\n\");
     CFUNCSMESSPY(\"cb:#name#_capi=\",cb->capi);
     if (cb->capi==NULL) {
         capi_longjmp_ok = 0;
         cb->capi = PyObject_GetAttrString(#modulename#_module,\"#argname#\");
+        CFUNCSMESSPY(\"cb:#name#_capi=\",cb->capi);
     }
     if (cb->capi==NULL) {
         PyErr_SetString(#modulename#_error,\"cb: Callback #argname# not defined (as an argument or module #modulename# attribute).\\n\");
