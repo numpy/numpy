@@ -1026,8 +1026,7 @@ def _median_nancheck(data, result, axis, out):
     """
     if data.size == 0:
         return result
-    data = np.moveaxis(data, axis, -1)
-    n = np.isnan(data[..., -1])
+    n = np.isnan(data.take(-1, axis=axis))
     # masked NaN values are ok
     if np.ma.isMaskedArray(n):
         n = n.filled(False)
