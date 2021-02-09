@@ -1285,6 +1285,14 @@ class TestNonzero:
                 idxs = np.nonzero(x)[0]
                 assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
 
+        for _ in range(iters): # Check for slices
+            for dtype in types:
+                x = ((2**33)*np.random.randn(100)).astype(dtype)
+                x_view = x[:50]
+                x_view[[0,2,8,22,24]] = 0
+                idxs = np.nonzero(x_view)[0]
+                assert_equal(np.array_equal(np.where(x_view != 0)[0], idxs), True)
+
 
     def test_nonzero_twodim(self):
         x = np.array([[0, 1, 0], [2, 0, 3]])
@@ -1312,6 +1320,8 @@ class TestNonzero:
         types = [bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
         idxs = np.arange(100)
         iters = 10
+        dim_permutation = np.arange(2) # Shuffle dimensions
+
         for _ in range(iters):
             for dtype in types:
                 x = ((2**33)*np.random.randn(10, 10)).astype(dtype)
@@ -1327,10 +1337,90 @@ class TestNonzero:
                 assert_equal(nzs, 0)
 
 
+        for _ in range(iters): # This time randomly permute dimensions
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10)).astype(dtype)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 101)
+                x.flat[idxs[:num_zeros]] = 0
+                np.random.shuffle(dim_permutation)
+                x = np.transpose(x, dim_permutation)
+                idxs_0, idxs_1 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j in zip(idxs_0, idxs_1):
+                    if x[i,j] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
+        # Repeat the above logic for fortran contiguous arrays
+        for _ in range(iters):
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10)).astype(dtype)
+                x = np.asfortranarray(x)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 101)
+                x.flat[idxs[:num_zeros]] = 0
+                idxs_0, idxs_1 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j in zip(idxs_0, idxs_1):
+                    if x[i,j] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
+
+        for _ in range(iters): # This time randomly permute dimensions
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10)).astype(dtype)
+                x = np.asfortranarray(x)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 101)
+                x.flat[idxs[:num_zeros]] = 0
+                np.random.shuffle(dim_permutation)
+                x = np.transpose(x, dim_permutation)
+                idxs_0, idxs_1 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j in zip(idxs_0, idxs_1):
+                    if x[i,j] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
+
+        for i in range(iters):  # check for slices
+            x = ((2**33)*np.random.randn(10, 10)).astype(np.int32)
+            x.flat[[2,6,9,15,21]] = 0
+            x_view = x[:5,:5]
+
+            idxs_0, idxs_1 = np.nonzero(x_view)
+            assert_equal(np.count_nonzero(x_view), len(idxs_0))
+            nzs = 0
+            for i,j in zip(idxs_0, idxs_1):
+                if x_view[i,j] == 0:
+                    nzs += 1
+            assert_equal(nzs, 0)
+
+            y = np.asfortranarray(x)
+            y_view = y[:5,:5]
+
+            idxs_0, idxs_1 = np.nonzero(y_view)
+            assert_equal(np.count_nonzero(y_view), len(idxs_0))
+            nzs = 0
+            for i,j in zip(idxs_0, idxs_1):
+                if y_view[i,j] == 0:
+                    nzs += 1
+            assert_equal(nzs, 0)
+
+
+
+
     def test_nonzero_threedim(self):
         types = [bool, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64]
         idxs = np.arange(300)
         iters = 10
+        dim_permutation = np.arange(3) # Shuffle dimensions
+
         for _ in range(iters):
             for dtype in types:
                 x = ((2**33)*np.random.randn(10, 10, 3)).astype(dtype)
@@ -1344,6 +1434,83 @@ class TestNonzero:
                     if x[i,j,k] == 0:
                         nzs += 1
                 assert_equal(nzs, 0)
+
+
+        for _ in range(iters): # This time randomly permute dimensions
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10, 3)).astype(dtype)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 301)
+                x.flat[idxs[:num_zeros]] = 0
+                np.random.shuffle(dim_permutation)
+                x = np.transpose(x, dim_permutation)
+                idxs_0, idxs_1, idxs_2 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j,k in zip(idxs_0, idxs_1, idxs_2):
+                    if x[i,j,k] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
+        # Repeat the above for fortran contiguous arrays
+        for _ in range(iters):
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10, 3)).astype(dtype)
+                x = np.asfortranarray(x)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 301)
+                x.flat[idxs[:num_zeros]] = 0
+                idxs_0, idxs_1, idxs_2 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j,k in zip(idxs_0, idxs_1, idxs_2):
+                    if x[i,j,k] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
+
+        for _ in range(iters): # This time randomly permute dimensions
+            for dtype in types:
+                x = ((2**33)*np.random.randn(10, 10, 3)).astype(dtype)
+                x = np.asfortranarray(x)
+                np.random.shuffle(idxs)
+                num_zeros = np.random.randint(0, 301)
+                x.flat[idxs[:num_zeros]] = 0
+                np.random.shuffle(dim_permutation)
+                x = np.transpose(x, dim_permutation)
+                idxs_0, idxs_1, idxs_2 = np.nonzero(x)
+                assert_equal(np.count_nonzero(x), len(idxs_0))
+                nzs = 0
+                for i,j,k in zip(idxs_0, idxs_1, idxs_2):
+                    if x[i,j,k] == 0:
+                        nzs += 1
+                assert_equal(nzs, 0)
+
+
+        for i in range(iters): # Check for slices
+            x = ((2**33)*np.random.randn(10, 10)).astype(np.int32)
+            x.flat[[2,6,9,15,21]] = 0
+            x_view = x[:5,:5]
+
+            idxs_0, idxs_1 = np.nonzero(x_view)
+            assert_equal(np.count_nonzero(x_view), len(idxs_0))
+            nzs = 0
+            for i,j in zip(idxs_0, idxs_1):
+                if x_view[i,j] == 0:
+                    nzs += 1
+            assert_equal(nzs, 0)
+
+            y = np.asfortranarray(x)
+            y_view = y[:5,:5]
+
+            idxs_0, idxs_1 = np.nonzero(y_view)
+            assert_equal(np.count_nonzero(y_view), len(idxs_0))
+            nzs = 0
+            for i,j in zip(idxs_0, idxs_1):
+                if y_view[i,j] == 0:
+                    nzs += 1
+            assert_equal(nzs, 0)
+
 
 
     def test_sparse(self):
