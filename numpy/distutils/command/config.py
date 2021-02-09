@@ -92,6 +92,8 @@ class config(old_config):
         save_compiler = self.compiler
         if lang in ['f77', 'f90']:
             self.compiler = self.fcompiler
+        if self.compiler is None:
+            raise CompileError('%s compiler is not set' % (lang,))
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError, CompileError) as e:
