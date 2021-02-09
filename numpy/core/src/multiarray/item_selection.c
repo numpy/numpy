@@ -2639,7 +2639,6 @@ bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, np
     }
 
     NPY_END_THREADS;
-
     return executed;
 }
 
@@ -2731,54 +2730,57 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
-    bool used_optimization = false;
-    npy_stride_sort_item out_strideperm[ndim]; // For storing the stride permutation needed for dimension swapped views.
-    bool is_C_layout = true;
     /* nothing to do */
     if (nonzero_count == 0) {
         goto finish;
     }
 
-
-    PyArrayObject* original_array = self;
-    
-    if (PyArray_BASE(self) != NULL) {
-        original_array = (PyArrayObject*) PyArray_BASE(self);
-    } 
-
     npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
     char * data = PyArray_BYTES(self);
     int flags = PyArray_FLAGS(self);
 
-    if ((flags & NPY_ARRAY_ALIGNED) && PyArray_ISNOTSWAPPED(original_array)) { // Only apply the optimization if array is aligned and byteorder is not swapped.
+    bool can_be_optimized = false;
+    PyArrayObject* original_array = self;
+
+    if (PyArray_BASE(self) != NULL) {
+        original_array = (PyArrayObject*) PyArray_BASE(self);
+    } 
+
+    if (dtype->kind == 'b' || dtype->kind == 'i' || dtype->kind == 'u' || dtype->kind == 'f')
+        can_be_optimized = true;
+
+    if (can_be_optimized && (flags & NPY_ARRAY_ALIGNED) && PyArray_ISNOTSWAPPED(self) && PyArray_ISNOTSWAPPED(original_array)) { // Only apply the optimization if array is aligned and byteorder is not swapped.
         bool to_jmp = false;
-        bool is_slice = false;
-        int original_flags = PyArray_FLAGS(original_array);
+        bool is_contiguous = true;
+        bool is_C_layout = false;
 
         if (!(flags & NPY_ARRAY_C_CONTIGUOUS) && !(flags & NPY_ARRAY_F_CONTIGUOUS)) {
-            is_slice = true;
+            is_contiguous = false;
         }
-        else if (original_flags & NPY_ARRAY_C_CONTIGUOUS) {
+        else if (flags & NPY_ARRAY_C_CONTIGUOUS) {
             is_C_layout = true;
-        }
-        else if (original_flags & NPY_ARRAY_F_CONTIGUOUS) {
-            is_C_layout = false;
-        }
+        } 
+        /* No need to check for F_Contiguousness since if it is not C_contiguous and it is contiguous 
+        then it must be F_contiguous. Hence is_C_layout stays false to indicate F_contiguousness.*/
 
-        if (!is_slice && is_C_layout) { 
-            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(original_array), PyArray_STRIDES(original_array), PyArray_DESCR(original_array)->type_num, nonzero_count, ndim, true);
+        npy_intp* M_shape = PyArray_SHAPE(self);
+        npy_intp* M_strides = PyArray_STRIDES(self);
+        int M_type_num = dtype->type_num;
+        int M_dim = ndim;
+
+        if (is_contiguous && is_C_layout) { 
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, M_shape, M_strides, M_type_num, nonzero_count, M_dim, true);
         }
-        else if (!is_slice && !is_C_layout) { 
-            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, PyArray_SHAPE(original_array), PyArray_STRIDES(original_array), PyArray_DESCR(original_array)->type_num, nonzero_count, ndim, false);
+        else if (is_contiguous && !is_C_layout) { 
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, M_shape, M_strides, M_type_num, nonzero_count, M_dim, false);
         }
 
         if (to_jmp) {
-            PyArray_CreateSortedStridePerm(ndim, PyArray_STRIDES(self), out_strideperm);
             added_count = nonzero_count;
-            used_optimization = true;
             goto finish;
         }
     }
+
 
     /* If it's a one-dimensional result, don't use an iterator */
     if (ndim == 1) {     
@@ -2940,15 +2942,7 @@ finish:
     for (i = 0; i < ndim; ++i) {
         npy_intp stride = ndim * NPY_SIZEOF_INTP;
         /* the result is an empty array, the view must point to valid memory */
-        npy_intp data_offset; 
-        if (used_optimization) {
-            if (is_C_layout)
-                data_offset = nonzero_count == 0 ? 0 : out_strideperm[i].perm * NPY_SIZEOF_INTP;
-            else
-                data_offset = nonzero_count == 0 ? 0 : out_strideperm[ndim-i-1].perm * NPY_SIZEOF_INTP;
-        } else {
-            data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
-        }
+        npy_intp data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
 
         PyArrayObject *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(ret), PyArray_DescrFromType(NPY_INTP),
