@@ -40,6 +40,15 @@ typedef struct {
     jmp_buf jmpbuf;
 } #name#_t;
 
+static void show_#name#(#name#_t *ptr) {
+    if (ptr != NULL) {
+      CFUNCSMESSPY(\"show_#name#: capi=\", ptr->capi);
+      CFUNCSMESSPY(\"show_#name#: args_capi=\", ptr->args_capi);
+    } else {
+      CFUNCSMESS(\"show_#name#: ptr=NULL");
+    }
+}
+
 #if defined(F2PY_THREAD_LOCAL_DECL) && !defined(F2PY_USE_PYTHON_TLS)
 
 static F2PY_THREAD_LOCAL_DECL #name#_t *_active_#name# = NULL;
@@ -82,6 +91,11 @@ static #name#_t *get_active_#name#(void) {
 f2py_cb_start_clock();
 #endif
     cb = get_active_#name#();
+    show_#name#(cb);
+    if (cb == NULL) {
+        PyErr_SetString(#modulename#_error,\"cb: No active callback #name#!\\n\");
+        goto capi_fail;
+    }
     capi_arglist = cb->args_capi;
     CFUNCSMESS(\"cb:Call-back function #name# (maxnofargs=#maxnofargs#(-#nofoptargs#))\\n\");
     CFUNCSMESSPY(\"cb:#name#_capi=\",cb->capi);
@@ -180,7 +194,7 @@ capi_return_pt:
 }
 #endtitle#
 """,
-    'need': ['setjmp.h', 'CFUNCSMESS', 'F2PY_THREAD_LOCAL_DECL'],
+    'need': ['setjmp.h', 'CFUNCSMESS', 'CFUNCSMESSPY', 'F2PY_THREAD_LOCAL_DECL'],
     'maxnofargs': '#maxnofargs#',
     'nofoptargs': '#nofoptargs#',
     'docstr': """\

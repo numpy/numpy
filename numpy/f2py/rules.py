@@ -813,12 +813,15 @@ if (#varname#_cb.capi==Py_None) {
                          {l_not(isintent_callback): """        fprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
             """\
         CFUNCSMESS(\"Saving callback variables for `#varname#`.\\n\");
-        #varname#_cb_ptr = swap_active_#cbname#(#varname#_cb_ptr);""",
+        #varname#_cb_ptr = swap_active_#cbname#(#varname#_cb_ptr);
+        show_#cbname#(#varname#_cb_ptr);
+        """,
         ],
         'cleanupfrompyobj':
         """\
         CFUNCSMESS(\"Restoring callback variables for `#varname#`.\\n\");
         #varname#_cb_ptr = swap_active_#cbname#(#varname#_cb_ptr);
+        show_#cbname#(#varname#_cb_ptr);
         Py_DECREF(#varname#_cb.args_capi);
     }""",
         'need': ['SWAP', 'create_cb_arglist'],
