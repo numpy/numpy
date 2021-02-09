@@ -2773,7 +2773,8 @@ def test_iter_writemasked_decref():
     assert (arr[mask] == np.array((3, singleton), arr.dtype)).all()
     del arr
 
-    assert sys.getrefcount(singleton) == count
+    if HAS_REFCOUNT:
+        assert sys.getrefcount(singleton) == count
 
 
 def test_iter_non_writable_attribute_deletion():
