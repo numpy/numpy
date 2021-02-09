@@ -1015,8 +1015,8 @@ def _median_nancheck(data, result, axis, out):
         Input data to median function
     result : Array or MaskedArray
         Result of median function
-    axis : {int, sequence of int, None}, optional
-        Axis or axes along which the median was computed.
+    axis : int
+        Axis along which the median was computed.
     out : ndarray, optional
         Output array in which to place the result.
     Returns
