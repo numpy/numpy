@@ -40,21 +40,11 @@ typedef struct {
     jmp_buf jmpbuf;
 } #name#_t;
 
-static void show_#name#(#name#_t *ptr) {
-    if (ptr != NULL) {
-      CFUNCSMESSPY(\"show_#name#: capi=\", ptr->capi);
-      CFUNCSMESSPY(\"show_#name#: args_capi=\", ptr->args_capi);
-    } else {
-      CFUNCSMESS(\"show_#name#: ptr=NULL\\n");
-    }
-}
-
 #if defined(F2PY_THREAD_LOCAL_DECL) && !defined(F2PY_USE_PYTHON_TLS)
 
 static F2PY_THREAD_LOCAL_DECL #name#_t *_active_#name# = NULL;
 
 static #name#_t *swap_active_#name#(#name#_t *ptr) {
-    CFUNCSMESS2(\"swap_active_#name#: active=%p, ptr=%p\\n", _active_#name#, ptr);
     #name#_t *prev = _active_#name#;
     _active_#name# = ptr;
     return prev;
@@ -80,6 +70,7 @@ static #name#_t *get_active_#name#(void) {
 
 /*typedef #rctype#(*#name#_typedef)(#optargs_td##args_td##strarglens_td##noargs#);*/
 #static# #rctype# #callbackname# (#optargs##args##strarglens##noargs#) {
+    #name#_t cb_local = { NULL, NULL, 0 };
     #name#_t *cb = NULL;
     PyTupleObject *capi_arglist = NULL;
     PyObject *capi_return = NULL;
@@ -92,11 +83,9 @@ static #name#_t *get_active_#name#(void) {
 f2py_cb_start_clock();
 #endif
     cb = get_active_#name#();
-    show_#name#(cb);
     if (cb == NULL) {
         capi_longjmp_ok = 0;
-        PyErr_SetString(#modulename#_error,\"cb: No active callback #name#!\\n\");
-        goto capi_fail;
+        cb = &cb_local;
     }
     capi_arglist = cb->args_capi;
     CFUNCSMESS(\"cb:Call-back function #name# (maxnofargs=#maxnofargs#(-#nofoptargs#))\\n\");
@@ -104,6 +93,7 @@ f2py_cb_start_clock();
     if (cb->capi==NULL) {
         capi_longjmp_ok = 0;
         cb->capi = PyObject_GetAttrString(#modulename#_module,\"#argname#\");
+        CFUNCSMESSPY(\"cb:#name#_capi=\",cb->capi);
     }
     if (cb->capi==NULL) {
         PyErr_SetString(#modulename#_error,\"cb: Callback #argname# not defined (as an argument or module #modulename# attribute).\\n\");
@@ -196,7 +186,7 @@ capi_return_pt:
 }
 #endtitle#
 """,
-    'need': ['setjmp.h', 'CFUNCSMESS', 'CFUNCSMESSPY', 'F2PY_THREAD_LOCAL_DECL'],
+    'need': ['setjmp.h', 'CFUNCSMESS', 'F2PY_THREAD_LOCAL_DECL'],
     'maxnofargs': '#maxnofargs#',
     'nofoptargs': '#nofoptargs#',
     'docstr': """\
