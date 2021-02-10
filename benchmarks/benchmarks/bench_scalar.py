@@ -35,3 +35,9 @@ class ScalarMath(Benchmark):
     def time_compare(self, typename):
         n = self.num
         res = [n == randint(-128, 127) for _ in range(10)]
+
+    def time_compare_types(self, typename):
+        n1 = self.num
+        for type_lhs in TYPES1:
+            n2 = np.dtype(type_lhs).type(randint(-128, 127))
+            res = [n1 == n2 for _ in range(10)]
