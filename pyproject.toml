@@ -2,7 +2,7 @@
 # Minimum requirements for the build system to execute.
 requires = [
     "setuptools<49.2.0",
-    "wheel<=0.35.1",
+    "wheel==0.36.2",
     "Cython>=0.29.21,<3.0",  # Note: keep in sync with tools/cythonize.py
 ]
 
