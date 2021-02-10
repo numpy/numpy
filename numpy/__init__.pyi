@@ -281,6 +281,11 @@ from numpy.core.arrayprint import (
     printoptions as printoptions,
 )
 
+from numpy.core.einsumfunc import (
+    einsum as einsum,
+    einsum_path as einsum_path,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
@@ -401,8 +406,6 @@ dot: Any
 dsplit: Any
 dstack: Any
 ediff1d: Any
-einsum: Any
-einsum_path: Any
 expand_dims: Any
 extract: Any
 eye: Any
