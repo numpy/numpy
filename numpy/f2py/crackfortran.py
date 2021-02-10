@@ -294,10 +294,10 @@ def getextension(name):
         return ''
     return name[i + 1:]
 
-is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z', re.I).match
-_has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-', re.I).search
-_has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-', re.I).search
-_has_fix_header = re.compile(r'-[*]-\s*fix\s*-[*]-', re.I).search
+is_f_file = re.compile(r'.*\.(for|ftn|f77|f)\Z', re.I).match
+_has_f_header = re.compile(r'-\*-\s*fortran\s*-\*-', re.I).search
+_has_f90_header = re.compile(r'-\*-\s*f90\s*-\*-', re.I).search
+_has_fix_header = re.compile(r'-\*-\s*fix\s*-\*-', re.I).search
 _free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]', re.I).match
 
 
@@ -868,7 +868,7 @@ def appenddecl(decl, decl2, force=1):
     return decl
 
 selectpattern = re.compile(
-    r'\s*(?P<this>(@\(@.*?@\)@|[*][\d*]+|[*]\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
+    r'\s*(?P<this>(@\(@.*?@\)@|\*[\d*]+|\*\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
 nameargspattern = re.compile(
     r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>.*)\s*@\)@))*\s*\Z', re.I)
 callnameargspattern = re.compile(
@@ -1389,7 +1389,7 @@ def analyzeline(m, case, line):
         previous_context = ('common', bn, groupcounter)
     elif case == 'use':
         m1 = re.match(
-            r'\A\s*(?P<name>\b[\w]+\b)\s*((,(\s*\bonly\b\s*:|(?P<notonly>))\s*(?P<list>.*))|)\s*\Z', m.group('after'), re.I)
+            r'\A\s*(?P<name>\b\w+\b)\s*((,(\s*\bonly\b\s*:|(?P<notonly>))\s*(?P<list>.*))|)\s*\Z', m.group('after'), re.I)
         if m1:
             mm = m1.groupdict()
             if 'use' not in groupcache[groupcounter]:
@@ -1406,7 +1406,7 @@ def analyzeline(m, case, line):
                 for l in ll:
                     if '=' in l:
                         m2 = re.match(
-                            r'\A\s*(?P<local>\b[\w]+\b)\s*=\s*>\s*(?P<use>\b[\w]+\b)\s*\Z', l, re.I)
+                            r'\A\s*(?P<local>\b\w+\b)\s*=\s*>\s*(?P<use>\b\w+\b)\s*\Z', l, re.I)
                         if m2:
                             rl[m2.group('local').strip()] = m2.group(
                                 'use').strip()
@@ -1482,15 +1482,15 @@ def cracktypespec0(typespec, ll):
         ll = ll[i + 2:]
     return typespec, selector, attr, ll
 #####
-namepattern = re.compile(r'\s*(?P<name>\b[\w]+\b)\s*(?P<after>.*)\s*\Z', re.I)
+namepattern = re.compile(r'\s*(?P<name>\b\w+\b)\s*(?P<after>.*)\s*\Z', re.I)
 kindselector = re.compile(
-    r'\s*(\(\s*(kind\s*=)?\s*(?P<kind>.*)\s*\)|[*]\s*(?P<kind2>.*?))\s*\Z', re.I)
+    r'\s*(\(\s*(kind\s*=)?\s*(?P<kind>.*)\s*\)|\*\s*(?P<kind2>.*?))\s*\Z', re.I)
 charselector = re.compile(
-    r'\s*(\((?P<lenkind>.*)\)|[*]\s*(?P<charlen>.*))\s*\Z', re.I)
+    r'\s*(\((?P<lenkind>.*)\)|\*\s*(?P<charlen>.*))\s*\Z', re.I)
 lenkindpattern = re.compile(
     r'\s*(kind\s*=\s*(?P<kind>.*?)\s*(@,@\s*len\s*=\s*(?P<len>.*)|)|(len\s*=\s*|)(?P<len2>.*?)\s*(@,@\s*(kind\s*=\s*|)(?P<kind2>.*)|))\s*\Z', re.I)
 lenarraypattern = re.compile(
-    r'\s*(@\(@\s*(?!/)\s*(?P<array>.*?)\s*@\)@\s*[*]\s*(?P<len>.*?)|([*]\s*(?P<len2>.*?)|)\s*(@\(@\s*(?!/)\s*(?P<array2>.*?)\s*@\)@|))\s*(=\s*(?P<init>.*?)|(@\(@|)/\s*(?P<init2>.*?)\s*/(@\)@|)|)\s*\Z', re.I)
+    r'\s*(@\(@\s*(?!/)\s*(?P<array>.*?)\s*@\)@\s*\*\s*(?P<len>.*?)|(\*\s*(?P<len2>.*?)|)\s*(@\(@\s*(?!/)\s*(?P<array2>.*?)\s*@\)@|))\s*(=\s*(?P<init>.*?)|(@\(@|)/\s*(?P<init2>.*?)\s*/(@\)@|)|)\s*\Z', re.I)
 
 
 def removespaces(expr):
@@ -1611,6 +1611,10 @@ def updatevars(typespec, selector, attrspec, entitydecl):
             edecl['charselector'] = copy.copy(charselect)
             edecl['typename'] = typename
             edecl['attrspec'] = copy.copy(attrspec)
+        if 'external' in (edecl.get('attrspec') or []) and e in groupcache[groupcounter]['args']:
+            if 'externals' not in groupcache[groupcounter]:
+                groupcache[groupcounter]['externals'] = []
+            groupcache[groupcounter]['externals'].append(e)
         if m.group('after'):
             m1 = lenarraypattern.match(markouterparen(m.group('after')))
             if m1:
@@ -2988,10 +2992,10 @@ def analyzeargs(block):
         block['vars'][block['result']] = {}
     return block
 
-determineexprtype_re_1 = re.compile(r'\A\(.+?[,].+?\)\Z', re.I)
-determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>[\w]+)|)\Z', re.I)
+determineexprtype_re_1 = re.compile(r'\A\(.+?,.+?\)\Z', re.I)
+determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>\w+)|)\Z', re.I)
 determineexprtype_re_3 = re.compile(
-    r'\A[+-]?[\d.]+[\d+\-de.]*(_(?P<name>[\w]+)|)\Z', re.I)
+    r'\A[+-]?[\d.]+[-\d+de.]*(_(?P<name>\w+)|)\Z', re.I)
 determineexprtype_re_4 = re.compile(r'\A\(.*\)\Z', re.I)
 determineexprtype_re_5 = re.compile(r'\A(?P<name>\w+)\s*\(.*?\)\s*\Z', re.I)
 
