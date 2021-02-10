@@ -565,6 +565,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
 
+    # Ensure that iteration through object arrays yields size-1 arrays
+    if ar2.dtype == object:
+        ar2 = ar2.reshape(-1, 1)
+
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
 
