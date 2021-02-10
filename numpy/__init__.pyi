@@ -332,6 +332,12 @@ from numpy.core.shape_base import (
     vstack as vstack,
 )
 
+from numpy.lib.ufunclike import (
+    fix as fix,
+    isposinf as isposinf,
+    isneginf as isneginf,
+)
+
 __all__: List[str]
 __path__: List[str]
 __version__: str
@@ -401,7 +407,6 @@ extract: Any
 eye: Any
 fill_diagonal: Any
 finfo: Any
-fix: Any
 flip: Any
 fliplr: Any
 flipud: Any
@@ -437,8 +442,6 @@ is_busday: Any
 iscomplex: Any
 iscomplexobj: Any
 isin: Any
-isneginf: Any
-isposinf: Any
 isreal: Any
 isrealobj: Any
 iterable: Any
