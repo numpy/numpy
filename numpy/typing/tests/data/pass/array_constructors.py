@@ -114,6 +114,9 @@ np.atleast_2d(C)
 
 np.atleast_3d(C)
 
+np.atleast_nd(C, ndim=2)
+np.atleast_nd(C, ndim=2, pos=1)
+
 np.vstack([C, C])
 np.vstack([C, A])
 np.vstack([A, A])

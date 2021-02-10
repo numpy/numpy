@@ -967,6 +967,7 @@ Conversions
    `atleast_1d`,
    `atleast_2d`,
    `atleast_3d`,
+   `atleast_nd`,
    `mat`
 Manipulations
     `array_split`,

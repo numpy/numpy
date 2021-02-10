@@ -1,9 +1,9 @@
+from decimal import Decimal
 import pytest
 import numpy as np
 from numpy.core import (
-    array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
-    newaxis, concatenate, stack
-    )
+    array, arange, atleast_1d, atleast_2d, atleast_3d, atleast_nd,
+    block, vstack, hstack, newaxis, concatenate, stack)
 from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
@@ -121,6 +121,71 @@ class TestAtleast3d:
         res = [atleast_3d(a), atleast_3d(b)]
         desired = [a, b]
         assert_array_equal(res, desired)
+
+
+class TestAtleastNd(object):
+    def test_0D_arrays(self):
+        a = array(3)
+        dims = [3, 2, 0]
+        expected = [array([[[3]]]), array([[3]]), array(3)]
+
+        for b, d in zip(expected, dims):
+            assert_array_equal(atleast_nd(a, d), b)
+            assert_array_equal(atleast_nd(a, d, -1), b)
+
+    def test_nD_arrays(self):
+        a = array([1])
+        b = array([4, 5, 6])
+        c = array([[2, 3]])
+        d = array([[[2], [3]], [[2], [3]]])
+        e = ((((1, 2), (3, 4)), ((5, 6), (7, 8))))
+        arrays = (a, b, c, d, e)
+        expected_before = (array([[[1]]]),
+                           array([[[4, 5, 6]]]),
+                           array([[[2, 3]]]),
+                           d,
+                           array(e))
+        expected_after = (array([[[1]]]),
+                          array([[[4]], [[5]], [[6]]]),
+                          array([[[2], [3]]]),
+                          d,
+                          array(e))
+
+        for x, y in zip(arrays, expected_before):
+            assert_array_equal(atleast_nd(x, 3), y)
+        for x, y in zip(arrays, expected_after):
+            assert_array_equal(atleast_nd(x, 3, pos=-1), y)
+
+    def test_nocopy(self):
+        a = arange(12.0).reshape(4, 3)
+        res = atleast_nd(a, 5)
+        desired_shape = (1, 1, 1, 4, 3)
+        desired_base = a.base  # a was reshaped
+        assert_equal(res.shape, desired_shape)
+        assert_(res.base is desired_base)
+
+    def test_passthough(self):
+        a = array([1, 2, 3])
+        assert_(atleast_nd(a, 0) is a)
+        assert_(atleast_nd(a, 1) is a)
+
+    def test_other_pos(self):
+        a = arange(12.0).reshape(4, 3)
+        res = atleast_nd(a, 4, pos=1)
+        assert_equal(res.shape, (4, 1, 1, 3))
+        assert_raises(ValueError, atleast_nd, a, 4, pos=5)
+
+    def test_ndim(self):
+        a = 3
+        assert_raises(TypeError, atleast_nd, a, 0.4)
+        assert_raises(TypeError, atleast_nd, a, Decimal(4))
+        assert_raises(TypeError, atleast_nd, a, np.array([4, 5]))
+        assert_raises(np.AxisError, atleast_nd, a, -2, 1)
+        assert_equal(atleast_nd(a, np.array(4, dtype=np.uint8)).ndim, 4)
+
+        assert isinstance(atleast_nd(a, 0, 0), np.ndarray)
+        assert_equal(atleast_nd(a, -5).ndim, 0)
+        assert_equal(atleast_nd(a, -5, -1).ndim, 0)
 
 
 class TestHstack:

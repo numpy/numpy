@@ -326,6 +326,7 @@ from numpy.core.shape_base import (
     atleast_1d as atleast_1d,
     atleast_2d as atleast_2d,
     atleast_3d as atleast_3d,
+    atleast_nd as atleast_nd,
     block as block,
     hstack as hstack,
     stack as stack,

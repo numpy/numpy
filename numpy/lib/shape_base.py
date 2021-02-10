@@ -542,7 +542,7 @@ def expand_dims(a, axis):
     --------
     squeeze : The inverse operation, removing singleton dimensions
     reshape : Insert, remove, and combine dimensions, and resize existing ones
-    doc.indexing, atleast_1d, atleast_2d, atleast_3d
+    doc.indexing, atleast_1d, atleast_2d, atleast_3d, atleast_nd
 
     Examples
     --------

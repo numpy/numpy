@@ -10,7 +10,7 @@ A collection of utilities for `numpy.ma`.
 """
 __all__ = [
     'apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
-    'atleast_3d', 'average', 'clump_masked', 'clump_unmasked',
+    'atleast_3d', 'atleast_nd', 'average', 'clump_masked', 'clump_unmasked',
     'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
     'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
     'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
@@ -272,12 +272,10 @@ class _fromnxfunction_single(_fromnxfunction):
         func = getattr(np, self.__name__)
         if isinstance(x, ndarray):
             _d = func(x.__array__(), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            return masked_array(_d, mask=_m)
         else:
             _d = func(np.asarray(x), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            return masked_array(_d, mask=_m)
+        _m = func(getmaskarray(x), *args, **params)
+        return masked_array(_d, mask=_m)
 
 
 class _fromnxfunction_seq(_fromnxfunction):
@@ -344,6 +342,7 @@ class _fromnxfunction_allargs(_fromnxfunction):
 atleast_1d = _fromnxfunction_allargs('atleast_1d')
 atleast_2d = _fromnxfunction_allargs('atleast_2d')
 atleast_3d = _fromnxfunction_allargs('atleast_3d')
+atleast_nd = _fromnxfunction_single('atleast_nd')
 
 vstack = row_stack = _fromnxfunction_seq('vstack')
 hstack = _fromnxfunction_seq('hstack')

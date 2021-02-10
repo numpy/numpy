@@ -1,0 +1,4 @@
+Added `atleast_nd` function to `numpy` and `numpy.ma`
+-----------------------------------------------------
+`atleast_nd` generalizes ``atleast_1d``, ``atleast_2d`` and ``atleast_3d`` to
+arbitrary numbers of dimensions.

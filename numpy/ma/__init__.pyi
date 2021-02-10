@@ -185,6 +185,7 @@ apply_over_axes: Any
 atleast_1d: Any
 atleast_2d: Any
 atleast_3d: Any
+atleast_nd: Any
 average: Any
 clump_masked: Any
 clump_unmasked: Any

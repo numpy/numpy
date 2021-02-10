@@ -1,5 +1,5 @@
-__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
-           'stack', 'vstack']
+__all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'atleast_nd',
+           'block', 'hstack', 'stack', 'vstack']
 
 import functools
 import itertools
@@ -15,6 +15,12 @@ from . import fromnumeric as _from_nx
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
+
+
+def _unpack(lst):
+    if len(lst) == 1:
+        return lst[0]
+    return lst
 
 
 def _atleast_1d_dispatcher(*arys):
@@ -42,7 +48,7 @@ def atleast_1d(*arys):
 
     See Also
     --------
-    atleast_2d, atleast_3d
+    atleast_2d, atleast_3d, atleast_nd
 
     Examples
     --------
@@ -61,18 +67,7 @@ def atleast_1d(*arys):
     [array([1]), array([3, 4])]
 
     """
-    res = []
-    for ary in arys:
-        ary = asanyarray(ary)
-        if ary.ndim == 0:
-            result = ary.reshape(1)
-        else:
-            result = ary
-        res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return res
+    return _unpack([atleast_nd(a, 1, 0) for a in arys])
 
 
 def _atleast_2d_dispatcher(*arys):
@@ -87,9 +82,9 @@ def atleast_2d(*arys):
     Parameters
     ----------
     arys1, arys2, ... : array_like
-        One or more array-like sequences.  Non-array inputs are converted
-        to arrays.  Arrays that already have two or more dimensions are
-        preserved.
+        One or more array-like sequences.  Non-array inputs are
+        converted to arrays. Arrays that already have two or more
+        dimensions are preserved.
 
     Returns
     -------
@@ -100,7 +95,7 @@ def atleast_2d(*arys):
 
     See Also
     --------
-    atleast_1d, atleast_3d
+    atleast_1d, atleast_3d, atleast_nd
 
     Examples
     --------
@@ -117,20 +112,7 @@ def atleast_2d(*arys):
     [array([[1]]), array([[1, 2]]), array([[1, 2]])]
 
     """
-    res = []
-    for ary in arys:
-        ary = asanyarray(ary)
-        if ary.ndim == 0:
-            result = ary.reshape(1, 1)
-        elif ary.ndim == 1:
-            result = ary[_nx.newaxis, :]
-        else:
-            result = ary
-        res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return res
+    return _unpack([atleast_nd(a, 2, 0) for a in arys])
 
 
 def _atleast_3d_dispatcher(*arys):
@@ -145,22 +127,31 @@ def atleast_3d(*arys):
     Parameters
     ----------
     arys1, arys2, ... : array_like
-        One or more array-like sequences.  Non-array inputs are converted to
-        arrays.  Arrays that already have three or more dimensions are
-        preserved.
+        One or more array-like sequences.  Non-array inputs are
+        converted to arrays.  Arrays that already have three or more
+        dimensions are preserved.
 
     Returns
     -------
     res1, res2, ... : ndarray
-        An array, or list of arrays, each with ``a.ndim >= 3``.  Copies are
-        avoided where possible, and views with three or more dimensions are
-        returned.  For example, a 1-D array of shape ``(N,)`` becomes a view
-        of shape ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a
-        view of shape ``(M, N, 1)``.
+        An array, or list of arrays, each with ``a.ndim >= 3``.  Copies
+        are avoided where possible, and views with three or more
+        dimensions are returned.  For example, a 1-D array of shape
+        ``(N,)`` becomes a view of shape ``(1, N, 1)``, and a 2-D array
+        of shape ``(M, N)`` becomes a view of shape ``(M, N, 1)``.
 
     See Also
     --------
-    atleast_1d, atleast_2d
+    atleast_1d, atleast_2d, atleast_nd
+
+    Notes
+    -----
+    As mentioned in the `Returns` section, the results of this
+    function are not consistent with any of the other `atleast*`
+    functions. `atleast_2d` prepends the unit dimension to a 1D array
+    while `atleast_3d` appends it to a 2D array. The 1D array case
+    both appends and prepends a dimension, while `atleast_nd` can only
+    add dimensions to one end at a time.
 
     Examples
     --------
@@ -187,22 +178,105 @@ def atleast_3d(*arys):
     [[[1 2]]] (1, 1, 2)
 
     """
-    res = []
-    for ary in arys:
-        ary = asanyarray(ary)
-        if ary.ndim == 0:
-            result = ary.reshape(1, 1, 1)
-        elif ary.ndim == 1:
-            result = ary[_nx.newaxis, :, _nx.newaxis]
-        elif ary.ndim == 2:
-            result = ary[:, :, _nx.newaxis]
-        else:
-            result = ary
-        res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return res
+    return _unpack([atleast_nd(atleast_nd(a, 2, 0), 3, -1) for a in arys])
+
+
+def _atleast_nd_dispatcher(ary, ndim, pos=None):
+    return (ary,)
+
+
+@array_function_dispatch(_atleast_nd_dispatcher)
+def atleast_nd(ary, ndim, pos=0):
+    """
+    View input as array with at least `ndim` dimensions.
+
+    New unit dimensions are inserted at the index given by `pos` if
+    necessary.
+
+    Parameters
+    ----------
+    ary : array_like
+        The input array. Non-array inputs are converted to arrays.
+        Arrays that already have `ndim` or more dimensions are
+        preserved.
+    ndim : int
+        The minimum number of dimensions required.
+    pos : int, optional
+        The index to insert the new dimensions. May range from
+        ``-ary.ndim - 1`` to ``+ary.ndim`` (inclusive). Non-negative
+        indices indicate locations before the corresponding axis:
+        ``pos=0`` means to insert at the very beginning. Negative
+        indices indicate locations after the corresponding axis:
+        ``pos=-1`` means to insert at the very end. 0 and -1 are always
+        guaranteed to work. Any other number will depend on the
+        dimensions of the existing array. Default is 0.
+
+    Returns
+    -------
+    res : ndarray
+        An array with ``res.ndim >= ndim``. A view is returned for array
+        inputs. Dimensions are prepended if `pos` is 0, so for example,
+        a 1-D array of shape ``(N,)`` with ``ndim=4`` becomes a view of
+        shape ``(1, 1, 1, N)``. Dimensions are appended if `pos` is -1,
+        so for example a 2-D array of shape ``(M, N)`` becomes a view of
+        shape ``(M, N, 1, 1)`` when ``ndim=4``.
+
+    See Also
+    --------
+    atleast_1d, atleast_2d, atleast_3d
+
+    Notes
+    -----
+    This function does not follow the convention of the other
+    ``atleast_*d`` functions in numpy in that it only accepts a single
+    array argument. To process multiple arrays, use a comprehension or
+    loop around the function call. See examples below.
+
+    Setting ``pos=0`` is equivalent to how the array would be
+    interpreted by numpy's broadcasting rules. There is no need to call
+    this function for simple broadcasting. This is also roughly
+    (but not exactly) equivalent to
+    ``np.array(ary, copy=False, subok=True, ndmin=ndim)``.
+
+    It is easy to create functions for specific dimensions similar to
+    the other ``atleast_*d`` functions using Python's
+    `functools.partial` function. An example is shown below.
+
+    Examples
+    --------
+    >>> np.atleast_nd(3.0, 4)
+    array([[[[ 3.]]]])
+
+    >>> x = np.arange(3.0)
+    >>> np.atleast_nd(x, 2).shape
+    (1, 3)
+
+    >>> x = np.arange(12.0).reshape(4, 3)
+    >>> np.atleast_nd(x, 5).shape
+    (1, 1, 1, 4, 3)
+    >>> np.atleast_nd(x, 5).base is x.base
+    True
+
+    >>> [np.atleast_nd(x, 2) for x in ((1, 2), [[3, 4]], [[[5, 6]]])]
+    [array([[1, 2]]), array([[3, 4]]), array([[[5, 6]]])]
+
+    >>> np.atleast_nd((1, 2), 5, pos=0).shape
+    (1, 1, 1, 1, 2)
+    >>> np.atleast_nd((1, 2), 5, pos=-1).shape
+    (2, 1, 1, 1, 1)
+
+    >>> from functools import partial
+    >>> atleast_4d = partial(np.atleast_nd, ndim=4)
+    >>> atleast_4d([1, 2, 3])
+    [[[[1, 2, 3]]]]
+    """
+    ary = array(ary, copy=False, subok=True)
+    pos = normalize_axis_index(pos, ary.ndim + 1)
+    extra = operator.index(ndim) - ary.ndim
+    if extra > 0:
+        ind = pos * (slice(None),) + extra * (None,) + (Ellipsis,)
+        ary = ary[ind]
+    return ary
 
 
 def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
