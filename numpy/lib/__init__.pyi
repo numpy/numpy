@@ -1,5 +1,11 @@
 from typing import Any, List
 
+from numpy.lib.ufunclike import (
+    fix as fix,
+    isposinf as isposinf,
+    isneginf as isneginf,
+)
+
 __all__: List[str]
 
 emath: Any
@@ -108,9 +114,6 @@ tril_indices: Any
 tril_indices_from: Any
 triu_indices: Any
 triu_indices_from: Any
-fix: Any
-isneginf: Any
-isposinf: Any
 pad: Any
 poly: Any
 roots: Any

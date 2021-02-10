@@ -1015,8 +1015,8 @@ def _median_nancheck(data, result, axis, out):
         Input data to median function
     result : Array or MaskedArray
         Result of median function
-    axis : {int, sequence of int, None}, optional
-        Axis or axes along which the median was computed.
+    axis : int
+        Axis along which the median was computed.
     out : ndarray, optional
         Output array in which to place the result.
     Returns
@@ -1026,8 +1026,7 @@ def _median_nancheck(data, result, axis, out):
     """
     if data.size == 0:
         return result
-    data = np.moveaxis(data, axis, -1)
-    n = np.isnan(data[..., -1])
+    n = np.isnan(data.take(-1, axis=axis))
     # masked NaN values are ok
     if np.ma.isMaskedArray(n):
         n = n.filled(False)

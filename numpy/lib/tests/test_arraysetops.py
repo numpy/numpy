@@ -358,6 +358,39 @@ class TestSetOps:
         result = np.in1d(ar1, ar2)
         assert_array_equal(result, expected)
 
+    def test_in1d_with_arrays_containing_tuples(self):
+        ar1 = np.array([(1,), 2], dtype=object)
+        ar2 = np.array([(1,), 2], dtype=object)
+        expected = np.array([True, True])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+        result = np.in1d(ar1, ar2, invert=True)
+        assert_array_equal(result, np.invert(expected))
+
+        # An integer is added at the end of the array to make sure
+        # that the array builder will create the array with tuples
+        # and after it's created the integer is removed.
+        # There's a bug in the array constructor that doesn't handle
+        # tuples properly and adding the integer fixes that.
+        ar1 = np.array([(1,), (2, 1), 1], dtype=object)
+        ar1 = ar1[:-1]
+        ar2 = np.array([(1,), (2, 1), 1], dtype=object)
+        ar2 = ar2[:-1]
+        expected = np.array([True, True])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+        result = np.in1d(ar1, ar2, invert=True)
+        assert_array_equal(result, np.invert(expected))
+
+        ar1 = np.array([(1,), (2, 3), 1], dtype=object)
+        ar1 = ar1[:-1]
+        ar2 = np.array([(1,), 2], dtype=object)
+        expected = np.array([True, False])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+        result = np.in1d(ar1, ar2, invert=True)
+        assert_array_equal(result, np.invert(expected))
+
     def test_union1d(self):
         a = np.array([5, 4, 7, 1, 2])
         b = np.array([2, 4, 3, 3, 2, 1, 5])

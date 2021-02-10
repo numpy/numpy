@@ -1,4 +1,5 @@
 import builtins
+import os
 import sys
 import datetime as dt
 from abc import abstractmethod
@@ -127,6 +128,23 @@ from numpy.typing._callable import (
     _ComplexOp,
     _NumberOp,
     _ComparisonOp,
+)
+
+# NOTE: Numpy's mypy plugin is used for removing the types unavailable
+# to the specific platform
+from numpy.typing._extended_precision import (
+    uint128 as uint128,
+    uint256 as uint256,
+    int128 as int128,
+    int256 as int256,
+    float80 as float80,
+    float96 as float96,
+    float128 as float128,
+    float256 as float256,
+    complex160 as complex160,
+    complex192 as complex192,
+    complex256 as complex256,
+    complex512 as complex512,
 )
 
 from typing import (
@@ -315,6 +333,12 @@ from numpy.core.shape_base import (
     vstack as vstack,
 )
 
+from numpy.lib.ufunclike import (
+    fix as fix,
+    isposinf as isposinf,
+    isneginf as isneginf,
+)
+
 __all__: List[str]
 __path__: List[str]
 __version__: str
@@ -384,7 +408,6 @@ extract: Any
 eye: Any
 fill_diagonal: Any
 finfo: Any
-fix: Any
 flip: Any
 fliplr: Any
 flipud: Any
@@ -420,8 +443,6 @@ is_busday: Any
 iscomplex: Any
 iscomplexobj: Any
 isin: Any
-isneginf: Any
-isposinf: Any
 isreal: Any
 isrealobj: Any
 iterable: Any
@@ -887,7 +908,7 @@ class _ArrayOrScalarCommon:
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
     def tofile(
-        self, fid: Union[IO[bytes], str], sep: str = ..., format: str = ...
+        self, fid: Union[IO[bytes], str, bytes, os.PathLike[Any]], sep: str = ..., format: str = ...
     ) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
@@ -2507,7 +2528,6 @@ class floating(inexact[_NBit1]):
 float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 float64 = floating[_64Bit]
-float128 = floating[_128Bit]
 
 half = floating[_NBitHalf]
 single = floating[_NBitSingle]
@@ -2542,7 +2562,6 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
 
 complex64 = complexfloating[_32Bit, _32Bit]
 complex128 = complexfloating[_64Bit, _64Bit]
-complex256 = complexfloating[_128Bit, _128Bit]
 
 csingle = complexfloating[_NBitSingle, _NBitSingle]
 singlecomplex = complexfloating[_NBitSingle, _NBitSingle]
@@ -2595,8 +2614,6 @@ class str_(character, str):
 
 unicode_ = str_
 str0 = str_
-
-# TODO: Platform dependent types: float128, complex256, float96
 
 def array(
     object: object,
