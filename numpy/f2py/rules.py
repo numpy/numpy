@@ -50,17 +50,14 @@ $Date: 2005/08/30 08:58:42 $
 Pearu Peterson
 
 """
-__version__ = "$Revision: 1.129 $"[10:-1]
-
-from . import __version__
-f2py_version = __version__.version
-
-from .. import version as _numpy_version
-numpy_version = _numpy_version.version
-
 import os
 import time
 import copy
+
+# __version__.version is now the same as the NumPy version
+from . import __version__
+f2py_version = __version__.version
+numpy_version = __version__.version
 
 from .auxfuncs import (
     applyrules, debugcapi, dictappend, errmess, gentitle, getargs2,
@@ -202,7 +199,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 \tif (PyErr_Occurred())
 \t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return m;}
 \td = PyModule_GetDict(m);
-\ts = PyUnicode_FromString(\"$R""" + """evision: $\");
+\ts = PyUnicode_FromString(\"#f2py_version#\");
 \tPyDict_SetItemString(d, \"__version__\", s);
 \tPy_DECREF(s);
 \ts = PyUnicode_FromString(
@@ -812,7 +809,7 @@ if (#varname#_cb.capi==Py_None) {
 """,
             {debugcapi: ["""\
         fprintf(stderr,\"debug-capi:Assuming %d arguments; at most #maxnofargs#(-#nofoptargs#) is expected.\\n\",#varname#_cb.nofargs);
-        CFUNCSMESSPY(\"for #varname#=\",#cbname#_capi);""",
+        CFUNCSMESSPY(\"for #varname#=\",#varname#_cb.capi);""",
                          {l_not(isintent_callback): """        fprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
             """\
         CFUNCSMESS(\"Saving callback variables for `#varname#`.\\n\");
