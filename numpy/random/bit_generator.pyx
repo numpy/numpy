@@ -43,10 +43,7 @@ except ImportError:
     from random import SystemRandom
     randbits = SystemRandom().getrandbits
 
-try:
-    from threading import Lock
-except ImportError:
-    from dummy_threading import Lock
+from threading import Lock
 
 from cpython.pycapsule cimport PyCapsule_New
 
