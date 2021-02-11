@@ -41,7 +41,7 @@ array as its first argument.
 The ``@`` operator
 ------------------
 
-Introduced in NumPy 1.10.0, the ``@`` and ``@=`` operators are preferable to
+Introduced in NumPy 1.10.0, the ``@`` operator is preferable to
 other methods when computing the matrix product between 2d arrays. The
 :func:`numpy.matmul` function implements the ``@`` operator.
 

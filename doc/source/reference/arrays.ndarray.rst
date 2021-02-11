@@ -567,8 +567,8 @@ Matrix Multiplication:
 .. note::
 
    Matrix operators ``@`` and ``@=`` were introduced in Python 3.5
-   following :pep:`465` and are available since NumPy 1.10.0. Further
-   information can be found in the :func:`matmul` documentation.
+   following :pep:`465`, and the ``@`` operator has been introduced in NumPy
+   1.10.0. Further information can be found in the :func:`matmul` documentation.
 
 Special methods
 ===============
