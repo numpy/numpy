@@ -1,5 +1,8 @@
 from typing import Any, List
-from numpy.random.bit_generator import BitGenerator, SeedSequence
+from numpy.random.bit_generator import (
+    BitGenerator as BitGenerator,
+    SeedSequence as SeedSequence
+)
 
 __all__: List[str]
 
