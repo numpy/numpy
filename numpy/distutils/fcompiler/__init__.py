@@ -610,7 +610,7 @@ class FCompiler(CCompiler):
             self.spawn(command, display=display)
         except DistutilsExecError as e:
             msg = str(e)
-            raise CompileError(msg)
+            raise CompileError(msg) from None
 
     def module_options(self, module_dirs, module_build_dir):
         options = []
@@ -678,7 +678,7 @@ class FCompiler(CCompiler):
                 self.spawn(command)
             except DistutilsExecError as e:
                 msg = str(e)
-                raise LinkError(msg)
+                raise LinkError(msg) from None
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
 
