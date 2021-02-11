@@ -1,10 +1,38 @@
 import abc
 from threading import Lock
-from typing import (Any, Callable, Dict, List, Literal, NamedTuple, Optional,
-                    Sequence, Tuple, Union, overload)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    overload,
+)
 
-from numpy import dtype, ndarray, uint32, uint64
-from numpy.typing import DTypeLike, _ArrayLikeInt_co, _ShapeLike
+from numpy import dtype, ndarray, uint32, uint64, unsignedinteger
+from numpy.typing import (
+    DTypeLike,
+    _ArrayLikeInt_co,
+    _DTypeLikeUInt,
+    _ShapeLike,
+    _SupportsDType,
+)
+
+_T = TypeVar("_T")
+
+_UIntType = TypeVar("_UIntType", uint64, uint32)
+_DTypeLike = Union[
+    Type[_UIntType],
+    dtype[_UIntType],
+    _SupportsDType[dtype[_UIntType]],
+]
 
 class _Interface(NamedTuple):
     state_address: Any
@@ -15,20 +43,31 @@ class _Interface(NamedTuple):
     bit_generator: Any
 
 class ISeedSequence(abc.ABC):
+    @overload
     @abc.abstractmethod
     def generate_state(
-        self, n_words: int, dtype: DTypeLike = ...
-    ) -> ndarray[Any, Any]: ...
+        self, n_words: int, dtype: _DTypeLike[_UIntType] = ...
+    ) -> ndarray[Any, dtype[_UIntType]]: ...
+    @overload
+    @abc.abstractmethod
+    def generate_state(
+        self, n_words: int, dtype: _DTypeLikeUInt = ...
+    ) -> ndarray[Any, dtype[unsignedinteger[Any]]]: ...
 
 class ISpawnableSeedSequence(ISeedSequence):
     @abc.abstractmethod
-    def spawn(self, n_children: int) -> List[ISpawnableSeedSequence]: ...
+    def spawn(self: _T, n_children: int) -> List[_T]: ...
 
-class SeedlessSeedSequence(ISeedSequence):
+class SeedlessSeedSequence(ISpawnableSeedSequence):
+    @overload
     def generate_state(
-        self, n_words: int, dtype: DTypeLike = ...
-    ) -> ndarray[Any, Any]: ...
-    def spawn(self, n_children: int) -> List[SeedlessSeedSequence]: ...
+        self, n_words: int, dtype: _DTypeLike[_UIntType] = ...
+    ) -> ndarray[Any, dtype[_UIntType]]: ...
+    @overload
+    def generate_state(
+        self, n_words: int, dtype: _DTypeLikeUInt = ...
+    ) -> ndarray[Any, dtype[unsignedinteger[Any]]]: ...
+    def spawn(self: _T, n_children: int) -> List[_T]: ...
 
 class SeedSequence(ISpawnableSeedSequence):
     entropy: Union[None, int, Sequence[int]]
@@ -71,17 +110,15 @@ class BitGenerator:
     @state.setter
     def state(self, value: Dict[str, Any]): ...
     @overload
-    def random_raw(
-        self, size: None = ..., output: Literal[True] = ...
-    ) -> int: ...
+    def random_raw(self, size: None = ..., output: Literal[True] = ...) -> int: ...  # type: ignore[misc]
     @overload
     def random_raw(
         self, size: _ShapeLike = ..., output: Literal[True] = ...
-    ) -> ndarray[Any, dtype[uint64]]: ...
+    ) -> ndarray[Any, dtype[uint64]]: ...  # type: ignore[misc]
     @overload
     def random_raw(
         self, size: Optional[_ShapeLike] = ..., output: Literal[False] = ...
-    ) -> None: ...
+    ) -> None: ...  # type: ignore[misc]
     def _benchmark(self, cnt: int, method: str = ...) -> None: ...
     @property
     def ctypes(self) -> _Interface: ...
