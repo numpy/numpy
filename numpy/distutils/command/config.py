@@ -64,7 +64,7 @@ class config(old_config):
                         % (e, self.compiler.__class__.__name__)
                     print(textwrap.dedent("""\
                         ============================================================================"""))
-                    raise distutils.errors.DistutilsPlatformError(msg)
+                    raise distutils.errors.DistutilsPlatformError(msg) from None
 
             # After MSVC is initialized, add an explicit /MANIFEST to linker
             # flags.  See issues gh-4245 and gh-4101 for details.  Also
@@ -97,9 +97,8 @@ class config(old_config):
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError, CompileError) as e:
-            str(e)
             self.compiler = save_compiler
-            raise CompileError
+            raise CompileError from e
         self.compiler = save_compiler
         return ret
 
