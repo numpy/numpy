@@ -1,4 +1,5 @@
 from typing import Any, List
+from numpy.random.bit_generator import BitGenerator, SeedSequence
 
 __all__: List[str]
 
@@ -54,10 +55,8 @@ weibull: Any
 zipf: Any
 Generator: Any
 RandomState: Any
-SeedSequence: Any
 MT19937: Any
 Philox: Any
 PCG64: Any
 SFC64: Any
 default_rng: Any
-BitGenerator: Any
