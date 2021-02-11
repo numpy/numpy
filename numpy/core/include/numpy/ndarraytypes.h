@@ -1925,6 +1925,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          * (structured and object are exceptions).
          * This should potentially become a weak mapping in the future.
          */
+        PyObject *within_dtype_castingimpl;
         PyObject *castingimpls;
     };
 

@@ -66,7 +66,13 @@ PyArray_GetObjectToGenericCastingImpl(void);
 NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
-    PyObject *res = PyDict_GetItem(from->castingimpls, (PyObject *)to);
+    PyObject *res;
+    if (from == to) {
+        res = from->within_dtype_castingimpl;
+    }
+    else {
+        res = PyDict_GetItemWithError(from->castingimpls, (PyObject *)to);
+    }
     if (res != NULL || PyErr_Occurred()) {
         Py_XINCREF(res);
         return res;
@@ -131,6 +137,12 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     }
 
     if (res == NULL) {
+        return NULL;
+    }
+    if (from == to) {
+        PyErr_Format(PyExc_RuntimeError,
+                "Internal NumPy error, within-DType cast missing for %S!", from);
+        Py_DECREF(res);
         return NULL;
     }
     if (PyDict_SetItem(from->castingimpls, (PyObject *)to, res) < 0) {
@@ -1885,6 +1897,11 @@ PyArray_AddCastingImplmentation(PyBoundArrayMethodObject *meth)
         return -1;
     }
     if (meth->dtypes[0] == meth->dtypes[1]) {
+        /*
+         * The method casting between instances of the same dtype is special,
+         * since it is common, it is stored explicitly (currently) and must
+         * obey additional constraints to ensure convenient casting.
+         */
         if (!(meth->method->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
             PyErr_Format(PyExc_TypeError,
                     "A cast where input and output DType (class) are identical "
@@ -1899,6 +1916,16 @@ PyArray_AddCastingImplmentation(PyBoundArrayMethodObject *meth)
                     meth->method->name);
             return -1;
         }
+        if (meth->dtypes[0]->within_dtype_castingimpl != NULL) {
+            PyErr_Format(PyExc_RuntimeError,
+                    "A cast was already added for %S -> %S. (method: %s)",
+                    meth->dtypes[0], meth->dtypes[1], meth->method->name);
+            return -1;
+        }
+        Py_INCREF(meth->method);
+        meth->dtypes[0]->within_dtype_castingimpl = (PyObject *)meth->method;
+
+        return 0;
     }
     if (PyDict_Contains(meth->dtypes[0]->castingimpls,
             (PyObject *)meth->dtypes[1])) {
