@@ -710,6 +710,7 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
+    scipy.signal.correlate : uses FFT which has far superior performance on large arrays. 
 
     Notes
     -----
@@ -719,6 +720,10 @@ def correlate(a, v, mode='valid'):
         c'_{av}[k] = sum_n a[n] conj(v[n+k])
 
     which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
+
+    The convolution can often be calcualted much faster using ``scipy.signal.correlate``.
+    ``numpy.correlate`` performs slowly because it does not use FFT; for large arrays (i.e. n = 1e5) ``scipy.signal.correlate`` might be considered.
+    
 
     Examples
     --------
