@@ -48,11 +48,11 @@ if TYPE_CHECKING or HAVE_LITERAL:
 
     _HalfCodes = Literal["half", "e", "=e", "<e", ">e"]
     _SingleCodes = Literal["single", "f", "=f", "<f", ">f"]
-    _DoubleCodes = Literal["double" "float", "float_", "d", "=d", "<d", ">d"]
+    _DoubleCodes = Literal["double", "float", "float_", "d", "=d", "<d", ">d"]
     _LongDoubleCodes = Literal["longdouble", "longfloat", "g", "=g", "<g", ">g"]
 
     _CSingleCodes = Literal["csingle", "singlecomplex", "F", "=F", "<F", ">F"]
-    _CDoubleCodes = Literal["cdouble" "complex", "complex_", "cfloat", "D", "=D", "<D", ">D"]
+    _CDoubleCodes = Literal["cdouble", "complex", "complex_", "cfloat", "D", "=D", "<D", ">D"]
     _CLongDoubleCodes = Literal["clongdouble", "clongfloat", "longcomplex", "G", "=G", "<G", ">G"]
 
     _StrCodes = Literal["str", "str_", "str0", "unicode", "unicode_", "U", "=U", "<U", ">U"]
