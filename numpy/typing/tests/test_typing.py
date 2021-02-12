@@ -57,7 +57,7 @@ def run_mypy() -> None:
 
     for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR, MISC_DIR):
         # Run mypy
-        stdout, stderr, _ = api.run([
+        stdout, stderr, exit_code = api.run([
             "--config-file",
             MYPY_INI,
             "--cache-dir",
@@ -65,6 +65,7 @@ def run_mypy() -> None:
             directory,
         ])
         assert not stderr, directory
+        assert exit_code in {0, 1}, stdout
         stdout = stdout.replace('*', '')
 
         # Parse the output
