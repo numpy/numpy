@@ -1,18 +1,20 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, TypedDict, Union
 
 from numpy import dtype, ndarray, uint64
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy.typing import _ArrayLikeInt_co
 
-_PhiloxState = Dict[
-    str,
-    Union[
-        str,
-        int,
-        ndarray[Any, dtype[uint64]],
-        Dict[str, ndarray[Any, dtype[uint64]]],
-    ],
-]
+class _PhiloxInternal(TypedDict):
+    counter: ndarray[Any, dtype[uint64]]
+    key: ndarray[Any, dtype[uint64]]
+
+class _PhiloxState(TypedDict):
+    bit_generator: str
+    state: _PhiloxInternal
+    buffer: ndarray[Any, dtype[uint64]]
+    buffer_pos: int
+    has_uint32: int
+    uinteger: int
 
 class Philox(BitGenerator):
     def __init__(

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, TypedDict, Union
 
 from numpy import dtype as dtype
 from numpy import ndarray as ndarray
@@ -6,10 +6,14 @@ from numpy import uint64
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy.typing import _ArrayLikeInt_co
 
-_SFC64State = Dict[
-    str,
-    Union[str, int, Dict[str, ndarray[Any, dtype[uint64]]]],
-]
+class _SFC64Internal(TypedDict):
+    state: ndarray[Any, dtype[uint64]]
+
+class _SFC64State(TypedDict):
+    bit_generator: str
+    state: _SFC64Internal
+    has_uint32: int
+    uinteger: int
 
 class SFC64(BitGenerator):
     def __init__(self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> None: ...

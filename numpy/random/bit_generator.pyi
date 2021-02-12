@@ -6,6 +6,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    Mapping,
     NamedTuple,
     Optional,
     Sequence,
@@ -99,9 +100,9 @@ class BitGenerator:
         self,
     ) -> Tuple[Callable[[str], BitGenerator], Tuple[str], Tuple[Dict[str, Any]]]: ...
     @property
-    def state(self) -> Dict[str, Any]: ...
+    def state(self) -> Mapping[str, Any]: ...
     @state.setter
-    def state(self, value: Dict[str, Any]) -> None: ...
+    def state(self, value: Mapping[str, Any]) -> None: ...
     @overload
     def random_raw(self, size: None = ..., output: Literal[True] = ...) -> int: ...  # type: ignore[misc]
     @overload

@@ -1,12 +1,17 @@
-from typing import Dict, Union
+from typing import Dict, TypedDict, Union
 
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy.typing import _ArrayLikeInt_co
 
-_PCG64State = Dict[
-    str,
-    Union[str, int, Dict[str, int]],
-]
+class _PCG64Internal(TypedDict):
+    state: int
+    inc: int
+
+class _PCG64State(TypedDict):
+    bit_generator: str
+    state: _PCG64Internal
+    has_uint32: int
+    uinteger: int
 
 class PCG64(BitGenerator):
     def __init__(self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> None: ...

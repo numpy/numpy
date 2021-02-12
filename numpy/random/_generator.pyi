@@ -3,7 +3,15 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union, overlo
 
 from numpy import dtype, float32, float64, int64, integer, ndarray
 from numpy.random import BitGenerator
-from numpy.typing import ArrayLike, DTypeLike, _ArrayLikeFloat_co, _ArrayLikeInt_co, _ShapeLike, _DoubleCodes, _SingleCodes
+from numpy.typing import (
+    ArrayLike,
+    DTypeLike,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
+    _DoubleCodes,
+    _ShapeLike,
+    _SingleCodes,
+)
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -72,15 +80,14 @@ class Generator:
         size: Union[None, _ShapeLike] = ...,
     ) -> Union[float, ndarray[Any, dtype[float64]]]: ...
     @overload
-    def standard_normal(
+    def standard_normal(  # type: ignore[misc]
         self,
         size: None = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
     ) -> float: ...
-    # TODO: How to literal dtype?
     @overload
-    def standard_normal(
+    def standard_normal(  # type: ignore[misc]
         self,
         size: _ShapeLike = ...,
         dtype: DTypeLike = ...,

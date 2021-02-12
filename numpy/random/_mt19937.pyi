@@ -1,10 +1,16 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, TypedDict, Union
 
 from numpy import dtype, ndarray, uint32
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy.typing import _ArrayLikeInt_co
 
-_MT19937State = Dict[str, Union[str, Dict[str, Union[int, ndarray[Any, dtype[uint32]]]]]]
+class _MT19937Internal(TypedDict):
+    key: ndarray[Any, dtype[uint32]]
+    pos: int
+
+class _MT19937State(TypedDict):
+    bit_generator: str
+    state: _MT19937Internal
 
 class MT19937(BitGenerator):
     def __init__(self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> None: ...
