@@ -61,13 +61,50 @@ AR_m // AR_LIKE_M  # E: Unsupported operand types
 AR_M // AR_LIKE_M  # E: Unsupported operand types
 
 _3 = AR_m // AR_LIKE_b  # E: Need type annotation
-AR_m // AR_LIKE_c # E: Unsupported operand types
+AR_m // AR_LIKE_c  # E: Unsupported operand types
 
-AR_b // AR_LIKE_m # E: Unsupported operand types
-AR_u // AR_LIKE_m # E: Unsupported operand types
-AR_i // AR_LIKE_m # E: Unsupported operand types
-AR_f // AR_LIKE_m # E: Unsupported operand types
-AR_c // AR_LIKE_m # E: Unsupported operand types
+AR_b // AR_LIKE_m  # E: Unsupported operand types
+AR_u // AR_LIKE_m  # E: Unsupported operand types
+AR_i // AR_LIKE_m  # E: Unsupported operand types
+AR_f // AR_LIKE_m  # E: Unsupported operand types
+AR_c // AR_LIKE_m  # E: Unsupported operand types
+
+# Array multiplication
+
+AR_b *= AR_LIKE_u  # E: incompatible type
+AR_b *= AR_LIKE_i  # E: incompatible type
+AR_b *= AR_LIKE_f  # E: incompatible type
+AR_b *= AR_LIKE_c  # E: incompatible type
+AR_b *= AR_LIKE_m  # E: incompatible type
+
+AR_u *= AR_LIKE_i  # E: incompatible type
+AR_u *= AR_LIKE_f  # E: incompatible type
+AR_u *= AR_LIKE_c  # E: incompatible type
+AR_u *= AR_LIKE_m  # E: incompatible type
+
+AR_i *= AR_LIKE_f  # E: incompatible type
+AR_i *= AR_LIKE_c  # E: incompatible type
+AR_i *= AR_LIKE_m  # E: incompatible type
+
+AR_f *= AR_LIKE_c  # E: incompatible type
+AR_f *= AR_LIKE_m  # E: incompatible type
+
+# Array power
+
+AR_b **= AR_LIKE_b  # E: incompatible type
+AR_b **= AR_LIKE_u  # E: incompatible type
+AR_b **= AR_LIKE_i  # E: incompatible type
+AR_b **= AR_LIKE_f  # E: incompatible type
+AR_b **= AR_LIKE_c  # E: incompatible type
+
+AR_u **= AR_LIKE_i  # E: incompatible type
+AR_u **= AR_LIKE_f  # E: incompatible type
+AR_u **= AR_LIKE_c  # E: incompatible type
+
+AR_i **= AR_LIKE_f  # E: incompatible type
+AR_i **= AR_LIKE_c  # E: incompatible type
+
+AR_f **= AR_LIKE_c  # E: incompatible type
 
 # Scalars
 
