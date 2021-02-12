@@ -661,7 +661,7 @@ def openfile(fname):
     try:
         f = open(fname)
     except IOError:
-        raise IOError(f"No such file: '{fname}'")
+        raise IOError(f"No such file: '{fname}'") from None
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f
