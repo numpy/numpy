@@ -91,7 +91,7 @@ def test_success(path):
     # Alias `OUTPUT_MYPY` so that it appears in the local namespace
     output_mypy = OUTPUT_MYPY
     if path in output_mypy:
-        raise AssertionError("\n".join(v for v in output_mypy[path].values()))
+        raise AssertionError("\n".join(v for v in output_mypy[path]))
 
 
 @pytest.mark.slow
