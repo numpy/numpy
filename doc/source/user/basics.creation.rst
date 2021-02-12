@@ -293,7 +293,7 @@ For more information and examples look at :ref:`Copies and Views
 
 There are a number of routines to join existing arrays e.g. :func:`numpy.vstack`,
 :func:`numpy.hstack`, and :func:`numpy.block`. Here is an example of joining four 2-by-2
-arrays into a 4-by-4 array using ``block`` ::
+arrays into a 4-by-4 array using ``block``::
 
  >>> A = np.ones((2, 2))
  >>> B = np.eye((2, 2))
