@@ -276,7 +276,7 @@ def ensure_executable(name):
     try:
         which(name)
     except:
-        raise SystemExit(name + ' not found')
+        raise SystemExit(name + ' not found') from None
 
 def create_name_header(output_dir):
     routine_re = re.compile(r'^      (subroutine|.* function)\s+(\w+)\(.*$',
