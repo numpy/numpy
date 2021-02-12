@@ -1,5 +1,7 @@
 from typing import Any, List
 
+from numpy.random._generator import Generator as Generator
+from numpy.random._generator import default_rng as default_rng
 from numpy.random._mt19937 import MT19937 as MT19937
 from numpy.random._pcg64 import PCG64 as PCG64
 from numpy.random._philox import Philox as Philox
@@ -59,6 +61,4 @@ vonmises: Any
 wald: Any
 weibull: Any
 zipf: Any
-Generator: Any
 RandomState: Any
-default_rng: Any
