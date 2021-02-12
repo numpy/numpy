@@ -564,6 +564,52 @@ class TestUnique:
         assert_equal(a3_idx.dtype, np.intp)
         assert_equal(a3_inv.dtype, np.intp)
 
+        # test for ticket 2111 - float
+        a = [2.0, np.nan, 1.0, np.nan]
+        ua = [1.0, 2.0, np.nan]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - complex
+        a = [2.0-1j, np.nan, 1.0+1j, complex(0.0, np.nan), complex(1.0, np.nan)]
+        ua = [1.0+1j, 2.0-1j, complex(0.0, np.nan)]
+        ua_idx = [2, 0, 3]
+        ua_inv = [1, 2, 0, 2, 2]
+        ua_cnt = [1, 1, 3]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - datetime64
+        nat = np.datetime64('nat')
+        a = [np.datetime64('2020-12-26'), nat, np.datetime64('2020-12-24'), nat]
+        ua = [np.datetime64('2020-12-24'), np.datetime64('2020-12-26'), nat]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - timedelta
+        nat = np.timedelta64('nat')
+        a = [np.timedelta64(1, 'D'), nat, np.timedelta64(1, 'h'), nat]
+        ua = [np.timedelta64(1, 'h'), np.timedelta64(1, 'D'), nat]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
         assert_raises(TypeError, self._run_axis_tests,
