@@ -64,7 +64,7 @@ class config(old_config):
                         % (e, self.compiler.__class__.__name__)
                     print(textwrap.dedent("""\
                         ============================================================================"""))
-                    raise distutils.errors.DistutilsPlatformError(msg) from None
+                    raise distutils.errors.DistutilsPlatformError(msg) from e
 
             # After MSVC is initialized, add an explicit /MANIFEST to linker
             # flags.  See issues gh-4245 and gh-4101 for details.  Also
