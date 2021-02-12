@@ -1,5 +1,9 @@
 from typing import Any, List
 import numpy as np
+import numpy.typing as npt
+
+# Can't directly import `np.float128` as it is not available on all platforms
+f16: np.floating[npt._128Bit]
 
 c16 = np.complex128()
 f8 = np.float64()
@@ -263,6 +267,7 @@ reveal_type(AR_LIKE_O // AR_O)  # E: Any
 
 # unary ops
 
+reveal_type(-f16)  # E: {float128}
 reveal_type(-c16)  # E: {complex128}
 reveal_type(-c8)  # E: {complex64}
 reveal_type(-f8)  # E: {float64}
@@ -274,6 +279,7 @@ reveal_type(-u4)  # E: {uint32}
 reveal_type(-td)  # E: numpy.timedelta64
 reveal_type(-AR_f)  # E: Any
 
+reveal_type(+f16)  # E: {float128}
 reveal_type(+c16)  # E: {complex128}
 reveal_type(+c8)  # E: {complex64}
 reveal_type(+f8)  # E: {float64}
@@ -285,6 +291,7 @@ reveal_type(+u4)  # E: {uint32}
 reveal_type(+td)  # E: numpy.timedelta64
 reveal_type(+AR_f)  # E: Any
 
+reveal_type(abs(f16))  # E: {float128}
 reveal_type(abs(c16))  # E: {float64}
 reveal_type(abs(c8))  # E: {float32}
 reveal_type(abs(f8))  # E: {float64}
@@ -332,6 +339,7 @@ reveal_type(b_ / i4)  # E: {float64}
 reveal_type(b_ / u8)  # E: {float64}
 reveal_type(b_ / u4)  # E: {float64}
 reveal_type(b_ / f)  # E: {float64}
+reveal_type(b_ / f16)  # E: {float128}
 reveal_type(b_ / f8)  # E: {float64}
 reveal_type(b_ / f4)  # E: {float32}
 reveal_type(b_ / c)  # E: {complex128}
@@ -346,6 +354,7 @@ reveal_type(i4 / b_)  # E: {float64}
 reveal_type(u8 / b_)  # E: {float64}
 reveal_type(u4 / b_)  # E: {float64}
 reveal_type(f / b_)  # E: {float64}
+reveal_type(f16 / b_)  # E: {float128}
 reveal_type(f8 / b_)  # E: {float64}
 reveal_type(f4 / b_)  # E: {float32}
 reveal_type(c / b_)  # E: {complex128}
@@ -354,6 +363,7 @@ reveal_type(c8 / b_)  # E: {complex64}
 
 # Complex
 
+reveal_type(c16 + f16)  # E: {complex256}
 reveal_type(c16 + c16)  # E: {complex128}
 reveal_type(c16 + f8)  # E: {complex128}
 reveal_type(c16 + i8)  # E: {complex128}
@@ -364,10 +374,10 @@ reveal_type(c16 + b_)  # E: {complex128}
 reveal_type(c16 + b)  # E: {complex128}
 reveal_type(c16 + c)  # E: {complex128}
 reveal_type(c16 + f)  # E: {complex128}
-
 reveal_type(c16 + i)  # E: {complex128}
 reveal_type(c16 + AR_f)  # E: Any
 
+reveal_type(f16 + c16)  # E: {complex256}
 reveal_type(c16 + c16)  # E: {complex128}
 reveal_type(f8 + c16)  # E: {complex128}
 reveal_type(i8 + c16)  # E: {complex128}
@@ -381,6 +391,7 @@ reveal_type(f + c16)  # E: {complex128}
 reveal_type(i + c16)  # E: {complex128}
 reveal_type(AR_f + c16)  # E: Any
 
+reveal_type(c8 + f16)  # E: {complex256}
 reveal_type(c8 + c16)  # E: {complex128}
 reveal_type(c8 + f8)  # E: {complex128}
 reveal_type(c8 + i8)  # E: {complex128}
@@ -394,6 +405,7 @@ reveal_type(c8 + f)  # E: {complex128}
 reveal_type(c8 + i)  # E: numpy.complexfloating[{_NBitInt}, {_NBitInt}]
 reveal_type(c8 + AR_f)  # E: Any
 
+reveal_type(f16 + c8)  # E: {complex256}
 reveal_type(c16 + c8)  # E: {complex128}
 reveal_type(f8 + c8)  # E: {complex128}
 reveal_type(i8 + c8)  # E: {complex128}
@@ -409,6 +421,7 @@ reveal_type(AR_f + c8)  # E: Any
 
 # Float
 
+reveal_type(f8 + f16)  # E: {float128}
 reveal_type(f8 + f8)  # E: {float64}
 reveal_type(f8 + i8)  # E: {float64}
 reveal_type(f8 + f4)  # E: {float64}
@@ -420,6 +433,7 @@ reveal_type(f8 + f)  # E: {float64}
 reveal_type(f8 + i)  # E: {float64}
 reveal_type(f8 + AR_f)  # E: Any
 
+reveal_type(f16 + f8)  # E: {float128}
 reveal_type(f8 + f8)  # E: {float64}
 reveal_type(i8 + f8)  # E: {float64}
 reveal_type(f4 + f8)  # E: {float64}
@@ -431,6 +445,7 @@ reveal_type(f + f8)  # E: {float64}
 reveal_type(i + f8)  # E: {float64}
 reveal_type(AR_f + f8)  # E: Any
 
+reveal_type(f4 + f16)  # E: {float128}
 reveal_type(f4 + f8)  # E: {float64}
 reveal_type(f4 + i8)  # E: {float64}
 reveal_type(f4 + f4)  # E: {float32}
@@ -442,6 +457,7 @@ reveal_type(f4 + f)  # E: {float64}
 reveal_type(f4 + i)  # E: numpy.floating[{_NBitInt}]
 reveal_type(f4 + AR_f)  # E: Any
 
+reveal_type(f16 + f4)  # E: {float128}
 reveal_type(f8 + f4)  # E: {float64}
 reveal_type(i8 + f4)  # E: {float64}
 reveal_type(f4 + f4)  # E: {float32}

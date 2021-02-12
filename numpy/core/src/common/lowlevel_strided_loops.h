@@ -159,8 +159,7 @@ PyArray_GetDTypeCopySwapFn(int aligned,
  *      Should be the dst stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
  * src_dtype:
- *      The data type of source data.  If this is NULL, a transfer
- *      function which sets the destination to zeros is produced.
+ *      The data type of source data. Must not be NULL.
  * dst_dtype:
  *      The data type of destination data.  If this is NULL and
  *      move_references is 1, a transfer function which decrements

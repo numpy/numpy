@@ -386,7 +386,7 @@ cdef class Generator:
                     0.0, '', CONS_NONE,
                     None)
 
-    def standard_exponential(self, size=None, dtype=np.float64, method=u'zig', out=None):
+    def standard_exponential(self, size=None, dtype=np.float64, method='zig', out=None):
         """
         standard_exponential(size=None, dtype=np.float64, method='zig', out=None)
 
@@ -426,12 +426,12 @@ cdef class Generator:
         """
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
-            if method == u'zig':
+            if method == 'zig':
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
             else:
                 return double_fill(&random_standard_exponential_inv_fill, &self._bitgen, size, self.lock, out)
         elif _dtype == np.float32:
-            if method == u'zig':
+            if method == 'zig':
                 return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
             else:
                 return float_fill(&random_standard_exponential_inv_fill_f, &self._bitgen, size, self.lock, out)
@@ -4398,7 +4398,9 @@ cdef class Generator:
             char* x_ptr
             char* buf_ptr
 
-        axis = normalize_axis_index(axis, np.ndim(x))
+        if isinstance(x, np.ndarray):
+            # Only call ndim on ndarrays, see GH 18142
+            axis = normalize_axis_index(axis, np.ndim(x))
 
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
