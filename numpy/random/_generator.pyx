@@ -1722,9 +1722,6 @@ cdef class Generator:
                Springer, 2002.
         .. [2] Wikipedia, "Student's t-distribution"
                https://en.wikipedia.org/wiki/Student's_t-distribution
-        .. [3] Walker, Helen M., "Degrees of freedom" in Journal of 
-               Educational Psychology
-               http://www.nohsteachers.info/pcaso/ap_statistics/PDFs/DegreesOfFreedom.pdf
 
         Examples
         --------
@@ -1740,11 +1737,12 @@ cdef class Generator:
         either positive or negative, hence making our test 2-tailed. 
 
         Because we are estimating the mean and we have N=11 values in our sample,
-        we have N-1=10 degrees of freedom [3]_. We set our signifance level to 95% and 
-        compute the t statistic using the empirical mean and standard deviation
-        of our intake, setting the ddof parameter to the unbiased
-        value so the divisor in the standard deviation will be degrees of
-        freedom.
+        we have N-1=10 degrees of freedom. We set our signifance level to 95% and 
+        compute the t statistic using the empirical mean and empirical standard 
+        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        empirical standard deviation on an unbiased estimate of the variance (note:
+        the final estimate is not unbiased due to the concave nature of the square 
+        root).
 
         >>> np.mean(intake)
         6753.636363636364
@@ -1764,10 +1762,8 @@ cdef class Generator:
         Does our t statistic land in one of the two critical regions found at 
         both tails of the distribution?
 
-        >>> np.sum(s<t) / float(len(s))
-        0.009159  #random <0.025, statistic is in critical region 
-        >>> 2*0.009159
-        0.018318  #random
+        >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
+        0.018318  #random < 0.05, statistic is in critical region
 
         The probability value for this 2-tailed test is about 1.83%, which is 
         lower than the 5% pre-determined significance threshold. 
