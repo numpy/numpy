@@ -40,6 +40,12 @@ def _key_func(key: str) -> str:
     return os.path.join(drive, tail.split(":", 1)[0])
 
 
+def _strip_filename(msg: str) -> str:
+    """Strip the filename from a mypy message."""
+    _, tail = os.path.splitdrive(msg)
+    return tail.split(":", 1)[-1]
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.fixture(scope="module", autouse=True)
@@ -64,8 +70,10 @@ def run_mypy() -> None:
             CACHE_DIR,
             directory,
         ])
-        assert not stderr, directory
-        assert exit_code in {0, 1}, stdout
+        if stderr:
+            pytest.fail(f"Unexpected mypy standard error\n\n{stderr}")
+        elif exit_code not in {0, 1}:
+            pytest.fail(f"Unexpected mypy exit code: {exit_code}\n\n{stdout}")
         stdout = stdout.replace('*', '')
 
         # Parse the output
@@ -95,7 +103,9 @@ def test_success(path):
     # Alias `OUTPUT_MYPY` so that it appears in the local namespace
     output_mypy = OUTPUT_MYPY
     if path in output_mypy:
-        raise AssertionError("\n".join(v for v in output_mypy[path]))
+        msg = "Unexpected mypy output\n\n"
+        msg += "\n".join(_strip_filename(v) for v in output_mypy[path])
+        raise AssertionError(msg)
 
 
 @pytest.mark.slow
@@ -112,14 +122,15 @@ def test_fail(path):
     output_mypy = OUTPUT_MYPY
     assert path in output_mypy
     for error_line in output_mypy[path]:
+        error_line = _strip_filename(error_line)
         match = re.match(
-            r"^.+\.py:(?P<lineno>\d+): (error|note): .+$",
+            r"(?P<lineno>\d+): (error|note): .+$",
             error_line,
         )
         if match is None:
             raise ValueError(f"Unexpected error line format: {error_line}")
         lineno = int(match.group('lineno'))
-        errors[lineno] += error_line
+        errors[lineno] += f'{error_line}\n'
 
     for i, line in enumerate(lines):
         lineno = i + 1
@@ -132,7 +143,7 @@ def test_fail(path):
             expected_error = errors.get(lineno)
             _test_fail(path, marker, expected_error, lineno)
         else:
-            pytest.fail(f"Error {repr(errors[lineno])} not found")
+            pytest.fail(f"Unexpected mypy output\n\n{errors[lineno]}")
 
 
 _FAIL_MSG1 = """Extra error at line {}
@@ -251,8 +262,9 @@ def test_reveal(path):
     output_mypy = OUTPUT_MYPY
     assert path in output_mypy
     for error_line in output_mypy[path]:
+        error_line = _strip_filename(error_line)
         match = re.match(
-            r"^.+\.py:(?P<lineno>\d+): note: .+$",
+            r"(?P<lineno>\d+): note: .+$",
             error_line,
         )
         if match is None:
@@ -312,6 +324,8 @@ def test_extended_precision() -> None:
 
     for _msg in output_mypy[path]:
         *_, _lineno, msg_typ, msg = _msg.split(":")
+
+        msg = _strip_filename(msg)
         lineno = int(_lineno)
         msg_typ = msg_typ.strip()
         assert msg_typ in {"error", "note"}
