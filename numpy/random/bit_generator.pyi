@@ -1,11 +1,11 @@
 import abc
+import sys
 from threading import Lock
 from typing import (
     Any,
     Callable,
     Dict,
     List,
-    Literal,
     NamedTuple,
     Optional,
     Sequence,
@@ -17,13 +17,12 @@ from typing import (
 )
 
 from numpy import dtype, ndarray, uint32, uint64, unsignedinteger
-from numpy.typing import (
-    DTypeLike,
-    _ArrayLikeInt_co,
-    _DTypeLikeUInt,
-    _ShapeLike,
-    _SupportsDType,
-)
+from numpy.typing import DTypeLike, _ArrayLikeInt_co, _DTypeLikeUInt, _ShapeLike, _SupportsDType
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 _T = TypeVar("_T")
 
@@ -71,7 +70,7 @@ class SeedlessSeedSequence(ISpawnableSeedSequence):
 
 class SeedSequence(ISpawnableSeedSequence):
     entropy: Union[None, int, Sequence[int]]
-    spawn_key: Tuple[int, ...]
+    spawn_key: Sequence[int]
     pool_size: int
     n_children_spawned: int
     pool: ndarray[Any, dtype[uint32]]
@@ -88,23 +87,17 @@ class SeedSequence(ISpawnableSeedSequence):
     def state(
         self,
     ) -> Dict[str, Union[None, Sequence[int], int, Tuple[int, ...]]]: ...
-    def generate_state(
-        self, n_words: int, dtype: DTypeLike = ...
-    ) -> ndarray[Any, Any]: ...
+    def generate_state(self, n_words: int, dtype: DTypeLike = ...) -> ndarray[Any, Any]: ...
     def spawn(self, n_children: int) -> List[SeedSequence]: ...
 
 class BitGenerator:
     lock: Lock
-    def __init__(
-        self, seed: Union[None, int, _ArrayLikeInt_co, SeedSequence] = ...
-    ) -> None: ...
+    def __init__(self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> None: ...
     def __getstate__(self) -> Dict[str, Any]: ...
     def __setstate__(self, state: Dict[str, Any]) -> None: ...
     def __reduce__(
         self,
-    ) -> Tuple[
-        Callable[[str], BitGenerator], Tuple[str], Tuple[Dict[str, Any]]
-    ]: ...
+    ) -> Tuple[Callable[[str], BitGenerator], Tuple[str], Tuple[Dict[str, Any]]]: ...
     @property
     def state(self) -> Dict[str, Any]: ...
     @state.setter
@@ -112,13 +105,9 @@ class BitGenerator:
     @overload
     def random_raw(self, size: None = ..., output: Literal[True] = ...) -> int: ...  # type: ignore[misc]
     @overload
-    def random_raw(
-        self, size: _ShapeLike = ..., output: Literal[True] = ...
-    ) -> ndarray[Any, dtype[uint64]]: ...  # type: ignore[misc]
+    def random_raw(self, size: _ShapeLike = ..., output: Literal[True] = ...) -> ndarray[Any, dtype[uint64]]: ...  # type: ignore[misc]
     @overload
-    def random_raw(
-        self, size: Optional[_ShapeLike] = ..., output: Literal[False] = ...
-    ) -> None: ...  # type: ignore[misc]
+    def random_raw(self, size: Optional[_ShapeLike] = ..., output: Literal[False] = ...) -> None: ...  # type: ignore[misc]
     def _benchmark(self, cnt: int, method: str = ...) -> None: ...
     @property
     def ctypes(self) -> _Interface: ...
