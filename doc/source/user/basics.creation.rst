@@ -341,7 +341,9 @@ value (tsv) files are used for programs like Excel and LabView. Python
 functions can read and parse these files line-by-line. NumPy has two
 standard routines for importing a file with delimited data :func:`numpy.loadtxt`
 and :func:`numpy.genfromtxt`. These functions have more involved use cases in
-:doc:`how-to-io`. A simple example given a ``simple.csv``::
+:doc:`how-to-io`. A simple example given a ``simple.csv``:
+
+.. code-block:: bash
 
  $ cat simple.csv
  x, y
