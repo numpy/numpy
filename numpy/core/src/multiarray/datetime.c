@@ -3993,22 +3993,23 @@ string_to_datetime_cast_resolve_descriptors(
         PyArray_Descr *given_descrs[2],
         PyArray_Descr *loop_descrs[2])
 {
-    /* We currently support byte-swapping, so any (unicode) string is OK */
-    Py_INCREF(given_descrs[0]);
-    loop_descrs[0] = given_descrs[0];
-
     if (given_descrs[1] == NULL) {
         /* NOTE: This doesn't actually work, and will error during the cast */
         loop_descrs[1] = dtypes[1]->default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
-            Py_DECREF(loop_descrs[0]);
             return -1;
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
-        loop_descrs[1] = given_descrs[1];
+        loop_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
+        if (loop_descrs[1] == NULL) {
+            return -1;
+        }
     }
+
+    /* We currently support byte-swapping, so any (unicode) string is OK */
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
 }
