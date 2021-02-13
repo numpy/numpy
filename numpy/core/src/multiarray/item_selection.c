@@ -2188,7 +2188,7 @@ static NPY_INLINE NPY_GCC_OPT_3 npy_intp
 count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
 {
     npy_intp count = 0;
-    if (bstride == 1)) {
+    if (bstride == 1) {
     #if NPY_SIMD
         npy_uintp len_m = len & -npyv_nlanes_u8;
         npy_uintp zcount = 0;
