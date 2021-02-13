@@ -161,6 +161,23 @@ class CountNonzero(Benchmark):
                 self.x.ndim - 1, self.x.ndim - 2))
 
 
+class Nonzero(Benchmark):
+    params = [
+    [bool, np.uint8, np.int8, np.uint16, np.int16, np.uint32, np.int32, np.uint64, np.int64, np.float32, np.float64],
+    [(1000000,), (1000,1000), (100,100,100)]
+    ]
+    param_names = ["dtype", "shape"]
+
+    def setup(self, dtype, size):
+        self.x = np.random.randint(0,2,size=size).astype(dtype)
+
+    def time_nonzero(self, dtype, size):
+        np.nonzero(self.x)
+
+    def time_nonzero_bool_comparison(self, dtype, size):
+        np.nonzero(self.x > 0.5)
+
+
 class PackBits(Benchmark):
     param_names = ['dtype']
     params = [[bool, np.uintp]]
