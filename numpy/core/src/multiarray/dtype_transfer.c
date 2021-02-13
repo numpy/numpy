@@ -3047,6 +3047,23 @@ init_cast_info(NPY_cast_info *cast_info, NPY_CASTING *casting,
 
 
 /*
+ * When there is a failure in ArrayMethod.get_loop(...) we still have
+ * to clean up references, but assume that `auxdata` and `func`
+ * have undefined values.
+ * NOTE: This should possibly be moved, but is only necessary here
+ */
+static void
+_clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
+{
+    /* As public API we could choose to clear auxdata != NULL */
+    assert(cast_info->auxdata == NULL);
+    /* Set func to be non-null so that `NPY_cats_info_xfree` does not skip */
+    cast_info->func = &_dec_src_ref_nop;
+    NPY_cast_info_xfree(cast_info);
+}
+
+
+/*
  * Helper for PyArray_GetDTypeTransferFunction, which fetches a single
  * transfer function from the each casting implementation (ArrayMethod).
  * May set the transfer function to NULL when the cast can be achieved using
@@ -3125,8 +3142,7 @@ define_cast_for_descrs(
             if (context->method->get_strided_loop(
                     context, aligned, move_references, strides,
                     &castdata.from.func, &castdata.from.auxdata, &flags) < 0) {
-                assert(castdata.from.auxdata == NULL);
-                castdata.from.func = &_dec_src_ref_nop;  /* avoid NULL */
+                _clear_cast_info_after_get_loop_failure(&castdata.from);
                 goto fail;
             }
             assert(castdata.from.func != NULL);
@@ -3164,8 +3180,7 @@ define_cast_for_descrs(
             if (context->method->get_strided_loop(
                     context, aligned, 1 /* clear buffer */, strides,
                     &castdata.to.func, &castdata.to.auxdata, &flags) < 0) {
-                assert(castdata.to.auxdata == NULL);
-                castdata.to.func = &_dec_src_ref_nop;  /* avoid NULL */
+                _clear_cast_info_after_get_loop_failure(&castdata.to);
                 goto fail;
             }
             assert(castdata.to.func != NULL);
@@ -3187,6 +3202,7 @@ define_cast_for_descrs(
     if (context->method->get_strided_loop(
             context, aligned, move_references, strides,
             &cast_info->func, &cast_info->auxdata, &flags) < 0) {
+        _clear_cast_info_after_get_loop_failure(cast_info);
         goto fail;
     }
 
