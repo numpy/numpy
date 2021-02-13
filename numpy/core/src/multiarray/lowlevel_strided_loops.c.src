@@ -1836,129 +1836,148 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         ptr_assignment \
     }
 
-#define nonzero_idxs_1D(data, idxs, shape, strides, nonzero_count, dtype) \
-    npy_intp stride = strides[0]; \
-    npy_intp added_count = 0; \
-    npy_intp a = 0; \
-    while (added_count < nonzero_count) { \
-        *idxs = a;  \
-        bool to_increment = ((bool) *data); \
-        idxs += ((int) to_increment); \
-        added_count += ((int) to_increment); \
-        data = (dtype *) (((char*) data) + stride); \
-        ++a;\
+/**begin repeat
+ * 
+ * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+ * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
+ */
+
+/**begin repeat1
+ *
+ * #layout=C,F#
+ *
+ */
+
+void nonzero_idxs_1D_@layout@_@name@(@dtype@ * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, npy_intp nonzero_count) {
+    npy_intp stride = strides[0]; 
+    npy_intp added_count = 0; 
+    npy_intp a = 0; 
+    while (added_count < nonzero_count) { 
+        *idxs = a;  
+        bool to_increment = ((bool) *data); 
+        idxs += ((int) to_increment); 
+        added_count += ((int) to_increment); 
+        data = (@dtype@ *) (((char*) data) + stride); 
+        ++a;
     }
+}
 
+ /**end repeat1**/
 
-#define nonzero_idxs_2D_C(data, idxs, shape, strides, nonzero_count, dtype) \
-    npy_intp idxs_stride = 2; \
-    npy_intp size_1 = shape[1]; \
-    npy_intp stride_1 = strides[1]; \
-    npy_intp* idxs_0 = idxs;\
-    npy_intp* idxs_1 = idxs + 1;    \
-    npy_intp added_count = 0; \
-    npy_intp a = 0; \
-    while (added_count < nonzero_count) { \
-        npy_intp old_added_count = added_count; \
-        npy_intp b = 0;\
-        while (added_count < nonzero_count && b<size_1) { \
-            *idxs_1 = b; \
-            npy_uintp to_increment = (npy_uintp) ((bool) *data); \
-            idxs_1 += (idxs_stride & (-to_increment)); \
-            added_count += to_increment; \
-            data = (dtype *) (((char *) data) + stride_1); \
-            ++b;\
-        } \
-        loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment1(idxs_0, a, idxs_stride)) \
-        ++a;\
+void nonzero_idxs_2D_C_@name@(@dtype@ * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, npy_intp nonzero_count) { 
+    npy_intp idxs_stride = 2; 
+    npy_intp size_1 = shape[1]; 
+    npy_intp stride_1 = strides[1]; 
+    npy_intp* idxs_0 = idxs;
+    npy_intp* idxs_1 = idxs + 1;    
+    npy_intp added_count = 0; 
+    npy_intp a = 0; 
+    while (added_count < nonzero_count) { 
+        npy_intp old_added_count = added_count; 
+        npy_intp b = 0;
+        while (added_count < nonzero_count && b<size_1) { 
+            *idxs_1 = b; 
+            npy_uintp to_increment = (npy_uintp) ((bool) *data); 
+            idxs_1 += (idxs_stride & (-to_increment)); 
+            added_count += to_increment; 
+            data = (@dtype@ *) (((char *) data) + stride_1); 
+            ++b;
+        } 
+        loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment1(idxs_0, a, idxs_stride)) 
+        ++a;
     }
+}
 
-#define nonzero_idxs_2D_F(data, idxs, shape, strides, nonzero_count, dtype) \
-    npy_intp idxs_stride = 2; \
-    npy_intp size_0 = shape[0]; \
-    npy_intp stride_0 = strides[0]; \
-    npy_intp* idxs_0 = idxs;\
-    npy_intp* idxs_1 = idxs + 1;    \
-    npy_intp added_count = 0; \
-    npy_intp b = 0; \
-    while (added_count < nonzero_count) { \
-        npy_intp old_added_count = added_count; \
-        npy_intp a = 0;\
-        while (added_count < nonzero_count && a<size_0) { \
-            *idxs_0 = a; \
-            npy_uintp to_increment = (npy_uintp) ((bool) *data); \
-            idxs_0 += (idxs_stride & (-to_increment)); \
-            added_count += to_increment; \
-            data = (dtype *) (((char *) data) + stride_0); \
-            ++a;\
-        } \
-        loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment1(idxs_1, b, idxs_stride)) \
-        ++b;\
+
+void nonzero_idxs_2D_F_@name@(@dtype@ * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, npy_intp nonzero_count) { 
+    npy_intp idxs_stride = 2; 
+    npy_intp size_0 = shape[0]; 
+    npy_intp stride_0 = strides[0]; 
+    npy_intp* idxs_0 = idxs;
+    npy_intp* idxs_1 = idxs + 1;    
+    npy_intp added_count = 0; 
+    npy_intp b = 0; 
+    while (added_count < nonzero_count) { 
+        npy_intp old_added_count = added_count; 
+        npy_intp a = 0;
+        while (added_count < nonzero_count && a<size_0) { 
+            *idxs_0 = a; 
+            npy_uintp to_increment = (npy_uintp) ((bool) *data); 
+            idxs_0 += (idxs_stride & (-to_increment)); 
+            added_count += to_increment; 
+            data = (@dtype@ *) (((char *) data) + stride_0); 
+            ++a;
+        } 
+        loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment1(idxs_1, b, idxs_stride)) 
+        ++b;
     }
+}
 
 
-#define nonzero_idxs_3D_C(data, idxs, shape, strides, nonzero_count, dtype) \
-    npy_intp idxs_stride = 3; \
-    npy_intp size_1 = shape[1]; \
-    npy_intp size_2 = shape[2]; \
-    npy_intp stride_2 = strides[2]; \
-    npy_intp* idxs_0 = idxs;\
-    npy_intp* idxs_1 = idxs + 1;    \
-    npy_intp* idxs_2 = idxs + 2;    \
-    npy_intp added_count = 0; \
-    npy_intp a = 0; \
-    while (added_count < nonzero_count) { \
-        npy_intp b = 0;\
-        while (added_count < nonzero_count && b<size_1) { \
-            npy_intp old_added_count = added_count; \
-            npy_intp c = 0;\
-            while (added_count < nonzero_count && c<size_2) { \
-                *idxs_2 = c; \
-                npy_uintp to_increment = (npy_uintp) ((bool) *data); \
-                idxs_2 += (idxs_stride & (-to_increment)); \
-                added_count += to_increment; \
-                data = (dtype *) (((char *) data) + stride_2); \
-                ++c;\
-            }\
-            loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment2(idxs_0, a, idxs_stride, idxs_1, b, idxs_stride)) \
-            ++b;\
-        }\
-        ++a;\
+void nonzero_idxs_3D_C_@name@(@dtype@ * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, npy_intp nonzero_count) { 
+    npy_intp idxs_stride = 3; 
+    npy_intp size_1 = shape[1]; 
+    npy_intp size_2 = shape[2]; 
+    npy_intp stride_2 = strides[2]; 
+    npy_intp* idxs_0 = idxs;
+    npy_intp* idxs_1 = idxs + 1;    
+    npy_intp* idxs_2 = idxs + 2;    
+    npy_intp added_count = 0; 
+    npy_intp a = 0; 
+    while (added_count < nonzero_count) { 
+        npy_intp b = 0;
+        while (added_count < nonzero_count && b<size_1) { 
+            npy_intp old_added_count = added_count; 
+            npy_intp c = 0;
+            while (added_count < nonzero_count && c<size_2) { 
+                *idxs_2 = c; 
+                npy_uintp to_increment = (npy_uintp) ((bool) *data); 
+                idxs_2 += (idxs_stride & (-to_increment)); 
+                added_count += to_increment; 
+                data = (@dtype@ *) (((char *) data) + stride_2); 
+                ++c;
+            }
+            loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment2(idxs_0, a, idxs_stride, idxs_1, b, idxs_stride)) 
+            ++b;
+        }
+        ++a;
     }
+}
 
 
-#define nonzero_idxs_3D_F(data, idxs, shape, strides, nonzero_count, dtype) \
-    npy_intp idxs_stride = 3; \
-    npy_intp size_0 = shape[0]; \
-    npy_intp size_1 = shape[1]; \
-    npy_intp stride_0 = strides[0]; \
-    npy_intp* idxs_0 = idxs;\
-    npy_intp* idxs_1 = idxs + 1;    \
-    npy_intp* idxs_2 = idxs + 2;    \
-    npy_intp added_count = 0; \
-    npy_intp c = 0; \
-    while (added_count < nonzero_count) { \
-        npy_intp b = 0;\
-        while (added_count < nonzero_count && b<size_1) { \
-            npy_intp old_added_count = added_count; \
-            npy_intp a = 0;\
-            while (added_count < nonzero_count && a<size_0) { \
-                *idxs_0 = a; \
-                npy_uintp to_increment = (npy_uintp) ((bool) *data); \
-                idxs_0 += (idxs_stride & (-to_increment)); \
-                added_count += to_increment; \
-                data = (dtype *) (((char *) data) + stride_0); \
-                ++a;\
-            }\
-            loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment2(idxs_1, b, idxs_stride, idxs_2, c, idxs_stride)) \
-            ++b;\
-        }\
-        ++c;\
+void nonzero_idxs_3D_F_@name@(@dtype@ * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, npy_intp nonzero_count) { 
+    npy_intp idxs_stride = 3; 
+    npy_intp size_0 = shape[0]; 
+    npy_intp size_1 = shape[1]; 
+    npy_intp stride_0 = strides[0]; 
+    npy_intp* idxs_0 = idxs;
+    npy_intp* idxs_1 = idxs + 1;    
+    npy_intp* idxs_2 = idxs + 2;    
+    npy_intp added_count = 0; 
+    npy_intp c = 0; 
+    while (added_count < nonzero_count) { 
+        npy_intp b = 0;
+        while (added_count < nonzero_count && b<size_1) { 
+            npy_intp old_added_count = added_count; 
+            npy_intp a = 0;
+            while (added_count < nonzero_count && a<size_0) { 
+                *idxs_0 = a; 
+                npy_uintp to_increment = (npy_uintp) ((bool) *data); 
+                idxs_0 += (idxs_stride & (-to_increment)); 
+                added_count += to_increment; 
+                data = (@dtype@ *) (((char *) data) + stride_0); 
+                ++a;
+            }
+            loop_ptr_assignment(0, added_count - old_added_count, ptr_assignment2(idxs_1, b, idxs_stride, idxs_2, c, idxs_stride)) 
+            ++b;
+        }
+        ++c;
     }
+}
+
+/**end repeat**/
 
 
-#define nonzero_idxs_1D_C nonzero_idxs_1D
-#define nonzero_idxs_1D_F nonzero_idxs_1D
 
  /**begin repeat
   *
@@ -1967,80 +1986,30 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
  /**begin repeat1
   *
-  * #layout = _C, _F#
+  * #layout = C, F#
   */
 
-bool nonzero_idxs_dispatcher@ndim@D@layout@(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count) { 
+bool nonzero_idxs_dispatcher@ndim@D_@layout@(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count) { 
 
     switch(dtype) { 
     
-        case NPY_BOOL: 
+        /**begin repeat2
+         *
+         * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+         * #dtypeID = NPY_BOOL, NPY_UINT8, NPY_INT8, NPY_UINT16, NPY_INT16, NPY_UINT32, NPY_INT32, NPY_UINT64, NPY_INT64, NPY_FLOAT32, NPY_FLOAT64#
+         * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
+         */
+
+        case @dtypeID@: 
         { 
-            npy_bool* data_ptr = (npy_bool*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_bool); 
+            @dtype@ * data_ptr = (@dtype@ *) data; 
+            nonzero_idxs_@ndim@D_@layout@_@name@(data_ptr, idxs, shape, strides, nonzero_count); 
             return true; 
         } 
-        case NPY_UINT8: 
-        { 
-            npy_byte* data_ptr = (npy_byte*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); 
-            return true; 
-        } 
-        case NPY_INT8: 
-        { 
-            npy_byte* data_ptr = (npy_byte*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_byte); 
-            return true; 
-        } 
-        case NPY_UINT16: 
-        { 
-            npy_uint16* data_ptr = (npy_uint16*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_uint16); 
-            return true; 
-        } 
-        case NPY_INT16: 
-        { 
-            npy_int16* data_ptr = (npy_int16*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_int16); 
-            return true; 
-        } 
-        case NPY_UINT32: 
-        { 
-            npy_uint32* data_ptr = (npy_uint32*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_uint32); 
-            return true; 
-        } 
-        case NPY_INT32: 
-        { 
-            npy_int32* data_ptr = (npy_int32*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_int32); 
-            return true; 
-        } 
-        case NPY_UINT64: 
-        { 
-            npy_uint64* data_ptr = (npy_uint64*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_uint64); 
-            return true; 
-        } 
-        case NPY_INT64: 
-        { 
-            npy_int64* data_ptr = (npy_int64*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_int64); 
-            return true; 
-        } 
-        case NPY_FLOAT32: 
-        { 
-            npy_float* data_ptr = (npy_float*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_float); 
-            return true; 
-        } 
-        case NPY_FLOAT64: 
-        { 
-            npy_double* data_ptr = (npy_double*) data; 
-            nonzero_idxs_@ndim@D@layout@(data_ptr, idxs, shape, strides, nonzero_count, npy_double); 
-            return true; 
-        } 
-    } 
+
+        /**end repeat2**/
+
+    }
     return false; 
 }
 
