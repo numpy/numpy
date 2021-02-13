@@ -559,12 +559,14 @@ beginpattern90 = re.compile(
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
-    beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
-# endifs='end\s*(if|do|where|select|while|forall)'
-endifs = r'(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
+    beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
+endifs = r'end\s*(if|do|where|select|while|forall)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
 #
+moduleprocedures = r'module\s*procedure'
+moduleprocedurepattern = re.compile(
+    beforethisafter % ('', moduleprocedures, moduleprocedures, r'.*'), re.I), 'moduleprocedure'
 implicitpattern = re.compile(
     beforethisafter % ('', 'implicit', 'implicit', '.*'), re.I), 'implicit'
 dimensionpattern = re.compile(beforethisafter % (
@@ -713,7 +715,8 @@ def crackline(line, reset=0):
                 callpattern, usepattern, containspattern,
                 entrypattern,
                 f2pyenhancementspattern,
-                multilinepattern
+                multilinepattern,
+                moduleprocedurepattern
                 ]:
         m = pat[0].match(line)
         if m:
@@ -783,6 +786,8 @@ def crackline(line, reset=0):
         expectbegin = 0
     elif pat[1] == 'endif':
         pass
+    elif pat[1] == 'moduleprocedure':
+        analyzeline(m, pat[1], line)
     elif pat[1] == 'contains':
         if ignorecontains:
             return
@@ -871,6 +876,8 @@ selectpattern = re.compile(
     r'\s*(?P<this>(@\(@.*?@\)@|\*[\d*]+|\*\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
 nameargspattern = re.compile(
     r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>.*)\s*@\)@))*\s*\Z', re.I)
+operatorpattern = re.compile(
+    r'\s*operator@\(@\s*(?P<name>[^)]+)\s*@\)@\s*\Z', re.I)
 callnameargspattern = re.compile(
     r'\s*(?P<name>\b[\w$]+\b)\s*@\(@\s*(?P<args>.*)\s*@\)@\s*\Z', re.I)
 real16pattern = re.compile(
@@ -893,6 +900,9 @@ def _resolvenameargspattern(line):
     m1 = nameargspattern.match(line)
     if m1:
         return m1.group('name'), m1.group('args'), m1.group('result'), m1.group('bind')
+    m1 = operatorpattern.match(line)
+    if m1:
+        return 'operator(' + m1.group('name') + ')', [], None, None
     m1 = callnameargspattern.match(line)
     if m1:
         return m1.group('name'), m1.group('args'), None, None
@@ -1134,6 +1144,8 @@ def analyzeline(m, case, line):
                     continue
             else:
                 k = rmbadname1(m1.group('name'))
+            if case in ['public', 'private'] and k == 'operator':
+                k = 'operator' + m1.group('after')
             if k not in edecl:
                 edecl[k] = {}
             if case == 'dimension':
@@ -1176,6 +1188,8 @@ def analyzeline(m, case, line):
         groupcache[groupcounter]['vars'] = edecl
         if last_name is not None:
             previous_context = ('variable', last_name, groupcounter)
+    elif case == 'moduleprocedure':
+        groupcache[groupcounter]['implementedby'] = [x.strip() for x in m.group('after').split(',')]
     elif case == 'parameter':
         edecl = groupcache[groupcounter]['vars']
         ll = m.group('after').strip()[1:-1]
@@ -2075,7 +2089,7 @@ def analyzebody(block, args, tab=''):
         else:
             as_ = args
         b = postcrack(b, as_, tab=tab + '\t')
-        if b['block'] == 'interface' and not b['body']:
+        if b['block'] == 'interface' and not b['body'] and not b['implementedby']:
             if 'f2pyenhancements' not in b:
                 continue
         if b['block'].replace(' ', '') == 'pythonmodule':
