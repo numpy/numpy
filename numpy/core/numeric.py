@@ -721,7 +721,9 @@ def correlate(a, v, mode='valid'):
 
     which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
 
-    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might be considered.
+    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
+    not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
+    be preferable.
     
 
     Examples
