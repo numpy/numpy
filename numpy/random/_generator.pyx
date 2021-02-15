@@ -3688,16 +3688,17 @@ cdef class Generator:
             ``(k0, k1, ..., kn, p)``. Each element ``pvals[i,j,...,:]`` must
             sum to 1 (however, the last element is always assumed to account
             for the remaining probability, as long as
-            ``sum(pvals[i,j,...,:-1]) <= 1)``.
+            ``sum(pvals[..., :-1], axis=-1) <= 1.0``. Must have at least 1
+            dimension where pvals.shape[-1] > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None where the output
-            size is determined by the broadcast shape of ``n`` and ``pvals``,
-            ``b=(b0, b1, ..., bq)``. If size is not None, then it must be
-            compatible with the broadcast shape of ``n`` and ``pvals``. size
-            must have ``q+1`` or more elements and size[-(q+1-j):] must equal
-            ``bj`` when ``bj`` is not 1. If ``bj`` is 1, then size can be any
-            positive integer value.
+            ``m * n * k`` samples are drawn each with ``p`` elements. Default
+            is None where the output size is determined by the broadcast shape
+            of ``n`` and all by the final dimension of ``pvals``, which is
+            denoted as ``b=(b0, b1, ..., bq)`` be this size. If size is not None,
+            then it must be compatible with the broadcast shape ``b``.
+            Specifically, size must have ``q`` or more elements and
+            size[-(q-j):] must equal ``bj``.
 
         Returns
         -------
@@ -3706,7 +3707,7 @@ cdef class Generator:
             provided, the output shape is size + (p,)  If not specified,
             the shape is determined by the broadcast shape of ``n`` and
             ``pvals``, ``(b0, b1, ..., bq)`` augmented with the dimension of
-            the multiconial, ``p``, so that that output shape is
+            the multinomial, ``p``, so that that output shape is
             ``(b0, b1, ..., bq, p)``.
 
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
@@ -3763,7 +3764,17 @@ cdef class Generator:
 
         ``argmax(axis=-1)`` is then used to return the categories.
 
-        >>> rvs = rng.multinomial(1, [[.1, .5, .4 ], [.3, .7, .0]], size=(4,2))
+        >>> pvals = [[.1, .5, .4 ], [.3, .7, .0]]
+        >>> rvs = rng.multinomial(1, pvals, size=(4,2))
+        >>> rvs.argmax(axis=-1)
+        array([[0, 1],
+               [2, 0],
+               [2, 1],
+               [2, 0]], dtype=int64)  # random
+
+        The same output dimension can be produced using broadcasting.
+
+        >>> rvs = rng.multinomial([[1]] * 4, pvals)
         >>> rvs.argmax(axis=-1)
         array([[0, 1],
                [2, 0],
@@ -3793,13 +3804,20 @@ cdef class Generator:
         cdef int64_t *mnix
         cdef int64_t ni
         cdef np.broadcast it
-
-        on = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
-        parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 32, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
+        on = <np.ndarray>np.PyArray_FROM_OTF(n,
+                                             np.NPY_INT64,
+                                             np.NPY_ARRAY_ALIGNED |
+                                             np.NPY_ARRAY_C_CONTIGUOUS)
+        parr = <np.ndarray>np.PyArray_FROM_OTF(pvals,
+                                               np.NPY_DOUBLE,
+                                               np.NPY_ARRAY_ALIGNED |
+                                               np.NPY_ARRAY_C_CONTIGUOUS)
         ndim = parr.ndim
-        d = parr.shape[ndim - 1]
+        d = parr.shape[ndim - 1] if ndim >= 1 else 0
+        if d == 0:
+            raise ValueError("pvals must have at least 1 dimension with shape[-1] > 0.")
+
+        check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         pix = <double*>np.PyArray_DATA(parr)
         sz = np.PyArray_SIZE(parr)
         # Cython 0.29.20 would not correctly translate the range-based for
@@ -3822,7 +3840,6 @@ cdef class Generator:
                            "if the sum of the original pvals is valid.")
                 else:
                     msg = f"sum(pvals{slice_repr}) > 1.0"
-
                 raise ValueError(msg)
             offset += d
 
@@ -3830,7 +3847,9 @@ cdef class Generator:
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)
             # This provides the offsets to use in the C-contig parr when
             # broadcasting
-            offsets = <np.ndarray>np.arange(0, np.PyArray_SIZE(parr), d, dtype=np.intp).reshape((<object>parr).shape[:ndim - 1])
+            offsets = <np.ndarray>np.arange(
+                0, np.PyArray_SIZE(parr), d, dtype=np.intp
+            ).reshape((<object>parr).shape[:ndim - 1])
             if size is None:
                 it = np.PyArray_MultiIterNew2(on, offsets)
             else:
