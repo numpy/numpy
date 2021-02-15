@@ -614,8 +614,8 @@ descr_from_basic_scalar(PyObject *obj, PyArray_Descr **descr)
     return -1;
 }
 
-#define PyDescr_PythonCRepresentable(d) (d->type_num == NPY_LONGDOUBLE || \
-        d->type_num > NPY_CDOUBLE)
+#define PyDescr_PythonRepresentable(d) (d->type_num < NPY_LONGDOUBLE || \
+        d->type_num == NPY_CFLOAT || d->type_num == NPY_CDOUBLE)
 
 /**
  * This function attempts to compare NumPy or Python scalars
@@ -634,7 +634,7 @@ do_richcompare_on_scalars(PyObject *self, PyObject *other, int cmp_op) {
     PyArray_Descr *self_descr=NULL, *other_descr=NULL;
     void *data_self, *data_other;
     int pyscalar_other, pyscalar_self;
-    int is_complex_operands, is_equality_operator, is_python_scalar;
+    int is_complex_operands, is_equality_operator, is_python_representable;
 
     pyscalar_self = descr_from_basic_scalar(self, &self_descr);
     pyscalar_other = descr_from_basic_scalar(other, &other_descr);
@@ -648,10 +648,15 @@ do_richcompare_on_scalars(PyObject *self, PyObject *other, int cmp_op) {
         is_complex_operands = (PyTypeNum_ISCOMPLEX(self_descr->type_num) ||
             PyTypeNum_ISCOMPLEX(other_descr->type_num));
         is_equality_operator = (cmp_op != Py_EQ && cmp_op != Py_NE);
-        is_python_scalar = PyDescr_PythonCRepresentable(self_descr) ||
-            PyDescr_PythonCRepresentable(other_descr);
+        is_python_representable = PyDescr_PythonRepresentable(self_descr) &&
+            PyDescr_PythonRepresentable(other_descr);
 
-        if (!(is_complex_operands && is_equality_operator) && !is_python_scalar) {
+        if (!(is_complex_operands && is_equality_operator) && is_python_representable) {
+            /*
+             * If the scalar is a python built-in, we can use the object as is.
+             * Else we need to obtain the value from the operand.
+             * Note: If we reach this point, one of the scalars must be built-in.
+             */
             data_self = scalar_value(self, NULL);
             data_other = scalar_value(other, NULL);
             cmp_item_self = pyscalar_self == 0 ? self_descr->f->getitem(data_self, NULL):
