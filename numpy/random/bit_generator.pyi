@@ -78,7 +78,7 @@ class SeedlessSeedSequence(ISpawnableSeedSequence):
 
 class SeedSequence(ISpawnableSeedSequence):
     entropy: Union[None, int, Sequence[int]]
-    spawn_key: Sequence[int]
+    spawn_key: Tuple[int, ...]
     pool_size: int
     n_children_spawned: int
     pool: ndarray[Any, dtype[uint32]]
@@ -86,7 +86,7 @@ class SeedSequence(ISpawnableSeedSequence):
         self,
         entropy: Union[None, int, Sequence[int]] = ...,
         *,
-        spawn_key: Tuple[int, ...] = ...,
+        spawn_key: Sequence[int] = ...,
         pool_size: int = ...,
         n_children_spawned: int = ...,
     ) -> None: ...
