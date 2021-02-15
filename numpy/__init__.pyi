@@ -1641,7 +1641,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __mod__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
     @overload
-    def __mod__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co) -> _ArrayOrScalar[timedelta64]: ...
+    def __mod__(self: _ArrayTD64_co, other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> _ArrayOrScalar[timedelta64]: ...
     @overload
     def __mod__(self: _ArrayND[object_], other: Any) -> Any: ...
     @overload
@@ -1663,7 +1663,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __rmod__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _ArrayOrScalar[floating[Any]]: ...  # type: ignore[misc]
     @overload
-    def __rmod__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co) -> _ArrayOrScalar[timedelta64]: ...
+    def __rmod__(self: _ArrayTD64_co, other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> _ArrayOrScalar[timedelta64]: ...
     @overload
     def __rmod__(self: _ArrayND[object_], other: Any) -> Any: ...
     @overload
@@ -1685,7 +1685,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __divmod__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _2Tuple[_ArrayOrScalar[floating[Any]]]: ...  # type: ignore[misc]
     @overload
-    def __divmod__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co) -> Union[Tuple[int64, timedelta64], Tuple[_ArrayND[int64], _ArrayND[timedelta64]]]: ...
+    def __divmod__(self: _ArrayTD64_co, other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> Union[Tuple[int64, timedelta64], Tuple[_ArrayND[int64], _ArrayND[timedelta64]]]: ...
     @overload
     def __divmod__(
         self: _ArrayND[Union[bool_, integer[Any], floating[Any], timedelta64]],
@@ -1703,7 +1703,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __rdivmod__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> _2Tuple[_ArrayOrScalar[floating[Any]]]: ...  # type: ignore[misc]
     @overload
-    def __rdivmod__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co) -> Union[Tuple[int64, timedelta64], Tuple[_ArrayND[int64], _ArrayND[timedelta64]]]: ...
+    def __rdivmod__(self: _ArrayTD64_co, other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> Union[Tuple[int64, timedelta64], Tuple[_ArrayND[int64], _ArrayND[timedelta64]]]: ...
     @overload
     def __rdivmod__(
         self: _ArrayND[Union[bool_, integer[Any], floating[Any], timedelta64]],
