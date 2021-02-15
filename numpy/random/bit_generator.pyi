@@ -12,6 +12,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypedDict,
     TypeVar,
     Union,
     overload,
@@ -33,6 +34,12 @@ _DTypeLike = Union[
     dtype[_UIntType],
     _SupportsDType[dtype[_UIntType]],
 ]
+
+class _SeedSeqState(TypedDict):
+    entropy: Union[None, int, Sequence[int]]
+    spawn_key: Tuple[int, ...]
+    pool_size: int
+    n_children_spawned: int
 
 class _Interface(NamedTuple):
     state_address: Any
@@ -87,11 +94,11 @@ class SeedSequence(ISpawnableSeedSequence):
     @property
     def state(
         self,
-    ) -> Dict[str, Union[None, Sequence[int], int, Tuple[int, ...]]]: ...
+    ) -> _SeedSeqState: ...
     def generate_state(self, n_words: int, dtype: DTypeLike = ...) -> ndarray[Any, Any]: ...
     def spawn(self, n_children: int) -> List[SeedSequence]: ...
 
-class BitGenerator:
+class BitGenerator(abc.ABC):
     lock: Lock
     def __init__(self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> None: ...
     def __getstate__(self) -> Dict[str, Any]: ...
@@ -99,6 +106,7 @@ class BitGenerator:
     def __reduce__(
         self,
     ) -> Tuple[Callable[[str], BitGenerator], Tuple[str], Tuple[Dict[str, Any]]]: ...
+    @abc.abstractmethod
     @property
     def state(self) -> Mapping[str, Any]: ...
     @state.setter
