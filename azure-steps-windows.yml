@@ -52,7 +52,7 @@ steps:
   displayName: 'Install 32-bit mingw for 32-bit builds'
   condition: eq(variables['BITS'], 32)
 - powershell: |
-    choco install -y llvm --force --version=10.0.0
+    choco install -y llvm --force --version=11.0.1
   displayName: 'Install LLVM for Clang-CL builds'
   condition: eq(variables['CLANG_CL'], 1)
 # NOTE: for Windows builds it seems much more tractable to use runtests.py

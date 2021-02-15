@@ -131,8 +131,10 @@
 #endif
 #endif
 
-#if defined(_MSC_VER)
-        #define NPY_INLINE inline
+#if defined(_MSC_VER) && !defined(__clang__)
+    #define NPY_INLINE __inline
+#elif defined(_MSC_VER) && defined(__clang__)
+    #define NPY_INLINE inline
 #elif defined(__GNUC__)
     #if defined(__STRICT_ANSI__)
          #define NPY_INLINE __inline__
