@@ -1,7 +1,22 @@
 import sys
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union, overload
 
-from numpy import double, dtype, float32, float64, int64, integer, ndarray, single
+from numpy import (
+    double,
+    dtype,
+    float32,
+    float64,
+    int8,
+    int16,
+    int32,
+    int64,
+    integer,
+    ndarray,
+    single,
+    uint8,
+    uint16,
+    uint32,
+)
 from numpy.random import BitGenerator, SeedSequence
 from numpy.typing import (
     ArrayLike,
@@ -141,7 +156,9 @@ class Generator:
         size: Optional[_ShapeLike] = ...,
         dtype: Union[_DTypeLikeBool, _DTypeLikeInt, _DTypeLikeUInt] = ...,
         endpoint: bool = ...,
-    ) -> ndarray[Any, dtype[integer]]: ...
+    ) -> ndarray[
+        Any, dtype[Union[bool, uint8, uint16, uint32, uint64, int8, int16, int32, int64]]
+    ]: ...
     # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> Union[_T, ndarray[Any,Any]]
     def choice(
         self,
