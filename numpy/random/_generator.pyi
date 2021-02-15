@@ -1,7 +1,8 @@
 import sys
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union, overload
+from typing import Any, Callable, Dict, Literal, Optional, Sequence, Tuple, Type, Union, overload
 
 from numpy import (
+    bool_,
     double,
     dtype,
     float32,
@@ -10,27 +11,40 @@ from numpy import (
     int16,
     int32,
     int64,
-    integer,
+    int_,
     ndarray,
     single,
+    uint,
     uint8,
     uint16,
     uint32,
+    uint64,
 )
 from numpy.random import BitGenerator, SeedSequence
 from numpy.typing import (
     ArrayLike,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
+    _BoolCodes,
     _DoubleCodes,
     _DTypeLikeBool,
     _DTypeLikeInt,
     _DTypeLikeUInt,
     _Float32Codes,
     _Float64Codes,
+    _Int8Codes,
+    _Int16Codes,
+    _Int32Codes,
+    _Int64Codes,
+    _IntCodes,
     _ShapeLike,
     _SingleCodes,
     _SupportsDType,
+    _UInt8Codes,
+    _UInt16Codes,
+    _UInt32Codes,
+    _UInt64Codes,
+    _UIntCodes,
 )
 
 if sys.version_info >= (3, 8):
@@ -149,16 +163,116 @@ class Generator:
         endpoint: bool = ...,
     ) -> int: ...
     @overload
-    def integers(
+    def integers(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-        dtype: Union[_DTypeLikeBool, _DTypeLikeInt, _DTypeLikeUInt] = ...,
+        dtype: Union[
+            dtype[int_], Type[int], Type[int_], _IntCodes, _SupportsDType[dtype[int_]]
+        ] = ...,
         endpoint: bool = ...,
-    ) -> ndarray[
-        Any, dtype[Union[bool, uint8, uint16, uint32, uint64, int8, int16, int32, int64]]
-    ]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[uint]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[
+            dtype[bool_], Type[bool], Type[bool_], _BoolCodes, _SupportsDType[dtype[bool_]]
+        ] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[bool_]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[dtype[int8], Type[int8], _Int8Codes, _SupportsDType[dtype[int8]]] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[int8]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[dtype[int16], Type[int16], _Int16Codes, _SupportsDType[dtype[int16]]] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[int16]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[dtype[int32], Type[int32], _Int32Codes, _SupportsDType[dtype[int32]]] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[Union[int32]]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Optional[
+            Union[dtype[int64], Type[int64], _Int64Codes, _SupportsDType[dtype[int64]]]
+        ] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[int64]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[dtype[uint8], Type[uint8], _UInt8Codes, _SupportsDType[dtype[uint8]]] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[uint8]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[
+            dtype[uint16], Type[uint16], _UInt16Codes, _SupportsDType[dtype[uint16]]
+        ] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[Union[uint16]]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[
+            dtype[uint32], Type[uint32], _UInt32Codes, _SupportsDType[dtype[uint32]]
+        ] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[uint32]]: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[
+            dtype[uint64], Type[uint64], _UInt64Codes, _SupportsDType[dtype[uint64]]
+        ] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[uint64]]: ...
     # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> Union[_T, ndarray[Any,Any]]
     def choice(
         self,
