@@ -18,6 +18,26 @@ stages:
 - stage: InitialTests
   jobs:
 
+  - job: Lint
+    condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))  # skip for PR merges
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+        addToPath: true
+        architecture: 'x64'
+    - script: >-
+        python -m pip install
+        pycodestyle==2.5.0
+        GitPython==3.1.13
+      displayName: 'Install tools'
+      failOnStderr: true
+    - script: |
+        python tools/linter.py --branch origin/$(System.PullRequest.SourceBranch)
+      displayName: 'Run Lint Checks'
+      failOnStderr: true
   # Native build is based on gcc flag `-march=native`
   - job: Linux_baseline_native
     pool:
