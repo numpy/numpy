@@ -658,6 +658,10 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
         }
         if (*len == -1)
             *len = (PyArray_ITEMSIZE(arr))*PyArray_SIZE(arr);
+        if ((PyArray_ITEMSIZE(arr))*PyArray_SIZE(arr) < *len) {
+            PyErr_SetString(PyExc_ValueError,\"string input has smaller byte-size than expected.\");
+            goto capi_fail;
+        }
         STRINGMALLOC(*str,*len);
         STRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
         return 1;

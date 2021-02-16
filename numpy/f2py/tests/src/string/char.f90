@@ -25,5 +25,14 @@ SUBROUTINE change_strings(strings, n_strs, out_strings)
 
 END SUBROUTINE change_strings
 
+SUBROUTINE string_size(string)
+    IMPLICIT NONE
+
+    CHARACTER(len=4), intent(inout) :: string
+
+    string(1:1) = 'A'
+
+END SUBROUTINE string_size
+
 END MODULE char_test
 
