@@ -1121,10 +1121,7 @@ class TestStringPromotion(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.concatenate((arr1, arr2), axis=0))
         self.assert_deprecated(lambda: np.concatenate((arr1, arr2), axis=None))
 
-        # coercing to an array is similar, but will fall-back to `object`
-        # (when raising the FutureWarning, this already happens)
-        self.assert_deprecated(lambda: np.array([arr1[0], arr2[0]]),
-                               exceptions=())
+        self.assert_deprecated(lambda: np.array([arr1[0], arr2[0]]))
 
     @pytest.mark.parametrize("dtype", "?bhilqpBHILQPefdgFDG")
     @pytest.mark.parametrize("string_dt", ["S", "U"])

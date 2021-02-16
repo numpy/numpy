@@ -11,9 +11,8 @@ are:
   a string result.
 * `numpy.array` and related functions will start returning ``object``
   arrays because these functions use ``object`` as a fallback when
-  no common dtype can be found. (In this case setting the
-  ``FutureWarning`` to be raised will unfortunately lead to the new
-  behaviour)
+  no common dtype can be found.  However, it may happen that future
+  releases of NumPy will generally error in these cases.
 
 This will mainly affect code such as::
 
@@ -24,6 +23,7 @@ and::
     np.concatenate((['string'], [0]))
 
 in both cases adding ``dtype="U"`` or ``dtype="S"`` will give the
-previous (string) result.
+previous (string) result, while ``dtype=object`` will ensure an array with
+object dtype is returned.
 
 Comparisons, universal functions, and casting are not affected by this.
