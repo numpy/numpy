@@ -10,9 +10,5 @@ np.mgrid[1]  # E: Invalid index type
 np.mgrid[...]  # E: Invalid index type
 np.ogrid[1]  # E: Invalid index type
 np.ogrid[...]  # E: Invalid index type
-np.index_exp[1]  # E: No overload variant
-np.index_exp[...]  # E: No overload variant
-np.s_[1]  # E: cannot be "int"
-np.s_[...]  # E: cannot be "ellipsis"
 np.fill_diagonal(AR_LIKE_f, 2)  # E: incompatible type
 np.diag_indices(1.0)  # E: incompatible type

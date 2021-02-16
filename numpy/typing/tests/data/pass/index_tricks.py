@@ -46,9 +46,11 @@ np.ogrid[1:1:2, None:10]
 
 np.index_exp[0:1]
 np.index_exp[0:1, None:3]
+np.index_exp[0, 0:1, ..., [0, 1, 3]]
 
 np.s_[0:1]
 np.s_[0:1, None:3]
+np.s_[0, 0:1, ..., [0, 1, 3]]
 
 np.ix_(AR_LIKE_b[0])
 np.ix_(AR_LIKE_i[0], AR_LIKE_f[0])

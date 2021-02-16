@@ -52,7 +52,7 @@ else:
 _T = TypeVar("_T")
 _DType = TypeVar("_DType", bound=dtype[Any])
 _BoolType = TypeVar("_BoolType", Literal[True], Literal[False])
-_SliceOrTuple = TypeVar("_SliceOrTuple", bound=Union[slice, Tuple[slice, ...]])
+_TupType = TypeVar("_TupType", bound=Tuple[Any, ...])
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 
 __all__: List[str]
@@ -163,11 +163,11 @@ class IndexExpression(Generic[_BoolType]):
     maketuple: _BoolType
     def __init__(self, maketuple: _BoolType) -> None: ...
     @overload
-    def __getitem__(  # type: ignore[misc]
-        self: IndexExpression[Literal[True]], item: slice
-    ) -> Tuple[slice]: ...
+    def __getitem__(self, item: _TupType) -> _TupType: ...  # type: ignore[misc]
     @overload
-    def __getitem__(self, item: _SliceOrTuple) -> _SliceOrTuple: ...
+    def __getitem__(self: IndexExpression[Literal[True]], item: _T) -> Tuple[_T]: ...
+    @overload
+    def __getitem__(self: IndexExpression[Literal[False]], item: _T) -> _T: ...
 
 index_exp: IndexExpression[Literal[True]]
 s_: IndexExpression[Literal[False]]

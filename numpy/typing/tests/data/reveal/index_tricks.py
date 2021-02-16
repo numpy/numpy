@@ -45,9 +45,11 @@ reveal_type(np.ogrid[1:1:2, None:10])  # E: list[numpy.ndarray[Any, numpy.dtype[
 
 reveal_type(np.index_exp[0:1])  # E: Tuple[builtins.slice]
 reveal_type(np.index_exp[0:1, None:3])  # E: Tuple[builtins.slice, builtins.slice]
+reveal_type(np.index_exp[0, 0:1, ..., [0, 1, 3]])  # E: Tuple[Literal[0]?, builtins.slice, builtins.ellipsis, builtins.list[builtins.int]]
 
 reveal_type(np.s_[0:1])  # E: builtins.slice
 reveal_type(np.s_[0:1, None:3])  # E: Tuple[builtins.slice, builtins.slice]
+reveal_type(np.s_[0, 0:1, ..., [0, 1, 3]])  # E: Tuple[Literal[0]?, builtins.slice, builtins.ellipsis, builtins.list[builtins.int]]
 
 reveal_type(np.ix_(AR_LIKE_b))  # E: tuple[numpy.ndarray[Any, numpy.dtype[numpy.bool_]]]
 reveal_type(np.ix_(AR_LIKE_i, AR_LIKE_f))  # E: tuple[numpy.ndarray[Any, numpy.dtype[{double}]]]
