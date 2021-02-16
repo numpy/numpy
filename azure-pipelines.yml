@@ -35,7 +35,7 @@ stages:
       displayName: 'Install tools'
       failOnStderr: true
     - script: |
-        python tools/linter.py --branch origin/$(System.PullRequest.SourceBranch)
+        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
       displayName: 'Run Lint Checks'
       failOnStderr: true
   # Native build is based on gcc flag `-march=native`

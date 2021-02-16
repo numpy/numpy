@@ -4,7 +4,6 @@ import subprocess
 from argparse import ArgumentParser
 from git import Repo, exc
 
-BASE_BRANCH = 'master'
 CONFIG = os.path.join(
          os.path.abspath(os.path.dirname(__file__)),
          'lint_diff.ini',
@@ -15,6 +14,7 @@ class DiffLinter:
     def __init__(self, branch):
         self.branch = branch
         self.repo = Repo('.')
+        self.head = self.repo.head.commit
 
     def get_branch_diff(self, uncommitted = False):
         """
@@ -24,15 +24,15 @@ class DiffLinter:
                   uncommitted changes
         """
         try:
-            commit = self.repo.merge_base(BASE_BRANCH, self.branch)[0]
+            commit = self.repo.merge_base(self.branch, self.head)[0]
         except exc.GitCommandError:
             print(f"Branch with name `{self.branch}` does not exist")
             sys.exit(1)
 
         if uncommitted:
-            diff = self.repo.git.diff(self.branch, '***.py')
+            diff = self.repo.git.diff(self.head, '***.py')
         else:
-            diff = self.repo.git.diff(commit, self.branch, '***.py')
+            diff = self.repo.git.diff(commit, self.head, '***.py')
         return diff
 
     def run_pycodestyle(self, diff):
