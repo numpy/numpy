@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 from argparse import ArgumentParser
-from git import Repo
+from git import Repo, exc
 
 BASE_BRANCH = 'master'
 CONFIG = os.path.join(
@@ -16,8 +16,18 @@ class DiffLinter:
         self.branch = branch
         self.repo = Repo('.')
 
-    def get_branch_diff(self, uncommitted):
-        commit = self.repo.merge_base(BASE_BRANCH, self.branch)[0]
+    def get_branch_diff(self, uncommitted = False):
+        """
+            Determine the first common ancestor commit.
+            Find diff between branch and FCA commit.
+            Note: if `uncommitted` is set, check only
+                  uncommitted changes
+        """
+        try:
+            commit = self.repo.merge_base(BASE_BRANCH, self.branch)[0]
+        except exc.GitCommandError:
+            print(f"Branch with name `{self.branch}` does not exist")
+            sys.exit(1)
 
         if uncommitted:
             diff = self.repo.git.diff(self.branch, '***.py')
