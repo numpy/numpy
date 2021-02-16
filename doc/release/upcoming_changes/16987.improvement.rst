@@ -1,6 +1,6 @@
-Arbitrary `period` option for ``numpy.unwrap``
------------------------------------------------------
-The size of the interval over which phases are unwrapped is no longer restricted to `2 * pi`.
+Arbitrary ``period`` option for `numpy.unwrap`
+----------------------------------------------
+The size of the interval over which phases are unwrapped is no longer restricted to ``2 * pi``.
 This is especially useful for unwrapping degrees, but can also be used for other intervals.
 
 .. code:: python
