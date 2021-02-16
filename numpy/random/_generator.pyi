@@ -159,9 +159,29 @@ class Generator:
         low: int,
         high: Optional[int] = ...,
         size: None = ...,
-        dtype: Union[_DTypeLikeBool, _DTypeLikeInt, _DTypeLikeUInt] = ...,
+        dtype: _DTypeLikeBool = ...,
+        endpoint: bool = ...,
+    ) -> bool: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: Optional[int] = ...,
+        size: None = ...,
+        dtype: Union[_DTypeLikeInt, _DTypeLikeUInt] = ...,
         endpoint: bool = ...,
     ) -> int: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[
+            dtype[bool_], Type[bool], Type[bool_], _BoolCodes, _SupportsDType[dtype[bool_]]
+        ] = ...,
+        endpoint: bool = ...,
+    ) -> ndarray[Any, dtype[bool_]]: ...
     @overload
     def integers(  # type: ignore[misc]
         self,
@@ -182,17 +202,6 @@ class Generator:
         dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint]]: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: _ArrayLikeInt_co,
-        high: Optional[_ArrayLikeInt_co] = ...,
-        size: Optional[_ShapeLike] = ...,
-        dtype: Union[
-            dtype[bool_], Type[bool], Type[bool_], _BoolCodes, _SupportsDType[dtype[bool_]]
-        ] = ...,
-        endpoint: bool = ...,
-    ) -> ndarray[Any, dtype[bool_]]: ...
     @overload
     def integers(  # type: ignore[misc]
         self,
