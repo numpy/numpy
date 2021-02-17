@@ -606,6 +606,8 @@ def transpose(a, axes=None):
 
     For an array a with two axes, transpose(a) gives the matrix transpose.
 
+    Refer to `numpy.ndarray.transpose` for full documentation.
+
     Parameters
     ----------
     a : array_like
@@ -625,6 +627,7 @@ def transpose(a, axes=None):
 
     See Also
     --------
+    ndarray.transpose : Equivalent method
     moveaxis
     argsort
 
