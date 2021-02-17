@@ -195,6 +195,11 @@ class _Config:
             opt = "-O3",
             werror = '-Werror'
         ),
+        clang_cl=dict(
+            native='-march=native',
+            opt="/O2",
+            werror='-Werror'
+        ),
         icc = dict(
             native = '-xHost',
             opt = '-O3',
@@ -307,7 +312,7 @@ class _Config:
             return {}
 
         on_x86 = self.cc_on_x86 or self.cc_on_x64
-        is_unix = self.cc_is_gcc or self.cc_is_clang
+        is_unix = self.cc_is_gcc or self.cc_is_clang or self.cc_is_clang_cl
 
         if on_x86 and is_unix: return dict(
             SSE    = dict(flags="-msse"),
@@ -864,6 +869,8 @@ class _CCompiler(object):
         if the compiler is unknown
     cc_is_clang : bool
         True if the compiler is Clang
+    cc_is_clang_cl : bool
+        True if the compiler is clang-cl
     cc_is_icc : bool
         True if the compiler is Intel compiler (unix like)
     cc_is_iccw : bool
@@ -902,6 +909,7 @@ class _CCompiler(object):
         )
         detect_compiler = (
             ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
+            ("cc_is_clang_cl", ".*clang-cl.*"),
             ("cc_is_clang",    ".*clang.*"),
             ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
             ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
@@ -967,7 +975,7 @@ class _CCompiler(object):
                 break
 
         self.cc_name = "unknown"
-        for name in ("gcc", "clang", "iccw", "icc", "msvc"):
+        for name in ("gcc", "clang", "clang_cl", "iccw", "icc", "msvc"):
             if getattr(self, "cc_is_" + name):
                 self.cc_name = name
                 break
@@ -1027,7 +1035,7 @@ class _CCompiler(object):
         ['-march=core-avx2']
         """
         assert(isinstance(flags, list))
-        if self.cc_is_gcc or self.cc_is_clang or self.cc_is_icc:
+        if self.cc_is_gcc or self.cc_is_clang or self.cc_is_clang_cl or self.cc_is_icc:
             return self._cc_normalize_unix(flags)
 
         if self.cc_is_msvc or self.cc_is_iccw:
@@ -2354,7 +2362,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         ))
 
         ########## dispatch ##########
-        if self.cc_noopt:
+        # TODO: Fix this
+        if self.cc_noopt or not hasattr(self, "_requested_dispatch"):
             baseline_rows.append(("Requested", "optimization disabled"))
         else:
             dispatch_rows.append(("Requested", repr(self._requested_dispatch)))
