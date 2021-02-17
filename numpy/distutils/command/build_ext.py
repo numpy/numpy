@@ -565,7 +565,12 @@ class build_ext (old_build_ext):
 
         linker = self.compiler.link_shared_object
         # Always use system linker when using MSVC compiler.
-        if self.compiler.compiler_type in ('msvc', 'intelw', 'intelemw', 'clang-cl'):
+        if self.compiler.compiler_type in (
+                "msvc",
+                "intelw",
+                "intelemw",
+                "clang-cl",
+        ):
             # expand libraries with fcompiler libraries as we are
             # not using fcompiler linker
             self._libs_with_msvc_and_fortran(
