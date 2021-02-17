@@ -4471,9 +4471,9 @@ cdef class Generator:
                     if i == j:
                         # i == j is not needed and memcpy is undefined.
                         continue
-                    buf[...] = x[j]
-                    x[j] = x[i]
-                    x[i] = buf
+                    buf[...] = x[j, ...]
+                    x[j, ...] = x[i, ...]
+                    x[i, ...] = buf
         else:
             # Untyped path.
             if not isinstance(x, Sequence):
