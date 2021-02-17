@@ -1921,11 +1921,15 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         common_dtype_function *common_dtype;
         common_instance_function *common_instance;
         /*
+         * The casting implementation (ArrayMethod) to convert between two
+         * instances of this DType, stored explicitly for fast access:
+         */
+        PyObject *within_dtype_castingimpl;
+        /*
          * Dictionary of ArrayMethods representing most possible casts
          * (structured and object are exceptions).
          * This should potentially become a weak mapping in the future.
          */
-        PyObject *within_dtype_castingimpl;
         PyObject *castingimpls;
     };
 

@@ -174,17 +174,10 @@ PyArray_GetDTypeCopySwapFn(int aligned,
  *      If 0, the destination data gets new reference ownership.
  *      If 1, the references from the source data are moved to
  *      the destination data.
- * out_stransfer:
- *      The resulting transfer function is placed here.
- * out_transferdata:
- *      The auxiliary data for the transfer function is placed here.
- *      When finished with the transfer function, the caller must call
- *      NPY_AUXDATA_FREE on this data.
- * context:
- *      A pointer to a PyArrayMethod_Context which is filled in the call.
- *      Note that `context->method` may be set to `NULL` e.g. for multi-step
- *      casts. The filled result is always valid as input to the returned
- *      `out_stransfer` function.
+ * cast_info:
+ *      A pointer to an (uninitialized) `NPY_cast_info` struct, the caller
+ *      must call `NPY_cast_info_xfree` on it (except on error) and handle
+ *      its memory livespan.
  * out_needs_api:
  *      If this is non-NULL, and the transfer function produced needs
  *      to call into the (Python) API, this gets set to 1.  This
