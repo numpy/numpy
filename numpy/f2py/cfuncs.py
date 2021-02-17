@@ -1023,6 +1023,7 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         }
         (*v).r = ((npy_cdouble *)PyArray_DATA(arr))->real;
         (*v).i = ((npy_cdouble *)PyArray_DATA(arr))->imag;
+        Py_DECREF(arr);
         return 1;
     }
     /* Python does not provide PyNumber_Complex function :-( */
