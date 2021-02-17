@@ -10,7 +10,7 @@
  * casts (e.g. structured dtypes).
  *
  * This struct provides a place to store all necessary information as
- * compact as possible.  It must be used with the inlie functions below
+ * compact as possible.  It must be used with the inline functions below
  * to ensure correct setup and teardown.
  *
  * In general, the casting machinery currently handles the correct set up

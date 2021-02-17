@@ -2859,7 +2859,7 @@ _multistep_cast_auxdata_clone_int(_multistep_castdata *castdata, int move_info)
     newdata->from_buffer = char_data + from_buffer_offset;
     newdata->to_buffer = char_data + to_buffer_offset;
 
-    /* Initialize func's to NULL to signal no-cleanup in case of an error. */
+    /* Initialize funcs to NULL to signal no-cleanup in case of an error. */
     newdata->from.func = NULL;
     newdata->to.func = NULL;
 
