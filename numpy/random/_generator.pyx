@@ -579,13 +579,13 @@ cdef class Generator:
 
         Returns
         -------
-        out : str
+        out : bytes
             String of length `length`.
 
         Examples
         --------
         >>> np.random.default_rng().bytes(10)
-        ' eh\\x85\\x022SZ\\xbf\\xa4' #random
+        b'\xfeC\x9b\x86\x17\xf2\xa1\xafcp' # random
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
@@ -996,7 +996,7 @@ cdef class Generator:
         --------
         >>> rng = np.random.default_rng()
         >>> rng.standard_normal()
-        2.1923875335537315 #random
+        2.1923875335537315 # random
 
         >>> s = rng.standard_normal(8000)
         >>> s
@@ -1755,7 +1755,7 @@ cdef class Generator:
         statistic appear?
 
         >>> np.sum(s<t) / float(len(s))
-        0.0090699999999999999  #random
+        0.0090699999999999999  # random
 
         So the p-value is about 0.009, which says the null hypothesis has a
         probability of about 99% of being true.
@@ -3196,7 +3196,7 @@ cdef class Generator:
         How many trials succeeded after a single run?
 
         >>> (z == 1).sum() / 10000.
-        0.34889999999999999 #random
+        0.34889999999999999 # random
 
         """
         return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
