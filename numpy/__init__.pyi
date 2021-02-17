@@ -1,4 +1,5 @@
 import builtins
+import os
 import sys
 import datetime as dt
 from abc import abstractmethod
@@ -280,6 +281,11 @@ from numpy.core.arrayprint import (
     printoptions as printoptions,
 )
 
+from numpy.core.einsumfunc import (
+    einsum as einsum,
+    einsum_path as einsum_path,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
@@ -330,6 +336,12 @@ from numpy.core.shape_base import (
     hstack as hstack,
     stack as stack,
     vstack as vstack,
+)
+
+from numpy.lib.ufunclike import (
+    fix as fix,
+    isposinf as isposinf,
+    isneginf as isneginf,
 )
 
 __all__: List[str]
@@ -394,14 +406,11 @@ dot: Any
 dsplit: Any
 dstack: Any
 ediff1d: Any
-einsum: Any
-einsum_path: Any
 expand_dims: Any
 extract: Any
 eye: Any
 fill_diagonal: Any
 finfo: Any
-fix: Any
 flip: Any
 fliplr: Any
 flipud: Any
@@ -437,8 +446,6 @@ is_busday: Any
 iscomplex: Any
 iscomplexobj: Any
 isin: Any
-isneginf: Any
-isposinf: Any
 isreal: Any
 isrealobj: Any
 iterable: Any
@@ -904,7 +911,7 @@ class _ArrayOrScalarCommon:
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
     def tofile(
-        self, fid: Union[IO[bytes], str], sep: str = ..., format: str = ...
+        self, fid: Union[IO[bytes], str, bytes, os.PathLike[Any]], sep: str = ..., format: str = ...
     ) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...

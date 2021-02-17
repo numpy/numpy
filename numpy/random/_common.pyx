@@ -25,11 +25,11 @@ cdef uint64_t MAXSIZE = <uint64_t>sys.maxsize
 cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method):
     """Benchmark command used by BitGenerator"""
     cdef Py_ssize_t i
-    if method==u'uint64':
+    if method=='uint64':
         with lock, nogil:
             for i in range(cnt):
                 bitgen.next_uint64(bitgen.state)
-    elif method==u'double':
+    elif method=='double':
         with lock, nogil:
             for i in range(cnt):
                 bitgen.next_double(bitgen.state)

@@ -317,6 +317,7 @@ from ._dtype_like import (
     _DTypeLikeVoid,
     _DTypeLikeStr,
     _DTypeLikeBytes,
+    _DTypeLikeComplex_co,
 )
 from ._array_like import (
     ArrayLike as ArrayLike,

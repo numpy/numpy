@@ -2526,3 +2526,11 @@ def test_broadcast_size_scalar():
     random.normal(mu, sigma, size=3)
     with pytest.raises(ValueError):
         random.normal(mu, sigma, size=2)
+
+
+def test_ragged_shuffle():
+    # GH 18142
+    seq = [[], [], 1]
+    gen = Generator(MT19937(0))
+    assert_no_warnings(gen.shuffle, seq)
+    assert seq == [1, [], []]

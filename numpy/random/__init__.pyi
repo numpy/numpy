@@ -1,5 +1,14 @@
 from typing import Any, List
 
+from numpy.random._generator import Generator as Generator
+from numpy.random._generator import default_rng as default_rng
+from numpy.random._mt19937 import MT19937 as MT19937
+from numpy.random._pcg64 import PCG64 as PCG64
+from numpy.random._philox import Philox as Philox
+from numpy.random._sfc64 import SFC64 as SFC64
+from numpy.random.bit_generator import BitGenerator as BitGenerator
+from numpy.random.bit_generator import SeedSequence as SeedSequence
+
 __all__: List[str]
 
 beta: Any
@@ -52,12 +61,4 @@ vonmises: Any
 wald: Any
 weibull: Any
 zipf: Any
-Generator: Any
 RandomState: Any
-SeedSequence: Any
-MT19937: Any
-Philox: Any
-PCG64: Any
-SFC64: Any
-default_rng: Any
-BitGenerator: Any
