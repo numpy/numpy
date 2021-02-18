@@ -775,7 +775,7 @@ def array_split(ary, indices_or_sections, axis=0):
         # indices_or_sections is a scalar, not an array.
         Nsections = int(indices_or_sections)
         if Nsections <= 0:
-            raise ValueError('number sections must be larger than 0.')
+            raise ValueError('number sections must be larger than 0.') from None
         Neach_section, extras = divmod(Ntotal, Nsections)
         section_sizes = ([0] +
                          extras * [Neach_section+1] +

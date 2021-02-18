@@ -8,7 +8,7 @@ from typing import Optional, IO, Dict, List
 
 import pytest
 import numpy as np
-from numpy.typing.mypy_plugin import _PRECISION_DICT
+from numpy.typing.mypy_plugin import _PRECISION_DICT, _EXTENDED_PRECISION_LIST
 
 try:
     from mypy import api
@@ -22,6 +22,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 PASS_DIR = os.path.join(DATA_DIR, "pass")
 FAIL_DIR = os.path.join(DATA_DIR, "fail")
 REVEAL_DIR = os.path.join(DATA_DIR, "reveal")
+MISC_DIR = os.path.join(DATA_DIR, "misc")
 MYPY_INI = os.path.join(DATA_DIR, "mypy.ini")
 CACHE_DIR = os.path.join(DATA_DIR, ".mypy_cache")
 
@@ -51,7 +52,7 @@ def run_mypy() -> None:
     if os.path.isdir(CACHE_DIR):
         shutil.rmtree(CACHE_DIR)
 
-    for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR):
+    for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR, MISC_DIR):
         # Run mypy
         stdout, stderr, _ = api.run([
             "--config-file",
@@ -89,7 +90,8 @@ def get_test_cases(directory):
 def test_success(path):
     # Alias `OUTPUT_MYPY` so that it appears in the local namespace
     output_mypy = OUTPUT_MYPY
-    assert path not in output_mypy
+    if path in output_mypy:
+        raise AssertionError("\n".join(v for v in output_mypy[path]))
 
 
 @pytest.mark.slow
@@ -157,15 +159,27 @@ def _construct_format_dict():
         "uint16": "numpy.unsignedinteger[numpy.typing._16Bit]",
         "uint32": "numpy.unsignedinteger[numpy.typing._32Bit]",
         "uint64": "numpy.unsignedinteger[numpy.typing._64Bit]",
+        "uint128": "numpy.unsignedinteger[numpy.typing._128Bit]",
+        "uint256": "numpy.unsignedinteger[numpy.typing._256Bit]",
         "int8": "numpy.signedinteger[numpy.typing._8Bit]",
         "int16": "numpy.signedinteger[numpy.typing._16Bit]",
         "int32": "numpy.signedinteger[numpy.typing._32Bit]",
         "int64": "numpy.signedinteger[numpy.typing._64Bit]",
+        "int128": "numpy.signedinteger[numpy.typing._128Bit]",
+        "int256": "numpy.signedinteger[numpy.typing._256Bit]",
         "float16": "numpy.floating[numpy.typing._16Bit]",
         "float32": "numpy.floating[numpy.typing._32Bit]",
         "float64": "numpy.floating[numpy.typing._64Bit]",
+        "float80": "numpy.floating[numpy.typing._80Bit]",
+        "float96": "numpy.floating[numpy.typing._96Bit]",
+        "float128": "numpy.floating[numpy.typing._128Bit]",
+        "float256": "numpy.floating[numpy.typing._256Bit]",
         "complex64": "numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]",
         "complex128": "numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]",
+        "complex160": "numpy.complexfloating[numpy.typing._80Bit, numpy.typing._80Bit]",
+        "complex192": "numpy.complexfloating[numpy.typing._96Bit, numpy.typing._96Bit]",
+        "complex256": "numpy.complexfloating[numpy.typing._128Bit, numpy.typing._128Bit]",
+        "complex512": "numpy.complexfloating[numpy.typing._256Bit, numpy.typing._256Bit]",
 
         "ubyte": f"numpy.unsignedinteger[{dct['_NBitByte']}]",
         "ushort": f"numpy.unsignedinteger[{dct['_NBitShort']}]",
@@ -267,3 +281,44 @@ def test_code_runs(path):
     spec = importlib.util.spec_from_file_location(f"{dirname}.{filename}", path)
     test_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(test_module)
+
+
+LINENO_MAPPING = {
+    3: "uint128",
+    4: "uint256",
+    6: "int128",
+    7: "int256",
+    9: "float80",
+    10: "float96",
+    11: "float128",
+    12: "float256",
+    14: "complex160",
+    15: "complex192",
+    16: "complex256",
+    17: "complex512",
+}
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
+def test_extended_precision() -> None:
+    path = os.path.join(MISC_DIR, "extended_precision.py")
+    output_mypy = OUTPUT_MYPY
+    assert path in output_mypy
+
+    for _msg in output_mypy[path]:
+        *_, _lineno, msg_typ, msg = _msg.split(":")
+        lineno = int(_lineno)
+        msg_typ = msg_typ.strip()
+        assert msg_typ in {"error", "note"}
+
+        if LINENO_MAPPING[lineno] in _EXTENDED_PRECISION_LIST:
+            if msg_typ == "error":
+                raise ValueError(f"Unexpected reveal line format: {lineno}")
+            else:
+                marker = FORMAT_DICT[LINENO_MAPPING[lineno]]
+                _test_reveal(path, marker, msg, lineno)
+        else:
+            if msg_typ == "error":
+                marker = "Module has no attribute"
+                _test_fail(path, marker, msg, lineno)

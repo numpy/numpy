@@ -1557,6 +1557,8 @@ NpyIter_DebugPrint(NpyIter *iter)
 
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+        NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
+
         printf("| BufferData:\n");
         printf("|   BufferSize: %d\n", (int)NBF_BUFFERSIZE(bufferdata));
         printf("|   Size: %d\n", (int)NBF_SIZE(bufferdata));
@@ -1598,19 +1600,19 @@ NpyIter_DebugPrint(NpyIter *iter)
         }
         printf("|   ReadTransferFn: ");
         for (iop = 0; iop < nop; ++iop)
-            printf("%p ", (void *)NBF_READTRANSFERFN(bufferdata)[iop]);
+            printf("%p ", (void *)transferinfo[iop].read.func);
         printf("\n");
         printf("|   ReadTransferData: ");
         for (iop = 0; iop < nop; ++iop)
-            printf("%p ", (void *)NBF_READTRANSFERDATA(bufferdata)[iop]);
+            printf("%p ", (void *)transferinfo[iop].read.auxdata);
         printf("\n");
         printf("|   WriteTransferFn: ");
         for (iop = 0; iop < nop; ++iop)
-            printf("%p ", (void *)NBF_WRITETRANSFERFN(bufferdata)[iop]);
+            printf("%p ", (void *)transferinfo[iop].write.func);
         printf("\n");
         printf("|   WriteTransferData: ");
         for (iop = 0; iop < nop; ++iop)
-            printf("%p ", (void *)NBF_WRITETRANSFERDATA(bufferdata)[iop]);
+            printf("%p ", (void *)transferinfo[iop].write.auxdata);
         printf("\n");
         printf("|   Buffers: ");
         for (iop = 0; iop < nop; ++iop)
@@ -1889,9 +1891,6 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_intp reduce_outerdim = 0;
     npy_intp *reduce_outerstrides = NULL;
 
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, nop) /
                                 NPY_SIZEOF_INTP;
 
@@ -1909,9 +1908,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
         transfersize *= NBF_REDUCE_OUTERSIZE(bufferdata);
     }
 
+    NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
     for (iop = 0; iop < nop; ++iop) {
-        stransfer = NBF_WRITETRANSFERFN(bufferdata)[iop];
-        transferdata = NBF_WRITETRANSFERDATA(bufferdata)[iop];
         buffer = buffers[iop];
         /*
          * Copy the data back to the arrays.  If the type has refs,
@@ -1920,7 +1918,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * The flag USINGBUFFER is set when the buffer was used, so
          * only copy back when this flag is on.
          */
-        if ((stransfer != NULL) &&
+        if ((transferinfo[iop].write.func != NULL) &&
                (op_itflags[iop]&(NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER))
                         == (NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER)) {
             npy_intp op_transfersize;
@@ -2011,8 +2009,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
                         dst_coords, axisdata_incr,
                         dst_shape, axisdata_incr,
                         op_transfersize, dtypes[iop]->elsize,
-                        (PyArray_MaskedStridedUnaryOp *)stransfer,
-                        transferdata) < 0) {
+                        (PyArray_MaskedStridedUnaryOp *)transferinfo[iop].write.func,
+                        transferinfo[iop].write.auxdata) < 0) {
                     return -1;
                 }
             }
@@ -2024,8 +2022,8 @@ npyiter_copy_from_buffers(NpyIter *iter)
                         dst_coords, axisdata_incr,
                         dst_shape, axisdata_incr,
                         op_transfersize, dtypes[iop]->elsize,
-                        stransfer,
-                        transferdata) < 0) {
+                        transferinfo[iop].write.func,
+                        transferinfo[iop].write.auxdata) < 0) {
                     return -1;
                 }
             }
@@ -2037,14 +2035,15 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * The flag USINGBUFFER is set when the buffer was used, so
          * only decrement refs when this flag is on.
          */
-        else if (stransfer != NULL &&
+        else if (transferinfo[iop].write.func != NULL &&
                        (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER) != 0) {
             NPY_IT_DBG_PRINT1("Iterator: Freeing refs and zeroing buffer "
                                 "of operand %d\n", (int)iop);
             /* Decrement refs */
-            if (stransfer(NULL, 0, buffer, dtypes[iop]->elsize,
-                          transfersize, dtypes[iop]->elsize,
-                          transferdata) < 0) {
+            if (transferinfo[iop].write.func(
+                    NULL, 0, buffer, dtypes[iop]->elsize,
+                    transfersize, dtypes[iop]->elsize,
+                    transferinfo[iop].write.auxdata) < 0) {
                 /* Since this should only decrement, it should never error */
                 assert(0);
                 return -1;
@@ -2093,9 +2092,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
 
     npy_intp *reduce_outerstrides = NULL;
     char **reduce_outerptrs = NULL;
-
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
 
     /*
      * Have to get this flag before npyiter_checkreducesize sets
@@ -2207,13 +2203,9 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         is_onestride = 1;
     }
 
+    NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
     for (iop = 0; iop < nop; ++iop) {
-        /*
-         * If the buffer is write-only, these two are NULL, and the buffer
-         * pointers will be set up but the read copy won't be done
-         */
-        stransfer = NBF_READTRANSFERFN(bufferdata)[iop];
-        transferdata = NBF_READTRANSFERDATA(bufferdata)[iop];
+
         switch (op_itflags[iop]&
                         (NPY_OP_ITFLAG_BUFNEVER|
                          NPY_OP_ITFLAG_CAST|
@@ -2231,8 +2223,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                  * could be zero, but strides[iop] was initialized
                  * to the first non-trivial stride.
                  */
-                stransfer = NULL;
                 /* The flag NPY_OP_ITFLAG_USINGBUFFER can be ignored here */
+                assert(!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER));
                 break;
             /* Never need to buffer this operand */
             case NPY_OP_ITFLAG_BUFNEVER|NPY_OP_ITFLAG_REDUCE:
@@ -2244,8 +2236,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                  * could be zero, but strides[iop] was initialized
                  * to the first non-trivial stride.
                  */
-                stransfer = NULL;
                 /* The flag NPY_OP_ITFLAG_USINGBUFFER can be ignored here */
+                assert(!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER));
                 break;
             /* Just a copy */
             case 0:
@@ -2263,7 +2255,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 if (is_onestride) {
                     ptrs[iop] = ad_ptrs[iop];
                     strides[iop] = ad_strides[iop];
-                    stransfer = NULL;
                     /* Signal that the buffer is not being used */
                     op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                 }
@@ -2278,7 +2269,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                     strides[iop] = ad_strides[iop];
                     reduce_outerstrides[iop] =
                                     NAD_STRIDES(reduce_outeraxisdata)[iop];
-                    stransfer = NULL;
                     /* Signal that the buffer is not being used */
                     op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                 }
@@ -2309,7 +2299,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         NPY_IT_DBG_PRINT1("reduce op %d all one stride\n", (int)iop);
                         ptrs[iop] = ad_ptrs[iop];
                         reduce_outerstrides[iop] = 0;
-                        stransfer = NULL;
                         /* Signal that the buffer is not being used */
                         op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                     }
@@ -2324,7 +2313,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         /* Outer reduce loop advances by one item */
                         reduce_outerstrides[iop] =
                                 NAD_STRIDES(reduce_outeraxisdata)[iop];
-                        stransfer = NULL;
                         /* Signal that the buffer is not being used */
                         op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                     }
@@ -2350,7 +2338,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                     ptrs[iop] = ad_ptrs[iop];
                     strides[iop] = ad_strides[iop];
                     reduce_outerstrides[iop] = 0;
-                    stransfer = NULL;
                     /* Signal that the buffer is not being used */
                     op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                 }
@@ -2365,7 +2352,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         /* Outer reduce loop advances by one item */
                         reduce_outerstrides[iop] =
                                 NAD_STRIDES(reduce_outeraxisdata)[iop];
-                        stransfer = NULL;
                         /* Signal that the buffer is not being used */
                         op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                     }
@@ -2443,7 +2429,12 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 break;
         }
 
-        if (stransfer != NULL) {
+        /*
+         * If OP_ITFLAG_USINGBUFFER is enabled and the read func is not NULL,
+         * the buffer needs to be read.
+         */
+        if (op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER &&
+                transferinfo[iop].read.func != NULL) {
             npy_intp src_itemsize;
             npy_intp op_transfersize;
 
@@ -2454,7 +2445,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
 
             src_itemsize = PyArray_DTYPE(operands[iop])->elsize;
 
-            /* If stransfer wasn't set to NULL, buffering is required */
+            /* If we reach here, buffering is required */
             any_buffered = 1;
 
             /*
@@ -2554,12 +2545,13 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                                 (int)iop, (int)op_transfersize);
 
                 if (PyArray_TransferNDimToStrided(
-                                ndim_transfer, ptrs[iop], dst_stride,
-                                ad_ptrs[iop], src_strides, axisdata_incr,
-                                src_coords, axisdata_incr,
-                                src_shape, axisdata_incr,
-                                op_transfersize, src_itemsize,
-                                stransfer, transferdata) < 0) {
+                        ndim_transfer, ptrs[iop], dst_stride,
+                        ad_ptrs[iop], src_strides, axisdata_incr,
+                        src_coords, axisdata_incr,
+                        src_shape, axisdata_incr,
+                        op_transfersize, src_itemsize,
+                        transferinfo[iop].read.func,
+                        transferinfo[iop].read.auxdata) < 0) {
                     return -1;
                 }
             }

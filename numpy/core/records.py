@@ -45,7 +45,10 @@ from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
-__all__ = ['record', 'recarray', 'format_parser']
+__all__ = [
+    'record', 'recarray', 'format_parser',
+    'fromarrays', 'fromrecords', 'fromstring', 'fromfile', 'array',
+]
 
 
 ndarray = sb.ndarray

@@ -341,7 +341,9 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     if ffile == []:
         return
     localdolowercase = dolowercase
-    cont = 0
+    # cont: set to True when the content of the last line read
+    # indicates statement continuation
+    cont = False
     finalline = ''
     ll = ''
     includeline = re.compile(
@@ -392,14 +394,26 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             if rl[:5].lower() == '!f2py':  # f2py directive
                 l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
         if l.strip() == '':  # Skip empty line
-            cont = 0
+            if sourcecodeform == 'free':
+                # In free form, a statement continues in the next line
+                # that is not a comment line [3.3.2.4^1], lines with
+                # blanks are comment lines [3.3.2.3^1]. Hence, the
+                # line continuation flag must retain its state.
+                pass
+            else:
+                # In fixed form, statement continuation is determined
+                # by a non-blank character at the 6-th position. Empty
+                # line indicates a start of a new statement
+                # [3.3.3.3^1]. Hence, the line continuation flag must
+                # be reset.
+                cont = False
             continue
         if sourcecodeform == 'fix':
             if l[0] in ['*', 'c', '!', 'C', '#']:
                 if l[1:5].lower() == 'f2py':  # f2py directive
                     l = '     ' + l[5:]
                 else:  # Skip comment line
-                    cont = 0
+                    cont = False
                     continue
             elif strictf77:
                 if len(l) > 72:
@@ -560,8 +574,7 @@ groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
-# endifs='end\s*(if|do|where|select|while|forall)'
-endifs = r'(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
+endifs = r'(end\s*(if|do|where|select|while|forall|associate|block|critical|enum|team))|(module\s*procedure)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
 #

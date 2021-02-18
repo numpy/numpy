@@ -228,3 +228,11 @@ _DTypeLikeObject = Union[
     "_SupportsDType[np.dtype[np.object_]]",
     _ObjectCodes,
 ]
+
+_DTypeLikeComplex_co = Union[
+    _DTypeLikeBool,
+    _DTypeLikeUInt,
+    _DTypeLikeInt,
+    _DTypeLikeFloat,
+    _DTypeLikeComplex,
+]

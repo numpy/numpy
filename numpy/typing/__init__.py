@@ -22,14 +22,19 @@ the two below:
 Mypy plugin
 -----------
 
-A mypy_ plugin is available for automatically assigning the (platform-dependent)
-precisions of certain `~numpy.number` subclasses, including the likes of
-`~numpy.int_`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
-:ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
-of the affected classes.
+A mypy_ plugin is distributed in `numpy.typing` for managing a number of
+platform-specific annotations. Its function can be split into to parts:
 
-Note that while usage of the plugin is completely optional, without it the
-precision of above-mentioned classes will be inferred as `~typing.Any`.
+* Assigning the (platform-dependent) precisions of certain `~numpy.number` subclasses,
+  including the likes of `~numpy.int_`, `~numpy.intp` and `~numpy.longlong`.
+  See the documentation on :ref:`scalar types <arrays.scalars.built-in>` for a
+  comprehensive overview of the affected classes. without the plugin the precision
+  of all relevant classes will be inferred as `~typing.Any`.
+* Removing all extended-precision `~numpy.number` subclasses that are unavailable
+  for the platform in question. Most notable this includes the likes of
+  `~numpy.float128` and `~numpy.complex256`. Without the plugin *all*
+  extended-precision types will, as far as mypy is concerned, be available
+  to all platforms.
 
 To enable the plugin, one must add it to their mypy `configuration file`_:
 
@@ -312,6 +317,7 @@ from ._dtype_like import (
     _DTypeLikeVoid,
     _DTypeLikeStr,
     _DTypeLikeBytes,
+    _DTypeLikeComplex_co,
 )
 from ._array_like import (
     ArrayLike as ArrayLike,

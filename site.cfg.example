@@ -28,7 +28,7 @@
 #       extensions with this dependency. Use the character given by os.pathsep
 #       to separate the items in the list. Note that this character is known to
 #       vary on some unix-like systems; if a colon does not work, try a comma.
-#       This also applies to include_dirs and src_dirs (see below).
+#       This also applies to include_dirs.
 #       On UN*X-type systems (OS X, most BSD and Linux systems):
 #           library_dirs = /usr/lib:/usr/local/lib
 #       On Windows:
@@ -39,15 +39,6 @@
 #   include_dirs
 #       List of directories to add to the header file search path.
 #           include_dirs = /usr/include:/usr/local/include
-#
-#   src_dirs
-#       List of directories that contain extracted source code for the
-#       dependency. For some dependencies, numpy.distutils will be able to build
-#       them from source if binaries cannot be found. The FORTRAN BLAS and
-#       LAPACK libraries are one example. However, most dependencies are more
-#       complicated and require actual installation that you need to do
-#       yourself.
-#           src_dirs = /home/username/src/BLAS_SRC:/home/username/src/LAPACK_SRC
 #
 #   search_static_first
 #       Boolean (one of (0, false, no, off) for False or (1, true, yes, on) for

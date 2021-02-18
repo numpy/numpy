@@ -1,4 +1,4 @@
-# <img alt="NumPy" src="https://ghcdn.rawgit.org/numpy/numpy/master/branding/icons/primary/numpylogo.svg" height="60">
+# <img alt="NumPy" src="/branding/logo/primary/numpylogo.svg" height="60">
 
 [![Travis CI](https://img.shields.io/travis/com/numpy/numpy/master?label=Travis%20CI)](
     https://travis-ci.com/github/numpy/numpy)

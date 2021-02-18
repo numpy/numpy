@@ -10,13 +10,10 @@ import shutil
 import multiprocessing
 import textwrap
 import importlib.util
+from threading import local as tlocal
 
 import distutils
 from distutils.errors import DistutilsError
-try:
-    from threading import local as tlocal
-except ImportError:
-    from dummy_threading import local as tlocal
 
 # stores temporary directory of each thread to only create one per thread
 _tdata = tlocal()

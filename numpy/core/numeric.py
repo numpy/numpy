@@ -710,6 +710,7 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
+    scipy.signal.correlate : uses FFT which has superior performance on large arrays. 
 
     Notes
     -----
@@ -719,6 +720,11 @@ def correlate(a, v, mode='valid'):
         c'_{av}[k] = sum_n a[n] conj(v[n+k])
 
     which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
+
+    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
+    not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
+    be preferable.
+    
 
     Examples
     --------
@@ -2350,8 +2356,13 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
     # (e.g., for numpy.ma).
-    dt = multiarray.result_type(y, 1.)
-    y = array(y, dtype=dt, copy=False, subok=True)
+    # NOTE: We explicitly allow timedelta, which used to work. This could
+    #       possibly be deprecated. See also gh-18286.
+    #       timedelta works if `atol` is an integer or also a timedelta.
+    #       Although, the default tolerances are unlikely to be useful
+    if y.dtype.kind != "m":
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
 
     xfin = isfinite(x)
     yfin = isfinite(y)

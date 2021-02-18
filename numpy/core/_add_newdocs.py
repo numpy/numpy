@@ -4076,6 +4076,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
     See Also
     --------
+    transpose : Equivalent function
     ndarray.T : Array property returning the array transposed.
     ndarray.reshape : Give a new shape to an array without changing its data.
 

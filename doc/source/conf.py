@@ -98,7 +98,7 @@ master_doc = 'contents'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2020, The SciPy community'
+copyright = '2008-2021, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -137,9 +137,6 @@ add_function_parentheses = False
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
 #show_authors = False
-
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
 
 def setup(app):
     # add a config value for `ifconfig` directives
@@ -288,7 +285,7 @@ intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('https://matplotlib.org', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),

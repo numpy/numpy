@@ -562,7 +562,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     below, :math:`h` is the binwidth and :math:`n_h` is the number of
     bins. All estimators that compute bin counts are recast to bin width
     using the `ptp` of the data. The final bin count is obtained from
-    ``np.round(np.ceil(range / h))``.
+    ``np.round(np.ceil(range / h))``. The final bin width is often less 
+    than what is returned by the estimators below.
 
     'auto' (maximum of the 'sturges' and 'fd' estimators)
         A compromise to get a good value. For small datasets the Sturges

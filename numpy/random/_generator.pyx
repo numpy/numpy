@@ -2,7 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
-from collections.abc import MutableSequence
+from collections.abc import Sequence
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -386,7 +386,7 @@ cdef class Generator:
                     0.0, '', CONS_NONE,
                     None)
 
-    def standard_exponential(self, size=None, dtype=np.float64, method=u'zig', out=None):
+    def standard_exponential(self, size=None, dtype=np.float64, method='zig', out=None):
         """
         standard_exponential(size=None, dtype=np.float64, method='zig', out=None)
 
@@ -426,12 +426,12 @@ cdef class Generator:
         """
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
-            if method == u'zig':
+            if method == 'zig':
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
             else:
                 return double_fill(&random_standard_exponential_inv_fill, &self._bitgen, size, self.lock, out)
         elif _dtype == np.float32:
-            if method == u'zig':
+            if method == 'zig':
                 return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
             else:
                 return float_fill(&random_standard_exponential_inv_fill_f, &self._bitgen, size, self.lock, out)
@@ -579,13 +579,13 @@ cdef class Generator:
 
         Returns
         -------
-        out : str
+        out : bytes
             String of length `length`.
 
         Examples
         --------
         >>> np.random.default_rng().bytes(10)
-        ' eh\\x85\\x022SZ\\xbf\\xa4' #random
+        b'\xfeC\x9b\x86\x17\xf2\xa1\xafcp' # random
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
@@ -996,7 +996,7 @@ cdef class Generator:
         --------
         >>> rng = np.random.default_rng()
         >>> rng.standard_normal()
-        2.1923875335537315 #random
+        2.1923875335537315 # random
 
         >>> s = rng.standard_normal(8000)
         >>> s
@@ -1755,7 +1755,7 @@ cdef class Generator:
         statistic appear?
 
         >>> np.sum(s<t) / float(len(s))
-        0.0090699999999999999  #random
+        0.0090699999999999999  # random
 
         So the p-value is about 0.009, which says the null hypothesis has a
         probability of about 99% of being true.
@@ -3196,7 +3196,7 @@ cdef class Generator:
         How many trials succeeded after a single run?
 
         >>> (z == 1).sum() / 10000.
-        0.34889999999999999 #random
+        0.34889999999999999 # random
 
         """
         return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
@@ -4398,7 +4398,9 @@ cdef class Generator:
             char* x_ptr
             char* buf_ptr
 
-        axis = normalize_axis_index(axis, np.ndim(x))
+        if isinstance(x, np.ndarray):
+            # Only call ndim on ndarrays, see GH 18142
+            axis = normalize_axis_index(axis, np.ndim(x))
 
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
@@ -4440,7 +4442,7 @@ cdef class Generator:
                     x[i] = buf
         else:
             # Untyped path.
-            if not isinstance(x, MutableSequence):
+            if not isinstance(x, Sequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
                     "`x` isn't a recognized object; `shuffle` is not guaranteed "
