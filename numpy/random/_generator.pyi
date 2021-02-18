@@ -76,7 +76,7 @@ class Generator:
     def __reduce__(self) -> Tuple[Callable[[str], BitGenerator], Tuple[str], Dict[str, Any]]: ...
     @property
     def bit_generator(self) -> BitGenerator: ...
-    def bytes(self, length: int) -> str: ...
+    def bytes(self, length: int) -> bytes: ...
     @overload
     def standard_normal(  # type: ignore[misc]
         self,
@@ -279,15 +279,46 @@ class Generator:
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint64]]: ...
     # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> Union[_T, ndarray[Any,Any]]
+    @overload
+    def choice(
+        self,
+        a: int,
+        size: None = ...,
+        replace: bool = ...,
+        p: Optional[_ArrayLikeFloat_co] = ...,
+        axis: int = ...,
+        shuffle: bool = ...,
+    ) -> int: ...
+    @overload
+    def choice(
+        self,
+        a: int,
+        size: _ShapeLike = ...,
+        replace: bool = ...,
+        p: Optional[_ArrayLikeFloat_co] = ...,
+        axis: int = ...,
+        shuffle: bool = ...,
+    ) -> ndarray[Any, dtype[int64]]: ...
+    @overload
     def choice(
         self,
         a: ArrayLike,
-        size: Optional[_ShapeLike] = ...,
+        size: None = ...,
         replace: bool = ...,
         p: Optional[_ArrayLikeFloat_co] = ...,
-        axis: Optional[int] = ...,
+        axis: int = ...,
         shuffle: bool = ...,
     ) -> Any: ...
+    @overload
+    def choice(
+        self,
+        a: ArrayLike,
+        size: _ShapeLike = ...,
+        replace: bool = ...,
+        p: Optional[_ArrayLikeFloat_co] = ...,
+        axis: int = ...,
+        shuffle: bool = ...,
+    ) -> ndarray[Any, Any]: ...
     @overload
     def uniform(self, low: float = ..., high: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
@@ -523,6 +554,8 @@ class Generator:
     def permuted(
         self, x: ArrayLike, *, axis: Optional[int] = ..., out: Optional[ndarray[Any, Any]] = ...
     ) -> ndarray[Any, Any]: ...
-    def shuffle(self, x: ArrayLike, axis: int = ...) -> Sequence[Any]: ...
+    def shuffle(self, x: ArrayLike, axis: int = ...) -> None: ...
 
-def default_rng(seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> Generator: ...
+def default_rng(
+    seed: Union[None, _ArrayLikeInt_co, SeedSequence, BitGenerator, Generator] = ...
+) -> Generator: ...
