@@ -970,8 +970,6 @@ def configuration(parent_package='',top_path=None):
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
-                         # TODO: See if npysort can be dropped here
-                         # libraries=['npymath', 'npysort'],
                          libraries=['npymath'],
                          extra_info=extra_info)
 

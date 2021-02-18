@@ -988,7 +988,7 @@ RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
      * just reject this value. This function then models a Zipf
      * distribution truncated to sys.maxint.
      */
-    if (X > (double)RAND_INT_MAX || X < 1.0) {
+    if (X > RAND_INT_MAX || X < 1.0) {
       continue;
     }
 

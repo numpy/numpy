@@ -1035,7 +1035,12 @@ class _CCompiler(object):
         ['-march=core-avx2']
         """
         assert(isinstance(flags, list))
-        if self.cc_is_gcc or self.cc_is_clang or self.cc_is_clang_cl or self.cc_is_icc:
+        if (
+            self.cc_is_gcc
+            or self.cc_is_clang
+            or self.cc_is_clang_cl
+            or self.cc_is_icc
+        ):
             return self._cc_normalize_unix(flags)
 
         if self.cc_is_msvc or self.cc_is_iccw:

@@ -96,7 +96,7 @@ class ClangCL(MSVCCompiler):
         clang_version = ""
         if "version" in clang_full_ver:
             loc = clang_full_ver.find("version")
-            clang_ver_string = clang_full_ver[loc + 7 :]
+            clang_ver_string = clang_full_ver[loc + 7:]
             clang_version = clang_ver_string.split("\n")[0].strip()
         clang_command_and_return = (
             f"Running the command \n\n{' '.join(clang_version_cmd)}\n\n "
