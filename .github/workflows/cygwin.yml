@@ -20,7 +20,7 @@ jobs:
         with:
           platform: x64
           install-dir: 'C:\tools\cygwin'
-          packages: python38-devel python38-pytest python38-hypothesis python38-cython python38-pip python38-wheel python38-setuptools liblapack-devel libopenblas gcc-fortran git
+          packages: python37-devel python37-pytest python37-hypothesis python37-cython python37-pip python37-wheel python37-setuptools liblapack-devel libopenblas gcc-fortran git
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
@@ -36,19 +36,19 @@ jobs:
       - name: Verify python version
         # Make sure it's the Cygwin one, not a Windows one
         run: |
-          bash -c "type python3.8; python3.8 --version -V"
+          bash -c "type python3.7; python3.7 --version -V"
       - name: Build NumPy wheel
         run: |
-          bash -c "python3.8 setup.py bdist_wheel"
+          bash -c "python3.7 setup.py bdist_wheel"
       - name: Install new NumPy
         run: |
-          bash -c "python3.8 -m pip install dist/numpy-*cp38*.whl"
+          bash -c "python3.7 -m pip install dist/numpy-*cp37*.whl"
       - name: Check that pip installed the extensions
         run: |
-          bash -c "python3.8 -m pip show numpy"
-          bash -c "python3.8 -m pip show -f numpy | grep .dll"
-          echo >list_dlls_dos.sh 'site_packages=$(python3.8 -m pip show numpy | grep Location | cut -d " " -f 2 -);
-          dll_list=$(for name in $(python3.8 -m pip show -f numpy | grep -F .dll); do echo ${site_packages}/${name}; done)
+          bash -c "python3.7 -m pip show numpy"
+          bash -c "python3.7 -m pip show -f numpy | grep .dll"
+          echo >list_dlls_dos.sh 'site_packages=$(python3.7 -m pip show numpy | grep Location | cut -d " " -f 2 -);
+          dll_list=$(for name in $(python3.7 -m pip show -f numpy | grep -F .dll); do echo ${site_packages}/${name}; done)
           ls -l ${dll_list}
           file ${dll_list}
           ldd ${dll_list}
@@ -65,10 +65,10 @@ jobs:
       - name: Run NumPy test suite
         run: |
           dash -c "mkdir empty"
-          bash -c "cd empty && PATH=/bin:/usr/bin:/usr/lib/lapack python3.8 -vv -c 'import numpy as np; np.test()' && cd .."
+          bash -c "cd empty && PATH=/bin:/usr/bin:/usr/lib/lapack python3.7 -vv -c 'import numpy as np; np.test()' && cd .."
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v2
         if: failure()
         with:
           name: numpy-cygwin-wheel
-          path: dist/numpy-*cp38*.whl
+          path: dist/numpy-*cp37*.whl
