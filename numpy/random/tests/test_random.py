@@ -1,5 +1,7 @@
 import warnings
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
         assert_, assert_raises, assert_equal, assert_warns,
@@ -509,6 +511,16 @@ class TestRandomDist:
             np.random.shuffle(b)
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
+
+    @pytest.mark.parametrize("random",
+            [np.random, np.random.RandomState(), np.random.default_rng()])
+    def test_shuffle_untyped_warning(self, random):
+        # Create a dict works like a sequence but isn't one
+        values = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+        with pytest.warns(UserWarning,
+                match="you are shuffling a 'dict' object") as rec:
+            random.shuffle(values)
+        assert "test_random" in rec[0].filename
 
     def test_shuffle_memoryview(self):
         # gh-18273
