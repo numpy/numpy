@@ -700,17 +700,17 @@ cdef class Generator:
             try:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
-            except TypeError:
-                raise ValueError("a must be an array or an integer, "
-                                 f"not {type(a_original)}") from None
+            except TypeError as exc:
+                raise ValueError("a must be a sequence or an integer, "
+                                 f"not {type(a_original)}") from exc
             if pop_size <= 0 and np.prod(size) != 0:
-                raise ValueError("a must be a positive integer unless no"
-                                 " samples are taken")
+                raise ValueError("a must be a positive integer unless no "
+                                 "samples are taken")
         else:
             pop_size = a.shape[axis]
             if pop_size == 0 and np.prod(size) != 0:
-                raise ValueError("a cannot be empty unless no samples are"
-                                 " taken")
+                raise ValueError("a cannot be empty unless no samples are "
+                                 "taken")
 
         if p is not None:
             d = len(p)
