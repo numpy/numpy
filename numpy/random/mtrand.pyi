@@ -113,6 +113,20 @@ class RandomState:
     def tomaxint(self, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def tomaxint(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[int_]]: ...
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: Optional[int] = ...,
+    ) -> int: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: int,
+        high: Optional[int] = ...,
+        size: None = ...,
+        dtype: _DTypeLikeBool = ...,
+        endpoint: bool = ...,
+    ) -> bool: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
@@ -135,28 +149,15 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-        dtype: Union[
-            dtype[bool_], Type[bool], Type[bool_], _BoolCodes, _SupportsDType[dtype[bool_]]
-        ] = ...,
+    ) -> ndarray[Any, dtype[int64]]: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: _DTypeLikeBool = ...,
     ) -> ndarray[Any, dtype[bool_]]: ...
-    @overload
-    def randint(  # type: ignore[misc]
-        self,
-        low: _ArrayLikeInt_co,
-        high: Optional[_ArrayLikeInt_co] = ...,
-        size: Optional[_ShapeLike] = ...,
-        dtype: Union[
-            dtype[int_], Type[int], Type[int_], _IntCodes, _SupportsDType[dtype[int_]]
-        ] = ...,
-    ) -> ndarray[Any, dtype[int_]]: ...
-    @overload
-    def randint(  # type: ignore[misc]
-        self,
-        low: _ArrayLikeInt_co,
-        high: Optional[_ArrayLikeInt_co] = ...,
-        size: Optional[_ShapeLike] = ...,
-        dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
-    ) -> ndarray[Any, dtype[uint]]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
@@ -229,14 +230,57 @@ class RandomState:
             dtype[uint64], Type[uint64], _UInt64Codes, _SupportsDType[dtype[uint64]]
         ] = ...,
     ) -> ndarray[Any, dtype[uint64]]: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[
+            dtype[int_], Type[int], Type[int_], _IntCodes, _SupportsDType[dtype[int_]]
+        ] = ...,
+    ) -> ndarray[Any, dtype[int_]]: ...
+    @overload
+    def randint(  # type: ignore[misc]
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+        dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
+    ) -> ndarray[Any, dtype[uint]]: ...
     def bytes(self, length: int) -> bytes: ...
+    @overload
+    def choice(
+        self,
+        a: int,
+        size: None = ...,
+        replace: bool = ...,
+        p: Optional[_ArrayLikeFloat_co] = ...,
+    ) -> int: ...
+    @overload
+    def choice(
+        self,
+        a: int,
+        size: _ShapeLike = ...,
+        replace: bool = ...,
+        p: Optional[_ArrayLikeFloat_co] = ...,
+    ) -> ndarray[Any, dtype[int64]]: ...
+    @overload
     def choice(
         self,
         a: ArrayLike,
-        size: Optional[_ShapeLike] = ...,
+        size: None = ...,
         replace: bool = ...,
         p: Optional[_ArrayLikeFloat_co] = ...,
     ) -> Any: ...
+    @overload
+    def choice(
+        self,
+        a: ArrayLike,
+        size: _ShapeLike = ...,
+        replace: bool = ...,
+        p: Optional[_ArrayLikeFloat_co] = ...,
+    ) -> ndarray[Any, Any]: ...
     @overload
     def uniform(self, low: float = ..., high: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
@@ -479,13 +523,6 @@ class RandomState:
     ) -> ndarray[Any, dtype[float64]]: ...
     def multinomial(
         self, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int_]]: ...
-    def multivariate_hypergeometric(
-        self,
-        colors: _ArrayLikeInt_co,
-        nsample: int,
-        size: Optional[_ShapeLike] = ...,
-        method: Literal["marginals", "count"] = ...,
     ) -> ndarray[Any, dtype[int_]]: ...
     def dirichlet(
         self, alpha: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...

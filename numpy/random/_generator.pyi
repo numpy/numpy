@@ -114,10 +114,6 @@ class Generator:
     @overload
     def permutation(self, x: ArrayLike, axis: int = ...) -> ndarray[Any, Any]: ...
     @overload
-    def standard_cauchy(self, size: None = ...) -> float: ...  # type: ignore[misc]
-    @overload
-    def standard_cauchy(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[float64]]: ...
-    @overload
     def standard_exponential(  # type: ignore[misc]
         self,
         size: None = ...,
@@ -522,6 +518,10 @@ class Generator:
     def power(
         self, a: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
     ) -> ndarray[Any, dtype[float64]]: ...
+    @overload
+    def standard_cauchy(self, size: None = ...) -> float: ...  # type: ignore[misc]
+    @overload
+    def standard_cauchy(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def laplace(self, loc: float = ..., scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
