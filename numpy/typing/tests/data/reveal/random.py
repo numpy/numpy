@@ -87,6 +87,8 @@ I_arr_like_10: List[int] = [10]
 I_arr_like_20: List[int] = [20]
 D_2D_like: List[List[float]] = [[1, 2], [2, 3], [3, 4], [4, 5.1]]
 D_2D: np.ndarray[Any, np.dtype[np.float64]] = np.array(D_2D_like)
+S_out: np.ndarray[Any, np.dtype[np.float32]] = np.empty(1, dtype=np.float32)
+D_out: np.ndarray[Any, np.dtype[np.float64]] = np.empty(1)
 
 reveal_type(def_gen.standard_normal())  # E: float
 reveal_type(def_gen.standard_normal(dtype=np.float32))  # E: float
@@ -97,9 +99,14 @@ reveal_type(def_gen.standard_normal(size=None))  # E: float
 reveal_type(def_gen.standard_normal(size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_normal(size=1, dtype=np.float32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
 reveal_type(def_gen.standard_normal(size=1, dtype="f4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.standard_normal(size=1, dtype="float32", out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.standard_normal(dtype=np.float32, out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
 reveal_type(def_gen.standard_normal(size=1, dtype=np.float64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_normal(size=1, dtype="float64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_normal(size=1, dtype="f8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_normal(out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_normal(size=1, dtype="float64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_normal(size=1, dtype="float64", out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.random())  # E: float
 reveal_type(def_gen.random(dtype=np.float32))  # E: float
@@ -110,9 +117,14 @@ reveal_type(def_gen.random(size=None))  # E: float
 reveal_type(def_gen.random(size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.random(size=1, dtype=np.float32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
 reveal_type(def_gen.random(size=1, dtype="f4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.random(size=1, dtype="float32", out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.random(dtype=np.float32, out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
 reveal_type(def_gen.random(size=1, dtype=np.float64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.random(size=1, dtype="float64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.random(size=1, dtype="f8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.random(out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.random(size=1, dtype="float64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.random(size=1, dtype="float64", out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.standard_cauchy())  # E: float
 reveal_type(def_gen.standard_cauchy(size=None))  # E: float
@@ -129,9 +141,14 @@ reveal_type(def_gen.standard_exponential(size=None, method="inv"))  # E: float
 reveal_type(def_gen.standard_exponential(size=1, method="inv"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_exponential(size=1, dtype=np.float32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
 reveal_type(def_gen.standard_exponential(size=1, dtype="f4", method="inv"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.standard_exponential(size=1, dtype="float32", out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.standard_exponential(dtype=np.float32, out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
 reveal_type(def_gen.standard_exponential(size=1, dtype=np.float64, method="inv"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_exponential(size=1, dtype="float64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_exponential(size=1, dtype="f8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_exponential(out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_exponential(size=1, dtype="float64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_exponential(size=1, dtype="float64", out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.zipf(1.5))  # E: int
 reveal_type(def_gen.zipf(1.5, size=None))  # E: int
@@ -223,11 +240,20 @@ reveal_type(def_gen.rayleigh(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, n
 
 reveal_type(def_gen.standard_gamma(0.5))  # E: float
 reveal_type(def_gen.standard_gamma(0.5, size=None))  # E: float
+reveal_type(def_gen.standard_gamma(0.5, dtype="float32"))  # E: float
+reveal_type(def_gen.standard_gamma(0.5, size=None, dtype="float32"))  # E: float
 reveal_type(def_gen.standard_gamma(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_gamma(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_gamma(D_arr_0p5, dtype="f4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.standard_gamma(0.5, size=1, dtype="float32", out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
+reveal_type(def_gen.standard_gamma(D_arr_0p5, dtype=np.float32, out=S_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._32Bit]]]
 reveal_type(def_gen.standard_gamma(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_gamma(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 reveal_type(def_gen.standard_gamma(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_gamma(0.5, out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_gamma(D_arr_like_0p5, out=D_out))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_gamma(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
+reveal_type(def_gen.standard_gamma(D_arr_like_0p5, size=1, out=D_out, dtype=np.float64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.vonmises(0.5, 0.5))  # E: float
 reveal_type(def_gen.vonmises(0.5, 0.5, size=None))  # E: float
