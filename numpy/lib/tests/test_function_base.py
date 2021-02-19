@@ -19,12 +19,14 @@ from numpy.testing import (
     )
 import numpy.lib.function_base as nfb
 from numpy.random import rand
-from numpy.lib import (
+from numpy.lib.function_base import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
+    delete, diff, digitize, extract, gradient, hamming, hanning,
     i0, insert, interp, kaiser, meshgrid, msort, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
+    select, sinc, trapz, trim_zeros, unwrap, vectorize,
     )
+from numpy.lib.arraysetops import setxor1d, unique
+from numpy.lib.twodim_base import flipud
 
 
 def get_mat(n):
@@ -1928,14 +1930,14 @@ class TestCheckFinite:
         a = [1, 2, 3]
         b = [1, 2, np.inf]
         c = [1, 2, np.nan]
-        np.lib.asarray_chkfinite(a)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, b)
-        assert_raises(ValueError, np.lib.asarray_chkfinite, c)
+        np.asarray_chkfinite(a)
+        assert_raises(ValueError, np.asarray_chkfinite, b)
+        assert_raises(ValueError, np.asarray_chkfinite, c)
 
     def test_dtype_order(self):
         # Regression test for missing dtype and order arguments
         a = [1, 2, 3]
-        a = np.lib.asarray_chkfinite(a, order='F', dtype=np.float64)
+        a = np.asarray_chkfinite(a, order='F', dtype=np.float64)
         assert_(a.dtype == np.float64)
 
 

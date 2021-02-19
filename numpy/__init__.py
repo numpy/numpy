@@ -153,7 +153,7 @@ else:
     from . import lib
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.
-    from .lib import *
+    from .lib._lib_importer import *
 
     from . import linalg
     from . import fft
@@ -225,7 +225,7 @@ else:
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
-    __all__.extend(lib.__all__)
+    __all__.extend(lib._lib_importer.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
     # These are exported by np.core, but are replaced by the builtins below
@@ -234,14 +234,6 @@ else:
     del long, unicode
     __all__.remove('long')
     __all__.remove('unicode')
-
-    # Remove things that are in the numpy.lib but not in the numpy namespace
-    # Note that there is a test (numpy/tests/test_public_api.py:test_numpy_namespace)
-    # that prevents adding more things to the main namespace by accident.
-    # The list below will grow until the `from .lib import *` fixme above is
-    # taken care of
-    __all__.remove('Arrayterator')
-    del Arrayterator
 
     # These names were removed in NumPy 1.20.  For at least one release,
     # attempts to access these names in the numpy namespace will trigger
