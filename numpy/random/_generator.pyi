@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Dict, Literal, Optional, Sequence, Tuple, Type, Union, overload
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union, overload
 
 from numpy import (
     bool_,
@@ -23,7 +23,6 @@ from numpy.typing import (
     ArrayLike,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
-    _BoolCodes,
     _DoubleCodes,
     _DTypeLikeBool,
     _DTypeLikeInt,
