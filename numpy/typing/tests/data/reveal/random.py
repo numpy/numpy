@@ -940,11 +940,11 @@ reveal_type(random_st.standard_exponential(size=1))  # E: numpy.ndarray[Any, num
 
 reveal_type(random_st.zipf(1.5))  # E: int
 reveal_type(random_st.zipf(1.5, size=None))  # E: int
-reveal_type(random_st.zipf(1.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.zipf(D_arr_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.zipf(D_arr_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.zipf(D_arr_like_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.zipf(D_arr_like_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.zipf(1.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.zipf(D_arr_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.zipf(D_arr_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.zipf(D_arr_like_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.zipf(D_arr_like_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.weibull(0.5))  # E: float
 reveal_type(random_st.weibull(0.5, size=None))  # E: float
@@ -964,11 +964,11 @@ reveal_type(random_st.standard_t(D_arr_like_0p5, size=1))  # E: numpy.ndarray[An
 
 reveal_type(random_st.poisson(0.5))  # E: int
 reveal_type(random_st.poisson(0.5, size=None))  # E: int
-reveal_type(random_st.poisson(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.poisson(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.poisson(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.poisson(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.poisson(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.poisson(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.poisson(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.poisson(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.poisson(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.poisson(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.power(0.5))  # E: float
 reveal_type(random_st.power(0.5, size=None))  # E: float
@@ -1004,19 +1004,19 @@ reveal_type(random_st.exponential(D_arr_like_0p5, size=1))  # E: numpy.ndarray[A
 
 reveal_type(random_st.geometric(0.5))  # E: int
 reveal_type(random_st.geometric(0.5, size=None))  # E: int
-reveal_type(random_st.geometric(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.geometric(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.geometric(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.geometric(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.geometric(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.geometric(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.geometric(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.geometric(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.geometric(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.geometric(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.logseries(0.5))  # E: int
 reveal_type(random_st.logseries(0.5, size=None))  # E: int
-reveal_type(random_st.logseries(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.logseries(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.logseries(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.logseries(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.logseries(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.logseries(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.logseries(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.logseries(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.logseries(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.logseries(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.rayleigh(0.5))  # E: float
 reveal_type(random_st.rayleigh(0.5, size=None))  # E: float
@@ -1233,50 +1233,50 @@ reveal_type(random_st.noncentral_f(D_arr_like_0p1, D_arr_like_0p5, D_arr_like_0p
 
 reveal_type(random_st.binomial(10, 0.5))  # E: int
 reveal_type(random_st.binomial(10, 0.5, size=None))  # E: int
-reveal_type(random_st.binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.negative_binomial(10, 0.5))  # E: int
 reveal_type(random_st.negative_binomial(10, 0.5, size=None))  # E: int
-reveal_type(random_st.negative_binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.negative_binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.negative_binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.negative_binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.hypergeometric(20, 20, 10))  # E: int
 reveal_type(random_st.hypergeometric(20, 20, 10, size=None))  # E: int
-reveal_type(random_st.hypergeometric(20, 20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(I_arr_20, 20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(I_arr_20, 20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(20, I_arr_20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(I_arr_like_20, 20, I_arr_10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(I_arr_20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(I_arr_like_20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(I_arr_20, I_arr_20, I_arr_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.hypergeometric(20, 20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(I_arr_20, 20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(I_arr_20, 20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(20, I_arr_20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(I_arr_like_20, 20, I_arr_10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(I_arr_20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(I_arr_like_20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(I_arr_20, I_arr_20, I_arr_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.randint(0, 100))  # E: int
 reveal_type(random_st.randint(100))  # E: int
-reveal_type(random_st.randint([100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.randint(0, [100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.randint([100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(0, [100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.randint(2, dtype=bool))  # E: builtins.bool
 reveal_type(random_st.randint(0, 2, dtype=bool))  # E: builtins.bool
@@ -1438,10 +1438,10 @@ reveal_type(random_st._bit_generator)  # E: BitGenerator
 reveal_type(random_st.bytes(2))  # E: bytes
 
 reveal_type(random_st.choice(5))  # E: int
-reveal_type(random_st.choice(5, 3))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.choice(5, 3, replace=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.choice(5, 3, p=[1 / 5] * 5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.choice(5, 3, p=[1 / 5] * 5, replace=False))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.choice(5, 3))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.choice(5, 3, replace=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.choice(5, 3, p=[1 / 5] * 5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.choice(5, 3, p=[1 / 5] * 5, replace=False))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"]))  # E: Any
 reveal_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3))  # E: numpy.ndarray[Any, Any]
@@ -1453,16 +1453,16 @@ reveal_type(random_st.dirichlet([0.5, 0.5]))  # E: numpy.ndarray[Any, numpy.dtyp
 reveal_type(random_st.dirichlet(np.array([0.5, 0.5])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(random_st.dirichlet(np.array([0.5, 0.5]), size=3))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 
-reveal_type(random_st.multinomial(20, [1 / 6.0] * 6))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.multinomial(20, np.array([0.5, 0.5])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.multinomial(20, [1 / 6.0] * 6, size=2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.multinomial(20, [1 / 6.0] * 6))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.multinomial(20, np.array([0.5, 0.5])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.multinomial(20, [1 / 6.0] * 6, size=2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.multivariate_normal([0.0], [[1.0]]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(random_st.multivariate_normal([0.0], np.array([[1.0]])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(random_st.multivariate_normal(np.array([0.0]), [[1.0]]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(random_st.multivariate_normal([0.0], np.array([[1.0]])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 
-reveal_type(random_st.permutation(10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
+reveal_type(random_st.permutation(10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 reveal_type(random_st.permutation([1, 2, 3, 4]))  # E: numpy.ndarray[Any, Any]
 reveal_type(random_st.permutation(np.array([1, 2, 3, 4])))  # E: numpy.ndarray[Any, Any]
 reveal_type(random_st.permutation(D_2D))  # E: numpy.ndarray[Any, Any]
@@ -1473,7 +1473,7 @@ reveal_type(random_st.shuffle(D_2D))  # E: None
 
 reveal_type(np.random.RandomState(pcg64))  # E: RandomState
 reveal_type(np.random.RandomState(0))  # E: RandomState
-reveal_type(np.random.RandomState([0,1,2]))  # E: RandomState
+reveal_type(np.random.RandomState([0, 1, 2]))  # E: RandomState
 reveal_type(random_st.__str__())  # E: str
 reveal_type(random_st.__repr__())  # E: str
 random_st_state = random_st.__getstate__()
@@ -1481,10 +1481,10 @@ reveal_type(random_st_state)  # E: builtins.dict[builtins.str, Any]
 reveal_type(random_st.__setstate__(random_st_state))  # E: None
 reveal_type(random_st.seed())  # E: None
 reveal_type(random_st.seed(1))  # E: None
-reveal_type(random_st.seed([0,1]))  # E: None
-random_st_get_state = random_st.get_state() 
+reveal_type(random_st.seed([0, 1]))  # E: None
+random_st_get_state = random_st.get_state()
 reveal_type(random_st_state)  # E: builtins.dict[builtins.str, Any]
-random_st_get_state_legacy = random_st.get_state(legacy=True) 
+random_st_get_state_legacy = random_st.get_state(legacy=True)
 reveal_type(random_st_get_state_legacy)  # E: Union[builtins.dict[builtins.str, Any], Tuple[builtins.str, numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]], builtins.int, builtins.int, builtins.float]]
 reveal_type(random_st.set_state(random_st_get_state))  # E: None
 
@@ -1496,9 +1496,8 @@ reveal_type(random_st.randn(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.float
 reveal_type(random_st.randn(1, 2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(random_st.random_sample())  # E: float
 reveal_type(random_st.random_sample(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
-reveal_type(random_st.random_sample(size=(1,2)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
+reveal_type(random_st.random_sample(size=(1, 2)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 
 reveal_type(random_st.tomaxint())  # E: int
-reveal_type(random_st.tomaxint(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
-reveal_type(random_st.tomaxint((1,)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]
- 
+reveal_type(random_st.tomaxint(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.tomaxint((1,)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
