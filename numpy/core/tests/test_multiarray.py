@@ -7023,8 +7023,6 @@ class TestPEP3118Dtype:
         self._check('^x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
 
     def test_trailing_padding(self):
-        # Trailing padding should be included, *and*, the item size
-        # should match the alignment if in aligned mode
         align = np.dtype('i').alignment
         size = np.dtype('i').itemsize
 
@@ -7033,17 +7031,30 @@ class TestPEP3118Dtype:
 
         base = dict(formats=['i'], names=['f0'])
 
-        self._check('ix',    dict(itemsize=aligned(size + 1), **base))
-        self._check('ixx',   dict(itemsize=aligned(size + 2), **base))
-        self._check('ixxx',  dict(itemsize=aligned(size + 3), **base))
-        self._check('ixxxx', dict(itemsize=aligned(size + 4), **base))
-        self._check('i7x',   dict(itemsize=aligned(size + 7), **base))
+        self._check('ix',    dict(itemsize=size + 1, **base))
+        self._check('ixx',   dict(itemsize=size + 2, **base))
+        self._check('ixxx',  dict(itemsize=size + 3, **base))
+        self._check('ixxxx', dict(itemsize=size + 4, **base))
+        self._check('i7x',   dict(itemsize=size + 7, **base))
+
+        self._check('T{i:f0:x}',    dict(itemsize=aligned(size + 1), **base))
+        self._check('T{i:f0:xx}',   dict(itemsize=aligned(size + 2), **base))
+        self._check('T{i:f0:xxx}',  dict(itemsize=aligned(size + 3), **base))
+        self._check('T{i:f0:xxxx}', dict(itemsize=aligned(size + 4), **base))
+        self._check('T{i:f0:7x}',   dict(itemsize=aligned(size + 7), **base))
 
         self._check('^ix',    dict(itemsize=size + 1, **base))
         self._check('^ixx',   dict(itemsize=size + 2, **base))
         self._check('^ixxx',  dict(itemsize=size + 3, **base))
         self._check('^ixxxx', dict(itemsize=size + 4, **base))
         self._check('^i7x',   dict(itemsize=size + 7, **base))
+
+        # check we can convert to memoryview and back, aligned and unaligned
+        arr = np.zeros(3, dtype=np.dtype('u1,i4,u1', align=True))
+        assert_equal(arr.dtype, np.array(memoryview(arr)).dtype)
+
+        arr = np.zeros(3, dtype=np.dtype('u1,i4,u1', align=False))
+        assert_equal(arr.dtype, np.array(memoryview(arr)).dtype)
 
     def test_native_padding_3(self):
         dt = np.dtype(
@@ -7075,15 +7086,9 @@ class TestPEP3118Dtype:
         align = np.dtype('i').alignment
         size = np.dtype('i').itemsize
 
-        def aligned(n):
-            return (align*(1 + (n-1)//align))
-
-        self._check('(3)T{ix}', (dict(
-            names=['f0'],
-            formats=['i'],
-            offsets=[0],
-            itemsize=aligned(size + 1)
-        ), (3,)))
+        expected_dtype = {'names': ['f0'], 'formats': ['i'],
+                          'itemsize': np.dtype('i,V1', align=True).itemsize}
+        self._check('(3)T{ix}', (expected_dtype, (3,)))
 
     def test_char_vs_string(self):
         dt = np.dtype('c')

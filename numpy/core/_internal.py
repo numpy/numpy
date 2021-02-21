@@ -689,8 +689,17 @@ def __dtype_from_pep3118(stream, is_subdtype):
 
         field_spec['itemsize'] = offset
 
-    # extra final padding for aligned types
-    if stream.byteorder == '@':
+    # extra final padding for aligned types:
+    # Inside of T{}, if in aligned mode, we add trailing padding like in a
+    # C struct so the end of the struct is aligned.
+    # Note that this behavior is *not* described by the PEP3118 spec, which
+    # does not say anything about T{} trailing padding. Note also that the Py
+    # struct docs say that trailing padding should *not* be implicitly added
+    # when outside of T{}, and the user should explicitly add a 0-sized
+    # trailing field to add padding, however struct does not implement T{}. So,
+    # here numpy is taking the initiative to specify how trailing padding works
+    # inside T{}, while we mimic struct outside of T{}.
+    if is_subdtype and stream.byteorder == '@':
         field_spec['itemsize'] += (-offset) % common_alignment
 
     # Check if this was a simple 1-item type, and unwrap it

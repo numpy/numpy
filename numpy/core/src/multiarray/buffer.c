@@ -88,6 +88,19 @@ _append_str(_tmp_string_t *s, char const *p)
     return 0;
 }
 
+static int
+_append_int(_tmp_string_t *s, unsigned int n)
+{
+    /* even on 64bit, int strings are at most 20 bytes; 256 is overkill */
+    static char buf[256];
+    int nw = snprintf(buf, 256, "%u", n);
+    if (nw < 0 || nw >= 256) {
+        return -1;
+    }
+    return _append_str(s, buf);
+}
+
+
 /*
  * Append a PEP3118-formatted field name, ":name:", to str
  */
@@ -276,15 +289,20 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* Insert padding manually */
             if (*offset > new_offset) {
                 PyErr_SetString(
-                    PyExc_ValueError,
-                    "dtypes with overlapping or out-of-order fields are not "
-                    "representable as buffers. Consider reordering the fields."
-                );
+                    PyExc_ValueError, "The buffer interface does not support "
+                                      "overlapping fields or out-of-order "
+                                      "fields");
                 return -1;
             }
-            while (*offset < new_offset) {
+            /* add padding bytes: repeat-count plus 'x' */
+            if (*offset < new_offset) {
+                if (new_offset - (*offset) > 1) {
+                    if (_append_int(str, new_offset - (*offset)) < 0) {
+                        return -1;
+                    }
+                }
                 if (_append_char(str, 'x') < 0) return -1;
-                ++*offset;
+                *offset = new_offset;
             }
 
             /* Insert child item */
@@ -297,6 +315,16 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* Insert field name */
             if (_append_field_name(str, name) < 0) return -1;
         }
+
+        /* Add any trailing padding */
+        if (*offset < descr->elsize) {
+            if (descr->elsize - (*offset) > 1) {
+                if (_append_int(str, descr->elsize - (*offset)) < 0) return -1;
+            }
+            if (_append_char(str, 'x') < 0) return -1;
+            *offset = descr->elsize;
+        }
+
         if (_append_char(str, '}') < 0) return -1;
     }
     else {
