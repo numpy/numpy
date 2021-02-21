@@ -289,9 +289,10 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* Insert padding manually */
             if (*offset > new_offset) {
                 PyErr_SetString(
-                    PyExc_ValueError, "The buffer interface does not support "
-                                      "overlapping fields or out-of-order "
-                                      "fields");
+                    PyExc_ValueError,
+                    "dtypes with overlapping or out-of-order fields are not "
+                    "representable as buffers. Consider reordering the fields."
+                );
                 return -1;
             }
             /* add padding bytes: repeat-count plus 'x' */
