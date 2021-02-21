@@ -152,11 +152,11 @@ reveal_type(def_gen.standard_exponential(size=1, dtype="float64", out=D_out))  #
 
 reveal_type(def_gen.zipf(1.5))  # E: int
 reveal_type(def_gen.zipf(1.5, size=None))  # E: int
-reveal_type(def_gen.zipf(1.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.zipf(D_arr_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.zipf(D_arr_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.zipf(D_arr_like_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.zipf(D_arr_like_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.zipf(1.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.zipf(D_arr_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.zipf(D_arr_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.zipf(D_arr_like_1p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.zipf(D_arr_like_1p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.weibull(0.5))  # E: float
 reveal_type(def_gen.weibull(0.5, size=None))  # E: float
@@ -176,11 +176,11 @@ reveal_type(def_gen.standard_t(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any,
 
 reveal_type(def_gen.poisson(0.5))  # E: int
 reveal_type(def_gen.poisson(0.5, size=None))  # E: int
-reveal_type(def_gen.poisson(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.poisson(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.poisson(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.poisson(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.poisson(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.poisson(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.poisson(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.poisson(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.poisson(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.poisson(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.power(0.5))  # E: float
 reveal_type(def_gen.power(0.5, size=None))  # E: float
@@ -216,19 +216,19 @@ reveal_type(def_gen.exponential(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any
 
 reveal_type(def_gen.geometric(0.5))  # E: int
 reveal_type(def_gen.geometric(0.5, size=None))  # E: int
-reveal_type(def_gen.geometric(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.geometric(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.geometric(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.geometric(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.geometric(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.geometric(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.geometric(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.geometric(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.geometric(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.geometric(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.logseries(0.5))  # E: int
 reveal_type(def_gen.logseries(0.5, size=None))  # E: int
-reveal_type(def_gen.logseries(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.logseries(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.logseries(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.logseries(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.logseries(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.logseries(0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.logseries(D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.logseries(D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.logseries(D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.logseries(D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.rayleigh(0.5))  # E: float
 reveal_type(def_gen.rayleigh(0.5, size=None))  # E: float
@@ -453,52 +453,52 @@ reveal_type(def_gen.noncentral_f(D_arr_like_0p1, D_arr_like_0p5, D_arr_like_0p9,
 
 reveal_type(def_gen.binomial(10, 0.5))  # E: int
 reveal_type(def_gen.binomial(10, 0.5, size=None))  # E: int
-reveal_type(def_gen.binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.negative_binomial(10, 0.5))  # E: int
 reveal_type(def_gen.negative_binomial(10, 0.5, size=None))  # E: int
-reveal_type(def_gen.negative_binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.negative_binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.negative_binomial(10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(I_arr_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(I_arr_10, 0.5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(I_arr_like_10, 0.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(I_arr_10, D_arr_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(I_arr_like_10, D_arr_like_0p5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(I_arr_10, D_arr_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.negative_binomial(I_arr_like_10, D_arr_like_0p5, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.hypergeometric(20, 20, 10))  # E: int
 reveal_type(def_gen.hypergeometric(20, 20, 10, size=None))  # E: int
-reveal_type(def_gen.hypergeometric(20, 20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(I_arr_20, 20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(I_arr_20, 20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(20, I_arr_20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(I_arr_like_20, 20, I_arr_10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(I_arr_20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(I_arr_20, I_arr_20, I_arr_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.hypergeometric(20, 20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(I_arr_20, 20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(I_arr_20, 20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(20, I_arr_20, 10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(I_arr_like_20, 20, I_arr_10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(I_arr_20, I_arr_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, 10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(I_arr_20, I_arr_20, I_arr_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10, size=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 I_int64_100: np.ndarray[Any, np.dtype[np.int64]] = np.array([100], dtype=np.int64)
 
 reveal_type(def_gen.integers(0, 100))  # E: int
 reveal_type(def_gen.integers(100))  # E: int
-reveal_type(def_gen.integers([100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(0, [100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.integers([100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(0, [100]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 I_bool_low: np.ndarray[Any, np.dtype[np.bool_]] = np.array([0], dtype=np.bool_)
 I_bool_low_like: List[int] = [0]
@@ -538,37 +538,37 @@ reveal_type(def_gen.integers(256, dtype="u1"))  # E: int
 reveal_type(def_gen.integers(0, 256, dtype="u1"))  # E: int
 reveal_type(def_gen.integers(255, dtype="u1", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 255, dtype="u1", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u1_low_like, 255, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_low, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(0, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_high_closed, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(0, I_u1_high_closed, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
+reveal_type(def_gen.integers(I_u1_low_like, 255, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_low, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(0, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_high_closed, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(0, I_u1_high_closed, dtype="u1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
 
 reveal_type(def_gen.integers(256, dtype="uint8"))  # E: int
 reveal_type(def_gen.integers(0, 256, dtype="uint8"))  # E: int
 reveal_type(def_gen.integers(255, dtype="uint8", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 255, dtype="uint8", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u1_low_like, 255, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_low, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(0, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_high_closed, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(0, I_u1_high_closed, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
+reveal_type(def_gen.integers(I_u1_low_like, 255, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_low, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(0, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_high_closed, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(0, I_u1_high_closed, dtype="uint8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
 
 reveal_type(def_gen.integers(256, dtype=np.uint8))  # E: int
 reveal_type(def_gen.integers(0, 256, dtype=np.uint8))  # E: int
 reveal_type(def_gen.integers(255, dtype=np.uint8, endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 255, dtype=np.uint8, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u1_low_like, 255, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_low, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(0, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_high_closed, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(0, I_u1_high_closed, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
+reveal_type(def_gen.integers(I_u1_low_like, 255, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_low, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(0, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_high_closed, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(0, I_u1_high_closed, dtype=np.uint8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
 
 I_u2_low: np.ndarray[Any, np.dtype[np.uint16]] = np.array([0], dtype=np.uint16)
 I_u2_low_like: List[int] = [0]
@@ -579,78 +579,103 @@ reveal_type(def_gen.integers(65536, dtype="u2"))  # E: int
 reveal_type(def_gen.integers(0, 65536, dtype="u2"))  # E: int
 reveal_type(def_gen.integers(65535, dtype="u2", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 65535, dtype="u2", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u2_low_like, 65535, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_low, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(0, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_high_closed, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(0, I_u2_high_closed, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
+reveal_type(def_gen.integers(I_u2_low_like, 65535, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_low, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(0, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_high_closed, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(0, I_u2_high_closed, dtype="u2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
 
 reveal_type(def_gen.integers(65536, dtype="uint16"))  # E: int
 reveal_type(def_gen.integers(0, 65536, dtype="uint16"))  # E: int
 reveal_type(def_gen.integers(65535, dtype="uint16", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 65535, dtype="uint16", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u2_low_like, 65535, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_low, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(0, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_high_closed, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(0, I_u2_high_closed, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
+reveal_type(def_gen.integers(I_u2_low_like, 65535, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_low, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(0, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_high_closed, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(0, I_u2_high_closed, dtype="uint16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
 
 reveal_type(def_gen.integers(65536, dtype=np.uint16))  # E: int
 reveal_type(def_gen.integers(0, 65536, dtype=np.uint16))  # E: int
 reveal_type(def_gen.integers(65535, dtype=np.uint16, endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 65535, dtype=np.uint16, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u2_low_like, 65535, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_low, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(0, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_high_closed, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(0, I_u2_high_closed, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
+reveal_type(def_gen.integers(I_u2_low_like, 65535, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_low, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(0, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_high_closed, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(0, I_u2_high_closed, dtype=np.uint16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
 
 I_u4_low: np.ndarray[Any, np.dtype[np.uint32]] = np.array([0], dtype=np.uint32)
 I_u4_low_like: List[int] = [0]
 I_u4_high_open: np.ndarray[Any, np.dtype[np.uint32]] = np.array([4294967295], dtype=np.uint32)
 I_u4_high_closed: np.ndarray[Any, np.dtype[np.uint32]] = np.array([4294967295], dtype=np.uint32)
 
+reveal_type(def_gen.integers(4294967296, dtype=np.int_))  # E: int
+reveal_type(def_gen.integers(0, 4294967296, dtype=np.int_))  # E: int
+reveal_type(def_gen.integers(4294967295, dtype=np.int_, endpoint=True))  # E: int
+reveal_type(def_gen.integers(0, 4294967295, dtype=np.int_, endpoint=True))  # E: int
+reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype=np.int_, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(def_gen.integers(I_u4_high_open, dtype=np.int_))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype=np.int_))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(def_gen.integers(0, I_u4_high_open, dtype=np.int_))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(def_gen.integers(I_u4_high_closed, dtype=np.int_, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.int_, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(def_gen.integers(0, I_u4_high_closed, dtype=np.int_, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+
+
 reveal_type(def_gen.integers(4294967296, dtype="u4"))  # E: int
 reveal_type(def_gen.integers(0, 4294967296, dtype="u4"))  # E: int
 reveal_type(def_gen.integers(4294967295, dtype="u4", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 4294967295, dtype="u4", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(0, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_high_closed, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(0, I_u4_high_closed, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
+reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(0, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_high_closed, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(0, I_u4_high_closed, dtype="u4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
 
 reveal_type(def_gen.integers(4294967296, dtype="uint32"))  # E: int
 reveal_type(def_gen.integers(0, 4294967296, dtype="uint32"))  # E: int
 reveal_type(def_gen.integers(4294967295, dtype="uint32", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 4294967295, dtype="uint32", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(0, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_high_closed, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(0, I_u4_high_closed, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
+reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(0, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_high_closed, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(0, I_u4_high_closed, dtype="uint32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
 
 reveal_type(def_gen.integers(4294967296, dtype=np.uint32))  # E: int
 reveal_type(def_gen.integers(0, 4294967296, dtype=np.uint32))  # E: int
 reveal_type(def_gen.integers(4294967295, dtype=np.uint32, endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 4294967295, dtype=np.uint32, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(0, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_high_closed, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(0, I_u4_high_closed, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
+reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(0, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_high_closed, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(0, I_u4_high_closed, dtype=np.uint32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+
+reveal_type(def_gen.integers(4294967296, dtype=np.uint))  # E: int
+reveal_type(def_gen.integers(0, 4294967296, dtype=np.uint))  # E: int
+reveal_type(def_gen.integers(4294967295, dtype=np.uint, endpoint=True))  # E: int
+reveal_type(def_gen.integers(0, 4294967295, dtype=np.uint, endpoint=True))  # E: int
+reveal_type(def_gen.integers(I_u4_low_like, 4294967295, dtype=np.uint, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(def_gen.integers(I_u4_high_open, dtype=np.uint))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_open, dtype=np.uint))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(def_gen.integers(0, I_u4_high_open, dtype=np.uint))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(def_gen.integers(I_u4_high_closed, dtype=np.uint, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.uint, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(def_gen.integers(0, I_u4_high_closed, dtype=np.uint, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
 
 I_u8_low: np.ndarray[Any, np.dtype[np.uint64]] = np.array([0], dtype=np.uint64)
 I_u8_low_like: List[int] = [0]
@@ -661,37 +686,37 @@ reveal_type(def_gen.integers(18446744073709551616, dtype="u8"))  # E: int
 reveal_type(def_gen.integers(0, 18446744073709551616, dtype="u8"))  # E: int
 reveal_type(def_gen.integers(18446744073709551615, dtype="u8", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 18446744073709551615, dtype="u8", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u8_low_like, 18446744073709551615, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_low, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(0, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_high_closed, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(0, I_u8_high_closed, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.integers(I_u8_low_like, 18446744073709551615, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_low, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(0, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_high_closed, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(0, I_u8_high_closed, dtype="u8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.integers(18446744073709551616, dtype="uint64"))  # E: int
 reveal_type(def_gen.integers(0, 18446744073709551616, dtype="uint64"))  # E: int
 reveal_type(def_gen.integers(18446744073709551615, dtype="uint64", endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 18446744073709551615, dtype="uint64", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u8_low_like, 18446744073709551615, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_low, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(0, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_high_closed, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(0, I_u8_high_closed, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.integers(I_u8_low_like, 18446744073709551615, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_low, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(0, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_high_closed, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(0, I_u8_high_closed, dtype="uint64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.integers(18446744073709551616, dtype=np.uint64))  # E: int
 reveal_type(def_gen.integers(0, 18446744073709551616, dtype=np.uint64))  # E: int
 reveal_type(def_gen.integers(18446744073709551615, dtype=np.uint64, endpoint=True))  # E: int
 reveal_type(def_gen.integers(0, 18446744073709551615, dtype=np.uint64, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_u8_low_like, 18446744073709551615, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_low, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(0, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_high_closed, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(0, I_u8_high_closed, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.integers(I_u8_low_like, 18446744073709551615, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_low, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(0, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_high_closed, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(0, I_u8_high_closed, dtype=np.uint64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
 
 I_i1_low: np.ndarray[Any, np.dtype[np.int8]] = np.array([-128], dtype=np.int8)
 I_i1_low_like: List[int] = [-128]
@@ -702,37 +727,37 @@ reveal_type(def_gen.integers(128, dtype="i1"))  # E: int
 reveal_type(def_gen.integers(-128, 128, dtype="i1"))  # E: int
 reveal_type(def_gen.integers(127, dtype="i1", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-128, 127, dtype="i1", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i1_low_like, 127, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_low, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(-128, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_high_closed, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_low, I_i1_high_closed, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(-128, I_i1_high_closed, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
+reveal_type(def_gen.integers(I_i1_low_like, 127, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_low, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(-128, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_high_closed, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_low, I_i1_high_closed, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(-128, I_i1_high_closed, dtype="i1", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
 
 reveal_type(def_gen.integers(128, dtype="int8"))  # E: int
 reveal_type(def_gen.integers(-128, 128, dtype="int8"))  # E: int
 reveal_type(def_gen.integers(127, dtype="int8", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-128, 127, dtype="int8", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i1_low_like, 127, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_low, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(-128, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_high_closed, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_low, I_i1_high_closed, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(-128, I_i1_high_closed, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
+reveal_type(def_gen.integers(I_i1_low_like, 127, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_low, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(-128, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_high_closed, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_low, I_i1_high_closed, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(-128, I_i1_high_closed, dtype="int8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
 
 reveal_type(def_gen.integers(128, dtype=np.int8))  # E: int
 reveal_type(def_gen.integers(-128, 128, dtype=np.int8))  # E: int
 reveal_type(def_gen.integers(127, dtype=np.int8, endpoint=True))  # E: int
 reveal_type(def_gen.integers(-128, 127, dtype=np.int8, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i1_low_like, 127, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_low, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(-128, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_high_closed, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(I_i1_low, I_i1_high_closed, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(def_gen.integers(-128, I_i1_high_closed, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
+reveal_type(def_gen.integers(I_i1_low_like, 127, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_low, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(-128, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_high_closed, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(I_i1_low, I_i1_high_closed, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(def_gen.integers(-128, I_i1_high_closed, dtype=np.int8, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
 
 I_i2_low: np.ndarray[Any, np.dtype[np.int16]] = np.array([-32768], dtype=np.int16)
 I_i2_low_like: List[int] = [-32768]
@@ -743,37 +768,37 @@ reveal_type(def_gen.integers(32768, dtype="i2"))  # E: int
 reveal_type(def_gen.integers(-32768, 32768, dtype="i2"))  # E: int
 reveal_type(def_gen.integers(32767, dtype="i2", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-32768, 32767, dtype="i2", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i2_low_like, 32767, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_low, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(-32768, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_high_closed, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(-32768, I_i2_high_closed, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
+reveal_type(def_gen.integers(I_i2_low_like, 32767, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_low, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(-32768, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_high_closed, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(-32768, I_i2_high_closed, dtype="i2", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
 
 reveal_type(def_gen.integers(32768, dtype="int16"))  # E: int
 reveal_type(def_gen.integers(-32768, 32768, dtype="int16"))  # E: int
 reveal_type(def_gen.integers(32767, dtype="int16", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-32768, 32767, dtype="int16", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i2_low_like, 32767, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_low, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(-32768, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_high_closed, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(-32768, I_i2_high_closed, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
+reveal_type(def_gen.integers(I_i2_low_like, 32767, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_low, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(-32768, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_high_closed, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(-32768, I_i2_high_closed, dtype="int16", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
 
 reveal_type(def_gen.integers(32768, dtype=np.int16))  # E: int
 reveal_type(def_gen.integers(-32768, 32768, dtype=np.int16))  # E: int
 reveal_type(def_gen.integers(32767, dtype=np.int16, endpoint=True))  # E: int
 reveal_type(def_gen.integers(-32768, 32767, dtype=np.int16, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i2_low_like, 32767, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_low, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(-32768, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_high_closed, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(def_gen.integers(-32768, I_i2_high_closed, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
+reveal_type(def_gen.integers(I_i2_low_like, 32767, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_low, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(-32768, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_high_closed, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(def_gen.integers(-32768, I_i2_high_closed, dtype=np.int16, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
 
 I_i4_low: np.ndarray[Any, np.dtype[np.int32]] = np.array([-2147483648], dtype=np.int32)
 I_i4_low_like: List[int] = [-2147483648]
@@ -784,37 +809,37 @@ reveal_type(def_gen.integers(2147483648, dtype="i4"))  # E: int
 reveal_type(def_gen.integers(-2147483648, 2147483648, dtype="i4"))  # E: int
 reveal_type(def_gen.integers(2147483647, dtype="i4", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-2147483648, 2147483647, dtype="i4", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i4_low_like, 2147483647, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_low, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(-2147483648, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_high_closed, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
+reveal_type(def_gen.integers(I_i4_low_like, 2147483647, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_low, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(-2147483648, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_high_closed, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype="i4", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
 
 reveal_type(def_gen.integers(2147483648, dtype="int32"))  # E: int
 reveal_type(def_gen.integers(-2147483648, 2147483648, dtype="int32"))  # E: int
 reveal_type(def_gen.integers(2147483647, dtype="int32", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-2147483648, 2147483647, dtype="int32", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i4_low_like, 2147483647, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_low, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(-2147483648, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_high_closed, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
+reveal_type(def_gen.integers(I_i4_low_like, 2147483647, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_low, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(-2147483648, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_high_closed, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype="int32", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
 
 reveal_type(def_gen.integers(2147483648, dtype=np.int32))  # E: int
 reveal_type(def_gen.integers(-2147483648, 2147483648, dtype=np.int32))  # E: int
 reveal_type(def_gen.integers(2147483647, dtype=np.int32, endpoint=True))  # E: int
 reveal_type(def_gen.integers(-2147483648, 2147483647, dtype=np.int32, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i4_low_like, 2147483647, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_low, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(-2147483648, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_high_closed, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
+reveal_type(def_gen.integers(I_i4_low_like, 2147483647, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_low, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(-2147483648, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_high_closed, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype=np.int32, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
 
 I_i8_low: np.ndarray[Any, np.dtype[np.int64]] = np.array([-9223372036854775808], dtype=np.int64)
 I_i8_low_like: List[int] = [-9223372036854775808]
@@ -825,37 +850,37 @@ reveal_type(def_gen.integers(9223372036854775808, dtype="i8"))  # E: int
 reveal_type(def_gen.integers(-9223372036854775808, 9223372036854775808, dtype="i8"))  # E: int
 reveal_type(def_gen.integers(9223372036854775807, dtype="i8", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-9223372036854775808, 9223372036854775807, dtype="i8", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i8_low_like, 9223372036854775807, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_low, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_high_closed, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.integers(I_i8_low_like, 9223372036854775807, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_low, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_high_closed, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype="i8", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.integers(9223372036854775808, dtype="int64"))  # E: int
 reveal_type(def_gen.integers(-9223372036854775808, 9223372036854775808, dtype="int64"))  # E: int
 reveal_type(def_gen.integers(9223372036854775807, dtype="int64", endpoint=True))  # E: int
 reveal_type(def_gen.integers(-9223372036854775808, 9223372036854775807, dtype="int64", endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i8_low_like, 9223372036854775807, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_low, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_high_closed, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.integers(I_i8_low_like, 9223372036854775807, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_low, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_high_closed, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype="int64", endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.integers(9223372036854775808, dtype=np.int64))  # E: int
 reveal_type(def_gen.integers(-9223372036854775808, 9223372036854775808, dtype=np.int64))  # E: int
 reveal_type(def_gen.integers(9223372036854775807, dtype=np.int64, endpoint=True))  # E: int
 reveal_type(def_gen.integers(-9223372036854775808, 9223372036854775807, dtype=np.int64, endpoint=True))  # E: int
-reveal_type(def_gen.integers(I_i8_low_like, 9223372036854775807, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_low, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_high_closed, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.integers(I_i8_low_like, 9223372036854775807, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_low, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_high_closed, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype=np.int64, endpoint=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 
 reveal_type(def_gen.bit_generator)  # E: BitGenerator
@@ -863,10 +888,10 @@ reveal_type(def_gen.bit_generator)  # E: BitGenerator
 reveal_type(def_gen.bytes(2))  # E: bytes
 
 reveal_type(def_gen.choice(5))  # E: int
-reveal_type(def_gen.choice(5, 3))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.choice(5, 3, replace=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.choice(5, 3, p=[1 / 5] * 5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.choice(5, 3, p=[1 / 5] * 5, replace=False))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.choice(5, 3))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.choice(5, 3, replace=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.choice(5, 3, p=[1 / 5] * 5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.choice(5, 3, p=[1 / 5] * 5, replace=False))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"]))  # E: Any
 reveal_type(def_gen.choice(["pooh", "rabbit", "piglet", "Christopher"], 3))  # E: numpy.ndarray[Any, Any]
@@ -878,25 +903,25 @@ reveal_type(def_gen.dirichlet([0.5, 0.5]))  # E: numpy.ndarray[Any, numpy.dtype[
 reveal_type(def_gen.dirichlet(np.array([0.5, 0.5])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(def_gen.dirichlet(np.array([0.5, 0.5]), size=3))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 
-reveal_type(def_gen.multinomial(20, [1 / 6.0] * 6))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multinomial(20, np.array([0.5, 0.5])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multinomial([[10], [20]], [1 / 6.0] * 6, size=(2, 2)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multinomial(np.array([[10], [20]]), np.array([0.5, 0.5]), size=(2, 2)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.multinomial(20, [1 / 6.0] * 6))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multinomial(20, np.array([0.5, 0.5])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multinomial([[10], [20]], [1 / 6.0] * 6, size=(2, 2)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multinomial(np.array([[10], [20]]), np.array([0.5, 0.5]), size=(2, 2)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
-reveal_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=4))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=(4, 7)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2, method="count"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, method="marginals"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=4))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=(4, 7)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2, method="count"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, method="marginals"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(def_gen.multivariate_normal([0.0], [[1.0]]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(def_gen.multivariate_normal(np.array([0.0]), [[1.0]]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 
-reveal_type(def_gen.permutation(10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(def_gen.permutation(10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 reveal_type(def_gen.permutation([1, 2, 3, 4]))  # E: numpy.ndarray[Any, Any]
 reveal_type(def_gen.permutation(np.array([1, 2, 3, 4])))  # E: numpy.ndarray[Any, Any]
 reveal_type(def_gen.permutation(D_2D, axis=1))  # E: numpy.ndarray[Any, Any]
@@ -1292,146 +1317,157 @@ reveal_type(random_st.randint(0, I_bool_high_open, dtype=np.bool_))  # E: numpy.
 
 reveal_type(random_st.randint(256, dtype="u1"))  # E: int
 reveal_type(random_st.randint(0, 256, dtype="u1"))  # E: int
-reveal_type(random_st.randint(I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(I_u1_low, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(0, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
+reveal_type(random_st.randint(I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(I_u1_low, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(0, I_u1_high_open, dtype="u1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
 
 reveal_type(random_st.randint(256, dtype="uint8"))  # E: int
 reveal_type(random_st.randint(0, 256, dtype="uint8"))  # E: int
-reveal_type(random_st.randint(I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(I_u1_low, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(0, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
+reveal_type(random_st.randint(I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(I_u1_low, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(0, I_u1_high_open, dtype="uint8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
 
 reveal_type(random_st.randint(256, dtype=np.uint8))  # E: int
 reveal_type(random_st.randint(0, 256, dtype=np.uint8))  # E: int
-reveal_type(random_st.randint(I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(I_u1_low, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(0, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]
+reveal_type(random_st.randint(I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(I_u1_low, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(0, I_u1_high_open, dtype=np.uint8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._8Bit]]]
 
 reveal_type(random_st.randint(65536, dtype="u2"))  # E: int
 reveal_type(random_st.randint(0, 65536, dtype="u2"))  # E: int
-reveal_type(random_st.randint(I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(I_u2_low, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(0, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
+reveal_type(random_st.randint(I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(I_u2_low, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(0, I_u2_high_open, dtype="u2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
 
 reveal_type(random_st.randint(65536, dtype="uint16"))  # E: int
 reveal_type(random_st.randint(0, 65536, dtype="uint16"))  # E: int
-reveal_type(random_st.randint(I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(I_u2_low, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(0, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
+reveal_type(random_st.randint(I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(I_u2_low, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(0, I_u2_high_open, dtype="uint16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
 
 reveal_type(random_st.randint(65536, dtype=np.uint16))  # E: int
 reveal_type(random_st.randint(0, 65536, dtype=np.uint16))  # E: int
-reveal_type(random_st.randint(I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(I_u2_low, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(0, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]
+reveal_type(random_st.randint(I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(I_u2_low, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(0, I_u2_high_open, dtype=np.uint16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._16Bit]]]
 
 reveal_type(random_st.randint(4294967296, dtype="u4"))  # E: int
 reveal_type(random_st.randint(0, 4294967296, dtype="u4"))  # E: int
-reveal_type(random_st.randint(I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(I_u4_low, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(0, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
+reveal_type(random_st.randint(I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(I_u4_low, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(0, I_u4_high_open, dtype="u4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
 
 reveal_type(random_st.randint(4294967296, dtype="uint32"))  # E: int
 reveal_type(random_st.randint(0, 4294967296, dtype="uint32"))  # E: int
-reveal_type(random_st.randint(I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(I_u4_low, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(0, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
+reveal_type(random_st.randint(I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(I_u4_low, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(0, I_u4_high_open, dtype="uint32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
 
 reveal_type(random_st.randint(4294967296, dtype=np.uint32))  # E: int
 reveal_type(random_st.randint(0, 4294967296, dtype=np.uint32))  # E: int
-reveal_type(random_st.randint(I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(I_u4_low, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(0, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]
+reveal_type(random_st.randint(I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(I_u4_low, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(0, I_u4_high_open, dtype=np.uint32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._32Bit]]]
 
+reveal_type(random_st.randint(4294967296, dtype=np.uint))  # E: int
+reveal_type(random_st.randint(0, 4294967296, dtype=np.uint))  # E: int
+reveal_type(random_st.randint(I_u4_high_open, dtype=np.uint))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(random_st.randint(I_u4_low, I_u4_high_open, dtype=np.uint))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
+reveal_type(random_st.randint(0, I_u4_high_open, dtype=np.uint))  # E: numpy.ndarray[Any, numpy.dtype[{uint}]]
 
 reveal_type(random_st.randint(18446744073709551616, dtype="u8"))  # E: int
 reveal_type(random_st.randint(0, 18446744073709551616, dtype="u8"))  # E: int
-reveal_type(random_st.randint(I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(I_u8_low, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(0, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
+reveal_type(random_st.randint(I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(I_u8_low, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(0, I_u8_high_open, dtype="u8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.randint(18446744073709551616, dtype="uint64"))  # E: int
 reveal_type(random_st.randint(0, 18446744073709551616, dtype="uint64"))  # E: int
-reveal_type(random_st.randint(I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(I_u8_low, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(0, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
+reveal_type(random_st.randint(I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(I_u8_low, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(0, I_u8_high_open, dtype="uint64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.randint(18446744073709551616, dtype=np.uint64))  # E: int
 reveal_type(random_st.randint(0, 18446744073709551616, dtype=np.uint64))  # E: int
-reveal_type(random_st.randint(I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(I_u8_low, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(0, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]
+reveal_type(random_st.randint(I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(I_u8_low, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(0, I_u8_high_open, dtype=np.uint64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.randint(128, dtype="i1"))  # E: int
 reveal_type(random_st.randint(-128, 128, dtype="i1"))  # E: int
-reveal_type(random_st.randint(I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(I_i1_low, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(-128, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
+reveal_type(random_st.randint(I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(I_i1_low, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(-128, I_i1_high_open, dtype="i1"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
 
 reveal_type(random_st.randint(128, dtype="int8"))  # E: int
 reveal_type(random_st.randint(-128, 128, dtype="int8"))  # E: int
-reveal_type(random_st.randint(I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(I_i1_low, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(-128, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
+reveal_type(random_st.randint(I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(I_i1_low, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(-128, I_i1_high_open, dtype="int8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
 
 reveal_type(random_st.randint(128, dtype=np.int8))  # E: int
 reveal_type(random_st.randint(-128, 128, dtype=np.int8))  # E: int
-reveal_type(random_st.randint(I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(I_i1_low, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
-reveal_type(random_st.randint(-128, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]
+reveal_type(random_st.randint(I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(I_i1_low, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
+reveal_type(random_st.randint(-128, I_i1_high_open, dtype=np.int8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._8Bit]]]
 
 reveal_type(random_st.randint(32768, dtype="i2"))  # E: int
 reveal_type(random_st.randint(-32768, 32768, dtype="i2"))  # E: int
-reveal_type(random_st.randint(I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(I_i2_low, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(-32768, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
+reveal_type(random_st.randint(I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(I_i2_low, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(-32768, I_i2_high_open, dtype="i2"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
 reveal_type(random_st.randint(32768, dtype="int16"))  # E: int
 reveal_type(random_st.randint(-32768, 32768, dtype="int16"))  # E: int
-reveal_type(random_st.randint(I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(I_i2_low, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(-32768, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
+reveal_type(random_st.randint(I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(I_i2_low, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(-32768, I_i2_high_open, dtype="int16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
 reveal_type(random_st.randint(32768, dtype=np.int16))  # E: int
 reveal_type(random_st.randint(-32768, 32768, dtype=np.int16))  # E: int
-reveal_type(random_st.randint(I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(I_i2_low, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
-reveal_type(random_st.randint(-32768, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]
+reveal_type(random_st.randint(I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(I_i2_low, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
+reveal_type(random_st.randint(-32768, I_i2_high_open, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._16Bit]]]
 
 reveal_type(random_st.randint(2147483648, dtype="i4"))  # E: int
 reveal_type(random_st.randint(-2147483648, 2147483648, dtype="i4"))  # E: int
-reveal_type(random_st.randint(I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(I_i4_low, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(-2147483648, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
+reveal_type(random_st.randint(I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(I_i4_low, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(-2147483648, I_i4_high_open, dtype="i4"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
 
 reveal_type(random_st.randint(2147483648, dtype="int32"))  # E: int
 reveal_type(random_st.randint(-2147483648, 2147483648, dtype="int32"))  # E: int
-reveal_type(random_st.randint(I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(I_i4_low, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(-2147483648, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
+reveal_type(random_st.randint(I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(I_i4_low, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(-2147483648, I_i4_high_open, dtype="int32"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
 
 reveal_type(random_st.randint(2147483648, dtype=np.int32))  # E: int
 reveal_type(random_st.randint(-2147483648, 2147483648, dtype=np.int32))  # E: int
-reveal_type(random_st.randint(I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(I_i4_low, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
-reveal_type(random_st.randint(-2147483648, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]
+reveal_type(random_st.randint(I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(I_i4_low, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+reveal_type(random_st.randint(-2147483648, I_i4_high_open, dtype=np.int32))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._32Bit]]]
+
+reveal_type(random_st.randint(2147483648, dtype=np.int_))  # E: int
+reveal_type(random_st.randint(-2147483648, 2147483648, dtype=np.int_))  # E: int
+reveal_type(random_st.randint(I_i4_high_open, dtype=np.int_))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(random_st.randint(I_i4_low, I_i4_high_open, dtype=np.int_))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(random_st.randint(-2147483648, I_i4_high_open, dtype=np.int_))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
 
 reveal_type(random_st.randint(9223372036854775808, dtype="i8"))  # E: int
 reveal_type(random_st.randint(-9223372036854775808, 9223372036854775808, dtype="i8"))  # E: int
-reveal_type(random_st.randint(I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(I_i8_low, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(-9223372036854775808, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(random_st.randint(I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(I_i8_low, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(-9223372036854775808, I_i8_high_open, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.randint(9223372036854775808, dtype="int64"))  # E: int
 reveal_type(random_st.randint(-9223372036854775808, 9223372036854775808, dtype="int64"))  # E: int
-reveal_type(random_st.randint(I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(I_i8_low, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(-9223372036854775808, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(random_st.randint(I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(I_i8_low, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(-9223372036854775808, I_i8_high_open, dtype="int64"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st.randint(9223372036854775808, dtype=np.int64))  # E: int
 reveal_type(random_st.randint(-9223372036854775808, 9223372036854775808, dtype=np.int64))  # E: int
-reveal_type(random_st.randint(I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(I_i8_low, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
-reveal_type(random_st.randint(-9223372036854775808, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
+reveal_type(random_st.randint(I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(I_i8_low, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
+reveal_type(random_st.randint(-9223372036854775808, I_i8_high_open, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]]
 
 reveal_type(random_st._bit_generator)  # E: BitGenerator
 
