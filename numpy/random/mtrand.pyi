@@ -264,7 +264,7 @@ class RandomState:
         size: _ShapeLike = ...,
         replace: bool = ...,
         p: Optional[_ArrayLikeFloat_co] = ...,
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def choice(
         self,
