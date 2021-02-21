@@ -19,6 +19,24 @@ env:
   PYTHON_VERSION: 3.7
 
 jobs:
+  lint:
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install linter requirements
+      run:
+        python -m pip install -r linter_requirements.txt
+    - name: Run linter on PR diff
+      run:
+        python tools/linter.py --branch origin/${{ github.base_ref }}
+
   smoke_test:
     if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     runs-on: ubuntu-latest
@@ -33,7 +51,7 @@ jobs:
     - uses: ./.github/actions
 
   basic:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -49,7 +67,7 @@ jobs:
     - uses: ./.github/actions
 
   debug:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-20.04
     env:
       USE_DEBUG: 1
@@ -64,7 +82,7 @@ jobs:
     - uses: ./.github/actions
 
   blas64:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
       NPY_USE_BLAS_ILP64: 1
@@ -79,7 +97,7 @@ jobs:
     - uses: ./.github/actions
 
   full:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-18.04
     env:
       USE_WHEEL: 1
@@ -97,7 +115,7 @@ jobs:
     - uses: ./.github/actions
 
   benchmark:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
       PYTHONOPTIMIZE: 2
@@ -118,7 +136,7 @@ jobs:
     - uses: ./.github/actions
 
   no_relaxed_strides:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
       NPY_RELAXED_STRIDES_CHECKING: 0
@@ -135,7 +153,7 @@ jobs:
     - uses: ./.github/actions
 
   use_wheel:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
       USE_WHEEL: 1
@@ -151,7 +169,7 @@ jobs:
     - uses: ./.github/actions
 
   no_array_func:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
       NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: 0
@@ -166,7 +184,7 @@ jobs:
     - uses: ./.github/actions
 
   no_openblas:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
       BLAS: None
@@ -184,7 +202,7 @@ jobs:
     - uses: ./.github/actions
 
   pypy37:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -197,7 +215,7 @@ jobs:
     - uses: ./.github/actions
 
   sdist:
-    needs: smoke_test
+    needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
       USE_SDIST: 1
