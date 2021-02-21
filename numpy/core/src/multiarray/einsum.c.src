@@ -536,6 +536,10 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
     for (coord = shape[1]; coord > 0; --coord) {
         sop(1, ptrs[0], strides[0], shape[0]);
 
+        if(PyErr_Occurred()){
+            return -1;
+        }
+
         ptr = ptrs[1][0] + strides[1][0];
         ptrs[0][0] = ptrs[1][0] = ptr;
         ptr = ptrs[1][1] + strides[1][1];
@@ -590,6 +594,10 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
     for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
         for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
             sop(1, ptrs[0], strides[0], shape[0]);
+
+            if(PyErr_Occurred()){
+                return -1;
+            }
 
             ptr = ptrs[1][0] + strides[1][0];
             ptrs[0][0] = ptrs[1][0] = ptr;
@@ -647,6 +655,10 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
     for (coord = shape[1]; coord > 0; --coord) {
         sop(2, ptrs[0], strides[0], shape[0]);
 
+        if(PyErr_Occurred()){
+            return -1;
+        }
+
         ptr = ptrs[1][0] + strides[1][0];
         ptrs[0][0] = ptrs[1][0] = ptr;
         ptr = ptrs[1][1] + strides[1][1];
@@ -703,6 +715,10 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
     for (coords[1] = shape[2]; coords[1] > 0; --coords[1]) {
         for (coords[0] = shape[1]; coords[0] > 0; --coords[0]) {
             sop(2, ptrs[0], strides[0], shape[0]);
+
+            if(PyErr_Occurred()){
+                return -1;
+            }
 
             ptr = ptrs[1][0] + strides[1][0];
             ptrs[0][0] = ptrs[1][0] = ptr;
@@ -1115,6 +1131,11 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         NPY_EINSUM_DBG_PRINT("Einsum loop\n");
         do {
             sop(nop, dataptr, stride, *countptr);
+
+            if(PyErr_Occurred()){
+                goto fail;
+            }
+
         } while(iternext(iter));
         NPY_END_THREADS;
 
