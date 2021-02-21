@@ -20,8 +20,7 @@ in addition to NumPy.
 
 **Learner profile**
 
-This is a quick overview of
-algebra and arrays in NumPy. It demonstrates how n-dimensional
+This is a quick overview of arrays in NumPy. It demonstrates how n-dimensional
 (:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
 you don't know how to apply common functions to n-dimensional arrays (without
 using for-loops), or if you want to understand axis and shape properties for
@@ -1391,11 +1390,6 @@ Indexing with strings
 
 See :ref:`structured_arrays`.
 
-Linear Algebra
-==============
-
-See :doc:`tutorial-svd`
-
 Tricks and Tips
 ===============
 
@@ -1484,3 +1478,4 @@ Further reading
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
+-  :doc:`tutorial-svd`
