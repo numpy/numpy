@@ -619,38 +619,48 @@ def matrix_power(a, n):
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
 
-    try:
+    try:                            # Branch: 'branch1'
+        branches_covered['Matrix_power']['branch1'] = True
         n = operator.index(n)
-    except TypeError as e:
+    except TypeError as e:          # Branch: 'branch2'
+        branches_covered['Matrix_power']['branch2'] = True
         raise TypeError("exponent must be an integer") from e
 
     # Fall back on dot for object arrays. Object arrays are not supported by
     # the current implementation of matmul using einsum
-    if a.dtype != object:
+    if a.dtype != object:           # Branch: 'branch3'
+        branches_covered['Matrix_power']['branch3'] = True
         fmatmul = matmul
-    elif a.ndim == 2:
+    elif a.ndim == 2:               # Branch: 'branch4'
+        branches_covered['Matrix_power']['branch4'] = True
         fmatmul = dot
-    else:
+    else:                           # Branch: 'branch5'
+        branches_covered['Matrix_power']['branch5'] = True
         raise NotImplementedError(
             "matrix_power not supported for stacks of object arrays")
 
-    if n == 0:
+    if n == 0:                      # Branch: 'branch6'
+        branches_covered['Matrix_power']['branch6'] = True
         a = empty_like(a)
         a[...] = eye(a.shape[-2], dtype=a.dtype)
         return a
 
-    elif n < 0:
+    elif n < 0:                     # Branch: 'branch7'
+        branches_covered['Matrix_power']['branch7'] = True
         a = inv(a)
         n = abs(n)
 
     # short-cuts.
-    if n == 1:
+    if n == 1:                      # Branch: 'branch8'
+        branches_covered['Matrix_power']['branch8'] = True
         return a
 
-    elif n == 2:
+    elif n == 2:                    # Branch: 'branch9'
+        branches_covered['Matrix_power']['branch9'] = True
         return fmatmul(a, a)
 
-    elif n == 3:
+    elif n == 3:                    # Branch: 'branch10'
+        branches_covered['Matrix_power']['branch10'] = True
         return fmatmul(fmatmul(a, a), a)
 
     # Use binary decomposition to reduce the number of matrix multiplications.
@@ -660,7 +670,8 @@ def matrix_power(a, n):
     while n > 0:
         z = a if z is None else fmatmul(z, z)
         n, bit = divmod(n, 2)
-        if bit:
+        if bit:                     # Branch: 'branch11'
+            branches_covered['Matrix_power']['branch11'] = True
             result = z if result is None else fmatmul(result, z)
 
     return result
