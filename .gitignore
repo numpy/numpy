@@ -220,3 +220,4 @@ numpy/core/src/umath/loops_exponent_log.dispatch.c
 
 # Coverage
 *.coverage
+htmlcov/
