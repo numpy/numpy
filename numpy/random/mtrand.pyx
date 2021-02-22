@@ -4476,11 +4476,12 @@ cdef class RandomState:
             if not isinstance(x, Sequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
-                    "`x` isn't a recognized object; `shuffle` is not guaranteed "
-                    "to behave correctly. E.g., non-numpy array/tensor objects "
-                    "with view semantics may contain duplicates after shuffling.",
-                    UserWarning, stacklevel=2
-                )
+                    f"you are shuffling a '{type(x).__name__}' object "
+                    "which is not a subclass of 'Sequence'; "
+                    "`shuffle` is not guaranteed to behave correctly. "
+                    "E.g., non-numpy array/tensor objects with view semantics "
+                    "may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=1)  # Cython does not add a level
 
             with self.lock:
                 for i in reversed(range(1, n)):
