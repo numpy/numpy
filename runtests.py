@@ -53,6 +53,7 @@ else:
 
 import sys
 import os, glob
+import json
 
 # In case we are run from the source directory, we don't want to import the
 # project from there:
@@ -61,6 +62,7 @@ sys.path.pop(0)
 import shutil
 import subprocess
 import time
+from tools.branches_covered import branches_covered
 from argparse import ArgumentParser, REMAINDER
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
@@ -364,6 +366,10 @@ def main(argv):
                       tests=tests)
     finally:
         os.chdir(cwd)
+
+    # Write coverage results to Json
+    with open('coverage_results.json', 'w') as json_file:
+        json.dump(branches_covered, json_file)
 
     if isinstance(result, bool):
         sys.exit(0 if result else 1)
