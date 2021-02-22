@@ -30,9 +30,10 @@ class DiffLinter:
             sys.exit(1)
 
         if uncommitted:
-            diff = self.repo.git.diff(self.head, '***.py')
+            diff = self.repo.git.diff(self.head, '--unified=0', '***.py')
         else:
-            diff = self.repo.git.diff(commit, self.head, '***.py')
+            diff = self.repo.git.diff(commit, self.head,
+                   '--unified=0', '***.py')
         return diff
 
     def run_pycodestyle(self, diff):
