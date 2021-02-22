@@ -1266,10 +1266,14 @@ class TestNonzero:
         assert_equal(np.count_nonzero(x), 4)
         assert_equal(np.nonzero(x), ([0, 2, 3, 6],))
 
-        x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
-                     dtype=[('a', 'i4'), ('b', 'i2')])
+        # x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
+        #              dtype=[('a', 'i4'), ('b', 'i2')])
+        x = np.array([(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
+                     dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')])
         assert_equal(np.count_nonzero(x['a']), 3)
         assert_equal(np.count_nonzero(x['b']), 4)
+        assert_equal(np.count_nonzero(x['c']), 3)
+        assert_equal(np.count_nonzero(x['d']), 4)
         assert_equal(np.nonzero(x['a']), ([0, 2, 3],))
         assert_equal(np.nonzero(x['b']), ([0, 2, 3, 4],))
 
@@ -1296,11 +1300,17 @@ class TestNonzero:
 
     def test_nonzero_twodim(self):
         x = np.array([[0, 1, 0], [2, 0, 3]])
-        assert_equal(np.count_nonzero(x), 3)
+        assert_equal(np.count_nonzero(x.astype('i1')), 3)
+        assert_equal(np.count_nonzero(x.astype('i2')), 3)
+        assert_equal(np.count_nonzero(x.astype('i4')), 3)
+        assert_equal(np.count_nonzero(x.astype('i8')), 3)
         assert_equal(np.nonzero(x), ([0, 1, 1], [1, 0, 2]))
 
         x = np.eye(3)
-        assert_equal(np.count_nonzero(x), 3)
+        assert_equal(np.count_nonzero(x.astype('i1')), 3)
+        assert_equal(np.count_nonzero(x.astype('i2')), 3)
+        assert_equal(np.count_nonzero(x.astype('i4')), 3)
+        assert_equal(np.count_nonzero(x.astype('i8')), 3)
         assert_equal(np.nonzero(x), ([0, 1, 2], [0, 1, 2]))
 
         x = np.array([[(0, 1), (0, 0), (1, 11)],
@@ -1742,6 +1752,27 @@ class TestNonzero:
         # raise exception in second pass for n-dimensional loop
         a = np.array([[ThrowsAfter(15)]]*10)
         assert_raises(ValueError, np.nonzero, a)
+
+    def test_structured_threadsafety(self):
+        # Nonzero (and some other functions) should be threadsafe for
+        # structured datatypes, see gh-15387. This test can behave randomly.
+        from concurrent.futures import ThreadPoolExecutor
+
+        # Create a deeply nested dtype to make a failure more likely:
+        dt = np.dtype([("", "f8")])
+        dt = np.dtype([("", dt)])
+        dt = np.dtype([("", dt)] * 2)
+        # The array should be large enough to likely run into threading issues
+        arr = np.random.uniform(size=(5000, 4)).view(dt)[:, 0]
+        def func(arr):
+            arr.nonzero()
+
+        tpe = ThreadPoolExecutor(max_workers=8)
+        futures = [tpe.submit(func, arr) for _ in range(10)]
+        for f in futures:
+            f.result()
+
+        assert arr.dtype is dt
 
 
 class TestIndex:

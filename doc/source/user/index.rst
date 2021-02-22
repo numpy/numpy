@@ -34,7 +34,6 @@ details are found in :ref:`reference`.
 .. toctree::
    :hidden:
 
-   explanations_index
    ../f2py/index
    ../glossary
    ../dev/underthehood
