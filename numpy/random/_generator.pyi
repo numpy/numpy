@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union, overload
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union, overload, TypeVar
 
 from numpy import (
     bool_,
@@ -49,6 +49,8 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
+_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
+
 _DTypeLikeFloat32 = Union[
     dtype[float32],
     _SupportsDType[dtype[float32]],
@@ -72,7 +74,7 @@ class Generator:
     def __str__(self) -> str: ...
     def __getstate__(self) -> Dict[str, Any]: ...
     def __setstate__(self, state: Dict[str, Any]) -> None: ...
-    def __reduce__(self) -> Tuple[Callable[[str], BitGenerator], Tuple[str], Dict[str, Any]]: ...
+    def __reduce__(self) -> Tuple[Callable[[str], Generator], Tuple[str], Dict[str, Any]]: ...
     @property
     def bit_generator(self) -> BitGenerator: ...
     def bytes(self, length: int) -> bytes: ...
@@ -207,15 +209,6 @@ class Generator:
         low: int,
         high: Optional[int] = ...,
     ) -> int: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: Optional[int] = ...,
-        size: None = ...,
-        dtype: _DTypeLikeBool = ...,
-        endpoint: bool = ...,
-    ) -> bool: ...
     @overload
     def integers(  # type: ignore[misc]
         self,
