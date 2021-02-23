@@ -1,9 +1,55 @@
-from typing import TypeVar, Optional, Type, Union, Tuple, Sequence, overload, Any
+import sys
+from typing import (
+    TypeVar,
+    Optional,
+    Type,
+    Union,
+    Tuple,
+    Sequence,
+    overload,
+    Any,
+    TypeVar,
+    Dict,
+    List,
+)
 
 from numpy import generic, ndarray, dtype
-from numpy.typing import DTypeLike
+
+from numpy.core._type_aliases import (
+    sctypeDict as sctypeDict,
+    sctypes as sctypes,
+)
+
+from numpy.typing import DTypeLike, ArrayLike
+
+if sys.version_info >= (3, 8):
+    from typing import Literal, Protocol, TypedDict
+else:
+    from typing_extensions import Literal, Protocol, TypedDict
 
 _T = TypeVar("_T")
+_ScalarType = TypeVar("_ScalarType", bound=generic)
+
+class _CastFunc(Protocol):
+    def __call__(
+        self, x: ArrayLike, k: DTypeLike = ...
+    ) -> ndarray[Any, dtype[Any]]: ...
+
+class _TypeCodes(TypedDict):
+    Character: Literal['c']
+    Integer: Literal['bhilqp']
+    UnsignedInteger: Literal['BHILQP']
+    Float: Literal['efdg']
+    Complex: Literal['FDG']
+    AllInteger: Literal['bBhHiIlLqQpP']
+    AllFloat: Literal['efdgFDG']
+    Datetime: Literal['Mm']
+    All: Literal['?bhilqpBHILQPefdgFDGSUVOMm']
+
+class _typedict(Dict[Type[generic], _T]):
+    def __getitem__(self, key: DTypeLike) -> _T: ...
+
+__all__: List[str]
 
 def maximum_sctype(t: DTypeLike) -> dtype: ...
 def issctype(rep: object) -> bool: ...
@@ -25,5 +71,7 @@ def find_common_type(
     array_types: Sequence[DTypeLike], scalar_types: Sequence[DTypeLike]
 ) -> dtype: ...
 
-# TODO: Add annotations for the following objects:
-# nbytes, cast, ScalarType & typecodes
+cast: _typedict[_CastFunc]
+nbytes: _typedict[int]
+typecodes: _TypeCodes
+ScalarType: Tuple[type, ...]
