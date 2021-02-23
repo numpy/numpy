@@ -408,7 +408,15 @@ dstack: Any
 ediff1d: Any
 expand_dims: Any
 extract: Any
-eye: Any
+def eye(
+    N: int,
+    M: int = ...,
+    k: int = ...,
+    dtype: DTypeLike = ...,
+    order: str = ...,
+    *,
+    like: ArrayLike = ...
+) -> ndarray: ...
 fill_diagonal: Any
 finfo: Any
 flip: Any
