@@ -51,6 +51,8 @@ class _typedict(Dict[Type[generic], _T]):
 
 __all__: List[str]
 
+# TODO: Clean up the annotations for the 7 functions below
+
 def maximum_sctype(t: DTypeLike) -> dtype: ...
 def issctype(rep: object) -> bool: ...
 @overload
