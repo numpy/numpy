@@ -410,13 +410,13 @@ expand_dims: Any
 extract: Any
 def eye(
     N: int,
-    M: int = ...,
+    M: Optional[int] = ...,
     k: int = ...,
     dtype: DTypeLike = ...,
-    order: str = ...,
+    order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...
-) -> ndarray: ...
+    like: Optional[ArrayLike] = ...
+) -> ndarray[Any, Any]: ...
 fill_diagonal: Any
 finfo: Any
 flip: Any
