@@ -294,6 +294,14 @@ def log10(x: array, /) -> array:
     """
     return np.log10(x)
 
+def logaddexp(x1: array, x2: array) -> array:
+    """
+    Array API compatible wrapper for :py:func:`np.logaddexp <numpy.logaddexp>`.
+
+    See its docstring for more information.
+    """
+    return np.logaddexp(x1, x2)
+
 def logical_and(x1: array, x2: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.logical_and <numpy.logical_and>`.

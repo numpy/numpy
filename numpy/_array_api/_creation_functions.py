@@ -1,8 +1,20 @@
 from __future__ import annotations
 
-from ._types import Optional, Tuple, Union, array, device, dtype
+from ._types import (Optional, SupportsDLPack, SupportsBufferProtocol, Tuple,
+                     Union, array, device, dtype)
 
 import numpy as np
+
+def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, SupportsBufferProtocol], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None, copy: Optional[bool] = None) -> array:
+    """
+    Array API compatible wrapper for :py:func:`np.asarray <numpy.asarray>`.
+
+    See its docstring for more information.
+    """
+    if device is not None:
+        # Note: Device support is not yet implemented on ndarray
+        raise NotImplementedError("Device support is not yet implemented")
+    return np.asarray(obj, dtype=dtype, copy=copy)
 
 def arange(start: Union[int, float], /, *, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -47,6 +59,10 @@ def eye(N: int, /, *, M: Optional[int] = None, k: Optional[int] = 0, dtype: Opti
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
     return np.eye(N, M=M, k=k, dtype=dtype)
+
+def from_dlpack(x: object, /) -> array:
+    # Note: dlpack support is not yet implemented on ndarray
+    raise NotImplementedError("DLPack support is not yet implemented")
 
 def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
