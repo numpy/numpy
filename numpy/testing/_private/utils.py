@@ -1529,6 +1529,64 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
                          verbose=verbose, header=header, equal_nan=equal_nan)
 
 
+def assert_notclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
+                    err_msg='', verbose=True):
+    """
+    Raises an AssertionError if two objects are equal up to desired
+    tolerance.
+
+    The test is equivalent to ``not allclose(actual, desired, rtol, atol)`` (note
+    that ``allclose`` has different default values). It compares the difference
+    between `actual` and `desired` to ``atol + rtol * abs(desired)``.
+
+    .. versionadded:: 1.21.0
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    rtol : float, optional
+        Relative tolerance.
+    atol : float, optional
+        Absolute tolerance.
+    equal_nan : bool, optional.
+        If True, NaNs will compare equal.
+    err_msg : str, optional
+        The error message to be printed in case of failure.
+    verbose : bool, optional
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+        If actual and desired are equal up to specified precision.
+
+    See Also
+    --------
+    assert_allclose
+
+    Examples
+    --------
+    >>> x = [1e-5, 1e-3, 1e-1]
+    >>> y = np.arccos(np.cos(x))
+    >>> np.testing.assert_notclose(x, y, rtol=1e-5, atol=0)
+
+    """
+    __tracebackhide__ = True  # Hide traceback for py.test
+    import numpy as np
+
+    def compare(x, y):
+        return ~np.core.numeric.isclose(x, y, rtol=rtol, atol=atol,
+                                       equal_nan=equal_nan)
+
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    header = f'Equal to tolerance rtol={rtol:g}, atol={atol:g}'
+    assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
+                         verbose=verbose, header=header, equal_nan=equal_nan)
+
+
 def assert_array_almost_equal_nulp(x, y, nulp=1):
     """
     Compare two arrays relatively to their spacing.
