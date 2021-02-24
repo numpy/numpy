@@ -19,6 +19,8 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
     if copy is not None:
         # Note: copy is not yet implemented in np.asarray
         raise NotImplementedError("The copy keyword argument to asarray is not yet implemented")
+    if isinstance(obj, ndarray):
+        return obj
     res = np.asarray(obj, dtype=dtype)
     if res.dtype not in _dtypes._all_dtypes:
         raise TypeError(f"The array_api namespace does not support the dtype {res.dtype}")
