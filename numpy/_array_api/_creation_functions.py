@@ -14,7 +14,10 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.asarray(obj, dtype=dtype, copy=copy)
+    if copy is not None:
+        # Note: copy is not yet implemented in np.asarray
+        raise NotImplementedError("The copy keyword argument to asarray is not yet implemented")
+    return np.asarray(obj, dtype=dtype)
 
 def arange(start: Union[int, float], /, *, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
