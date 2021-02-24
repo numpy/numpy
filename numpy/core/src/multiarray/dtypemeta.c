@@ -167,7 +167,7 @@ void_discover_descr_from_pyobject(
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
         }
-        descr->elsize = itemsize;
+        descr->elsize = (int)itemsize;
         return descr;
     }
     PyErr_Format(PyExc_TypeError,
