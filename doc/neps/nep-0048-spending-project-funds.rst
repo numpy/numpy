@@ -18,7 +18,7 @@ Abstract
 
 The NumPy project has historically never received significant **unrestricted**
 funding. However, that is starting to change.  This NEP aims to provide
-guidance about spending NumPy project unrestricted funds, by formulating a set
+guidance about spending NumPy project unrestricted funds by formulating a set
 of principles about *what* to pay for and *who* to pay. It will also touch on
 how decisions regarding spending funds get made, how funds get administered,
 and transparency around these topics.
@@ -27,10 +27,10 @@ and transparency around these topics.
 Motivation and Scope
 --------------------
 
-In its 16+ year history, the NumPy project has only spent on the order of
+Since its inception and until 2020, the NumPy project has only spent on the order of
 $10,000 USD of funds that were not restricted to a particular program.  Project
 income of this type has been relying on donations from individuals and, from
-May 2019, recurring monthly contributions from Tidelift. By the end of 2020,
+mid 2019, recurring monthly contributions from Tidelift. By the end of 2020,
 the Tidelift contributions increased to $3,000/month, and there's also a
 potential for an increase of donations and grants going directly to the
 project. Having a clear set of principles around how to use these funds will
@@ -62,7 +62,7 @@ Out of scope for this NEP are:
   executed. In some cases, we may not even know the contributions were funded
   or done by an employee on work time. (Whether that's the case or not should
   not change how we approach a contribution).  For grants though, we do expect
-  the PI and funded team to align their work with the project's needs and be
+  the research/project leader and funded team to align their work with the needs of NumPy and be
   receptive to feedback from other NumPy maintainers and contributors.*
 
 
@@ -100,9 +100,9 @@ be giving to (a) the most boring/painful tasks that no one likes doing, and to
 necessary structural changes to the code base that are too large to be done by
 a volunteer in a reasonable amount of time.
 
-There are also a large amount of tasks, activities, and projects outside of
+There are also many tasks, activities, and projects outside of
 development work that are important and could enhance the project or community
-- think for example of user surveys, translations, outreach, dedicated
+- think of, for example, user surveys, translations, outreach, dedicated
 mentoring of newcomers, community organization, website improvements, and
 administrative tasks.
 
@@ -126,7 +126,7 @@ It will likely depend on the project/tasks whether there's already a clear best
 candidate within the NumPy team, or whether we look for new people to get
 involved. Before making any decisions, the decision makers should think about
 whether an opportunity should be advertised to give a wider group of people a
-chance to throw their hat in the ring for it.
+chance to apply for it.
 
 Compensating fairly
 ```````````````````
@@ -143,7 +143,7 @@ We consider them both extreme:
 
 - "Same work -- same pay" is unfair to people living in locations with a higher
   cost of living. For example, the average rent for a single family apartment
-  can differ by a large factor (from a few hundred dollar to thousands of
+  can differ by a large factor (from a few hundred dollars to thousands of
   dollars per month).
 - "Pay local market rates" bakes in existing inequalities between countries
   and makes fixed-cost items like a development machine or a holiday trip
@@ -293,7 +293,7 @@ all transactions is probably fine, but not necessary.
 effort required.*
 
 
-History and current status
+NumPy funding – history and current status
 --------------------------
 
 The NumPy project received its first major funding in 2017. For an overview of
@@ -324,7 +324,7 @@ its "managed open source" business model. From May 2019 till July 2020 this was
 $1,000/month, and it started steadily growing after that to about $3,000/month
 (as of Feb 2021).
 
-Finally there have been other incidental project income, for example some book
+Finally, there has been other incidental project income, for example, some book
 royalties from Packt Publishing, GSoC mentoring fees from Google, and
 merchandise sales revenue through the NumFOCUS web shop. All of these were
 small (two or three figure) amounts.
@@ -336,7 +336,7 @@ website and Sphinx theme. Those spending decisions were made by the NumPy
 Steering Council and announced on the mailing list.
 
 That leaves about $25,000 in available funds at the time of writing, and
-that amount is current growing at a rate of about $3,000/month.
+that amount is currently growing at a rate of about $3,000/month.
 
 
 Related Work
