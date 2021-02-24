@@ -162,12 +162,12 @@ void_discover_descr_from_pyobject(
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
-        Py_ssize_t itemsize = (int)PyBytes_Size(obj);
+        Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
         }
-        descr->elsize = itemsize;
+        descr->elsize = (int)itemsize;
         return descr;
     }
     PyErr_Format(PyExc_TypeError,
