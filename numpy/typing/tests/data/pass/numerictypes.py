@@ -27,3 +27,21 @@ np.find_common_type([], [np.int64, np.float32, complex])
 np.find_common_type((), (np.int64, np.float32, complex))
 np.find_common_type([np.int64, np.float32], [])
 np.find_common_type([np.float32], [np.int64, np.float64])
+
+np.cast[int]
+np.cast["i8"]
+np.cast[np.int64]
+
+np.nbytes[int]
+np.nbytes["i8"]
+np.nbytes[np.int64]
+
+np.ScalarType
+np.ScalarType[0]
+np.ScalarType[4]
+np.ScalarType[9]
+np.ScalarType[11]
+
+np.typecodes["Character"]
+np.typecodes["Complex"]
+np.typecodes["All"]
