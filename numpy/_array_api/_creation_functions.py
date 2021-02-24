@@ -11,13 +11,18 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
+    from . import _dtypes
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
     if copy is not None:
         # Note: copy is not yet implemented in np.asarray
         raise NotImplementedError("The copy keyword argument to asarray is not yet implemented")
-    return np.asarray(obj, dtype=dtype)
+    res = np.asarray(obj, dtype=dtype)
+    if res.dtype not in _dtypes._all_dtypes:
+        raise TypeError(f"The array_api namespace does not support the dtype {res.dtype}")
+    return ndarray._new(res)
 
 def arange(start: Union[int, float], /, *, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
