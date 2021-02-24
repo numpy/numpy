@@ -27,6 +27,10 @@ and transparency around these topics.
 Motivation and Scope
 --------------------
 
+NumPy is a fiscally sponsored project of NumFOCUS, a 501(c)(3) nonprofit organization headquartered in Austin, TX. Therefore, for all legal and accounting matters the NumPy project has to follow the rules and regulations for US nonprofits. All nonprofit donations are classified into two categories: **unrestricted funds** which may be used for any legal purpose appropriate to the organization and **restricted funds**, monies set aside for a particular purpose (e.g., project, educational program, etc.). It’s important to note that restricted funds are **permanently restricted** to that purpose and cannot be used for any other expenses.  
+
+For the detailed timeline of NumPy funding refer to [NumPy funding – history and current status](#history-and-current-status).
+
 Since its inception and until 2020, the NumPy project has only spent on the order of
 $10,000 USD of funds that were not restricted to a particular program.  Project
 income of this type has been relying on donations from individuals and, from
