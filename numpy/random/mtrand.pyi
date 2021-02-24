@@ -125,7 +125,6 @@ class RandomState:
         high: Optional[int] = ...,
         size: None = ...,
         dtype: _DTypeLikeBool = ...,
-        endpoint: bool = ...,
     ) -> bool: ...
     @overload
     def randint(  # type: ignore[misc]
