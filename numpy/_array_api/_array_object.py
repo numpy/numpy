@@ -40,6 +40,23 @@ class ndarray:
     def __new__(cls, *args, **kwargs):
         raise TypeError("The array_api ndarray object should not be instantiated directly. Use an array creation function, such as asarray(), instead.")
 
+    # These functions are not required by the spec, but are implemented for
+    # the sake of usability.
+
+    def __str__(x: array, /) -> str:
+        """
+        Performs the operation __str__.
+        """
+        return x._array.__str__()
+
+    def __repr__(x: array, /) -> str:
+        """
+        Performs the operation __repr__.
+        """
+        return x._array.__repr__()
+
+    # Everything below this is required by the spec.
+
     def __abs__(x: array, /) -> array:
         """
         Performs the operation __abs__.
