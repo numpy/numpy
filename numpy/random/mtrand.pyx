@@ -784,7 +784,7 @@ cdef class RandomState:
 
         Returns
         -------
-        out : str
+        out : bytes
             String of length `length`.
 
         See Also
