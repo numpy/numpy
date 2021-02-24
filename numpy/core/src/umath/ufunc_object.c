@@ -5222,6 +5222,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 if (current->arg_dtypes == NULL) {
                     PyErr_NoMemory();
                     result = -1;
+                    goto done;
                 }
                 else if (arg_dtypes != NULL) {
                     for (i = 0; i < ufunc->nargs; i++) {
