@@ -644,6 +644,12 @@ cdef class Generator:
         --------
         integers, shuffle, permutation
 
+        Notes
+        -----
+        Setting user-specified probabilities through ``p`` uses a more general but less
+        efficient sampler than the default. The general sampler produces a different sample
+        than the optimized sampler even if each element of ``p`` is 1 / len(a).
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:

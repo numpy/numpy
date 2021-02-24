@@ -852,6 +852,10 @@ cdef class RandomState:
 
         Notes
         -----
+        Setting user-specified probabilities through ``p`` uses a more general but less
+        efficient sampler than the default. The general sampler produces a different sample
+        than the optimized sampler even if each element of ``p`` is 1 / len(a).
+
         Sampling random rows from a 2-D array is not possible with this function,
         but is possible with `Generator.choice` through its ``axis`` keyword.
 
