@@ -1331,10 +1331,10 @@ get_datetime_to_unicode_transfer_function(int aligned,
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
     str_dtype = PyArray_DescrNewFromType(NPY_STRING);
-    str_dtype->elsize = dst_dtype->elsize / 4;
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
+    str_dtype->elsize = dst_dtype->elsize / 4;
 
     /* Get the copy/swap operation to dst */
     if (PyArray_GetDTypeCopySwapFn(aligned,

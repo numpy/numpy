@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union, overload, TypeVar
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union, overload
 
 from numpy import (
     bool_,
@@ -18,7 +18,7 @@ from numpy import (
     uint32,
     uint64,
 )
-from numpy.random import BitGenerator, SeedSequence
+from numpy.random.bit_generator import BitGenerator
 from numpy.typing import (
     ArrayLike,
     _ArrayLikeFloat_co,
@@ -49,8 +49,6 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
-_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
-
 _DTypeLikeFloat32 = Union[
     dtype[float32],
     _SupportsDType[dtype[float32]],
@@ -68,129 +66,32 @@ _DTypeLikeFloat64 = Union[
     _DoubleCodes,
 ]
 
-class Generator:
-    def __init__(self, bit_generator: BitGenerator) -> None: ...
+class RandomState:
+    _bit_generator: BitGenerator
+    def __init__(self, seed: Union[None, _ArrayLikeInt_co, BitGenerator] = ...) -> None: ...
     def __repr__(self) -> str: ...
     def __str__(self) -> str: ...
     def __getstate__(self) -> Dict[str, Any]: ...
     def __setstate__(self, state: Dict[str, Any]) -> None: ...
-    def __reduce__(self) -> Tuple[Callable[[str], Generator], Tuple[str], Dict[str, Any]]: ...
-    @property
-    def bit_generator(self) -> BitGenerator: ...
-    def bytes(self, length: int) -> bytes: ...
+    def __reduce__(self) -> Tuple[Callable[[str], RandomState], Tuple[str], Dict[str, Any]]: ...
+    def seed(self, seed: Optional[_ArrayLikeFloat_co] = ...) -> None: ...
     @overload
-    def standard_normal(  # type: ignore[misc]
-        self,
-        size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
-        out: None = ...,
-    ) -> float: ...
+    def get_state(self, legacy: Literal[False] = ...) -> Dict[str, Any]: ...
     @overload
-    def standard_normal(  # type: ignore[misc]
-        self,
-        size: _ShapeLike = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
+    def get_state(
+        self, legacy: Literal[True] = ...
+    ) -> Union[Dict[str, Any], Tuple[str, ndarray[Any, dtype[uint32]], int, int, float]]: ...
+    def set_state(
+        self, state: Union[Dict[str, Any], Tuple[str, ndarray[Any, dtype[uint32]], int, int, float]]
+    ) -> None: ...
     @overload
-    def standard_normal(  # type: ignore[misc]
-        self,
-        *,
-        out: ndarray[Any, dtype[float64]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
+    def random_sample(self, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
-    def standard_normal(  # type: ignore[misc]
-        self,
-        size: _ShapeLike = ...,
-        dtype: _DTypeLikeFloat32 = ...,
-        out: Optional[ndarray[Any, dtype[float32]]] = ...,
-    ) -> ndarray[Any, dtype[float32]]: ...
+    def random_sample(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def standard_normal(  # type: ignore[misc]
-        self,
-        size: _ShapeLike = ...,
-        dtype: _DTypeLikeFloat64 = ...,
-        out: Optional[ndarray[Any, dtype[float64]]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
+    def random(self, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
-    def permutation(self, x: int, axis: int = ...) -> ndarray[Any, dtype[int64]]: ...
-    @overload
-    def permutation(self, x: ArrayLike, axis: int = ...) -> ndarray[Any, Any]: ...
-    @overload
-    def standard_exponential(  # type: ignore[misc]
-        self,
-        size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
-        method: Literal["zig", "inv"] = ...,
-        out: None = ...,
-    ) -> float: ...
-    @overload
-    def standard_exponential(
-        self,
-        size: _ShapeLike = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def standard_exponential(
-        self,
-        *,
-        out: ndarray[Any, dtype[float64]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def standard_exponential(
-        self,
-        size: _ShapeLike = ...,
-        *,
-        method: Literal["zig", "inv"] = ...,
-        out: Optional[ndarray[Any, dtype[float64]]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def standard_exponential(
-        self,
-        size: _ShapeLike = ...,
-        dtype: _DTypeLikeFloat32 = ...,
-        method: Literal["zig", "inv"] = ...,
-        out: Optional[ndarray[Any, dtype[float32]]] = ...,
-    ) -> ndarray[Any, dtype[float32]]: ...
-    @overload
-    def standard_exponential(
-        self,
-        size: _ShapeLike = ...,
-        dtype: _DTypeLikeFloat64 = ...,
-        method: Literal["zig", "inv"] = ...,
-        out: Optional[ndarray[Any, dtype[float64]]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def random(  # type: ignore[misc]
-        self,
-        size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
-        out: None = ...,
-    ) -> float: ...
-    @overload
-    def random(
-        self,
-        *,
-        out: ndarray[Any, dtype[float64]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def random(
-        self,
-        size: _ShapeLike = ...,
-        *,
-        out: Optional[ndarray[Any, dtype[float64]]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def random(
-        self,
-        size: _ShapeLike = ...,
-        dtype: _DTypeLikeFloat32 = ...,
-        out: Optional[ndarray[Any, dtype[float32]]] = ...,
-    ) -> ndarray[Any, dtype[float32]]: ...
-    @overload
-    def random(
-        self,
-        size: _ShapeLike = ...,
-        dtype: _DTypeLikeFloat64 = ...,
-        out: Optional[ndarray[Any, dtype[float64]]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
+    def random(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def beta(self, a: float, b: float, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
@@ -204,74 +105,76 @@ class Generator:
         self, scale: _ArrayLikeFloat_co = ..., size: Optional[_ShapeLike] = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def standard_exponential(self, size: None = ...) -> float: ...  # type: ignore[misc]
+    @overload
+    def standard_exponential(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[float64]]: ...
+    @overload
+    def tomaxint(self, size: None = ...) -> int: ...  # type: ignore[misc]
+    @overload
+    def tomaxint(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[int_]]: ...
+    @overload
+    def randint(  # type: ignore[misc]
         self,
         low: int,
         high: Optional[int] = ...,
     ) -> int: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: int,
         high: Optional[int] = ...,
         size: None = ...,
         dtype: _DTypeLikeBool = ...,
-        endpoint: bool = ...,
     ) -> bool: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: int,
         high: Optional[int] = ...,
         size: None = ...,
         dtype: Union[_DTypeLikeInt, _DTypeLikeUInt] = ...,
-        endpoint: bool = ...,
     ) -> int: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
         dtype: _DTypeLikeBool = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[bool_]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
         dtype: Union[dtype[int8], Type[int8], _Int8Codes, _SupportsDType[dtype[int8]]] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int8]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
         dtype: Union[dtype[int16], Type[int16], _Int16Codes, _SupportsDType[dtype[int16]]] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int16]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
         dtype: Union[dtype[int32], Type[int32], _Int32Codes, _SupportsDType[dtype[int32]]] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[Union[int32]]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
@@ -279,19 +182,17 @@ class Generator:
         dtype: Optional[
             Union[dtype[int64], Type[int64], _Int64Codes, _SupportsDType[dtype[int64]]]
         ] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
         dtype: Union[dtype[uint8], Type[uint8], _UInt8Codes, _SupportsDType[dtype[uint8]]] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint8]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
@@ -299,10 +200,9 @@ class Generator:
         dtype: Union[
             dtype[uint16], Type[uint16], _UInt16Codes, _SupportsDType[dtype[uint16]]
         ] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[Union[uint16]]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
@@ -310,10 +210,9 @@ class Generator:
         dtype: Union[
             dtype[uint32], Type[uint32], _UInt32Codes, _SupportsDType[dtype[uint32]]
         ] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint32]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
@@ -321,10 +220,9 @@ class Generator:
         dtype: Union[
             dtype[uint64], Type[uint64], _UInt64Codes, _SupportsDType[dtype[uint64]]
         ] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint64]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
@@ -332,18 +230,16 @@ class Generator:
         dtype: Union[
             dtype[int_], Type[int], Type[int_], _IntCodes, _SupportsDType[dtype[int_]]
         ] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int_]]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
         dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
-        endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint]]: ...
-    # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> Union[_T, ndarray[Any,Any]]
+    def bytes(self, length: int) -> bytes: ...
     @overload
     def choice(
         self,
@@ -351,8 +247,6 @@ class Generator:
         size: None = ...,
         replace: bool = ...,
         p: Optional[_ArrayLikeFloat_co] = ...,
-        axis: int = ...,
-        shuffle: bool = ...,
     ) -> int: ...
     @overload
     def choice(
@@ -361,9 +255,7 @@ class Generator:
         size: _ShapeLike = ...,
         replace: bool = ...,
         p: Optional[_ArrayLikeFloat_co] = ...,
-        axis: int = ...,
-        shuffle: bool = ...,
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def choice(
         self,
@@ -371,8 +263,6 @@ class Generator:
         size: None = ...,
         replace: bool = ...,
         p: Optional[_ArrayLikeFloat_co] = ...,
-        axis: int = ...,
-        shuffle: bool = ...,
     ) -> Any: ...
     @overload
     def choice(
@@ -381,8 +271,6 @@ class Generator:
         size: _ShapeLike = ...,
         replace: bool = ...,
         p: Optional[_ArrayLikeFloat_co] = ...,
-        axis: int = ...,
-        shuffle: bool = ...,
     ) -> ndarray[Any, Any]: ...
     @overload
     def uniform(self, low: float = ..., high: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
@@ -392,6 +280,29 @@ class Generator:
         low: _ArrayLikeFloat_co = ...,
         high: _ArrayLikeFloat_co = ...,
         size: Optional[_ShapeLike] = ...,
+    ) -> ndarray[Any, dtype[float64]]: ...
+    @overload
+    def rand(self) -> float: ...
+    @overload
+    def rand(self, *args: int) -> ndarray[Any, dtype[float64]]: ...
+    @overload
+    def randn(self) -> float: ...
+    @overload
+    def randn(self, *args: int) -> ndarray[Any, dtype[float64]]: ...
+    @overload
+    def random_integers(self, low: int, high: Optional[int] = ..., size: None = ...) -> int: ...  # type: ignore[misc]
+    @overload
+    def random_integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: Optional[_ArrayLikeInt_co] = ...,
+        size: Optional[_ShapeLike] = ...,
+    ) -> ndarray[Any, dtype[int_]]: ...
+    @overload
+    def standard_normal(self, size: None = ...) -> float: ...  # type: ignore[misc]
+    @overload
+    def standard_normal(  # type: ignore[misc]
+        self, size: _ShapeLike = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def normal(self, loc: float = ..., scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
@@ -407,37 +318,12 @@ class Generator:
         self,
         shape: float,
         size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
-        out: None = ...,
     ) -> float: ...
     @overload
     def standard_gamma(
         self,
         shape: _ArrayLikeFloat_co,
         size: Optional[_ShapeLike] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def standard_gamma(
-        self,
-        shape: _ArrayLikeFloat_co,
-        *,
-        out: ndarray[Any, dtype[float64]] = ...,
-    ) -> ndarray[Any, dtype[float64]]: ...
-    @overload
-    def standard_gamma(
-        self,
-        shape: _ArrayLikeFloat_co,
-        size: Optional[_ShapeLike] = ...,
-        dtype: _DTypeLikeFloat32 = ...,
-        out: Optional[ndarray[Any, dtype[float32]]] = ...,
-    ) -> ndarray[Any, dtype[float32]]: ...
-    @overload
-    def standard_gamma(
-        self,
-        shape: _ArrayLikeFloat_co,
-        size: Optional[_ShapeLike] = ...,
-        dtype: _DTypeLikeFloat64 = ...,
-        out: Optional[ndarray[Any, dtype[float64]]] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def gamma(self, shape: float, scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
@@ -577,31 +463,31 @@ class Generator:
     @overload
     def binomial(
         self, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def negative_binomial(self, n: float, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def negative_binomial(
         self, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def poisson(self, lam: float = ..., size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def poisson(
         self, lam: _ArrayLikeFloat_co = ..., size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def zipf(self, a: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def zipf(
         self, a: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def geometric(self, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def geometric(
         self, p: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def hypergeometric(self, ngood: int, nbad: int, nsample: int, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
@@ -611,13 +497,13 @@ class Generator:
         nbad: _ArrayLikeInt_co,
         nsample: _ArrayLikeInt_co,
         size: Optional[_ShapeLike] = ...,
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def logseries(self, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def logseries(
         self, p: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     def multivariate_normal(
         self,
         mean: _ArrayLikeFloat_co,
@@ -625,27 +511,69 @@ class Generator:
         size: Optional[_ShapeLike] = ...,
         check_valid: Literal["warn", "raise", "ignore"] = ...,
         tol: float = ...,
-        *,
-        method: Literal["svd", "eigh", "cholesky"] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     def multinomial(
         self, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
-    ) -> ndarray[Any, dtype[int64]]: ...
-    def multivariate_hypergeometric(
-        self,
-        colors: _ArrayLikeInt_co,
-        nsample: int,
-        size: Optional[_ShapeLike] = ...,
-        method: Literal["marginals", "count"] = ...,
-    ) -> ndarray[Any, dtype[int64]]: ...
+    ) -> ndarray[Any, dtype[int_]]: ...
     def dirichlet(
         self, alpha: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
     ) -> ndarray[Any, dtype[float64]]: ...
-    def permuted(
-        self, x: ArrayLike, *, axis: Optional[int] = ..., out: Optional[ndarray[Any, Any]] = ...
-    ) -> ndarray[Any, Any]: ...
-    def shuffle(self, x: ArrayLike, axis: int = ...) -> None: ...
+    def shuffle(self, x: ArrayLike) -> None: ...
+    @overload
+    def permutation(self, x: int) -> ndarray[Any, dtype[int_]]: ...
+    @overload
+    def permutation(self, x: ArrayLike) -> ndarray[Any, Any]: ...
 
-def default_rng(
-    seed: Union[None, _ArrayLikeInt_co, SeedSequence, BitGenerator, Generator] = ...
-) -> Generator: ...
+_rand: RandomState
+
+beta = _rand.beta
+binomial = _rand.binomial
+bytes = _rand.bytes
+chisquare = _rand.chisquare
+choice = _rand.choice
+dirichlet = _rand.dirichlet
+exponential = _rand.exponential
+f = _rand.f
+gamma = _rand.gamma
+get_state = _rand.get_state
+geometric = _rand.geometric
+gumbel = _rand.gumbel
+hypergeometric = _rand.hypergeometric
+laplace = _rand.laplace
+logistic = _rand.logistic
+lognormal = _rand.lognormal
+logseries = _rand.logseries
+multinomial = _rand.multinomial
+multivariate_normal = _rand.multivariate_normal
+negative_binomial = _rand.negative_binomial
+noncentral_chisquare = _rand.noncentral_chisquare
+noncentral_f = _rand.noncentral_f
+normal = _rand.normal
+pareto = _rand.pareto
+permutation = _rand.permutation
+poisson = _rand.poisson
+power = _rand.power
+rand = _rand.rand
+randint = _rand.randint
+randn = _rand.randn
+random = _rand.random
+random_integers = _rand.random_integers
+random_sample = _rand.random_sample
+rayleigh = _rand.rayleigh
+seed = _rand.seed
+set_state = _rand.set_state
+shuffle = _rand.shuffle
+standard_cauchy = _rand.standard_cauchy
+standard_exponential = _rand.standard_exponential
+standard_gamma = _rand.standard_gamma
+standard_normal = _rand.standard_normal
+standard_t = _rand.standard_t
+triangular = _rand.triangular
+uniform = _rand.uniform
+vonmises = _rand.vonmises
+wald = _rand.wald
+weibull = _rand.weibull
+zipf = _rand.zipf
+# Two legacy that are trivial wrappers around random_sample
+sample = _rand.random_sample
+ranf = _rand.random_sample

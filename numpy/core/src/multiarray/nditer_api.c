@@ -2632,6 +2632,7 @@ npyiter_clear_buffers(NpyIter *iter)
     /* Cleanup any buffers with references */
     char **buffers = NBF_BUFFERS(bufferdata);
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     for (int iop = 0; iop < nop; ++iop, ++buffers) {
         /*
          * We may want to find a better way to do this, on the other hand,
@@ -2640,7 +2641,8 @@ npyiter_clear_buffers(NpyIter *iter)
          * a well defined state (either NULL or owning the reference).
          * Only we implement cleanup
          */
-        if (!PyDataType_REFCHK(dtypes[iop])) {
+        if (!PyDataType_REFCHK(dtypes[iop]) ||
+                !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
             continue;
         }
         if (*buffers == 0) {

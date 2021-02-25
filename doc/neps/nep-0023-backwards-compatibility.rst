@@ -5,7 +5,7 @@ NEP 23 — Backwards compatibility and deprecation policy
 =======================================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
-:Status: Accepted
+:Status: Final
 :Type: Process
 :Created: 2018-07-14
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-January/081423.html

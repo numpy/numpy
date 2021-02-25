@@ -8,7 +8,7 @@ import numpy as np
 import numpy.core.numeric as _nx
 from numpy.core import transpose
 from numpy.core.numeric import (
-    ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
+    ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
     ndarray, around, floor, ceil, take, dot, where, intp,
     integer, isscalar, absolute
     )
@@ -606,7 +606,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
             .format(n, n, n+1)
         )
 
-    y = zeros(x.shape, x.dtype)
+    y = zeros_like(x)
     for cond, func in zip(condlist, funclist):
         if not isinstance(func, collections.abc.Callable):
             y[cond] = func

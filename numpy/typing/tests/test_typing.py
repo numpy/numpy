@@ -48,8 +48,11 @@ def run_mypy() -> None:
 
     The mypy results are cached in `OUTPUT_MYPY` for further use.
 
+    The cache refresh can be skipped using
+
+    NUMPY_TYPING_TEST_CLEAR_CACHE=0 pytest numpy/typing/tests
     """
-    if os.path.isdir(CACHE_DIR):
+    if os.path.isdir(CACHE_DIR) and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True)):
         shutil.rmtree(CACHE_DIR)
 
     for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR, MISC_DIR):

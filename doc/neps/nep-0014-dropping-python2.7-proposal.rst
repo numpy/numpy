@@ -4,7 +4,7 @@
 NEP 14 — Plan for dropping Python 2.7 support
 =============================================
 
-:Status: Accepted
+:Status: Final
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2017-November/077419.html
 
 The Python core team plans to stop supporting Python 2 in 2020. The NumPy
