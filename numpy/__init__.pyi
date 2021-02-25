@@ -408,7 +408,15 @@ dstack: Any
 ediff1d: Any
 expand_dims: Any
 extract: Any
-eye: Any
+def eye(
+    N: int,
+    M: Optional[int] = ...,
+    k: int = ...,
+    dtype: DTypeLike = ...,
+    order: _OrderCF = ...,
+    *,
+    like: Optional[ArrayLike] = ...
+) -> ndarray[Any, Any]: ...
 fill_diagonal: Any
 finfo: Any
 flip: Any
