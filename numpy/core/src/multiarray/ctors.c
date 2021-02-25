@@ -73,7 +73,7 @@ fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
     int r = dtype->f->fromstr(*s, dptr, &e, dtype);
     /*
      * fromstr always returns 0 for basic dtypes; s points to the end of the
-     * parsed string. If s is not changed an error occurred or the end was
+     * parsed string. If s is not changed an error occu5trred or the end was
      * reached.
      */
     if (*s == e || r < 0) {
@@ -3367,6 +3367,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
     NPY_BEGIN_ALLOW_THREADS;
     totalbytes = bytes = size * dtype->elsize;
     dptr = PyArray_DATA(r);
+    
     for (i = 0; num < 0 || i < num; i++) {
         stop_reading_flag = next(&stream, dptr, dtype, stream_data);
         if (stop_reading_flag < 0) {
@@ -3718,6 +3719,10 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         else {
             end = data + slen;
         }
+        // remove trailing whitespace from the string
+        char *clean_sep = swab_separator(sep);
+        int stop_reading_flag = fromstr_skip_separator(&data, clean_sep, end);
+        //
         ret = array_from_text(dtype, num, sep, &nread,
                               data,
                               (next_element) fromstr_next_element,
