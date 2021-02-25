@@ -5219,7 +5219,12 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
             if (cmp == 0 && current != NULL && current->arg_dtypes == NULL) {
                 current->arg_dtypes = PyArray_malloc(ufunc->nargs *
                     sizeof(PyArray_Descr*));
-                if (arg_dtypes != NULL) {
+                if (current->arg_dtypes == NULL) {
+                    PyErr_NoMemory();
+                    result = -1;
+                    goto done;
+                }
+                else if (arg_dtypes != NULL) {
                     for (i = 0; i < ufunc->nargs; i++) {
                         current->arg_dtypes[i] = arg_dtypes[i];
                         Py_INCREF(current->arg_dtypes[i]);
