@@ -3721,7 +3721,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         }
         // remove trailing whitespace from the string
         char *clean_sep = swab_separator(sep);
-        int stop_reading_flag = fromstr_skip_separator(&data, clean_sep, end);
+        fromstr_skip_separator(&data, clean_sep, end);
         //
         ret = array_from_text(dtype, num, sep, &nread,
                               data,
