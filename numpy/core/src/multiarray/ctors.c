@@ -73,7 +73,7 @@ fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
     int r = dtype->f->fromstr(*s, dptr, &e, dtype);
     /*
      * fromstr always returns 0 for basic dtypes; s points to the end of the
-     * parsed string. If s is not changed an error occu5trred or the end was
+     * parsed string. If s is not changed, an error occurred or the end was
      * reached.
      */
     if (*s == e || r < 0) {
