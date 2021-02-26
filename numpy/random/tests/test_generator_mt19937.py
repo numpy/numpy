@@ -10,7 +10,7 @@ from numpy.testing import (
     assert_warns, assert_no_warnings, assert_array_equal,
     assert_array_almost_equal, suppress_warnings)
 
-from numpy.random import Generator, MT19937, SeedSequence
+from numpy.random import Generator, MT19937, SeedSequence, RandomState
 
 random = Generator(MT19937())
 
@@ -1734,6 +1734,26 @@ class TestRandomDist:
         random = Generator(MT19937(self.seed))
         r = random.vonmises(mu=0., kappa=np.nan)
         assert_(np.isnan(r))
+
+    @pytest.mark.parametrize("kappa", [1e4, 1e15])
+    def test_vonmises_large_kappa(self, kappa):
+        random = Generator(MT19937(self.seed))
+        rs = RandomState(random.bit_generator)
+        state = random.bit_generator.state
+
+        random_state_vals = rs.vonmises(0, kappa, size=10)
+        random.bit_generator.state = state
+        gen_vals = random.vonmises(0, kappa, size=10)
+        if kappa < 1e6:
+            assert_allclose(random_state_vals, gen_vals)
+        else:
+            assert np.all(random_state_vals != gen_vals)
+
+    @pytest.mark.parametrize("mu", [-7., -np.pi, -3.1, np.pi, 3.2])
+    @pytest.mark.parametrize("kappa", [1e-9, 1e-6, 1, 1e3, 1e15])
+    def test_vonmises_large_kappa_range(self, mu, kappa):
+        r = random.vonmises(mu, kappa, 50)
+        assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_wald(self):
         random = Generator(MT19937(self.seed))

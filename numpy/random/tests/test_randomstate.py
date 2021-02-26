@@ -1238,6 +1238,15 @@ class TestRandomDist:
         r = random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
         assert_(np.isfinite(r).all())
 
+    def test_vonmises_large(self):
+        # guard against changes in RandomState when Generator is fixed
+        random.seed(self.seed)
+        actual = random.vonmises(mu=0., kappa=1e7, size=3)
+        desired = np.array([4.634253748521111e-04,
+                            3.558873596114509e-04,
+                            -2.337119622577433e-04])
+        assert_array_almost_equal(actual, desired, decimal=8)
+
     def test_vonmises_nan(self):
         random.seed(self.seed)
         r = random.vonmises(mu=0., kappa=np.nan)
