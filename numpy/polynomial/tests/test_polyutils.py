@@ -52,7 +52,7 @@ class TestMisc:
         # c2[-1] == 0
         assert_raises(ZeroDivisionError, pu._div, pu._div, (1, 2, 3), [0])
 
-    def test_pow_tolargepow(self):
+    def test_pow_too_large(self):
         # power > maxpower
         assert_raises(ValueError, pu._pow, (), [1, 2, 3], 5, 4)
 
