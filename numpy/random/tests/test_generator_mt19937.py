@@ -147,7 +147,7 @@ class TestMultinomial:
                       1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
         pvals = x / x.sum()
         random = Generator(MT19937(1432985819))
-        match = r"[\w\s]*pvals are cast to 64-bit floating"
+        match = r"[\w\s]*pvals array is cast to 64-bit floating"
         with pytest.raises(ValueError, match=match):
             random.multinomial(1, pvals)
 

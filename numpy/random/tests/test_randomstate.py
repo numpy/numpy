@@ -167,6 +167,14 @@ class TestMultinomial:
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
 
+    def test_multinomial_pvals_float32(self):
+        x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
+                      1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
+        pvals = x / x.sum()
+        match = r"[\w\s]*pvals array is cast to 64-bit floating"
+        with pytest.raises(ValueError, match=match):
+            random.multinomial(1, pvals)
+
 
 class TestSetState:
     def setup(self):
