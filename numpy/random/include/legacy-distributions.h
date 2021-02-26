@@ -31,6 +31,7 @@ extern double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden);
 extern double legacy_normal(aug_bitgen_t *aug_state, double loc, double scale);
 extern double legacy_standard_gamma(aug_bitgen_t *aug_state, double shape);
 extern double legacy_exponential(aug_bitgen_t *aug_state, double scale);
+extern double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa);
 extern int64_t legacy_random_binomial(bitgen_t *bitgen_state, double p,
                                       int64_t n, binomial_t *binomial);
 extern int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n,
