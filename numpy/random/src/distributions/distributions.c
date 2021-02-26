@@ -1,6 +1,7 @@
 #include "numpy/random/distributions.h"
 #include "ziggurat_constants.h"
 #include "logfactorial.h"
+#include <stdio.h>
 
 #if defined(_MSC_VER) && defined(_WIN64)
 #include <intrin.h>
@@ -844,8 +845,7 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
   }
   if (kappa < 1e-8) {
     return M_PI * (2 * next_double(bitgen_state) - 1);
-  }
-  else {
+  } else {
     /* with double precision rho is zero until 1.4e-8 */
     if (kappa < 1e-5) {
       /*
@@ -853,9 +853,12 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
        * precise until relatively large kappas as second order is 0
        */
       s = (1. / kappa + kappa);
-    }
-    else {
-      /* Fallback to normal distribution for big values of kappa */
+    } else {
+#ifndef NP_RANDOM_LEGACY
+      /* Fallback to normal distribution for big values of kappa
+       * Fix only applies to Generator, not RandomState
+       * RandomState defines NP_RANDOM_LEGACY=1
+       */
       if (kappa > 1e6) {
         result = mu + sqrt(1. / kappa) * random_standard_normal(bitgen_state);
         /* Check if result is within bounds */
@@ -866,12 +869,15 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
           return result - 2*M_PI;
         }
         return result;
-      }
-      else {
+      } else {
+#endif
+        /* Path for 1e-5 <= kappa <= 1e6 */
         double r = 1 + sqrt(1 + 4 * kappa * kappa);
         double rho = (r - sqrt(2 * r)) / (2 * kappa);
         s = (1 + rho * rho) / (2 * rho);
+#if !defined NP_RANDOM_LEGACY
       }
+#endif
     }
 
     while (1) {
