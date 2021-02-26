@@ -489,12 +489,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (M,), optional
-        Weights to apply to the unsquared residual of each point.  When these
-        correspond to weighting by Gaussian uncertainties, use w = 1/sigma.
-        Note that w here is the sqrt of the more typical definition of the
-        weights in weighted least squares, which generally uses
-        W = w**2 = 1/sigma**2 (or more generally 1/var) to weight the squared
-        residual of each point.
+        Weights. If not None, the contribution of each point (x[i],y[i]) to
+        the fit is weighted by w[i]. Ideally the weights are chosen so that
+        the errors of the products w[i]*y[i] all have the same variance.
+        The default value is None.
     cov : bool or str, optional
         If given and not `False`, return not just the estimate but also its
         covariance matrix. By default, the covariance are scaled by
@@ -502,7 +500,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         to be unreliable except in a relative sense and everything is scaled 
         such that the reduced chi2 is unity. This scaling is omitted if 
         ``cov='unscaled'``, as is relevant for the case that the weights are 
-        w**2 = 1/sigma**2, with sigma known to be a reliable estimate of the
+        w = 1/sigma, with sigma known to be a reliable estimate of the
         uncertainty.
 
     Returns
