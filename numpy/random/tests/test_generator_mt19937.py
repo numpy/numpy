@@ -142,6 +142,14 @@ class TestMultinomial:
         assert_raises(ValueError, random.multinomial, 10, [[[0], [1]], [[1], [0]]])
         assert_raises(ValueError, random.multinomial, 10, np.array([[0, 1], [1, 0]]))
 
+    def test_multinomial_pvals_float32(self):
+        x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
+                      1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
+        pvals = x / x.sum()
+        random = Generator(MT19937(1432985819))
+        match = r"[\w\s]*pvals array is cast to 64-bit floating"
+        with pytest.raises(ValueError, match=match):
+            random.multinomial(1, pvals)
 
 class TestMultivariateHypergeometric:
 

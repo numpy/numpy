@@ -3756,7 +3756,20 @@ cdef class Generator:
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
-            raise ValueError("sum(pvals[:-1]) > 1.0")
+            # When floating, but not float dtype, and close, improve the error
+            # 1.0001 works for float16 and float32
+            if (isinstance(pvals, np.ndarray)
+                    and np.issubdtype(pvals.dtype, np.floating)
+                    and pvals.dtype != float
+                    and pvals.sum() < 1.0001):
+                msg = ("sum(pvals[:-1].astype(np.float64)) > 1.0. The pvals "
+                       "array is cast to 64-bit floating point prior to "
+                       "checking the sum. Precision changes when casting may "
+                       "cause problems even if the sum of the original pvals "
+                       "is valid.")
+            else:
+                msg = "sum(pvals[:-1]) > 1.0"
+            raise ValueError(msg)
 
         if np.PyArray_NDIM(on) != 0: # vector
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)
