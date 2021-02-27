@@ -12,8 +12,9 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
 
     See its docstring for more information.
     """
+    # _array_object imports in this file are inside the functions to avoid
+    # circular imports
     from ._array_object import ndarray
-    from . import _dtypes
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
@@ -23,7 +24,7 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
     if isinstance(obj, ndarray):
         return obj
     res = np.asarray(obj, dtype=dtype)
-    if res.dtype not in _dtypes._all_dtypes:
+    if res.dtype not in _all_dtypes:
         raise TypeError(f"The array_api namespace does not support the dtype '{res.dtype}'")
     return ndarray._new(res)
 
