@@ -156,7 +156,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
 
     if not ARRAY_FUNCTION_ENABLED:
         def decorator(implementation):
-            if docs_from_dispatcher:
+            if docs_from_dispatcher and dispatcher.__doc__ is not None:
                 add_docstring(implementation, dispatcher.__doc__)
             if module is not None:
                 implementation.__module__ = module
@@ -167,7 +167,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if verify:
             verify_matching_signatures(implementation, dispatcher)
 
-        if docs_from_dispatcher:
+        if docs_from_dispatcher and dispatcher.__doc__ is not None:
             add_docstring(implementation, dispatcher.__doc__)
 
         # Equivalently, we could define this function directly instead of using
