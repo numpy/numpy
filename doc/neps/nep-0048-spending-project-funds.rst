@@ -27,9 +27,16 @@ and transparency around these topics.
 Motivation and Scope
 --------------------
 
-NumPy is a fiscally sponsored project of NumFOCUS, a 501(c)(3) nonprofit organization headquartered in Austin, TX. Therefore, for all legal and accounting matters the NumPy project has to follow the rules and regulations for US nonprofits. All nonprofit donations are classified into two categories: **unrestricted funds** which may be used for any legal purpose appropriate to the organization and **restricted funds**, monies set aside for a particular purpose (e.g., project, educational program, etc.). It’s important to note that restricted funds are **permanently restricted** to that purpose and cannot be used for any other expenses.  
+NumPy is a fiscally sponsored project of NumFOCUS, a 501(c)(3) nonprofit
+organization headquartered in Austin, TX. Therefore, for all legal and
+accounting matters the NumPy project has to follow the rules and regulations
+for US nonprofits. All nonprofit donations are classified into two categories:
+**unrestricted funds** which may be used for any legal purpose appropriate
+to the organization and **restricted funds**, monies set aside for a
+particular purpose (e.g., project, educational program, etc.).
 
-For the detailed timeline of NumPy funding refer to [NumPy funding – history and current status](#history-and-current-status).
+For the detailed timeline of NumPy funding refer to
+:ref:`numpy-funding-history`.
 
 Since its inception and until 2020, the NumPy project has only spent on the order of
 $10,000 USD of funds that were not restricted to a particular program.  Project
@@ -63,10 +70,11 @@ Out of scope for this NEP are:
   directly to the NumPy project, and companies or institutions funding specific
   features.
   *Rationale: As a project, we have no direct control over how this work gets
-  executed. In some cases, we may not even know the contributions were funded
-  or done by an employee on work time. (Whether that's the case or not should
-  not change how we approach a contribution).  For grants though, we do expect
-  the research/project leader and funded team to align their work with the needs of NumPy and be
+  executed (at least formally, until issues or PRs show up). In some cases, we
+  may not even know the contributions were funded or done by an employee on
+  work time. (Whether that's the case or not should not change how we approach
+  a contribution).  For grants though, we do expect the research/project leader
+  and funded team to align their work with the needs of NumPy and be
   receptive to feedback from other NumPy maintainers and contributors.*
 
 
@@ -78,6 +86,14 @@ contributors than funded people. Therefore having those funded people operate
 in ways that attract more volunteers and enhance their participation experience
 is critical. That key principle motivates many of the more detailed principles
 given below for what to pay for and whom to pay.
+
+The approach for spending funds will be:
+
+- first figure out what we want to fund,
+- then look for a great candidate,
+- after that's settled, determine a fair compensation level.
+
+The next sections go into detail on each of these three points.
 
 What to pay for
 ```````````````
@@ -119,7 +135,8 @@ Whom to pay
 ```````````
 
 1. All else being equal, give preference to existing maintainers/contributors.
-2. Consider this an opportunity to make the project more diverse.
+2. When looking outside of the current team, consider this an opportunity to
+   make the project more diverse.
 3. Pay attention to the following when considering paying someone:
 
    - the necessary technical or domain-specific skills to execute the tasks,
@@ -135,13 +152,21 @@ chance to apply for it.
 Compensating fairly
 ```````````````````
 
-Paying people fairly is a difficult topic. Therefore, we will only offer some
-guidance here. Final decisions will always have to be considered and approved
-by the group of people that bears this responsibility (according to the
-current NumPy governance structure, this would be the NumPy Steering Council).
+.. note::
 
-Discussions on employee compensation tend to be dominated by two narratives:
-"pay local market rates" and "same work -- same pay".
+   This section on compensating fairly will be considered *Draft* even if this
+   NEP as a whole is accepted. Once we have applied the approach outlined here
+   at least 2-3 times and we are happy with it, will we remove this note and
+   consider this section *Accepted*.
+
+Paying people fairly is a difficult topic, especially when it comes to
+distributed teams. Therefore, we will only offer some guidance here. Final
+decisions will always have to be considered and approved by the group of people
+that bears this responsibility (according to the current NumPy governance
+structure, this would be the NumPy Steering Council).
+
+Discussions on remote employee compensation tend to be dominated by two
+narratives: "pay local market rates" and "same work -- same pay".
 
 We consider them both extreme:
 
@@ -193,9 +218,11 @@ Some other considerations:
   than someone who is employed since they have to take care of their benefits
   and accounting on their own.
 - Some people may be happy with one-off payments towards a particular
-  deliverable (e.g., hiring a cleaner or some other service to use the saved
-  time for work on open source). This should be compensated at a lower rate
-  compared to an individual contractor.
+  deliverable (e.g., "triage all open issues for label X for $x,xxx").
+  This should be compensated at a lower rate compared to an individual
+  contractor. Or they may motivate lower amounts for another reason (e.g., "I
+  want to receive $x,xxx to hire a cleaner or pay for childcare, to free up
+  time for work on open source).
 - When funding someone's time through their employer, that employer may want to
   set the compensation level based on its internal rules (e.g., overhead rates).
   Small deviations from the guidelines in this NEP may be needed in such cases,
@@ -297,8 +324,10 @@ all transactions is probably fine, but not necessary.
 effort required.*
 
 
+.. _numpy-funding-history:
+
 NumPy funding – history and current status
---------------------------
+------------------------------------------
 
 The NumPy project received its first major funding in 2017. For an overview of
 the early history of NumPy (and SciPy), including some institutions sponsoring
@@ -346,9 +375,9 @@ that amount is currently growing at a rate of about $3,000/month.
 Related Work
 ------------
 
-See references. We assume that there are other open source projects having
-published guidelines on spending project funds, however we don't have concrete
-examples at this time.
+See references.  We assume that other open source projects have also developed
+guidelines on spending project funds. However, we were unable to find any
+examples at the time of writing.
 
 
 Alternatives
