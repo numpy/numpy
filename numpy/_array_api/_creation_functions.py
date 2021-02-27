@@ -32,10 +32,11 @@ def arange(start: Union[int, float], /, *, stop: Optional[Union[int, float]] = N
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.arange(start, stop=stop, step=step, dtype=dtype)
+    return ndarray._new(np.arange(start, stop=stop, step=step, dtype=dtype))
 
 def empty(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -43,10 +44,11 @@ def empty(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = Non
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.empty(shape, dtype=dtype)
+    return ndarray._new(np.empty(shape, dtype=dtype))
 
 def empty_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -54,10 +56,11 @@ def empty_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[d
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.empty_like._implementation(x, dtype=dtype)
+    return ndarray._new(np.empty_like._implementation(x._array, dtype=dtype))
 
 def eye(N: int, /, *, M: Optional[int] = None, k: Optional[int] = 0, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -65,10 +68,11 @@ def eye(N: int, /, *, M: Optional[int] = None, k: Optional[int] = 0, dtype: Opti
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.eye(N, M=M, k=k, dtype=dtype)
+    return ndarray._new(np.eye(N, M=M, k=k, dtype=dtype))
 
 def from_dlpack(x: object, /) -> array:
     # Note: dlpack support is not yet implemented on ndarray
@@ -80,10 +84,11 @@ def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], /, *
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.full(shape, fill_value, dtype=dtype)
+    return ndarray._new(np.full(shape, fill_value, dtype=dtype))
 
 def full_like(x: array, fill_value: Union[int, float], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -91,10 +96,11 @@ def full_like(x: array, fill_value: Union[int, float], /, *, dtype: Optional[dty
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.full_like._implementation(x, fill_value, dtype=dtype)
+    return ndarray._new(np.full_like._implementation(x._array, fill_value, dtype=dtype))
 
 def linspace(start: Union[int, float], stop: Union[int, float], num: int, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None, endpoint: bool = True) -> array:
     """
@@ -102,10 +108,11 @@ def linspace(start: Union[int, float], stop: Union[int, float], num: int, /, *, 
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint)
+    return ndarray._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
 def ones(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -113,10 +120,11 @@ def ones(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = None
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.ones(shape, dtype=dtype)
+    return ndarray._new(np.ones(shape, dtype=dtype))
 
 def ones_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -124,10 +132,11 @@ def ones_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[de
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.ones_like._implementation(x, dtype=dtype)
+    return ndarray._new(np.ones_like._implementation(x._array, dtype=dtype))
 
 def zeros(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -135,10 +144,11 @@ def zeros(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = Non
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.zeros(shape, dtype=dtype)
+    return ndarray._new(np.zeros(shape, dtype=dtype))
 
 def zeros_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -146,7 +156,8 @@ def zeros_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[d
 
     See its docstring for more information.
     """
+    from ._array_object import ndarray
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return np.zeros_like._implementation(x, dtype=dtype)
+    return ndarray._new(np.zeros_like._implementation(x._array, dtype=dtype))
