@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._dtypes import (_all_dtypes, _boolean_dtypes, _floating_dtypes,
+from ._dtypes import (_boolean_dtypes, _floating_dtypes,
                       _integer_dtypes, _integer_or_boolean_dtypes, _numeric_dtypes)
 from ._types import array
 from ._array_object import ndarray
@@ -213,8 +213,6 @@ def equal(x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _all_dtypes or x2.dtype not in _all_dtypes:
-        raise TypeError('Only array API spec dtypes are allowed in equal')
     return ndarray._new(np.equal(x1._array, x2._array))
 
 def exp(x: array, /) -> array:
@@ -443,8 +441,6 @@ def not_equal(x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _all_dtypes or x2.dtype not in _all_dtypes:
-        raise TypeError('Only array API spec dtypes are allowed in not_equal')
     return ndarray._new(np.not_equal(x1._array, x2._array))
 
 def positive(x: array, /) -> array:
