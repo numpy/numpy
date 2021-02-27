@@ -23,7 +23,7 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
         return obj
     res = np.asarray(obj, dtype=dtype)
     if res.dtype not in _dtypes._all_dtypes:
-        raise TypeError(f"The array_api namespace does not support the dtype {res.dtype}")
+        raise TypeError(f"The array_api namespace does not support the dtype '{res.dtype}'")
     return ndarray._new(res)
 
 def arange(start: Union[int, float], /, *, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
