@@ -47,13 +47,13 @@ class ndarray:
         """
         Performs the operation __str__.
         """
-        return x._array.__str__()
+        return x._array.__str__().replace('array', 'ndarray')
 
     def __repr__(x: array, /) -> str:
         """
         Performs the operation __repr__.
         """
-        return x._array.__repr__()
+        return x._array.__repr__().replace('array', 'ndarray')
 
     # Everything below this is required by the spec.
 
