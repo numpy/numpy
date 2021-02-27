@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from enum import IntEnum
 from ._types import Optional, PyCapsule, Tuple, Union, array
+from ._creation_functions import asarray
 
 class ndarray:
     # Use a custom constructor instead of __init__, as manually initializing
@@ -61,384 +62,399 @@ class ndarray:
         """
         Performs the operation __abs__.
         """
-        res = x._array.__abs__(x)
+        res = x._array.__abs__()
         return x.__class__._new(res)
 
     def __add__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __add__.
         """
-        res = x1._array.__add__(x1, x2)
+        res = x1._array.__add__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __and__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __and__.
         """
-        res = x1._array.__and__(x1, x2)
+        res = x1._array.__and__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __bool__(x: array, /) -> bool:
         """
         Performs the operation __bool__.
         """
-        res = x._array.__bool__(x)
+        res = x._array.__bool__()
         return x.__class__._new(res)
 
     def __dlpack__(x: array, /, *, stream: Optional[int] = None) -> PyCapsule:
         """
         Performs the operation __dlpack__.
         """
-        res = x._array.__dlpack__(x, stream=None)
+        res = x._array.__dlpack__(stream=None)
         return x.__class__._new(res)
 
     def __dlpack_device__(x: array, /) -> Tuple[IntEnum, int]:
         """
         Performs the operation __dlpack_device__.
         """
-        res = x._array.__dlpack_device__(x)
+        res = x._array.__dlpack_device__()
         return x.__class__._new(res)
 
     def __eq__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __eq__.
         """
-        res = x1._array.__eq__(x1, x2)
+        res = x1._array.__eq__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __float__(x: array, /) -> float:
         """
         Performs the operation __float__.
         """
-        res = x._array.__float__(x)
+        res = x._array.__float__()
         return x.__class__._new(res)
 
     def __floordiv__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __floordiv__.
         """
-        res = x1._array.__floordiv__(x1, x2)
+        res = x1._array.__floordiv__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __ge__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __ge__.
         """
-        res = x1._array.__ge__(x1, x2)
+        res = x1._array.__ge__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __getitem__(x: array, key: Union[int, slice, Tuple[Union[int, slice], ...], array], /) -> array:
         """
         Performs the operation __getitem__.
         """
-        res = x._array.__getitem__(x, key)
+        res = x._array.__getitem__(asarray(key)._array)
         return x.__class__._new(res)
 
     def __gt__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __gt__.
         """
-        res = x1._array.__gt__(x1, x2)
+        res = x1._array.__gt__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __int__(x: array, /) -> int:
         """
-        Performs the in-place operation __int__.
+        Performs the operation __int__.
         """
-        x._array.__int__(x)
+        res = x._array.__int__()
+        return x.__class__._new(res)
 
     def __invert__(x: array, /) -> array:
         """
-        Performs the in-place operation __invert__.
+        Performs the operation __invert__.
         """
-        x._array.__invert__(x)
+        res = x._array.__invert__()
+        return x.__class__._new(res)
 
     def __le__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __le__.
         """
-        res = x1._array.__le__(x1, x2)
+        res = x1._array.__le__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __len__(x, /):
         """
         Performs the operation __len__.
         """
-        res = x._array.__len__(x)
+        res = x._array.__len__()
         return x.__class__._new(res)
 
     def __lshift__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __lshift__.
         """
-        res = x1._array.__lshift__(x1, x2)
+        res = x1._array.__lshift__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __lt__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __lt__.
         """
-        res = x1._array.__lt__(x1, x2)
+        res = x1._array.__lt__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __matmul__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __matmul__.
         """
-        res = x1._array.__matmul__(x1, x2)
+        res = x1._array.__matmul__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __mod__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __mod__.
         """
-        res = x1._array.__mod__(x1, x2)
+        res = x1._array.__mod__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __mul__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __mul__.
         """
-        res = x1._array.__mul__(x1, x2)
+        res = x1._array.__mul__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __ne__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __ne__.
         """
-        res = x1._array.__ne__(x1, x2)
+        res = x1._array.__ne__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __neg__(x: array, /) -> array:
         """
         Performs the operation __neg__.
         """
-        res = x._array.__neg__(x)
+        res = x._array.__neg__()
         return x.__class__._new(res)
 
     def __or__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __or__.
         """
-        res = x1._array.__or__(x1, x2)
+        res = x1._array.__or__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __pos__(x: array, /) -> array:
         """
         Performs the operation __pos__.
         """
-        res = x._array.__pos__(x)
+        res = x._array.__pos__()
         return x.__class__._new(res)
 
     def __pow__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __pow__.
         """
-        res = x1._array.__pow__(x1, x2)
+        res = x1._array.__pow__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __rshift__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rshift__.
         """
-        res = x1._array.__rshift__(x1, x2)
+        res = x1._array.__rshift__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __setitem__(x, key, value, /):
         """
         Performs the operation __setitem__.
         """
-        res = x._array.__setitem__(x, key, value)
+        res = x._array.__setitem__(asarray(key)._array, asarray(value)._array)
         return x.__class__._new(res)
 
     def __sub__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __sub__.
         """
-        res = x1._array.__sub__(x1, x2)
+        res = x1._array.__sub__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __truediv__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __truediv__.
         """
-        res = x1._array.__truediv__(x1, x2)
+        res = x1._array.__truediv__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __xor__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __xor__.
         """
-        res = x1._array.__xor__(x1, x2)
+        res = x1._array.__xor__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __iadd__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __iadd__.
+        Performs the operation __iadd__.
         """
-        x1._array.__iadd__(x1, x2)
+        res = x1._array.__iadd__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __radd__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __radd__.
         """
-        res = x1._array.__radd__(x1, x2)
+        res = x1._array.__radd__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __iand__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __iand__.
+        Performs the operation __iand__.
         """
-        x1._array.__iand__(x1, x2)
+        res = x1._array.__iand__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rand__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rand__.
         """
-        res = x1._array.__rand__(x1, x2)
+        res = x1._array.__rand__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __ifloordiv__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __ifloordiv__.
+        Performs the operation __ifloordiv__.
         """
-        x1._array.__ifloordiv__(x1, x2)
+        res = x1._array.__ifloordiv__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rfloordiv__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rfloordiv__.
         """
-        res = x1._array.__rfloordiv__(x1, x2)
+        res = x1._array.__rfloordiv__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __ilshift__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __ilshift__.
+        Performs the operation __ilshift__.
         """
-        x1._array.__ilshift__(x1, x2)
+        res = x1._array.__ilshift__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rlshift__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rlshift__.
         """
-        res = x1._array.__rlshift__(x1, x2)
+        res = x1._array.__rlshift__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __imatmul__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __imatmul__.
+        Performs the operation __imatmul__.
         """
-        x1._array.__imatmul__(x1, x2)
+        res = x1._array.__imatmul__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rmatmul__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rmatmul__.
         """
-        res = x1._array.__rmatmul__(x1, x2)
+        res = x1._array.__rmatmul__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __imod__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __imod__.
+        Performs the operation __imod__.
         """
-        x1._array.__imod__(x1, x2)
+        res = x1._array.__imod__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rmod__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rmod__.
         """
-        res = x1._array.__rmod__(x1, x2)
+        res = x1._array.__rmod__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __imul__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __imul__.
+        Performs the operation __imul__.
         """
-        x1._array.__imul__(x1, x2)
+        res = x1._array.__imul__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rmul__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rmul__.
         """
-        res = x1._array.__rmul__(x1, x2)
+        res = x1._array.__rmul__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __ior__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __ior__.
+        Performs the operation __ior__.
         """
-        x1._array.__ior__(x1, x2)
+        res = x1._array.__ior__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __ror__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __ror__.
         """
-        res = x1._array.__ror__(x1, x2)
+        res = x1._array.__ror__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __ipow__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __ipow__.
+        Performs the operation __ipow__.
         """
-        x1._array.__ipow__(x1, x2)
+        res = x1._array.__ipow__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rpow__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rpow__.
         """
-        res = x1._array.__rpow__(x1, x2)
+        res = x1._array.__rpow__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __irshift__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __irshift__.
+        Performs the operation __irshift__.
         """
-        x1._array.__irshift__(x1, x2)
+        res = x1._array.__irshift__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rrshift__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rrshift__.
         """
-        res = x1._array.__rrshift__(x1, x2)
+        res = x1._array.__rrshift__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __isub__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __isub__.
+        Performs the operation __isub__.
         """
-        x1._array.__isub__(x1, x2)
+        res = x1._array.__isub__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rsub__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rsub__.
         """
-        res = x1._array.__rsub__(x1, x2)
+        res = x1._array.__rsub__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __itruediv__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __itruediv__.
+        Performs the operation __itruediv__.
         """
-        x1._array.__itruediv__(x1, x2)
+        res = x1._array.__itruediv__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rtruediv__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rtruediv__.
         """
-        res = x1._array.__rtruediv__(x1, x2)
+        res = x1._array.__rtruediv__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     def __ixor__(x1: array, x2: array, /) -> array:
         """
-        Performs the in-place operation __ixor__.
+        Performs the operation __ixor__.
         """
-        x1._array.__ixor__(x1, x2)
+        res = x1._array.__ixor__(asarray(x2)._array)
+        return x1.__class__._new(res)
 
     def __rxor__(x1: array, x2: array, /) -> array:
         """
         Performs the operation __rxor__.
         """
-        res = x1._array.__rxor__(x1, x2)
+        res = x1._array.__rxor__(asarray(x2)._array)
         return x1.__class__._new(res)
 
     @property
