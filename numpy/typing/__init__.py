@@ -327,6 +327,7 @@ from ._array_like import (
     _SupportsArray,
     _ArrayND,
     _ArrayOrScalar,
+    _ArrayLikeInt,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -339,7 +340,6 @@ from ._array_like import (
     _ArrayLikeVoid_co,
     _ArrayLikeStr_co,
     _ArrayLikeBytes_co,
-
 )
 
 if __doc__ is not None:
