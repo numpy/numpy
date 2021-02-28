@@ -19,8 +19,8 @@ deprecated code. *Bugfix* releases are made even more frequently; they do not
 contain any new features or deprecations.
 
 It is important to know that NumPy, like Python itself and most other
-well-known scientific Python projects, does **not** use semantic versioning.
-Instead, backwards-incompatible API changes require deprecation warnings for at
+well known scientific Python projects, does **not** use semantic versioning.
+Instead, backwards incompatible API changes require deprecation warnings for at
 least two releases. For more details, see :ref:`NEP23`.
 
 NumPy has both a Python API and a C API. The C API can be used directly or via
@@ -39,10 +39,8 @@ testing against the development version of NumPy in CI. To make this easy,
 nightly builds are provided as wheels at
 https://anaconda.org/scipy-wheels-nightly/.
 This helps detect regressions in NumPy that need fixing before the next NumPy
-release.
-
-Furthermore, we recommend to raise errors on warnings in CI for this job,
-either all warnings or otherwise at least ``DeprecationWarning`` and
+release.  Furthermore, we recommend to raise errors on warnings in CI for this
+job, either all warnings or otherwise at least ``DeprecationWarning`` and
 ``FutureWarning``. This gives you an early warning about changes in NumPy to
 adapt your code.
 
@@ -55,7 +53,7 @@ Build-time dependency
 
 If a package either uses the NumPy C API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
-of the package. Because the NumPy ABI is only forward-compatible, you must
+of the package. Because the NumPy ABI is only forward compatible, you must
 build your own binaries (wheels or other package formats) against the lowest
 NumPy version that you support (or an even older version).
 
