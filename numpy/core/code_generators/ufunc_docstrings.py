@@ -781,7 +781,7 @@ add_newdoc('numpy.core.umath', 'ceil',
 
     See Also
     --------
-    floor, trunc, rint
+    floor, trunc, rint, fix
 
     Examples
     --------
@@ -813,7 +813,7 @@ add_newdoc('numpy.core.umath', 'trunc',
 
     See Also
     --------
-    ceil, floor, rint
+    ceil, floor, rint, fix
 
     Notes
     -----
@@ -1374,13 +1374,14 @@ add_newdoc('numpy.core.umath', 'floor',
 
     See Also
     --------
-    ceil, trunc, rint
+    ceil, trunc, rint, fix
 
     Notes
     -----
-    Some spreadsheet programs calculate the "floor-towards-zero", in other
-    words ``floor(-2.5) == -2``.  NumPy instead uses the definition of
-    `floor` where `floor(-2.5) == -3`.
+    Other than the NumPy ``floor`` function, which always rounds down, the
+    FLOOR function in common spreadsheet programs calculates the
+    "floor-towards-zero", i.e. ``FLOOR(-2.5) == -2``. This "floor-towards-zero"
+    function is called ``fix`` in NumPy.
 
     Examples
     --------
@@ -3486,7 +3487,7 @@ add_newdoc('numpy.core.umath', 'rint',
 
     See Also
     --------
-    ceil, floor, trunc
+    fix, ceil, floor, trunc
 
     Examples
     --------
