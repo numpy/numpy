@@ -26,7 +26,9 @@ least two releases. For more details, see :ref:`NEP23`.
 NumPy has both a Python API and a C API. The C API can be used directly or via
 Cython, f2py, or other such tools. If your package uses the C API, then ABI
 (application binary interface) stability of NumPy is important. NumPy's ABI is
-backwards but not forwards compatible.
+forward but not backward compatible. This means: binaries compiled against a
+given version of NumPy will still run correctly with newer NumPy versions, but
+not with older versions.
 
 
 Testing against the NumPy main branch or pre-releases
@@ -84,13 +86,17 @@ NumPy in build-time and runtime dependencies, so typically this is enough
 
 .. note::
 
-   ``pip`` has ``--no-use-pep517`` and ``--no-build-isolation`` flags that may
-   ignore ``pyproject.toml`` or treat it differently - if users use those
-   flags, they are responsible for installing the correct build dependencies
-   themselves.
+    ``pip`` has ``--no-use-pep517`` and ``--no-build-isolation`` flags that may
+    ignore ``pyproject.toml`` or treat it differently - if users use those
+    flags, they are responsible for installing the correct build dependencies
+    themselves.
 
-   Please do not use ``setup_requires`` (it is deprecated and may invoke
-   ``easy_install``).
+    ``conda`` will always use ``-no-build-isolation``; dependencies for conda
+    builds are given in the conda recipe (``meta.yaml``), the ones in
+    ``pyproject.toml`` have no effect.
+
+    Please do not use ``setup_requires`` (it is deprecated and may invoke
+    ``easy_install``).
 
 Because for NumPy you have to care about ABI compatibility, you
 specify the version with ``==`` to the lowest supported version. For your other
