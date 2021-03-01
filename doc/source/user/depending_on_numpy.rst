@@ -126,7 +126,7 @@ released there will be no matching version of your package that works with it.
 What to do here depends on your release frequency. Given that NumPy releases
 come in a 6-monthly cadence and that features that get deprecated in NumPy
 should stay around for another two releases, a good upper bound is
-``<1.xx+3.0`` - where ``xx`` is the minor version of the latest
+``<1.(xx+3).0`` - where ``xx`` is the minor version of the latest
 already-released NumPy. This is safe to do if you release at least once a year.
 If your own releases are much less frequent, you may set the upper bound a
 little further into the future - this is a trade-off between a future NumPy
