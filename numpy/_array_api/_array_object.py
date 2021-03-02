@@ -19,6 +19,8 @@ from enum import IntEnum
 from ._types import Optional, PyCapsule, Tuple, Union, array
 from ._creation_functions import asarray
 
+import numpy as np
+
 class ndarray:
     # Use a custom constructor instead of __init__, as manually initializing
     # this class is not supported API.
@@ -34,6 +36,10 @@ class ndarray:
 
         """
         obj = super().__new__(cls)
+        # Note: The spec does not have array scalars, only shape () arrays.
+        if isinstance(x, np.generic):
+            # x[...] converts an array scalar to a shape () array.
+            x = x[...]
         obj._array = x
         return obj
 
