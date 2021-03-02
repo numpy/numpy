@@ -10,4 +10,4 @@ def unique(x: array, /, *, return_counts: bool = False, return_index: bool = Fal
 
     See its docstring for more information.
     """
-    return np.unique._implementation(x, return_counts=return_counts, return_index=return_index, return_inverse=return_inverse)
+    return np.unique(x, return_counts=return_counts, return_index=return_index, return_inverse=return_inverse)

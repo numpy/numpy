@@ -62,7 +62,7 @@ def empty_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[d
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.empty_like._implementation(x._array, dtype=dtype))
+    return ndarray._new(np.empty_like(x._array, dtype=dtype))
 
 def eye(N: int, /, *, M: Optional[int] = None, k: Optional[int] = 0, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -109,7 +109,7 @@ def full_like(x: array, fill_value: Union[int, float], /, *, dtype: Optional[dty
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    res = np.full_like._implementation(x._array, fill_value, dtype=dtype)
+    res = np.full_like(x._array, fill_value, dtype=dtype)
     if res.dtype not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
         # coerces to one of the acceptable dtypes.
@@ -150,7 +150,7 @@ def ones_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[de
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.ones_like._implementation(x._array, dtype=dtype))
+    return ndarray._new(np.ones_like(x._array, dtype=dtype))
 
 def zeros(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """
@@ -174,4 +174,4 @@ def zeros_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[d
     if device is not None:
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.zeros_like._implementation(x._array, dtype=dtype))
+    return ndarray._new(np.zeros_like(x._array, dtype=dtype))

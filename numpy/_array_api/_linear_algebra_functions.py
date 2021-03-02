@@ -18,7 +18,7 @@ def cross(x1: array, x2: array, /, *, axis: int = -1) -> array:
 
     See its docstring for more information.
     """
-    return np.cross._implementation(x1, x2, axis=axis)
+    return np.cross(x1, x2, axis=axis)
 
 def det(x: array, /) -> array:
     """
@@ -35,7 +35,7 @@ def diagonal(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) ->
 
     See its docstring for more information.
     """
-    return np.diagonal._implementation(x, axis1=axis1, axis2=axis2, offset=offset)
+    return np.diagonal(x, axis1=axis1, axis2=axis2, offset=offset)
 
 # def dot():
 #     """
@@ -128,7 +128,7 @@ def outer(x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
-    return np.outer._implementation(x1, x2)
+    return np.outer(x1, x2)
 
 # def pinv():
 #     """
@@ -176,7 +176,7 @@ def trace(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> ar
 
     See its docstring for more information.
     """
-    return np.asarray(np.trace._implementation(x, axis1=axis1, axis2=axis2, offset=offset))
+    return np.asarray(np.trace(x, axis1=axis1, axis2=axis2, offset=offset))
 
 def transpose(x: array, /, *, axes: Optional[Tuple[int, ...]] = None) -> array:
     """
@@ -184,4 +184,4 @@ def transpose(x: array, /, *, axes: Optional[Tuple[int, ...]] = None) -> array:
 
     See its docstring for more information.
     """
-    return np.transpose._implementation(x, axes=axes)
+    return np.transpose(x, axes=axes)

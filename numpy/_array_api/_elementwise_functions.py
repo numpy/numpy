@@ -482,7 +482,7 @@ def round(x: array, /) -> array:
     """
     if x.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in round')
-    return ndarray._new(np.round._implementation(x._array))
+    return ndarray._new(np.round(x._array))
 
 def sign(x: array, /) -> array:
     """

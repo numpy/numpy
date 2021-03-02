@@ -12,7 +12,7 @@ def argsort(x: array, /, *, axis: int = -1, descending: bool = False, stable: bo
     """
     # Note: this keyword argument is different, and the default is different.
     kind = 'stable' if stable else 'quicksort'
-    res = np.argsort._implementation(x, axis=axis, kind=kind)
+    res = np.argsort(x, axis=axis, kind=kind)
     if descending:
         res = np.flip(res, axis=axis)
     return res
@@ -25,7 +25,7 @@ def sort(x: array, /, *, axis: int = -1, descending: bool = False, stable: bool 
     """
     # Note: this keyword argument is different, and the default is different.
     kind = 'stable' if stable else 'quicksort'
-    res = np.sort._implementation(x, axis=axis, kind=kind)
+    res = np.sort(x, axis=axis, kind=kind)
     if descending:
         res = np.flip(res, axis=axis)
     return res
