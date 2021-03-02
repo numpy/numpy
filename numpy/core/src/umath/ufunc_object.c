@@ -3525,7 +3525,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
                         strides_copy, innerloopdata);
 
             if (needs_api && PyErr_Occurred()) {
-                break;
+                goto finish_loop;
             }
 
             /* Jump to the faster loop when skipping is done */
@@ -3539,6 +3539,11 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
             }
         } while (iternext(iter));
     }
+
+    if (needs_api && PyErr_Occurred()) {
+        goto finish_loop;
+    }
+
     do {
         /* Turn the two items into three for the inner loop */
         dataptrs_copy[0] = dataptrs[0];
