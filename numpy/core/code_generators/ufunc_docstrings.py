@@ -1378,9 +1378,9 @@ add_newdoc('numpy.core.umath', 'floor',
 
     Notes
     -----
-    Other than the NumPy ``floor`` function, which always rounds down, the
-    FLOOR function in common spreadsheet programs calculates the
-    "floor-towards-zero", i.e. ``FLOOR(-2.5) == -2``. This "floor-towards-zero"
+    Some spreadsheet programs calculate the "floor-towards-zero", where
+    ``floor(-2.5) == -2``.  NumPy instead uses the definition of
+    `floor` where `floor(-2.5) == -3`. The "floor-towards-zero"
     function is called ``fix`` in NumPy.
 
     Examples
