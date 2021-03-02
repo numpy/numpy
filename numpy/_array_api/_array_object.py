@@ -84,7 +84,7 @@ class ndarray:
         Performs the operation __bool__.
         """
         res = x._array.__bool__()
-        return x.__class__._new(res)
+        return res
 
     def __dlpack__(x: array, /, *, stream: Optional[int] = None) -> PyCapsule:
         """
@@ -112,7 +112,7 @@ class ndarray:
         Performs the operation __float__.
         """
         res = x._array.__float__()
-        return x.__class__._new(res)
+        return res
 
     def __floordiv__(x1: array, x2: array, /) -> array:
         """
@@ -132,7 +132,7 @@ class ndarray:
         """
         Performs the operation __getitem__.
         """
-        res = x._array.__getitem__(asarray(key)._array)
+        res = x._array.__getitem__(key)
         return x.__class__._new(res)
 
     def __gt__(x1: array, x2: array, /) -> array:
@@ -147,7 +147,7 @@ class ndarray:
         Performs the operation __int__.
         """
         res = x._array.__int__()
-        return x.__class__._new(res)
+        return res
 
     def __invert__(x: array, /) -> array:
         """
@@ -251,7 +251,7 @@ class ndarray:
         """
         Performs the operation __setitem__.
         """
-        res = x._array.__setitem__(asarray(key)._array, asarray(value)._array)
+        res = x._array.__setitem__(key, asarray(value)._array)
         return x.__class__._new(res)
 
     def __sub__(x1: array, x2: array, /) -> array:
