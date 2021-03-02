@@ -83,6 +83,9 @@ class ndarray:
         """
         Performs the operation __bool__.
         """
+        # Note: This is an error here.
+        if x._array.shape != ():
+            raise TypeError("bool is only allowed on arrays with shape ()")
         res = x._array.__bool__()
         return res
 
@@ -111,6 +114,9 @@ class ndarray:
         """
         Performs the operation __float__.
         """
+        # Note: This is an error here.
+        if x._array.shape != ():
+            raise TypeError("bool is only allowed on arrays with shape ()")
         res = x._array.__float__()
         return res
 
@@ -146,6 +152,9 @@ class ndarray:
         """
         Performs the operation __int__.
         """
+        # Note: This is an error here.
+        if x._array.shape != ():
+            raise TypeError("bool is only allowed on arrays with shape ()")
         res = x._array.__int__()
         return res
 
