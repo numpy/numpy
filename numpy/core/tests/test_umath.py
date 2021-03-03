@@ -838,6 +838,25 @@ class TestPower:
                 assert_complex_equal(np.power(zero, -p), cnan)
             assert_complex_equal(np.power(zero, -1+0.2j), cnan)
 
+    # Testing 0^{Non-zero} issue 18378
+    def test_zero_power_nonzero(self):
+        zero = np.array([0j])
+        cnan = np.array([complex(np.nan,np.nan)])
+
+        def assert_complex_equal(x, y):
+            assert_array_equal(x.real, y.real)
+            assert_array_equal(x.imag, y.imag)
+
+        with np.errstate(invalid="ignore"):
+            #real part and imaginary part both greater than zero
+            assert_complex_equal(np.power(zero,1+4j),zero)
+            #real part greater than zero imag part less than zero
+            assert_complex_equal(np.power(zero,2-3j),zero)
+            #real part less than zero imag part greater than zero
+            assert_complex_equal(np.power(zero,-1+1j),cnan)
+            #real part less than zero imag part less than zero
+            assert_complex_equal(np.power(zero,-2-3j),cnan)
+
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
         res = x**2.0

@@ -445,28 +445,22 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     @type@ bi = npy_cimag@c@(b);
     @ctype@ r;
 
-    if (br == 0. && bi == 0.) {
-        return npy_cpack@c@(1., 0.);
+    //Checking if in a^b, if b is zero.
+    //If a is not zero then by definition of logarithm a^0 is zero.
+    //If a is also zero then as per IEEE 0^0 is best defined as 1.
+    if(br == 0. && bi == 0.){
+        return npy_cpack@c@(1.,0.);
     }
-    if (ar == 0. && ai == 0.) {
-        if (br > 0 && bi == 0) {
-            return npy_cpack@c@(0., 0.);
+    //Here it is already tested that for a^b, b is not zero.
+    //So we are checking behaviour of a.
+    else if(ar == 0. && ai == 0.){
+        //Checking if real part of power is greater than zero then the result is zero.
+        //If not the result is undefined as it blows up or oscillates.
+        if(br > 0){
+            return npy_cpack@c@(0.,0.);
         }
-        else {
-            volatile @type@ tmp = NPY_INFINITY@C@;
-            /*
-             * NB: there are four complex zeros; c0 = (+-0, +-0), so that
-             * unlike for reals, c0**p, with `p` negative is in general
-             * ill-defined.
-             *
-             *     c0**z with z complex is also ill-defined.
-             */
-            r = npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
-
-            /* Raise invalid */
-            tmp -= NPY_INFINITY@C@;
-            ar = tmp;
-            return r;
+        else{
+            return npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
         }
     }
     if (bi == 0 && (n=(npy_intp)br) == br) {
