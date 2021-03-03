@@ -34,7 +34,8 @@ class MachArLike:
 
     def __init__(self,
                  ftype,
-                 *, eps, epsneg, huge, tiny, ibeta, **kwargs):
+                 *, eps, epsneg, huge, tiny, smallest_normal,
+                 smallest_subnormal, ibeta, **kwargs):
         params = _MACHAR_PARAMS[ftype]
         float_conv = lambda v: array([v], ftype)
         float_to_float = lambda v : _fr1(float_conv(v))
@@ -47,6 +48,10 @@ class MachArLike:
         self.xmax = self.huge = float_to_float(huge)
         self.xmin = self.tiny = float_to_float(tiny)
         self.ibeta = params['itype'](ibeta)
+        self.smallest_normal = float_to_float(smallest_normal)
+        self.smallest_subnormal = float_to_float(smallest_subnormal)
+        self._str_smallest_normal = float_to_str(self.smallest_normal)
+        self._str_smallest_subnormal = float_to_str(self.smallest_subnormal)
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
         self.resolution = float_to_float(float_conv(10) ** (-self.precision))
@@ -108,7 +113,9 @@ def _register_known_types():
                             eps=exp2(f16(-10)),
                             epsneg=exp2(f16(-11)),
                             huge=f16(65504),
-                            tiny=f16(2 ** -14))
+                            tiny=f16(2 ** -14),
+                            smallest_normal=f16(2 ** -14),
+                            smallest_subnormal=f16(2 ** -24))
     _register_type(float16_ma, b'f\xae')
     _float_ma[16] = float16_ma
 
@@ -127,7 +134,9 @@ def _register_known_types():
                             eps=exp2(f32(-23)),
                             epsneg=exp2(f32(-24)),
                             huge=f32((1 - 2 ** -24) * 2**128),
-                            tiny=exp2(f32(-126)))
+                            tiny=exp2(f32(-126)),
+                            smallest_normal=exp2(f32(-126)),
+                            smallest_subnormal=exp2(f32(-149)))
     _register_type(float32_ma, b'\xcd\xcc\xcc\xbd')
     _float_ma[32] = float32_ma
 
@@ -148,7 +157,9 @@ def _register_known_types():
                             eps=2.0 ** -52.0,
                             epsneg=epsneg_f64,
                             huge=(1.0 - epsneg_f64) / tiny_f64 * f64(4),
-                            tiny=tiny_f64)
+                            tiny=tiny_f64,
+                            smallest_normal=tiny_f64,
+                            smallest_subnormal=2.0 ** -1074.0)
     _register_type(float64_ma, b'\x9a\x99\x99\x99\x99\x99\xb9\xbf')
     _float_ma[64] = float64_ma
 
@@ -172,7 +183,9 @@ def _register_known_types():
                              eps=exp2(ld(-112)),
                              epsneg=epsneg_f128,
                              huge=huge_f128,
-                             tiny=tiny_f128)
+                             tiny=tiny_f128,
+                             smallest_normal=tiny_f128,
+                             smallest_subnormal=exp2(ld(-16445)))
     # IEEE 754 128-bit binary float
     _register_type(float128_ma,
         b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
@@ -199,7 +212,9 @@ def _register_known_types():
                             eps=exp2(ld(-63)),
                             epsneg=epsneg_f80,
                             huge=huge_f80,
-                            tiny=tiny_f80)
+                            tiny=tiny_f80,
+                            smallest_normal=tiny_f80,
+                            smallest_subnormal=exp2(ld(-16445)))
     # float80, first 10 bytes containing actual storage
     _register_type(float80_ma, b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
     _float_ma[80] = float80_ma
@@ -212,19 +227,21 @@ def _register_known_types():
                 if hasattr(umath, 'nextafter')  # Missing on some platforms?
                 else float64_ma.huge)
     float_dd_ma = MachArLike(ld,
-                              machep=-105,
-                              negep=-106,
-                              minexp=-1022,
-                              maxexp=1024,
-                              it=105,
-                              iexp=11,
-                              ibeta=2,
-                              irnd=5,
-                              ngrd=0,
-                              eps=exp2(ld(-105)),
-                              epsneg= exp2(ld(-106)),
-                              huge=huge_dd,
-                              tiny=exp2(ld(-1022)))
+                             machep=-105,
+                             negep=-106,
+                             minexp=-1022,
+                             maxexp=1024,
+                             it=105,
+                             iexp=11,
+                             ibeta=2,
+                             irnd=5,
+                             ngrd=0,
+                             eps=exp2(ld(-105)),
+                             epsneg= exp2(ld(-106)),
+                             huge=huge_dd,
+                             tiny=exp2(ld(-1022)),
+                             smallest_normal=exp2(ld(-1022)),
+                             smallest_subnormal=exp2(ld(-16445)))
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
         b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf')
@@ -343,6 +360,12 @@ class finfo:
     tiny : float
         The smallest positive floating point number with full precision
         (see Notes).
+    smallest_normal : float
+        The smallest positive floating point number with 1 as leading bit in
+        the mantissa following IEEE-754.
+    smallest_subnormal : float
+        The smallest positive floating point number with 0 as leading bit in
+        the mantissa following IEEE-754.
 
     Parameters
     ----------
@@ -368,7 +391,7 @@ class finfo:
     NumPy floating point types make use of subnormal numbers to fill the
     gap between 0 and ``tiny``. However, subnormal numbers may have
     significantly reduced precision [2]_.
-    
+
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
@@ -420,7 +443,8 @@ class finfo:
                      'maxexp', 'minexp', 'negep',
                      'machep']:
             setattr(self, word, getattr(machar, word))
-        for word in ['tiny', 'resolution', 'epsneg']:
+        for word in ['tiny', 'resolution', 'epsneg', 'smallest_normal',
+                     'smallest_subnormal']:
             setattr(self, word, getattr(machar, word).flat[0])
         self.bits = self.dtype.itemsize * 8
         self.max = machar.huge.flat[0]
@@ -434,6 +458,8 @@ class finfo:
         self._str_epsneg = machar._str_epsneg.strip()
         self._str_eps = machar._str_eps.strip()
         self._str_resolution = machar._str_resolution.strip()
+        self._str_smallest_normal = machar._str_smallest_normal.strip()
+        self._str_smallest_subnormal = machar._str_smallest_subnormal.strip()
         return self
 
     def __str__(self):
@@ -446,6 +472,8 @@ class finfo:
             'minexp = %(minexp)6s   tiny =       %(_str_tiny)s\n'
             'maxexp = %(maxexp)6s   max =        %(_str_max)s\n'
             'nexp =   %(nexp)6s   min =        -max\n'
+            'smallest_normal = %(_str_smallest_normal)s   '
+            'smallest_subnormal = %(_str_smallest_subnormal)s\n'
             '---------------------------------------------------------------\n'
             )
         return fmt % self.__dict__
