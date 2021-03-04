@@ -1,3 +1,5 @@
+# <img alt="NumPy" src="/branding/logo/primary/numpylogo.svg" height="60">
+
 NumPy is the fundamental package needed for scientific computing with Python.
 
 - **Website:** https://www.numpy.org
