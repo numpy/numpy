@@ -3,7 +3,7 @@ trigger:
   batch: False
   branches:
     include:
-      - master
+      - main
       - maintenance/*
 
 
