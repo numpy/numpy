@@ -95,10 +95,10 @@ that can be used to assess such impact include:
   analysis tools to determine where and how the functionality is used.
 - Test prominent downstream libraries against a development build of NumPy
   containing the proposed change to get real-world data on its impact.
-- Make a change in master and revert it before release if it causes problems.
-  We encourage other packages to test against NumPy's master branch and if
-  that's too burdensome, then at least to test pre-releases. This often
-  turns up issues quickly.
+- Make a change on the main branch and revert it before release if it
+  causes problems.  We encourage other packages to test against
+  NumPy's main branch and if that's too burdensome, then at least to
+  test pre-releases. This often turns up issues quickly.
 
 Alternatives to deprecations
 ````````````````````````````
