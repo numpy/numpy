@@ -5,6 +5,10 @@ from numpy import (
     ndindex as ndindex,
 )
 
+from numpy.lib.arrayterator import (
+    Arrayterator as Arrayterator,
+)
+
 from numpy.lib.index_tricks import (
     ravel_multi_index as ravel_multi_index,
     unravel_index as unravel_index,
@@ -31,7 +35,6 @@ __all__: List[str]
 emath: Any
 math: Any
 tracemalloc_domain: Any
-Arrayterator: Any
 iscomplexobj: Any
 isrealobj: Any
 imag: Any
