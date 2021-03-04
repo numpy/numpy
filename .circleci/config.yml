@@ -101,7 +101,7 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi
 
       - add_ssh_keys:
@@ -130,5 +130,5 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi
