@@ -279,8 +279,8 @@ introduced for v1.11.0 and turned into a hard error for v1.12.0.
 
 This change was disruptive, however it did catch real bugs in, e.g., SciPy and
 scikit-learn.  Overall the change was worth the cost, and introducing it in
-master first to allow testing, then removing it again before a release, is a
-useful strategy.
+the main branch first to allow testing, then removing it again before
+a release, is a useful strategy.
 
 Similar deprecations that also look like good examples of
 cleanups/improvements:

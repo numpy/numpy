@@ -278,7 +278,7 @@ minor variations, it can be helpful to create a base class containing
 all the common tests, and then create a subclass for each variation.
 Several examples of this technique exist in NumPy; below are excerpts
 from one in `numpy/linalg/tests/test_linalg.py
-<https://github.com/numpy/numpy/blob/master/numpy/linalg/tests/test_linalg.py>`__::
+<https://github.com/numpy/numpy/blob/main/numpy/linalg/tests/test_linalg.py>`__::
 
   class LinalgTestCase:
       def test_single(self):

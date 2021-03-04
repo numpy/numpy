@@ -94,6 +94,7 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
+# Will change to `root_doc` in Sphinx 4
 master_doc = 'index'
 
 # General substitutions.
@@ -442,7 +443,7 @@ def linkcode_resolve(domain, info):
         linespec = ""
 
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
            fn, linespec)
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (

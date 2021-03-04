@@ -74,8 +74,8 @@ For maintainers
   
 - Make sure all automated CI tests pass before merging a PR, and that the
   :ref:`documentation builds <building-docs>` without any errors.
-- In case of merge conflicts, ask the PR submitter to :ref:`rebase on master
-  <rebasing-on-master>`.
+- In case of merge conflicts, ask the PR submitter to :ref:`rebase on main
+  <rebasing-on-main>`.
 - For PRs that add new features or are in some way complex, wait at least a day
   or two before merging it. That way, others get a chance to comment before the
   code goes in. Consider adding it to the release notes.
