@@ -29,7 +29,7 @@ appended to ``doc/release/1.19.0-notes.rst`` for patch release, though not for
 new releases like ``1.19.0``, as the changelogs for ``*.0`` releases tend to be
 excessively long. The ``doc/source/release.rst`` file should also be updated
 with a link to the new release notes. These changes should be committed to the
-maintenance branch, and later will be forward ported to master. The changelog
+maintenance branch, and later will be forward ported to main. The changelog
 should be reviewed for name duplicates or short names and the ``.mailmap`` file
 updated if needed.
 
@@ -292,7 +292,7 @@ python-announce-list is BCC so that replies will not be sent to that list.
 Post-Release Tasks
 ------------------
 
-Checkout master and forward port the documentation changes::
+Checkout main and forward port the documentation changes::
 
     $ git checkout -b post-1.19.0-release-update
     $ git checkout maintenance/1.19.x doc/source/release/1.19.0-notes.rst
@@ -301,7 +301,7 @@ Checkout master and forward port the documentation changes::
     $ gvim doc/source/release.rst  # Add link to new notes
     $ git add doc/changelog/1.19.0-changelog.rst doc/source/release/1.19.0-notes.rst
     $ git status  # check status before commit
-    $ git commit -a -m"REL: Update master after 1.19.0 release."
+    $ git commit -a -m"REL: Update main after 1.19.0 release."
     $ git push origin HEAD
 
 Go to github and make a PR.

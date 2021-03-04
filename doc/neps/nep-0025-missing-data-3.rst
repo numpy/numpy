@@ -14,7 +14,7 @@ Abstract
 
 *Context: this NEP was written as an additional alternative to NEP 12 (NEP 24
 is another alternative), which at the time of writing had an implementation
-that was merged into the NumPy master branch.*
+that was merged into the NumPy main branch.*
 
 To try and make more progress on the whole missing values/masked arrays/...
 debate, it seems useful to have a more technical discussion of the pieces

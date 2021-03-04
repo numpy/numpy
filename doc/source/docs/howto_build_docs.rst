@@ -81,7 +81,7 @@ pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details
 on how to update https://numpy.org/doc.
 
 .. _Matplotlib: https://matplotlib.org/
-.. _HOWTO RELEASE: https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
+.. _HOWTO RELEASE: https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst.txt
 
 Sphinx extensions
 -----------------

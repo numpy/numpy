@@ -1150,7 +1150,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * bpo-32780
          * bpo-32782
          *
-         * Note that even if the above are fixed in master, we have to drop the
+         * Note that even if the above are fixed in main, we have to drop the
          * early patch versions of python to actually make use of the fixes.
          */
         if (!npy_ctypes_check(Py_TYPE(view->obj))) {

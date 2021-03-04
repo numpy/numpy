@@ -240,7 +240,7 @@ Discussion
 References and Footnotes
 ------------------------
 
-- `Inside NumPy: preparing for the next decade <https://github.com/numpy/archive/blob/master/content/inside_numpy_presentation_SciPy2019.pdf>`__ presentation at SciPy'19 discussing the impact of the first NumPy grant.
+- `Inside NumPy: preparing for the next decade <https://github.com/numpy/archive/blob/main/content/inside_numpy_presentation_SciPy2019.pdf>`__ presentation at SciPy'19 discussing the impact of the first NumPy grant.
 - `Issue  <https://github.com/numpy/numpy/issues/13393>`__ and
   `email <https://mail.python.org/pipermail/numpy-discussion/2019-April/079371.html>`__
   where IBM offered a $5,000 bounty for VSX SIMD support

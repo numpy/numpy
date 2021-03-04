@@ -1,12 +1,5 @@
 # <img alt="NumPy" src="/branding/logo/primary/numpylogo.svg" height="60">
 
-[![Travis CI](https://img.shields.io/travis/com/numpy/numpy/master?label=Travis%20CI)](
-    https://travis-ci.com/github/numpy/numpy)
-[![Azure](https://dev.azure.com/numpy/numpy/_apis/build/status/azure-pipeline%20numpy.numpy)](
-    https://dev.azure.com/numpy/numpy/_build/latest?definitionId=5)
-[![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](
-    https://codecov.io/gh/numpy/numpy)
-
 NumPy is the fundamental package needed for scientific computing with Python.
 
 - **Website:** https://www.numpy.org
