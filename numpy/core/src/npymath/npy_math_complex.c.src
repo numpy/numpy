@@ -446,7 +446,7 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     @ctype@ r;
 
     //Checking if in a^b, if b is zero.
-    //If a is not zero then by definition of logarithm a^0 is zero.
+    //If a is not zero then by definition of logarithm a^0 is one.
     //If a is also zero then as per IEEE 0^0 is best defined as 1.
     if(br == 0. && bi == 0.){
         return npy_cpack@c@(1.,0.);
@@ -460,6 +460,10 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
             return npy_cpack@c@(0.,0.);
         }
         else{
+            //Generating an invalid
+            volatile @type@ tmp=NPY_INFINITY@C@;
+            tmp-=NPY_INFINITY@C@;
+            ar=tmp;
             return npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
         }
     }

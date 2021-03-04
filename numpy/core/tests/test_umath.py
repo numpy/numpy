@@ -847,15 +847,28 @@ class TestPower:
             assert_array_equal(x.real, y.real)
             assert_array_equal(x.imag, y.imag)
 
-        with np.errstate(invalid="ignore"):
+        with pytest.warns(None) as record_pp:
             #real part and imaginary part both greater than zero
+            #This case should not generate any warning
             assert_complex_equal(np.power(zero,1+4j),zero)
+        assert len(record_pp)==0
+        with pytest.warns(None) as record_pn: 
             #real part greater than zero imag part less than zero
+            #This case should not generate any warning
             assert_complex_equal(np.power(zero,2-3j),zero)
+        assert len(record_pn)==0
+        with pytest.warns(None) as record_np:
             #real part less than zero imag part greater than zero
+            #This case will generate a warning
             assert_complex_equal(np.power(zero,-1+1j),cnan)
+        assert len(record_np)==1
+        assert record_np[0].message.args[0]=="invalid value encountered in power"
+        with pytest.warns(None) as record_nn:
             #real part less than zero imag part less than zero
+            #This case will generate a warning
             assert_complex_equal(np.power(zero,-2-3j),cnan)
+        assert len(record_nn)==1
+        assert record_nn[0].message.args[0]=="invalid value encountered in power"
 
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
