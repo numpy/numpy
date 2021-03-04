@@ -3,11 +3,11 @@ name: Build_Test
 on:
   push:
     branches:
-      - master
+      - main
       - maintenance/**
   pull_request:
     branches:
-      - master
+      - main
       - maintenance/**
 
 defaults:
