@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._types import Tuple, array
+from ._array_object import ndarray
 
 import numpy as np
 
@@ -11,7 +12,7 @@ def argmax(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
     See its docstring for more information.
     """
     # Note: this currently fails as np.argmax does not implement keepdims
-    return np.asarray(np.argmax(x, axis=axis, keepdims=keepdims))
+    return ndarray._new(np.asarray(np.argmax(x._array, axis=axis, keepdims=keepdims)))
 
 def argmin(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
     """
@@ -20,7 +21,7 @@ def argmin(x: array, /, *, axis: int = None, keepdims: bool = False) -> array:
     See its docstring for more information.
     """
     # Note: this currently fails as np.argmin does not implement keepdims
-    return np.asarray(np.argmin(x, axis=axis, keepdims=keepdims))
+    return ndarray._new(np.asarray(np.argmin(x._array, axis=axis, keepdims=keepdims)))
 
 def nonzero(x: array, /) -> Tuple[array, ...]:
     """
@@ -28,7 +29,7 @@ def nonzero(x: array, /) -> Tuple[array, ...]:
 
     See its docstring for more information.
     """
-    return np.nonzero(x)
+    return ndarray._new(np.nonzero(x._array))
 
 def where(condition: array, x1: array, x2: array, /) -> array:
     """
@@ -36,4 +37,4 @@ def where(condition: array, x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
-    return np.where(condition, x1, x2)
+    return ndarray._new(np.where(condition._array, x1._array, x2._array))

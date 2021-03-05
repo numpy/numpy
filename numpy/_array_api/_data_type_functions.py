@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from ._types import Union, array, dtype
+from ._array_object import ndarray
+
 from collections.abc import Sequence
 
 import numpy as np
@@ -27,4 +29,4 @@ def result_type(*arrays_and_dtypes: Sequence[Union[array, dtype]]) -> dtype:
 
     See its docstring for more information.
     """
-    return np.result_type(*arrays_and_dtypes)
+    return np.result_type(*(a._array if isinstance(a, ndarray) else a for a in arrays_and_dtypes))

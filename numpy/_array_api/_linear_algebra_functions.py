@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._types import Literal, Optional, Tuple, Union, array
+from ._array_object import ndarray
 
 import numpy as np
 
@@ -18,7 +19,7 @@ def cross(x1: array, x2: array, /, *, axis: int = -1) -> array:
 
     See its docstring for more information.
     """
-    return np.cross(x1, x2, axis=axis)
+    return ndarray._new(np.cross(x1._array, x2._array, axis=axis))
 
 def det(x: array, /) -> array:
     """
@@ -27,7 +28,7 @@ def det(x: array, /) -> array:
     See its docstring for more information.
     """
     # Note: this function is being imported from a nondefault namespace
-    return np.linalg.det(x)
+    return ndarray._new(np.linalg.det(x._array))
 
 def diagonal(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> array:
     """
@@ -35,7 +36,7 @@ def diagonal(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) ->
 
     See its docstring for more information.
     """
-    return np.diagonal(x, axis1=axis1, axis2=axis2, offset=offset)
+    return ndarray._new(np.diagonal(x._array, axis1=axis1, axis2=axis2, offset=offset))
 
 # def dot():
 #     """
@@ -76,7 +77,7 @@ def inv(x: array, /) -> array:
     See its docstring for more information.
     """
     # Note: this function is being imported from a nondefault namespace
-    return np.linalg.inv(x)
+    return ndarray._new(np.linalg.inv(x._array))
 
 # def lstsq():
 #     """
@@ -120,7 +121,7 @@ def norm(x: array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, kee
     if axis == None and x.ndim > 2:
         x = x.flatten()
     # Note: this function is being imported from a nondefault namespace
-    return np.linalg.norm(x, axis=axis, keepdims=keepdims, ord=ord)
+    return ndarray._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
 
 def outer(x1: array, x2: array, /) -> array:
     """
@@ -128,7 +129,7 @@ def outer(x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
-    return np.outer(x1, x2)
+    return ndarray._new(np.outer(x1._array, x2._array))
 
 # def pinv():
 #     """
@@ -176,7 +177,7 @@ def trace(x: array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> ar
 
     See its docstring for more information.
     """
-    return np.asarray(np.trace(x, axis1=axis1, axis2=axis2, offset=offset))
+    return ndarray._new(np.asarray(np.trace(x._array, axis1=axis1, axis2=axis2, offset=offset)))
 
 def transpose(x: array, /, *, axes: Optional[Tuple[int, ...]] = None) -> array:
     """
@@ -184,4 +185,4 @@ def transpose(x: array, /, *, axes: Optional[Tuple[int, ...]] = None) -> array:
 
     See its docstring for more information.
     """
-    return np.transpose(x, axes=axes)
+    return ndarray._new(np.transpose(x._array, axes=axes))

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._types import Optional, Tuple, Union, array
+from ._array_object import ndarray
 
 import numpy as np
 
@@ -10,7 +11,7 @@ def all(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keep
 
     See its docstring for more information.
     """
-    return np.asarray(np.all(x, axis=axis, keepdims=keepdims))
+    return ndarray._new(np.asarray(np.all(x._array, axis=axis, keepdims=keepdims)))
 
 def any(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
     """
@@ -18,4 +19,4 @@ def any(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keep
 
     See its docstring for more information.
     """
-    return np.asarray(np.any(x, axis=axis, keepdims=keepdims))
+    return ndarray._new(np.asarray(np.any(x._array, axis=axis, keepdims=keepdims)))
