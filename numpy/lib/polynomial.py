@@ -489,10 +489,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (M,), optional
-        Weights. If not None, the contribution of each point (x[i],y[i]) to
-        the fit is weighted by w[i]. Ideally the weights are chosen so that
-        the errors of the products w[i]*y[i] all have the same variance.
-        The default value is None.
+        Weights. If not None, the weight to apply to the unsquared residual
+        at each point ``(x[i], y[i])``. Ideally the weights are chosen so
+        that the errors of the products ``w[i]*y[i]`` all have the same
+        variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
     cov : bool or str, optional
         If given and not `False`, return not just the estimate but also its
         covariance matrix. By default, the covariance are scaled by
