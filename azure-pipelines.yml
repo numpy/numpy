@@ -63,12 +63,11 @@ stages:
 
   - job: Linux_Python_38_32bit_full_with_asserts
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
     - script: |
-            docker pull quay.io/pypa/manylinux2010_i686
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
-            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686 \
+            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686:2021-02-28-1f32361 \
             /bin/bash -xc "cd numpy && \
             /opt/python/cp38-cp38/bin/python -mvenv venv &&\
             source venv/bin/activate && \
