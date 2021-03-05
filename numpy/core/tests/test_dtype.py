@@ -336,6 +336,20 @@ class TestRecord:
 
         assert_array_equal(res, expected)
 
+    def test_subarray_dtypes_filled_with_string_inputs(self):
+        array = np.array(["abcd", "efgh"], dtype=("U1", 4))
+        check = np.array([['a', 'a', 'a', 'a'], ['e', 'e', 'e', 'e']], dtype='<U1')
+        assert_equal(array, check)
+        array = np.array(["abcd", "efgh"], dtype=("U2", 4))
+        check = np.array([['ab', 'ab', 'ab', 'ab'], ['ef', 'ef', 'ef', 'ef']], dtype='<U2')
+        assert_equal(array, check)
+        array = np.array(["abcd", "efgh"], dtype=("U3", 4))
+        check = np.array([['abc', 'abc', 'abc', 'abc'], ['efg', 'efg', 'efg', 'efg']], dtype='<U3')
+        assert_equal(array, check)
+        array = np.array(["abcd", "efgh"], dtype=("U4", 4))
+        check = np.array([['abcd', 'abcd', 'abcd', 'abcd'], ['efgh', 'efgh', 'efgh', 'efgh']], dtype='<U4')
+        assert_equal(array, check)
+
     def test_comma_datetime(self):
         dt = np.dtype('M8[D],datetime64[Y],i8')
         assert_equal(dt, np.dtype([('f0', 'M8[D]'),
