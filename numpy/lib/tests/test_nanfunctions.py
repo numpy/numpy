@@ -849,6 +849,14 @@ class TestNanFunctions_Percentile:
                 assert_equal(np.nanpercentile(mat, 40, axis=axis), np.zeros([]))
                 assert_(len(w) == 0)
 
+    # gh-18158
+    def test_empty_shape(self):
+        mat = np.zeros((0, 1))
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            res = np.nanpercentile(mat, [50, 99], axis=1)
+            assert_equal(res.shape, (2, 0))
+
     def test_scalar(self):
         assert_equal(np.nanpercentile(0., 100), 0.)
         a = np.arange(6)
