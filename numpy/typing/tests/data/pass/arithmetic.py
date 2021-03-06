@@ -42,6 +42,18 @@ class Object:
     def __rfloordiv__(self, value: Any) -> Object:
         return self
 
+    def __mul__(self, value: Any) -> Object:
+        return self
+
+    def __rmul__(self, value: Any) -> Object:
+        return self
+
+    def __pow__(self, value: Any) -> Object:
+        return self
+
+    def __rpow__(self, value: Any) -> Object:
+        return self
+
 
 AR_b: np.ndarray[Any, np.dtype[np.bool_]] = np.array([True])
 AR_u: np.ndarray[Any, np.dtype[np.uint32]] = np.array([1], dtype=np.uint32)
@@ -266,6 +278,67 @@ AR_LIKE_u // AR_O
 AR_LIKE_i // AR_O
 AR_LIKE_f // AR_O
 AR_LIKE_O // AR_O
+
+# Inplace multiplication
+
+AR_b *= AR_LIKE_b
+
+AR_u *= AR_LIKE_b
+AR_u *= AR_LIKE_u
+
+AR_i *= AR_LIKE_b
+AR_i *= AR_LIKE_u
+AR_i *= AR_LIKE_i
+
+AR_f *= AR_LIKE_b
+AR_f *= AR_LIKE_u
+AR_f *= AR_LIKE_i
+AR_f *= AR_LIKE_f
+
+AR_c *= AR_LIKE_b
+AR_c *= AR_LIKE_u
+AR_c *= AR_LIKE_i
+AR_c *= AR_LIKE_f
+AR_c *= AR_LIKE_c
+
+AR_m *= AR_LIKE_b
+AR_m *= AR_LIKE_u
+AR_m *= AR_LIKE_i
+AR_m *= AR_LIKE_f
+
+AR_O *= AR_LIKE_b
+AR_O *= AR_LIKE_u
+AR_O *= AR_LIKE_i
+AR_O *= AR_LIKE_f
+AR_O *= AR_LIKE_c
+AR_O *= AR_LIKE_O
+
+# Inplace power
+
+AR_u **= AR_LIKE_b
+AR_u **= AR_LIKE_u
+
+AR_i **= AR_LIKE_b
+AR_i **= AR_LIKE_u
+AR_i **= AR_LIKE_i
+
+AR_f **= AR_LIKE_b
+AR_f **= AR_LIKE_u
+AR_f **= AR_LIKE_i
+AR_f **= AR_LIKE_f
+
+AR_c **= AR_LIKE_b
+AR_c **= AR_LIKE_u
+AR_c **= AR_LIKE_i
+AR_c **= AR_LIKE_f
+AR_c **= AR_LIKE_c
+
+AR_O **= AR_LIKE_b
+AR_O **= AR_LIKE_u
+AR_O **= AR_LIKE_i
+AR_O **= AR_LIKE_f
+AR_O **= AR_LIKE_c
+AR_O **= AR_LIKE_O
 
 # unary ops
 
