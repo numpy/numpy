@@ -95,6 +95,8 @@ The approach for spending funds will be:
 
 The next sections go into detail on each of these three points.
 
+.. _section-what-to-pay-for:
+
 What to pay for
 ```````````````
 
@@ -123,7 +125,7 @@ a volunteer in a reasonable amount of time.
 There are also many tasks, activities, and projects outside of
 development work that are important and could enhance the project or community
 - think of, for example, user surveys, translations, outreach, dedicated
-mentoring of newcomers, community organization, website improvements, and
+mentoring of newcomers, community organizating, website improvements, and
 administrative tasks.
 
 Time of people to perform tasks is also not the only thing that funds can be
@@ -145,9 +147,10 @@ Whom to pay
 
 It will likely depend on the project/tasks whether there's already a clear best
 candidate within the NumPy team, or whether we look for new people to get
-involved. Before making any decisions, the decision makers should think about
-whether an opportunity should be advertised to give a wider group of people a
-chance to apply for it.
+involved. Before making any decisions, the decision makers (according to the
+NumPy governance document - currently that's the Steering Council) should think
+about whether an opportunity should be advertised to give a wider group of
+people a chance to apply for it.
 
 Compensating fairly
 ```````````````````
@@ -251,7 +254,8 @@ Each listed idea must meet the following requirements:
 
 1. It must be clearly scoped: its description must explain the importance to
    the project, referencing the NumPy Roadmap if possible, the items to pay for
-   or activities and deliverables, and why it should be a funded activity.
+   or activities and deliverables, and why it should be a funded activity (see
+   :ref:`section-what-to-pay-for`).
 2. It must contain the following metadata: title, cost, time duration or effort
    estimate, and (if known) names of the team member(s) to execute or coordinate.
 3. It must have an assigned priority (low, medium, or high). This discussion
