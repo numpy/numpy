@@ -2738,6 +2738,14 @@ def test_object_iter_cleanup():
     oarr[:, -1] = None
     assert_raises(TypeError, lambda: np.add(oarr[:, ::-1], arr[:, ::-1]))
 
+    # followup: this tests for a bug introduced in the first pass of gh-18450,
+    # caused by an incorrect fallthrough of the TypeError
+    class T:
+        def __bool__(self):
+            raise TypeError("Ambiguous")
+    assert_raises(TypeError, np.logical_or.reduce, 
+                             np.array([T(), T()], dtype='O'))
+
 def test_iter_too_large():
     # The total size of the iterator must not exceed the maximum intp due
     # to broadcasting. Dividing by 1024 will keep it small enough to
