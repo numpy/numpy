@@ -31,7 +31,7 @@ Generate C code coverage listing under build/lcov/:
 Run lint checks.
 Provide target branch name or `uncommitted` to check before committing:
 
-    $ python runtests.py --lint master
+    $ python runtests.py --lint main
     $ python runtests.py --lint uncommitted
 
 """
@@ -664,7 +664,7 @@ def check_lint(lint_args):
         sys.exit(1)
 
     uncommitted = lint_args == "uncommitted"
-    branch = "master" if uncommitted else lint_args
+    branch = "main" if uncommitted else lint_args
 
     DiffLinter(branch).run_lint(uncommitted)
 

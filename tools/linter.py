@@ -62,7 +62,7 @@ class DiffLinter:
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument("--branch", type=str, default='master',
+    parser.add_argument("--branch", type=str, default='main',
                         help="The branch to diff against")
     parser.add_argument("--uncommitted", action='store_true',
                         help="Check only uncommitted changes")
