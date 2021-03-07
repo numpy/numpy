@@ -40,7 +40,7 @@ class DiffLinter:
         """
             Original Author: Josh Wilson (@person142)
             Source:
-              https://github.com/scipy/scipy/blob/master/tools/lint_diff.py
+              https://github.com/scipy/scipy/blob/main/tools/lint_diff.py
             Run pycodestyle on the given diff.
         """
         res = subprocess.run(
