@@ -700,20 +700,22 @@ cdef class Generator:
         cdef uint64_t set_size, mask
         cdef uint64_t[::1] hash_set
         # Format and Verify input
+        a_original = a
         a = np.array(a, copy=False)
         if a.ndim == 0:
             try:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
-            except TypeError:
-                raise ValueError("a must an array or an integer")
+            except TypeError as exc:
+                raise ValueError("a must be a sequence or an integer, "
+                                 f"not {type(a_original)}") from exc
             if pop_size <= 0 and np.prod(size) != 0:
-                raise ValueError("a must be a positive integer unless no"
+                raise ValueError("a must be a positive integer unless no "
                                  "samples are taken")
         else:
             pop_size = a.shape[axis]
             if pop_size == 0 and np.prod(size) != 0:
-                raise ValueError("a cannot be empty unless no samples are"
+                raise ValueError("a cannot be empty unless no samples are "
                                  "taken")
 
         if p is not None:
