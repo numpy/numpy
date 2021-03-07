@@ -28,6 +28,12 @@ Generate C code coverage listing under build/lcov/:
     $ python runtests.py --gcov [...other args...]
     $ python runtests.py --lcov-html
 
+Run lint checks.
+Provide target branch name or `uncommitted` to check before committing:
+
+    $ python runtests.py --lint main
+    $ python runtests.py --lint uncommitted
+
 """
 #
 # This is a generic test runner script for projects using NumPy's test
@@ -84,6 +90,10 @@ def main(argv):
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
+    parser.add_argument("--lint", default=None,
+                        help="'<Target Branch>' or 'uncommitted', passed to "
+                             "tools/linter.py [--branch BRANCH] "
+                             "[--uncommitted]")
     parser.add_argument("--durations", action="store", default=-1, type=int,
                         help=("Time N slowest tests, time all if 0, time none if < 0"))
     parser.add_argument("--gcov", action="store_true", default=False,
@@ -161,6 +171,9 @@ def main(argv):
     if args.debug and args.bench:
         print("*** Benchmarks should not be run against debug "
               "version; remove -g flag ***")
+
+    if args.lint:
+        check_lint(args.lint)
 
     if not args.no_build:
         # we need the noarch path in case the package is pure python.
@@ -636,6 +649,24 @@ def lcov_generate():
         print("genhtml failed!")
     else:
         print("HTML output generated under build/lcov/")
+
+def check_lint(lint_args):
+    """
+    Adds ROOT_DIR to path and performs lint checks.
+    This functions exits the program with status code of lint check.
+    """
+    sys.path.append(ROOT_DIR)
+    try:
+        from tools.linter import DiffLinter
+    except ModuleNotFoundError as e:
+        print(f"Error: {e.msg}. "
+              "Install using linter_requirements.txt.")
+        sys.exit(1)
+
+    uncommitted = lint_args == "uncommitted"
+    branch = "main" if uncommitted else lint_args
+
+    DiffLinter(branch).run_lint(uncommitted)
 
 
 if __name__ == "__main__":
