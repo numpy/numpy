@@ -44,7 +44,8 @@ def run(cmd, stdout=True):
 workdir = tempfile.mkdtemp()
 os.chdir(workdir)
 
-run(['git', 'init', '--initial-branch=main'])
+run(['git', 'init'])
+run(['git', 'branch', '-m', 'master', 'main'])
 run(['git', 'remote', 'add', 'origin',  args.remote])
 run(['git', 'config', '--local', 'user.name', args.committer])
 run(['git', 'config', '--local', 'user.email', args.email])
