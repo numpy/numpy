@@ -32,7 +32,10 @@ Call for Contributions
 
 The NumPy project welcomes your expertise and enthusiasm!
 
-Small improvements or fixes are always appreciated. (Issues labeled as easy may be a good starting point.) If you are considering larger contributions to the source code, please contact us through the [mailing list](https://mail.python.org/mailman/listinfo/numpy-discussion) first. 
+Small improvements or fixes are always appreciated. (Issues labeled as "good
+first issue" may be a good starting point.) If you are considering larger
+contributions to the source code, please contact us through the [mailing
+list](https://mail.python.org/mailman/listinfo/numpy-discussion) first. 
 
 Writing code isn’t the only way to contribute to NumPy. You can also: 
 - review pull requests
