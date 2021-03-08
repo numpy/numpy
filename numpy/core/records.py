@@ -35,7 +35,7 @@ Record arrays allow us to access fields as properties::
 """
 import os
 import warnings
-from collections import Counter, OrderedDict
+from collections import Counter
 from contextlib import nullcontext
 
 from . import numeric as sb
@@ -75,23 +75,12 @@ _byteorderconv = {'b':'>',
 
 numfmt = nt.typeDict
 
-# taken from OrderedDict recipes in the Python documentation
-# https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes
-class _OrderedCounter(Counter, OrderedDict):
-    """Counter that remembers the order elements are first encountered"""
-
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
-
-    def __reduce__(self):
-        return self.__class__, (OrderedDict(self),)
-
 
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     return [
         item
-        for item, counts in _OrderedCounter(list).items()
+        for item, counts in Counter(list).items()
         if counts > 1
     ]
 
