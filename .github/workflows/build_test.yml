@@ -211,7 +211,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@v2
       with:
-        python-version: pypy-3.7
+        python-version: pypy-3.7-nightly
     - uses: ./.github/actions
 
   sdist:
