@@ -56,6 +56,11 @@ typedef double     npyv_lanetype_f64;
     #include "emulate_maskop.h"
 #endif
 
+// enable integer divisor generator for all SIMD extensions
+#if NPY_SIMD
+    #include "intdiv.h"
+#endif
+
 /**
  * Some SIMD extensions currently(AVX2, AVX512F) require (de facto)
  * a maximum number of strides sizes when dealing with non-contiguous memory access.
