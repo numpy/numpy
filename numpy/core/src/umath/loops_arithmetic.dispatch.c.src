@@ -1,0 +1,131 @@
+/*@targets
+ ** $maxopt baseline
+ ** sse2 sse41 avx2 avx512_skx
+ ** vsx2
+ ** neon
+ **/
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+#include<signal.h> 
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+//###############################################################################
+//## Unsigned Integers
+//###############################################################################
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
+#ifdef NPY_SIMD
+/**begin repeat
+ *  #sfx = u8, u16, u32, u64#
+ */
+
+static void simd_divide_by_scalar_contig_contig_@sfx@
+(npyv_lanetype_@sfx@ *src, const npyv_lanetype_@sfx@ scalar, npyv_lanetype_@sfx@ *dst,
+ int len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    const npyv_@sfx@x3 divisor = npyv_divisor_@sfx@(scalar);
+
+    for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+        npyv_@sfx@ a = npyv_load_@sfx@(src);
+        npyv_@sfx@ c = npyv_divc_@sfx@(a, divisor);
+        npyv_store_@sfx@(dst, c);
+    }
+    for (; len > 0; --len, ++src, ++dst) {
+        const npyv_lanetype_@sfx@ a = *src;
+        *dst = a / scalar;
+    }
+    npyv_cleanup();
+}
+
+/**end repeat**/
+#endif
+
+
+
+// XXX Need to see what can be done for 64 bits
+/**begin repeat
+ * Unsigned types
+ *  #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ *  #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ *  #SIGNED_TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
+ */
+#if NPY_BITSOF_@SIGNED_TYPE@ <= 8
+    #define simd_divide_by_scalar_@type@ simd_divide_by_scalar_contig_contig_u8
+#elif NPY_BITSOF_@SIGNED_TYPE@ <= 16
+    #define simd_divide_by_scalar_@type@ simd_divide_by_scalar_contig_contig_u16
+#elif NPY_BITSOF_@SIGNED_TYPE@ <= 32
+    #define simd_divide_by_scalar_@type@ simd_divide_by_scalar_contig_contig_u32
+#else
+    #define simd_divide_by_scalar_@type@ simd_divide_by_scalar_contig_contig_u64
+#endif
+static NPY_INLINE int
+run_binary_simd_divide_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    BINARY_DEFS
+
+    if (n == 0) {
+        return 1;
+    }
+
+    const @type@ in2 = *(@type@ *)ip2;
+    if (in2 == 0) {
+        npy_set_floatstatus_divbyzero();
+        BINARY_LOOP_SLIDING {
+            *((@type@ *)op1) = 0;
+        }
+        return 1;
+    }
+#if defined NPY_SIMD
+    #ifdef NPY_HAVE_AVX512F
+        const npy_intp vector_size_bytes = 64;
+    #elif defined NPY_HAVE_AVX2
+        const npy_intp vector_size_bytes = 32;
+    #else
+        const npy_intp vector_size_bytes = 16;
+    #endif
+    // XXX Implement other loops
+    if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), (npy_uintp)vector_size_bytes)) {
+        simd_divide_by_scalar_@type@(ip1, in2, op1, n);
+        return 1;
+    }
+#endif
+    return 0;
+}
+/**end repeat**/ 
+
+/**begin repeat
+ * Unsigned types
+ *  #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ *  #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            io1 /= *(@type@ *)ip2;
+        }
+        *((@type@ *)iop1) = io1;
+    }
+    else if (!run_binary_simd_divide_@TYPE@(args, dimensions, steps)) {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            if (in2 == 0) {
+                npy_set_floatstatus_divbyzero();
+                *((@type@ *)op1) = 0;
+            }
+            *((@type@ *)op1) = in1 / in2;
+        }
+    }
+}
+/**end repeat**/
