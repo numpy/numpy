@@ -1015,22 +1015,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 }
 
 NPY_NO_EXPORT void
-@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-        }
-        else {
-            *((@type@ *)op1)= in1/in2;
-        }
-    }
-}
-
-NPY_NO_EXPORT void
 @TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {

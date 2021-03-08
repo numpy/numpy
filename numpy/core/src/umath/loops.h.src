@@ -53,6 +53,17 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
  *****************************************************************************
  */
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_arithmetic.dispatch.h"
+#endif
+
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ */
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_divide,
+     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat**/
+
 /**begin repeat
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
  */
@@ -141,7 +152,7 @@ NPY_NO_EXPORT void
 @S@@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@S@@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @S@@TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
