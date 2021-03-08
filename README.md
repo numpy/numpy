@@ -41,7 +41,7 @@ Writing code isn’t the only way to contribute to NumPy. You can also:
 - maintain and improve our website numpy.org
 - develop graphic design for our brand assets and promotional materials
 - translate website content
-- serve as a community coordinator
+- help with outreach and onboard new contributors
 - write grant proposals and help with other fundraising efforts
 
 If you’re unsure where to start or how your skills fit in, reach out! You can
