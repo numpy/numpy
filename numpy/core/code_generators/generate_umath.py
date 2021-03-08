@@ -325,7 +325,7 @@ defdict = {
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.floor_divide'),
           'PyUFunc_DivisionTypeResolver',
-          TD(intfltcmplx),
+          TD(intfltcmplx, cfunc_alias='divide', dispatch=[('loops_arithmetic', 'BHILQ')]),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
            TypeDescription('m', FullTypeDescr, 'mm', 'q'),
