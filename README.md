@@ -51,7 +51,10 @@ If you’re unsure where to start or how your skills fit in, reach out! You can
 ask on the mailing list or here, on GitHub, by opening a new issue or leaving a
 comment on a relevant issue that is already open.
 
-Those are our preferred channels (open source is open by nature), but if you’d like to speak to us in private first, contact our community coordinators at numpy-team@googlegroups.com or on Slack (write numpy-team@googlegroups.com for an invite).
+Our preferred channels of communication are all public, but if you’d like to
+speak to us in private first, contact our community coordinators at
+numpy-team@googlegroups.com or on Slack (write numpy-team@googlegroups.com for
+an invite).
 
 We also have a biweekly community call, details of which are announced on the
 mailing list. You are very welcome to join. 
