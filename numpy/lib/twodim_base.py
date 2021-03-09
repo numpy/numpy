@@ -47,10 +47,11 @@ def _flip_dispatcher(m):
 @array_function_dispatch(_flip_dispatcher)
 def fliplr(m):
     """
-    Flip array in the left/right direction.
+    Reverse the order of elements along axis 1 (left/right).
 
-    Flip the entries in each row in the left/right direction.
-    Columns are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each row in the left/right
+    direction. Columns are preserved, but appear in a different order than
+    before.
 
     Parameters
     ----------
@@ -66,11 +67,13 @@ def fliplr(m):
     See Also
     --------
     flipud : Flip array in the up/down direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to m[:,::-1]. Requires the array to be at least 2-D.
+    Equivalent to ``m[:,::-1]`` or ``np.flip(m, axis=1)``.
+    Requires the array to be at least 2-D.
 
     Examples
     --------
@@ -98,10 +101,10 @@ def fliplr(m):
 @array_function_dispatch(_flip_dispatcher)
 def flipud(m):
     """
-    Flip array in the up/down direction.
+    Reverse the order of elements along axis 0 (up/down).
 
-    Flip the entries in each column in the up/down direction.
-    Rows are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each column in the up/down
+    direction. Rows are preserved, but appear in a different order than before.
 
     Parameters
     ----------
@@ -117,12 +120,13 @@ def flipud(m):
     See Also
     --------
     fliplr : Flip array in the left/right direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to ``m[::-1,...]``.
-    Does not require the array to be two-dimensional.
+    Equivalent to ``m[::-1, ...]`` or ``np.flip(m, axis=0)``.
+    Requires the array to be at least 1-D.
 
     Examples
     --------
