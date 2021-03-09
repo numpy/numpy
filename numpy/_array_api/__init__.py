@@ -58,19 +58,31 @@ A few notes about the current state of this submodule:
   guaranteed to give a comprehensive coverage of the spec. Therefore, those
   reviewing this submodule should refer to the standard documents themselves.
 
+- There is a custom array object, numpy._array_api.ndarray, which is returned
+  by all functions in this module. All functions in the array API namespace
+  implicitly assume that they will only receive this object as input. The only
+  way to create instances of this object is to use one of the array creation
+  functions. It does not have a public constructor on the object itself. The
+  object is a small wrapper Python class around numpy.ndarray. The main
+  purpose of it is to restrict the namespace of the array object to only those
+  methods that are required by the spec, as well as to limit/change certain
+  behavior that differs in the spec. In particular:
+
+  - Indexing: Only a subset of indices supported by NumPy are required by the
+    spec. The ndarray object restricts indexing to only allow those types of
+    indices that are required by the spec. See the docstring of the
+    numpy._array_api.ndarray._validate_indices helper function for more
+    information.
+
+  - Type promotion: Some type promotion rules are different in the spec. In
+    particular, the spec does not have any value-based casing. Note that the
+    code to correct the type promotion rules on numpy._array_api.ndarray is
+    not yet implemented.
+
 - All functions include type annotations, corresponding to those given in the
   spec (see _types.py for definitions of the types 'array', 'device', and
   'dtype'). These do not currently fully pass mypy due to some limitations in
   mypy.
-
-- The array object is not modified at all. That means that functions return
-  np.ndarray, which has methods and attributes that aren't part of the spec.
-  Modifying/subclassing ndarray for the purposes of the array API namespace
-  was considered too complex for this initial implementation.
-
-- All functions that would otherwise accept array-like input have been wrapped
-  to only accept ndarray (with the exception of methods on the array object,
-  which are not modified).
 
 - All places where the implementations in this submodule are known to deviate
   from their corresponding functions in NumPy are marked with "# Note"
