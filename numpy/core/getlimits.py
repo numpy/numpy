@@ -358,11 +358,10 @@ class finfo:
         The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
     tiny : float
-        The smallest positive floating point number with full precision
-        (see Notes).
+        An alias for `smallest_normal`, kept for backwards compatibility.
     smallest_normal : float
         The smallest positive floating point number with 1 as leading bit in
-        the mantissa following IEEE-754.
+        the mantissa following IEEE-754 (see Notes).
     smallest_subnormal : float
         The smallest positive floating point number with 0 as leading bit in
         the mantissa following IEEE-754.
@@ -386,11 +385,11 @@ class finfo:
     impacts import times.  These objects are cached, so calling ``finfo()``
     repeatedly inside your functions is not a problem.
 
-    Note that ``tiny`` is not actually the smallest positive representable
-    value in a NumPy floating point type. As in the IEEE-754 standard [1]_,
-    NumPy floating point types make use of subnormal numbers to fill the
-    gap between 0 and ``tiny``. However, subnormal numbers may have
-    significantly reduced precision [2]_.
+    Note that ``smallest_normal`` is not actually the smallest positive
+    representable value in a NumPy floating point type. As in the IEEE-754
+    standard [1]_, NumPy floating point types make use of subnormal numbers to
+    fill the gap between 0 and ``smallest_normal``. However, subnormal numbers
+    may have significantly reduced precision [2]_.
 
     References
     ----------
