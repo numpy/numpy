@@ -5720,6 +5720,15 @@ class TestStats:
                             np.array(_res))
             assert_allclose(np.mean(a, axis=_ax, where=_wh),
                             np.array(_res))
+
+        a3d = np.arange(16).reshape((2, 2, 4))
+        _wh_partial = np.array([False, True, True, False])
+        _res = [[1.5, 5.5], [9.5, 13.5]]
+        assert_allclose(a3d.mean(axis=2, where=_wh_partial),
+                        np.array(_res))
+        assert_allclose(np.mean(a3d, axis=2, where=_wh_partial),
+                        np.array(_res))
+
         with pytest.warns(RuntimeWarning) as w:
             assert_allclose(a.mean(axis=1, where=wh_partial),
                             np.array([np.nan, 5.5, 9.5, np.nan]))
