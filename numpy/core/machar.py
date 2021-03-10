@@ -299,6 +299,8 @@ class MachAr:
             else:
                 xmax = xmax * beta
 
+        smallest_subnormal = abs(xmin / beta ** (it))
+
         self.ibeta = ibeta
         self.it = it
         self.negep = negep
@@ -323,7 +325,7 @@ class MachAr:
         self.tiny = self.xmin
         self.huge = self.xmax
         self.smallest_normal = self.xmin
-        self.smallest_subnormal = self.xmin / self.ibeta ** (self.it)
+        self.smallest_subnormal = float_to_float(smallest_subnormal)
 
         import math
         self.precision = int(-math.log10(float_to_float(self.eps)))

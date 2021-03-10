@@ -196,6 +196,7 @@ def _register_known_types():
     # Known parameters for float80 (Intel 80-bit extended precision)
     epsneg_f80 = exp2(ld(-64))
     tiny_f80 = exp2(ld(-16382))
+    smallest_subnormal = exp2(ld(-16445))
     # Ignore runtime error when this is not f80
     with numeric.errstate(all='ignore'):
         huge_f80 = (ld(1) - epsneg_f80) / tiny_f80 * ld(4)
@@ -214,7 +215,7 @@ def _register_known_types():
                             huge=huge_f80,
                             tiny=tiny_f80,
                             smallest_normal=tiny_f80,
-                            smallest_subnormal=exp2(ld(-16445)))
+                            smallest_subnormal=smallest_subnormal)
     # float80, first 10 bytes containing actual storage
     _register_type(float80_ma, b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
     _float_ma[80] = float80_ma
