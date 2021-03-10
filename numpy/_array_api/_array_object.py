@@ -24,6 +24,20 @@ from ._dtypes import _boolean_dtypes, _integer_dtypes
 import numpy as np
 
 class ndarray:
+    """
+    ndarray object for the array API namespace.
+
+    See the docstring of :py:obj:`np.ndarray <numpy.ndarray>` for more
+    information.
+
+    This is a wrapper around numpy.ndarray that restricts the usage to only
+    those things that are required by the array API namespace. Note,
+    attributes on this object that start with a single underscore are not part
+    of the API specification and should only be used internally. This object
+    should not be constructed directly. Rather, use one of the creation
+    functions, such as asarray().
+
+    """
     # Use a custom constructor instead of __init__, as manually initializing
     # this class is not supported API.
     @classmethod
