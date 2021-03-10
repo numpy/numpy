@@ -52,40 +52,40 @@ class ndarray:
     # These functions are not required by the spec, but are implemented for
     # the sake of usability.
 
-    def __str__(x: array, /) -> str:
+    def __str__(self: array, /) -> str:
         """
         Performs the operation __str__.
         """
-        return x._array.__str__().replace('array', 'ndarray')
+        return self._array.__str__().replace('array', 'ndarray')
 
-    def __repr__(x: array, /) -> str:
+    def __repr__(self: array, /) -> str:
         """
         Performs the operation __repr__.
         """
-        return x._array.__repr__().replace('array', 'ndarray')
+        return self._array.__repr__().replace('array', 'ndarray')
 
     # Everything below this is required by the spec.
 
-    def __abs__(x: array, /) -> array:
+    def __abs__(self: array, /) -> array:
         """
         Performs the operation __abs__.
         """
-        res = x._array.__abs__()
-        return x.__class__._new(res)
+        res = self._array.__abs__()
+        return self.__class__._new(res)
 
-    def __add__(x1: array, x2: array, /) -> array:
+    def __add__(self: array, other: array, /) -> array:
         """
         Performs the operation __add__.
         """
-        res = x1._array.__add__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__add__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __and__(x1: array, x2: array, /) -> array:
+    def __and__(self: array, other: array, /) -> array:
         """
         Performs the operation __and__.
         """
-        res = x1._array.__and__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__and__(asarray(other)._array)
+        return self.__class__._new(res)
 
     def __array_namespace__(self, /, *, api_version=None):
         if api_version is not None:
@@ -93,60 +93,60 @@ class ndarray:
         from numpy import _array_api
         return _array_api
 
-    def __bool__(x: array, /) -> bool:
+    def __bool__(self: array, /) -> bool:
         """
         Performs the operation __bool__.
         """
         # Note: This is an error here.
-        if x._array.shape != ():
+        if self._array.shape != ():
             raise TypeError("bool is only allowed on arrays with shape ()")
-        res = x._array.__bool__()
+        res = self._array.__bool__()
         return res
 
-    def __dlpack__(x: array, /, *, stream: Optional[int] = None) -> PyCapsule:
+    def __dlpack__(self: array, /, *, stream: Optional[int] = None) -> PyCapsule:
         """
         Performs the operation __dlpack__.
         """
-        res = x._array.__dlpack__(stream=None)
-        return x.__class__._new(res)
+        res = self._array.__dlpack__(stream=None)
+        return self.__class__._new(res)
 
-    def __dlpack_device__(x: array, /) -> Tuple[IntEnum, int]:
+    def __dlpack_device__(self: array, /) -> Tuple[IntEnum, int]:
         """
         Performs the operation __dlpack_device__.
         """
-        res = x._array.__dlpack_device__()
-        return x.__class__._new(res)
+        res = self._array.__dlpack_device__()
+        return self.__class__._new(res)
 
-    def __eq__(x1: array, x2: array, /) -> array:
+    def __eq__(self: array, other: array, /) -> array:
         """
         Performs the operation __eq__.
         """
-        res = x1._array.__eq__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__eq__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __float__(x: array, /) -> float:
+    def __float__(self: array, /) -> float:
         """
         Performs the operation __float__.
         """
         # Note: This is an error here.
-        if x._array.shape != ():
+        if self._array.shape != ():
             raise TypeError("bool is only allowed on arrays with shape ()")
-        res = x._array.__float__()
+        res = self._array.__float__()
         return res
 
-    def __floordiv__(x1: array, x2: array, /) -> array:
+    def __floordiv__(self: array, other: array, /) -> array:
         """
         Performs the operation __floordiv__.
         """
-        res = x1._array.__floordiv__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__floordiv__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ge__(x1: array, x2: array, /) -> array:
+    def __ge__(self: array, other: array, /) -> array:
         """
         Performs the operation __ge__.
         """
-        res = x1._array.__ge__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ge__(asarray(other)._array)
+        return self.__class__._new(res)
 
     # Note: A large fraction of allowed indices are disallowed here (see the
     # docstring below)
@@ -255,343 +255,343 @@ class ndarray:
             # ndarray() form, like a list of booleans.
             raise IndexError("Only integers, slices (`:`), ellipsis (`...`), and boolean arrays are valid indices in the array API namespace")
 
-    def __getitem__(x: array, key: Union[int, slice, Tuple[Union[int, slice], ...], array], /) -> array:
+    def __getitem__(self: array, key: Union[int, slice, Tuple[Union[int, slice], ...], array], /) -> array:
         """
         Performs the operation __getitem__.
         """
         # Note: Only indices required by the spec are allowed. See the
         # docstring of _validate_index
-        key = x._validate_index(key, x.shape)
-        res = x._array.__getitem__(key)
-        return x.__class__._new(res)
+        key = self._validate_index(key, self.shape)
+        res = self._array.__getitem__(key)
+        return self.__class__._new(res)
 
-    def __gt__(x1: array, x2: array, /) -> array:
+    def __gt__(self: array, other: array, /) -> array:
         """
         Performs the operation __gt__.
         """
-        res = x1._array.__gt__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__gt__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __int__(x: array, /) -> int:
+    def __int__(self: array, /) -> int:
         """
         Performs the operation __int__.
         """
         # Note: This is an error here.
-        if x._array.shape != ():
+        if self._array.shape != ():
             raise TypeError("bool is only allowed on arrays with shape ()")
-        res = x._array.__int__()
+        res = self._array.__int__()
         return res
 
-    def __invert__(x: array, /) -> array:
+    def __invert__(self: array, /) -> array:
         """
         Performs the operation __invert__.
         """
-        res = x._array.__invert__()
-        return x.__class__._new(res)
+        res = self._array.__invert__()
+        return self.__class__._new(res)
 
-    def __le__(x1: array, x2: array, /) -> array:
+    def __le__(self: array, other: array, /) -> array:
         """
         Performs the operation __le__.
         """
-        res = x1._array.__le__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__le__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __len__(x, /):
+    def __len__(self, /):
         """
         Performs the operation __len__.
         """
-        res = x._array.__len__()
-        return x.__class__._new(res)
+        res = self._array.__len__()
+        return self.__class__._new(res)
 
-    def __lshift__(x1: array, x2: array, /) -> array:
+    def __lshift__(self: array, other: array, /) -> array:
         """
         Performs the operation __lshift__.
         """
-        res = x1._array.__lshift__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__lshift__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __lt__(x1: array, x2: array, /) -> array:
+    def __lt__(self: array, other: array, /) -> array:
         """
         Performs the operation __lt__.
         """
-        res = x1._array.__lt__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__lt__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __matmul__(x1: array, x2: array, /) -> array:
+    def __matmul__(self: array, other: array, /) -> array:
         """
         Performs the operation __matmul__.
         """
-        res = x1._array.__matmul__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__matmul__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __mod__(x1: array, x2: array, /) -> array:
+    def __mod__(self: array, other: array, /) -> array:
         """
         Performs the operation __mod__.
         """
-        res = x1._array.__mod__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__mod__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __mul__(x1: array, x2: array, /) -> array:
+    def __mul__(self: array, other: array, /) -> array:
         """
         Performs the operation __mul__.
         """
-        res = x1._array.__mul__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__mul__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ne__(x1: array, x2: array, /) -> array:
+    def __ne__(self: array, other: array, /) -> array:
         """
         Performs the operation __ne__.
         """
-        res = x1._array.__ne__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ne__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __neg__(x: array, /) -> array:
+    def __neg__(self: array, /) -> array:
         """
         Performs the operation __neg__.
         """
-        res = x._array.__neg__()
-        return x.__class__._new(res)
+        res = self._array.__neg__()
+        return self.__class__._new(res)
 
-    def __or__(x1: array, x2: array, /) -> array:
+    def __or__(self: array, other: array, /) -> array:
         """
         Performs the operation __or__.
         """
-        res = x1._array.__or__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__or__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __pos__(x: array, /) -> array:
+    def __pos__(self: array, /) -> array:
         """
         Performs the operation __pos__.
         """
-        res = x._array.__pos__()
-        return x.__class__._new(res)
+        res = self._array.__pos__()
+        return self.__class__._new(res)
 
-    def __pow__(x1: array, x2: array, /) -> array:
+    def __pow__(self: array, other: array, /) -> array:
         """
         Performs the operation __pow__.
         """
-        res = x1._array.__pow__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__pow__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rshift__(x1: array, x2: array, /) -> array:
+    def __rshift__(self: array, other: array, /) -> array:
         """
         Performs the operation __rshift__.
         """
-        res = x1._array.__rshift__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rshift__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __setitem__(x, key, value, /):
+    def __setitem__(self, key, value, /):
         """
         Performs the operation __setitem__.
         """
         # Note: Only indices required by the spec are allowed. See the
         # docstring of _validate_index
-        key = x._validate_index(key, x.shape)
-        res = x._array.__setitem__(key, asarray(value)._array)
-        return x.__class__._new(res)
+        key = self._validate_index(key, self.shape)
+        res = self._array.__setitem__(key, asarray(value)._array)
+        return self.__class__._new(res)
 
-    def __sub__(x1: array, x2: array, /) -> array:
+    def __sub__(self: array, other: array, /) -> array:
         """
         Performs the operation __sub__.
         """
-        res = x1._array.__sub__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__sub__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __truediv__(x1: array, x2: array, /) -> array:
+    def __truediv__(self: array, other: array, /) -> array:
         """
         Performs the operation __truediv__.
         """
-        res = x1._array.__truediv__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__truediv__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __xor__(x1: array, x2: array, /) -> array:
+    def __xor__(self: array, other: array, /) -> array:
         """
         Performs the operation __xor__.
         """
-        res = x1._array.__xor__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__xor__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __iadd__(x1: array, x2: array, /) -> array:
+    def __iadd__(self: array, other: array, /) -> array:
         """
         Performs the operation __iadd__.
         """
-        res = x1._array.__iadd__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__iadd__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __radd__(x1: array, x2: array, /) -> array:
+    def __radd__(self: array, other: array, /) -> array:
         """
         Performs the operation __radd__.
         """
-        res = x1._array.__radd__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__radd__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __iand__(x1: array, x2: array, /) -> array:
+    def __iand__(self: array, other: array, /) -> array:
         """
         Performs the operation __iand__.
         """
-        res = x1._array.__iand__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__iand__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rand__(x1: array, x2: array, /) -> array:
+    def __rand__(self: array, other: array, /) -> array:
         """
         Performs the operation __rand__.
         """
-        res = x1._array.__rand__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rand__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ifloordiv__(x1: array, x2: array, /) -> array:
+    def __ifloordiv__(self: array, other: array, /) -> array:
         """
         Performs the operation __ifloordiv__.
         """
-        res = x1._array.__ifloordiv__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ifloordiv__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rfloordiv__(x1: array, x2: array, /) -> array:
+    def __rfloordiv__(self: array, other: array, /) -> array:
         """
         Performs the operation __rfloordiv__.
         """
-        res = x1._array.__rfloordiv__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rfloordiv__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ilshift__(x1: array, x2: array, /) -> array:
+    def __ilshift__(self: array, other: array, /) -> array:
         """
         Performs the operation __ilshift__.
         """
-        res = x1._array.__ilshift__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ilshift__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rlshift__(x1: array, x2: array, /) -> array:
+    def __rlshift__(self: array, other: array, /) -> array:
         """
         Performs the operation __rlshift__.
         """
-        res = x1._array.__rlshift__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rlshift__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __imatmul__(x1: array, x2: array, /) -> array:
+    def __imatmul__(self: array, other: array, /) -> array:
         """
         Performs the operation __imatmul__.
         """
-        res = x1._array.__imatmul__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__imatmul__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rmatmul__(x1: array, x2: array, /) -> array:
+    def __rmatmul__(self: array, other: array, /) -> array:
         """
         Performs the operation __rmatmul__.
         """
-        res = x1._array.__rmatmul__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rmatmul__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __imod__(x1: array, x2: array, /) -> array:
+    def __imod__(self: array, other: array, /) -> array:
         """
         Performs the operation __imod__.
         """
-        res = x1._array.__imod__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__imod__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rmod__(x1: array, x2: array, /) -> array:
+    def __rmod__(self: array, other: array, /) -> array:
         """
         Performs the operation __rmod__.
         """
-        res = x1._array.__rmod__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rmod__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __imul__(x1: array, x2: array, /) -> array:
+    def __imul__(self: array, other: array, /) -> array:
         """
         Performs the operation __imul__.
         """
-        res = x1._array.__imul__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__imul__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rmul__(x1: array, x2: array, /) -> array:
+    def __rmul__(self: array, other: array, /) -> array:
         """
         Performs the operation __rmul__.
         """
-        res = x1._array.__rmul__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rmul__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ior__(x1: array, x2: array, /) -> array:
+    def __ior__(self: array, other: array, /) -> array:
         """
         Performs the operation __ior__.
         """
-        res = x1._array.__ior__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ior__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ror__(x1: array, x2: array, /) -> array:
+    def __ror__(self: array, other: array, /) -> array:
         """
         Performs the operation __ror__.
         """
-        res = x1._array.__ror__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ror__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ipow__(x1: array, x2: array, /) -> array:
+    def __ipow__(self: array, other: array, /) -> array:
         """
         Performs the operation __ipow__.
         """
-        res = x1._array.__ipow__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ipow__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rpow__(x1: array, x2: array, /) -> array:
+    def __rpow__(self: array, other: array, /) -> array:
         """
         Performs the operation __rpow__.
         """
-        res = x1._array.__rpow__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rpow__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __irshift__(x1: array, x2: array, /) -> array:
+    def __irshift__(self: array, other: array, /) -> array:
         """
         Performs the operation __irshift__.
         """
-        res = x1._array.__irshift__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__irshift__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rrshift__(x1: array, x2: array, /) -> array:
+    def __rrshift__(self: array, other: array, /) -> array:
         """
         Performs the operation __rrshift__.
         """
-        res = x1._array.__rrshift__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rrshift__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __isub__(x1: array, x2: array, /) -> array:
+    def __isub__(self: array, other: array, /) -> array:
         """
         Performs the operation __isub__.
         """
-        res = x1._array.__isub__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__isub__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rsub__(x1: array, x2: array, /) -> array:
+    def __rsub__(self: array, other: array, /) -> array:
         """
         Performs the operation __rsub__.
         """
-        res = x1._array.__rsub__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rsub__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __itruediv__(x1: array, x2: array, /) -> array:
+    def __itruediv__(self: array, other: array, /) -> array:
         """
         Performs the operation __itruediv__.
         """
-        res = x1._array.__itruediv__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__itruediv__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rtruediv__(x1: array, x2: array, /) -> array:
+    def __rtruediv__(self: array, other: array, /) -> array:
         """
         Performs the operation __rtruediv__.
         """
-        res = x1._array.__rtruediv__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rtruediv__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __ixor__(x1: array, x2: array, /) -> array:
+    def __ixor__(self: array, other: array, /) -> array:
         """
         Performs the operation __ixor__.
         """
-        res = x1._array.__ixor__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__ixor__(asarray(other)._array)
+        return self.__class__._new(res)
 
-    def __rxor__(x1: array, x2: array, /) -> array:
+    def __rxor__(self: array, other: array, /) -> array:
         """
         Performs the operation __rxor__.
         """
-        res = x1._array.__rxor__(asarray(x2)._array)
-        return x1.__class__._new(res)
+        res = self._array.__rxor__(asarray(other)._array)
+        return self.__class__._new(res)
 
     @property
     def dtype(self):
