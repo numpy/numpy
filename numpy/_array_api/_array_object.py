@@ -87,6 +87,12 @@ class ndarray:
         res = x1._array.__and__(asarray(x2)._array)
         return x1.__class__._new(res)
 
+    def __array_namespace__(self, /, *, api_version=None):
+        if api_version is not None:
+            raise ValueError("Unrecognized array API version")
+        from numpy import _array_api
+        return _array_api
+
     def __bool__(x: array, /) -> bool:
         """
         Performs the operation __bool__.
