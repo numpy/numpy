@@ -65,8 +65,8 @@ A few notes about the current state of this submodule:
   functions. It does not have a public constructor on the object itself. The
   object is a small wrapper Python class around numpy.ndarray. The main
   purpose of it is to restrict the namespace of the array object to only those
-  methods that are required by the spec, as well as to limit/change certain
-  behavior that differs in the spec. In particular:
+  dtypes and only those methods that are required by the spec, as well as to
+  limit/change certain behavior that differs in the spec. In particular:
 
   - Indexing: Only a subset of indices supported by NumPy are required by the
     spec. The ndarray object restricts indexing to only allow those types of
@@ -75,7 +75,7 @@ A few notes about the current state of this submodule:
     information.
 
   - Type promotion: Some type promotion rules are different in the spec. In
-    particular, the spec does not have any value-based casing. Note that the
+    particular, the spec does not have any value-based casting. Note that the
     code to correct the type promotion rules on numpy._array_api.ndarray is
     not yet implemented.
 
@@ -84,9 +84,29 @@ A few notes about the current state of this submodule:
   'dtype'). These do not currently fully pass mypy due to some limitations in
   mypy.
 
+- The wrapper functions in this module do not do any type checking for things
+  that would be impossible without leaving the _array_api namespace.
+
 - All places where the implementations in this submodule are known to deviate
   from their corresponding functions in NumPy are marked with "# Note"
   comments. Reviewers should make note of these comments.
+
+Still TODO in this module are:
+
+- Implement the spec type promotion rules on the ndarray object.
+
+- Disable NumPy warnings in the API functions.
+
+- Implement keepdims on argmin and argmax.
+
+- Device support and DLPack support are not yet implemented. These require
+  support in NumPy itself first.
+
+- The a non-default value for the `copy` keyword argument is not yet
+  implemented on asarray. This requires support in numpy.asarray() first.
+
+- Some functions are not yet fully tested in the array API test suite, and may
+  require updates that are not yet known until the tests are written.
 
 """
 
