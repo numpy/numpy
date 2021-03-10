@@ -423,7 +423,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         return NULL;
     }
     arr2 = (PyArrayObject *)PyArray_EnsureAnyArray(
-                PyArray_GenericBinaryFunction(arr1, obj3, n_ops.multiply));
+            PyArray_GenericBinaryFunction((PyObject *)arr1, obj3, n_ops.multiply));
     Py_DECREF(arr1);
     Py_DECREF(obj3);
     if (arr2 == NULL) {
@@ -1211,7 +1211,7 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
                                                 n_ops.conjugate);
         }
         else {
-            return PyArray_GenericBinaryFunction(self,
+            return PyArray_GenericBinaryFunction((PyObject *)self,
                                                  (PyObject *)out,
                                                  n_ops.conjugate);
         }

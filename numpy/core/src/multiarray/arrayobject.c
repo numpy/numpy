@@ -1356,11 +1356,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     switch (cmp_op) {
     case Py_LT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other, n_ops.less);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.less);
         break;
     case Py_LE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other, n_ops.less_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.less_equal);
         break;
     case Py_EQ:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1410,9 +1412,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        result = PyArray_GenericBinaryFunction(self,
-                (PyObject *)other,
-                n_ops.equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, (PyObject *)other, n_ops.equal);
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1462,18 +1463,18 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
-                n_ops.not_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.greater);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.greater);
         break;
     case Py_GE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.greater_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.greater_equal);
         break;
     default:
         Py_INCREF(Py_NotImplemented);
