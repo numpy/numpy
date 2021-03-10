@@ -11,12 +11,13 @@ __all__ = ['Literal', 'Optional', 'Tuple', 'Union', 'array', 'device',
 
 from typing import Literal, Optional, Tuple, Union, TypeVar
 
-import numpy as np
+from . import (ndarray, int8, int16, int32, int64, uint8, uint16, uint32,
+               uint64, float32, float64)
 
-array = np.ndarray
+array = ndarray
 device = TypeVar('device')
-dtype = Literal[np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
-                np.uint32, np.uint64, np.float32, np.float64]
+dtype = Literal[int8, int16, int32, int64, uint8, uint16,
+                uint32, uint64, float32, float64]
 SupportsDLPack = TypeVar('SupportsDLPack')
 SupportsBufferProtocol = TypeVar('SupportsBufferProtocol')
 PyCapsule = TypeVar('PyCapsule')
