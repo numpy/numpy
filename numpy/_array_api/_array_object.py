@@ -54,8 +54,10 @@ class ndarray:
         obj = super().__new__(cls)
         # Note: The spec does not have array scalars, only shape () arrays.
         if isinstance(x, np.generic):
-            # x[...] converts an array scalar to a shape () array.
-            x = x[...]
+            # Convert the array scalar to a shape () array
+            xa = np.empty((), x.dtype)
+            xa[()] = x
+            x = xa
         obj._array = x
         return obj
 
