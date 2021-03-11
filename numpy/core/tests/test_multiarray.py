@@ -3746,7 +3746,7 @@ class TestBinop:
             # Out argument must be tuple, since there are multiple outputs
             np.modf(dummy, out=a)
 
-        assert_raises(ValueError, np.modf, dummy, out=(a,))
+        assert_raises(TypeError, np.modf, dummy, out=(a,))
 
         # 2 inputs, 1 output
         assert_equal(np.add(a, dummy), 0)

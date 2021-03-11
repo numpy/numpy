@@ -41,7 +41,7 @@ struct _tagPyUFuncObject;
  *
  * For backwards compatibility, the regular type resolution function does not
  * support auxiliary data with object semantics. The type resolution call
- * which returns a masked generic function returns a standard NpyAuxData
+ * which returns a masked generic function returns 5015a standard NpyAuxData
  * object, for which the NPY_AUXDATA_FREE and NPY_AUXDATA_CLONE macros
  * work.
  *
@@ -194,7 +194,11 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
+    #if PY_VERSION_HEX >= 0x03080000
+        vectorcallfunc vectorcall;
+    #else
         void *reserved2;
+    #endif
         /*
          * A function which returns a masked inner loop for the ufunc.
          */

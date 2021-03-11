@@ -34,7 +34,7 @@ class TestUfuncKwargs:
         assert_raises(TypeError, np.add, 1, 2, wherex=[True])
 
     def test_sig_signature(self):
-        assert_raises(ValueError, np.add, 1, 2, sig='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, sig='ii->i',
                       signature='ii->i')
 
     def test_sig_dtype(self):

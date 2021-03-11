@@ -216,44 +216,16 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_out = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_where = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axes = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axis = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_keepdims = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_casting = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_order = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_dtype = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_subok = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_signature = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_sig = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_extobj = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 
 /* intern some strings used in ufuncs, returns 0 on success */
 static int
 intern_strings(void)
 {
-    if (!(npy_um_str_out = PyUnicode_InternFromString("out"))) return -1;
-    if (!(npy_um_str_where = PyUnicode_InternFromString("where"))) return -1;
-    if (!(npy_um_str_axes = PyUnicode_InternFromString("axes"))) return -1;
-    if (!(npy_um_str_axis = PyUnicode_InternFromString("axis"))) return -1;
-    if (!(npy_um_str_keepdims = PyUnicode_InternFromString("keepdims"))) return -1;
-    if (!(npy_um_str_casting = PyUnicode_InternFromString("casting"))) return -1;
-    if (!(npy_um_str_order = PyUnicode_InternFromString("order"))) return -1;
-    if (!(npy_um_str_dtype = PyUnicode_InternFromString("dtype"))) return -1;
-    if (!(npy_um_str_subok = PyUnicode_InternFromString("subok"))) return -1;
-    if (!(npy_um_str_signature = PyUnicode_InternFromString("signature"))) return -1;
-    if (!(npy_um_str_sig = PyUnicode_InternFromString("sig"))) return -1;
-    if (!(npy_um_str_extobj = PyUnicode_InternFromString("extobj"))) return -1;
     if (!(npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__"))) return -1;
     if (!(npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__"))) return -1;
-    if (!(npy_um_str_array_finalize = PyUnicode_InternFromString("__array_finalize__"))) return -1;
-    if (!(npy_um_str_ufunc = PyUnicode_InternFromString("__array_ufunc__"))) return -1;
     if (!(npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME))) return -1;
     return 0;
 }
