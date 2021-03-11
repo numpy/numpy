@@ -2104,7 +2104,8 @@ class TestRegression:
         assert_raises(TypeError, np.searchsorted, a, 1.2)
         # Ticket #2066, similar problem:
         dtype = np.format_parser(['i4', 'i4'], [], [])
-        a = np.recarray((2, ), dtype)
+        a = np.recarray((2,), dtype)
+        a[...] = [(1, 2), (3, 4)]
         assert_raises(TypeError, np.searchsorted, a, 1)
 
     def test_complex64_alignment(self):
