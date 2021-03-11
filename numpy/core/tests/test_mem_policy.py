@@ -1,8 +1,7 @@
-import pathlib
 import pytest
-import tempfile
 import numpy as np
 from numpy.testing import extbuild
+
 
 @pytest.fixture
 def get_module(tmp_path):
@@ -18,21 +17,22 @@ def get_module(tmp_path):
                 PyErr_SetString(PyExc_ValueError,
                         "must be called with a numpy scalar or ndarray");
             }
-            return PyUnicode_FromString(PyDataMem_GetHandlerName((PyArrayObject*)args));
+            return PyUnicode_FromString(
+                            PyDataMem_GetHandlerName((PyArrayObject*)args));
         """
         ),
         ("set_new_policy", "METH_NOARGS",
-        """
-            const PyDataMem_Handler *old = PyDataMem_SetHandler(&new_handler);
-            return PyUnicode_FromString(old->name);
-        """),
+         """
+             const PyDataMem_Handler *old = PyDataMem_SetHandler(&new_handler);
+             return PyUnicode_FromString(old->name);
+         """),
         ("set_old_policy", "METH_NOARGS",
-        """
-            const PyDataMem_Handler *old = PyDataMem_SetHandler(NULL);
-            return PyUnicode_FromString(old->name);
-        """),
+         """
+             const PyDataMem_Handler *old = PyDataMem_SetHandler(NULL);
+             return PyUnicode_FromString(old->name);
+         """),
         ]
-    prologue='''
+    prologue = '''
         #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
         #include <numpy/arrayobject.h>
         NPY_NO_EXPORT void *
@@ -99,20 +99,18 @@ def get_module(tmp_path):
             memcpy,               /* obj2obj */
         };
         '''
-    more_init="import_array();"
+    more_init = "import_array();"
     try:
         import mem_policy
         return mem_policy
     except ImportError:
         pass
     # if it does not exist, build and load it
-    try:
-        return extbuild.build_and_import_extension('mem_policy',
-            functions, prologue=prologue, include_dirs=[np.get_include()],
-            build_dir=tmp_path, more_init=more_init)
-    except:
-        raise
-        pytest.skip("could not build module")
+    return extbuild.build_and_import_extension(
+        'mem_policy',
+        functions, prologue=prologue, include_dirs=[np.get_include()],
+        build_dir=tmp_path, more_init=more_init
+        )
 
 
 def test_set_policy(get_module):
@@ -121,6 +119,7 @@ def test_set_policy(get_module):
     assert get_module.set_new_policy() == orig_policy
     if orig_policy == 'default_allocator':
         get_module.set_old_policy()
+
 
 @pytest.mark.slow
 def test_new_policy(get_module):

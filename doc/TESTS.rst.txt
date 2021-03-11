@@ -153,7 +153,7 @@ modules written "as-if" they know nothing about the internals of NumPy, rather
 using the official C-API interfaces only. Examples of such modules are tests
 for a user-defined ``rational`` dtype in ``_rational_tests`` or the ufunc
 machinery tests in ``_umath_tests`` which are part of the binary distribution.
-Starting from version 1.20, you can also write snippets of C code in tests that
+Starting from version 1.21, you can also write snippets of C code in tests that
 will be compiled locally into c-extension modules and loaded into python.
 
 .. currentmodule:: numpy.testing.extbuild
