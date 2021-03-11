@@ -7,6 +7,7 @@ Reading and writing files
 This page tackles common applications; for the full collection of I/O
 routines, see :ref:`routines.io`.
 
+.. image:: np_how-to-io_flowchart.svg
 
 ******************************************************************************
 Reading text and CSV_ files
