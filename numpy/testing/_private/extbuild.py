@@ -7,17 +7,18 @@ See build_and_import_extensions for usage hints
 import os
 import pathlib
 import sys
-import setuptools
+import setuptools  # noqa
 import sysconfig
 from distutils.ccompiler import new_compiler
 from distutils.sysconfig import customize_compiler
 from distutils.errors import CompileError
 
-__all__ = ['build_and_import_extensions', 'compile_extension_module']
+__all__ = ['build_and_import_extension', 'compile_extension_module']
 
-def build_and_import_extension(modname, functions, *, prologue="", build_dir=None,
-                               include_dirs=[], more_init="",
-                              ):
+
+def build_and_import_extension(
+        modname, functions, *, prologue="", build_dir=None,
+        include_dirs=[], more_init=""):
     """
     Build and imports a c-extension module `modname` from a list of function
     fragments `functions`.
@@ -54,7 +55,7 @@ def build_and_import_extension(modname, functions, *, prologue="", build_dir=Non
     >>> assert not mod.test_bytes(u'abc')
     >>> assert mod.test_bytes(b'abc')
     """
-    
+
     body = prologue + _make_methods(functions, modname)
     init = """PyObject *mod = PyModule_Create(&moduledef);
            """
@@ -78,7 +79,9 @@ def build_and_import_extension(modname, functions, *, prologue="", build_dir=Non
     spec.loader.exec_module(foo)
     return foo
 
-def compile_extension_module(name, builddir, include_dirs,
+
+def compile_extension_module(
+        name, builddir, include_dirs,
         source_string, libraries=[], library_dirs=[]):
     """
     Build an extension module and return the filename of the resulting
@@ -104,9 +107,11 @@ def compile_extension_module(name, builddir, include_dirs,
     cfile = _convert_str_to_file(source_string, dirname)
     include_dirs = [sysconfig.get_config_var('INCLUDEPY')] + include_dirs
 
-    return _c_compile(cfile, outputfilename= dirname / modname,
+    return _c_compile(
+        cfile, outputfilename=dirname / modname,
         include_dirs=include_dirs, libraries=[], library_dirs=[],
         )
+
 
 def _convert_str_to_file(source, dirname):
     """Helper function to create a file ``source.c`` in `dirname` that contains
@@ -156,6 +161,7 @@ def _make_methods(functions, modname):
     };
     """ % dict(methods='\n'.join(methods_table), modname=modname)
     return body
+
 
 def _make_source(name, init, body):
     """ Combines the code fragments into source code ready to be compiled
@@ -213,20 +219,24 @@ def _c_compile(cfile, outputfilename, include_dirs=[], libraries=[],
                 os.environ[key] = value
     return outputfilename
 
+
 def build(cfile, outputfilename, compile_extra, link_extra,
-        include_dirs, libraries, library_dirs):
+          include_dirs, libraries, library_dirs):
     "cd into the directory where the cfile is, use distutils to build"
 
     compiler = new_compiler(force=1)
     compiler.verbose = 1
     customize_compiler(compiler)
     objects = []
-        
+
     old = os.getcwd()
     os.chdir(cfile.parent)
     try:
-        res = compiler.compile([str(cfile.name)],
-            include_dirs=include_dirs, extra_preargs=compile_extra)
+        res = compiler.compile(
+            [str(cfile.name)],
+            include_dirs=include_dirs,
+            extra_preargs=compile_extra
+            )
         objects += [str(cfile.parent / r) for r in res]
     finally:
         os.chdir(old)
@@ -237,12 +247,8 @@ def build(cfile, outputfilename, compile_extra, link_extra,
         extra_preargs=link_extra,
         library_dirs=library_dirs)
 
+
 def get_so_suffix():
     ret = sysconfig.get_config_var('EXT_SUFFIX')
     assert ret
     return ret
-
-def get_extbuilder(base_dir):
-    return ExtensionCompiler(
-        builddir_base=base_dir,
-        )

@@ -44,7 +44,7 @@ call :c:func:`PyTraceMalloc_Track`, :c:func:`PyTraceMalloc_Untrack`, and will
 use the :c:func:`PyDataMem_EventHookFunc` mechanism. Since the functions may
 change during the lifetime of the process, each ``ndarray`` carries with it the
 functions used at the time of its instantiation, and these will be used to
-reallocate or free the data memory of the instance. As of NumPy version 1.20,
+reallocate or free the data memory of the instance. As of NumPy version 1.21,
 the copy functions are not yet implemented, all memory copies are handled by
 calls to ``memcpy``.
 
