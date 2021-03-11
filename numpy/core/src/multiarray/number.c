@@ -227,10 +227,7 @@ PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
 {
     PyObject *args, *ret = NULL, *meth;
     PyObject *kwds;
-    if (op == NULL) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
+
     args = Py_BuildValue("(Oi)", m1, axis);
     kwds = _get_keywords(rtype, out);
     meth = PyObject_GetAttrString(op, "reduce");
@@ -250,10 +247,7 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
 {
     PyObject *args, *ret = NULL, *meth;
     PyObject *kwds;
-    if (op == NULL) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
+
     args = Py_BuildValue("(Oi)", m1, axis);
     kwds = _get_keywords(rtype, out);
     meth = PyObject_GetAttrString(op, "accumulate");
@@ -270,28 +264,12 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
 NPY_NO_EXPORT PyObject *
 PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
 {
-    /*
-     * I suspect that the next few lines are buggy and cause NotImplemented to
-     * be returned at weird times... but if we raise an error here, then
-     * *everything* breaks. (Like, 'arange(10) + 1' and just
-     * 'repr(arange(10))' both blow up with an error here.) Not sure what's
-     * going on with that, but I'll leave it alone for now. - njs, 2015-06-21
-     */
-    if (op == NULL) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-
     return PyObject_CallFunctionObjArgs(op, m1, m2, NULL);
 }
 
 NPY_NO_EXPORT PyObject *
 PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op)
 {
-    if (op == NULL) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
     return PyObject_CallFunctionObjArgs(op, m1, NULL);
 }
 
@@ -299,20 +277,12 @@ static PyObject *
 PyArray_GenericInplaceBinaryFunction(PyArrayObject *m1,
                                      PyObject *m2, PyObject *op)
 {
-    if (op == NULL) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
     return PyObject_CallFunctionObjArgs(op, m1, m2, m1, NULL);
 }
 
 static PyObject *
 PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
 {
-    if (op == NULL) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
     return PyObject_CallFunctionObjArgs(op, m1, m1, NULL);
 }
 
