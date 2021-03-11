@@ -4,7 +4,7 @@ These guidelines are meant to help keep the NumPy logo consistent and recognizab
 The primary logo is the horizontal option (logomark and text next to each other) and the secondary logo is the stacked version (logomark over text). I’ve also provided the logomark on its own (meaning it doesn’t have text). When in doubt, it’s preferable to use primary or secondary options over the logomark alone.
 
 ## Color
-The full color options are a combo of Maximum Blue/rgb(77, 171, 207) and Han Blue/rgb(77, 119, 207), while light options are White/rgb(255, 255, 255) and dark options are Gunmetal/rgb(1, 50, 67).
+The full color options are a combo of two shades of blue, rgb(77, 171, 207) and rgb(77, 119, 207), while light options are rgb(255, 255, 255) and dark options are rgb(1, 50, 67).
 
 Whenever possible, use the full color logos. One color logos (light or dark) are to be used when full color will not have enough contrast, usually when logos must be on colored backgrounds.
 
