@@ -25,7 +25,7 @@ i = int(1)
 
 
 class Object:
-    def __array__(self, dtype: None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
+    def __array__(self) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
         return ret
