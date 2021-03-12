@@ -244,7 +244,8 @@ class TestMaskedArray:
         normal_int = np.arange(2)
         res = np.ma.asarray([masked_str, normal_int])
         assert_array_equal(res.mask, [[True, False], [False, False]])
-        # Te above only failed due a long chain of oddity, try also with
+
+        # The above only failed due a long chain of oddity, try also with
         # an object array that cannot be converted to bool always:
         class NotBool():
             def __bool__(self):
