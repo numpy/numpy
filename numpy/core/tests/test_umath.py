@@ -1952,7 +1952,7 @@ class TestSpecialMethods:
             _wrap_args = None
             _prepare_args = None
             def __new__(cls):
-                return np.empty(()).view(cls)
+                return np.zeros(()).view(cls)
             def __array_wrap__(self, obj, context):
                 self._wrap_args = context[1]
                 return obj
