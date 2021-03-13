@@ -595,7 +595,7 @@ def _read_array_header(fp, version):
         d = safe_eval(header)
     except SyntaxError as e:
         msg = "Cannot parse header: {!r}\nException: {!r}"
-        raise ValueError(msg.format(header, e)) from None
+        raise ValueError(msg.format(header, e)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
         raise ValueError(msg.format(d))
@@ -614,9 +614,9 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(d['fortran_order']))
     try:
         dtype = descr_to_dtype(d['descr'])
-    except TypeError:
+    except TypeError as e:
         msg = "descr is not a valid dtype descriptor: {!r}"
-        raise ValueError(msg.format(d['descr'])) from None
+        raise ValueError(msg.format(d['descr'])) from e
 
     return d['shape'], d['fortran_order'], dtype
 
