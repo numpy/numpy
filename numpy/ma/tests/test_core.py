@@ -242,7 +242,7 @@ class TestMaskedArray:
         # Tests the regression in gh-18551
         masked_str = np.ma.masked_array(['a', 'b'], mask=[True, False])
         normal_int = np.arange(2)
-        res = np.ma.asarray([masked_str, normal_int])
+        res = np.ma.asarray([masked_str, normal_int], dtype="U21")
         assert_array_equal(res.mask, [[True, False], [False, False]])
 
         # The above only failed due a long chain of oddity, try also with
