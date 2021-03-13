@@ -445,17 +445,17 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     @type@ bi = npy_cimag@c@(b);
     @ctype@ r;
 
-    //Checking if in a^b, if b is zero.
-    //If a is not zero then by definition of logarithm a^0 is one.
-    //If a is also zero then as per IEEE 0^0 is best defined as 1.
+    /*Checking if in a^b, if b is zero.
+    If a is not zero then by definition of logarithm a^0 is one.
+    If a is also zero then as per IEEE 0^0 is best defined as 1.*/
     if(br == 0. && bi == 0.){
         return npy_cpack@c@(1.,0.);
     }
-    //Here it is already tested that for a^b, b is not zero.
-    //So we are checking behaviour of a.
+    /*Here it is already tested that for a^b, b is not zero.
+    So we are checking behaviour of a.*/
     else if(ar == 0. && ai == 0.){
-        //Checking if real part of power is greater than zero then the result is zero.
-        //If not the result is undefined as it blows up or oscillates.
+        /*Checking if real part of power is greater than zero then the result is zero.
+        If not the result is undefined as it blows up or oscillates.*/
         if(br > 0){
             return npy_cpack@c@(0.,0.);
         }
