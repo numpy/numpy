@@ -594,7 +594,7 @@ def _read_array_header(fp, version):
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: {!r}\nException: {!r}"
+        msg = "Cannot parse header: {!r}\n"
         raise ValueError(msg.format(header, e)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
