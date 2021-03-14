@@ -80,8 +80,8 @@ class CompaqVisualFCompiler(FCompiler):
         except DistutilsPlatformError:
             pass
         except AttributeError as e:
-            if '_MSVCCompiler__root' in str(msg):
-                print('Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg))
+            if '_MSVCCompiler__root' in str(e):
+                print('Ignoring "%s" (I think it is msvccompiler.py bug)' % (e))
             else:
                 raise
         except IOError as e:
