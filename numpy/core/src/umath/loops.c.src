@@ -2527,7 +2527,7 @@ NPY_NO_EXPORT void
         const @ftype@ in2r = ((@ftype@ *)ip2)[0];
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
 #if defined(__APPLE__) && defined(__aarch64__)
-        // On macos-arm64, if this block of code was not there,
+        // On macos-arm64 without this block of code,
         // when branch prediction goes wrong, the floating point exception
         // register does not get cleared and an exception for the
         // wrong branch is thrown.
