@@ -237,6 +237,7 @@ stages:
       vmImage: 'ubuntu-18.04'
     steps:
     - script: |
+            sudo apt update
             sudo apt install python3.7
             sudo apt install python3.7-dev
             if ! `gcc-4.8 2>/dev/null`; then
