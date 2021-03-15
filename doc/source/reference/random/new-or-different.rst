@@ -112,7 +112,7 @@ And in more detail:
 .. ipython:: python
 
   existing = np.zeros(4)
-  rg.random(out=existing[:2])
+  rng.random(out=existing[:2])
   print(existing)
 
 * Optional ``axis`` argument for methods like `~.Generator.choice`,
