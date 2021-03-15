@@ -759,6 +759,10 @@ class TestPrintOptions:
         assert_equal(repr(c),
             "array([1.00000000+1.00000000j, 1.12345679+1.12345679j])")
 
+        # test unique special case (gh-18609)
+        a = np.float64.fromhex('-1p-97')
+        assert_equal(np.float64(np.array2string(a, floatmode='unique')), a)
+
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
         # use * for non-finite imaginary part

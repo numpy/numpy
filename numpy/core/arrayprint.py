@@ -914,6 +914,7 @@ class FloatingFormat:
             self.trim = '.'
             self.exp_size = -1
             self.unique = True
+            self.min_digits = None
         elif self.exp_format:
             trim, unique = '.', True
             if self.floatmode == 'fixed' or self._legacy == '1.13':
@@ -927,6 +928,8 @@ class FloatingFormat:
 
             self.trim = 'k'
             self.precision = max(len(s) for s in frac_part)
+            self.min_digits = self.precision
+            self.unique = unique
 
             # for back-compat with np 1.13, use 2 spaces & sign and full prec
             if self._legacy == '1.13':
@@ -936,10 +939,7 @@ class FloatingFormat:
                 self.pad_left = max(len(s) for s in int_part)
             # pad_right is only needed for nan length calculation
             self.pad_right = self.exp_size + 2 + self.precision
-
-            self.unique = False
         else:
-            # first pass printing to determine sizes
             trim, unique = '.', True
             if self.floatmode == 'fixed':
                 trim, unique = 'k', False
@@ -955,14 +955,14 @@ class FloatingFormat:
                 self.pad_left = max(len(s) for s in int_part)
             self.pad_right = max(len(s) for s in frac_part)
             self.exp_size = -1
+            self.unique = unique
 
             if self.floatmode in ['fixed', 'maxprec_equal']:
-                self.precision = self.pad_right
-                self.unique = False
+                self.precision = self.min_digits = self.pad_right
                 self.trim = 'k'
             else:
-                self.unique = True
                 self.trim = '.'
+                self.min_digits = 0
 
         if self._legacy != '1.13':
             # account for sign = ' ' by adding one to pad_left
@@ -991,6 +991,7 @@ class FloatingFormat:
         if self.exp_format:
             return dragon4_scientific(x,
                                       precision=self.precision,
+                                      min_digits=self.min_digits,
                                       unique=self.unique,
                                       trim=self.trim,
                                       sign=self.sign == '+',
@@ -999,6 +1000,7 @@ class FloatingFormat:
         else:
             return dragon4_positional(x,
                                       precision=self.precision,
+                                      min_digits=self.min_digits,
                                       unique=self.unique,
                                       fractional=True,
                                       trim=self.trim,
@@ -1009,7 +1011,8 @@ class FloatingFormat:
 
 @set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
-                            sign=False, pad_left=None, exp_digits=None):
+                            sign=False, pad_left=None, exp_digits=None,
+                            min_digits=None):
     """
     Format a floating-point scalar as a decimal string in scientific notation.
 
@@ -1027,11 +1030,12 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         If `True`, use a digit-generation strategy which gives the shortest
         representation which uniquely identifies the floating-point number from
         other values of the same type, by judicious rounding. If `precision`
-        was omitted, print all necessary digits, otherwise digit generation is
-        cut off after `precision` digits and the remaining value is rounded.
+        is given fewer digits than necessary can be printed, or if `min_digits`
+        is given more can be printed, in which cases the last digit is rounded
+        with unbiased rounding.
         If `False`, digits are generated as if printing an infinite-precision
         value and stopping after `precision` digits, rounding the remaining
-        value.
+        value with unbiased rounding
     trim : one of 'k', '.', '0', '-', optional
         Controls post-processing trimming of trailing digits, as follows:
 
@@ -1048,6 +1052,10 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
     exp_digits : non-negative integer, optional
         Pad the exponent with zeros until it contains at least this many digits.
         If omitted, the exponent will be at least 2 digits.
+    min_digits : non-negative integer or None, optional
+        Minimum number of digits to print. Only has an effect if `unique=True`
+        in which case additional digits past those necessary to uniquely
+        identify the value may be printed, rounding the last additional digit.
 
     Returns
     -------
@@ -1071,15 +1079,18 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
     precision = _none_or_positive_arg(precision, 'precision')
     pad_left = _none_or_positive_arg(pad_left, 'pad_left')
     exp_digits = _none_or_positive_arg(exp_digits, 'exp_digits')
+    min_digits = _none_or_positive_arg(min_digits, 'min_digits')
+    if min_digits > 0 and precision > 0 and min_digits > precision:
+        raise ValueError("min_digits must be less than or equal to precision")
     return dragon4_scientific(x, precision=precision, unique=unique,
                               trim=trim, sign=sign, pad_left=pad_left,
-                              exp_digits=exp_digits)
+                              exp_digits=exp_digits, min_digits=min_digits)
 
 
 @set_module('numpy')
 def format_float_positional(x, precision=None, unique=True,
                             fractional=True, trim='k', sign=False,
-                            pad_left=None, pad_right=None):
+                            pad_left=None, pad_right=None, min_digits=None):
     """
     Format a floating-point scalar as a decimal string in positional notation.
 
@@ -1097,16 +1108,19 @@ def format_float_positional(x, precision=None, unique=True,
         If `True`, use a digit-generation strategy which gives the shortest
         representation which uniquely identifies the floating-point number from
         other values of the same type, by judicious rounding. If `precision`
-        was omitted, print out all necessary digits, otherwise digit generation
-        is cut off after `precision` digits and the remaining value is rounded.
+        is given fewer digits than necessary can be printed, or if `min_digits`
+        is given more can be printed, in which cases the last digit is rounded
+        with unbiased rounding.
         If `False`, digits are generated as if printing an infinite-precision
         value and stopping after `precision` digits, rounding the remaining
-        value.
+        value with unbiased rounding
     fractional : boolean, optional
-        If `True`, the cutoff of `precision` digits refers to the total number
-        of digits after the decimal point, including leading zeros.
-        If `False`, `precision` refers to the total number of significant
-        digits, before or after the decimal point, ignoring leading zeros.
+        If `True`, the cutoffs of `precision` and `min_digits` refer to the
+        total number of digits after the decimal point, including leading
+        zeros.
+        If `False`, `precision` and `min_digits` refer to the total number of
+        significant digits, before or after the decimal point, ignoring leading
+        zeros.
     trim : one of 'k', '.', '0', '-', optional
         Controls post-processing trimming of trailing digits, as follows:
 
@@ -1123,6 +1137,10 @@ def format_float_positional(x, precision=None, unique=True,
     pad_right : non-negative integer, optional
         Pad the right side of the string with whitespace until at least that
         many characters are to the right of the decimal point.
+    min_digits : non-negative integer or None, optional
+        Minimum number of digits to print. Only has an effect if `unique=True`
+        in which case additional digits past those necessary to uniquely
+        identify the value may be printed, rounding the last additional digit.
 
     Returns
     -------
@@ -1147,10 +1165,16 @@ def format_float_positional(x, precision=None, unique=True,
     precision = _none_or_positive_arg(precision, 'precision')
     pad_left = _none_or_positive_arg(pad_left, 'pad_left')
     pad_right = _none_or_positive_arg(pad_right, 'pad_right')
+    min_digits = _none_or_positive_arg(min_digits, 'min_digits')
+    if not fractional and precision == 0:
+        raise ValueError("precision must be greater than 0 if "
+                         "fractional=False")
+    if min_digits > 0 and precision > 0 and min_digits > precision:
+        raise ValueError("min_digits must be less than or equal to precision")
     return dragon4_positional(x, precision=precision, unique=unique,
                               fractional=fractional, trim=trim,
                               sign=sign, pad_left=pad_left,
-                              pad_right=pad_right)
+                              pad_right=pad_right, min_digits=min_digits)
 
 
 class IntegerFormat:
