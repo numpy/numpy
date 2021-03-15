@@ -176,8 +176,8 @@ cdef class Generator:
     Examples
     --------
     >>> from numpy.random import Generator, PCG64
-    >>> rg = Generator(PCG64())
-    >>> rg.standard_normal()
+    >>> rng = Generator(PCG64())
+    >>> rng.standard_normal()
     -0.203  # random
 
     See Also
@@ -997,8 +997,8 @@ cdef class Generator:
         -----
         For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
 
-            mu + sigma * gen.standard_normal(size=...)
-            gen.normal(mu, sigma, size=...)
+            mu + sigma * rng.standard_normal(size=...)
+            rng.normal(mu, sigma, size=...)
 
         Examples
         --------
