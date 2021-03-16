@@ -7,7 +7,6 @@ from numpy.polynomial import (
     laguerre as laguerre,
     legendre as legendre,
     polynomial as polynomial,
-    polyutils as polyutils,
 )
 
 Polynomial: Any

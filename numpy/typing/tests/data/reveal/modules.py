@@ -28,7 +28,6 @@ reveal_type(np.polynomial.hermite_e)  # E: ModuleType
 reveal_type(np.polynomial.laguerre)  # E: ModuleType
 reveal_type(np.polynomial.legendre)  # E: ModuleType
 reveal_type(np.polynomial.polynomial)  # E: ModuleType
-reveal_type(np.polynomial.polyutils)  # E: ModuleType
 
 # TODO: Remove when annotations have been added to `np.testing.assert_equal`
 reveal_type(np.testing.assert_equal)  # E: Any

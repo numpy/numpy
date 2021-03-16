@@ -26,7 +26,6 @@ np.polynomial.hermite_e
 np.polynomial.laguerre
 np.polynomial.legendre
 np.polynomial.polynomial
-np.polynomial.polyutils
 
 np.__path__
 np.__version__
