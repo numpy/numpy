@@ -3489,6 +3489,12 @@ add_newdoc('numpy.core.umath', 'rint',
     --------
     fix, ceil, floor, trunc
 
+    Notes
+    -----
+    For values exactly halfway between rounded decimal values, NumPy
+    rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
+    -0.5 and 0.5 round to 0.0, etc.
+
     Examples
     --------
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
