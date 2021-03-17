@@ -23,7 +23,7 @@ def configuration(parent_package='', top_path=None):
 
     # enable unix large file support on 32 bit systems
     # (64 bit off_t, lseek -> lseek64 etc.)
-    if sys.platform[:3] == "aix":
+    if sys.platform[:3] == 'aix':
         defs = [('_LARGE_FILES', None)]
     else:
         defs = [('_FILE_OFFSET_BITS', '64'),
@@ -116,7 +116,7 @@ def configuration(parent_package='', top_path=None):
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
-                             libraries=EXTRA_LIBRARIES,
+                             libraries=EXTRA_LIBRARIES + ['npymath'],
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              include_dirs=['.', 'src'],
                              extra_link_args=EXTRA_LINK_ARGS,
@@ -124,13 +124,14 @@ def configuration(parent_package='', top_path=None):
                              define_macros=defs,
                              )
     config.add_data_files('_bounded_integers.pxd')
+    mtrand_libs = ['m', 'npymath'] if os.name != 'nt' else ['npymath']
     config.add_extension('mtrand',
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
                                   'src/distributions/distributions.c',
                                  ],
                          include_dirs=['.', 'src', 'src/legacy'],
-                         libraries=['m'] if os.name != 'nt' else [],
+                         libraries=mtrand_libs,
                          extra_compile_args=EXTRA_COMPILE_ARGS,
                          extra_link_args=EXTRA_LINK_ARGS,
                          depends=depends + ['mtrand.pyx'],

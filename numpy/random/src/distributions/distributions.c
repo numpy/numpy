@@ -906,15 +906,9 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
   }
 }
 
-/*
- * RAND_INT_TYPE is used to share integer generators with RandomState which
- * used long in place of int64_t. If changing a distribution that uses
- * RAND_INT_TYPE, then the original unmodified copy must be retained for
- * use in RandomState by copying to the legacy distributions source file.
- */
-RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
+int64_t random_logseries(bitgen_t *bitgen_state, double p) {
   double q, r, U, V;
-  RAND_INT_TYPE result;
+  int64_t result;
 
   r = npy_log1p(-p);
 
@@ -926,7 +920,7 @@ RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
     U = next_double(bitgen_state);
     q = 1.0 - exp(r * U);
     if (V <= q * q) {
-      result = (RAND_INT_TYPE)floor(1 + log(V) / log(q));
+      result = (int64_t)floor(1 + log(V) / log(q));
       if ((result < 1) || (V == 0.0)) {
         continue;
       } else {
@@ -940,6 +934,14 @@ RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
   }
 }
 
+/*
+ * RAND_INT_TYPE is used to share integer generators with RandomState which
+ * used long in place of int64_t. If changing a distribution that uses
+ * RAND_INT_TYPE, then the original unmodified copy must be retained for
+ * use in RandomState by copying to the legacy distributions source file.
+ */
+
+/* Still used but both generator and mtrand via legacy_random_geometric */
 RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
   double U;
   RAND_INT_TYPE X;
@@ -957,11 +959,11 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
   return X;
 }
 
-RAND_INT_TYPE random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (RAND_INT_TYPE)ceil(npy_log1p(-next_double(bitgen_state)) / npy_log1p(-p));
+int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
+  return (int64_t)ceil(npy_log1p(-next_double(bitgen_state)) / npy_log1p(-p));
 }
 
-RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p) {
+int64_t random_geometric(bitgen_t *bitgen_state, double p) {
   if (p >= 0.333333333333333333333333) {
     return random_geometric_search(bitgen_state, p);
   } else {
