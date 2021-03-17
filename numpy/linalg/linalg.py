@@ -2177,7 +2177,7 @@ def lstsq(a, b, rcond="warn"):
     equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
     is the "exact" solution of the equation. Else, `x` minimizes the
-    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing 
+    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing
     solutions, the one with the smallest 2-norm :math:`||x||` is returned.
 
     Parameters
