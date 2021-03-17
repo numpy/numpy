@@ -485,7 +485,6 @@ def count_nonzero(a, axis=None, *, keepdims=False):
         return multiarray.count_nonzero(a)
 
     a = asanyarray(a)
-
     # TODO: this works around .astype(bool) not working properly (gh-9847)
     if np.issubdtype(a.dtype, np.character):
         a_bool = a != a.dtype.type()
@@ -710,7 +709,7 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
-    scipy.signal.correlate : uses FFT which has superior performance on large arrays. 
+    scipy.signal.correlate : uses FFT which has superior performance on large arrays.
 
     Notes
     -----
@@ -724,7 +723,7 @@ def correlate(a, v, mode='valid'):
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
     be preferable.
-    
+
 
     Examples
     --------
@@ -1299,7 +1298,7 @@ def rollaxis(a, axis, start=0):
            +-------------------+----------------------+
            | ``arr.ndim + 1``  | raise ``AxisError``  |
            +-------------------+----------------------+
-           
+
         .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
 
     Returns
