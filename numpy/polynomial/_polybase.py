@@ -15,6 +15,7 @@ from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
 
+
 class ABCPolyBase(abc.ABC):
     """An abstract base class for immutable series classes.
 
@@ -399,7 +400,8 @@ class ABCPolyBase(abc.ABC):
             raise NotImplementedError(
                 "Subclasses must define either a basis name, or override "
                 "_repr_latex_term(i, arg_str, needs_parens)")
-        # since we always add parens, we don't care if the expression needs them
+        # since we always add parens, we don't care if the expression
+        # needs them
         return f"{{{cls.basis_name}}}_{{{i}}}({arg_str})"
 
     @staticmethod
@@ -460,8 +462,6 @@ class ABCPolyBase(abc.ABC):
             body = '0'
 
         return rf"$x \mapsto {body}$"
-
-
 
     # Pickle and copy
 
@@ -899,7 +899,7 @@ class ABCPolyBase(abc.ABC):
 
     @classmethod
     def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,
-        window=None):
+            window=None):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
