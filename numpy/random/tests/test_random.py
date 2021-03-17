@@ -529,7 +529,9 @@ class TestRandomDist:
         class MyArr(np.ndarray):
             pass
 
-        items = [None, np.array([3]), np.float64(3), np.array(10), np.float64(7)]
+        items = [None, np.array([3]), np.float64(3), np.array(10),
+                 np.float64(7)
+                ]
         arr = np.array(items, dtype=object)
         item_ids = {id(i) for i in items}
         if use_array_like:
