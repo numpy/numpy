@@ -52,7 +52,8 @@ __all__ = [
     'asarray', 'bitwise_and', 'bitwise_or', 'bitwise_xor', 'bool_', 'ceil',
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
     'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
-    'count', 'count_nonzero', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
+    'count', 'count_nonzero', 'cumprod', 'cumsum', 'default_fill_value',
+    'diag', 'diagonal',
     'diff', 'divide', 'empty', 'empty_like', 'equal', 'exp',
     'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
@@ -5049,7 +5050,8 @@ class MaskedArray(ndarray):
         3
         """
         marr = np.ma.asarray(a)
-        return np.count_nonzero(marr.data.astype(bool) & ~marr.mask, axis=axis, keepdims=keepdims)
+        return np.count_nonzero(marr.data.astype(bool)
+            & ~marr.mask, axis=axis, keepdims=keepdims)
 
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         """

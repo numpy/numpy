@@ -34,7 +34,8 @@ from numpy.ma.core import (
     MAError, MaskError, MaskType, MaskedArray, abs, absolute, add, all,
     allclose, allequal, alltrue, angle, anom, arange, arccos, arccosh, arctan2,
     arcsin, arctan, argsort, array, asarray, choose, concatenate,
-    conjugate, cos, count_nonzero, cosh, count, default_fill_value, diag, divide, doc_note,
+    conjugate, cos, count_nonzero, cosh, count, default_fill_value, diag,
+    divide, doc_note,
     empty, empty_like, equal, exp, flatten_mask, filled, fix_invalid,
     flatten_structured_array, fromflex, getmask, getmaskarray, greater,
     greater_equal, identity, inner, isMaskedArray, less, less_equal, log,
@@ -183,9 +184,9 @@ class TestMaskedArray:
     def test_count_nonzero(self):
         x = array(np.eye(3))
         assert_equal(count_nonzero(x), 3)
-        x[1,1] = masked
+        x[1, 1] = masked
         assert_equal(count_nonzero(x), 2)
-        
+
     def test_creation_ndmin(self):
         # Check the use of ndmin
         x = array([1, 2, 3], mask=[1, 0, 0], ndmin=2)
