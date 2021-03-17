@@ -89,7 +89,7 @@ cdef extern from "include/legacy-distributions.h":
                                    int64_t n, binomial_t *binomial) nogil
     int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) nogil
     int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad, int64_t sample) nogil
-    int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t legacy_logseries(bitgen_t *bitgen_state, double p) nogil
     int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) nogil
     int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) nogil
     int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) nogil
@@ -3954,7 +3954,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        out = disc(&legacy_random_logseries, &self._bitgen, size, self.lock, 1, 0,
+        out = disc(&legacy_logseries, &self._bitgen, size, self.lock, 1, 0,
                    p, 'p', CONS_BOUNDED_0_1,
                    0.0, '', CONS_NONE,
                    0.0, '', CONS_NONE)
