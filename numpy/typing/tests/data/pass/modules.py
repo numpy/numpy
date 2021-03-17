@@ -15,6 +15,18 @@ np.rec
 np.testing
 np.version
 
+np.lib.format
+np.lib.mixins
+np.lib.scimath
+np.lib.stride_tricks
+np.ma.extras
+np.polynomial.chebyshev
+np.polynomial.hermite
+np.polynomial.hermite_e
+np.polynomial.laguerre
+np.polynomial.legendre
+np.polynomial.polynomial
+
 np.__path__
 np.__version__
 

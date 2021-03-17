@@ -17,6 +17,18 @@ reveal_type(np.rec)  # E: ModuleType
 reveal_type(np.testing)  # E: ModuleType
 reveal_type(np.version)  # E: ModuleType
 
+reveal_type(np.lib.format)  # E: ModuleType
+reveal_type(np.lib.mixins)  # E: ModuleType
+reveal_type(np.lib.scimath)  # E: ModuleType
+reveal_type(np.lib.stride_tricks)  # E: ModuleType
+reveal_type(np.ma.extras)  # E: ModuleType
+reveal_type(np.polynomial.chebyshev)  # E: ModuleType
+reveal_type(np.polynomial.hermite)  # E: ModuleType
+reveal_type(np.polynomial.hermite_e)  # E: ModuleType
+reveal_type(np.polynomial.laguerre)  # E: ModuleType
+reveal_type(np.polynomial.legendre)  # E: ModuleType
+reveal_type(np.polynomial.polynomial)  # E: ModuleType
+
 # TODO: Remove when annotations have been added to `np.testing.assert_equal`
 reveal_type(np.testing.assert_equal)  # E: Any
 
