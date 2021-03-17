@@ -479,6 +479,7 @@ class ABCPolyBase(abc.ABC):
 
     def __call__(self, arg):
         off, scl = pu.mapparms(self.domain, self.window)
+        arg = np.asarray(arg)
         arg = off + scl*arg
         return self._val(arg, self.coef)
 
