@@ -379,23 +379,28 @@ int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good,
 }
 
 
-int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) {
-  return (int64_t)random_logseries(bitgen_state, p);
-}
-
- int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) {
+int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) {
   return (int64_t)random_poisson(bitgen_state, lam);
 }
 
- int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) {
+int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) {
   return (int64_t)random_zipf(bitgen_state, a);
 }
 
- int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
-  return (int64_t)random_geometric(bitgen_state, p);
+
+static long legacy_geometric_inversion(bitgen_t *bitgen_state, double p) {
+  return (long)ceil(npy_log1p(-next_double(bitgen_state)) / log(1 - p));
 }
 
- void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
+int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
+  if (p >= 0.333333333333333333333333) {
+    return (int64_t)random_geometric_search(bitgen_state, p);
+  } else {
+    return (int64_t)legacy_geometric_inversion(bitgen_state, p);
+  }
+}
+
+void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
                                RAND_INT_TYPE *mnix, double *pix, npy_intp d,
                                binomial_t *binomial) {
   return random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
@@ -456,5 +461,33 @@ double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
     }
 
     return mod;
+  }
+}
+
+int64_t legacy_logseries(bitgen_t *bitgen_state, double p) {
+  double q, r, U, V;
+  long result;
+
+  r = log(1.0 - p);
+
+  while (1) {
+    V = next_double(bitgen_state);
+    if (V >= p) {
+      return 1;
+    }
+    U = next_double(bitgen_state);
+    q = 1.0 - exp(r * U);
+    if (V <= q * q) {
+      result = (long)floor(1 + log(V) / log(q));
+      if ((result < 1) || (V == 0.0)) {
+        continue;
+      } else {
+        return (int64_t)result;
+      }
+    }
+    if (V >= q) {
+      return 1;
+    }
+    return 2;
   }
 }

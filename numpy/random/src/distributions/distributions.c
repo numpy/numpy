@@ -47,7 +47,7 @@ static double standard_exponential_unlikely(bitgen_t *bitgen_state,
                                                 uint8_t idx, double x) {
   if (idx == 0) {
     /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-    return ziggurat_exp_r - log(1.0 - next_double(bitgen_state));
+    return ziggurat_exp_r - npy_log1p(-next_double(bitgen_state));
   } else if ((fe_double[idx - 1] - fe_double[idx]) * next_double(bitgen_state) +
                  fe_double[idx] <
              exp(-x)) {
@@ -84,7 +84,7 @@ static float standard_exponential_unlikely_f(bitgen_t *bitgen_state,
                                                  uint8_t idx, float x) {
   if (idx == 0) {
     /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-    return ziggurat_exp_r_f - logf(1.0f - next_float(bitgen_state));
+    return ziggurat_exp_r_f - npy_log1pf(-next_float(bitgen_state));
   } else if ((fe_float[idx - 1] - fe_float[idx]) * next_float(bitgen_state) +
                  fe_float[idx] <
              expf(-x)) {
@@ -121,7 +121,7 @@ void random_standard_exponential_inv_fill(bitgen_t * bitgen_state, npy_intp cnt,
 {
   npy_intp i;
   for (i = 0; i < cnt; i++) {
-    out[i] = -log(1.0 - next_double(bitgen_state));
+    out[i] = -npy_log1p(-next_double(bitgen_state));
   }
 }
 
@@ -129,7 +129,7 @@ void random_standard_exponential_inv_fill_f(bitgen_t * bitgen_state, npy_intp cn
 {
   npy_intp i;
   for (i = 0; i < cnt; i++) {
-    out[i] = -log(1.0 - next_float(bitgen_state));
+    out[i] = -npy_log1p(-next_float(bitgen_state));
   }
 }
 
@@ -155,8 +155,8 @@ double random_standard_normal(bitgen_t *bitgen_state) {
     if (idx == 0) {
       for (;;) {
         /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-        xx = -ziggurat_nor_inv_r * log(1.0 - next_double(bitgen_state));
-        yy = -log(1.0 - next_double(bitgen_state));
+        xx = -ziggurat_nor_inv_r * npy_log1p(-next_double(bitgen_state));
+        yy = -npy_log1p(-next_double(bitgen_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r + xx)
                                      : ziggurat_nor_r + xx;
@@ -196,8 +196,8 @@ float random_standard_normal_f(bitgen_t *bitgen_state) {
     if (idx == 0) {
       for (;;) {
         /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-        xx = -ziggurat_nor_inv_r_f * logf(1.0f - next_float(bitgen_state));
-        yy = -logf(1.0f - next_float(bitgen_state));
+        xx = -ziggurat_nor_inv_r_f * npy_log1pf(-next_float(bitgen_state));
+        yy = -npy_log1pf(-next_float(bitgen_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r_f + xx)
                                      : ziggurat_nor_r_f + xx;
@@ -508,7 +508,7 @@ double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) {
 }
 
 double random_rayleigh(bitgen_t *bitgen_state, double mode) {
-  return mode * sqrt(-2.0 * log(1.0 - next_double(bitgen_state)));
+  return mode * sqrt(-2.0 * npy_log1p(-next_double(bitgen_state)));
 }
 
 double random_standard_t(bitgen_t *bitgen_state, double df) {
@@ -906,17 +906,11 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
   }
 }
 
-/*
- * RAND_INT_TYPE is used to share integer generators with RandomState which
- * used long in place of int64_t. If changing a distribution that uses
- * RAND_INT_TYPE, then the original unmodified copy must be retained for
- * use in RandomState by copying to the legacy distributions source file.
- */
-RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
+int64_t random_logseries(bitgen_t *bitgen_state, double p) {
   double q, r, U, V;
-  RAND_INT_TYPE result;
+  int64_t result;
 
-  r = log(1.0 - p);
+  r = npy_log1p(-p);
 
   while (1) {
     V = next_double(bitgen_state);
@@ -926,7 +920,7 @@ RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
     U = next_double(bitgen_state);
     q = 1.0 - exp(r * U);
     if (V <= q * q) {
-      result = (RAND_INT_TYPE)floor(1 + log(V) / log(q));
+      result = (int64_t)floor(1 + log(V) / log(q));
       if ((result < 1) || (V == 0.0)) {
         continue;
       } else {
@@ -940,6 +934,14 @@ RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
   }
 }
 
+/*
+ * RAND_INT_TYPE is used to share integer generators with RandomState which
+ * used long in place of int64_t. If changing a distribution that uses
+ * RAND_INT_TYPE, then the original unmodified copy must be retained for
+ * use in RandomState by copying to the legacy distributions source file.
+ */
+
+/* Still used but both generator and mtrand via legacy_random_geometric */
 RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
   double U;
   RAND_INT_TYPE X;
@@ -957,11 +959,11 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
   return X;
 }
 
-RAND_INT_TYPE random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (RAND_INT_TYPE)ceil(log(1.0 - next_double(bitgen_state)) / log(1.0 - p));
+int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
+  return (int64_t)ceil(npy_log1p(-next_double(bitgen_state)) / npy_log1p(-p));
 }
 
-RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p) {
+int64_t random_geometric(bitgen_t *bitgen_state, double p) {
   if (p >= 0.333333333333333333333333) {
     return random_geometric_search(bitgen_state, p);
   } else {
