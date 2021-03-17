@@ -34,7 +34,7 @@ from numpy.ma.core import (
     MAError, MaskError, MaskType, MaskedArray, abs, absolute, add, all,
     allclose, allequal, alltrue, angle, anom, arange, arccos, arccosh, arctan2,
     arcsin, arctan, argsort, array, asarray, choose, concatenate,
-    conjugate, cos, cosh, count, default_fill_value, diag, divide, doc_note,
+    conjugate, cos, count_nonzero, cosh, count, default_fill_value, diag, divide, doc_note,
     empty, empty_like, equal, exp, flatten_mask, filled, fix_invalid,
     flatten_structured_array, fromflex, getmask, getmaskarray, greater,
     greater_equal, identity, inner, isMaskedArray, less, less_equal, log,
@@ -180,6 +180,12 @@ class TestMaskedArray:
         test = concatenate([data[:5], data[5:]])
         assert_equal_records(test, data)
 
+    def test_count_nonzero(self):
+        x = array(np.eye(3))
+        assert_equal(count_nonzero(x), 3)
+        x[1,1] = masked
+        assert_equal(count_nonzero(x), 2)
+        
     def test_creation_ndmin(self):
         # Check the use of ndmin
         x = array([1, 2, 3], mask=[1, 0, 0], ndmin=2)
@@ -1297,7 +1303,7 @@ class TestMaskedArrayArithmetic:
                               dtype=float_dtype)
             assert_equal(zm.min(), float_dtype(-np.inf-1j))
             assert_equal(zm.max(), float_dtype(np.inf+2j))
-            
+
             cmax = np.inf - 1j * np.finfo(np.float64).max
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax

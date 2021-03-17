@@ -52,7 +52,7 @@ __all__ = [
     'asarray', 'bitwise_and', 'bitwise_or', 'bitwise_xor', 'bool_', 'ceil',
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
     'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
-    'count', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
+    'count', 'count_nonzero', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
     'diff', 'divide', 'empty', 'empty_like', 'equal', 'exp',
     'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
@@ -4977,6 +4977,80 @@ class MaskedArray(ndarray):
         """
         return narray(self.filled(0), copy=False).nonzero()
 
+    def count_nonzero(a, axis=None, *, keepdims=False):
+        """
+        Counts the number of unmasked values in the array ``a`` that are not 0.
+
+        This function is extension to the numpy.count_nonzero function that is
+        compatible with masked arrays.
+
+        Parameters
+        ----------
+        a : masked_array_like
+            The masked array for which to count non-zeros.
+        axis : int or tuple, optional
+            Axis or tuple of axes along which to count non-zeros.
+            Default is None, meaning that non-zeros will be counted
+            along a flattened version of ``a``.
+
+        keepdims : bool, optional
+            If this is set to True, the axes that are counted are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the input array.
+
+        Returns
+        -------
+        count : int or array of int
+            Number of non-zero values in the array along a given axis.
+            Otherwise, the total number of non-zero values in the masked array
+            is returned.
+
+        See Also
+        --------
+        numpy.nonzero :
+            Return the coordinates of all the non-zero values.
+        numpy.count_nonzero :
+            Counts the number of non-zero values in an array.
+        nonzero:
+            Return the indices of unmasked elements that are not zero.
+
+        Examples
+        --------
+        >>> import numpy.ma as ma
+        >>> x = ma.array(np.eye(3))
+        >>> x
+        masked_array(
+            data=[[1., 0., 0.],
+                  [0., 1., 0.],
+                  [0., 0., 1.]],
+            mask=False,
+            fill_value=1e+20)
+        >>> ma.count_nonzero(x)
+        3
+
+        Masked elements are ignored.
+
+        >>> x[1, 1] = ma.masked
+        >>> x
+        masked_array(
+          data=[[1.0, 0.0, 0.0],
+                [0.0, --, 0.0],
+                [0.0, 0.0, 1.0]],
+          mask=[[False, False, False],
+                [False,  True, False],
+                [False, False, False]],
+          fill_value=1e+20)
+        >>> ma.count_nonzero(x)
+        2
+
+        whereas
+
+        >>> np.count_nonzero(x)
+        3
+        """
+        marr = np.ma.asarray(a)
+        return np.count_nonzero(marr.data.astype(bool) & ~marr.mask, axis=axis, keepdims=keepdims)
+
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         """
         (this docstring should be overwritten)
@@ -6777,6 +6851,7 @@ all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
 any = _frommethod('any')
 compress = _frommethod('compress', reversed=True)
+count_nonzero = _frommethod('count_nonzero')
 cumprod = _frommethod('cumprod')
 cumsum = _frommethod('cumsum')
 copy = _frommethod('copy')
