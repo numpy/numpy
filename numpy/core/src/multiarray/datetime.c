@@ -185,6 +185,20 @@ get_datetimestruct_minutes(const npy_datetimestruct *dts)
 }
 
 /*
+ * Calculates the seconds offset from the 1970 epoch.
+ */
+NPY_NO_EXPORT npy_int64
+get_datetimestruct_seconds(const npy_datetimestruct *dts)
+{
+    npy_int64 seconds = get_datetimestruct_minutes(dts) * 60;
+    seconds += dts->sec;
+    seconds += (dts->us / pow(10, 6));
+    seconds += (dts->ps / pow(10, 12));
+
+    return seconds;
+}
+
+/*
  * Modifies '*days_' to be the day offset within the year,
  * and returns the year.
  */
@@ -357,6 +371,16 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                       dts->ps / 1000;
                 break;
             case NPY_FR_ps:
+                /* only +- 106 days around epoch tolerated */
+                if (abs(get_datetimestruct_seconds(dts)) > 
+                        NPY_MAX_INT64 * pow(10, -12)) {
+                    /* reject with seconds resolution */
+                    PyErr_SetString(PyExc_ValueError,
+                            "Time span around POSIX epoch is "
+                            "too large for ps units");
+                    return -1;
+                };
+
                 ret = ((((days * 24 +
                       dts->hour) * 60 +
                       dts->min) * 60 +
@@ -366,6 +390,15 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                 break;
             case NPY_FR_fs:
                 /* only 2.6 hours */
+                if (abs(get_datetimestruct_seconds(dts)) > 
+                        2.6 * 60 * 60) {
+                    /* reject with seconds resolution */
+                    PyErr_SetString(PyExc_ValueError,
+                            "Time span around POSIX epoch is "
+                            "too large for fs units");
+                    return -1;
+                };
+
                 ret = (((((days * 24 +
                       dts->hour) * 60 +
                       dts->min) * 60 +
@@ -376,6 +409,14 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                 break;
             case NPY_FR_as:
                 /* only 9.2 secs */
+                if (abs(get_datetimestruct_seconds(dts)) >
+                        NPY_MAX_INT64 / pow(10, 18)) {
+                    /* NOTE: may want to increase resolution here */
+                    PyErr_SetString(PyExc_ValueError,
+                            "Time span around POSIX epoch is "
+                            "too large for as units");
+                    return -1;
+                };
                 ret = (((((days * 24 +
                       dts->hour) * 60 +
                       dts->min) * 60 +
