@@ -15,25 +15,24 @@ information can be found in the docstring for the module of interest.
 This package provides *convenience classes* for each of six different kinds
 of polynomials:
 
-         ============    ================
-         **Name**        **Provides**
-         ============    ================
-         Polynomial      Power series
-         Chebyshev       Chebyshev series
-         Legendre        Legendre series
-         Laguerre        Laguerre series
-         Hermite         Hermite series
-         HermiteE        HermiteE series
-         ============    ================
+         ========================    ================
+         **Name**                    **Provides**
+         ========================    ================
+         `~polynomial.Polynomial`    Power series
+         `~chebyshev.Chebyshev`      Chebyshev series
+         `~legendre.Legendre`        Legendre series
+         `~laguerre.Laguerre`        Laguerre series
+         `~hermite.Hermite`          Hermite series
+         `~hermite_e.HermiteE`       HermiteE series
+         ========================    ================
 
 These *convenience classes* provide a consistent interface for creating,
 manipulating, and fitting data with polynomials of different bases.
 The convenience classes are the preferred interface for the `~numpy.polynomial`
-package, and are available from the `numpy.polynomial` namespace.
-This eliminates the need to
-navigate to the corresponding submodules, e.g. ``np.polynomial.Polynomial``
-or ``np.polynomial.Chebyshev`` instead of
-``np.polynomial.polynomial.Polynomial`` or 
+package, and are available from the ``numpy.polynomial`` namespace.
+This eliminates the need to navigate to the corresponding submodules, e.g.
+``np.polynomial.Polynomial`` or ``np.polynomial.Chebyshev`` instead of
+``np.polynomial.polynomial.Polynomial`` or
 ``np.polynomial.chebyshev.Chebyshev``, respectively.
 The classes provide a more consistent and concise interface than the
 type-specific functions defined in the submodules for each type of polynomial.
@@ -45,7 +44,7 @@ by arrays ``xdata`` and ``ydata``, the
     >>> c = Chebyshev.fit(xdata, ydata, deg=1)
 
 is preferred over the `chebyshev.chebfit` function from the 
-`numpy.polynomial.chebyshev` module::
+``np.polynomial.chebyshev`` module::
 
     >>> from numpy.polynomial.chebyshev import chebfit
     >>> c = chebfit(xdata, ydata, deg=1)
@@ -58,8 +57,8 @@ Convenience Classes
 The following lists the various constants and methods common to all of
 the classes representing the various kinds of polynomials. In the following,
 the term ``Poly`` represents any one of the convenience classes (e.g.
-``Polynomial``, ``Chebyshev``, ``Hermite``, etc.) while the lowercase ``p``
-represents an **instance** of a polynomial class.
+`~polynomial.Polynomial`, `~chebyshev.Chebyshev`, `~hermite.Hermite`, etc.)
+while the lowercase ``p`` represents an **instance** of a polynomial class.
 
 Constants
 ---------
