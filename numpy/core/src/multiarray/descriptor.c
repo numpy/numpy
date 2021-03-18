@@ -2304,6 +2304,33 @@ arraydescr_new(PyTypeObject *subtype,
                 PyObject *args, PyObject *kwds)
 {
     if (subtype != &PyArrayDescr_Type) {
+        if (Py_TYPE(subtype) == &PyArrayDTypeMeta_Type &&
+                !(PyType_GetFlags(Py_TYPE(subtype)) & Py_TPFLAGS_HEAPTYPE) &&
+                (NPY_DT_SLOTS((PyArray_DTypeMeta *)subtype)) != NULL) {
+            /*
+             * Appears to be a properly initialized user DType. Allocate
+             * it and initialize the main part as best we can.
+             * TODO: This should probably be a user function, and enforce
+             *       things like the `elsize` being correctly set.
+             * TODO: This is EXPERIMENTAL API!
+             */
+            PyArray_DTypeMeta *DType = (PyArray_DTypeMeta *)subtype;
+            PyArray_Descr *descr = (PyArray_Descr *)subtype->tp_alloc(subtype, 0);
+            if (descr == 0) {
+                PyErr_NoMemory();
+                return NULL;
+            }
+            PyObject_Init((PyObject *)descr, subtype);
+            descr->f = &NPY_DT_SLOTS(DType)->f;
+            Py_XINCREF(DType->scalar_type);
+            descr->typeobj = DType->scalar_type;
+            descr->type_num = DType->type_num;
+            descr->flags = NPY_USE_GETITEM|NPY_USE_SETITEM;
+            descr->byteorder = '|';  /* If DType uses it, let it override */
+            descr->elsize = -1;  /* Initialize to invalid value */
+            descr->hash = -1;
+            return (PyObject *)descr;
+        }
         /* The DTypeMeta class should prevent this from happening. */
         PyErr_Format(PyExc_SystemError,
                 "'%S' must not inherit np.dtype.__new__().", subtype);
