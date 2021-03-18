@@ -690,9 +690,27 @@ class TestDateTime:
     def test_time_byteswapping(self, time_dtype):
         times = np.array(["2017", "NaT"], dtype=time_dtype)
         times_swapped = times.astype(times.dtype.newbyteorder())
+        assert_array_equal(times, times_swapped)
 
         unswapped = times_swapped.view(np.int64).newbyteorder()
         assert_array_equal(unswapped, times.view(np.int64))
+
+    @pytest.mark.parametrize(["time1", "time2"],
+            [("M8[s]", "M8[D]"), ("m8[s]", "m8[ns]")])
+    def test_time_byteswapped_cast(self, time1, time2):
+        dtype1 = np.dtype(time1)
+        dtype2 = np.dtype(time2)
+        times = np.array(["2017", "NaT"], dtype=dtype1)
+        expected = times.astype(dtype2)
+
+        # Test that every byte-swapping combination also returns the same
+        # results (previous tests check that this comparison works fine).
+        res1 = times.astype(dtype1.newbyteorder()).astype(dtype2)
+        assert_array_equal(res1, expected)
+        res2 = times.astype(dtype2.newbyteorder())
+        assert_array_equal(res2, expected)
+        res3 = times.astype(dtype1.newbyteorder()).astype(dtype2.newbyteorder())
+        assert_array_equal(res3, expected)
 
     @pytest.mark.parametrize("time_dtype", ["m8[D]", "M8[Y]"])
     @pytest.mark.parametrize("str_dtype", ["U", "S"])
