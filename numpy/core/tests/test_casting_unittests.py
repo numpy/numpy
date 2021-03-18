@@ -626,20 +626,20 @@ class TestCasting:
         # that tests unicode bytedwaps including for unaligned array data.
         dtype1 = np.dtype(f"{order1}U30")
         dtype2 = np.dtype(f"{order2}U30")
-        data1 = np.empty(30 * 4 + 1, dtype=np.uint8)[None, 1:].view(dtype1)
-        data2 = np.empty(30 * 4 + 1, dtype=np.uint8)[None, 1:].view(dtype2)
+        data1 = np.empty(30 * 4 + 1, dtype=np.uint8)[1:].view(dtype1)
+        data2 = np.empty(30 * 4 + 1, dtype=np.uint8)[1:].view(dtype2)
         if dtype1.alignment != 1:
             # alignment should always be >1, but skip the check if not
             assert not data1.flags.aligned
             assert not data2.flags.aligned
 
         element = "this is a ünicode string‽"
-        data1[0] = element
+        data1[()] = element
         # Test both `data1` and `data1.copy()`  (which should be aligned)
         for data in [data1, data1.copy()]:
             data2[...] = data1
-            assert data2[0] == element
-            assert data2.copy()[0] == element
+            assert data2[()] == element
+            assert data2.copy()[()] == element
 
     def test_void_to_string_special_case(self):
         # Cover a small special case in void to string casting that could

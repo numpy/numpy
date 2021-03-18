@@ -285,6 +285,11 @@ _strided_to_strided(
     return 0;
 }
 
+/*
+ * NOTE: This function is currently unused. It would currently be used for
+ *       builtin dtypes that have an elsize other than 2, 4, 8, or 16 bytes.
+ *       Since unicode and complex swap differently, no such dtype exists.
+ */
 static int
 _swap_strided_to_strided(
         PyArrayMethod_Context *context, char *const *args,
