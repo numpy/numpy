@@ -27,7 +27,8 @@ class TestString(util.F2PyTest):
     @pytest.mark.slow
     def test_char(self):
         strings = np.array(['ab', 'cd', 'ef'], dtype='c').T
-        inp, out = self.module.char_test.change_strings(strings, strings.shape[1])
+        inp, out = self.module.char_test.change_strings(strings,
+                                                        strings.shape[1])
         assert_array_equal(inp, strings)
         expected = strings.copy()
         expected[1, :] = 'AAA'
@@ -40,7 +41,8 @@ class TestString(util.F2PyTest):
         assert_array_equal(string, np.array(b'A234'))
 
     def test_char_intent_inout_toosmall(self, toosmall):
-        assert_raises(ValueError, self.module.char_test.string_size_inout, toosmall)
+        assert_raises(ValueError, self.module.char_test.string_size_inout,
+                      toosmall)
 
     def test_char_intent_inout_toolarge(self, toolarge):
         self.module.char_test.string_size_inout(toolarge)
@@ -51,7 +53,8 @@ class TestString(util.F2PyTest):
         assert_array_equal(string, np.array(b'1234'))
 
     def test_char_intent_cache_toosmall(self, toosmall):
-        assert_raises(ValueError, self.module.char_test.string_size_cache, toosmall)
+        assert_raises(ValueError, self.module.char_test.string_size_cache,
+                      toosmall)
 
     def test_char_intent_cache_toolarge(self, toolarge):
         self.module.char_test.string_size_cache(toolarge)
@@ -65,7 +68,8 @@ class TestString(util.F2PyTest):
         assert_array_equal(string, np.array(b'A234'))
 
     def test_char_intent_overwrite_toosmall(self, toosmall):
-        assert_raises(ValueError, self.module.char_test.string_size_overwrite, toosmall)
+        assert_raises(ValueError, self.module.char_test.string_size_overwrite,
+                      toosmall)
 
     @pytest.mark.xfail
     # string is unchanged even with intent(in, overwrite)
@@ -80,7 +84,8 @@ class TestString(util.F2PyTest):
         assert_array_equal(result, np.array(b'A234'))
 
     @pytest.mark.xfail
-    # Raises value error but should create a temporary variable with appropriate size
+    # Raises value error but should create a temporary variable with appropriate
+    # size
     def test_char_intent_copy_toosmall(self, toosmall):
         result = self.module.char_test.string_size_copy(toosmall)
         assert_array_equal(toosmall, np.array(b'123'))
@@ -99,7 +104,8 @@ class TestString(util.F2PyTest):
         assert_array_equal(string, np.array(b'A234'))
 
     @pytest.mark.xfail
-    # Raises value error but should create a temporary variable with appropriate size
+    # Raises value error but should create a temporary variable with appropriate
+    # size
     def test_char_intent_inplace_toosmall(self, toosmall):
         self.module.char_test.string_size_inplace(toosmall)
         assert_array_equal(toosmall, np.array(b'A23'))
@@ -117,7 +123,8 @@ class TestString(util.F2PyTest):
         assert_array_equal(result, np.array(b'A234'))
 
     @pytest.mark.xfail
-    # Raises value error but should create a temporary variable with appropriate size
+    # Raises value error but should create a temporary variable with appropriate
+    # size
     def test_char_intent_out_toosmall(self, toosmall):
         result = self.module.char_test.string_size_out(toosmall)
         assert_array_equal(toosmall, np.array(b'123'))
