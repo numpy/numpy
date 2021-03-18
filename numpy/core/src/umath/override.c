@@ -143,7 +143,7 @@ static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
     /*
-     * If the keywords include sign rename to signature. An error
+     * If the keywords include `sig` rename to `signature`. An error
      * will have been raised if both were given.
      */
     PyObject* obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");

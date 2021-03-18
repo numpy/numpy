@@ -41,7 +41,7 @@ struct _tagPyUFuncObject;
  *
  * For backwards compatibility, the regular type resolution function does not
  * support auxiliary data with object semantics. The type resolution call
- * which returns a masked generic function returns 5015a standard NpyAuxData
+ * which returns a masked generic function returns a standard NpyAuxData
  * object, for which the NPY_AUXDATA_FREE and NPY_AUXDATA_CLONE macros
  * work.
  *

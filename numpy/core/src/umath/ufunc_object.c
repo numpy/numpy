@@ -4519,8 +4519,13 @@ _convert_typetup(PyObject *dtype_obj, PyObject **out_typetup)
 
 
 /*
- * Make use of fastcall. If Python has tp_vectorcall we can use this
- * directly, otherwise we have to unpack it.
+ * Main ufunc call implementation.
+ *
+ * This implementation makes use of the "fastcall" way of passing keyword
+ * arguments and is called directly from `ufunc_generic_vectorcall` when
+ * Python has `tp_vectorcall` (Python 3.8+).
+ * If `tp_vectorcall` is not available, the dictionary `kwargs` are unpacked in
+ * `ufunc_generic_call`/`ufunc_generic_call_mps` with fairly little overhead.
  */
 static PyObject *
 ufunc_generic_fastcall(PyUFuncObject *ufunc,
@@ -4832,7 +4837,8 @@ fail:
 
 /*
  * TODO: The implementation below can be replaced with PyVectorcall_Call
- *       when available (should be Python 3.8+).
+ *       when available (should be Python 3.8+).  And removed entirely if
+ *       `PyUFunc_GenericFunction` is disabled as well.
  */
 static PyObject *
 ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
@@ -4857,7 +4863,6 @@ ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
          * We do not have enough scratch-space, so we have to abort;
          * In practice this error should not be seen by users.
          */
-        // TODO: This was a ValueError (but TypeError is more correct)
         PyErr_Format(PyExc_ValueError,
                 "%s() takes from %d to %d positional arguments but "
                 "%zd were given",
@@ -4875,7 +4880,6 @@ ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
     PyObject *key, *value;
     Py_ssize_t pos = 0;
     Py_ssize_t i = 0;
-    // TODO: do compilers optimize this all the way?
     while (PyDict_Next(kwds, &pos, &key, &value)) {
         Py_INCREF(key);
         PyTuple_SET_ITEM(kwnames, i, key);
