@@ -8,7 +8,7 @@ from .overrides import (
     set_array_function_like_doc,
     set_module,
 )
-from .multiarray import array
+from .multiarray import array, asanyarray
 
 
 __all__ = ["require"]
