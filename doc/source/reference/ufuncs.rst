@@ -628,8 +628,8 @@ Math operations
     for large calculations. If your arrays are large, complicated
     expressions can take longer than absolutely necessary due to the
     creation and (later) destruction of temporary calculation
-    spaces. For example, the expression ``G = a * b + c`` is equivalent to
-    ``t1 = A * B; G = T1 + C; del t1``. It will be more quickly executed
+    spaces. For example, the expression ``G = A * B + C`` is equivalent to
+    ``T1 = A * B; G = T1 + C; del T1``. It will be more quickly executed
     as ``G = A * B; add(G, C, G)`` which is the same as
     ``G = A * B; G += C``.
 
