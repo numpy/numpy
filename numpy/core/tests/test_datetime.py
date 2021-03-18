@@ -705,12 +705,12 @@ class TestDateTime:
 
         # Test that every byte-swapping combination also returns the same
         # results (previous tests check that this comparison works fine).
-        res1 = times.astype(dtype1.newbyteorder()).astype(dtype2)
-        assert_array_equal(res1, expected)
-        res2 = times.astype(dtype2.newbyteorder())
-        assert_array_equal(res2, expected)
-        res3 = times.astype(dtype1.newbyteorder()).astype(dtype2.newbyteorder())
-        assert_array_equal(res3, expected)
+        res = times.astype(dtype1.newbyteorder()).astype(dtype2)
+        assert_array_equal(res, expected)
+        res = times.astype(dtype2.newbyteorder())
+        assert_array_equal(res, expected)
+        res = times.astype(dtype1.newbyteorder()).astype(dtype2.newbyteorder())
+        assert_array_equal(res, expected)
 
     @pytest.mark.parametrize("time_dtype", ["m8[D]", "M8[Y]"])
     @pytest.mark.parametrize("str_dtype", ["U", "S"])
@@ -732,7 +732,8 @@ class TestDateTime:
         assert_array_equal(res, to_strings)
 
         # Check that conversion from string to times works if src is swapped:
-        from_strings_swapped = from_strings.astype(from_strings.dtype.newbyteorder())
+        from_strings_swapped = from_strings.astype(
+                from_strings.dtype.newbyteorder())
         res = from_strings_swapped.astype(time_dtype)
         assert_array_equal(res, times)
         # And if both are swapped:
