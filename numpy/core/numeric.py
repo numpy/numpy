@@ -662,17 +662,6 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
-_mode_from_name_dict = {'v': 0,
-                        's': 1,
-                        'f': 2}
-
-
-def _mode_from_name(mode):
-    if isinstance(mode, str):
-        return _mode_from_name_dict[mode.lower()[0]]
-    return mode
-
-
 def _correlate_dispatcher(a, v, mode=None):
     return (a, v)
 
@@ -748,7 +737,6 @@ def correlate(a, v, mode='valid'):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    mode = _mode_from_name(mode)
     return multiarray.correlate2(a, v, mode)
 
 
@@ -852,7 +840,6 @@ def convolve(a, v, mode='full'):
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
-    mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
 
