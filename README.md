@@ -19,10 +19,7 @@ It provides:
 
 Testing:
 
-- NumPy versions &ge; 1.15 require `pytest`
-- NumPy versions &lt; 1.15 require `nose`
-
-Tests can then be run after installation with:
+NumPy requires `pytest`.  Tests can then be run after installation with:
 
     python -c 'import numpy; numpy.test()'
 
