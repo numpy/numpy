@@ -112,7 +112,7 @@ def _swap_direction(norm):
         return _SWAP_DIRECTION_MAP[norm]
     except KeyError:
         raise ValueError(f'Invalid norm value {norm}; should be "backward", '
-                         '"ortho" or "forward".')
+                         '"ortho" or "forward".') from None
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
