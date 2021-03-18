@@ -39,7 +39,7 @@ extern int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n,
 extern int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state,
                                             int64_t good, int64_t bad,
                                             int64_t sample);
-extern int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p);
+extern int64_t legacy_logseries(bitgen_t *bitgen_state, double p);
 extern int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam);
 extern int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a);
 extern int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p);

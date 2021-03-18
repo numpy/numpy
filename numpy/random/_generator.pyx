@@ -176,8 +176,8 @@ cdef class Generator:
     Examples
     --------
     >>> from numpy.random import Generator, PCG64
-    >>> rg = Generator(PCG64())
-    >>> rg.standard_normal()
+    >>> rng = Generator(PCG64())
+    >>> rng.standard_normal()
     -0.203  # random
 
     See Also
@@ -997,8 +997,8 @@ cdef class Generator:
         -----
         For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
 
-            mu + sigma * gen.standard_normal(size=...)
-            gen.normal(mu, sigma, size=...)
+            mu + sigma * rng.standard_normal(size=...)
+            rng.normal(mu, sigma, size=...)
 
         Examples
         --------
@@ -4471,9 +4471,9 @@ cdef class Generator:
                     if i == j:
                         # i == j is not needed and memcpy is undefined.
                         continue
-                    buf[...] = x[j]
-                    x[j] = x[i]
-                    x[i] = buf
+                    buf[...] = x[j, ...]
+                    x[j, ...] = x[i, ...]
+                    x[i, ...] = buf
         else:
             # Untyped path.
             if not isinstance(x, Sequence):

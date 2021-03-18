@@ -155,7 +155,7 @@ NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
         int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop, NpyAuxData **out_transferdata,
+        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArray_Descr **descrs = context->descriptors;
@@ -627,6 +627,7 @@ boundarraymethod__simple_strided_call(
     PyArray_Descr *out_descrs[NPY_MAXARGS];
     ssize_t length = -1;
     int aligned = 1;
+    char *args[NPY_MAXARGS];
     npy_intp strides[NPY_MAXARGS];
     int nin = self->method->nin;
     int nout = self->method->nout;
@@ -679,6 +680,7 @@ boundarraymethod__simple_strided_call(
             }
         }
 
+        args[i] = PyArray_BYTES(arrays[i]);
         strides[i] = PyArray_STRIDES(arrays[i])[0];
         /* TODO: We may need to distinguish aligned and itemsize-aligned */
         aligned &= PyArray_ISALIGNED(arrays[i]);
@@ -719,7 +721,7 @@ boundarraymethod__simple_strided_call(
             .method = self->method,
             .descriptors = descrs,
     };
-    PyArray_StridedUnaryOp *strided_loop = NULL;
+    PyArrayMethod_StridedLoop *strided_loop = NULL;
     NpyAuxData *loop_data = NULL;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
 
@@ -733,11 +735,7 @@ boundarraymethod__simple_strided_call(
      * TODO: Add floating point error checks if requested and
      *       possibly release GIL if allowed by the flags.
      */
-    /* TODO: strided_loop is currently a cast loop, this will change. */
-    int res = strided_loop(
-            PyArray_BYTES(arrays[1]), strides[1],
-            PyArray_BYTES(arrays[0]), strides[0],
-            length, descrs[0]->elsize, loop_data);
+    int res = strided_loop(&context, args, &length, strides, loop_data);
     if (loop_data != NULL) {
         loop_data->free(loop_data);
     }

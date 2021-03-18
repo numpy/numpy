@@ -597,27 +597,25 @@ NpyIter_Copy(NpyIter *iter)
                 }
             }
 
-            if (transferinfo[iop].read.auxdata != NULL) {
+            if (transferinfo[iop].read.func != NULL) {
                 if (out_of_memory) {
-                    transferinfo[iop].read.auxdata = NULL;
+                    transferinfo[iop].read.func = NULL;  /* No cleanup */
                 }
                 else {
-                    transferinfo[iop].read.auxdata =
-                          NPY_AUXDATA_CLONE(transferinfo[iop].read.auxdata);
-                    if (transferinfo[iop].read.auxdata == NULL) {
+                    if (NPY_cast_info_copy(&transferinfo[iop].read,
+                                           &transferinfo[iop].read) < 0) {
                         out_of_memory = 1;
                     }
                 }
             }
 
-            if (transferinfo[iop].write.auxdata != NULL) {
+            if (transferinfo[iop].write.func != NULL) {
                 if (out_of_memory) {
-                    transferinfo[iop].write.auxdata = NULL;
+                    transferinfo[iop].write.func = NULL;  /* No cleanup */
                 }
                 else {
-                    transferinfo[iop].write.auxdata =
-                          NPY_AUXDATA_CLONE(transferinfo[iop].write.auxdata);
-                    if (transferinfo[iop].write.auxdata == NULL) {
+                    if (NPY_cast_info_copy(&transferinfo[iop].write,
+                                           &transferinfo[iop].write) < 0) {
                         out_of_memory = 1;
                     }
                 }
@@ -696,12 +694,8 @@ NpyIter_Deallocate(NpyIter *iter)
         NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
         /* read bufferdata */
         for (iop = 0; iop < nop; ++iop, ++transferinfo) {
-            if (transferinfo->read.auxdata) {
-                NPY_AUXDATA_FREE(transferinfo->read.auxdata);
-            }
-            if (transferinfo->write.auxdata) {
-                NPY_AUXDATA_FREE(transferinfo->write.auxdata);
-            }
+            NPY_cast_info_xfree(&transferinfo->read);
+            NPY_cast_info_xfree(&transferinfo->write);
         }
     }
 
@@ -3163,8 +3157,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         PyArray_DESCR(op[iop]),
                                         op_dtype[iop],
                                         move_references,
-                                        &transferinfo[iop].read.func,
-                                        &transferinfo[iop].read.auxdata,
+                                        &transferinfo[iop].read,
                                         &needs_api) != NPY_SUCCEED) {
                     iop -= 1;  /* This one cannot be cleaned up yet. */
                     goto fail;
@@ -3196,8 +3189,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                             PyArray_DESCR(op[iop]),
                             mask_dtype,
                             move_references,
-                            (PyArray_MaskedStridedUnaryOp **)&transferinfo[iop].write.func,
-                            &transferinfo[iop].write.auxdata,
+                            &transferinfo[iop].write,
                             &needs_api) != NPY_SUCCEED) {
                         goto fail;
                     }
@@ -3210,8 +3202,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                             op_dtype[iop],
                             PyArray_DESCR(op[iop]),
                             move_references,
-                            &transferinfo[iop].write.func,
-                            &transferinfo[iop].write.auxdata,
+                            &transferinfo[iop].write,
                             &needs_api) != NPY_SUCCEED) {
                         goto fail;
                     }
@@ -3229,8 +3220,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                         op_dtype[iop]->elsize, 0,
                         op_dtype[iop], NULL,
                         1,
-                        &transferinfo[iop].write.func,
-                        &transferinfo[iop].write.auxdata,
+                        &transferinfo[iop].write,
                         &needs_api) != NPY_SUCCEED) {
                     goto fail;
                 }
@@ -3254,14 +3244,8 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
 
 fail:
     for (i = 0; i < iop+1; ++i) {
-        if (transferinfo[iop].read.auxdata != NULL) {
-            NPY_AUXDATA_FREE(transferinfo[iop].read.auxdata);
-            transferinfo[iop].read.auxdata = NULL;
-        }
-        if (transferinfo[iop].write.auxdata != NULL) {
-            NPY_AUXDATA_FREE(transferinfo[iop].write.auxdata);
-            transferinfo[iop].write.auxdata = NULL;
-        }
+        NPY_cast_info_xfree(&transferinfo[iop].read);
+        NPY_cast_info_xfree(&transferinfo[iop].write);
     }
     return 0;
 }

@@ -5,6 +5,13 @@ from numpy import (
     ndindex as ndindex,
 )
 
+from numpy.lib import (
+    format as format,
+    mixins as mixins,
+    scimath as scimath,
+    stride_tricks as stride_stricks,
+)
+
 from numpy.lib.arrayterator import (
     Arrayterator as Arrayterator,
 )

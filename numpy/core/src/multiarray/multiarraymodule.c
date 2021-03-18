@@ -26,7 +26,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
-
+#include "npy_argparse.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
@@ -2829,28 +2829,36 @@ array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 static PyObject *
-array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array_correlate(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *shape, *a0;
     int mode = 0;
-    static char *kwlist[] = {"a", "v", "mode", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:correlate", kwlist,
-                &a0, &shape, &mode)) {
+    if (npy_parse_arguments("correlate", args, len_args, kwnames,
+            "a", NULL, &a0,
+            "v", NULL, &shape,
+            "|mode", &PyArray_PythonPyIntFromInt, &mode,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
     return PyArray_Correlate(a0, shape, mode);
 }
 
 static PyObject*
-array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array_correlate2(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *shape, *a0;
     int mode = 0;
-    static char *kwlist[] = {"a", "v", "mode", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:correlate2", kwlist,
-                &a0, &shape, &mode)) {
+    if (npy_parse_arguments("correlate2", args, len_args, kwnames,
+            "a", NULL, &a0,
+            "v", NULL, &shape,
+            "|mode", &PyArray_PythonPyIntFromInt, &mode,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
     return PyArray_Correlate2(a0, shape, mode);
@@ -3426,6 +3434,42 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return res;
 }
 
+
+static int
+trimmode_converter(PyObject *obj, TrimMode *trim)
+{
+    if (!PyUnicode_Check(obj) || PyUnicode_GetLength(obj) != 1) {
+        goto error;
+    }
+    const char *trimstr = PyUnicode_AsUTF8AndSize(obj, NULL);
+
+    if (trimstr != NULL) {
+        if (trimstr[0] == 'k') {
+            *trim = TrimMode_None;
+        }
+        else if (trimstr[0] == '.') {
+            *trim = TrimMode_Zeros;
+        }
+        else if (trimstr[0] ==  '0') {
+            *trim = TrimMode_LeaveOneZero;
+        }
+        else if (trimstr[0] ==  '-') {
+            *trim = TrimMode_DptZeros;
+        }
+        else {
+            goto error;
+        }
+    }
+    return NPY_SUCCEED;
+
+error:
+    PyErr_Format(PyExc_TypeError,
+            "if supplied, trim must be 'k', '.', '0' or '-' found `%100S`",
+            obj);
+    return NPY_FAIL;
+}
+
+
 /*
  * Prints floating-point scalars using the Dragon4 algorithm, scientific mode.
  * See docstring of `np.format_float_scientific` for description of arguments.
@@ -3433,41 +3477,26 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
  * precision, which is equivalent to `None`.
  */
 static PyObject *
-dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+dragon4_scientific(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj;
-    static char *kwlist[] = {"x", "precision", "unique", "sign", "trim",
-                             "pad_left", "exp_digits", NULL};
     int precision=-1, pad_left=-1, exp_digits=-1;
-    char *trimstr=NULL;
     DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii:dragon4_scientific",
-                kwlist, &obj, &precision, &unique, &sign, &trimstr, &pad_left,
-                &exp_digits)) {
+    if (npy_parse_arguments("dragon4_scientific", args, len_args, kwnames,
+            "x", NULL , &obj,
+            "|precision", &PyArray_PythonPyIntFromInt, &precision,
+            "|unique", &PyArray_PythonPyIntFromInt, &unique,
+            "|sign", &PyArray_PythonPyIntFromInt, &sign,
+            "|trim", &trimmode_converter, &trim,
+            "|pad_left", &PyArray_PythonPyIntFromInt, &pad_left,
+            "|exp_digits", &PyArray_PythonPyIntFromInt, &exp_digits,
+            NULL, NULL, NULL) < 0) {
         return NULL;
-    }
-
-    if (trimstr != NULL) {
-        if (strcmp(trimstr, "k") == 0) {
-            trim = TrimMode_None;
-        }
-        else if (strcmp(trimstr, ".") == 0) {
-            trim = TrimMode_Zeros;
-        }
-        else if (strcmp(trimstr, "0") == 0) {
-            trim = TrimMode_LeaveOneZero;
-        }
-        else if (strcmp(trimstr, "-") == 0) {
-            trim = TrimMode_DptZeros;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                "if supplied, trim must be 'k', '.', '0' or '-'");
-            return NULL;
-        }
     }
 
     digit_mode = unique ? DigitMode_Unique : DigitMode_Exact;
@@ -3489,42 +3518,28 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
  * precision, which is equivalent to `None`.
  */
 static PyObject *
-dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+dragon4_positional(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj;
-    static char *kwlist[] = {"x", "precision", "unique", "fractional",
-                             "sign", "trim", "pad_left", "pad_right", NULL};
     int precision=-1, pad_left=-1, pad_right=-1;
-    char *trimstr=NULL;
     CutoffMode cutoff_mode;
     DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1, fractional=0;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiisii:dragon4_positional",
-                kwlist, &obj, &precision, &unique, &fractional, &sign, &trimstr,
-                &pad_left, &pad_right)) {
+    if (npy_parse_arguments("dragon4_positional", args, len_args, kwnames,
+            "x", NULL , &obj,
+            "|precision", &PyArray_PythonPyIntFromInt, &precision,
+            "|unique", &PyArray_PythonPyIntFromInt, &unique,
+            "|fractional", &PyArray_PythonPyIntFromInt, &fractional,
+            "|sign", &PyArray_PythonPyIntFromInt, &sign,
+            "|trim", &trimmode_converter, &trim,
+            "|pad_left", &PyArray_PythonPyIntFromInt, &pad_left,
+            "|pad_right", &PyArray_PythonPyIntFromInt, &pad_right,
+            NULL, NULL, NULL) < 0) {
         return NULL;
-    }
-
-    if (trimstr != NULL) {
-        if (strcmp(trimstr, "k") == 0) {
-            trim = TrimMode_None;
-        }
-        else if (strcmp(trimstr, ".") == 0) {
-            trim = TrimMode_Zeros;
-        }
-        else if (strcmp(trimstr, "0") == 0) {
-            trim = TrimMode_LeaveOneZero;
-        }
-        else if (strcmp(trimstr, "-") == 0) {
-            trim = TrimMode_DptZeros;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                "if supplied, trim must be 'k', '.', '0' or '-'");
-            return NULL;
-        }
     }
 
     digit_mode = unique ? DigitMode_Unique : DigitMode_Exact;
@@ -4052,15 +4067,19 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
 }
 
 static PyObject *
-normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+normalize_axis_index(PyObject *NPY_UNUSED(self),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    static char *kwlist[] = {"axis", "ndim", "msg_prefix", NULL};
     int axis;
     int ndim;
     PyObject *msg_prefix = Py_None;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii|O:normalize_axis_index",
-                                     kwlist, &axis, &ndim, &msg_prefix)) {
+    if (npy_parse_arguments("normalize_axis_index", args, len_args, kwnames,
+            "axis", &PyArray_PythonPyIntFromInt, &axis,
+            "ndim", &PyArray_PythonPyIntFromInt, &ndim,
+            "|msg_prefix", NULL, &msg_prefix,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
     if (check_and_adjust_axis_msg(&axis, ndim, msg_prefix) < 0) {
@@ -4191,10 +4210,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"correlate",
         (PyCFunction)array_correlate,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"correlate2",
         (PyCFunction)array_correlate2,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"frombuffer",
         (PyCFunction)array_frombuffer,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4241,10 +4260,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"dragon4_positional",
         (PyCFunction)dragon4_positional,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"dragon4_scientific",
         (PyCFunction)dragon4_scientific,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"compare_chararrays",
         (PyCFunction)compare_chararrays,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4277,7 +4296,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"unpackbits", (PyCFunction)io_unpack,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"normalize_axis_index", (PyCFunction)normalize_axis_index,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
         METH_VARARGS, NULL},
     {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,

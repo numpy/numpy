@@ -89,7 +89,7 @@ cdef extern from "include/legacy-distributions.h":
                                    int64_t n, binomial_t *binomial) nogil
     int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) nogil
     int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad, int64_t sample) nogil
-    int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t legacy_logseries(bitgen_t *bitgen_state, double p) nogil
     int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) nogil
     int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) nogil
     int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) nogil
@@ -3954,7 +3954,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        out = disc(&legacy_random_logseries, &self._bitgen, size, self.lock, 1, 0,
+        out = disc(&legacy_logseries, &self._bitgen, size, self.lock, 1, 0,
                    p, 'p', CONS_BOUNDED_0_1,
                    0.0, '', CONS_NONE,
                    0.0, '', CONS_NONE)
@@ -4491,6 +4491,17 @@ cdef class RandomState:
             if x.size == 0:
                 # shuffling is a no-op
                 return
+
+            if x.ndim == 1 and x.dtype.type is np.object_:
+                warnings.warn(
+                        "Shuffling a one dimensional array subclass containing "
+                        "objects gives incorrect results for most array "
+                        "subclasses.  "
+                        "Please us the new random number API instead: "
+                        "https://numpy.org/doc/stable/reference/random/index.html\n"
+                        "The new API fixes this issue. This version will not "
+                        "be fixed due to stability guarantees of the API.",
+                        UserWarning, stacklevel=1)  # Cython adds no stacklevel
 
             buf = np.empty_like(x[0, ...])
             with self.lock:
