@@ -488,9 +488,9 @@ cppmacros['STRINGCOPYN'] = """\
         char *_from = (from);                                   \\
         FAILNULL(_to); FAILNULL(_from);                         \\
         (void)strncpy(_to, _from, sizeof(char)*_m);             \\
-        _to[_m-1] = '\\0';                                      \\
+        _to[_m] = '\\0';                                        \\
         /* Padding with spaces instead of nulls */              \\
-        for (_m -= 2; _m >= 0 && _to[_m] == '\\0'; _m--) {      \\
+        for (_m -= 1; _m >= 0 && _to[_m] == '\\0'; _m--) {      \\
             _to[_m] = ' ';                                      \\
         }                                                       \\
     } while (0)
@@ -623,8 +623,9 @@ needs['try_pyarr_from_string'] = ['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
 cfuncs['try_pyarr_from_string'] = """\
 static int try_pyarr_from_string(PyObject *obj,const string str) {
     PyArrayObject *arr = NULL;
-    if (PyArray_Check(obj) && (!((arr = (PyArrayObject *)obj) == NULL)))
-        { STRINGCOPYN(PyArray_DATA(arr),str,PyArray_NBYTES(arr)); }
+    if (PyArray_Check(obj) && (!((arr = (PyArrayObject *)obj) == NULL))) {
+        STRINGCOPYN(PyArray_DATA(arr),str,PyArray_NBYTES(arr));
+    }
     return 1;
 capi_fail:
     PRINTPYOBJERR(obj);
@@ -646,7 +647,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
         if (*len == -1)
             *len = strlen(inistr); /* Will this cause problems? */
         STRINGMALLOC(*str,*len);
-        STRINGCOPYN(*str,inistr,*len+1);
+        STRINGCOPYN(*str,inistr,*len);
         return 1;
     }
     if (PyArray_Check(obj)) {
@@ -659,7 +660,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
         if (*len == -1)
             *len = (PyArray_ITEMSIZE(arr))*PyArray_SIZE(arr);
         STRINGMALLOC(*str,*len);
-        STRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
+        STRINGCOPYN(*str,PyArray_DATA(arr),*len);
         return 1;
     }
     if (PyBytes_Check(obj)) {
@@ -684,7 +685,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
     if (*len == -1)
         *len = PyBytes_GET_SIZE(tmp);
     STRINGMALLOC(*str,*len);
-    STRINGCOPYN(*str,PyBytes_AS_STRING(tmp),*len+1);
+    STRINGCOPYN(*str,PyBytes_AS_STRING(tmp),*len);
     Py_DECREF(tmp);
     return 1;
 capi_fail:
