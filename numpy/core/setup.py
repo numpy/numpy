@@ -716,8 +716,10 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
-                             join('src', 'common', 'mem_overlap.c')],
+                             join('src', 'common', 'mem_overlap.c'),
+                             join('src', 'common', 'npy_argparse.c')],
                     depends=[join('src', 'common', 'mem_overlap.h'),
+                             join('src', 'common', 'npy_argparse.h'),
                              join('src', 'common', 'npy_extint128.h')],
                     libraries=['npymath'])
 
@@ -731,6 +733,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'cblasfuncs.h'),
             join('src', 'common', 'lowlevel_strided_loops.h'),
             join('src', 'common', 'mem_overlap.h'),
+            join('src', 'common', 'npy_argparse.h'),
             join('src', 'common', 'npy_cblas.h'),
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_ctypes.h'),
@@ -749,6 +752,7 @@ def configuration(parent_package='',top_path=None):
     common_src = [
             join('src', 'common', 'array_assign.c'),
             join('src', 'common', 'mem_overlap.c'),
+            join('src', 'common', 'npy_argparse.c'),
             join('src', 'common', 'npy_longdouble.c'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.c'),
