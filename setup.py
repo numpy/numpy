@@ -313,8 +313,6 @@ def parse_setuppy_commands():
             Instead, build what you want to upload and upload those files
             with `twine upload -s <filenames>` instead.
             """,
-        upload_docs="`setup.py upload_docs` is not supported",
-        easy_install="`setup.py easy_install` is not supported",
         clean="""
             `setup.py clean` is not supported, use one of the following instead:
 
@@ -322,10 +320,6 @@ def parse_setuppy_commands():
               - `git clean -Xdf` (cleans all versioned files, doesn't touch
                                   files that aren't checked into the git repo)
             """,
-        check="`setup.py check` is not supported",
-        register="`setup.py register` is not supported",
-        bdist_dumb="`setup.py bdist_dumb` is not supported",
-        bdist="`setup.py bdist` is not supported",
         build_sphinx="""
             `setup.py build_sphinx` is not supported, use the
             Makefile under doc/""",
