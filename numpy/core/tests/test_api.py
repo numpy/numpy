@@ -149,7 +149,7 @@ def test_array_impossible_casts(array):
     rt = rational(1, 2)
     if array:
         rt = np.array(rt)
-    with assert_raises(ValueError):
+    with assert_raises(TypeError):
         np.array(rt, dtype="M8")
 
 

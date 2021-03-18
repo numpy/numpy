@@ -21,6 +21,7 @@
 #include "convert_datatype.h"
 
 #include "lowlevel_strided_loops.h"
+#include "dtype_transfer.h"
 
 /********** ITERATOR CONSTRUCTION TIMING **************/
 #define NPY_IT_CONSTRUCTION_TIMING 0
@@ -231,14 +232,10 @@ typedef npy_int16 npyiter_opitflags;
         &(iter)->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
 
 /* Internal-only BUFFERDATA MEMBER ACCESS */
-struct _transferdata {
-    PyArray_StridedUnaryOp *func;
-    NpyAuxData *auxdata;
-};
 
 struct NpyIter_TransferInfo_tag {
-    struct _transferdata read;
-    struct _transferdata write;
+    NPY_cast_info read;
+    NPY_cast_info write;
     /* Probably unnecessary, but make sure what follows is intp aligned: */
     npy_intp _unused_ensure_alignment[];
 };
