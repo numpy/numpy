@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from ._types import Literal, Optional, Tuple, Union, array
 from ._array_object import ndarray
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ._types import Literal, Optional, Tuple, Union, array
 
 import numpy as np
 

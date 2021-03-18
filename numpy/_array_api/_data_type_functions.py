@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from ._types import Union, array, dtype
 from ._array_object import ndarray
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ._types import Union, array, dtype
 
 from collections.abc import Sequence
 

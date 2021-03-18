@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from ._types import (Optional, SupportsDLPack, SupportsBufferProtocol, Tuple,
-                     Union, array, device, dtype)
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ._types import (Optional, SupportsDLPack, SupportsBufferProtocol, Tuple,
+                         Union, array, device, dtype)
 from ._dtypes import _all_dtypes
 
 import numpy as np

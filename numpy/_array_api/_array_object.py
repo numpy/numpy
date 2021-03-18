@@ -17,9 +17,12 @@ from __future__ import annotations
 
 import operator
 from enum import IntEnum
-from ._types import Optional, PyCapsule, Tuple, Union, array
 from ._creation_functions import asarray
 from ._dtypes import _boolean_dtypes, _integer_dtypes
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ._types import Optional, PyCapsule, Tuple, Union, array
 
 import numpy as np
 

@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from ._dtypes import (_boolean_dtypes, _floating_dtypes,
                       _integer_dtypes, _integer_or_boolean_dtypes, _numeric_dtypes)
-from ._types import array
 from ._array_object import ndarray
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ._types import array
 
 import numpy as np
 

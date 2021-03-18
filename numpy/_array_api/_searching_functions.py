@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from ._types import Tuple, array
 from ._array_object import ndarray
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ._types import Tuple, array
 
 import numpy as np
 
