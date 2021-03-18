@@ -123,10 +123,13 @@ def bitwise_left_shift(x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
+    # Note: the function name is different here
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
         raise TypeError('Only integer dtypes are allowed in bitwise_left_shift')
-    # Note: the function name is different here
-    return ndarray._new(np.left_shift(x1._array, x2._array))
+    # Note: The spec requires the return dtype of bitwise_left_shift to be the
+    # same as the first argument. np.left_shift() returns a type that is the
+    # type promotion of the two input types.
+    return ndarray._new(np.left_shift(x1._array, x2._array).astype(x1.dtype))
 
 def bitwise_invert(x: array, /) -> array:
     """
@@ -155,10 +158,13 @@ def bitwise_right_shift(x1: array, x2: array, /) -> array:
 
     See its docstring for more information.
     """
+    # Note: the function name is different here
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
         raise TypeError('Only integer dtypes are allowed in bitwise_right_shift')
-    # Note: the function name is different here
-    return ndarray._new(np.right_shift(x1._array, x2._array))
+    # Note: The spec requires the return dtype of bitwise_left_shift to be the
+    # same as the first argument. np.left_shift() returns a type that is the
+    # type promotion of the two input types.
+    return ndarray._new(np.right_shift(x1._array, x2._array).astype(x1.dtype))
 
 def bitwise_xor(x1: array, x2: array, /) -> array:
     """
