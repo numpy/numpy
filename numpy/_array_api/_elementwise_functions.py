@@ -126,6 +126,9 @@ def bitwise_left_shift(x1: array, x2: array, /) -> array:
     # Note: the function name is different here
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
         raise TypeError('Only integer dtypes are allowed in bitwise_left_shift')
+    # Note: bitwise_left_shift is only defined for x2 nonnegative.
+    if np.any(x2._array < 0):
+        raise ValueError('bitwise_left_shift(x1, x2) is only defined for x2 >= 0')
     # Note: The spec requires the return dtype of bitwise_left_shift to be the
     # same as the first argument. np.left_shift() returns a type that is the
     # type promotion of the two input types.
@@ -161,6 +164,9 @@ def bitwise_right_shift(x1: array, x2: array, /) -> array:
     # Note: the function name is different here
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
         raise TypeError('Only integer dtypes are allowed in bitwise_right_shift')
+    # Note: bitwise_right_shift is only defined for x2 nonnegative.
+    if np.any(x2._array < 0):
+        raise ValueError('bitwise_right_shift(x1, x2) is only defined for x2 >= 0')
     # Note: The spec requires the return dtype of bitwise_left_shift to be the
     # same as the first argument. np.left_shift() returns a type that is the
     # type promotion of the two input types.
