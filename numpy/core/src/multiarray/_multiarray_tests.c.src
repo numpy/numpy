@@ -7,6 +7,7 @@
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
 #include "common.h"
+#include "npy_argparse.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "array_method.h"
@@ -18,6 +19,25 @@
 #endif
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
+
+static PyObject *
+argparse_example_function(PyObject *NPY_UNUSED(mod),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+    int arg1;
+    PyObject *arg2, *arg3, *arg4;
+    if (npy_parse_arguments("func", args, len_args, kwnames,
+            "", &PyArray_PythonPyIntFromInt, &arg1,
+            "arg2", NULL, &arg2,
+            "|arg3", NULL, &arg3,
+            "$arg3", NULL, &arg4,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
@@ -2255,6 +2275,9 @@ run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {
+    {"argparse_example_function",
+         (PyCFunction)argparse_example_function,
+         METH_KEYWORDS | METH_FASTCALL, NULL},
     {"IsPythonScalar",
         IsPythonScalar,
         METH_VARARGS, NULL},
