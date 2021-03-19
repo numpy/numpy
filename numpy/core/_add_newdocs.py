@@ -906,7 +906,7 @@ add_newdoc('numpy.core.multiarray', 'array',
 
 add_newdoc('numpy.core.multiarray', 'asarray',
     """
-    asarray(a, dtype=None, order=None)
+    asarray(a, dtype=None, order=None, *, like=None)
 
     Convert the input to an array.
 
@@ -918,10 +918,16 @@ add_newdoc('numpy.core.multiarray', 'asarray',
         of lists and ndarrays.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major (C-style) or
-        column-major (Fortran-style) memory representation.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
         Defaults to 'C'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -974,11 +980,14 @@ add_newdoc('numpy.core.multiarray', 'asarray',
     >>> np.asanyarray(a) is a
     True
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'asanyarray',
     """
-    asanyarray(a, dtype=None, order=None)
+    asanyarray(a, dtype=None, order=None, *, like=None)
 
     Convert the input to an ndarray, but pass ndarray subclasses through.
 
@@ -990,9 +999,16 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
         tuples of lists, and ndarrays.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major (C-style) or column-major
-        (Fortran-style) memory representation.  Defaults to 'C'.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'C'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1027,11 +1043,14 @@ add_newdoc('numpy.core.multiarray', 'asanyarray',
     >>> np.asanyarray(a) is a
     True
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
     """
-    ascontiguousarray(a, dtype=None)
+    ascontiguousarray(a, dtype=None, *, like=None)
 
     Return a contiguous array (ndim >= 1) in memory (C order).
 
@@ -1041,6 +1060,9 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
         Input array.
     dtype : str or dtype object, optional
         Data-type of returned array.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1067,11 +1089,14 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'asfortranarray',
     """
-    asfortranarray(a, dtype=None)
+    asfortranarray(a, dtype=None, *, like=None)
 
     Return an array (ndim >= 1) laid out in Fortran order in memory.
 
@@ -1081,6 +1106,9 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
         Input array.
     dtype : str or dtype object, optional
         By default, the data-type is inferred from the input data.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1107,7 +1135,10 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'empty',
     """
