@@ -1253,12 +1253,12 @@ class DatetimeFormat(_TimelikeFormat):
         self.legacy = legacy
 
         # must be called after the above are configured
-        super(DatetimeFormat, self).__init__(x)
+        super().__init__(x)
 
     def __call__(self, x):
         if self.legacy == '1.13':
             return self._format_non_nat(x)
-        return super(DatetimeFormat, self).__call__(x)
+        return super().__call__(x)
 
     def _format_non_nat(self, x):
         return "'%s'" % datetime_as_string(x,

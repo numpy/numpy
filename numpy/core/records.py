@@ -244,12 +244,12 @@ class record(nt.void):
     def __repr__(self):
         if get_printoptions()['legacy'] == '1.13':
             return self.__str__()
-        return super(record, self).__repr__()
+        return super().__repr__()
 
     def __str__(self):
         if get_printoptions()['legacy'] == '1.13':
             return str(self.item())
-        return super(record, self).__str__()
+        return super().__str__()
 
     def __getattribute__(self, attr):
         if attr in ('setfield', 'getfield', 'dtype'):
@@ -518,7 +518,7 @@ class recarray(ndarray):
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
-        obj = super(recarray, self).__getitem__(indx)
+        obj = super().__getitem__(indx)
 
         # copy behavior of getattr, except that here
         # we might also be returning a single element

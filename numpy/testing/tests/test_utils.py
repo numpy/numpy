@@ -434,10 +434,10 @@ class TestArrayAlmostEqual(_GenericTest):
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
             def __eq__(self, other):
-                return super(MyArray, self).__eq__(other).view(np.ndarray)
+                return super().__eq__(other).view(np.ndarray)
 
             def __lt__(self, other):
-                return super(MyArray, self).__lt__(other).view(np.ndarray)
+                return super().__lt__(other).view(np.ndarray)
 
             def all(self, *args, **kwargs):
                 raise NotImplementedError
@@ -585,10 +585,10 @@ class TestAlmostEqual(_GenericTest):
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
             def __eq__(self, other):
-                return super(MyArray, self).__eq__(other).view(np.ndarray)
+                return super().__eq__(other).view(np.ndarray)
 
             def __lt__(self, other):
-                return super(MyArray, self).__lt__(other).view(np.ndarray)
+                return super().__lt__(other).view(np.ndarray)
 
             def all(self, *args, **kwargs):
                 raise NotImplementedError

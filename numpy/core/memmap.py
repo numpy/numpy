@@ -316,7 +316,7 @@ class memmap(ndarray):
             self.base.flush()
 
     def __array_wrap__(self, arr, context=None):
-        arr = super(memmap, self).__array_wrap__(arr, context)
+        arr = super().__array_wrap__(arr, context)
 
         # Return a memmap if a memmap was given as the output of the
         # ufunc. Leave the arr class unchanged if self is not a memmap
@@ -331,7 +331,7 @@ class memmap(ndarray):
         return arr.view(np.ndarray)
 
     def __getitem__(self, index):
-        res = super(memmap, self).__getitem__(index)
+        res = super().__getitem__(index)
         if type(res) is memmap and res._mmap is None:
             return res.view(type=ndarray)
         return res

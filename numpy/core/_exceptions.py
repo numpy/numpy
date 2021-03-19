@@ -135,7 +135,7 @@ class AxisError(ValueError, IndexError):
             if msg_prefix is not None:
                 msg = "{}: {}".format(msg_prefix, msg)
 
-        super(AxisError, self).__init__(msg)
+        super().__init__(msg)
 
 
 @_display_as_base
