@@ -603,19 +603,19 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
     NPY_CPU_DISPATCH_CALL_XB(highest_func_xb = _umath_tests_dispatch_func, ());
     NPY_CPU_DISPATCH_CALL_XB(highest_var_xb  = _umath_tests_dispatch_var);
 
-    PyObject *dict = PyDict_New(), *item;
+    PyObject *dict = PyDict_New(), *item = NULL;
     if (dict == NULL) {
         return NULL;
     }
     /**begin repeat
      * #str = func, var, func_xb, var_xb#
     */
-    item = PyUnicode_FromString(highest_@str@);
+    Py_XSETREF(item, PyUnicode_FromString(highest_@str@));
     if (item == NULL || PyDict_SetItemString(dict, "@str@", item) < 0) {
         goto err;
     }
     /**end repeat**/
-    item = PyList_New(0);
+    Py_SETREF(item, PyList_New(0));
     if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {
         goto err;
     }
