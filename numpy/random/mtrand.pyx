@@ -2156,7 +2156,7 @@ cdef class RandomState:
         either positive or negative, hence making our test 2-tailed. 
 
         Because we are estimating the mean and we have N=11 values in our sample,
-        we have N-1=10 degrees of freedom. We set our signifance level to 95% and 
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
         compute the t statistic using the empirical mean and empirical standard 
         deviation of our intake. We use a ddof of 1 to base the computation of our 
         empirical standard deviation on an unbiased estimate of the variance (note:
