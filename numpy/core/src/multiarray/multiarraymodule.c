@@ -1704,7 +1704,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("asarray", args, len_args, kwnames,
-                "object", NULL, &op,
+                "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "|order", &PyArray_OrderConverter, &order,
                 "$like", NULL, &like,
@@ -1743,7 +1743,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("asanyarray", args, len_args, kwnames,
-                "object", NULL, &op,
+                "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "|order", &PyArray_OrderConverter, &order,
                 "$like", NULL, &like,
@@ -1782,7 +1782,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("ascontiguousarray", args, len_args, kwnames,
-                "object", NULL, &op,
+                "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
@@ -1820,7 +1820,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("asfortranarray", args, len_args, kwnames,
-                "object", NULL, &op,
+                "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
