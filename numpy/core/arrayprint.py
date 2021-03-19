@@ -1030,7 +1030,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         If `True`, use a digit-generation strategy which gives the shortest
         representation which uniquely identifies the floating-point number from
         other values of the same type, by judicious rounding. If `precision`
-        is given fewer digits than necessary can be printed, or if `min_digits`
+        is given fewer digits than necessary can be printed. If `min_digits`
         is given more can be printed, in which cases the last digit is rounded
         with unbiased rounding.
         If `False`, digits are generated as if printing an infinite-precision
