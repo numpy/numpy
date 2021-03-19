@@ -4479,7 +4479,7 @@ _get_typetup(PyObject *sig_obj, PyObject *signature_obj, PyObject *dtype,
 
     if (dtype != NULL) {
         if (*out_typetup != NULL) {
-            // TODO: change to typeerreor
+            /* TODO: This should be changed to a TypeError */
             PyErr_SetString(PyExc_RuntimeError,
                     "cannot specify both 'signature' and 'dtype'");
             Py_SETREF(*out_typetup, NULL);
