@@ -11,6 +11,10 @@ else:
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 
+# TODO: The following functions are now defined in C, so should be defined
+#       in a (not yet existing) `multiarray.pyi`.
+#       (with the exception of `require`)
+
 def asarray(
     a: object,
     dtype: DTypeLike = ...,
