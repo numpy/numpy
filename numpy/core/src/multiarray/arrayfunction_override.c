@@ -408,6 +408,7 @@ array_implement_c_array_function_creation(
             kwargs = PyDict_New();
             if (kwargs == NULL) {
                 Py_DECREF(args);
+                return NULL;
             }
             Py_ssize_t nkwargs = PyTuple_GET_SIZE(kwnames);
             for (Py_ssize_t i = 0; i < nkwargs; i++) {
@@ -416,6 +417,7 @@ array_implement_c_array_function_creation(
                 if (PyDict_SetItem(kwargs, key, value) < 0) {
                     Py_DECREF(args);
                     Py_DECREF(kwargs);
+                    return NULL;
                 }
             }
         }
