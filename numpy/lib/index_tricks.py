@@ -251,7 +251,7 @@ class MGridClass(nd_grid):
     """
 
     def __init__(self):
-        super(MGridClass, self).__init__(sparse=False)
+        super().__init__(sparse=False)
 
 
 mgrid = MGridClass()
@@ -298,7 +298,7 @@ class OGridClass(nd_grid):
     """
 
     def __init__(self):
-        super(OGridClass, self).__init__(sparse=True)
+        super().__init__(sparse=True)
 
 
 ogrid = OGridClass()

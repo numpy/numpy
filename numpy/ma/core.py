@@ -914,7 +914,7 @@ class _MaskedUnaryOperation(_MaskedUFunc):
     """
 
     def __init__(self, mufunc, fill=0, domain=None):
-        super(_MaskedUnaryOperation, self).__init__(mufunc)
+        super().__init__(mufunc)
         self.fill = fill
         self.domain = domain
         ufunc_domain[mufunc] = domain
@@ -996,7 +996,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         abfunc(x, filly) = x for all x to enable reduce.
 
         """
-        super(_MaskedBinaryOperation, self).__init__(mbfunc)
+        super().__init__(mbfunc)
         self.fillx = fillx
         self.filly = filly
         ufunc_domain[mbfunc] = None
@@ -1142,7 +1142,7 @@ class _DomainedBinaryOperation(_MaskedUFunc):
         """abfunc(fillx, filly) must be defined.
            abfunc(x, filly) = x for all x to enable reduce.
         """
-        super(_DomainedBinaryOperation, self).__init__(dbfunc)
+        super().__init__(dbfunc)
         self.domain = domain
         self.fillx = fillx
         self.filly = filly
@@ -3400,7 +3400,7 @@ class MaskedArray(ndarray):
     # Define so that we can overwrite the setter.
     @property
     def dtype(self):
-        return super(MaskedArray, self).dtype
+        return super().dtype
 
     @dtype.setter
     def dtype(self, dtype):
@@ -3416,7 +3416,7 @@ class MaskedArray(ndarray):
 
     @property
     def shape(self):
-        return super(MaskedArray, self).shape
+        return super().shape
 
     @shape.setter
     def shape(self, shape):
@@ -4985,8 +4985,8 @@ class MaskedArray(ndarray):
         #!!!: implement out + test!
         m = self._mask
         if m is nomask:
-            result = super(MaskedArray, self).trace(offset=offset, axis1=axis1,
-                                                    axis2=axis2, out=out)
+            result = super().trace(offset=offset, axis1=axis1, axis2=axis2,
+                                   out=out)
             return result.astype(dtype)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
@@ -5237,8 +5237,7 @@ class MaskedArray(ndarray):
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
         if self._mask is nomask:
-            result = super(MaskedArray, self).mean(axis=axis,
-                                                   dtype=dtype, **kwargs)[()]
+            result = super().mean(axis=axis, dtype=dtype, **kwargs)[()]
         else:
             dsum = self.sum(axis=axis, dtype=dtype, **kwargs)
             cnt = self.count(axis=axis, **kwargs)
@@ -5315,8 +5314,8 @@ class MaskedArray(ndarray):
 
         # Easy case: nomask, business as usual
         if self._mask is nomask:
-            ret = super(MaskedArray, self).var(axis=axis, dtype=dtype, out=out,
-                                               ddof=ddof, **kwargs)[()]
+            ret = super().var(axis=axis, dtype=dtype, out=out, ddof=ddof,
+                              **kwargs)[()]
             if out is not None:
                 if isinstance(out, MaskedArray):
                     out.__setmask__(nomask)
@@ -5947,13 +5946,13 @@ class MaskedArray(ndarray):
         warnings.warn("Warning: 'partition' will ignore the 'mask' "
                       f"of the {self.__class__.__name__}.",
                       stacklevel=2)
-        return super(MaskedArray, self).partition(*args, **kwargs)
+        return super().partition(*args, **kwargs)
 
     def argpartition(self, *args, **kwargs):
         warnings.warn("Warning: 'argpartition' will ignore the 'mask' "
                       f"of the {self.__class__.__name__}.",
                       stacklevel=2)
-        return super(MaskedArray, self).argpartition(*args, **kwargs)
+        return super().argpartition(*args, **kwargs)
 
     def take(self, indices, axis=None, out=None, mode='raise'):
         """
@@ -6179,7 +6178,7 @@ class MaskedArray(ndarray):
 
         """
         cf = 'CF'[self.flags.fnc]
-        data_state = super(MaskedArray, self).__reduce__()[2]
+        data_state = super().__reduce__()[2]
         return data_state + (getmaskarray(self).tobytes(cf), self._fill_value)
 
     def __setstate__(self, state):
@@ -6195,7 +6194,7 @@ class MaskedArray(ndarray):
 
         """
         (_, shp, typ, isf, raw, msk, flv) = state
-        super(MaskedArray, self).__setstate__((shp, typ, isf, raw))
+        super().__setstate__((shp, typ, isf, raw))
         self._mask.__setstate__((shp, make_mask_descr(typ), isf, msk))
         self.fill_value = flv
 
@@ -6256,7 +6255,7 @@ class mvoid(MaskedArray):
     @property
     def _data(self):
         # Make sure that the _data part is a np.void
-        return super(mvoid, self)._data[()]
+        return super()._data[()]
 
     def __getitem__(self, indx):
         """
@@ -6293,7 +6292,7 @@ class mvoid(MaskedArray):
             return str(self._data)
 
         rdtype = _replace_dtype_fields(self._data.dtype, "O")
-        data_arr = super(mvoid, self)._data
+        data_arr = super()._data
         res = data_arr.astype(rdtype)
         _recursive_printoption(res, self._mask, masked_print_option)
         return str(res)
@@ -6455,7 +6454,7 @@ class MaskedConstant(MaskedArray):
         if not self.__has_singleton():
             # this handles the `.view` in __new__, which we want to copy across
             # properties normally
-            return super(MaskedConstant, self).__array_finalize__(obj)
+            return super().__array_finalize__(obj)
         elif self is self.__singleton:
             # not clear how this can happen, play it safe
             pass
@@ -6529,14 +6528,14 @@ class MaskedConstant(MaskedArray):
     def __setattr__(self, attr, value):
         if not self.__has_singleton():
             # allow the singleton to be initialized
-            return super(MaskedConstant, self).__setattr__(attr, value)
+            return super().__setattr__(attr, value)
         elif self is self.__singleton:
             raise AttributeError(
                 f"attributes of {self!r} are not writeable")
         else:
             # duplicate instance - we can end up here from __array_finalize__,
             # where we set the __class__ attribute
-            return super(MaskedConstant, self).__setattr__(attr, value)
+            return super().__setattr__(attr, value)
 
 
 masked = masked_singleton = MaskedConstant()
@@ -6628,7 +6627,7 @@ class _extrema_operation(_MaskedUFunc):
 
     """
     def __init__(self, ufunc, compare, fill_value):
-        super(_extrema_operation, self).__init__(ufunc)
+        super().__init__(ufunc)
         self.compare = compare
         self.fill_value_func = fill_value
 

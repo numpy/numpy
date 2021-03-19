@@ -45,7 +45,7 @@ class TestArrayRepr:
                 return obj
 
             def __getitem__(self, ind):
-                ret = super(sub, self).__getitem__(ind)
+                ret = super().__getitem__(ind)
                 return sub(ret)
 
         # test that object + subclass is OK:
@@ -67,7 +67,7 @@ class TestArrayRepr:
                 return obj
 
             def __getitem__(self, ind):
-                ret = super(sub, self).__getitem__(ind)
+                ret = super().__getitem__(ind)
                 return sub(ret)
 
         x = sub(1)
@@ -101,7 +101,7 @@ class TestArrayRepr:
         # gh-10663
         class DuckCounter(np.ndarray):
             def __getitem__(self, item):
-                result = super(DuckCounter, self).__getitem__(item)
+                result = super().__getitem__(item)
                 if not isinstance(result, DuckCounter):
                     result = result[...].view(DuckCounter)
                 return result
