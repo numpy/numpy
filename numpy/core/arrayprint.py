@@ -1053,9 +1053,9 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         Pad the exponent with zeros until it contains at least this many digits.
         If omitted, the exponent will be at least 2 digits.
     min_digits : non-negative integer or None, optional
-        Minimum number of digits to print. Only has an effect if `unique=True`
-        in which case additional digits past those necessary to uniquely
-        identify the value may be printed, rounding the last additional digit.
+        Minimum number of digits to print. This only has an effect for `unique=True`.
+        In that case more digits than necessary to uniquely identify the value may
+        be printed. The last additional digit is rounded unbiased.
 
     Returns
     -------
