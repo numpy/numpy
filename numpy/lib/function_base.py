@@ -2197,7 +2197,10 @@ class vectorize:
             outputs = ufunc(*inputs)
 
             if ufunc.nout == 1:
-                res = array(outputs, copy=False, subok=True, dtype=otypes[0])
+                if np.ndim(outputs) > 0:
+                    res = array(outputs, copy=False, subok=True, dtype=otypes[0])
+                else:
+                    res = outputs
             else:
                 res = tuple([array(x, copy=False, subok=True, dtype=t)
                              for x, t in zip(outputs, otypes)])
