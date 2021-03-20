@@ -748,6 +748,7 @@ find_descriptor_from_array(
                     NULL, DType, &flags, item_DType) < 0) {
                 Py_DECREF(iter);
                 Py_DECREF(elem);
+                Py_XDECREF(*out_descr);
                 Py_XDECREF(item_DType);
                 return -1;
             }
