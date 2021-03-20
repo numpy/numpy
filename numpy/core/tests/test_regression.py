@@ -1750,7 +1750,7 @@ class TestRegression:
             # it is designed to simulate an old API
             # expectation to guard against regression
             def squeeze(self):
-                return super(OldSqueeze, self).squeeze()
+                return super().squeeze()
 
         oldsqueeze = OldSqueeze(np.array([[1],[2],[3]]))
 
