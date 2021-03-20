@@ -1672,9 +1672,8 @@ For example, you can plot a 1D array like this::
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
-  >>> from mpl_toolkits.mplot3d import Axes3D
   >>> fig = plt.figure()
-  >>> ax = Axes3D(fig)
+  >>> ax = fig.add_subplot(projection='3d')
   >>> X = np.arange(-5, 5, 0.15)
   >>> Y = np.arange(-5, 5, 0.15)
   >>> X, Y = np.meshgrid(X, Y)

@@ -300,9 +300,11 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> n = np.zeros((400,), dtype=complex)
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
-    >>> plt.plot(t, s.real, 'b-', t, s.imag, 'r--')
-    [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object at ...>]
-    >>> plt.legend(('real', 'imaginary'))
+    >>> plt.plot(t, s.real, label='real')
+    [<matplotlib.lines.Line2D object at ...>]
+    >>> plt.plot(t, s.imag, '--', label='imaginary')
+    [<matplotlib.lines.Line2D object at ...>]
+    >>> plt.legend()
     <matplotlib.legend.Legend object at ...>
     >>> plt.show()
 
