@@ -161,10 +161,12 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
 
         while (*curtype != NPY_NOTYPE) {
             if (*curtype++ == totype) {
+                Py_DECREF(from);
                 return 1;
             }
         }
     }
+    Py_DECREF(from);
     return 0;
 }
 
