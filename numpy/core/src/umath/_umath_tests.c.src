@@ -614,6 +614,7 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
     if (item == NULL || PyDict_SetItemString(dict, "@str@", item) < 0) {
         goto err;
     }
+    Py_DECREF(item);
     /**end repeat**/
     item = PyList_New(0);
     if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {

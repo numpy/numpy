@@ -878,6 +878,7 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
      */
     _buffer_info_t *info = _buffer_get_info(&scalar->_buffer_info, self, flags);
     if (info == NULL) {
+        Py_DECREF(self);
         return -1;
     }
     view->format = info->format;
