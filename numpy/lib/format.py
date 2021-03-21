@@ -432,7 +432,6 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    header = _filter_header(header)
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
