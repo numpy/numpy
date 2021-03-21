@@ -3417,6 +3417,15 @@ class TestMethods:
         assert_raises(TypeError, lambda: a.conj())
         assert_raises(TypeError, lambda: a.conjugate())
 
+    def test_conjugate_out(self):
+        # Minimal test for the out argument being passed on correctly
+        # NOTE: The ability to pass `out` is currently undocumented!
+        a = np.array([1-1j, 1+1j, 23+23.0j])
+        out = np.empty_like(a)
+        res = a.conjugate(out)
+        assert res is out
+        assert_array_equal(out, a.conjugate())
+
     def test__complex__(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
                   'u1', 'u2', 'u4', 'u8',
