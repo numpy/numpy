@@ -37,11 +37,6 @@ from functools import wraps
 from types import MethodType
 from collections import namedtuple
 
-try:
-    from collections import OrderedDict as MaybeOrderedDict
-except ImportError:
-    MaybeOrderedDict = dict
-
 from unittest import TestCase
 
 _param = namedtuple("param", "args kwargs")
@@ -113,13 +108,6 @@ class param(_param):
         return "param(*%r, **%r)" %self
 
 
-class QuietOrderedDict(MaybeOrderedDict):
-    """ When OrderedDict is available, use it to make sure that the kwargs in
-        doc strings are consistently ordered. """
-    __str__ = dict.__str__
-    __repr__ = dict.__repr__
-
-
 def parameterized_argument_value_pairs(func, p):
     """Return tuples of parameterized arguments and their values.
 
@@ -165,7 +153,7 @@ def parameterized_argument_value_pairs(func, p):
     ])
 
     seen_arg_names = {n for (n, _) in result}
-    keywords = QuietOrderedDict(sorted([
+    keywords = dict(sorted([
         (name, p.kwargs[name])
         for name in p.kwargs
         if name not in seen_arg_names
