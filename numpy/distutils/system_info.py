@@ -314,7 +314,7 @@ else:
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
     default_runtime_dirs = []
     default_include_dirs = ['/usr/local/include',
-                            '/opt/include', '/usr/include',
+                            '/opt/include',
                             # path of umfpack under macports
                             '/opt/local/include/ufsparse',
                             '/opt/local/include', '/sw/include',
@@ -323,8 +323,7 @@ else:
 
     default_x11_lib_dirs = libpaths(['/usr/X11R6/lib', '/usr/X11/lib',
                                      '/usr/lib'], platform_bits)
-    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include',
-                                '/usr/include']
+    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include']
 
     if os.path.exists('/usr/lib/X11'):
         globbed_x11_dir = glob('/usr/lib/*/libX11.so')
