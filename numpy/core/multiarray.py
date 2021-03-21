@@ -26,7 +26,8 @@ __all__ = [
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP', '_fastCopyAndTranspose',
     '_flagdict', '_insert', '_reconstruct', '_vec_string', '_monotonicity',
-    'add_docstring', 'arange', 'array', 'bincount', 'broadcast',
+    'add_docstring', 'arange', 'array', 'asarray', 'asanyarray',
+    'ascontiguousarray', 'asfortranarray', 'bincount', 'broadcast',
     'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
@@ -49,6 +50,10 @@ scalar.__module__ = 'numpy.core.multiarray'
 
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
+asarray.__module__ = 'numpy'
+asanyarray.__module__ = 'numpy'
+ascontiguousarray.__module__ = 'numpy'
+asfortranarray.__module__ = 'numpy'
 datetime_data.__module__ = 'numpy'
 empty.__module__ = 'numpy'
 frombuffer.__module__ = 'numpy'
