@@ -589,7 +589,10 @@ def _read_array_header(fp, version):
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
-    header = _filter_header(header)
+    # Versions (2, 0) and (1, 0) could have been created by a Python 2 implementation
+    # before header filtering was implemented.
+    if version <= (2, 0):
+        header = _filter_header(header)
     try:
         d = safe_eval(header)
     except SyntaxError as e:
