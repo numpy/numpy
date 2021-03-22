@@ -1,7 +1,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define NO_IMPORT_ARRAY
 
-#include "npy_argparse.h"
 #include "npy_pycompat.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
@@ -29,7 +28,7 @@ get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args,
 {
     int i;
     int num_override_args = 0;
-    int narg, nout = 0;
+    int narg, nout;
 
     narg = (int)PyTuple_GET_SIZE(in_args);
     /* It is valid for out_args to be NULL: */
@@ -136,16 +135,15 @@ initialize_normal_kwds(PyObject *out_args,
 }
 
 /*
- * ufunc() and ufunc.outer() accept 'sig' or 'signature';
- * normalize to 'signature'
+ * ufunc() and ufunc.outer() accept 'sig' or 'signature'.  We guarantee
+ * that it is passed as 'signature' by renaming 'sig' if present.
+ * Note that we have already validated that only one of them was passed
+ * before checking for checking for overrides.
  */
 static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
-    /*
-     * If the keywords include `sig` rename to `signature`. An error
-     * will have been raised if both were given.
-     */
+    /* If the keywords include `sig` rename to `signature`. */
     PyObject* obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");
     if (obj == NULL && PyErr_Occurred()) {
         return -1;
@@ -240,8 +238,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
 
     /*
-     * Normalize ufunc arguments, note that args does not hold any positional
-     * arguments. (len_args is 0)
+     * Normalize ufunc arguments, note that any input and output arguments
+     * have already been stored in `in_args` and `out_args`.
      */
     normal_kwds = PyDict_New();
     if (normal_kwds == NULL) {
@@ -255,8 +253,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     /*
      * Reduce-like methods can pass keyword arguments also by position,
      * in which case the additional positional arguments have to be copied
-     * into the keyword argument dictionary. The __call__ method has to
-     * normalize sig and signature away.
+     * into the keyword argument dictionary. The `__call__` and `__outer__`
+     * method has to normalize sig and signature.
      */
 
     /* ufunc.__call__ */

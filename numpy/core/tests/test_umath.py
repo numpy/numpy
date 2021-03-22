@@ -102,8 +102,8 @@ class TestOut:
             assert_raises(TypeError, np.add, a, 2, o, o, subok=subok)
             assert_raises(TypeError, np.add, a, 2, o, out=o, subok=subok)
             assert_raises(TypeError, np.add, a, 2, None, out=o, subok=subok)
-            assert_raises(TypeError, np.add, a, 2, out=(o, o), subok=subok)
-            assert_raises(TypeError, np.add, a, 2, out=(), subok=subok)
+            assert_raises(ValueError, np.add, a, 2, out=(o, o), subok=subok)
+            assert_raises(ValueError, np.add, a, 2, out=(), subok=subok)
             assert_raises(TypeError, np.add, a, 2, [], subok=subok)
             assert_raises(TypeError, np.add, a, 2, out=[], subok=subok)
             assert_raises(TypeError, np.add, a, 2, out=([],), subok=subok)
@@ -2427,8 +2427,8 @@ class TestSpecialMethods:
                               'initial': None, 'where': True})
 
         # reduce, wrong args
-        assert_raises(TypeError, np.multiply.reduce, a, out=())
-        assert_raises(TypeError, np.multiply.reduce, a, out=('out0', 'out1'))
+        assert_raises(ValueError, np.multiply.reduce, a, out=())
+        assert_raises(ValueError, np.multiply.reduce, a, out=('out0', 'out1'))
         assert_raises(TypeError, np.multiply.reduce, a, 'axis0', axis='axis0')
 
         # accumulate, pos args
@@ -2461,8 +2461,8 @@ class TestSpecialMethods:
         assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # accumulate, wrong args
-        assert_raises(TypeError, np.multiply.accumulate, a, out=())
-        assert_raises(TypeError, np.multiply.accumulate, a,
+        assert_raises(ValueError, np.multiply.accumulate, a, out=())
+        assert_raises(ValueError, np.multiply.accumulate, a,
                       out=('out0', 'out1'))
         assert_raises(TypeError, np.multiply.accumulate, a,
                       'axis0', axis='axis0')
@@ -2497,8 +2497,8 @@ class TestSpecialMethods:
         assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # reduceat, wrong args
-        assert_raises(TypeError, np.multiply.reduce, a, [4, 2], out=())
-        assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
+        assert_raises(ValueError, np.multiply.reduce, a, [4, 2], out=())
+        assert_raises(ValueError, np.multiply.reduce, a, [4, 2],
                       out=('out0', 'out1'))
         assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
                       'axis0', axis='axis0')
@@ -2576,12 +2576,12 @@ class TestSpecialMethods:
         # wrong number of arguments in the tuple is an error too.
         assert_raises(TypeError, np.multiply, a, b, 'one', out='two')
         assert_raises(TypeError, np.multiply, a, b, 'one', 'two')
-        assert_raises(TypeError, np.multiply, a, b, out=('one', 'two'))
+        assert_raises(ValueError, np.multiply, a, b, out=('one', 'two'))
         assert_raises(TypeError, np.multiply, a, out=())
         assert_raises(TypeError, np.modf, a, 'one', out=('two', 'three'))
         assert_raises(TypeError, np.modf, a, 'one', 'two', 'three')
-        assert_raises(TypeError, np.modf, a, out=('one', 'two', 'three'))
-        assert_raises(TypeError, np.modf, a, out=('one',))
+        assert_raises(ValueError, np.modf, a, out=('one', 'two', 'three'))
+        assert_raises(ValueError, np.modf, a, out=('one',))
 
     def test_ufunc_override_exception(self):
 
@@ -2668,8 +2668,8 @@ class TestSpecialMethods:
         assert_raises(TypeError, inner1d, a, out='two')
         assert_raises(TypeError, inner1d, a, a, 'one', out='two')
         assert_raises(TypeError, inner1d, a, a, 'one', 'two')
-        assert_raises(TypeError, inner1d, a, a, out=('one', 'two'))
-        assert_raises(TypeError, inner1d, a, a, out=())
+        assert_raises(ValueError, inner1d, a, a, out=('one', 'two'))
+        assert_raises(ValueError, inner1d, a, a, out=())
 
     def test_ufunc_override_with_super(self):
         # NOTE: this class is used in doc/source/user/basics.subclassing.rst

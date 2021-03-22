@@ -97,8 +97,9 @@ _get_wrap_prepare_args(ufunc_full_args full_args) {
 /* ---------------------------------------------------------------- */
 
 static PyObject *
-ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
-                       PyArrayObject **mps_in);
+ufunc_generic_call_with_operands(
+        PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
+        PyArrayObject **operands_in);
 
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc);
@@ -904,27 +905,14 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
     }
 }
 
-NPY_NO_EXPORT int
-_new_reference(PyObject *obj, PyObject **out)
-{
-    Py_INCREF(obj);
-    *out = obj;
-    return NPY_SUCCEED;
-}
-
-NPY_NO_EXPORT int
-_borrowed_reference(PyObject *obj, PyObject **out)
-{
-    *out = obj;
-    return NPY_SUCCEED;
-}
 
 /*
  * Due to the array override, do the actual parameter conversion
  * only in this step. This function takes the reference objects and
  * parses them into the desired values.
  * This function cleans up after itself and NULLs references on error,
- * the caller has to ensure that out_op[0:nargs] is NULLed.
+ * however, the caller has to ensure that `out_op[0:nargs]` and `out_whermeask`
+ * are NULL initialized.
  */
 static int
 convert_ufunc_arguments(PyUFuncObject *ufunc,
@@ -939,10 +927,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     int nout = ufunc->nout;
     int nop = ufunc->nargs;
     PyObject *obj;
-
-    if (out_wheremask != NULL) {
-        *out_wheremask = NULL;
-    }
 
     /* Convert and fill in input arguments */
     for (int i = 0; i < nin; i++) {
@@ -2273,7 +2257,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
 
     /* Possibly remap axes. */
     if (axes != NULL || axis != NULL) {
-        assert((axes == NULL) || (axis == NULL));
+        assert(!(axes != NULL && axis != NULL));
 
         remap_axis = PyArray_malloc(sizeof(remap_axis[0]) * nop);
         remap_axis_memory = PyArray_malloc(sizeof(remap_axis_memory[0]) *
@@ -2889,7 +2873,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         return -1;
     }
 
-    PyObject *res = ufunc_generic_call_mps(ufunc, args, kwds, op);
+    PyObject *res = ufunc_generic_call_with_operands(ufunc, args, kwds, op);
     if (res == NULL) {
         return -1;
     }
@@ -4035,8 +4019,7 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
 {
     if (PyTuple_CheckExact(out_obj)) {
         if (PyTuple_GET_SIZE(out_obj) != nout) {
-            // TODO: Was ValueError (and error order changed)
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_ValueError,
                             "The 'out' tuple must have exactly "
                             "one entry per ufunc output");
             return -1;
@@ -4071,7 +4054,8 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
 
 
 /*
- * Parser function which replaces np._NoValue with NULL.
+ * Convert function which replaces np._NoValue with NULL.
+ * As a converter returns 0 on error and 1 on success.
  */
 static int
 _not_NoValue(PyObject *obj, PyObject **out)
@@ -4103,7 +4087,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     int axes[NPY_MAXDIMS];
 
     ufunc_full_args full_args = {NULL, NULL};
-    PyObject *axes_in = NULL;
+    PyObject *axes_obj = NULL;
     PyArrayObject *mp = NULL, *wheremask = NULL, *ret = NULL;
     PyObject *op = NULL;
     PyArrayObject *indices = NULL;
@@ -4153,7 +4137,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         if (npy_parse_arguments("reduceat", args, len_args, kwnames,
                 "array", NULL, &op,
                 "indices", NULL, &indices_obj,
-                "|axis", NULL, &axes_in,
+                "|axis", NULL, &axes_obj,
                 "|dtype", NULL, &otype_obj,
                 "|out", NULL, &out_obj,
                 NULL, NULL, NULL) < 0) {
@@ -4171,7 +4155,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
 
         if (npy_parse_arguments("accumulate", args, len_args, kwnames,
                 "array", NULL, &op,
-                "|axis", NULL, &axes_in,
+                "|axis", NULL, &axes_obj,
                 "|dtype", NULL, &otype_obj,
                 "|out", NULL, &out_obj,
                 NULL, NULL, NULL) < 0) {
@@ -4189,7 +4173,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
 
         if (npy_parse_arguments("reduce", args, len_args, kwnames,
                 "array", NULL, &op,
-                "|axis", NULL, &axes_in,
+                "|axis", NULL, &axes_obj,
                 "|dtype", NULL, &otype_obj,
                 "|out", NULL, &out_obj,
                 "|keepdims", NULL, &keepdims_obj,
@@ -4280,7 +4264,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     }
 
     /* Convert the 'axis' parameter into a list of axes */
-    if (axes_in == NULL) {
+    if (axes_obj == NULL) {
         /* apply defaults */
         if (ndim == 0) {
             naxes = 0;
@@ -4290,22 +4274,22 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             axes[0] = 0;
         }
     }
-    else if (axes_in == Py_None) {
+    else if (axes_obj == Py_None) {
         /* Convert 'None' into all the axes */
         naxes = ndim;
         for (i = 0; i < naxes; ++i) {
             axes[i] = i;
         }
     }
-    else if (PyTuple_Check(axes_in)) {
-        naxes = PyTuple_Size(axes_in);
+    else if (PyTuple_Check(axes_obj)) {
+        naxes = PyTuple_Size(axes_obj);
         if (naxes < 0 || naxes > NPY_MAXDIMS) {
             PyErr_SetString(PyExc_ValueError,
                     "too many values for 'axis'");
             goto fail;
         }
         for (i = 0; i < naxes; ++i) {
-            PyObject *tmp = PyTuple_GET_ITEM(axes_in, i);
+            PyObject *tmp = PyTuple_GET_ITEM(axes_obj, i);
             int axis = PyArray_PyIntAsInt(tmp);
             if (error_converting(axis)) {
                 goto fail;
@@ -4318,7 +4302,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     }
     else {
         /* Try to interpret axis as an integer */
-        int axis = PyArray_PyIntAsInt(axes_in);
+        int axis = PyArray_PyIntAsInt(axes_obj);
         /* TODO: PyNumber_Index would be good to use here */
         if (error_converting(axis)) {
             goto fail;
@@ -4479,8 +4463,7 @@ _get_typetup(PyObject *sig_obj, PyObject *signature_obj, PyObject *dtype,
 
     if (dtype != NULL) {
         if (*out_typetup != NULL) {
-            /* TODO: This should be changed to a TypeError */
-            PyErr_SetString(PyExc_RuntimeError,
+            PyErr_SetString(PyExc_TypeError,
                     "cannot specify both 'signature' and 'dtype'");
             Py_SETREF(*out_typetup, NULL);
             return -1;
@@ -4525,15 +4508,16 @@ _convert_typetup(PyObject *dtype_obj, PyObject **out_typetup)
  * arguments and is called directly from `ufunc_generic_vectorcall` when
  * Python has `tp_vectorcall` (Python 3.8+).
  * If `tp_vectorcall` is not available, the dictionary `kwargs` are unpacked in
- * `ufunc_generic_call`/`ufunc_generic_call_mps` with fairly little overhead.
+ * `ufunc_generic_call`/`ufunc_generic_call_with_operands` with fairly little
+ * overhead.
  */
 static PyObject *
 ufunc_generic_fastcall(PyUFuncObject *ufunc,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
-        npy_bool outer, PyArrayObject **mps_in)
+        npy_bool outer, PyArrayObject **operands_in)
 {
-    PyArrayObject *mps_buffer[NPY_MAXARGS] = {NULL};
-    PyArrayObject **mps;
+    PyArrayObject *operands_buffer[NPY_MAXARGS] = {NULL};
+    PyArrayObject **operands;
     PyObject *retobj[NPY_MAXARGS];
     PyObject *wraparr[NPY_MAXARGS];
     PyObject *override = NULL;
@@ -4543,12 +4527,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
 
-    /* Deprecated PyUfunc_GenericFunction support only */
-    if (mps_in != NULL) {
-        mps = mps_in;
+    /*
+     * `PyUfunc_GenericFunction` uses `ufunc_generic_call_with_operands`
+     * which passes in the operands explicitly.  `PyUfunc_GenericFunction`
+     * is deprecated and this can be simplified when the deprecation is over.
+     */
+    if (operands_in != NULL) {
+        operands = operands_in;
     }
     else {
-        mps = mps_buffer;
+        operands = operands_buffer;
     }
 
     /*
@@ -4583,10 +4571,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * If there are more arguments, they define the out args. Otherwise
      * full_args.out is NULL for now, and the `out` kwarg may still be passed.
      */
-    npy_bool out_is_passed_by_position = NPY_FALSE;
-    if (len_args > nin) {
+    npy_bool out_is_passed_by_position = len_args > nin;
+    if (out_is_passed_by_position) {
         npy_bool all_none = NPY_TRUE;
-        out_is_passed_by_position = NPY_TRUE;
 
         full_args.out = PyTuple_New(nout);
         if (full_args.out == NULL) {
@@ -4671,7 +4658,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         /* Handle `out` arguments passed by keyword */
         if (out_obj != NULL) {
             if (out_is_passed_by_position) {
-                // TODO: Was ValueError (and error order changed)
                 PyErr_SetString(PyExc_TypeError,
                         "cannot specify 'out' as both a "
                         "positional and keyword argument");
@@ -4696,7 +4682,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         method = "outer";
     }
     /* We now have all the information required to check for Overrides */
-    if (mps_in == NULL) {
+    if (operands_in == NULL) {
         /* Deprecated PyUfunc_GenericFunction path does not use overrides */
         errval = PyUFunc_CheckOverride(ufunc, method,
                 full_args.in, full_args.out,
@@ -4731,7 +4717,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     npy_bool subok = NPY_TRUE;
     int keepdims = -1;  /* We need to know if it was passed */
     PyArrayObject *wheremask = NULL;
-    if (convert_ufunc_arguments(ufunc, full_args, mps,
+    if (convert_ufunc_arguments(ufunc, full_args, operands,
             order_obj, &order,
             casting_obj, &casting,
             subok_obj, &subok,
@@ -4741,13 +4727,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
 
     if (!ufunc->core_enabled) {
-        errval = PyUFunc_GenericFunctionInternal(ufunc, mps,
+        errval = PyUFunc_GenericFunctionInternal(ufunc, operands,
                 full_args, typetup, extobj, casting, order, subok,
                 wheremask);
         Py_XDECREF(wheremask);
     }
     else {
-        errval = PyUFunc_GeneralizedFunctionInternal(ufunc, mps,
+        errval = PyUFunc_GeneralizedFunctionInternal(ufunc, operands,
                 full_args, typetup, extobj, casting, order, subok,
                 axis_obj, axes_obj, keepdims);
     }
@@ -4756,14 +4742,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    if (mps_in != NULL) {
+    if (operands_in != NULL) {
         /* Deprecated PyUfunc_GenericFunction path does not wrap. */
         Py_RETURN_NONE;
     }
 
     /* Free the input references */
     for (int i = 0; i < ufunc->nin; i++) {
-        Py_XSETREF(mps[i], NULL);
+        Py_XSETREF(operands[i], NULL);
     }
 
     /*
@@ -4795,8 +4781,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         context.args = full_args;
         context.out_i = i;
 
-        wrapped = _apply_array_wrap(wraparr[i], mps[j], &context);
-        mps[j] = NULL;  /* Prevent fail double-freeing this */
+        wrapped = _apply_array_wrap(wraparr[i], operands[j], &context);
+        operands[j] = NULL;  /* Prevent fail double-freeing this */
         if (wrapped == NULL) {
             for (int j = 0; j < i; j++) {
                 Py_DECREF(retobj[j]);
@@ -4829,7 +4815,7 @@ fail:
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
     for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(mps[i]);
+        Py_XDECREF(operands[i]);
     }
     return NULL;
 }
@@ -4837,12 +4823,16 @@ fail:
 
 /*
  * TODO: The implementation below can be replaced with PyVectorcall_Call
- *       when available (should be Python 3.8+).  And removed entirely if
- *       `PyUFunc_GenericFunction` is disabled as well.
+ *       when available (should be Python 3.8+).
+ * TODO: After `PyUFunc_GenericFunction` is disabled `operands_in` becomes
+ *       unnecessary and this function can be merged with `ufunc_generic_call`.
+ *       The `operands_in` handling can also be removed entirely from
+ *       `ufunc_generic_fastcall`.
  */
 static PyObject *
-ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
-        PyArrayObject **mps_in)
+ufunc_generic_call_with_operands(
+        PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
+        PyArrayObject **operands_in)
 {
     Py_ssize_t len_args = PyTuple_GET_SIZE(args);
     /*
@@ -4852,7 +4842,8 @@ ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
      */
     if (kwds == NULL) {
         return ufunc_generic_fastcall(ufunc,
-                PySequence_Fast_ITEMS(args), len_args, NULL, NPY_FALSE, mps_in);
+                PySequence_Fast_ITEMS(args), len_args, NULL, NPY_FALSE,
+                operands_in);
     }
 
     PyObject *new_args[NPY_MAXARGS];
@@ -4888,7 +4879,7 @@ ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
     }
 
     PyObject *res = ufunc_generic_fastcall(ufunc,
-            new_args, len_args, kwnames, NPY_FALSE, mps_in);
+            new_args, len_args, kwnames, NPY_FALSE, operands_in);
     Py_DECREF(kwnames);
     return res;
 }
@@ -4897,7 +4888,7 @@ ufunc_generic_call_mps(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
 static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
-    return ufunc_generic_call_mps(ufunc, args, kwds, NULL);
+    return ufunc_generic_call_with_operands(ufunc, args, kwds, NULL);
 }
 
 

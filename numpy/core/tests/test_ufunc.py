@@ -38,9 +38,9 @@ class TestUfuncKwargs:
                       signature='ii->i')
 
     def test_sig_dtype(self):
-        assert_raises(RuntimeError, np.add, 1, 2, sig='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, sig='ii->i',
                       dtype=int)
-        assert_raises(RuntimeError, np.add, 1, 2, signature='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, signature='ii->i',
                       dtype=int)
 
     def test_extobj_refcount(self):
