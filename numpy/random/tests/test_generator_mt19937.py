@@ -1252,9 +1252,9 @@ class TestRandomDist:
     def test_geometric(self):
         random = Generator(MT19937(self.seed))
         actual = random.geometric(.123456789, size=(3, 2))
-        desired = np.array([[ 1, 10],
-                            [ 1, 12],
-                            [ 9, 10]])
+        desired = np.array([[1, 11],
+                            [1, 12],
+                            [11, 17]])
         assert_array_equal(actual, desired)
 
     def test_geometric_exceptions(self):
@@ -1557,9 +1557,9 @@ class TestRandomDist:
     def test_rayleigh(self):
         random = Generator(MT19937(self.seed))
         actual = random.rayleigh(scale=10, size=(3, 2))
-        desired = np.array([[ 4.51734079831581, 15.6802442485758 ],
-                            [ 4.19850651287094, 17.08718809823704],
-                            [14.7907457708776 , 15.85545333419775]])
+        desired = np.array([[4.19494429102666, 16.66920198906598],
+                            [3.67184544902662, 17.74695521962917],
+                            [16.27935397855501, 21.08355560691792]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_rayleigh_0(self):
@@ -2114,7 +2114,11 @@ class TestBroadcast:
     def test_rayleigh(self):
         scale = [1]
         bad_scale = [-1]
-        desired = np.array([0.60439534475066, 0.66120048396359, 1.67873398389499])
+        desired = np.array(
+            [1.1597068009872629,
+             0.6539188836253857,
+             1.1981526554349398]
+        )
 
         random = Generator(MT19937(self.seed))
         actual = random.rayleigh(scale * 3)

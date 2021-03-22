@@ -79,6 +79,7 @@ cdef extern from "include/legacy-distributions.h":
     double legacy_gamma(aug_bitgen_t *aug_state, double shape, double scale) nogil
     double legacy_power(aug_bitgen_t *aug_state, double a) nogil
     double legacy_chisquare(aug_bitgen_t *aug_state, double df) nogil
+    double legacy_rayleigh(aug_bitgen_t *aug_state, double mode) nogil
     double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
                                     double nonc) nogil
     double legacy_noncentral_f(aug_bitgen_t *aug_state, double dfnum, double dfden,
@@ -3086,7 +3087,7 @@ cdef class RandomState:
         0.087300000000000003 # random
 
         """
-        return cont(&random_rayleigh, &self._bitgen, size, self.lock, 1,
+        return cont(&legacy_rayleigh, &self._bitgen, size, self.lock, 1,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)

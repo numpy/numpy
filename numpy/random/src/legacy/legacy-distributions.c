@@ -112,6 +112,10 @@ double legacy_chisquare(aug_bitgen_t *aug_state, double df) {
   return 2.0 * legacy_standard_gamma(aug_state, df / 2.0);
 }
 
+double legacy_rayleigh(bitgen_t *bitgen_state, double mode) {
+  return mode * sqrt(-2.0 * npy_log1p(-next_double(bitgen_state)));
+}
+
 double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
                                    double nonc) {
   double out;

@@ -508,7 +508,7 @@ double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) {
 }
 
 double random_rayleigh(bitgen_t *bitgen_state, double mode) {
-  return mode * sqrt(-2.0 * npy_log1p(-next_double(bitgen_state)));
+  return mode * sqrt(2.0 * random_standard_exponential(bitgen_state));
 }
 
 double random_standard_t(bitgen_t *bitgen_state, double df) {
@@ -960,7 +960,7 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
 }
 
 int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (int64_t)ceil(npy_log1p(-next_double(bitgen_state)) / npy_log1p(-p));
+  return (int64_t)ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
 }
 
 int64_t random_geometric(bitgen_t *bitgen_state, double p) {
