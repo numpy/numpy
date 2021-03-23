@@ -4492,6 +4492,7 @@ _convert_typetup(PyObject *dtype_obj, PyObject **out_typetup)
             return 0;
         }
         *out_typetup = PyTuple_Pack(1, (PyObject *)dtype);
+        Py_DECREF(dtype);
         if (*out_typetup == NULL) {
             return -1;
         }
