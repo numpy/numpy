@@ -5578,7 +5578,6 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "first") < 0) {
-            Py_DECREF(tmp);
             return NULL;
         }
         ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
@@ -5596,7 +5595,6 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "second") < 0) {
-            Py_DECREF(tmp);
             Py_DECREF(ap1);
             return NULL;
         }
@@ -5646,6 +5644,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
                 "To work around this issue, please convert the inputs to "
                 "numpy arrays.",
                 ufunc->name, Py_TYPE(ap_new)->tp_name);
+        Py_DECREF(ap_new);
         goto fail;
     }
 
