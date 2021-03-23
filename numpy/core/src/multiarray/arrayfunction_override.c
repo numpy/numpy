@@ -341,18 +341,23 @@ array_implement_array_function(
         return NULL;
     }
 
-    /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
+    /*
+     * Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If `like=` is specified but doesn't
      * implement `__array_function__`, raise a `TypeError`.
      */
     if (kwargs != NULL && PyDict_Contains(kwargs, npy_ma_str_like)) {
         PyObject *like_arg = PyDict_GetItem(kwargs, npy_ma_str_like);
-        if (like_arg && !get_array_function(like_arg)) {
-            return PyErr_Format(PyExc_TypeError,
-                    "The `like` argument must be an array-like that implements "
-                    "the `__array_function__` protocol.");
+        if (like_arg != NULL) {
+            PyObject *tmp_has_override = get_array_function(like_arg);
+            if (tmp_has_override == NULL) {
+                return PyErr_Format(PyExc_TypeError,
+                        "The `like` argument must be an array-like that "
+                        "implements the `__array_function__` protocol.");
+            }
+            Py_DECREF(tmp_has_override);
+            PyDict_DelItem(kwargs, npy_ma_str_like);
         }
-        PyDict_DelItem(kwargs, npy_ma_str_like);
     }
 
     PyObject *res = array_implement_array_function_internal(
@@ -382,11 +387,14 @@ array_implement_c_array_function_creation(
     PyObject *public_api = NULL;
     PyObject *result = NULL;
 
-    if (!get_array_function(like)) {
+    /* If `like` doesn't implement `__array_function__`, raise a `TypeError` */
+    PyObject *tmp_has_override = get_array_function(like);
+    if (tmp_has_override == NULL) {
         return PyErr_Format(PyExc_TypeError,
-                "The `like` argument must be an array-like that implements "
-                "the `__array_function__` protocol.");
+                "The `like` argument must be an array-like that "
+                "implements the `__array_function__` protocol.");
     }
+    Py_DECREF(tmp_has_override);
 
     if (fast_args != NULL) {
         /*

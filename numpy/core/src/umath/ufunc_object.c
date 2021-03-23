@@ -5495,6 +5495,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "first") < 0) {
+            Py_DECREF(tmp);
             return NULL;
         }
         ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
@@ -5514,6 +5515,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "second") < 0) {
+            Py_DECREF(tmp);
             Py_DECREF(ap1);
             return NULL;
         }
@@ -5538,7 +5540,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
                 "maximum supported dimension for an ndarray is %d, but "
                 "`%s.outer()` result would have %d.",
                 NPY_MAXDIMS, ufunc->name, newdims.len);
-        return NPY_FAIL;
+        goto fail;
     }
     if (newdims.ptr == NULL) {
         goto fail;
