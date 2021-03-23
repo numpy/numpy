@@ -179,7 +179,7 @@ copy_positional_args_to_kwargs(const char **keywords,
              * This is only relevant for reduce, which is the only one with
              * 5 keyword arguments.
              */
-            PyObject *NoValue = NULL;
+            static PyObject *NoValue = NULL;
             assert(strcmp(keywords[i], "initial") == 0);
             npy_cache_import("numpy", "_NoValue", &NoValue);
             if (args[i] == NoValue) {
