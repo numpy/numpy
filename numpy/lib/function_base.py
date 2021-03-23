@@ -675,8 +675,8 @@ def select(condlist, choicelist, default=0):
     try:
         intermediate_dtype = np.result_type(*choicelist)
     except TypeError as e:
-        raise TypeError('Choicelist elements do not have a common dtype: {}'
-                        .format(e))
+        msg = f'Choicelist elements do not have a common dtype: {e}'
+        raise TypeError(msg) from None
     default_array = np.asarray(default)
     choicelist.append(default_array)
 
@@ -685,9 +685,8 @@ def select(condlist, choicelist, default=0):
     try:
         dtype = np.result_type(intermediate_dtype, default_array)
     except TypeError as e:
-        raise TypeError(
-                'Choicelists and default do not have a common dtype: {}'
-                .format(e))
+        msg = f'Choicelists and default value do not have a common dtype: {e}'
+        raise TypeError(msg) from None
 
     # Convert conditions to arrays and broadcast conditions and choices
     # as the shape is needed for the result. Doing it separately optimizes
