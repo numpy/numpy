@@ -1,0 +1,3 @@
+``count_nonzero`` has been added to ``np.ma``
+----------------------------------------------
+When ``np.count_nonzero`` is applied to a masked array, it considers masked zero value as a non-zero value. Now, ``np.ma.count_nonzero`` has been implemented to avoid this issue by separating the array from the mask. The function returns the number of non-zero unmasked values in a given array. To use it, call ``np.ma.count_nonzero(arr, options)``. 
