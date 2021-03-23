@@ -138,7 +138,7 @@ initialize_normal_kwds(PyObject *out_args,
  * ufunc() and ufunc.outer() accept 'sig' or 'signature'.  We guarantee
  * that it is passed as 'signature' by renaming 'sig' if present.
  * Note that we have already validated that only one of them was passed
- * before checking for checking for overrides.
+ * before checking for overrides.
  */
 static int
 normalize_signature_keyword(PyObject *normal_kwds)
@@ -254,7 +254,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * Reduce-like methods can pass keyword arguments also by position,
      * in which case the additional positional arguments have to be copied
      * into the keyword argument dictionary. The `__call__` and `__outer__`
-     * method has to normalize sig and signature.
+     * method have to normalize sig and signature.
      */
 
     /* ufunc.__call__ */
