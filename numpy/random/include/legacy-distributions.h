@@ -17,6 +17,7 @@ extern double legacy_weibull(aug_bitgen_t *aug_state, double a);
 extern double legacy_power(aug_bitgen_t *aug_state, double a);
 extern double legacy_gamma(aug_bitgen_t *aug_state, double shape, double scale);
 extern double legacy_chisquare(aug_bitgen_t *aug_state, double df);
+extern double legacy_rayleigh(bitgen_t *bitgen_state, double mode);
 extern double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
                                           double nonc);
 extern double legacy_noncentral_f(aug_bitgen_t *aug_state, double dfnum,
