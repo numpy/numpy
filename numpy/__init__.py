@@ -332,7 +332,7 @@ else:
     def _sanity_check():
         """
         Quick sanity checks for common bugs caused by environment.
-        There are some cases e.g. with wrong BLAS ABI that cause wrong
+        There are some cases e.g. with wrong BLAS API that cause wrong
         results under specific runtime conditions that are not necessarily
         achieved during test suite runs, and it is useful to catch those early.
 
