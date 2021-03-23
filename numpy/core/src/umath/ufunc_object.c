@@ -853,7 +853,7 @@ ufunc_get_name_cstr(PyUFuncObject *ufunc) {
 /*
  * Converters for use in parsing of keywords arguments.
  */
-NPY_NO_EXPORT int
+static int
 _subok_converter(PyObject *obj, npy_bool *subok)
 {
     if (PyBool_Check(obj)) {
@@ -867,7 +867,7 @@ _subok_converter(PyObject *obj, npy_bool *subok)
     }
 }
 
-NPY_NO_EXPORT int
+static int
 _keepdims_converter(PyObject *obj, int *keepdims)
 {
     if (PyBool_Check(obj)) {
@@ -881,7 +881,7 @@ _keepdims_converter(PyObject *obj, int *keepdims)
     }
 }
 
-NPY_NO_EXPORT int
+static int
 _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
 {
     /*
