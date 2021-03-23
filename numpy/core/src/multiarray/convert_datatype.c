@@ -902,8 +902,7 @@ PyArray_FindConcatenationDescriptor(
                     "The dtype `%R` is not a valid dtype for concatenation "
                     "since it is a subarray dtype (the subarray dimensions "
                     "would be added as array dimensions).", result);
-            Py_DECREF(result);
-            return NULL;
+            Py_SETREF(result, NULL);
         }
         goto finish;
     }
