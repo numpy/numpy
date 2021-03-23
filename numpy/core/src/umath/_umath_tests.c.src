@@ -621,6 +621,7 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
         goto err;
     }
     NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
+    Py_SETREF(item, NULL);
     if (PyErr_Occurred()) {
         goto err;
     }
