@@ -2100,6 +2100,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     array_function_result = array_implement_c_array_function_creation(
             "fromstring", args, keywds);
     if (array_function_result != Py_NotImplemented) {
+        Py_XDECREF(descr);
         return array_function_result;
     }
 
