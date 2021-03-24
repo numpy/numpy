@@ -18,7 +18,7 @@ argument) when dispatch was known to occur.
 
 ``__array_ufunc__`` and additional positional arguments
 -------------------------------------------------------
-Previously, all positionally passed arguments were check for
+Previously, all positionally passed arguments were checked for
 ``__array_ufunc__`` support.  In the case of ``reduce``,
 ``accumulate``, and ``reduceat`` all arguments may be passed by
 position.  This means that when they were passed by
