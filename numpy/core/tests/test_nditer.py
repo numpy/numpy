@@ -3065,6 +3065,10 @@ def test_close_raises():
     assert_raises(StopIteration, next, it)
     assert_raises(ValueError, getattr, it, 'operands')
 
+def test_close_parameters():
+    it = np.nditer(np.arange(3))
+    assert_raises(TypeError, it.close, 1)
+
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_warn_noclose():
     a = np.arange(6, dtype='f4')
