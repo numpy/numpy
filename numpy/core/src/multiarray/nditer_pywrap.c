@@ -2369,7 +2369,7 @@ static PyMethodDef npyiter_methods[] = {
     {"__exit__",  (PyCFunction)npyiter_exit,
          METH_VARARGS, NULL},
     {"close",  (PyCFunction)npyiter_close,
-         METH_VARARGS, NULL},
+         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 
