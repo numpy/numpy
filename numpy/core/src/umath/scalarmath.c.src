@@ -674,8 +674,12 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg)
     }
     PyArray_Descr *value_descr;
     int pyscalar = descr_from_basic_scalar(a, &value_descr);
-    if (pyscalar < 0) {
-        return -2;
+    if (NPY_UNLIKELY(pyscalar < 0)) {
+        /*
+         * Not a NumPy (or handled Python) scalar. It could be array-like or
+         * 3rd party scalar.
+         */
+        return -3;
     }
     int type_num = value_descr->type_num;
     if (type_num > @TYPE@) {
@@ -723,7 +727,10 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
         ret = -3;
     }
     if (ret < 0) {
-        return ret;
+        if (ret == -3) {
+            /* Indicate which scalar may need wrapping. */
+            return -4;
+        }
     }
     ret = _@name@_convert_to_ctype(b, arg2);
     if (ret < 0) {
@@ -796,13 +803,70 @@ static PyObject *
 #endif
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+        PyObject *self, *other;
         case 0:
             break;
         case -1:
             Py_RETURN_NOTIMPLEMENTED;
         case -2:
             /* one of them can't be cast safely must be mixed-types */
-            return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+            return PyGenericArrType_Type.tp_as_number->nb_@oper@(a, b);
+        case -3:
+            self = b;
+            other = a;
+        case -4:
+            self = a;
+            other = b;
+            /*
+             * This case covers two possible cases, either one of the operands
+             * is an array-like, or a (scalar) type not known to NumPy.
+             * In the first case, we may need to defer with the typical
+             * binop deferal logic (if no deferral occurs we are allowed to
+             * coerce the object to an array).
+             * If it is an unknown scalar we have a caveat. `np.array(other)`
+             * will be an object array containing `other`. In this case we
+             * cannot handle the operation. We deal with this by either:
+             * 1. Returning `oper(self.item(), other)`, potentially
+             * 2. Defering to the other type (longdouble, clongdouble)
+             * Where case 1. must be used if `self.item() is self`.
+             */
+            BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
+            /* Normalize a and b */
+            PyArrayObject *tmp = (PyArrayObject *) PyArray_FROM_O(other);
+            if (tmp == NULL) {
+                return NULL;
+            }
+            if (PyArray_NDIM(tmp) == 0 && PyArray_ISOBJECT(tmp) &&
+                    ((PyObject *)PyArray_BYTES(tmp)) == other) {
+                /* This is a scalar unknown to NumPy */
+                Py_DECREF(tmp);
+#if defined(_IS_LongDouble) || defined(_IS_CLongDouble)
+                /* Defer directly for longdouble and clongdouble */
+                Py_RETURN_NOTIMPLEMENTED;
+#else  /* Not (C)LongDouble, so conversion to python is valid */
+
+                PyObject *py_number;
+  #if defined(_IS_Double) || defined(_IS_Float) || defined(_IS_Half)
+                py_number = PyNumber_Float(self);
+  #elif defined(_IS_CDouble) || defined(_IS_CFloat)
+                py_number = PyNumber_Complex(self);
+  #else
+                py_number = PyNumber_Long(self);
+  #endif
+                if (py_number == NULL) {
+                    return NULL;
+                }
+                /* Try again with the same operation after replacing self */
+                if (b == self) {
+                    ret = PyArray_Type.tp_as_number->nb_@oper@(a, py_number);
+                }
+                else {
+                    ret = PyArray_Type.tp_as_number->nb_@oper@(py_number, b);
+                }
+                Py_DECREF(py_number);
+                return ret;
+#endif /* (C)LongDouble */
+            }
     }
 
 #if @fperr@
