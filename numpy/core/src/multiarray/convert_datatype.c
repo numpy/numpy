@@ -761,8 +761,8 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
     int fromtype;
     int totype;
 
-    fromtype = _typenum_fromtypeobj((PyObject *)from, 0);
-    totype = _typenum_fromtypeobj((PyObject *)to, 0);
+    fromtype = PyArray_TypeNumFromNumPyScalarType((PyObject *) from, 0);
+    totype = PyArray_TypeNumFromNumPyScalarType((PyObject *) to, 0);
     if (fromtype == NPY_NOTYPE || totype == NPY_NOTYPE) {
         return NPY_FALSE;
     }
