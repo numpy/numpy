@@ -2537,11 +2537,24 @@ class object_(generic):
 
 object0 = object_
 
+#Added Protocol to typecheck for day, month, year property to be used in
+#datetime64 constructor per Issue #18640 and BvB93s recommendation
+class _DatetimeScalar(Protocol):
+    @property
+    def day(self) -> int: ...
+    @property
+    def month(self) -> int: ...
+    @property
+    def year(self) -> int: ...
+
+
 class datetime64(generic):
-    @overload
+    #Replaced dt.datetime with _DatetimeScalar per issue #18640 and
+    #BvB93s recommendation
+    @overload    
     def __init__(
         self,
-        __value: Union[None, datetime64, _CharLike_co, dt.datetime] = ...,
+        __value: Union[None, datetime64, _CharLike_co, _DatetimeScalar] = ...,
         __format: Union[_CharLike_co, Tuple[_CharLike_co, _IntLike_co]] = ...,
     ) -> None: ...
     @overload
