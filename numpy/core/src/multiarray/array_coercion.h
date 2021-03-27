@@ -20,6 +20,10 @@ _PyArray_MapPyTypeToDType(
         PyArray_DTypeMeta *DType, PyTypeObject *pytype, npy_bool userdef);
 
 NPY_NO_EXPORT int
+PyArray_PackKnownScalar(PyArray_Descr *descr, char *item, PyObject *value,
+                                PyArray_Descr *value_descr);
+
+NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
 
 NPY_NO_EXPORT PyArray_Descr *

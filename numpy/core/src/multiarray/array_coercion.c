@@ -385,16 +385,18 @@ find_scalar_descriptor(
  * `PyArray_AssignFromCache` (which already does this), we need to special
  * case 0-D array-likes to behave like arbitrary (unknown!) Python objects.
  *
- * @param descr
- * @param item
- * @param value
+ * @param descr The dtype of the memory area being assigned
+ * @param item Pointer to the memory area being assigned
+ * @param value The Python object to be assigned
+ * @param value_descr if not NULL, assumed to work for value.
  * @return 0 on success -1 on failure.
  */
 /*
  * TODO: This function should possibly be public API.
  */
 NPY_NO_EXPORT int
-PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
+PyArray_PackKnownScalar(PyArray_Descr *descr, char *item, PyObject *value,
+                        PyArray_Descr *value_descr)
 {
     PyArrayObject_fields arr_fields = {
             .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
@@ -412,50 +414,57 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         return descr->f->setitem(value, item, &arr_fields);
     }
 
-    /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
-    PyArray_DTypeMeta *DType = discover_dtype_from_pyobject(
-            value, NULL, NPY_DTYPE(descr));
-    if (DType == NULL) {
-        return -1;
+    PyArray_DTypeMeta *DType;
+    if (value_descr == NULL) {
+        /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
+        DType = discover_dtype_from_pyobject(
+                value, NULL, NPY_DTYPE(descr));
+        if (DType == NULL) {
+            return -1;
+        }
+
+        if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
+            /* We can set the element directly (or at least will try to) */
+            Py_XDECREF(DType);
+            arr_fields.descr = descr;
+            return descr->f->setitem(value, item, &arr_fields);
+        }
+        value_descr = DType->discover_descr_from_pyobject(DType, value);
+        Py_DECREF(DType);
+        if (value_descr == NULL) {
+            return -1;
+        }
     }
-    if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
-        /* We can set the element directly (or at least will try to) */
-        Py_XDECREF(DType);
-        arr_fields.descr = descr;
-        return descr->f->setitem(value, item, &arr_fields);
-    }
-    PyArray_Descr *tmp_descr;
-    tmp_descr = DType->discover_descr_from_pyobject(DType, value);
-    Py_DECREF(DType);
-    if (tmp_descr == NULL) {
-        return -1;
+    else {
+        Py_INCREF(value_descr);
     }
 
-    char *data = PyObject_Malloc(tmp_descr->elsize);
+    /* TODO: use a stack allocation when the allocation is small */
+    char *data = PyObject_Malloc(value_descr->elsize);
     if (data == NULL) {
         PyErr_NoMemory();
-        Py_DECREF(tmp_descr);
+        Py_DECREF(value_descr);
         return -1;
     }
-    if (PyDataType_FLAGCHK(tmp_descr, NPY_NEEDS_INIT)) {
-        memset(data, 0, tmp_descr->elsize);
+    if (PyDataType_FLAGCHK(value_descr, NPY_NEEDS_INIT)) {
+        memset(data, 0, value_descr->elsize);
     }
-    arr_fields.descr = tmp_descr;
-    if (tmp_descr->f->setitem(value, data, &arr_fields) < 0) {
+    arr_fields.descr = value_descr;
+    if (value_descr->f->setitem(value, data, &arr_fields) < 0) {
         PyObject_Free(data);
-        Py_DECREF(tmp_descr);
+        Py_DECREF(value_descr);
         return -1;
     }
-    if (PyDataType_REFCHK(tmp_descr)) {
+    if (PyDataType_REFCHK(value_descr)) {
         /* We could probably use move-references above */
-        PyArray_Item_INCREF(data, tmp_descr);
+        PyArray_Item_INCREF(data, value_descr);
     }
 
     int res = 0;
     int needs_api = 0;
     NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(
-            0, 0, 0, tmp_descr, descr, 0, &cast_info,
+            0, 0, 0, value_descr, descr, 0, &cast_info,
             &needs_api) == NPY_FAIL) {
         res = -1;
         goto finish;
@@ -470,13 +479,24 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     NPY_cast_info_xfree(&cast_info);
 
   finish:
-    if (PyDataType_REFCHK(tmp_descr)) {
+    if (PyDataType_REFCHK(value_descr)) {
         /* We could probably use move-references above */
-        PyArray_Item_XDECREF(data, tmp_descr);
+        PyArray_Item_XDECREF(data, value_descr);
     }
     PyObject_Free(data);
-    Py_DECREF(tmp_descr);
+    Py_DECREF(value_descr);
     return res;
+}
+
+
+/*
+ * Same as PyArray_PackKnownScalar but without passing in the descriptor
+ * information of the scalar.
+ */
+NPY_NO_EXPORT int
+PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
+{
+    return PyArray_PackKnownScalar(descr, item, value, NULL);
 }
 
 
