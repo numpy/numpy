@@ -574,15 +574,21 @@ static void
 
 /* The general strategy for commutative binary operators is to
  *
- * 1) Convert the types to the common type if both are scalars (0 return)
- * 2) If both are not scalars use ufunc machinery (-2 return)
- * 3) If both are scalars but cannot be cast to the right type
- * return NotImplemented (-1 return)
+ * 1) Defer if the other scalar has a higher type number, since type numbers
+ *    are ordered, if the other scalar has a higher number it must perform
+ *    the operation. (-1 return, leading to NotImplemented)
+ * 2) If the other type is not a known NumPy scalar (or float or int)
+ *    always fall back to the array (or generic) method. (-2 return)
+ * 3) If the other scalar cannot be cast to this scalar we fall back
+ *    to the array (or generic) method. (-2 return)
+ *    (Note that the fallback method may still decide to defer)
+ * 4) During the above steps, we extract the raw C type of all scalars.
+ *
+ * After the initial set, we perform the operation much like in ufuncs:
  *
  * 4) Perform the function on the C-type.
- * 5) If an error condition occurred, check to see
- * what the current error-handling is and handle the error.
- *
+ * 5) If an error condition occurred, check to see what the current
+ *    error-handling is and handle the error.
  * 6) Construct and return the output scalar.
  */
 
