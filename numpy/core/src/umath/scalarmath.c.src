@@ -817,8 +817,6 @@ static PyObject *
     int first;
 #endif
 
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
-
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -949,8 +947,6 @@ static PyObject *
 {
     PyObject *ret;
     @type@ arg1, arg2, out;
-
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
