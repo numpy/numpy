@@ -884,7 +884,8 @@ Indexing and slicing operations are useful when you're manipulating matrices::
   >>> data[0, 1]
   2
   >>> data[1:3]
-  array([[3, 4]])
+  array([[3, 4],
+         [5, 6]])
   >>> data[0:2, 0]
   array([1, 3])
 
@@ -893,11 +894,11 @@ Indexing and slicing operations are useful when you're manipulating matrices::
 You can aggregate matrices the same way you aggregated vectors::
 
   >>> data.max()
-  4
+  6
   >>> data.min()
   1
   >>> data.sum()
-  10
+  21
 
 .. image:: images/np_matrix_aggregation.png
 
@@ -905,9 +906,9 @@ You can aggregate all the values in a matrix and you can aggregate them across
 columns or rows using the ``axis`` parameter::
 
   >>> data.max(axis=0)
-  array([3, 4])
+  array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4])
+  array([2, 4, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
