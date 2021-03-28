@@ -16,6 +16,8 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
          np.single, np.double, np.longdouble, np.csingle,
          np.cdouble, np.clongdouble]
+all_numbers_dtypes = np.typecodes['AllInteger'] + np.typecodes['AllFloat'] +\
+        np.typecodes['Complex']
 
 floating_types = np.floating.__subclasses__()
 complex_floating_types = np.complexfloating.__subclasses__()
@@ -707,3 +709,13 @@ class TestBitShifts:
                 shift_arr = np.array([shift]*32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)
+
+class TestComparison:
+    @pytest.mark.parametrize('type_code_rhs', all_numbers_dtypes)
+    @pytest.mark.parametrize('type_code_lhs', all_numbers_dtypes)
+    def test_numbers_compare(self, type_code_rhs, type_code_lhs):
+        rand_num = np.random.randint(0, 127)
+        a = np.dtype(type_code_rhs).type(rand_num)
+        b = np.dtype(type_code_lhs).type(rand_num)
+
+        assert_almost_equal(a, b)

@@ -443,7 +443,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromTypeObject(PyObject *type)
 {
     /* if it's a builtin type, then use the typenumber */
-    int typenum = _typenum_fromtypeobj(type,1);
+    int typenum = PyArray_TypeNumFromNumPyScalarType(type,1);
     if (typenum != NPY_NOTYPE) {
         return PyArray_DescrFromType(typenum);
     }
