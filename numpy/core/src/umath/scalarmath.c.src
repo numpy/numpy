@@ -1067,9 +1067,7 @@ informative TypeError. This fixes the last part of bug gh-18548.
 static PyObject *
 clongdouble_@oper@(PyObject *a, PyObject *b)
 {
-    PyObject *ret;
     npy_clongdouble arg1, arg2;
-    npy_clongdouble out;
 
     BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, clongdouble_@oper@);
 
