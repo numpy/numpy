@@ -871,10 +871,11 @@ Creating matrices
 You can pass Python lists of lists to create a 2-D array (or "matrix") to
 represent them in NumPy. ::
 
-  >>> data = np.array([[1, 2], [3, 4]])
+  >>> data = np.array([[1, 2], [3, 4], [5, 6]])
   >>> data
   array([[1, 2],
-         [3, 4]])
+         [3, 4],
+         [5, 6]])
 
 .. image:: images/np_create_matrix.png
 
