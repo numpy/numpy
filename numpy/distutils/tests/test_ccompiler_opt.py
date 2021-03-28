@@ -112,7 +112,7 @@ class _Test_CCompilerOpt(object):
             gflags = {}
             fake_objects = opt.try_dispatch([file])
             for source, flags in fake_objects:
-                gtar = source.split('.')[1:-1]
+                gtar = path.basename(source).split('.')[1:-1]
                 glen = len(gtar)
                 if glen == 0:
                     gtar = "baseline"
