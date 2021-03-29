@@ -2549,8 +2549,6 @@ class _DatetimeScalar(Protocol):
 
 
 class datetime64(generic):
-    #Replaced dt.datetime with _DatetimeScalar per issue #18640 and
-    #BvB93s recommendation
     @overload    
     def __init__(
         self,
