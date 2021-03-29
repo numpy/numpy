@@ -2537,11 +2537,22 @@ class object_(generic):
 
 object0 = object_
 
+# The `datetime64` constructors requires an object with the three attributes below,
+# and thus supports datetime duck typing
+class _DatetimeScalar(Protocol):
+    @property
+    def day(self) -> int: ...
+    @property
+    def month(self) -> int: ...
+    @property
+    def year(self) -> int: ...
+
+
 class datetime64(generic):
     @overload
     def __init__(
         self,
-        __value: Union[None, datetime64, _CharLike_co, dt.datetime] = ...,
+        __value: Union[None, datetime64, _CharLike_co, _DatetimeScalar] = ...,
         __format: Union[_CharLike_co, Tuple[_CharLike_co, _IntLike_co]] = ...,
     ) -> None: ...
     @overload
