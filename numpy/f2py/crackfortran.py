@@ -43,7 +43,8 @@ Usage:
           'implicit','externals','interfaced','common','sortvars',
           'commonvars','note']}
      B['block'] = 'interface' | 'function' | 'subroutine' | 'module' |
-                  'program' | 'block data' | 'type' | 'pythonmodule' | 'abstract interface'
+                  'program' | 'block data' | 'type' | 'pythonmodule' |
+                  'abstract interface'
      B['body'] --- list containing `subblocks' with the same structure as `blocks'
      B['parent_block'] --- dictionary of a parent block:
                              C['body'][<index>]['parent_block'] is C
@@ -568,7 +569,8 @@ groupbegins77 = r'program|block\s*data'
 beginpattern77 = re.compile(
     beforethisafter % ('', groupbegins77, groupbegins77, '.*'), re.I), 'begin'
 groupbegins90 = groupbegins77 + \
-    r'|module(?!\s*procedure)|python\s*module|(abstract|)\s*interface|type(?!\s*\()'
+    r'|module(?!\s*procedure)|python\s*module|(abstract|)\s*interface|' + \
+    r'type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
