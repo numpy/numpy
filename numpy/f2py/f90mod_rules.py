@@ -192,7 +192,7 @@ def buildhooks(pymod):
         if hasbody(m):
             for b in m['body']:
                 if not isroutine(b):
-                    print('Skipping', b['block'], b['name'])
+                    outmess(f"f90mod_rules.buildhooks: skipping {b['block']} {b['name']}\n")
                     continue
                 modobjs.append('%s()' % (b['name']))
                 b['modulename'] = m['name']
