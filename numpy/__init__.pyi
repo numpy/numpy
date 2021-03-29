@@ -2537,8 +2537,8 @@ class object_(generic):
 
 object0 = object_
 
-#Added Protocol to typecheck for day, month, year property to be used in
-#datetime64 constructor per Issue #18640 and BvB93s recommendation
+# The `datetime64` constructors requires an object with the three attributes below, 
+# and thus supports datetime duck typing
 class _DatetimeScalar(Protocol):
     @property
     def day(self) -> int: ...
