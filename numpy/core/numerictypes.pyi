@@ -26,4 +26,4 @@ def find_common_type(
 ) -> dtype: ...
 
 # TODO: Add annotations for the following objects:
-# typeDict, nbytes, cast, ScalarType & typecodes
+# nbytes, cast, ScalarType & typecodes

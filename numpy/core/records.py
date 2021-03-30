@@ -73,7 +73,7 @@ _byteorderconv = {'b':'>',
 # of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  '
 # are equally allowed
 
-numfmt = nt.typeDict
+numfmt = nt.sctypeDict
 
 
 def find_duplicate(list):

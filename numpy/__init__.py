@@ -195,6 +195,11 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+    # Numpy 1.20.0, 2020-10-19
+    __deprecated_attrs__["typeDict"] = (
+        core.numerictypes.typeDict,
+        "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
 
     _msg = (
         "`np.{n}` is a deprecated alias for `np.compat.{n}`. "

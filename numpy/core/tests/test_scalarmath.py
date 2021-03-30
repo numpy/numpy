@@ -407,15 +407,15 @@ class TestConversion:
             assert_(res == tgt)
 
         for code in np.typecodes['AllInteger']:
-            res = np.typeDict[code](np.iinfo(code).max)
+            res = np.dtype(code).type(np.iinfo(code).max)
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 
     def test_int_raise_behaviour(self):
         def overflow_error_func(dtype):
-            np.typeDict[dtype](np.iinfo(dtype).max + 1)
+            dtype(np.iinfo(dtype).max + 1)
 
-        for code in 'lLqQ':
+        for code in [np.int_, np.uint, np.longlong, np.ulonglong]:
             assert_raises(OverflowError, overflow_error_func, code)
 
     def test_int_from_infinite_longdouble(self):

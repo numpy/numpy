@@ -698,6 +698,9 @@ class TestDeprecatedGlobals(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.long(1))
         self.assert_deprecated(lambda: np.unicode('abc'))
 
+        # from np.core.numerictypes
+        self.assert_deprecated(lambda: np.typeDict)
+
 
 class TestMatrixInOuter(_DeprecationTestCase):
     # 2020-05-13 NumPy 1.20.0

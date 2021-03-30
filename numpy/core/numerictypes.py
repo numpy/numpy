@@ -5,7 +5,7 @@ This module is designed so "from numerictypes import \\*" is safe.
 Exported symbols include:
 
   Dictionary with all registered number types (including aliases):
-    typeDict
+    sctypeDict
 
   Type objects (not all will be available, depends on platform):
       see variable sctypes for which ones you have
@@ -91,7 +91,7 @@ from numpy.core.multiarray import (
 from numpy.core.overrides import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'typeDict', 'sctypes',
+__all__ = ['sctypeDict', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
@@ -542,6 +542,7 @@ typecodes = {'Character':'c',
              'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
+# Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
 typeDict = sctypeDict
 
 # b -> boolean

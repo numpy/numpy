@@ -567,7 +567,6 @@ trim_zeros: Any
 triu: Any
 triu_indices: Any
 triu_indices_from: Any
-typeDict: Any
 typecodes: Any
 typename: Any
 union1d: Any
