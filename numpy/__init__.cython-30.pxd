@@ -910,8 +910,6 @@ cdef extern from "numpy/ufuncobject.h":
           void **, char *, int, int, int, int, char *, char *, int)
     int PyUFunc_RegisterLoopForType(ufunc, int,
                                     PyUFuncGenericFunction, int *, void *)
-    int PyUFunc_GenericFunction \
-        (ufunc, PyObject *, PyObject *, PyArrayObject **)
     void PyUFunc_f_f_As_d_d \
          (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_d_d \

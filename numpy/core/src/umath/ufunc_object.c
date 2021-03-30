@@ -97,15 +97,8 @@ _get_wrap_prepare_args(ufunc_full_args full_args) {
 /* ---------------------------------------------------------------- */
 
 static PyObject *
-ufunc_generic_call_with_operands(
-        PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
-        PyArrayObject **operands_in);
-
-static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc);
 
-static int
-_does_loop_use_arrays(void *data);
 
 /*UFUNC_API*/
 NPY_NO_EXPORT int
@@ -1340,10 +1333,6 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
                     &innerloop, &innerloopdata, &needs_api) < 0) {
         return -1;
     }
-    /* If the loop wants the arrays, provide them. */
-    if (_does_loop_use_arrays(innerloopdata)) {
-        innerloopdata = (void*)op;
-    }
 
     /* First check for the trivial cases that don't need an iterator */
     if (trivial_loop_ok) {
@@ -2443,11 +2432,6 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
         _find_array_prepare(full_args, arr_prep, nout);
     }
 
-    /* If the loop wants the arrays, provide them */
-    if (_does_loop_use_arrays(innerloopdata)) {
-        innerloopdata = (void*)op;
-    }
-
     /*
      * Set up the iterator per-op flags.  For generalized ufuncs, we
      * can't do buffering, so must COPY or UPDATEIFCOPY.
@@ -2842,44 +2826,19 @@ fail:
 }
 
 
-/*UFUNC_API
- * This generic function is called with the ufunc object, the arguments to it,
- * and an array of (pointers to) PyArrayObjects which are NULL.
- *
- * 'op' is an array of at least NPY_MAXARGS PyArrayObject *.
- */
+/*UFUNC_API*/
 NPY_NO_EXPORT int
-PyUFunc_GenericFunction(PyUFuncObject *ufunc,
-        PyObject *args, PyObject *kwds, PyArrayObject **op)
+PyUFunc_GenericFunction(PyUFuncObject *NPY_UNUSED(ufunc),
+        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds),
+        PyArrayObject **NPY_UNUSED(op))
 {
-    /* NumPy 1.19, 2020-01-24 */
-    if (DEPRECATE(
-                "PyUFunc_GenericFunction() C-API function is deprecated "
-                "and expected to be removed rapidly. If you are using it (i.e. see "
-                "this warning/error), please notify the NumPy developers. "
-                "As of now it is expected that any use case is served better by "
-                "the direct use of `PyObject_Call(ufunc, args, kwargs)`. "
-                "PyUFunc_GenericFunction function has slightly different "
-                "untested behaviour.") < 0) {
-        return -1;
-    }
-    if (ufunc == NULL) {
-        PyErr_SetString(PyExc_ValueError, "function not supported");
-        return -1;
-    }
-    if (op == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                        "PyUFunc_GenericFunction() op must not be NULL.");
-        return -1;
-    }
-
-    PyObject *res = ufunc_generic_call_with_operands(ufunc, args, kwds, op);
-    if (res == NULL) {
-        return -1;
-    }
-    assert(res == Py_None);
-    Py_DECREF(res);
-    return 0;
+    /* NumPy 1.21, 2020-03-29 */
+    PyErr_SetString(PyExc_RuntimeError,
+            "The `PyUFunc_GenericFunction()` C-API function has been disabled. "
+            "Please use `PyObject_Call(ufunc, args, kwargs)`, which has "
+            "identical behaviour but allows subclass and `__array_ufunc__` "
+            "override handling and only returns the normal ufunc result.");
+    return -1;
 }
 
 
@@ -4509,16 +4468,14 @@ _convert_typetup(PyObject *dtype_obj, PyObject **out_typetup)
  * arguments and is called directly from `ufunc_generic_vectorcall` when
  * Python has `tp_vectorcall` (Python 3.8+).
  * If `tp_vectorcall` is not available, the dictionary `kwargs` are unpacked in
- * `ufunc_generic_call`/`ufunc_generic_call_with_operands` with fairly little
- * overhead.
+ * `ufunc_generic_call` with fairly little overhead.
  */
 static PyObject *
 ufunc_generic_fastcall(PyUFuncObject *ufunc,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
-        npy_bool outer, PyArrayObject **operands_in)
+        npy_bool outer)
 {
-    PyArrayObject *operands_buffer[NPY_MAXARGS] = {NULL};
-    PyArrayObject **operands;
+    PyArrayObject *operands[NPY_MAXARGS] = {NULL};
     PyObject *retobj[NPY_MAXARGS];
     PyObject *wraparr[NPY_MAXARGS];
     PyObject *override = NULL;
@@ -4527,18 +4484,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
-
-    /*
-     * `PyUfunc_GenericFunction` uses `ufunc_generic_call_with_operands`
-     * which passes in the operands explicitly.  `PyUfunc_GenericFunction`
-     * is deprecated and this can be simplified when the deprecation is over.
-     */
-    if (operands_in != NULL) {
-        operands = operands_in;
-    }
-    else {
-        operands = operands_buffer;
-    }
 
     /*
      * Note that the input (and possibly output) arguments are passed in as
@@ -4683,20 +4628,17 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         method = "outer";
     }
     /* We now have all the information required to check for Overrides */
-    if (operands_in == NULL) {
-        /* Deprecated PyUfunc_GenericFunction path does not use overrides */
-        errval = PyUFunc_CheckOverride(ufunc, method,
-                full_args.in, full_args.out,
-                args, len_args, kwnames, &override);
-        if (errval) {
-            goto fail;
-        }
-        else if (override) {
-            Py_XDECREF(typetup);
-            Py_DECREF(full_args.in);
-            Py_XDECREF(full_args.out);
-            return override;
-        }
+    errval = PyUFunc_CheckOverride(ufunc, method,
+            full_args.in, full_args.out,
+            args, len_args, kwnames, &override);
+    if (errval) {
+        goto fail;
+    }
+    else if (override) {
+        Py_XDECREF(typetup);
+        Py_DECREF(full_args.in);
+        Py_XDECREF(full_args.out);
+        return override;
     }
 
     if (outer) {
@@ -4741,11 +4683,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     if (errval < 0) {
         goto fail;
-    }
-
-    if (operands_in != NULL) {
-        /* Deprecated PyUfunc_GenericFunction path does not wrap. */
-        Py_RETURN_NONE;
     }
 
     /* Free the input references */
@@ -4825,15 +4762,10 @@ fail:
 /*
  * TODO: The implementation below can be replaced with PyVectorcall_Call
  *       when available (should be Python 3.8+).
- * TODO: After `PyUFunc_GenericFunction` is disabled `operands_in` becomes
- *       unnecessary and this function can be merged with `ufunc_generic_call`.
- *       The `operands_in` handling can also be removed entirely from
- *       `ufunc_generic_fastcall`.
  */
 static PyObject *
-ufunc_generic_call_with_operands(
-        PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
-        PyArrayObject **operands_in)
+ufunc_generic_call(
+        PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     Py_ssize_t len_args = PyTuple_GET_SIZE(args);
     /*
@@ -4843,8 +4775,7 @@ ufunc_generic_call_with_operands(
      */
     if (kwds == NULL) {
         return ufunc_generic_fastcall(ufunc,
-                PySequence_Fast_ITEMS(args), len_args, NULL, NPY_FALSE,
-                operands_in);
+                PySequence_Fast_ITEMS(args), len_args, NULL, NPY_FALSE);
     }
 
     PyObject *new_args[NPY_MAXARGS];
@@ -4880,16 +4811,9 @@ ufunc_generic_call_with_operands(
     }
 
     PyObject *res = ufunc_generic_fastcall(ufunc,
-            new_args, len_args, kwnames, NPY_FALSE, operands_in);
+            new_args, len_args, kwnames, NPY_FALSE);
     Py_DECREF(kwnames);
     return res;
-}
-
-
-static PyObject *
-ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
-{
-    return ufunc_generic_call_with_operands(ufunc, args, kwds, NULL);
 }
 
 
@@ -4909,7 +4833,7 @@ ufunc_generic_vectorcall(PyObject *ufunc,
      * args[-1] may be (temporarily) used. So normalize it here.
      */
     return ufunc_generic_fastcall((PyUFuncObject *)ufunc,
-            args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE, NULL);
+            args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE);
 }
 #endif  /* PY_VERSION_HEX >= 0x03080000 */
 
@@ -5125,44 +5049,16 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     return (PyObject *)ufunc;
 }
 
-/* Specify that the loop specified by the given index should use the array of
- * input and arrays as the data pointer to the loop.
- */
+
 /*UFUNC_API*/
 NPY_NO_EXPORT int
-PyUFunc_SetUsesArraysAsData(void **data, size_t i)
+PyUFunc_SetUsesArraysAsData(void **NPY_UNUSED(data), size_t NPY_UNUSED(i))
 {
-    /* NumPy 1.19, 2020-01-24 */
-    if (DEPRECATE(
-            "PyUFunc_SetUsesArraysAsData() C-API function is deprecated "
-            "and expected to be removed rapidly. If you are using it (i.e. see "
-            "this warning/error), please notify the NumPy developers. "
-            "It is currently assumed that this function is simply unused and "
-            "its removal will facilitate the implementation of better "
-            "approaches.") < 0) {
-        return -1;
-    }
-    data[i] = (void*)PyUFunc_SetUsesArraysAsData;
-    return 0;
-}
-
-/*
- * Return 1 if the given data pointer for the loop specifies that it needs the
- * arrays as the data pointer.
- *
- * NOTE: This is easier to specify with the type_resolver
- *       in the ufunc object.
- *
- * TODO: Remove this, since this is already basically broken
- *       with the addition of the masked inner loops and
- *       not worth fixing since the new loop selection functions
- *       have access to the full dtypes and can dynamically allocate
- *       arbitrary auxiliary data.
- */
-static int
-_does_loop_use_arrays(void *data)
-{
-    return (data == PyUFunc_SetUsesArraysAsData);
+    /* NumPy 1.21, 201-03-29 */
+    PyErr_SetString(PyExc_RuntimeError,
+            "PyUFunc_SetUsesArraysAsData() C-API function has been "
+            "disabled.  It was initially deprecated in NumPy 1.19.");
+    return -1;
 }
 
 
@@ -5553,7 +5449,7 @@ ufunc_outer(PyUFuncObject *ufunc,
         return NULL;
     }
 
-    return ufunc_generic_fastcall(ufunc, args, len_args, kwnames, NPY_TRUE, NULL);
+    return ufunc_generic_fastcall(ufunc, args, len_args, kwnames, NPY_TRUE);
 }
 
 
