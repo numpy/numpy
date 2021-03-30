@@ -1,0 +1,5 @@
+* The function ``PyUFunc_GenericFunction`` has been disabled.
+  It was deprecated in NumPy 1.19.  Users should call the ufunc
+  directly using the Python API.
+* The function ``PyUFunc_SetUsesArraysAsData`` has been disabled.
+  It was deprecated in NumPy 1.19.
