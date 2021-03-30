@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 import numpy as np
 
-def finfo(type: Union[dtype, array], /) -> finfo:
+def finfo(type: Union[dtype, array], /) -> finfo_object:
     """
     Array API compatible wrapper for :py:func:`np.finfo <numpy.finfo>`.
 
@@ -18,7 +18,7 @@ def finfo(type: Union[dtype, array], /) -> finfo:
     """
     return np.finfo(type)
 
-def iinfo(type: Union[dtype, array], /) -> iinfo:
+def iinfo(type: Union[dtype, array], /) -> iinfo_object:
     """
     Array API compatible wrapper for :py:func:`np.iinfo <numpy.iinfo>`.
 

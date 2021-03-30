@@ -106,7 +106,7 @@ class ndarray:
         res = self._array.__and__(asarray(other)._array)
         return self.__class__._new(res)
 
-    def __array_namespace__(self, /, *, api_version=None):
+    def __array_namespace__(self: array, /, *, api_version: Optional[str] = None) -> object:
         if api_version is not None:
             raise ValueError("Unrecognized array API version")
         from numpy import _array_api
@@ -274,7 +274,7 @@ class ndarray:
             # ndarray() form, like a list of booleans.
             raise IndexError("Only integers, slices (`:`), ellipsis (`...`), and boolean arrays are valid indices in the array API namespace")
 
-    def __getitem__(self: array, key: Union[int, slice, Tuple[Union[int, slice], ...], array], /) -> array:
+    def __getitem__(self: array, key: Union[int, slice, ellipsis, Tuple[Union[int, slice, ellipsis], ...], array], /) -> array:
         """
         Performs the operation __getitem__.
         """

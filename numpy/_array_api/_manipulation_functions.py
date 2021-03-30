@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-def concat(arrays: Tuple[array], /, *, axis: Optional[int] = 0) -> array:
+def concat(arrays: Tuple[array, ...], /, *, axis: Optional[int] = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.concatenate <numpy.concatenate>`.
 
@@ -58,7 +58,7 @@ def squeeze(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) 
     """
     return ndarray._array(np.squeeze(x._array, axis=axis))
 
-def stack(arrays: Tuple[array], /, *, axis: int = 0) -> array:
+def stack(arrays: Tuple[array, ...], /, *, axis: int = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.stack <numpy.stack>`.
 
