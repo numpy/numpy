@@ -43,7 +43,8 @@ Usage:
           'implicit','externals','interfaced','common','sortvars',
           'commonvars','note']}
      B['block'] = 'interface' | 'function' | 'subroutine' | 'module' |
-                  'program' | 'block data' | 'type' | 'pythonmodule'
+                  'program' | 'block data' | 'type' | 'pythonmodule' |
+                  'abstract interface'
      B['body'] --- list containing `subblocks' with the same structure as `blocks'
      B['parent_block'] --- dictionary of a parent block:
                              C['body'][<index>]['parent_block'] is C
@@ -138,6 +139,7 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
+import io
 import sys
 import string
 import fileinput
@@ -567,7 +569,8 @@ groupbegins77 = r'program|block\s*data'
 beginpattern77 = re.compile(
     beforethisafter % ('', groupbegins77, groupbegins77, '.*'), re.I), 'begin'
 groupbegins90 = groupbegins77 + \
-    r'|module(?!\s*procedure)|python\s*module|interface|type(?!\s*\()'
+    r'|module(?!\s*procedure)|python\s*module|(abstract|)\s*interface|' + \
+    r'type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
@@ -941,15 +944,17 @@ def analyzeline(m, case, line):
         block = block.lower()
         if re.match(r'block\s*data', block, re.I):
             block = 'block data'
-        if re.match(r'python\s*module', block, re.I):
+        elif re.match(r'python\s*module', block, re.I):
             block = 'python module'
+        elif re.match(r'abstract\s*interface', block, re.I):
+            block = 'abstract interface'
         name, args, result, bind = _resolvenameargspattern(m.group('after'))
         if name is None:
             if block == 'block data':
                 name = '_BLOCK_DATA_'
             else:
                 name = ''
-            if block not in ['interface', 'block data']:
+            if block not in ['interface', 'block data', 'abstract interface']:
                 outmess('analyzeline: No name/args pattern found for line.\n')
 
         previous_context = (block, name, groupcounter)
@@ -983,7 +988,7 @@ def analyzeline(m, case, line):
         if f77modulename and neededmodule == -1 and groupcounter <= 1:
             neededmodule = groupcounter + 2
             needmodule = 1
-            if block != 'interface':
+            if block not in ['interface', 'abstract interface']:
                 needinterface = 1
         # Create new block(s)
         groupcounter = groupcounter + 1
@@ -1023,7 +1028,7 @@ def analyzeline(m, case, line):
         groupname[groupcounter] = block
         groupcache[groupcounter]['block'] = block
         if not name:
-            name = 'unknown_' + block
+            name = 'unknown_' + block.replace(' ', '_')
         groupcache[groupcounter]['prefix'] = m.group('before')
         groupcache[groupcounter]['name'] = rmbadname1(name)
         groupcache[groupcounter]['result'] = result
@@ -2088,7 +2093,7 @@ def analyzebody(block, args, tab=''):
         else:
             as_ = args
         b = postcrack(b, as_, tab=tab + '\t')
-        if b['block'] == 'interface' and not b['body']:
+        if b['block'] in ['interface', 'abstract interface'] and not b['body']:
             if 'f2pyenhancements' not in b:
                 continue
         if b['block'].replace(' ', '') == 'pythonmodule':
