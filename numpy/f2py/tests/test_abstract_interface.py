@@ -53,13 +53,13 @@ class TestAbstractInterface(util.F2PyTest):
         f_path = tmp_path / "gh18403_mod.f90"
         with f_path.open('w') as ff:
             ff.write(textwrap.dedent("""\
-        module test
-          abstract       interface
-            subroutine foo()
-            end subroutine
-          end interface
-        end module test
-            """))
+                module test
+                  abstract interface
+                    subroutine foo()
+                    end subroutine
+                  end interface
+                end module test
+                """))
         mod = crackfortran.crackfortran([str(f_path)])
         assert len(mod) == 1
         assert len(mod[0]['body']) == 1
