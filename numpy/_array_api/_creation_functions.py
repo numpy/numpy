@@ -26,6 +26,10 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
         raise NotImplementedError("The copy keyword argument to asarray is not yet implemented")
     if isinstance(obj, ndarray) and (dtype is None or obj.dtype == dtype):
         return obj
+    if isinstance(obj, int) and (obj > 2**64 or obj < -2**63):
+        # Give a better error message in this case. NumPy would convert this
+        # to an object array.
+        raise OverflowError("Integer out of bounds for array dtypes")
     res = np.asarray(obj, dtype=dtype)
     if res.dtype not in _all_dtypes:
         raise TypeError(f"The array_api namespace does not support the dtype '{res.dtype}'")
