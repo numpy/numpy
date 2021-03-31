@@ -2219,7 +2219,6 @@ class TestMsort:
                       [0.64864341, 0.79115165, 0.96098397]]))
 
 
-# Run test using: python3 runtests.py -t numpy.lib.tests.test_function_base
 class TestMeshgrid:
 
     def test_simple(self):
