@@ -3,6 +3,7 @@ The arraypad module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
 
 """
+
 import numpy as np
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib.index_tricks import ndindex
@@ -1025,6 +1026,16 @@ def pad_to_size(
         pad_width = tuple((d, 0) for d in shape_difference)
 
     elif append_mode == "surround":
+        if np.any(np.asarray(padding_ratio) < 0.0) or np.any(np.asarray(padding_ratio) > 1.0):
+            raise ValueError(
+                f"padding_ratio must be between 0.0 and 1.0"
+            )
+
+        if not len(padding_ratio) == len(shape_difference) and not len(padding_ratio) == 1:
+            raise ValueError(
+                "The amount of padding_ratio values does not match the desired amount of dimensions"
+            )
+
         pad_width_before = np.floor(shape_difference * padding_ratio).astype(int)
         pad_width_after = shape_difference - pad_width_before
 
