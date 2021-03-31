@@ -1,0 +1,21 @@
+Add ``pad_to_size`` and ``pad_to_match``
+----------------------------------------
+The new functions ``pad_to_size`` and ``pad_to_match``
+are added.
+These functions provide some additional functionality
+on top of ``pad`` that allow the user to set a target
+size instead of having to manually calculate where the
+padding needs to happen, provided the target size
+is larger than the input array's size in that
+dimension.
+These functions can handle multiple dimensions
+
+An example call would be::
+
+    >>> input = np.ones((5, 5, 5))
+    >>> pad_to_size(input, (10, 10, 10)).shape
+    (10, 10, 10)
+
+    >>> target = np.ones((15, 15, 15))
+    >>> pad_to_match(input, target).shape
+    (15, 15, 15)
