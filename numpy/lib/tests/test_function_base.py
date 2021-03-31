@@ -2219,6 +2219,7 @@ class TestMsort:
                       [0.64864341, 0.79115165, 0.96098397]]))
 
 
+# Run test using: python3 runtests.py -t numpy.lib.tests.test_function_base
 class TestMeshgrid:
 
     def test_simple(self):
@@ -2306,6 +2307,20 @@ class TestMeshgrid:
         x[0, :] = 0
         assert_equal(x[0, :], 0)
         assert_equal(x[1, :], X)
+
+    def test_higher_dimensions(self):
+        a, b, c = np.meshgrid([0], [1, 1], [2, 2])
+        assert_equal(a, [[[0, 0]], [[0, 0]]])
+        assert_equal(b, [[[1, 1]], [[1, 1]]])
+        assert_equal(c, [[[2, 2]], [[2, 2]]])
+
+        a, b, c, d, e = np.meshgrid(*([0] * i for i in range(1, 6)))
+        expected_shape = (2, 1, 3, 4, 5)
+        assert_equal(a.shape, expected_shape)
+        assert_equal(b.shape, expected_shape)
+        assert_equal(c.shape, expected_shape)
+        assert_equal(d.shape, expected_shape)
+        assert_equal(e.shape, expected_shape)
 
 
 class TestPiecewise:
