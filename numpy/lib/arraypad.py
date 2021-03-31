@@ -7,7 +7,6 @@ import numpy as np
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib.index_tricks import ndindex
 
-
 __all__ = ['pad']
 
 
@@ -210,17 +209,17 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     left_ramp, right_ramp = (
         np.linspace(
             start=end_value,
-            stop=edge.squeeze(axis), # Dimension is replaced by linspace
+            stop=edge.squeeze(axis),  # Dimension is replaced by linspace
             num=width,
             endpoint=False,
             dtype=padded.dtype,
             axis=axis
         )
         for end_value, edge, width in zip(
-            end_value_pair, edge_pair, width_pair
-        )
+        end_value_pair, edge_pair, width_pair
     )
-        
+    )
+
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
@@ -435,7 +434,7 @@ def _set_wrap_both(padded, axis, width_pair):
         # Use min(period, right_pad) to ensure that chunk is not larger than
         # pad area
         left_slice = _slice_at_axis(
-            slice(left_pad, left_pad + min(period, right_pad),), axis)
+            slice(left_pad, left_pad + min(period, right_pad), ), axis)
         left_chunk = padded[left_slice]
 
         if right_pad > period:
@@ -874,3 +873,220 @@ def pad(array, pad_width, mode='constant', **kwargs):
                     roi, axis, (left_index, right_index))
 
     return padded
+
+
+def pad_to_size(
+        array,
+        target_shape,
+        append_mode="surround",
+        padding_ratio=0.5,
+        padding_mode="constant",
+        **kwargs
+) -> np.ndarray:
+    """
+    Pad an array to a specific size.
+
+    Parameters
+    ----------
+    array : array_like of rank N
+        The array to pad.
+    target_shape : {sequence, array_like, int}
+        The desired output shape of the array.
+    append_mode : str, optional
+        'after'
+            Pad the new values after the existing values
+        'before'
+            Pad the new values before the existing values
+        'surround'
+            Pad the new values around the existing values according to the value(s) in `padding_ratio`
+    padding_mode : str or function, optional
+        One of the following string values or a user supplied function.
+
+        See `mode` in `np.pad`.
+    padding_ratio: {sequence, array_like, float}, optional
+        The proportion of entries to be placed before the existing values, the remainder are placed after.
+        If left empty, the default ratio is 0.5, e.g.: Half of the new values will be placed before, and half after.
+
+    Returns
+    -------
+    pad : ndarray
+        Padded array of rank equal to `array` with shape increased
+        according to `target_shape`.
+
+    Notes
+    -------
+    This function calls `pad` internally.
+    Keyword arguments meant to be used in `pad` are passed on to it.
+
+    Examples
+    -------
+    >>> x = np.ones((3, 3))
+    >>> x
+    array([[1., 1., 1.],
+           [1., 1., 1.],
+           [1., 1., 1.]])
+
+    >>> pad_to_size(x, (6, 7)).shape
+    (6, 7)
+
+    >>> pad_to_size(x, (5, 5), append_mode="surround")
+    array([[0., 0., 0., 0., 0.],
+           [0., 1., 1., 1., 0.],
+           [0., 1., 1., 1., 0.],
+           [0., 1., 1., 1., 0.],
+           [0., 0., 0., 0., 0.]])
+
+    >>> pad_to_size(x, (5, 5), append_mode="after")
+    array([[1., 1., 1., 0., 0.],
+           [1., 1., 1., 0., 0.],
+           [1., 1., 1., 0., 0.],
+           [0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0.]])
+
+    >>> pad_to_size(x, (5, 5), append_mode="before")
+    array([[0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0.],
+           [0., 0., 1., 1., 1.],
+           [0., 0., 1., 1., 1.],
+           [0., 0., 1., 1., 1.]])
+
+    Passing keywords for `pad` also works
+
+    >>> pad_to_size(x, (5, 5), append_mode="surround", padding_mode="edge")
+    array([[1., 1., 1., 1., 1.],
+           [1., 1., 1., 1., 1.],
+           [1., 1., 1., 1., 1.],
+           [1., 1., 1., 1., 1.],
+           [1., 1., 1., 1., 1.]])
+
+    >>> pad_to_size(x, (5, 5), append_mode="surround", constant_values=(2, 3))
+    array([[2., 2., 2., 2., 3.],
+           [2., 1., 1., 1., 3.],
+           [2., 1., 1., 1., 3.],
+           [2., 1., 1., 1., 3.],
+           [2., 3., 3., 3., 3.]])
+
+    Using `surround` lets you define how many of the new values go before or after the input array
+
+    >>> pad_to_size(x, (10, 10), padding_ratio=0.2)
+    array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 1., 1., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 1., 1., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 1., 1., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]])
+
+    This also works with a value for each dimension
+
+    >>> pad_to_size(x, (10, 10), padding_ratio=(0.7, 0.4))
+    array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 1., 1., 1., 0., 0., 0., 0., 0.],
+           [0., 0., 1., 1., 1., 0., 0., 0., 0., 0.],
+           [0., 0., 1., 1., 1., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]])
+
+    Works across multiple dimensions
+
+    >>> x = np.ones((3, 3, 3, 3, 3))
+    >>> pad_to_size(x, (4, 5, 6, 7, 8)).shape
+    (4, 5, 6, 7, 8)
+    """
+    input_shape = array.shape
+
+    if not len(input_shape) == len(target_shape):
+        # Making sure we have the right amount of dimensions
+        raise ValueError(
+            f"Cannot pad array with {len(input_shape)} dimensions to shape with {len(target_shape)} dimensions"
+        )
+
+    # Before we can start padding, we need to know how many more entries we need
+    shape_difference = np.asarray([target_shape[i] - input_shape[i] for i in range(len(target_shape))])
+
+    if np.any(np.asarray(shape_difference) < 0):
+        # We can't pad to a negative amount, we catch this here
+        raise ValueError(
+            "The target shape in a dimension is smaller than the input shape"
+            f" for input shape {input_shape} and target shape {target_shape}"
+        )
+
+    if append_mode == "after":
+        pad_width = tuple((0, d) for d in shape_difference)
+
+    elif append_mode == "before":
+        pad_width = tuple((d, 0) for d in shape_difference)
+
+    elif append_mode == "surround":
+        pad_width_before = np.floor(shape_difference * padding_ratio).astype(int)
+        pad_width_after = shape_difference - pad_width_before
+
+        # Now that we know how many new entries go before and after, set up the pad_width
+        pad_width = tuple((pad_width_before[i], pad_width_after[i]) for i in range(len(pad_width_before)))
+
+    else:
+        raise ValueError(
+            f"The append mode {append_mode} is not valid."
+        )
+
+    return pad(array, pad_width, padding_mode, **kwargs)
+
+
+def pad_to_match(
+        array: np.ndarray,
+        target_array: np.ndarray,
+        append_mode: str = "surround",
+        padding_ratio=0.5,
+        padding_mode: str = "constant",
+        **kwargs
+) -> np.ndarray:
+    """
+    Pads an array to match another array
+
+    Parameters
+    ----------
+    array : array_like of rank N
+        The array to pad.
+    target_array : array_like of rank N
+        The array to match
+    append_mode : str, optional
+        'after'
+            Pad the new values after the existing values
+        'before'
+            Pad the new values before the existing values
+        'surround'
+            Pad the new values around the existing values according to the value(s) in `padding_ratio`
+    padding_mode : str or function, optional
+        One of the following string values or a user supplied function.
+
+        See `mode` in `np.pad`.
+    padding_ratio: {sequence, array_like, float}, optional
+        The proportion of entries to be placed before the existing values, the remainder are placed after.
+        If left empty, the default ratio is 0.5, e.g.: Half of the new values will be placed before, and half after.
+
+    Returns
+    -------
+    pad : ndarray
+        Padded array of rank equal to `array` with shape increased
+        according to `target_array.shape`.
+
+    Notes
+    -------
+    Calls `pad_to_size` internally with `target_array.shape` for the `target_shape`.
+
+    Examples
+    -------
+    >>> x = np.ones((3, 3, 3))
+    >>> y = np.ones((6, 7, 8))
+    >>> pad_to_match(x, y).shape
+    (6, 7, 8)
+
+    """
+    return pad_to_size(array, target_array.shape, append_mode, padding_ratio, padding_mode, **kwargs)
