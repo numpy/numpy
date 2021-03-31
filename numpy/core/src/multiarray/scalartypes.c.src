@@ -331,13 +331,13 @@ format_@name@(@type@ val, npy_bool scientific,
 {
     if (scientific) {
         return Dragon4_Scientific_@Name@(&val,
-                        DigitMode_Unique, precision,
+                        DigitMode_Unique, precision, -1,
                         sign, trim, pad_left, exp_digits);
     }
     else {
         return Dragon4_Positional_@Name@(&val,
                         DigitMode_Unique, CutoffMode_TotalLength, precision,
-                        sign, trim, pad_left, pad_right);
+                        -1, sign, trim, pad_left, pad_right);
     }
 }
 

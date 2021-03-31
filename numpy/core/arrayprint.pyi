@@ -103,6 +103,7 @@ def format_float_scientific(
     sign: bool = ...,
     pad_left: Optional[int] = ...,
     exp_digits: Optional[int] = ...,
+    min_digits: Optional[int] = ...,
 ) -> str: ...
 def format_float_positional(
     x: _FloatLike_co,
@@ -113,6 +114,7 @@ def format_float_positional(
     sign: bool = ...,
     pad_left: Optional[int] = ...,
     pad_right: Optional[int] = ...,
+    min_digits: Optional[int] = ...,
 ) -> str: ...
 def array_repr(
     arr: ndarray[Any, Any],
