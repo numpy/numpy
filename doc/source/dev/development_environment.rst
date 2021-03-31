@@ -57,7 +57,8 @@ When using pytest as a target (the default), you can
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
-build or installing to a virtualenv. See the FAQ below for details.
+build or installing to a virtualenv or a conda environment. See the FAQ below
+for details.
 
 .. note::
 
@@ -130,17 +131,27 @@ to see this output, you can run the ``build_src`` stage verbosely::
 
     $ python build build_src -v
 
-Using virtualenvs
------------------
+Using virtual environments
+--------------------------
 
 A frequently asked question is "How do I set up a development version of NumPy
 in parallel to a released version that I use to do my job/research?".
 
 One simple way to achieve this is to install the released version in
-site-packages, by using a binary installer or pip for example, and set
-up the development version in a virtualenv.  First install
+site-packages, by using pip or conda for example, and set
+up the development version in a virtual environment.
+
+If you use conda, we recommend creating a separate virtual environment for
+numpy development using the ``environment.yml`` file in the root of the repo
+(this will create the environment and install all development dependencies at
+once)::
+
+    $ conda env create -f environment.yml  # `mamba` works too for this command
+    $ conda activate numpy-dev
+
+If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named numpy-dev here) with::
+virtualenv (named ``numpy-dev`` here) with::
 
     $ virtualenv numpy-dev
 
