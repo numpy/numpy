@@ -154,7 +154,7 @@ _PyFrame_GetCodeBorrow(PyFrameObject *frame)
 
 
 // bpo-40421 added PyFrame_GetCode() to Python 3.9.0b1
-#if PY_VERSION_HEX < 0x030900B1
+#if PY_VERSION_HEX < 0x030900B1 && !defined(PYPY_VERSION)
 static inline PyFrameObject*
 PyFrame_GetBack(PyFrameObject *frame)
 {
@@ -163,11 +163,13 @@ PyFrame_GetBack(PyFrameObject *frame)
 }
 #endif
 
+#if !defined(PYPY_VERSION)
 static inline PyFrameObject*
 _PyFrame_GetBackBorrow(PyFrameObject *frame)
 {
     return (PyFrameObject *)_Py_XStealRef(PyFrame_GetBack(frame));
 }
+#endif
 
 
 // bpo-39947 added PyThreadState_GetInterpreter() to Python 3.9.0a5
@@ -182,7 +184,7 @@ PyThreadState_GetInterpreter(PyThreadState *tstate)
 
 
 // bpo-40429 added PyThreadState_GetFrame() to Python 3.9.0b1
-#if PY_VERSION_HEX < 0x030900B1
+#if PY_VERSION_HEX < 0x030900B1 && !defined(PYPY_VERSION)
 static inline PyFrameObject*
 PyThreadState_GetFrame(PyThreadState *tstate)
 {
@@ -191,11 +193,13 @@ PyThreadState_GetFrame(PyThreadState *tstate)
 }
 #endif
 
+#if !defined(PYPY_VERSION)
 static inline PyFrameObject*
 _PyThreadState_GetFrameBorrow(PyThreadState *tstate)
 {
     return (PyFrameObject *)_Py_XStealRef(PyThreadState_GetFrame(tstate));
 }
+#endif
 
 
 // bpo-39947 added PyInterpreterState_Get() to Python 3.9.0a5
@@ -292,7 +296,7 @@ PyModule_AddType(PyObject *module, PyTypeObject *type)
 
 // bpo-40241 added PyObject_GC_IsTracked() to Python 3.9.0a6.
 // bpo-4688 added _PyObject_GC_IS_TRACKED() to Python 2.7.0a2.
-#if PY_VERSION_HEX < 0x030900A6
+#if PY_VERSION_HEX < 0x030900A6 && !defined(PYPY_VERSION)
 static inline int
 PyObject_GC_IsTracked(PyObject* obj)
 {
@@ -302,7 +306,7 @@ PyObject_GC_IsTracked(PyObject* obj)
 
 // bpo-40241 added PyObject_GC_IsFinalized() to Python 3.9.0a6.
 // bpo-18112 added _PyGCHead_FINALIZED() to Python 3.4.0 final.
-#if PY_VERSION_HEX < 0x030900A6 && PY_VERSION_HEX >= 0x030400F0
+#if PY_VERSION_HEX < 0x030900A6 && PY_VERSION_HEX >= 0x030400F0 && !defined(PYPY_VERSION)
 static inline int
 PyObject_GC_IsFinalized(PyObject *obj)
 {
