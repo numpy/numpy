@@ -1,0 +1,53 @@
+Changes to comparisons with ``dtype=...``
+-----------------------------------------
+When the ``dtype=`` (or ``signature``) arguments to comparison
+ufuncs (``equal``, ``less``, etc.) is used, this will denote
+the desired output dtype in the future.
+This means that:
+
+    np.equal(2, 3, dtype=object)
+
+will give a ``FutureWarning`` that it will return an ``object``
+array in the future, which currently happens for:
+
+    np.equal(None, None, dtype=object)
+
+due to the fact that ``np.array(None)`` is already an object
+array. (This also happens for some other dtypes.)
+
+Since comparisons normally only return boolean arrays, providing
+any other dtype will always raise an error in the future and
+give a ``DeprecationWarning`` now.
+
+
+Changes to ``dtype`` and ``signature`` arguments in ufuncs
+----------------------------------------------------------
+The universal function arguments ``dtype`` and ``signature``
+which are also valid for reduction such as ``np.add.reduce``
+(which is the implementation for ``np.sum``) will now issue
+a warning when the ``dtype`` provided is not a "basic" dtype.
+
+NumPy almost always ignored metadata, byteorder or time units
+on these inputs.  NumPy will now always ignore it and issue
+a warning if byteorder or time unit changed.
+The following are the most important examples of changes which
+will issue the warning and in some cases previously returned
+different results::
+
+    # The following will now warn on most systems (unchanged result):
+    np.add(3, 5, dtype=">i32")
+
+    # The biggest impact is for timedelta or datetimes:
+    arr = np.arange(10, dtype="m8[s]")
+    # The examples always ignored the time unit "ns" (using the
+    # unit of `arr`.  They now issue a warning:
+    np.add(arr, arr, dtype="m8[ns]")
+    np.maximum.reduce(arr, dtype="m8[ns]")
+
+    # The following issue a warning but previously did return
+    # a "ns" result.
+    np.add(3, 5, dtype="m8[ns]")  # Now return generic time units
+    np.maximum(arr, arr, dtype="m8[ns]")  # Now returns "s" (from `arr`)
+
+The same applies for functions like ``np.sum`` which use these internally.
+This change is necessary to achieve consistent handling within NumPy.

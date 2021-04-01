@@ -410,9 +410,12 @@ class TestUfunc:
     def test_forced_sig(self):
         a = 0.5*np.arange(3, dtype='f8')
         assert_equal(np.add(a, 0.5), [0.5, 1, 1.5])
-        assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig='ii->i', casting='unsafe'), [0, 0, 1])
-        assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'),
+                         [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig=('i4', 'i4', 'i4'),
                                             casting='unsafe'), [0, 0, 1])
 
@@ -420,17 +423,57 @@ class TestUfunc:
         np.add(a, 0.5, out=b)
         assert_equal(b, [0.5, 1, 1.5])
         b[:] = 0
-        np.add(a, 0.5, sig='i', out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig='i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig='ii->i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
-        np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
+
+    def test_forced_dtype_times(self):
+        # Signatures only set the type numbers (not the actual loop dtypes)
+        # so using `M` in a signature/dtype should generally work:
+        a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='>M8[D]')
+        np.maximum(a, a, dtype="M")
+        np.maximum.reduce(a, dtype="M")
+
+        arr = np.arange(10, dtype="m8[s]")
+        np.add(arr, arr, dtype="m")
+        np.maximum(arr, arr, dtype="m")
+
+    def test_forced_dtype_warning(self):
+        # does not warn (test relies on bad pickling behaviour, simply remove
+        # it if the `assert int64 is not int64_2` should start failing.
+        int64 = np.dtype("int64")
+        int64_2 = pickle.loads(pickle.dumps(int64))
+        assert int64 is not int64_2
+        np.add(3, 4, dtype=int64_2)
+
+        arr = np.arange(10, dtype="m8[s]")
+        with pytest.warns(UserWarning,
+                match="The `dtype` and `signature` arguments to") as rec:
+            np.add(3, 5, dtype=int64.newbyteorder())
+            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
+            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
+            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
+            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
+
+        assert len(rec) == 5  # each of the above call should cause one
+
+        # Also check the error paths:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            with pytest.raises(UserWarning):
+                np.add(3, 5, dtype="m8[ns]")
+            with pytest.raises(UserWarning):
+                np.maximum.reduce(arr, dtype="m8[ns]")
 
     def test_true_divide(self):
         a = np.array(10)
