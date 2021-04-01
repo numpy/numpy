@@ -224,7 +224,7 @@ PyInterpreterState_Get(void)
 
 
 // bpo-39947 added PyInterpreterState_Get() to Python 3.9.0a6
-#if 0x030700A1 <= PY_VERSION_HEX && PY_VERSION_HEX < 0x030900A6
+#if 0x030700A1 <= PY_VERSION_HEX && PY_VERSION_HEX < 0x030900A6 && !defined(PYPY_VERSION)
 static inline uint64_t
 PyThreadState_GetID(PyThreadState *tstate)
 {
