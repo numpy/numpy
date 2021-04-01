@@ -1265,7 +1265,7 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...
     ...     for i in range(maxit):
     ...         z = z**2 + C
-    ...         diverge = abs(z) > 2                    # who is diverging
+    ...         diverge = abs(z) > r                    # who is diverging
     ...         div_now = diverge & (divtime == maxit)  # who is diverging now
     ...         divtime[div_now] = i                    # note when
     ...         z[diverge] = r                          # avoid diverging too much
