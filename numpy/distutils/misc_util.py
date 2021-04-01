@@ -11,6 +11,7 @@ import multiprocessing
 import textwrap
 import importlib.util
 from threading import local as tlocal
+from typing import Dict
 
 import distutils
 from distutils.errors import DistutilsError
@@ -2094,7 +2095,8 @@ class Configuration:
         return info_dict
 
 
-def get_cmd(cmdname, _cache={}):
+def get_cmd(cmdname, _cache:Dict=None):
+    _cache = _cache or {}
     if cmdname not in _cache:
         import distutils.core
         dist = distutils.core._setup_distribution

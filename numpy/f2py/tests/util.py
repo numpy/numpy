@@ -14,6 +14,7 @@ import atexit
 import textwrap
 import re
 import pytest
+from typing import List
 
 from numpy.compat import asbytes, asstr
 from numpy.testing import temppath
@@ -87,12 +88,14 @@ def _memoize(func):
 
 
 @_memoize
-def build_module(source_files, options=[], skip=[], only=[], module_name=None):
+def build_module(source_files, options:List=None, skip:List=None, only:List=None, module_name=None):
     """
     Compile and import a f2py module, built from the given files.
 
     """
-
+    options = options or []
+    skip = skip or []
+    only = only or []
     code = ("import sys; sys.path = %s; import numpy.f2py as f2py2e; "
             "f2py2e.main()" % repr(sys.path))
 
@@ -144,12 +147,15 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
 
 @_memoize
-def build_code(source_code, options=[], skip=[], only=[], suffix=None,
+def build_code(source_code, options:List=None, skip:List=None, only:List=None, suffix=None,
                module_name=None):
     """
     Compile and import Fortran code using f2py.
 
     """
+    options = options or []
+    skip = skip or []
+    only = only or []
     if suffix is None:
         suffix = '.f'
     with temppath(suffix=suffix) as path:

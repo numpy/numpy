@@ -147,6 +147,7 @@ import re
 import os
 import copy
 import platform
+from typing import List, Dict
 
 from . import __version__
 
@@ -2485,7 +2486,8 @@ def _selected_real_kind_func(p, r=0, radix=0):
     return -1
 
 
-def get_parameters(vars, global_params={}):
+def get_parameters(vars, global_params:Dict=None):
+    global_params = global_params or {}
     params = copy.copy(global_params)
     g_params = copy.copy(global_params)
     for name, func in [('kind', _kind_func),
@@ -2947,7 +2949,8 @@ def analyzevars(block):
 analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z', re.I)
 
 
-def expr2name(a, block, args=[]):
+def expr2name(a, block, args:List=None):
+    args = args or []
     orig_a = a
     a_is_expr = not analyzeargs_re_1.match(a)
     if a_is_expr:  # `a` is an expression
@@ -3030,7 +3033,8 @@ def _ensure_exprdict(r):
     raise AssertionError(repr(r))
 
 
-def determineexprtype(expr, vars, rules={}):
+def determineexprtype(expr, vars, rules:Dict=None):
+    rules = rules or {}
     if expr in vars:
         return _ensure_exprdict(vars[expr])
     expr = expr.strip()

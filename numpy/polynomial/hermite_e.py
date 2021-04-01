@@ -78,6 +78,7 @@ See also
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
+from typing import List
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -670,7 +671,7 @@ def hermeder(c, m=1, scl=1, axis=0):
     return c
 
 
-def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def hermeint(c, m=1, k:List=None, lbnd=0, scl=1, axis=0):
     """
     Integrate a Hermite_e series.
 
@@ -753,6 +754,7 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 1.83333333,  0.        ,  0.5       ,  0.33333333,  0.25      ]) # may vary
 
     """
+    k = k or []
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)

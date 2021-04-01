@@ -82,6 +82,7 @@ numpy.polynomial
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
+from typing import List
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -701,7 +702,7 @@ def legder(c, m=1, scl=1, axis=0):
     return c
 
 
-def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def legint(c, m=1, k:List=None, lbnd=0, scl=1, axis=0):
     """
     Integrate a Legendre series.
 
@@ -786,6 +787,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ]) # may vary
 
     """
+    k = k or []
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)

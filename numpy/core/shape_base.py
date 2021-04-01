@@ -5,6 +5,7 @@ import functools
 import itertools
 import operator
 import warnings
+from typing import List
 
 from . import numeric as _nx
 from . import overrides
@@ -449,7 +450,7 @@ def _block_format_index(index):
     return 'arrays' + idx_str
 
 
-def _block_check_depths_match(arrays, parent_index=[]):
+def _block_check_depths_match(arrays, parent_index:List=None):
     """
     Recursive function checking that the depths of nested lists in `arrays`
     all match. Mismatch raises a ValueError as described in the block
@@ -480,6 +481,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
         the choice of algorithm used using benchmarking wisdom.
 
     """
+    parent_index = parent_index or []
     if type(arrays) is tuple:
         # not strictly necessary, but saves us from:
         #  - more than one way to do things - no point treating tuples like
