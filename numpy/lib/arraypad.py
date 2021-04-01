@@ -522,6 +522,28 @@ def _pad_dispatcher(array, pad_width, mode=None, **kwargs):
     return (array,)
 
 
+def _pad_to_shape_dispatcher(
+        array,
+        target_shape,
+        append_mode=None,
+        padding_ratio=None,
+        padding_mode=None,
+        **kwargs
+):
+    return (array,)
+
+
+def _pad_to_match_dispatcher(
+        array,
+        target_array,
+        append_mode=None,
+        padding_ratio=None,
+        padding_mode=None,
+        **kwargs
+):
+    return (array,)
+
+
 ###############################################################################
 # Public functions
 
@@ -878,16 +900,17 @@ def pad(array, pad_width, mode='constant', **kwargs):
     return padded
 
 
-def pad_to_size(
+@array_function_dispatch(_pad_to_shape_dispatcher, module='numpy')
+def pad_to_shape(
     array,
     target_shape,
     append_mode="surround",
     padding_ratio=0.5,
     padding_mode="constant",
     **kwargs,
-) -> np.ndarray:
+):
     """
-    Pad an array to a specific size.
+    Pad an array to a specific shape.
 
     Parameters
     ----------
@@ -932,24 +955,24 @@ def pad_to_size(
            [1., 1., 1.],
            [1., 1., 1.]])
 
-    >>> pad_to_size(x, (6, 7)).shape
+    >>> pad_to_shape(x, (6, 7)).shape
     (6, 7)
 
-    >>> pad_to_size(x, (5, 5), append_mode="surround")
+    >>> pad_to_shape(x, (5, 5), append_mode="surround")
     array([[0., 0., 0., 0., 0.],
            [0., 1., 1., 1., 0.],
            [0., 1., 1., 1., 0.],
            [0., 1., 1., 1., 0.],
            [0., 0., 0., 0., 0.]])
 
-    >>> pad_to_size(x, (5, 5), append_mode="after")
+    >>> pad_to_shape(x, (5, 5), append_mode="after")
     array([[1., 1., 1., 0., 0.],
            [1., 1., 1., 0., 0.],
            [1., 1., 1., 0., 0.],
            [0., 0., 0., 0., 0.],
            [0., 0., 0., 0., 0.]])
 
-    >>> pad_to_size(x, (5, 5), append_mode="before")
+    >>> pad_to_shape(x, (5, 5), append_mode="before")
     array([[0., 0., 0., 0., 0.],
            [0., 0., 0., 0., 0.],
            [0., 0., 1., 1., 1.],
@@ -958,14 +981,14 @@ def pad_to_size(
 
     Passing keywords for `pad` also works
 
-    >>> pad_to_size(x, (5, 5), append_mode="surround", padding_mode="edge")
+    >>> pad_to_shape(x, (5, 5), append_mode="surround", padding_mode="edge")
     array([[1., 1., 1., 1., 1.],
            [1., 1., 1., 1., 1.],
            [1., 1., 1., 1., 1.],
            [1., 1., 1., 1., 1.],
            [1., 1., 1., 1., 1.]])
 
-    >>> pad_to_size(x, (5, 5), append_mode="surround", constant_values=(2, 3))
+    >>> pad_to_shape(x, (5, 5), append_mode="surround", constant_values=(2, 3))
     array([[2., 2., 2., 2., 3.],
            [2., 1., 1., 1., 3.],
            [2., 1., 1., 1., 3.],
@@ -975,7 +998,7 @@ def pad_to_size(
     Using `surround` lets you define how many of the new values go before or
     after the input array
 
-    >>> pad_to_size(x, (10, 10), padding_ratio=0.2)
+    >>> pad_to_shape(x, (10, 10), padding_ratio=0.2)
     array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
            [0., 1., 1., 1., 0., 0., 0., 0., 0., 0.],
            [0., 1., 1., 1., 0., 0., 0., 0., 0., 0.],
@@ -989,7 +1012,7 @@ def pad_to_size(
 
     This also works with a value for each dimension
 
-    >>> pad_to_size(x, (10, 10), padding_ratio=(0.7, 0.4))
+    >>> pad_to_shape(x, (10, 10), padding_ratio=(0.7, 0.4))
     array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
            [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
            [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
@@ -1004,7 +1027,7 @@ def pad_to_size(
     Works across multiple dimensions
 
     >>> x = np.ones((3, 3, 3, 3, 3))
-    >>> pad_to_size(x, (4, 5, 6, 7, 8)).shape
+    >>> pad_to_shape(x, (4, 5, 6, 7, 8)).shape
     (4, 5, 6, 7, 8)
     """
     input_shape = array.shape
@@ -1068,6 +1091,7 @@ def pad_to_size(
     return pad(array, pad_width, padding_mode, **kwargs)
 
 
+@array_function_dispatch(_pad_to_match_dispatcher, module='numpy')
 def pad_to_match(
     array: np.ndarray,
     target_array: np.ndarray,
@@ -1075,7 +1099,7 @@ def pad_to_match(
     padding_ratio=0.5,
     padding_mode: str = "constant",
     **kwargs,
-) -> np.ndarray:
+):
     """
     Pads an array to match another array
 
@@ -1122,7 +1146,7 @@ def pad_to_match(
     (6, 7, 8)
 
     """
-    return pad_to_size(
+    return pad_to_shape(
         array,
         target_array.shape,
         append_mode,

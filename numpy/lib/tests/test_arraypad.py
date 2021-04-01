@@ -27,6 +27,11 @@ _all_modes = {
     'wrap': {},
     'empty': {}
 }
+_append_modes = {
+    'before': {},
+    'after': {},
+    'surround': {'padding_ratio': 0.5}
+}
 
 
 class TestAsPairs:
@@ -1362,3 +1367,17 @@ def test_dtype_persistence(dtype, mode):
     arr = np.zeros((3, 2, 1), dtype=dtype)
     result = np.pad(arr, 1, mode=mode)
     assert result.dtype == dtype
+
+
+@pytest.mark.parametrize("append_mode", _append_modes.keys())
+@pytest.mark.parametrize("padding_mode", _all_modes.keys())
+def test_pad_to_shape(append_mode, padding_mode):
+    x = np.ones((3, 3))
+    new_shape = (10, 10)
+    result = np.pad_to_size(
+        x,
+        new_shape,
+        append_mode=append_mode,
+        padding_mode=padding_mode
+    )
+    assert result.shape == new_shape

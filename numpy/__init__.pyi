@@ -512,6 +512,8 @@ newaxis: Any
 numarray: Any
 packbits: Any
 pad: Any
+pad_to_shape: Any
+pad_to_match: Any
 percentile: Any
 piecewise: Any
 place: Any
