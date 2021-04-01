@@ -3579,7 +3579,7 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj;
-    int precision=-1, pad_left=-1, exp_digits=-1;
+    int precision=-1, pad_left=-1, exp_digits=-1, min_digits=-1;
     DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1;
@@ -3593,6 +3593,7 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy),
             "|trim", &trimmode_converter, &trim,
             "|pad_left", &PyArray_PythonPyIntFromInt, &pad_left,
             "|exp_digits", &PyArray_PythonPyIntFromInt, &exp_digits,
+            "|min_digits", &PyArray_PythonPyIntFromInt, &min_digits,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -3605,7 +3606,7 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy),
         return NULL;
     }
 
-    return Dragon4_Scientific(obj, digit_mode, precision, sign, trim,
+    return Dragon4_Scientific(obj, digit_mode, precision, min_digits, sign, trim,
                               pad_left, exp_digits);
 }
 
@@ -3620,7 +3621,7 @@ dragon4_positional(PyObject *NPY_UNUSED(dummy),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj;
-    int precision=-1, pad_left=-1, pad_right=-1;
+    int precision=-1, pad_left=-1, pad_right=-1, min_digits=-1;
     CutoffMode cutoff_mode;
     DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
@@ -3636,6 +3637,7 @@ dragon4_positional(PyObject *NPY_UNUSED(dummy),
             "|trim", &trimmode_converter, &trim,
             "|pad_left", &PyArray_PythonPyIntFromInt, &pad_left,
             "|pad_right", &PyArray_PythonPyIntFromInt, &pad_right,
+            "|min_digits", &PyArray_PythonPyIntFromInt, &min_digits,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -3650,8 +3652,8 @@ dragon4_positional(PyObject *NPY_UNUSED(dummy),
         return NULL;
     }
 
-    return Dragon4_Positional(obj, digit_mode, cutoff_mode, precision, sign,
-                              trim, pad_left, pad_right);
+    return Dragon4_Positional(obj, digit_mode, cutoff_mode, precision,
+                              min_digits, sign, trim, pad_left, pad_right);
 }
 
 static PyObject *
@@ -3670,7 +3672,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                 "not a longfloat");
         return NULL;
     }
-    return Dragon4_Scientific(obj, DigitMode_Unique, precision, 0,
+    return Dragon4_Scientific(obj, DigitMode_Unique, precision, -1, 0,
                               TrimMode_LeaveOneZero, -1, -1);
 }
 
