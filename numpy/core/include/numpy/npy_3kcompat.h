@@ -19,6 +19,7 @@
 
 #include "numpy/npy_common.h"
 #include "numpy/ndarrayobject.h"
+#include "numpy/pythoncapi_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,27 +86,8 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
 #endif
 
-#if PY_VERSION_HEX < 0x030900a4
-    /* Introduced in https://github.com/python/cpython/commit/d2ec81a8c99796b51fb8c49b77a7fe369863226f */
-    #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)), (void)0)
-    /* Introduced in https://github.com/python/cpython/commit/b10dc3e7a11fcdb97e285882eba6da92594f90f9 */
-    #define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)), (void)0)
-    /* Introduced in https://github.com/python/cpython/commit/c86a11221df7e37da389f9c6ce6e47ea22dc44ff */
-    #define Py_SET_REFCNT(obj, refcnt) ((Py_REFCNT(obj) = (refcnt)), (void)0)
-#endif
-
 
 #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
-
-/* Py_SETREF was added in 3.5.2, and only if Py_LIMITED_API is absent */
-#if PY_VERSION_HEX < 0x03050200
-    #define Py_SETREF(op, op2)                      \
-        do {                                        \
-            PyObject *_py_tmp = (PyObject *)(op);   \
-            (op) = (op2);                           \
-            Py_DECREF(_py_tmp);                     \
-        } while (0)
-#endif
 
 /* introduced in https://github.com/python/cpython/commit/a24107b04c1277e3c1105f98aff5bfa3a98b33a0 */
 #if PY_VERSION_HEX < 0x030800A3
