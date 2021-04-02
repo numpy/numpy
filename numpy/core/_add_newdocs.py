@@ -1619,7 +1619,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     --------
     The length of the output might not be numerically stable.
 
-    Another stability issue is due to the internal implementation of `numpy.arange`.
+    Another stability issue is due to the internal implementation of
+    `numpy.arange`.
     The actual step value used to populate the array is
     ``dtype(start + step) - dtype(start)`` and not `step`. Precision loss
     can occur here, due to casting or due to using floating points when
