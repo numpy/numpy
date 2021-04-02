@@ -1,0 +1,4 @@
+The C API now requires ISO C99 support
+--------------------------------------
+The numpy C API now requires a subset of the ISO C99, especially static inline
+functions and C++-style line comments.
