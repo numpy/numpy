@@ -1631,8 +1631,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
       >>> np.arange(-3, 3, 0.5, dtype=int)
       array([-3, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
-    A workaround to these problems is to use `numpy.linspace`, which has a
-    numerically stable implementation.
+    In such cases, the use of `numpy.linspace` should be preferred.
 
     See Also
     --------
