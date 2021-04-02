@@ -96,70 +96,17 @@ The primitive types supported are tied closely to those in C:
 
 
 Since many of these have platform-dependent definitions, a set of fixed-size
-aliases are provided:
+aliases are provided to this site: :doc:`../reference/arrays.scalars`
+under the "Sized aliases" section.
 
-.. list-table::
-    :header-rows: 1
+In the site above, are listed some types of the table above such as `byte`, 
+`short`, `intc` and `int_`. The corresponding unsigned and signed types
+of these are written too.
 
-    * - Numpy type
-      - C type
-      - Description
+'float' and 'complex' aliases are listed, as well. The functionality
+for each of these types are descripted in the table above, as long as
+examples with similarities with ``C types``.
 
-    * - `numpy.int8`
-      - ``int8_t``
-      - Byte (-128 to 127)
-
-    * - `numpy.int16`
-      - ``int16_t``
-      - Integer (-32768 to 32767)
-
-    * - `numpy.int32`
-      - ``int32_t``
-      - Integer (-2147483648 to 2147483647)
-
-    * - `numpy.int64`
-      - ``int64_t``
-      - Integer (-9223372036854775808 to 9223372036854775807)
-
-    * - `numpy.uint8`
-      - ``uint8_t``
-      - Unsigned integer (0 to 255)
-
-    * - `numpy.uint16`
-      - ``uint16_t``
-      - Unsigned integer (0 to 65535)
-
-    * - `numpy.uint32`
-      - ``uint32_t``
-      - Unsigned integer (0 to 4294967295)
-
-    * - `numpy.uint64`
-      - ``uint64_t``
-      - Unsigned integer (0 to 18446744073709551615)
-
-    * - `numpy.intp`
-      - ``intptr_t``
-      - Integer used for indexing, typically the same as ``ssize_t``
-
-    * - `numpy.uintp`
-      - ``uintptr_t``
-      - Integer large enough to hold a pointer
-
-    * - `numpy.float32`
-      - ``float``
-      -
-
-    * - `numpy.float64` / `numpy.float_`
-      - ``double``
-      - Note that this matches the precision of the builtin python `float`.
-
-    * - `numpy.complex64`
-      - ``float complex``
-      - Complex number, represented by two 32-bit floats (real and imaginary components)
-
-    * - `numpy.complex128` / `numpy.complex_`
-      - ``double complex``
-      - Note that this matches the precision of the builtin python `complex`.
 
 
 NumPy numerical types are instances of ``dtype`` (data-type) objects, each
@@ -171,7 +118,7 @@ having unique characteristics.  Once you have imported NumPy using
 
 the dtypes are available as ``np.bool_``, ``np.float32``, etc.
 
-Advanced types, not listed in the table above, are explored in
+Advanced types, not listed in the site above, are explored in
 section :ref:`structured_arrays`.
 
 There are 5 basic numerical types representing booleans (bool), integers (int),
