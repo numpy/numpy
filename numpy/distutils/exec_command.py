@@ -56,7 +56,6 @@ import sys
 import subprocess
 import locale
 import warnings
-from typing import Dict
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
@@ -114,12 +113,11 @@ def get_pythonexe():
         assert os.path.isfile(pythonexe), '%r is not a file' % (pythonexe,)
     return pythonexe
 
-def find_executable(exe, path=None, _cache:Dict=None):
+def find_executable(exe, path=None, _cache={}):
     """Return full path of a executable or None.
 
     Symbolic links are not followed.
     """
-    _cache = _cache or {}
     key = exe, path
     try:
         return _cache[key]
