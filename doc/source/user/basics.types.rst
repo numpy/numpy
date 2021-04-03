@@ -104,7 +104,7 @@ In the site above, are listed some types of the table above such as `byte`,
 of these are written too.
 
 'float' and 'complex' aliases are listed, as well. The functionality
-for each of these types are descripted in the table above, as long as
+for each of these types is descripted in the table above, as well as
 examples with similarities with ``C types``.
 
 
