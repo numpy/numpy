@@ -437,6 +437,41 @@ class TestUfunc:
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
 
+    def test_signature_all_None(self):
+        # signature all None, is an acceptable alternative (since 1.21)
+        # to not providing a signature.
+        res1 = np.add([3], [4], sig=(None, None, None))
+        res2 = np.add([3], [4])
+        assert_array_equal(res1, res2)
+        res1 = np.maximum([3], [4], sig=(None, None, None))
+        res2 = np.maximum([3], [4])
+        assert_array_equal(res1, res2)
+
+        with pytest.raises(TypeError):
+            # special case, that would be deprecated anyway, so errors:
+            np.add(3, 4, signature=(None,))
+
+    def test_signature_dtype_type(self):
+        # Since that will be the normal behaviour (past NumPy 1.21)
+        # we do support the types already:
+        float_dtype = type(np.dtype(np.float64))
+        np.add(3, 4, signature=(float_dtype, float_dtype, None))
+
+    def test_signature_errors(self):
+        with pytest.raises(TypeError,
+                    match="the signature object to ufunc must be a string or"):
+            np.add(3, 4, signature=123.)  # neither a string nor a tuple
+
+        with pytest.raises(ValueError):
+            # bad symbols that do not translate to dtypes
+            np.add(3, 4, signature="%^->#")
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature=(None, "f8"))  # bad length
+
+        with pytest.raises(UnicodeDecodeError):
+            np.add(3, 4, signature=b"\xff\xff->i")
+
     def test_forced_dtype_times(self):
         # Signatures only set the type numbers (not the actual loop dtypes)
         # so using `M` in a signature/dtype should generally work:

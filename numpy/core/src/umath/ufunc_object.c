@@ -4434,7 +4434,6 @@ _check_and_copy_sig_to_signature(
             *out_signature = NULL;
             return -1;
         }
-        Py_INCREF(sig_obj);
         *out_signature = sig_obj;
     }
 
@@ -4511,10 +4510,13 @@ _make_new_typetup(
     if (*out_typetup == NULL) {
         return -1;
     }
+
+    int noncount = 0;
     for (int i = 0; i < nop; i++) {
         PyObject *item;
         if (signature[i] == NULL) {
             item = Py_None;
+            noncount++;
         }
         else {
             if (!signature[i]->legacy || signature[i]->abstract) {
@@ -4533,6 +4535,11 @@ _make_new_typetup(
         }
         Py_INCREF(item);
         PyTuple_SET_ITEM(*out_typetup, i, item);
+    }
+    if (noncount == nop) {
+        /* The whole signature was None, simply ignore type tuple */
+        Py_DECREF(*out_typetup);
+        *out_typetup = NULL;
     }
     return 0;
 }
@@ -4592,7 +4599,6 @@ _get_normalized_typetup(PyUFuncObject *ufunc,
     assert(signature_obj != NULL);
     /* Fill in specified_types from the tuple or string (signature_obj) */
     if (PyTuple_Check(signature_obj)) {
-        int nonecount = 0;
         Py_ssize_t n = PyTuple_GET_SIZE(signature_obj);
         if (n == 1 && nop != 1) {
             /*
@@ -4624,20 +4630,12 @@ _get_normalized_typetup(PyUFuncObject *ufunc,
         for (int i = 0; i < nop; ++i) {
             PyObject *item = PyTuple_GET_ITEM(signature_obj, i);
             if (item == Py_None) {
-                ++nonecount;
+                continue;
             }
-            else {
-                signature[i] = _get_dtype(item);
-                if (signature[i] == NULL) {
-                    goto finish;
-                }
+            signature[i] = _get_dtype(item);
+            if (signature[i] == NULL) {
+                goto finish;
             }
-        }
-        if (nonecount == n) {
-            PyErr_SetString(PyExc_ValueError,
-                    "the type-tuple provided to the ufunc "
-                    "must specify at least one none-None dtype");
-            goto finish;
         }
     }
     else if (PyBytes_Check(signature_obj) || PyUnicode_Check(signature_obj)) {
@@ -4697,7 +4695,7 @@ _get_normalized_typetup(PyUFuncObject *ufunc,
     }
     else {
         PyErr_SetString(PyExc_TypeError,
-                "The signature object to ufunc must be a string or a tuple.");
+                "the signature object to ufunc must be a string or a tuple.");
         goto finish;
     }
     res = _make_new_typetup(nop, signature, out_typetup);

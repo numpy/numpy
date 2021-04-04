@@ -563,12 +563,12 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     continue;
                 }
                 if (!PyArray_DescrCheck(item)) {
-                    /* bad type tuple (maybe not normalized correctly?) */
+                    /* Defer to default resolver (will raise an error there) */
                     descr = NULL;
                     break;
                 }
                 if (descr != NULL && descr != (PyArray_Descr *)item) {
-                    /* descriptor mismatch, probably a bad signature. */
+                    /* Descriptor mismatch: try with default (probable error) */
                     descr = NULL;
                     break;
                 }
