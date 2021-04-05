@@ -2307,12 +2307,7 @@ class TestMeshgrid:
         assert_equal(x[0, :], 0)
         assert_equal(x[1, :], X)
 
-    def test_higher_dimensions(self):
-        a, b, c = np.meshgrid([0], [1, 1], [2, 2])
-        assert_equal(a, [[[0, 0]], [[0, 0]]])
-        assert_equal(b, [[[1, 1]], [[1, 1]]])
-        assert_equal(c, [[[2, 2]], [[2, 2]]])
-
+    def test_nd_shape(self):
         a, b, c, d, e = np.meshgrid(*([0] * i for i in range(1, 6)))
         expected_shape = (2, 1, 3, 4, 5)
         assert_equal(a.shape, expected_shape)
@@ -2320,6 +2315,18 @@ class TestMeshgrid:
         assert_equal(c.shape, expected_shape)
         assert_equal(d.shape, expected_shape)
         assert_equal(e.shape, expected_shape)
+
+    def test_nd_values(self):
+        a, b, c = np.meshgrid([0], [1, 2], [3, 4, 5])
+        assert_equal(a, [[[0, 0, 0]], [[0, 0, 0]]])
+        assert_equal(b, [[[1, 1, 1]], [[2, 2, 2]]])
+        assert_equal(c, [[[3, 4, 5]], [[3, 4, 5]]])
+
+    def test_nd_indexing(self):
+        a, b, c = np.meshgrid([0], [1, 2], [3, 4, 5], indexing='ij')
+        assert_equal(a, [[[0, 0, 0], [0, 0, 0]]])
+        assert_equal(b, [[[1, 1, 1], [2, 2, 2]]])
+        assert_equal(c, [[[3, 4, 5], [3, 4, 5]]])
 
 
 class TestPiecewise:
