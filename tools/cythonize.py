@@ -62,7 +62,7 @@ def process_pyx(fromfile, tofile):
         # The `cython` command need not point to the version installed in the
         # Python running this script, so raise an error to avoid the chance of
         # using the wrong version of Cython.
-        raise OSError('Cython needs to be installed in Python as a module')
+        raise OSError('Cython needs to be installed in Python as a module') from None
     else:
         # check the version, and invoke through python
         from distutils.version import LooseVersion
