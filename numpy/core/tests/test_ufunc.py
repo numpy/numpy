@@ -467,6 +467,12 @@ class TestUfunc:
             np.add(3, 4, signature="%^->#")
 
         with pytest.raises(ValueError):
+            np.add(3, 4, signature=b"ii-i")  # incomplete and byte string
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature="ii>i")  # incomplete string
+
+        with pytest.raises(ValueError):
             np.add(3, 4, signature=(None, "f8"))  # bad length
 
         with pytest.raises(UnicodeDecodeError):
