@@ -121,7 +121,7 @@ cdef object prepare_cffi(bitgen_t *bitgen):
     """
     try:
         import cffi
-    except ImportError:
+    except ImportError as e:
         raise ImportError('cffi cannot be imported.') from e
 
     ffi = cffi.FFI()
