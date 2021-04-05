@@ -10,7 +10,7 @@ from numpy.testing import (
     assert_warns, assert_no_warnings, assert_array_equal,
     assert_array_almost_equal, suppress_warnings)
 
-from numpy.random import Generator, MT19937, SeedSequence
+from numpy.random import Generator, MT19937, SeedSequence, RandomState
 
 random = Generator(MT19937())
 
@@ -142,6 +142,14 @@ class TestMultinomial:
         assert_raises(ValueError, random.multinomial, 10, [[[0], [1]], [[1], [0]]])
         assert_raises(ValueError, random.multinomial, 10, np.array([[0, 1], [1, 0]]))
 
+    def test_multinomial_pvals_float32(self):
+        x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
+                      1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
+        pvals = x / x.sum()
+        random = Generator(MT19937(1432985819))
+        match = r"[\w\s]*pvals array is cast to 64-bit floating"
+        with pytest.raises(ValueError, match=match):
+            random.multinomial(1, pvals)
 
 class TestMultivariateHypergeometric:
 
@@ -1244,9 +1252,9 @@ class TestRandomDist:
     def test_geometric(self):
         random = Generator(MT19937(self.seed))
         actual = random.geometric(.123456789, size=(3, 2))
-        desired = np.array([[ 1, 10],
-                            [ 1, 12],
-                            [ 9, 10]])
+        desired = np.array([[1, 11],
+                            [1, 12],
+                            [11, 17]])
         assert_array_equal(actual, desired)
 
     def test_geometric_exceptions(self):
@@ -1549,9 +1557,9 @@ class TestRandomDist:
     def test_rayleigh(self):
         random = Generator(MT19937(self.seed))
         actual = random.rayleigh(scale=10, size=(3, 2))
-        desired = np.array([[ 4.51734079831581, 15.6802442485758 ],
-                            [ 4.19850651287094, 17.08718809823704],
-                            [14.7907457708776 , 15.85545333419775]])
+        desired = np.array([[4.19494429102666, 16.66920198906598],
+                            [3.67184544902662, 17.74695521962917],
+                            [16.27935397855501, 21.08355560691792]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_rayleigh_0(self):
@@ -1734,6 +1742,26 @@ class TestRandomDist:
         random = Generator(MT19937(self.seed))
         r = random.vonmises(mu=0., kappa=np.nan)
         assert_(np.isnan(r))
+
+    @pytest.mark.parametrize("kappa", [1e4, 1e15])
+    def test_vonmises_large_kappa(self, kappa):
+        random = Generator(MT19937(self.seed))
+        rs = RandomState(random.bit_generator)
+        state = random.bit_generator.state
+
+        random_state_vals = rs.vonmises(0, kappa, size=10)
+        random.bit_generator.state = state
+        gen_vals = random.vonmises(0, kappa, size=10)
+        if kappa < 1e6:
+            assert_allclose(random_state_vals, gen_vals)
+        else:
+            assert np.all(random_state_vals != gen_vals)
+
+    @pytest.mark.parametrize("mu", [-7., -np.pi, -3.1, np.pi, 3.2])
+    @pytest.mark.parametrize("kappa", [1e-9, 1e-6, 1, 1e3, 1e15])
+    def test_vonmises_large_kappa_range(self, mu, kappa):
+        r = random.vonmises(mu, kappa, 50)
+        assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_wald(self):
         random = Generator(MT19937(self.seed))
@@ -2086,7 +2114,11 @@ class TestBroadcast:
     def test_rayleigh(self):
         scale = [1]
         bad_scale = [-1]
-        desired = np.array([0.60439534475066, 0.66120048396359, 1.67873398389499])
+        desired = np.array(
+            [1.1597068009872629,
+             0.6539188836253857,
+             1.1981526554349398]
+        )
 
         random = Generator(MT19937(self.seed))
         actual = random.rayleigh(scale * 3)
@@ -2534,3 +2566,18 @@ def test_ragged_shuffle():
     gen = Generator(MT19937(0))
     assert_no_warnings(gen.shuffle, seq)
     assert seq == [1, [], []]
+
+
+@pytest.mark.parametrize("high", [-2, [-2]])
+@pytest.mark.parametrize("endpoint", [True, False])
+def test_single_arg_integer_exception(high, endpoint):
+    # GH 14333
+    gen = Generator(MT19937(0))
+    msg = 'high < 0' if endpoint else 'high <= 0'
+    with pytest.raises(ValueError, match=msg):
+        gen.integers(high, endpoint=endpoint)
+    msg = 'low > high' if endpoint else 'low >= high'
+    with pytest.raises(ValueError, match=msg):
+        gen.integers(-1, high, endpoint=endpoint)
+    with pytest.raises(ValueError, match=msg):
+        gen.integers([-1], high, endpoint=endpoint)

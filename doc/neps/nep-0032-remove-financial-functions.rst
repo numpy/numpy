@@ -5,7 +5,7 @@ NEP 32 — Remove the financial functions from NumPy
 ==================================================
 
 :Author: Warren Weckesser <warren.weckesser@gmail.com>
-:Status: Accepted
+:Status: Final
 :Type: Standards Track
 :Created: 2019-08-30
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-September/080074.html

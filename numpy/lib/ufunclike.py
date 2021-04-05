@@ -100,7 +100,7 @@ def fix(x, out=None):
 
     See Also
     --------
-    trunc, floor, ceil
+    rint, trunc, floor, ceil
     around : Round to given number of decimals
 
     Examples

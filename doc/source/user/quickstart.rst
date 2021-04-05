@@ -20,8 +20,7 @@ in addition to NumPy.
 
 **Learner profile**
 
-This is a quick overview of
-algebra and arrays in NumPy. It demonstrates how n-dimensional
+This is a quick overview of arrays in NumPy. It demonstrates how n-dimensional
 (:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
 you don't know how to apply common functions to n-dimensional arrays (without
 using for-loops), or if you want to understand axis and shape properties for
@@ -1255,19 +1254,21 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
 
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> def mandelbrot(h, w, maxit=20):
+    >>> def mandelbrot(h, w, maxit=20, r=2):
     ...     """Returns an image of the Mandelbrot fractal of size (h,w)."""
-    ...     y, x = np.ogrid[-1.4:1.4:h*1j, -2:0.8:w*1j]
-    ...     c = x + y * 1j
-    ...     z = c
+    ...     x = np.linspace(-2.5, 1.5, 4*h+1)
+    ...     y = np.linspace(-1.5, 1.5, 3*w+1)
+    ...     A, B = np.meshgrid(x, y)
+    ...     C = A + B*1j
+    ...     z = np.zeros_like(C)
     ...     divtime = maxit + np.zeros(z.shape, dtype=int)
     ...
     ...     for i in range(maxit):
-    ...         z = z**2 + c
-    ...         diverge = z * np.conj(z) > 2**2       # who is diverging
+    ...         z = z**2 + C
+    ...         diverge = abs(z) > r                    # who is diverging
     ...         div_now = diverge & (divtime == maxit)  # who is diverging now
     ...         divtime[div_now] = i                    # note when
-    ...         z[diverge] = 2                          # avoid diverging too much
+    ...         z[diverge] = r                          # avoid diverging too much
     ...
     ...     return divtime
     >>> plt.imshow(mandelbrot(400, 400))
@@ -1391,57 +1392,6 @@ Indexing with strings
 
 See :ref:`structured_arrays`.
 
-Linear Algebra
-==============
-
-Work in progress. Basic linear algebra to be included here.
-
-Simple Array Operations
------------------------
-
-See linalg.py in numpy folder for more.
-
-::
-
-    >>> import numpy as np
-    >>> a = np.array([[1.0, 2.0], [3.0, 4.0]])
-    >>> print(a)
-    [[1. 2.]
-     [3. 4.]]
-    >>> a.transpose()
-    array([[1., 3.],
-           [2., 4.]])
-    >>> np.linalg.inv(a)
-    array([[-2. ,  1. ],
-           [ 1.5, -0.5]])
-    >>> u = np.eye(2)  # unit 2x2 matrix; "eye" represents "I"
-    >>> u
-    array([[1., 0.],
-           [0., 1.]])
-    >>> j = np.array([[0.0, -1.0], [1.0, 0.0]])
-    >>> j @ j  # matrix product
-    array([[-1.,  0.],
-           [ 0., -1.]])
-    >>> np.trace(u)  # trace
-    2.0
-    >>> y = np.array([[5.], [7.]])
-    >>> np.linalg.solve(a, y)
-    array([[-3.],
-           [ 4.]])
-    >>> np.linalg.eig(j)
-    (array([0.+1.j, 0.-1.j]), array([[0.70710678+0.j        , 0.70710678-0.j        ],
-           [0.        -0.70710678j, 0.        +0.70710678j]]))
-
-::
-
-    Parameters:
-        square matrix
-    Returns
-        The eigenvalues, each repeated according to its multiplicity.
-        The normalized (unit "length") eigenvectors, such that the
-        column ``v[:, i]`` is the eigenvector corresponding to the
-        eigenvalue ``w[i]`` .
-
 Tricks and Tips
 ===============
 
@@ -1516,10 +1466,12 @@ that ``pylab.hist`` plots the histogram automatically, while
     >>> mu, sigma = 2, 0.5
     >>> v = rg.normal(mu, sigma, 10000)
     >>> # Plot a normalized histogram with 50 bins
-    >>> plt.hist(v, bins=50, density=1)       # matplotlib version (plot)
+    >>> plt.hist(v, bins=50, density=True)       # matplotlib version (plot)
     >>> # Compute the histogram with numpy and then plot it
     >>> (n, bins) = np.histogram(v, bins=50, density=True)  # NumPy version (no plot)
     >>> plt.plot(.5 * (bins[1:] + bins[:-1]), n)
+
+With Matplotlib >=3.4 you can also use ``plt.stairs(n, bins)``.
 
 
 Further reading
@@ -1530,3 +1482,4 @@ Further reading
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
+-  :doc:`tutorial-svd`

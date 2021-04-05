@@ -236,6 +236,12 @@ typedef enum {
         NPY_RAISE=2
 } NPY_CLIPMODE;
 
+typedef enum {
+        NPY_VALID=0,
+        NPY_SAME=1,
+        NPY_FULL=2
+} NPY_CORRELATEMODE;
+
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
 
@@ -1920,6 +1926,11 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         default_descr_function *default_descr;
         common_dtype_function *common_dtype;
         common_instance_function *common_instance;
+        /*
+         * The casting implementation (ArrayMethod) to convert between two
+         * instances of this DType, stored explicitly for fast access:
+         */
+        PyObject *within_dtype_castingimpl;
         /*
          * Dictionary of ArrayMethods representing most possible casts
          * (structured and object are exceptions).

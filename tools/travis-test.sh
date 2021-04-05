@@ -42,7 +42,7 @@ setup_base()
   # Travis typically has a stable numpy release pre-installed, and if we
   # don't remove it, then we can accidentally end up e.g. running old
   # test modules that were in the stable release but have been removed
-  # from master. (See gh-2765, gh-2768.)  Using 'pip install' also has
+  # from main. (See gh-2765, gh-2768.)  Using 'pip install' also has
   # the advantage that it tests that numpy is 'pip install' compatible,
   # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then

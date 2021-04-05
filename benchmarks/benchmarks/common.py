@@ -21,7 +21,7 @@ TYPES1 = [
     'int64', 'float64',  'complex64',
     'longfloat', 'complex128',
 ]
-if 'complex256' in numpy.typeDict:
+if 'complex256' in numpy.sctypeDict:
     TYPES1.append('complex256')
 
 

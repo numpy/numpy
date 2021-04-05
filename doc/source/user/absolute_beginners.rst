@@ -871,10 +871,11 @@ Creating matrices
 You can pass Python lists of lists to create a 2-D array (or "matrix") to
 represent them in NumPy. ::
 
-  >>> data = np.array([[1, 2], [3, 4]])
+  >>> data = np.array([[1, 2], [3, 4], [5, 6]])
   >>> data
   array([[1, 2],
-         [3, 4]])
+         [3, 4],
+         [5, 6]])
 
 .. image:: images/np_create_matrix.png
 
@@ -883,7 +884,8 @@ Indexing and slicing operations are useful when you're manipulating matrices::
   >>> data[0, 1]
   2
   >>> data[1:3]
-  array([[3, 4]])
+  array([[3, 4],
+         [5, 6]])
   >>> data[0:2, 0]
   array([1, 3])
 
@@ -892,11 +894,11 @@ Indexing and slicing operations are useful when you're manipulating matrices::
 You can aggregate matrices the same way you aggregated vectors::
 
   >>> data.max()
-  4
+  6
   >>> data.min()
   1
   >>> data.sum()
-  10
+  21
 
 .. image:: images/np_matrix_aggregation.png
 
@@ -904,9 +906,9 @@ You can aggregate all the values in a matrix and you can aggregate them across
 columns or rows using the ``axis`` parameter::
 
   >>> data.max(axis=0)
-  array([3, 4])
+  array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4])
+  array([2, 4, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
@@ -1672,9 +1674,8 @@ For example, you can plot a 1D array like this::
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
-  >>> from mpl_toolkits.mplot3d import Axes3D
   >>> fig = plt.figure()
-  >>> ax = Axes3D(fig)
+  >>> ax = fig.add_subplot(projection='3d')
   >>> X = np.arange(-5, 5, 0.15)
   >>> Y = np.arange(-5, 5, 0.15)
   >>> X, Y = np.meshgrid(X, Y)

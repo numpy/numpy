@@ -35,7 +35,7 @@ Record arrays allow us to access fields as properties::
 """
 import os
 import warnings
-from collections import Counter, OrderedDict
+from collections import Counter
 from contextlib import nullcontext
 
 from . import numeric as sb
@@ -73,25 +73,14 @@ _byteorderconv = {'b':'>',
 # of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  '
 # are equally allowed
 
-numfmt = nt.typeDict
-
-# taken from OrderedDict recipes in the Python documentation
-# https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes
-class _OrderedCounter(Counter, OrderedDict):
-    """Counter that remembers the order elements are first encountered"""
-
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
-
-    def __reduce__(self):
-        return self.__class__, (OrderedDict(self),)
+numfmt = nt.sctypeDict
 
 
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     return [
         item
-        for item, counts in _OrderedCounter(list).items()
+        for item, counts in Counter(list).items()
         if counts > 1
     ]
 
@@ -244,12 +233,12 @@ class record(nt.void):
     def __repr__(self):
         if get_printoptions()['legacy'] == '1.13':
             return self.__str__()
-        return super(record, self).__repr__()
+        return super().__repr__()
 
     def __str__(self):
         if get_printoptions()['legacy'] == '1.13':
             return str(self.item())
-        return super(record, self).__str__()
+        return super().__str__()
 
     def __getattribute__(self, attr):
         if attr in ('setfield', 'getfield', 'dtype'):
@@ -518,7 +507,7 @@ class recarray(ndarray):
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
-        obj = super(recarray, self).__getitem__(indx)
+        obj = super().__getitem__(indx)
 
         # copy behavior of getattr, except that here
         # we might also be returning a single element

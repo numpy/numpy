@@ -63,15 +63,61 @@ array_length(PyArrayObject *self)
 
 /* -------------------------------------------------------------- */
 
+
+/*
+ * Helper for `PyArray_MapIterSwapAxes` (and related), see its documentation.
+ */
+static void
+_get_transpose(int fancy_ndim, int consec, int ndim, int getmap, npy_intp *dims)
+{
+    /*
+     * For getting the array the tuple for transpose is
+     * (n1,...,n1+n2-1,0,...,n1-1,n1+n2,...,n3-1)
+     * n1 is the number of dimensions of the broadcast index array
+     * n2 is the number of dimensions skipped at the start
+     * n3 is the number of dimensions of the result
+     */
+
+    /*
+     * For setting the array the tuple for transpose is
+     * (n2,...,n1+n2-1,0,...,n2-1,n1+n2,...n3-1)
+     */
+    int n1 = fancy_ndim;
+    int n2 = consec;  /* axes to insert at */
+    int n3 = ndim;
+
+    /* use n1 as the boundary if getting but n2 if setting */
+    int bnd = getmap ? n1 : n2;
+    int val = bnd;
+    int i = 0;
+    while (val < n1 + n2) {
+        dims[i++] = val++;
+    }
+    val = 0;
+    while (val < bnd) {
+        dims[i++] = val++;
+    }
+    val = n1 + n2;
+    while (val < n3) {
+        dims[i++] = val++;
+    }
+}
+
+
 /*NUMPY_API
  *
+ * Swap the axes to or from their inserted form. MapIter always puts the
+ * advanced (array) indices first in the iteration. But if they are
+ * consecutive, will insert/transpose them back before returning.
+ * This is stored as `mit->consec != 0` (the place where they are inserted)
+ * For assignments, the opposite happens: The values to be assigned are
+ * transposed (getmap=1 instead of getmap=0). `getmap=0` and `getmap=1`
+ * undo the other operation.
  */
 NPY_NO_EXPORT void
 PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
 {
     PyObject *new;
-    int n1, n2, n3, val, bnd;
-    int i;
     PyArray_Dims permute;
     npy_intp d[NPY_MAXDIMS];
     PyArrayObject *arr;
@@ -85,10 +131,10 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
      */
     arr = *ret;
     if (PyArray_NDIM(arr) != mit->nd) {
-        for (i = 1; i <= PyArray_NDIM(arr); i++) {
+        for (int i = 1; i <= PyArray_NDIM(arr); i++) {
             permute.ptr[mit->nd-i] = PyArray_DIMS(arr)[PyArray_NDIM(arr)-i];
         }
-        for (i = 0; i < mit->nd-PyArray_NDIM(arr); i++) {
+        for (int i = 0; i < mit->nd-PyArray_NDIM(arr); i++) {
             permute.ptr[i] = 1;
         }
         new = PyArray_Newshape(arr, &permute, NPY_ANYORDER);
@@ -99,44 +145,8 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
         }
     }
 
-    /*
-     * Setting and getting need to have different permutations.
-     * On the get we are permuting the returned object, but on
-     * setting we are permuting the object-to-be-set.
-     * The set permutation is the inverse of the get permutation.
-     */
+    _get_transpose(mit->nd_fancy, mit->consec, mit->nd, getmap, permute.ptr);
 
-    /*
-     * For getting the array the tuple for transpose is
-     * (n1,...,n1+n2-1,0,...,n1-1,n1+n2,...,n3-1)
-     * n1 is the number of dimensions of the broadcast index array
-     * n2 is the number of dimensions skipped at the start
-     * n3 is the number of dimensions of the result
-     */
-
-    /*
-     * For setting the array the tuple for transpose is
-     * (n2,...,n1+n2-1,0,...,n2-1,n1+n2,...n3-1)
-     */
-    n1 = mit->nd_fancy;
-    n2 = mit->consec; /* axes to insert at */
-    n3 = mit->nd;
-
-    /* use n1 as the boundary if getting but n2 if setting */
-    bnd = getmap ? n1 : n2;
-    val = bnd;
-    i = 0;
-    while (val < n1 + n2) {
-        permute.ptr[i++] = val++;
-    }
-    val = 0;
-    while (val < bnd) {
-        permute.ptr[i++] = val++;
-    }
-    val = n1 + n2;
-    while (val < n3) {
-        permute.ptr[i++] = val++;
-    }
     new = PyArray_Transpose(*ret, &permute);
     Py_DECREF(*ret);
     *ret = (PyArrayObject *)new;
@@ -1037,8 +1047,6 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *op[2] = {self, bmask};
         npy_uint32 flags, op_flags[2];
         npy_intp fixed_strides[3];
-        PyArray_StridedUnaryOp *stransfer = NULL;
-        NpyAuxData *transferdata = NULL;
 
         NpyIter_IterNextFunc *iternext;
         npy_intp innersize, *innerstrides;
@@ -1063,12 +1071,13 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        NPY_cast_info cast_info;
         if (PyArray_GetDTypeTransferFunction(
                         IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
-                        &stransfer, &transferdata,
+                        &cast_info,
                         &needs_api) != NPY_SUCCEED) {
             Py_DECREF(ret);
             NpyIter_Deallocate(iter);
@@ -1080,7 +1089,7 @@ array_boolean_subscript(PyArrayObject *self,
         if (iternext == NULL) {
             Py_DECREF(ret);
             NpyIter_Deallocate(iter);
-            NPY_AUXDATA_FREE(transferdata);
+            NPY_cast_info_xfree(&cast_info);
             return NULL;
         }
 
@@ -1091,6 +1100,8 @@ array_boolean_subscript(PyArrayObject *self,
 
         self_stride = innerstrides[0];
         bmask_stride = innerstrides[1];
+        npy_intp strides[2] = {self_stride, itemsize};
+
         int res = 0;
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
@@ -1106,8 +1117,9 @@ array_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                res = stransfer(ret_data, itemsize, self_data, self_stride,
-                                subloopsize, itemsize, transferdata);
+                char *args[2] = {self_data, ret_data};
+                res = cast_info.func(&cast_info.context,
+                        args, &subloopsize, strides, cast_info.auxdata);
                 if (res < 0) {
                     break;
                 }
@@ -1122,7 +1134,7 @@ array_boolean_subscript(PyArrayObject *self,
         if (!NpyIter_Deallocate(iter)) {
             res = -1;
         }
-        NPY_AUXDATA_FREE(transferdata);
+        NPY_cast_info_xfree(&cast_info);
         if (res < 0) {
             /* Should be practically impossible, since there is no cast */
             Py_DECREF(ret);
@@ -1164,7 +1176,7 @@ NPY_NO_EXPORT int
 array_assign_boolean_subscript(PyArrayObject *self,
                     PyArrayObject *bmask, PyArrayObject *v, NPY_ORDER order)
 {
-    npy_intp size, src_itemsize, v_stride;
+    npy_intp size, v_stride;
     char *v_data;
     int needs_api = 0;
     npy_intp bmask_size;
@@ -1216,7 +1228,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
         v_stride = 0;
     }
 
-    src_itemsize = PyArray_DESCR(v)->elsize;
     v_data = PyArray_DATA(v);
 
     /* Create an iterator for the data */
@@ -1231,8 +1242,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
         npy_intp innersize, *innerstrides;
         char **dataptrs;
 
-        PyArray_StridedUnaryOp *stransfer = NULL;
-        NpyAuxData *transferdata = NULL;
         npy_intp self_stride, bmask_stride, subloopsize;
         char *self_data;
         char *bmask_data;
@@ -1264,13 +1273,14 @@ array_assign_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        NPY_cast_info cast_info;
         if (PyArray_GetDTypeTransferFunction(
                  IsUintAligned(self) && IsAligned(self) &&
                         IsUintAligned(v) && IsAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
-                        &stransfer, &transferdata,
+                        &cast_info,
                         &needs_api) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
             return -1;
@@ -1279,6 +1289,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
         if (!needs_api) {
             NPY_BEGIN_THREADS_NDITER(iter);
         }
+
+        npy_intp strides[2] = {v_stride, self_stride};
 
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
@@ -1294,8 +1306,10 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                res = stransfer(self_data, self_stride, v_data, v_stride,
-                        subloopsize, src_itemsize, transferdata);
+
+                char *args[2] = {v_data, self_data};
+                res = cast_info.func(&cast_info.context,
+                        args, &subloopsize, strides, cast_info.auxdata);
                 if (res < 0) {
                     break;
                 }
@@ -1309,7 +1323,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
             NPY_END_THREADS;
         }
 
-        NPY_AUXDATA_FREE(transferdata);
+        NPY_cast_info_xfree(&cast_info);
         if (!NpyIter_Deallocate(iter)) {
             res = -1;
         }
@@ -3200,12 +3214,19 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     int extra_ndim = PyArray_NDIM(original_extra_op);
     npy_intp *extra_dims = PyArray_DIMS(original_extra_op);
-    PyObject *shape1 = convert_shape_to_string(extra_ndim, extra_dims, " ");
+    PyObject *shape1 = convert_shape_to_string(extra_ndim, extra_dims, "");
     if (shape1 == NULL) {
         goto finish;
     }
 
-    PyObject *shape2 = convert_shape_to_string(mit->nd, mit->dimensions, "");
+    /* Unscramble the iterator shape for reporting when `mit->consec` is used */
+    npy_intp transposed[NPY_MAXDIMS];
+    _get_transpose(mit->nd_fancy, mit->consec, mit->nd, 1, transposed);
+    for (i = 0; i < mit->nd; i++) {
+        transposed[i] = mit->dimensions[transposed[i]];
+    }
+
+    PyObject *shape2 = convert_shape_to_string(mit->nd, transposed, "");
     if (shape2 == NULL) {
         Py_DECREF(shape1);
         goto finish;

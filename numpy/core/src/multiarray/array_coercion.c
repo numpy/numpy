@@ -452,18 +452,21 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 
     int res = 0;
     int needs_api = 0;
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *transferdata;
+    NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(
-            0, 0, 0, tmp_descr, descr, 0, &stransfer, &transferdata,
+            0, 0, 0, tmp_descr, descr, 0, &cast_info,
             &needs_api) == NPY_FAIL) {
         res = -1;
         goto finish;
     }
-    if (stransfer(item, 0, data, 0, 1, tmp_descr->elsize, transferdata) < 0) {
+    char *args[2] = {data, item};
+    const npy_intp strides[2] = {0, 0};
+    const npy_intp length = 1;
+    if (cast_info.func(&cast_info.context,
+            args, &length, strides, cast_info.auxdata) < 0) {
         res = -1;
     }
-    NPY_AUXDATA_FREE(transferdata);
+    NPY_cast_info_xfree(&cast_info);
 
   finish:
     if (PyDataType_REFCHK(tmp_descr)) {
@@ -745,6 +748,7 @@ find_descriptor_from_array(
                     NULL, DType, &flags, item_DType) < 0) {
                 Py_DECREF(iter);
                 Py_DECREF(elem);
+                Py_XDECREF(*out_descr);
                 Py_XDECREF(item_DType);
                 return -1;
             }

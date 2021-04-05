@@ -207,7 +207,7 @@ class TestFlags:
             a[2] = 10
             # only warn once
             assert_(len(w) == 1)
-    
+
     @pytest.mark.parametrize(["flag", "flag_value", "writeable"],
             [("writeable", True, True),
              # Delete _warn_on_write after deprecation and simplify
@@ -484,6 +484,33 @@ class TestArrayConstruction:
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
+    @pytest.mark.parametrize("func",
+            [np.array,
+             np.asarray,
+             np.asanyarray,
+             np.ascontiguousarray,
+             np.asfortranarray])
+    def test_bad_arguments_error(self, func):
+        with pytest.raises(TypeError):
+            func(3, dtype="bad dtype")
+        with pytest.raises(TypeError):
+            func()  # missing arguments
+        with pytest.raises(TypeError):
+            func(1, 2, 3, 4, 5, 6, 7, 8)  # too many arguments
+
+    @pytest.mark.parametrize("func",
+            [np.array,
+             np.asarray,
+             np.asanyarray,
+             np.ascontiguousarray,
+             np.asfortranarray])
+    def test_array_as_keyword(self, func):
+        # This should likely be made positional only, but do not change
+        # the name accidentally.
+        if func is np.array:
+            func(object=3)
+        else:
+            func(a=3)
 
 class TestAssignment:
     def test_assignment_broadcasting(self):
@@ -1418,11 +1445,11 @@ class TestStructured:
         a = np.array([(1,2)], dtype=[('a', 'i4'), ('b', 'i4')])
         a[['a', 'b']] = a[['b', 'a']]
         assert_equal(a[0].item(), (2,1))
-    
+
     def test_scalar_assignment(self):
         with assert_raises(ValueError):
-            arr = np.arange(25).reshape(5, 5)                                                                               
-            arr.itemset(3)  
+            arr = np.arange(25).reshape(5, 5)
+            arr.itemset(3)
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
@@ -3389,6 +3416,15 @@ class TestMethods:
         a = np.array([1-1j, 1, 2.0, 'f'], object)
         assert_raises(TypeError, lambda: a.conj())
         assert_raises(TypeError, lambda: a.conjugate())
+
+    def test_conjugate_out(self):
+        # Minimal test for the out argument being passed on correctly
+        # NOTE: The ability to pass `out` is currently undocumented!
+        a = np.array([1-1j, 1+1j, 23+23.0j])
+        out = np.empty_like(a)
+        res = a.conjugate(out)
+        assert res is out
+        assert_array_equal(out, a.conjugate())
 
     def test__complex__(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
@@ -5720,6 +5756,15 @@ class TestStats:
                             np.array(_res))
             assert_allclose(np.mean(a, axis=_ax, where=_wh),
                             np.array(_res))
+
+        a3d = np.arange(16).reshape((2, 2, 4))
+        _wh_partial = np.array([False, True, True, False])
+        _res = [[1.5, 5.5], [9.5, 13.5]]
+        assert_allclose(a3d.mean(axis=2, where=_wh_partial),
+                        np.array(_res))
+        assert_allclose(np.mean(a3d, axis=2, where=_wh_partial),
+                        np.array(_res))
+
         with pytest.warns(RuntimeWarning) as w:
             assert_allclose(a.mean(axis=1, where=wh_partial),
                             np.array([np.nan, 5.5, 9.5, np.nan]))
@@ -5795,6 +5840,15 @@ class TestStats:
                             np.array(_res))
             assert_allclose(np.var(a, axis=_ax, where=_wh),
                             np.array(_res))
+
+        a3d = np.arange(16).reshape((2, 2, 4))
+        _wh_partial = np.array([False, True, True, False])
+        _res = [[0.25, 0.25], [0.25, 0.25]]
+        assert_allclose(a3d.var(axis=2, where=_wh_partial),
+                        np.array(_res))
+        assert_allclose(np.var(a3d, axis=2, where=_wh_partial),
+                        np.array(_res))
+
         assert_allclose(np.var(a, axis=1, where=wh_full),
                         np.var(a[wh_full].reshape((5, 3)), axis=1))
         assert_allclose(np.var(a, axis=0, where=wh_partial),
@@ -5833,6 +5887,14 @@ class TestStats:
         for _ax, _wh, _res in _cases:
             assert_allclose(a.std(axis=_ax, where=_wh), _res)
             assert_allclose(np.std(a, axis=_ax, where=_wh), _res)
+
+        a3d = np.arange(16).reshape((2, 2, 4))
+        _wh_partial = np.array([False, True, True, False])
+        _res = [[0.5, 0.5], [0.5, 0.5]]
+        assert_allclose(a3d.std(axis=2, where=_wh_partial),
+                        np.array(_res))
+        assert_allclose(np.std(a3d, axis=2, where=_wh_partial),
+                        np.array(_res))
 
         assert_allclose(a.std(axis=1, where=whf),
                         np.std(a[whf].reshape((5,3)), axis=1))
@@ -7214,7 +7276,7 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x)
 
     def test_roundtrip_single_types(self):
-        for typ in np.typeDict.values():
+        for typ in np.sctypeDict.values():
             dtype = np.dtype(typ)
 
             if dtype.char in 'Mm':
@@ -7460,7 +7522,7 @@ class TestNewBufferProtocol:
             memoryview(arr)
 
     def test_max_dims(self):
-        a = np.empty((1,) * 32)
+        a = np.ones((1,) * 32)
         self._check_roundtrip(a)
 
     @pytest.mark.slow

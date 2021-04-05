@@ -123,8 +123,9 @@ DECLDIR RAND_INT_TYPE random_negative_binomial(bitgen_t *bitgen_state, double n,
 DECLDIR int64_t random_binomial(bitgen_t *bitgen_state, double p,
                                 int64_t n, binomial_t *binomial);
 
-DECLDIR RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p);
-DECLDIR RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p);
+DECLDIR int64_t random_logseries(bitgen_t *bitgen_state, double p);
+DECLDIR int64_t random_geometric(bitgen_t *bitgen_state, double p);
+DECLDIR RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a);
 DECLDIR int64_t random_hypergeometric(bitgen_t *bitgen_state,
                                       int64_t good, int64_t bad, int64_t sample);

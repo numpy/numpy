@@ -10,7 +10,8 @@ from . import multiarray
 from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
-    WRAP, arange, array, broadcast, can_cast, compare_chararrays,
+    WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
+    asfortranarray, broadcast, can_cast, compare_chararrays,
     concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
     inner, lexsort, matmul, may_share_memory,
@@ -26,7 +27,6 @@ from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._exceptions import TooHardError, AxisError
-from ._asarray import asarray, asanyarray
 from ._ufunc_config import errstate
 
 bitwise_not = invert
@@ -39,7 +39,8 @@ array_function_dispatch = functools.partial(
 
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
-    'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
+    'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
+    'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'where',
     'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
     'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
@@ -662,17 +663,6 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
-_mode_from_name_dict = {'v': 0,
-                        's': 1,
-                        'f': 2}
-
-
-def _mode_from_name(mode):
-    if isinstance(mode, str):
-        return _mode_from_name_dict[mode.lower()[0]]
-    return mode
-
-
 def _correlate_dispatcher(a, v, mode=None):
     return (a, v)
 
@@ -748,7 +738,6 @@ def correlate(a, v, mode='valid'):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    mode = _mode_from_name(mode)
     return multiarray.correlate2(a, v, mode)
 
 
@@ -852,7 +841,6 @@ def convolve(a, v, mode='full'):
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
-    mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
 
@@ -2362,7 +2350,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     #       Although, the default tolerances are unlikely to be useful
     if y.dtype.kind != "m":
         dt = multiarray.result_type(y, 1.)
-        y = array(y, dtype=dt, copy=False, subok=True)
+        y = asanyarray(y, dtype=dt)
 
     xfin = isfinite(x)
     yfin = isfinite(y)

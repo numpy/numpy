@@ -51,7 +51,6 @@ cdef extern from "numpy/random/distributions.h":
     void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     int64_t random_positive_int(bitgen_t *bitgen_state) nogil
     double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
-    double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
     double random_laplace(bitgen_t *bitgen_state, double loc, double scale) nogil
     double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) nogil
     double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
@@ -80,6 +79,7 @@ cdef extern from "include/legacy-distributions.h":
     double legacy_gamma(aug_bitgen_t *aug_state, double shape, double scale) nogil
     double legacy_power(aug_bitgen_t *aug_state, double a) nogil
     double legacy_chisquare(aug_bitgen_t *aug_state, double df) nogil
+    double legacy_rayleigh(aug_bitgen_t *aug_state, double mode) nogil
     double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
                                     double nonc) nogil
     double legacy_noncentral_f(aug_bitgen_t *aug_state, double dfnum, double dfden,
@@ -90,7 +90,7 @@ cdef extern from "include/legacy-distributions.h":
                                    int64_t n, binomial_t *binomial) nogil
     int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) nogil
     int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad, int64_t sample) nogil
-    int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t legacy_logseries(bitgen_t *bitgen_state, double p) nogil
     int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) nogil
     int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) nogil
     int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) nogil
@@ -100,6 +100,7 @@ cdef extern from "include/legacy-distributions.h":
     double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) nogil
     double legacy_exponential(aug_bitgen_t *aug_state, double scale) nogil
     double legacy_power(aug_bitgen_t *state, double a) nogil
+    double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
 
 np.import_array()
 
@@ -784,7 +785,7 @@ cdef class RandomState:
 
         Returns
         -------
-        out : str
+        out : bytes
             String of length `length`.
 
         See Also
@@ -852,6 +853,10 @@ cdef class RandomState:
 
         Notes
         -----
+        Setting user-specified probabilities through ``p`` uses a more general but less
+        efficient sampler than the default. The general sampler produces a different sample
+        than the optimized sampler even if each element of ``p`` is 1 / len(a).
+
         Sampling random rows from a 2-D array is not possible with this function,
         but is possible with `Generator.choice` through its ``axis`` keyword.
 
@@ -2147,33 +2152,45 @@ cdef class RandomState:
         ...                    7515, 8230, 8770])
 
         Does their energy intake deviate systematically from the recommended
-        value of 7725 kJ?
+        value of 7725 kJ? Our null hypothesis will be the absence of deviation,
+        and the alternate hypothesis will be the presence of an effect that could be
+        either positive or negative, hence making our test 2-tailed. 
 
-        We have 10 degrees of freedom, so is the sample mean within 95% of the
-        recommended value?
+        Because we are estimating the mean and we have N=11 values in our sample,
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
+        compute the t statistic using the empirical mean and empirical standard 
+        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        empirical standard deviation on an unbiased estimate of the variance (note:
+        the final estimate is not unbiased due to the concave nature of the square 
+        root).
 
-        >>> s = np.random.standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
         1142.1232221373727
-
-        Calculate the t statistic, setting the ddof parameter to the unbiased
-        value so the divisor in the standard deviation will be degrees of
-        freedom, N-1.
-
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
+        >>> t
+        -2.8207540608310198
+
+        We draw 1000000 samples from Student's t distribution with the adequate
+        degrees of freedom.
+
         >>> import matplotlib.pyplot as plt
+        >>> s = np.random.standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        For a one-sided t-test, how far out in the distribution does the t
-        statistic appear?
+        Does our t statistic land in one of the two critical regions found at 
+        both tails of the distribution?
 
-        >>> np.sum(s<t) / float(len(s))
-        0.0090699999999999999  #random
+        >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
+        0.018318  #random < 0.05, statistic is in critical region
 
-        So the p-value is about 0.009, which says the null hypothesis has a
-        probability of about 99% of being true.
+        The probability value for this 2-tailed test is about 1.83%, which is 
+        lower than the 5% pre-determined significance threshold. 
+
+        Therefore, the probability of observing values as extreme as our intake
+        conditionally on the null hypothesis being true is too low, and we reject 
+        the null hypothesis of no deviation. 
 
         """
         return cont(&legacy_standard_t, &self._aug_state, size, self.lock, 1,
@@ -2265,7 +2282,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&random_vonmises, &self._bitgen, size, self.lock, 2,
+        return cont(&legacy_vonmises, &self._bitgen, size, self.lock, 2,
                     mu, 'mu', CONS_NONE,
                     kappa, 'kappa', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -3070,7 +3087,7 @@ cdef class RandomState:
         0.087300000000000003 # random
 
         """
-        return cont(&random_rayleigh, &self._bitgen, size, self.lock, 1,
+        return cont(&legacy_rayleigh, &self._bitgen, size, self.lock, 1,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
@@ -3512,8 +3529,9 @@ cdef class RandomState:
         Parameters
         ----------
         lam : float or array_like of floats
-            Expectation of interval, must be >= 0. A sequence of expectation
-            intervals must be broadcastable over the requested size.
+            Expected number of events occurring in a fixed-time interval,
+            must be >= 0. A sequence must be broadcastable over the requested
+            size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3937,7 +3955,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        out = disc(&legacy_random_logseries, &self._bitgen, size, self.lock, 1, 0,
+        out = disc(&legacy_logseries, &self._bitgen, size, self.lock, 1, 0,
                    p, 'p', CONS_BOUNDED_0_1,
                    0.0, '', CONS_NONE,
                    0.0, '', CONS_NONE)
@@ -4215,7 +4233,20 @@ cdef class RandomState:
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
-            raise ValueError("sum(pvals[:-1]) > 1.0")
+            # When floating, but not float dtype, and close, improve the error
+            # 1.0001 works for float16 and float32
+            if (isinstance(pvals, np.ndarray)
+                    and np.issubdtype(pvals.dtype, np.floating)
+                    and pvals.dtype != float
+                    and pvals.sum() < 1.0001):
+                msg = ("sum(pvals[:-1].astype(np.float64)) > 1.0. The pvals "
+                       "array is cast to 64-bit floating point prior to "
+                       "checking the sum. Precision changes when casting may "
+                       "cause problems even if the sum of the original pvals "
+                       "is valid.")
+            else:
+                msg = "sum(pvals[:-1]) > 1.0"
+            raise ValueError(msg)
 
         if size is None:
             shape = (d,)
@@ -4462,6 +4493,17 @@ cdef class RandomState:
                 # shuffling is a no-op
                 return
 
+            if x.ndim == 1 and x.dtype.type is np.object_:
+                warnings.warn(
+                        "Shuffling a one dimensional array subclass containing "
+                        "objects gives incorrect results for most array "
+                        "subclasses.  "
+                        "Please us the new random number API instead: "
+                        "https://numpy.org/doc/stable/reference/random/index.html\n"
+                        "The new API fixes this issue. This version will not "
+                        "be fixed due to stability guarantees of the API.",
+                        UserWarning, stacklevel=1)  # Cython adds no stacklevel
+
             buf = np.empty_like(x[0, ...])
             with self.lock:
                 for i in reversed(range(1, n)):
@@ -4476,11 +4518,12 @@ cdef class RandomState:
             if not isinstance(x, Sequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
-                    "`x` isn't a recognized object; `shuffle` is not guaranteed "
-                    "to behave correctly. E.g., non-numpy array/tensor objects "
-                    "with view semantics may contain duplicates after shuffling.",
-                    UserWarning, stacklevel=2
-                )
+                    f"you are shuffling a '{type(x).__name__}' object "
+                    "which is not a subclass of 'Sequence'; "
+                    "`shuffle` is not guaranteed to behave correctly. "
+                    "E.g., non-numpy array/tensor objects with view semantics "
+                    "may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=1)  # Cython does not add a level
 
             with self.lock:
                 for i in reversed(range(1, n)):

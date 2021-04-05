@@ -118,9 +118,9 @@ example, consider a simple linear fit to the following data:
 
 .. ipython:: python
 
-    rg = np.random.default_rng()
+    rng = np.random.default_rng()
     x = np.arange(10)
-    y = np.arange(10) + rg.standard_normal(10)
+    y = np.arange(10) + rng.standard_normal(10)
 
 With the legacy polynomial module, a linear fit (i.e. polynomial of degree 1)
 could be applied to these data with `~numpy.polyfit`:

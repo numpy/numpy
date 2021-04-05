@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import List
 
 from numpy.random._generator import Generator as Generator
 from numpy.random._generator import default_rng as default_rng
@@ -8,57 +8,58 @@ from numpy.random._philox import Philox as Philox
 from numpy.random._sfc64 import SFC64 as SFC64
 from numpy.random.bit_generator import BitGenerator as BitGenerator
 from numpy.random.bit_generator import SeedSequence as SeedSequence
+from numpy.random.mtrand import (
+    RandomState as RandomState,
+    beta as beta,
+    binomial as binomial,
+    bytes as bytes,
+    chisquare as chisquare,
+    choice as choice,
+    dirichlet as dirichlet,
+    exponential as exponential,
+    f as f,
+    gamma as gamma,
+    geometric as geometric,
+    get_state as get_state,
+    gumbel as gumbel,
+    hypergeometric as hypergeometric,
+    laplace as laplace,
+    logistic as logistic,
+    lognormal as lognormal,
+    logseries as logseries,
+    multinomial as multinomial,
+    multivariate_normal as multivariate_normal,
+    negative_binomial as negative_binomial,
+    noncentral_chisquare as noncentral_chisquare,
+    noncentral_f as noncentral_f,
+    normal as normal,
+    pareto as pareto,
+    permutation as permutation,
+    poisson as poisson,
+    power as power,
+    rand as rand,
+    randint as randint,
+    randn as randn,
+    random as random,
+    random_integers as random_integers,
+    random_sample as random_sample,
+    ranf as ranf,
+    rayleigh as rayleigh,
+    sample as sample,
+    seed as seed,
+    set_state as set_state,
+    shuffle as shuffle,
+    standard_cauchy as standard_cauchy,
+    standard_exponential as standard_exponential,
+    standard_gamma as standard_gamma,
+    standard_normal as standard_normal,
+    standard_t as standard_t,
+    triangular as triangular,
+    uniform as uniform,
+    vonmises as vonmises,
+    wald as wald,
+    weibull as weibull,
+    zipf as zipf,
+)
 
 __all__: List[str]
-
-beta: Any
-binomial: Any
-bytes: Any
-chisquare: Any
-choice: Any
-dirichlet: Any
-exponential: Any
-f: Any
-gamma: Any
-geometric: Any
-get_state: Any
-gumbel: Any
-hypergeometric: Any
-laplace: Any
-logistic: Any
-lognormal: Any
-logseries: Any
-multinomial: Any
-multivariate_normal: Any
-negative_binomial: Any
-noncentral_chisquare: Any
-noncentral_f: Any
-normal: Any
-pareto: Any
-permutation: Any
-poisson: Any
-power: Any
-rand: Any
-randint: Any
-randn: Any
-random: Any
-random_integers: Any
-random_sample: Any
-ranf: Any
-rayleigh: Any
-sample: Any
-seed: Any
-set_state: Any
-shuffle: Any
-standard_cauchy: Any
-standard_exponential: Any
-standard_gamma: Any
-standard_normal: Any
-standard_t: Any
-triangular: Any
-uniform: Any
-vonmises: Any
-wald: Any
-weibull: Any
-zipf: Any
-RandomState: Any

@@ -633,6 +633,22 @@ class TestBroadcastedAssignments:
         assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 0)))
         assert_raises(ValueError, assign, a, s_[[0], :], np.zeros((2, 1)))
 
+    @pytest.mark.parametrize("index", [
+            (..., [1, 2], slice(None)),
+            ([0, 1], ..., 0),
+            (..., [1, 2], [1, 2])])
+    def test_broadcast_error_reports_correct_shape(self, index):
+        values = np.zeros((100, 100))  # will never broadcast below  
+
+        arr = np.zeros((3, 4, 5, 6, 7))
+        # We currently report without any spaces (could be changed)
+        shape_str = str(arr[index].shape).replace(" ", "")
+        
+        with pytest.raises(ValueError) as e:
+            arr[index] = values
+
+        assert str(e.value).endswith(shape_str)
+
     def test_index_is_larger(self):
         # Simple case of fancy index broadcasting of the index.
         a = np.zeros((5, 5))

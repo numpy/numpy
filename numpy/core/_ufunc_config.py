@@ -98,10 +98,9 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
       File "<stdin>", line 1, in <module>
     FloatingPointError: overflow encountered in short_scalars
 
-    >>> from collections import OrderedDict
     >>> old_settings = np.seterr(all='print')
-    >>> OrderedDict(np.geterr())
-    OrderedDict([('divide', 'print'), ('over', 'print'), ('under', 'print'), ('invalid', 'print')])
+    >>> np.geterr()
+    {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
     >>> np.int16(32000) * np.int16(3)
     30464
 
@@ -153,15 +152,14 @@ def geterr():
 
     Examples
     --------
-    >>> from collections import OrderedDict
-    >>> sorted(np.geterr().items())
-    [('divide', 'warn'), ('invalid', 'warn'), ('over', 'warn'), ('under', 'ignore')]
+    >>> np.geterr()
+    {'divide': 'warn', 'over': 'warn', 'under': 'ignore', 'invalid': 'warn'}
     >>> np.arange(3.) / np.arange(3.)
     array([nan,  1.,  1.])
 
     >>> oldsettings = np.seterr(all='warn', over='raise')
-    >>> OrderedDict(sorted(np.geterr().items()))
-    OrderedDict([('divide', 'warn'), ('invalid', 'warn'), ('over', 'raise'), ('under', 'warn')])
+    >>> np.geterr()
+    {'divide': 'warn', 'over': 'raise', 'under': 'warn', 'invalid': 'warn'}
     >>> np.arange(3.) / np.arange(3.)
     array([nan,  1.,  1.])
 
@@ -270,7 +268,6 @@ def seterrcall(func):
 
     >>> saved_handler = np.seterrcall(err_handler)
     >>> save_err = np.seterr(all='call')
-    >>> from collections import OrderedDict
 
     >>> np.array([1, 2, 3]) / 0.0
     Floating point error (divide by zero), with flag 1
@@ -278,8 +275,8 @@ def seterrcall(func):
 
     >>> np.seterrcall(saved_handler)
     <function err_handler at 0x...>
-    >>> OrderedDict(sorted(np.seterr(**save_err).items()))
-    OrderedDict([('divide', 'call'), ('invalid', 'call'), ('over', 'call'), ('under', 'call')])
+    >>> np.seterr(**save_err)
+    {'divide': 'call', 'over': 'call', 'under': 'call', 'invalid': 'call'}
 
     Log error message:
 
@@ -298,8 +295,8 @@ def seterrcall(func):
 
     >>> np.seterrcall(saved_handler)
     <numpy.core.numeric.Log object at 0x...>
-    >>> OrderedDict(sorted(np.seterr(**save_err).items()))
-    OrderedDict([('divide', 'log'), ('invalid', 'log'), ('over', 'log'), ('under', 'log')])
+    >>> np.seterr(**save_err)
+    {'divide': 'log', 'over': 'log', 'under': 'log', 'invalid': 'log'}
 
     """
     if func is not None and not isinstance(func, collections.abc.Callable):
@@ -402,7 +399,6 @@ class errstate(contextlib.ContextDecorator):
 
     Examples
     --------
-    >>> from collections import OrderedDict
     >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
 
     >>> np.arange(3) / 0.
@@ -421,8 +417,8 @@ class errstate(contextlib.ContextDecorator):
 
     Outside the context the error handling behavior has not changed:
 
-    >>> OrderedDict(sorted(np.geterr().items()))
-    OrderedDict([('divide', 'ignore'), ('invalid', 'ignore'), ('over', 'ignore'), ('under', 'ignore')])
+    >>> np.geterr()
+    {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
 
     """
 

@@ -40,11 +40,12 @@ _DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
     # The `_SupportsArray` protocol only cares about the default dtype
-    # (i.e. `dtype=None`) of the to-be returned array.
+    # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
+    # array.
     # Concrete implementations of the protocol are responsible for adding
     # any and all remaining overloads
     class _SupportsArray(Protocol[_DType_co]):
-        def __array__(self, dtype: None = ...) -> ndarray[Any, _DType_co]: ...
+        def __array__(self) -> ndarray[Any, _DType_co]: ...
 else:
     _SupportsArray = Any
 
@@ -122,6 +123,11 @@ _ArrayLikeStr_co = _ArrayLike[
 _ArrayLikeBytes_co = _ArrayLike[
     "dtype[bytes_]",
     bytes,
+]
+
+_ArrayLikeInt = _ArrayLike[
+    "dtype[integer[Any]]",
+    int,
 ]
 
 if TYPE_CHECKING:

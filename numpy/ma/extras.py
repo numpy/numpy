@@ -1483,7 +1483,7 @@ class MAxisConcatenator(AxisConcatenator):
         # deprecate that class. In preparation, we use the unmasked version
         # to construct the matrix (with copy=False for backwards compatibility
         # with the .view)
-        data = super(MAxisConcatenator, cls).makemat(arr.data, copy=False)
+        data = super().makemat(arr.data, copy=False)
         return array(data, mask=arr.mask)
 
     def __getitem__(self, key):
@@ -1491,7 +1491,7 @@ class MAxisConcatenator(AxisConcatenator):
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
 
-        return super(MAxisConcatenator, self).__getitem__(key)
+        return super().__getitem__(key)
 
 
 class mr_class(MAxisConcatenator):

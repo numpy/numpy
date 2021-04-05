@@ -5,7 +5,7 @@ NEP 23 — Backwards compatibility and deprecation policy
 =======================================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
-:Status: Accepted
+:Status: Final
 :Type: Process
 :Created: 2018-07-14
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-January/081423.html
@@ -95,10 +95,10 @@ that can be used to assess such impact include:
   analysis tools to determine where and how the functionality is used.
 - Test prominent downstream libraries against a development build of NumPy
   containing the proposed change to get real-world data on its impact.
-- Make a change in master and revert it before release if it causes problems.
-  We encourage other packages to test against NumPy's master branch and if
-  that's too burdensome, then at least to test pre-releases. This often
-  turns up issues quickly.
+- Make a change on the main branch and revert it before release if it
+  causes problems.  We encourage other packages to test against
+  NumPy's main branch and if that's too burdensome, then at least to
+  test pre-releases. This often turns up issues quickly.
 
 Alternatives to deprecations
 ````````````````````````````
@@ -279,8 +279,8 @@ introduced for v1.11.0 and turned into a hard error for v1.12.0.
 
 This change was disruptive, however it did catch real bugs in, e.g., SciPy and
 scikit-learn.  Overall the change was worth the cost, and introducing it in
-master first to allow testing, then removing it again before a release, is a
-useful strategy.
+the main branch first to allow testing, then removing it again before
+a release, is a useful strategy.
 
 Similar deprecations that also look like good examples of
 cleanups/improvements:

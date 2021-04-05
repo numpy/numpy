@@ -167,6 +167,14 @@ class TestMultinomial:
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
 
+    def test_multinomial_pvals_float32(self):
+        x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
+                      1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
+        pvals = x / x.sum()
+        match = r"[\w\s]*pvals array is cast to 64-bit floating"
+        with pytest.raises(ValueError, match=match):
+            random.multinomial(1, pvals)
+
 
 class TestSetState:
     def setup(self):
@@ -1237,6 +1245,15 @@ class TestRandomDist:
         random.seed(self.seed)
         r = random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
         assert_(np.isfinite(r).all())
+
+    def test_vonmises_large(self):
+        # guard against changes in RandomState when Generator is fixed
+        random.seed(self.seed)
+        actual = random.vonmises(mu=0., kappa=1e7, size=3)
+        desired = np.array([4.634253748521111e-04,
+                            3.558873596114509e-04,
+                            -2.337119622577433e-04])
+        assert_array_almost_equal(actual, desired, decimal=8)
 
     def test_vonmises_nan(self):
         random.seed(self.seed)

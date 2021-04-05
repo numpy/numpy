@@ -552,7 +552,7 @@ PyArray_AssignFromCache_Recursive(
             else {
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
-                if (view < 0) {
+                if (view == NULL) {
                     goto fail;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
@@ -1150,7 +1150,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * bpo-32780
          * bpo-32782
          *
-         * Note that even if the above are fixed in master, we have to drop the
+         * Note that even if the above are fixed in main, we have to drop the
          * early patch versions of python to actually make use of the fixes.
          */
         if (!npy_ctypes_check(Py_TYPE(view->obj))) {
@@ -2545,8 +2545,6 @@ PyArray_EnsureAnyArray(PyObject *op)
 NPY_NO_EXPORT int
 PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 {
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
     NpyIter *dst_iter, *src_iter;
 
     NpyIter_IterNextFunc *dst_iternext, *src_iternext;
@@ -2555,9 +2553,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     npy_intp *dst_countptr, *src_countptr;
     npy_uint32 baseflags;
 
-    char *dst_data, *src_data;
     npy_intp dst_count, src_count, count;
-    npy_intp src_itemsize;
     npy_intp dst_size, src_size;
     int needs_api;
 
@@ -2629,7 +2625,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     /* Since buffering is disabled, we can cache the stride */
     src_stride = NpyIter_GetInnerStrideArray(src_iter)[0];
     src_countptr = NpyIter_GetInnerLoopSizePtr(src_iter);
-    src_itemsize = PyArray_DESCR(src)->elsize;
 
     if (dst_iternext == NULL || src_iternext == NULL) {
         NpyIter_Deallocate(dst_iter);
@@ -2646,14 +2641,14 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
      * we can pass them to this function to take advantage of
      * contiguous strides, etc.
      */
+    NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(
                     IsUintAligned(src) && IsAligned(src) &&
                     IsUintAligned(dst) && IsAligned(dst),
                     src_stride, dst_stride,
                     PyArray_DESCR(src), PyArray_DESCR(dst),
                     0,
-                    &stransfer, &transferdata,
-                    &needs_api) != NPY_SUCCEED) {
+                    &cast_info, &needs_api) != NPY_SUCCEED) {
         NpyIter_Deallocate(dst_iter);
         NpyIter_Deallocate(src_iter);
         return -1;
@@ -2665,15 +2660,15 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
     dst_count = *dst_countptr;
     src_count = *src_countptr;
-    dst_data = dst_dataptr[0];
-    src_data = src_dataptr[0];
+    char *args[2] = {src_dataptr[0], dst_dataptr[0]};
+    npy_intp strides[2] = {src_stride, dst_stride};
+
     int res = 0;
     for(;;) {
         /* Transfer the biggest amount that fits both */
         count = (src_count < dst_count) ? src_count : dst_count;
-        if (stransfer(
-                dst_data, dst_stride, src_data, src_stride,
-                count, src_itemsize, transferdata) < 0) {
+        if (cast_info.func(&cast_info.context,
+                args, &count, strides, cast_info.auxdata) < 0) {
             res = -1;
             break;
         }
@@ -2685,11 +2680,11 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
                 break;
             }
             dst_count = *dst_countptr;
-            dst_data = dst_dataptr[0];
+            args[1] = dst_dataptr[0];
         }
         else {
             dst_count -= count;
-            dst_data += count*dst_stride;
+            args[1] += count*dst_stride;
         }
 
         /* If we exhausted the src block, refresh it */
@@ -2699,17 +2694,17 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
                 break;
             }
             src_count = *src_countptr;
-            src_data = src_dataptr[0];
+            args[0] = src_dataptr[0];
         }
         else {
             src_count -= count;
-            src_data += count*src_stride;
+            args[0] += count*src_stride;
         }
     }
 
     NPY_END_THREADS;
 
-    NPY_AUXDATA_FREE(transferdata);
+    NPY_cast_info_xfree(&cast_info);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
     if (res > 0) {

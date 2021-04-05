@@ -60,7 +60,7 @@ def get_manylinux(arch):
         default = '2014'
     ret = os.environ.get("MB_ML_VER", default)
     # XXX For PEP 600 this can be a glibc version
-    assert ret in ('1', '2010', '2014'), f'invalid MB_ML_VER {ret}'
+    assert ret in ('1', '2010', '2014', '_2_24'), f'invalid MB_ML_VER {ret}'
     return ret
 
 
@@ -80,7 +80,7 @@ def download_openblas(target, plat, ilp64):
         suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
         typ = 'tar.gz'
     elif plat == 'macosx-arm64':
-        suffix = 'macosx_11_0_arm64-gf_f10e307.tar.gz'
+        suffix = 'macosx_11_0_arm64-gf_f26990f.tar.gz'
         typ = 'tar.gz'
     elif osname == 'win':
         if plat == "win-32":

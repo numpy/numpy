@@ -1533,7 +1533,7 @@ class TestRegression:
             np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
-        dtypes = [x for x in np.typeDict.values()
+        dtypes = [x for x in np.sctypeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
         a = np.array([], np.bool_)  # not x[0] because it is unordered
@@ -1750,7 +1750,7 @@ class TestRegression:
             # it is designed to simulate an old API
             # expectation to guard against regression
             def squeeze(self):
-                return super(OldSqueeze, self).squeeze()
+                return super().squeeze()
 
         oldsqueeze = OldSqueeze(np.array([[1],[2],[3]]))
 
@@ -2104,7 +2104,8 @@ class TestRegression:
         assert_raises(TypeError, np.searchsorted, a, 1.2)
         # Ticket #2066, similar problem:
         dtype = np.format_parser(['i4', 'i4'], [], [])
-        a = np.recarray((2, ), dtype)
+        a = np.recarray((2,), dtype)
+        a[...] = [(1, 2), (3, 4)]
         assert_raises(TypeError, np.searchsorted, a, 1)
 
     def test_complex64_alignment(self):
@@ -2334,7 +2335,7 @@ class TestRegression:
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set
-        all_types = set(np.typeDict.values()) - {np.void}
+        all_types = set(np.sctypeDict.values()) - {np.void}
         for t in all_types:
             val = t()
 

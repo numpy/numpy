@@ -238,6 +238,26 @@ class TestMaskedArray:
         assert_equal(data, [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0]])
         assert_(data.mask is nomask)
 
+    def test_creation_with_list_of_maskedarrays_no_bool_cast(self):
+        # Tests the regression in gh-18551
+        masked_str = np.ma.masked_array(['a', 'b'], mask=[True, False])
+        normal_int = np.arange(2)
+        res = np.ma.asarray([masked_str, normal_int], dtype="U21")
+        assert_array_equal(res.mask, [[True, False], [False, False]])
+
+        # The above only failed due a long chain of oddity, try also with
+        # an object array that cannot be converted to bool always:
+        class NotBool():
+            def __bool__(self):
+                raise ValueError("not a bool!")
+        masked_obj = np.ma.masked_array([NotBool(), 'b'], mask=[True, False])
+        # Check that the NotBool actually fails like we would expect:
+        with pytest.raises(ValueError, match="not a bool!"):
+            np.asarray([masked_obj], dtype=bool)
+
+        res = np.ma.asarray([masked_obj, normal_int])
+        assert_array_equal(res.mask, [[True, False], [False, False]])
+
     def test_creation_from_ndarray_with_padding(self):
         x = np.array([('A', 0)], dtype={'names':['f0','f1'],
                                         'formats':['S4','i8'],

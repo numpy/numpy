@@ -13,4 +13,4 @@ a[[0, 1, 2]]
 a[...]
 a[:]
 a.__array__()
-a.__array__(np.float64)
+a.__array__(np.dtype(np.float64))

@@ -3,7 +3,7 @@ trigger:
   batch: False
   branches:
     include:
-      - master
+      - main
       - maintenance/*
 
 
@@ -18,6 +18,24 @@ stages:
 - stage: InitialTests
   jobs:
 
+  - job: Lint
+    condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/main'))  # skip for PR merges
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+        addToPath: true
+        architecture: 'x64'
+    - script: >-
+        python -m pip install -r linter_requirements.txt
+      displayName: 'Install tools'
+      failOnStderr: true
+    - script: |
+        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
+      displayName: 'Run Lint Checks'
+      failOnStderr: true
   # Native build is based on gcc flag `-march=native`
   - job: Linux_baseline_native
     pool:
@@ -63,12 +81,11 @@ stages:
 
   - job: Linux_Python_38_32bit_full_with_asserts
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
     - script: |
-            docker pull quay.io/pypa/manylinux2010_i686
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
-            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686 \
+            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686:2021-02-28-1f32361 \
             /bin/bash -xc "cd numpy && \
             /opt/python/cp38-cp38/bin/python -mvenv venv &&\
             source venv/bin/activate && \
@@ -267,6 +284,7 @@ stages:
       vmImage: 'ubuntu-18.04'
     steps:
     - script: |
+            sudo apt update
             sudo apt install python3.7
             sudo apt install python3.7-dev
             if ! `gcc-4.8 2>/dev/null`; then

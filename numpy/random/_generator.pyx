@@ -176,8 +176,8 @@ cdef class Generator:
     Examples
     --------
     >>> from numpy.random import Generator, PCG64
-    >>> rg = Generator(PCG64())
-    >>> rg.standard_normal()
+    >>> rng = Generator(PCG64())
+    >>> rng.standard_normal()
     -0.203  # random
 
     See Also
@@ -644,6 +644,12 @@ cdef class Generator:
         --------
         integers, shuffle, permutation
 
+        Notes
+        -----
+        Setting user-specified probabilities through ``p`` uses a more general but less
+        efficient sampler than the default. The general sampler produces a different sample
+        than the optimized sampler even if each element of ``p`` is 1 / len(a).
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
@@ -694,20 +700,22 @@ cdef class Generator:
         cdef uint64_t set_size, mask
         cdef uint64_t[::1] hash_set
         # Format and Verify input
+        a_original = a
         a = np.array(a, copy=False)
         if a.ndim == 0:
             try:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
-            except TypeError:
-                raise ValueError("a must an array or an integer")
+            except TypeError as exc:
+                raise ValueError("a must be a sequence or an integer, "
+                                 f"not {type(a_original)}") from exc
             if pop_size <= 0 and np.prod(size) != 0:
-                raise ValueError("a must be a positive integer unless no"
+                raise ValueError("a must be a positive integer unless no "
                                  "samples are taken")
         else:
             pop_size = a.shape[axis]
             if pop_size == 0 and np.prod(size) != 0:
-                raise ValueError("a cannot be empty unless no samples are"
+                raise ValueError("a cannot be empty unless no samples are "
                                  "taken")
 
         if p is not None:
@@ -989,8 +997,8 @@ cdef class Generator:
         -----
         For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
 
-            mu + sigma * gen.standard_normal(size=...)
-            gen.normal(mu, sigma, size=...)
+            mu + sigma * rng.standard_normal(size=...)
+            rng.normal(mu, sigma, size=...)
 
         Examples
         --------
@@ -1732,33 +1740,45 @@ cdef class Generator:
         ...                    7515, 8230, 8770])
 
         Does their energy intake deviate systematically from the recommended
-        value of 7725 kJ?
+        value of 7725 kJ? Our null hypothesis will be the absence of deviation,
+        and the alternate hypothesis will be the presence of an effect that could be
+        either positive or negative, hence making our test 2-tailed. 
 
-        We have 10 degrees of freedom, so is the sample mean within 95% of the
-        recommended value?
+        Because we are estimating the mean and we have N=11 values in our sample,
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
+        compute the t statistic using the empirical mean and empirical standard 
+        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        empirical standard deviation on an unbiased estimate of the variance (note:
+        the final estimate is not unbiased due to the concave nature of the square 
+        root).
 
-        >>> s = np.random.default_rng().standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
         1142.1232221373727
-
-        Calculate the t statistic, setting the ddof parameter to the unbiased
-        value so the divisor in the standard deviation will be degrees of
-        freedom, N-1.
-
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
+        >>> t
+        -2.8207540608310198
+
+        We draw 1000000 samples from Student's t distribution with the adequate
+        degrees of freedom.
+
         >>> import matplotlib.pyplot as plt
+        >>> s = np.random.default_rng().standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        For a one-sided t-test, how far out in the distribution does the t
-        statistic appear?
+        Does our t statistic land in one of the two critical regions found at 
+        both tails of the distribution?
 
-        >>> np.sum(s<t) / float(len(s))
-        0.0090699999999999999  # random
+        >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
+        0.018318  #random < 0.05, statistic is in critical region
 
-        So the p-value is about 0.009, which says the null hypothesis has a
-        probability of about 99% of being true.
+        The probability value for this 2-tailed test is about 1.83%, which is 
+        lower than the 5% pre-determined significance threshold. 
+
+        Therefore, the probability of observing values as extreme as our intake
+        conditionally on the null hypothesis being true is too low, and we reject 
+        the null hypothesis of no deviation. 
 
         """
         return cont(&random_standard_t, &self._bitgen, size, self.lock, 1,
@@ -3013,8 +3033,9 @@ cdef class Generator:
         Parameters
         ----------
         lam : float or array_like of floats
-            Expectation of interval, must be >= 0. A sequence of expectation
-            intervals must be broadcastable over the requested size.
+            Expected number of events occurring in a fixed-time interval,
+            must be >= 0. A sequence must be broadcastable over the requested
+            size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3737,7 +3758,20 @@ cdef class Generator:
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
-            raise ValueError("sum(pvals[:-1]) > 1.0")
+            # When floating, but not float dtype, and close, improve the error
+            # 1.0001 works for float16 and float32
+            if (isinstance(pvals, np.ndarray)
+                    and np.issubdtype(pvals.dtype, np.floating)
+                    and pvals.dtype != float
+                    and pvals.sum() < 1.0001):
+                msg = ("sum(pvals[:-1].astype(np.float64)) > 1.0. The pvals "
+                       "array is cast to 64-bit floating point prior to "
+                       "checking the sum. Precision changes when casting may "
+                       "cause problems even if the sum of the original pvals "
+                       "is valid.")
+            else:
+                msg = "sum(pvals[:-1]) > 1.0"
+            raise ValueError(msg)
 
         if np.PyArray_NDIM(on) != 0: # vector
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)
@@ -4437,19 +4471,20 @@ cdef class Generator:
                     if i == j:
                         # i == j is not needed and memcpy is undefined.
                         continue
-                    buf[...] = x[j]
-                    x[j] = x[i]
-                    x[i] = buf
+                    buf[...] = x[j, ...]
+                    x[j, ...] = x[i, ...]
+                    x[i, ...] = buf
         else:
             # Untyped path.
             if not isinstance(x, Sequence):
                 # See gh-18206. We may decide to deprecate here in the future.
                 warnings.warn(
-                    "`x` isn't a recognized object; `shuffle` is not guaranteed "
-                    "to behave correctly. E.g., non-numpy array/tensor objects "
-                    "with view semantics may contain duplicates after shuffling.",
-                    UserWarning, stacklevel=2
-                )
+                    f"you are shuffling a '{type(x).__name__}' object "
+                    "which is not a subclass of 'Sequence'; "
+                    "`shuffle` is not guaranteed to behave correctly. "
+                    "E.g., non-numpy array/tensor objects with view semantics "
+                    "may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=1)  # Cython does not add a level
 
             if axis != 0:
                 raise NotImplementedError("Axis argument is only supported "

@@ -1970,7 +1970,7 @@ class Configuration:
                 try:
                     version = version_module.get_versions()['version']
                 except AttributeError:
-                    version = None
+                    pass
 
                 if version is not None:
                     break

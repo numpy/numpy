@@ -6,6 +6,7 @@ NumPy Documentation
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    User Guide <user/index>
    API reference <reference/index>

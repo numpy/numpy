@@ -2399,6 +2399,14 @@ class TestPiecewise:
         assert_array_equal(y, np.array([[-1., -1., -1.],
                                         [3., 3., 1.]]))
 
+    def test_subclasses(self):
+        class subclass(np.ndarray):
+            pass
+        x = np.arange(5.).view(subclass)
+        r = piecewise(x, [x<2., x>=4], [-1., 1., 0.])
+        assert_equal(type(r), subclass)
+        assert_equal(r, [-1., -1., 0., 0., 1.])
+
 
 class TestBincount:
 

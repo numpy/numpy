@@ -424,6 +424,8 @@ Discussion
 ----------
 
 - `Further discussion on implementation and the NEP's content <https://mail.python.org/pipermail/numpy-discussion/2020-August/080919.html>`_
+- `Decision to release an experimental implementation in NumPy 1.20.0 <https://mail.python.org/pipermail/numpy-discussion/2020-November/081193.html>`__
+
 
 References
 ----------

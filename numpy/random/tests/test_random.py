@@ -1,5 +1,7 @@
 import warnings
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
         assert_, assert_raises, assert_equal, assert_warns,
@@ -509,6 +511,43 @@ class TestRandomDist:
             np.random.shuffle(b)
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
+
+    @pytest.mark.parametrize("random",
+            [np.random, np.random.RandomState(), np.random.default_rng()])
+    def test_shuffle_untyped_warning(self, random):
+        # Create a dict works like a sequence but isn't one
+        values = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+        with pytest.warns(UserWarning,
+                match="you are shuffling a 'dict' object") as rec:
+            random.shuffle(values)
+        assert "test_random" in rec[0].filename
+
+    @pytest.mark.parametrize("random",
+        [np.random, np.random.RandomState(), np.random.default_rng()])
+    @pytest.mark.parametrize("use_array_like", [True, False])
+    def test_shuffle_no_object_unpacking(self, random, use_array_like):
+        class MyArr(np.ndarray):
+            pass
+
+        items = [
+            None, np.array([3]), np.float64(3), np.array(10), np.float64(7)
+        ]
+        arr = np.array(items, dtype=object)
+        item_ids = {id(i) for i in items}
+        if use_array_like:
+            arr = arr.view(MyArr)
+
+        # The array was created fine, and did not modify any objects:
+        assert all(id(i) in item_ids for i in arr)
+
+        if use_array_like and not isinstance(random, np.random.Generator):
+            # The old API gives incorrect results, but warns about it.
+            with pytest.warns(UserWarning,
+                    match="Shuffling a one dimensional array.*"):
+                random.shuffle(arr)
+        else:
+            random.shuffle(arr)
+            assert all(id(i) in item_ids for i in arr)
 
     def test_shuffle_memoryview(self):
         # gh-18273

@@ -1,9 +1,12 @@
+import contextlib
 import sys
 import warnings
 import itertools
 import operator
 import platform
 import pytest
+from hypothesis import given, settings, Verbosity, assume
+from hypothesis.strategies import sampled_from
 
 import numpy as np
 from numpy.testing import (
@@ -404,15 +407,15 @@ class TestConversion:
             assert_(res == tgt)
 
         for code in np.typecodes['AllInteger']:
-            res = np.typeDict[code](np.iinfo(code).max)
+            res = np.dtype(code).type(np.iinfo(code).max)
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 
     def test_int_raise_behaviour(self):
         def overflow_error_func(dtype):
-            np.typeDict[dtype](np.iinfo(dtype).max + 1)
+            dtype(np.iinfo(dtype).max + 1)
 
-        for code in 'lLqQ':
+        for code in [np.int_, np.uint, np.longlong, np.ulonglong]:
             assert_raises(OverflowError, overflow_error_func, code)
 
     def test_int_from_infinite_longdouble(self):
@@ -707,3 +710,81 @@ class TestBitShifts:
                 shift_arr = np.array([shift]*32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)
+
+
+@contextlib.contextmanager
+def recursionlimit(n):
+    o = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(n)
+        yield
+    finally:
+        sys.setrecursionlimit(o)
+
+
+objecty_things = [object(), None]
+reasonable_operators_for_scalars = [
+    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
+    operator.gt, operator.add, operator.floordiv, operator.mod,
+    operator.mul, operator.matmul, operator.pow, operator.sub,
+    operator.truediv,
+]
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+@settings(verbosity=Verbosity.verbose)
+def test_operator_object_left(o, op, type_):
+    try:
+        with recursionlimit(100):
+            op(o, type_(1))
+    except TypeError:
+        pass
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+def test_operator_object_right(o, op, type_):
+    try:
+        with recursionlimit(100):
+            op(type_(1), o)
+    except TypeError:
+        pass
+
+
+@given(sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types),
+       sampled_from(types))
+def test_operator_scalars(op, type1, type2):
+    try:
+        op(type1(1), type2(1))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_longdouble_inf_loop(op):
+    try:
+        op(np.longdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_clongdouble_inf_loop(op):
+    if op in {operator.mod} and False:
+        pytest.xfail("The modulo operator is known to be broken")
+    try:
+        op(np.clongdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass

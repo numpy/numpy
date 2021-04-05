@@ -6,6 +6,7 @@ Release Notes
     :maxdepth: 3
 
     1.21.0 <release/1.21.0-notes>
+    1.20.2 <release/1.20.2-notes>
     1.20.1 <release/1.20.1-notes>
     1.20.0 <release/1.20.0-notes>
     1.19.5 <release/1.19.5-notes>

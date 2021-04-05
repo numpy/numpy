@@ -5,8 +5,8 @@ import functools
 
 from numpy.core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
-    nonzero, indices
+    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
+    diagonal, nonzero, indices
     )
 from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
@@ -47,10 +47,11 @@ def _flip_dispatcher(m):
 @array_function_dispatch(_flip_dispatcher)
 def fliplr(m):
     """
-    Flip array in the left/right direction.
+    Reverse the order of elements along axis 1 (left/right).
 
-    Flip the entries in each row in the left/right direction.
-    Columns are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each row in the left/right
+    direction. Columns are preserved, but appear in a different order than
+    before.
 
     Parameters
     ----------
@@ -66,11 +67,13 @@ def fliplr(m):
     See Also
     --------
     flipud : Flip array in the up/down direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to m[:,::-1]. Requires the array to be at least 2-D.
+    Equivalent to ``m[:,::-1]`` or ``np.flip(m, axis=1)``.
+    Requires the array to be at least 2-D.
 
     Examples
     --------
@@ -98,10 +101,10 @@ def fliplr(m):
 @array_function_dispatch(_flip_dispatcher)
 def flipud(m):
     """
-    Flip array in the up/down direction.
+    Reverse the order of elements along axis 0 (up/down).
 
-    Flip the entries in each column in the up/down direction.
-    Rows are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each column in the up/down
+    direction. Rows are preserved, but appear in a different order than before.
 
     Parameters
     ----------
@@ -117,12 +120,13 @@ def flipud(m):
     See Also
     --------
     fliplr : Flip array in the left/right direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to ``m[::-1,...]``.
-    Does not require the array to be two-dimensional.
+    Equivalent to ``m[::-1, ...]`` or ``np.flip(m, axis=0)``.
+    Requires the array to be at least 1-D.
 
     Examples
     --------
@@ -348,10 +352,10 @@ def diagflat(v, k=0):
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0, n-k)
+        i = arange(0, n-k, dtype=intp)
         fi = i+k+i*n
     else:
-        i = arange(0, n+k)
+        i = arange(0, n+k, dtype=intp)
         fi = i+(i-k)*n
     res.flat[fi] = v
     if not wrap:

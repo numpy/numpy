@@ -296,6 +296,7 @@ class TestNonarrayArgs:
         B[0] = 1j
         assert_almost_equal(np.var(B), 0.25)
 
+
 class TestIsscalar:
     def test_isscalar(self):
         assert_(np.isscalar(3.1))
@@ -2362,8 +2363,8 @@ class TestClip:
                 base_shape=shape,
                 # Commenting out the min_dims line allows zero-dimensional arrays,
                 # and zero-dimensional arrays containing NaN make the test fail.
-                min_dims=1  
-                            
+                min_dims=1
+  
             )
         )
         amin = data.draw(
@@ -2896,10 +2897,10 @@ class TestCorrelate:
         self.x = np.array([1, 2, 3, 4, 5], dtype=dt)
         self.xs = np.arange(1, 20)[::3]
         self.y = np.array([-1, -2, -3], dtype=dt)
-        self.z1 = np.array([ -3.,  -8., -14., -20., -26., -14.,  -5.], dtype=dt)
+        self.z1 = np.array([-3., -8., -14., -20., -26., -14., -5.], dtype=dt)
         self.z1_4 = np.array([-2., -5., -8., -11., -14., -5.], dtype=dt)
-        self.z1r = np.array([-15., -22., -22., -16., -10.,  -4.,  -1.], dtype=dt)
-        self.z2 = np.array([-5., -14., -26., -20., -14., -8.,  -3.], dtype=dt)
+        self.z1r = np.array([-15., -22., -22., -16., -10., -4., -1.], dtype=dt)
+        self.z2 = np.array([-5., -14., -26., -20., -14., -8., -3.], dtype=dt)
         self.z2r = np.array([-1., -4., -10., -16., -22., -22., -15.], dtype=dt)
         self.zs = np.array([-3., -14., -30., -48., -66., -84.,
                            -102., -54., -19.], dtype=dt)
@@ -2947,6 +2948,22 @@ class TestCorrelate:
         with pytest.raises(ValueError):
             np.correlate(np.ones(1000), np.array([]), mode='full')
 
+    def test_mode(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        default_mode = np.correlate(d, k, mode='valid')
+        with assert_warns(DeprecationWarning):
+            valid_mode = np.correlate(d, k, mode='v')
+        assert_array_equal(valid_mode, default_mode)
+        # integer mode
+        with assert_raises(ValueError):
+            np.correlate(d, k, mode=-1)
+        assert_array_equal(np.correlate(d, k, mode=0), valid_mode)
+        # illegal arguments
+        with assert_raises(TypeError):
+            np.correlate(d, k, mode=None)
+
+
 class TestConvolve:
     def test_object(self):
         d = [1.] * 100
@@ -2959,6 +2976,21 @@ class TestConvolve:
         np.convolve(d, k)
         assert_array_equal(d, np.ones(100))
         assert_array_equal(k, np.ones(3))
+
+    def test_mode(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        default_mode = np.convolve(d, k, mode='full')
+        with assert_warns(DeprecationWarning):
+            full_mode = np.convolve(d, k, mode='f')
+        assert_array_equal(full_mode, default_mode)
+        # integer mode
+        with assert_raises(ValueError):
+            np.convolve(d, k, mode=-1)
+        assert_array_equal(np.convolve(d, k, mode=2), full_mode)
+        # illegal arguments
+        with assert_raises(TypeError):
+            np.convolve(d, k, mode=None)
 
 
 class TestArgwhere:

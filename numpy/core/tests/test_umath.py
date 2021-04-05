@@ -99,9 +99,9 @@ class TestOut:
                 # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
 
-            assert_raises(ValueError, np.add, a, 2, o, o, subok=subok)
-            assert_raises(ValueError, np.add, a, 2, o, out=o, subok=subok)
-            assert_raises(ValueError, np.add, a, 2, None, out=o, subok=subok)
+            assert_raises(TypeError, np.add, a, 2, o, o, subok=subok)
+            assert_raises(TypeError, np.add, a, 2, o, out=o, subok=subok)
+            assert_raises(TypeError, np.add, a, 2, None, out=o, subok=subok)
             assert_raises(ValueError, np.add, a, 2, out=(o, o), subok=subok)
             assert_raises(ValueError, np.add, a, 2, out=(), subok=subok)
             assert_raises(TypeError, np.add, a, 2, [], subok=subok)
@@ -1952,7 +1952,7 @@ class TestSpecialMethods:
             _wrap_args = None
             _prepare_args = None
             def __new__(cls):
-                return np.empty(()).view(cls)
+                return np.zeros(()).view(cls)
             def __array_wrap__(self, obj, context):
                 self._wrap_args = context[1]
                 return obj
@@ -2364,12 +2364,14 @@ class TestSpecialMethods:
 
         # __call__
         a = A()
-        res = np.multiply.__call__(1, a, foo='bar', answer=42)
+        with assert_raises(TypeError):
+            np.multiply.__call__(1, a, foo='bar', answer=42)
+        res = np.multiply.__call__(1, a, subok='bar', where=42)
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], '__call__')
         assert_equal(res[3], (1, a))
-        assert_equal(res[4], {'foo': 'bar', 'answer': 42})
+        assert_equal(res[4], {'subok': 'bar', 'where': 42})
 
         # __call__, wrong args
         assert_raises(TypeError, np.multiply, a)
@@ -2575,7 +2577,7 @@ class TestSpecialMethods:
         assert_raises(TypeError, np.multiply, a, b, 'one', out='two')
         assert_raises(TypeError, np.multiply, a, b, 'one', 'two')
         assert_raises(ValueError, np.multiply, a, b, out=('one', 'two'))
-        assert_raises(ValueError, np.multiply, a, out=())
+        assert_raises(TypeError, np.multiply, a, out=())
         assert_raises(TypeError, np.modf, a, 'one', out=('two', 'three'))
         assert_raises(TypeError, np.modf, a, 'one', 'two', 'three')
         assert_raises(ValueError, np.modf, a, out=('one', 'two', 'three'))
@@ -2703,8 +2705,8 @@ class TestSpecialMethods:
                 if out_no:
                     info['outputs'] = out_no
 
-                results = super(A, self).__array_ufunc__(ufunc, method,
-                                                         *args, **kwargs)
+                results = super().__array_ufunc__(ufunc, method,
+                                                  *args, **kwargs)
                 if results is NotImplemented:
                     return NotImplemented
 

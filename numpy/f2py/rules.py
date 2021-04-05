@@ -1163,7 +1163,7 @@ def buildmodule(m, um):
     for n in m['interfaced']:
         nb = None
         for bi in m['body']:
-            if not bi['block'] == 'interface':
+            if bi['block'] not in ['interface', 'abstract interface']:
                 errmess('buildmodule: Expected interface block. Skipping.\n')
                 continue
             for b in bi['body']:

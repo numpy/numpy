@@ -94,7 +94,8 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-master_doc = 'contents'
+# Will change to `root_doc` in Sphinx 4
+master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
@@ -160,6 +161,7 @@ html_theme = 'pydata_sphinx_theme'
 html_logo = '_static/numpylogo.svg'
 
 html_theme_options = {
+  "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
 }
@@ -442,7 +444,7 @@ def linkcode_resolve(domain, info):
         linespec = ""
 
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
            fn, linespec)
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (

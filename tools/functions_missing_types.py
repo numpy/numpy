@@ -45,6 +45,7 @@ EXCLUDE_LIST = {
         "safe_eval",
         "set_numeric_ops",
         "test",
+        "typeDict",
         # Builtins
         "bool",
         "complex",
