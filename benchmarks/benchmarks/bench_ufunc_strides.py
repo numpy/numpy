@@ -67,7 +67,7 @@ class AVX_BFunc(Benchmark):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, ufuncname)
-        xcept AttributeError:
+        except AttributeError:
             raise NotImplementedError(f"No ufunc {ufuncname} found") from None
         N = 10000
         self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
