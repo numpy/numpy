@@ -3693,9 +3693,8 @@ def percentile(a, q, axis=None, out=None,
         use when the desired percentile lies between two data points
         ``i < j``:
 
-        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
-          is the fractional part of the index surrounded by ``i``
-          and ``j``.
+        * 'linear': ``i + (j - i) *`` the fractional part of the
+          index surrounded by ``i`` and ``j``.
         * 'lower': ``i``.
         * 'higher': ``j``.
         * 'nearest': ``i`` or ``j``, whichever is nearest.
@@ -3841,9 +3840,8 @@ def quantile(a, q, axis=None, out=None,
         use when the desired quantile lies between two data points
         ``i < j``:
 
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
+            * linear: ``i + (j - i) *`` the fractional part of the
+              index surrounded by ``i`` and ``j``.
             * lower: ``i``.
             * higher: ``j``.
             * nearest: ``i`` or ``j``, whichever is nearest.
