@@ -96,16 +96,7 @@ The primitive types supported are tied closely to those in C:
 
 
 Since many of these have platform-dependent definitions, a set of fixed-size
-aliases are provided to this site: :doc:`../reference/arrays.scalars`
-under the "Sized aliases" section.
-
-In the site above, are listed some types of the table above such as `byte`, 
-`short`, `intc` and `int_`. The corresponding unsigned and signed types
-of these are written too.
-
-'float' and 'complex' aliases are listed, as well. The functionality
-for each of these types is descripted in the table above, as well as
-examples with similarities with ``C types``.
+aliases are provided (See :ref:`sized-aliases`).
 
 
 
@@ -118,7 +109,7 @@ having unique characteristics.  Once you have imported NumPy using
 
 the dtypes are available as ``np.bool_``, ``np.float32``, etc.
 
-Advanced types, not listed in the site above, are explored in
+Advanced types, not listed above, are explored in
 section :ref:`structured_arrays`.
 
 There are 5 basic numerical types representing booleans (bool), integers (int),
