@@ -328,7 +328,7 @@ defdict = {
           docstrings.get('numpy.core.umath.floor_divide'),
           'PyUFunc_DivisionTypeResolver',
           TD(ints, cfunc_alias='divide',
-              dispatch=[('loops_arithmetic', 'BHILQ')]),
+              dispatch=[('loops_arithmetic', 'bBhHiIlLqQ')]),
           TD(flts + cmplx),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
