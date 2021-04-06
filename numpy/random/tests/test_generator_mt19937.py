@@ -2581,3 +2581,26 @@ def test_single_arg_integer_exception(high, endpoint):
         gen.integers(-1, high, endpoint=endpoint)
     with pytest.raises(ValueError, match=msg):
         gen.integers([-1], high, endpoint=endpoint)
+
+
+@pytest.mark.parametrize("dtype", ["f4", "f8"])
+def test_c_contig_req_out(dtype):
+    # GH 18704
+    out = np.empty((2, 3), order="F", dtype=dtype)
+    shape = [1, 2, 3]
+    with pytest.raises(ValueError, match="Supplied output array"):
+        random.standard_gamma(shape, out=out, dtype=dtype)
+    with pytest.raises(ValueError, match="Supplied output array"):
+        random.standard_gamma(shape, out=out, size=out.shape, dtype=dtype)
+
+
+@pytest.mark.parametrize("dtype", ["f4", "f8"])
+@pytest.mark.parametrize("order", ["F", "C"])
+@pytest.mark.parametrize("dist", [random.standard_normal, random.random])
+def test_contig_req_out(dist, order, dtype):
+    # GH 18704
+    out = np.empty((2, 3), dtype=dtype, order=order)
+    variates = dist(out=out, dtype=dtype)
+    assert variates is out
+    variates = dist(out=out, dtype=dtype, size=out.shape)
+    assert variates is out
