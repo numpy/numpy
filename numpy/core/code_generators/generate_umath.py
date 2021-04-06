@@ -245,6 +245,8 @@ all = '?bBhHiIlLqQefdgFDGOmM'
 O = 'O'
 P = 'P'
 ints = 'bBhHiIlLqQ'
+sints = 'bhilq'
+uints = 'BHILQ'
 times = 'Mm'
 timedeltaonly = 'm'
 intsO = ints + O
@@ -325,7 +327,9 @@ defdict = {
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.floor_divide'),
           'PyUFunc_DivisionTypeResolver',
-          TD(intfltcmplx),
+          TD(uints, cfunc_alias='divide',
+              dispatch=[('loops_arithmetic', 'BHILQ')]),
+          TD(sints + flts + cmplx),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
            TypeDescription('m', FullTypeDescr, 'mm', 'q'),

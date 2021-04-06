@@ -250,13 +250,22 @@ class TestDivision:
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
     @pytest.mark.parametrize("input_dtype",
-            [np.int8, np.int16, np.int32, np.int64])
+            np.sctypes['int'] + np.sctypes['uint'])
     def test_division_int_boundary(self, input_dtype):
         iinfo = np.iinfo(input_dtype)
 
+        # Unsigned:
+        # Create list with 0, 25th, 50th, 75th percentile and max
+        if iinfo.min == 0:
+            lst = [0, iinfo.max//4, iinfo.max//2,
+                    int(iinfo.max/1.33), iinfo.max]
+            divisors = [iinfo.max//4, iinfo.max//2,
+                    int(iinfo.max/1.33), iinfo.max]
+        # Signed:
         # Create list with min, 25th percentile, 0, 75th percentile, max
-        lst = [iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max]
-        divisors = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
+        else:
+            lst = [iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max]
+            divisors = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
         a = np.array(lst, dtype=input_dtype)
 
         for divisor in divisors:
@@ -926,7 +935,7 @@ class TestSpecialFloats:
             assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.log, np.float32(-1.0))
 
-        # See https://github.com/numpy/numpy/issues/18005 
+        # See https://github.com/numpy/numpy/issues/18005
         with assert_no_warnings():
             a = np.array(1e9, dtype='float32')
             np.log(a)

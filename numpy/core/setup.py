@@ -931,6 +931,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_arithmetic.dispatch.c.src'),
             join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
             join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),

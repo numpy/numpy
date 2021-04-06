@@ -135,18 +135,19 @@ class CustomScalar(Benchmark):
 
 
 class CustomScalarFloorDivideInt(Benchmark):
-    params = ([np.int8, np.int16, np.int32, np.int64], [8, -8, 43, -43, 0])
+    params = (np.sctypes['int'] + np.sctypes['uint'], [8, -8, 43, -43])
     param_names = ['dtype', 'divisors']
-    max_value = 10**7
-    min_value = -10**7
 
     def setup(self, dtype, divisor):
-        iinfo = np.iinfo(dtype)
-        self.x = np.arange(
-                max(iinfo.min, self.min_value),
-                min(iinfo.max, self.max_value), dtype=dtype)
+        if dtype in np.sctypes['uint'] and divisor < 0:
+            raise NotImplementedError(
+                    "Skipping test for negative divisor with unsigned type")
 
-    def time_floor_divide_int(self, dtpye, divisor):
+        iinfo = np.iinfo(dtype)
+        self.x = np.random.randint(
+                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+
+    def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
 
 
