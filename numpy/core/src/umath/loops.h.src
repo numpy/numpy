@@ -58,7 +58,8 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 #endif
 
 /**begin repeat
- * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+           BYTE,  SHORT,  INT,  LONG,  LONGLONG#
  */
  NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_divide,
      (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
@@ -150,9 +151,6 @@ NPY_NO_EXPORT void
 
 NPY_NO_EXPORT void
 @S@@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @S@@TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
