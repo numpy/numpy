@@ -16,4 +16,6 @@ RUN cd /workspace/numpy && \
     PATH="/usr/lib/ccache:$PATH" python setup.py build_ext -i && \
     ccache -s
 
+# gitpod will load the repository into /workspace/numpy. We remove the
+# directoy from the image to prevent conflicts.
 RUN sudo rm -rf /workspace/numpy
