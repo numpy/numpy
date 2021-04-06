@@ -69,7 +69,17 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
     #define TO_SIMD_SFX(X) X##_u@len@
 /**end repeat1**/
 #endif
-
+/*
+ * For 64-bit division on Armv7, Aarch64, and IBM/Power, NPYV fall-backs to the scalar division
+ * because emulating multiply-high on these architectures is going to be expensive comparing
+ * to the native scalar dividers.
+ * Therefore it's better to disable NPYV in this special case to avoid any unnecessary shuffles.
+ * Power10(VSX4) is an exception here since it has native support for integer vector division,
+ * note neither infrastructure nor NPYV has supported VSX4 yet.
+ */
+#if NPY_BITSOF_@STYPE@ == 64 && !defined(NPY_HAVE_VSX4) && (defined(NPY_HAVE_VSX) || defined(NPY_HAVE_NEON))
+    #undef TO_SIMD_SFX
+#endif
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
