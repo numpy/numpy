@@ -1038,7 +1038,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
             try:
                 np.copyto(result, da, casting='unsafe', where=m)
             except Exception:
-                print(impossible to guarantee masked values)
+                print("impossible to guarantee masked values")
                 raise
 
         # Transforms to a (subclass of) MaskedArray
