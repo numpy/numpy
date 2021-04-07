@@ -8,7 +8,7 @@ RUN git clone --depth 1 file:////tmp/numpy_repo /tmp/numpy
 
 FROM gitpod/workspace-base
 
-# gitpod/workspace-base at least one file here
+# gitpod/workspace-base needs at least one file here
 RUN touch /home/gitpod/.bashrc.d/empty
 
 ARG MAMBAFORGE_VERSION="4.10.0-0"
