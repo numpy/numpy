@@ -1,3 +1,5 @@
-image: thomasjpfan/numpy-gitpod:latest
+image: thomasjpfan/numpy-gitpod
 tasks:
-  - init: python setup.py develop
+  - init: |
+      python setup.py build_ext -i
+      echo "export PYTHONPATH=$PWD" >> ~/.bashrc
