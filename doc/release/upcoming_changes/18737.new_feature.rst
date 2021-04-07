@@ -1,0 +1,9 @@
+generic optimized BLAS and LAPACK via NPY_BLAS_LIBS etal.
+---------------------------------------------------------
+There is a generic choice for BLAS and LAPACK during build that
+is activated by defining NPY_BLAS_LIBS, NPY_CBLAS_LIBS,  and
+NPYLAPACK_LIBS in the environment of setup.py to the respective
+linker flags. This shortcuts any automatic guessing and allows
+simple controlled linkage of BLAS/LAPACK in automated builds,
+also possibly to replace the actual implementation at runtime
+via stub library links.

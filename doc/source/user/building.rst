@@ -123,13 +123,17 @@ in the ``site.cfg.example`` file.
 BLAS
 ~~~~
 
+Note that both BLAS and CBLAS interfaces are needed for a properly
+optimized build of NumPy.
+
 The default order for the libraries are:
 
-1. MKL
-2. BLIS
-3. OpenBLAS
-4. ATLAS
-5. BLAS (NetLIB)
+1. generic (NPY_BLAS_LIBS and NPY_CBLAS_LIBS from environment)
+2. MKL
+3. BLIS
+4. OpenBLAS
+5. ATLAS
+6. BLAS (NetLIB)
 
 If you wish to build against OpenBLAS but you also have BLIS available one
 may predefine the order of searching via the environment variable
@@ -152,16 +156,29 @@ list is retained.
 One cannot mix negation and positives, nor have multiple negations, such cases will
 raise an error.
 
+The generic option shortcuts any automatic library checks if NPY_BLAS_LIBS
+is defined in the environment. NPY_BLAS_LIBS is supposed to contain all
+linker flags to link to a standard BLAS library that offers the Fortran
+interface. Also define NPY_CBLAS_LIBS (even empty if CBLAS is contained
+in your BLAS library) to trigger use of CBLAS and avoid slow fallback
+code for matrix calculations.
+
+You can use the generic mechanism to ensure that the build is agnostic
+to the actual BLAS implementation.  This is also the first in the list
+to enable the not uncommon behaviour of using NPY_BLAS_LIBS from the
+environment and only guessing if it is not set.
+
 LAPACK
 ~~~~~~
 
 The default order for the libraries are:
 
-1. MKL
-2. OpenBLAS
-3. libFLAME
-4. ATLAS
-5. LAPACK (NetLIB)
+1. generic (NPY_LAPACK_LIBS from environment)
+2. MKL
+3. OpenBLAS
+4. libFLAME
+5. ATLAS
+6. LAPACK (NetLIB)
 
 
 If you wish to build against OpenBLAS but you also have MKL available one
@@ -185,6 +202,13 @@ list is retained.
 One cannot mix negation and positives, nor have multiple negations, such cases will
 raise an error.
 
+The generic option shortcuts any automatic library checks if NPY_LAPACK_LIBS
+is defined in the environment. NPY_LAPACK_LIBS is supposed to contain
+all linker flags to link to a standard LAPACK library that offers the
+Fortran interface.  You can use this mechanism to ensure that the build
+is agnostic to the actual LAPACK implementation. This is also the first
+in the list to enable the not uncommon behaviour of using NPY_LAPACK_LIBS
+from the environment and only guessing if it is not set.
 
 .. deprecated:: 1.20
   The native libraries on macOS, provided by Accelerate, are not fit for use
