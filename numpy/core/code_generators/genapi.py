@@ -281,9 +281,8 @@ def find_functions(filename, tag='API'):
                     state = SCANNING
                 else:
                     function_args.append(line)
-        except Exception:
-            print(filename, lineno + 1)
-            raise
+        except Exception as e:
+            raise Exception(filename, lineno + 1) from e
     fo.close()
     return functions
 
