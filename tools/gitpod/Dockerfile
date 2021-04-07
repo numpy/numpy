@@ -1,4 +1,7 @@
-FROM gitpod/workspace-full
+FROM gitpod/workspace-base
+
+# gitpod/workspace-base at least one file here
+RUN touch /home/gitpod/.bashrc.d/empty
 
 ARG miniforge_version="4.10.0-0"
 ARG conda_env=numpy-dev
