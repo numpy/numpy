@@ -3,3 +3,4 @@ tasks:
   - init: |
       python setup.py build_ext -i
       echo "export PYTHONPATH=$PWD" >> ~/.bashrc
+      source ~/.bashrc
