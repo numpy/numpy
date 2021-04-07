@@ -4,3 +4,7 @@ tasks:
       python setup.py build_ext -i
       echo "export PYTHONPATH=$PWD" >> ~/.bashrc
       source ~/.bashrc
+
+github:
+  prebuilds:
+    master: true
