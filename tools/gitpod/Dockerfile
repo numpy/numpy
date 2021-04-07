@@ -1,3 +1,11 @@
+FROM gitpod/workspace-base as stage1
+
+COPY --chown=gitpod . /tmp/numpy_repo
+
+# versioneer.py needs a git repo to construct the version
+# We use a multistage build to create a shallow copy of the repo
+RUN git clone --depth 1 file:////tmp/numpy_repo /tmp/numpy
+
 FROM gitpod/workspace-base
 
 # gitpod/workspace-base at least one file here
@@ -16,8 +24,7 @@ SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
 RUN wget -q -O mambaforge3.sh \
     https://github.com/conda-forge/miniforge/releases/download/$MAMBAFORGE_VERSION/Mambaforge-$MAMBAFORGE_VERSION-Linux-x86_64.sh && \
     bash mambaforge3.sh -p $CONDA_DIR -b && \
-    rm mambaforge3.sh && \
-    rm $CONDA_DIR/pkgs/cache/*
+    rm mambaforge3.sh
 
 # makes conda activate command for this Dockerfile
 RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
@@ -25,8 +32,8 @@ RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
 RUN conda init bash
 
 # Install numpy dev dependencies
-COPY environment.yml /tmp/environment.yml
-RUN mamba env create -f /tmp/environment.yml -n $CONDA_ENV && \
+COPY --from=stage1 --chown=gitpod /tmp/numpy /workspace/numpy
+RUN mamba env create -f /workspace/numpy/environment.yml -n $CONDA_ENV && \
     conda activate $CONDA_ENV && \
     mamba install ccache -y && \
     conda clean --all -f -y
@@ -43,8 +50,6 @@ RUN echo "conda activate $CONDA_ENV" >> ~/.startuprc && \
     echo "export FC=\"ccache \$FC\"" >> ~/.startuprc && \
     echo "source ~/.startuprc" >> ~/.profile && \
     echo "source ~/.startuprc" >> ~/.bashrc
-
-COPY --chown=gitpod . /workspace/numpy
 
 RUN python /workspace/numpy/setup.py build_ext -i && \
     ccache -s
