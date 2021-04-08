@@ -3127,11 +3127,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
     function :func:`numpy.copy` is similar, but it defaults to using order 'C',
     and will not pass sub-classes through by default.
 
-    See also
-    --------
-    numpy.copy
-    numpy.copyto
-
     Examples
     --------
     >>> x = np.array([[1,2,3],[4,5,6]], order='F')
