@@ -498,23 +498,17 @@ class TestUfunc:
         np.add(3, 4, dtype=int64_2)
 
         arr = np.arange(10, dtype="m8[s]")
-        with pytest.warns(UserWarning,
-                match="The `dtype` and `signature` arguments to") as rec:
+        msg = "The `dtype` and `signature` arguments to ufuncs only select the"
+        with pytest.raises(TypeError, match=msg):
             np.add(3, 5, dtype=int64.newbyteorder())
+        with pytest.raises(TypeError, match=msg):
             np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
             np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
+        with pytest.raises(TypeError, match=msg):
             np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
             np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
-
-        assert len(rec) == 5  # each of the above call should cause one
-
-        # Also check the error paths:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", UserWarning)
-            with pytest.raises(UserWarning):
-                np.add(3, 5, dtype="m8[ns]")
-            with pytest.raises(UserWarning):
-                np.maximum.reduce(arr, dtype="m8[ns]")
 
     def test_true_divide(self):
         a = np.array(10)

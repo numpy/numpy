@@ -4480,20 +4480,19 @@ _get_dtype(PyObject *dtype_obj) {
         else if (NPY_UNLIKELY(out->singleton != descr)) {
             /* This does not warn about `metadata`, but units is important. */
             if (!PyArray_EquivTypes(out->singleton, descr)) {
-                if (PyErr_WarnFormat(PyExc_UserWarning, 1,
+                PyErr_Format(PyExc_TypeError,
                         "The `dtype` and `signature` arguments to "
                         "ufuncs only select the general DType and not details "
-                        "such as the byte order or time unit. "
-                        "In very rare cases NumPy <1.21 may have preserved the "
-                        "time unit for `dtype=`.  The cases are mainly "
-                        "`np.minimum(arr1, arr2, dtype='m8[ms]')` and when the "
-                        "output is timedelta, but the input is integer. "
-                        "(See NumPy 1.21.0 release notes for details.)\n"
-                        "If you wish to set an exact output dtype, you must "
-                        "currently pass `out=` instead.") < 0) {
-                    Py_DECREF(descr);
-                    return NULL;
-                }
+                        "such as the byte order or time unit (with rare "
+                        "exceptions see release notes).  To avoid this warning "
+                        "please use the scalar types `np.float64`, or string "
+                        "notation.\n"
+                        "In rare cases where the time unit was preserved, "
+                        "either cast the inputs or provide an output array. "
+                        "In the future NumPy may transition to allow providing "
+                        "`dtype=` to denote the outputs `dtype` as well");
+                Py_DECREF(descr);
+                return NULL;
             }
         }
         Py_INCREF(out);

@@ -28,26 +28,32 @@ which are also valid for reduction such as ``np.add.reduce``
 a warning when the ``dtype`` provided is not a "basic" dtype.
 
 NumPy almost always ignored metadata, byteorder or time units
-on these inputs.  NumPy will now always ignore it and issue
-a warning if byteorder or time unit changed.
+on these inputs.  NumPy will now always ignore it and raise an
+error if byteorder or time unit changed.
 The following are the most important examples of changes which
-will issue the warning and in some cases previously returned
-different results::
+will give the error.  In some cases previously the information
+stored was not ignored, in all of these an error is now raised::
 
-    # The following will now warn on most systems (unchanged result):
+    # Previously ignored the byte-order (affect if non-native)
     np.add(3, 5, dtype=">i32")
 
     # The biggest impact is for timedelta or datetimes:
     arr = np.arange(10, dtype="m8[s]")
-    # The examples always ignored the time unit "ns" (using the
-    # unit of `arr`.  They now issue a warning:
+    # The examples always ignored the time unit "ns":
     np.add(arr, arr, dtype="m8[ns]")
     np.maximum.reduce(arr, dtype="m8[ns]")
 
-    # The following issue a warning but previously did return
-    # a "ns" result.
+    # The following previously did use "ns" (as opposed to `arr.dtype`)
     np.add(3, 5, dtype="m8[ns]")  # Now return generic time units
     np.maximum(arr, arr, dtype="m8[ns]")  # Now returns "s" (from `arr`)
 
 The same applies for functions like ``np.sum`` which use these internally.
 This change is necessary to achieve consistent handling within NumPy.
+
+If you run into these, in most cases pass for example ``dtype=np.timedelta64``
+which clearly denotes a general ``timedelta64`` without any unit or byte-order
+defined.  If you need to specify the output dtype precisely, you may do so
+by either casting the inputs or providing an output array using `out=`.
+
+NumPy may choose to allow providing an exact output ``dtype`` here in the
+future, which would be preceded by a ``FutureWarning``.
