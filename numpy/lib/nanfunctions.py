@@ -1363,26 +1363,23 @@ def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
     if a.size == 0:
-        if np.isscalar(q):
-            return np.nanmean(a, axis, out=out, keepdims=keepdims)
-        else:
-            r = np.nanmean(a, axis, keepdims=keepdims)
-            result = np.broadcast_to(r, q.shape + r.shape)
-            if out is not None:
-                np.copyto(out, result)
-            return result
-
-    r, k = function_base._ureduce(
-        a, func=_nanquantile_ureduce_func, q=q, axis=axis, out=out,
-        overwrite_input=overwrite_input, interpolation=interpolation
-    )
-    if keepdims and keepdims is not np._NoValue:
-        return r.reshape(q.shape + k)
+        r = np.nanmean(a, axis, keepdims=keepdims)
+        if q.ndim != 0:
+            r = np.broadcast_to(r, q.shape + r.shape)
     else:
-        return r
+        r, k = function_base._ureduce(
+            a, func=_nanquantile_ureduce_func, q=q, axis=axis,
+            overwrite_input=overwrite_input, interpolation=interpolation
+        )
+        if keepdims and keepdims is not np._NoValue:
+            r = r.reshape(q.shape + k)
+
+    if out is not None:
+        out[...] = r
+    return r
 
 
-def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
+def _nanquantile_ureduce_func(a, q, axis=None, overwrite_input=False,
                               interpolation='linear'):
     """
     Private function that doesn't support extended axis or keepdims.
@@ -1401,8 +1398,6 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         if q.ndim != 0:
             result = np.moveaxis(result, axis, 0)
 
-    if out is not None:
-        out[...] = result
     return result
 
 
