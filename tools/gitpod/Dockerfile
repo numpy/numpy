@@ -23,6 +23,9 @@ ARG CONDA_ENV=numpy-dev
 ENV CONDA_DIR=/home/gitpod/mambaforge3
 ENV PATH=$CONDA_DIR/bin:$PATH
 
+# Installs latex for building sphinx building
+RUN install-packages texlive-latex-recommended
+
 # Allows this Dockerfile to activate conda environments
 SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
 
