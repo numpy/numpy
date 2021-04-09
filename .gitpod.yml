@@ -4,8 +4,6 @@ tasks:
   # should be faster since it is using the cache.
   - init: |
       python setup.py build_ext -i
-      echo "export PYTHONPATH=$PWD" >> ~/.bashrc
-      source ~/.bashrc
 
 github:
   prebuilds:
