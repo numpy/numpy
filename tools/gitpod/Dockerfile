@@ -1,3 +1,6 @@
+# Builds a development environment for gitpod by building numpy with
+# ccache enabled. When gitpod is prebuilding or starting up, it should
+# build numpy faster because of ccache.
 FROM gitpod/workspace-base as clone
 
 COPY --chown=gitpod . /tmp/numpy_repo
