@@ -3,10 +3,10 @@ FROM gitpod/workspace-base as clone
 COPY --chown=gitpod . /tmp/numpy_repo
 
 # We use a multistage build to create a shallow clone of the repo to avoid
-# having the complete git history in the build stage. During the build stage,
-# the shallow clone is used to install the dependencies and build numpy to
-# populate the cache used by ccache. Building numpy with setup.py uses
-# versioneer.py which requires a git history.
+# having the complete git history in the build stage and reducing the image
+# size. During the build stage, the shallow clone is used to install the
+# dependencies and build numpy to populate the cache used by ccache. Building
+# numpy with setup.py uses versioneer.py which requires a git history.
 RUN git clone --depth 1 file:////tmp/numpy_repo /tmp/numpy
 
 FROM gitpod/workspace-base as build
