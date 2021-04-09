@@ -1,12 +1,15 @@
-FROM gitpod/workspace-base as stage1
+FROM gitpod/workspace-base as clone
 
 COPY --chown=gitpod . /tmp/numpy_repo
 
-# versioneer.py needs a git repo to construct the version
-# We use a multistage build to create a shallow copy of the repo
+# We use a multistage build to create a shallow clone of the repo to avoid
+# having the complete git history in the build stage. During the build stage,
+# the shallow clone is used to install the dependencies and build numpy to
+# populate the cache used by ccache. Building numpy with setup.py uses
+# versioneer.py which requires a git history.
 RUN git clone --depth 1 file:////tmp/numpy_repo /tmp/numpy
 
-FROM gitpod/workspace-base
+FROM gitpod/workspace-base as build
 
 # gitpod/workspace-base needs at least one file here
 RUN touch /home/gitpod/.bashrc.d/empty
@@ -32,7 +35,7 @@ RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
 RUN conda init bash
 
 # Install numpy dev dependencies
-COPY --from=stage1 --chown=gitpod /tmp/numpy /workspace/numpy
+COPY --from=clone --chown=gitpod /tmp/numpy /workspace/numpy
 RUN mamba env create -f /workspace/numpy/environment.yml -n $CONDA_ENV && \
     conda activate $CONDA_ENV && \
     mamba install ccache -y && \
@@ -51,6 +54,7 @@ RUN echo "conda activate $CONDA_ENV" >> ~/.startuprc && \
     echo "source ~/.startuprc" >> ~/.profile && \
     echo "source ~/.startuprc" >> ~/.bashrc
 
+# Build numpy to populate the cache used by ccache
 RUN python /workspace/numpy/setup.py build_ext -i && \
     ccache -s
 
