@@ -61,6 +61,9 @@ RUN echo "conda activate $CONDA_ENV" >> ~/.startuprc && \
 RUN python /workspace/numpy/setup.py build_ext -i && \
     ccache -s
 
+# .gitpod.yml is configured to install numpy from /workspace/numpy
+RUN echo "export PYTHONPATH=/workspace/numpy" >> ~/.bashrc
+
 # gitpod will load the repository into /workspace/numpy. We remove the
 # directoy from the image to prevent conflicts
 RUN sudo rm -rf /workspace/numpy
