@@ -4,7 +4,7 @@ tasks:
   # should be faster since it is using the cache.
   - init: python setup.py build_ext -i
   - openMode: split-right
-    command: make -C doc -e SPHINXOPTS="-j auto" html
+    command: make -C doc html
 
 github:
   prebuilds:
