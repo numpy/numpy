@@ -1,4 +1,4 @@
-image: thomasjpfan/numpy-gitpod
+image: thomasjpfan/numpy-gitpod:latest
 tasks:
   # The base image complied numpy with ccache enabled. This second build
   # should be faster since it is using the cache.
