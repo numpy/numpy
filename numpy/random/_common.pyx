@@ -232,13 +232,34 @@ cdef validate_output_shape(iter_shape, np.ndarray output):
         )
 
 
-cdef check_output(object out, object dtype, object size):
+cdef check_output(object out, object dtype, object size, bint require_c_array):
+    """
+    Check user-supplied output array properties and shape
+    
+    Parameters
+    ----------
+    out : {ndarray, None}
+        The array to check.  If None, returns immediately.
+    dtype : dtype
+        The required dtype of out.
+    size : {None, int, tuple[int]}
+        The size passed.  If out is an ndarray, verifies that the shape of out
+        matches size.
+    require_c_array : bool
+        Whether out must be a C-array.  If False, out can be either C- or F-
+        ordered.  If True, must be C-ordered. In either case, must be
+        contiguous, writable, aligned and in native byte-order.
+    """
     if out is None:
         return
     cdef np.ndarray out_array = <np.ndarray>out
-    if not (np.PyArray_CHKFLAGS(out_array, np.NPY_CARRAY) or
-            np.PyArray_CHKFLAGS(out_array, np.NPY_FARRAY)):
-        raise ValueError('Supplied output array is not contiguous, writable or aligned.')
+    if not (np.PyArray_ISCARRAY(out_array) or
+            (np.PyArray_ISFARRAY(out_array) and not require_c_array)):
+        req = "C-" if require_c_array else ""
+        raise ValueError(
+            f'Supplied output array must be {req}contiguous, writable, '
+            f'aligned, and in machine byte-order.'
+        )
     if out_array.dtype != dtype:
         raise TypeError('Supplied output array has the wrong type. '
                         'Expected {0}, got {1}'.format(np.dtype(dtype), out_array.dtype))
@@ -264,7 +285,7 @@ cdef object double_fill(void *func, bitgen_t *state, object size, object lock, o
             return out_val
 
     if out is not None:
-        check_output(out, np.float64, size)
+        check_output(out, np.float64, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.double)
@@ -288,7 +309,7 @@ cdef object float_fill(void *func, bitgen_t *state, object size, object lock, ob
             return out_val
 
     if out is not None:
-        check_output(out, np.float32, size)
+        check_output(out, np.float32, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.float32)
@@ -310,7 +331,7 @@ cdef object float_fill_from_double(void *func, bitgen_t *state, object size, obj
             return <float>random_func(state)
 
     if out is not None:
-        check_output(out, np.float32, size)
+        check_output(out, np.float32, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.float32)
@@ -521,7 +542,7 @@ cdef object cont(void *func, void *state, object size, object lock, int narg,
     cdef np.ndarray a_arr, b_arr, c_arr
     cdef double _a = 0.0, _b = 0.0, _c = 0.0
     cdef bint is_scalar = True
-    check_output(out, np.float64, size)
+    check_output(out, np.float64, size, narg > 0)
     if narg > 0:
         a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
@@ -971,7 +992,7 @@ cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
     cdef float _a
     cdef bint is_scalar = True
     cdef int requirements = np.NPY_ALIGNED | np.NPY_FORCECAST
-    check_output(out, np.float32, size)
+    check_output(out, np.float32, size, True)
     a_arr = <np.ndarray>np.PyArray_FROMANY(a, np.NPY_FLOAT32, 0, 0, requirements)
     is_scalar = np.PyArray_NDIM(a_arr) == 0
 
