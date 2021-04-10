@@ -1,9 +1,12 @@
-generic optimized BLAS and LAPACK via NPY_BLAS_LIBS etal.
----------------------------------------------------------
-There is a generic choice for BLAS and LAPACK during build that
-is activated by defining NPY_BLAS_LIBS, NPY_CBLAS_LIBS,  and
-NPYLAPACK_LIBS in the environment of setup.py to the respective
-linker flags. This shortcuts any automatic guessing and allows
-simple controlled linkage of BLAS/LAPACK in automated builds,
-also possibly to replace the actual implementation at runtime
-via stub library links.
+BLAS and LAPACK configuration via environment variables
+-------------------------------------------------------
+Autodetection of installed BLAS and LAPACK libraries can be bypassed by using
+the ``NPY_BLAS_LIBS`` and ``NPY_LAPACK_LIBS`` environment variables. Instead,
+the link flags in these environment variables will be used directly, and the
+language is assumed to be F77.  This is especially useful in automated builds
+where the BLAS and LAPACK that are installed are known exactly.  A use case is
+replacing the actual implementation at runtime via stub library links.
+
+If ``NPY_CBLAS_LIBS`` is set (optional in addition to ``NPY_BLAS_LIBS``), this
+will be used as well, by defining ``HAVE_CBLAS`` and appending the environment
+variable content to the link flags.
