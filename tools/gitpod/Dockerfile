@@ -1,6 +1,8 @@
 # Builds a development environment for gitpod by building numpy with
-# ccache enabled. When gitpod is prebuilding or starting up, it should
-# build numpy faster because of ccache.
+# ccache enabled. When gitpod is prebuilding or starting up it clones
+# a branch into `/workspace/numpy`. The gitpod clone is different than the
+# one used to build this Docker image. The gitpod clone will build numpy
+# faster because it is using compliers with ccache enabled.
 FROM gitpod/workspace-base as clone
 
 COPY --chown=gitpod . /tmp/numpy_repo
