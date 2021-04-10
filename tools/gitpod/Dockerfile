@@ -1,7 +1,6 @@
 # Builds a development environment for gitpod by building numpy with
 # ccache enabled. When gitpod is prebuilding or starting up it clones
-# a branch into `/workspace/numpy`. The gitpod clone is different than the
-# one used to build this Docker image. The gitpod clone will build numpy
+# a branch into `/workspace/numpy`. The gitpod clone will build numpy
 # faster because it is using compliers with ccache enabled.
 FROM gitpod/workspace-base as clone
 
@@ -26,7 +25,7 @@ ENV CONDA_DIR=/home/gitpod/mambaforge3
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 USER root
-RUN install-packages texlive-latex-extra
+RUN install-packages texlive-latex-extra dvisvgm
 USER gitpod
 
 # Allows this Dockerfile to activate conda environments
