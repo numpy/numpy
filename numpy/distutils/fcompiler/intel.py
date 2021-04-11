@@ -59,7 +59,8 @@ class IntelFCompiler(BaseIntelFCompiler):
     def get_flags_opt(self):  # Scipy test failures with -O2
         v = self.get_version()
         mpopt = 'openmp' if v and v < '15' else 'qopenmp'
-        return ['-fp-model', 'strict', '-O1', '-assume', 'minus0', '-{}'.format(mpopt)]
+        return ['-fp-model', 'strict', '-O1',
+                '-assume', 'minus0', '-{}'.format(mpopt)]
 
     def get_flags_arch(self):
         return []
