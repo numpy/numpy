@@ -2527,3 +2527,36 @@ class TestRegression:
 
         f = np.frompyfunc(cassé, 1, 1)
         assert str(f) == "<ufunc 'cassé (vectorized)'>"
+
+    @pytest.mark.parametrize("operation", [
+        'add', 'subtract', 'multiply', 'floor_divide',
+        'conjugate', 'fmod', 'square', 'reciprocal',
+        'power', 'absolute', 'negative', 'positive',
+        'greater', 'greater_equal', 'less',
+        'less_equal', 'equal', 'not_equal', 'logical_and',
+        'logical_not', 'logical_or', 'bitwise_and', 'bitwise_or',
+        'bitwise_xor', 'invert', 'left_shift', 'right_shift',
+        'gcd', 'lcm'
+        ]
+    )
+    @pytest.mark.parametrize("order", [
+        ('b->', 'B->'),
+        ('h->', 'H->'),
+        ('i->', 'I->'),
+        ('l->', 'L->'),
+        ('q->', 'Q->'),
+        ]
+    )
+    def test_ufunc_order(self, operation, order):
+        # gh-18075
+        # Ensure signed types before unsigned
+        def get_idx(string, str_lst):
+            for i, s in enumerate(str_lst):
+                if string in s:
+                    return i
+            raise ValueError(f"{string} not in list")
+        types = getattr(np, operation).types
+        assert get_idx(order[0], types) < get_idx(order[1], types), (
+                f"Unexpected types order of ufunc in {operation}"
+                f"for {order}. Possible fix: Use signed before unsigned"
+                "in generate_umath.py")
