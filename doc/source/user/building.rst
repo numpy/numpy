@@ -6,7 +6,7 @@ Building from source
 A general overview of building NumPy from source is given here, with detailed
 instructions for specific platforms given separately.
 
-.. 
+..
   This page is referenced from numpy/numpy/__init__.py. Please keep its
   location in sync with the link there.
 
@@ -123,6 +123,9 @@ in the ``site.cfg.example`` file.
 BLAS
 ~~~~
 
+Note that both BLAS and CBLAS interfaces are needed for a properly
+optimized build of NumPy.
+
 The default order for the libraries are:
 
 1. MKL
@@ -130,6 +133,12 @@ The default order for the libraries are:
 3. OpenBLAS
 4. ATLAS
 5. BLAS (NetLIB)
+
+The detection of BLAS libraries may be bypassed by defining the environment
+variable ``NPY_BLAS_LIBS`` , which should contain the exact linker flags you
+want to use (interface is assumed to be Fortran 77).  Also define
+``NPY_CBLAS_LIBS`` (even empty if CBLAS is contained in your BLAS library) to
+trigger use of CBLAS and avoid slow fallback code for matrix calculations.
 
 If you wish to build against OpenBLAS but you also have BLIS available one
 may predefine the order of searching via the environment variable
@@ -163,6 +172,9 @@ The default order for the libraries are:
 4. ATLAS
 5. LAPACK (NetLIB)
 
+The detection of LAPACK libraries may be bypassed by defining the environment
+variable ``NPY_LAPACK_LIBS``, which should contain the exact linker flags you
+want to use (language is assumed to be Fortran 77).
 
 If you wish to build against OpenBLAS but you also have MKL available one
 may predefine the order of searching via the environment variable
@@ -184,7 +196,6 @@ list is retained.
 
 One cannot mix negation and positives, nor have multiple negations, such cases will
 raise an error.
-
 
 .. deprecated:: 1.20
   The native libraries on macOS, provided by Accelerate, are not fit for use

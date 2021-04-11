@@ -114,6 +114,19 @@ Currently, the following classes are available, along with their section names:
     x11_info:x11
     xft_info:xft
 
+Note that blas_opt_info and lapack_opt_info honor the NPY_BLAS_ORDER
+and NPY_LAPACK_ORDER environment variables to determine the order in which
+specific BLAS and LAPACK libraries are searched for.
+
+This search (or autodetection) can be bypassed by defining the environment
+variables NPY_BLAS_LIBS and NPY_LAPACK_LIBS, which should then contain the
+exact linker flags to use (language will be set to F77). Building against
+Netlib BLAS/LAPACK or stub files, in order to be able to switch BLAS and LAPACK
+implementations at runtime. If using this to build NumPy itself, it is
+recommended to also define NPY_CBLAS_LIBS (assuming your BLAS library has a
+CBLAS interface) to enable CBLAS usage for matrix multiplication (unoptimized
+otherwise).
+
 Example:
 ----------
 [DEFAULT]
@@ -1847,6 +1860,16 @@ class lapack_opt_info(system_info):
             return True
         return False
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_LAPACK_LIBS'].split()
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
@@ -1856,6 +1879,12 @@ class lapack_opt_info(system_info):
             raise ValueError("lapack_opt_info user defined "
                              "LAPACK order has unacceptable "
                              "values: {}".format(unknown_order))
+
+        if 'NPY_LAPACK_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for lapack in lapack_order:
             if self._calc_info(lapack):
@@ -1979,6 +2008,20 @@ class blas_opt_info(system_info):
         self.set_info(**info)
         return True
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_BLAS_LIBS'].split()
+        if 'NPY_CBLAS_LIBS' in os.environ:
+            info['define_macros'].append(('HAVE_CBLAS', None))
+            info['extra_link_args'].extend(
+                                        os.environ['NPY_CBLAS_LIBS'].split())
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
@@ -1986,6 +2029,12 @@ class blas_opt_info(system_info):
         blas_order, unknown_order = _parse_env_order(self.blas_order, self.order_env_var_name)
         if len(unknown_order) > 0:
             raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(unknown_order))
+
+        if 'NPY_BLAS_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for blas in blas_order:
             if self._calc_info(blas):
