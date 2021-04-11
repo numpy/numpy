@@ -122,7 +122,7 @@ This search (or autodetection) can be bypassed by defining the environment
 variables NPY_BLAS_LIBS and NPY_LAPACK_LIBS, which should then contain the
 exact linker flags to use (language will be set to F77). Building against
 Netlib BLAS/LAPACK or stub files, in order to be able to switch BLAS and LAPACK
-implementations at runtime If using this to build NumPy itself, it is
+implementations at runtime. If using this to build NumPy itself, it is
 recommended to also define NPY_CBLAS_LIBS (assuming your BLAS library has a
 CBLAS interface) to enable CBLAS usage for matrix multiplication (unoptimized
 otherwise).
