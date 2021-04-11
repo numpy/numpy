@@ -737,7 +737,7 @@ reasonable_operators_for_scalars = [
 @settings(verbosity=Verbosity.verbose)
 def test_operator_object_left(o, op, type_):
     try:
-        with recursionlimit(100):
+        with recursionlimit(200):
             op(o, type_(1))
     except TypeError:
         pass
@@ -748,7 +748,7 @@ def test_operator_object_left(o, op, type_):
        sampled_from(types))
 def test_operator_object_right(o, op, type_):
     try:
-        with recursionlimit(100):
+        with recursionlimit(200):
             op(type_(1), o)
     except TypeError:
         pass
