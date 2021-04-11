@@ -850,12 +850,22 @@ class TestNanFunctions_Percentile:
                 assert_(len(w) == 0)
 
     # gh-18158
-    def test_empty_shape(self):
+    def test_shape_from_empty_array(self):
         mat = np.zeros((0, 1))
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
             res = np.nanpercentile(mat, [50, 99], axis=1)
             assert_equal(res.shape, (2, 0))
+
+    # gh-18746
+    def test_out_with_keepdims(self):
+        mat = np.zeros((3, 4, 2))
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            res = np.nanpercentile(mat, [50, 99], axis=0, keepdims=True)
+            resout = np.zeros(res.shape)
+            np.nanpercentile(mat, [50, 99], axis=0, keepdims=True, out=resout)
+            assert_almost_equal(res, resout)
 
     def test_scalar(self):
         assert_equal(np.nanpercentile(0., 100), 0.)
