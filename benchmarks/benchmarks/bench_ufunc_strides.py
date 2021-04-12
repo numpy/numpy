@@ -33,7 +33,7 @@ class Unary(Benchmark):
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError(f"No ufunc {ufuncname} found") from None
         N = 10000
         self.arr = np.ones(stride*N, dtype)
         self.arr_out = np.empty(stride_out*N, dtype)
@@ -68,7 +68,7 @@ class AVX_BFunc(Benchmark):
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError(f"No ufunc {ufuncname} found") from None
         N = 10000
         self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
         self.arr2 = np.array(np.random.rand(stride*N), dtype=dtype)
@@ -109,7 +109,7 @@ class AVX_cmplx_arithmetic(Benchmark):
         try:
             self.f = getattr(np, bfuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError(f"No bfunc {bfuncname} found") from None
         N = 10000
         self.arr1 = np.ones(stride*N, dtype)
         self.arr2 = np.ones(stride*N, dtype)
@@ -132,7 +132,7 @@ class AVX_cmplx_funcs(Benchmark):
         try:
             self.f = getattr(np, bfuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError(f"No bfunc {bfuncname} found") from None
         N = 10000
         self.arr1 = np.ones(stride*N, dtype)
 
