@@ -410,9 +410,12 @@ class TestUfunc:
     def test_forced_sig(self):
         a = 0.5*np.arange(3, dtype='f8')
         assert_equal(np.add(a, 0.5), [0.5, 1, 1.5])
-        assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig='ii->i', casting='unsafe'), [0, 0, 1])
-        assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'),
+                         [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig=('i4', 'i4', 'i4'),
                                             casting='unsafe'), [0, 0, 1])
 
@@ -420,17 +423,92 @@ class TestUfunc:
         np.add(a, 0.5, out=b)
         assert_equal(b, [0.5, 1, 1.5])
         b[:] = 0
-        np.add(a, 0.5, sig='i', out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig='i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig='ii->i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
-        np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
+
+    def test_signature_all_None(self):
+        # signature all None, is an acceptable alternative (since 1.21)
+        # to not providing a signature.
+        res1 = np.add([3], [4], sig=(None, None, None))
+        res2 = np.add([3], [4])
+        assert_array_equal(res1, res2)
+        res1 = np.maximum([3], [4], sig=(None, None, None))
+        res2 = np.maximum([3], [4])
+        assert_array_equal(res1, res2)
+
+        with pytest.raises(TypeError):
+            # special case, that would be deprecated anyway, so errors:
+            np.add(3, 4, signature=(None,))
+
+    def test_signature_dtype_type(self):
+        # Since that will be the normal behaviour (past NumPy 1.21)
+        # we do support the types already:
+        float_dtype = type(np.dtype(np.float64))
+        np.add(3, 4, signature=(float_dtype, float_dtype, None))
+
+    def test_signature_errors(self):
+        with pytest.raises(TypeError,
+                    match="the signature object to ufunc must be a string or"):
+            np.add(3, 4, signature=123.)  # neither a string nor a tuple
+
+        with pytest.raises(ValueError):
+            # bad symbols that do not translate to dtypes
+            np.add(3, 4, signature="%^->#")
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature=b"ii-i")  # incomplete and byte string
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature="ii>i")  # incomplete string
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature=(None, "f8"))  # bad length
+
+        with pytest.raises(UnicodeDecodeError):
+            np.add(3, 4, signature=b"\xff\xff->i")
+
+    def test_forced_dtype_times(self):
+        # Signatures only set the type numbers (not the actual loop dtypes)
+        # so using `M` in a signature/dtype should generally work:
+        a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='>M8[D]')
+        np.maximum(a, a, dtype="M")
+        np.maximum.reduce(a, dtype="M")
+
+        arr = np.arange(10, dtype="m8[s]")
+        np.add(arr, arr, dtype="m")
+        np.maximum(arr, arr, dtype="m")
+
+    def test_forced_dtype_warning(self):
+        # does not warn (test relies on bad pickling behaviour, simply remove
+        # it if the `assert int64 is not int64_2` should start failing.
+        int64 = np.dtype("int64")
+        int64_2 = pickle.loads(pickle.dumps(int64))
+        assert int64 is not int64_2
+        np.add(3, 4, dtype=int64_2)
+
+        arr = np.arange(10, dtype="m8[s]")
+        msg = "The `dtype` and `signature` arguments to ufuncs only select the"
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, dtype=int64.newbyteorder())
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
 
     def test_true_divide(self):
         a = np.array(10)

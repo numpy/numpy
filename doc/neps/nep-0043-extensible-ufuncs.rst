@@ -150,6 +150,11 @@ The masked type resolvers specifically will *not* remain supported, but
 has no known users (including NumPy itself, which only uses the default
 version).
 
+Further, no compatibility attempt will be made for *calling* as opposed
+to providing either the normal or the masked type resolver.  As NumPy
+will use it only as a fallback.  There are no known users of this
+(undocumented) possibility.
+
 While the above changes potentially break some workflows,
 we believe that the long-term improvements vastly outweigh this.
 Further, packages such as astropy and Numba are capable of adapting so that
