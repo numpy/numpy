@@ -281,9 +281,11 @@ def find_functions(filename, tag='API'):
                     state = SCANNING
                 else:
                     function_args.append(line)
-        except Exception:
-            print(filename, lineno + 1)
+        except ParseError:
             raise
+        except Exception as e:
+            msg = "see chained exception for details"
+            raise ParseError(filename, lineno + 1, msg) from e
     fo.close()
     return functions
 
