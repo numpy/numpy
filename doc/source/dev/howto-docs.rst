@@ -7,9 +7,9 @@ How to contribute to the NumPy documentation
 This guide will help you decide what to contribute and how to submit it to the
 official NumPy documentation.
 
-******************************************************************************
+***************************
 Documentation team meetings
-******************************************************************************
+***************************
 
 The NumPy community has set a firm goal of improving its documentation. We
 hold regular documentation meetings on Zoom (dates are announced on the
@@ -21,9 +21,9 @@ Minutes are taken `on hackmd.io <https://hackmd.io/oB_boakvRqKR-_2jRV-Qjg>`__
 and stored in the `NumPy Archive repository
 <https://github.com/numpy/archive>`__.
 
-*************************
+*************
 What's needed
-*************************
+*************
 
 The :ref:`NumPy Documentation <numpy_docs_mainpage>` has the details covered.
 API reference documentation is generated directly from
@@ -35,9 +35,9 @@ there is a lack of usage examples for some of them.
 What we lack are docs with broader scope -- tutorials, how-tos, and
 explanations. Reporting defects is another way to contribute. We discuss both.
 
-*************************
+******************
 Contributing fixes
-*************************
+******************
 
 We're eager to hear about and fix doc defects. But to attack the biggest
 problems we end up having to defer or overlook some bug reports. Here are the
@@ -59,9 +59,9 @@ Obvious **wording** mistakes (like leaving out a "not") fall into the typo
 category, but other rewordings -- even for grammar -- require a judgment call,
 which raises the bar. Test the waters by first presenting the fix as an issue.
 
-******************************************************************************
+**********************
 Contributing new pages
-******************************************************************************
+**********************
 
 Your frustrations using our documents are our best guide to what needs fixing.
 
@@ -82,7 +82,7 @@ additions we'd like to see, including :ref:`Jupyter notebooks <numpy_tutorials>`
 .. _tutorials_howtos_explanations:
 
 Documentation framework
-==============================================================================
+=======================
 
 There are formulas for writing useful documents, and four formulas
 cover nearly everything. There are four formulas because there are four
@@ -109,7 +109,7 @@ own tutorials as pull requests.
 .. _contributing:
 
 More on contributing
-==============================================================================
+====================
 
 Don't worry if English is not your first language, or if you can only come up
 with a rough draft. Open source is a community effort. Do your best -- we'll
@@ -137,9 +137,9 @@ rST, see the `Quick reStructuredText Guide
 <http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__
 
 
-************************************************************
+***********************
 Contributing indirectly
-************************************************************
+***********************
 
 If you run across outside material that would be a useful addition to the
 NumPy docs, let us know by `opening an issue <https://github.com/numpy/numpy/issues>`__.
@@ -149,9 +149,9 @@ if you write a tutorial on your blog, create a YouTube video, or answer question
 on Stack Overflow and other sites.
 
 
-************************************************************
+*********************
 Documentation reading
-************************************************************
+*********************
 
 - The leading organization of technical writers,
   `Write the Docs <https://www.writethedocs.org/>`__,
