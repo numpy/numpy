@@ -24,13 +24,16 @@ and stored in the `NumPy Archive repository
 *************************
 What's needed
 *************************
-NumPy docs have the details covered. API reference
-documentation is generated directly from
-`docstrings <https://www.python.org/dev/peps/pep-0257/>`_ in the code
-when the documentation is :ref:`built<howto-build-docs>`.
 
-What we lack are docs with broader scope -- tutorials, how-tos, and explanations.
-Reporting defects is another way to contribute. We discuss both.
+The :ref:`NumPy Documentation <numpy_docs_mainpage>` has the details covered.
+API reference documentation is generated directly from
+`docstrings <https://www.python.org/dev/peps/pep-0257/>`_ in the code when the
+documentation is :ref:`built<howto-build-docs>`. Although we have mostly
+complete reference documentation for each function and class exposed to users,
+there is a lack of usage examples for some of them.
+
+What we lack are docs with broader scope -- tutorials, how-tos, and
+explanations. Reporting defects is another way to contribute. We discuss both.
 
 *************************
 Contributing fixes
@@ -48,8 +51,8 @@ a `pull request (PR) <https://numpy.org/devdocs/dev/index.html#devindex>`__
 with the fix, if you know how to do that; otherwise please `open an issue
 <https://github.com/numpy/numpy/issues>`__.
 
-**Typos and misspellings** fall on a lower rung; we welcome hearing about them but
-may not be able to fix them promptly. These too can be handled as pull
+**Typos and misspellings** fall on a lower rung; we welcome hearing about them
+but may not be able to fix them promptly. These too can be handled as pull
 requests or issues.
 
 Obvious **wording** mistakes (like leaving out a "not") fall into the typo
@@ -74,28 +77,36 @@ If you're looking for subjects, our formal roadmap for documentation is a
 *NumPy Enhancement Proposal (NEP)*,
 `NEP 44 - Restructuring the NumPy Documentation <https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
 It identifies areas where our docs need help and lists several
-additions we'd like to see, including Jupyter notebooks.
-
-You can find larger planned and in-progress ideas `at
-our GitHub project <https://github.com/orgs/numpy/projects/2>`__.
+additions we'd like to see, including :ref:`Jupyter notebooks <numpy_tutorials>`.
 
 .. _tutorials_howtos_explanations:
 
-
-Formula writing
+Documentation framework
 ==============================================================================
+
 There are formulas for writing useful documents, and four formulas
 cover nearly everything. There are four formulas because there are four
 categories of document -- ``tutorial``, ``how-to guide``, ``explanation``,
 and ``reference``. The insight that docs divide up this way belongs to
-Daniele Procida, who goes on
-`in this short article <https://documentation.divio.com/>`__ to explain
-the differences and reveal the formulas. When you begin a document or
-propose one, have in mind which of these types it will be.
+Daniele Procida and his `Diátaxis Framework <https://diataxis.fr/>`__. When you
+begin a document or propose one, have in mind which of these types it will be.
 
+.. _numpy_tutorials:
+
+NumPy tutorials
+===============
+
+In addition to the documentation that is part of the NumPy source tree, you can
+submit content in Jupyter Notebook format to the
+`NumPy Tutorials <https://numpy.org/numpy-tutorials>`__ page. This
+set of tutorials and educational materials is meant to provide high-quality
+resources by the NumPy project, both for self-learning and for teaching classes
+with. These resources are developed in a separate GitHub repository,
+`numpy-tutorials <https://github.com/numpy/numpy-tutorials>`__, where you can
+check out existing notebooks, open issues to suggest new topics or submit your
+own tutorials as pull requests.
 
 .. _contributing:
-
 
 More on contributing
 ==============================================================================
