@@ -887,7 +887,7 @@ array_astype(PyArrayObject *self,
     if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) &&
             DEPRECATE_FUTUREWARNING(
                 "casting an array to a subarray dtype "
-                "will not using broadcasting in the future, but cast each "
+                "will not use broadcasting in the future, but cast each "
                 "element to the new dtype and then append the dtype's shape "
                 "to the new array. You can opt-in to the new behaviour, by "
                 "additional field to the cast: "

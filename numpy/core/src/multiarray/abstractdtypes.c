@@ -143,7 +143,7 @@ initialize_and_map_pytypes_to_dtypes()
 /*
  * The following functions define the "common DType" for the abstract dtypes.
  *
- * Note that the logic with resupt to the "higher" dtypes such as floats
+ * Note that the logic with respect to the "higher" dtypes such as floats
  * could likely be more logically defined for them, but since NumPy dtypes
  * largely "know" each other, that is not necessary.
  */
