@@ -631,13 +631,16 @@ static int *nextforcomb(void) {
 needs['try_pyarr_from_string'] = ['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
 cfuncs['try_pyarr_from_string'] = """\
 /*
-  try_pyarr_from_string copies str[:len(obj)] to a mutable Python string-like obj.
+  try_pyarr_from_string copies str[:len(obj)] to a mutable Python
+  string-like obj.
 
   if the specified len==-1, str must be null-terminated.
 */
-static int try_pyarr_from_string(PyObject *obj, const string str, const int len) {
+static int try_pyarr_from_string(PyObject *obj,
+                                 const string str, const int len) {
 #ifdef DEBUGCFUNCS
-fprintf(stderr,\"try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n\",(char*)str,len, obj);
+fprintf(stderr,\"try_pyarr_from_string(str='%s',
+               len=%d, obj=%p)\\n\",(char*)str,len, obj);
 #endif
     PyArrayObject *arr = NULL;
     if (PyArray_Check(obj) && (!((arr = (PyArrayObject *)obj) == NULL))) {
@@ -673,14 +676,16 @@ cfuncs['string_from_pyobj'] = """\
   The string buffer may or may not be null-terminated.
  */
 static int
-string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj, const char *errmess)
+string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj,
+                  const char *errmess)
 {
     PyArrayObject *arr = NULL;
     PyObject *tmp = NULL;
     string buf = NULL;
     int n = -1;
 #ifdef DEBUGCFUNCS
-fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(char*)str,*len,(char *)inistr,obj);
+fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
+               (char*)str, *len, (char *)inistr, obj);
 #endif
     if (obj == Py_None) {
         n = strlen(inistr);
@@ -689,7 +694,8 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
         if ((arr = (PyArrayObject *)obj) == NULL)
             goto capi_fail;
         if (!ISCONTIGUOUS(arr)) {
-            PyErr_SetString(PyExc_ValueError, \"array object is non-contiguous.\");
+            PyErr_SetString(PyExc_ValueError,
+                            \"array object is non-contiguous.\");
             goto capi_fail;
         }
         n = PyArray_NBYTES(arr);
