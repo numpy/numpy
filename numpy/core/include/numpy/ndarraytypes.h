@@ -862,7 +862,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
      * python float, int, or complex.
      * An array using this flag must be a temporary array that can never
      * leave the C internals of NumPy.  Even if it does, ENSUREARRAY is
-     * absolutely safe to abuse, since it alraedy is be a base class array :).
+     * absolutely safe to abuse, since it already is a base class array :).
      */
     #define _NPY_ARRAY_WAS_PYSCALAR   0x0040
 #endif  /* NPY_INTERNAL_BUILD */
