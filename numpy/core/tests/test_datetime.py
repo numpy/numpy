@@ -5,7 +5,7 @@ import datetime
 import pytest
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
-    assert_raises_regex,
+    assert_raises_regex, assert_array_equal,
     )
 from numpy.compat import pickle
 
@@ -26,6 +26,7 @@ class TestDateTime:
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
+                     'μs',  # alias for us
                      'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]' % unit)
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
@@ -429,6 +430,10 @@ class TestDateTime:
                             np.timedelta64)
         assert_equal(actual, expected)
 
+    def test_timedelta_nat_format(self):
+        # gh-17552
+        assert_equal('NaT', '{0}'.format(np.timedelta64('nat')))
+
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
         assert_equal(np.datetime64('2010').dtype,
@@ -681,6 +686,63 @@ class TestDateTime:
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 
+    @pytest.mark.parametrize("time_dtype", ["m8[D]", "M8[Y]"])
+    def test_time_byteswapping(self, time_dtype):
+        times = np.array(["2017", "NaT"], dtype=time_dtype)
+        times_swapped = times.astype(times.dtype.newbyteorder())
+        assert_array_equal(times, times_swapped)
+
+        unswapped = times_swapped.view(np.int64).newbyteorder()
+        assert_array_equal(unswapped, times.view(np.int64))
+
+    @pytest.mark.parametrize(["time1", "time2"],
+            [("M8[s]", "M8[D]"), ("m8[s]", "m8[ns]")])
+    def test_time_byteswapped_cast(self, time1, time2):
+        dtype1 = np.dtype(time1)
+        dtype2 = np.dtype(time2)
+        times = np.array(["2017", "NaT"], dtype=dtype1)
+        expected = times.astype(dtype2)
+
+        # Test that every byte-swapping combination also returns the same
+        # results (previous tests check that this comparison works fine).
+        res = times.astype(dtype1.newbyteorder()).astype(dtype2)
+        assert_array_equal(res, expected)
+        res = times.astype(dtype2.newbyteorder())
+        assert_array_equal(res, expected)
+        res = times.astype(dtype1.newbyteorder()).astype(dtype2.newbyteorder())
+        assert_array_equal(res, expected)
+
+    @pytest.mark.parametrize("time_dtype", ["m8[D]", "M8[Y]"])
+    @pytest.mark.parametrize("str_dtype", ["U", "S"])
+    def test_datetime_conversions_byteorders(self, str_dtype, time_dtype):
+        times = np.array(["2017", "NaT"], dtype=time_dtype)
+        # Unfortunately, timedelta does not roundtrip:
+        from_strings = np.array(["2017", "NaT"], dtype=str_dtype)
+        to_strings = times.astype(str_dtype)  # assume this is correct
+
+        # Check that conversion from times to string works if src is swapped:
+        times_swapped = times.astype(times.dtype.newbyteorder())
+        res = times_swapped.astype(str_dtype)
+        assert_array_equal(res, to_strings)
+        # And also if both are swapped:
+        res = times_swapped.astype(to_strings.dtype.newbyteorder())
+        assert_array_equal(res, to_strings)
+        # only destination is swapped:
+        res = times.astype(to_strings.dtype.newbyteorder())
+        assert_array_equal(res, to_strings)
+
+        # Check that conversion from string to times works if src is swapped:
+        from_strings_swapped = from_strings.astype(
+                from_strings.dtype.newbyteorder())
+        res = from_strings_swapped.astype(time_dtype)
+        assert_array_equal(res, times)
+        # And if both are swapped:
+        res = from_strings_swapped.astype(times.dtype.newbyteorder())
+        assert_array_equal(res, times)
+        # Only destination is swapped:
+        res = from_strings.astype(times.dtype.newbyteorder())
+        assert_array_equal(res, times)
+
     def test_datetime_array_str(self):
         a = np.array(['2011-03-16', '1920-01-01', '2013-05-19'], dtype='M')
         assert_equal(str(a), "['2011-03-16' '1920-01-01' '2013-05-19']")
@@ -775,6 +837,12 @@ class TestDateTime:
                             np.dtype('m8[Y]'), np.dtype('m8[D]'))
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[M]'), np.dtype('m8[W]'))
+        # timedelta and float cannot be safely cast with each other
+        assert_raises(TypeError, np.promote_types, "float32", "m8")
+        assert_raises(TypeError, np.promote_types, "m8", "float32")
+        assert_raises(TypeError, np.promote_types, "uint64", "m8")
+        assert_raises(TypeError, np.promote_types, "m8", "uint64")
+
         # timedelta <op> timedelta may overflow with big unit ranges
         assert_raises(OverflowError, np.promote_types,
                             np.dtype('m8[W]'), np.dtype('m8[fs]'))
@@ -1647,8 +1715,9 @@ class TestDateTime:
                      '1959-10-13T12:34:56')
         assert_equal(np.datetime_as_string(np.datetime64(datetime, 'ms')),
                      '1959-10-13T12:34:56.789')
-        assert_equal(np.datetime_as_string(np.datetime64(datetime, 'us')),
-                     '1959-10-13T12:34:56.789012')
+        for us in ['us', 'μs', b'us']:  # check non-ascii and bytes too
+            assert_equal(np.datetime_as_string(np.datetime64(datetime, us)),
+                         '1959-10-13T12:34:56.789012')
 
         datetime = '1969-12-31T23:34:56.789012345678901234'
 
@@ -2323,9 +2392,21 @@ class TestDateTime:
         obj_arr = np.array([None])
         obj_arr[0] = a
 
-        # gh-11154: This shouldn't cause a C stack overflow
-        assert_raises(RecursionError, obj_arr.astype, 'M8')
-        assert_raises(RecursionError, obj_arr.astype, 'm8')
+        # At some point this caused a stack overflow (gh-11154). Now raises
+        # ValueError since the nested list cannot be converted to a datetime.
+        assert_raises(ValueError, obj_arr.astype, 'M8')
+        assert_raises(ValueError, obj_arr.astype, 'm8')
+
+    @pytest.mark.parametrize("shape", [(), (1,)])
+    def test_discovery_from_object_array(self, shape):
+        arr = np.array("2020-10-10", dtype=object).reshape(shape)
+        res = np.array("2020-10-10", dtype="M8").reshape(shape)
+        assert res.dtype == np.dtype("M8[D]")
+        assert_equal(arr.astype("M8"), res)
+        arr[...] = np.bytes_("2020-10-10")  # try a numpy string type
+        assert_equal(arr.astype("M8"), res)
+        arr = arr.astype("S")
+        assert_equal(arr.astype("S").astype("M8"), res)
 
     @pytest.mark.parametrize("time_unit", [
         "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as",
@@ -2371,3 +2452,19 @@ class TestDateTimeData:
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
+
+    def test_bytes(self):
+        # byte units are converted to unicode
+        dt = np.datetime64('2000', (b'ms', 5))
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+        dt = np.datetime64('2000', b'5ms')
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+    def test_non_ascii(self):
+        # μs is normalized to μ
+        dt = np.datetime64('2000', ('μs', 5))
+        assert np.datetime_data(dt.dtype) == ('us', 5)
+
+        dt = np.datetime64('2000', '5μs')
+        assert np.datetime_data(dt.dtype) == ('us', 5)

@@ -7,9 +7,13 @@ class Core(Benchmark):
     def setup(self):
         self.l100 = range(100)
         self.l50 = range(50)
+        self.float_l1000 = [float(i) for i in range(1000)]
+        self.float64_l1000 = [np.float64(i) for i in range(1000)]
+        self.int_l1000 = list(range(1000))
         self.l = [np.arange(1000), np.arange(1000)]
         self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
+        self.float64_dtype = np.dtype(np.float64)
 
     def time_array_1(self):
         np.array(1)
@@ -22,6 +26,18 @@ class Core(Benchmark):
 
     def time_array_l100(self):
         np.array(self.l100)
+
+    def time_array_float_l1000(self):
+        np.array(self.float_l1000)
+
+    def time_array_float_l1000_dtype(self):
+        np.array(self.float_l1000, dtype=self.float64_dtype)
+
+    def time_array_float64_l1000(self):
+        np.array(self.float64_l1000)
+
+    def time_array_int_l1000(self):
+        np.array(self.int_l1000)
 
     def time_array_l(self):
         np.array(self.l)
@@ -77,6 +93,12 @@ class Core(Benchmark):
     def time_tril_l10x10(self):
         np.tril(self.l10x10)
 
+    def time_triu_indices_500(self):
+        np.triu_indices(500)
+
+    def time_tril_indices_500(self):
+        np.tril_indices(500)
+
 
 class Temporaries(Benchmark):
     def setup(self):
@@ -120,7 +142,7 @@ class CountNonzero(Benchmark):
     params = [
         [1, 2, 3],
         [100, 10000, 1000000],
-        [bool, int, str, object]
+        [bool, np.int8, np.int16, np.int32, np.int64, str, object]
     ]
 
     def setup(self, numaxes, size, dtype):
@@ -148,6 +170,9 @@ class PackBits(Benchmark):
 
     def time_packbits(self, dtype):
         np.packbits(self.d)
+
+    def time_packbits_little(self, dtype):
+        np.packbits(self.d, bitorder="little")
 
     def time_packbits_axis0(self, dtype):
         np.packbits(self.d2, axis=0)
@@ -180,3 +205,14 @@ class UnpackBits(Benchmark):
 class Indices(Benchmark):
     def time_indices(self):
         np.indices((1000, 500))
+
+class VarComplex(Benchmark):
+    params = [10**n for n in range(1, 9)]
+    def setup(self, n):
+        self.arr = np.random.randn(n) + 1j * np.random.randn(n)
+
+    def teardown(self, n):
+        del self.arr
+
+    def time_var(self, n):
+        self.arr.var()

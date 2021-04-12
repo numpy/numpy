@@ -1,20 +1,14 @@
-Cython API for random
----------------------
-
-.. currentmodule:: numpy.random
-
-Typed versions of many of the `Generator` and `BitGenerator` methods as well as
-the classes themselves can be accessed directly from Cython via
-
-.. code-block:: cython
-
-    cimport numpy.random
-
 C API for random
 ----------------
 
-Access to various distributions is available via Cython or C-wrapper libraries
-like CFFI. All the functions accept a :c:type:`bitgen_t` as their first argument.
+.. currentmodule:: numpy.random
+
+Access to various distributions below is available via Cython or C-wrapper
+libraries like CFFI. All the functions accept a :c:type:`bitgen_t` as their
+first argument.  To access these from Cython or C, you must link with the
+``npyrandom`` library which is part of the NumPy distribution, located in
+``numpy/random/lib``.
+
 
 .. c:type:: bitgen_t
 
@@ -187,6 +181,5 @@ Generate a single integer
 
 Generate random uint64 numbers in closed interval [off, off + rng].
 
-.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state, npy_uint64 off, npy_uint64 rng, npy_uint64 mask, bint use_masked)
-
+.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state, npy_uint64 off, npy_uint64 rng, npy_uint64 mask, bool use_masked)
 

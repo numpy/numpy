@@ -134,12 +134,12 @@ typedef struct {
         char obval;
 } PyScalarObject;
 
-#define PyStringScalarObject PyStringObject
-#define PyStringScalarObject PyStringObject
+#define PyStringScalarObject PyBytesObject
 typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
         PyUnicodeObject base;
         Py_UCS4 *obval;
+        char *buffer_fmt;
 } PyUnicodeScalarObject;
 
 
@@ -149,6 +149,7 @@ typedef struct {
         PyArray_Descr *descr;
         int flags;
         PyObject *base;
+        void *_buffer_info;  /* private buffer info, tagged to allow warning */
 } PyVoidScalarObject;
 
 /* Macros

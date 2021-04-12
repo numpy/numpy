@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Copyright 1999,2000 Pearu Peterson all rights reserved,
@@ -11,8 +11,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-__version__ = "$Revision: 1.60 $"[10:-1]
-
 from . import __version__
 f2py_version = __version__.version
 
@@ -22,7 +20,7 @@ import os
 from .crackfortran import markoutercomma
 from . import cb_rules
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -309,7 +307,7 @@ def getstrlength(var):
             len = a['*']
         elif 'len' in a:
             len = a['len']
-    if re.match(r'\(\s*([*]|[:])\s*\)', len) or re.match(r'([*]|[:])', len):
+    if re.match(r'\(\s*(\*|:)\s*\)', len) or re.match(r'(\*|:)', len):
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
                 repr(var)))
@@ -318,7 +316,6 @@ def getstrlength(var):
 
 
 def getarrdims(a, var, verbose=0):
-    global depargs
     ret = {}
     if isstring(var) and not isarray(var):
         ret['dims'] = getstrlength(var)
@@ -514,7 +511,6 @@ def sign2map(a, var):
     varrfromat
     intent
     """
-    global lcb_map, cb_map
     out_a = a
     if isintent_out(var):
         for k in var['intent']:

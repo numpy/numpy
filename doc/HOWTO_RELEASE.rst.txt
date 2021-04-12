@@ -18,19 +18,12 @@ Source tree
 
 NumPy Docs
 ----------
-- https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
-- http://projects.scipy.org/numpy/wiki/MicrosoftToolchainSupport (dead link)
+- https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst.txt
 
 
 SciPy.org wiki
 --------------
 - https://www.scipy.org/Installing_SciPy and links on that page.
-- http://new.scipy.org/building/windows.html (dead link)
-
-
-Doc wiki
---------
-- http://docs.scipy.org/numpy/docs/numpy-docs/user/install.rst/ (dead link)
 
 
 Release Scripts
@@ -40,16 +33,17 @@ Release Scripts
 
 Supported platforms and versions
 ================================
-`NEP 29`_ outlines which Python versions are supported; For the first half of
-2020, this will be Python >= 3.6. We test NumPy against all these versions
-every time we merge code to master.  Binary installers may be available for a
-subset of these versions (see below).
+:ref:`NEP 29 <NEP29>` outlines which Python versions
+are supported; For the first half of 2020, this will be Python >= 3.6. We test
+NumPy against all these versions every time we merge code to main.  Binary
+installers may be available for a subset of these versions (see below).
 
 OS X
 ----
-OS X versions >= 10.9 are supported, for Python version support see `NEP 29`_.
-We build binary wheels for OSX that are compatible with Python.org Python,
-system Python, homebrew and macports - see this `OSX wheel building summary
+OS X versions >= 10.9 are supported, for Python version support see
+:ref:`NEP 29 <NEP29>`. We build binary wheels for
+OSX that are compatible with Python.org Python, system Python, homebrew and
+macports - see this `OSX wheel building summary
 <https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_ for details.
 
 
@@ -95,7 +89,6 @@ You will need Cython for building the binaries.  Cython compiles the ``.pyx``
 files in the NumPy distribution to ``.c`` files.
 
 .. _mingw-w64 toolchain : https://mingwpy.github.io
-.. _NEP 29 : https://numpy.org/neps/nep-0029-deprecation_policy.html
 
 OpenBLAS
 ------------
@@ -192,7 +185,7 @@ A typical release schedule is one beta, two release candidates and a final
 release.  It's best to discuss the timing on the mailing list first, in order
 for people to get their commits in on time, get doc wiki edits merged, etc.
 After a date is set, create a new maintenance/x.y.z branch, add new empty
-release notes for the next version in the master branch and update the Trac
+release notes for the next version in the main branch and update the Trac
 Milestones.
 
 
@@ -343,8 +336,8 @@ to public keyservers, with a command such as::
     gpg --send-keys <yourkeyid>
 
 
-Update the version of the master branch
----------------------------------------
+Update the version of the main branch
+-------------------------------------
 Increment the release number in setup.py. Release candidates should have "rc1"
 (or "rc2", "rcN") appended to the X.Y.Z format.
 
@@ -352,36 +345,30 @@ Also create a new version hash in cversions.txt and a corresponding version
 define NPY_x_y_API_VERSION in numpyconfig.h
 
 
-Trigger the wheel builds on travis-ci and Appveyor
---------------------------------------------------
-See the `numpy wheels` repository.
+Trigger the wheel builds
+------------------------
+See the `MacPython/numpy wheels` repository.
 
 In that repository edit the files:
 
-- ``.travis.yml``;
-- ``appveyor.yml``.
+- ``azure/posix.yml``
+- ``azure/windows.yml``.
 
 In both cases, set the ``BUILD_COMMIT`` variable to the current release tag -
-e.g. ``v1.11.1``.
+e.g. ``v1.19.0``::
+
+    $ gvim azure/posix.yml azure/windows.yml
+    $ git commit -a
+    $ git push upstream HEAD
 
 Make sure that the release tag has been pushed.
 
-Trigger a build by doing a commit of your edits to ``.travis.yml`` and
-``appveyor.yml`` to the repository::
+Trigger a build by pushing a commit of your edits to the repository. Note that
+you can do this on a branch, but it must be pushed upstream to the
+``MacPython/numpy-wheels`` repository to trigger uploads since only
+that repo has the appropriate tokens to allow uploads.
 
-    cd /path/to/numpy-wheels
-    # Edit .travis.yml, appveyor.yml
-    git commit
-    git push
-
-The wheels, once built, appear at a Rackspace container pointed at by:
-
-- http://wheels.scipy.org
-- https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com
-
-The HTTP address may update first, and you should wait 15 minutes after the
-build finishes before fetching the binaries.
-
+The wheels, once built, appear at https://anaconda.org/multibuild-wheels-staging/numpy
 
 Make the release
 ----------------
@@ -403,8 +390,11 @@ create an archive of the documentation in the numpy/doc repo::
     # This checks out github.com/numpy/doc and adds (``git add``) the
     # documentation to the checked out repo.
     make merge-doc
-    # Now edit the ``index.html`` file in the repo to reflect the new content,
-    # and commit the changes
+    # Now edit the ``index.html`` file in the repo to reflect the new content.
+    # If the documentation is for a non-patch release (e.g. 1.19 -> 1.20),
+    # make sure to update the ``stable`` symlink to point to the new directory.
+    ln -sfn <latest_stable_directory> stable
+    # Commit the changes
     git -C build/merge commit -am "Add documentation for <version>"
     # Push to numpy/doc repo
     git -C build/merge push
@@ -423,7 +413,7 @@ https://github.com/MacPython/terryfy.  Here is the recommended incantation for
 downloading all the Windows, Manylinux, OSX wheels and uploading to PyPI. ::
 
     NPY_WHLS=~/wheelhouse   # local directory to cache wheel downloads
-    CDN_URL=https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com
+    CDN_URL=https://anaconda.org/multibuild-wheels-staging/numpy/files
     wheel-uploader -u $CDN_URL -w $NPY_WHLS -v -s -t win numpy 1.11.1rc1
     wheel-uploader -u $CDN_URL -w warehouse -v -s -t macosx numpy 1.11.1rc1
     wheel-uploader -u $CDN_URL -w warehouse -v -s -t manylinux1 numpy 1.11.1rc1
@@ -470,6 +460,15 @@ The scipy.org should be a PR at https://github.com/scipy/scipy.org. The file
 that needs modification is ``www/index.rst``. Search for ``News``.
 
 
+Update oldest-supported-numpy
+-----------------------------
+If this release is the first one to support a new Python version, or the first
+to provide wheels for a new platform or PyPy version, the version pinnings
+in https://github.com/scipy/oldest-supported-numpy should be updated.
+Either submit a PR with changes to ``setup.cfg`` there, or open an issue with
+info on needed changes.
+
+
 Announce to the lists
 ---------------------
 The release should be announced on the mailing lists of
@@ -493,5 +492,5 @@ After the final release is announced, a few administrative tasks are left to be
 done:
 
   - Forward port changes in the release branch to release notes and release
-    scripts, if any, to master branch.
+    scripts, if any, to main branch.
   - Update the Milestones in Trac.

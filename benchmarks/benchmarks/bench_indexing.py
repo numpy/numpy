@@ -31,6 +31,36 @@ class Indexing(Benchmark):
         self.func()
 
 
+class ScalarIndexing(Benchmark):
+    params = [[0, 1, 2]]
+    param_names = ["ndim"]
+
+    def setup(self, ndim):
+        self.array = np.ones((5,) * ndim)
+
+    def time_index(self, ndim):
+        # time indexing.
+        arr = self.array
+        indx = (1,) * ndim
+        for i in range(100):
+            arr[indx]
+
+    def time_assign(self, ndim):
+        # time assignment from a python scalar
+        arr = self.array
+        indx = (1,) * ndim
+        for i in range(100):
+            arr[indx] = 5.
+
+    def time_assign_cast(self, ndim):
+        # time an assignment which may use a cast operation
+        arr = self.array
+        indx = (1,) * ndim
+        val = np.int16(43)
+        for i in range(100):
+            arr[indx] = val
+
+
 class IndexingSeparate(Benchmark):
     def setup(self):
         self.tmp_dir = mkdtemp()

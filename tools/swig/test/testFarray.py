@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 # System imports
 from   distutils.util import get_platform
 import os

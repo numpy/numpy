@@ -1,4 +1,5 @@
 import sys
+import gc
 import gzip
 import os
 import threading
@@ -12,16 +13,19 @@ from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
+from multiprocessing import Process, Value
+from ctypes import c_bool
 
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes
+from numpy.compat import asbytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
+    break_cycles
     )
 from numpy.testing._private.utils import requires_memory
 
@@ -276,8 +280,7 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    #FIXME: Is this still true?
-    @pytest.mark.skipif(IS_PYPY, reason="Missing context manager on PyPy")
+    @pytest.mark.slow_pypy
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -290,17 +293,18 @@ class TestSavezLoad(RoundtripTest):
             # numpy npz file returned by np.load when their reference count
             # goes to zero.  Python 3 running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
-            # collector, so we catch the warnings.  Because ResourceWarning
-            # is unknown in Python < 3.x, we take the easy way out and
-            # catch all warnings.
+            # collector, so we catch the warnings.
             with suppress_warnings() as sup:
-                sup.filter(Warning)  # TODO: specify exact message
+                sup.filter(ResourceWarning)  # TODO: specify exact message
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
                         msg = "Failed to load data from a file: %s" % e
                         raise AssertionError(msg)
+                    finally:
+                        if IS_PYPY:
+                            gc.collect()
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to
@@ -568,16 +572,37 @@ class TestSaveTxt:
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason="large files cause problems")
+    @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
-        # The test takes at least 6GB of memory, writes a file larger than 4GB
-        test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                               for i in range(800000)], dtype=object)
-        with tempdir() as tmpdir:
-            np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        def check_large_zip(memoryerror_raised):
+            memoryerror_raised.value = False
+            try:
+                # The test takes at least 6GB of memory, writes a file larger
+                # than 4GB. This tests the ``allowZip64`` kwarg to ``zipfile``
+                test_data = np.asarray([np.random.rand(
+                                        np.random.randint(50,100),4)
+                                        for i in range(800000)], dtype=object)
+                with tempdir() as tmpdir:
+                    np.savez(os.path.join(tmpdir, 'test.npz'),
+                             test_data=test_data)
+            except MemoryError:
+                memoryerror_raised.value = True
+                raise
+        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
+        # Use an object in shared memory to re-raise the MemoryError exception
+        # in our process if needed, see gh-16889
+        memoryerror_raised = Value(c_bool)
+        p = Process(target=check_large_zip, args=(memoryerror_raised,))
+        p.start()
+        p.join()
+        if memoryerror_raised.value:
+            raise MemoryError("Child process raised a MemoryError exception")
+        # -9 indicates a SIGKILL, probably an OOM.
+        if p.exitcode == -9:
+            pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
+        assert p.exitcode == 0
 
 class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
@@ -1004,7 +1029,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([b'start ', b'  ', b''])
         assert_array_equal(x['comment'], a)
 
-    def test_structure_unpack(self):
+    def test_unpack_structured(self):
         txt = TextIO("M 21 72\nF 35 58")
         dt = {'names': ('a', 'b', 'c'), 'formats': ('|S1', '<i4', '<f4')}
         a, b, c = np.loadtxt(txt, dtype=dt, unpack=True)
@@ -1560,6 +1585,13 @@ M   33  21.99
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
 
+    def test_dtype_with_object_no_converter(self):
+        # Object without a converter uses bytes:
+        parsed = np.genfromtxt(TextIO("1"), dtype=object)
+        assert parsed[()] == b"1"
+        parsed = np.genfromtxt(TextIO("string"), dtype=object)
+        assert parsed[()] == b"string"
+
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')
@@ -1810,16 +1842,11 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
-        #
-        kwargs = dict(delimiter=",", dtype=None, names=True)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
 
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, invalid_raise=False, **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        kwargs = dict(delimiter=",", dtype=None, names=True)
+        def f():
+            return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
@@ -1834,16 +1861,12 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
+
         kwargs = dict(delimiter=",", dtype=None, names=True,
                       invalid_raise=False)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
-
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        def f():
+            return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
@@ -2332,11 +2355,56 @@ M   33  21.99
 
         assert_(test.dtype['f0'] == float)
         assert_(test.dtype['f1'] == np.int64)
-        assert_(test.dtype['f2'] == np.integer)
+        assert_(test.dtype['f2'] == np.int_)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
+
+    def test_unpack_structured(self):
+        # Regression test for gh-4341
+        # Unpacking should work on structured arrays
+        txt = TextIO("M 21 72\nF 35 58")
+        dt = {'names': ('a', 'b', 'c'), 'formats': ('S1', 'i4', 'f4')}
+        a, b, c = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_equal(a.dtype, np.dtype('S1'))
+        assert_equal(b.dtype, np.dtype('i4'))
+        assert_equal(c.dtype, np.dtype('f4'))
+        assert_array_equal(a, np.array([b'M', b'F']))
+        assert_array_equal(b, np.array([21, 35]))
+        assert_array_equal(c, np.array([72.,  58.]))
+
+    def test_unpack_auto_dtype(self):
+        # Regression test for gh-4341
+        # Unpacking should work when dtype=None
+        txt = TextIO("M 21 72.\nF 35 58.")
+        expected = (np.array(["M", "F"]), np.array([21, 35]), np.array([72., 58.]))
+        test = np.genfromtxt(txt, dtype=None, unpack=True, encoding="utf-8")
+        for arr, result in zip(expected, test):
+            assert_array_equal(arr, result)
+            assert_equal(arr.dtype, result.dtype)
+
+    def test_unpack_single_name(self):
+        # Regression test for gh-4341
+        # Unpacking should work when structured dtype has only one field
+        txt = TextIO("21\n35")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array([21, 35], dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal(expected.dtype, test.dtype)
+
+    def test_squeeze_scalar(self):
+        # Regression test for gh-4341
+        # Unpacking a scalar should give zero-dim output,
+        # even if dtype is structured
+        txt = TextIO("1")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array((1,), dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal((), test.shape)
+        assert_equal(expected.dtype, test.dtype)
 
 
 class TestPathUsage:
@@ -2368,6 +2436,9 @@ class TestPathUsage:
             assert_array_equal(data, a)
             # close the mem-mapped file
             del data
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
 
     def test_save_load_memmap_readwrite(self):
         # Test that pathlib.Path instances can be written mem-mapped.
@@ -2379,6 +2450,9 @@ class TestPathUsage:
             a[0][0] = 5
             b[0][0] = 5
             del b  # closes the file
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
             data = np.load(path)
             assert_array_equal(data, a)
 

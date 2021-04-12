@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #cython: language_level=3
 
 from libc.stdint cimport uint32_t

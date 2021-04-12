@@ -3,11 +3,12 @@
 
 #include "config.h"
 #include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
 #include "numpy/numpyconfig.h"
 #include "numpy/npy_cpu.h"
 #include "numpy/npy_os.h"
 
-/* blacklist */
+/* blocklist */
 
 /* Disable broken Sun Workshop Pro math functions */
 #ifdef __SUNPRO_C
@@ -15,6 +16,15 @@
 #undef HAVE_ATAN2
 #undef HAVE_ATAN2F
 #undef HAVE_ATAN2L
+
+#endif
+
+/* Disable broken functions on z/OS */
+#if defined (__MVS__)
+
+#undef HAVE_POWF
+#undef HAVE_EXPF
+#undef HAVE___THREAD
 
 #endif
 

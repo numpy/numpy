@@ -19,7 +19,7 @@ from Python.
 .. toctree::
    :maxdepth: 2
 
-   getting-started
+   f2py.getting-started
    signature-file
    python-usage
    usage

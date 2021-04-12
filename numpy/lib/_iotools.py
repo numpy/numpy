@@ -5,7 +5,7 @@ __docformat__ = "restructuredtext en"
 
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode, bytes
+from numpy.compat import asbytes, asunicode
 
 
 def _decode_line(line, encoding=None):
@@ -18,6 +18,8 @@ def _decode_line(line, encoding=None):
     ----------
     line : str or bytes
          Line to be decoded.
+    encoding : str
+         Encoding used to decode `line`.
 
     Returns
     -------
@@ -27,9 +29,8 @@ def _decode_line(line, encoding=None):
     """
     if type(line) is bytes:
         if encoding is None:
-            line = line.decode('latin1')
-        else:
-            line = line.decode(encoding)
+            encoding = "latin1"
+        line = line.decode(encoding)
 
     return line
 
@@ -165,7 +166,6 @@ class LineSplitter:
 
         """
         return lambda input: [_.strip() for _ in method(input)]
-    #
 
     def __init__(self, delimiter=None, comments='#', autostrip=True,
                  encoding=None):
@@ -195,7 +195,6 @@ class LineSplitter:
         else:
             self._handyman = _handyman
         self.encoding = encoding
-    #
 
     def _delimited_splitter(self, line):
         """Chop off comments, strip, and split at delimiter. """
@@ -205,7 +204,6 @@ class LineSplitter:
         if not line:
             return []
         return line.split(self.delimiter)
-    #
 
     def _fixedwidth_splitter(self, line):
         if self.comments is not None:
@@ -216,7 +214,6 @@ class LineSplitter:
         fixed = self.delimiter
         slices = [slice(i, i + fixed) for i in range(0, len(line), fixed)]
         return [line[s] for s in slices]
-    #
 
     def _variablewidth_splitter(self, line):
         if self.comments is not None:
@@ -225,7 +222,6 @@ class LineSplitter:
             return []
         slices = self.delimiter
         return [line[s] for s in slices]
-    #
 
     def __call__(self, line):
         return self._handyman(_decode_line(line, self.encoding))
@@ -282,10 +278,9 @@ class NameValidator:
     ('EXCL', 'FIELD2', 'NO_Q', 'WITH_SPACE', 'CASE')
 
     """
-    #
+
     defaultexcludelist = ['return', 'file', 'print']
     defaultdeletechars = set(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
-    #
 
     def __init__(self, excludelist=None, deletechars=None,
                  case_sensitive=None, replace_space='_'):
@@ -311,7 +306,7 @@ class NameValidator:
         else:
             msg = 'unrecognized case_sensitive value %s.' % case_sensitive
             raise ValueError(msg)
-        #
+
         self.replace_space = replace_space
 
     def validate(self, names, defaultfmt="f%i", nbfields=None):
@@ -362,7 +357,7 @@ class NameValidator:
         validatednames = []
         seen = dict()
         nbempty = 0
-        #
+
         for item in names:
             item = case_converter(item).strip()
             if replace_space:
@@ -383,7 +378,6 @@ class NameValidator:
                 validatednames.append(item)
             seen[item] = cnt + 1
         return tuple(validatednames)
-    #
 
     def __call__(self, names, defaultfmt="f%i", nbfields=None):
         return self.validate(names, defaultfmt=defaultfmt, nbfields=nbfields)
@@ -502,70 +496,73 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    #
     _mapper = [(nx.bool_, str2bool, False),
-               (nx.integer, int, -1)]
+               (nx.int_, int, -1),]
 
     # On 32-bit systems, we need to make sure that we explicitly include
-    # nx.int64 since ns.integer is nx.int32.
-    if nx.dtype(nx.integer).itemsize < nx.dtype(nx.int64).itemsize:
+    # nx.int64 since ns.int_ is nx.int32.
+    if nx.dtype(nx.int_).itemsize < nx.dtype(nx.int64).itemsize:
         _mapper.append((nx.int64, int, -1))
 
-    _mapper.extend([(nx.floating, float, nx.nan),
-                    (nx.complexfloating, complex, nx.nan + 0j),
+    _mapper.extend([(nx.float64, float, nx.nan),
+                    (nx.complex128, complex, nx.nan + 0j),
                     (nx.longdouble, nx.longdouble, nx.nan),
+                    # If a non-default dtype is passed, fall back to generic
+                    # ones (should only be used for the converter)
+                    (nx.integer, int, -1),
+                    (nx.floating, float, nx.nan),
+                    (nx.complexfloating, complex, nx.nan + 0j),
+                    # Last, try with the string types (must be last, because
+                    # `_mapper[-1]` is used as default in some cases)
                     (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???')])
-
-    (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
+                    (nx.string_, asbytes, '???'),
+                    ])
 
     @classmethod
     def _getdtype(cls, val):
         """Returns the dtype of the input variable."""
         return np.array(val).dtype
-    #
 
     @classmethod
     def _getsubdtype(cls, val):
         """Returns the type of the dtype of the input variable."""
         return np.array(val).dtype.type
-    #
-    # This is a bit annoying. We want to return the "general" type in most
-    # cases (ie. "string" rather than "S10"), but we want to return the
-    # specific type for datetime64 (ie. "datetime64[us]" rather than
-    # "datetime64").
 
     @classmethod
     def _dtypeortype(cls, dtype):
         """Returns dtype for datetime64 and type of dtype otherwise."""
+
+        # This is a bit annoying. We want to return the "general" type in most
+        # cases (ie. "string" rather than "S10"), but we want to return the
+        # specific type for datetime64 (ie. "datetime64[us]" rather than
+        # "datetime64").
         if dtype.type == np.datetime64:
             return dtype
         return dtype.type
-    #
 
     @classmethod
     def upgrade_mapper(cls, func, default=None):
         """
-    Upgrade the mapper of a StringConverter by adding a new function and
-    its corresponding default.
+        Upgrade the mapper of a StringConverter by adding a new function and
+        its corresponding default.
 
-    The input function (or sequence of functions) and its associated
-    default value (if any) is inserted in penultimate position of the
-    mapper.  The corresponding type is estimated from the dtype of the
-    default value.
+        The input function (or sequence of functions) and its associated
+        default value (if any) is inserted in penultimate position of the
+        mapper.  The corresponding type is estimated from the dtype of the
+        default value.
 
-    Parameters
-    ----------
-    func : var
-        Function, or sequence of functions
+        Parameters
+        ----------
+        func : var
+            Function, or sequence of functions
 
-    Examples
-    --------
-    >>> import dateutil.parser
-    >>> import datetime
-    >>> dateparser = dateutil.parser.parse
-    >>> defaultdate = datetime.date(2000, 1, 1)
-    >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
+        Examples
+        --------
+        >>> import dateutil.parser
+        >>> import datetime
+        >>> dateparser = dateutil.parser.parse
+        >>> defaultdate = datetime.date(2000, 1, 1)
+        >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
         """
         # Func is a single functions
         if hasattr(func, '__call__'):
@@ -581,9 +578,22 @@ class StringConverter:
             else:
                 default = list(default)
                 default.append([None] * (len(func) - len(default)))
-            for (fct, dft) in zip(func, default):
+            for fct, dft in zip(func, default):
                 cls._mapper.insert(-1, (cls._getsubdtype(dft), fct, dft))
-    #
+
+    @classmethod
+    def _find_map_entry(cls, dtype):
+        # if a converter for the specific dtype is available use that
+        for i, (deftype, func, default_def) in enumerate(cls._mapper):
+            if dtype.type == deftype:
+                return i, (deftype, func, default_def)
+
+        # otherwise find an inexact match
+        for i, (deftype, func, default_def) in enumerate(cls._mapper):
+            if np.issubdtype(dtype.type, deftype):
+                return i, (deftype, func, default_def)
+
+        raise LookupError
 
     def __init__(self, dtype_or_func=None, default=None, missing_values=None,
                  locked=False):
@@ -616,36 +626,26 @@ class StringConverter:
                     except ValueError:
                         default = None
                 dtype = self._getdtype(default)
-            # Set the status according to the dtype
-            _status = -1
-            for (i, (deftype, func, default_def)) in enumerate(self._mapper):
-                if np.issubdtype(dtype.type, deftype):
-                    _status = i
-                    if default is None:
-                        self.default = default_def
-                    else:
-                        self.default = default
-                    break
-            # if a converter for the specific dtype is available use that
-            last_func = func
-            for (i, (deftype, func, default_def)) in enumerate(self._mapper):
-                if dtype.type == deftype:
-                    _status = i
-                    last_func = func
-                    if default is None:
-                        self.default = default_def
-                    else:
-                        self.default = default
-                    break
-            func = last_func
-            if _status == -1:
-                # We never found a match in the _mapper...
-                _status = 0
+
+            # find the best match in our mapper
+            try:
+                self._status, (_, func, default_def) = self._find_map_entry(dtype)
+            except LookupError:
+                # no match
                 self.default = default
-            self._status = _status
+                _, func, _ = self._mapper[-1]
+                self._status = 0
+            else:
+                # use the found default only if we did not already have one
+                if default is None:
+                    self.default = default_def
+                else:
+                    self.default = default
+
             # If the input was a dtype, set the function to the last we saw
             if self.func is None:
                 self.func = func
+
             # If the status is 1 (int), change the function to
             # something more robust.
             if self.func == self._mapper[1][1]:
@@ -662,19 +662,17 @@ class StringConverter:
             if isinstance(missing_values, str):
                 missing_values = missing_values.split(",")
             self.missing_values = set(list(missing_values) + [''])
-        #
+
         self._callingfunction = self._strict_call
         self.type = self._dtypeortype(dtype)
         self._checked = False
         self._initial_default = default
-    #
 
     def _loose_call(self, value):
         try:
             return self.func(value)
         except ValueError:
             return self.default
-    #
 
     def _strict_call(self, value):
         try:
@@ -700,11 +698,29 @@ class StringConverter:
                     self._checked = False
                 return self.default
             raise ValueError("Cannot convert string '%s'" % value)
-    #
 
     def __call__(self, value):
         return self._callingfunction(value)
-    #
+
+    def _do_upgrade(self):
+        # Raise an exception if we locked the converter...
+        if self._locked:
+            errmsg = "Converter is locked and cannot be upgraded"
+            raise ConverterLockError(errmsg)
+        _statusmax = len(self._mapper)
+        # Complains if we try to upgrade by the maximum
+        _status = self._status
+        if _status == _statusmax:
+            errmsg = "Could not find a valid conversion function"
+            raise ConverterError(errmsg)
+        elif _status < _statusmax - 1:
+            _status += 1
+        self.type, self.func, default = self._mapper[_status]
+        self._status = _status
+        if self._initial_default is not None:
+            self.default = self._initial_default
+        else:
+            self.default = default
 
     def upgrade(self, value):
         """
@@ -731,24 +747,7 @@ class StringConverter:
         try:
             return self._strict_call(value)
         except ValueError:
-            # Raise an exception if we locked the converter...
-            if self._locked:
-                errmsg = "Converter is locked and cannot be upgraded"
-                raise ConverterLockError(errmsg)
-            _statusmax = len(self._mapper)
-            # Complains if we try to upgrade by the maximum
-            _status = self._status
-            if _status == _statusmax:
-                errmsg = "Could not find a valid conversion function"
-                raise ConverterError(errmsg)
-            elif _status < _statusmax - 1:
-                _status += 1
-            (self.type, self.func, default) = self._mapper[_status]
-            self._status = _status
-            if self._initial_default is not None:
-                self.default = self._initial_default
-            else:
-                self.default = default
+            self._do_upgrade()
             return self.upgrade(value)
 
     def iterupgrade(self, value):
@@ -760,25 +759,7 @@ class StringConverter:
             for _m in value:
                 _strict_call(_m)
         except ValueError:
-            # Raise an exception if we locked the converter...
-            if self._locked:
-                errmsg = "Converter is locked and cannot be upgraded"
-                raise ConverterLockError(errmsg)
-            _statusmax = len(self._mapper)
-            # Complains if we try to upgrade by the maximum
-            _status = self._status
-            if _status == _statusmax:
-                raise ConverterError(
-                    "Could not find a valid conversion function"
-                    )
-            elif _status < _statusmax - 1:
-                _status += 1
-            (self.type, self.func, default) = self._mapper[_status]
-            if self._initial_default is not None:
-                self.default = self._initial_default
-            else:
-                self.default = default
-            self._status = _status
+            self._do_upgrade()
             self.iterupgrade(value)
 
     def update(self, func, default=None, testing_value=None,

@@ -8,6 +8,6 @@ coverage:
       default:
         # Require 1% coverage, i.e., always succeed
         target: 1
-    patch: false
+    patch: true
     changes: false
 comment: off

@@ -19,11 +19,6 @@ from numpy.compat import asbytes, asstr
 from numpy.testing import temppath
 from importlib import import_module
 
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import new as md5  # noqa: F401
-
 #
 # Maintaining a temporary module directory
 #

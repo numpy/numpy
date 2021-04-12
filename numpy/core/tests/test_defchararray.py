@@ -119,14 +119,14 @@ class TestVecString:
     def test_invalid_result_type(self):
 
         def fail():
-            _vec_string(['a'], np.integer, 'strip')
+            _vec_string(['a'], np.int_, 'strip')
 
         assert_raises(TypeError, fail)
 
     def test_broadcast_error(self):
 
         def fail():
-            _vec_string([['abc', 'def']], np.integer, 'find', (['a', 'd', 'j'],))
+            _vec_string([['abc', 'def']], np.int_, 'find', (['a', 'd', 'j'],))
 
         assert_raises(ValueError, fail)
 
@@ -178,6 +178,12 @@ class TestComparisons:
 
     def test_less(self):
         assert_array_equal((self.A < self.B), [[True, False], [False, False]])
+
+    def test_type(self):
+        out1 = np.char.equal(self.A, self.B)
+        out2 = np.char.equal('a', 'a')
+        assert_(isinstance(out1, np.ndarray))
+        assert_(isinstance(out2, np.ndarray))
 
 class TestComparisonsMixed1(TestComparisons):
     """Ticket #1276"""

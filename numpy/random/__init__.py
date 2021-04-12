@@ -181,7 +181,7 @@ from . import _common
 from . import _bounded_integers
 
 from ._generator import Generator, default_rng
-from ._bit_generator import SeedSequence, BitGenerator
+from .bit_generator import SeedSequence, BitGenerator
 from ._mt19937 import MT19937
 from ._pcg64 import PCG64
 from ._philox import Philox

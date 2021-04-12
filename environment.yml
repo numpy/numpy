@@ -1,0 +1,34 @@
+# To use:
+#   $ conda env create -f environment.yml  # `mamba` works too for this command
+#   $ conda activate numpy-dev
+name: numpy-dev
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - cython
+  - compilers
+  - openblas
+  - nomkl
+  # For testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - hypothesis
+  # For type annotations 
+  - mypy=0.812
+  - typing_extensions
+  # For building docs
+  - sphinx=3.5.2
+  - numpydoc=1.1.0
+  - ipython
+  - scipy
+  - pandas
+  - matplotlib
+  - pydata-sphinx-theme
+  # For linting
+  - pycodestyle=2.7.0
+  - gitpython
+  # Used in some tests
+  - cffi
+  - pytz

@@ -48,7 +48,8 @@
             || defined(NPY_CPU_MIPSEL)        \
             || defined(NPY_CPU_PPC64LE)       \
             || defined(NPY_CPU_ARCEL)         \
-            || defined(NPY_CPU_RISCV64)
+            || defined(NPY_CPU_RISCV64)       \
+            || defined(NPY_CPU_WASM)
         #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN
     #elif defined(NPY_CPU_PPC)                \
             || defined(NPY_CPU_SPARC)         \

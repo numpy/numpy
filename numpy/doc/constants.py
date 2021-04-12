@@ -135,10 +135,6 @@ add_newdoc('numpy', 'newaxis',
     """
     A convenient alias for None, useful for indexing arrays.
 
-    See Also
-    --------
-    `numpy.doc.indexing`
-
     Examples
     --------
     >>> newaxis is None

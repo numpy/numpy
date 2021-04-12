@@ -1,4 +1,0 @@
-* Code compatibility with Python versions < 3.5 (including Python 2) was
-  dropped from both the python and C code. The shims in numpy.compat will
-  remain to support third-party packages, but they may be deprecated in a
-  future release.

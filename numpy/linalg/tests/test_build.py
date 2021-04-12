@@ -15,14 +15,14 @@ class FindDependenciesLdd:
         try:
             p = Popen(self.cmd, stdout=PIPE, stderr=PIPE)
             stdout, stderr = p.communicate()
-        except OSError:
-            raise RuntimeError("command %s cannot be run" % self.cmd)
+        except OSError as e:
+            raise RuntimeError(f'command {self.cmd} cannot be run') from e
 
     def get_dependencies(self, lfile):
         p = Popen(self.cmd + [lfile], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if not (p.returncode == 0):
-            raise RuntimeError("failed dependencies check for %s" % lfile)
+            raise RuntimeError(f'failed dependencies check for {lfile}')
 
         return stdout
 

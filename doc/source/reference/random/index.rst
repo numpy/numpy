@@ -23,7 +23,9 @@ number of different BitGenerators. It exposes many different probability
 distributions. See `NEP 19 <https://www.numpy.org/neps/
 nep-0019-rng-policy.html>`_ for context on the updated random Numpy number
 routines. The legacy `RandomState` random number routines are still
-available, but limited to a single BitGenerator.
+available, but limited to a single BitGenerator. See :ref:`new-or-different` 
+for a complete list of improvements and differences from the legacy
+``Randomstate``.
 
 For convenience and backward compatibility, a single `RandomState`
 instance's methods are imported into the numpy.random namespace, see
@@ -41,13 +43,13 @@ properties than the legacy `MT19937` used in `RandomState`.
 
 .. code-block:: python
 
-  # Do this
+  # Do this (new version)
   from numpy.random import default_rng
   rng = default_rng()
   vals = rng.standard_normal(10)
   more_vals = rng.standard_normal(10)
 
-  # instead of this
+  # instead of this (legacy version)
   from numpy import random
   vals = random.standard_normal(10)
   more_vals = random.standard_normal(10)
@@ -73,7 +75,7 @@ cleanup means that legacy and compatibility methods have been removed from
 ``seed``            removed        Use `SeedSequence.spawn`
 =================== ============== ============
 
-See :ref:`new-or-different` for more information
+See :ref:`new-or-different` for more information.
 
 Something like the following code can be used to support both ``RandomState``
 and ``Generator``, with the understanding that the interfaces are slightly
@@ -82,10 +84,10 @@ different
 .. code-block:: python
 
     try:
-        rg_integers = rg.integers
+        rng_integers = rng.integers
     except AttributeError:
-        rg_integers = rg.randint
-    a = rg_integers(1000)
+        rng_integers = rng.randint
+    a = rng_integers(1000)
 
 Seeds can be passed to any of the BitGenerators. The provided value is mixed
 via `SeedSequence` to spread a possible sequence of seeds across a wider
@@ -95,8 +97,32 @@ is wrapped with a `Generator`.
 .. code-block:: python
 
   from numpy.random import Generator, PCG64
-  rg = Generator(PCG64(12345))
-  rg.standard_normal()
+  rng = Generator(PCG64(12345))
+  rng.standard_normal()
+  
+Here we use `default_rng` to create an instance of `Generator` to generate a 
+random float:
+ 
+>>> import numpy as np
+>>> rng = np.random.default_rng(12345)
+>>> print(rng)
+Generator(PCG64)
+>>> rfloat = rng.random()
+>>> rfloat
+0.22733602246716966
+>>> type(rfloat)
+<class 'float'>
+ 
+Here we use `default_rng` to create an instance of `Generator` to generate 3 
+random integers between 0 (inclusive) and 10 (exclusive):
+    
+>>> import numpy as np
+>>> rng = np.random.default_rng(12345)
+>>> rints = rng.integers(low=0, high=10, size=3)
+>>> rints
+array([6, 2, 7])
+>>> type(rints[0])
+<class 'numpy.int64'> 
 
 Introduction
 ------------
@@ -113,25 +139,36 @@ bit generator-provided stream and transforms them into more useful
 distributions, e.g., simulated normal random values. This structure allows
 alternative bit generators to be used with little code duplication.
 
-The `Generator` is the user-facing object that is nearly identical to
-`RandomState`. The canonical method to initialize a generator passes a
-`PCG64` bit generator as the sole argument.
-
-.. code-block:: python
-
-  from numpy.random import default_rng
-  rg = default_rng(12345)
-  rg.random()
-
+The `Generator` is the user-facing object that is nearly identical to the
+legacy `RandomState`. It accepts a bit generator instance as an argument.
+The default is currently `PCG64` but this may change in future versions. 
+As a convenience NumPy  provides the `default_rng` function to hide these 
+details:
+  
+>>> from numpy.random import default_rng
+>>> rng = default_rng(12345)
+>>> print(rng)
+Generator(PCG64)
+>>> print(rng.random())
+0.22733602246716966
+  
 One can also instantiate `Generator` directly with a `BitGenerator` instance.
-To use the older `MT19937` algorithm, one can instantiate it directly
-and pass it to `Generator`.
 
-.. code-block:: python
+To use the default `PCG64` bit generator, one can instantiate it directly and 
+pass it to `Generator`:
 
-  from numpy.random import Generator, MT19937
-  rg = Generator(MT19937(12345))
-  rg.random()
+>>> from numpy.random import Generator, PCG64
+>>> rng = Generator(PCG64(12345))
+>>> print(rng)
+Generator(PCG64)
+
+Similarly to use the older `MT19937` bit generator (not recommended), one can
+instantiate it directly and pass it to `Generator`:
+
+>>> from numpy.random import Generator, MT19937
+>>> rng = Generator(MT19937(12345))
+>>> print(rng)
+Generator(MT19937)
 
 What's New or Different
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,6 +205,9 @@ What's New or Different
   Python's `random.random`.
 * All BitGenerators in numpy use `SeedSequence` to convert seeds into
   initialized states.
+* The addition of an ``axis`` keyword argument to methods such as 
+  `Generator.choice`, `Generator.permutation`,  and `Generator.shuffle` 
+  improves support for sampling from and shuffling multi-dimensional arrays.
 
 See :ref:`new-or-different` for a complete list of improvements and
 differences from the traditional ``Randomstate``.
@@ -208,4 +248,3 @@ Original Source of the Generator and BitGenerators
 
 This package was developed independently of NumPy and was integrated in version
 1.17.0. The original repo is at https://github.com/bashtage/randomgen.
-

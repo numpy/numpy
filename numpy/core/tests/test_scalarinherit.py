@@ -5,7 +5,7 @@
 import pytest
 
 import numpy as np
-from numpy.testing import assert_
+from numpy.testing import assert_, assert_raises
 
 
 class A:
@@ -74,13 +74,21 @@ class TestCharacter:
         assert_(s + np_s == b'defabc')
         assert_(u + np_u == u'defabc')
 
-
-        class Mystr(str, np.generic):
+        class MyStr(str, np.generic):
             # would segfault
             pass
 
-        ret = s + Mystr('abc')
-        assert_(type(ret) is type(s))
+        with assert_raises(TypeError):
+            # Previously worked, but gave completely wrong result
+            ret = s + MyStr('abc')
+
+        class MyBytes(bytes, np.generic):
+            # would segfault
+            pass
+
+        ret = s + MyBytes(b'abc')
+        assert(type(ret) is type(s))
+        assert ret == b"defabc"
 
     def test_char_repeat(self):
         np_s = np.string_('abc')

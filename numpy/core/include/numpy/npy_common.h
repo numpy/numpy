@@ -1,22 +1,24 @@
 #ifndef _NPY_COMMON_H_
 #define _NPY_COMMON_H_
 
+/* need Python.h for npy_intp, npy_uintp */
+#include <Python.h>
+
 /* numpconfig.h is auto-generated */
 #include "numpyconfig.h"
 #ifdef HAVE_NPY_CONFIG_H
 #include <npy_config.h>
 #endif
 
-/* need Python.h for npy_intp, npy_uintp */
-#include <Python.h>
-
 /*
  * using static inline modifiers when defining npy_math functions
  * allows the compiler to make optimizations when possible
  */
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
 #ifndef NPY_INLINE_MATH
-#define NPY_INLINE_MATH 1
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    #define NPY_INLINE_MATH 1
+#else
+    #define NPY_INLINE_MATH 0
 #endif
 #endif
 
@@ -64,6 +66,13 @@
 #define NPY_GCC_TARGET_AVX512F
 #endif
 
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX && defined HAVE_LINK_AVX512_SKX
+#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
+#elif defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
+#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
+#else
+#define NPY_GCC_TARGET_AVX512_SKX
+#endif
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -132,6 +141,14 @@
     #endif
 #else
     #define NPY_INLINE
+#endif
+
+#ifdef _MSC_VER
+    #define NPY_FINLINE static __forceinline
+#elif defined(__GNUC__)
+    #define NPY_FINLINE static NPY_INLINE __attribute__((always_inline))
+#else
+    #define NPY_FINLINE static
 #endif
 
 #ifdef HAVE___THREAD
@@ -247,11 +264,10 @@ typedef Py_uintptr_t npy_uintp;
 #define constchar char
 
 /* NPY_INTP_FMT Note:
- *      Unlike the other NPY_*_FMT macros which are used with
- *      PyOS_snprintf, NPY_INTP_FMT is used with PyErr_Format and
- *      PyString_Format. These functions use different formatting
- *      codes which are portably specified according to the Python
- *      documentation. See ticket #1795.
+ *      Unlike the other NPY_*_FMT macros, which are used with PyOS_snprintf,
+ *      NPY_INTP_FMT is used with PyErr_Format and PyUnicode_FromFormat. Those
+ *      functions use different formatting codes that are portably specified
+ *      according to the Python documentation. See issue gh-2388.
  */
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT

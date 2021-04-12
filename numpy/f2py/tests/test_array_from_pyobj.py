@@ -3,9 +3,8 @@ import sys
 import copy
 import pytest
 
-from numpy import (
-    array, alltrue, ndarray, zeros, dtype, intp, clongdouble
-    )
+import numpy as np
+
 from numpy.testing import assert_, assert_equal
 from numpy.core.multiarray import typeinfo
 from . import util
@@ -119,7 +118,7 @@ _cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
 # 16 byte long double types this means the inout intent cannot be satisfied
 # and several tests fail as the alignment flag can be randomly true or fals
 # when numpy gains an aligned allocator the tests could be enabled again
-if ((intp().dtype.itemsize != 4 or clongdouble().dtype.alignment <= 8) and
+if ((np.intp().dtype.itemsize != 4 or np.clongdouble().dtype.alignment <= 8) and
         sys.platform != 'win32'):
     _type_names.extend(['LONGDOUBLE', 'CDOUBLE', 'CLONGDOUBLE'])
     _cast_dict['LONGDOUBLE'] = _cast_dict['LONG'] + \
@@ -133,7 +132,7 @@ class Type:
     _type_cache = {}
 
     def __new__(cls, name):
-        if isinstance(name, dtype):
+        if isinstance(name, np.dtype):
             dtype0 = name
             name = None
             for n, i in typeinfo.items():
@@ -153,7 +152,8 @@ class Type:
         info = typeinfo[self.NAME]
         self.type_num = getattr(wrap, 'NPY_' + self.NAME)
         assert_equal(self.type_num, info.num)
-        self.dtype = info.type
+        self.dtype = np.dtype(info.type)
+        self.type = info.type
         self.elsize = info.bits / 8
         self.dtypechar = info.char
 
@@ -202,7 +202,7 @@ class Array:
         # arr.dtypechar may be different from typ.dtypechar
         self.arr = wrap.call(typ.type_num, dims, intent.flags, obj)
 
-        assert_(isinstance(self.arr, ndarray), repr(type(self.arr)))
+        assert_(isinstance(self.arr, np.ndarray), repr(type(self.arr)))
 
         self.arr_attr = wrap.array_attrs(self.arr)
 
@@ -225,13 +225,15 @@ class Array:
             return
 
         if intent.is_intent('cache'):
-            assert_(isinstance(obj, ndarray), repr(type(obj)))
-            self.pyarr = array(obj).reshape(*dims).copy()
+            assert_(isinstance(obj, np.ndarray), repr(type(obj)))
+            self.pyarr = np.array(obj).reshape(*dims).copy()
         else:
-            self.pyarr = array(array(obj, dtype=typ.dtypechar).reshape(*dims),
-                               order=self.intent.is_intent('c') and 'C' or 'F')
+            self.pyarr = np.array(
+                    np.array(obj, dtype=typ.dtypechar).reshape(*dims),
+                    order=self.intent.is_intent('c') and 'C' or 'F')
             assert_(self.pyarr.dtype == typ,
                     repr((self.pyarr.dtype, typ)))
+        self.pyarr.setflags(write=self.arr.flags['WRITEABLE'])
         assert_(self.pyarr.flags['OWNDATA'], (obj, intent))
         self.pyarr_attr = wrap.array_attrs(self.pyarr)
 
@@ -266,7 +268,7 @@ class Array:
                     repr((self.arr_attr[5][3], self.type.elsize)))
         assert_(self.arr_equal(self.pyarr, self.arr))
 
-        if isinstance(self.obj, ndarray):
+        if isinstance(self.obj, np.ndarray):
             if typ.elsize == Type(obj.dtype).elsize:
                 if not intent.is_intent('copy') and self.arr_attr[1] <= 1:
                     assert_(self.has_shared_memory())
@@ -274,8 +276,7 @@ class Array:
     def arr_equal(self, arr1, arr2):
         if arr1.shape != arr2.shape:
             return False
-        s = arr1 == arr2
-        return alltrue(s.flatten())
+        return (arr1 == arr2).all()
 
     def __str__(self):
         return str(self.arr)
@@ -285,7 +286,7 @@ class Array:
         """
         if self.obj is self.arr:
             return True
-        if not isinstance(self.obj, ndarray):
+        if not isinstance(self.obj, np.ndarray):
             return False
         obj_attr = wrap.array_attrs(self.obj)
         return obj_attr[0] == self.arr_attr[0]
@@ -318,7 +319,7 @@ class TestSharedMemory:
 
     def test_in_from_2casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num2seq, dtype=t.dtype)
+            obj = np.array(self.num2seq, dtype=t.dtype)
             a = self.array([len(self.num2seq)], intent.in_, obj)
             if t.elsize == self.type.elsize:
                 assert_(
@@ -326,8 +327,20 @@ class TestSharedMemory:
             else:
                 assert_(not a.has_shared_memory(), repr(t.dtype))
 
+    @pytest.mark.parametrize('write', ['w', 'ro'])
+    @pytest.mark.parametrize('order', ['C', 'F'])
+    @pytest.mark.parametrize('inp', ['2seq', '23seq'])
+    def test_in_nocopy(self, write, order, inp):
+        """Test if intent(in) array can be passed without copies
+        """
+        seq = getattr(self, 'num' + inp)
+        obj = np.array(seq, dtype=self.type.dtype, order=order)
+        obj.setflags(write=(write == 'w'))
+        a = self.array(obj.shape, ((order=='C' and intent.in_.c) or intent.in_), obj)
+        assert a.has_shared_memory()
+
     def test_inout_2seq(self):
-        obj = array(self.num2seq, dtype=self.type.dtype)
+        obj = np.array(self.num2seq, dtype=self.type.dtype)
         a = self.array([len(self.num2seq)], intent.inout, obj)
         assert_(a.has_shared_memory())
 
@@ -341,12 +354,12 @@ class TestSharedMemory:
             raise SystemError('intent(inout) should have failed on sequence')
 
     def test_f_inout_23seq(self):
-        obj = array(self.num23seq, dtype=self.type.dtype, order='F')
+        obj = np.array(self.num23seq, dtype=self.type.dtype, order='F')
         shape = (len(self.num23seq), len(self.num23seq[0]))
         a = self.array(shape, intent.in_.inout, obj)
         assert_(a.has_shared_memory())
 
-        obj = array(self.num23seq, dtype=self.type.dtype, order='C')
+        obj = np.array(self.num23seq, dtype=self.type.dtype, order='C')
         shape = (len(self.num23seq), len(self.num23seq[0]))
         try:
             a = self.array(shape, intent.in_.inout, obj)
@@ -359,14 +372,14 @@ class TestSharedMemory:
                 'intent(inout) should have failed on improper array')
 
     def test_c_inout_23seq(self):
-        obj = array(self.num23seq, dtype=self.type.dtype)
+        obj = np.array(self.num23seq, dtype=self.type.dtype)
         shape = (len(self.num23seq), len(self.num23seq[0]))
         a = self.array(shape, intent.in_.c.inout, obj)
         assert_(a.has_shared_memory())
 
     def test_in_copy_from_2casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num2seq, dtype=t.dtype)
+            obj = np.array(self.num2seq, dtype=t.dtype)
             a = self.array([len(self.num2seq)], intent.in_.copy, obj)
             assert_(not a.has_shared_memory(), repr(t.dtype))
 
@@ -377,14 +390,14 @@ class TestSharedMemory:
 
     def test_in_from_23casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num23seq, dtype=t.dtype)
+            obj = np.array(self.num23seq, dtype=t.dtype)
             a = self.array([len(self.num23seq), len(self.num23seq[0])],
                            intent.in_, obj)
             assert_(not a.has_shared_memory(), repr(t.dtype))
 
     def test_f_in_from_23casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num23seq, dtype=t.dtype, order='F')
+            obj = np.array(self.num23seq, dtype=t.dtype, order='F')
             a = self.array([len(self.num23seq), len(self.num23seq[0])],
                            intent.in_, obj)
             if t.elsize == self.type.elsize:
@@ -394,7 +407,7 @@ class TestSharedMemory:
 
     def test_c_in_from_23casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num23seq, dtype=t.dtype)
+            obj = np.array(self.num23seq, dtype=t.dtype)
             a = self.array([len(self.num23seq), len(self.num23seq[0])],
                            intent.in_.c, obj)
             if t.elsize == self.type.elsize:
@@ -404,14 +417,14 @@ class TestSharedMemory:
 
     def test_f_copy_in_from_23casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num23seq, dtype=t.dtype, order='F')
+            obj = np.array(self.num23seq, dtype=t.dtype, order='F')
             a = self.array([len(self.num23seq), len(self.num23seq[0])],
                            intent.in_.copy, obj)
             assert_(not a.has_shared_memory(), repr(t.dtype))
 
     def test_c_copy_in_from_23casttype(self):
         for t in self.type.cast_types():
-            obj = array(self.num23seq, dtype=t.dtype)
+            obj = np.array(self.num23seq, dtype=t.dtype)
             a = self.array([len(self.num23seq), len(self.num23seq[0])],
                            intent.in_.c.copy, obj)
             assert_(not a.has_shared_memory(), repr(t.dtype))
@@ -420,7 +433,7 @@ class TestSharedMemory:
         for t in self.type.all_types():
             if t.elsize != self.type.elsize:
                 continue
-            obj = array(self.num2seq, dtype=t.dtype)
+            obj = np.array(self.num2seq, dtype=t.dtype)
             shape = (len(self.num2seq),)
             a = self.array(shape, intent.in_.c.cache, obj)
             assert_(a.has_shared_memory(), repr(t.dtype))
@@ -428,7 +441,7 @@ class TestSharedMemory:
             a = self.array(shape, intent.in_.cache, obj)
             assert_(a.has_shared_memory(), repr(t.dtype))
 
-            obj = array(self.num2seq, dtype=t.dtype, order='F')
+            obj = np.array(self.num2seq, dtype=t.dtype, order='F')
             a = self.array(shape, intent.in_.c.cache, obj)
             assert_(a.has_shared_memory(), repr(t.dtype))
 
@@ -449,7 +462,7 @@ class TestSharedMemory:
         for t in self.type.all_types():
             if t.elsize >= self.type.elsize:
                 continue
-            obj = array(self.num2seq, dtype=t.dtype)
+            obj = np.array(self.num2seq, dtype=t.dtype)
             shape = (len(self.num2seq),)
             try:
                 self.array(shape, intent.in_.cache, obj)  # Should succeed
@@ -485,18 +498,18 @@ class TestSharedMemory:
         shape = (2,)
         a = self.array(shape, intent.hide, None)
         assert_(a.arr.shape == shape)
-        assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
+        assert_(a.arr_equal(a.arr, np.zeros(shape, dtype=self.type.dtype)))
 
         shape = (2, 3)
         a = self.array(shape, intent.hide, None)
         assert_(a.arr.shape == shape)
-        assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
+        assert_(a.arr_equal(a.arr, np.zeros(shape, dtype=self.type.dtype)))
         assert_(a.arr.flags['FORTRAN'] and not a.arr.flags['CONTIGUOUS'])
 
         shape = (2, 3)
         a = self.array(shape, intent.c.hide, None)
         assert_(a.arr.shape == shape)
-        assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
+        assert_(a.arr_equal(a.arr, np.zeros(shape, dtype=self.type.dtype)))
         assert_(not a.arr.flags['FORTRAN'] and a.arr.flags['CONTIGUOUS'])
 
         shape = (-1, 3)
@@ -514,18 +527,18 @@ class TestSharedMemory:
         shape = (2,)
         a = self.array(shape, intent.optional, None)
         assert_(a.arr.shape == shape)
-        assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
+        assert_(a.arr_equal(a.arr, np.zeros(shape, dtype=self.type.dtype)))
 
         shape = (2, 3)
         a = self.array(shape, intent.optional, None)
         assert_(a.arr.shape == shape)
-        assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
+        assert_(a.arr_equal(a.arr, np.zeros(shape, dtype=self.type.dtype)))
         assert_(a.arr.flags['FORTRAN'] and not a.arr.flags['CONTIGUOUS'])
 
         shape = (2, 3)
         a = self.array(shape, intent.c.optional, None)
         assert_(a.arr.shape == shape)
-        assert_(a.arr_equal(a.arr, zeros(shape, dtype=self.type.dtype)))
+        assert_(a.arr_equal(a.arr, np.zeros(shape, dtype=self.type.dtype)))
         assert_(not a.arr.flags['FORTRAN'] and a.arr.flags['CONTIGUOUS'])
 
     def test_optional_from_2seq(self):
@@ -547,14 +560,14 @@ class TestSharedMemory:
         assert_(not a.has_shared_memory())
 
     def test_inplace(self):
-        obj = array(self.num23seq, dtype=self.type.dtype)
+        obj = np.array(self.num23seq, dtype=self.type.dtype)
         assert_(not obj.flags['FORTRAN'] and obj.flags['CONTIGUOUS'])
         shape = obj.shape
         a = self.array(shape, intent.inplace, obj)
         assert_(obj[1][2] == a.arr[1][2], repr((obj, a.arr)))
         a.arr[1][2] = 54
         assert_(obj[1][2] == a.arr[1][2] ==
-                array(54, dtype=self.type.dtype), repr((obj, a.arr)))
+                np.array(54, dtype=self.type.dtype), repr((obj, a.arr)))
         assert_(a.arr is obj)
         assert_(obj.flags['FORTRAN'])  # obj attributes are changed inplace!
         assert_(not obj.flags['CONTIGUOUS'])
@@ -563,17 +576,17 @@ class TestSharedMemory:
         for t in self.type.cast_types():
             if t is self.type:
                 continue
-            obj = array(self.num23seq, dtype=t.dtype)
-            assert_(obj.dtype.type == t.dtype)
-            assert_(obj.dtype.type is not self.type.dtype)
+            obj = np.array(self.num23seq, dtype=t.dtype)
+            assert_(obj.dtype.type == t.type)
+            assert_(obj.dtype.type is not self.type.type)
             assert_(not obj.flags['FORTRAN'] and obj.flags['CONTIGUOUS'])
             shape = obj.shape
             a = self.array(shape, intent.inplace, obj)
             assert_(obj[1][2] == a.arr[1][2], repr((obj, a.arr)))
             a.arr[1][2] = 54
             assert_(obj[1][2] == a.arr[1][2] ==
-                    array(54, dtype=self.type.dtype), repr((obj, a.arr)))
+                    np.array(54, dtype=self.type.dtype), repr((obj, a.arr)))
             assert_(a.arr is obj)
             assert_(obj.flags['FORTRAN'])  # obj attributes changed inplace!
             assert_(not obj.flags['CONTIGUOUS'])
-            assert_(obj.dtype.type is self.type.dtype)  # obj changed inplace!
+            assert_(obj.dtype.type is self.type.type)  # obj changed inplace!

@@ -107,6 +107,13 @@ add_newdoc('numpy.core.umath', 'absolute',
     >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10], cmap='gray')
     >>> plt.show()
 
+    The `abs` function can be used as a shorthand for ``np.absolute`` on
+    ndarrays.
+
+    >>> x = np.array([-1.2, 1.2])
+    >>> abs(x)
+    array([1.2, 1.2])
+
     """)
 
 add_newdoc('numpy.core.umath', 'add',
@@ -141,6 +148,14 @@ add_newdoc('numpy.core.umath', 'add',
            [  3.,   5.,   7.],
            [  6.,   8.,  10.]])
 
+    The ``+`` operator can be used as a shorthand for ``np.add`` on ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 + x2
+    array([[ 0.,  2.,  4.],
+           [ 3.,  5.,  7.],
+           [ 6.,  8., 10.]])
     """)
 
 add_newdoc('numpy.core.umath', 'arccos',
@@ -170,7 +185,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     Notes
     -----
     `arccos` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `cos(z) = x`. The convention is to return
+    many numbers `z` such that ``cos(z) = x``. The convention is to return
     the angle `z` whose real part lies in `[0, pi]`.
 
     For real-valued input data types, `arccos` always returns real output.
@@ -178,7 +193,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arccos` is a complex analytic function that
-    has branch cuts `[-inf, -1]` and `[1, inf]` and is continuous from
+    has branch cuts ``[-inf, -1]`` and `[1, inf]` and is continuous from
     above on the former and from below on the latter.
 
     The inverse `cos` is also known as `acos` or cos^-1.
@@ -230,7 +245,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     -----
     `arccosh` is a multivalued function: for each `x` there are infinitely
     many numbers `z` such that `cosh(z) = x`. The convention is to return the
-    `z` whose imaginary part lies in `[-pi, pi]` and the real part in
+    `z` whose imaginary part lies in ``[-pi, pi]`` and the real part in
     ``[0, inf]``.
 
     For real-valued input data types, `arccosh` always returns real output.
@@ -391,7 +406,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arctan` is a complex analytic function that
-    has [`1j, infj`] and [`-1j, -infj`] as branch cuts, and is continuous
+    has [``1j, infj``] and [``-1j, -infj``] as branch cuts, and is continuous
     from the left on the former and from the right on the latter.
 
     The inverse tangent is also known as `atan` or tan^{-1}.
@@ -529,7 +544,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     Notes
     -----
     `arctanh` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `tanh(z) = x`. The convention is to return
+    many numbers `z` such that ``tanh(z) = x``. The convention is to return
     the `z` whose imaginary part lies in `[-pi/2, pi/2]`.
 
     For real-valued input data types, `arctanh` always returns real output.
@@ -608,6 +623,14 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     >>> np.bitwise_and([True, True], [False, True])
     array([False,  True])
 
+    The ``&`` operator can be used as a shorthand for ``np.bitwise_and`` on
+    ndarrays.
+
+    >>> x1 = np.array([2, 5, 255])
+    >>> x2 = np.array([3, 14, 16])
+    >>> x1 & x2
+    array([ 2,  4, 16])
+
     """)
 
 add_newdoc('numpy.core.umath', 'bitwise_or',
@@ -667,6 +690,14 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     >>> np.bitwise_or([True, True], [False, True])
     array([ True,  True])
 
+    The ``|`` operator can be used as a shorthand for ``np.bitwise_or`` on
+    ndarrays.
+
+    >>> x1 = np.array([2, 5, 255])
+    >>> x2 = np.array([4, 4, 4])
+    >>> x1 | x2
+    array([  6,   5, 255])
+
     """)
 
 add_newdoc('numpy.core.umath', 'bitwise_xor',
@@ -719,6 +750,14 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     >>> np.bitwise_xor([True, True], [False, True])
     array([ True, False])
 
+    The ``^`` operator can be used as a shorthand for ``np.bitwise_xor`` on
+    ndarrays.
+
+    >>> x1 = np.array([True, True])
+    >>> x2 = np.array([False, True])
+    >>> x1 ^ x2
+    array([ True, False])
+
     """)
 
 add_newdoc('numpy.core.umath', 'ceil',
@@ -726,7 +765,7 @@ add_newdoc('numpy.core.umath', 'ceil',
     Return the ceiling of the input, element-wise.
 
     The ceil of the scalar `x` is the smallest integer `i`, such that
-    `i >= x`.  It is often denoted as :math:`\\lceil x \\rceil`.
+    ``i >= x``.  It is often denoted as :math:`\\lceil x \\rceil`.
 
     Parameters
     ----------
@@ -742,7 +781,7 @@ add_newdoc('numpy.core.umath', 'ceil',
 
     See Also
     --------
-    floor, trunc, rint
+    floor, trunc, rint, fix
 
     Examples
     --------
@@ -774,7 +813,7 @@ add_newdoc('numpy.core.umath', 'trunc',
 
     See Also
     --------
-    ceil, floor, rint
+    ceil, floor, rint, fix
 
     Notes
     -----
@@ -1088,6 +1127,16 @@ add_newdoc('numpy.core.umath', 'divide',
     >>> np.divide(1, 0)
     0
 
+    The ``/`` operator can be used as a shorthand for ``np.divide`` on
+    ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = 2 * np.ones(3)
+    >>> x1 / x2
+    array([[0. , 0.5, 1. ],
+           [1.5, 2. , 2.5],
+           [3. , 3.5, 4. ]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'equal',
@@ -1122,6 +1171,14 @@ add_newdoc('numpy.core.umath', 'equal',
 
     >>> np.equal(1, np.ones(1))
     array([ True])
+
+    The ``==`` operator can be used as a shorthand for ``np.equal`` on
+    ndarrays.
+
+    >>> a = np.array([2, 4, 6])
+    >>> b = np.array([2, 4, 2])
+    >>> a == b
+    array([ True,  True, False])
 
     """)
 
@@ -1317,13 +1374,14 @@ add_newdoc('numpy.core.umath', 'floor',
 
     See Also
     --------
-    ceil, trunc, rint
+    ceil, trunc, rint, fix
 
     Notes
     -----
-    Some spreadsheet programs calculate the "floor-towards-zero", in other
-    words ``floor(-2.5) == -2``.  NumPy instead uses the definition of
-    `floor` where `floor(-2.5) == -3`.
+    Some spreadsheet programs calculate the "floor-towards-zero", where
+    ``floor(-2.5) == -2``.  NumPy instead uses the definition of
+    `floor` where `floor(-2.5) == -3`. The "floor-towards-zero"
+    function is called ``fix`` in NumPy.
 
     Examples
     --------
@@ -1369,6 +1427,13 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     2
     >>> np.floor_divide([1., 2., 3., 4.], 2.5)
     array([ 0.,  0.,  1.,  1.])
+
+    The ``//`` operator can be used as a shorthand for ``np.floor_divide``
+    on ndarrays.
+
+    >>> x1 = np.array([1., 2., 3., 4.])
+    >>> x1 // 2.5
+    array([0., 0., 1., 1.])
 
     """)
 
@@ -1458,10 +1523,11 @@ add_newdoc('numpy.core.umath', 'greater',
     >>> np.greater([4,2],[2,2])
     array([ True, False])
 
-    If the inputs are ndarrays, then np.greater is equivalent to '>'.
+    The ``>`` operator can be used as a shorthand for ``np.greater`` on
+    ndarrays.
 
-    >>> a = np.array([4,2])
-    >>> b = np.array([2,2])
+    >>> a = np.array([4, 2])
+    >>> b = np.array([2, 2])
     >>> a > b
     array([ True, False])
 
@@ -1493,6 +1559,14 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     --------
     >>> np.greater_equal([4, 2, 1], [2, 2, 2])
     array([ True, True, False])
+
+    The ``>=`` operator can be used as a shorthand for ``np.greater_equal``
+    on ndarrays.
+
+    >>> a = np.array([4, 2, 1])
+    >>> b = np.array([2, 2, 2])
+    >>> a >= b
+    array([ True,  True, False])
 
     """)
 
@@ -1610,6 +1684,13 @@ add_newdoc('numpy.core.umath', 'invert',
     Booleans are accepted as well:
 
     >>> np.invert(np.array([True, False]))
+    array([False,  True])
+
+    The ``~`` operator can be used as a shorthand for ``np.invert`` on
+    ndarrays.
+
+    >>> x1 = np.array([True, False])
+    >>> ~x1
     array([False,  True])
 
     """)
@@ -1835,6 +1916,25 @@ add_newdoc('numpy.core.umath', 'left_shift',
     >>> np.left_shift(5, [1,2,3])
     array([10, 20, 40])
 
+    Note that the dtype of the second argument may change the dtype of the
+    result and can lead to unexpected results in some cases (see
+    :ref:`Casting Rules <ufuncs.casting>`):
+
+    >>> a = np.left_shift(np.uint8(255), 1) # Expect 254
+    >>> print(a, type(a)) # Unexpected result due to upcasting
+    510 <class 'numpy.int64'>
+    >>> b = np.left_shift(np.uint8(255), np.uint8(1))
+    >>> print(b, type(b))
+    254 <class 'numpy.uint8'>
+
+    The ``<<`` operator can be used as a shorthand for ``np.left_shift`` on
+    ndarrays.
+
+    >>> x1 = 5
+    >>> x2 = np.array([1, 2, 3])
+    >>> x1 << x2
+    array([10, 20, 40])
+
     """)
 
 add_newdoc('numpy.core.umath', 'less',
@@ -1864,11 +1964,18 @@ add_newdoc('numpy.core.umath', 'less',
     >>> np.less([1, 2], [2, 2])
     array([ True, False])
 
+    The ``<`` operator can be used as a shorthand for ``np.less`` on ndarrays.
+
+    >>> a = np.array([1, 2])
+    >>> b = np.array([2, 2])
+    >>> a < b
+    array([ True, False])
+
     """)
 
 add_newdoc('numpy.core.umath', 'less_equal',
     """
-    Return the truth value of (x1 =< x2) element-wise.
+    Return the truth value of (x1 <= x2) element-wise.
 
     Parameters
     ----------
@@ -1891,6 +1998,14 @@ add_newdoc('numpy.core.umath', 'less_equal',
     Examples
     --------
     >>> np.less_equal([4, 2, 1], [2, 2, 2])
+    array([False,  True,  True])
+
+    The ``<=`` operator can be used as a shorthand for ``np.less_equal`` on
+    ndarrays.
+
+    >>> a = np.array([4, 2, 1])
+    >>> b = np.array([2, 2, 2])
+    >>> a <= b
     array([False,  True,  True])
 
     """)
@@ -2220,6 +2335,15 @@ add_newdoc('numpy.core.umath', 'logical_and',
     >>> np.logical_and(x>1, x<4)
     array([False, False,  True,  True, False])
 
+
+    The ``&`` operator can be used as a shorthand for ``np.logical_and`` on
+    boolean ndarrays.
+
+    >>> a = np.array([True, False])
+    >>> b = np.array([False, False])
+    >>> a & b
+    array([False, False])
+
     """)
 
 add_newdoc('numpy.core.umath', 'logical_not',
@@ -2289,6 +2413,14 @@ add_newdoc('numpy.core.umath', 'logical_or',
     >>> x = np.arange(5)
     >>> np.logical_or(x < 1, x > 3)
     array([ True, False, False, False,  True])
+
+    The ``|`` operator can be used as a shorthand for ``np.logical_or`` on
+    boolean ndarrays.
+
+    >>> a = np.array([True, False])
+    >>> b = np.array([False, False])
+    >>> a | b
+    array([ True, False])
 
     """)
 
@@ -2635,8 +2767,8 @@ add_newdoc('numpy.core.umath', 'matmul',
     Raises
     ------
     ValueError
-        If the last dimension of `a` is not the same size as
-        the second-to-last dimension of `b`.
+        If the last dimension of `x1` is not the same size as
+        the second-to-last dimension of `x2`.
 
         If a scalar value is passed in.
 
@@ -2677,8 +2809,8 @@ add_newdoc('numpy.core.umath', 'matmul',
       (9, 5, 7, 3)
       >>> # n is 7, k is 4, m is 3
 
-    The matmul function implements the semantics of the `@` operator introduced
-    in Python 3.5 following PEP465.
+    The matmul function implements the semantics of the ``@`` operator introduced
+    in Python 3.5 following :pep:`465`.
 
     Examples
     --------
@@ -2726,6 +2858,14 @@ add_newdoc('numpy.core.umath', 'matmul',
     Traceback (most recent call last):
     ...
     ValueError: matmul: Input operand 1 does not have enough dimensions ...
+
+    The ``@`` operator can be used as a shorthand for ``np.matmul`` on
+    ndarrays.
+
+    >>> x1 = np.array([2j, 3j])
+    >>> x2 = np.array([2j, 3j])
+    >>> x1 @ x2
+    (-13+0j)
 
     .. versionadded:: 1.10.0
     """)
@@ -2803,6 +2943,16 @@ add_newdoc('numpy.core.umath', 'multiply',
            [  0.,   4.,  10.],
            [  0.,   7.,  16.]])
 
+    The ``*`` operator can be used as a shorthand for ``np.multiply`` on
+    ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 * x2
+    array([[  0.,   1.,   4.],
+           [  0.,   4.,  10.],
+           [  0.,   7.,  16.]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'negative',
@@ -2824,6 +2974,13 @@ add_newdoc('numpy.core.umath', 'negative',
     Examples
     --------
     >>> np.negative([1.,-1.])
+    array([-1.,  1.])
+
+    The unary ``-`` operator can be used as a shorthand for ``np.negative`` on
+    ndarrays.
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> -x1
     array([-1.,  1.])
 
     """)
@@ -2849,6 +3006,20 @@ add_newdoc('numpy.core.umath', 'positive',
     -----
     Equivalent to `x.copy()`, but only defined for types that support
     arithmetic.
+
+    Examples
+    --------
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> np.positive(x1)
+    array([ 1., -1.])
+
+    The unary ``+`` operator can be used as a shorthand for ``np.positive`` on
+    ndarrays.
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> +x1
+    array([ 1., -1.])
 
     """)
 
@@ -2881,6 +3052,15 @@ add_newdoc('numpy.core.umath', 'not_equal',
     >>> np.not_equal([1, 2], [[1, 3],[1, 4]])
     array([[False,  True],
            [False,  True]])
+
+    The ``!=`` operator can be used as a shorthand for ``np.not_equal`` on
+    ndarrays.
+
+    >>> a = np.array([1., 2.])
+    >>> b = np.array([1., 3.])
+    >>> a != b
+    array([False,  True])
+
 
     """)
 
@@ -2925,9 +3105,9 @@ add_newdoc('numpy.core.umath', 'power',
 
     Examples
     --------
-    Cube each element in a list.
+    Cube each element in an array.
 
-    >>> x1 = range(6)
+    >>> x1 = np.arange(6)
     >>> x1
     [0, 1, 2, 3, 4, 5]
     >>> np.power(x1, 3)
@@ -2948,6 +3128,14 @@ add_newdoc('numpy.core.umath', 'power',
     >>> np.power(x1, x2)
     array([[ 0,  1,  8, 27, 16,  5],
            [ 0,  1,  8, 27, 16,  5]])
+
+    The ``**`` operator can be used as a shorthand for ``np.power`` on
+    ndarrays.
+
+    >>> x2 = np.array([1, 2, 3, 3, 2, 1])
+    >>> x1 = np.arange(6)
+    >>> x1 ** x2
+    array([ 0,  1,  8, 27, 16,  5])
 
     """)
 
@@ -3172,6 +3360,13 @@ add_newdoc('numpy.core.umath', 'remainder',
     >>> np.remainder(np.arange(7), 5)
     array([0, 1, 2, 3, 4, 0, 1])
 
+    The ``%`` operator can be used as a shorthand for ``np.remainder`` on
+    ndarrays.
+
+    >>> x1 = np.arange(7)
+    >>> x1 % 5
+    array([0, 1, 2, 3, 4, 0, 1])
+
     """)
 
 add_newdoc('numpy.core.umath', 'divmod',
@@ -3212,6 +3407,13 @@ add_newdoc('numpy.core.umath', 'divmod',
     Examples
     --------
     >>> np.divmod(np.arange(5), 3)
+    (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
+
+    The `divmod` function can be used as a shorthand for ``np.divmod`` on
+    ndarrays.
+
+    >>> x = np.arange(5)
+    >>> divmod(x, 3)
     (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
 
     """)
@@ -3257,6 +3459,14 @@ add_newdoc('numpy.core.umath', 'right_shift',
     >>> np.right_shift(10, [1,2,3])
     array([5, 2, 1])
 
+    The ``>>`` operator can be used as a shorthand for ``np.right_shift`` on
+    ndarrays.
+
+    >>> x1 = 10
+    >>> x2 = np.array([1,2,3])
+    >>> x1 >> x2
+    array([5, 2, 1])
+
     """)
 
 add_newdoc('numpy.core.umath', 'rint',
@@ -3277,7 +3487,13 @@ add_newdoc('numpy.core.umath', 'rint',
 
     See Also
     --------
-    ceil, floor, trunc
+    fix, ceil, floor, trunc
+
+    Notes
+    -----
+    For values exactly halfway between rounded decimal values, NumPy
+    rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
+    -0.5 and 0.5 round to 0.0, etc.
 
     Examples
     --------
@@ -3698,6 +3914,16 @@ add_newdoc('numpy.core.umath', 'subtract',
            [ 3.,  3.,  3.],
            [ 6.,  6.,  6.]])
 
+    The ``-`` operator can be used as a shorthand for ``np.subtract`` on
+    ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 - x2
+    array([[0., 0., 0.],
+           [3., 3., 3.],
+           [6., 6., 6.]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'tan',
@@ -3835,13 +4061,18 @@ add_newdoc('numpy.core.umath', 'true_divide',
     >>> np.true_divide(x, 4)
     array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
 
+    >>> x/4
+    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
+
     >>> x//4
     array([0, 0, 0, 0, 1])
 
-    >>> x/4
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-    >>> x//4
-    array([0, 0, 0, 0, 1])
+    The ``/`` operator can be used as a shorthand for ``np.true_divide`` on
+    ndarrays.
+
+    >>> x = np.arange(5)
+    >>> x / 4
+    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
 
     """)
 

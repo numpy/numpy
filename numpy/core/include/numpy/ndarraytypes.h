@@ -210,6 +210,7 @@ typedef enum {
 
 /* For specifying allowed casting in operations which support it */
 typedef enum {
+        _NPY_ERROR_OCCURRED_IN_CAST = -1,
         /* Only allow identical types */
         NPY_NO_CASTING=0,
         /* Allow identical and byte swapped types */
@@ -219,7 +220,14 @@ typedef enum {
         /* Allow safe casts or casts within the same kind */
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
-        NPY_UNSAFE_CASTING=4
+        NPY_UNSAFE_CASTING=4,
+        /*
+         * Flag to allow signalling that a cast is a view, this flag is not
+         * valid when requesting a cast of specific safety.
+         * _NPY_CAST_IS_VIEW|NPY_EQUIV_CASTING means the same as NPY_NO_CASTING.
+         */
+        // TODO-DTYPES: Needs to be documented.
+        _NPY_CAST_IS_VIEW = 1 << 16,
 } NPY_CASTING;
 
 typedef enum {
@@ -227,6 +235,12 @@ typedef enum {
         NPY_WRAP=1,
         NPY_RAISE=2
 } NPY_CLIPMODE;
+
+typedef enum {
+        NPY_VALID=0,
+        NPY_SAME=1,
+        NPY_FULL=2
+} NPY_CORRELATEMODE;
 
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
@@ -340,9 +354,6 @@ struct NpyAuxData_tag {
 
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
-
-#define NPY_STRINGIFY(x) #x
-#define NPY_TOSTRING(x) NPY_STRINGIFY(x)
 
   /*
    * Macros to define how array, and dimension/strides data is
@@ -704,6 +715,7 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
+    void *_buffer_info;  /* private buffer info, tagged to allow warning */
 } PyArrayObject_fields;
 
 /*
@@ -723,7 +735,18 @@ typedef struct tagPyArrayObject {
 } PyArrayObject;
 #endif
 
-#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
+/*
+ * Removed 2020-Nov-25, NumPy 1.20
+ * #define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
+ *
+ * The above macro was removed as it gave a false sense of a stable ABI
+ * with respect to the structures size.  If you require a runtime constant,
+ * you can use `PyArray_Type.tp_basicsize` instead.  Otherwise, please
+ * see the PyArrayObject documentation or ask the NumPy developers for
+ * information on how to correctly replace the macro in a way that is
+ * compatible with multiple NumPy versions.
+ */
+
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
@@ -1448,9 +1471,8 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * checking of correctness when working with these objects in C.
  */
 
-#define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || \
-                             PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
-                             PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
+#define PyArray_ISONESEGMENT(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
+                                 PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
 
 #define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) && \
                              (!PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)))
@@ -1551,11 +1573,15 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
                                         (void *)itemptr, (PyArrayObject *)arr);
 }
 
+/*
+ * SETITEM should only be used if it is known that the value is a scalar
+ * and of a type understood by the arrays dtype.
+ * Use `PyArray_Pack` if the value may be of a different dtype.
+ */
 static NPY_INLINE int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(
-                                                        v, itemptr, arr);
+    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
 }
 
 #else
@@ -1759,8 +1785,8 @@ typedef struct {
 } npy_stride_sort_item;
 
 /************************************************************
- * This is the form of the struct that's returned pointed by the
- * PyCObject attribute of an array __array_struct__. See
+ * This is the form of the struct that's stored in the
+ * PyCapsule returned by an array's __array_struct__ attribute. See
  * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
  * documentation.
  ************************************************************/
@@ -1809,6 +1835,112 @@ typedef struct {
  */
 typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
                                        void *user_data);
+
+
+/*
+ * PyArray_DTypeMeta related definitions.
+ *
+ * As of now, this API is preliminary and will be extended as necessary.
+ */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * The Structures defined in this block are considered private API and
+     * may change without warning!
+     */
+    /* TODO: Make this definition public in the API, as soon as its settled */
+    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
+
+    typedef struct PyArray_DTypeMeta_tag PyArray_DTypeMeta;
+
+    typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
+            PyArray_DTypeMeta *cls, PyObject *obj);
+
+    /*
+     * Before making this public, we should decide whether it should pass
+     * the type, or allow looking at the object. A possible use-case:
+     * `np.array(np.array([0]), dtype=np.ndarray)`
+     * Could consider arrays that are not `dtype=ndarray` "scalars".
+     */
+    typedef int (is_known_scalar_type_function)(
+            PyArray_DTypeMeta *cls, PyTypeObject *obj);
+
+    typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
+    typedef PyArray_DTypeMeta *(common_dtype_function)(
+            PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2);
+    typedef PyArray_Descr *(common_instance_function)(
+            PyArray_Descr *dtype1, PyArray_Descr *dtyep2);
+
+    /*
+     * While NumPy DTypes would not need to be heap types the plan is to
+     * make DTypes available in Python at which point they will be heap types.
+     * Since we also wish to add fields to the DType class, this looks like
+     * a typical instance definition, but with PyHeapTypeObject instead of
+     * only the PyObject_HEAD.
+     * This must only be exposed very extremely careful consideration, since
+     * it is a fairly complex construct which may be better to allow
+     * refactoring of.
+     */
+    struct PyArray_DTypeMeta_tag {
+        PyHeapTypeObject super;
+
+        /*
+         * Most DTypes will have a singleton default instance, for the
+         * parametric legacy DTypes (bytes, string, void, datetime) this
+         * may be a pointer to the *prototype* instance?
+         */
+        PyArray_Descr *singleton;
+        /*
+         * Is this DType created using the old API? This exists mainly to
+         * allow for assertions in paths specific to wrapping legacy types.
+         */
+        npy_bool legacy;
+        /* The values stored by a parametric datatype depend on its instance */
+        npy_bool parametric;
+        /* whether the DType can be instantiated (i.e. np.dtype cannot) */
+        npy_bool abstract;
+
+        /*
+         * The following fields replicate the most important dtype information.
+         * In the legacy implementation most of these are stored in the
+         * PyArray_Descr struct.
+         */
+        /* The type object of the scalar instances (may be NULL?) */
+        PyTypeObject *scalar_type;
+        /* kind for this type */
+        char kind;
+        /* unique-character representing this type */
+        char type;
+        /* flags describing data type */
+        char flags;
+        /* number representing this type */
+        int type_num;
+        /*
+         * Point to the original ArrFuncs.
+         * NOTE: We could make a copy to detect changes to `f`.
+         */
+        PyArray_ArrFuncs *f;
+
+        /* DType methods, these could be moved into its own struct */
+        discover_descr_from_pyobject_function *discover_descr_from_pyobject;
+        is_known_scalar_type_function *is_known_scalar_type;
+        default_descr_function *default_descr;
+        common_dtype_function *common_dtype;
+        common_instance_function *common_instance;
+        /*
+         * The casting implementation (ArrayMethod) to convert between two
+         * instances of this DType, stored explicitly for fast access:
+         */
+        PyObject *within_dtype_castingimpl;
+        /*
+         * Dictionary of ArrayMethods representing most possible casts
+         * (structured and object are exceptions).
+         * This should potentially become a weak mapping in the future.
+         */
+        PyObject *castingimpls;
+    };
+
+#endif  /* NPY_INTERNAL_BUILD */
+
 
 /*
  * Use the keyword NPY_DEPRECATED_INCLUDES to ensure that the header files

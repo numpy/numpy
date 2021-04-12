@@ -17,7 +17,7 @@ from ._multiarray_umath import *  # noqa: F403
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity, _get_ndarray_c_version
+    _ARRAY_API, _monotonicity, _get_ndarray_c_version, _set_madvise_hugepage,
     )
 
 __all__ = [
@@ -26,7 +26,8 @@ __all__ = [
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP', '_fastCopyAndTranspose',
     '_flagdict', '_insert', '_reconstruct', '_vec_string', '_monotonicity',
-    'add_docstring', 'arange', 'array', 'bincount', 'broadcast',
+    'add_docstring', 'arange', 'array', 'asarray', 'asanyarray',
+    'ascontiguousarray', 'asfortranarray', 'bincount', 'broadcast',
     'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
@@ -38,7 +39,7 @@ __all__ = [
     'nested_iters', 'normalize_axis_index', 'packbits',
     'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
     'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
-    'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
+    'set_string_function', 'set_typeDict', 'shares_memory',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
 
@@ -49,6 +50,10 @@ scalar.__module__ = 'numpy.core.multiarray'
 
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
+asarray.__module__ = 'numpy'
+asanyarray.__module__ = 'numpy'
+ascontiguousarray.__module__ = 'numpy'
+asfortranarray.__module__ = 'numpy'
 datetime_data.__module__ = 'numpy'
 empty.__module__ = 'numpy'
 frombuffer.__module__ = 'numpy'
@@ -90,14 +95,14 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
-        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        'F' means F-order, 'A' means 'F' if `prototype` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
 
         .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
+        type of `prototype`, otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
         Overrides the shape of the result. If order='K' and the number of
@@ -141,9 +146,9 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
-def concatenate(arrays, axis=None, out=None):
+def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
-    concatenate((a1, a2, ...), axis=0, out=None)
+    concatenate((a1, a2, ...), axis=0, out=None, dtype=None, casting="same_kind")
 
     Join a sequence of arrays along an existing axis.
 
@@ -159,6 +164,16 @@ def concatenate(arrays, axis=None, out=None):
         If provided, the destination to place the result. The shape must be
         correct, matching that of what concatenate would have returned if no
         out argument were specified.
+    dtype : str or dtype
+        If provided, the destination array will have this dtype. Cannot be
+        provided together with `out`.
+
+        .. versionadded:: 1.20.0
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -171,14 +186,15 @@ def concatenate(arrays, axis=None, out=None):
     array_split : Split an array into multiple sub-arrays of equal or
                   near-equal size.
     split : Split array into a list of multiple sub-arrays of equal size.
-    hsplit : Split array into multiple sub-arrays horizontally (column wise)
-    vsplit : Split array into multiple sub-arrays vertically (row wise)
+    hsplit : Split array into multiple sub-arrays horizontally (column wise).
+    vsplit : Split array into multiple sub-arrays vertically (row wise).
     dsplit : Split array into multiple sub-arrays along the 3rd axis (depth).
     stack : Stack a sequence of arrays along a new axis.
-    hstack : Stack arrays in sequence horizontally (column wise)
-    vstack : Stack arrays in sequence vertically (row wise)
-    dstack : Stack arrays in sequence depth wise (along third dimension)
     block : Assemble arrays from blocks.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    vstack : Stack arrays in sequence vertically (row wise).
+    dstack : Stack arrays in sequence depth wise (along third dimension).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
 
     Notes
     -----
@@ -248,12 +264,16 @@ def inner(a, b):
     Returns
     -------
     out : ndarray
-        `out.shape = a.shape[:-1] + b.shape[:-1]`
+        If `a` and `b` are both
+        scalars or both 1-D arrays then a scalar is returned; otherwise
+        an array is returned.
+        ``out.shape = (*a.shape[:-1], *b.shape[:-1])``
 
     Raises
     ------
     ValueError
-        If the last dimension of `a` and `b` has different size.
+        If both `a` and `b` are nonscalar and their last dimensions have
+        different sizes.
 
     See Also
     --------
@@ -273,8 +293,8 @@ def inner(a, b):
 
     or explicitly::
 
-        np.inner(a, b)[i0,...,ir-1,j0,...,js-1]
-             = sum(a[i0,...,ir-1,:]*b[j0,...,js-1,:])
+        np.inner(a, b)[i0,...,ir-2,j0,...,js-2]
+             = sum(a[i0,...,ir-2,:]*b[j0,...,js-2,:])
 
     In addition `a` or `b` may be scalars, in which case::
 
@@ -289,13 +309,24 @@ def inner(a, b):
     >>> np.inner(a, b)
     2
 
-    A multidimensional example:
+    Some multidimensional examples:
 
     >>> a = np.arange(24).reshape((2,3,4))
     >>> b = np.arange(4)
-    >>> np.inner(a, b)
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (2, 3)
+    >>> c
     array([[ 14,  38,  62],
            [ 86, 110, 134]])
+
+    >>> a = np.arange(2).reshape((1,1,2))
+    >>> b = np.arange(6).reshape((3,2))
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (1, 1, 3)
+    >>> c
+    array([[[1, 3, 5]]])
 
     An example where `b` is a scalar:
 
@@ -395,7 +426,7 @@ def lexsort(keys, axis=None):
     for the primary sort order, the second-to-last key for the secondary sort
     order, and so on. The keys argument must be a sequence of objects that
     can be converted to arrays of the same shape. If a 2D array is provided
-    for the keys argument, it's rows are interpreted as the sorting keys and
+    for the keys argument, its rows are interpreted as the sorting keys and
     sorting is according to the last row, second last row etc.
 
     Parameters
@@ -760,6 +791,7 @@ def dot(a, b, out=None):
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
     matmul : '@' operator as method with out parameter.
+    linalg.multi_dot : Chained dot product.
 
     Examples
     --------
@@ -909,8 +941,9 @@ def bincount(x, weights=None, minlength=None):
 
     >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: array cannot be safely cast to required type
+      ...
+    TypeError: Cannot cast array data from dtype('float64') to dtype('int64')
+    according to the rule 'safe'
 
     A possible use of ``bincount`` is to perform sums over
     variable-size chunks of an array, using the ``weights`` keyword.
@@ -986,7 +1019,7 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
-def unravel_index(indices, shape=None, order=None, dims=None):
+def unravel_index(indices, shape=None, order=None):
     """
     unravel_index(indices, shape, order='C')
 
@@ -1032,9 +1065,6 @@ def unravel_index(indices, shape=None, order=None, dims=None):
     (3, 1, 4, 1)
 
     """
-    if dims is not None:
-        warnings.warn("'shape' argument should be used instead of 'dims'",
-                      DeprecationWarning, stacklevel=3)
     return (indices,)
 
 
@@ -1087,7 +1117,7 @@ def putmask(a, mask, values):
 
     Parameters
     ----------
-    a : array_like
+    a : ndarray
         Target array.
     mask : array_like
         Boolean mask array. It has to be the same shape as `a`.
@@ -1137,7 +1167,7 @@ def packbits(a, axis=None, bitorder='big'):
         ``None`` implies packing the flattened array.
     bitorder : {'big', 'little'}, optional
         The order of the input bits. 'big' will mimic bin(val),
-        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011``, 'little' will
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
@@ -1265,7 +1295,13 @@ def shares_memory(a, b, max_work=None):
     """
     shares_memory(a, b, max_work=None)
 
-    Determine if two arrays share memory
+    Determine if two arrays share memory.
+
+    .. warning::
+
+       This function can be exponentially slow for some inputs, unless
+       `max_work` is set to a finite number or ``MAY_SHARE_BOUNDS``.
+       If in doubt, use `numpy.may_share_memory` instead.
 
     Parameters
     ----------
@@ -1278,7 +1314,8 @@ def shares_memory(a, b, max_work=None):
 
         max_work=MAY_SHARE_EXACT  (default)
             The problem is solved exactly. In this case, the function returns
-            True only if there is an element shared between the arrays.
+            True only if there is an element shared between the arrays. Finding
+            the exact solution may take extremely long in some cases.
         max_work=MAY_SHARE_BOUNDS
             Only the memory bounds of a and b are checked.
 
@@ -1297,8 +1334,32 @@ def shares_memory(a, b, max_work=None):
 
     Examples
     --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    >>> x = np.array([1, 2, 3, 4])
+    >>> np.shares_memory(x, np.array([5, 6, 7]))
     False
+    >>> np.shares_memory(x[::2], x)
+    True
+    >>> np.shares_memory(x[::2], x[1::2])
+    False
+
+    Checking whether two arrays share memory is NP-complete, and
+    runtime may increase exponentially in the number of
+    dimensions. Hence, `max_work` should generally be set to a finite
+    number, as it is possible to construct examples that take
+    extremely long to run:
+
+    >>> from numpy.lib.stride_tricks import as_strided
+    >>> x = np.zeros([192163377], dtype=np.int8)
+    >>> x1 = as_strided(x, strides=(36674, 61119, 85569), shape=(1049, 1049, 1049))
+    >>> x2 = as_strided(x[64023025:], strides=(12223, 12224, 1), shape=(1049, 1049, 1))
+    >>> np.shares_memory(x1, x2, max_work=1000)
+    Traceback (most recent call last):
+    ...
+    numpy.TooHardError: Exceeded max_work
+
+    Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
+    around 1 minute for this case. It is possible to find problems
+    that take still significantly longer.
 
     """
     return (a, b)
@@ -1385,7 +1446,7 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     busday_offset : Applies an offset counted in valid days.
     busday_count : Counts how many valid days are in a half-open date range.
 
@@ -1460,7 +1521,7 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     is_busday : Returns a boolean array indicating valid days.
     busday_count : Counts how many valid days are in a half-open date range.
 
@@ -1542,7 +1603,7 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     See Also
     --------
-    busdaycalendar: An object that specifies a custom set of valid days.
+    busdaycalendar : An object that specifies a custom set of valid days.
     is_busday : Returns a boolean array indicating valid days.
     busday_offset : Applies an offset counted in valid days.
 

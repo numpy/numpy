@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- encoding:utf-8 -*-
 """
 Script to generate contributor and pull request lists
@@ -45,15 +45,16 @@ if sys.version_info[:2] < (3, 6):
 this_repo = Repo(os.path.join(os.path.dirname(__file__), ".."))
 
 author_msg =\
-u"""
+"""
 A total of %d people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 """
 
 pull_request_msg =\
-u"""
+"""
 A total of %d pull requests were merged for this release.
 """
+
 
 def get_authors(revision_range):
     pat = u'^.*\\t(.*)$'

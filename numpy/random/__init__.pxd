@@ -11,4 +11,4 @@ cdef extern from "numpy/random/bitgen.h":
 
     ctypedef bitgen bitgen_t
 
-from numpy.random._bit_generator cimport BitGenerator, SeedSequence
+from numpy.random.bit_generator cimport BitGenerator, SeedSequence
