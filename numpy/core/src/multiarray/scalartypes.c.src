@@ -2429,12 +2429,7 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
-#ifdef __VMS
-    // 'readonly' is reserved
-    view->readonly$ = 1; /* assume general (user) scalars are readonly. */
-#else
     view->readonly = 1;  /* assume general (user) scalars are readonly. */
-#endif
     Py_INCREF(self);
     view->obj = self;
     view->buf = scalar_value(self, descr);
@@ -2479,12 +2474,7 @@ static int
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
-#ifdef __VMS
-    // 'readonly' is reserved
-    view->readonly$ = 1;
-#else
     view->readonly = 1;
-#endif
     Py_INCREF(self);
     view->obj = self;
     view->buf = &(scalar->obval);
@@ -2523,12 +2513,7 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
-#ifdef __VMS
-    // 'readonly' is reserved
-    view->readonly$ = 1;
-#else
     view->readonly = 1;
-#endif
     Py_INCREF(self);
     view->obj = self;
 
@@ -2597,12 +2582,7 @@ static int
     view->shape = &length;
     view->strides = NULL;
     view->suboffsets = NULL;
-#ifdef __VMS
-    // 'readonly' is reserved
-    view->readonly$ = 1;
-#else
     view->readonly = 1;
-#endif
     Py_INCREF(self);
     view->obj = self;
 

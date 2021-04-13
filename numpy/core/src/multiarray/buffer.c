@@ -809,14 +809,8 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
      * buffer is requested since `PyArray_FailUnlessWriteable` is called above
      * (and clears the `NPY_ARRAY_WARN_ON_WRITE` flag).
      */
-#ifdef __VMS
-    // 'readonly' is reserved word for OpenVMS compiler
-    view->readonly$ = (!PyArray_ISWRITEABLE(self) ||
-                      PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
-#else
     view->readonly = (!PyArray_ISWRITEABLE(self) ||
                       PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
-#endif
     view->internal = NULL;
     view->len = PyArray_NBYTES(self);
     if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
@@ -867,12 +861,7 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->suboffsets = NULL;
     view->len = scalar->descr->elsize;
     view->itemsize = scalar->descr->elsize;
-#ifdef __VMS
-    // 'readonly' is reserved word for OpenVMS compiler
-    view->readonly$ = 1;
-#else
     view->readonly = 1;
-#endif
     view->suboffsets = NULL;
     Py_INCREF(self);
     view->obj = self;
