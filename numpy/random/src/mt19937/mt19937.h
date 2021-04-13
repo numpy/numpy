@@ -8,7 +8,6 @@
 #include <math.h>
 #include <stdint.h>
 
-
 #ifdef _WIN32
 #define inline __forceinline
 #endif

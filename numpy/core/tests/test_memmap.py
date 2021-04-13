@@ -204,7 +204,7 @@ class TestMemmap:
 
     def test_no_shape(self):
         self.tmpfp.write(b'a'*16)
-        self.tmpfp.flush()
+        self.tmpfp.flush()              # OpenVMS
         os.fsync(self.tmpfp.fileno())
         mm = memmap(self.tmpfp, dtype='float64')
         assert_equal(mm.shape, (2,))
@@ -215,7 +215,7 @@ class TestMemmap:
             memmap(self.tmpfp, shape=(0,4), mode='w+')
 
         self.tmpfp.write(b'\0')
-        self.tmpfp.flush()
+        self.tmpfp.flush()              # OpenVMS
         os.fsync(self.tmpfp.fileno())
 
         # ok now the file is not empty

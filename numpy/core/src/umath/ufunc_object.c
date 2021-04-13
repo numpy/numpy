@@ -1431,6 +1431,7 @@ iterator_loop(PyUFuncObject *ufunc,
     char **dataptr;
     npy_intp *stride;
     npy_intp *count_ptr;
+    int needs_api;
 
     PyArrayObject **op_it;
     npy_uint32 iter_flags;
@@ -1525,6 +1526,7 @@ iterator_loop(PyUFuncObject *ufunc,
         dataptr = NpyIter_GetDataPtrArray(iter);
         stride = NpyIter_GetInnerStrideArray(iter);
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+        needs_api = NpyIter_IterationNeedsAPI(iter);
 
         NPY_BEGIN_THREADS_NDITER(iter);
 
@@ -1532,7 +1534,7 @@ iterator_loop(PyUFuncObject *ufunc,
         do {
             NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
             innerloop(dataptr, count_ptr, stride, innerloopdata);
-        } while (iternext(iter));
+        } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
 
         NPY_END_THREADS;
     }
@@ -1859,6 +1861,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         dataptr = NpyIter_GetDataPtrArray(iter);
         strides = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
+        needs_api = NpyIter_IterationNeedsAPI(iter);
 
         NPY_BEGIN_THREADS_NDITER(iter);
 
@@ -1869,7 +1872,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
             innerloop(dataptr, strides,
                         dataptr[nop], strides[nop],
                         *countptr, innerloopdata);
-        } while (iternext(iter));
+        } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
 
         NPY_END_THREADS;
 
@@ -2973,6 +2976,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+        needs_api = NpyIter_IterationNeedsAPI(iter);
 
         if (!needs_api && !NpyIter_IterationNeedsAPI(iter)) {
             NPY_BEGIN_THREADS_THRESHOLDED(total_problem_size);
@@ -2980,7 +2984,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         do {
             inner_dimensions[0] = *count_ptr;
             innerloop(dataptr, inner_dimensions, inner_strides, innerloopdata);
-        } while (iternext(iter));
+        } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
 
         if (!needs_api && !NpyIter_IterationNeedsAPI(iter)) {
             NPY_END_THREADS;
@@ -3520,6 +3524,10 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
             innerloop(dataptrs_copy, &count,
                         strides_copy, innerloopdata);
 
+            if (needs_api && PyErr_Occurred()) {
+                goto finish_loop;
+            }
+
             /* Jump to the faster loop when skipping is done */
             if (skip_first_count == 0) {
                 if (iternext(iter)) {
@@ -3531,6 +3539,11 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
             }
         } while (iternext(iter));
     }
+
+    if (needs_api && PyErr_Occurred()) {
+        goto finish_loop;
+    }
+
     do {
         /* Turn the two items into three for the inner loop */
         dataptrs_copy[0] = dataptrs[0];
@@ -3569,7 +3582,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
                 n = 1;
             }
         }
-    } while (iternext(iter));
+    } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
 
 finish_loop:
     NPY_END_THREADS;
@@ -3882,6 +3895,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
+        needs_api = NpyIter_IterationNeedsAPI(iter);
 
 
         /* Execute the loop with just the outer iterator */
@@ -3932,7 +3946,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                 innerloop(dataptr_copy, &count_m1,
                             stride_copy, innerloopdata);
             }
-        } while (iternext(iter));
+        } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
 
         NPY_END_THREADS;
     }
@@ -4263,6 +4277,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
 
         int itemsize = op_dtypes[0]->elsize;
+        int needs_api = NpyIter_IterationNeedsAPI(iter);
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -4327,7 +4342,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                                 stride_copy, innerloopdata);
                 }
             }
-        } while (iternext(iter));
+        } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
 
         NPY_END_THREADS;
     }
@@ -5209,7 +5224,12 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
             if (cmp == 0 && current != NULL && current->arg_dtypes == NULL) {
                 current->arg_dtypes = PyArray_malloc(ufunc->nargs *
                     sizeof(PyArray_Descr*));
-                if (arg_dtypes != NULL) {
+                if (current->arg_dtypes == NULL) {
+                    PyErr_NoMemory();
+                    result = -1;
+                    goto done;
+                }
+                else if (arg_dtypes != NULL) {
                     for (i = 0; i < ufunc->nargs; i++) {
                         current->arg_dtypes[i] = arg_dtypes[i];
                         Py_INCREF(current->arg_dtypes[i]);
@@ -5475,6 +5495,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "first") < 0) {
+            Py_DECREF(tmp);
             return NULL;
         }
         ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
@@ -5494,6 +5515,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "second") < 0) {
+            Py_DECREF(tmp);
             Py_DECREF(ap1);
             return NULL;
         }
@@ -5518,7 +5540,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
                 "maximum supported dimension for an ndarray is %d, but "
                 "`%s.outer()` result would have %d.",
                 NPY_MAXDIMS, ufunc->name, newdims.len);
-        return NPY_FAIL;
+        goto fail;
     }
     if (newdims.ptr == NULL) {
         goto fail;

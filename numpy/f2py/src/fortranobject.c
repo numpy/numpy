@@ -799,7 +799,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
             && ARRAY_ISCOMPATIBLE(arr,type_num)
             && F2PY_CHECK_ALIGNMENT(arr, intent)
             ) {
-            if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
+            if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY_RO(arr):PyArray_ISFARRAY_RO(arr)) {
                 if ((intent & F2PY_INTENT_OUT)) {
                     Py_INCREF(arr);
                 }
@@ -807,9 +807,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
                 return arr;
             }
         }
-
         if (intent & F2PY_INTENT_INOUT) {
             strcpy(mess, "failed to initialize intent(inout) array");
+            /* Must use PyArray_IS*ARRAY because intent(inout) requires writable input */
             if ((intent & F2PY_INTENT_C) && !PyArray_ISCARRAY(arr))
                 strcat(mess, " -- input not contiguous");
             if (!(intent & F2PY_INTENT_C) && !PyArray_ISFARRAY(arr))

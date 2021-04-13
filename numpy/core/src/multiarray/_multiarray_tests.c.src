@@ -1300,7 +1300,7 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 {
     PyObject *A = NULL;
     PyObject *U = NULL;
-    npy_int64 b_input = 0;        // diophantine functions assume 'b_input' is npy_int64
+    npy_int64 b_input = 0;        // diophantine functions assume 'b_input' is npy_int64 (__VMS)
     Py_ssize_t max_work = -1;
     int simplify = 0;
     int require_ub_nontrivial = 0;
@@ -1315,7 +1315,7 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
     PyObject *retval = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O!L|nii", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O!L|nii", kwlist,   // __VMS
                                      &PyTuple_Type, &A,
                                      &PyTuple_Type, &U,
                                      &b_input, &max_work, &simplify,
@@ -1336,11 +1336,11 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
     }
 
     for (j = 0; j < nterms; ++j) {
-        terms[j].a = (npy_int64)PyLong_AsLongLong(PyTuple_GET_ITEM(A, j));
+        terms[j].a = (npy_int64)PyLong_AsLongLong(PyTuple_GET_ITEM(A, j));  // __VMS
         if (error_converting(terms[j].a)) {
             goto fail;
         }
-        terms[j].ub = (npy_int64)PyLong_AsLongLong(PyTuple_GET_ITEM(U, j));
+        terms[j].ub = (npy_int64)PyLong_AsLongLong(PyTuple_GET_ITEM(U, j)); // __VMS
         if (error_converting(terms[j].ub)) {
             goto fail;
         }
@@ -1367,7 +1367,7 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 
         for (j = 0; j < nterms; ++j) {
             PyObject *obj;
-            obj = PyLong_FromLongLong(x[j]);
+            obj = PyLong_FromLongLong(x[j]);    // __VMS
             if (obj == NULL) {
                 goto fail;
             }

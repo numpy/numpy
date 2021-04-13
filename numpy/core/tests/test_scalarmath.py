@@ -286,16 +286,14 @@ class TestModulus:
                 finf = np.array(np.inf, dtype=dt)
                 fnan = np.array(np.nan, dtype=dt)
                 rem = operator.mod(fone, fzer)
-                if sys.platform != 'OpenVMS':   # OpenVMS returns zero
-                    assert_(np.isnan(rem), 'dt: %s' % dt)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
                 # MSVC 2008 returns NaN here, so disable the check.
                 #rem = operator.mod(fone, finf)
                 #assert_(rem == fone, 'dt: %s' % dt)
                 rem = operator.mod(fone, fnan)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
-                if sys.platform != 'OpenVMS':   # OpenVMS returns zero
-                    assert_(np.isnan(rem), 'dt: %s' % dt)
+                assert_(np.isnan(rem), 'dt: %s' % dt)
                 for op in [floordiv_and_mod, divmod]:
                     div, mod = op(fone, fzer)
                     assert_(np.isinf(div)) and assert_(np.isnan(mod))

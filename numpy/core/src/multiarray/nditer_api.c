@@ -1194,7 +1194,7 @@ NpyIter_GetIndexPtr(NpyIter *iter)
 
     if (itflags&NPY_ITFLAG_HASINDEX) {
         /* The index is just after the data pointers */
-        return (npy_intp*)(NAD_PTRS(axisdata) + nop);
+        return (npy_intp*)(NAD_PTRS(axisdata) + nop);   // __VMS
     }
     else {
         return NULL;
@@ -1640,7 +1640,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("\n");
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Value: %d\n",
-                               (int)(intptr_t)(NAD_PTRS(axisdata)[nop]));
+                               (int)(intptr_t)(NAD_PTRS(axisdata)[nop]));   // __VMS
         }
     }
 
@@ -2640,6 +2640,7 @@ npyiter_clear_buffers(NpyIter *iter)
     /* Cleanup any buffers with references */
     char **buffers = NBF_BUFFERS(bufferdata);
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     for (int iop = 0; iop < nop; ++iop, ++buffers) {
         /*
          * We may want to find a better way to do this, on the other hand,
@@ -2648,7 +2649,8 @@ npyiter_clear_buffers(NpyIter *iter)
          * a well defined state (either NULL or owning the reference).
          * Only we implement cleanup
          */
-        if (!PyDataType_REFCHK(dtypes[iop])) {
+        if (!PyDataType_REFCHK(dtypes[iop]) ||
+                !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
             continue;
         }
         if (*buffers == 0) {

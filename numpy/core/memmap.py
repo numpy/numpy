@@ -112,7 +112,7 @@ class memmap(ndarray):
     The memmap object can be used anywhere an ndarray is accepted.
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
-
+    
     Memory-mapped files cannot be larger than 2GB on 32-bit systems.
 
     When a memmap causes a file to be created or extended beyond its
@@ -254,7 +254,7 @@ class memmap(ndarray):
                 fid.seek(bytes - 1, 0)
                 fid.write(b'\0')
                 fid.flush()
-                fsync(fid.fileno())
+                fsync(fid.fileno())     // OpenVMS
 
             if mode == 'c':
                 acc = mmap.ACCESS_COPY

@@ -2230,7 +2230,7 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
         return npyiter_seq_item(self, i);
     }
     else if (PySlice_Check(op)) {
-        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength = 0;
+        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength = 0;   // __VMS
         if (PySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
                                  &istart, &iend, &istep, &islicelength) < 0) {
             return NULL;

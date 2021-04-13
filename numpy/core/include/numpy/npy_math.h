@@ -87,7 +87,7 @@ extern long double decc$gx_long_dbl_snan;
 #define NPY_PZEROL ((npy_longdouble)NPY_PZEROF)
 #define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
 
-#endif
+#endif  // __VMS
 
 /*
  * Useful constants
@@ -234,7 +234,7 @@ double npy_spacing(double x);
 
 /* use builtins to avoid function calls in tight loops
  * only available if npy_config.h is available (= numpys own build) */
-#ifdef HAVE___BUILTIN_ISNAN
+#ifdef HAVE___BUILTIN_ISNAN     // __VMS
     #define npy_isnan(x) __builtin_isnan(x)
 #else
     #ifndef NPY_HAVE_DECL_ISNAN
@@ -250,7 +250,7 @@ double npy_spacing(double x);
 
 
 /* only available if npy_config.h is available (= numpys own build) */
-#ifdef HAVE___BUILTIN_ISFINITE
+#ifdef HAVE___BUILTIN_ISFINITE  // __VMS
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
     #ifndef NPY_HAVE_DECL_ISFINITE
@@ -265,7 +265,7 @@ double npy_spacing(double x);
 #endif
 
 /* only available if npy_config.h is available (= numpys own build) */
-#ifdef HAVE___BUILTIN_ISINF
+#ifdef HAVE___BUILTIN_ISINF // __VMS
     #define npy_isinf(x) __builtin_isinf(x)
 #else
     #ifndef NPY_HAVE_DECL_ISINF

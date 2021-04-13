@@ -3,8 +3,8 @@
 ==========================
 NumPy 1.20.0 Release Notes
 ==========================
-This NumPy release is the largest so made to date, some 648 PRs contributed by
-182 people have been merged. See the list of highlights below for more details.
+This NumPy release is the largest so made to date, some 684 PRs contributed by
+184 people have been merged. See the list of highlights below for more details.
 The Python versions supported for this release are 3.7-3.9, support for Python
 3.6 has been dropped. Highlights are
 
@@ -75,32 +75,60 @@ Using the aliases of builtin types like ``np.int`` is deprecated
 ----------------------------------------------------------------
 
 For a long time, ``np.int`` has been an alias of the builtin ``int``. This is
-repeatedly a cause of confusion for newcomers, and is also simply not useful.
+repeatedly a cause of confusion for newcomers, and existed mainly for historic
+reasons.
 
 These aliases have been deprecated. The table below shows the full list of
 deprecated aliases, along with their exact meaning. Replacing uses of items in
 the first column with the contents of the second column will work identically
 and silence the deprecation warning.
 
-In many cases, it may have been intended to use the types from the third column.
-Be aware that use of these types may result in subtle but desirable behavior
-changes.
+The third column lists alternative NumPy names which may occasionally be
+preferential. See also :ref:`basics.types` for additional details.
 
-==================  =================================  ==================================================================
-Deprecated name     Identical to                       Possibly intended numpy type
-==================  =================================  ==================================================================
-``numpy.bool``      ``bool``                           `numpy.bool_`
-``numpy.int``       ``int``                            `numpy.int_` (default int dtype), `numpy.cint` (C ``int``)
-``numpy.float``     ``float``                          `numpy.float_`, `numpy.double` (equivalent)
-``numpy.complex``   ``complex``                        `numpy.complex_`, `numpy.cdouble` (equivalent)
-``numpy.object``    ``object``                         `numpy.object_`
-``numpy.str``       ``str``                            `numpy.str_`
-``numpy.long``      ``int`` (``long`` on Python 2)     `numpy.int_` (C ``long``), `numpy.longlong` (largest integer type)
-``numpy.unicode``   ``str`` (``unicode`` on Python 2)  `numpy.unicode_`
-==================  =================================  ==================================================================
+=================  ============  ==================================================================
+Deprecated name    Identical to  NumPy scalar type names
+=================  ============  ==================================================================
+``numpy.bool``     ``bool``      `numpy.bool_`
+``numpy.int``      ``int``       `numpy.int_` (default), ``numpy.int64``, or ``numpy.int32``
+``numpy.float``    ``float``     `numpy.float64`, `numpy.float_`, `numpy.double` (equivalent)
+``numpy.complex``  ``complex``   `numpy.complex128`, `numpy.complex_`, `numpy.cdouble` (equivalent)
+``numpy.object``   ``object``    `numpy.object_`
+``numpy.str``      ``str``       `numpy.str_`
+``numpy.long``     ``int``       `numpy.int_` (C ``long``), `numpy.longlong` (largest integer type)
+``numpy.unicode``  ``str``       `numpy.unicode_`
+=================  ============  ==================================================================
 
-Note that for technical reasons these deprecation warnings will only be emitted
-on Python 3.7 and above.
+To give a clear guideline for the vast majority of cases, for the types
+``bool``, ``object``, ``str`` (and ``unicode``) using the plain version
+is shorter and clear, and generally a good replacement.
+For ``float`` and ``complex`` you can use ``float64`` and ``complex128``
+if you wish to be more explicit about the precision.
+
+For ``np.int`` a direct replacement with ``np.int_`` or ``int`` is also
+good and will not change behavior, but the precision will continue to depend
+on the computer and operating system.
+If you want to be more explicit and review the current use, you have the
+following alternatives:
+
+* ``np.int64`` or ``np.int32`` to specify the precision exactly.
+  This ensures that results cannot depend on the computer or operating system.
+* ``np.int_`` or ``int`` (the default), but be aware that it depends on
+  the computer and operating system.
+* The C types: ``np.cint`` (int), ``np.int_`` (long), ``np.longlong``.
+* ``np.intp`` which is 32bit on 32bit machines 64bit on 64bit machines.
+  This can be the best type to use for indexing.
+
+When used with ``np.dtype(...)`` or ``dtype=...`` changing it to the
+NumPy name as mentioned above will have no effect on the output.
+If used as a scalar with::
+
+    np.float(123)
+
+changing it can subtly change the result.  In this case, the Python version
+``float(123)`` or ``int(12.)`` is normally preferable, although the NumPy
+version may be useful for consistency with NumPy arrays (for example,
+NumPy behaves differently for things like division by zero).
 
 (`gh-14882 <https://github.com/numpy/numpy/pull/14882>`__)
 
@@ -183,6 +211,43 @@ The documentation has warned against using this function since NumPy 1.8.
 Use ``next(it)`` instead of ``it.ndincr()``.
 
 (`gh-17233 <https://github.com/numpy/numpy/pull/17233>`__)
+
+ArrayLike objects which do not define ``__len__`` and ``__getitem__``
+---------------------------------------------------------------------
+Objects which define one of the protocols ``__array__``,
+``__array_interface__``, or ``__array_struct__`` but are not sequences
+(usually defined by having a ``__len__`` and ``__getitem__``) will behave
+differently during array-coercion in the future.
+
+When nested inside sequences, such as ``np.array([array_like])``, these
+were handled as a single Python object rather than an array.
+In the future they will behave identically to::
+
+    np.array([np.array(array_like)])
+
+This change should only have an effect if ``np.array(array_like)`` is not 0-D.
+The solution to this warning may depend on the object:
+
+* Some array-likes may expect the new behaviour, and users can ignore the
+  warning.  The object can choose to expose the sequence protocol to opt-in
+  to the new behaviour.
+* For example, ``shapely`` will allow conversion to an array-like using
+  ``line.coords`` rather than ``np.asarray(line)``. Users may work around
+  the warning, or use the new convention when it becomes available.
+
+Unfortunately, using the new behaviour can only be achieved by
+calling ``np.array(array_like)``.
+
+If you wish to ensure that the old behaviour remains unchanged, please create
+an object array and then fill it explicitly, for example::
+
+    arr = np.empty(3, dtype=object)
+    arr[:] = [array_like1, array_like2, array_like3]
+
+This will ensure NumPy knows to not enter the array-like and use it as
+a object instead.
+
+(`gh-17973 <https://github.com/numpy/numpy/pull/17973>`__)
 
 
 Future Changes
@@ -349,9 +414,15 @@ Things will now be more consistent with::
 
     np.array([np.array(array_like1)])
 
-This could potentially subtly change output for badly defined array-likes.
-We are not aware of any such case where the results were not clearly
-incorrect previously.
+This can subtly change output for some badly defined array-likes.
+One example for this are array-like objects which are not also sequences
+of matching shape.
+In NumPy 1.20, a warning will be given when an array-like is not also a
+sequence (but behaviour remains identical, see deprecations).
+If an array like is also a sequence (defines ``__getitem__`` and ``__len__``)
+NumPy will now only use the result given by ``__array__``,
+``__array_interface__``, or ``__array_struct__``. This will result in
+differences when the (nested) sequence describes a different shape.
 
 (`gh-16200 <https://github.com/numpy/numpy/pull/16200>`__)
 
@@ -551,6 +622,7 @@ replacing it with the new definition::
     PyObject_TypeCheck(op, &PyArrayDescr_Type)
 
 which is compatible with all NumPy versions.
+
 
 Size of ``np.ndarray`` and ``np.void_`` changed
 -----------------------------------------------
@@ -927,6 +999,4 @@ The former result can still be obtained with::
     array([-3, -2, -1, -1,  0,  0,  0,  1])
 
 (`gh-16841 <https://github.com/numpy/numpy/pull/16841>`__)
-
-
 

@@ -76,7 +76,7 @@ def test_cython(tmp_path):
     assert so1 is not None
     assert so2 is not None
     # import the so's without adding the directory to sys.path
-    from importlib.machinery import ExtensionFileLoader
+    from importlib.machinery import ExtensionFileLoader 
     extending = ExtensionFileLoader('extending', so1).load_module()
     extending_distributions = ExtensionFileLoader('extending_distributions', so2).load_module()
 

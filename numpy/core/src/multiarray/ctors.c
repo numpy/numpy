@@ -552,7 +552,7 @@ PyArray_AssignFromCache_Recursive(
             else {
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
-                if ((npy_intp)view < 0) {
+                if (view == NULL) {
                     goto fail;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
@@ -2124,7 +2124,16 @@ PyArray_FromInterface(PyObject *origin)
 
     if (iface == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                    PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                /* RecursionError and MemoryError are considered fatal */
+                return NULL;
+            }
+            /*
+             * This probably be deprecated, but at least shapely raised
+             * a NotImplementedError expecting it to be cleared (gh-17965)
+             */
+            PyErr_Clear();
         }
         return Py_NotImplemented;
     }
@@ -2392,7 +2401,13 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                /* RecursionError and MemoryError are considered fatal */
+                return NULL;
+            }
+            /* This probably be deprecated. */
+            PyErr_Clear();
         }
         return Py_NotImplemented;
     }

@@ -87,10 +87,10 @@
             simd_arg_converter, &arg1,                    \
             simd_arg_converter, &arg2                     \
         )) return NULL;                                   \
-        simd_data data;                                   \
+        simd_data data = {.u64 = 0};                      \
         data.RET = NPY_CAT(SIMD__IMPL_COUNT_, CONST_RNG)( \
             SIMD__REPEAT_2IMM, NAME, IN0                  \
-        ) npyv_##NAME(arg1.data.IN0, 0);                  \
+        ) data.RET;                                       \
         simd_arg_free(&arg1);                             \
         simd_arg ret = {                                  \
             .data = data, .dtype = simd_data_##RET        \

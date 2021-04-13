@@ -217,9 +217,9 @@ from ._scalars import (
     _ScalarLike,
     _VoidLike,
 )
-from ._array_like import _SupportsArray, ArrayLike
+from ._array_like import _SupportsArray, ArrayLike as ArrayLike
 from ._shape import _Shape, _ShapeLike
-from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
+from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike as DTypeLike
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings

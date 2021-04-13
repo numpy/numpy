@@ -10,7 +10,7 @@ try:
 except ImportError:
     from pipes import quote
 
-__all__ = ['WindowsParser', 'PosixParser', 'OpenVMSParser', 'NativeParser']
+__all__ = ['WindowsParser', 'PosixParser', 'NativeParser', 'OpenVMSParser']
 
 
 class CommandLineParser:

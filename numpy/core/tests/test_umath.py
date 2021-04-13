@@ -251,67 +251,6 @@ class TestDivision:
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
-    @pytest.mark.parametrize("input_dtype",
-            [np.int8, np.int16, np.int32, np.int64])
-    def test_division_int_boundary(self, input_dtype):
-        iinfo = np.iinfo(input_dtype)
-
-        # Create list with min, 25th percentile, 0, 75th percentile, max
-        lst = [iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max]
-        divisors = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
-        a = np.array(lst, dtype=input_dtype)
-
-        for divisor in divisors:
-            div_a = a // divisor
-            b = a.copy(); b //= divisor
-            div_lst = [i // divisor for i in lst]
-
-            msg = "Integer arrays floor division check (//)"
-            assert all(div_a == div_lst), msg
-
-            msg = "Integer arrays floor division check (//=)"
-            assert all(div_a == b), msg
-
-        with np.errstate(divide='raise'):
-            with pytest.raises(FloatingPointError):
-                a // 0
-            with pytest.raises(FloatingPointError):
-                a //= 0
-
-            np.array([], dtype=input_dtype) // 0
-
-    @pytest.mark.parametrize(
-            "dividend,divisor,quotient",
-            [(np.timedelta64(2,'Y'), np.timedelta64(2,'M'), 12),
-             (np.timedelta64(2,'Y'), np.timedelta64(-2,'M'), -12),
-             (np.timedelta64(-2,'Y'), np.timedelta64(2,'M'), -12),
-             (np.timedelta64(-2,'Y'), np.timedelta64(-2,'M'), 12),
-             (np.timedelta64(2,'M'), np.timedelta64(-2,'Y'), -1),
-             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), 0),
-             (np.timedelta64(2,'Y'), 2, np.timedelta64(1,'Y')),
-             (np.timedelta64(2,'Y'), -2, np.timedelta64(-1,'Y')),
-             (np.timedelta64(-2,'Y'), 2, np.timedelta64(-1,'Y')),
-             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
-             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
-             (np.timedelta64(-2,'Y'), -3, np.timedelta64(0,'Y')),
-             (np.timedelta64(-2,'Y'), 0, np.timedelta64('Nat','Y')),
-            ])
-    def test_division_int_timedelta(self, dividend, divisor, quotient):
-        # If either divisor is 0 or quotient is Nat, check for division by 0
-        if divisor and (isinstance(quotient, int) or not np.isnat(quotient)):
-            msg = "Timedelta floor division check"
-            assert dividend // divisor == quotient, msg
-
-            # Test for arrays as well
-            msg = "Timedelta arrays floor division check"
-            dividend_array = np.array([dividend]*5)
-            quotient_array = np.array([quotient]*5)
-            assert all(dividend_array // divisor == quotient_array), msg
-        else:
-            with np.errstate(divide='raise', invalid='raise'):
-                with pytest.raises(FloatingPointError):
-                    dividend // divisor
-
     def test_division_complex(self):
         # check that implementation is correct
         msg = "Complex division implementation check"
@@ -559,44 +498,45 @@ class TestRemainder:
             assert_(rem >= -b, 'dt: %s' % dt)
 
         # Check nans, inf
-        if not is_openvms:  # OpenVMS has a lot of bugs in nans, inf
-            with suppress_warnings() as sup:
-                sup.filter(RuntimeWarning, "invalid value encountered in remainder")
-                sup.filter(RuntimeWarning, "invalid value encountered in fmod")
-                for dt in np.typecodes['Float']:
-                    fone = np.array(1.0, dtype=dt)
-                    fzer = np.array(0.0, dtype=dt)
-                    finf = np.array(np.inf, dtype=dt)
-                    fnan = np.array(np.nan, dtype=dt)
-                    rem = np.remainder(fone, fzer)
-                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                    # MSVC 2008 returns NaN here, so disable the check.
-                    #rem = np.remainder(fone, finf)
-                    #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
-                    rem = np.remainder(finf, fone)
-                    fmod = np.fmod(finf, fone)
-                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                    rem = np.remainder(finf, finf)
-                    fmod = np.fmod(finf, fone)
-                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                    rem = np.remainder(finf, fzer)
-                    fmod = np.fmod(finf, fzer)
-                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                    rem = np.remainder(fone, fnan)
-                    fmod = np.fmod(fone, fnan)
-                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-                    rem = np.remainder(fnan, fzer)
-                    fmod = np.fmod(fnan, fzer)
-                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
-                    rem = np.remainder(fnan, fone)
-                    fmod = np.fmod(fnan, fone)
-                    assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                    assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
+        if is_openvms:  # OpenVMS has a lot of bugs in nans, inf
+            return
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning, "invalid value encountered in fmod")
+            for dt in np.typecodes['Float']:
+                fone = np.array(1.0, dtype=dt)
+                fzer = np.array(0.0, dtype=dt)
+                finf = np.array(np.inf, dtype=dt)
+                fnan = np.array(np.nan, dtype=dt)
+                rem = np.remainder(fone, fzer)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                # MSVC 2008 returns NaN here, so disable the check.
+                #rem = np.remainder(fone, finf)
+                #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(finf, fone)
+                fmod = np.fmod(finf, fone)
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(finf, finf)
+                fmod = np.fmod(finf, fone)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                rem = np.remainder(finf, fzer)
+                fmod = np.fmod(finf, fzer)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                rem = np.remainder(fone, fnan)
+                fmod = np.fmod(fone, fnan)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                rem = np.remainder(fnan, fzer)
+                fmod = np.fmod(fnan, fzer)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
+                rem = np.remainder(fnan, fone)
+                fmod = np.fmod(fnan, fone)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
 
 
 class TestCbrt:
@@ -937,6 +877,11 @@ class TestSpecialFloats:
         with np.errstate(invalid='raise'):
             assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.log, np.float32(-1.0))
+
+        # See https://github.com/numpy/numpy/issues/18005 
+        with assert_no_warnings():
+            a = np.array(1e9, dtype='float32')
+            np.log(a)
 
     def test_sincos_values(self):
         with np.errstate(all='ignore'):

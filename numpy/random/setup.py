@@ -64,14 +64,7 @@ def configuration(parent_package='', top_path=None):
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
     if is_openvms:
-        EXTRA_COMPILE_ARGS = [ \
-            # '/WARN=DISABLE=('   \
-            #     'MACROREDEF,'   \
-            #     'INTCONSTTRUNC,'\
-            #     'VOIDRETURN1)'  \
-            # '/STAND=C99',
-            # '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
-            ]
+        EXTRA_COMPILE_ARGS = []
 
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
@@ -91,14 +84,6 @@ def configuration(parent_package='', top_path=None):
     EXTRA_COMPILE_ARGS = []
     if is_msvc:
         EXTRA_COMPILE_ARGS = ['/GL-']
-    elif is_openvms:
-        EXTRA_COMPILE_ARGS = [ \
-            # '/WARN=DISABLE=('\
-            # 'MACROREDEF,'   \
-            # 'INTCONSTTRUNC,'\
-            # 'VOIDRETURN1'\
-            # ')'
-            ]
     config.add_installed_library('npyrandom',
         sources=npyrandom_sources,
         install_dir='lib',

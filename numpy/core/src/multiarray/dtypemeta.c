@@ -162,12 +162,12 @@ void_discover_descr_from_pyobject(
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
-        Py_ssize_t itemsize = (int)PyBytes_Size(obj);
+        Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
         }
-        descr->elsize = itemsize;
+        descr->elsize = (int)itemsize;
         return descr;
     }
     PyErr_Format(PyExc_TypeError,
@@ -375,7 +375,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES);
     if (!other->legacy || other->type_num > cls->type_num) {
-        /* Let the more generic (larger type number) DType handle this */
+        /*
+         * Let the more generic (larger type number) DType handle this
+         * (note that half is after all others, which works out here.)
+         */
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
@@ -397,10 +400,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES);
-    if (!other->legacy || other->type_num > cls->type_num ||
-        other->type_num == NPY_OBJECT) {
-        /* Let the more generic (larger type number) DType handle this */
+    assert(cls->type_num < NPY_NTYPES && cls != other);
+    if (!other->legacy || (!PyTypeNum_ISNUMBER(other->type_num) &&
+            /* Not numeric so defer unless cls is unicode and other is string */
+            !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }

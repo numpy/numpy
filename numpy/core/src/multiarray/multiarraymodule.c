@@ -448,17 +448,10 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 
         /* Get the priority subtype for the array */
         PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
-
-        if (dtype == NULL) {
-            /* Get the resulting dtype from combining all the arrays */
-            dtype = (PyArray_Descr *)PyArray_ResultType(
-                                                narrays, arrays, 0, NULL);
-            if (dtype == NULL) {
-                return NULL;
-            }
-        }
-        else {
-            Py_INCREF(dtype);
+        PyArray_Descr *descr = PyArray_FindConcatenationDescriptor(
+                narrays, arrays,  (PyObject *)dtype);
+        if (descr == NULL) {
+            return NULL;
         }
 
         /*
@@ -467,7 +460,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
          * resolution rules matching that of the NpyIter.
          */
         PyArray_CreateMultiSortedStridePerm(narrays, arrays, ndim, strideperm);
-        s = dtype->elsize;
+        s = descr->elsize;
         for (idim = ndim-1; idim >= 0; --idim) {
             int iperm = strideperm[idim];
             strides[iperm] = s;
@@ -475,17 +468,13 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         }
 
         /* Allocate the array for the result. This steals the 'dtype' reference. */
-        ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                                        dtype,
-                                                        ndim,
-                                                        shape,
-                                                        strides,
-                                                        NULL,
-                                                        0,
-                                                        NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+                subtype, descr, ndim, shape, strides, NULL, 0, NULL,
+                NULL, 0, 1);
         if (ret == NULL) {
             return NULL;
         }
+        assert(PyArray_DESCR(ret) == descr);
     }
 
     /*
@@ -575,32 +564,22 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         /* Get the priority subtype for the array */
         PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
-        if (dtype == NULL) {
-            /* Get the resulting dtype from combining all the arrays */
-            dtype = (PyArray_Descr *)PyArray_ResultType(
-                                            narrays, arrays, 0, NULL);
-            if (dtype == NULL) {
-                return NULL;
-            }
-        }
-        else {
-            Py_INCREF(dtype);
+        PyArray_Descr *descr = PyArray_FindConcatenationDescriptor(
+                narrays, arrays, (PyObject *)dtype);
+        if (descr == NULL) {
+            return NULL;
         }
 
-        stride = dtype->elsize;
+        stride = descr->elsize;
 
         /* Allocate the array for the result. This steals the 'dtype' reference. */
-        ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                                        dtype,
-                                                        1,
-                                                        &shape,
-                                                        &stride,
-                                                        NULL,
-                                                        0,
-                                                        NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+                subtype, descr,  1, &shape, &stride, NULL, 0, NULL,
+                NULL, 0, 1);
         if (ret == NULL) {
             return NULL;
         }
+        assert(PyArray_DESCR(ret) == descr);
     }
 
     /*
@@ -1850,6 +1829,8 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     array_function_result = array_implement_c_array_function_creation(
             "empty", args, kwds);
     if (array_function_result != Py_NotImplemented) {
+        Py_XDECREF(typecode);
+        npy_free_cache_dim_obj(shape);
         return array_function_result;
     }
 
@@ -2047,6 +2028,8 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     array_function_result = array_implement_c_array_function_creation(
             "zeros", args, kwds);
     if (array_function_result != Py_NotImplemented) {
+        Py_XDECREF(typecode);
+        npy_free_cache_dim_obj(shape);
         return array_function_result;
     }
 
@@ -2117,6 +2100,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     array_function_result = array_implement_c_array_function_creation(
             "fromstring", args, keywds);
     if (array_function_result != Py_NotImplemented) {
+        Py_XDECREF(descr);
         return array_function_result;
     }
 
@@ -2160,11 +2144,13 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     array_function_result = array_implement_c_array_function_creation(
             "fromfile", args, keywds);
     if (array_function_result != Py_NotImplemented) {
+        Py_XDECREF(type);
         return array_function_result;
     }
 
     file = NpyPath_PathlikeToFspath(file);
     if (file == NULL) {
+        Py_XDECREF(type);
         return NULL;
     }
 
@@ -2271,6 +2257,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     array_function_result = array_implement_c_array_function_creation(
             "frombuffer", args, keywds);
     if (array_function_result != Py_NotImplemented) {
+        Py_XDECREF(type);
         return array_function_result;
     }
 
@@ -2878,7 +2865,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     static char *kwd[] = {"start", "stop", "step", "dtype", "like", NULL};
     PyArray_Descr *typecode = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "|OOOO&$O:arange", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&$O:arange", kwd,
                 &o_start,
                 &o_stop,
                 &o_step,
@@ -2886,18 +2873,6 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
                 &like)) {
         Py_XDECREF(typecode);
         return NULL;
-    }
-
-    if (o_stop == NULL) {
-        if (args == NULL || PyTuple_GET_SIZE(args) == 0){
-            PyErr_SetString(PyExc_TypeError,
-                "arange() requires stop to be specified.");
-            return NULL;
-        }
-    }
-    else if (o_start == NULL) {
-        o_start = o_stop;
-        o_stop = NULL;
     }
 
     array_function_result = array_implement_c_array_function_creation(

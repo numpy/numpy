@@ -561,7 +561,7 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
     /* don't set invalid flag */
     if (npy_isnan(x)) {
-        return NPY_NAN@C@;
+        return NPY_NAN@C@;  // __VMS
     }
     else if (x < 0) {
         return -npy_pow@c@(-x, 1. / 3.);
@@ -593,7 +593,7 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 @type@ npy_heaviside@c@(@type@ x, @type@ h0)
 {
     if (npy_isnan(x)) {
-        return (@type@) NPY_NAN@C@;
+        return (@type@) NPY_NAN@C@; // __VMS
     }
     else if (x == 0) {
         return h0;

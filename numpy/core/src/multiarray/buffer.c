@@ -493,10 +493,8 @@ _buffer_info_new(PyObject *obj, int flags)
             info->strides = NULL;
         }
         else {
-            info->shape = (Py_ssize_t *)((char *)info + sizeof(_buffer_info_t));
-#ifndef __VMS
+            info->shape = (npy_intp *)((char *)info + sizeof(_buffer_info_t));
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
-#endif
             info->strides = info->shape + PyArray_NDIM(arr);
 
 #if NPY_RELAXED_STRIDES_CHECKING
@@ -880,6 +878,7 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
      */
     _buffer_info_t *info = _buffer_get_info(&scalar->_buffer_info, self, flags);
     if (info == NULL) {
+        Py_DECREF(self);
         return -1;
     }
     view->format = info->format;

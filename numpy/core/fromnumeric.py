@@ -1375,7 +1375,7 @@ def resize(a, new_shape):
     reshaped_array : ndarray
         The new array is formed from the data in the old array, repeated
         if necessary to fill out the required number of elements.  The
-        data are repeated iterating over the array in C-order.
+        data are repeated in the order that they are stored in memory.
 
     See Also
     --------
@@ -1392,11 +1392,11 @@ def resize(a, new_shape):
 
     Warning: This functionality does **not** consider axes separately,
     i.e. it does not apply interpolation/extrapolation.
-    It fills the return array with the required number of elements, iterating
-    over `a` in C-order, disregarding axes (and cycling back from the start if
-    the new shape is larger).  This functionality is therefore not suitable to
-    resize images, or data where each axis represents a separate and distinct
-    entity.
+    It fills the return array with the required number of elements, taken
+    from `a` as they are laid out in memory, disregarding strides and axes.
+    (This is in case the new shape is smaller. For larger, see above.)
+    This functionality is therefore not suitable to resize images,
+    or data where each axis represents a separate and distinct entity.
 
     Examples
     --------

@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdint.h>
 
-
 /*
  *  logfact[k] holds log(k!) for k = 0, 1, 2, ..., 125.
  */

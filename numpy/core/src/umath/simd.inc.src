@@ -864,7 +864,7 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             }
         }
     }
-#elif defined __AVX2__
+#elif defined __AVX2__  // __VMS
     const npy_intp vector_size_bytes = 32;
     LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[i];
@@ -1006,7 +1006,7 @@ sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
     }
 
 
-#elif defined __AVX2__
+#elif defined __AVX2__  // __VMS
     const npy_intp vector_size_bytes = 32;
     const @vtype256@ a = @vpre256@_set1_@vsuf@(ip1[0]);
     LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
@@ -1073,7 +1073,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
         }
     }
 
-#elif defined __AVX2__
+#elif defined __AVX2__  // __VMS
     const npy_intp vector_size_bytes = 32;
     const @vtype256@ b = @vpre256@_set1_@vsuf@(ip2[0]);
     LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
@@ -1549,7 +1549,11 @@ fma_get_exponent(__m256 x)
     __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
     __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
 
-    __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    /*
+     * It is necessary for temp1 to be volatile, a bug in clang optimizes it out which leads
+     * to an overflow warning in some cases. See https://github.com/numpy/numpy/issues/18005
+     */
+    volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
     __m256 temp = _mm256_mul_ps(temp1, two_power_100);
     x = _mm256_blendv_ps(x, temp, denormal_mask);
 
@@ -1576,7 +1580,11 @@ fma_get_mantissa(__m256 x)
     __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
     __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
 
-    __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    /*
+     * It is necessary for temp1 to be volatile, a bug in clang optimizes it out which leads
+     * to an overflow warning in some cases. See https://github.com/numpy/numpy/issues/18005
+     */
+    volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
     __m256 temp = _mm256_mul_ps(temp1, two_power_100);
     x = _mm256_blendv_ps(x, temp, denormal_mask);
 
@@ -2116,7 +2124,7 @@ AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, co
             x1 = avx512_masked_gather_@vsuffix@(zeros_f, ip, vindex_ip, load_mask);
         }
 #if @is_signbit@
-        x1 = _mm512_and_@vsuffix@(x1,signbit);
+        x1 = _mm512_and_@vsuffix@(x1,signbit); 
 #endif
 
         @mask@ fpclassmask = _mm512_fpclass_@vsuffix@_mask(x1, @IMM8@);
@@ -2209,7 +2217,7 @@ AVX512_SKX_ldexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const 
         }
 
         @vtype1@ out = _mm512_scalef_@vsuffix@(x1, _mm512_cvtepi32_@vsuffix@(x2));
-
+        
         if (stride_op == 1) {
             _mm512_mask_storeu_@vsuffix@(op, load_mask, out);
         }
@@ -3035,7 +3043,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __m512d mTable_tail_1 = _mm512_loadu_pd(&(EXP_Table_tail[8*1]));
     __m512d mTable_tail_2 = _mm512_loadu_pd(&(EXP_Table_tail[8*2]));
     __m512d mTable_tail_3 = _mm512_loadu_pd(&(EXP_Table_tail[8*3]));
-
+    
     __mmask8 overflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
     __mmask8 load_mask = avx512_get_full_load_mask_pd();
     __mmask8 xmin_mask, xmax_mask, inf_mask, nan_mask, nearzero_mask;
@@ -3059,12 +3067,12 @@ AVX512F_exp_DOUBLE(npy_double * op,
         xmax_mask = _mm512_cmp_pd_mask(x, mTH_max, _CMP_GT_OQ);
         xmin_mask = _mm512_cmp_pd_mask(x, mTH_min, _CMP_LT_OQ);
         inf_mask = _mm512_cmp_pd_mask(x, mTH_inf, _CMP_EQ_OQ);
-        __m512i x_abs = _mm512_and_epi64(_mm512_castpd_si512(x),
+        __m512i x_abs = _mm512_and_epi64(_mm512_castpd_si512(x), 
                                 _mm512_set1_epi64(0x7FFFFFFFFFFFFFFF));
-        nearzero_mask = _mm512_cmp_pd_mask(_mm512_castsi512_pd(x_abs),
+        nearzero_mask = _mm512_cmp_pd_mask(_mm512_castsi512_pd(x_abs), 
                                     mTH_nearzero, _CMP_LT_OQ);
         nearzero_mask = _mm512_kxor(nearzero_mask, nan_mask);
-        overflow_mask = _mm512_kor(overflow_mask,
+        overflow_mask = _mm512_kor(overflow_mask, 
                                 _mm512_kxor(xmax_mask, inf_mask));
         x = avx512_set_masked_lanes_pd(x, zeros_d,
                         _mm512_kor(_mm512_kor(nan_mask, xmin_mask),
@@ -3072,7 +3080,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
 
         /* z = x * 32/ln2 */
         __m512d z = _mm512_mul_pd(x, InvLn2N);
-
+        
         /* round to nearest */
         __m512d kd = _mm512_add_pd(z, mShift);
         __m512i ki = _mm512_castpd_si512(kd);
@@ -3099,9 +3107,9 @@ AVX512F_exp_DOUBLE(npy_double * op,
         __m512d tail = avx512_permute_x4var_pd(mTable_tail_0, mTable_tail_1,
                                   mTable_tail_2, mTable_tail_3, j);
 
-        /*
+        /* 
          * s = top + tail;
-         * exp(x) = 2^m * (top + (tail + s * p));
+         * exp(x) = 2^m * (top + (tail + s * p)); 
          */
         __m512d s = _mm512_add_pd(top, tail);
         __m512d res = _mm512_fmadd_pd(s, p, tail);
@@ -3109,9 +3117,9 @@ AVX512F_exp_DOUBLE(npy_double * op,
         res= _mm512_scalef_pd(res, _mm512_div_pd(kd, _mm512_set1_pd(32)));
 
         /* return special cases */
-        res = avx512_set_masked_lanes_pd(res, _mm512_add_pd(x, ones_d),
+        res = avx512_set_masked_lanes_pd(res, _mm512_add_pd(x, ones_d), 
                                         nearzero_mask);
-        res = avx512_set_masked_lanes_pd(res, _mm512_set1_pd(NPY_NAN),
+        res = avx512_set_masked_lanes_pd(res, _mm512_set1_pd(NPY_NAN), 
                                         nan_mask);
         res = avx512_set_masked_lanes_pd(res, mTH_inf, xmax_mask);
         res = avx512_set_masked_lanes_pd(res, zeros_d, xmin_mask);
@@ -3131,8 +3139,8 @@ AVX512F_exp_DOUBLE(npy_double * op,
 
 /*
  * Vectorized implementation of log double using AVX512
- * Reference:
- * [1] Tang, Ping Tak Peter. Table-lookup algorithms for elementary functions
+ * Reference: 
+ * [1] Tang, Ping Tak Peter. Table-lookup algorithms for elementary functions 
  *     and their error analysis. No. CONF-9106103-1. Argonne National Lab.,
  *     IL (USA), 1991.
  * [2] Tang, Ping-Tak Peter. "Table-driven implementation of the logarithm
@@ -3197,7 +3205,7 @@ AVX512F_log_DOUBLE(npy_double * op,
 
     __m512d mLUT_TOP_@i@ = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*@i@]));
     __m512d mLUT_TAIL_@i@ = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*@i@]));
-
+    
     /**end repeat**/
 
     __mmask8 load_mask = avx512_get_full_load_mask_pd();

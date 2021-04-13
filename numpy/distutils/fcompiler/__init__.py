@@ -976,7 +976,7 @@ def is_free_format(file):
     with open(file, encoding='latin1') as f:
         line = f.readline()
         n = 10000 # the number of non-comment lines to scan for hints
-        if _has_f_header(line):
+        if _has_f_header(line) or _has_fix_header(line):
             n = 0
         elif _has_f90_header(line):
             n = 0

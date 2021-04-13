@@ -55,18 +55,19 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 21
-MICRO               = 0
+MINOR               = 20
+MICRO               = 2
 ISRELEASED          = True
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 10):
+    fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
-        f"NumPy {VERSION} may not yet support Python "
-        f"{sys.version_info.major}.{sys.version_info.minor}.",
+        fmt.format(VERSION, *sys.version_info[:2]),
         RuntimeWarning,
     )
+    del fmt
 
 
 # Return the git revision as a string
@@ -129,10 +130,7 @@ def get_version_info():
         GIT_REVISION = "Unknown"
 
     if not ISRELEASED:
-        import time
-
-        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime())
-        FULLVERSION += f'.dev0+{time_stamp}_{GIT_REVISION[:7]}'
+        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
 
     return FULLVERSION, GIT_REVISION
 

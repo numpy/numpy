@@ -57,11 +57,11 @@
 #define inline __forceinline
 #endif
 
-#if defined(__GNUC_GNU_INLINE__) && !defined(__cplusplus)
+#if defined(__GNUC_GNU_INLINE__) && !defined(__cplusplus)   // __VMS
 #error Nonstandard GNU inlining semantics. Compile with -std=c99 or better.
 #endif
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // __VMS
 extern "C" {
 #endif
 
@@ -255,7 +255,7 @@ typedef pcg_state_setseq_128 pcg64_random_t;
 #define pcg64_advance_r pcg_setseq_128_advance_r
 #define PCG64_INITIALIZER PCG_STATE_SETSEQ_128_INITIALIZER
 
-#ifdef __cplusplus
+#ifdef __cplusplus  // __VMS
 }
 #endif
 

@@ -694,7 +694,6 @@ def configuration(parent_package='',top_path=None):
     # Intel and Clang also don't seem happy with /GL
     is_msvc = (platform.platform().startswith('Windows') and
                platform.python_compiler().startswith('MS'))
-
     LIBRARIES = ['npymath']
     if is_openvms:
         LIBRARIES.append('sys$library:pthread$rtl.exe')
@@ -704,22 +703,6 @@ def configuration(parent_package='',top_path=None):
     DEFINE_MACROS=[]
     if is_msvc:
         EXTRA_COMPILE_ARGS = ['/GL-']
-    elif is_openvms:
-        EXTRA_COMPILE_ARGS = [  \
-            # '/WARN=DISABLE=('   \
-            #     'NONSTANDCAST,' \
-            #     'MIXFUNCVOID,'  \
-            #     'TOOFEWACTUALS,'\
-            #     'PARENLITERAL,' \
-            #     'CMPPTRFUNVOID,'\
-            #     'MACROREDEF,'   \
-            #     'INTCONSTTRUNC,'\
-            #     'VOIDRETURN1)',
-            # '/STAND=C99',
-            # '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
-            ]
-
-
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
@@ -735,6 +718,7 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
+
     EXPORT_SYMBOLS_MULTIARRAY_TESTS = []
     if is_openvms:
         EXPORT_SYMBOLS_MULTIARRAY_TESTS = ['forward_pointer']
@@ -998,9 +982,9 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_umath_tests', sources=[
-            join('src', 'umath', '_umath_tests.c.src'),
-            join('src', 'umath', '_umath_tests.dispatch.c'),
-            join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', 'umath', '_umath_tests.c.src'),
+        join('src', 'umath', '_umath_tests.dispatch.c'),
+        join('src', 'common', 'npy_cpu_features.c.src'),
         ],
         extra_compile_args=EXTRA_COMPILE_ARGS,
         extra_link_args=EXTRA_LINK_ARGS,)

@@ -888,39 +888,41 @@ class TestTypes:
         assert np.can_cast(rational_dt, double_dt)
         assert np.promote_types(double_dt, rational_dt) is double_dt
 
-    def test_promote_types_strings(self):
-        assert_equal(np.promote_types('bool', 'S'), np.dtype('S5'))
-        assert_equal(np.promote_types('b', 'S'), np.dtype('S4'))
-        assert_equal(np.promote_types('u1', 'S'), np.dtype('S3'))
-        assert_equal(np.promote_types('u2', 'S'), np.dtype('S5'))
-        assert_equal(np.promote_types('u4', 'S'), np.dtype('S10'))
-        assert_equal(np.promote_types('u8', 'S'), np.dtype('S20'))
-        assert_equal(np.promote_types('i1', 'S'), np.dtype('S4'))
-        assert_equal(np.promote_types('i2', 'S'), np.dtype('S6'))
-        assert_equal(np.promote_types('i4', 'S'), np.dtype('S11'))
-        assert_equal(np.promote_types('i8', 'S'), np.dtype('S21'))
-        assert_equal(np.promote_types('bool', 'U'), np.dtype('U5'))
-        assert_equal(np.promote_types('b', 'U'), np.dtype('U4'))
-        assert_equal(np.promote_types('u1', 'U'), np.dtype('U3'))
-        assert_equal(np.promote_types('u2', 'U'), np.dtype('U5'))
-        assert_equal(np.promote_types('u4', 'U'), np.dtype('U10'))
-        assert_equal(np.promote_types('u8', 'U'), np.dtype('U20'))
-        assert_equal(np.promote_types('i1', 'U'), np.dtype('U4'))
-        assert_equal(np.promote_types('i2', 'U'), np.dtype('U6'))
-        assert_equal(np.promote_types('i4', 'U'), np.dtype('U11'))
-        assert_equal(np.promote_types('i8', 'U'), np.dtype('U21'))
-        assert_equal(np.promote_types('bool', 'S1'), np.dtype('S5'))
-        assert_equal(np.promote_types('bool', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('b', 'S1'), np.dtype('S4'))
-        assert_equal(np.promote_types('b', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u1', 'S1'), np.dtype('S3'))
-        assert_equal(np.promote_types('u1', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u2', 'S1'), np.dtype('S5'))
-        assert_equal(np.promote_types('u2', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u4', 'S1'), np.dtype('S10'))
-        assert_equal(np.promote_types('u4', 'S30'), np.dtype('S30'))
-        assert_equal(np.promote_types('u8', 'S1'), np.dtype('S20'))
-        assert_equal(np.promote_types('u8', 'S30'), np.dtype('S30'))
+    @pytest.mark.parametrize("swap", ["", "swap"])
+    @pytest.mark.parametrize("string_dtype", ["U", "S"])
+    def test_promote_types_strings(self, swap, string_dtype):
+        if swap == "swap":
+            promote_types = lambda a, b: np.promote_types(b, a)
+        else:
+            promote_types = np.promote_types
+
+        S = string_dtype
+        # Promote numeric with unsized string:
+        assert_equal(promote_types('bool', S), np.dtype(S+'5'))
+        assert_equal(promote_types('b', S), np.dtype(S+'4'))
+        assert_equal(promote_types('u1', S), np.dtype(S+'3'))
+        assert_equal(promote_types('u2', S), np.dtype(S+'5'))
+        assert_equal(promote_types('u4', S), np.dtype(S+'10'))
+        assert_equal(promote_types('u8', S), np.dtype(S+'20'))
+        assert_equal(promote_types('i1', S), np.dtype(S+'4'))
+        assert_equal(promote_types('i2', S), np.dtype(S+'6'))
+        assert_equal(promote_types('i4', S), np.dtype(S+'11'))
+        assert_equal(promote_types('i8', S), np.dtype(S+'21'))
+        # Promote numeric with sized string:
+        assert_equal(promote_types('bool', S+'1'), np.dtype(S+'5'))
+        assert_equal(promote_types('bool', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('b', S+'1'), np.dtype(S+'4'))
+        assert_equal(promote_types('b', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u1', S+'1'), np.dtype(S+'3'))
+        assert_equal(promote_types('u1', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u2', S+'1'), np.dtype(S+'5'))
+        assert_equal(promote_types('u2', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u4', S+'1'), np.dtype(S+'10'))
+        assert_equal(promote_types('u4', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u8', S+'1'), np.dtype(S+'20'))
+        assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
+        # Promote with object:
+        assert_equal(promote_types('O', S+'30'), np.dtype('O'))
 
     @pytest.mark.parametrize(["dtype1", "dtype2"],
             [[np.dtype("V6"), np.dtype("V10")],
@@ -1514,6 +1516,27 @@ class TestNonzero:
         # raise exception in second pass for n-dimensional loop
         a = np.array([[ThrowsAfter(15)]]*10)
         assert_raises(ValueError, np.nonzero, a)
+
+    def test_structured_threadsafety(self):
+        # Nonzero (and some other functions) should be threadsafe for
+        # structured datatypes, see gh-15387. This test can behave randomly.
+        from concurrent.futures import ThreadPoolExecutor
+
+        # Create a deeply nested dtype to make a failure more likely:
+        dt = np.dtype([("", "f8")])
+        dt = np.dtype([("", dt)])
+        dt = np.dtype([("", dt)] * 2)
+        # The array should be large enough to likely run into threading issues
+        arr = np.random.uniform(size=(5000, 4)).view(dt)[:, 0]
+        def func(arr):
+            arr.nonzero()
+
+        tpe = ThreadPoolExecutor(max_workers=8)
+        futures = [tpe.submit(func, arr) for _ in range(10)]
+        for f in futures:
+            f.result()
+
+        assert arr.dtype is dt
 
 
 class TestIndex:
@@ -2566,6 +2589,15 @@ class TestIsclose:
         assert_(np.isclose(np.inf, -np.inf) is np.False_)
         assert_(np.isclose(0, np.inf) is np.False_)
         assert_(type(np.isclose(0, np.inf)) is np.bool_)
+
+    def test_timedelta(self):
+        # Allclose currently works for timedelta64 as long as `atol` is
+        # an integer or also a timedelta64
+        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+        assert np.isclose(a, a, atol=0, equal_nan=True).all()
+        assert np.isclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True).all()
+        assert np.allclose(a, a, atol=0, equal_nan=True)
+        assert np.allclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True)
 
 
 class TestStdVar:

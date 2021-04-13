@@ -1,6 +1,14 @@
 name: Build_Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - maintenance/**
+  pull_request:
+    branches:
+      - master
+      - maintenance/**
 
 defaults:
   run:
@@ -12,6 +20,7 @@ env:
 
 jobs:
   smoke_test:
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -71,7 +80,7 @@ jobs:
 
   full:
     needs: smoke_test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     env:
       USE_WHEEL: 1
       RUN_FULL_TESTS: 1
@@ -197,5 +206,20 @@ jobs:
         fi
         echo $PWD/pypy3/bin >> $GITHUB_PATH
 
+    - uses: ./.github/actions
+
+  sdist:
+    needs: smoke_test
+    runs-on: ubuntu-latest
+    env:
+      USE_SDIST: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 

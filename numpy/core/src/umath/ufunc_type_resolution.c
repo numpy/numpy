@@ -12,11 +12,6 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-// printif debug tracing
-#ifndef NPY_UF_DBG_TRACING
-    #define NPY_UF_DBG_TRACING 0
-#endif
-
 #include <stdbool.h>
 
 #include "Python.h"

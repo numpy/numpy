@@ -2342,7 +2342,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  * @param Number of indices
  * @param The array that is being iterated
  *
- * @return 0 on success -1 on failure
+ * @return 0 on success -1 on failure (broadcasting or too many fancy indices)
  */
 static int
 mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
@@ -2380,6 +2380,17 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
             /* consec_status == 0 means there was a fancy index before */
             if (consec_status == 0) {
                 consec_status = 1;
+            }
+        }
+
+        /* Before contunuing, ensure that there are not too fancy indices */
+        if (indices[i].type & HAS_FANCY) {
+            if (NPY_UNLIKELY(j >= NPY_MAXDIMS)) {
+                PyErr_Format(PyExc_IndexError,
+                        "too many advanced (array) indices. This probably "
+                        "means you are indexing with too many booleans. "
+                        "(more than %d found)", NPY_MAXDIMS);
+                return -1;
             }
         }
 
@@ -2669,6 +2680,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     /* For shape reporting on error */
     PyArrayObject *original_extra_op = extra_op;
 
+    /* NOTE: MAXARGS is the actual limit (2*NPY_MAXDIMS is index number one) */
     PyArrayObject *index_arrays[NPY_MAXDIMS];
     PyArray_Descr *intp_descr;
     PyArray_Descr *dtypes[NPY_MAXDIMS];  /* borrowed references */

@@ -2351,8 +2351,13 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
     # (e.g., for numpy.ma).
-    dt = multiarray.result_type(y, 1.)
-    y = array(y, dtype=dt, copy=False, subok=True)
+    # NOTE: We explicitly allow timedelta, which used to work. This could
+    #       possibly be deprecated. See also gh-18286.
+    #       timedelta works if `atol` is an integer or also a timedelta.
+    #       Although, the default tolerances are unlikely to be useful
+    if y.dtype.kind != "m":
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
 
     xfin = isfinite(x)
     yfin = isfinite(y)

@@ -606,7 +606,7 @@ dump_@TYPE@_matrix(const char* name,
                    const @typ@* ptr)
 {
     size_t i, j;
-    TRACE_TXT("\n%s %p (%zd, %"PY_FORMAT_SIZE_T"d)\n", name, ptr, rows, columns);
+    TRACE_TXT("\n%s %p (%"PY_FORMAT_SIZE_T"d, %"PY_FORMAT_SIZE_T"d)\n", name, ptr, rows, columns);  // __VMS
     for (i = 0; i < rows; i++)
     {
         TRACE_TXT("| ");

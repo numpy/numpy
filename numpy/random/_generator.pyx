@@ -2,6 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
+from collections.abc import Sequence
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -4293,7 +4294,7 @@ cdef class Generator:
         if axis is None:
             if x.ndim > 1:
                 if not (np.PyArray_FLAGS(out) & (np.NPY_ARRAY_C_CONTIGUOUS |
-                                                 np.NPY_ARRAY_F_CONTIGUOUS)):
+                                                 np.NPY_ARRAY_F_CONTIGUOUS)): 
                     flags = (np.NPY_ARRAY_C_CONTIGUOUS |
                              NPY_ARRAY_WRITEBACKIFCOPY)
                     to_shuffle = PyArray_FromArray(<np.PyArrayObject *>out,
@@ -4350,14 +4351,14 @@ cdef class Generator:
         """
         shuffle(x, axis=0)
 
-        Modify a sequence in-place by shuffling its contents.
+        Modify an array or sequence in-place by shuffling its contents.
 
         The order of sub-arrays is changed but their contents remains the same.
 
         Parameters
         ----------
-        x : array_like
-            The array or list to be shuffled.
+        x : ndarray or MutableSequence
+            The array, list or mutable sequence to be shuffled.
         axis : int, optional
             The axis which `x` is shuffled along. Default is 0.
             It is only supported on `ndarray` objects.
@@ -4417,7 +4418,11 @@ cdef class Generator:
                 with self.lock, nogil:
                     _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
                                       x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+        elif isinstance(x, np.ndarray):
+            if x.size == 0:
+                # shuffling is a no-op
+                return
+
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
             with self.lock:
@@ -4431,6 +4436,15 @@ cdef class Generator:
                     x[i] = buf
         else:
             # Untyped path.
+            if not isinstance(x, Sequence):
+                # See gh-18206. We may decide to deprecate here in the future.
+                warnings.warn(
+                    "`x` isn't a recognized object; `shuffle` is not guaranteed "
+                    "to behave correctly. E.g., non-numpy array/tensor objects "
+                    "with view semantics may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=2
+                )
+
             if axis != 0:
                 raise NotImplementedError("Axis argument is only supported "
                                           "on ndarray objects")
@@ -4534,15 +4548,15 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
-
+    
     Examples
     --------
     ``default_rng`` is the reccomended constructor for the random number class
-    ``Generator``. Here are several ways we can construct a random
-    number generator using ``default_rng`` and the ``Generator`` class.
-
+    ``Generator``. Here are several ways we can construct a random 
+    number generator using ``default_rng`` and the ``Generator`` class. 
+    
     Here we use ``default_rng`` to generate a random float:
-
+ 
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
     >>> print(rng)
@@ -4552,10 +4566,10 @@ def default_rng(seed=None):
     0.22733602246716966
     >>> type(rfloat)
     <class 'float'>
-
-    Here we use ``default_rng`` to generate 3 random integers between 0
+     
+    Here we use ``default_rng`` to generate 3 random integers between 0 
     (inclusive) and 10 (exclusive):
-
+        
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
     >>> rints = rng.integers(low=0, high=10, size=3)
@@ -4563,9 +4577,9 @@ def default_rng(seed=None):
     array([6, 2, 7])
     >>> type(rints[0])
     <class 'numpy.int64'>
-
+    
     Here we specify a seed so that we have reproducible results:
-
+    
     >>> import numpy as np
     >>> rng = np.random.default_rng(seed=42)
     >>> print(rng)

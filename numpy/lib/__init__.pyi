@@ -1,4 +1,13 @@
-from typing import Any
+from typing import Any, List
+
+from numpy.lib import (
+    format as format,
+    mixins as mixins,
+    scimath as scimath,
+    stride_tricks as stride_stricks,
+)
+
+__all__: List[str]
 
 emath: Any
 math: Any
@@ -175,3 +184,4 @@ nanquantile: Any
 histogram: Any
 histogramdd: Any
 histogram_bin_edges: Any
+NumpyVersion: Any

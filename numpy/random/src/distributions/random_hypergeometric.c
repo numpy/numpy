@@ -39,7 +39,7 @@
  *
  *  It is assumed that when this function is called:
  *    * good, bad and sample are nonnegative;
- *    * the sum good+bad will not result in overflow;
+ *    * the sum good+bad will not result in overflow; 
  *    * sample <= good+bad.
  */
 
@@ -104,7 +104,7 @@ static int64_t hypergeometric_sample(bitgen_t *bitgen_state,
  *
  *  It is assumed that when this function is called:
  *    * good, bad and sample are nonnegative;
- *    * the sum good+bad will not result in overflow;
+ *    * the sum good+bad will not result in overflow; 
  *    * sample <= good+bad.
  *
  *  References:
@@ -218,7 +218,7 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
 
         if (2.0*log(U) <= T) {
             // acceptance
-            break;
+            break;  
         }
     }
 
@@ -239,7 +239,7 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
  *
  *  It is assumed that when this function is called:
  *    * good, bad and sample are nonnegative;
- *    * the sum good+bad will not result in overflow;
+ *    * the sum good+bad will not result in overflow; 
  *    * sample <= good+bad.
  */
 

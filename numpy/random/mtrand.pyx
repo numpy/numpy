@@ -2,6 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -4402,8 +4403,8 @@ cdef class RandomState:
 
         Parameters
         ----------
-        x : array_like
-            The array or list to be shuffled.
+        x : ndarray or MutableSequence
+            The array, list or mutable sequence to be shuffled.
 
         Returns
         -------
@@ -4456,7 +4457,11 @@ cdef class RandomState:
                     self._shuffle_raw(n, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
                 else:
                     self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+        elif isinstance(x, np.ndarray):
+            if x.size == 0:
+                # shuffling is a no-op
+                return
+
             buf = np.empty_like(x[0, ...])
             with self.lock:
                 for i in reversed(range(1, n)):
@@ -4468,6 +4473,15 @@ cdef class RandomState:
                     x[i] = buf
         else:
             # Untyped path.
+            if not isinstance(x, Sequence):
+                # See gh-18206. We may decide to deprecate here in the future.
+                warnings.warn(
+                    "`x` isn't a recognized object; `shuffle` is not guaranteed "
+                    "to behave correctly. E.g., non-numpy array/tensor objects "
+                    "with view semantics may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=2
+                )
+
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = random_interval(&self._bitgen, i)

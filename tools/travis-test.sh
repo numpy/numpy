@@ -46,13 +46,6 @@ setup_base()
   # the advantage that it tests that numpy is 'pip install' compatible,
   # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then
-    # activates '-Werror=undef' when DEBUG isn't enabled since _cffi_backend'
-    # extension breaks the build due to the following error:
-    #
-    # error: "HAVE_FFI_PREP_CIF_VAR" is not defined, evaluates to 0 [-Werror=undef]
-    # #if !HAVE_FFI_PREP_CIF_VAR && defined(__arm64__) && defined(__APPLE__)
-    #
-    export CFLAGS="$CFLAGS -Werror=undef"
     $PIP install -v . 2>&1 | tee log
   else
     # The job run with USE_DEBUG=1 on travis needs this.

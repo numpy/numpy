@@ -1,4 +1,6 @@
-from typing import Any
+from typing import Any, List
+
+__all__: List[str]
 
 equal: Any
 not_equal: Any
@@ -51,3 +53,4 @@ isnumeric: Any
 isdecimal: Any
 array: Any
 asarray: Any
+chararray: Any

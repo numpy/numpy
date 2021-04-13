@@ -904,6 +904,11 @@ class TestAssertAllclose:
         msg = str(exc_info.value)
         assert_('Max relative difference: 0.5' in msg)
 
+    def test_timedelta(self):
+        # see gh-18286
+        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+        assert_allclose(a, a)
+
 
 class TestArrayAlmostEqualNulp:
 

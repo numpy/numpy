@@ -20,9 +20,6 @@
 
 #include <string.h> /* for memchr */
 
-/* Use Libdivide for faster division */
-#include "numpy/libdivide/libdivide.h"
-
 /*
  * cutoff blocksize for pairwise summation
  * decreasing it decreases errors slightly as more pairs are summed but
@@ -573,7 +570,7 @@ NPY_NO_EXPORT void
 /**begin repeat1
  * #isa = , _avx2#
  * #ISA = , AVX2#
- * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX2)#
+ * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX2#
  * #ATTR = , NPY_GCC_TARGET_AVX2#
  */
 
@@ -843,88 +840,28 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
-/* Libdivide only supports 32 and 64 bit types
- * We try to pick the best possible one */
-#if NPY_BITSOF_@TYPE@ <= 32
-#define libdivide_@type@_t libdivide_s32_t
-#define libdivide_@type@_gen libdivide_s32_gen
-#define libdivide_@type@_do libdivide_s32_do
-#else
-#define libdivide_@type@_t libdivide_s64_t
-#define libdivide_@type@_gen libdivide_s64_gen
-#define libdivide_@type@_do libdivide_s64_do
-#endif
-
 NPY_NO_EXPORT void
 @TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-
-        /* If divisor is 0, we need not compute anything */
-        if (in2 == 0) {
+        /*
+         * FIXME: On x86 at least, dividing the smallest representable integer
+         * by -1 causes a SIFGPE (division overflow). We treat this case here
+         * (to avoid a SIGFPE crash at python level), but a good solution would
+         * be to treat integer division problems separately from FPU exceptions
+         * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
+         */
+        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
             npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((@type@ *)op1) = 0;
-            }
+            *((@type@ *)op1) = 0;
+        }
+        else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
+            *((@type@ *)op1) = in1/in2 - 1;
         }
         else {
-            struct libdivide_@type@_t fast_d = libdivide_@type@_gen(in2);
-            BINARY_LOOP_SLIDING {
-                const @type@ in1 = *(@type@ *)ip1;
-                /*
-                 * FIXME: On x86 at least, dividing the smallest representable integer
-                 * by -1 causes a SIFGPE (division overflow). We treat this case here
-                 * (to avoid a SIGFPE crash at python level), but a good solution would
-                 * be to treat integer division problems separately from FPU exceptions
-                 * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-                 */
-                if (in1 == NPY_MIN_@TYPE@ && in2 == -1) {
-                    npy_set_floatstatus_divbyzero();
-                    *((@type@ *)op1) = 0;
-                }
-                else {
-                    *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d);
-
-                    /* Negative quotients needs to be rounded down */
-                    if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
-                        *((@type@ *)op1) = *((@type@ *)op1) - 1;
-                    }
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            /*
-             * FIXME: On x86 at least, dividing the smallest representable integer
-             * by -1 causes a SIFGPE (division overflow). We treat this case here
-             * (to avoid a SIGFPE crash at python level), but a good solution would
-             * be to treat integer division problems separately from FPU exceptions
-             * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-             */
-            if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-                npy_set_floatstatus_divbyzero();
-                *((@type@ *)op1) = 0;
-            }
-            else {
-                *((@type@ *)op1) = in1/in2;
-
-                /* Negative quotients needs to be rounded down */
-                if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
-                    *((@type@ *)op1) = *((@type@ *)op1) - 1;
-                }
-            }
+            *((@type@ *)op1) = in1/in2;
         }
     }
 }
@@ -1415,48 +1352,14 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 NPY_NO_EXPORT void
 TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    /* NOTE: This code is similar to array floor divide */
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_int64 in2 = *(npy_int64 *)ip2;
-
-        /* If divisor is 0, we need not compute anything */
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-            }
+        if (in1 == NPY_DATETIME_NAT || in2 == 0) {
+            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-            BINARY_LOOP_SLIDING {
-                const npy_timedelta in1 = *(npy_timedelta *)ip1;
-                if (in1 == NPY_DATETIME_NAT) {
-                    *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-                }
-                else {
-                    *((npy_timedelta *)op1) = libdivide_s64_do(in1, &fast_d);;
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const npy_timedelta in1 = *(npy_timedelta *)ip1;
-            const npy_int64 in2 = *(npy_int64 *)ip2;
-            if (in1 == NPY_DATETIME_NAT || in2 == 0) {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-            }
-            else {
-                *((npy_timedelta *)op1) = in1 / in2;
-            }
+            *((npy_timedelta *)op1) = in1 / in2;
         }
     }
 }
@@ -1528,69 +1431,23 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const
 NPY_NO_EXPORT void
 TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    /* NOTE: This code is similar to array floor divide */
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
-
-        /* If divisor is 0 or NAT, we need not compute anything */
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((npy_int64 *)op1) = 0;
-            }
-        }
-        else if (in2 == NPY_DATETIME_NAT) {
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             npy_set_floatstatus_invalid();
-            BINARY_LOOP_SLIDING {
-                *((npy_int64 *)op1) = 0;
-            }
+            *((npy_int64 *)op1) = 0;
+        }
+        else if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            *((npy_int64 *)op1) = 0;
         }
         else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-             BINARY_LOOP_SLIDING {
-                const npy_timedelta in1 = *(npy_timedelta *)ip1;
-                if (in1 == NPY_DATETIME_NAT) {
-                    npy_set_floatstatus_invalid();
-                    *((npy_int64 *)op1) = 0;
-                }
-                else {
-                    *((npy_int64 *)op1) = libdivide_s64_do(in1, &fast_d);
-
-                    /* Negative quotients needs to be rounded down */
-                    if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
-                        *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
-                    }
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const npy_timedelta in1 = *(npy_timedelta *)ip1;
-            const npy_timedelta in2 = *(npy_timedelta *)ip2;
-            if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-                npy_set_floatstatus_invalid();
-                *((npy_int64 *)op1) = 0;
-            }
-            else if (in2 == 0) {
-                npy_set_floatstatus_divbyzero();
-                *((npy_int64 *)op1) = 0;
+            if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
+                *((npy_int64 *)op1) = in1/in2 - 1;
             }
             else {
                 *((npy_int64 *)op1) = in1/in2;
-
-                /* Negative quotients needs to be rounded down */
-                if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
-                    *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
-                }
             }
         }
     }

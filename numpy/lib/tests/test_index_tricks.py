@@ -16,13 +16,23 @@ class TestRavelUnravelIndex:
     def test_basic(self):
         assert_equal(np.unravel_index(2, (2, 2)), (1, 0))
 
+        # test backwards compatibility with older dims
+        # keyword argument; see Issue #10586
+        with assert_warns(DeprecationWarning):
+            # we should achieve the correct result
+            # AND raise the appropriate warning
+            # when using older "dims" kw argument
+            assert_equal(np.unravel_index(indices=2,
+                                          dims=(2, 2)),
+                                          (1, 0))
+
         # test that new shape argument works properly
         assert_equal(np.unravel_index(indices=2,
                                       shape=(2, 2)),
                                       (1, 0))
 
         # test that an invalid second keyword argument
-        # is properly handled, including the old name `dims`.
+        # is properly handled
         with assert_raises(TypeError):
             np.unravel_index(indices=2, hape=(2, 2))
 
@@ -31,9 +41,6 @@ class TestRavelUnravelIndex:
 
         with assert_raises(TypeError):
             np.unravel_index(254, ims=(17, 94))
-
-        with assert_raises(TypeError):
-            np.unravel_index(254, dims=(17, 94))
 
         assert_equal(np.ravel_multi_index((1, 0), (2, 2)), 2)
         assert_equal(np.unravel_index(254, (17, 94)), (2, 66))
