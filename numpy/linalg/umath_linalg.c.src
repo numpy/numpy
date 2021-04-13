@@ -567,17 +567,10 @@ dump_ufunc_object(PyUFuncObject* ufunc)
 static NPY_INLINE void
 dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 {
-#ifndef __VMS
-    TRACE_TXT("\n\t%s rows: %zd columns: %zd"\
+    TRACE_TXT("\n\t%s rows: %zd columns: %"PY_FORMAT_SIZE_T"d"\
               "\n\t\trow_strides: %td column_strides: %td"\
               "\n", name, params->rows, params->columns,
               params->row_strides, params->column_strides);
-#else
-    TRACE_TXT("\n\t%s rows: %Ld columns: %Ld"\
-              "\n\t\trow_strides: %Ld column_strides: %Ld"\
-              "\n", name, params->rows, params->columns,
-              params->row_strides, params->column_strides);
-#endif
 }
 
 static NPY_INLINE void
@@ -613,11 +606,7 @@ dump_@TYPE@_matrix(const char* name,
                    const @typ@* ptr)
 {
     size_t i, j;
-#ifndef __VMS
-    TRACE_TXT("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
-#else
-    TRACE_TXT("\n%s %p (%d, %d)\n", name, ptr, rows, columns);
-#endif
+    TRACE_TXT("\n%s %p (%zd, %"PY_FORMAT_SIZE_T"d)\n", name, ptr, rows, columns);
     for (i = 0; i < rows; i++)
     {
         TRACE_TXT("| ");
