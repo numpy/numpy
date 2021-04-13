@@ -383,7 +383,6 @@ matrix: Type[Any]
 memmap: Type[Any]
 nbytes: Dict[generic, int]
 nditer: Type[Any]
-numarray: str
 poly1d: Type[Any]
 recarray: Type[Any]
 record: Type[Any]
