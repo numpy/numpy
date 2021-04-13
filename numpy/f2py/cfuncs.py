@@ -672,7 +672,7 @@ cfuncs['string_from_pyobj'] = """\
 
   The string buffer has given size (len) or the size of inistr when len==-1.
 
-  The string buffer may or may not be null-terminated.
+  The string buffer is null-terminated.
  */
 static int
 string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj,
@@ -700,10 +700,6 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
         }
         n = PyArray_NBYTES(arr);
         buf = PyArray_DATA(arr);
-        if (n == 1 && buf[0] == '\\0') {
-            /* handle the numpy.array(b'') case */
-            n = 0;
-        }
     }
     else {
         if (PyBytes_Check(obj)) {

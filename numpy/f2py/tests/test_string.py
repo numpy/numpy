@@ -34,7 +34,7 @@ class TestFixedString(util.F2PyTest):
           integer :: j, i
           i = 0
           do j=1, len(s)
-           i = i + (ichar(s(j:j+1)) - 48) * 10 ** (j - 1)
+           i = i + (ichar(s(j:j)) - 48) * 10 ** (j - 1)
           end do
           return
         end function sint
@@ -54,7 +54,7 @@ class TestFixedString(util.F2PyTest):
           integer :: sint
           character(len=4), intent(inout) :: a
           integer :: i
-          if (a(1:1).ne.' ') then
+          if (a(1:1).ne.' '.and.ichar(a(1:1)).ne.0) then
             a(1:1) = 'A'
           endif
           i = sint(a)
@@ -72,9 +72,6 @@ class TestFixedString(util.F2PyTest):
         """
         if isinstance(s, np.ndarray):
             s = s.tobytes()
-            if s == b'\x00':
-                # Handle np.array(b'') case
-                s = b''
         elif isinstance(s, str):
             s = s.encode()
         assert isinstance(s, bytes)
@@ -101,8 +98,8 @@ class TestFixedString(util.F2PyTest):
             yield b'1\0'
             yield b'1234'
             yield b'12345'
-        yield np.empty((), [('x', 'S0')])['x']  # array(b'', dtype='|S0')
-        yield np.array(b'')                     # array(b'', dtype='|S1')
+        yield np.ndarray((), np.bytes_, buffer=b'')  # array(b'', dtype='|S0')
+        yield np.array(b'')                          # array(b'', dtype='|S1')
         yield np.array(b'\0')
         yield np.array(b'1')
         yield np.array(b'1\0')
