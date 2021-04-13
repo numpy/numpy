@@ -651,10 +651,6 @@ fprintf(stderr,\"try_pyarr_from_string(str='%s',
         }
         if (n > PyArray_NBYTES(arr)) {
             n = PyArray_NBYTES(arr);
-            if (n == 1 && buf[0] == '\0') {
-                /* handle the numpy.array(b'') case */
-                n = 0;
-            }
         }
         STRINGCOPYN(buf, str, n);
         return 1;
