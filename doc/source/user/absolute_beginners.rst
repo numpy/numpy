@@ -63,17 +63,13 @@ at `SciPy <https://www.scipy.org>`_.
 How to import NumPy
 -------------------
 
-Any time you want to use a package or library in your code, you first need to
-make it accessible.
-
-In order to start using NumPy and all of the functions available in NumPy,
-you'll need to import it. This can be easily done with this import statement::
+To access NumPy and its functions import it in your Python code like this::
 
   import numpy as np
 
-(We shorten ``numpy`` to ``np`` in order to save time and also to keep code
-standardized so that anyone working with your code can easily understand and
-run it.)
+We shorten the imported name to ``np`` for better readability of code using
+NumPy. This is a widely adopted convention that you should follow too, so that
+anyone working with your code can easily understand it.
 
 Reading the example code
 ------------------------
