@@ -98,7 +98,8 @@ class TestFixedString(util.F2PyTest):
             yield b'1'
             yield b'1234'
             yield b'12345'
-        yield np.array(b'')
+        yield np.empty((), [('x', 'S0')])['x']  # array(b'', dtype='|S0')
+        yield np.array(b'')                     # array(b'', dtype='|S1')
         yield np.array(b'1')
         yield np.array(b'1234')
         yield np.array(b'12345')
