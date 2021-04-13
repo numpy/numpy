@@ -7,8 +7,6 @@ by importing from the extension module.
 """
 
 import functools
-import warnings
-
 from . import overrides
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403
@@ -17,7 +15,7 @@ from ._multiarray_umath import *  # noqa: F403
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity, _get_ndarray_c_version, _set_madvise_hugepage,
+    _ARRAY_API, _monotonicity, _get_ndarray_c_version,
     )
 
 __all__ = [
