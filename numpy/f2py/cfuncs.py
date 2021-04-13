@@ -631,8 +631,7 @@ static int *nextforcomb(void) {
 needs['try_pyarr_from_string'] = ['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
 cfuncs['try_pyarr_from_string'] = """\
 /*
-  try_pyarr_from_string copies str[:len(obj)] to a mutable Python
-  string-like obj.
+  try_pyarr_from_string copies str[:len(obj)] to the data of an `ndarray`.
 
   if the specified len==-1, str must be null-terminated.
 */
