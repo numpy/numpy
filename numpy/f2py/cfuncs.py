@@ -644,7 +644,7 @@ fprintf(stderr,\"try_pyarr_from_string(str='%s',
     PyArrayObject *arr = NULL;
     if (PyArray_Check(obj) && (!((arr = (PyArrayObject *)obj) == NULL))) {
         string buf = PyArray_DATA(arr);
-        int n = len;
+        npy_intp n = len;
         if (n == -1) {
             /* Assuming null-terminated str. */
             n = strlen(str);
@@ -681,7 +681,7 @@ string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj,
     PyArrayObject *arr = NULL;
     PyObject *tmp = NULL;
     string buf = NULL;
-    int n = -1;
+    npy_intp n = -1;
 #ifdef DEBUGCFUNCS
 fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
                (char*)str, *len, (char *)inistr, obj);
@@ -729,6 +729,11 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
         buf = PyBytes_AS_STRING(tmp);
     }
     if (*len == -1) {
+        /* TODO: change the type of `len` so that we can remove this */
+        if (n > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_OverflowError, "object too larger for a 32-bit int");
+            goto capi_fail;
+        }
         *len = n;
     }
     else if (*len < n) {
