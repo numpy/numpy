@@ -526,20 +526,11 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         if (align) {
-#ifdef __VMS
-            // '_align' is reserved word for OpenVMS compiler
-            int _align$ = conv->alignment;
-            if (_align$ > 1) {
-                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align$);
-            }
-            maxalign = PyArray_MAX(maxalign, _align$);
-#else
             int _align = conv->alignment;
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = PyArray_MAX(maxalign, _align);
-#endif
         }
         PyObject *tup = PyTuple_New((title == NULL ? 2 : 3));
         if (tup == NULL) {
@@ -663,20 +654,11 @@ _convert_from_list(PyObject *obj, int align)
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         if (align) {
-#ifdef __VMS
-            // '_align' is reserved word for OpenVMS compiler
-            int _align$ = conv->alignment;
-            if (_align$ > 1) {
-                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align$);
-            }
-            maxalign = PyArray_MAX(maxalign, _align$);
-#else
             int _align = conv->alignment;
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = PyArray_MAX(maxalign, _align);
-#endif
         }
         PyObject *size_obj = PyLong_FromLong((long) totalsize);
         if (!size_obj) {
@@ -1156,20 +1138,11 @@ _convert_from_dict(PyObject *obj, int align)
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
-#ifdef __VMS
-        // '_align' is reserved word for OpenVMS compiler
-        int _align$ = 1;
-        if (align) {
-            _align$ = newdescr->alignment;
-            maxalign = PyArray_MAX(maxalign,_align$);
-        }
-#else
         int _align = 1;
         if (align) {
             _align = newdescr->alignment;
             maxalign = PyArray_MAX(maxalign,_align);
         }
-#endif
         if (offsets) {
             PyObject *off = PyObject_GetItem(offsets, ind);
             if (!off) {
@@ -1214,16 +1187,9 @@ _convert_from_dict(PyObject *obj, int align)
             }
         }
         else {
-#ifdef __VMS
-            // '_align' is reserved word for OpenVMS compiler
-            if (align && _align$ > 1) {
-                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align$);
-            }
-#else
             if (align && _align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
-#endif
             PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(totalsize));
             totalsize += newdescr->elsize;
         }
