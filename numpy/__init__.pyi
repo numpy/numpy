@@ -543,17 +543,14 @@ def who(vardict=...): ...
 # Placeholders for C-based functions
 arange: Callable[..., Any]
 bincount: Callable[..., Any]
-bitwise_not: Callable[..., Any]
 busday_count: Callable[..., Any]
 busday_offset: Callable[..., Any]
 can_cast: Callable[..., Any]
 compare_chararrays: Callable[..., Any]
 concatenate: Callable[..., Any]
-conj: Callable[..., Any]
 copyto: Callable[..., Any]
 datetime_as_string: Callable[..., Any]
 datetime_data: Callable[..., Any]
-divide: Callable[..., Any]
 dot: Callable[..., Any]
 frombuffer: Callable[..., Any]
 fromfile: Callable[..., Any]
@@ -566,7 +563,6 @@ is_busday: Callable[..., Any]
 lexsort: Callable[..., Any]
 may_share_memory: Callable[..., Any]
 min_scalar_type: Callable[..., Any]
-mod: Callable[..., Any]
 nested_iters: Callable[..., Any]
 packbits: Callable[..., Any]
 promote_types: Callable[..., Any]
@@ -2996,16 +2992,19 @@ arctan2: ufunc
 arctan: ufunc
 arctanh: ufunc
 bitwise_and: ufunc
+bitwise_not: ufunc
 bitwise_or: ufunc
 bitwise_xor: ufunc
 cbrt: ufunc
 ceil: ufunc
+conj: ufunc
 conjugate: ufunc
 copysign: ufunc
 cos: ufunc
 cosh: ufunc
 deg2rad: ufunc
 degrees: ufunc
+divide: ufunc
 divmod: ufunc
 equal: ufunc
 exp2: ufunc
@@ -3047,6 +3046,7 @@ logical_xor: ufunc
 matmul: ufunc
 maximum: ufunc
 minimum: ufunc
+mod: ufunc
 modf: ufunc
 multiply: ufunc
 negative: ufunc
