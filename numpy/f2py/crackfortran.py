@@ -1539,8 +1539,6 @@ def markinnerspaces(line):
             cc = c
         if c == cc:
             f = f + 1
-        elif c == cc:
-            f = f - 1
         elif c == ' ' and f == 1:
             l = l + '@_@'
             continue
