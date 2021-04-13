@@ -95,13 +95,20 @@ class TestFixedString(util.F2PyTest):
             yield '1234'
             yield '12345'
             yield b''
+            yield b'\0'
             yield b'1'
+            yield b'\01'
+            yield b'1\0'
             yield b'1234'
             yield b'12345'
         yield np.empty((), [('x', 'S0')])['x']  # array(b'', dtype='|S0')
         yield np.array(b'')                     # array(b'', dtype='|S1')
+        yield np.array(b'\0')
         yield np.array(b'1')
+        yield np.array(b'1\0')
+        yield np.array(b'\01')
         yield np.array(b'1234')
+        yield np.array(b'123\0')
         yield np.array(b'12345')
 
     def test_intent_in(self):
