@@ -85,6 +85,7 @@ np.datetime64("2019", "D")
 np.datetime64(np.datetime64())
 np.datetime64(dt.datetime(2000, 5, 3))
 np.datetime64(None)
+np.datetime64(dt.date(2000, 5, 3))
 np.datetime64(None, "D")
 
 np.timedelta64()
