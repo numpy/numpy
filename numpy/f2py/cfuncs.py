@@ -498,9 +498,9 @@ preceeding nulls with spaces.
         (void)strncpy(_to, _from, sizeof(char)*_m);             \\
         /* Padding with spaces instead of nulls */              \\
         if (_m > 0 && _to[_m-1] == '\\0') {                     \\
-          for (_m -= 2; _m >= 0 && _to[_m] == '\\0'; _m--) {    \\
-              _to[_m] = ' ';                                    \\
-          }                                                     \\
+            for (_m -= 2; _m >= 0 && _to[_m] == '\\0'; _m--) {  \\
+                _to[_m] = ' ';                                  \\
+            }                                                   \\
         }                                                       \\
     } while (0)
 """
