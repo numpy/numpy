@@ -497,7 +497,7 @@ preceeding nulls with spaces.
         FAILNULL(_to); FAILNULL(_from);                         \\
         (void)strncpy(_to, _from, sizeof(char)*_m);             \\
         /* Padding with spaces instead of nulls */              \\
-        if (_to[_m-1] == '\\0') {                               \\
+        if (_m > 0 && _to[_m-1] == '\\0') {                     \\
           for (_m -= 2; _m >= 0 && _to[_m] == '\\0'; _m--) {    \\
               _to[_m] = ' ';                                    \\
           }                                                     \\
