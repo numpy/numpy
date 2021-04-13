@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - add-cygwin-build-to-ci
   pull_request:
     branches:
       - master
