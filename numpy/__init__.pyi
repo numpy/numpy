@@ -540,42 +540,43 @@ def vander(x, N=..., increasing=...): ...
 def vsplit(ary, indices_or_sections): ...
 def who(vardict=...): ...
 
-arange: Any
-bincount: Any
-bitwise_not: Any
-busday_count: Any
-busday_offset: Any
-can_cast: Any
-compare_chararrays: Any
-concatenate: Any
-conj: Any
-copyto: Any
-datetime_as_string: Any
-datetime_data: Any
-divide: Any
-dot: Any
-frombuffer: Any
-fromfile: Any
-fromiter: Any
-frompyfunc: Any
-fromstring: Any
-geterrobj: Any
-inner: Any
-is_busday: Any
-lexsort: Any
-may_share_memory: Any
-min_scalar_type: Any
-mod: Any
-nested_iters: Any
-packbits: Any
-promote_types: Any
-putmask: Any
-result_type: Any
-seterrobj: Any
-shares_memory: Any
-unpackbits: Any
-vdot: Any
-where: Any
+# Placeholders for C-based functions
+arange: Callable[..., Any]
+bincount: Callable[..., Any]
+bitwise_not: Callable[..., Any]
+busday_count: Callable[..., Any]
+busday_offset: Callable[..., Any]
+can_cast: Callable[..., Any]
+compare_chararrays: Callable[..., Any]
+concatenate: Callable[..., Any]
+conj: Callable[..., Any]
+copyto: Callable[..., Any]
+datetime_as_string: Callable[..., Any]
+datetime_data: Callable[..., Any]
+divide: Callable[..., Any]
+dot: Callable[..., Any]
+frombuffer: Callable[..., Any]
+fromfile: Callable[..., Any]
+fromiter: Callable[..., Any]
+frompyfunc: Callable[..., Any]
+fromstring: Callable[..., Any]
+geterrobj: Callable[..., Any]
+inner: Callable[..., Any]
+is_busday: Callable[..., Any]
+lexsort: Callable[..., Any]
+may_share_memory: Callable[..., Any]
+min_scalar_type: Callable[..., Any]
+mod: Callable[..., Any]
+nested_iters: Callable[..., Any]
+packbits: Callable[..., Any]
+promote_types: Callable[..., Any]
+putmask: Callable[..., Any]
+result_type: Callable[..., Any]
+seterrobj: Callable[..., Any]
+shares_memory: Callable[..., Any]
+unpackbits: Callable[..., Any]
+vdot: Callable[..., Any]
+where: Callable[..., Any]
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
