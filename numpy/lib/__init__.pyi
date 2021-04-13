@@ -131,6 +131,8 @@ tril_indices_from: Any
 triu_indices: Any
 triu_indices_from: Any
 pad: Any
+pad_to_size: Any
+pad_to_match: Any
 poly: Any
 roots: Any
 polyint: Any
