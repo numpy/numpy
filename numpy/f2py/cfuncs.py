@@ -690,7 +690,8 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
     if (obj == Py_None) {
         n = strlen(inistr);
         buf = inistr;
-    } else if (PyArray_Check(obj)) {
+    }
+    else if (PyArray_Check(obj)) {
         if ((arr = (PyArrayObject *)obj) == NULL)
             goto capi_fail;
         if (!ISCONTIGUOUS(arr)) {
@@ -704,14 +705,16 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
             /* handle the numpy.array(b'') case */
             n = 0;
         }
-    } else {
+    }
+    else {
         if (PyBytes_Check(obj)) {
             tmp = obj;
             Py_INCREF(tmp);
         }
         else if (PyUnicode_Check(obj)) {
             tmp = PyUnicode_AsASCIIString(obj);
-        } else {
+        }
+        else {
             PyObject *tmp2;
             tmp2 = PyObject_Str(obj);
             if (tmp2) {
@@ -728,7 +731,8 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
     }
     if (*len == -1) {
         *len = n;
-    } else if (*len < n) {
+    }
+    else if (*len < n) {
         /* discard the last (len-n) bytes of input buf */
         n = *len;  
     }
