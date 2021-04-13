@@ -705,18 +705,18 @@ def configuration(parent_package='',top_path=None):
     if is_msvc:
         EXTRA_COMPILE_ARGS = ['/GL-']
     elif is_openvms:
-        EXTRA_COMPILE_ARGS = [
-            '/WARN=DISABLE=('   \
-                'NONSTANDCAST,' \
-                'MIXFUNCVOID,'  \
-                'TOOFEWACTUALS,'\
-                'PARENLITERAL,' \
-                'CMPPTRFUNVOID,'\
-                'MACROREDEF,'   \
-                'INTCONSTTRUNC,'\
-                'VOIDRETURN1)',
-            '/STAND=C99',
-            '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
+        EXTRA_COMPILE_ARGS = [  \
+            # '/WARN=DISABLE=('   \
+            #     'NONSTANDCAST,' \
+            #     'MIXFUNCVOID,'  \
+            #     'TOOFEWACTUALS,'\
+            #     'PARENLITERAL,' \
+            #     'CMPPTRFUNVOID,'\
+            #     'MACROREDEF,'   \
+            #     'INTCONSTTRUNC,'\
+            #     'VOIDRETURN1)',
+            # '/STAND=C99',
+            # '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
             ]
 
 

@@ -68,12 +68,12 @@ def configuration(parent_package='', top_path=None):
     EXTRA_COMPILE_ARGS = []
     EXTRA_LINK_ARGS = []
     if sys.platform == 'OpenVMS':
-        EXTRA_COMPILE_ARGS = [
-            '/WARN=DISABLE=('   \
-                'NONSTANDCAST,'\
-                'MISSINGRETURN)',
-            '/STAND=C99',
-            '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
+        EXTRA_COMPILE_ARGS = [  \
+            # '/WARN=DISABLE=('   \
+            #     'NONSTANDCAST,'\
+            #     'MISSINGRETURN)',
+            # '/STAND=C99',
+            # '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
             ]
 
     config.add_extension(

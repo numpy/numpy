@@ -12,8 +12,8 @@ def configuration(parent_package='',top_path=None):
     EXTRA_COMPILE_ARGS = []
     EXTRA_LINK_ARGS = []
     if sys.platform == 'OpenVMS':
-        EXTRA_COMPILE_ARGS = [
-            '/WARN=DISABLE=BADALIAS',
+        EXTRA_COMPILE_ARGS = [  \
+            # '/WARN=DISABLE=BADALIAS',
             ]
     config.add_extension('_pocketfft_internal',
                          sources=['_pocketfft.c'],
