@@ -41,6 +41,7 @@ EXCLUDE_LIST = {
         "fastCopyAndTranspose",
         "get_array_wrap",
         "int_asbuffer",
+        "numarray",
         "oldnumeric",
         "safe_eval",
         "set_numeric_ops",
