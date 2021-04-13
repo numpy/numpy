@@ -365,9 +365,32 @@ __path__: List[str]
 __version__: str
 __git_version__: str
 
-DataSource: Any
-MachAr: Any
-ScalarType: Any
+# TODO: Move placeholders to their respective module once
+# their annotations are properly implemented
+#
+# Placeholders for non-functions (types and other objects)
+DataSource: Type[Any]
+MachAr: Type[Any]
+ScalarType: Tuple[Type[Any], ...]
+broadcast: Type[Any]
+busdaycalendar: Type[Any]
+cast: Dict[generic, Callable[..., ndarray[Any, dtype[Any]]]]
+chararray: Type[Any]
+finfo: Type[Any]
+format_parser: Type[Any]
+iinfo: Type[Any]
+matrix: Type[Any]
+memmap: Type[Any]
+nbytes: Dict[generic, int]
+nditer: Type[Any]
+numarray: str
+poly1d: Type[Any]
+recarray: Type[Any]
+record: Type[Any]
+typecodes: Dict[str, str]
+vectorize: Type[Any]
+
+# Placeholders for python-based functions
 angle: Any
 append: Any
 apply_along_axis: Any
@@ -384,16 +407,12 @@ bincount: Any
 bitwise_not: Any
 blackman: Any
 bmat: Any
-broadcast: Any
 broadcast_arrays: Any
 broadcast_to: Any
 busday_count: Any
 busday_offset: Any
-busdaycalendar: Any
 byte_bounds: Any
 can_cast: Any
-cast: Any
-chararray: Any
 column_stack: Any
 common_type: Any
 compare_chararrays: Any
@@ -421,20 +440,9 @@ dstack: Any
 ediff1d: Any
 expand_dims: Any
 extract: Any
-def eye(
-    N: int,
-    M: Optional[int] = ...,
-    k: int = ...,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: Optional[ArrayLike] = ...
-) -> ndarray[Any, Any]: ...
-finfo: Any
 flip: Any
 fliplr: Any
 flipud: Any
-format_parser: Any
 frombuffer: Any
 fromfile: Any
 fromiter: Any
@@ -453,7 +461,6 @@ histogram_bin_edges: Any
 histogramdd: Any
 hsplit: Any
 i0: Any
-iinfo: Any
 imag: Any
 in1d: Any
 info: Any
@@ -478,11 +485,9 @@ lookfor: Any
 mafromtxt: Any
 mask_indices: Any
 mat: Any
-matrix: Any
 max: Any
 may_share_memory: Any
 median: Any
-memmap: Any
 meshgrid: Any
 min: Any
 min_scalar_type: Any
@@ -504,19 +509,14 @@ nanquantile: Any
 nanstd: Any
 nansum: Any
 nanvar: Any
-nbytes: Any
 ndfromtxt: Any
-nditer: Any
 nested_iters: Any
-newaxis: Any
-numarray: Any
 packbits: Any
 pad: Any
 percentile: Any
 piecewise: Any
 place: Any
 poly: Any
-poly1d: Any
 polyadd: Any
 polyder: Any
 polydiv: Any
@@ -532,10 +532,8 @@ putmask: Any
 quantile: Any
 real: Any
 real_if_close: Any
-recarray: Any
 recfromcsv: Any
 recfromtxt: Any
-record: Any
 result_type: Any
 roots: Any
 rot90: Any
@@ -567,7 +565,6 @@ trim_zeros: Any
 triu: Any
 triu_indices: Any
 triu_indices_from: Any
-typecodes: Any
 typename: Any
 union1d: Any
 unique: Any
@@ -575,7 +572,6 @@ unpackbits: Any
 unwrap: Any
 vander: Any
 vdot: Any
-vectorize: Any
 vsplit: Any
 where: Any
 who: Any
@@ -583,6 +579,17 @@ who: Any
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = Literal["S", "<", ">", "=", "|", "L", "B", "N", "I"]
+
+# TODO: Move to `np.lib.twodim_base`
+def eye(
+    N: int,
+    M: Optional[int] = ...,
+    k: int = ...,
+    dtype: DTypeLike = ...,
+    order: _OrderCF = ...,
+    *,
+    like: Optional[ArrayLike] = ...
+) -> ndarray[Any, Any]: ...
 
 class dtype(Generic[_DTypeScalar_co]):
     names: Optional[Tuple[str, ...]]
@@ -2906,6 +2913,8 @@ True_: Final[bool_]
 False_: Final[bool_]
 
 UFUNC_PYVALS_NAME: Final[str]
+
+newaxis: None
 
 class ufunc:
     @property
