@@ -1712,11 +1712,21 @@ class object_(generic):
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
 
+# The `datetime64` constructors requires an object with the three attributes below,
+# and thus supports datetime duck typing
+class _DatetimeScalar(Protocol):
+    @property
+    def day(self) -> int: ...
+    @property
+    def month(self) -> int: ...
+    @property
+    def year(self) -> int: ...
+
 class datetime64(generic):
     @overload
     def __init__(
         self,
-        __value: Union[None, datetime64, _CharLike, dt.datetime] = ...,
+        __value: Union[None, datetime64, _CharLike, _DatetimeScalar] = ...,
         __format: Union[_CharLike, Tuple[_CharLike, _IntLike]] = ...,
     ) -> None: ...
     @overload
