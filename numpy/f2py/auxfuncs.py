@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Auxiliary functions for f2py2e.
@@ -14,8 +14,6 @@ $Date: 2005/07/24 19:01:55 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 import pprint
 import sys
 import types
@@ -259,6 +257,7 @@ def ismodule(rout):
 def isfunction(rout):
     return 'block' in rout and 'function' == rout['block']
 
+
 def isfunction_wrap(rout):
     if isintent_c(rout):
         return 0
@@ -284,6 +283,10 @@ def hasassumedshape(rout):
                 rout['hasassumedshape'] = True
                 return True
     return False
+
+
+def requiresf90wrapper(rout):
+    return ismoduleroutine(rout) or hasassumedshape(rout)
 
 
 def isroutine(rout):
@@ -552,7 +555,7 @@ class F2PYError(Exception):
     pass
 
 
-class throw_error(object):
+class throw_error:
 
     def __init__(self, mess):
         self.mess = mess

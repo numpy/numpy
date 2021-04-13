@@ -1,18 +1,15 @@
-from __future__ import division, absolute_import, print_function
-
-import sys
 
 import numpy as np
 from numpy.core.multiarray import _vec_string
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
-    assert_raises_regex, suppress_warnings,
+    assert_raises_regex
     )
 
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
 
-class TestBasic(object):
+class TestBasic:
     def test_from_object_array(self):
         A = np.array([['abc', 2],
                       ['long   ', '0123456789']], dtype='O')
@@ -83,7 +80,7 @@ class TestBasic(object):
         assert_equal(A.itemsize, 4)
         assert_(issubclass(A.dtype.type, np.unicode_))
 
-class TestVecString(object):
+class TestVecString:
     def test_non_existent_method(self):
 
         def fail():
@@ -122,19 +119,19 @@ class TestVecString(object):
     def test_invalid_result_type(self):
 
         def fail():
-            _vec_string(['a'], np.integer, 'strip')
+            _vec_string(['a'], np.int_, 'strip')
 
         assert_raises(TypeError, fail)
 
     def test_broadcast_error(self):
 
         def fail():
-            _vec_string([['abc', 'def']], np.integer, 'find', (['a', 'd', 'j'],))
+            _vec_string([['abc', 'def']], np.int_, 'find', (['a', 'd', 'j'],))
 
         assert_raises(ValueError, fail)
 
 
-class TestWhitespace(object):
+class TestWhitespace:
     def setup(self):
         self.A = np.array([['abc ', '123  '],
                            ['789 ', 'xyz ']]).view(np.chararray)
@@ -149,7 +146,7 @@ class TestWhitespace(object):
         assert_(not np.any(self.A < self.B))
         assert_(not np.any(self.A != self.B))
 
-class TestChar(object):
+class TestChar:
     def setup(self):
         self.A = np.array('abc1', dtype='c').view(np.chararray)
 
@@ -157,7 +154,7 @@ class TestChar(object):
         assert_equal(self.A.shape, (4,))
         assert_equal(self.A.upper()[:2].tobytes(), b'AB')
 
-class TestComparisons(object):
+class TestComparisons:
     def setup(self):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']]).view(np.chararray)
@@ -182,6 +179,12 @@ class TestComparisons(object):
     def test_less(self):
         assert_array_equal((self.A < self.B), [[True, False], [False, False]])
 
+    def test_type(self):
+        out1 = np.char.equal(self.A, self.B)
+        out2 = np.char.equal('a', 'a')
+        assert_(isinstance(out1, np.ndarray))
+        assert_(isinstance(out2, np.ndarray))
+
 class TestComparisonsMixed1(TestComparisons):
     """Ticket #1276"""
 
@@ -198,7 +201,7 @@ class TestComparisonsMixed2(TestComparisons):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']], np.unicode_).view(np.chararray)
 
-class TestInformation(object):
+class TestInformation:
     def setup(self):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
@@ -304,7 +307,7 @@ class TestInformation(object):
         assert_raises(TypeError, fail)
 
 
-class TestMethods(object):
+class TestMethods:
     def setup(self):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
@@ -343,15 +346,8 @@ class TestMethods(object):
         assert_array_equal(C, tgt)
 
     def test_decode(self):
-        if sys.version_info[0] >= 3:
-            A = np.char.array([b'\\u03a3'])
-            assert_(A.decode('unicode-escape')[0] == '\u03a3')
-        else:
-            with suppress_warnings() as sup:
-                if sys.py3kwarning:
-                    sup.filter(DeprecationWarning, "'hex_codec'")
-                A = np.char.array(['736563726574206d657373616765'])
-                assert_(A.decode('hex_codec')[0] == 'secret message')
+        A = np.char.array([b'\\u03a3'])
+        assert_(A.decode('unicode-escape')[0] == '\u03a3')
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
@@ -362,18 +358,12 @@ class TestMethods(object):
         assert_(T[2, 0] == b'123      345 \0')
 
     def test_join(self):
-        if sys.version_info[0] >= 3:
-            # NOTE: list(b'123') == [49, 50, 51]
-            #       so that b','.join(b'123') results to an error on Py3
-            A0 = self.A.decode('ascii')
-        else:
-            A0 = self.A
+        # NOTE: list(b'123') == [49, 50, 51]
+        #       so that b','.join(b'123') results to an error on Py3
+        A0 = self.A.decode('ascii')
 
         A = np.char.join([',', '#'], A0)
-        if sys.version_info[0] >= 3:
-            assert_(issubclass(A.dtype.type, np.unicode_))
-        else:
-            assert_(issubclass(A.dtype.type, np.string_))
+        assert_(issubclass(A.dtype.type, np.unicode_))
         tgt = np.array([[' ,a,b,c, ', ''],
                         ['1,2,3,4,5', 'M#i#x#e#d#C#a#s#e'],
                         ['1,2,3, ,\t, ,3,4,5, ,\x00, ', 'U#P#P#E#R']])
@@ -443,15 +433,6 @@ class TestMethods(object):
                [b'12########## \t ##########45 \x00', b'UPPER']]
         assert_(issubclass(R.dtype.type, np.string_))
         assert_array_equal(R, tgt)
-
-        if sys.version_info[0] < 3:
-            # NOTE: b'abc'.replace(b'a', 'b') is not allowed on Py3
-            R = self.A.replace(b'a', u'\u03a3')
-            tgt = [[u' \u03a3bc ', ''],
-                   ['12345', u'MixedC\u03a3se'],
-                   ['123 \t 345 \x00', 'UPPER']]
-            assert_(issubclass(R.dtype.type, np.unicode_))
-            assert_array_equal(R, tgt)
 
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.string_))
@@ -599,7 +580,7 @@ class TestMethods(object):
                 [False, False], [True, False], [False, False]])
 
 
-class TestOperations(object):
+class TestOperations:
     def setup(self):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']]).view(np.chararray)

@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-from __future__ import division, print_function
-
+#!/usr/bin/env python3
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('matrixlib', parent_package, top_path)
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
+    config.add_data_files('*.pyi')
     return config
 
 if __name__ == "__main__":

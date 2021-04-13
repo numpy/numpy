@@ -1,8 +1,6 @@
 """Provide class for testing in French locale
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import locale
 
@@ -45,7 +43,7 @@ def find_comma_decimal_point_locale():
     return old_locale, new_locale
 
 
-class CommaDecimalPointLocale(object):
+class CommaDecimalPointLocale:
     """Sets LC_NUMERIC to a locale with comma as decimal point.
 
     Classes derived from this class have setup and teardown methods that run

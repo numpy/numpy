@@ -26,23 +26,19 @@ Py_square(PyObject *o)
 static PyObject *
 Py_get_one(PyObject *NPY_UNUSED(o))
 {
-    return PyInt_FromLong(1);
+    return PyLong_FromLong(1);
 }
 
 static PyObject *
 Py_reciprocal(PyObject *o)
 {
-    PyObject *one = PyInt_FromLong(1);
+    PyObject *one = PyLong_FromLong(1);
     PyObject *result;
 
     if (!one) {
         return NULL;
     }
-#if defined(NPY_PY3K)
     result = PyNumber_TrueDivide(one, o);
-#else
-    result = PyNumber_Divide(one, o);
-#endif
     Py_DECREF(one);
     return result;
 }
@@ -197,8 +193,7 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
     PyObject *gcd = NULL;
 
-    /* use math.gcd if available, and valid on the provided types */
-#if PY_VERSION_HEX >= 0x03050000
+    /* use math.gcd if valid on the provided types */
     {
         static PyObject *math_gcd_func = NULL;
 
@@ -213,7 +208,6 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
         /* silence errors, and fall back on pure-python gcd */
         PyErr_Clear();
     }
-#endif
 
     /* otherwise, use our internal one, written in python */
     {

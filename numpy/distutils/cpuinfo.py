@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 cpuinfo
 
@@ -12,28 +12,22 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['cpu']
 
-import sys, re, types
 import os
-
-if sys.version_info[0] >= 3:
-    from subprocess import getstatusoutput
-else:
-    from commands import getstatusoutput
-
-import warnings
 import platform
+import re
+import sys
+import types
+import warnings
 
-from numpy.distutils.compat import get_exception
+from subprocess import getstatusoutput
+
 
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:
         status, output = getstatusoutput(cmd)
-    except EnvironmentError:
-        e = get_exception()
+    except EnvironmentError as e:
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
         return False, ""
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
@@ -67,7 +61,7 @@ def key_value_from_command(cmd, sep, successful_status=(0,),
             d[l[0]] = l[1]
     return d
 
-class CPUInfoBase(object):
+class CPUInfoBase:
     """Holds CPU information and provides methods for requiring
     the availability of various CPU features.
     """
@@ -115,8 +109,7 @@ class LinuxCPUInfo(CPUInfoBase):
             info[0]['uname_m'] = output.strip()
         try:
             fo = open('/proc/cpuinfo')
-        except EnvironmentError:
-            e = get_exception()
+        except EnvironmentError as e:
             warnings.warn(str(e), UserWarning, stacklevel=2)
         else:
             for line in fo:
@@ -490,10 +483,7 @@ class Win32CPUInfo(CPUInfoBase):
         info = []
         try:
             #XXX: Bad style to use so long `try:...except:...`. Fix it!
-            if sys.version_info[0] >= 3:
-                import winreg
-            else:
-                import _winreg as winreg
+            import winreg
 
             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"
                               r"\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
@@ -523,8 +513,8 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Family"]=int(srch.group("FML"))
                                     info[-1]["Model"]=int(srch.group("MDL"))
                                     info[-1]["Stepping"]=int(srch.group("STP"))
-        except Exception:
-            print(sys.exc_info()[1], '(ignoring)')
+        except Exception as e:
+            print(e, '(ignoring)')
         self.__class__.info = info
 
     def _not_impl(self): pass

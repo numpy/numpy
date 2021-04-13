@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import functools
 
 import numpy.core.numeric as _nx
@@ -71,13 +69,13 @@ def take_along_axis(arr, indices, axis):
 
     Parameters
     ----------
-    arr: ndarray (Ni..., M, Nk...)
+    arr : ndarray (Ni..., M, Nk...)
         Source array
-    indices: ndarray (Ni..., J, Nk...)
+    indices : ndarray (Ni..., J, Nk...)
         Indices to take along each 1d slice of `arr`. This must match the
         dimension of arr, but dimensions Ni and Nj only need to broadcast
         against `arr`.
-    axis: int
+    axis : int
         The axis to take 1d slices along. If axis is None, the input array is
         treated as if it had first been flattened to 1d, for consistency with
         `sort` and `argsort`.
@@ -192,16 +190,16 @@ def put_along_axis(arr, indices, values, axis):
 
     Parameters
     ----------
-    arr: ndarray (Ni..., M, Nk...)
+    arr : ndarray (Ni..., M, Nk...)
         Destination array.
-    indices: ndarray (Ni..., J, Nk...)
+    indices : ndarray (Ni..., J, Nk...)
         Indices to change along each 1d slice of `arr`. This must match the
         dimension of arr, but dimensions in Ni and Nj may be 1 to broadcast
         against `arr`.
-    values: array_like (Ni..., J, Nk...)
+    values : array_like (Ni..., J, Nk...)
         values to insert at those indices. Its shape and dimension are
         broadcast to match that of `indices`.
-    axis: int
+    axis : int
         The axis to take 1d slices along. If axis is None, the destination
         array is treated as if a flattened 1d view had been created of it.
 
@@ -271,8 +269,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     Apply a function to 1-D slices along the given axis.
 
-    Execute `func1d(a, *args)` where `func1d` operates on 1-D arrays and `a`
-    is a 1-D slice of `arr` along `axis`.
+    Execute `func1d(a, *args, **kwargs)` where `func1d` operates on 1-D arrays
+    and `a` is a 1-D slice of `arr` along `axis`.
 
     This is equivalent to (but faster than) the following use of `ndindex` and
     `s_`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of indices::
@@ -374,8 +372,10 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # invoke the function on the first item
     try:
         ind0 = next(inds)
-    except StopIteration:
-        raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0')
+    except StopIteration as e:
+        raise ValueError(
+            'Cannot apply_along_axis when any iteration dimensions are 0'
+        ) from None
     res = asanyarray(func1d(inarr_view[ind0], *args, **kwargs))
 
     # build a buffer for storing evaluations of func1d.
@@ -452,7 +452,7 @@ def apply_over_axes(func, a, axes):
         Apply a function to 1-D slices of an array along the given axis.
 
     Notes
-    ------
+    -----
     This function is equivalent to tuple axis arguments to reorderable ufuncs
     with keepdims=True. Tuple axis arguments to ufuncs have been available since
     version 1.7.0.
@@ -649,7 +649,7 @@ def column_stack(tup):
 
     arrays = []
     for v in tup:
-        arr = array(v, copy=False, subok=True)
+        arr = asanyarray(v)
         if arr.ndim < 2:
             arr = array(arr, copy=False, subok=True, ndmin=2).T
         arrays.append(arr)
@@ -688,10 +688,12 @@ def dstack(tup):
 
     See Also
     --------
-    stack : Join a sequence of arrays along a new axis.
-    vstack : Stack along first axis.
-    hstack : Stack along second axis.
     concatenate : Join a sequence of arrays along an existing axis.
+    stack : Join a sequence of arrays along a new axis.
+    block : Assemble an nd-array from nested lists of blocks.
+    vstack : Stack arrays in sequence vertically (row wise).
+    hstack : Stack arrays in sequence horizontally (column wise).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
     dsplit : Split array along third axis.
 
     Examples
@@ -754,11 +756,11 @@ def array_split(ary, indices_or_sections, axis=0):
     --------
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
 
-    >>> x = np.arange(7.0)
-    >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.]), array([5.,  6.])]
+    >>> x = np.arange(9)
+    >>> np.array_split(x, 4)
+    [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
 
     """
     try:
@@ -773,7 +775,7 @@ def array_split(ary, indices_or_sections, axis=0):
         # indices_or_sections is a scalar, not an array.
         Nsections = int(indices_or_sections)
         if Nsections <= 0:
-            raise ValueError('number sections must be larger than 0.')
+            raise ValueError('number sections must be larger than 0.') from None
         Neach_section, extras = divmod(Ntotal, Nsections)
         section_sizes = ([0] +
                          extras * [Neach_section+1] +
@@ -868,7 +870,7 @@ def split(ary, indices_or_sections, axis=0):
         N = ary.shape[axis]
         if N % sections:
             raise ValueError(
-                'array split does not result in an equal division')
+                'array split does not result in an equal division') from None
     return array_split(ary, indices_or_sections, axis)
 
 
@@ -1086,8 +1088,8 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If `a.shape = (r0,r1,..,rN)` and `b.shape = (s0,s1,...,sN)`,
-    the Kronecker product has shape `(r0*s0, r1*s1, ..., rN*SN)`.
+    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::
 

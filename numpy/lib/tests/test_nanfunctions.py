@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import pytest
 
@@ -37,7 +35,7 @@ _ndat_zeros = np.array([[0.6244, 0.0, 0.2692, 0.0116, 0.0, 0.1170],
                         [0.1610, 0.0, 0.0, 0.1859, 0.3146, 0.0]])
 
 
-class TestNanFunctions_MinMax(object):
+class TestNanFunctions_MinMax:
 
     nanfuncs = [np.nanmin, np.nanmax]
     stdfuncs = [np.min, np.max]
@@ -171,7 +169,7 @@ class TestNanFunctions_MinMax(object):
             assert_(issubclass(w[0].category, RuntimeWarning))
 
 
-class TestNanFunctions_ArgminArgmax(object):
+class TestNanFunctions_ArgminArgmax:
 
     nanfuncs = [np.nanargmin, np.nanargmax]
 
@@ -233,7 +231,7 @@ class TestNanFunctions_ArgminArgmax(object):
             assert_(res.shape == ())
 
 
-class TestNanFunctions_IntTypes(object):
+class TestNanFunctions_IntTypes:
 
     int_types = (np.int8, np.int16, np.int32, np.int64, np.uint8,
                  np.uint16, np.uint32, np.uint64)
@@ -308,7 +306,7 @@ class TestNanFunctions_IntTypes(object):
             assert_equal(np.nanstd(mat, ddof=1), tgt)
 
 
-class SharedNanFunctionsTestsMixin(object):
+class SharedNanFunctionsTestsMixin:
     def test_mutation(self):
         # Check that passed array is not modified.
         ndat = _ndat.copy()
@@ -590,7 +588,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
                     assert_(len(w) == 0)
 
 
-class TestNanFunctions_Median(object):
+class TestNanFunctions_Median:
 
     def test_mutation(self):
         # Check that passed array is not modified.
@@ -754,7 +752,7 @@ class TestNanFunctions_Median(object):
                                      ([np.nan] * i) + [-inf] * j)
 
 
-class TestNanFunctions_Percentile(object):
+class TestNanFunctions_Percentile:
 
     def test_mutation(self):
         # Check that passed array is not modified.
@@ -893,7 +891,7 @@ class TestNanFunctions_Percentile(object):
         assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
 
 
-class TestNanFunctions_Quantile(object):
+class TestNanFunctions_Quantile:
     # most of this is already tested by TestPercentile
 
     def test_regression(self):
@@ -959,7 +957,7 @@ def test__replace_nan():
     """ Test that _replace_nan returns the original array if there are no
     NaNs, not a copy.
     """
-    for dtype in [np.bool, np.int32, np.int64]:
+    for dtype in [np.bool_, np.int32, np.int64]:
         arr = np.array([0, 1], dtype=dtype)
         result, mask = _replace_nan(arr, 0)
         assert mask is None

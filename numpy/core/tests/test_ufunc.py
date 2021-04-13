@@ -1,7 +1,6 @@
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import itertools
+import sys
 
 import pytest
 
@@ -13,7 +12,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose,
+    assert_allclose, HAS_REFCOUNT,
     )
 from numpy.compat import pickle
 
@@ -23,7 +22,7 @@ UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 
-class TestUfuncKwargs(object):
+class TestUfuncKwargs:
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
         assert_raises(TypeError, np.add, 1, 2, dtypex=int)
@@ -35,13 +34,13 @@ class TestUfuncKwargs(object):
         assert_raises(TypeError, np.add, 1, 2, wherex=[True])
 
     def test_sig_signature(self):
-        assert_raises(ValueError, np.add, 1, 2, sig='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, sig='ii->i',
                       signature='ii->i')
 
     def test_sig_dtype(self):
-        assert_raises(RuntimeError, np.add, 1, 2, sig='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, sig='ii->i',
                       dtype=int)
-        assert_raises(RuntimeError, np.add, 1, 2, signature='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, signature='ii->i',
                       dtype=int)
 
     def test_extobj_refcount(self):
@@ -49,7 +48,7 @@ class TestUfuncKwargs(object):
         assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
 
 
-class TestUfuncGenericLoops(object):
+class TestUfuncGenericLoops:
     """Test generic loops.
 
     The loops to be tested are:
@@ -118,7 +117,7 @@ class TestUfuncGenericLoops(object):
         assert_equal(ys.dtype, output_dtype)
 
     # class to use in testing object method loops
-    class foo(object):
+    class foo:
         def conjugate(self):
             return np.bool_(1)
 
@@ -179,7 +178,11 @@ class TestUfuncGenericLoops(object):
                 assert_array_equal(res_num.astype("O"), res_obj)
 
 
-class TestUfunc(object):
+def _pickleable_module_global():
+    pass
+
+
+class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             assert_(pickle.loads(pickle.dumps(np.sin,
@@ -195,6 +198,15 @@ class TestUfunc(object):
         astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
+
+    def test_pickle_name_is_qualname(self):
+        # This tests that a simplification of our ufunc pickle code will
+        # lead to allowing qualnames as names.  Future ufuncs should
+        # possible add a specific qualname, or a hook into pickling instead
+        # (dask+numba may benefit).
+        _pickleable_module_global.ufunc = umt._pickleable_module_global_ufunc
+        obj = pickle.loads(pickle.dumps(_pickleable_module_global.ufunc))
+        assert obj is umt._pickleable_module_global_ufunc
 
     def test_reduceat_shifting_sum(self):
         L = 6
@@ -398,9 +410,12 @@ class TestUfunc(object):
     def test_forced_sig(self):
         a = 0.5*np.arange(3, dtype='f8')
         assert_equal(np.add(a, 0.5), [0.5, 1, 1.5])
-        assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig='ii->i', casting='unsafe'), [0, 0, 1])
-        assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'),
+                         [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig=('i4', 'i4', 'i4'),
                                             casting='unsafe'), [0, 0, 1])
 
@@ -408,17 +423,92 @@ class TestUfunc(object):
         np.add(a, 0.5, out=b)
         assert_equal(b, [0.5, 1, 1.5])
         b[:] = 0
-        np.add(a, 0.5, sig='i', out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig='i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig='ii->i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
-        np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
+
+    def test_signature_all_None(self):
+        # signature all None, is an acceptable alternative (since 1.21)
+        # to not providing a signature.
+        res1 = np.add([3], [4], sig=(None, None, None))
+        res2 = np.add([3], [4])
+        assert_array_equal(res1, res2)
+        res1 = np.maximum([3], [4], sig=(None, None, None))
+        res2 = np.maximum([3], [4])
+        assert_array_equal(res1, res2)
+
+        with pytest.raises(TypeError):
+            # special case, that would be deprecated anyway, so errors:
+            np.add(3, 4, signature=(None,))
+
+    def test_signature_dtype_type(self):
+        # Since that will be the normal behaviour (past NumPy 1.21)
+        # we do support the types already:
+        float_dtype = type(np.dtype(np.float64))
+        np.add(3, 4, signature=(float_dtype, float_dtype, None))
+
+    def test_signature_errors(self):
+        with pytest.raises(TypeError,
+                    match="the signature object to ufunc must be a string or"):
+            np.add(3, 4, signature=123.)  # neither a string nor a tuple
+
+        with pytest.raises(ValueError):
+            # bad symbols that do not translate to dtypes
+            np.add(3, 4, signature="%^->#")
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature=b"ii-i")  # incomplete and byte string
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature="ii>i")  # incomplete string
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature=(None, "f8"))  # bad length
+
+        with pytest.raises(UnicodeDecodeError):
+            np.add(3, 4, signature=b"\xff\xff->i")
+
+    def test_forced_dtype_times(self):
+        # Signatures only set the type numbers (not the actual loop dtypes)
+        # so using `M` in a signature/dtype should generally work:
+        a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='>M8[D]')
+        np.maximum(a, a, dtype="M")
+        np.maximum.reduce(a, dtype="M")
+
+        arr = np.arange(10, dtype="m8[s]")
+        np.add(arr, arr, dtype="m")
+        np.maximum(arr, arr, dtype="m")
+
+    def test_forced_dtype_warning(self):
+        # does not warn (test relies on bad pickling behaviour, simply remove
+        # it if the `assert int64 is not int64_2` should start failing.
+        int64 = np.dtype("int64")
+        int64_2 = pickle.loads(pickle.dumps(int64))
+        assert int64 is not int64_2
+        np.add(3, 4, dtype=int64_2)
+
+        arr = np.arange(10, dtype="m8[s]")
+        msg = "The `dtype` and `signature` arguments to ufuncs only select the"
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, dtype=int64.newbyteorder())
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
 
     def test_true_divide(self):
         a = np.array(10)
@@ -612,7 +702,32 @@ class TestUfunc(object):
             warnings.simplefilter("always")
             u += v
             assert_equal(len(w), 1)
-            assert_(x[0,0]  != u[0, 0])
+            assert_(x[0, 0] != u[0, 0])
+
+        # Output reduction should not be allowed.
+        # See gh-15139
+        a = np.arange(6).reshape(3, 2)
+        b = np.ones(2)
+        out = np.empty(())
+        assert_raises(ValueError, umt.inner1d, a, b, out)
+        out2 = np.empty(3)
+        c = umt.inner1d(a, b, out2)
+        assert_(c is out2)
+
+    def test_out_broadcasts(self):
+        # For ufuncs and gufuncs (not for reductions), we currently allow
+        # the output to cause broadcasting of the input arrays.
+        # both along dimensions with shape 1 and dimensions which do not
+        # exist at all in the inputs.
+        arr = np.arange(3).reshape(1, 3)
+        out = np.empty((5, 4, 3))
+        np.add(arr, arr, out=out)
+        assert (out == np.arange(3) * 2).all()
+
+        # The same holds for gufuncs (gh-16484)
+        umt.inner1d(arr, arr, out=out)
+        # the result would be just a scalar `5`, but is broadcast fully:
+        assert (out == 5).all()
 
     def test_type_cast(self):
         msg = "type cast"
@@ -944,7 +1059,10 @@ class TestUfunc(object):
         assert_array_equal(result, np.vstack((np.zeros(3), a[2], -a[1])))
         assert_raises(ValueError, umt.cross1d, np.eye(4), np.eye(4))
         assert_raises(ValueError, umt.cross1d, a, np.arange(4.))
+        # Wrong output core dimension.
         assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros((3, 4)))
+        # Wrong output broadcast dimension (see gh-15139).
+        assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros(3))
 
     def test_can_ignore_signature(self):
         # Comparing the effects of ? in signature:
@@ -1123,7 +1241,7 @@ class TestUfunc(object):
         assert_equal(np.logical_and.reduce(a), None)
 
     def test_object_comparison(self):
-        class HasComparisons(object):
+        class HasComparisons:
             def __eq__(self, other):
                 return '=='
 
@@ -1162,14 +1280,18 @@ class TestUfunc(object):
         # Twice reproduced also for tuples:
         np.add.accumulate(arr, out=arr)
         np.add.accumulate(arr, out=arr)
-        assert_array_equal(arr, np.array([[1]*i for i in [1, 3, 6, 10]]))
+        assert_array_equal(arr,
+                           np.array([[1]*i for i in [1, 3, 6, 10]], dtype=object),
+                          )
 
         # And the same if the axis argument is used
         arr = np.ones((2, 4), dtype=object)
         arr[0, :] = [[2] for i in range(4)]
         np.add.accumulate(arr, out=arr, axis=-1)
         np.add.accumulate(arr, out=arr, axis=-1)
-        assert_array_equal(arr[0, :], np.array([[2]*i for i in [1, 3, 6, 10]]))
+        assert_array_equal(arr[0, :],
+                           np.array([[2]*i for i in [1, 3, 6, 10]], dtype=object),
+                          )
 
     def test_object_array_reduceat_inplace(self):
         # Checks that in-place reduceats work, see also gh-7465
@@ -1288,6 +1410,18 @@ class TestUfunc(object):
         a = np.array([1], dtype=np.float64)
         m = np.array([True], dtype=bool)
         assert_equal(np.sqrt(a, where=m), [1])
+
+    def test_where_with_broadcasting(self):
+        # See gh-17198
+        a = np.random.random((5000, 4))
+        b = np.random.random((5000, 1))
+
+        where = a > 0.3
+        out = np.full_like(a, 0)
+        np.less(a, b, where=where, out=out)
+        b_where = np.broadcast_to(b, a.shape)[where]
+        assert_array_equal((a[where] < b_where), out[where].astype(bool))
+        assert not out[~where].any()  # outside mask, out remains all 0
 
     def check_identityless_reduction(self, a):
         # np.minimum.reduce is an identityless reduction
@@ -1592,7 +1726,7 @@ class TestUfunc(object):
 
     def test_custom_array_like(self):
 
-        class MyThing(object):
+        class MyThing:
             __array_priority__ = 1000
 
             rmul_count = 0
@@ -1813,7 +1947,7 @@ class TestUfunc(object):
         assert_raises(TypeError, f, d, 0, keepdims="invalid", dtype="invalid",
                      out=None)
 
-        # invalid keyord
+        # invalid keyword
         assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
         assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, 0, keepdims=True, invalid="invalid",
@@ -1887,6 +2021,48 @@ class TestUfunc(object):
         assert_equal(r0, r1)
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
+
+    @pytest.mark.parametrize('out_shape',
+                             [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('keepdims', [True, False])
+    @pytest.mark.parametrize('f_reduce', [np.add.reduce, np.minimum.reduce])
+    def test_reduce_wrong_dimension_output(self, f_reduce, keepdims, out_shape):
+        # Test that we're not incorrectly broadcasting dimensions.
+        # See gh-15144 (failed for np.add.reduce previously).
+        a = np.arange(12.).reshape(4, 3)
+        out = np.empty(out_shape, a.dtype)
+
+        correct_out = f_reduce(a, axis=0, keepdims=keepdims)
+        if out_shape != correct_out.shape:
+            with assert_raises(ValueError):
+                f_reduce(a, axis=0, out=out, keepdims=keepdims)
+        else:
+            check = f_reduce(a, axis=0, out=out, keepdims=keepdims)
+            assert_(check is out)
+            assert_array_equal(check, correct_out)
+
+    def test_reduce_output_does_not_broadcast_input(self):
+        # Test that the output shape cannot broadcast an input dimension
+        # (it never can add dimensions, but it might expand an existing one)
+        a = np.ones((1, 10))
+        out_correct = (np.empty((1, 1)))
+        out_incorrect = np.empty((3, 1))
+        np.add.reduce(a, axis=-1, out=out_correct, keepdims=True)
+        np.add.reduce(a, axis=-1, out=out_correct[:, 0], keepdims=False)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect, keepdims=True)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect[:, 0], keepdims=False)
+
+    def test_reduce_output_subclass_ok(self):
+        class MyArr(np.ndarray):
+            pass
+
+        out = np.empty(())
+        np.add.reduce(np.ones(5), out=out)  # no subclass, all fine
+        out = out.view(MyArr)
+        assert np.add.reduce(np.ones(5), out=out) is out
+        assert type(np.add.reduce(out)) is MyArr
 
     def test_no_doc_string(self):
         # gh-9337
@@ -1984,3 +2160,78 @@ def test_ufunc_noncontiguous(ufunc):
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
             else:
                 assert_equal(c_ar, n_ar)
+
+
+@pytest.mark.parametrize('ufunc', [np.sign, np.equal])
+def test_ufunc_warn_with_nan(ufunc):
+    # issue gh-15127
+    # test that calling certain ufuncs with a non-standard `nan` value does not
+    # emit a warning
+    # `b` holds a 64 bit signaling nan: the most significant bit of the
+    # significand is zero.
+    b = np.array([0x7ff0000000000001], 'i8').view('f8')
+    assert np.isnan(b)
+    if ufunc.nin == 1:
+        ufunc(b)
+    elif ufunc.nin == 2:
+        ufunc(b, b.copy())
+    else:
+        raise ValueError('ufunc with more than 2 inputs')
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_ufunc_casterrors():
+    # Tests that casting errors are correctly reported and buffers are
+    # cleared.
+    # The following array can be added to itself as an object array, but
+    # the result cannot be cast to an integer output:
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * int(np.BUFSIZE * 1.5) +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.ones(len(arr), dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # Output casting failure:
+        np.add(arr, arr, out=out, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+    with pytest.raises(ValueError):
+        # Input casting failure:
+        np.add(arr, arr, out=out, dtype=np.intp, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize("offset",
+        [0, np.BUFSIZE//2, int(1.5*np.BUFSIZE)])
+def test_reduce_casterrors(offset):
+    # Test reporting of casting errors in reductions, we test various
+    # offsets to where the casting error will occur, since these may occur
+    # at different places during the reduction procedure. For example
+    # the first item may be special.
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * offset +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.array(-1, dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # This is an unsafe cast, but we currently always allow that:
+        np.add.reduce(arr, dtype=np.intp, out=out)
+    assert count == sys.getrefcount(value)
+    # If an error occurred during casting, the operation is done at most until
+    # the error occurs (the result of which would be `value * offset`) and -1
+    # if the error happened immediately.
+    # This does not define behaviour, the output is invalid and thus undefined
+    assert out[()] < value * offset

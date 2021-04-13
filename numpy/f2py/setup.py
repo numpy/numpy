@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 setup.py for installing F2PY
 
@@ -16,8 +16,6 @@ $Date: 2005/01/30 17:22:14 $
 Pearu Peterson
 
 """
-from __future__ import division, print_function
-
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
@@ -27,10 +25,12 @@ from __version__ import version
 
 def configuration(parent_package='', top_path=None):
     config = Configuration('f2py', parent_package, top_path)
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
+    config.add_data_dir('tests/src')
     config.add_data_files(
         'src/fortranobject.c',
         'src/fortranobject.h')
+    config.add_data_files('*.pyi')
     return config
 
 

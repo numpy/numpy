@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
@@ -50,16 +50,14 @@ $Date: 2005/08/30 08:58:42 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
-__version__ = "$Revision: 1.129 $"[10:-1]
-
-from . import __version__
-f2py_version = __version__.version
-
 import os
 import time
 import copy
+
+# __version__.version is now the same as the NumPy version
+from . import __version__
+f2py_version = __version__.version
+numpy_version = __version__.version
 
 from .auxfuncs import (
     applyrules, debugcapi, dictappend, errmess, gentitle, getargs2,
@@ -75,7 +73,7 @@ from .auxfuncs import (
     issubroutine, issubroutine_wrap, isthreadsafe, isunsigned,
     isunsigned_char, isunsigned_chararray, isunsigned_long_long,
     isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
-    l_and, l_not, l_or, outmess, replace, stripcomma,
+    l_and, l_not, l_or, outmess, replace, stripcomma, requiresf90wrapper
 )
 
 from . import capi_maps
@@ -180,7 +178,6 @@ static PyMethodDef f2py_module_methods[] = {
 \t{NULL,NULL}
 };
 
-#if PY_VERSION_HEX >= 0x03000000
 static struct PyModuleDef moduledef = {
 \tPyModuleDef_HEAD_INIT,
 \t"#modulename#",
@@ -192,37 +189,25 @@ static struct PyModuleDef moduledef = {
 \tNULL,
 \tNULL
 };
-#endif
 
-#if PY_VERSION_HEX >= 0x03000000
-#define RETVAL m
 PyMODINIT_FUNC PyInit_#modulename#(void) {
-#else
-#define RETVAL
-PyMODINIT_FUNC init#modulename#(void) {
-#endif
 \tint i;
 \tPyObject *m,*d, *s, *tmp;
-#if PY_VERSION_HEX >= 0x03000000
 \tm = #modulename#_module = PyModule_Create(&moduledef);
-#else
-\tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);
-#endif
-\tPy_TYPE(&PyFortran_Type) = &PyType_Type;
+\tPy_SET_TYPE(&PyFortran_Type, &PyType_Type);
 \timport_array();
 \tif (PyErr_Occurred())
-\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return RETVAL;}
+\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return m;}
 \td = PyModule_GetDict(m);
-\ts = PyString_FromString(\"$R""" + """evision: $\");
+\ts = PyUnicode_FromString(\"#f2py_version#\");
 \tPyDict_SetItemString(d, \"__version__\", s);
 \tPy_DECREF(s);
-#if PY_VERSION_HEX >= 0x03000000
 \ts = PyUnicode_FromString(
-#else
-\ts = PyString_FromString(
-#endif
 \t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
+\tPy_DECREF(s);
+\ts = PyUnicode_FromString(\"""" + numpy_version + """\");
+\tPyDict_SetItemString(d, \"__f2py_numpy_version__\", s);
 \tPy_DECREF(s);
 \t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
 \t/*
@@ -245,7 +230,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tif (! PyErr_Occurred())
 \t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-\treturn RETVAL;
+\treturn m;
 }
 #ifdef __cplusplus
 }
@@ -284,18 +269,18 @@ static PyObject *#apiname#(const PyObject *capi_self,
                            PyObject *capi_args,
                            PyObject *capi_keywds,
                            #functype# (*f2py_func)(#callprotoargument#)) {
-\tPyObject * volatile capi_buildvalue = NULL;
-\tvolatile int f2py_success = 1;
+    PyObject * volatile capi_buildvalue = NULL;
+    volatile int f2py_success = 1;
 #decl#
-\tstatic char *capi_kwlist[] = {#kwlist##kwlistopt##kwlistxa#NULL};
+    static char *capi_kwlist[] = {#kwlist##kwlistopt##kwlistxa#NULL};
 #usercode#
 #routdebugenter#
 #ifdef F2PY_REPORT_ATEXIT
 f2py_start_clock();
 #endif
-\tif (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,\\
-\t\t\"#argformat##keyformat##xaformat#:#pyname#\",\\
-\t\tcapi_kwlist#args_capi##keys_capi##keys_xa#))\n\t\treturn NULL;
+    if (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,\\
+        \"#argformat#|#keyformat##xaformat#:#pyname#\",\\
+        capi_kwlist#args_capi##keys_capi##keys_xa#))\n        return NULL;
 #frompyobj#
 /*end of frompyobj*/
 #ifdef F2PY_REPORT_ATEXIT
@@ -308,27 +293,27 @@ if (PyErr_Occurred())
 f2py_stop_call_clock();
 #endif
 /*end of callfortranroutine*/
-\t\tif (f2py_success) {
+        if (f2py_success) {
 #pyobjfrom#
 /*end of pyobjfrom*/
-\t\tCFUNCSMESS(\"Building return value.\\n\");
-\t\tcapi_buildvalue = Py_BuildValue(\"#returnformat#\"#return#);
+        CFUNCSMESS(\"Building return value.\\n\");
+        capi_buildvalue = Py_BuildValue(\"#returnformat#\"#return#);
 /*closepyobjfrom*/
 #closepyobjfrom#
-\t\t} /*if (f2py_success) after callfortranroutine*/
+        } /*if (f2py_success) after callfortranroutine*/
 /*cleanupfrompyobj*/
 #cleanupfrompyobj#
-\tif (capi_buildvalue == NULL) {
+    if (capi_buildvalue == NULL) {
 #routdebugfailure#
-\t} else {
+    } else {
 #routdebugleave#
-\t}
-\tCFUNCSMESS(\"Freeing memory.\\n\");
+    }
+    CFUNCSMESS(\"Freeing memory.\\n\");
 #freemem#
 #ifdef F2PY_REPORT_ATEXIT
 f2py_stop_clock();
 #endif
-\treturn capi_buildvalue;
+    return capi_buildvalue;
 }
 #endtitle#
 """,
@@ -448,11 +433,7 @@ rout_rules = [
       tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
-#if PY_VERSION_HEX >= 0x03000000
       s = PyUnicode_FromString("#name#");
-#else
-      s = PyString_FromString("#name#");
-#endif
       PyObject_SetAttrString(o,"__name__", s);
       Py_DECREF(s);
     }
@@ -490,11 +471,7 @@ rout_rules = [
       tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
-#if PY_VERSION_HEX >= 0x03000000
       s = PyUnicode_FromString("#name#");
-#else
-      s = PyString_FromString("#name#");
-#endif
       PyObject_SetAttrString(o,"__name__", s);
       Py_DECREF(s);
     }
@@ -775,36 +752,35 @@ arg_rules = [
         'docstrcbs': '#cbdocstr#',
         'latexdocstrcbs': '\\item[] #cblatexdocstr#',
         'latexdocstropt': {isintent_nothide: '\\item[]{{}\\verb@#varname#_extra_args := () input tuple@{}} --- Extra arguments for call-back function {{}\\verb@#varname#@{}}.'},
-        'decl': ['\tPyObject *#varname#_capi = Py_None;',
-                 '\tPyTupleObject *#varname#_xa_capi = NULL;',
-                 '\tPyTupleObject *#varname#_args_capi = NULL;',
-                 '\tint #varname#_nofargs_capi = 0;',
+        'decl': ['    #cbname#_t #varname#_cb = { Py_None, NULL, 0 };',
+                 '    #cbname#_t *#varname#_cb_ptr = &#varname#_cb;',
+                 '    PyTupleObject *#varname#_xa_capi = NULL;',
                  {l_not(isintent_callback):
-                  '\t#cbname#_typedef #varname#_cptr;'}
+                  '    #cbname#_typedef #varname#_cptr;'}
                  ],
         'kwlistxa': {isintent_nothide: '"#varname#_extra_args",'},
         'argformat': {isrequired: 'O'},
         'keyformat': {isoptional: 'O'},
         'xaformat': {isintent_nothide: 'O!'},
-        'args_capi': {isrequired: ',&#varname#_capi'},
-        'keys_capi': {isoptional: ',&#varname#_capi'},
+        'args_capi': {isrequired: ',&#varname#_cb.capi'},
+        'keys_capi': {isoptional: ',&#varname#_cb.capi'},
         'keys_xa': ',&PyTuple_Type,&#varname#_xa_capi',
-        'setjmpbuf': '(setjmp(#cbname#_jmpbuf))',
+        'setjmpbuf': '(setjmp(#varname#_cb.jmpbuf))',
         'callfortran': {l_not(isintent_callback): '#varname#_cptr,'},
         'need': ['#cbname#', 'setjmp.h'],
         '_check':isexternal
     },
     {
         'frompyobj': [{l_not(isintent_callback): """\
-if(F2PyCapsule_Check(#varname#_capi)) {
-  #varname#_cptr = F2PyCapsule_AsVoidPtr(#varname#_capi);
+if(F2PyCapsule_Check(#varname#_cb.capi)) {
+  #varname#_cptr = F2PyCapsule_AsVoidPtr(#varname#_cb.capi);
 } else {
   #varname#_cptr = #cbname#;
 }
 """}, {isintent_callback: """\
-if (#varname#_capi==Py_None) {
-  #varname#_capi = PyObject_GetAttrString(#modulename#_module,\"#varname#\");
-  if (#varname#_capi) {
+if (#varname#_cb.capi==Py_None) {
+  #varname#_cb.capi = PyObject_GetAttrString(#modulename#_module,\"#varname#\");
+  if (#varname#_cb.capi) {
     if (#varname#_xa_capi==NULL) {
       if (PyObject_HasAttrString(#modulename#_module,\"#varname#_extra_args\")) {
         PyObject* capi_tmp = PyObject_GetAttrString(#modulename#_module,\"#varname#_extra_args\");
@@ -822,35 +798,29 @@ if (#varname#_capi==Py_None) {
       }
     }
   }
-  if (#varname#_capi==NULL) {
+  if (#varname#_cb.capi==NULL) {
     PyErr_SetString(#modulename#_error,\"Callback #varname# not defined (as an argument or module #modulename# attribute).\\n\");
     return NULL;
   }
 }
 """},
             """\
-\t#varname#_nofargs_capi = #cbname#_nofargs;
-\tif (create_cb_arglist(#varname#_capi,#varname#_xa_capi,#maxnofargs#,#nofoptargs#,&#cbname#_nofargs,&#varname#_args_capi,\"failed in processing argument list for call-back #varname#.\")) {
-\t\tjmp_buf #varname#_jmpbuf;""",
+    if (create_cb_arglist(#varname#_cb.capi,#varname#_xa_capi,#maxnofargs#,#nofoptargs#,&#varname#_cb.nofargs,&#varname#_cb.args_capi,\"failed in processing argument list for call-back #varname#.\")) {
+""",
             {debugcapi: ["""\
-\t\tfprintf(stderr,\"debug-capi:Assuming %d arguments; at most #maxnofargs#(-#nofoptargs#) is expected.\\n\",#cbname#_nofargs);
-\t\tCFUNCSMESSPY(\"for #varname#=\",#cbname#_capi);""",
-                         {l_not(isintent_callback): """\t\tfprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
+        fprintf(stderr,\"debug-capi:Assuming %d arguments; at most #maxnofargs#(-#nofoptargs#) is expected.\\n\",#varname#_cb.nofargs);
+        CFUNCSMESSPY(\"for #varname#=\",#varname#_cb.capi);""",
+                         {l_not(isintent_callback): """        fprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
             """\
-\t\tCFUNCSMESS(\"Saving jmpbuf for `#varname#`.\\n\");
-\t\tSWAP(#varname#_capi,#cbname#_capi,PyObject);
-\t\tSWAP(#varname#_args_capi,#cbname#_args_capi,PyTupleObject);
-\t\tmemcpy(&#varname#_jmpbuf,&#cbname#_jmpbuf,sizeof(jmp_buf));""",
+        CFUNCSMESS(\"Saving callback variables for `#varname#`.\\n\");
+        #varname#_cb_ptr = swap_active_#cbname#(#varname#_cb_ptr);""",
         ],
         'cleanupfrompyobj':
         """\
-\t\tCFUNCSMESS(\"Restoring jmpbuf for `#varname#`.\\n\");
-\t\t#cbname#_capi = #varname#_capi;
-\t\tPy_DECREF(#cbname#_args_capi);
-\t\t#cbname#_args_capi = #varname#_args_capi;
-\t\t#cbname#_nofargs = #varname#_nofargs_capi;
-\t\tmemcpy(&#cbname#_jmpbuf,&#varname#_jmpbuf,sizeof(jmp_buf));
-\t}""",
+        CFUNCSMESS(\"Restoring callback variables for `#varname#`.\\n\");
+        #varname#_cb_ptr = swap_active_#cbname#(#varname#_cb_ptr);
+        Py_DECREF(#varname#_cb.args_capi);
+    }""",
         'need': ['SWAP', 'create_cb_arglist'],
         '_check':isexternal,
         '_depend':''
@@ -1183,7 +1153,6 @@ def buildmodule(m, um):
     """
     Return
     """
-    global f2py_version, options
     outmess('\tBuilding module "%s"...\n' % (m['name']))
     ret = {}
     mod_rules = defmod_rules[:]
@@ -1194,7 +1163,7 @@ def buildmodule(m, um):
     for n in m['interfaced']:
         nb = None
         for bi in m['body']:
-            if not bi['block'] == 'interface':
+            if bi['block'] not in ['interface', 'abstract interface']:
                 errmess('buildmodule: Expected interface block. Skipping.\n')
                 continue
             for b in bi['body']:
@@ -1215,9 +1184,12 @@ def buildmodule(m, um):
                 nb1['args'] = a
                 nb_list.append(nb1)
         for nb in nb_list:
+            # requiresf90wrapper must be called before buildapi as it
+            # rewrites assumed shape arrays as automatic arrays.
+            isf90 = requiresf90wrapper(nb)
             api, wrap = buildapi(nb)
             if wrap:
-                if ismoduleroutine(nb):
+                if isf90:
                     funcwrappers2.append(wrap)
                 else:
                     funcwrappers.append(wrap)
@@ -1319,7 +1291,10 @@ def buildmodule(m, um):
                 'C     It contains Fortran 77 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
-                if l and l[0] == ' ':
+                if 0 <= l.find('!') < 66:
+                    # don't split comment lines
+                    lines.append(l + '\n')
+                elif l and l[0] == ' ':
                     while len(l) >= 66:
                         lines.append(l[:66] + '\n     &')
                         l = l[66:]
@@ -1341,7 +1316,10 @@ def buildmodule(m, um):
                 '!     It contains Fortran 90 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
-                if len(l) > 72 and l[0] == ' ':
+                if 0 <= l.find('!') < 72:
+                    # don't split comment lines
+                    lines.append(l + '\n')
+                elif len(l) > 72 and l[0] == ' ':
                     lines.append(l[:72] + '&\n     &')
                     l = l[72:]
                     while len(l) > 66:
@@ -1470,16 +1448,6 @@ def buildapi(rout):
             rd['latexdocstrsigns'] = rd['latexdocstrsigns'] + rd[k][0:1] +\
                 ['\\begin{description}'] + rd[k][1:] +\
                 ['\\end{description}']
-
-    # Workaround for Python 2.6, 2.6.1 bug: https://bugs.python.org/issue4720
-    if rd['keyformat'] or rd['xaformat']:
-        argformat = rd['argformat']
-        if isinstance(argformat, list):
-            argformat.append('|')
-        else:
-            assert isinstance(argformat, str), repr(
-                (argformat, type(argformat)))
-            rd['argformat'] += '|'
 
     ar = applyrules(routine_rules, rd)
     if ismoduleroutine(rout):

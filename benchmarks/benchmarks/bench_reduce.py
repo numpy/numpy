@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark, TYPES1, get_squares
 
 import numpy as np
@@ -60,6 +58,15 @@ class MinMax(Benchmark):
     def time_max(self, dtype):
         np.max(self.d)
 
+class ArgMax(Benchmark):
+    params = [np.float32, bool]
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        self.d = np.zeros(200000, dtype=dtype)
+
+    def time_argmax(self, dtype):
+        np.argmax(self.d)
 
 class SmallReduction(Benchmark):
     def setup(self):

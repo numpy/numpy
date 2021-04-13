@@ -1,7 +1,5 @@
 """ Test functions for linalg module
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 
 import numpy as np
@@ -12,7 +10,7 @@ from numpy.testing import (
 )
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_eig_build(self):
         # Ticket #652
@@ -59,8 +57,8 @@ class TestRegression(object):
         assert_array_almost_equal(b, np.zeros((2, 2)))
 
     def test_norm_vector_badarg(self):
-        # Regression for #786: Froebenius norm for vectors raises
-        # TypeError.
+        # Regression for #786: Frobenius norm for vectors raises
+        # ValueError.
         assert_raises(ValueError, linalg.norm, array([1., 2., 3.]), 'fro')
 
     def test_lapack_endian(self):

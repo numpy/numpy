@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from subprocess import PIPE, Popen
 import sys
 import re
@@ -9,7 +7,7 @@ from numpy.linalg import lapack_lite
 from numpy.testing import assert_
 
 
-class FindDependenciesLdd(object):
+class FindDependenciesLdd:
 
     def __init__(self):
         self.cmd = ['ldd']
@@ -17,14 +15,14 @@ class FindDependenciesLdd(object):
         try:
             p = Popen(self.cmd, stdout=PIPE, stderr=PIPE)
             stdout, stderr = p.communicate()
-        except OSError:
-            raise RuntimeError("command %s cannot be run" % self.cmd)
+        except OSError as e:
+            raise RuntimeError(f'command {self.cmd} cannot be run') from e
 
     def get_dependencies(self, lfile):
         p = Popen(self.cmd + [lfile], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if not (p.returncode == 0):
-            raise RuntimeError("failed dependencies check for %s" % lfile)
+            raise RuntimeError(f'failed dependencies check for {lfile}')
 
         return stdout
 
@@ -41,7 +39,7 @@ class FindDependenciesLdd(object):
         return founds
 
 
-class TestF77Mismatch(object):
+class TestF77Mismatch:
 
     @pytest.mark.skipif(not(sys.platform[:5] == 'linux'),
                         reason="no fortran compiler on non-Linux platform")

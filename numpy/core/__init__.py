@@ -6,8 +6,6 @@ are available in the main ``numpy`` namespace - use that instead.
 
 """
 
-from __future__ import division, absolute_import, print_function
-
 from numpy.version import version as __version__
 
 import os
@@ -28,25 +26,21 @@ except ImportError as exc:
 
 IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
 
-Importing the numpy c-extensions failed.
-- Try uninstalling and reinstalling numpy.
-- If you have already done that, then:
-  1. Check that you expected to use Python%d.%d from "%s",
-     and that you have no directories in your PATH or PYTHONPATH that can
-     interfere with the Python and numpy version "%s" you're trying to use.
-  2. If (1) looks fine, you can open a new issue at
-     https://github.com/numpy/numpy/issues.  Please include details on:
-     - how you installed Python
-     - how you installed numpy
-     - your operating system
-     - whether or not you have multiple versions of Python installed
-     - if you built from source, your compiler versions and ideally a build log
+Importing the numpy C-extensions failed. This error can happen for
+many reasons, often due to issues with your setup or how NumPy was
+installed.
 
-- If you're working with a numpy git repository, try `git clean -xdf`
-  (removes all files not under version control) and rebuild numpy.
+We have compiled some common reasons and troubleshooting tips at:
 
-Note: this error has many possible causes, so please don't comment on
-an existing issue about this - open a new one instead.
+    https://numpy.org/devdocs/user/troubleshooting-importerror.html
+
+Please note and check the following:
+
+  * The Python version is: Python%d.%d from "%s"
+  * The NumPy version is: "%s"
+
+and make sure that they are the versions you expect.
+Please carefully study the documentation linked above for further help.
 
 Original error was: %s
 """ % (sys.version_info[0], sys.version_info[1], sys.executable,
@@ -81,7 +75,7 @@ from . import fromnumeric
 from .fromnumeric import *
 from . import defchararray as char
 from . import records as rec
-from .records import *
+from .records import record, recarray, format_parser
 from .memmap import *
 from .defchararray import chararray
 from . import function_base
@@ -102,6 +96,7 @@ from .numeric import absolute as abs
 # do this after everything else, to minimize the chance of this misleadingly
 # appearing in an import-time traceback
 from . import _add_newdocs
+from . import _add_newdocs_scalars
 # add these for module-freeze analysis (like PyInstaller)
 from . import _dtype_ctypes
 from . import _internal
@@ -111,7 +106,7 @@ from . import _methods
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
-__all__ += rec.__all__
+__all__ += ['record', 'recarray', 'format_parser']
 __all__ += ['chararray']
 __all__ += function_base.__all__
 __all__ += machar.__all__
@@ -119,10 +114,9 @@ __all__ += getlimits.__all__
 __all__ += shape_base.__all__
 __all__ += einsumfunc.__all__
 
-# Make it possible so that ufuncs can be pickled
-#  Here are the loading and unloading functions
-# The name numpy.core._ufunc_reconstruct must be
-#   available for unpickling to work.
+# We used to use `np.core._ufunc_reconstruct` to unpickle. This is unnecessary,
+# but old pickles saved before 1.20 will be using it, and there is no reason
+# to break loading them.
 def _ufunc_reconstruct(module, name):
     # The `fromlist` kwarg is required to ensure that `mod` points to the
     # inner-most module rather than the parent package when module name is
@@ -131,23 +125,41 @@ def _ufunc_reconstruct(module, name):
     mod = __import__(module, fromlist=[name])
     return getattr(mod, name)
 
+
 def _ufunc_reduce(func):
-    from pickle import whichmodule
-    name = func.__name__
-    return _ufunc_reconstruct, (whichmodule(func, name), name)
+    # Report the `__name__`. pickle will try to find the module. Note that
+    # pickle supports for this `__name__` to be a `__qualname__`. It may
+    # make sense to add a `__qualname__` to ufuncs, to allow this more
+    # explicitly (Numba has ufuncs as attributes).
+    # See also: https://github.com/dask/distributed/issues/3450
+    return func.__name__
 
 
-import sys
-if sys.version_info[0] >= 3:
-    import copyreg
-else:
-    import copy_reg as copyreg
+def _DType_reconstruct(scalar_type):
+    # This is a work-around to pickle type(np.dtype(np.float64)), etc.
+    # and it should eventually be replaced with a better solution, e.g. when
+    # DTypes become HeapTypes.
+    return type(dtype(scalar_type))
 
-copyreg.pickle(ufunc, _ufunc_reduce, _ufunc_reconstruct)
-# Unclutter namespace (must keep _ufunc_reconstruct for unpickling)
+
+def _DType_reduce(DType):
+    # To pickle a DType without having to add top-level names, pickle the
+    # scalar type for now (and assume that reconstruction will be possible).
+    if DType is dtype:
+        return "dtype"  # must pickle `np.dtype` as a singleton.
+    scalar_type = DType.type  # pickle the scalar type for reconstruction
+    return _DType_reconstruct, (scalar_type,)
+
+
+import copyreg
+
+copyreg.pickle(ufunc, _ufunc_reduce)
+copyreg.pickle(type(dtype), _DType_reduce, _DType_reconstruct)
+
+# Unclutter namespace (must keep _*_reconstruct for unpickling)
 del copyreg
-del sys
 del _ufunc_reduce
+del _DType_reduce
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

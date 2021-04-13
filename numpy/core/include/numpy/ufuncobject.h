@@ -14,8 +14,8 @@ extern "C" {
  */
 typedef void (*PyUFuncGenericFunction)
             (char **args,
-             npy_intp *dimensions,
-             npy_intp *strides,
+             npy_intp const *dimensions,
+             npy_intp const *strides,
              void *innerloopdata);
 
 /*
@@ -194,7 +194,11 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
+    #if PY_VERSION_HEX >= 0x03080000
+        vectorcallfunc vectorcall;
+    #else
         void *reserved2;
+    #endif
         /*
          * A function which returns a masked inner loop for the ufunc.
          */

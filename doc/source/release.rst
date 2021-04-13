@@ -5,13 +5,28 @@ Release Notes
 .. toctree::
     :maxdepth: 3
 
+    1.21.0 <release/1.21.0-notes>
+    1.20.2 <release/1.20.2-notes>
+    1.20.1 <release/1.20.1-notes>
+    1.20.0 <release/1.20.0-notes>
+    1.19.5 <release/1.19.5-notes>
+    1.19.4 <release/1.19.4-notes>
+    1.19.3 <release/1.19.3-notes>
+    1.19.2 <release/1.19.2-notes>
+    1.19.1 <release/1.19.1-notes>
     1.19.0 <release/1.19.0-notes>
+    1.18.4 <release/1.18.4-notes>
+    1.18.3 <release/1.18.3-notes>
+    1.18.2 <release/1.18.2-notes>
+    1.18.1 <release/1.18.1-notes>
     1.18.0 <release/1.18.0-notes>
+    1.17.5 <release/1.17.5-notes>
     1.17.4 <release/1.17.4-notes>
     1.17.3 <release/1.17.3-notes>
     1.17.2 <release/1.17.2-notes>
     1.17.1 <release/1.17.1-notes>
     1.17.0 <release/1.17.0-notes>
+    1.16.6 <release/1.16.6-notes>
     1.16.5 <release/1.16.5-notes>
     1.16.4 <release/1.16.4-notes>
     1.16.3 <release/1.16.3-notes>

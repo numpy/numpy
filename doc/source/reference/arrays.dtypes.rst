@@ -87,22 +87,22 @@ Sub-arrays always have a C-contiguous memory layout.
 
    >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
-   dtype('|U16')
+   dtype('<U16')
    >>> dt['grades']
-   dtype(('float64',(2,)))
+   dtype(('<f8', (2,)))
 
    Items of an array of this data type are wrapped in an :ref:`array
    scalar <arrays.scalars>` type that also has two fields:
 
    >>> x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
    >>> x[1]
-   ('John', [6.0, 7.0])
+   ('John', [6., 7.])
    >>> x[1]['grades']
-   array([ 6.,  7.])
+   array([6.,  7.])
    >>> type(x[1])
-   <type 'numpy.void'>
+   <class 'numpy.void'>
    >>> type(x[1]['grades'])
-   <type 'numpy.ndarray'>
+   <class 'numpy.ndarray'>
 
 .. _arrays.dtypes.constructing:
 
@@ -122,14 +122,12 @@ constructor:
 What can be converted to a data-type object is described below:
 
 :class:`dtype` object
-
    .. index::
       triple: dtype; construction; from dtype
 
    Used as-is.
 
 None
-
    .. index::
       triple: dtype; construction; from None
 
@@ -139,7 +137,6 @@ None
    triple: dtype; construction; from type
 
 Array-scalar types
-
     The 24 built-in :ref:`array scalar type objects
     <arrays.scalars.built-in>` all convert to an associated data-type object.
     This is true for their sub-classes as well.
@@ -155,7 +152,6 @@ Array-scalar types
        >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
 
 Generic types
-
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
@@ -168,8 +164,16 @@ Generic types
     :class:`generic`, :class:`flexible`                    :class:`void`
     =====================================================  ===============
 
-Built-in Python types
+    .. deprecated:: 1.19
 
+        This conversion of generic scalar types is deprecated.
+        This is because it can be unexpected in a context such as
+        ``arr.astype(dtype=np.floating)``, which casts an array of ``float32``
+        to an array of ``float64``, even though ``float32`` is a subdtype of
+        ``np.floating``.
+
+
+Built-in Python types
     Several python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
@@ -179,8 +183,7 @@ Built-in Python types
     :class:`float`    :class:`float\_`
     :class:`complex`  :class:`cfloat`
     :class:`bytes`    :class:`bytes\_`
-    :class:`str`      :class:`bytes\_` (Python2) or :class:`unicode\_` (Python3)
-    :class:`unicode`  :class:`unicode\_`
+    :class:`str`      :class:`str\_`
     :class:`buffer`   :class:`void`
     (all others)      :class:`object_`
     ================  ===============
@@ -196,8 +199,12 @@ Built-in Python types
        >>> dt = np.dtype(int)     # Python-compatible integer
        >>> dt = np.dtype(object)  # Python object
 
-Types with ``.dtype``
+    .. note::
 
+        All other types map to ``object_`` for convenience. Code should expect
+        that such types may map to a specific (new) dtype in the future.
+
+Types with ``.dtype``
     Any type object with a ``dtype`` attribute: The attribute will be
     accessed and used directly. The attribute must return something
     that is convertible into a dtype object.
@@ -211,7 +218,6 @@ prepended with ``'>'`` (:term:`big-endian`), ``'<'``
 specify the byte order.
 
 One-character strings
-
     Each built-in data-type has a character code
     (the updated Numeric typecodes), that uniquely identifies it.
 
@@ -223,7 +229,6 @@ One-character strings
        >>> dt = np.dtype('d')  # double-precision floating-point number
 
 Array-protocol type strings (see :ref:`arrays.interface`)
-
    The first character specifies the kind of data and the remaining
    characters specify the number of bytes per item, except for Unicode,
    where it is interpreted as the number of characters.  The item size
@@ -259,14 +264,12 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
-    remain zero-terminated bytes and ``np.string_`` continues to map to
-    ``np.bytes_``.
-    To use actual strings in Python 3 use ``U`` or ``np.unicode_``.
+    remain zero-terminated bytes and `numpy.string_` continues to alias
+    `numpy.bytes_`. To use actual strings in Python 3 use ``U`` or `numpy.str_`.
     For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
     used.
 
 String with comma-separated fields
-
    A short-hand notation for specifying the format of a structured data type is
    a comma-separated string of basic formats.
 
@@ -298,19 +301,17 @@ String with comma-separated fields
       >>> dt = np.dtype("a3, 3u8, (3,4)a10")
 
 Type strings
-
    Any string in :obj:`numpy.sctypeDict`.keys():
 
    .. admonition:: Example
 
       >>> dt = np.dtype('uint32')   # 32-bit unsigned integer
-      >>> dt = np.dtype('Float64')  # 64-bit floating-point number
+      >>> dt = np.dtype('float64')  # 64-bit floating-point number
 
 .. index::
    triple: dtype; construction; from tuple
 
 ``(flexible_dtype, itemsize)``
-
     The first argument must be an object that is converted to a
     zero-sized flexible data-type object, the second argument is
     an integer providing the desired itemsize.
@@ -321,30 +322,29 @@ Type strings
        >>> dt = np.dtype(('U', 10))   # 10-character unicode string
 
 ``(fixed_dtype, shape)``
-
     .. index::
        pair: dtype; sub-array
 
     The first argument is any object that can be converted into a
     fixed-size data-type object. The second argument is the desired
     shape of this type. If the shape parameter is 1, then the
-    data-type object is equivalent to fixed dtype. If *shape* is a
-    tuple, then the new dtype defines a sub-array of the given shape.
+    data-type object used to be equivalent to fixed dtype. This behaviour is
+    deprecated since NumPy 1.17 and will raise an error in the future.
+    If *shape* is a tuple, then the new dtype defines a sub-array of the given
+    shape.
 
     .. admonition:: Example
 
        >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
-       >>> dt = np.dtype(('U10', 1))                 # 10-character string
        >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 structured sub-array
 
 .. index::
    triple: dtype; construction; from list
 
 ``[(field_name, field_dtype, field_shape), ...]``
-
    *obj* should be a list of fields where each field is described by a
    tuple of length 2 or 3. (Equivalent to the ``descr`` item in the
-   :obj:`__array_interface__` attribute.)
+   :obj:`~object.__array_interface__` attribute.)
 
    The first element, *field_name*, is the field name (if this is
    ``''`` then a standard field name, ``'f#'``, is assigned).  The
@@ -381,7 +381,6 @@ Type strings
    triple: dtype; construction; from dict
 
 ``{'names': ..., 'formats': ..., 'offsets': ..., 'titles': ..., 'itemsize': ...}``
-
     This style has two required and three optional keys.  The *names*
     and *formats* keys are required. Their respective values are
     equal-length lists with the field names and the field formats.
@@ -392,9 +391,9 @@ Type strings
     their values must each be lists of the same length as the *names*
     and *formats* lists. The *offsets* value is a list of byte offsets
     (limited to `ctypes.c_int`) for each field, while the *titles* value is a
-    list of titles for each field (None can be used if no title is
-    desired for that field). The *titles* can be any :class:`string`
-    or :class:`unicode` object and will add another entry to the
+    list of titles for each field (``None`` can be used if no title is
+    desired for that field). The *titles* can be any object, but when a
+    :class:`str` object will add another entry to the
     fields dictionary keyed by the title and referencing the same
     field tuple which will contain the title as an additional tuple
     member.
@@ -411,7 +410,7 @@ Type strings
        an 8-bit unsigned integer:
 
        >>> dt = np.dtype({'names': ['r','g','b','a'],
-       ...                'formats': [uint8, uint8, uint8, uint8]})
+       ...                'formats': [np.uint8, np.uint8, np.uint8, np.uint8]})
 
        Data type with fields ``r`` and ``b`` (with the given titles),
        both being 8-bit unsigned integers, the first at byte position
@@ -423,7 +422,6 @@ Type strings
 
 
 ``{'field1': ..., 'field2': ..., ...}``
-
     This usage is discouraged, because it is ambiguous with the
     other dict-based construction method. If you have a field
     called 'names' and a field called 'formats' there will be
@@ -441,11 +439,10 @@ Type strings
        byte position 0), ``col2`` (32-bit float at byte position 10),
        and ``col3`` (integers at byte position 14):
 
-       >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (float32, 10),
-           'col3': (int, 14)})
+       >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (np.float32, 10),
+       ...                'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``
-
     In NumPy 1.7 and later, this form allows `base_dtype` to be interpreted as
     a structured dtype. Arrays created with this dtype will have underlying
     dtype `base_dtype` but will have fields and flags taken from `new_dtype`.
@@ -464,7 +461,7 @@ Type strings
        32-bit integer, whose first two bytes are interpreted as an integer
        via field ``real``, and the following two bytes via field ``imag``.
 
-       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)})
+       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)}))
 
        32-bit integer, which is interpreted as consisting of a sub-array
        of shape ``(4,)`` containing 8-bit integers:
@@ -539,6 +536,13 @@ Attributes providing additional information:
    dtype.descr
    dtype.alignment
    dtype.base
+
+Metadata attached by the user:
+
+.. autosummary::
+   :toctree: generated/
+
+    dtype.metadata
 
 
 Methods

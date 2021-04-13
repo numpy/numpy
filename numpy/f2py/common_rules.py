@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Build common block mechanism for f2py2e.
@@ -13,10 +13,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
-__version__ = "$Revision: 1.19 $"[10:-1]
-
 from . import __version__
 f2py_version = __version__.version
 

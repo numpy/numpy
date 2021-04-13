@@ -59,7 +59,7 @@ SciPy pure Python package example
 
 Below is an example of a minimal ``setup.py`` file for a pure SciPy package::
 
-  #!/usr/bin/env python
+  #!/usr/bin/env python3
   def configuration(parent_package='',top_path=None):
       from numpy.distutils.misc_util import Configuration
       config = Configuration('mypackage',parent_package,top_path)
@@ -345,7 +345,7 @@ expression, '<...>' will be replaced first with item1, and then with
 item2, and so forth until N repeats are accomplished. Once a named
 repeat specification has been introduced, the same repeat rule may be
 used **in the current block** by referring only to the name
-(i.e. <rule1>.
+(i.e. <rule1>).
 
 
 Short repeat rule
@@ -385,46 +385,46 @@ that should be repeated using a variable expansion similar to the
 named repeat rules of the Fortran-specific repeats.
 
 NumPy Distutils preprocesses C source files (extension: :file:`.c.src`) written
-in a custom templating language to generate C code. The :c:data:`@` symbol is
+in a custom templating language to generate C code. The ``@`` symbol is
 used to wrap macro-style variables to empower a string substitution mechanism
 that might describe (for instance) a set of data types.
 
-The template language blocks are delimited by :c:data:`/**begin repeat`
-and :c:data:`/**end repeat**/` lines, which may also be nested using
-consecutively numbered delimiting lines such as :c:data:`/**begin repeat1`
-and :c:data:`/**end repeat1**/`:
+The template language blocks are delimited by ``/**begin repeat``
+and ``/**end repeat**/`` lines, which may also be nested using
+consecutively numbered delimiting lines such as ``/**begin repeat1``
+and ``/**end repeat1**/``:
 
-1. "/\**begin repeat "on a line by itself marks the beginning of
-a segment that should be repeated.
+1. ``/**begin repeat`` on a line by itself marks the beginning of
+   a segment that should be repeated.
 
 2. Named variable expansions are defined using ``#name=item1, item2, item3,
-..., itemN#`` and placed on successive lines. These variables are
-replaced in each repeat block with corresponding word. All named
-variables in the same repeat block must define the same number of
-words.
+   ..., itemN#`` and placed on successive lines. These variables are
+   replaced in each repeat block with corresponding word. All named
+   variables in the same repeat block must define the same number of
+   words.
 
 3. In specifying the repeat rule for a named variable, ``item*N`` is short-
-hand for ``item, item, ..., item`` repeated N times. In addition,
-parenthesis in combination with \*N can be used for grouping several
-items that should be repeated. Thus, #name=(item1, item2)*4# is
-equivalent to #name=item1, item2, item1, item2, item1, item2, item1,
-item2#
+   hand for ``item, item, ..., item`` repeated N times. In addition,
+   parenthesis in combination with ``*N`` can be used for grouping several
+   items that should be repeated. Thus, ``#name=(item1, item2)*4#`` is
+   equivalent to ``#name=item1, item2, item1, item2, item1, item2, item1,
+   item2#``.
 
-4. "\*/ "on a line by itself marks the end of the variable expansion
-naming. The next line is the first line that will be repeated using
-the named rules.
+4. ``*/`` on a line by itself marks the end of the variable expansion
+   naming. The next line is the first line that will be repeated using
+   the named rules.
 
 5. Inside the block to be repeated, the variables that should be expanded
-are specified as ``@name@``
+   are specified as ``@name@``.
 
-6. "/\**end repeat**/ "on a line by itself marks the previous line
-as the last line of the block to be repeated.
+6. ``/**end repeat**/`` on a line by itself marks the previous line
+   as the last line of the block to be repeated.
 
 7. A loop in the NumPy C source code may have a ``@TYPE@`` variable, targeted
-for string substitution, which is preprocessed to a number of otherwise
-identical loops with several strings such as INT, LONG, UINT, ULONG. The
-``@TYPE@`` style syntax thus reduces code duplication and maintenance burden by
-mimicking languages that have generic type support.
+   for string substitution, which is preprocessed to a number of otherwise
+   identical loops with several strings such as ``INT``, ``LONG``, ``UINT``,
+   ``ULONG``. The ``@TYPE@`` style syntax thus reduces code duplication and
+   maintenance burden by mimicking languages that have generic type support.
 
 The above rules may be clearer in the following template source example:
 
@@ -464,15 +464,15 @@ The above rules may be clearer in the following template source example:
 
     /**end repeat**/
 
-The preprocessing of generically typed C source files (whether in NumPy
+The preprocessing of generically-typed C source files (whether in NumPy
 proper or in any third party package using NumPy Distutils) is performed
 by `conv_template.py`_.
-The type specific C files generated (extension: .c)
+The type-specific C files generated (extension: ``.c``)
 by these modules during the build process are ready to be compiled. This
 form of generic typing is also supported for C header files (preprocessed
-to produce .h files).
+to produce ``.h`` files).
 
-.. _conv_template.py: https://github.com/numpy/numpy/blob/master/numpy/distutils/conv_template.py
+.. _conv_template.py: https://github.com/numpy/numpy/blob/main/numpy/distutils/conv_template.py
 
 Useful functions in ``numpy.distutils.misc_util``
 -------------------------------------------------
@@ -577,9 +577,6 @@ The header of a typical SciPy ``__init__.py`` is::
   Package docstring, typically with a brief description and function listing.
   """
 
-  # py3k related imports
-  from __future__ import division, print_function, absolute_import
-
   # import functions into module namespace
   from .subpackage import *
   ...
@@ -589,10 +586,6 @@ The header of a typical SciPy ``__init__.py`` is::
   from numpy.testing import Tester
   test = Tester().test
   bench = Tester().bench
-
-Note that NumPy submodules still use a file named ``info.py`` in which the
-module docstring and ``__all__`` dict are defined.  These files will be removed
-at some point.
 
 Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 from tempfile import TemporaryFile
@@ -10,12 +8,9 @@ from numpy.testing import tempdir, assert_, assert_warns
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to
 # emulate them import StringIO from the io module.
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
-class redirect_stdout(object):
+class redirect_stdout:
     """Context manager to redirect stdout for exec_command test."""
     def __init__(self, stdout=None):
         self._stdout = stdout or sys.stdout
@@ -30,7 +25,7 @@ class redirect_stdout(object):
         # note: closing sys.stdout won't close it.
         self._stdout.close()
 
-class redirect_stderr(object):
+class redirect_stderr:
     """Context manager to redirect stderr for exec_command test."""
     def __init__(self, stderr=None):
         self._stderr = stderr or sys.stderr
@@ -45,7 +40,7 @@ class redirect_stderr(object):
         # note: closing sys.stderr won't close it.
         self._stderr.close()
 
-class emulate_nonposix(object):
+class emulate_nonposix:
     """Context manager to emulate os.name != 'posix' """
     def __init__(self, osname='non-posix'):
         self._new_name = osname
@@ -98,7 +93,7 @@ def test_exec_command_stderr():
                         exec_command.exec_command("cd '.'")
 
 
-class TestExecCommand(object):
+class TestExecCommand:
     def setup(self):
         self.pyexe = get_pythonexe()
 
@@ -191,9 +186,8 @@ class TestExecCommand(object):
         with tempdir() as tmpdir:
             fn = "file"
             tmpfile = os.path.join(tmpdir, fn)
-            f = open(tmpfile, 'w')
-            f.write('Hello')
-            f.close()
+            with open(tmpfile, 'w') as f:
+                f.write('Hello')
 
             s, o = exec_command.exec_command(
                  '"%s" -c "f = open(\'%s\', \'r\'); f.close()"' %

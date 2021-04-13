@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 from distutils.msvc9compiler import MSVCCompiler as _MSVCCompiler
 

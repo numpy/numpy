@@ -8,9 +8,6 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-
-#include "npy_config.h"
-
 #include "npy_pycompat.h"
 
 #include "common.h"
@@ -248,13 +245,13 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
                 PyTuple_SET_ITEM(tupobj,0,obj);
-                obj = PyUString_FromString((const char *)format);
+                obj = PyUnicode_FromString((const char *)format);
                 if (obj == NULL) {
                     Py_DECREF(tupobj);
                     Py_DECREF(it);
                     return -1;
                 }
-                strobj = PyUString_Format(obj, tupobj);
+                strobj = PyUnicode_Format(obj, tupobj);
                 Py_DECREF(obj);
                 Py_DECREF(tupobj);
                 if (strobj == NULL) {
@@ -262,18 +259,12 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
             }
-#if defined(NPY_PY3K)
             byteobj = PyUnicode_AsASCIIString(strobj);
-#else
-            byteobj = strobj;
-#endif
             NPY_BEGIN_ALLOW_THREADS;
             n2 = PyBytes_GET_SIZE(byteobj);
             n = fwrite(PyBytes_AS_STRING(byteobj), 1, n2, fp);
             NPY_END_ALLOW_THREADS;
-#if defined(NPY_PY3K)
             Py_DECREF(byteobj);
-#endif
             if (n < n2) {
                 PyErr_Format(PyExc_IOError,
                         "problem writing element %" NPY_INTP_FMT
@@ -409,7 +400,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         }
     }
     /* Python integer */
-    else if (PyLong_Check(obj) || PyInt_Check(obj)) {
+    else if (PyLong_Check(obj)) {
         /* Try long long before unsigned long long */
         npy_longlong ll_v = PyLong_AsLongLong(obj);
         if (error_converting(ll_v)) {

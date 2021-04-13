@@ -41,7 +41,7 @@ Capabilities
 - Is straightforward to reverse engineer. Datasets often live longer than
   the programs that created them. A competent developer should be
   able to create a solution in their preferred programming language to
-  read most ``.npy`` files that he has been given without much
+  read most ``.npy`` files that they have been given without much
   documentation.
 
 - Allows memory-mapping of the data. See `open_memmep`.
@@ -156,26 +156,24 @@ names.
 Notes
 -----
 The ``.npy`` format, including motivation for creating it and a comparison of
-alternatives, is described in the `"npy-format" NEP
-<https://www.numpy.org/neps/nep-0001-npy-format.html>`_, however details have
+alternatives, is described in the
+:doc:`"npy-format" NEP <neps:nep-0001-npy-format>`, however details have
 evolved with time and this document is more current.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy
-import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    isfileobj, long, os_fspath, pickle
+    isfileobj, os_fspath, pickle
     )
 
 
 __all__ = []
 
 
+EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
@@ -215,10 +213,7 @@ def magic(major, minor):
         raise ValueError("major version must be 0 <= major < 256")
     if minor < 0 or minor > 255:
         raise ValueError("minor version must be 0 <= minor < 256")
-    if sys.version_info[0] < 3:
-        return MAGIC_PREFIX + chr(major) + chr(minor)
-    else:
-        return MAGIC_PREFIX + bytes([major, minor])
+    return MAGIC_PREFIX + bytes([major, minor])
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -236,10 +231,7 @@ def read_magic(fp):
     if magic_str[:-2] != MAGIC_PREFIX:
         msg = "the magic string is not correct; expected %r, got %r"
         raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
-    if sys.version_info[0] < 3:
-        major, minor = map(ord, magic_str[-2:])
-    else:
-        major, minor = magic_str[-2:]
+    major, minor = magic_str[-2:]
     return major, minor
 
 def _has_metadata(dt):
@@ -289,14 +281,26 @@ def dtype_to_descr(dtype):
         return dtype.str
 
 def descr_to_dtype(descr):
-    '''
-    descr may be stored as dtype.descr, which is a list of
-    (name, format, [shape]) tuples where format may be a str or a tuple.
-    Offsets are not explicitly saved, rather empty fields with
-    name, format == '', '|Vn' are added as padding.
+    """
+    Returns a dtype based off the given description.
 
-    This function reverses the process, eliminating the empty padding fields.
-    '''
+    This is essentially the reverse of `dtype_to_descr()`. It will remove
+    the valueless padding fields created by, i.e. simple fields like
+    dtype('float32'), and then convert the description to its corresponding
+    dtype.
+
+    Parameters
+    ----------
+    descr : object
+        The object retreived by dtype.descr. Can be passed to
+        `numpy.dtype()` in order to replicate the input dtype.
+
+    Returns
+    -------
+    dtype : dtype
+        The dtype constructed by the description.
+
+    """
     if isinstance(descr, str):
         # No padding removal needed
         return numpy.dtype(descr)
@@ -304,7 +308,11 @@ def descr_to_dtype(descr):
         # subtype, will always have a shape descr[1]
         dt = descr_to_dtype(descr[0])
         return numpy.dtype((dt, descr[1]))
-    fields = []
+
+    titles = []
+    names = []
+    formats = []
+    offsets = []
     offset = 0
     for field in descr:
         if len(field) == 2:
@@ -318,14 +326,13 @@ def descr_to_dtype(descr):
         # Once support for blank names is removed, only "if name == ''" needed)
         is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
         if not is_pad:
-            fields.append((name, dt, offset))
-
+            title, name = name if isinstance(name, tuple) else (None, name)
+            titles.append(title)
+            names.append(name)
+            formats.append(dt)
+            offsets.append(offset)
         offset += dt.itemsize
 
-    names, formats, offsets = zip(*fields)
-    # names may be (title, names) tuples
-    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
-    titles, names = zip(*nametups)
     return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
                         'offsets': offsets, 'itemsize': offset})
 
@@ -372,7 +379,7 @@ def _wrap_header(header, version):
         header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
     except struct.error:
         msg = "Header length {} too big for version={}".format(hlen, version)
-        raise ValueError(msg)
+        raise ValueError(msg) from None
 
     # Pad the header with spaces and a final newline such that the magic
     # string, the header-length short and the header are aligned on a
@@ -426,7 +433,6 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    header = _filter_header(header)
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
@@ -544,16 +550,11 @@ def _filter_header(s):
 
     """
     import tokenize
-    if sys.version_info[0] >= 3:
-        from io import StringIO
-    else:
-        from StringIO import StringIO
+    from io import StringIO
 
     tokens = []
     last_token_was_number = False
-    # adding newline as python 2.7.5 workaround
-    string = s + "\n"
-    for token in tokenize.generate_tokens(StringIO(string).readline):
+    for token in tokenize.generate_tokens(StringIO(s).readline):
         token_type = token[0]
         token_string = token[1]
         if (last_token_was_number and
@@ -563,8 +564,7 @@ def _filter_header(s):
         else:
             tokens.append(token)
         last_token_was_number = (token_type == tokenize.NUMBER)
-    # removing newline (see above) as python 2.7.5 workaround
-    return tokenize.untokenize(tokens)[:-1]
+    return tokenize.untokenize(tokens)
 
 
 def _read_array_header(fp, version):
@@ -590,23 +590,27 @@ def _read_array_header(fp, version):
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
-    header = _filter_header(header)
+    # Versions (2, 0) and (1, 0) could have been created by a Python 2
+    # implementation before header filtering was implemented.
+    if version <= (2, 0):
+        header = _filter_header(header)
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: {!r}\nException: {!r}"
-        raise ValueError(msg.format(header, e))
+        msg = "Cannot parse header: {!r}"
+        raise ValueError(msg.format(header)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
         raise ValueError(msg.format(d))
-    keys = sorted(d.keys())
-    if keys != ['descr', 'fortran_order', 'shape']:
+
+    if EXPECTED_KEYS != d.keys():
+        keys = sorted(d.keys())
         msg = "Header does not contain the correct keys: {!r}"
-        raise ValueError(msg.format(keys))
+        raise ValueError(msg.format(d.keys()))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-            not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
+            not all(isinstance(x, int) for x in d['shape'])):
         msg = "shape is not valid: {!r}"
         raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):
@@ -616,7 +620,7 @@ def _read_array_header(fp, version):
         dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
         msg = "descr is not a valid dtype descriptor: {!r}"
-        raise ValueError(msg.format(d['descr']))
+        raise ValueError(msg.format(d['descr'])) from e
 
     return d['shape'], d['fortran_order'], dtype
 
@@ -743,12 +747,10 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
         try:
             array = pickle.load(fp, **pickle_kwargs)
         except UnicodeError as err:
-            if sys.version_info[0] >= 3:
-                # Friendlier error message
-                raise UnicodeError("Unpickling a python object failed: %r\n"
-                                   "You may need to pass the encoding= option "
-                                   "to numpy.load" % (err,))
-            raise
+            # Friendlier error message
+            raise UnicodeError("Unpickling a python object failed: %r\n"
+                               "You may need to pass the encoding= option "
+                               "to numpy.load" % (err,)) from err
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.
@@ -834,7 +836,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     See Also
     --------
-    memmap
+    numpy.memmap
 
     """
     if isfileobj(filename):

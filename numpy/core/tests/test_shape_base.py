@@ -1,7 +1,4 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
-import sys
 import numpy as np
 from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
@@ -11,12 +8,11 @@ from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns
+    assert_raises_regex, assert_warns, IS_PYPY
     )
 
-from numpy.compat import long
 
-class TestAtleast1d(object):
+class TestAtleast1d:
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -52,12 +48,11 @@ class TestAtleast1d(object):
         """
         assert_(atleast_1d(3).shape == (1,))
         assert_(atleast_1d(3j).shape == (1,))
-        assert_(atleast_1d(long(3)).shape == (1,))
         assert_(atleast_1d(3.0).shape == (1,))
         assert_(atleast_1d([[2, 3], [4, 5]]).shape == (2, 2))
 
 
-class TestAtleast2d(object):
+class TestAtleast2d:
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -96,7 +91,7 @@ class TestAtleast2d(object):
         assert_(atleast_2d([[[3, 1], [4, 5]], [[3, 5], [1, 2]]]).shape == (2, 2, 2))
 
 
-class TestAtleast3d(object):
+class TestAtleast3d:
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -128,7 +123,7 @@ class TestAtleast3d(object):
         assert_array_equal(res, desired)
 
 
-class TestHstack(object):
+class TestHstack:
     def test_non_iterable(self):
         assert_raises(TypeError, hstack, 1)
 
@@ -159,13 +154,11 @@ class TestHstack(object):
     def test_generator(self):
         with assert_warns(FutureWarning):
             hstack((np.arange(3) for _ in range(2)))
-        if sys.version_info.major > 2:
-            # map returns a list on Python 2
-            with assert_warns(FutureWarning):
-                hstack(map(lambda x: x, np.ones((3, 2))))
+        with assert_warns(FutureWarning):
+            hstack(map(lambda x: x, np.ones((3, 2))))
 
 
-class TestVstack(object):
+class TestVstack:
     def test_non_iterable(self):
         assert_raises(TypeError, vstack, 1)
 
@@ -205,7 +198,7 @@ class TestVstack(object):
             vstack((np.arange(3) for _ in range(2)))
 
 
-class TestConcatenate(object):
+class TestConcatenate:
     def test_returns_copy(self):
         a = np.eye(3)
         b = np.concatenate([a])
@@ -263,7 +256,7 @@ class TestConcatenate(object):
         r = np.concatenate((a, b), axis=None)
         assert_equal(r.size, a.size + len(b))
         assert_equal(r.dtype, a.dtype)
-        r = np.concatenate((a, b, c), axis=None)
+        r = np.concatenate((a, b, c), axis=None, dtype="U")
         d = array(['0.0', '1.0', '2.0', '3.0',
                    '0', '1', '2', 'x'])
         assert_array_equal(r, d)
@@ -327,6 +320,19 @@ class TestConcatenate(object):
         assert_(out is rout)
         assert_equal(res, rout)
 
+    @pytest.mark.skipif(IS_PYPY, reason="PYPY handles sq_concat, nb_add differently than cpython")
+    def test_operator_concat(self):
+        import operator
+        a = array([1, 2])
+        b = array([3, 4])
+        n = [1,2]
+        res = array([1, 2, 3, 4])
+        assert_raises(TypeError, operator.concat, a, b)
+        assert_raises(TypeError, operator.concat, a, n)
+        assert_raises(TypeError, operator.concat, n, a)
+        assert_raises(TypeError, operator.concat, a, 1)
+        assert_raises(TypeError, operator.concat, 1, a)
+
     def test_bad_out_shape(self):
         a = array([1, 2])
         b = array([3, 4])
@@ -336,19 +342,59 @@ class TestConcatenate(object):
         assert_raises(ValueError, concatenate, (a, b), out=np.empty((1,4)))
         concatenate((a, b), out=np.empty(4))
 
-    def test_out_dtype(self):
-        out = np.empty(4, np.float32)
-        res = concatenate((array([1, 2]), array([3, 4])), out=out)
-        assert_(out is res)
+    @pytest.mark.parametrize("axis", [None, 0])
+    @pytest.mark.parametrize("out_dtype", ["c8", "f4", "f8", ">f8", "i8", "S4"])
+    @pytest.mark.parametrize("casting",
+            ['no', 'equiv', 'safe', 'same_kind', 'unsafe'])
+    def test_out_and_dtype(self, axis, out_dtype, casting):
+        # Compare usage of `out=out` with `dtype=out.dtype`
+        out = np.empty(4, dtype=out_dtype)
+        to_concat = (array([1.1, 2.2]), array([3.3, 4.4]))
 
-        out = np.empty(4, np.complex64)
-        res = concatenate((array([0.1, 0.2]), array([0.3, 0.4])), out=out)
-        assert_(out is res)
+        if not np.can_cast(to_concat[0], out_dtype, casting=casting):
+            with assert_raises(TypeError):
+                concatenate(to_concat, out=out, axis=axis, casting=casting)
+            with assert_raises(TypeError):
+                concatenate(to_concat, dtype=out.dtype,
+                            axis=axis, casting=casting)
+        else:
+            res_out = concatenate(to_concat, out=out,
+                                  axis=axis, casting=casting)
+            res_dtype = concatenate(to_concat, dtype=out.dtype,
+                                    axis=axis, casting=casting)
+            assert res_out is out
+            assert_array_equal(out, res_dtype)
+            assert res_dtype.dtype == out_dtype
 
-        # invalid cast
-        out = np.empty(4, np.int32)
-        assert_raises(TypeError, concatenate,
-            (array([0.1, 0.2]), array([0.3, 0.4])), out=out)
+        with assert_raises(TypeError):
+            concatenate(to_concat, out=out, dtype=out_dtype, axis=axis)
+
+    @pytest.mark.parametrize("axis", [None, 0])
+    @pytest.mark.parametrize("string_dt", ["S", "U", "S0", "U0"])
+    @pytest.mark.parametrize("arrs",
+            [([0.],), ([0.], [1]), ([0], ["string"], [1.])])
+    def test_dtype_with_promotion(self, arrs, string_dt, axis):
+        # Note that U0 and S0 should be deprecated eventually and changed to
+        # actually give the empty string result (together with `np.array`)
+        res = np.concatenate(arrs, axis=axis, dtype=string_dt, casting="unsafe")
+        # The actual dtype should be identical to a cast (of a double array):
+        assert res.dtype == np.array(1.).astype(string_dt).dtype
+
+    @pytest.mark.parametrize("axis", [None, 0])
+    def test_string_dtype_does_not_inspect(self, axis):
+        # The error here currently depends on NPY_USE_NEW_CASTINGIMPL as
+        # the new version rejects using the "default string length" of 64.
+        # The new behaviour is better, `np.array()` and `arr.astype()` would
+        # have to be used instead. (currently only raises due to unsafe cast)
+        with pytest.raises((ValueError, TypeError)):
+            np.concatenate(([None], [1]), dtype="S", axis=axis)
+        with pytest.raises((ValueError, TypeError)):
+            np.concatenate(([None], [1]), dtype="U", axis=axis)
+
+    @pytest.mark.parametrize("axis", [None, 0])
+    def test_subarray_error(self, axis):
+        with pytest.raises(TypeError, match=".*subarray dtype"):
+            np.concatenate(([1], [1]), dtype="(2,)i", axis=axis)
 
 
 def test_stack():
@@ -409,7 +455,7 @@ def test_stack():
     assert_array_equal(result, np.array([0, 1, 2]))
 
 
-class TestBlock(object):
+class TestBlock:
     @pytest.fixture(params=['block', 'force_concatenate', 'force_slicing'])
     def block(self, request):
         # blocking small arrays and large arrays go through different paths.
@@ -707,7 +753,7 @@ class TestBlock(object):
 
 
 def test_block_dispatcher():
-    class ArrayLike(object):
+    class ArrayLike:
         pass
     a = ArrayLike()
     b = ArrayLike()

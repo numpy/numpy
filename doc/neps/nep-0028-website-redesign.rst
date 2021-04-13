@@ -1,3 +1,5 @@
+.. _NEP28:
+
 ===================================
 NEP 28 — numpy.org website redesign
 ===================================
@@ -5,7 +7,7 @@ NEP 28 — numpy.org website redesign
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
 :Author: Joe LaChance <joe@boldmetrics.com>
 :Author: Shekhar Rajak <shekharrajak.1994@gmail.com>
-:Status: Accepted
+:Status: Final
 :Type: Informational
 :Created: 2019-07-16
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-August/079889.html
@@ -131,7 +133,7 @@ Possible options for static site generators
    Unlike the previous options, Docusaurus doesn't come with themes, and thus we
    would not want to use this for our landing page. This is an excellent docs
    option written in React. Docusaurus natively has support for i18n (via
-   Crowdin_, document versioning, and document search.
+   Crowdin_), document versioning, and document search.
 
 Both Jekyll and Hugo are excellent options that should be supported into the
 future and are good choices for NumPy. Docusaurus has several bonus features
@@ -153,7 +155,7 @@ significant drain on the time of maintainers.
 2. *Github Pages.* Github Pages also has a 100GB bandwidth limit, and is unclear if
    additional bandwidth can be purchased. It is also unclear where sites are deployed,
    and should be assumed sites aren't deployed globally. Github Pages has an easy to
-   use CI & DNS, similar to to Netlify. HTTPS is supported.
+   use CI & DNS, similar to Netlify. HTTPS is supported.
 3. *Cloudflare.* An excellent option, additional CI is likely needed for the same
    ease of deployment.
 
@@ -166,7 +168,7 @@ have a similar deployment to GitHub Pages or Netlify.
 Analytics
 ~~~~~~~~~
 
-It's benefical to maintainers to know how many visitors are coming to
+It's beneficial to maintainers to know how many visitors are coming to
 numpy.org. Google Analytics offers visitor counts and locations. This will
 help to support and deploy more strategically, and help maintainers
 understand where traffic is coming from.
@@ -321,7 +323,9 @@ Alternatives we considered for the overall design of the website:
 Discussion
 ----------
 
-Mailing list thread discussing this NEP: TODO
+- Pull request for this NEP (with a good amount of discussion): https://github.com/numpy/numpy/pull/14032
+- Email about NEP for review: https://mail.python.org/pipermail/numpy-discussion/2019-July/079856.html
+- Proposal to accept this NEP: https://mail.python.org/pipermail/numpy-discussion/2019-August/079889.html
 
 
 References and Footnotes

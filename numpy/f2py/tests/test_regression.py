@@ -1,10 +1,8 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import pytest
 
 import numpy as np
-from numpy.testing import assert_raises, assert_equal
+from numpy.testing import assert_, assert_raises, assert_equal, assert_string_equal
 
 from . import util
 
@@ -27,3 +25,23 @@ class TestIntentInOut(util.F2PyTest):
         x = np.arange(3, dtype=np.float32)
         self.module.foo(x)
         assert_equal(x, [3, 1, 2])
+ 
+
+class TestNumpyVersionAttribute(util.F2PyTest):
+    # Check that th attribute __f2py_numpy_version__ is present
+    # in the compiled module and that has the value np.__version__.
+    sources = [_path('src', 'regression', 'inout.f90')]
+    
+    @pytest.mark.slow
+    def test_numpy_version_attribute(self):
+        
+        # Check that self.module has an attribute named "__f2py_numpy_version__"
+        assert_(hasattr(self.module, "__f2py_numpy_version__"), 
+                msg="Fortran module does not have __f2py_numpy_version__")
+        
+        # Check that the attribute __f2py_numpy_version__ is a string
+        assert_(isinstance(self.module.__f2py_numpy_version__, str),
+                msg="__f2py_numpy_version__ is not a string")
+        
+        # Check that __f2py_numpy_version__ has the value numpy.__version__
+        assert_string_equal(np.__version__, self.module.__f2py_numpy_version__)

@@ -2,8 +2,6 @@
 
 Test that we can run executable scripts that have been installed with numpy.
 """
-from __future__ import division, print_function, absolute_import
-
 import sys
 import os
 import pytest
@@ -11,8 +9,7 @@ from os.path import join as pathjoin, isfile, dirname
 import subprocess
 
 import numpy as np
-from numpy.compat.py3k import basestring
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_equal
 
 is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
 
@@ -41,9 +38,9 @@ def find_f2py_commands():
 def test_f2py(f2py_cmd):
     # test that we can run f2py script
     stdout = subprocess.check_output([f2py_cmd, '-v'])
-    assert_equal(stdout.strip(), b'2')
+    assert_equal(stdout.strip(), np.__version__.encode('ascii'))
 
 
 def test_pep338():
     stdout = subprocess.check_output([sys.executable, '-mnumpy.f2py', '-v'])
-    assert_equal(stdout.strip(), b'2')
+    assert_equal(stdout.strip(), np.__version__.encode('ascii'))

@@ -1,59 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This file defines a set of system_info classes for getting
 information about various resources (libraries, library directories,
-include directories, etc.) in the system. Currently, the following
-classes are available:
-
-  atlas_info
-  atlas_threads_info
-  atlas_blas_info
-  atlas_blas_threads_info
-  lapack_atlas_info
-  lapack_atlas_threads_info
-  atlas_3_10_info
-  atlas_3_10_threads_info
-  atlas_3_10_blas_info,
-  atlas_3_10_blas_threads_info,
-  lapack_atlas_3_10_info
-  lapack_atlas_3_10_threads_info
-  flame_info
-  blas_info
-  lapack_info
-  openblas_info
-  openblas64__info
-  openblas_ilp64_info
-  blis_info
-  blas_opt_info       # usage recommended
-  lapack_opt_info     # usage recommended
-  blas_ilp64_opt_info    # usage recommended (general ILP64 BLAS)
-  lapack_ilp64_opt_info  # usage recommended (general ILP64 LAPACK)
-  blas_ilp64_plain_opt_info    # usage recommended (general ILP64 BLAS, no symbol suffix)
-  lapack_ilp64_plain_opt_info  # usage recommended (general ILP64 LAPACK, no symbol suffix)
-  blas64__opt_info    # usage recommended (general ILP64 BLAS, 64_ symbol suffix)
-  lapack64__opt_info  # usage recommended (general ILP64 LAPACK, 64_ symbol suffix)
-  fftw_info,dfftw_info,sfftw_info
-  fftw_threads_info,dfftw_threads_info,sfftw_threads_info
-  djbfft_info
-  x11_info
-  lapack_src_info
-  blas_src_info
-  numpy_info
-  numarray_info
-  numpy_info
-  boost_python_info
-  agg2_info
-  wx_info
-  gdk_pixbuf_xlib_2_info
-  gdk_pixbuf_2_info
-  gdk_x11_2_info
-  gtkp_x11_2_info
-  gtkp_2_info
-  xft_info
-  freetype2_info
-  umfpack_info
-
-Usage:
+include directories, etc.) in the system. Usage:
     info_dict = get_info(<name>)
   where <name> is a string 'atlas','x11','fftw','lapack','blas',
   'lapack_src', 'blas_src', etc. For a complete list of allowed names,
@@ -81,19 +30,107 @@ The file 'site.cfg' is looked for in
 
 The first one found is used to get system configuration options The
 format is that used by ConfigParser (i.e., Windows .INI style). The
-section ALL has options that are the default for each section. The
-available sections are fftw, atlas, and x11. Appropriate defaults are
-used if nothing is specified.
+section ALL is not intended for general use.
+
+Appropriate defaults are used if nothing is specified.
 
 The order of finding the locations of resources is the following:
  1. environment variable
  2. section in site.cfg
- 3. ALL section in site.cfg
+ 3. DEFAULT section in site.cfg
+ 4. System default search paths (see ``default_*`` variables below).
 Only the first complete match is returned.
+
+Currently, the following classes are available, along with their section names:
+
+    Numeric_info:Numeric
+    _numpy_info:Numeric
+    _pkg_config_info:None
+    accelerate_info:accelerate
+    agg2_info:agg2
+    amd_info:amd
+    atlas_3_10_blas_info:atlas
+    atlas_3_10_blas_threads_info:atlas
+    atlas_3_10_info:atlas
+    atlas_3_10_threads_info:atlas
+    atlas_blas_info:atlas
+    atlas_blas_threads_info:atlas
+    atlas_info:atlas
+    atlas_threads_info:atlas
+    blas64__opt_info:ALL               # usage recommended (general ILP64 BLAS, 64_ symbol suffix)
+    blas_ilp64_opt_info:ALL            # usage recommended (general ILP64 BLAS)
+    blas_ilp64_plain_opt_info:ALL      # usage recommended (general ILP64 BLAS, no symbol suffix)
+    blas_info:blas
+    blas_mkl_info:mkl
+    blas_opt_info:ALL                  # usage recommended
+    blas_src_info:blas_src
+    blis_info:blis
+    boost_python_info:boost_python
+    dfftw_info:fftw
+    dfftw_threads_info:fftw
+    djbfft_info:djbfft
+    f2py_info:ALL
+    fft_opt_info:ALL
+    fftw2_info:fftw
+    fftw3_info:fftw3
+    fftw_info:fftw
+    fftw_threads_info:fftw
+    flame_info:flame
+    freetype2_info:freetype2
+    gdk_2_info:gdk_2
+    gdk_info:gdk
+    gdk_pixbuf_2_info:gdk_pixbuf_2
+    gdk_pixbuf_xlib_2_info:gdk_pixbuf_xlib_2
+    gdk_x11_2_info:gdk_x11_2
+    gtkp_2_info:gtkp_2
+    gtkp_x11_2_info:gtkp_x11_2
+    lapack64__opt_info:ALL             # usage recommended (general ILP64 LAPACK, 64_ symbol suffix)
+    lapack_atlas_3_10_info:atlas
+    lapack_atlas_3_10_threads_info:atlas
+    lapack_atlas_info:atlas
+    lapack_atlas_threads_info:atlas
+    lapack_ilp64_opt_info:ALL          # usage recommended (general ILP64 LAPACK)
+    lapack_ilp64_plain_opt_info:ALL    # usage recommended (general ILP64 LAPACK, no symbol suffix)
+    lapack_info:lapack
+    lapack_mkl_info:mkl
+    lapack_opt_info:ALL                # usage recommended
+    lapack_src_info:lapack_src
+    mkl_info:mkl
+    numarray_info:numarray
+    numerix_info:numerix
+    numpy_info:numpy
+    openblas64__info:openblas64_
+    openblas64__lapack_info:openblas64_
+    openblas_clapack_info:openblas
+    openblas_ilp64_info:openblas_ilp64
+    openblas_ilp64_lapack_info:openblas_ilp64
+    openblas_info:openblas
+    openblas_lapack_info:openblas
+    sfftw_info:fftw
+    sfftw_threads_info:fftw
+    system_info:ALL
+    umfpack_info:umfpack
+    wx_info:wx
+    x11_info:x11
+    xft_info:xft
+
+Note that blas_opt_info and lapack_opt_info honor the NPY_BLAS_ORDER
+and NPY_LAPACK_ORDER environment variables to determine the order in which
+specific BLAS and LAPACK libraries are searched for.
+
+This search (or autodetection) can be bypassed by defining the environment
+variables NPY_BLAS_LIBS and NPY_LAPACK_LIBS, which should then contain the
+exact linker flags to use (language will be set to F77). Building against
+Netlib BLAS/LAPACK or stub files, in order to be able to switch BLAS and LAPACK
+implementations at runtime. If using this to build NumPy itself, it is
+recommended to also define NPY_CBLAS_LIBS (assuming your BLAS library has a
+CBLAS interface) to enable CBLAS usage for matrix multiplication (unoptimized
+otherwise).
 
 Example:
 ----------
-[ALL]
+[DEFAULT]
+# default section
 library_dirs = /usr/lib:/usr/local/lib:/opt/lib
 include_dirs = /usr/include:/usr/local/include:/opt/include
 src_dirs = /usr/local/src:/opt/src
@@ -128,8 +165,6 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import re
@@ -140,12 +175,8 @@ import textwrap
 
 from glob import glob
 from functools import reduce
-if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError
-    from ConfigParser import RawConfigParser as ConfigParser
-else:
-    from configparser import NoOptionError
-    from configparser import RawConfigParser as ConfigParser
+from configparser import NoOptionError
+from configparser import RawConfigParser as ConfigParser
 # It seems that some people are importing ConfigParser from here so is
 # good to keep its class name. Use of RawConfigParser is needed in
 # order to be able to load path names with percent in them, like
@@ -153,23 +184,23 @@ else:
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
-import distutils.sysconfig
+import sysconfig
 from numpy.distutils import log
 from distutils.util import get_platform
 
 from numpy.distutils.exec_command import (
     find_executable, filepath_from_subprocess_output,
-    get_pythonexe)
+    )
 from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
-from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler as _customized_ccompiler
 from numpy.distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
 import shutil
 
+__all__ = ['system_info']
 
 # Determine number of bits
 import platform
@@ -238,7 +269,7 @@ def libpaths(paths, bits):
 
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
-                        os.path.join(distutils.sysconfig.EXEC_PREFIX,
+                        os.path.join(sysconfig.get_config_var('exec_prefix'),
                                      'libs')]
     default_runtime_dirs = []
     default_include_dirs = []
@@ -267,39 +298,36 @@ if sys.platform == 'win32':
         default_include_dirs.extend(
             os.path.join(library_root, d) for d in _include_dirs)
 
-    if sys.version_info >= (3, 3):
-        # VCpkg is the de-facto package manager on windows for C/C++
-        # libraries. If it is on the PATH, then we append its paths here.
-        # We also don't re-implement shutil.which for Python 2.7 because
-        # vcpkg doesn't support MSVC 2008.
-        vcpkg = shutil.which('vcpkg')
-        if vcpkg:
-            vcpkg_dir = os.path.dirname(vcpkg)
-            if platform.architecture() == '32bit':
-                specifier = 'x86'
-            else:
-                specifier = 'x64'
+    # VCpkg is the de-facto package manager on windows for C/C++
+    # libraries. If it is on the PATH, then we append its paths here.
+    vcpkg = shutil.which('vcpkg')
+    if vcpkg:
+        vcpkg_dir = os.path.dirname(vcpkg)
+        if platform.architecture()[0] == '32bit':
+            specifier = 'x86'
+        else:
+            specifier = 'x64'
 
-            vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
-            for vcpkg_root in [
-                os.path.join(vcpkg_installed, specifier + '-windows'),
-                os.path.join(vcpkg_installed, specifier + '-windows-static'),
-            ]:
-                add_system_root(vcpkg_root)
+        vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
+        for vcpkg_root in [
+            os.path.join(vcpkg_installed, specifier + '-windows'),
+            os.path.join(vcpkg_installed, specifier + '-windows-static'),
+        ]:
+            add_system_root(vcpkg_root)
 
-        # Conda is another popular package manager that provides libraries
-        conda = shutil.which('conda')
-        if conda:
-            conda_dir = os.path.dirname(conda)
-            add_system_root(os.path.join(conda_dir, '..', 'Library'))
-            add_system_root(os.path.join(conda_dir, 'Library'))
+    # Conda is another popular package manager that provides libraries
+    conda = shutil.which('conda')
+    if conda:
+        conda_dir = os.path.dirname(conda)
+        add_system_root(os.path.join(conda_dir, '..', 'Library'))
+        add_system_root(os.path.join(conda_dir, 'Library'))
 
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
     default_runtime_dirs = []
     default_include_dirs = ['/usr/local/include',
-                            '/opt/include', '/usr/include',
+                            '/opt/include',
                             # path of umfpack under macports
                             '/opt/local/include/ufsparse',
                             '/opt/local/include', '/sw/include',
@@ -308,8 +336,7 @@ else:
 
     default_x11_lib_dirs = libpaths(['/usr/X11R6/lib', '/usr/X11/lib',
                                      '/usr/lib'], platform_bits)
-    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include',
-                                '/usr/include']
+    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include']
 
     if os.path.exists('/usr/lib/X11'):
         globbed_x11_dir = glob('/usr/lib/*/libX11.so')
@@ -348,6 +375,22 @@ default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 so_ext = get_shared_lib_extension()
 
 
+def is_symlink_to_accelerate(filename):
+    accelpath = '/System/Library/Frameworks/Accelerate.framework'
+    return (sys.platform == 'darwin' and os.path.islink(filename) and
+            os.path.realpath(filename).startswith(accelpath))
+
+
+_accel_msg = (
+    'Found {filename}, but that file is a symbolic link to the '
+    'MacOS Accelerate framework, which is not supported by NumPy. '
+    'You must configure the build to use a different optimized library, '
+    'or disable the use of optimized BLAS and LAPACK by setting the '
+    'environment variables NPY_BLAS_ORDER="" and NPY_LAPACK_ORDER="" '
+    'before building NumPy.'
+)
+
+
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
     1) System-wide directory (directory-location of this module)
@@ -384,6 +427,89 @@ def get_standard_file(fname):
     return filenames
 
 
+def _parse_env_order(base_order, env):
+    """ Parse an environment variable `env` by splitting with "," and only returning elements from `base_order`
+
+    This method will sequence the environment variable and check for their invidual elements in `base_order`.
+
+    The items in the environment variable may be negated via '^item' or '!itema,itemb'.
+    It must start with ^/! to negate all options.
+
+    Raises
+    ------
+    ValueError: for mixed negated and non-negated orders or multiple negated orders
+
+    Parameters
+    ----------
+    base_order : list of str
+       the base list of orders
+    env : str
+       the environment variable to be parsed, if none is found, `base_order` is returned
+
+    Returns
+    -------
+    allow_order : list of str
+        allowed orders in lower-case
+    unknown_order : list of str
+        for values not overlapping with `base_order`
+    """
+    order_str = os.environ.get(env, None)
+
+    # ensure all base-orders are lower-case (for easier comparison)
+    base_order = [order.lower() for order in base_order]
+    if order_str is None:
+        return base_order, []
+
+    neg = order_str.startswith('^') or order_str.startswith('!')
+    # Check format
+    order_str_l = list(order_str)
+    sum_neg = order_str_l.count('^') + order_str_l.count('!')
+    if neg:
+        if sum_neg > 1:
+            raise ValueError(f"Environment variable '{env}' may only contain a single (prefixed) negation: {order_str}")
+        # remove prefix
+        order_str = order_str[1:]
+    elif sum_neg > 0:
+        raise ValueError(f"Environment variable '{env}' may not mix negated an non-negated items: {order_str}")
+
+    # Split and lower case
+    orders = order_str.lower().split(',')
+
+    # to inform callee about non-overlapping elements
+    unknown_order = []
+
+    # if negated, we have to remove from the order
+    if neg:
+        allow_order = base_order.copy()
+
+        for order in orders:
+            if not order:
+                continue
+
+            if order not in base_order:
+                unknown_order.append(order)
+                continue
+
+            if order in allow_order:
+                allow_order.remove(order)
+
+    else:
+        allow_order = []
+
+        for order in orders:
+            if not order:
+                continue
+
+            if order not in base_order:
+                unknown_order.append(order)
+                continue
+
+            if order not in allow_order:
+                allow_order.append(order)
+
+    return allow_order, unknown_order
+
+
 def get_info(name, notfound_action=0):
     """
     notfound_action:
@@ -413,7 +539,6 @@ def get_info(name, notfound_action=0):
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
-          'accelerate': accelerate_info,      # use blas_opt instead
           'openblas64_': openblas64__info,
           'openblas64__lapack': openblas64__lapack_info,
           'openblas_ilp64': openblas_ilp64_info,
@@ -582,14 +707,18 @@ class UmfpackNotFoundError(NotFoundError):
     the UMFPACK environment variable."""
 
 
-class system_info(object):
+class system_info:
 
     """ get_info() is the only public method. Don't use others.
     """
-    section = 'ALL'
     dir_env_var = None
-    search_static_first = 0  # XXX: disabled by default, may disappear in
-                            # future unless it is proved to be useful.
+    # XXX: search_static_first is disabled by default, may disappear in
+    # future unless it is proved to be useful.
+    search_static_first = 0
+    # The base-class section name is a random word "ALL" and is not really
+    # intended for general use. It cannot be None nor can it be DEFAULT as
+    # these break the ConfigParser. See gh-15338
+    section = 'ALL'
     saved_results = {}
 
     notfounderror = NotFoundError
@@ -682,8 +811,7 @@ class system_info(object):
         AliasedOptionError :
             in case more than one of the options are found
         """
-        found = map(lambda opt: self.cp.has_option(self.section, opt), options)
-        found = list(found)
+        found = [self.cp.has_option(self.section, opt) for opt in options]
         if sum(found) == 1:
             return options[found.index(True)]
         elif sum(found) == 0:
@@ -717,7 +845,7 @@ class system_info(object):
         return info
 
     def get_info(self, notfound_action=0):
-        """ Return a dictonary with items that are compatible
+        """ Return a dictionary with items that are compatible
             with numpy.distutils.setup keyword arguments.
         """
         flag = 0
@@ -901,6 +1029,9 @@ class system_info(object):
             for prefix in lib_prefixes:
                 p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
+                    # p[0] is the full path to the binary library file.
+                    if is_symlink_to_accelerate(p[0]):
+                        raise RuntimeError(_accel_msg.format(filename=p[0]))
                     break
             if p:
                 assert len(p) == 1
@@ -1430,6 +1561,9 @@ class lapack_info(system_info):
 
 
 class lapack_src_info(system_info):
+    # LAPACK_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'lapack_src'
     dir_env_var = 'LAPACK_SRC'
     notfounderror = LapackSrcNotFoundError
@@ -1632,8 +1766,8 @@ def get_atlas_version(**config):
 
 class lapack_opt_info(system_info):
     notfounderror = LapackNotFoundError
-    # List of all known BLAS libraries, in the default order
-    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'accelerate', 'lapack']
+    # List of all known LAPACK libraries, in the default order
+    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
 
     def _calc_info_mkl(self):
@@ -1726,28 +1860,31 @@ class lapack_opt_info(system_info):
             return True
         return False
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_LAPACK_LIBS'].split()
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
     def calc_info(self):
-        user_order = os.environ.get(self.order_env_var_name, None)
-        if user_order is None:
-            lapack_order = self.lapack_order
-        else:
-            # the user has requested the order of the
-            # check they are all in the available list, a COMMA SEPARATED list
-            user_order = user_order.lower().split(',')
-            non_existing = []
-            lapack_order = []
-            for order in user_order:
-                if order in self.lapack_order:
-                    lapack_order.append(order)
-                elif len(order) > 0:
-                    non_existing.append(order)
-            if len(non_existing) > 0:
-                raise ValueError("lapack_opt_info user defined "
-                                 "LAPACK order has unacceptable "
-                                 "values: {}".format(non_existing))
+        lapack_order, unknown_order = _parse_env_order(self.lapack_order, self.order_env_var_name)
+        if len(unknown_order) > 0:
+            raise ValueError("lapack_opt_info user defined "
+                             "LAPACK order has unacceptable "
+                             "values: {}".format(unknown_order))
+
+        if 'NPY_LAPACK_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for lapack in lapack_order:
             if self._calc_info(lapack):
@@ -1805,7 +1942,7 @@ class lapack64__opt_info(lapack_ilp64_opt_info):
 class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
     # List of all known BLAS libraries, in the default order
-    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'accelerate', 'blas']
+    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
 
     def _calc_info_mkl(self):
@@ -1871,26 +2008,33 @@ class blas_opt_info(system_info):
         self.set_info(**info)
         return True
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_BLAS_LIBS'].split()
+        if 'NPY_CBLAS_LIBS' in os.environ:
+            info['define_macros'].append(('HAVE_CBLAS', None))
+            info['extra_link_args'].extend(
+                                        os.environ['NPY_CBLAS_LIBS'].split())
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
     def calc_info(self):
-        user_order = os.environ.get(self.order_env_var_name, None)
-        if user_order is None:
-            blas_order = self.blas_order
-        else:
-            # the user has requested the order of the
-            # check they are all in the available list
-            user_order = user_order.lower().split(',')
-            non_existing = []
-            blas_order = []
-            for order in user_order:
-                if order in self.blas_order:
-                    blas_order.append(order)
-                elif len(order) > 0:
-                    non_existing.append(order)
-            if len(non_existing) > 0:
-                raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(non_existing))
+        blas_order, unknown_order = _parse_env_order(self.blas_order, self.order_env_var_name)
+        if len(unknown_order) > 0:
+            raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(unknown_order))
+
+        if 'NPY_BLAS_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for blas in blas_order:
             if self._calc_info(blas):
@@ -1926,6 +2070,14 @@ class blas64__opt_info(blas_ilp64_opt_info):
     symbol_suffix = '64_'
 
 
+class cblas_info(system_info):
+    section = 'cblas'
+    dir_env_var = 'CBLAS'
+    # No default as it's used only in blas_info
+    _lib_names = []
+    notfounderror = BlasNotFoundError
+
+
 class blas_info(system_info):
     section = 'blas'
     dir_env_var = 'BLAS'
@@ -1947,6 +2099,13 @@ class blas_info(system_info):
             # often not installed when mingw is being used. This rough
             # treatment is not desirable, but windows is tricky.
             info['language'] = 'f77'  # XXX: is it generally true?
+            # If cblas is given as an option, use those
+            cblas_info_obj = cblas_info()
+            cblas_opt = cblas_info_obj.get_option_single('cblas_libs', 'libraries')
+            cblas_libs = cblas_info_obj.get_libs(cblas_opt, None)
+            if cblas_libs:
+                info['libraries'] = cblas_libs + blas_libs
+                info['define_macros'] = [('HAVE_CBLAS', None)]
         else:
             lib = self.get_cblas_libs(info)
             if lib is not None:
@@ -2102,16 +2261,17 @@ class openblas_info(blas_info):
                 return None
 
         # Generate numpy.distutils virtual static library file
-        tmpdir = os.path.join(os.getcwd(), 'build', 'openblas')
+        basename = self.__class__.__name__
+        tmpdir = os.path.join(os.getcwd(), 'build', basename)
         if not os.path.isdir(tmpdir):
             os.makedirs(tmpdir)
 
         info = {'library_dirs': [tmpdir],
-                'libraries': ['openblas'],
+                'libraries': [basename],
                 'language': 'f77'}
 
-        fake_lib_file = os.path.join(tmpdir, 'openblas.fobjects')
-        fake_clib_file = os.path.join(tmpdir, 'openblas.cobjects')
+        fake_lib_file = os.path.join(tmpdir, basename + '.fobjects')
+        fake_clib_file = os.path.join(tmpdir, basename + '.cobjects')
         with open(fake_lib_file, 'w') as f:
             f.write("\n".join(library_paths))
         with open(fake_clib_file, 'w') as f:
@@ -2147,8 +2307,6 @@ class openblas_info(blas_info):
             extra_args = info['extra_link_args']
         except Exception:
             extra_args = []
-        if sys.version_info < (3, 5) and sys.version_info > (3, 0) and c.compiler_type == "msvc":
-            extra_args.append("/MANIFEST")
         try:
             with open(src, 'wt') as f:
                 f.write(s)
@@ -2361,6 +2519,9 @@ class accelerate_info(system_info):
         return
 
 class blas_src_info(system_info):
+    # BLAS_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'blas_src'
     dir_env_var = 'BLAS_SRC'
     notfounderror = BlasSrcNotFoundError
@@ -2464,13 +2625,12 @@ class _numpy_info(system_info):
             except AttributeError:
                 pass
 
-            include_dirs.append(distutils.sysconfig.get_python_inc(
-                                        prefix=os.sep.join(prefix)))
+            include_dirs.append(sysconfig.get_path('include'))
         except ImportError:
             pass
-        py_incl_dir = distutils.sysconfig.get_python_inc()
+        py_incl_dir = sysconfig.get_path('include')
         include_dirs.append(py_incl_dir)
-        py_pincl_dir = distutils.sysconfig.get_python_inc(plat_specific=True)
+        py_pincl_dir = sysconfig.get_path('platinclude')
         if py_pincl_dir not in include_dirs:
             include_dirs.append(py_pincl_dir)
         for d in default_include_dirs:
@@ -2540,18 +2700,18 @@ class numerix_info(system_info):
             try:
                 import numpy  # noqa: F401
                 which = "numpy", "defaulted"
-            except ImportError:
-                msg1 = str(get_exception())
+            except ImportError as e:
+                msg1 = str(e)
                 try:
                     import Numeric  # noqa: F401
                     which = "numeric", "defaulted"
-                except ImportError:
-                    msg2 = str(get_exception())
+                except ImportError as e:
+                    msg2 = str(e)
                     try:
                         import numarray  # noqa: F401
                         which = "numarray", "defaulted"
-                    except ImportError:
-                        msg3 = str(get_exception())
+                    except ImportError as e:
+                        msg3 = str(e)
                         log.info(msg1)
                         log.info(msg2)
                         log.info(msg3)
@@ -2597,8 +2757,8 @@ class boost_python_info(system_info):
                 break
         if not src_dir:
             return
-        py_incl_dirs = [distutils.sysconfig.get_python_inc()]
-        py_pincl_dir = distutils.sysconfig.get_python_inc(plat_specific=True)
+        py_incl_dirs = [sysconfig.get_path('include')]
+        py_pincl_dir = sysconfig.get_path('platinclude')
         if py_pincl_dir not in py_incl_dirs:
             py_incl_dirs.append(py_pincl_dir)
         srcs_dir = os.path.join(src_dir, 'libs', 'python', 'src')

@@ -248,7 +248,7 @@ check_ascii_format(const char *format)
  * Fix the generated string: make sure the decimal is ., that exponent has a
  * minimal number of digits, and that it has a decimal + one digit after that
  * decimal if decimal argument != 0 (Same effect that 'Z' format in
- * PyOS_ascii_formatd
+ * PyOS_ascii_formatd)
  */
 static char*
 fix_ascii_format(char* buf, size_t buflen, int decimal)
@@ -283,7 +283,7 @@ fix_ascii_format(char* buf, size_t buflen, int decimal)
  *      converting.
  *      - value: The value to convert
  *      - decimal: if != 0, always has a decimal, and at leasat one digit after
- *      the decimal. This has the same effect as passing 'Z' in the origianl
+ *      the decimal. This has the same effect as passing 'Z' in the original
  *      PyOS_ascii_formatd
  *
  * This is similar to PyOS_ascii_formatd in python > 2.6, except that it does

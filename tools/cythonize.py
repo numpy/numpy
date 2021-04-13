@@ -30,8 +30,6 @@ Note: this script does not check any of the dependent C libraries; it only
 operates on the Cython .pyx files.
 """
 
-from __future__ import division, print_function, absolute_import
-
 import os
 import re
 import sys
@@ -58,25 +56,28 @@ def process_pyx(fromfile, tofile):
 
     try:
         # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
+        import Cython
         from Cython.Compiler.Version import version as cython_version
-    except ImportError:
+    except ImportError as e:
         # The `cython` command need not point to the version installed in the
         # Python running this script, so raise an error to avoid the chance of
         # using the wrong version of Cython.
-        raise OSError('Cython needs to be installed in Python as a module')
+        msg = 'Cython needs to be installed in Python as a module'
+        raise OSError(msg) from e
     else:
         # check the version, and invoke through python
         from distutils.version import LooseVersion
 
-        # Cython 0.29.13 is required for Python 3.8 and there are
+        # Cython 0.29.21 is required for Python 3.9 and there are
         # other fixes in the 0.29 series that are needed even for earlier
         # Python versions.
         # Note: keep in sync with that in pyproject.toml
-        required_version = LooseVersion('0.29.13')
+        required_version = LooseVersion('0.29.21')
 
         if LooseVersion(cython_version) < required_version:
-            raise RuntimeError('Building {} requires Cython >= {}'.format(
-                VENDOR, required_version))
+            cython_path = Cython.__file__
+            raise RuntimeError(f'Building {VENDOR} requires Cython >= {required_version}'
+                               f', found {cython_version} at {cython_path}')
         subprocess.check_call(
             [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
 
@@ -181,13 +182,13 @@ def process(path, fromfile, tofile, processor_function, hash_db):
     fulltopath = os.path.join(path, tofile)
     current_hash = get_hash(fullfrompath, fulltopath)
     if current_hash == hash_db.get(normpath(fullfrompath), None):
-        print('%s has not changed' % fullfrompath)
+        print(f'{fullfrompath} has not changed')
         return
 
     orig_cwd = os.getcwd()
     try:
         os.chdir(path)
-        print('Processing %s' % fullfrompath)
+        print(f'Processing {fullfrompath}')
         processor_function(fromfile, tofile)
     finally:
         os.chdir(orig_cwd)

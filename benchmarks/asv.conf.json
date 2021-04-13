@@ -15,7 +15,7 @@
 
     // List of branches to benchmark. If not provided, defaults to "master"
     // (for git) or "tip" (for mercurial).
-    "branches": ["master"],
+    "branches": ["HEAD"],
 
     // The DVCS being used.  If not set, it will be automatically
     // determined from "repo" by looking at the protocol in the URL
@@ -42,7 +42,6 @@
     // list indicates to just test against the default (latest)
     // version.
     "matrix": {
-    	"six": [],
         "Cython": [],
     },
 

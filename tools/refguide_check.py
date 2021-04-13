@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 refguide_check.py [OPTIONS] [-- ARGS]
 
@@ -19,29 +19,29 @@ another function, or deprecated, or ...)
 Another use of this helper script is to check validity of code samples
 in docstrings::
 
-    $ python refguide_check.py --doctests ma
+    $ python tools/refguide_check.py --doctests ma
 
 or in RST-based documentations::
 
-    $ python refguide_check.py --rst docs
-"""
-from __future__ import print_function
+    $ python tools/refguide_check.py --rst doc/source
 
-import sys
+"""
+import copy
+import doctest
+import inspect
+import io
 import os
 import re
-import copy
-import inspect
-import warnings
-import doctest
-import tempfile
-import io
-import docutils.core
-from docutils.parsers.rst import directives
 import shutil
-import glob
-from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
+import sys
+import tempfile
+import warnings
+import docutils.core
 from argparse import ArgumentParser
+from contextlib import contextmanager, redirect_stderr
+from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
+
+from docutils.parsers.rst import directives
 from pkg_resources import parse_version
 
 import sphinx
@@ -72,7 +72,6 @@ BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
     'core',
-    'doc.structured_arrays',
     'f2py',
     'linalg',
     'lib',
@@ -120,6 +119,18 @@ RST_SKIPLIST = [
     'doc/release',
     'doc/source/release',
     'c-info.ufunc-tutorial.rst',
+    'c-info.python-as-glue.rst',
+    'f2py.getting-started.rst',
+    'arrays.nditer.cython.rst',
+    # See PR 17222, these should be fixed
+    'basics.broadcasting.rst',
+    'basics.byteswapping.rst',
+    'basics.creation.rst',
+    'basics.dispatch.rst',
+    'basics.indexing.rst',
+    'basics.subclassing.rst',
+    'basics.types.rst',
+    'misc.rst',
 ]
 
 # these names are not required to be present in ALL despite being in
@@ -155,9 +166,8 @@ def short_path(path, cwd=None):
 
     Parameters
     ----------
-    path: str or None
-
-    cwd: str or None
+    path : str or None
+    cwd : str or None
 
     Returns
     -------
@@ -197,7 +207,7 @@ def find_names(module, names_dict):
     names_dict : dict
         Dictionary which contains module name as key and a set of found
         function names and directives as value
-    
+
     Returns
     -------
     None
@@ -231,12 +241,12 @@ def find_names(module, names_dict):
 def get_all_dict(module):
     """
     Return a copy of the __all__ dict with irrelevant items removed.
-    
+
     Parameters
     ----------
     module : ModuleType
         The module whose __all__ dict has to be processed
-    
+
     Returns
     -------
     deprecated : list
@@ -244,7 +254,7 @@ def get_all_dict(module):
     not_deprecated : list
         List of non callable or non deprecated sub modules
     others : list
-        List of remaining types of sub modules 
+        List of remaining types of sub modules
     """
     if hasattr(module, "__all__"):
         all_dict = copy.deepcopy(module.__all__)
@@ -258,7 +268,7 @@ def get_all_dict(module):
         except ValueError:
             pass
     if not all_dict:
-        # Must be a pure documentation module like doc.structured_arrays
+        # Must be a pure documentation module
         all_dict.append('__doc__')
 
     # Modules are almost always private; real submodules need a separate
@@ -294,7 +304,7 @@ def compare(all_dict, others, names, module_name):
         List of non deprecated sub modules for module_name
     others : list
         List of sub modules for module_name
-    names :  set
+    names : set
         Set of function names or special directives present in
         docstring of module_name
     module_name : ModuleType
@@ -333,8 +343,8 @@ def is_deprecated(f):
     """
     Check if module `f` is deprecated
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     f : ModuleType
 
     Returns
@@ -386,8 +396,8 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
     output += "Objects in refguide: %i\n\n" % num_ref
 
     only_all, only_ref, missing = compare(all_dict, others, names, module_name)
-    dep_in_ref = set(only_ref).intersection(deprecated)
-    only_ref = set(only_ref).difference(deprecated)
+    dep_in_ref = only_ref.intersection(deprecated)
+    only_ref = only_ref.difference(deprecated)
 
     if len(dep_in_ref) > 0:
         output += "Deprecated objects in refguide::\n\n"
@@ -448,7 +458,7 @@ def validate_rst_syntax(text, name, dots=True):
         return False, "ERROR: %s: no documentation" % (name,)
 
     ok_unknown_items = set([
-        'mod', 'currentmodule', 'autosummary', 'data', 'attr',
+        'mod', 'doc', 'currentmodule', 'autosummary', 'data', 'attr',
         'obj', 'versionadded', 'versionchanged', 'module', 'class',
         'ref', 'func', 'toctree', 'moduleauthor', 'term', 'c:member',
         'sectionauthor', 'codeauthor', 'eq', 'doi', 'DOI', 'arXiv', 'arxiv'
@@ -658,7 +668,6 @@ class Checker(doctest.OutputChecker):
     Check the docstrings
     """
     obj_pattern = re.compile('at 0x[0-9a-fA-F]+>')
-    int_pattern = re.compile('^[0-9]+L?$')
     vanilla = doctest.OutputChecker()
     rndm_markers = {'# random', '# Random', '#random', '#Random', "# may vary",
                     "# uninitialized", "#uninitialized"}
@@ -696,11 +705,6 @@ class Checker(doctest.OutputChecker):
         # ignore comments (e.g. signal.freqresp)
         if want.lstrip().startswith("#"):
             return True
-
-        # python 2 long integers are equal to python 3 integers
-        if self.int_pattern.match(want) and self.int_pattern.match(got):
-            if want.rstrip("L\r\n") == got.rstrip("L\r\n"):
-                return True
 
         # try the standard doctest
         try:
@@ -775,54 +779,43 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
     Parameters
     ----------
-    tests: list
+    tests : list
 
     full_name : str
 
     verbose : bool
-
-    doctest_warning : bool
+    doctest_warnings : bool
 
     Returns
     -------
     tuple(bool, list)
         Tuple of (success, output)
     """
-    flags = NORMALIZE_WHITESPACE | ELLIPSIS | IGNORE_EXCEPTION_DETAIL
+    flags = NORMALIZE_WHITESPACE | ELLIPSIS
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
                       verbose=verbose)
 
-    output = []
+    output = io.StringIO(newline='')
     success = True
-    def out(msg):
-        output.append(msg)
 
-    class MyStderr(object):
-        """
-        Redirect stderr to the current stdout
-        """
-        def write(self, msg):
-            if doctest_warnings:
-                sys.stdout.write(msg)
-            else:
-                out(msg)
+    # Redirect stderr to the stdout or output
+    tmp_stderr = sys.stdout if doctest_warnings else output
 
-        # a flush method is required when a doctest uses multiprocessing
-        # multiprocessing/popen_fork.py flushes sys.stderr
-        def flush(self):
-            if doctest_warnings:
-                sys.stdout.flush()
+    @contextmanager
+    def temp_cwd():
+        cwd = os.getcwd()
+        tmpdir = tempfile.mkdtemp()
+        try:
+            os.chdir(tmpdir)
+            yield tmpdir
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmpdir)
 
     # Run tests, trying to restore global state afterward
-    old_printoptions = np.get_printoptions()
-    old_errstate = np.seterr()
-    old_stderr = sys.stderr
     cwd = os.getcwd()
-    tmpdir = tempfile.mkdtemp()
-    sys.stderr = MyStderr()
-    try:
-        os.chdir(tmpdir)
-
+    with np.errstate(), np.printoptions(), temp_cwd() as tmpdir, \
+            redirect_stderr(tmp_stderr):
         # try to ensure random seed is NOT reproducible
         np.random.seed(None)
 
@@ -837,18 +830,13 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
             # Process our options
             if any([SKIPBLOCK in ex.options for ex in t.examples]):
                 continue
-            fails, successes = runner.run(t, out=out, clear_globs=False)
+            fails, successes = runner.run(t, out=output.write, clear_globs=False)
             if fails > 0:
                 success = False
             ns = t.globs
-    finally:
-        sys.stderr = old_stderr
-        os.chdir(cwd)
-        shutil.rmtree(tmpdir)
-        np.set_printoptions(**old_printoptions)
-        np.seterr(**old_errstate)
 
-    return success, output
+    output.seek(0)
+    return success, output.read()
 
 
 def check_doctests(module, verbose, ns=None,
@@ -865,7 +853,7 @@ def check_doctests(module, verbose, ns=None,
     ns : dict
         Name space of module
     dots : bool
-    
+
     doctest_warnings : bool
 
     Returns
@@ -910,7 +898,7 @@ def check_doctests(module, verbose, ns=None,
         if dots:
             output_dot('.' if success else 'F')
 
-        results.append((full_name, success, "".join(output)))
+        results.append((full_name, success, output))
 
         if HAVE_MATPLOTLIB:
             import matplotlib.pyplot as plt
@@ -936,7 +924,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
     ns : dict
         Name space
-    
+
     dots : bool
 
     doctest_warnings : bool
@@ -948,6 +936,14 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
     Notes
     -----
+
+    refguide can be signalled to skip testing code by adding
+    ``#doctest: +SKIP`` to the end of the line. If the output varies or is
+    random, add ``# may vary`` or ``# random`` to the comment. for example
+
+    >>> plt.plot(...)  # doctest: +SKIP
+    >>> random.randint(0,10)
+    5 # random
 
     We also try to weed out pseudocode:
     * We maintain a list of exceptions which signal pseudocode,
@@ -980,12 +976,8 @@ def check_doctests_testfile(fname, verbose, ns=None,
         return results
 
     full_name = fname
-    if sys.version_info.major <= 2:
-        with open(fname) as f:
-            text = f.read()
-    else:
-        with open(fname, encoding='utf-8') as f:
-            text = f.read()
+    with open(fname, encoding='utf-8') as f:
+        text = f.read()
 
     PSEUDOCODE = set(['some_function', 'some_module', 'import example',
                       'ctypes.CDLL',     # likely need compiling, skip it
@@ -1026,7 +1018,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
     if dots:
         output_dot('.' if success else 'F')
 
-    results.append((full_name, success, "".join(output)))
+    results.append((full_name, success, output))
 
     if HAVE_MATPLOTLIB:
         import matplotlib.pyplot as plt
@@ -1052,7 +1044,7 @@ def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
     Yields
     ------
     path
-        Path of the directory and it's sub directories
+        Path of the directory and its sub directories
     """
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path
@@ -1118,7 +1110,7 @@ def init_matplotlib():
 def main(argv):
     """
     Validates the docstrings of all the pre decided set of
-    modules for errors and docstring standards. 
+    modules for errors and docstring standards.
     """
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("module_names", metavar="SUBMODULES", default=[],
@@ -1197,8 +1189,6 @@ def main(argv):
             if dots:
                 sys.stderr.write('\n')
                 sys.stderr.flush()
-
-            all_dict, deprecated, others = get_all_dict(module)
 
     if args.rst:
         base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')

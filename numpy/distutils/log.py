@@ -1,17 +1,11 @@
-# Colored log, requires Python 2.3 or up.
-from __future__ import division, absolute_import, print_function
-
+# Colored log
 import sys
-from distutils.log import *
+from distutils.log import *  # noqa: F403
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
 
-if sys.version_info[0] < 3:
-    from .misc_util import (red_text, default_text, cyan_text, green_text,
-            is_sequence, is_string)
-else:
-    from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
-            green_text, is_sequence, is_string)
+from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
+        green_text, is_sequence, is_string)
 
 
 def _fix_args(args,flag=1):

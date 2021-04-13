@@ -1,8 +1,6 @@
 """ Test functions for limits module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
@@ -11,37 +9,37 @@ from numpy.core.getlimits import _discovered_machar, _float_ma
 
 ##################################################
 
-class TestPythonFloat(object):
+class TestPythonFloat:
     def test_singleton(self):
         ftype = finfo(float)
         ftype2 = finfo(float)
         assert_equal(id(ftype), id(ftype2))
 
-class TestHalf(object):
+class TestHalf:
     def test_singleton(self):
         ftype = finfo(half)
         ftype2 = finfo(half)
         assert_equal(id(ftype), id(ftype2))
 
-class TestSingle(object):
+class TestSingle:
     def test_singleton(self):
         ftype = finfo(single)
         ftype2 = finfo(single)
         assert_equal(id(ftype), id(ftype2))
 
-class TestDouble(object):
+class TestDouble:
     def test_singleton(self):
         ftype = finfo(double)
         ftype2 = finfo(double)
         assert_equal(id(ftype), id(ftype2))
 
-class TestLongdouble(object):
+class TestLongdouble:
     def test_singleton(self):
         ftype = finfo(longdouble)
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
 
-class TestFinfo(object):
+class TestFinfo:
     def test_basic(self):
         dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
                        [np.float16, np.float32, np.float64, np.complex64,
@@ -54,7 +52,7 @@ class TestFinfo(object):
                              getattr(finfo(dt2), attr), attr)
         assert_raises(ValueError, finfo, 'i4')
 
-class TestIinfo(object):
+class TestIinfo:
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
                    'u1', 'u2', 'u4', 'u8'],
@@ -71,7 +69,7 @@ class TestIinfo(object):
         for T in types:
             assert_equal(iinfo(T).max, T(-1))
 
-class TestRepr(object):
+class TestRepr:
     def test_iinfo_repr(self):
         expected = "iinfo(min=-32768, max=32767, dtype=int16)"
         assert_equal(repr(np.iinfo(np.int16)), expected)

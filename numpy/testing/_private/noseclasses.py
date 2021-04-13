@@ -4,8 +4,6 @@
 # Because this module imports nose directly, it should not
 # be used except by nosetester.py to avoid a general NumPy
 # dependency on nose.
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import doctest
@@ -78,7 +76,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:
             for valname, val in obj.__dict__.items():
-                valname1 = '%s.%s' % (name, valname)
+                valname1 = f'{name}.{valname}'
                 if ( (isroutine(val) or isclass(val))
                      and self._from_module(module, val)):
 
@@ -98,7 +96,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                 if ((isfunction(val) or isclass(val) or
                      ismethod(val) or isinstance(val, property)) and
                       self._from_module(module, val)):
-                    valname = '%s.%s' % (name, valname)
+                    valname = f'{name}.{valname}'
                     self._find(tests, val, valname, module, source_lines,
                                globs, seen)
 
@@ -212,7 +210,7 @@ class NumpyDoctest(npd.Doctest):
         # starting Python and executing "import numpy as np", and,
         # for SciPy packages, an additional import of the local
         # package (so that scipy.linalg.basic.py's doctests have an
-        # implicit "from scipy import linalg" as well.
+        # implicit "from scipy import linalg" as well).
         #
         # Note: __file__ allows the doctest in NoseTester to run
         # without producing an error
@@ -268,7 +266,7 @@ class NumpyDoctest(npd.Doctest):
         return npd.Doctest.wantFile(self, file)
 
 
-class Unplugger(object):
+class Unplugger:
     """ Nose plugin to remove named plugin late in loading
 
     By default it removes the "doctest" plugin.

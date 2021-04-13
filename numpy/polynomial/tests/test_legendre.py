@@ -1,8 +1,6 @@
 """Tests for legendre module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from functools import reduce
 
 import numpy as np
@@ -30,7 +28,7 @@ def trim(x):
     return leg.legtrim(x, tol=1e-6)
 
 
-class TestConstants(object):
+class TestConstants:
 
     def test_legdomain(self):
         assert_equal(leg.legdomain, [-1, 1])
@@ -45,13 +43,13 @@ class TestConstants(object):
         assert_equal(leg.legx, [0, 1])
 
 
-class TestArithmetic(object):
+class TestArithmetic:
     x = np.linspace(-1, 1, 100)
 
     def test_legadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -61,7 +59,7 @@ class TestArithmetic(object):
     def test_legsub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -83,7 +81,7 @@ class TestArithmetic(object):
             pol1 = [0]*i + [1]
             val1 = leg.legval(self.x, pol1)
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 pol2 = [0]*j + [1]
                 val2 = leg.legval(self.x, pol2)
                 pol3 = leg.legmul(pol1, pol2)
@@ -94,7 +92,7 @@ class TestArithmetic(object):
     def test_legdiv(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = leg.legadd(ci, cj)
@@ -105,14 +103,14 @@ class TestArithmetic(object):
     def test_legpow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(leg.legmul, [c]*j, np.array([1]))
                 res = leg.legpow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
-class TestEvaluation(object):
+class TestEvaluation:
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([2., 2., 2.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -130,7 +128,7 @@ class TestEvaluation(object):
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Llist]
         for i in range(10):
-            msg = "At i=%d" % i
+            msg = f"At i={i}"
             tgt = y[i]
             res = leg.legval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)
@@ -206,7 +204,7 @@ class TestEvaluation(object):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(object):
+class TestIntegral:
 
     def test_legint(self):
         # check exceptions
@@ -307,8 +305,11 @@ class TestIntegral(object):
         res = leg.legint(c2d, k=3, axis=1)
         assert_almost_equal(res, tgt)
 
+    def test_legint_zerointord(self):
+        assert_equal(leg.legint((1, 2, 3), 0), (1, 2, 3))
 
-class TestDerivative(object):
+
+class TestDerivative:
 
     def test_legder(self):
         # check exceptions
@@ -347,8 +348,11 @@ class TestDerivative(object):
         res = leg.legder(c2d, axis=1)
         assert_almost_equal(res, tgt)
 
+    def test_legder_orderhigherthancoeff(self):
+        c = (1, 2, 3, 4)
+        assert_equal(leg.legder(c, 4), [0])
 
-class TestVander(object):
+class TestVander:
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -395,8 +399,11 @@ class TestVander(object):
         van = leg.legvander3d([x1], [x2], [x3], [1, 2, 3])
         assert_(van.shape == (1, 5, 24))
 
+    def test_legvander_negdeg(self):
+        assert_raises(ValueError, leg.legvander, (1, 2, 3), -1)
 
-class TestFitting(object):
+
+class TestFitting:
 
     def test_legfit(self):
         def f(x):
@@ -473,7 +480,7 @@ class TestFitting(object):
         assert_almost_equal(coef1, coef2)
 
 
-class TestCompanion(object):
+class TestCompanion:
 
     def test_raises(self):
         assert_raises(ValueError, leg.legcompanion, [])
@@ -488,7 +495,7 @@ class TestCompanion(object):
         assert_(leg.legcompanion([1, 2])[0, 0] == -.5)
 
 
-class TestGauss(object):
+class TestGauss:
 
     def test_100(self):
         x, w = leg.leggauss(100)
@@ -507,7 +514,7 @@ class TestGauss(object):
         assert_almost_equal(w.sum(), tgt)
 
 
-class TestMisc(object):
+class TestMisc:
 
     def test_legfromroots(self):
         res = leg.legfromroots([])
@@ -542,6 +549,9 @@ class TestMisc(object):
 
     def test_legline(self):
         assert_equal(leg.legline(3, 4), [3, 4])
+
+    def test_legline_zeroscl(self):
+        assert_equal(leg.legline(3, 0), [3])
 
     def test_leg2poly(self):
         for i in range(10):

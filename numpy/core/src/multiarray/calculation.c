@@ -392,7 +392,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         else {
             val = PyArray_DIM(arrnew,i);
         }
-        PyTuple_SET_ITEM(newshape, i, PyInt_FromLong((long)val));
+        PyTuple_SET_ITEM(newshape, i, PyLong_FromLong((long)val));
     }
     arr2 = (PyArrayObject *)PyArray_Reshape(arr1, newshape);
     Py_DECREF(arr1);
@@ -423,7 +423,8 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         return NULL;
     }
     arr2 = (PyArrayObject *)PyArray_EnsureAnyArray(
-                PyArray_GenericBinaryFunction(arr1, obj3, n_ops.multiply));
+                PyArray_GenericBinaryFunction((PyObject *)arr1, obj3,
+                                               n_ops.multiply));
     Py_DECREF(arr1);
     Py_DECREF(obj3);
     if (arr2 == NULL) {
@@ -772,11 +773,7 @@ PyArray_Mean(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
         return NULL;
     }
     if (!out) {
-#if defined(NPY_PY3K)
         ret = PyNumber_TrueDivide(obj1, obj2);
-#else
-        ret = PyNumber_Divide(obj1, obj2);
-#endif
     }
     else {
         ret = PyObject_CallFunction(n_ops.divide, "OOO", out, obj2, out);
@@ -930,14 +927,15 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         }
     }
 
-    /* NumPy 1.17.0, 2019-02-24 */
-    if (DEPRECATE(
-            "->f->fastclip is deprecated. Use PyUFunc_RegisterLoopForDescr to "
-            "attach a custom loop to np.core.umath.clip, np.minimum, and "
-            "np.maximum") < 0) {
-        return NULL;
-    }
-    /* everything below can be removed once this deprecation completes */
+    /*
+     * NumPy 1.17.0, 2019-02-24
+     * NumPy 1.19.0, 2020-01-15
+     *
+     * Setting `->f->fastclip to anything but NULL has been deprecated in 1.19
+     * the code path below was previously deprecated since 1.17.
+     * (the deprecation moved to registration time instead of execution time)
+     * everything below can be removed once this deprecation completes
+     */
 
     if (func == NULL
         || (min != NULL && !PyArray_CheckAnyScalar(min))
@@ -1026,7 +1024,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (min != NULL) {
         if (PyArray_ISUNSIGNED(self)) {
             int cmp;
-            zero = PyInt_FromLong(0);
+            zero = PyLong_FromLong(0);
             cmp = PyObject_RichCompareBool(min, zero, Py_LT);
             if (cmp == -1) {
                 Py_DECREF(zero);
@@ -1214,7 +1212,7 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
                                                 n_ops.conjugate);
         }
         else {
-            return PyArray_GenericBinaryFunction(self,
+            return PyArray_GenericBinaryFunction((PyObject *)self,
                                                  (PyObject *)out,
                                                  n_ops.conjugate);
         }

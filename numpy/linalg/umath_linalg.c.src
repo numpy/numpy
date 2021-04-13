@@ -1084,8 +1084,8 @@ static NPY_INLINE void
 
 static void
 @TYPE@_slogdet(char **args,
-               npy_intp *dimensions,
-               npy_intp *steps,
+               npy_intp const *dimensions,
+               npy_intp const *steps,
                void *NPY_UNUSED(func))
 {
     fortran_int m;
@@ -1127,8 +1127,8 @@ static void
 
 static void
 @TYPE@_det(char **args,
-           npy_intp *dimensions,
-           npy_intp *steps,
+           npy_intp const *dimensions,
+           npy_intp const *steps,
            void *NPY_UNUSED(func))
 {
     fortran_int m;
@@ -1426,8 +1426,8 @@ static NPY_INLINE void
 @TYPE@_eigh_wrapper(char JOBZ,
                     char UPLO,
                     char**args,
-                    npy_intp* dimensions,
-                    npy_intp* steps)
+                    npy_intp const *dimensions,
+                    npy_intp const *steps)
 {
     ptrdiff_t outer_steps[3];
     size_t iter;
@@ -1501,8 +1501,8 @@ static NPY_INLINE void
  */
 static void
 @TYPE@_eighlo(char **args,
-              npy_intp *dimensions,
-              npy_intp *steps,
+              npy_intp const *dimensions,
+              npy_intp const *steps,
               void *NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('V', 'L', args, dimensions, steps);
@@ -1510,8 +1510,8 @@ static void
 
 static void
 @TYPE@_eighup(char **args,
-              npy_intp *dimensions,
-              npy_intp *steps,
+              npy_intp const *dimensions,
+              npy_intp const *steps,
               void* NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('V', 'U', args, dimensions, steps);
@@ -1519,8 +1519,8 @@ static void
 
 static void
 @TYPE@_eigvalshlo(char **args,
-                  npy_intp *dimensions,
-                  npy_intp *steps,
+                  npy_intp const *dimensions,
+                  npy_intp const *steps,
                   void* NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('N', 'L', args, dimensions, steps);
@@ -1528,8 +1528,8 @@ static void
 
 static void
 @TYPE@_eigvalshup(char **args,
-                  npy_intp *dimensions,
-                  npy_intp *steps,
+                  npy_intp const *dimensions,
+                  npy_intp const *steps,
                   void* NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('N', 'U', args, dimensions, steps);
@@ -1618,7 +1618,7 @@ release_@lapack_func@(GESV_PARAMS_t *params)
 }
 
 static void
-@TYPE@_solve(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_solve(char **args, npy_intp const *dimensions, npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
@@ -1655,7 +1655,7 @@ static void
 }
 
 static void
-@TYPE@_solve1(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_solve1(char **args, npy_intp const *dimensions, npy_intp const *steps,
               void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
@@ -1690,7 +1690,7 @@ static void
 }
 
 static void
-@TYPE@_inv(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_inv(char **args, npy_intp const *dimensions, npy_intp const *steps,
            void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
@@ -1792,7 +1792,7 @@ release_@lapack_func@(POTR_PARAMS_t *params)
 }
 
 static void
-@TYPE@_cholesky(char uplo, char **args, npy_intp *dimensions, npy_intp *steps)
+@TYPE@_cholesky(char uplo, char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     POTR_PARAMS_t params;
     int error_occurred = get_fp_invalid_and_clear();
@@ -1825,7 +1825,7 @@ static void
 }
 
 static void
-@TYPE@_cholesky_lo(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_cholesky_lo(char **args, npy_intp const *dimensions, npy_intp const *steps,
                 void *NPY_UNUSED(func))
 {
     @TYPE@_cholesky('L', args, dimensions, steps);
@@ -1841,7 +1841,7 @@ typedef struct geev_params_struct {
     void *WR; /* RWORK in complex versions, REAL W buffer for (sd)geev*/
     void *WI;
     void *VLR; /* REAL VL buffers for _geev where _ is s, d */
-    void *VRR; /* REAL VR buffers for _geev hwere _ is s, d */
+    void *VRR; /* REAL VR buffers for _geev where _ is s, d */
     void *WORK;
     void *W;  /* final w */
     void *VL; /* final vl */
@@ -2235,8 +2235,8 @@ static NPY_INLINE void
 @TYPE@_eig_wrapper(char JOBVL,
                    char JOBVR,
                    char**args,
-                   npy_intp* dimensions,
-                   npy_intp* steps)
+                   npy_intp const *dimensions,
+                   npy_intp const *steps)
 {
     ptrdiff_t outer_steps[4];
     size_t iter;
@@ -2329,8 +2329,8 @@ static NPY_INLINE void
 
 static void
 @TYPE@_eig(char **args,
-           npy_intp *dimensions,
-           npy_intp *steps,
+           npy_intp const *dimensions,
+           npy_intp const *steps,
            void *NPY_UNUSED(func))
 {
     @TYPE@_eig_wrapper('N', 'V', args, dimensions, steps);
@@ -2338,8 +2338,8 @@ static void
 
 static void
 @TYPE@_eigvals(char **args,
-               npy_intp *dimensions,
-               npy_intp *steps,
+               npy_intp const *dimensions,
+               npy_intp const *steps,
                void *NPY_UNUSED(func))
 {
     @TYPE@_eig_wrapper('N', 'N', args, dimensions, steps);
@@ -2712,8 +2712,8 @@ release_@lapack_func@(GESDD_PARAMS_t* params)
 static NPY_INLINE void
 @TYPE@_svd_wrapper(char JOBZ,
                    char **args,
-                   npy_intp* dimensions,
-                   npy_intp* steps)
+                   npy_intp const *dimensions,
+                   npy_intp const *steps)
 {
     ptrdiff_t outer_steps[4];
     int error_occurred = get_fp_invalid_and_clear();
@@ -2807,8 +2807,8 @@ static NPY_INLINE void
  */
 static void
 @TYPE@_svd_N(char **args,
-             npy_intp *dimensions,
-             npy_intp *steps,
+             npy_intp const *dimensions,
+             npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('N', args, dimensions, steps);
@@ -2816,8 +2816,8 @@ static void
 
 static void
 @TYPE@_svd_S(char **args,
-             npy_intp *dimensions,
-             npy_intp *steps,
+             npy_intp const *dimensions,
+             npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('S', args, dimensions, steps);
@@ -2825,8 +2825,8 @@ static void
 
 static void
 @TYPE@_svd_A(char **args,
-             npy_intp *dimensions,
-             npy_intp *steps,
+             npy_intp const *dimensions,
+             npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('A', args, dimensions, steps);
@@ -3163,7 +3163,7 @@ static @basetyp@
 }
 
 static void
-@TYPE@_lstsq(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_lstsq(char **args, npy_intp const *dimensions, npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     GELSD_PARAMS_t params;
@@ -3590,7 +3590,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     }
 };
 
-static void
+static int
 addUfuncs(PyObject *dictionary) {
     PyObject *f;
     int i;
@@ -3609,12 +3609,19 @@ addUfuncs(PyObject *dictionary) {
                                                 d->doc,
                                                 0,
                                                 d->signature);
-        PyDict_SetItemString(dictionary, d->name, f);
+        if (f == NULL) {
+            return -1;
+        }
 #if 0
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
+        int ret = PyDict_SetItemString(dictionary, d->name, f);
         Py_DECREF(f);
+        if (ret < 0) {
+            return -1;
+        }
     }
+    return 0;
 }
 
 
@@ -3626,7 +3633,6 @@ static PyMethodDef UMath_LinAlgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         UMATH_LINALG_MODULE_NAME,
@@ -3638,48 +3644,41 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL(x) x
 PyObject *PyInit__umath_linalg(void)
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC
-init_umath_linalg(void)
-#endif
 {
     PyObject *m;
     PyObject *d;
     PyObject *version;
 
     init_constants();
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule(UMATH_LINALG_MODULE_NAME, UMath_LinAlgMethods);
-#endif
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     import_array();
     import_ufunc();
 
     d = PyModule_GetDict(m);
-
-    version = PyString_FromString(umath_linalg_version_string);
-    PyDict_SetItemString(d, "__version__", version);
-    Py_DECREF(version);
-
-    /* Load the ufunc operators into the module's namespace */
-    addUfuncs(d);
-
-    if (PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load _umath_linalg module.");
-        return RETVAL(NULL);
+    if (d == NULL) {
+        return NULL;
     }
 
-    return RETVAL(m);
+    version = PyUnicode_FromString(umath_linalg_version_string);
+    if (version == NULL) {
+        return NULL;
+    }
+    int ret = PyDict_SetItemString(d, "__version__", version);
+    Py_DECREF(version);
+    if (ret < 0) {
+        return NULL;
+    }
+
+    /* Load the ufunc operators into the module's namespace */
+    if (addUfuncs(d) < 0) {
+        return NULL;
+    }
+
+    return m;
 }

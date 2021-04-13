@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ NumPy is the fundamental package for array computing with Python.
 
 It provides:
@@ -17,83 +17,24 @@ variety of databases.
 All NumPy wheels distributed on PyPI are BSD licensed.
 
 """
-from __future__ import division, print_function
-
 DOCLINES = (__doc__ or '').split("\n")
 
 import os
 import sys
 import subprocess
 import textwrap
-
-
-if sys.version_info[:2] < (3, 6):
-    raise RuntimeError("Python version >= 3.6 required.")
-
+import warnings
 import builtins
 
 
-CLASSIFIERS = """\
-Development Status :: 5 - Production/Stable
-Intended Audience :: Science/Research
-Intended Audience :: Developers
-License :: OSI Approved
-Programming Language :: C
-Programming Language :: Python
-Programming Language :: Python :: 3
-Programming Language :: Python :: 3.6
-Programming Language :: Python :: 3.7
-Programming Language :: Python :: 3.8
-Programming Language :: Python :: 3 :: Only
-Programming Language :: Python :: Implementation :: CPython
-Topic :: Software Development
-Topic :: Scientific/Engineering
-Operating System :: Microsoft :: Windows
-Operating System :: POSIX
-Operating System :: Unix
-Operating System :: MacOS
-"""
-
-MAJOR               = 1
-MINOR               = 19
-MICRO               = 0
-ISRELEASED          = False
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+# Python supported version checks. Keep right after stdlib imports to ensure we
+# get a sensible error for older Python versions
+if sys.version_info[:2] < (3, 7):
+    raise RuntimeError("Python version >= 3.7 required.")
 
 
-# Return the git revision as a string
-def git_version():
-    def _minimal_ext_cmd(cmd):
-        # construct minimal environment
-        env = {}
-        for k in ['SYSTEMROOT', 'PATH', 'HOME']:
-            v = os.environ.get(k)
-            if v is not None:
-                env[k] = v
-        # LANGUAGE is used on win32
-        env['LANGUAGE'] = 'C'
-        env['LANG'] = 'C'
-        env['LC_ALL'] = 'C'
-        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
-        return out
+import versioneer
 
-    try:
-        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
-        GIT_REVISION = out.strip().decode('ascii')
-    except (subprocess.SubprocessError, OSError):
-        GIT_REVISION = "Unknown"
-
-    if not GIT_REVISION:
-        # this shouldn't happen but apparently can (see gh-8512)
-        GIT_REVISION = "Unknown"
-
-    return GIT_REVISION
-
-# BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
-# properly updated when the contents of directories change (true for distutils,
-# not sure about setuptools).
-if os.path.exists('MANIFEST'):
-    os.remove('MANIFEST')
 
 # This is a bit hackish: we are setting a global variable so that the main
 # numpy __init__ can detect if it is being loaded by the setup routine, to
@@ -101,57 +42,63 @@ if os.path.exists('MANIFEST'):
 # a lot more robust than what was previously being used.
 builtins.__NUMPY_SETUP__ = True
 
+# Needed for backwards code compatibility below and in some CI scripts.
+# The version components are changed from ints to strings, but only VERSION
+# seems to matter outside of this module and it was already a str.
+FULLVERSION = versioneer.get_version()
+ISRELEASED = 'dev' not in FULLVERSION
+MAJOR, MINOR, MICRO = FULLVERSION.split('.')[:3]
+VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
 
-def get_version_info():
-    # Adding the git rev number needs to be done inside write_version_py(),
-    # otherwise the import of numpy.version messes up the build under Python 3.
-    FULLVERSION = VERSION
-    if os.path.exists('.git'):
-        GIT_REVISION = git_version()
-    elif os.path.exists('numpy/version.py'):
-        # must be a source distribution, use existing version file
-        try:
-            from numpy.version import git_revision as GIT_REVISION
-        except ImportError:
-            raise ImportError("Unable to import git_revision. Try removing "
-                              "numpy/version.py and the build directory "
-                              "before building.")
-    else:
-        GIT_REVISION = "Unknown"
+# The first version not in the `Programming Language :: Python :: ...` classifiers above
+if sys.version_info >= (3, 10):
+    fmt = "NumPy {} may not yet support Python {}.{}."
+    warnings.warn(
+        fmt.format(VERSION, *sys.version_info[:2]),
+        RuntimeWarning)
+    del fmt
 
-    if not ISRELEASED:
-        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
+# BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
+# properly updated when the contents of directories change (true for distutils,
+# not sure about setuptools).
+if os.path.exists('MANIFEST'):
+    os.remove('MANIFEST')
 
-    return FULLVERSION, GIT_REVISION
+# We need to import setuptools here in order for it to persist in sys.modules.
+# Its presence/absence is used in subclassing setup in numpy/distutils/core.py.
+# However, we need to run the distutils version of sdist, so import that first
+# so that it is in sys.modules
+import numpy.distutils.command.sdist
+import setuptools
 
+# Initialize cmdclass from versioneer
+from numpy.distutils.core import numpy_cmdclass
+cmdclass = versioneer.get_cmdclass(numpy_cmdclass)
 
-def write_version_py(filename='numpy/version.py'):
-    cnt = """
-# THIS FILE IS GENERATED FROM NUMPY SETUP.PY
-#
-# To compare versions robustly, use `numpy.lib.NumpyVersion`
-short_version = '%(version)s'
-version = '%(version)s'
-full_version = '%(full_version)s'
-git_revision = '%(git_revision)s'
-release = %(isrelease)s
-
-if not release:
-    version = full_version
+CLASSIFIERS = """\
+Development Status :: 5 - Production/Stable
+Intended Audience :: Science/Research
+Intended Audience :: Developers
+License :: OSI Approved :: BSD License
+Programming Language :: C
+Programming Language :: Python
+Programming Language :: Python :: 3
+Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3.8
+Programming Language :: Python :: 3.9
+Programming Language :: Python :: 3 :: Only
+Programming Language :: Python :: Implementation :: CPython
+Topic :: Software Development
+Topic :: Scientific/Engineering
+Typing :: Typed
+Operating System :: Microsoft :: Windows
+Operating System :: POSIX
+Operating System :: Unix
+Operating System :: MacOS
 """
-    FULLVERSION, GIT_REVISION = get_version_info()
-
-    a = open(filename, 'w')
-    try:
-        a.write(cnt % {'version': VERSION,
-                       'full_version': FULLVERSION,
-                       'git_revision': GIT_REVISION,
-                       'isrelease': str(ISRELEASED)})
-    finally:
-        a.close()
 
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration(None, parent_package, top_path)
@@ -162,8 +109,9 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('numpy')
     config.add_data_files(('numpy', 'LICENSE.txt'))
+    config.add_data_files(('numpy', 'numpy/*.pxd'))
 
-    config.get_version('numpy/version.py') # sets config.version
+    config.get_version('numpy/version.py')  # sets config.version
 
     return config
 
@@ -175,12 +123,11 @@ def check_submodules():
     if not os.path.exists('.git'):
         return
     with open('.gitmodules') as f:
-        for l in f:
-            if 'path' in l:
-                p = l.split('=')[-1].strip()
+        for line in f:
+            if 'path' in line:
+                p = line.split('=')[-1].strip()
                 if not os.path.exists(p):
-                    raise ValueError('Submodule %s missing' % p)
-
+                    raise ValueError('Submodule {} missing'.format(p))
 
     proc = subprocess.Popen(['git', 'submodule', 'status'],
                             stdout=subprocess.PIPE)
@@ -188,7 +135,7 @@ def check_submodules():
     status = status.decode("ascii", "replace")
     for line in status.splitlines():
         if line.startswith('-') or line.startswith('+'):
-            raise ValueError('Submodule not clean: %s' % line)
+            raise ValueError('Submodule not clean: {}'.format(line))
 
 
 class concat_license_files():
@@ -218,13 +165,55 @@ class concat_license_files():
             f.write(self.bsd_text)
 
 
-from distutils.command.sdist import sdist
-class sdist_checked(sdist):
+# Need to inherit from versioneer version of sdist to get the encoded
+# version information.
+class sdist_checked(cmdclass['sdist']):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
         check_submodules()
         with concat_license_files():
-            sdist.run(self)
+            super().run()
+
+
+def get_build_overrides():
+    """
+    Custom build commands to add `-std=c99` to compilation
+    """
+    from numpy.distutils.command.build_clib import build_clib
+    from numpy.distutils.command.build_ext import build_ext
+    from distutils.version import LooseVersion
+
+    def _needs_gcc_c99_flag(obj):
+        if obj.compiler.compiler_type != 'unix':
+            return False
+
+        cc = obj.compiler.compiler[0]
+        if "gcc" not in cc:
+            return False
+
+        # will print something like '4.2.1\n'
+        out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, universal_newlines=True)
+        # -std=c99 is default from this version on
+        if LooseVersion(out.stdout) >= LooseVersion('5.0'):
+            return False
+        return True
+
+    class new_build_clib(build_clib):
+        def build_a_library(self, build_info, lib_name, libraries):
+            if _needs_gcc_c99_flag(self):
+                args = build_info.get('extra_compiler_args') or []
+                args.append('-std=c99')
+                build_info['extra_compiler_args'] = args
+            build_clib.build_a_library(self, build_info, lib_name, libraries)
+
+    class new_build_ext(build_ext):
+        def build_extension(self, ext):
+            if _needs_gcc_c99_flag(self):
+                if '-std=c99' not in ext.extra_compile_args:
+                    ext.extra_compile_args.append('-std=c99')
+            build_ext.build_extension(self, ext)
+    return new_build_clib, new_build_ext
 
 
 def generate_cython():
@@ -232,9 +221,9 @@ def generate_cython():
     print("Cythonizing sources")
     for d in ('random',):
         p = subprocess.call([sys.executable,
-                              os.path.join(cwd, 'tools', 'cythonize.py'),
-                              'numpy/{0}'.format(d)],
-                             cwd=cwd)
+                             os.path.join(cwd, 'tools', 'cythonize.py'),
+                             'numpy/{0}'.format(d)],
+                            cwd=cwd)
         if p != 0:
             raise RuntimeError("Running cythonize failed!")
 
@@ -256,7 +245,8 @@ def parse_setuppy_commands():
                      '--maintainer', '--maintainer-email', '--contact',
                      '--contact-email', '--url', '--license', '--description',
                      '--long-description', '--platforms', '--classifiers',
-                     '--keywords', '--provides', '--requires', '--obsoletes']
+                     '--keywords', '--provides', '--requires', '--obsoletes',
+                     'version',]
 
     for command in info_commands:
         if command in args:
@@ -267,7 +257,8 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src',
+                     'bdist_egg')
 
     for command in good_commands:
         if command in args:
@@ -305,7 +296,6 @@ def parse_setuppy_commands():
             """))
         return False
 
-
     # The following commands aren't supported.  They can only be executed when
     # the user explicitly adds a --force command-line argument.
     bad_commands = dict(
@@ -323,8 +313,6 @@ def parse_setuppy_commands():
             Instead, build what you want to upload and upload those files
             with `twine upload -s <filenames>` instead.
             """,
-        upload_docs="`setup.py upload_docs` is not supported",
-        easy_install="`setup.py easy_install` is not supported",
         clean="""
             `setup.py clean` is not supported, use one of the following instead:
 
@@ -332,10 +320,6 @@ def parse_setuppy_commands():
               - `git clean -Xdf` (cleans all versioned files, doesn't touch
                                   files that aren't checked into the git repo)
             """,
-        check="`setup.py check` is not supported",
-        register="`setup.py register` is not supported",
-        bdist_dumb="`setup.py bdist_dumb` is not supported",
-        bdist="`setup.py bdist` is not supported",
         build_sphinx="""
             `setup.py build_sphinx` is not supported, use the
             Makefile under doc/""",
@@ -343,8 +327,8 @@ def parse_setuppy_commands():
         )
     bad_commands['nosetests'] = bad_commands['test']
     for command in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
-                     'register', 'check', 'install_data', 'install_headers',
-                     'install_lib', 'install_scripts', ):
+                    'register', 'check', 'install_data', 'install_headers',
+                    'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command
 
     for command in bad_commands.keys():
@@ -356,16 +340,23 @@ def parse_setuppy_commands():
 
     # Commands that do more than print info, but also don't need Cython and
     # template parsing.
-    other_commands = ['egg_info', 'install_egg_info', 'rotate']
+    other_commands = ['egg_info', 'install_egg_info', 'rotate', 'dist_info']
     for command in other_commands:
         if command in args:
             return False
 
     # If we got here, we didn't detect what setup.py command was given
-    import warnings
-    warnings.warn("Unrecognized setuptools command, proceeding with "
-                  "generating Cython sources and expanding templates", stacklevel=2)
-    return True
+    raise RuntimeError("Unrecognized setuptools command: {}".format(args))
+
+
+def get_docs_url():
+    if 'dev' in VERSION:
+        return "https://numpy.org/devdocs"
+    else:
+        # For releases, this URL ends up on pypi.
+        # By pinning the version, users looking at old PyPI releases can get
+        # to the associated docs easily.
+        return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
 
 
 def setup_package():
@@ -373,9 +364,6 @@ def setup_package():
     old_path = os.getcwd()
     os.chdir(src_path)
     sys.path.insert(0, src_path)
-
-    # Rewrite the version file everytime
-    write_version_py()
 
     # The f2py scripts that will be installed
     if sys.platform == 'win32':
@@ -389,27 +377,28 @@ def setup_package():
             'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
             ]
 
+    cmdclass["sdist"] = sdist_checked
     metadata = dict(
-        name = 'numpy',
-        maintainer = "NumPy Developers",
-        maintainer_email = "numpy-discussion@python.org",
-        description = DOCLINES[0],
-        long_description = "\n".join(DOCLINES[2:]),
-        url = "https://www.numpy.org",
-        author = "Travis E. Oliphant et al.",
-        download_url = "https://pypi.python.org/pypi/numpy",
+        name='numpy',
+        maintainer="NumPy Developers",
+        maintainer_email="numpy-discussion@python.org",
+        description=DOCLINES[0],
+        long_description="\n".join(DOCLINES[2:]),
+        url="https://www.numpy.org",
+        author="Travis E. Oliphant et al.",
+        download_url="https://pypi.python.org/pypi/numpy",
         project_urls={
             "Bug Tracker": "https://github.com/numpy/numpy/issues",
-            "Documentation": "https://docs.scipy.org/doc/numpy/",
+            "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
-        license = 'BSD',
+        license='BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
-        platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-        test_suite='nose.collector',
-        cmdclass={"sdist": sdist_checked,
-                 },
-        python_requires='>=3.5',
+        platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+        test_suite='pytest',
+        version=versioneer.get_version(),
+        cmdclass=cmdclass,
+        python_requires='>=3.7',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds
@@ -423,19 +412,21 @@ def setup_package():
         # Raise errors for unsupported commands, improve help output, etc.
         run_build = parse_setuppy_commands()
 
-    from setuptools import setup
     if run_build:
+        # patches distutils, even though we don't use it
+        #from setuptools import setup
         from numpy.distutils.core import setup
-        cwd = os.path.abspath(os.path.dirname(__file__))
-        if not 'sdist' in sys.argv:
+
+        if 'sdist' not in sys.argv:
             # Generate Cython sources, unless we're generating an sdist
             generate_cython()
 
         metadata['configuration'] = configuration
+        # Customize extension building
+        cmdclass['build_clib'], cmdclass['build_ext'] = get_build_overrides()
     else:
-        # Version number is added to metadata inside configuration() if build
-        # is run.
-        metadata['version'] = get_version_info()[0]
+        #from numpy.distutils.core import setup
+        from setuptools import setup
 
     try:
         setup(**metadata)

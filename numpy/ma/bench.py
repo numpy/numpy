@@ -1,7 +1,5 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-from __future__ import division, print_function
 
 import timeit
 import numpy
@@ -60,7 +58,7 @@ def compare_functions_1v(func, nloop=500,
                        xs=xs, nmxs=nmxs, xl=xl, nmxl=nmxl):
     funcname = func.__name__
     print("-"*50)
-    print("%s on small arrays" % funcname)
+    print(f'{funcname} on small arrays')
     module, data = "numpy.ma", "nmxs"
     timer("%(module)s.%(funcname)s(%(data)s)" % locals(), v="%11s" % module, nloop=nloop)
 
@@ -72,8 +70,8 @@ def compare_functions_1v(func, nloop=500,
 def compare_methods(methodname, args, vars='x', nloop=500, test=True,
                     xs=xs, nmxs=nmxs, xl=xl, nmxl=nmxl):
     print("-"*50)
-    print("%s on small arrays" % methodname)
-    data, ver = "nm%ss" % vars, 'numpy.ma'
+    print(f'{methodname} on small arrays')
+    data, ver = f'nm{vars}l', 'numpy.ma'
     timer("%(data)s.%(methodname)s(%(args)s)" % locals(), v=ver, nloop=nloop)
 
     print("%s on large arrays" % methodname)
@@ -88,11 +86,11 @@ def compare_functions_2v(func, nloop=500, test=True,
                        yl=yl, nmyl=nmyl):
     funcname = func.__name__
     print("-"*50)
-    print("%s on small arrays" % funcname)
+    print(f'{funcname} on small arrays')
     module, data = "numpy.ma", "nmxs,nmys"
     timer("%(module)s.%(funcname)s(%(data)s)" % locals(), v="%11s" % module, nloop=nloop)
 
-    print("%s on large arrays" % funcname)
+    print(f'{funcname} on large arrays')
     module, data = "numpy.ma", "nmxl,nmyl"
     timer("%(module)s.%(funcname)s(%(data)s)" % locals(), v="%11s" % module, nloop=nloop)
     return

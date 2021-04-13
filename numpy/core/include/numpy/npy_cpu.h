@@ -18,12 +18,12 @@
  *              NPY_CPU_ARCEL
  *              NPY_CPU_ARCEB
  *              NPY_CPU_RISCV64
+ *              NPY_CPU_WASM
  */
 #ifndef _NPY_CPUARCH_H_
 #define _NPY_CPUARCH_H_
 
 #include "numpyconfig.h"
-#include <string.h> /* for memcpy */
 
 #if defined( __i386__ ) || defined(i386) || defined(_M_IX86)
     /*
@@ -102,17 +102,24 @@
     #define NPY_CPU_ARCEB
 #elif defined(__riscv) && defined(__riscv_xlen) && __riscv_xlen == 64
     #define NPY_CPU_RISCV64
+#elif defined(__EMSCRIPTEN__)
+    /* __EMSCRIPTEN__ is defined by emscripten: an LLVM-to-Web compiler */
+    #define NPY_CPU_WASM
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
 #endif
 
-#define NPY_COPY_PYOBJECT_PTR(dst, src) memcpy(dst, src, sizeof(PyObject *))
-
-#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
-#define NPY_CPU_HAVE_UNALIGNED_ACCESS 1
-#else
-#define NPY_CPU_HAVE_UNALIGNED_ACCESS 0
+/* 
+ * Except for the following architectures, memory access is limited to the natural
+ * alignment of data types otherwise it may lead to bus error or performance regression.
+ * For more details about unaligned access, see https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt.
+*/
+#if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64) || defined(__aarch64__) || defined(__powerpc64__)
+    #define NPY_ALIGNMENT_REQUIRED 0
+#endif
+#ifndef NPY_ALIGNMENT_REQUIRED
+    #define NPY_ALIGNMENT_REQUIRED 1
 #endif
 
 #endif

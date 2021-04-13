@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Copyright 1999,2000 Pearu Peterson all rights reserved,
@@ -11,21 +11,16 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
-__version__ = "$Revision: 1.60 $"[10:-1]
-
 from . import __version__
 f2py_version = __version__.version
 
 import copy
 import re
 import os
-import sys
 from .crackfortran import markoutercomma
 from . import cb_rules
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -79,7 +74,7 @@ c2capi_map = {'double': 'NPY_DOUBLE',
               'complex_long_double': 'NPY_CDOUBLE',   # forced casting
               'string': 'NPY_STRING'}
 
-# These new maps aren't used anyhere yet, but should be by default
+# These new maps aren't used anywhere yet, but should be by default
 #  unless building numeric or numarray extensions.
 if using_newcore:
     c2capi_map = {'double': 'NPY_DOUBLE',
@@ -149,11 +144,7 @@ c2buildvalue_map = {'double': 'd',
                     'complex_float': 'N',
                     'complex_double': 'N',
                     'complex_long_double': 'N',
-                    'string': 'z'}
-
-if sys.version_info[0] >= 3:
-    # Bytes, not Unicode strings
-    c2buildvalue_map['string'] = 'y'
+                    'string': 'y'}
 
 if using_newcore:
     # c2buildvalue_map=???
@@ -316,7 +307,7 @@ def getstrlength(var):
             len = a['*']
         elif 'len' in a:
             len = a['len']
-    if re.match(r'\(\s*([*]|[:])\s*\)', len) or re.match(r'([*]|[:])', len):
+    if re.match(r'\(\s*(\*|:)\s*\)', len) or re.match(r'(\*|:)', len):
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
                 repr(var)))
@@ -325,7 +316,6 @@ def getstrlength(var):
 
 
 def getarrdims(a, var, verbose=0):
-    global depargs
     ret = {}
     if isstring(var) and not isarray(var):
         ret['dims'] = getstrlength(var)
@@ -521,7 +511,6 @@ def sign2map(a, var):
     varrfromat
     intent
     """
-    global lcb_map, cb_map
     out_a = a
     if isintent_out(var):
         for k in var['intent']:

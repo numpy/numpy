@@ -1,8 +1,5 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
 import subprocess
-import os
 import json
 import sys
 

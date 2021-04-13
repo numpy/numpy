@@ -1,14 +1,18 @@
-from __future__ import division, print_function
-
 import os
 import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import (
+            get_info, system_info, lapack_opt_info, blas_opt_info)
     config = Configuration('linalg', parent_package, top_path)
 
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
+
+    # Accelerate is buggy, disallow it. See also numpy/core/setup.py
+    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
+        if 'accelerate' in opt_order:
+            opt_order.remove('accelerate')
 
     # Configure lapack_lite
 
@@ -31,8 +35,28 @@ def configuration(parent_package='', top_path=None):
     else:
         lapack_info = get_info('lapack_opt', 0)  # and {}
 
+    use_lapack_lite = not lapack_info
+
+    if use_lapack_lite:
+        # This makes numpy.distutils write the fact that lapack_lite
+        # is being used to numpy.__config__
+        class numpy_linalg_lapack_lite(system_info):
+            def calc_info(self):
+                info = {'language': 'c'}
+                if sys.maxsize > 2**32:
+                    # Build lapack-lite in 64-bit integer mode.
+                    # The suffix is arbitrary (lapack_lite symbols follow it),
+                    # but use the "64_" convention here.
+                    info['define_macros'] = [
+                        ('HAVE_BLAS_ILP64', None),
+                        ('BLAS_SYMBOL_SUFFIX', '64_')
+                    ]
+                self.set_info(**info)
+
+        lapack_info = numpy_linalg_lapack_lite().get_info(2)
+
     def get_lapack_lite_sources(ext, build_dir):
-        if not lapack_info:
+        if use_lapack_lite:
             print("### Warning:  Using unoptimized lapack ###")
             return all_sources
         else:
@@ -56,6 +80,7 @@ def configuration(parent_package='', top_path=None):
         extra_info=lapack_info,
         libraries=['npymath'],
     )
+    config.add_data_files('*.pyi')
     return config
 
 if __name__ == '__main__':

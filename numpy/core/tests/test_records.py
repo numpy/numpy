@@ -1,18 +1,11 @@
-from __future__ import division, absolute_import, print_function
-
-import sys
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc
 import textwrap
+from io import BytesIO
 from os import path
+from pathlib import Path
 import pytest
 
 import numpy as np
-from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, temppath,
@@ -20,18 +13,14 @@ from numpy.testing import (
 from numpy.compat import pickle
 
 
-class TestFromrecords(object):
+class TestFromrecords:
     def test_fromrecords(self):
         r = np.rec.fromrecords([[456, 'dbe', 1.2], [2, 'de', 1.3]],
                             names='col1,col2,col3')
         assert_equal(r[0].item(), (456, 'dbe', 1.2))
         assert_equal(r['col1'].dtype.kind, 'i')
-        if sys.version_info[0] >= 3:
-            assert_equal(r['col2'].dtype.kind, 'U')
-            assert_equal(r['col2'].dtype.itemsize, 12)
-        else:
-            assert_equal(r['col2'].dtype.kind, 'S')
-            assert_equal(r['col2'].dtype.itemsize, 3)
+        assert_equal(r['col2'].dtype.kind, 'U')
+        assert_equal(r['col2'].dtype.itemsize, 12)
         assert_equal(r['col3'].dtype.kind, 'f')
 
     def test_fromrecords_0len(self):
@@ -91,8 +80,14 @@ class TestFromrecords(object):
         r1 = np.rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
         fd.seek(2880 * 2)
         r2 = np.rec.array(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+        fd.seek(2880 * 2)
+        bytes_array = BytesIO()
+        bytes_array.write(fd.read())
+        bytes_array.seek(0)
+        r3 = np.rec.fromfile(bytes_array, formats='f8,i4,a5', shape=3, byteorder='big')
         fd.close()
         assert_equal(r1, r2)
+        assert_equal(r2, r3)
 
     def test_recarray_from_obj(self):
         count = 10
@@ -258,7 +253,7 @@ class TestFromrecords(object):
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(isinstance(ra.field, collections_abc.Callable))
+        assert_(isinstance(ra.field, collections.abc.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
@@ -325,8 +320,7 @@ class TestFromrecords(object):
         assert_equal(rec['f1'], [b'', b'', b''])
 
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_tofile_fromfile(self):
         with temppath(suffix='.bin') as path:
@@ -342,7 +336,7 @@ class TestPathUsage(object):
             assert_array_equal(x, a)
 
 
-class TestRecord(object):
+class TestRecord:
     def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
@@ -424,13 +418,22 @@ class TestRecord(object):
         a['obj'] = data
         a['int'] = 42
         ctor, args = a[0].__reduce__()
-        # check the contructor is what we expect before interpreting the arguments
+        # check the constructor is what we expect before interpreting the arguments
         assert ctor is np.core.multiarray.scalar
         dtype, obj = args
         # make sure we did not pickle the address
         assert not isinstance(obj, bytes)
 
-        assert_raises(TypeError, ctor, dtype, 13)
+        assert_raises(RuntimeError, ctor, dtype, 13)
+
+        # Test roundtrip:
+        dump = pickle.dumps(a[0])
+        unpickled = pickle.loads(dump)
+        assert a[0] == unpickled
+
+        # Also check the similar (impossible) "object scalar" path:
+        with pytest.warns(DeprecationWarning):
+            assert ctor(np.dtype("O"), data) is data
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599

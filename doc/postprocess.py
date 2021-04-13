@@ -1,42 +1,28 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-%prog MODE FILES...
-
 Post-processes HTML and Latex files output by Sphinx.
-MODE is either 'html' or 'tex'.
-
 """
-from __future__ import division, absolute_import, print_function
-
-import re
-import optparse
 import io
 
 def main():
-    p = optparse.OptionParser(__doc__)
-    options, args = p.parse_args()
+    import argparse
 
-    if len(args) < 1:
-        p.error('no mode given')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('mode', help='file mode', choices=('html', 'tex'))
+    parser.add_argument('file', nargs='+', help='input file(s)')
+    args = parser.parse_args()
 
-    mode = args.pop(0)
+    mode = args.mode
 
-    if mode not in ('html', 'tex'):
-        p.error('unknown mode %s' % mode)
-
-    for fn in args:
-        f = io.open(fn, 'r', encoding="utf-8")
-        try:
+    for fn in args.file:
+        with io.open(fn, 'r', encoding="utf-8") as f:
             if mode == 'html':
                 lines = process_html(fn, f.readlines())
             elif mode == 'tex':
                 lines = process_tex(f.readlines())
-        finally:
-            f.close()
 
-        f = io.open(fn, 'w', encoding="utf-8")
-        f.write("".join(lines))
-        f.close()
+        with io.open(fn, 'w', encoding="utf-8") as f:
+            f.write("".join(lines))
 
 def process_html(fn, lines):
     return lines

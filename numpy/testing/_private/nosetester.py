@@ -4,12 +4,9 @@ Nose test running.
 This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import warnings
-from numpy.compat import basestring
 import numpy as np
 
 from .utils import import_nose, suppress_warnings
@@ -112,7 +109,7 @@ def run_module_suite(file_to_run=None, argv=None):
     nose.run(argv=argv, addplugins=[KnownFailurePlugin()])
 
 
-class NoseTester(object):
+class NoseTester:
     """
     Nose test runner.
 
@@ -214,7 +211,7 @@ class NoseTester(object):
         '''
         argv = [__file__, self.package_path, '-s']
         if label and label != 'full':
-            if not isinstance(label, basestring):
+            if not isinstance(label, str):
                 raise TypeError('Selection label should be a string')
             if label == 'fast':
                 label = 'not slow'
@@ -236,20 +233,20 @@ class NoseTester(object):
         nose = import_nose()
 
         import numpy
-        print("NumPy version %s" % numpy.__version__)
+        print(f'NumPy version {numpy.__version__}')
         relaxed_strides = numpy.ones((10, 1), order="C").flags.f_contiguous
         print("NumPy relaxed strides checking option:", relaxed_strides)
         npdir = os.path.dirname(numpy.__file__)
-        print("NumPy is installed in %s" % npdir)
+        print(f'NumPy is installed in {npdir}')
 
         if 'scipy' in self.package_name:
             import scipy
-            print("SciPy version %s" % scipy.__version__)
+            print(f'SciPy version {scipy.__version__}')
             spdir = os.path.dirname(scipy.__file__)
-            print("SciPy is installed in %s" % spdir)
+            print(f'SciPy is installed in {spdir}')
 
         pyversion = sys.version.replace('\n', '')
-        print("Python version %s" % pyversion)
+        print(f'Python version {pyversion}')
         print("nose version %d.%d.%d" % nose.__versioninfo__)
 
     def _get_custom_doctester(self):
@@ -281,7 +278,7 @@ class NoseTester(object):
         argv = self._test_argv(label, verbose, extra_argv)
         # our way of doing coverage
         if coverage:
-            argv += ['--cover-package=%s' % self.package_name, '--with-coverage',
+            argv += [f'--cover-package={self.package_name}', '--with-coverage',
                    '--cover-tests', '--cover-erase']
 
         if timer:
@@ -355,7 +352,7 @@ class NoseTester(object):
         coverage : bool, optional
             If True, report coverage of NumPy code. Default is False.
             (This requires the
-            `coverage module <https://nedbatchelder.com/code/modules/coveragehtml>`_).
+            `coverage module <https://pypi.org/project/coverage/>`_).
         raise_warnings : None, str or sequence of warnings, optional
             This specifies which warnings to configure as 'raise' instead
             of being shown once during the test execution. Valid strings are:
@@ -406,9 +403,9 @@ class NoseTester(object):
                 label, verbose, extra_argv, doctests, coverage, timer)
 
         if doctests:
-            print("Running unit tests and doctests for %s" % self.package_name)
+            print(f'Running unit tests and doctests for {self.package_name}')
         else:
-            print("Running unit tests for %s" % self.package_name)
+            print(f'Running unit tests for {self.package_name}')
 
         self._show_system_info()
 
@@ -421,7 +418,7 @@ class NoseTester(object):
 
         _warn_opts = dict(develop=(Warning,),
                           release=())
-        if isinstance(raise_warnings, basestring):
+        if isinstance(raise_warnings, str):
             raise_warnings = _warn_opts[raise_warnings]
 
         with suppress_warnings("location") as sup:
@@ -450,20 +447,6 @@ class NoseTester(object):
                 warnings.simplefilter("always")
                 from ...distutils import cpuinfo
             sup.filter(category=UserWarning, module=cpuinfo)
-            # See #7949: Filter out deprecation warnings due to the -3 flag to
-            # python 2
-            if sys.version_info.major == 2 and sys.py3kwarning:
-                # This is very specific, so using the fragile module filter
-                # is fine
-                import threading
-                sup.filter(DeprecationWarning,
-                           r"sys\.exc_clear\(\) not supported in 3\.x",
-                           module=threading)
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __setslice__")
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
-                sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")
-                sup.filter(DeprecationWarning, message=r"CObject type is not supported in 3\.x")
-                sup.filter(DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")
             # Filter out some deprecation warnings inside nose 1.3.7 when run
             # on python 3.5b2. See
             #     https://github.com/nose-devs/nose/issues/929
@@ -537,7 +520,7 @@ class NoseTester(object):
 
         """
 
-        print("Running benchmarks for %s" % self.package_name)
+        print(f'Running benchmarks for {self.package_name}')
         self._show_system_info()
 
         argv = self._test_argv(label, verbose, extra_argv)

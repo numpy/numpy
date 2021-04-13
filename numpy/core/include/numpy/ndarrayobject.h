@@ -45,7 +45,6 @@ extern "C" {
 
 #define PyArray_CheckScalar(m) (PyArray_IsScalar(m, Generic) ||               \
                                 PyArray_IsZeroDim(m))
-#if PY_MAJOR_VERSION >= 3
 #define PyArray_IsPythonNumber(obj)                                           \
         (PyFloat_Check(obj) || PyComplex_Check(obj) ||                        \
          PyLong_Check(obj) || PyBool_Check(obj))
@@ -54,17 +53,6 @@ extern "C" {
 #define PyArray_IsPythonScalar(obj)                                           \
         (PyArray_IsPythonNumber(obj) || PyBytes_Check(obj) ||                 \
          PyUnicode_Check(obj))
-#else
-#define PyArray_IsPythonNumber(obj)                                           \
-        (PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) ||    \
-         PyLong_Check(obj) || PyBool_Check(obj))
-#define PyArray_IsIntegerScalar(obj) (PyInt_Check(obj)                        \
-              || PyLong_Check(obj)                                            \
-              || PyArray_IsScalar((obj), Integer))
-#define PyArray_IsPythonScalar(obj)                                           \
-        (PyArray_IsPythonNumber(obj) || PyString_Check(obj) ||                \
-         PyUnicode_Check(obj))
-#endif
 
 #define PyArray_IsAnyScalar(obj)                                              \
         (PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
@@ -226,7 +214,7 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 /*
    Check to see if this key in the dictionary is the "title"
    entry of the tuple (i.e. a duplicate dictionary entry in the fields
-   dict.
+   dict).
 */
 
 static NPY_INLINE int
@@ -248,11 +236,6 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
     if (PyUnicode_Check(title) && PyUnicode_Check(key)) {
         return PyUnicode_Compare(title, key) == 0 ? 1 : 0;
     }
-#if PY_VERSION_HEX < 0x03000000
-    if (PyString_Check(title) && PyString_Check(key)) {
-        return PyObject_Compare(title, key) == 0 ? 1 : 0;
-    }
-#endif
 #endif
     return 0;
 }

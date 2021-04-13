@@ -8,31 +8,33 @@ jobs:
     docker:
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: circleci/python:3.6.6
+      - image: circleci/python:3.8.4
 
     working_directory: ~/repo
 
     steps:
-      - checkout
+      - checkout:
+      - run:
+          name: pull changes from merge
+          command: |
+            if [[ -v CI_PULL_REQUEST ]] ; then git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge" ; fi
 
       - run:
-          name: install dependencies
+          name: create virtual environment, install dependencies
           command: |
-            python3 -m venv venv
-            ln -s $(which python3) venv/bin/python3.6
-            . venv/bin/activate
-            pip install cython sphinx==2.2.0 matplotlib ipython
             sudo apt-get update
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
+            python3.8 -m venv venv
+            . venv/bin/activate
 
       - run:
           name: build numpy
           command: |
             . venv/bin/activate
-            pip install --upgrade pip setuptools
-            pip install cython
+            pip install --progress-bar=off --upgrade pip 'setuptools<49.2.0'
+            pip install --progress-bar=off -r test_requirements.txt
             pip install .
-            pip install scipy
+            pip install --progress-bar=off -r doc_requirements.txt
 
       - run:
           name: create release notes
@@ -42,12 +44,29 @@ jobs:
             VERSION=$(python -c "import setup; print(setup.VERSION)")
             towncrier --version $VERSION --yes
             ./tools/ci/test_all_newsfragments_used.py
+
       - run:
-          name: build devdocs
+          name: run doctests on documentation
+          command: |
+            . venv/bin/activate
+            (cd doc ; git submodule update --init)
+            python tools/refguide_check.py --rst
+
+      - run:
+          name: build devdocs w/ref warnings
           command: |
             . venv/bin/activate
             cd doc
-            git submodule update --init
+            # Don't use -q, show warning summary"
+            SPHINXOPTS="-n" make -e html || echo "ignoring errors for now, see gh-13114"
+
+      - run:
+          name: build devdocs
+          no_output_timeout: 30m
+          command: |
+            . venv/bin/activate
+            cd doc
+            make clean
             SPHINXOPTS=-q make -e html
 
       - run:
@@ -61,8 +80,8 @@ jobs:
           path: doc/build/html/
 
 
-     #  - store_artifacts:
-     #      path: doc/neps/_build/html/
+      - store_artifacts:
+          path: doc/neps/_build/html/
      #      destination: neps
 
       - add_ssh_keys:
@@ -72,7 +91,7 @@ jobs:
       -  run:
           name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               touch doc/build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/build/html \
@@ -82,7 +101,7 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi
 
       - add_ssh_keys:
@@ -101,7 +120,7 @@ jobs:
       -  run:
           name: deploy neps
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               touch doc/neps/_build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
@@ -111,5 +130,5 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi

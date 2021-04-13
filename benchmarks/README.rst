@@ -16,19 +16,50 @@ unless told otherwise. Some of the benchmarking features in
 ``runtests.py``. To run the benchmarks, you do not need to install a
 development version of NumPy to your current Python environment.
 
-Run a benchmark against currently checked out NumPy version (don't
-record the result)::
+Before beginning, ensure that *airspeed velocity* is installed.
+By default, `asv` ships with support for anaconda and virtualenv::
+
+    pip install asv
+    pip install virtualenv
+
+After contributing new benchmarks, you should test them locally
+before submitting a pull request.
+
+To run all benchmarks, navigate to the root NumPy directory at
+the command line and execute::
+
+    python runtests.py --bench
+
+where ``--bench`` activates the benchmark suite instead of the
+test suite. This builds NumPy and runs  all available benchmarks
+defined in ``benchmarks/``. (Note: this could take a while. Each
+benchmark is run multiple times to measure the distribution in
+execution times.)
+
+To run benchmarks from a particular benchmark module, such as
+``bench_core.py``, simply append the filename without the extension::
 
     python runtests.py --bench bench_core
 
-Compare change in benchmark results to another version::
+To run a benchmark defined in a class, such as ``Mandelbrot``
+from ``bench_avx.py``::
+
+    python runtests.py --bench bench_avx.Mandelbrot
+
+Compare change in benchmark results to another version/commit/branch::
 
     python runtests.py --bench-compare v1.6.2 bench_core
+    python runtests.py --bench-compare 8bf4e9b bench_core
+    python runtests.py --bench-compare main bench_core
 
-Run ASV commands (record results and generate HTML)::
+All of the commands above display the results in plain text in
+the console, and the results are not saved for comparison with
+future commits. For greater control, a graphical view, and to
+have results saved for future comparison you can run ASV commands
+(record results and generate HTML)::
 
     cd benchmarks
-    asv run --skip-existing-commits --steps 10 ALL
+    asv run -n -e --python=same
     asv publish
     asv preview
 

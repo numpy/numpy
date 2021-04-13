@@ -2,8 +2,6 @@
 Functions to operate on polynomials.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit', 'RankWarning']
@@ -47,6 +45,12 @@ def _poly_dispatcher(seq_of_zeros):
 def poly(seq_of_zeros):
     """
     Find the coefficients of a polynomial with the given sequence of roots.
+
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
 
     Returns the coefficients of the polynomial whose leading coefficient
     is one for the given sequence of zeros (multiple roots must be included
@@ -170,6 +174,12 @@ def roots(p):
     """
     Return the roots of a polynomial with coefficients given in p.
 
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
+
     The values in the rank-1 array `p` are coefficients of a polynomial.
     If the length of `p` is n+1 then the polynomial is described by::
 
@@ -259,6 +269,12 @@ def _polyint_dispatcher(p, m=None, k=None):
 def polyint(p, m=1, k=None):
     """
     Return an antiderivative (indefinite integral) of a polynomial.
+
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
 
     The returned order `m` antiderivative `P` of polynomial `p` satisfies
     :math:`\\frac{d^m}{dx^m}P(x) = p(x)` and is defined up to `m - 1`
@@ -359,6 +375,12 @@ def polyder(p, m=1):
     """
     Return the derivative of the specified order of a polynomial.
 
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
+
     Parameters
     ----------
     p : poly1d or sequence
@@ -404,7 +426,7 @@ def polyder(p, m=1):
     >>> np.polyder(p, 3)
     poly1d([6])
     >>> np.polyder(p, 4)
-    poly1d([0.])
+    poly1d([0])
 
     """
     m = int(m)
@@ -432,6 +454,12 @@ def _polyfit_dispatcher(x, y, deg, rcond=None, full=None, w=None, cov=None):
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Least squares polynomial fit.
+
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
 
     Fit a polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
@@ -466,11 +494,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     cov : bool or str, optional
         If given and not `False`, return not just the estimate but also its
         covariance matrix. By default, the covariance are scaled by
-        chi2/sqrt(N-dof), i.e., the weights are presumed to be unreliable
-        except in a relative sense and everything is scaled such that the
-        reduced chi2 is unity. This scaling is omitted if ``cov='unscaled'``,
-        as is relevant for the case that the weights are 1/sigma**2, with
-        sigma known to be a reliable estimate of the uncertainty.
+        chi2/dof, where dof = M - (deg + 1), i.e., the weights are presumed 
+        to be unreliable except in a relative sense and everything is scaled 
+        such that the reduced chi2 is unity. This scaling is omitted if 
+        ``cov='unscaled'``, as is relevant for the case that the weights are 
+        1/sigma**2, with sigma known to be a reliable estimate of the 
+        uncertainty.
 
     Returns
     -------
@@ -669,12 +698,18 @@ def polyval(p, x):
     """
     Evaluate a polynomial at specific values.
 
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
+
     If `p` is of length N, this function returns the value:
 
         ``p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]``
 
-    If `x` is a sequence, then `p(x)` is returned for each element of `x`.
-    If `x` is another polynomial then the composite polynomial `p(x(t))`
+    If `x` is a sequence, then ``p(x)`` is returned for each element of ``x``.
+    If `x` is another polynomial then the composite polynomial ``p(x(t))``
     is returned.
 
     Parameters
@@ -719,11 +754,11 @@ def polyval(p, x):
     >>> np.polyval([3,0,1], 5)  # 3 * 5**2 + 0 * 5**1 + 1
     76
     >>> np.polyval([3,0,1], np.poly1d(5))
-    poly1d([76.])
+    poly1d([76])
     >>> np.polyval(np.poly1d([3,0,1]), 5)
     76
     >>> np.polyval(np.poly1d([3,0,1]), np.poly1d(5))
-    poly1d([76.])
+    poly1d([76])
 
     """
     p = NX.asarray(p)
@@ -745,6 +780,12 @@ def _binary_op_dispatcher(a1, a2):
 def polyadd(a1, a2):
     """
     Find the sum of two polynomials.
+
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
 
     Returns the polynomial resulting from the sum of two input polynomials.
     Each input must be either a poly1d object or a 1D sequence of polynomial
@@ -808,6 +849,12 @@ def polysub(a1, a2):
     """
     Difference (subtraction) of two polynomials.
 
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
+
     Given two polynomials `a1` and `a2`, returns ``a1 - a2``.
     `a1` and `a2` can be either array_like sequences of the polynomials'
     coefficients (including coefficients equal to zero), or `poly1d` objects.
@@ -855,6 +902,12 @@ def polysub(a1, a2):
 def polymul(a1, a2):
     """
     Find the product of two polynomials.
+
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
 
     Finds the polynomial resulting from the multiplication of the two input
     polynomials. Each input must be either a poly1d object or a 1D sequence
@@ -917,6 +970,12 @@ def polydiv(u, v):
     """
     Returns the quotient and remainder of polynomial division.
 
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
+
     The input arrays are the coefficients (including any coefficients
     equal to zero) of the "numerator" (dividend) and "denominator"
     (divisor) polynomials, respectively.
@@ -958,7 +1017,7 @@ def polydiv(u, v):
     (array([1.5 , 1.75]), array([0.25]))
 
     """
-    truepoly = (isinstance(u, poly1d) or isinstance(u, poly1d))
+    truepoly = (isinstance(u, poly1d) or isinstance(v, poly1d))
     u = atleast_1d(u) + 0.0
     v = atleast_1d(v) + 0.0
     # w has the common type
@@ -978,7 +1037,7 @@ def polydiv(u, v):
         return poly1d(q), poly1d(r)
     return q, r
 
-_poly_mat = re.compile(r"[*][*]([0-9]*)")
+_poly_mat = re.compile(r"\*\*([0-9]*)")
 def _raise_power(astr, wrap=70):
     n = 0
     line1 = ''
@@ -1007,9 +1066,15 @@ def _raise_power(astr, wrap=70):
 
 
 @set_module('numpy')
-class poly1d(object):
+class poly1d:
     """
     A one-dimensional polynomial class.
+
+    .. note::
+       This forms part of the old polynomial API. Since version 1.4, the
+       new polynomial API defined in `numpy.polynomial` is preferred.
+       A summary of the differences can be found in the
+       :doc:`transition guide </reference/routines.polynomials>`.
 
     A convenience class, used to encapsulate "natural" operations on
     polynomials so that said operations may take on their customary
@@ -1171,7 +1236,7 @@ class poly1d(object):
             raise ValueError("Polynomial must be 1d only.")
         c_or_r = trim_zeros(c_or_r, trim='f')
         if len(c_or_r) == 0:
-            c_or_r = NX.array([0.])
+            c_or_r = NX.array([0], dtype=c_or_r.dtype)
         self._coeffs = c_or_r
         if variable is None:
             variable = 'x'

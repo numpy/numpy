@@ -44,7 +44,7 @@ arguments may be forwarded to the target embedded by ``runtests.py`` by passing
 the extra arguments after a bare ``--``. For example, to run a test method with
 the ``--pdb`` flag forwarded to the target, run the following::
 
-    $ python runtests.py -t numpy/tests/test_scripts.py:test_f2py -- --pdb
+    $ python runtests.py -t numpy/tests/test_scripts.py::test_f2py -- --pdb
 
 When using pytest as a target (the default), you can
 `match test names using python operators`_ by passing the ``-k`` argument to pytest::
@@ -57,7 +57,8 @@ When using pytest as a target (the default), you can
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
-build or installing to a virtualenv. See the FAQ below for details.
+build or installing to a virtualenv or a conda environment. See the FAQ below
+for details.
 
 .. note::
 
@@ -130,17 +131,27 @@ to see this output, you can run the ``build_src`` stage verbosely::
 
     $ python build build_src -v
 
-Using virtualenvs
------------------
+Using virtual environments
+--------------------------
 
 A frequently asked question is "How do I set up a development version of NumPy
 in parallel to a released version that I use to do my job/research?".
 
 One simple way to achieve this is to install the released version in
-site-packages, by using a binary installer or pip for example, and set
-up the development version in a virtualenv.  First install
+site-packages, by using pip or conda for example, and set
+up the development version in a virtual environment.
+
+If you use conda, we recommend creating a separate virtual environment for
+numpy development using the ``environment.yml`` file in the root of the repo
+(this will create the environment and install all development dependencies at
+once)::
+
+    $ conda env create -f environment.yml  # `mamba` works too for this command
+    $ conda activate numpy-dev
+
+If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named numpy-dev here) with::
+virtualenv (named ``numpy-dev`` here) with::
 
     $ virtualenv numpy-dev
 
@@ -188,6 +199,35 @@ For more extensive information, see :ref:`testing-guidelines`
 *Note: do not run the tests from the root directory of your numpy git repo without ``runtests.py``,
 that will result in strange test errors.*
 
+Running Linting
+---------------
+Lint checks can be performed on newly added lines of Python code.
+
+Install all dependent packages using pip::
+
+    $ python -m pip install -r linter_requirements.txt
+
+To run lint checks before committing new code, run::
+
+    $ python runtests.py --lint uncommitted
+
+To check all changes in newly added Python code of current branch with target branch, run::
+
+    $ python runtests.py --lint main
+
+If there are no errors, the script exits with no message. In case of errors::
+
+    $ python runtests.py --lint main
+    ./numpy/core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
+    1       E303 too many blank lines (3)
+
+It is advisable to run lint checks before pushing commits to a remote branch
+since the linter runs as part of the CI pipeline.
+
+For more details on Style Guidelines:
+
+   - `Python Style Guide`_
+   - `C Style Guide`_
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -207,14 +247,26 @@ repo, use one of::
     $ git reset --hard
 
 
+.. _debugging:
+
 Debugging
 ---------
 
 Another frequently asked question is "How do I debug C code inside NumPy?".
-The easiest way to do this is to first write a Python script that invokes the C
-code whose execution you want to debug. For instance ``mytest.py``::
+First, ensure that you have gdb installed on your system with the Python
+extensions (often the default on Linux). You can see which version of
+Python is running inside gdb to verify your setup::
 
-    from numpy import linspace
+    (gdb) python
+    >import sys
+    >print(sys.version_info)
+    >end
+    sys.version_info(major=3, minor=7, micro=0, releaselevel='final', serial=0)
+
+Next you need to write a Python script that invokes the C code whose execution
+you want to debug. For instance ``mytest.py``::
+
+    import numpy as np
     x = np.arange(5)
     np.empty_like(x)
 
@@ -228,10 +280,14 @@ And then in the debugger::
     (gdb) run
 
 The execution will now stop at the corresponding C function and you can step
-through it as usual.  With the Python extensions for gdb installed (often the
-default on Linux), a number of useful Python-specific commands are available.
+through it as usual. A number of useful Python-specific commands are available.
 For example to see where in the Python code you are, use ``py-list``.  For more
-details, see `DebuggingWithGdb`_.
+details, see `DebuggingWithGdb`_. Here are some commonly used commands:
+
+   - ``list``: List specified function or line.
+   - ``next``: Step program, proceeding through subroutine calls.
+   - ``step``: Continue program being debugged, after signal or breakpoint.
+   - ``print``: Print value of expression EXP.
 
 Instead of plain ``gdb`` you can of course use your favourite
 alternative debugger; run it on the python binary with arguments
@@ -248,6 +304,8 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _virtualenvwrapper: http://www.doughellmann.com/projects/virtualenvwrapper/
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
+.. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
+.. _`C Style Guide`: https://numpy.org/neps/nep-0045-c_style_guide.html
 
 Understanding the code & getting started
 ----------------------------------------
@@ -259,7 +317,7 @@ pull requests aren't perfect, the community is always happy to help. As a
 volunteer project, things do sometimes get dropped and it's totally fine to
 ping us if something has sat without a response for about two to four weeks.
 
-So go ahead and pick something that annoys or confuses you about numpy,
+So go ahead and pick something that annoys or confuses you about NumPy,
 experiment with the code, hang around for discussions or go through the
 reference documents to try to fix it. Things will fall in place and soon
 you'll have a pretty good understanding of the project as a whole. Good Luck!

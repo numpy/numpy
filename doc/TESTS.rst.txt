@@ -12,7 +12,7 @@ the `pytest`_ framework. The older framework is still maintained in order to
 support downstream projects that use the old numpy framework, but all tests
 for NumPy should use pytest.
 
-Our goal is that every module and package in SciPy and NumPy
+Our goal is that every module and package in NumPy
 should have a thorough set of unit
 tests. These tests should exercise the full functionality of a given
 routine as well as its robustness to erroneous or unexpected input
@@ -28,26 +28,30 @@ is found in a routine, you should write a new test for that specific
 case and add it to the test suite to prevent that bug from creeping
 back in unnoticed.
 
-To run SciPy's full test suite, use the following::
+.. note::
 
-  >>> import scipy
-  >>> scipy.test()
+  SciPy uses the testing framework from :mod:`numpy.testing`,
+  so all of the NumPy examples shown below are also applicable to SciPy
 
-or from the command line::
+Testing NumPy
+'''''''''''''
 
-  $ python runtests.py
+NumPy can be tested in a number of ways, choose any way you feel comfortable.
 
-SciPy uses the testing framework from :mod:`numpy.testing`, so all
-the SciPy examples shown here are also applicable to NumPy.  NumPy's full test
-suite can be run as follows::
+Running tests from inside Python
+--------------------------------
+
+You can test an installed NumPy by `numpy.test`, for example,
+To run NumPy's full test suite, use the following::
 
   >>> import numpy
-  >>> numpy.test()
+  >>> numpy.test(label='slow')
 
-The test method may take two or more arguments; the first, ``label`` is a
-string specifying what should be tested and the second, ``verbose`` is an
-integer giving the level of output verbosity. See the docstring for
-numpy.test for details.  The default value for ``label`` is 'fast' - which
+The test method may take two or more arguments; the first ``label`` is a
+string specifying what should be tested and the second ``verbose`` is an
+integer giving the level of output verbosity. See the docstring
+`numpy.test`
+for details. The default value for ``label`` is 'fast' - which
 will run the standard tests.  The string 'full' will run the full battery
 of tests, including those identified as being slow to run. If ``verbose``
 is 1 or less, the tests will just show information messages about the tests
@@ -55,38 +59,43 @@ that are run; but if it is greater than 1, then the tests will also provide
 warnings on missing tests. So if you want to run every test and get
 messages about which modules don't have tests::
 
-  >>> scipy.test(label='full', verbose=2) # or scipy.test('full', 2)
+  >>> numpy.test(label='full', verbose=2) # or numpy.test('full', 2)
 
-Finally, if you are only interested in testing a subset of SciPy, for
-example, the ``integrate`` module, use the following::
+Finally, if you are only interested in testing a subset of NumPy, for
+example, the ``core`` module, use the following::
 
-  >>> scipy.integrate.test()
+  >>> numpy.core.test()
 
-or from the command line::
+Running tests from the command line
+-----------------------------------
 
-  $python runtests.py -t scipy/integrate/tests
+If you want to build NumPy in order to work on NumPy itself, use
+``runtests.py``.To run NumPy's full test suite::
 
-The rest of this page will give you a basic idea of how to add unit
-tests to modules in SciPy. It is extremely important for us to have
-extensive unit testing since this code is going to be used by
-scientists and researchers and is being developed by a large number of
-people spread across the world. So, if you are writing a package that
-you'd like to become part of SciPy, please write the tests as you
-develop the package. Also since much of SciPy is legacy code that was
-originally written without unit tests, there are still several modules
-that don't have tests yet. Please feel free to choose one of these
-modules and develop tests for it as you read through
-this introduction.
+  $ python runtests.py
+
+Testing a subset of NumPy::
+
+  $python runtests.py -t numpy/core/tests
+
+For detailed info on testing, see :ref:`testing-builds`
+
+Other methods of running tests
+------------------------------
+
+Run tests using your favourite IDE such as `vscode`_ or `pycharm`_
 
 Writing your own tests
 ''''''''''''''''''''''
 
-Every Python module, extension module, or subpackage in the SciPy
+If you are writing a package that you'd like to become part of NumPy,
+please write the tests as you develop the package.
+Every Python module, extension module, or subpackage in the NumPy
 package directory should have a corresponding ``test_<name>.py`` file.
-Pytest examines these files for test methods (named test*) and test
-classes (named Test*).
+Pytest examines these files for test methods (named ``test*``) and test
+classes (named ``Test*``).
 
-Suppose you have a SciPy module ``scipy/xxx/yyy.py`` containing a
+Suppose you have a NumPy module ``numpy/xxx/yyy.py`` containing a
 function ``zzz()``.  To test this function you would create a test
 module called ``test_yyy.py``.  If you only need to test one aspect of
 ``zzz``, you can simply add a test function::
@@ -100,7 +109,7 @@ a test class::
   from numpy.testing import assert_, assert_raises
 
   # import xxx symbols
-  from scipy.xxx.yyy import zzz
+  from numpy.xxx.yyy import zzz
 
   class TestZzz:
       def test_simple(self):
@@ -119,45 +128,31 @@ that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
 (``#``) if necessary.
 
-Labeling tests 
+Also since much of NumPy is legacy code that was
+originally written without unit tests, there are still several modules
+that don't have tests yet. Please feel free to choose one of these
+modules and develop tests for it.
+
+Labeling tests
 --------------
 
-As an alternative to ``pytest.mark.<label>``, there are a number of labels you
-can use.
-
 Unlabeled tests like the ones above are run in the default
-``scipy.test()`` run.  If you want to label your test as slow - and
-therefore reserved for a full ``scipy.test(label='full')`` run, you
-can label it with a decorator::
+``numpy.test()`` run.  If you want to label your test as slow - and
+therefore reserved for a full ``numpy.test(label='full')`` run, you
+can label it with ``pytest.mark.slow``::
 
-  # numpy.testing module includes 'import decorators as dec'
-  from numpy.testing import dec, assert_
+  import pytest
 
-  @dec.slow
+  @pytest.mark.slow
   def test_big(self):
-      print 'Big, slow test'
+      print('Big, slow test')
 
 Similarly for methods::
 
   class test_zzz:
-      @dec.slow
+      @pytest.mark.slow
       def test_simple(self):
           assert_(zzz() == 'Hello from zzz')
-
-Available labels are:
-
-- ``slow``: marks a test as taking a long time
-- ``setastest(tf)``: work-around for test discovery when the test name is
-  non conformant
-- ``skipif(condition, msg=None)``: skips the test when ``eval(condition)`` is
-  ``True``
-- ``knownfailureif(fail_cond, msg=None)``: will avoid running the test if
-  ``eval(fail_cond)`` is ``True``, useful for tests that conditionally segfault
-- ``deprecated(conditional=True)``: filters deprecation warnings emitted in the
-  test
-- ``paramaterize(var, input)``: an alternative to
-  `pytest.mark.paramaterized
-  <https://docs.pytest.org/en/latest/parametrize.html>`_
 
 Easier setup and teardown functions / methods
 ---------------------------------------------
@@ -167,21 +162,21 @@ name; thus::
 
   def setup():
       """Module-level setup"""
-      print 'doing setup'
+      print('doing setup')
 
   def teardown():
       """Module-level teardown"""
-      print 'doing teardown'
+      print('doing teardown')
 
 
-  class TestMe(object):
+  class TestMe:
       def setup():
           """Class-level setup"""
-          print 'doing setup'
+          print('doing setup')
 
       def teardown():
           """Class-level teardown"""
-          print 'doing teardown'
+          print('doing teardown')
 
 
 Setup and teardown functions to functions and methods are known as "fixtures",
@@ -211,10 +206,10 @@ for numpy.lib::
 >>> np.lib.test(doctests=True)
 
 The doctests are run as if they are in a fresh Python instance which
-has executed ``import numpy as np``. Tests that are part of a SciPy
+has executed ``import numpy as np``. Tests that are part of a NumPy
 subpackage will have that subpackage already imported. E.g. for a test
-in ``scipy/linalg/tests/``, the namespace will be created such that
-``from scipy import linalg`` has already executed.
+in ``numpy/linalg/tests/``, the namespace will be created such that
+``from numpy import linalg`` has already executed.
 
 
 ``tests/``
@@ -223,15 +218,15 @@ in ``scipy/linalg/tests/``, the namespace will be created such that
 Rather than keeping the code and the tests in the same directory, we
 put all the tests for a given subpackage in a ``tests/``
 subdirectory. For our example, if it doesn't already exist you will
-need to create a ``tests/`` directory in ``scipy/xxx/``. So the path
-for ``test_yyy.py`` is ``scipy/xxx/tests/test_yyy.py``.
+need to create a ``tests/`` directory in ``numpy/xxx/``. So the path
+for ``test_yyy.py`` is ``numpy/xxx/tests/test_yyy.py``.
 
-Once the ``scipy/xxx/tests/test_yyy.py`` is written, its possible to
+Once the ``numpy/xxx/tests/test_yyy.py`` is written, its possible to
 run the tests by going to the ``tests/`` directory and typing::
 
   python test_yyy.py
 
-Or if you add ``scipy/xxx/tests/`` to the Python path, you could run
+Or if you add ``numpy/xxx/tests/`` to the Python path, you could run
 the tests interactively in the interpreter like this::
 
   >>> import test_yyy
@@ -256,20 +251,20 @@ section of your setup.py::
   ...
   def configuration(parent_package='', top_path=None):
       ...
-      config.add_data_dir('tests')
+      config.add_subpackage('tests')
       return config
   ...
 
 Now you can do the following to test your module::
 
-  >>> import scipy
-  >>> scipy.xxx.test()
+  >>> import numpy
+  >>> numpy.xxx.test()
 
-Also, when invoking the entire SciPy test suite, your tests will be
+Also, when invoking the entire NumPy test suite, your tests will be
 found and run::
 
-  >>> import scipy
-  >>> scipy.test()
+  >>> import numpy
+  >>> numpy.test()
   # your tests are included and run automatically!
 
 Tips & Tricks
@@ -283,7 +278,7 @@ minor variations, it can be helpful to create a base class containing
 all the common tests, and then create a subclass for each variation.
 Several examples of this technique exist in NumPy; below are excerpts
 from one in `numpy/linalg/tests/test_linalg.py
-<https://github.com/numpy/numpy/blob/master/numpy/linalg/tests/test_linalg.py>`__::
+<https://github.com/numpy/numpy/blob/main/numpy/linalg/tests/test_linalg.py>`__::
 
   class LinalgTestCase:
       def test_single(self):
@@ -360,7 +355,24 @@ deterministic by setting the random number seed before generating it.  Use
 either Python's ``random.seed(some_number)`` or NumPy's
 ``numpy.random.seed(some_number)``, depending on the source of random numbers.
 
+Alternatively, you can use `Hypothesis`_ to generate arbitrary data.
+Hypothesis manages both Python's and Numpy's random seeds for you, and
+provides a very concise and powerful way to describe data (including
+``hypothesis.extra.numpy``, e.g. for a set of mutually-broadcastable shapes).
+
+The advantages over random generation include tools to replay and share
+failures without requiring a fixed seed, reporting *minimal* examples for
+each failure, and better-than-naive-random techniques for triggering bugs.
+
+
+Documentation for ``numpy.test``
+--------------------------------
+
+.. autofunction:: numpy.test
 
 .. _nose: https://nose.readthedocs.io/en/latest/
 .. _pytest: https://pytest.readthedocs.io
 .. _parameterization: https://docs.pytest.org/en/latest/parametrize.html
+.. _Hypothesis: https://hypothesis.readthedocs.io/en/latest/
+.. _vscode: https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework
+.. _pycharm: https://www.jetbrains.com/help/pycharm/testing-your-first-python-application.html

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import subprocess
 import pkgutil
@@ -30,9 +28,6 @@ def check_dir(module, module_name=None):
     return results
 
 
-@pytest.mark.skipif(
-    sys.version_info[0] < 3,
-    reason="NumPy exposes slightly different functions on Python 2")
 def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
@@ -45,12 +40,11 @@ def test_numpy_namespace():
         'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.<lambda>',
+        'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
         'disp': 'numpy.lib.function_base.disp',
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
         'get_include': 'numpy.lib.utils.get_include',
-        'int_asbuffer': 'numpy.core._multiarray_umath.int_asbuffer',
         'mafromtxt': 'numpy.lib.npyio.mafromtxt',
         'ndfromtxt': 'numpy.lib.npyio.ndfromtxt',
         'recfromcsv': 'numpy.lib.npyio.recfromcsv',
@@ -60,22 +54,26 @@ def test_numpy_namespace():
         'show_config': 'numpy.__config__.show',
         'who': 'numpy.lib.utils.who',
     }
-    # These built-in types are re-exported by numpy.
-    builtins = {
-        'bool': 'builtins.bool',
-        'complex': 'builtins.complex',
-        'float': 'builtins.float',
-        'int': 'builtins.int',
-        'long': 'builtins.int',
-        'object': 'builtins.object',
-        'str': 'builtins.str',
-        'unicode': 'builtins.str',
-    }
-    whitelist = dict(undocumented, **builtins)
+    if sys.version_info < (3, 7):
+        # These built-in types are re-exported by numpy.
+        builtins = {
+            'bool': 'builtins.bool',
+            'complex': 'builtins.complex',
+            'float': 'builtins.float',
+            'int': 'builtins.int',
+            'long': 'builtins.int',
+            'object': 'builtins.object',
+            'str': 'builtins.str',
+            'unicode': 'builtins.str',
+        }
+        allowlist = dict(undocumented, **builtins)
+    else:
+        # after 3.7, we override dir to not show these members
+        allowlist = undocumented
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal
-    assert bad_results == whitelist
+    assert bad_results == allowlist
 
 
 @pytest.mark.parametrize('name', ['testing', 'Tester'])
@@ -98,6 +96,12 @@ def test_import_lazy_import(name):
 
     # Make sure they are still in the __dir__
     assert name in dir(np)
+
+
+def test_dir_testing():
+    """Assert that output of dir has only one "testing/tester"
+    attribute without duplicate"""
+    assert len(dir(np)) == len(set(dir(np)))
 
 
 def test_numpy_linalg():
@@ -141,20 +145,8 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "distutils.log",
     "distutils.system_info",
     "doc",
-    "doc.basics",
-    "doc.broadcasting",
-    "doc.byteswapping",
     "doc.constants",
-    "doc.creation",
-    "doc.dispatch",
-    "doc.glossary",
-    "doc.indexing",
-    "doc.internals",
-    "doc.misc",
-    "doc.structured_arrays",
-    "doc.subclassing",
     "doc.ufuncs",
-    "dual",
     "f2py",
     "fft",
     "lib",
@@ -162,6 +154,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "lib.mixins",
     "lib.recfunctions",
     "lib.scimath",
+    "lib.stride_tricks",
     "linalg",
     "ma",
     "ma.extras",
@@ -174,9 +167,10 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.laguerre",
     "polynomial.legendre",
     "polynomial.polynomial",
-    "polynomial.polyutils",
     "random",
     "testing",
+    "typing",
+    "typing.mypy_plugin",
     "version",
 ]]
 
@@ -210,6 +204,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.umath",
     "core.umath_tests",
     "distutils.ccompiler",
+    'distutils.ccompiler_opt',
     "distutils.command",
     "distutils.command.autodist",
     "distutils.command.bdist_rpm",
@@ -228,7 +223,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.command.install_data",
     "distutils.command.install_headers",
     "distutils.command.sdist",
-    "distutils.compat",
     "distutils.conv_template",
     "distutils.core",
     "distutils.extension",
@@ -247,8 +241,10 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.fcompiler.none",
     "distutils.fcompiler.pathf95",
     "distutils.fcompiler.pg",
+    "distutils.fcompiler.nv",
     "distutils.fcompiler.sun",
     "distutils.fcompiler.vast",
+    "distutils.fcompiler.fujitsu",
     "distutils.from_template",
     "distutils.intelccompiler",
     "distutils.lib2def",
@@ -259,6 +255,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.numpy_distribution",
     "distutils.pathccompiler",
     "distutils.unixccompiler",
+    "dual",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",
@@ -276,7 +273,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "lib.arraypad",
     "lib.arraysetops",
     "lib.arrayterator",
-    "lib.financial",
     "lib.function_base",
     "lib.histograms",
     "lib.index_tricks",
@@ -284,7 +280,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "lib.npyio",
     "lib.polynomial",
     "lib.shape_base",
-    "lib.stride_tricks",
     "lib.twodim_base",
     "lib.type_check",
     "lib.ufunclike",
@@ -298,7 +293,9 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "ma.timer_comparison",
     "matrixlib",
     "matrixlib.defmatrix",
+    "polynomial.polyutils",
     "random.mtrand",
+    "random.bit_generator",
     "testing.print_coercion_tables",
     "testing.utils",
 ]]
@@ -354,7 +351,7 @@ def test_all_modules_are_expected():
             modnames.append(modname)
 
     if modnames:
-        raise AssertionError("Found unexpected modules: {}".format(modnames))
+        raise AssertionError(f'Found unexpected modules: {modnames}')
 
 
 # Stuff that clearly shouldn't be in the API and is detected by the next test
@@ -362,18 +359,6 @@ def test_all_modules_are_expected():
 SKIP_LIST_2 = [
     'numpy.math',
     'numpy.distutils.log.sys',
-    'numpy.distutils.system_info.copy',
-    'numpy.distutils.system_info.distutils',
-    'numpy.distutils.system_info.log',
-    'numpy.distutils.system_info.os',
-    'numpy.distutils.system_info.platform',
-    'numpy.distutils.system_info.re',
-    'numpy.distutils.system_info.shutil',
-    'numpy.distutils.system_info.subprocess',
-    'numpy.distutils.system_info.sys',
-    'numpy.distutils.system_info.tempfile',
-    'numpy.distutils.system_info.textwrap',
-    'numpy.distutils.system_info.warnings',
     'numpy.doc.constants.re',
     'numpy.doc.constants.textwrap',
     'numpy.lib.emath',

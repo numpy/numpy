@@ -1,15 +1,12 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises,
     )
 from numpy import random
-from numpy.compat import long
 import numpy as np
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -43,19 +40,12 @@ class TestRegression(object):
         # numbers with this large sample
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / float(N)
-        msg = "Frequency was %f, should be > 0.45" % freq
+        msg = f'Frequency was {freq:f}, should be > 0.45'
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / float(N)
-        msg = "Frequency was %f, should be < 0.23" % freq
+        msg = f'Frequency was {freq:f}, should be < 0.23'
         assert_(freq < 0.23, msg)
-
-    def test_permutation_longs(self):
-        np.random.seed(1234)
-        a = np.random.permutation(12)
-        np.random.seed(1234)
-        b = np.random.permutation(long(12))
-        assert_array_equal(a, b)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
@@ -66,7 +56,8 @@ class TestRegression(object):
             np.random.seed(12345)
             shuffled = list(t)
             random.shuffle(shuffled)
-            assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
+            expected = np.array([t[0], t[3], t[1], t[2]], dtype=object)
+            assert_array_equal(np.array(shuffled, dtype=object), expected)
 
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
@@ -126,7 +117,7 @@ class TestRegression(object):
         # a segfault on garbage collection.
         # See gh-7719
         np.random.seed(1234)
-        a = np.array([np.arange(1), np.arange(4)])
+        a = np.array([np.arange(1), np.arange(4)], dtype=object)
 
         for _ in range(1000):
             np.random.shuffle(a)
@@ -145,7 +136,7 @@ class TestRegression(object):
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
-        class M(object):
+        class M:
             a = np.arange(5)
 
             def __array__(self):

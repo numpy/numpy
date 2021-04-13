@@ -56,7 +56,7 @@ NPY_NO_EXPORT PyObject *
 _PyArray_GetNumericOps(void);
 
 NPY_NO_EXPORT PyObject *
-PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op);
+PyArray_GenericBinaryFunction(PyObject *m1, PyObject *m2, PyObject *op);
 
 NPY_NO_EXPORT PyObject *
 PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op);

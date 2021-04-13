@@ -127,7 +127,7 @@ def gauss_from_uint(x, n, bits):
     return gauss[:n]
 
 def test_seedsequence():
-    from numpy.random._bit_generator import (ISeedSequence,
+    from numpy.random.bit_generator import (ISeedSequence,
                                             ISpawnableSeedSequence,
                                             SeedlessSeedSequence)
 
@@ -145,7 +145,7 @@ def test_seedsequence():
     assert len(dummy.spawn(10)) == 10
 
 
-class Base(object):
+class Base:
     dtype = np.uint64
     data2 = data1 = {}
 
@@ -230,13 +230,13 @@ class Base(object):
     def test_repr(self):
         rs = Generator(self.bit_generator(*self.data1['seed']))
         assert 'Generator' in repr(rs)
-        assert '{:#x}'.format(id(rs)).upper().replace('X', 'x') in repr(rs)
+        assert f'{id(rs):#x}'.upper().replace('X', 'x') in repr(rs)
 
     def test_str(self):
         rs = Generator(self.bit_generator(*self.data1['seed']))
         assert 'Generator' in str(rs)
         assert str(self.bit_generator.__name__) in str(rs)
-        assert '{:#x}'.format(id(rs)).upper().replace('X', 'x') not in str(rs)
+        assert f'{id(rs):#x}'.upper().replace('X', 'x') not in str(rs)
 
     def test_pickle(self):
         import pickle
@@ -410,7 +410,7 @@ class TestSFC64(Base):
         cls.invalid_init_values = [(-1,)]
 
 
-class TestDefaultRNG(object):
+class TestDefaultRNG:
     def test_seed(self):
         for args in [(), (None,), (1234,), ([1234, 5678],)]:
             rg = default_rng(*args)

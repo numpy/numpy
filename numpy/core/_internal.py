@@ -4,13 +4,11 @@ A place for internal code
 Some things are more easily handled Python.
 
 """
-from __future__ import division, absolute_import, print_function
-
+import ast
 import re
 import sys
 import platform
 
-from numpy.compat import unicode
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
@@ -19,26 +17,25 @@ except ImportError:
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 
-if (sys.byteorder == 'little'):
-    _nbo = b'<'
+if sys.byteorder == 'little':
+    _nbo = '<'
 else:
-    _nbo = b'>'
+    _nbo = '>'
 
 def _makenames_list(adict, align):
     allfields = []
-    fnames = list(adict.keys())
-    for fname in fnames:
-        obj = adict[fname]
+
+    for fname, obj in adict.items():
         n = len(obj)
-        if not isinstance(obj, tuple) or n not in [2, 3]:
+        if not isinstance(obj, tuple) or n not in (2, 3):
             raise ValueError("entry not a 2- or 3- tuple")
-        if (n > 2) and (obj[2] == fname):
+        if n > 2 and obj[2] == fname:
             continue
         num = int(obj[1])
-        if (num < 0):
+        if num < 0:
             raise ValueError("invalid offset.")
         format = dtype(obj[0], align=align)
-        if (n > 2):
+        if n > 2:
             title = obj[2]
         else:
             title = None
@@ -70,7 +67,7 @@ def _usefields(adict, align):
             res = adict[name]
             formats.append(res[0])
             offsets.append(res[1])
-            if (len(res) > 2):
+            if len(res) > 2:
                 titles.append(res[2])
             else:
                 titles.append(None)
@@ -110,7 +107,7 @@ def _array_descr(descriptor):
     for field in ordered_fields:
         if field[1] > offset:
             num = field[1] - offset
-            result.append(('', '|V%d' % num))
+            result.append(('', f'|V{num}'))
             offset += num
         elif field[1] < offset:
             raise ValueError(
@@ -130,7 +127,7 @@ def _array_descr(descriptor):
 
     if descriptor.itemsize > offset:
         num = descriptor.itemsize - offset
-        result.append(('', '|V%d' % num))
+        result.append(('', f'|V{num}'))
 
     return result
 
@@ -145,16 +142,16 @@ def _reconstruct(subtype, shape, dtype):
 
 # format_re was originally from numarray by J. Todd Miller
 
-format_re = re.compile(br'(?P<order1>[<>|=]?)'
-                       br'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
-                       br'(?P<order2>[<>|=]?)'
-                       br'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
-sep_re = re.compile(br'\s*,\s*')
-space_re = re.compile(br'\s+$')
+format_re = re.compile(r'(?P<order1>[<>|=]?)'
+                       r'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
+                       r'(?P<order2>[<>|=]?)'
+                       r'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
+sep_re = re.compile(r'\s*,\s*')
+space_re = re.compile(r'\s+$')
 
 # astr is a string (perhaps comma separated)
 
-_convorder = {b'=': _nbo}
+_convorder = {'=': _nbo}
 
 def _commastring(astr):
     startindex = 0
@@ -164,8 +161,9 @@ def _commastring(astr):
         try:
             (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
-            raise ValueError('format number %d of "%s" is not recognized' %
-                                            (len(result)+1, astr))
+            raise ValueError(
+                f'format number {len(result)+1} of "{astr}" is not recognized'
+                ) from None
         startindex = mo.end()
         # Separator or ending padding
         if startindex < len(astr):
@@ -179,9 +177,9 @@ def _commastring(astr):
                         (len(result)+1, astr))
                 startindex = mo.end()
 
-        if order2 == b'':
+        if order2 == '':
             order = order1
-        elif order1 == b'':
+        elif order1 == '':
             order = order2
         else:
             order1 = _convorder.get(order1, order1)
@@ -192,18 +190,18 @@ def _commastring(astr):
                     (order1, order2))
             order = order1
 
-        if order in [b'|', b'=', _nbo]:
-            order = b''
+        if order in ('|', '=', _nbo):
+            order = ''
         dtype = order + dtype
-        if (repeats == b''):
+        if (repeats == ''):
             newitem = dtype
         else:
-            newitem = (dtype, eval(repeats))
+            newitem = (dtype, ast.literal_eval(repeats))
         result.append(newitem)
 
     return result
 
-class dummy_ctype(object):
+class dummy_ctype:
     def __init__(self, cls):
         self._cls = cls
     def __mul__(self, other):
@@ -224,7 +222,7 @@ def _getintp_ctype():
         val = dummy_ctype(np.intp)
     else:
         char = dtype('p').char
-        if (char == 'i'):
+        if char == 'i':
             val = ctypes.c_int
         elif char == 'l':
             val = ctypes.c_long
@@ -238,16 +236,16 @@ _getintp_ctype.cache = None
 
 # Used for .ctypes attribute of ndarray
 
-class _missing_ctypes(object):
+class _missing_ctypes:
     def cast(self, num, obj):
         return num.value
 
-    class c_void_p(object):
+    class c_void_p:
         def __init__(self, ptr):
             self.value = ptr
 
 
-class _ctypes(object):
+class _ctypes:
     def __init__(self, array, ptr=None):
         self._arr = array
 
@@ -366,7 +364,7 @@ def _newnames(datatype, order):
     """
     oldnames = datatype.names
     nameslist = list(oldnames)
-    if isinstance(order, (str, unicode)):
+    if isinstance(order, str):
         order = [order]
     seen = set()
     if isinstance(order, (list, tuple)):
@@ -375,12 +373,12 @@ def _newnames(datatype, order):
                 nameslist.remove(name)
             except ValueError:
                 if name in seen:
-                    raise ValueError("duplicate field name: %s" % (name,))
+                    raise ValueError(f"duplicate field name: {name}") from None
                 else:
-                    raise ValueError("unknown field name: %s" % (name,))
+                    raise ValueError(f"unknown field name: {name}") from None
             seen.add(name)
         return tuple(list(order) + nameslist)
-    raise ValueError("unsupported order value: %s" % (order,))
+    raise ValueError(f"unsupported order value: {order}")
 
 def _copy_fields(ary):
     """Return copy of structured array with padding between fields removed.
@@ -523,7 +521,7 @@ _pep3118_unsupported_map = {
     'X': 'function pointers',
 }
 
-class _Stream(object):
+class _Stream:
     def __init__(self, s):
         self.s = s
         self.byteorder = '@'
@@ -557,7 +555,6 @@ class _Stream(object):
 
     def __bool__(self):
         return bool(self.s)
-    __nonzero__ = __bool__
 
 
 def _dtype_from_pep3118(spec):
@@ -682,8 +679,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
 
         if not (is_padding and name is None):
             if name is not None and name in field_spec['names']:
-                raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
-                                   % name)
+                raise RuntimeError(f"Duplicate field name '{name}' in PEP3118 format")
             field_spec['names'].append(name)
             field_spec['formats'].append(value)
             field_spec['offsets'].append(offset)
@@ -719,7 +715,7 @@ def _fix_names(field_spec):
 
         j = 0
         while True:
-            name = 'f{}'.format(j)
+            name = f'f{j}'
             if name not in names:
                 break
             j = j + 1
@@ -792,7 +788,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     if ufunc.nin == 1:
         in_args = 'x'
     else:
-        in_args = ', '.join('x{}'.format(i+1) for i in range(ufunc.nin))
+        in_args = ', '.join(f'x{i+1}' for i in range(ufunc.nin))
 
     # output arguments are both keyword or positional
     if ufunc.nout == 0:
@@ -840,12 +836,12 @@ def npy_ctypes_check(cls):
             # # (..., _ctypes._CData, object)
             ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
-        return 'ctypes' in ctype_base.__module__
+        return '_ctypes' in ctype_base.__module__
     except Exception:
         return False
 
 
-class recursive(object):
+class recursive:
     '''
     A decorator class for recursive nested functions.
     Naive recursive nested functions hold a reference to themselves:

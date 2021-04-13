@@ -1,10 +1,6 @@
-#! /usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
 from   math           import sqrt
-import os
 import sys
 import unittest
 

@@ -23,6 +23,7 @@
 #include "lowlevel_strided_loops.h"
 
 #include "array_assign.h"
+#include "dtype_transfer.h"
 
 /*
  * Assigns the scalar value to every element of the destination raw array.
@@ -30,18 +31,15 @@
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_assign_scalar(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+raw_array_assign_scalar(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
     int aligned, needs_api = 0;
-    npy_intp src_itemsize = src_dtype->elsize;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -63,12 +61,12 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     }
 
     /* Get the function to do the casting */
+    NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(aligned,
                         0, dst_strides_it[0],
                         src_dtype, dst_dtype,
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &needs_api) != NPY_SUCCEED) {
         return -1;
     }
 
@@ -80,18 +78,25 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
+    npy_intp strides[2] = {0, dst_strides_it[0]};
+
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, 0,
-                    shape_it[0], src_itemsize, transferdata);
+        char *args[2] = {src_data, dst_data};
+        if (cast_info.func(&cast_info.context,
+                args, &shape_it[0], strides, cast_info.auxdata) < 0) {
+            goto fail;
+        }
     } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
                             shape_it, dst_data, dst_strides_it);
 
     NPY_END_THREADS;
-
-    NPY_AUXDATA_FREE(transferdata);
-
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    NPY_cast_info_xfree(&cast_info);
+    return 0;
+fail:
+    NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
+    return -1;
 }
 
 /*
@@ -101,21 +106,18 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp *wheremask_strides)
+        npy_intp const *wheremask_strides)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    PyArray_MaskedStridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
     int aligned, needs_api = 0;
-    npy_intp src_itemsize = src_dtype->elsize;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -139,12 +141,12 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
     }
 
     /* Get the function to do the casting */
+    NPY_cast_info cast_info;
     if (PyArray_GetMaskedDTypeTransferFunction(aligned,
                         0, dst_strides_it[0], wheremask_strides_it[0],
                         src_dtype, dst_dtype, wheremask_dtype,
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &needs_api) != NPY_SUCCEED) {
         return -1;
     }
 
@@ -156,19 +158,26 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
+    npy_intp strides[2] = {0, dst_strides_it[0]};
+
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, 0,
-                    (npy_bool *)wheremask_data, wheremask_strides_it[0],
-                    shape_it[0], src_itemsize, transferdata);
+        PyArray_MaskedStridedUnaryOp *stransfer;
+        stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
+
+        char *args[2] = {src_data, dst_data};
+        if (stransfer(&cast_info.context,
+                args, &shape_it[0], strides,
+                (npy_bool *)wheremask_data, wheremask_strides_it[0],
+                cast_info.auxdata) < 0) {
+            break;
+        }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
                             wheremask_data, wheremask_strides_it);
 
     NPY_END_THREADS;
-
-    NPY_AUXDATA_FREE(transferdata);
-
+    NPY_cast_info_xfree(&cast_info);
     return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
 
@@ -203,19 +212,8 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     /* Check the casting rule */
     if (!can_cast_scalar_to(src_dtype, src_data,
                             PyArray_DESCR(dst), casting)) {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot cast scalar from ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)src_dtype));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(dst)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        npy_set_invalid_cast_error(
+                src_dtype, PyArray_DESCR(dst), casting, NPY_TRUE);
         return -1;
     }
 

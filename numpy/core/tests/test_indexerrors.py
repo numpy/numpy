@@ -1,9 +1,10 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
-from numpy.testing import assert_raises
+from numpy.testing import (
+        assert_raises, assert_raises_regex,
+        )
 
-class TestIndexErrors(object):
+
+class TestIndexErrors:
     '''Tests to exercise indexerrors not covered by other tests.'''
 
     def test_arraytypes_fasttake(self):
@@ -111,6 +112,15 @@ class TestIndexErrors(object):
         a = np.zeros((3, 0))
         assert_raises(IndexError, lambda: a[(1, [0, 1])])
         assert_raises(IndexError, lambda: assign(a, (1, [0, 1]), 1))
+
+    def test_mapping_error_message(self):
+        a = np.zeros((3, 5))
+        index = (1, 2, 3, 4, 5)
+        assert_raises_regex(
+                IndexError,
+                "too many indices for array: "
+                "array is 2-dimensional, but 5 were indexed",
+                lambda: a[index])
 
     def test_methods(self):
         "cases from methods.c"

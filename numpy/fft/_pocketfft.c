@@ -10,6 +10,11 @@
  *  \author Martin Reinecke
  */
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "Python.h"
+#include "numpy/arrayobject.h"
+
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
@@ -2184,11 +2189,6 @@ WARN_UNUSED_RESULT static int rfft_forward(rfft_plan plan, double c[], double fc
     return rfftblue_forward(plan->blueplan,c,fct);
   }
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
-#include "Python.h"
-#include "numpy/arrayobject.h"
-
 static PyObject *
 execute_complex(PyObject *a1, int is_forward, double fct)
 {
@@ -2206,7 +2206,6 @@ execute_complex(PyObject *a1, int is_forward, double fct)
     double *dptr = (double *)PyArray_DATA(data);
     int fail=0;
     Py_BEGIN_ALLOW_THREADS;
-    NPY_SIGINT_ON;
     plan = make_cfft_plan(npts);
     if (!plan) fail=1;
     if (!fail)
@@ -2217,7 +2216,6 @@ execute_complex(PyObject *a1, int is_forward, double fct)
           dptr += npts*2;
       }
     if (plan) destroy_cfft_plan(plan);
-    NPY_SIGINT_OFF;
     Py_END_ALLOW_THREADS;
     if (fail) {
       Py_XDECREF(data);
@@ -2258,7 +2256,6 @@ execute_real_forward(PyObject *a1, double fct)
              *dptr = (double *)PyArray_DATA(data);
 
       Py_BEGIN_ALLOW_THREADS;
-      NPY_SIGINT_ON;
       plan = make_rfft_plan(npts);
       if (!plan) fail=1;
       if (!fail)
@@ -2272,7 +2269,6 @@ execute_real_forward(PyObject *a1, double fct)
             dptr += npts;
       }
       if (plan) destroy_rfft_plan(plan);
-      NPY_SIGINT_OFF;
       Py_END_ALLOW_THREADS;
     }
     if (fail) {
@@ -2303,7 +2299,6 @@ execute_real_backward(PyObject *a1, double fct)
              *dptr = (double *)PyArray_DATA(data);
 
       Py_BEGIN_ALLOW_THREADS;
-      NPY_SIGINT_ON;
       plan = make_rfft_plan(npts);
       if (!plan) fail=1;
       if (!fail) {
@@ -2316,7 +2311,6 @@ execute_real_backward(PyObject *a1, double fct)
         }
       }
       if (plan) destroy_rfft_plan(plan);
-      NPY_SIGINT_OFF;
       Py_END_ALLOW_THREADS;
     }
     if (fail) {
@@ -2359,7 +2353,6 @@ static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}          /* sentinel */
 };
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_pocketfft_internal",
@@ -2371,30 +2364,14 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if PY_MAJOR_VERSION >= 3
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit__pocketfft_internal(void)
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC
-init_pocketfft_internal(void)
-#endif
 {
     PyObject *m;
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
-#else
-    static const char module_documentation[] = "";
-
-    m = Py_InitModule4("_pocketfft_internal", methods,
-            module_documentation,
-            (PyObject*)NULL,PYTHON_API_VERSION);
-#endif
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     /* Import the array object */
@@ -2402,5 +2379,5 @@ init_pocketfft_internal(void)
 
     /* XXXX Add constants here */
 
-    return RETVAL(m);
+    return m;
 }

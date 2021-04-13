@@ -301,7 +301,7 @@ its interactions with NumFOCUS.
    or technical direction of the Project.
 -  This Subcommittee will have 5 members, 4 of whom will be current
    Council Members and 1 of whom will be external to the Steering
-   Council. No more than 2 Subcommitee Members can report to one person
+   Council. No more than 2 Subcommittee Members can report to one person
    through employment or contracting work (including the reportee, i.e.
    the reportee + 1 is the max). This avoids effective majorities
    resting on one person.
@@ -381,14 +381,13 @@ A list of current Institutional Partners is maintained at the page
 Document history
 ================
 
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
+https://github.com/numpy/numpy/commits/main/doc/source/dev/governance/governance.rst
 
 Acknowledgements
 ================
 
 Substantial portions of this document were adapted from the
-`Jupyter/IPython project's governance document
-<https://github.com/jupyter/governance/blob/master/governance.md>`_.
+`Jupyter/IPython project's governance document <https://github.com/jupyter/governance>`_
 
 License
 =======

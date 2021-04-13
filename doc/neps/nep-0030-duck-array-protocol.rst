@@ -1,3 +1,5 @@
+.. _NEP30:
+
 ======================================================
 NEP 30 — Duck Typing for NumPy Arrays - Implementation
 ======================================================
@@ -24,7 +26,7 @@ Detailed description
 NumPy's API, including array definitions, is implemented and mimicked in
 countless other projects. By definition, many of those arrays are fairly
 similar in how they operate to the NumPy standard. The introduction of
-``__array_function__`` allowed dispathing of functions implemented by several
+``__array_function__`` allowed dispatching of functions implemented by several
 of these projects directly via NumPy's API. This introduces a new requirement,
 returning the NumPy-like array itself, rather than forcing a coercion into a
 pure NumPy array.
@@ -33,30 +35,32 @@ For the purpose above, NEP 22 introduced the concept of duck typing to NumPy
 arrays. The suggested solution described in the NEP allows libraries to avoid
 coercion of a NumPy-like array to a pure NumPy array where necessary, while
 still allowing that NumPy-like array libraries that do not wish to implement
-the protocol to coerce arrays to a pure Numpy array via ``np.asarray``.
+the protocol to coerce arrays to a pure NumPy array via ``np.asarray``.
 
 Usage Guidance
 ~~~~~~~~~~~~~~
 
-Code that uses np.duckarray is meant for supporting other ndarray-like objects
+Code that uses ``np.duckarray`` is meant for supporting other ndarray-like objects
 that "follow the NumPy API". That is an ill-defined concept at the moment --
 every known library implements the NumPy API only partly, and many deviate
 intentionally in at least some minor ways. This cannot be easily remedied, so
-for users of ``__duckarray__`` we recommend the following strategy: check if the
-NumPy functionality used by the code that follows your use of ``__duckarray__``
+for users of ``np.duckarray`` we recommend the following strategy: check if the
+NumPy functionality used by the code that follows your use of ``np.duckarray``
 is present in Dask, CuPy and Sparse. If so, it's reasonable to expect any duck
 array to work here. If not, we suggest you indicate in your docstring what kinds
 of duck arrays are accepted, or what properties they need to have.
 
 To exemplify the usage of duck arrays, suppose one wants to take the ``mean()``
 of an array-like object ``arr``. Using NumPy to achieve that, one could write
-``np.asarray(arr).mean()`` to achieve the intended result. However, libraries
-may expect ``arr`` to be a NumPy-like array, and at the same time, the array may
-or may not be an object compliant to the NumPy API (either in full or partially)
-such as a CuPy, Sparse or a Dask array. In the case where ``arr`` is already an
-object compliant to the NumPy API, we would simply return it (and prevent it
-from being coerced into a pure NumPy array), otherwise, it would then be coerced
-into a NumPy array.
+``np.asarray(arr).mean()`` to achieve the intended result. If ``arr`` is not
+a NumPy array, this would create an actual NumPy array in order to call
+``.mean()``. However, if the array is an object that is compliant with the NumPy
+API (either in full or partially) such as a CuPy, Sparse or a Dask array, then
+that copy would have been unnecessary. On the other hand, if one were to use the new
+``__duckarray__`` protocol: ``np.duckarray(arr).mean()``, and ``arr`` is an object
+compliant with the NumPy API, it would simply be returned rather than coerced
+into a pure NumPy array, avoiding unnecessary copies and potential loss of
+performance.
 
 Implementation
 --------------
@@ -64,9 +68,9 @@ Implementation
 The implementation idea is fairly straightforward, requiring a new function
 ``duckarray`` to be introduced in NumPy, and a new method ``__duckarray__`` in
 NumPy-like array classes. The new ``__duckarray__`` method shall return the
-downstream array-like object itself, such as the ``self`` object. If appropriate,
-an ``__array__`` method may be implemented that returns a NumPy array or possibly
-raise a ``TypeError`` with a helpful message.
+downstream array-like object itself, such as the ``self`` object, while the
+``__array__`` method raises ``TypeError``.  Alternatively, the ``__array__``
+method could create an actual NumPy array and return that.
 
 The new NumPy ``duckarray`` function can be implemented as follows:
 
@@ -91,8 +95,8 @@ a complete implementation would look like the following:
             return self
 
         def __array__(self):
-            return TypeError("NumPyLikeArray can not be converted to a numpy array. "
-                             "You may want to use np.duckarray.")
+            raise TypeError("NumPyLikeArray can not be converted to a NumPy "
+                             "array. You may want to use np.duckarray() instead.")
 
 The implementation above exemplifies the simplest case, but the overall idea
 is that libraries will implement a ``__duckarray__`` method that returns the
@@ -114,7 +118,7 @@ An example of how the ``__duckarray__`` protocol could be used to write a
 seen below. The example here was chosen not only to demonstrate the usage of
 the ``duckarray`` function, but also to demonstrate its dependency on the NumPy
 API, demonstrated by checks on the array's ``shape`` attribute. Note that the
-example is merely a simplified version of NumPy's actually implementation of
+example is merely a simplified version of NumPy's actual implementation of
 ``stack`` working on the first axis, and it is assumed that Dask has implemented
 the ``__duckarray__`` method.
 

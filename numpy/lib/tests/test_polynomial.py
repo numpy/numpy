@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
@@ -7,7 +5,7 @@ from numpy.testing import (
     )
 
 
-class TestPolynomial(object):
+class TestPolynomial:
     def test_poly1d_str_and_repr(self):
         p = np.poly1d([1., 2, 3])
         assert_equal(repr(p), 'poly1d([1., 2., 3.])')
@@ -229,6 +227,20 @@ class TestPolynomial(object):
         v = np.arange(1, 21)
         assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
 
+    def test_zero_poly_dtype(self):
+        """
+        Regression test for gh-16354.
+        """
+        z = np.array([0, 0, 0])
+        p = np.poly1d(z.astype(np.int64))
+        assert_equal(p.coeffs.dtype, np.int64)
+
+        p = np.poly1d(z.astype(np.float32))
+        assert_equal(p.coeffs.dtype, np.float32)
+
+        p = np.poly1d(z.astype(np.complex64))
+        assert_equal(p.coeffs.dtype, np.complex64)
+
     def test_poly_eq(self):
         p = np.poly1d([1, 2, 3])
         p2 = np.poly1d([1, 2, 4])
@@ -245,6 +257,15 @@ class TestPolynomial(object):
         assert_equal(q.coeffs.dtype, np.complex128)
         assert_equal(r.coeffs.dtype, np.complex128)
         assert_equal(q*a + r, b)
+        
+        c = [1, 2, 3]
+        d = np.poly1d([1, 2, 3])
+        s, t = np.polydiv(c, d)
+        assert isinstance(s, np.poly1d)
+        assert isinstance(t, np.poly1d)
+        u, v = np.polydiv(d, c)
+        assert isinstance(u, np.poly1d)
+        assert isinstance(v, np.poly1d)
 
     def test_poly_coeffs_mutable(self):
         """ Coefficients should be modifiable """

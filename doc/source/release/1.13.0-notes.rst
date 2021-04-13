@@ -243,7 +243,7 @@ It is similar to Matlab's square bracket notation for creating block matrices.
 
 ``isin`` function, improving on ``in1d``
 ----------------------------------------
-The new function ``isin`` tests whether each element of an N-dimensonal
+The new function ``isin`` tests whether each element of an N-dimensional
 array is present anywhere within a second array. It is an enhancement
 of ``in1d`` that preserves the shape of the first array.
 

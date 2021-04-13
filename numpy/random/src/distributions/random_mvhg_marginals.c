@@ -1,9 +1,9 @@
+#include "numpy/random/distributions.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <math.h>
 
-#include "numpy/random/distributions.h"
 #include "logfactorial.h"
 
 

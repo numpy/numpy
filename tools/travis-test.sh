@@ -42,13 +42,20 @@ setup_base()
   # Travis typically has a stable numpy release pre-installed, and if we
   # don't remove it, then we can accidentally end up e.g. running old
   # test modules that were in the stable release but have been removed
-  # from master. (See gh-2765, gh-2768.)  Using 'pip install' also has
+  # from main. (See gh-2765, gh-2768.)  Using 'pip install' also has
   # the advantage that it tests that numpy is 'pip install' compatible,
   # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then
+    # activates '-Werror=undef' when DEBUG isn't enabled since _cffi_backend'
+    # extension breaks the build due to the following error:
+    #
+    # error: "HAVE_FFI_PREP_CIF_VAR" is not defined, evaluates to 0 [-Werror=undef]
+    # #if !HAVE_FFI_PREP_CIF_VAR && defined(__arm64__) && defined(__APPLE__)
+    #
+    export CFLAGS="$CFLAGS -Werror=undef"
     $PIP install -v . 2>&1 | tee log
   else
-    # Python3.5-dbg on travis seems to need this
+    # The job run with USE_DEBUG=1 on travis needs this.
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
     $PYTHON setup.py build build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
   fi
@@ -65,17 +72,18 @@ setup_base()
 
 run_test()
 {
-  $PIP install -r test_requirements.txt
+  # Install the test dependencies.
+  # Clear PYTHONOPTIMIZE when running `pip install -r test_requirements.txt`
+  # because version 2.19 of pycparser (a dependency of one of the packages
+  # in test_requirements.txt) does not provide a wheel, and the source tar
+  # file does not install correctly when Python's optimization level is set
+  # to strip docstrings (see https://github.com/eliben/pycparser/issues/291).
+  PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt
+  DURATIONS_FLAG="--durations 10"
 
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
-  fi
-
-  # pytest aborts when running --durations with python3.6-dbg, so only enable
-  # it for non-debug tests. That is a cPython bug fixed in later versions of
-  # python3.7 but python3.7-dbg is not currently available on travisCI.
-  if [ -z "$USE_DEBUG" ]; then
-    DURATIONS_FLAG="--durations 10"
+    export MYPYPATH=$PWD
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -91,14 +99,14 @@ run_test()
   export PYTHONWARNINGS=default
 
   if [ -n "$CHECK_BLAS" ]; then
-    $PYTHON ../tools/openblas_support.py --check_version $OpenBLAS_version
+    $PYTHON ../tools/openblas_support.py --check_version
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
     $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG
+    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG -- -rs
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -135,16 +143,11 @@ run_test()
   fi
 }
 
+
 export PYTHON
 export PIP
-$PIP install setuptools
 
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
-  # Build wheel
-  $PIP install wheel
-  # ensure that the pip / setuptools versions deployed inside
-  # the venv are recent enough
-  $PIP install -U virtualenv
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
   # adjust gcc flags if C coverage requested
@@ -167,8 +170,6 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   run_test
 
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
-  # use an up-to-date pip / setuptools inside the venv
-  $PIP install -U virtualenv
   # temporary workaround for sdist failures.
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued

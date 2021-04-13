@@ -26,8 +26,6 @@ def _display_as_base(cls):
     """
     assert issubclass(cls, Exception)
     cls.__name__ = cls.__base__.__name__
-    cls.__qualname__ = cls.__base__.__qualname__
-    set_module(cls.__base__.__module__)(cls)
     return cls
 
 
@@ -137,7 +135,7 @@ class AxisError(ValueError, IndexError):
             if msg_prefix is not None:
                 msg = "{}: {}".format(msg_prefix, msg)
 
-        super(AxisError, self).__init__(msg)
+        super().__init__(msg)
 
 
 @_display_as_base
@@ -157,7 +155,6 @@ class _ArrayMemoryError(MemoryError):
     @staticmethod
     def _size_to_string(num_bytes):
         """ Convert a number of bytes into a binary size string """
-        import math
 
         # https://en.wikipedia.org/wiki/Binary_prefix
         LOG2_STEP = 10

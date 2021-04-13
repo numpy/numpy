@@ -82,19 +82,12 @@ typedef struct {
   extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
   extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
 
-#if PY_VERSION_HEX >= 0x03000000
-
 PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
 void * F2PyCapsule_AsVoidPtr(PyObject *obj);
 int F2PyCapsule_Check(PyObject *ptr);
 
-#else
-
-PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *));
-void * F2PyCapsule_AsVoidPtr(PyObject *ptr);
-int F2PyCapsule_Check(PyObject *ptr);
-
-#endif
+extern void *F2PySwapThreadLocalCallbackPtr(char *key, void *ptr);
+extern void *F2PyGetThreadLocalCallbackPtr(char *key);
 
 #define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_ARRAY_C_CONTIGUOUS)
 #define F2PY_INTENT_IN 1

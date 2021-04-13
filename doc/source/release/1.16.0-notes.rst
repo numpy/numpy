@@ -170,8 +170,8 @@ See the "accessing multiple fields" section of the
 C API changes
 =============
 
-The :c:data:`NPY_API_VERSION` was incremented to 0x0000D, due to the addition
-of:
+The :c:data:`NPY_FEATURE_VERSION` was incremented to 0x0000D, due to
+the addition of:
 
 * :c:member:`PyUFuncObject.core_dim_flags`
 * :c:member:`PyUFuncObject.core_dim_sizes`

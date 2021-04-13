@@ -163,27 +163,29 @@ be imported from Python::
     f2py -c -m add add.f
 
 This command leaves a file named add.{ext} in the current directory
-(where {ext} is the appropriate extension for a python extension
+(where {ext} is the appropriate extension for a Python extension
 module on your platform --- so, pyd, *etc.* ). This module may then be
 imported from Python. It will contain a method for each subroutine in
 add (zadd, cadd, dadd, sadd). The docstring of each method contains
 information about how the module method may be called::
 
     >>> import add
-    >>> print add.zadd.__doc__
-    zadd - Function signature:
-      zadd(a,b,c,n)
-    Required arguments:
-      a : input rank-1 array('D') with bounds (*)
-      b : input rank-1 array('D') with bounds (*)
-      c : input rank-1 array('D') with bounds (*)
-      n : input int
+    >>> print(add.zadd.__doc__)
+    zadd(a,b,c,n)
 
+    Wrapper for ``zadd``.
+
+    Parameters
+    ----------
+    a : input rank-1 array('D') with bounds (*)
+    b : input rank-1 array('D') with bounds (*)
+    c : input rank-1 array('D') with bounds (*)
+    n : input int
 
 Improving the basic interface
 -----------------------------
 
-The default interface is a very literal translation of the fortran
+The default interface is a very literal translation of the Fortran
 code into Python. The Fortran array arguments must now be NumPy arrays
 and the integer argument should be an integer. The interface will
 attempt to convert all arguments to their required types (and shapes)
@@ -192,7 +194,7 @@ about the semantics of the arguments (such that C is an output and n
 should really match the array sizes), it is possible to abuse this
 function in ways that can cause Python to crash. For example::
 
-    >>> add.zadd([1,2,3], [1,2], [3,4], 1000)
+    >>> add.zadd([1, 2, 3], [1, 2], [3, 4], 1000)
 
 will cause a program crash on most systems. Under the covers, the
 lists are being converted to proper arrays but then the underlying add
@@ -240,27 +242,32 @@ necessary to tell f2py that the value of n depends on the input a (so
 that it won't try to create the variable n until the variable a is
 created).
 
-After modifying ``add.pyf``, the new python module file can be generated
-by compiling both ``add.f95`` and ``add.pyf``::
+After modifying ``add.pyf``, the new Python module file can be generated
+by compiling both ``add.f`` and ``add.pyf``::
 
-    f2py -c add.pyf add.f95 
+    f2py -c add.pyf add.f
 
 The new interface has docstring::
 
     >>> import add
-    >>> print add.zadd.__doc__
-    zadd - Function signature:
-      c = zadd(a,b)
-    Required arguments:
-      a : input rank-1 array('D') with bounds (n)
-      b : input rank-1 array('D') with bounds (n)
-    Return objects:
-      c : rank-1 array('D') with bounds (n)
+    >>> print(add.zadd.__doc__)
+    c = zadd(a,b)
+
+    Wrapper for ``zadd``.
+
+    Parameters
+    ----------
+    a : input rank-1 array('D') with bounds (n)
+    b : input rank-1 array('D') with bounds (n)
+
+    Returns
+    -------
+    c : rank-1 array('D') with bounds (n)
 
 Now, the function can be called in a much more robust way::
 
-    >>> add.zadd([1,2,3],[4,5,6])
-    array([ 5.+0.j,  7.+0.j,  9.+0.j])
+    >>> add.zadd([1, 2, 3], [4, 5, 6])
+    array([5.+0.j, 7.+0.j, 9.+0.j])
 
 Notice the automatic conversion to the correct format that occurred.
 
@@ -269,7 +276,7 @@ Inserting directives in Fortran source
 --------------------------------------
 
 The nice interface can also be generated automatically by placing the
-variable directives as special comments in the original fortran code.
+variable directives as special comments in the original Fortran code.
 Thus, if I modify the source code to contain:
 
 .. code-block:: none
@@ -655,7 +662,7 @@ To use ctypes you must
 
 2. Load the shared library.
 
-3. Convert the python objects to ctypes-understood arguments.
+3. Convert the Python objects to ctypes-understood arguments.
 
 4. Call the function from the library with the ctypes arguments.
 
@@ -671,7 +678,7 @@ simply have a shared library available to you). Items to remember are:
 - A shared library must be compiled in a special way ( *e.g.* using
   the ``-shared`` flag with gcc).
 
-- On some platforms (*e.g.* Windows) , a shared library requires a
+- On some platforms (*e.g.* Windows), a shared library requires a
   .def file that specifies the functions to be exported. For example a
   mylib.def file might contain::
 
@@ -802,7 +809,7 @@ Calling the function
 
 The function is accessed as an attribute of or an item from the loaded
 shared-library. Thus, if ``./mylib.so`` has a function named
-``cool_function1`` , I could access this function either as:
+``cool_function1``, I could access this function either as:
 
 .. code-block:: python
 

@@ -27,6 +27,7 @@
  *****************************************************************************
  */
 
+#if defined(HAVE_CBLAS)
 /*
  * -1 to be conservative, in case blas internally uses a for loop with an
  * inclusive upper bound
@@ -61,7 +62,6 @@ is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
     return NPY_FALSE;
 }
 
-#if defined(HAVE_CBLAS)
 static const npy_cdouble oneD = {1.0, 0.0}, zeroD = {0.0, 0.0};
 static const npy_cfloat  oneF = {1.0, 0.0}, zeroF = {0.0, 0.0};
 
@@ -395,7 +395,7 @@ OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
 
 
 NPY_NO_EXPORT void
-@TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_matmul(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     npy_intp dOuter = *dimensions++;
     npy_intp iOuter;

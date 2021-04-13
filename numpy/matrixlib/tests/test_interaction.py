@@ -2,8 +2,6 @@
 
 Note that tests with MaskedArray and linalg are done in separate files.
 """
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 import textwrap
@@ -290,7 +288,7 @@ def test_kron_matrix():
     assert_equal(type(np.kron(m, a)), np.matrix)
 
 
-class TestConcatenatorMatrix(object):
+class TestConcatenatorMatrix:
     # 2018-04-29: moved here from core.tests.test_index_tricks.
     def test_matrix(self):
         a = [1, 2]
@@ -326,24 +324,17 @@ class TestConcatenatorMatrix(object):
 
 def test_array_equal_error_message_matrix():
     # 2018-04-29: moved here from testing.tests.test_utils.
-    try:
+    with pytest.raises(AssertionError) as exc_info:
         assert_equal(np.array([1, 2]), np.matrix([1, 2]))
-    except AssertionError as e:
-        msg = str(e)
-        msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
-        msg_reference = textwrap.dedent("""\
+    msg = str(exc_info.value)
+    msg_reference = textwrap.dedent("""\
 
-        Arrays are not equal
+    Arrays are not equal
 
-        (shapes (2,), (1, 2) mismatch)
-         x: array([1, 2])
-         y: matrix([[1, 2]])""")
-        try:
-            assert_equal(msg, msg_reference)
-        except AssertionError:
-            assert_equal(msg2, msg_reference)
-    else:
-        raise AssertionError("Did not raise")
+    (shapes (2,), (1, 2) mismatch)
+     x: array([1, 2])
+     y: matrix([[1, 2]])""")
+    assert_equal(msg, msg_reference)
 
 
 def test_array_almost_equal_matrix():

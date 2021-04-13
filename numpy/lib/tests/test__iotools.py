@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import time
 from datetime import date
 
@@ -11,10 +9,9 @@ from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
     has_nested_fields, easy_dtype, flatten_dtype
     )
-from numpy.compat import unicode
 
 
-class TestLineSplitter(object):
+class TestLineSplitter:
     "Tests the LineSplitter class."
 
     def test_no_delimiter(self):
@@ -83,7 +80,7 @@ class TestLineSplitter(object):
 # -----------------------------------------------------------------------------
 
 
-class TestNameValidator(object):
+class TestNameValidator:
 
     def test_case_sensitivity(self):
         "Test case sensitivity"
@@ -141,7 +138,7 @@ def _bytes_to_date(s):
     return date(*time.strptime(s, "%Y-%m-%d")[:3])
 
 
-class TestStringConverter(object):
+class TestStringConverter:
     "Test StringConverter"
 
     def test_creation(self):
@@ -180,12 +177,12 @@ class TestStringConverter(object):
         # test str
         # note that the longdouble type has been skipped, so the
         # _status increases by 2. Everything should succeed with
-        # unicode conversion (5).
-        for s in ['a', u'a', b'a']:
+        # unicode conversion (8).
+        for s in ['a', b'a']:
             res = converter.upgrade(s)
-            assert_(type(res) is unicode)
-            assert_equal(res, u'a')
-            assert_equal(converter._status, 5 + status_offset)
+            assert_(type(res) is str)
+            assert_equal(res, 'a')
+            assert_equal(converter._status, 8 + status_offset)
 
     def test_missing(self):
         "Tests the use of missing values."
@@ -266,7 +263,7 @@ class TestStringConverter(object):
         assert_(converter(val) == 9223372043271415339)
 
 
-class TestMiscFunctions(object):
+class TestMiscFunctions:
 
     def test_has_nested_dtype(self):
         "Test has_nested_dtype"

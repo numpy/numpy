@@ -1,7 +1,4 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
-from numpy.compat import long
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises
     )
@@ -15,7 +12,7 @@ def assert_all(x):
     assert_(np.all(x), x)
 
 
-class TestCommonType(object):
+class TestCommonType:
     def test_basic(self):
         ai32 = np.array([[1, 2], [3, 4]], dtype=np.int32)
         af16 = np.array([[1, 2], [3, 4]], dtype=np.float16)
@@ -31,7 +28,7 @@ class TestCommonType(object):
         assert_(common_type(acd) == np.cdouble)
 
 
-class TestMintypecode(object):
+class TestMintypecode:
 
     def test_default_1(self):
         for itype in '1bcsuwil':
@@ -81,18 +78,17 @@ class TestMintypecode(object):
         assert_equal(mintypecode('idD'), 'D')
 
 
-class TestIsscalar(object):
+class TestIsscalar:
 
     def test_basic(self):
         assert_(np.isscalar(3))
         assert_(not np.isscalar([3]))
         assert_(not np.isscalar((3,)))
         assert_(np.isscalar(3j))
-        assert_(np.isscalar(long(10)))
         assert_(np.isscalar(4.0))
 
 
-class TestReal(object):
+class TestReal:
 
     def test_real(self):
         y = np.random.rand(10,)
@@ -123,7 +119,7 @@ class TestReal(object):
         assert_(not isinstance(out, np.ndarray))
 
 
-class TestImag(object):
+class TestImag:
 
     def test_real(self):
         y = np.random.rand(10,)
@@ -154,7 +150,7 @@ class TestImag(object):
         assert_(not isinstance(out, np.ndarray))
 
 
-class TestIscomplex(object):
+class TestIscomplex:
 
     def test_fail(self):
         z = np.array([-1, 0, 1])
@@ -167,7 +163,7 @@ class TestIscomplex(object):
         assert_array_equal(res, [1, 0, 0])
 
 
-class TestIsreal(object):
+class TestIsreal:
 
     def test_pass(self):
         z = np.array([-1, 0, 1j])
@@ -180,7 +176,7 @@ class TestIsreal(object):
         assert_array_equal(res, [0, 1, 1])
 
 
-class TestIscomplexobj(object):
+class TestIscomplexobj:
 
     def test_basic(self):
         z = np.array([-1, 0, 1])
@@ -209,7 +205,7 @@ class TestIscomplexobj(object):
         # (pandas.core.dtypes)
         class PdComplex(np.complex128):
             pass
-        class PdDtype(object):
+        class PdDtype:
             name = 'category'
             names = None
             type = PdComplex
@@ -233,7 +229,7 @@ class TestIscomplexobj(object):
         assert_(iscomplexobj(a))
 
 
-class TestIsrealobj(object):
+class TestIsrealobj:
     def test_basic(self):
         z = np.array([-1, 0, 1])
         assert_(isrealobj(z))
@@ -241,7 +237,7 @@ class TestIsrealobj(object):
         assert_(not isrealobj(z))
 
 
-class TestIsnan(object):
+class TestIsnan:
 
     def test_goodvalues(self):
         z = np.array((-1., 0., 1.))
@@ -271,7 +267,7 @@ class TestIsnan(object):
             assert_all(np.isnan(np.array(0+0j)/0.) == 1)
 
 
-class TestIsfinite(object):
+class TestIsfinite:
     # Fixme, wrong place, isfinite now ufunc
 
     def test_goodvalues(self):
@@ -302,7 +298,7 @@ class TestIsfinite(object):
             assert_all(np.isfinite(np.array(1+1j)/0.) == 0)
 
 
-class TestIsinf(object):
+class TestIsinf:
     # Fixme, wrong place, isinf now ufunc
 
     def test_goodvalues(self):
@@ -331,7 +327,7 @@ class TestIsinf(object):
             assert_all(np.isinf(np.array((0.,))/0.) == 0)
 
 
-class TestIsposinf(object):
+class TestIsposinf:
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -341,7 +337,7 @@ class TestIsposinf(object):
         assert_(vals[2] == 1)
 
 
-class TestIsneginf(object):
+class TestIsneginf:
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -351,7 +347,7 @@ class TestIsneginf(object):
         assert_(vals[2] == 0)
 
 
-class TestNanToNum(object):
+class TestNanToNum:
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -456,7 +452,7 @@ class TestNanToNum(object):
         assert_equal(type(vals), np.ndarray)
 
 
-class TestRealIfClose(object):
+class TestRealIfClose:
 
     def test_basic(self):
         a = np.random.rand(10)
@@ -469,7 +465,7 @@ class TestRealIfClose(object):
         assert_all(isrealobj(b))
 
 
-class TestArrayConversion(object):
+class TestArrayConversion:
 
     def test_asfarray(self):
         a = asfarray(np.array([1, 2, 3]))

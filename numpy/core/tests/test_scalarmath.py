@@ -1,11 +1,12 @@
-from __future__ import division, absolute_import, print_function
-
+import contextlib
 import sys
 import warnings
 import itertools
 import operator
 import platform
 import pytest
+from hypothesis import given, settings, Verbosity, assume
+from hypothesis.strategies import sampled_from
 
 import numpy as np
 from numpy.testing import (
@@ -25,7 +26,7 @@ complex_floating_types = np.complexfloating.__subclasses__()
 
 # This compares scalarmath against ufuncs.
 
-class TestTypes(object):
+class TestTypes:
     def test_types(self):
         for atype in types:
             a = atype(1)
@@ -64,7 +65,7 @@ class TestTypes(object):
             np.add(1, 1)
 
 
-class TestBaseMath(object):
+class TestBaseMath:
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1
@@ -86,7 +87,7 @@ class TestBaseMath(object):
                 assert_almost_equal(np.square(inp2),
                                     np.multiply(inp2, inp2),  err_msg=msg)
                 # skip true divide for ints
-                if dt != np.int32 or (sys.version_info.major < 3 and not sys.py3kwarning):
+                if dt != np.int32:
                     assert_almost_equal(np.reciprocal(inp2),
                                         np.divide(1, inp2),  err_msg=msg)
 
@@ -110,7 +111,7 @@ class TestBaseMath(object):
         np.add(d, np.ones_like(d))
 
 
-class TestPower(object):
+class TestPower:
     def test_small_types(self):
         for t in [np.int8, np.int16, np.float16]:
             a = t(3)
@@ -202,7 +203,7 @@ def _signs(dt):
         return (+1, -1)
 
 
-class TestModulus(object):
+class TestModulus:
 
     def test_modulus_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
@@ -278,6 +279,10 @@ class TestModulus(object):
         # Check nans, inf
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
+            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -292,6 +297,9 @@ class TestModulus(object):
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
+                for op in [floordiv_and_mod, divmod]:
+                    div, mod = op(fone, fzer)
+                    assert_(np.isinf(div)) and assert_(np.isnan(mod))
 
     def test_inplace_floordiv_handling(self):
         # issue gh-12927
@@ -304,7 +312,7 @@ class TestModulus(object):
             a //= b
 
 
-class TestComplexDivision(object):
+class TestComplexDivision:
     def test_zero_division(self):
         with np.errstate(all="ignore"):
             for t in [np.complex64, np.complex128]:
@@ -376,7 +384,7 @@ class TestComplexDivision(object):
                     assert_equal(result.imag, ex[1])
 
 
-class TestConversion(object):
+class TestConversion:
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
@@ -399,15 +407,15 @@ class TestConversion(object):
             assert_(res == tgt)
 
         for code in np.typecodes['AllInteger']:
-            res = np.typeDict[code](np.iinfo(code).max)
+            res = np.dtype(code).type(np.iinfo(code).max)
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 
     def test_int_raise_behaviour(self):
         def overflow_error_func(dtype):
-            np.typeDict[dtype](np.iinfo(dtype).max + 1)
+            dtype(np.iinfo(dtype).max + 1)
 
-        for code in 'lLqQ':
+        for code in [np.int_, np.uint, np.longlong, np.ulonglong]:
             assert_raises(OverflowError, overflow_error_func, code)
 
     def test_int_from_infinite_longdouble(self):
@@ -512,7 +520,7 @@ class TestConversion(object):
         assert_(np.equal(np.datetime64('NaT'), None))
 
 
-#class TestRepr(object):
+#class TestRepr:
 #    def test_repr(self):
 #        for t in types:
 #            val = t(1197346475.0137341)
@@ -521,7 +529,7 @@ class TestConversion(object):
 #            assert_equal( val, val2 )
 
 
-class TestRepr(object):
+class TestRepr:
     def _test_type_repr(self, t):
         finfo = np.finfo(t)
         last_fraction_bit_idx = finfo.nexp + finfo.nmant
@@ -556,7 +564,7 @@ class TestRepr(object):
 
 if not IS_PYPY:
     # sys.getsizeof() is not valid on PyPy
-    class TestSizeOf(object):
+    class TestSizeOf:
 
         def test_equal_nbytes(self):
             for type in types:
@@ -568,7 +576,7 @@ if not IS_PYPY:
             assert_raises(TypeError, d.__sizeof__, "a")
 
 
-class TestMultiply(object):
+class TestMultiply:
     def test_seq_repeat(self):
         # Test that basic sequences get repeated when multiplied with
         # numpy integers. And errors are raised when multiplied with others.
@@ -605,7 +613,7 @@ class TestMultiply(object):
         # Test that an array-like which does not know how to be multiplied
         # does not attempt sequence repeat (raise TypeError).
         # See also gh-7428.
-        class ArrayLike(object):
+        class ArrayLike:
             def __init__(self, arr):
                 self.arr = arr
             def __array__(self):
@@ -619,7 +627,7 @@ class TestMultiply(object):
             assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
 
 
-class TestNegative(object):
+class TestNegative:
     def test_exceptions(self):
         a = np.ones((), dtype=np.bool_)[()]
         assert_raises(TypeError, operator.neg, a)
@@ -633,7 +641,7 @@ class TestNegative(object):
                 assert_equal(operator.neg(a) + a, 0)
 
 
-class TestSubtract(object):
+class TestSubtract:
     def test_exceptions(self):
         a = np.ones((), dtype=np.bool_)[()]
         assert_raises(TypeError, operator.sub, a, a)
@@ -647,36 +655,36 @@ class TestSubtract(object):
                 assert_equal(operator.sub(a, a), 0)
 
 
-class TestAbs(object):
-    def _test_abs_func(self, absfunc):
-        for tp in floating_types + complex_floating_types:
-            x = tp(-1.5)
-            assert_equal(absfunc(x), 1.5)
-            x = tp(0.0)
-            res = absfunc(x)
-            # assert_equal() checks zero signedness
-            assert_equal(res, 0.0)
-            x = tp(-0.0)
-            res = absfunc(x)
-            assert_equal(res, 0.0)
+class TestAbs:
+    def _test_abs_func(self, absfunc, test_dtype):
+        x = test_dtype(-1.5)
+        assert_equal(absfunc(x), 1.5)
+        x = test_dtype(0.0)
+        res = absfunc(x)
+        # assert_equal() checks zero signedness
+        assert_equal(res, 0.0)
+        x = test_dtype(-0.0)
+        res = absfunc(x)
+        assert_equal(res, 0.0)
 
-            x = tp(np.finfo(tp).max)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).max)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).tiny)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).tiny)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).min)
-            assert_equal(absfunc(x), -x.real)
+        x = test_dtype(np.finfo(test_dtype).min)
+        assert_equal(absfunc(x), -x.real)
 
-    def test_builtin_abs(self):
-        self._test_abs_func(abs)
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_builtin_abs(self, dtype):
+        self._test_abs_func(abs, dtype)
 
-    def test_numpy_abs(self):
-        self._test_abs_func(np.abs)
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_numpy_abs(self, dtype):
+        self._test_abs_func(np.abs, dtype)
 
-
-class TestBitShifts(object):
+class TestBitShifts:
 
     @pytest.mark.parametrize('type_code', np.typecodes['AllInteger'])
     @pytest.mark.parametrize('op',
@@ -702,3 +710,81 @@ class TestBitShifts(object):
                 shift_arr = np.array([shift]*32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)
+
+
+@contextlib.contextmanager
+def recursionlimit(n):
+    o = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(n)
+        yield
+    finally:
+        sys.setrecursionlimit(o)
+
+
+objecty_things = [object(), None]
+reasonable_operators_for_scalars = [
+    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
+    operator.gt, operator.add, operator.floordiv, operator.mod,
+    operator.mul, operator.matmul, operator.pow, operator.sub,
+    operator.truediv,
+]
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+@settings(verbosity=Verbosity.verbose)
+def test_operator_object_left(o, op, type_):
+    try:
+        with recursionlimit(200):
+            op(o, type_(1))
+    except TypeError:
+        pass
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+def test_operator_object_right(o, op, type_):
+    try:
+        with recursionlimit(200):
+            op(type_(1), o)
+    except TypeError:
+        pass
+
+
+@given(sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types),
+       sampled_from(types))
+def test_operator_scalars(op, type1, type2):
+    try:
+        op(type1(1), type2(1))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_longdouble_inf_loop(op):
+    try:
+        op(np.longdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_clongdouble_inf_loop(op):
+    if op in {operator.mod} and False:
+        pytest.xfail("The modulo operator is known to be broken")
+    try:
+        op(np.clongdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass

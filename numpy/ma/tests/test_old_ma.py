@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from functools import reduce
 
 import numpy as np
@@ -29,11 +27,11 @@ pi = np.pi
 def eq(v, w, msg=''):
     result = allclose(v, w)
     if not result:
-        print("Not eq:%s\n%s\n----%s" % (msg, str(v), str(w)))
+        print(f'Not eq:{msg}\n{v}\n----{w}')
     return result
 
 
-class TestMa(object):
+class TestMa:
 
     def setup(self):
         x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
@@ -700,7 +698,7 @@ class TestMa(object):
         assert_equal(b[1].shape, ())
 
 
-class TestUfuncs(object):
+class TestUfuncs:
     def setup(self):
         self.d = (array([1.0, 0, -1, pi / 2] * 2, mask=[0, 1] + [0] * 6),
                   array([1.0, 0, -1, pi / 2] * 2, mask=[1, 0] + [0] * 6),)
@@ -765,7 +763,7 @@ class TestUfuncs(object):
             assert_(eq(nonzero(x), [0]))
 
 
-class TestArrayMethods(object):
+class TestArrayMethods:
 
     def setup(self):
         x = np.array([8.375, 7.545, 8.828, 8.5, 1.757, 5.928,

@@ -3,8 +3,6 @@ Module of functions that are like ufuncs in acting on arrays and optionally
 storing results in an output array.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
@@ -102,7 +100,7 @@ def fix(x, out=None):
 
     See Also
     --------
-    trunc, floor, ceil
+    rint, trunc, floor, ceil
     around : Round to given number of decimals
 
     Examples
@@ -190,9 +188,10 @@ def isposinf(x, out=None):
     is_inf = nx.isinf(x)
     try:
         signbit = ~nx.signbit(x)
-    except TypeError:
-        raise TypeError('This operation is not supported for complex values '
-                        'because it would be ambiguous.')
+    except TypeError as e:
+        dtype = nx.asanyarray(x).dtype
+        raise TypeError(f'This operation is not supported for {dtype} values '
+                        'because it would be ambiguous.') from e
     else:
         return nx.logical_and(is_inf, signbit, out)
 
@@ -261,8 +260,9 @@ def isneginf(x, out=None):
     is_inf = nx.isinf(x)
     try:
         signbit = nx.signbit(x)
-    except TypeError:
-        raise TypeError('This operation is not supported for complex values '
-                        'because it would be ambiguous.')
+    except TypeError as e:
+        dtype = nx.asanyarray(x).dtype
+        raise TypeError(f'This operation is not supported for {dtype} values '
+                        'because it would be ambiguous.') from e
     else:
         return nx.logical_and(is_inf, signbit, out)

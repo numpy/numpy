@@ -22,14 +22,11 @@ TODO
     - fix bdist_mpkg: we build the same source twice -> how to make sure we use
       the same underlying python for egg install in venv and for bdist_mpkg
 """
-from __future__ import division, print_function
-
 import os
 import sys
 import shutil
-import subprocess
-import re
 import hashlib
+import textwrap
 
 # The paver package needs to be installed to run tasks
 import paver
@@ -41,7 +38,7 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/release/1.18.0-notes.rst'
+RELEASE_NOTES = 'doc/source/release/1.21.0-notes.rst'
 
 
 #-------------------------------------------------------
@@ -53,25 +50,13 @@ options(installers=Bunch(releasedir="release",
                          installersdir=os.path.join("release", "installers")),)
 
 
-#-----------------------------
-# Generate the release version
-#-----------------------------
+#------------------------
+# Get the release version
+#------------------------
 
 sys.path.insert(0, os.path.dirname(__file__))
 try:
-    setup_py = __import__("setup")
-    FULLVERSION = setup_py.VERSION
-    # This is duplicated from setup.py
-    if os.path.exists('.git'):
-        GIT_REVISION = setup_py.git_version()
-    elif os.path.exists('numpy/version.py'):
-        # must be a source distribution, use existing version file
-        from numpy.version import git_revision as GIT_REVISION
-    else:
-        GIT_REVISION = "Unknown"
-
-    if not setup_py.ISRELEASED:
-        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
+    from setup import FULLVERSION
 finally:
     sys.path.pop(0)
 
@@ -88,12 +73,13 @@ def tarball_name(ftype='gztar'):
         Type of archive, default is 'gztar'.
 
     """
-    root = 'numpy-%s' % FULLVERSION
+    root = f'numpy-{FULLVERSION}'
     if ftype == 'gztar':
         return root + '.tar.gz'
     elif ftype == 'zip':
         return root + '.zip'
-    raise ValueError("Unknown type %s" % type)
+    raise ValueError(f"Unknown type {type}")
+
 
 @task
 def sdist(options):
@@ -182,6 +168,18 @@ def compute_sha256(idirs):
 def write_release_task(options, filename='README'):
     """Append hashes of release files to release notes.
 
+    This appends file hashes to the release notes ane creates
+    four README files of the result in various formats:
+
+    - README.rst
+    - README.rst.gpg
+    - README.md
+    - README.md.gpg
+
+    The md file are created using `pandoc` so that the links are
+    properly updated. The gpg files are kept separate, so that
+    the unsigned files may be edited before signing if needed.
+
     Parameters
     ----------
     options :
@@ -192,46 +190,47 @@ def write_release_task(options, filename='README'):
 
     """
     idirs = options.installers.installersdir
-    source = paver.path.path(RELEASE_NOTES)
-    target = paver.path.path(filename + '.rst')
-    if target.exists():
-        target.remove()
+    notes = paver.path.path(RELEASE_NOTES)
+    rst_readme = paver.path.path(filename + '.rst')
+    md_readme = paver.path.path(filename + '.md')
 
-    tmp_target = paver.path.path(filename + '.md')
-    source.copy(tmp_target)
+    # append hashes
+    with open(rst_readme, 'w') as freadme:
+        with open(notes) as fnotes:
+            freadme.write(fnotes.read())
 
-    with open(str(tmp_target), 'a') as ftarget:
-        ftarget.writelines("""
-Checksums
-=========
+        freadme.writelines(textwrap.dedent(
+            """
+            Checksums
+            =========
 
-MD5
----
+            MD5
+            ---
+            ::
 
-""")
-        ftarget.writelines(['    %s\n' % c for c in compute_md5(idirs)])
-        ftarget.writelines("""
-SHA256
-------
+            """))
+        freadme.writelines([f'    {c}\n' for c in compute_md5(idirs)])
 
-""")
-        ftarget.writelines(['    %s\n' % c for c in compute_sha256(idirs)])
+        freadme.writelines(textwrap.dedent(
+            """
+            SHA256
+            ------
+            ::
 
-    # Sign release
-    cmd = ['gpg', '--clearsign', '--armor']
+            """))
+        freadme.writelines([f'    {c}\n' for c in compute_sha256(idirs)])
+
+    # generate md file using pandoc before signing
+    sh(f"pandoc -s -o {md_readme} {rst_readme}")
+
+    # Sign files
     if hasattr(options, 'gpg_key'):
-        cmd += ['--default-key', options.gpg_key]
-    cmd += ['--output', str(target), str(tmp_target)]
-    subprocess.check_call(cmd)
-    print("signed %s" % (target,))
+        cmd = f'gpg --clearsign --armor --default_key {options.gpg_key}'
+    else:
+        cmd = 'gpg --clearsign --armor'
 
-    # Change PR links for github posting, don't sign this
-    # as the signing isn't markdown compatible.
-    with open(str(tmp_target), 'r') as ftarget:
-        mdtext = ftarget.read()
-        mdtext = re.sub(r'^\* `(\#[0-9]*).*?`__', r'* \1', mdtext, flags=re.M)
-    with open(str(tmp_target), 'w') as ftarget:
-        ftarget.write(mdtext)
+    sh(cmd + f' --output {rst_readme}.gpg {rst_readme}')
+    sh(cmd + f' --output {md_readme}.gpg {md_readme}')
 
 
 @task

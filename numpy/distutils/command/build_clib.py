@@ -1,7 +1,5 @@
 """ Modified version of build_clib that handles fortran source files.
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 from glob import glob
 import shutil
@@ -11,9 +9,11 @@ from distutils.errors import DistutilsSetupError, DistutilsError, \
 
 from numpy.distutils import log
 from distutils.dep_util import newer_group
-from numpy.distutils.misc_util import filter_sources, has_f_sources,\
-     has_cxx_sources, all_strings, get_lib_source_files, is_sequence, \
-     get_numpy_include_dirs
+from numpy.distutils.misc_util import (
+    filter_sources, get_lib_source_files, get_numpy_include_dirs,
+    has_cxx_sources, has_f_sources, is_sequence
+)
+from numpy.distutils.ccompiler_opt import new_ccompiler_opt
 
 # Fix Python distutils bug sf #1718574:
 _l = old_build_clib.user_options
@@ -35,9 +35,16 @@ class build_clib(old_build_clib):
          "number of parallel jobs"),
         ('warn-error', None,
          "turn all warnings into errors (-Werror)"),
+        ('cpu-baseline=', None,
+         "specify a list of enabled baseline CPU optimizations"),
+        ('cpu-dispatch=', None,
+         "specify a list of dispatched CPU optimizations"),
+        ('disable-optimization', None,
+         "disable CPU optimized code(dispatch,simd,fast...)"),
     ]
 
-    boolean_options = old_build_clib.boolean_options + ['inplace', 'warn-error']
+    boolean_options = old_build_clib.boolean_options + \
+    ['inplace', 'warn-error', 'disable-optimization']
 
     def initialize_options(self):
         old_build_clib.initialize_options(self)
@@ -45,17 +52,24 @@ class build_clib(old_build_clib):
         self.inplace = 0
         self.parallel = None
         self.warn_error = None
+        self.cpu_baseline = None
+        self.cpu_dispatch = None
+        self.disable_optimization = None
+
 
     def finalize_options(self):
         if self.parallel:
             try:
                 self.parallel = int(self.parallel)
-            except ValueError:
-                raise ValueError("--parallel/-j argument must be an integer")
+            except ValueError as e:
+                raise ValueError("--parallel/-j argument must be an integer") from e
         old_build_clib.finalize_options(self)
         self.set_undefined_options('build',
                                         ('parallel', 'parallel'),
                                         ('warn_error', 'warn_error'),
+                                        ('cpu_baseline', 'cpu_baseline'),
+                                        ('cpu_dispatch', 'cpu_dispatch'),
+                                        ('disable_optimization', 'disable_optimization')
                                   )
 
     def have_f_sources(self):
@@ -102,6 +116,28 @@ class build_clib(old_build_clib):
         self.libraries = libraries
 
         self.compiler.show_customization()
+
+        if not self.disable_optimization:
+            dispatch_hpath = os.path.join("numpy", "distutils", "include", "npy_cpu_dispatch_config.h")
+            dispatch_hpath = os.path.join(self.get_finalized_command("build_src").build_src, dispatch_hpath)
+            opt_cache_path = os.path.abspath(
+                os.path.join(self.build_temp, 'ccompiler_opt_cache_clib.py')
+            )
+            self.compiler_opt = new_ccompiler_opt(
+                compiler=self.compiler, dispatch_hpath=dispatch_hpath,
+                cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
+                cache_path=opt_cache_path
+            )
+            if not self.compiler_opt.is_cached():
+                log.info("Detected changes on compiler optimizations, force rebuilding")
+                self.force = True
+
+            import atexit
+            def report():
+                log.info("\n########### CLIB COMPILER OPTIMIZATION ###########")
+                log.info(self.compiler_opt.report(full=True))
+
+            atexit.register(report)
 
         if self.have_f_sources():
             from numpy.distutils.fcompiler import new_fcompiler
@@ -212,6 +248,8 @@ class build_clib(old_build_clib):
                 'extra_f90_compile_args') or []
 
         macros = build_info.get('macros')
+        if macros is None:
+            macros = []
         include_dirs = build_info.get('include_dirs')
         if include_dirs is None:
             include_dirs = []
@@ -230,25 +268,55 @@ class build_clib(old_build_clib):
             c_sources += cxx_sources
             cxx_sources = []
 
+        # filtering C dispatch-table sources when optimization is not disabled,
+        # otherwise treated as normal sources.
+        copt_c_sources = []
+        copt_baseline_flags = []
+        copt_macros = []
+        if not self.disable_optimization:
+            bsrc_dir = self.get_finalized_command("build_src").build_src
+            dispatch_hpath = os.path.join("numpy", "distutils", "include")
+            dispatch_hpath = os.path.join(bsrc_dir, dispatch_hpath)
+            include_dirs.append(dispatch_hpath)
+
+            copt_build_src = None if self.inplace else bsrc_dir
+            copt_c_sources = [
+                c_sources.pop(c_sources.index(src))
+                for src in c_sources[:] if src.endswith(".dispatch.c")
+            ]
+            copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
+        else:
+            copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
+
         objects = []
+        if copt_c_sources:
+            log.info("compiling C dispatch-able sources")
+            objects += self.compiler_opt.try_dispatch(copt_c_sources,
+                                                      output_dir=self.build_temp,
+                                                      src_dir=copt_build_src,
+                                                      macros=macros + copt_macros,
+                                                      include_dirs=include_dirs,
+                                                      debug=self.debug,
+                                                      extra_postargs=extra_postargs)
+
         if c_sources:
             log.info("compiling C sources")
-            objects = compiler.compile(c_sources,
-                                       output_dir=self.build_temp,
-                                       macros=macros,
-                                       include_dirs=include_dirs,
-                                       debug=self.debug,
-                                       extra_postargs=extra_postargs)
+            objects += compiler.compile(c_sources,
+                                        output_dir=self.build_temp,
+                                        macros=macros + copt_macros,
+                                        include_dirs=include_dirs,
+                                        debug=self.debug,
+                                        extra_postargs=extra_postargs + copt_baseline_flags)
 
         if cxx_sources:
             log.info("compiling C++ sources")
             cxx_compiler = compiler.cxx_compiler()
             cxx_objects = cxx_compiler.compile(cxx_sources,
                                                output_dir=self.build_temp,
-                                               macros=macros,
+                                               macros=macros + copt_macros,
                                                include_dirs=include_dirs,
                                                debug=self.debug,
-                                               extra_postargs=extra_postargs)
+                                               extra_postargs=extra_postargs + copt_baseline_flags)
             objects.extend(cxx_objects)
 
         if f_sources or fmodule_sources:

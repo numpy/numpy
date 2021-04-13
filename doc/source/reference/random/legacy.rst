@@ -48,7 +48,8 @@ using the state of the `RandomState`:
 
 
 .. autoclass:: RandomState
-	:exclude-members:
+    :members: __init__
+    :exclude-members: __init__
 
 Seeding and State
 =================
@@ -125,7 +126,7 @@ Distributions
 Functions in `numpy.random`
 ===========================
 Many of the RandomState methods above are exported as functions in
-`numpy.random` This usage is discouraged, as it is implemented via a gloabl
+`numpy.random` This usage is discouraged, as it is implemented via a global
 `RandomState` instance which is not advised on two counts:
 
 - It uses global state, which means results will change as the code changes
@@ -133,7 +134,7 @@ Many of the RandomState methods above are exported as functions in
 - It uses a `RandomState` rather than the more modern `Generator`.
 
 For backward compatible legacy reasons, we cannot change this. See
-`random-quick-start`.
+:ref:`random-quick-start`.
 
 .. autosummary::
    :toctree: generated/

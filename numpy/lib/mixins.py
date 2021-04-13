@@ -1,8 +1,4 @@
 """Mixin classes for custom array types that don't inherit from ndarray."""
-from __future__ import division, absolute_import, print_function
-
-import sys
-
 from numpy.core import umath as um
 
 
@@ -60,7 +56,7 @@ def _unary_method(ufunc, name):
     return func
 
 
-class NDArrayOperatorsMixin(object):
+class NDArrayOperatorsMixin:
     """Mixin defining all operator special methods using __array_ufunc__.
 
     This class implements the special methods for almost all of Python's
@@ -72,7 +68,7 @@ class NDArrayOperatorsMixin(object):
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
     arrays as described in `A Mechanism for Overriding Ufuncs
-    <../../neps/nep-0013-ufunc-overrides.html>`_.
+    <https://numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
 
     As an trivial example, consider this implementation of an ``ArrayLike``
     class that simply wraps a NumPy array and ensures that the result of any
@@ -154,9 +150,7 @@ class NDArrayOperatorsMixin(object):
     __mul__, __rmul__, __imul__ = _numeric_methods(um.multiply, 'mul')
     __matmul__, __rmatmul__, __imatmul__ = _numeric_methods(
         um.matmul, 'matmul')
-    if sys.version_info.major < 3:
-        # Python 3 uses only __truediv__ and __floordiv__
-        __div__, __rdiv__, __idiv__ = _numeric_methods(um.divide, 'div')
+    # Python 3 does not use __div__, __rdiv__, or __idiv__
     __truediv__, __rtruediv__, __itruediv__ = _numeric_methods(
         um.true_divide, 'truediv')
     __floordiv__, __rfloordiv__, __ifloordiv__ = _numeric_methods(
