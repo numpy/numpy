@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+# Note: the function name is different here
 def concat(arrays: Tuple[array, ...], /, *, axis: Optional[int] = 0) -> array:
     """
     Array API compatible wrapper for :py:func:`np.concatenate <numpy.concatenate>`.
@@ -15,7 +16,6 @@ def concat(arrays: Tuple[array, ...], /, *, axis: Optional[int] = 0) -> array:
     See its docstring for more information.
     """
     arrays = tuple(a._array for a in arrays)
-    # Note: the function name is different here
     return ndarray._new(np.concatenate(arrays, axis=axis))
 
 def expand_dims(x: array, axis: int, /) -> array:

@@ -20,6 +20,7 @@ def abs(x: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in abs')
     return ndarray._new(np.abs(x._array))
 
+# Note: the function name is different here
 def acos(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.arccos <numpy.arccos>`.
@@ -28,9 +29,9 @@ def acos(x: array, /) -> array:
     """
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in acos')
-    # Note: the function name is different here
     return ndarray._new(np.arccos(x._array))
 
+# Note: the function name is different here
 def acosh(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.arccosh <numpy.arccosh>`.
@@ -39,7 +40,6 @@ def acosh(x: array, /) -> array:
     """
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in acosh')
-    # Note: the function name is different here
     return ndarray._new(np.arccosh(x._array))
 
 def add(x1: array, x2: array, /) -> array:
@@ -52,6 +52,7 @@ def add(x1: array, x2: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in add')
     return ndarray._new(np.add(x1._array, x2._array))
 
+# Note: the function name is different here
 def asin(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.arcsin <numpy.arcsin>`.
@@ -60,9 +61,9 @@ def asin(x: array, /) -> array:
     """
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in asin')
-    # Note: the function name is different here
     return ndarray._new(np.arcsin(x._array))
 
+# Note: the function name is different here
 def asinh(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.arcsinh <numpy.arcsinh>`.
@@ -71,9 +72,9 @@ def asinh(x: array, /) -> array:
     """
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in asinh')
-    # Note: the function name is different here
     return ndarray._new(np.arcsinh(x._array))
 
+# Note: the function name is different here
 def atan(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.arctan <numpy.arctan>`.
@@ -82,9 +83,9 @@ def atan(x: array, /) -> array:
     """
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in atan')
-    # Note: the function name is different here
     return ndarray._new(np.arctan(x._array))
 
+# Note: the function name is different here
 def atan2(x1: array, x2: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.arctan2 <numpy.arctan2>`.
@@ -93,9 +94,9 @@ def atan2(x1: array, x2: array, /) -> array:
     """
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in atan2')
-    # Note: the function name is different here
     return ndarray._new(np.arctan2(x1._array, x2._array))
 
+# Note: the function name is different here
 def atanh(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.arctanh <numpy.arctanh>`.
@@ -104,7 +105,6 @@ def atanh(x: array, /) -> array:
     """
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in atanh')
-    # Note: the function name is different here
     return ndarray._new(np.arctanh(x._array))
 
 def bitwise_and(x1: array, x2: array, /) -> array:
@@ -117,13 +117,13 @@ def bitwise_and(x1: array, x2: array, /) -> array:
         raise TypeError('Only integer_or_boolean dtypes are allowed in bitwise_and')
     return ndarray._new(np.bitwise_and(x1._array, x2._array))
 
+# Note: the function name is different here
 def bitwise_left_shift(x1: array, x2: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.left_shift <numpy.left_shift>`.
 
     See its docstring for more information.
     """
-    # Note: the function name is different here
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
         raise TypeError('Only integer dtypes are allowed in bitwise_left_shift')
     # Note: bitwise_left_shift is only defined for x2 nonnegative.
@@ -134,6 +134,7 @@ def bitwise_left_shift(x1: array, x2: array, /) -> array:
     # type promotion of the two input types.
     return ndarray._new(np.left_shift(x1._array, x2._array).astype(x1.dtype))
 
+# Note: the function name is different here
 def bitwise_invert(x: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.invert <numpy.invert>`.
@@ -142,7 +143,6 @@ def bitwise_invert(x: array, /) -> array:
     """
     if x.dtype not in _integer_or_boolean_dtypes:
         raise TypeError('Only integer or boolean dtypes are allowed in bitwise_invert')
-    # Note: the function name is different here
     return ndarray._new(np.invert(x._array))
 
 def bitwise_or(x1: array, x2: array, /) -> array:
@@ -155,13 +155,13 @@ def bitwise_or(x1: array, x2: array, /) -> array:
         raise TypeError('Only integer or boolean dtypes are allowed in bitwise_or')
     return ndarray._new(np.bitwise_or(x1._array, x2._array))
 
+# Note: the function name is different here
 def bitwise_right_shift(x1: array, x2: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.right_shift <numpy.right_shift>`.
 
     See its docstring for more information.
     """
-    # Note: the function name is different here
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
         raise TypeError('Only integer dtypes are allowed in bitwise_right_shift')
     # Note: bitwise_right_shift is only defined for x2 nonnegative.
@@ -474,6 +474,7 @@ def positive(x: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in positive')
     return ndarray._new(np.positive(x._array))
 
+# Note: the function name is different here
 def pow(x1: array, x2: array, /) -> array:
     """
     Array API compatible wrapper for :py:func:`np.power <numpy.power>`.
@@ -482,7 +483,6 @@ def pow(x1: array, x2: array, /) -> array:
     """
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in pow')
-    # Note: the function name is different here
     return ndarray._new(np.power(x1._array, x2._array))
 
 def remainder(x1: array, x2: array, /) -> array:
