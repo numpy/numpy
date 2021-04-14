@@ -190,6 +190,9 @@ def ceil(x: array, /) -> array:
     """
     if x.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in ceil')
+    if x.dtype in _integer_dtypes:
+        # Note: The return dtype of ceil is the same as the input
+        return x
     return ndarray._new(np.ceil(x._array))
 
 def cos(x: array, /) -> array:
@@ -258,6 +261,9 @@ def floor(x: array, /) -> array:
     """
     if x.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in floor')
+    if x.dtype in _integer_dtypes:
+        # Note: The return dtype of floor is the same as the input
+        return x
     return ndarray._new(np.floor(x._array))
 
 def floor_divide(x1: array, x2: array, /) -> array:
