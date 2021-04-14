@@ -10,7 +10,7 @@ from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf
-from .umath import log10, exp2
+from .umath import log10, exp2, nextafter
 from . import umath
 
 
@@ -167,6 +167,11 @@ def _register_known_types():
     ld = ntypes.longdouble
     epsneg_f128 = exp2(ld(-113))
     tiny_f128 = exp2(ld(-16382))
+    # The value for the smallest subnormal may be 0 on some hardware platforms
+    if hasattr(umath, 'nextafter'):
+        smallest_subnormalf128 = nextafter(ld(0), ld(1), dtype=ld)
+    else:
+        smallest_subnormalf128 = float64_ma.smallest_subnormal
     # Ignore runtime error when this is not f128
     with numeric.errstate(all='ignore'):
         huge_f128 = (ld(1) - epsneg_f128) / tiny_f128 * ld(4)
@@ -185,7 +190,7 @@ def _register_known_types():
                              huge=huge_f128,
                              tiny=tiny_f128,
                              smallest_normal=tiny_f128,
-                             smallest_subnormal=exp2(ld(-16445)))
+                             smallest_subnormal=smallest_subnormalf128)
     # IEEE 754 128-bit binary float
     _register_type(float128_ma,
         b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
@@ -196,7 +201,11 @@ def _register_known_types():
     # Known parameters for float80 (Intel 80-bit extended precision)
     epsneg_f80 = exp2(ld(-64))
     tiny_f80 = exp2(ld(-16382))
-    smallest_subnormal = exp2(ld(-16445))
+    # The value for the smallest subnormal may be 0 on some hardware platforms
+    if hasattr(umath, 'nextafter'):
+        smallest_subnormalf80 = nextafter(ld(0), ld(1), dtype=ld)
+    else:
+        smallest_subnormalf80 = float64_ma.smallest_subnormal
     # Ignore runtime error when this is not f80
     with numeric.errstate(all='ignore'):
         huge_f80 = (ld(1) - epsneg_f80) / tiny_f80 * ld(4)
@@ -215,7 +224,7 @@ def _register_known_types():
                             huge=huge_f80,
                             tiny=tiny_f80,
                             smallest_normal=tiny_f80,
-                            smallest_subnormal=smallest_subnormal)
+                            smallest_subnormal=smallest_subnormalf80)
     # float80, first 10 bytes containing actual storage
     _register_type(float80_ma, b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
     _float_ma[80] = float80_ma
@@ -227,6 +236,11 @@ def _register_known_types():
     huge_dd = (umath.nextafter(ld(inf), ld(0))
                 if hasattr(umath, 'nextafter')  # Missing on some platforms?
                 else float64_ma.huge)
+    # The value for the smallest subnormal may be 0 on some hardware platforms
+    if hasattr(umath, 'nextafter'):
+        smallest_subnormal_dd = nextafter(ld(0), ld(1), dtype=ld)
+    else:
+        smallest_subnormal_dd = float64_ma.smallest_subnormal
     float_dd_ma = MachArLike(ld,
                              machep=-105,
                              negep=-106,
@@ -242,7 +256,7 @@ def _register_known_types():
                              huge=huge_dd,
                              tiny=exp2(ld(-1022)),
                              smallest_normal=exp2(ld(-1022)),
-                             smallest_subnormal=exp2(ld(-16445)))
+                             smallest_subnormal=smallest_subnormal_dd)
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
         b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf')
