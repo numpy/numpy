@@ -680,14 +680,17 @@ class TestFloatExceptions:
                                    np.power, ftype(2), ftype(2**fi.nexp))
             self.assert_raises_fpe(divbyzero,
                                    lambda a, b: a/b, ftype(1), ftype(0))
-            self.assert_raises_fpe(invalid,
-                                   lambda a, b: a/b, ftype(np.inf), ftype(np.inf))
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a/b, ftype(np.inf), ftype(np.inf)
+            )
             self.assert_raises_fpe(invalid,
                                    lambda a, b: a/b, ftype(0), ftype(0))
-            self.assert_raises_fpe(invalid,
-                                   lambda a, b: a-b, ftype(np.inf), ftype(np.inf))
-            self.assert_raises_fpe(invalid,
-                                   lambda a, b: a+b, ftype(np.inf), ftype(-np.inf))
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a-b, ftype(np.inf), ftype(np.inf)
+            )
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a+b, ftype(np.inf), ftype(-np.inf)
+            )
             self.assert_raises_fpe(invalid,
                                    lambda a, b: a*b, ftype(0), ftype(np.inf))
 
