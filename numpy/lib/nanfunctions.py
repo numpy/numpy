@@ -1360,20 +1360,12 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
 def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
                            interpolation='linear', keepdims=np._NoValue):
     """Assumes that q is in [0, 1], and is an ndarray"""
-    # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
-    # so deal them upfront
-    if a.size == 0:
-        r = np.nanmean(a, axis, keepdims=keepdims)
-        if q.ndim != 0:
-            r = np.broadcast_to(r, q.shape + r.shape)
-    else:
-        r, k = function_base._ureduce(
-            a, func=_nanquantile_ureduce_func, q=q, axis=axis,
-            overwrite_input=overwrite_input, interpolation=interpolation
-        )
-        if keepdims and keepdims is not np._NoValue:
-            r = r.reshape(q.shape + k)
-
+    r, k = function_base._ureduce(
+        a, func=_nanquantile_ureduce_func, q=q, axis=axis,
+        overwrite_input=overwrite_input, interpolation=interpolation
+    )
+    if keepdims and keepdims is not np._NoValue:
+        r = r.reshape(q.shape + k)
     if out is not None:
         out[...] = r
     return r
@@ -1389,6 +1381,11 @@ def _nanquantile_ureduce_func(a, q, axis=None, overwrite_input=False,
     if axis is None or a.ndim == 1:
         part = a.ravel()
         result = _nanquantile_1d(part, q, overwrite_input, interpolation)
+    # apply_along_axis doesn't handle empty arrays well, so deal them upfront
+    elif a.size == 0:
+        result = np.nanmean(a, axis)
+        if q.ndim != 0:
+            result = np.broadcast_to(result, q.shape + result.shape)
     else:
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
                                      overwrite_input, interpolation)
