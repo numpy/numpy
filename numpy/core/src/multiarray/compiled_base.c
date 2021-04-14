@@ -1428,9 +1428,26 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         PyCFunctionObject *new = (PyCFunctionObject *)obj;
         _ADDDOC(new->m_ml->ml_doc, new->m_ml->ml_name);
     }
-    else if (Py_TYPE(obj) == &PyType_Type) {
+    else if (PyObject_TypeCheck(obj, &PyType_Type)) {
+        /*
+         * We add it to both `tp_doc` and `__doc__` here.  Note that in theory
+         * `tp_doc` extracts the signature line, but we currently do not use
+         * it.  It may make sense to only add it as `__doc__` and
+         * `__text_signature__` to the dict in the future.
+         * The dictionary path is only necessary for heaptypes (currently not
+         * used) and metaclasses.
+         * If `__doc__` as stored in `to_dict` is None, we assume this was
+         * filled in by `PyType_Read()` and should also be replaced.
+         */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
+        if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
+                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) {
+            /* Warning: Modifying `tp_dict` is not generally safe! */
+            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+                return NULL;
+            }
+        }
     }
     else if (Py_TYPE(obj) == &PyMemberDescr_Type) {
         PyMemberDescrObject *new = (PyMemberDescrObject *)obj;
