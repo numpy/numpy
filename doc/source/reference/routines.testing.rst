@@ -18,9 +18,6 @@ Asserts
 .. autosummary::
    :toctree: generated/
 
-   assert_almost_equal
-   assert_approx_equal
-   assert_array_almost_equal
    assert_allclose
    assert_array_almost_equal_nulp
    assert_array_max_ulp
@@ -31,6 +28,14 @@ Asserts
    assert_raises_regex
    assert_warns
    assert_string_equal
+
+.. autosummary::
+   :toctree: generated/
+   :hidden:
+
+   assert_almost_equal
+   assert_approx_equal
+   assert_array_almost_equal
 
 Decorators
 ----------
