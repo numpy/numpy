@@ -207,7 +207,7 @@ stages:
     - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
     - script: python runtests.py -g --refguide-check
-      displayName: 'Run Refuide Check'
+      displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
