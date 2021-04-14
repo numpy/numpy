@@ -23,7 +23,7 @@ jobs:
             python37-devel python37-pytest python37-hypothesis
             python37-cython python37-pip python37-wheel
             python37-setuptools liblapack-devel libopenblas
-            gcc-fortran git
+            gcc-fortran git dash
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
@@ -35,21 +35,21 @@ jobs:
       - name: Update with Cygwin git
         # fetch-depth=0 above should make this short.
         run: |
-          bash -c "type git; git fetch --all -p"
+          dash -c "which git; /usr/bin/git fetch --all -p"
       - name: Verify python version
         # Make sure it's the Cygwin one, not a Windows one
         run: |
-          bash -c "type python3.7; python3.7 --version -V"
+          dash -c "which python3.7; /usr/bin/python3.7 --version -V"
       - name: Build NumPy wheel
         run: |
-          bash -c "python3.7 setup.py bdist_wheel"
+          dash -c "/usr/bin/python3.7 setup.py bdist_wheel"
       - name: Install new NumPy
         run: |
-          bash -c "python3.7 -m pip install dist/numpy-*cp37*.whl"
+          bash -c "/usr/bin/python3.7 -m pip install dist/numpy-*cp37*.whl"
       - name: Check that pip installed the extensions
         run: |
-          bash -c "python3.7 -m pip show numpy"
-          bash -c "python3.7 -m pip show -f numpy | grep .dll"
+          dash -c "/usr/bin/python3.7 -m pip show numpy"
+          dash -c "/usr/bin/python3.7 -m pip show -f numpy | grep .dll"
           echo >list_dlls_dos.sh 'site_packages=$(python3.7 -m pip show numpy | \
               grep Location | cut -d " " -f 2 -);
           dll_list=$(for name in $(python3.7 -m pip show -f numpy | \
@@ -68,8 +68,8 @@ jobs:
                   -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll//g")
           done
           '
-          dash -c "tr -d '\r' <list_dlls_dos.sh >list_dlls_unix.sh"
-          bash -c "PATH=/bin:/usr/bin:/usr/lib/lapack bash list_dlls_unix.sh"
+          dash -c "/bin/tr -d '\r' <list_dlls_dos.sh >list_dlls_unix.sh"
+          bash -c "PATH=/bin:/usr/bin:/usr/lib/lapack /bin/dash list_dlls_unix.sh"
       - name: Run NumPy test suite
         run: |
           dash -c "mkdir empty"
