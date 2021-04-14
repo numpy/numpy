@@ -19,7 +19,11 @@ jobs:
         with:
           platform: x64
           install-dir: 'C:\tools\cygwin'
-          packages: python37-devel python37-pytest python37-hypothesis python37-cython python37-pip python37-wheel python37-setuptools liblapack-devel libopenblas gcc-fortran git
+          packages: >
+            python37-devel python37-pytest python37-hypothesis
+            python37-cython python37-pip python37-wheel
+            python37-setuptools liblapack-devel libopenblas
+            gcc-fortran git
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
@@ -46,8 +50,10 @@ jobs:
         run: |
           bash -c "python3.7 -m pip show numpy"
           bash -c "python3.7 -m pip show -f numpy | grep .dll"
-          echo >list_dlls_dos.sh 'site_packages=$(python3.7 -m pip show numpy | grep Location | cut -d " " -f 2 -);
-          dll_list=$(for name in $(python3.7 -m pip show -f numpy | grep -F .dll); do echo ${site_packages}/${name}; done)
+          echo >list_dlls_dos.sh 'site_packages=$(python3.7 -m pip show numpy | \
+              grep Location | cut -d " " -f 2 -);
+          dll_list=$(for name in $(python3.7 -m pip show -f numpy | \
+              grep -F .dll); do echo ${site_packages}/${name}; done)
           ls -l ${dll_list}
           file ${dll_list}
           ldd ${dll_list}
@@ -56,7 +62,10 @@ jobs:
           for name in ${dll_list};
           do
               echo ${name}
-              python3.7 -c "import "$(echo ${name} | sed -E -e "s/\/+(home|usr).*?site-packages\/+//g" -e "s/\//./g" -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll//g")
+              python3.7 -c "import "$(echo ${name} | \
+                  sed -E \
+                  -e "s/\/+(home|usr).*?site-packages\/+//g" -e "s/\//./g" \
+                  -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll//g")
           done
           '
           dash -c "tr -d '\r' <list_dlls_dos.sh >list_dlls_unix.sh"
@@ -64,7 +73,8 @@ jobs:
       - name: Run NumPy test suite
         run: |
           dash -c "mkdir empty"
-          bash -c "cd empty && PATH=/bin:/usr/bin:/usr/lib/lapack python3.7 -vv -c 'import numpy as np; np.test()' && cd .."
+          bash -c "cd empty && PATH=/bin:/usr/bin:/usr/lib/lapack python3.7 -vv \
+              -c 'import numpy as np; np.test()' && cd .."
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v2
         if: failure()
