@@ -1438,7 +1438,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def imag(self, value: ArrayLike) -> None: ...
     def __new__(
         cls: Type[_ArraySelf],
-        shape: Sequence[int],
+        shape: _ShapeLike,
         dtype: DTypeLike = ...,
         buffer: _BufferType = ...,
         offset: int = ...,
