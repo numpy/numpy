@@ -17,6 +17,9 @@ C = [1]
 def func(i: int, j: int, **kwargs: Any) -> SubClass:
     return B
 
+np.ndarray(Index())
+np.ndarray([Index()])
+
 np.array(1, dtype=float)
 np.array(1, copy=False)
 np.array(1, order='F')
