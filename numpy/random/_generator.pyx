@@ -4592,7 +4592,7 @@ def default_rng(seed=None):
     
     Examples
     --------
-    ``default_rng`` is the reccomended constructor for the random number class
+    ``default_rng`` is the recommended constructor for the random number class
     ``Generator``. Here are several ways we can construct a random 
     number generator using ``default_rng`` and the ``Generator`` class. 
     
