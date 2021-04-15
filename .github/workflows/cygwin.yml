@@ -46,7 +46,17 @@ jobs:
       - name: Install new NumPy
         run: |
           bash -c "/usr/bin/python3.7 -m pip install dist/numpy-*cp37*.whl"
-      - name: Check that pip installed the extensions
+      - name: Run NumPy test suite
+        run: >-
+          bash -c "cd dist && PATH=/bin:/usr/bin:/usr/lib/lapack python3.7 -c 'import numpy as np; np.test()' && cd .."
+      - name: Upload wheel if tests fail
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: numpy-cygwin-wheel
+          path: dist/numpy-*cp37*.whl
+      - name: On failure check the extension modules
+        if: failure()
         run: |
           dash -c "/usr/bin/python3.7 -m pip show numpy"
           dash -c "/usr/bin/python3.7 -m pip show -f numpy | grep .dll"
@@ -70,12 +80,3 @@ jobs:
           '
           dash -c "/bin/tr -d '\r' <list_dlls_dos.sh >list_dlls_unix.sh"
           bash -c "PATH=/bin:/usr/bin:/usr/lib/lapack /bin/dash list_dlls_unix.sh"
-      - name: Run NumPy test suite
-        run: >-
-          bash -c "cd dist && PATH=/bin:/usr/bin:/usr/lib/lapack python3.7 -vv -c 'import numpy as np; np.test()' && cd .."
-      - name: Upload wheel if tests fail
-        uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: numpy-cygwin-wheel
-          path: dist/numpy-*cp37*.whl
