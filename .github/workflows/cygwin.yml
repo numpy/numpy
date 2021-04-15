@@ -20,10 +20,10 @@ jobs:
           platform: x64
           install-dir: 'C:\tools\cygwin'
           packages: >
-            python37-devel python37-importlib-metadata python37-cython
-            python37-pip python37-wheel python37-setuptools
-            python37-pytest python37-hypothesis liblapack-devel
-            libopenblas gcc-fortran git dash
+            python37-devel python37-zipp python37-importlib-metadata
+            python37-cython python37-pip python37-wheel
+            python37-setuptools python37-pytest python37-hypothesis
+            liblapack-devel libopenblas gcc-fortran git dash
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
@@ -42,6 +42,7 @@ jobs:
           dash -c "which python3.7; /usr/bin/python3.7 --version -V"
       - name: Build NumPy wheel
         run: |
+          dash -c "/usr/bin/python3.7 -m pip install -r test_requirements.txt"
           dash -c "/usr/bin/python3.7 setup.py bdist_wheel"
       - name: Install new NumPy
         run: |
