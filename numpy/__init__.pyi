@@ -368,26 +368,58 @@ __git_version__: str
 # TODO: Move placeholders to their respective module once
 # their annotations are properly implemented
 #
-# Placeholders for non-functions (types and other objects)
-DataSource: Type[Any]
-MachAr: Type[Any]
+# Placeholders for classes
+# TODO: Remove the `__getattr__` methods once the classes are stubbed out
+class DataSource:
+    def __getattr__(self, key: str) -> Any: ...
+
+class MachAr:
+    def __getattr__(self, key: str) -> Any: ...
+
+class broadcast:
+    def __getattr__(self, key: str) -> Any: ...
+
+class busdaycalendar:
+    def __getattr__(self, key: str) -> Any: ...
+
+class chararray(ndarray[_ShapeType, _DType_co]):
+    def __getattr__(self, key: str) -> Any: ...
+
+class finfo:
+    def __getattr__(self, key: str) -> Any: ...
+
+class format_parser:
+    def __getattr__(self, key: str) -> Any: ...
+
+class iinfo:
+    def __getattr__(self, key: str) -> Any: ...
+
+class matrix(ndarray[_ShapeType, _DType_co]):
+    def __getattr__(self, key: str) -> Any: ...
+
+class memmap(ndarray[_ShapeType, _DType_co]):
+    def __getattr__(self, key: str) -> Any: ...
+
+class nditer:
+    def __getattr__(self, key: str) -> Any: ...
+
+class poly1d:
+    def __getattr__(self, key: str) -> Any: ...
+
+class recarray(ndarray[_ShapeType, _DType_co]):
+    def __getattr__(self, key: str) -> Any: ...
+
+class record(void):
+    def __getattr__(self, key: str) -> Any: ...
+
+class vectorize:
+    def __getattr__(self, key: str) -> Any: ...
+
+# Placeholders for miscellaneous objects
 ScalarType: Tuple[Type[Any], ...]
-broadcast: Type[Any]
-busdaycalendar: Type[Any]
 cast: Dict[generic, Callable[..., ndarray[Any, dtype[Any]]]]
-chararray: Type[Any]
-finfo: Type[Any]
-format_parser: Type[Any]
-iinfo: Type[Any]
-matrix: Type[Any]
-memmap: Type[Any]
 nbytes: Dict[generic, int]
-nditer: Type[Any]
-poly1d: Type[Any]
-recarray: Type[Any]
-record: Type[Any]
 typecodes: Dict[str, str]
-vectorize: Type[Any]
 
 # Placeholders for Python-based functions
 def angle(z, deg=...): ...
