@@ -37,13 +37,13 @@ This eliminates the need to navigate to the corresponding submodules, e.g.
 The classes provide a more consistent and concise interface than the
 type-specific functions defined in the submodules for each type of polynomial.
 For example, to fit a Chebyshev polynomial with degree ``1`` to data given
-by arrays ``xdata`` and ``ydata``, the 
+by arrays ``xdata`` and ``ydata``, the
 `~chebyshev.Chebyshev.fit` class method::
 
     >>> from numpy.polynomial import Chebyshev
     >>> c = Chebyshev.fit(xdata, ydata, deg=1)
 
-is preferred over the `chebyshev.chebfit` function from the 
+is preferred over the `chebyshev.chebfit` function from the
 ``np.polynomial.chebyshev`` module::
 
     >>> from numpy.polynomial.chebyshev import chebfit
@@ -76,7 +76,7 @@ Methods for creating polynomial instances.
 
 - ``Poly.basis(degree)``    -- Basis polynomial of given degree
 - ``Poly.identity()``       -- ``p`` where ``p(x) = x`` for all ``x``
-- ``Poly.fit(x, y, deg)``   -- ``p`` of degree ``deg`` with coefficients 
+- ``Poly.fit(x, y, deg)``   -- ``p`` of degree ``deg`` with coefficients
   determined by the least-squares fit to the data ``x``, ``y``
 - ``Poly.fromroots(roots)`` -- ``p`` with specified roots
 - ``p.copy()``              -- Create a copy of ``p``
@@ -119,6 +119,16 @@ from .legendre import Legendre
 from .hermite import Hermite
 from .hermite_e import HermiteE
 from .laguerre import Laguerre
+
+__all__ = [
+    "set_default_printstyle",
+    "polynomial", "Polynomial",
+    "chebyshev", "Chebyshev",
+    "legendre", "Legendre",
+    "hermite", "Hermite",
+    "hermite_e", "HermiteE",
+    "laguerre", "Laguerre",
+]
 
 
 def set_default_printstyle(style):

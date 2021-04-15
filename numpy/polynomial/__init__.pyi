@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 from numpy.polynomial import (
     chebyshev as chebyshev,
@@ -8,6 +8,8 @@ from numpy.polynomial import (
     legendre as legendre,
     polynomial as polynomial,
 )
+
+__all__: List[str]
 
 Polynomial: Any
 Chebyshev: Any
