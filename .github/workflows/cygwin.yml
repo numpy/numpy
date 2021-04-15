@@ -28,7 +28,7 @@ jobs:
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
-          dirs: 'C:\tools\cygwin\bin'
+          dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
       - name: Verify that bash is Cygwin bash
         run: |
           command bash
@@ -50,7 +50,7 @@ jobs:
           bash -c "/usr/bin/python3.7 -m pip install dist/numpy-*cp37*.whl"
       - name: Run NumPy test suite
         run: >-
-          bash -c "PATH=/bin:/usr/bin:/usr/lib/lapack /usr/bin/python3.7 runtests.py -n -vv"
+          dash -c "/usr/bin/python3.7 runtests.py -n -vv"
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v2
         if: failure()
@@ -89,4 +89,4 @@ jobs:
           done
           '
           dash -c "/bin/tr -d '\r' <list_dlls_dos.sh >list_dlls_unix.sh"
-          bash -c "PATH=/bin:/usr/bin:/usr/lib/lapack /bin/dash list_dlls_unix.sh"
+          dash "list_dlls_unix.sh"
