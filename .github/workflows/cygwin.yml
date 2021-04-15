@@ -23,7 +23,7 @@ jobs:
             python37-devel python37-pytest python37-hypothesis
             python37-cython python37-pip python37-wheel
             python37-setuptools liblapack-devel libopenblas
-            gcc-fortran git dash
+            gcc-fortran git dash python37-importlib-metadata
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
