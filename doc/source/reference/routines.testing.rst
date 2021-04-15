@@ -29,9 +29,14 @@ Asserts
    assert_warns
    assert_string_equal
 
+Asserts (not recommanded)
+-------------------------
+It is recommended to use one of `assert_allclose`,
+`assert_array_almost_equal_nulp` or `assert_array_max_ulp` instead of these
+functions for more consistent floating point comparisons.
+
 .. autosummary::
    :toctree: generated/
-   :hidden:
 
    assert_almost_equal
    assert_approx_equal
