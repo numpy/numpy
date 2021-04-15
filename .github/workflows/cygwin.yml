@@ -49,7 +49,7 @@ jobs:
           bash -c "/usr/bin/python3.7 -m pip install dist/numpy-*cp37*.whl"
       - name: Run NumPy test suite
         run: >-
-          bash -c "cd dist && PATH=/bin:/usr/bin:/usr/lib/lapack python3.7 -c 'import numpy as np; np.test()' && cd .."
+          bash -c "cd dist && PATH=/bin:/usr/bin:/usr/lib/lapack /usr/bin/python3.7 -c 'import numpy as np; np.test()' && cd .."
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v2
         if: failure()
