@@ -21,9 +21,10 @@ jobs:
           install-dir: 'C:\tools\cygwin'
           packages: >
             python37-devel python37-zipp python37-importlib-metadata
-            python37-cython python37-pip python37-wheel
-            python37-setuptools python37-pytest python37-hypothesis
-            liblapack-devel libopenblas gcc-fortran git dash
+            python37-cython python37-pip python37-wheel python37-cffi
+            python37-pytz python37-setuptools python37-pytest
+            python37-hypothesis liblapack-devel libopenblas
+            gcc-fortran git dash
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
