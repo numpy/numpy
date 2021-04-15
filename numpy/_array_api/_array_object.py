@@ -86,15 +86,12 @@ class ndarray:
     # Helper function to match the type promotion rules in the spec
     def _promote_scalar(self, scalar):
         """
-        Returns a promoted version of a Python scalar appropiate for use with
+        Returns a promoted version of a Python scalar appropriate for use with
         operations on self.
 
         This may raise an OverflowError in cases where the scalar is an
         integer that is too large to fit in a NumPy integer dtype, or
         TypeError when the scalar type is incompatible with the dtype of self.
-
-        Note: this helper function returns a NumPy array (NOT a NumPy array
-        API ndarray).
         """
         if isinstance(scalar, bool):
             if self.dtype not in _boolean_dtypes:
@@ -112,9 +109,38 @@ class ndarray:
         # behavior for integers within the bounds of the integer dtype.
         # Outside of those bounds we use the default NumPy behavior (either
         # cast or raise OverflowError).
-        return np.array(scalar, self.dtype)
+        return ndarray._new(np.array(scalar, self.dtype))
 
-    # Everything below this is required by the spec.
+    @staticmethod
+    def _normalize_two_args(x1, x2):
+        """
+        Normalize inputs to two arg functions to fix type promotion rules
+
+        NumPy deviates from the spec type promotion rules in cases where one
+        argument is 0-dimensional and the other is not. For example:
+
+        >>> import numpy as np
+        >>> a = np.array([1.0], dtype=np.float32)
+        >>> b = np.array(1.0, dtype=np.float64)
+        >>> np.add(a, b) # The spec says this should be float64
+        array([2.], dtype=float32)
+
+        To fix this, we add a dimension to the 0-dimension array before passing it
+        through. This works because a dimension would be added anyway from
+        broadcasting, so the resulting shape is the same, but this prevents NumPy
+        from not promoting the dtype.
+        """
+        if x1.shape == () and x2.shape != ():
+            # The _array[None] workaround was chosen because it is relatively
+            # performant. broadcast_to(x1._array, x2.shape) is much slower. We
+            # could also manually type promote x2, but that is more complicated
+            # and about the same performance as this.
+            x1 = ndarray._new(x1._array[None])
+        elif x2.shape == () and x1.shape != ():
+            x2 = ndarray._new(x2._array[None])
+        return (x1, x2)
+
+    # Everything below this line is required by the spec.
 
     def __abs__(self: array, /) -> array:
         """
@@ -129,7 +155,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__add__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__add__(other._array)
         return self.__class__._new(res)
 
     def __and__(self: array, other: array, /) -> array:
@@ -138,7 +165,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__and__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__and__(other._array)
         return self.__class__._new(res)
 
     def __array_namespace__(self: array, /, *, api_version: Optional[str] = None) -> object:
@@ -177,7 +205,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__eq__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__eq__(other._array)
         return self.__class__._new(res)
 
     def __float__(self: array, /) -> float:
@@ -196,7 +225,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__floordiv__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__floordiv__(other._array)
         return self.__class__._new(res)
 
     def __ge__(self: array, other: array, /) -> array:
@@ -205,7 +235,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ge__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__ge__(other._array)
         return self.__class__._new(res)
 
     # Note: A large fraction of allowed indices are disallowed here (see the
@@ -331,7 +362,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__gt__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__gt__(other._array)
         return self.__class__._new(res)
 
     def __int__(self: array, /) -> int:
@@ -357,7 +389,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__le__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__le__(other._array)
         return self.__class__._new(res)
 
     def __len__(self, /):
@@ -373,7 +406,11 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__lshift__(asarray(other)._array)
+        # Note: The spec requires the return dtype of bitwise_left_shift, and
+        # hence also __lshift__, to be the same as the first argument.
+        # np.ndarray.__lshift__ returns a type that is the type promotion of
+        # the two input types.
+        res = self._array.__lshift__(other._array).astype(self.dtype)
         return self.__class__._new(res)
 
     def __lt__(self: array, other: array, /) -> array:
@@ -382,7 +419,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__lt__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__lt__(other._array)
         return self.__class__._new(res)
 
     def __matmul__(self: array, other: array, /) -> array:
@@ -393,7 +431,7 @@ class ndarray:
             # matmul is not defined for scalars, but without this, we may get
             # the wrong error message from asarray.
             other = self._promote_scalar(other)
-        res = self._array.__matmul__(asarray(other)._array)
+        res = self._array.__matmul__(other._array)
         return self.__class__._new(res)
 
     def __mod__(self: array, other: array, /) -> array:
@@ -402,7 +440,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__mod__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__mod__(other._array)
         return self.__class__._new(res)
 
     def __mul__(self: array, other: array, /) -> array:
@@ -411,7 +450,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__mul__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__mul__(other._array)
         return self.__class__._new(res)
 
     def __ne__(self: array, other: array, /) -> array:
@@ -420,7 +460,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ne__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__ne__(other._array)
         return self.__class__._new(res)
 
     def __neg__(self: array, /) -> array:
@@ -436,7 +477,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__or__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__or__(other._array)
         return self.__class__._new(res)
 
     def __pos__(self: array, /) -> array:
@@ -450,10 +492,13 @@ class ndarray:
         """
         Performs the operation __pow__.
         """
+        from ._elementwise_functions import pow
+
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__pow__(asarray(other)._array)
-        return self.__class__._new(res)
+        # Note: NumPy's __pow__ does not follow type promotion rules for 0-d
+        # arrays, so we use pow() here instead.
+        return pow(self, other)
 
     def __rshift__(self: array, other: array, /) -> array:
         """
@@ -461,7 +506,11 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rshift__(asarray(other)._array)
+        # Note: The spec requires the return dtype of bitwise_right_shift, and
+        # hence also __rshift__, to be the same as the first argument.
+        # np.ndarray.__rshift__ returns a type that is the type promotion of
+        # the two input types.
+        res = self._array.__rshift__(other._array).astype(self.dtype)
         return self.__class__._new(res)
 
     def __setitem__(self, key, value, /):
@@ -480,7 +529,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__sub__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__sub__(other._array)
         return self.__class__._new(res)
 
     def __truediv__(self: array, other: array, /) -> array:
@@ -489,7 +539,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__truediv__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__truediv__(other._array)
         return self.__class__._new(res)
 
     def __xor__(self: array, other: array, /) -> array:
@@ -498,7 +549,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__xor__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__xor__(other._array)
         return self.__class__._new(res)
 
     def __iadd__(self: array, other: array, /) -> array:
@@ -507,7 +559,9 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__iadd__(asarray(other)._array)
+        res = self._array.__iadd__(other._array)
+        if res.dtype != self.dtype:
+            raise RuntimeError
         return self.__class__._new(res)
 
     def __radd__(self: array, other: array, /) -> array:
@@ -516,7 +570,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__radd__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__radd__(other._array)
         return self.__class__._new(res)
 
     def __iand__(self: array, other: array, /) -> array:
@@ -525,7 +580,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__iand__(asarray(other)._array)
+        res = self._array.__iand__(other._array)
         return self.__class__._new(res)
 
     def __rand__(self: array, other: array, /) -> array:
@@ -534,7 +589,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rand__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rand__(other._array)
         return self.__class__._new(res)
 
     def __ifloordiv__(self: array, other: array, /) -> array:
@@ -543,7 +599,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ifloordiv__(asarray(other)._array)
+        res = self._array.__ifloordiv__(other._array)
         return self.__class__._new(res)
 
     def __rfloordiv__(self: array, other: array, /) -> array:
@@ -552,7 +608,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rfloordiv__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rfloordiv__(other._array)
         return self.__class__._new(res)
 
     def __ilshift__(self: array, other: array, /) -> array:
@@ -561,7 +618,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ilshift__(asarray(other)._array)
+        res = self._array.__ilshift__(other._array)
         return self.__class__._new(res)
 
     def __rlshift__(self: array, other: array, /) -> array:
@@ -570,7 +627,11 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rlshift__(asarray(other)._array)
+        # Note: The spec requires the return dtype of bitwise_left_shift, and
+        # hence also __lshift__, to be the same as the first argument.
+        # np.ndarray.__lshift__ returns a type that is the type promotion of
+        # the two input types.
+        res = self._array.__rlshift__(other._array).astype(other.dtype)
         return self.__class__._new(res)
 
     def __imatmul__(self: array, other: array, /) -> array:
@@ -581,7 +642,7 @@ class ndarray:
             # matmul is not defined for scalars, but without this, we may get
             # the wrong error message from asarray.
             other = self._promote_scalar(other)
-        res = self._array.__imatmul__(asarray(other)._array)
+        res = self._array.__imatmul__(other._array)
         return self.__class__._new(res)
 
     def __rmatmul__(self: array, other: array, /) -> array:
@@ -592,7 +653,7 @@ class ndarray:
             # matmul is not defined for scalars, but without this, we may get
             # the wrong error message from asarray.
             other = self._promote_scalar(other)
-        res = self._array.__rmatmul__(asarray(other)._array)
+        res = self._array.__rmatmul__(other._array)
         return self.__class__._new(res)
 
     def __imod__(self: array, other: array, /) -> array:
@@ -601,7 +662,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__imod__(asarray(other)._array)
+        res = self._array.__imod__(other._array)
         return self.__class__._new(res)
 
     def __rmod__(self: array, other: array, /) -> array:
@@ -610,7 +671,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rmod__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rmod__(other._array)
         return self.__class__._new(res)
 
     def __imul__(self: array, other: array, /) -> array:
@@ -619,7 +681,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__imul__(asarray(other)._array)
+        res = self._array.__imul__(other._array)
         return self.__class__._new(res)
 
     def __rmul__(self: array, other: array, /) -> array:
@@ -628,7 +690,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rmul__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rmul__(other._array)
         return self.__class__._new(res)
 
     def __ior__(self: array, other: array, /) -> array:
@@ -637,7 +700,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ior__(asarray(other)._array)
+        res = self._array.__ior__(other._array)
         return self.__class__._new(res)
 
     def __ror__(self: array, other: array, /) -> array:
@@ -646,7 +709,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ror__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__ror__(other._array)
         return self.__class__._new(res)
 
     def __ipow__(self: array, other: array, /) -> array:
@@ -655,17 +719,20 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ipow__(asarray(other)._array)
+        res = self._array.__ipow__(other._array)
         return self.__class__._new(res)
 
     def __rpow__(self: array, other: array, /) -> array:
         """
         Performs the operation __rpow__.
         """
+        from ._elementwise_functions import pow
+
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rpow__(asarray(other)._array)
-        return self.__class__._new(res)
+        # Note: NumPy's __pow__ does not follow the spec type promotion rules
+        # for 0-d arrays, so we use pow() here instead.
+        return pow(other, self)
 
     def __irshift__(self: array, other: array, /) -> array:
         """
@@ -673,7 +740,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__irshift__(asarray(other)._array)
+        res = self._array.__irshift__(other._array)
         return self.__class__._new(res)
 
     def __rrshift__(self: array, other: array, /) -> array:
@@ -682,7 +749,11 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rrshift__(asarray(other)._array)
+        # Note: The spec requires the return dtype of bitwise_right_shift, and
+        # hence also __rshift__, to be the same as the first argument.
+        # np.ndarray.__rshift__ returns a type that is the type promotion of
+        # the two input types.
+        res = self._array.__rrshift__(other._array).astype(other.dtype)
         return self.__class__._new(res)
 
     def __isub__(self: array, other: array, /) -> array:
@@ -691,7 +762,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__isub__(asarray(other)._array)
+        res = self._array.__isub__(other._array)
         return self.__class__._new(res)
 
     def __rsub__(self: array, other: array, /) -> array:
@@ -700,7 +771,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rsub__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rsub__(other._array)
         return self.__class__._new(res)
 
     def __itruediv__(self: array, other: array, /) -> array:
@@ -709,7 +781,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__itruediv__(asarray(other)._array)
+        res = self._array.__itruediv__(other._array)
         return self.__class__._new(res)
 
     def __rtruediv__(self: array, other: array, /) -> array:
@@ -718,7 +790,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rtruediv__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rtruediv__(other._array)
         return self.__class__._new(res)
 
     def __ixor__(self: array, other: array, /) -> array:
@@ -727,7 +800,7 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ixor__(asarray(other)._array)
+        res = self._array.__ixor__(other._array)
         return self.__class__._new(res)
 
     def __rxor__(self: array, other: array, /) -> array:
@@ -736,7 +809,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__rxor__(asarray(other)._array)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rxor__(other._array)
         return self.__class__._new(res)
 
     @property
