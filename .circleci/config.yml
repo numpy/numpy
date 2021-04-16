@@ -42,7 +42,7 @@ jobs:
             . venv/bin/activate
             pip install git+https://github.com/hawkowl/towncrier.git@master
             VERSION=$(python -c "import setup; print(setup.VERSION)")
-            towncrier --version $VERSION --yes
+            towncrier build --version $VERSION --yes
             ./tools/ci/test_all_newsfragments_used.py
 
       - run:
