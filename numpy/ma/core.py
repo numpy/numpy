@@ -5050,8 +5050,8 @@ class MaskedArray(ndarray):
         3
         """
         marr = np.ma.asarray(a)
-        return np.count_nonzero(marr.data.astype(bool)
-            & ~marr.mask, axis=axis, keepdims=keepdims)
+        return np.count_nonzero(marr.data.astype(bool) & ~marr.mask,
+                                axis=axis, keepdims=keepdims)
 
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         """
