@@ -1973,6 +1973,16 @@ array_setstate(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
+    /*
+     * Reassigning fa->descr messes with the reallocation strategy,
+     * since fa could be a 0-d or scalar, and then
+     * PyDataMem_UserFREE will be confused
+     */
+    size_t n_tofree = PyArray_NBYTES(self);
+    if (n_tofree == 0) {
+        PyArray_Descr *dtype = PyArray_DESCR(self);
+        n_tofree = dtype->elsize ? dtype->elsize : 1;
+    }
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
@@ -2039,7 +2049,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        PyDataMem_UserFREE(PyArray_DATA(self), PyArray_NBYTES(self),
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree,
                            PyArray_HANDLER(self)->free);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
@@ -2076,7 +2090,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         int swap = PyArray_ISBYTESWAPPED(self);
-        fa->data = datastr;
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
@@ -2122,7 +2135,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_DECREF(rawdata);
         }
         else {
+            fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
+                Py_DECREF(rawdata);
                 return NULL;
             }
         }
