@@ -25,7 +25,7 @@ dependencies:
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme
+  - pydata-sphinx-theme=0.5.2
   # For linting
   - pycodestyle=2.7.0
   - gitpython
