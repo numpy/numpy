@@ -258,10 +258,8 @@ Check the release notes
 Use `towncrier`_ to build the release note and
 commit the changes. This will remove all the fragments from
 ``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.rst``.
-Note that currently towncrier must be installed from its master branch as the
-last release (19.2.0) is outdated.
 
-    towncrier --version "<version>"
+    towncrier build --version "<version>"
     git commit -m"Create release note"
 
 Check that the release notes are up-to-date.
@@ -275,7 +273,7 @@ following:
   - for SciPy, supported NumPy version(s)
   - outlook for the near future
 
-.. _towncrier: https://github.com/hawkowl/towncrier
+.. _towncrier: https://pypi.org/project/towncrier/
 
 
 Update the release status and create a release "tag"
