@@ -1,0 +1,5 @@
+Added `numpy.clip` note and example for special case `a_min` greater than `a_max` to the documentation
+------------------------------------------------------------------------------------------------------
+The documentation of `numpy.clip` has been changed to include an example and a note
+for the special case where `a_min` is set to a value greater than `a_max`,
+which causes `numpy.clip` to return an array in which all values are equal to `a_max`.

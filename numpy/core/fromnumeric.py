@@ -2086,14 +2086,24 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     --------
     :ref:`ufuncs-output-type`
 
+    Notes
+    --------
+    When `a_min` is greater than `a_max`, `clip` returns an 
+    array in which all values are equal to `a_max`, 
+    as shown in the second example.  
+
     Examples
     --------
     >>> a = np.arange(10)
-    >>> np.clip(a, 1, 8)
-    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.clip(a, 1, 8)
+    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
+    >>> np.clip(a, a_max = 1, a_min = 8)
+    array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
     >>> np.clip(a, 3, 6, out=a)
+    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    >>> a
     array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
     >>> a = np.arange(10)
     >>> a
