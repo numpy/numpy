@@ -12,5 +12,5 @@ fragments.remove("template.rst")
 
 if fragments:
     print("The following files were not found by towncrier:")
-    print("    " + "    \n".join(fragments))
+    print("    " + "\n    ".join(fragments))
     sys.exit(1)
