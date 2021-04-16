@@ -1587,7 +1587,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column, individually.
     comments : str, optional
         The character used to indicate the start of a comment.
-        All the characters occurring on a line after a comment are discarded
+        All the characters occurring on a line after a comment are discarded.
     delimiter : str, int, or sequence, optional
         The string used to separate values.  By default, any consecutive
         whitespaces act as delimiter.  An integer or sequence of integers
@@ -1614,15 +1614,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines.  This line can optionally be proceeded
+        the first `skip_header` lines. This line can optionally be preceeded
         by a comment delimiter. If `names` is a sequence or a single-string of
         comma-separated names, the names will be used to define the field names
         in a structured dtype. If `names` is None, the names of the dtype
         fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
-        ['return','file','print']. Excluded names are appended an underscore:
-        for example, `file` would become `file_`.
+        ['return','file','print']. Excluded names are appended with an
+        underscore: for example, `file` would become `file_`.
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
         names.
@@ -1631,7 +1631,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     autostrip : bool, optional
         Whether to automatically strip white spaces from the variables.
     replace_space : char, optional
-        Character(s) used in replacement of white spaces in the variables
+        Character(s) used in replacement of white spaces in the variable
         names. By default, use a '_'.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
         If True, field names are case sensitive.
