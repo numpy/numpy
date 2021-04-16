@@ -91,7 +91,7 @@ jobs:
       -  run:
           name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               touch doc/build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/build/html \
@@ -101,7 +101,7 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi
 
       - add_ssh_keys:
@@ -120,7 +120,7 @@ jobs:
       -  run:
           name: deploy neps
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               touch doc/neps/_build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
@@ -130,5 +130,5 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi
