@@ -41,7 +41,7 @@ def get_module(tmp_path):
             if (real == NULL) {
                 return NULL;
             }
-            snprintf(real, 64, "originally allocated %ld", sz);
+            snprintf(real, 64, "originally allocated %ld", (unsigned long)sz);
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void *
@@ -50,7 +50,8 @@ def get_module(tmp_path):
             if (real == NULL) {
                 return NULL;
             }
-            snprintf(real, 64, "originally allocated %ld", sz);
+            snprintf(real, 64, "originally allocated %ld via zero",
+                     (unsigned long)sz);
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void
@@ -60,13 +61,24 @@ def get_module(tmp_path):
             }
             char *real = (char *)p - 64;
             if (strncmp(real, "originally allocated", 20) != 0) {
-                fprintf(stdout, "uh-oh, unmatched shift_free\\n");
+                fprintf(stdout, "uh-oh, unmatched shift_free, "
+                        "no appropriate prefix\\n");
                 /* Make gcc crash by calling free on the wrong address */
                 free((char *)p + 10);
-                /* free(p); */
+                /* free(real); */
             }
             else {
-                free(real);
+                int i = atoi(real +20);
+                if (i != sz) {
+                    fprintf(stderr, "uh-oh, unmatched "
+                            "shift_free(ptr, %d) but allocated %d\\n", sz, i);
+                    /* Make gcc crash by calling free on the wrong address */
+                    /* free((char *)p + 10); */
+                    free(real);
+                }
+                else {
+                    free(real);
+                }
             }
         }
         NPY_NO_EXPORT void *
@@ -84,7 +96,8 @@ def get_module(tmp_path):
                 if (real == NULL) {
                     return NULL;
                 }
-                snprintf(real, 64, "originally allocated (realloc) %ld", sz);
+                snprintf(real, 64, "originally allocated "
+                         "%ld  via realloc", (unsigned long)sz);
                 return (void *)(real + 64);
             }
         }
@@ -131,11 +144,16 @@ def test_new_policy(get_module):
 
     # test array manipulation. This is slow
     if orig_policy == 'default_allocator':
-        # when the test set recurses into this test, the policy will be set
-        # so this "if" will be false, preventing infinite recursion
+        # when the np.core.test tests recurse into this test, the
+        # policy will be set so this "if" will be false, preventing
+        # infinite recursion
         #
-        # if needed, debug this by setting extra_argv=['-vvx']
-        np.core.test(verbose=0, extra_argv=[])
+        # if needed, debug this by
+        # - running tests with -- -s (to not capture stdout/stderr
+        # - setting extra_argv=['-vv'] here
+        np.core.test(verbose=2, extra_argv=['-vv'])
+        # also try the ma tests, the pickling test is quite tricky
+        np.ma.test(verbose=2, extra_argv=['-vv'])
     get_module.set_old_policy()
     assert get_module.test_prefix(a) == orig_policy
     c = np.arange(10)
