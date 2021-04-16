@@ -727,6 +727,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_import.h'),
             join('src', 'common', 'npy_hashtable.h'),
             join('src', 'common', 'npy_longdouble.h'),
+            join('src', 'common', 'npy_svml.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
             join('src', 'common', 'ufunc_override.h'),
@@ -951,6 +952,13 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             ]
 
+
+    svml_objs = []
+    if "x86" in platform.machine():
+        for svmlsrc in os.listdir("numpy/core/src/umath/svml"):
+            if svmlsrc.endswith(".s"):
+                svml_objs.append(join('src', 'umath', 'svml', svmlsrc))
+
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
                                  common_src +
@@ -965,6 +973,7 @@ def configuration(parent_package='',top_path=None):
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
                          libraries=['npymath'],
+                         extra_objects=svml_objs,
                          extra_info=extra_info)
 
     #######################################################################

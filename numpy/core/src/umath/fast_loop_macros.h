@@ -284,6 +284,11 @@ abs_ptrdiff(char *a, char *b)
  * ensures this. The condition also requires that the input and output arrays
  * should have no overlap in memory.
  */
+#define IS_UNARY_SMALL_STEPS_AND_NOMEMOVERLAP \
+    ((labs(steps[0]) < MAX_STEP_SIZE)  && \
+     (labs(steps[1]) < MAX_STEP_SIZE)  && \
+     (nomemoverlap(args[0], steps[0] * dimensions[0], args[1], steps[1] * dimensions[0])))
+
 #define IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP \
     ((labs(steps[0]) < MAX_STEP_SIZE)  && \
      (labs(steps[1]) < MAX_STEP_SIZE)  && \
