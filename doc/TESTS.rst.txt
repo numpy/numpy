@@ -187,7 +187,7 @@ Parametric tests
 
 One very nice feature of testing is allowing easy testing across a range
 of parameters - a nasty problem for standard unit tests. Use the
-``dec.paramaterize`` decorator.
+``pytest.mark.parametrize`` decorator.
 
 Doctests
 --------
