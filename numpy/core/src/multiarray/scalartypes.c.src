@@ -3032,6 +3032,9 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                     (int) NPY_MAX_INT);
             return NULL;
         }
+        if (memu == 0) {
+            memu = 1;
+        }
         destptr = npy_alloc_cache_zero(memu, 1);
         if (destptr == NULL) {
             return PyErr_NoMemory();
