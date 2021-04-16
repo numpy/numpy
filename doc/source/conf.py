@@ -292,6 +292,7 @@ intersphinx_mapping = {
     'skimage': ('https://scikit-image.org/docs/stable', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
 }
 
 
