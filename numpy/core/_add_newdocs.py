@@ -3936,7 +3936,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
         actual implementation will vary with datatype. The 'mergesort' option
         is retained for backwards compatibility.
 
-        .. versionchanged:: 1.15.0.
+        .. versionchanged:: 1.15.0
            The 'stable' option was added.
 
     order : str or list of str, optional

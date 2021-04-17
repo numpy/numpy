@@ -1019,6 +1019,7 @@ def _median_nancheck(data, result, axis, out):
         Axis along which the median was computed.
     out : ndarray, optional
         Output array in which to place the result.
+
     Returns
     -------
     median : scalar or ndarray
