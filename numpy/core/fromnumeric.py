@@ -2087,7 +2087,7 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     :ref:`ufuncs-output-type`
 
     Notes
-    --------
+    -----
     When `a_min` is greater than `a_max`, `clip` returns an 
     array in which all values are equal to `a_max`, 
     as shown in the second example.  
