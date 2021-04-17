@@ -432,9 +432,11 @@ class vectorize:
     def __getattr__(self, key: str) -> Any: ...
 
 # Placeholders for miscellaneous objects
+# NOTE: `cast` and `nbytes` are in fact instances of a `dict` subclass that
+# converts passed `DTypeLike` objects into the actual keys (`np.generic`)
 ScalarType: Tuple[Type[Any], ...]
-cast: Dict[generic, Callable[..., ndarray[Any, dtype[Any]]]]
-nbytes: Dict[generic, int]
+cast: Dict[DTypeLike, Callable[..., ndarray[Any, dtype[Any]]]]
+nbytes: Dict[DTypeLike, int]
 typecodes: Dict[str, str]
 
 # Placeholders for Python-based functions
