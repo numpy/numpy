@@ -92,16 +92,14 @@ calls to ``memcpy``.
 For an example of setting up and using the PyDataMem_Handler, see the test in
 :file:`numpy/core/tests/test_mem_policy.py`
 
-.. c:function:: typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp,
-                            size_t size, void *user_data);
+.. c:function:: void PyDataMem_EventHookFunc(void *inp, void *outp, size_t size, void *user_data);
 
     This function will be called on NEW,FREE,RENEW calls in data memory
     manipulation
 
 
 
-.. c:function:: PyDataMem_EventHookFunc * PyDataMem_SetEventHook(
-            PyDataMem_EventHookFunc *newhook, void *user_data, void **old_data)
+.. c:function:: PyDataMem_EventHookFunc * PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook, void *user_data, void **old_data)
 
     Sets the allocation event hook for numpy array data.
   
