@@ -29,7 +29,7 @@ Asserts
    assert_warns
    assert_string_equal
 
-Asserts (not recommanded)
+Asserts (not recommended)
 -------------------------
 It is recommended to use one of `assert_allclose`,
 `assert_array_almost_equal_nulp` or `assert_array_max_ulp` instead of these
