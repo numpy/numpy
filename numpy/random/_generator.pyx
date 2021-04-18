@@ -614,11 +614,12 @@ cdef class Generator:
             len(size)``. Default is None, in which case a single value is
             returned.
         replace : bool, optional
-            Whether the sample is with or without replacement
+            Whether the sample is with or without replacement. Default is True,
+            meaning that a value of ``a`` can be selected multiple times.
         p : 1-D array_like, optional
             The probabilities associated with each entry in a.
-            If not given the sample assumes a uniform distribution over all
-            entries in a.
+            If not given, the sample assumes a uniform distribution over all
+            entries in ``a``.
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
