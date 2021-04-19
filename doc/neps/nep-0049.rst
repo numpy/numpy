@@ -27,8 +27,7 @@ Motivation and Scope
 
 Users may wish to override the internal data memory routines with ones of their
 own. Two such use-cases are to ensure data alignment and to pin certain
-allocations to certain NUMA cores. The NEP is based on `PR 17582`_ and
-largely taken from the documentation added there.
+allocations to certain NUMA cores.
 
 User who wish to change the NumPy data memory management routines will use
 :c:func:`PyDataMem_SetHandler`, which uses a :c:type:`PyDataMem_Handler`
@@ -70,10 +69,6 @@ Detailed description
 NumPy C-API functions
 =====================
 
-As of NumPy version 1.21, the copy functions are not yet implemented, all
-memory copies are handled by calls to ``memcpy``. The API leaves room for a
-future enhancement which will carefully check all the ``memcpy`` calls in NumPy
-and replace them with ``host2obj``, ``obj2obj``, or ``obj2host``.
 
 .. c:type:: PyDataMem_Handler
 
@@ -87,9 +82,6 @@ and replace them with ``host2obj``, ``obj2obj``, or ``obj2host``.
             PyDataMem_ZeroedAllocFunc *zeroed_alloc;
             PyDataMem_FreeFunc *free;
             PyDataMem_ReallocFunc *realloc;
-            PyDataMem_CopyFunc *host2obj;  /* copy from the host python */
-            PyDataMem_CopyFunc *obj2host;  /* copy to the host python */
-            PyDataMem_CopyFunc *obj2obj;  /* copy between two objects */
         } PyDataMem_Handler;
 
     where the function's signatures are
@@ -101,6 +93,8 @@ and replace them with ``host2obj``, ``obj2obj``, or ``obj2host``.
         typedef void (PyDataMem_FreeFunc)(void *ptr, size_t size);
         typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
         typedef void *(PyDataMem_CopyFunc)(void *dst, const void *src, size_t size);
+
+    Internally NumPy may use ``memcpy` or ``memset`` on the data ``ptr``.
 
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
@@ -299,17 +293,15 @@ Alternatives
 ------------
 
 These were discussed in `issue 17467`_. `PR 5457`_ proposed a
-global interface for specifying aligned allocations. But alignment can be
+global interface for specifying aligned allocations. Alignment can be
 crucial for some applications, but in general is just extra overhead, so it
-should be configurable by the user/app.
+should be configurable by the user/app. ``PyArray_malloc_aligned`` and
+friends were added to NumPy with the random API refactor. and are used there
+for performance.
 
 `PR 5470`_ had two parts: configurable `PyDataMem*` overrides and a hook
-mechanism. The hook mechanism was merged (does anyone use that?) but the part I
-am interested in would requre an API change.
-
-A fallback proposal would be to allow specifying a default allocation alignment
-aka ``PR 5457``, perhaps using ``PyArray_malloc_aligned`` and friends which
-were added to NumPy with the random API refactor.
+mechanism. The hook mechanism was merged (does anyone use that?) but the
+part described by this NEP would still requre an API change.
 
 Discussion
 ----------
