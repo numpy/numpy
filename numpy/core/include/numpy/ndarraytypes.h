@@ -679,9 +679,6 @@ typedef struct {
     PyDataMem_ZeroedAllocFunc *zeroed_alloc;
     PyDataMem_FreeFunc *free;
     PyDataMem_ReallocFunc *realloc;
-    PyDataMem_CopyFunc *host2obj;  /* copy from the host python */
-    PyDataMem_CopyFunc *obj2host;  /* copy to the host python */
-    PyDataMem_CopyFunc *obj2obj;  /* copy between two objects */
 } PyDataMem_Handler;
 
 

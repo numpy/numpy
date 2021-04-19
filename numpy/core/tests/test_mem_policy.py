@@ -106,10 +106,7 @@ def get_module(tmp_path):
             shift_alloc,      /* alloc */
             shift_zero, /* zeroed_alloc */
             shift_free,       /* free */
-            shift_realloc,      /* realloc */
-            memcpy,               /* host2obj */
-            memcpy,               /* obj2host */
-            memcpy,               /* obj2obj */
+            shift_realloc      /* realloc */
         };
         '''
     more_init = "import_array();"
