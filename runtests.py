@@ -76,19 +76,19 @@ def main(argv):
     parser.add_argument("--verbose", "-v", action="count", default=1,
                         help="Add one verbosity level to pytest. Default is 0")
     parser.add_argument("--debug-info", action="store_true",
-                        help=("add --verbose-cfg to build_src to show compiler "
+                        help=("Add --verbose-cfg to build_src to show compiler "
                               "configuration output while creating "
                               "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
-                        help="do not build the project (use system installed version)")
+                        help="Do not build the project (use system installed version)")
     parser.add_argument("--build-only", "-b", action="store_true", default=False,
-                        help="just build, do not run any tests")
+                        help="Just build, do not run any tests")
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
     parser.add_argument("--refguide-check", action="store_true", default=False,
                         help="Run refguide (doctest) check (do not run regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
-                        help=("report coverage of project code. HTML output goes "
+                        help=("Report coverage of project code. HTML output goes "
                               "under build/coverage"))
     parser.add_argument("--lint", default=None,
                         help="'<Target Branch>' or 'uncommitted', passed to "
@@ -97,10 +97,10 @@ def main(argv):
     parser.add_argument("--durations", action="store", default=-1, type=int,
                         help=("Time N slowest tests, time all if 0, time none if < 0"))
     parser.add_argument("--gcov", action="store_true", default=False,
-                        help=("enable C code coverage via gcov (requires GCC). "
+                        help=("Enable C code coverage via gcov (requires GCC). "
                               "gcov output goes to build/**/*.gc*"))
     parser.add_argument("--lcov-html", action="store_true", default=False,
-                        help=("produce HTML for C code coverage information "
+                        help=("Produce HTML for C code coverage information "
                               "from a previous run with --gcov. "
                               "HTML output goes to build/lcov/"))
     parser.add_argument("--mode", "-m", default="fast",
