@@ -23,11 +23,6 @@ NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
 
-# Set to True to use the new casting implementation as much as implemented.
-# Allows running the full test suit to exercise the new machinery until
-# it is used as default and the old version is eventually deleted.
-NPY_USE_NEW_CASTINGIMPL = os.environ.get('NPY_USE_NEW_CASTINGIMPL', "0") != "0"
-
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -471,12 +466,6 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
             else:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 0))
-
-            # Use the new experimental casting implementation in NumPy 1.20:
-            if NPY_USE_NEW_CASTINGIMPL:
-                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 1))
-            else:
-                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 0))
 
             # Get long double representation
             rep = check_long_double_representation(config_cmd)
