@@ -74,7 +74,7 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
-                        help="more verbosity")
+                        help="Add one verbosity level to pytest. Default is 0")
     parser.add_argument("--debug-info", action="store_true",
                         help=("add --verbose-cfg to build_src to show compiler "
                               "configuration output while creating "
