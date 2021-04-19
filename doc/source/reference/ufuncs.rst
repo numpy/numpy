@@ -266,7 +266,7 @@ can generate this table for your system with the code given in the Figure.
     S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
     U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
     V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
-    O - - - - - - - - - - - - - - - - - - - - - - Y Y - -
+    O - - - - - - - - - - - - - - - - - - - - - - - Y - -
     M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
     m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
 

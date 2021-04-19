@@ -1088,6 +1088,41 @@ class TestPickling:
             assert roundtrip_DType is DType
 
 
+class TestPromotion:
+    """Test cases related to more complex DType promotions.  Further promotion
+    tests are defined in `test_numeric.py`
+    """
+    @pytest.mark.parametrize(["other", "expected"],
+            [(2**16-1, np.complex64),
+             (2**32-1, np.complex128),
+             (np.float16(2), np.complex64),
+             (np.float32(2), np.complex64),
+             (np.float128(2), np.complex64),
+             (np.nextafter(np.longdouble(1.7e308), 0.), np.complex128),
+             (np.longdouble(1.7e308), np.clongdouble),
+             ])
+    def test_complex_value_based(self, other, expected):
+        # This would change if we modfiy the value based promotion
+        min_complex = np.dtype(np.complex64)
+
+        res = np.result_type(other, min_complex)
+        assert res == expected
+        # Check the same for a simple ufunc call that uses the same logic:
+        res = np.minimum(other, np.ones(3, dtype=min_complex)).dtype
+        assert res == expected
+
+    @pytest.mark.parametrize(["dtypes", "expected"],
+            [([np.uint16, np.int16, np.float16], np.float32),
+             ([np.uint16, np.int8, np.float16], np.float32),
+             ([np.uint8, np.int16, np.float16], np.float32)])
+    def test_permutations_do_not_influence_result(self, dtypes, expected):
+        # Tests that most permutations do not influence the result.  In the
+        # above some uint and int combintations promote to a larger integer
+        # type, which would then promote to a larger than necessary float.
+        for perm in permutations(dtypes):
+            assert np.result_type(*perm) == expected
+
+
 def test_rational_dtype():
     # test for bug gh-5719
     a = np.array([1111], dtype=rational).astype
