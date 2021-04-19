@@ -369,56 +369,147 @@ __git_version__: str
 # their annotations are properly implemented
 #
 # Placeholders for classes
-# TODO: Remove the `__getattr__` methods once the classes are stubbed out
+# TODO: Remove `__getattr__` once the classes are stubbed out
 class DataSource:
+    def __init__(self, destpath: Any = ...) -> None: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class MachAr:
+    def __init__(
+        self,
+        float_conv: Any = ...,
+        int_conv: Any = ...,
+        float_to_float: Any = ...,
+        float_to_str: Any = ...,
+        title: Any = ...,
+    ) -> None: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class broadcast:
+    def __new__(cls: Any, *args: Any) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class busdaycalendar:
+    def __new__(cls, weekmask: Any = ..., holidays: Any = ...) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class chararray(ndarray[_ShapeType, _DType_co]):
+    def __new__(
+        subtype,
+        shape: Any,
+        itemsize: Any = ...,
+        unicode: Any = ...,
+        buffer: Any = ...,
+        offset: Any = ...,
+        strides: Any = ...,
+        order: Any = ...,
+    ) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class finfo:
+    def __new__(cls, dtype: Any) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class format_parser:
+    def __init__(
+        self,
+        formats: Any,
+        names: Any,
+        titles: Any,
+        aligned: Any = ...,
+        byteorder: Any = ...,
+    ) -> None: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class iinfo:
+    def __init__(self, int_type: Any) -> None: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class matrix(ndarray[_ShapeType, _DType_co]):
+    def __new__(
+        subtype,
+        data: Any,
+        dtype: Any = ...,
+        copy: Any = ...,
+    ) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class memmap(ndarray[_ShapeType, _DType_co]):
+    def __new__(
+        subtype,
+        filename: Any,
+        dtype: Any = ...,
+        mode: Any = ...,
+        offset: Any = ...,
+        shape: Any = ...,
+        order: Any = ...,
+    ) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class nditer:
+    def __new__(
+        cls,
+        op: Any,
+        flags: Any = ...,
+        op_flags: Any = ...,
+        op_dtypes: Any = ...,
+        order: Any = ...,
+        casting: Any = ...,
+        op_axes: Any = ...,
+        itershape: Any = ...,
+        buffersize: Any = ...,
+    ) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class poly1d:
+    def __init__(
+        self,
+        c_or_r: Any,
+        r: Any = ...,
+        variable: Any = ...,
+    ) -> None: ...
+    def __call__(self, val: Any) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class recarray(ndarray[_ShapeType, _DType_co]):
+    def __new__(
+        subtype,
+        shape: Any,
+        dtype: Any = ...,
+        buf: Any = ...,
+        offset: Any = ...,
+        strides: Any = ...,
+        formats: Any = ...,
+        names: Any = ...,
+        titles: Any = ...,
+        byteorder: Any = ...,
+        aligned: Any = ...,
+        order: Any = ...,
+    ) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 class record(void):
     def __getattr__(self, key: str) -> Any: ...
 
 class vectorize:
+    def __init__(
+        self,
+        pyfunc,
+        otypes: Any = ...,
+        doc: Any = ...,
+        excluded: Any = ...,
+        cache: Any = ...,
+        signature: Any = ...,
+    ) -> None: ...
+    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
 # Placeholders for miscellaneous objects
+# NOTE: `cast` and `nbytes` are in fact instances of a `dict` subclass that
+# converts passed `DTypeLike` objects into the actual keys (`np.generic`)
 ScalarType: Tuple[Type[Any], ...]
-cast: Dict[generic, Callable[..., ndarray[Any, dtype[Any]]]]
-nbytes: Dict[generic, int]
+cast: Dict[DTypeLike, Callable[..., ndarray[Any, dtype[Any]]]]
+nbytes: Dict[DTypeLike, int]
 typecodes: Dict[str, str]
 
 # Placeholders for Python-based functions
@@ -576,7 +667,7 @@ def who(vardict=...): ...
 @overload
 def arange(stop, dtype=..., *, like=...): ...
 @overload
-def arange(start, stop, step, dtype=..., *, like=...): ...
+def arange(start, stop, step=..., dtype=..., *, like=...): ...
 def bincount(x, weights=..., minlength=...): ...
 def busday_count(
     begindates,
