@@ -76,8 +76,8 @@ def main(argv):
     parser.add_argument("--verbose", "-v", action="count", default=1,
                         help="Add one verbosity level to pytest. Default is 0")
     parser.add_argument("--debug-info", action="store_true",
-                        help=("Add --verbose-cfg to build_src to show compiler"
-                              " configuration output while creating "
+                        help=("Add --verbose-cfg to build_src to show "
+                              "compiler configuration output while creating "
                               "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
                         help="Do not build the project (use system installed "
@@ -87,8 +87,8 @@ def main(argv):
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
     parser.add_argument("--refguide-check", action="store_true", default=False,
-                        help="Run refguide (doctest) check (do not run regular"
-                             " tests.)")
+                        help="Run refguide (doctest) check (do not run "
+                             "regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("Report coverage of project code. HTML output "
                               "goes under build/coverage"))
@@ -100,8 +100,8 @@ def main(argv):
                         help=("Time N slowest tests, time all if 0, time none "
                               "if < 0"))
     parser.add_argument("--gcov", action="store_true", default=False,
-                        help=("Enable C code coverage via gcov (requires GCC)."
-                              " gcov output goes to build/**/*.gc*"))
+                        help=("Enable C code coverage via gcov (requires "
+                              "GCC). gcov output goes to build/**/*.gc*"))
     parser.add_argument("--lcov-html", action="store_true", default=False,
                         help=("Produce HTML for C code coverage information "
                               "from a previous run with --gcov. "
@@ -110,8 +110,8 @@ def main(argv):
                         help="'fast', 'full', or something that could be "
                              "passed to nosetests -A [default: fast]")
     parser.add_argument("--submodule", "-s", default=None,
-                        help="Submodule whose tests to run (cluster, constants"
-                             ", ...)")
+                        help="Submodule whose tests to run (cluster, "
+                             "constants, ...)")
     parser.add_argument("--pythonpath", "-p", default=None,
                         help="Paths to prepend to PYTHONPATH")
     parser.add_argument("--tests", "-t", action='append',
@@ -137,8 +137,8 @@ def main(argv):
     parser.add_argument("--cpu-dispatch", default=None,
                         help="Specify a list of dispatched CPU optimizations"),
     parser.add_argument("--disable-optimization", action="store_true",
-                        help="Disable CPU optimized code (dispatch, simd, fast"
-                             ", ...)"),
+                        help="Disable CPU optimized code (dispatch, simd, "
+                             "fast, ...)"),
     parser.add_argument("--simd-test", default=None,
                         help="Specify a list of CPU optimizations to be "
                              "tested against NumPy SIMD interface"),
