@@ -56,7 +56,11 @@ in the ``doc/`` directory. If all goes well, this will generate a
 a message about ``installed numpy != current repo git version``, you must
 either override the check by setting ``GITVER`` or re-install NumPy.
 
-Note that if you have built numpy into a virtual enviornment and getting an error that says ``numpy not found, cannot build documentation without...`` you need to override the makefile ``PYTHON`` variable at the commandline, so instead of writing ``make html`` write::
+Note that if you have built numpy into a virtual enviornment and 
+getting an error that says ``numpy not found, cannot build 
+documentation without...`` you need to override the makefile 
+``PYTHON`` variable at the commandline, so instead of writing ``make 
+html`` write::
 
     make PYTHON=python html
     
