@@ -74,40 +74,44 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
-                        help="more verbosity")
+                        help="Add one verbosity level to pytest. Default is 0")
     parser.add_argument("--debug-info", action="store_true",
-                        help=("add --verbose-cfg to build_src to show compiler "
-                              "configuration output while creating "
+                        help=("Add --verbose-cfg to build_src to show "
+                              "compiler configuration output while creating "
                               "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
-                        help="do not build the project (use system installed version)")
-    parser.add_argument("--build-only", "-b", action="store_true", default=False,
-                        help="just build, do not run any tests")
+                        help="Do not build the project (use system installed "
+                             "version)")
+    parser.add_argument("--build-only", "-b", action="store_true",
+                        default=False, help="Just build, do not run any tests")
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
     parser.add_argument("--refguide-check", action="store_true", default=False,
-                        help="Run refguide (doctest) check (do not run regular tests.)")
+                        help="Run refguide (doctest) check (do not run "
+                             "regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
-                        help=("report coverage of project code. HTML output goes "
-                              "under build/coverage"))
+                        help=("Report coverage of project code. HTML output "
+                              "goes under build/coverage"))
     parser.add_argument("--lint", default=None,
                         help="'<Target Branch>' or 'uncommitted', passed to "
                              "tools/linter.py [--branch BRANCH] "
                              "[--uncommitted]")
     parser.add_argument("--durations", action="store", default=-1, type=int,
-                        help=("Time N slowest tests, time all if 0, time none if < 0"))
+                        help=("Time N slowest tests, time all if 0, time none "
+                              "if < 0"))
     parser.add_argument("--gcov", action="store_true", default=False,
-                        help=("enable C code coverage via gcov (requires GCC). "
-                              "gcov output goes to build/**/*.gc*"))
+                        help=("Enable C code coverage via gcov (requires "
+                              "GCC). gcov output goes to build/**/*.gc*"))
     parser.add_argument("--lcov-html", action="store_true", default=False,
-                        help=("produce HTML for C code coverage information "
+                        help=("Produce HTML for C code coverage information "
                               "from a previous run with --gcov. "
                               "HTML output goes to build/lcov/"))
     parser.add_argument("--mode", "-m", default="fast",
                         help="'fast', 'full', or something that could be "
                              "passed to nosetests -A [default: fast]")
     parser.add_argument("--submodule", "-s", default=None,
-                        help="Submodule whose tests to run (cluster, constants, ...)")
+                        help="Submodule whose tests to run (cluster, "
+                             "constants, ...)")
     parser.add_argument("--pythonpath", "-p", default=None,
                         help="Paths to prepend to PYTHONPATH")
     parser.add_argument("--tests", "-t", action='append',
@@ -125,13 +129,16 @@ def main(argv):
     parser.add_argument("--parallel", "-j", type=int, default=0,
                         help="Number of parallel jobs during build")
     parser.add_argument("--warn-error", action="store_true",
-                        help="Set -Werror to convert all compiler warnings to errors")
+                        help="Set -Werror to convert all compiler warnings to "
+                             "errors")
     parser.add_argument("--cpu-baseline", default=None,
-                        help="Specify a list of enabled baseline CPU optimizations"),
+                        help="Specify a list of enabled baseline CPU "
+                             "optimizations"),
     parser.add_argument("--cpu-dispatch", default=None,
                         help="Specify a list of dispatched CPU optimizations"),
     parser.add_argument("--disable-optimization", action="store_true",
-                        help="Disable CPU optimized code(dispatch,simd,fast...)"),
+                        help="Disable CPU optimized code (dispatch, simd, "
+                             "fast, ...)"),
     parser.add_argument("--simd-test", default=None,
                         help="Specify a list of CPU optimizations to be "
                              "tested against NumPy SIMD interface"),
@@ -146,7 +153,8 @@ def main(argv):
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
-                        help="Arguments to pass to pytest, asv, mypy, Python or shell")
+                        help="Arguments to pass to pytest, asv, mypy, Python "
+                             "or shell")
     args = parser.parse_args(argv)
 
     if args.durations < 0:
