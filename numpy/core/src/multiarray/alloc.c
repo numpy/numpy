@@ -331,10 +331,7 @@ PyDataMem_Handler default_allocator = {
     npy_alloc_cache,      /* alloc */
     npy_alloc_cache_zero, /* zeroed_alloc */
     npy_free_cache,       /* free */
-    PyDataMem_RENEW,      /* realloc */
-    memcpy,               /* host2obj */
-    memcpy,               /* obj2host */
-    memcpy,               /* obj2obj */
+    PyDataMem_RENEW       /* realloc */
 };
 
 PyDataMem_Handler *current_allocator = &default_allocator;
