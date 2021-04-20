@@ -19,7 +19,7 @@ jobs:
       - name: Lint Docker 
         uses: brpaz/hadolint-action@v1.2.1
         with: 
-          dockerfile: ./tools/docker_dev/.gitpod.Dockerfile
+          dockerfile: ./tools/gitpod/.gitpod.Dockerfile
       - name: Get refs
         shell: bash
         run: |
