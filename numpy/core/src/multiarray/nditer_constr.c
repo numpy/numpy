@@ -596,6 +596,9 @@ NpyIter_Copy(NpyIter *iter)
                     if (buffers[iop] == NULL) {
                         out_of_memory = 1;
                     }
+                    if (PyDataType_FLAGCHK(dtypes[iop], NPY_NEEDS_INIT)) {
+                        memset(buffers[iop], '\0', itemsize*buffersize);
+                    }
                 }
             }
 

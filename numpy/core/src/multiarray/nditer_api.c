@@ -1758,6 +1758,9 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
                 }
                 goto fail;
             }
+            if (PyDataType_FLAGCHK(op_dtype[iop], NPY_NEEDS_INIT)) {
+                memset(buffer, '\0', itemsize*buffersize);
+            }
             buffers[iop] = buffer;
         }
     }
