@@ -17,10 +17,12 @@ to hold ``numpy.ndarray.strides``, ``numpy.ndarray.shape`` and
 after creating the python object in ``__new__`` method. The ``strides`` and
 ``shape`` are stored in a piece of memory allocated internally.
 
-These allocations are small relative to the ``data``, the homogeneous chunk of
-memory used to store the actual array values (which could be pointers in the
-case of ``object`` arrays). This NEP proposes a mechanism to override the
-default memory management strategy in NumPy with user-provided alternatives.
+This NEP proposes a mechanism to override the memory management strategy used
+for ``ndarray->data`` with user-provided alternatives. This allocation holds
+the arrays data and is can be very large. As accessing this data often becomes
+a performance bottleneck, custom allocation strategies to guarantee data
+alignment or pinning allocations to specialized memory hardware can enable
+hardware-specific optimizations.
 
 Motivation and Scope
 --------------------
@@ -41,7 +43,8 @@ Since a call to ``PyDataMem_SetHandler`` will change the default functions, but
 that function may be called during the lifetime of an ``ndarray`` object, each
 ``ndarray`` will carry with it the ``PyDataMem_Handler`` struct used at the
 time of its instantiation, and these will be used to reallocate or free the
-data memory of the instance.
+data memory of the instance. Internally NumPy may use ``memcpy` or ``memset``
+on the data ``ptr``.
 
 Usage and Impact
 ----------------
@@ -63,8 +66,6 @@ in size should not impact end-users.
 
 Detailed description
 --------------------
-
-
 
 NumPy C-API functions
 =====================
@@ -93,8 +94,6 @@ NumPy C-API functions
         typedef void (PyDataMem_FreeFunc)(void *ptr, size_t size);
         typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
         typedef void *(PyDataMem_CopyFunc)(void *dst, const void *src, size_t size);
-
-    Internally NumPy may use ``memcpy` or ``memset`` on the data ``ptr``.
 
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
@@ -145,7 +144,9 @@ For an example of setting up and using the PyDataMem_Handler, see the test in
 Sample code
 ===========
 
-Here is some sample code from the test added to the PR::
+This code adds a 64-byte header to each ``data`` pointer and stores information
+about the allocation in the header. Before calling ``free``, a check ensures
+the ``sz`` argument is correct ::
 
     #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
     #include <numpy/arrayobject.h>
@@ -218,12 +219,9 @@ Here is some sample code from the test added to the PR::
     static PyDataMem_Handler new_handler = {
         "secret_data_allocator",
         shift_alloc,      /* alloc */
-        shift_zero, /* zeroed_alloc */
+        shift_zero,       /* zeroed_alloc */
         shift_free,       /* free */
-        shift_realloc,      /* realloc */
-        memcpy,               /* host2obj */
-        memcpy,               /* obj2host */
-        memcpy,               /* obj2obj */
+        shift_realloc     /* realloc */
     };
 
     static PyObject* mem_policy_test_prefix(PyObject *self, PyObject *args)
@@ -300,8 +298,8 @@ friends were added to NumPy with the random API refactor. and are used there
 for performance.
 
 `PR 5470`_ had two parts: configurable `PyDataMem*` overrides and a hook
-mechanism. The hook mechanism was merged (does anyone use that?) but the
-part described by this NEP would still requre an API change.
+mechanism. The hook mechanism was merged but the part described by this NEP
+was not.
 
 Discussion
 ----------
