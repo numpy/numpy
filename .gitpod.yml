@@ -15,7 +15,6 @@ tasks:
       echo "🛠 Completed rebuilding NumPy!! 🛠 "
       echo "📖 Building docs 📖 "
       git submodule --init 
-      python -m pip install -r doc_requirements.txt
       cd doc
       make html
       echo "✨ Pre-build complete! You can close this terminal ✨ "
