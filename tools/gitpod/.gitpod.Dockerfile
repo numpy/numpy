@@ -1,5 +1,6 @@
 # Doing a local shallow clone - keeps the container secure
-# and much slimmer than usins COPY directly
+# and much slimmer than using COPY directly or making a 
+# remote clone
 ARG BASE_CONTAINER="trallard/numpy-dev:latest"
 FROM gitpod/workspace-base:latest as clone
 
@@ -12,6 +13,7 @@ RUN git clone --depth 1 file:////tmp/numpy_repo /tmp/numpy
 # while reducing the build time
 FROM ${BASE_CONTAINER} as build
 
+# -----------------------------------------------------------------------------
 USER root
 
 # -----------------------------------------------------------------------------
@@ -23,9 +25,10 @@ ENV WORKSPACE=/workspace/numpy/ \
 # Allows this Dockerfile to activate conda environments
 SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
 
-# Install numpy dev dependencies
+# Copy over the shallow clone
 COPY --from=clone --chown=gitpod /tmp/numpy ${WORKSPACE}
 
+# Everything happens in the /workspace/numpy directory
 WORKDIR ${WORKSPACE}
 
 # Build numpy to populate the cache used by ccache
@@ -33,9 +36,10 @@ RUN conda activate ${CONDA_ENV} && \
     python setup.py build_ext --inplace && \
     ccache -s
 
-# gitpod will load the repository into /workspace/numpy. We remove the
+# Gitpod will load the repository into /workspace/numpy. We remove the
 # directoy from the image to prevent conflicts
 RUN rm -rf ${WORKSPACE}
 
 # -----------------------------------------------------------------------------
+# Always return to non privileged user
 USER gitpod
