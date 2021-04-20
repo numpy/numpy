@@ -1,14 +1,11 @@
 name: Build Base Docker Image
 
 on:
-  push: 
+  push:
     branches:
-    - main
-    - trallard/**
-    paths:
-    - './environment.yml'
-    tags:
-      - '*'
+      - trallard/**
+  schedule:
+    - cron: "0 0 * * *" # nightly
       
 jobs: 
   build:
@@ -49,7 +46,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: "."
-          file: "./tools/docker_dev/Dockerfile"
+          file: "./tools/gitpod/Dockerfile"
           push: ${{ github.event_name != 'pull_request' }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache

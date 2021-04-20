@@ -9,7 +9,7 @@ tasks:
   - name: Prepare development
     init: |
       mkdir -p .vscode
-      cp tools/docker_dev/settings.json .vscode/settings.json
+      cp tools/gitpod/settings.json .vscode/settings.json
       python setup.py build_ext --inplace
       echo "🛠 \e[35m\e[1m Completed rebuilding NumPy!! 🛠 "
       echo "📖 \e[35m\e[1m Building docs 📖 "
