@@ -136,7 +136,7 @@ NPY_FINLINE npy_uint64 npyv__divh128_u64(npy_uint64 high, npy_uint64 divisor)
 {
     assert(divisor > 1);
     npy_uint64 quotient;
-#if defined(_M_X64) && defined(_MSC_VER) && _MSC_VER >= 1920
+#if defined(_M_X64) && defined(_MSC_VER) && _MSC_VER >= 1920 && !defined(__clang__)
     npy_uint64 remainder;
     quotient = _udiv128(high, 0, divisor, &remainder);
     (void)remainder;
