@@ -30,7 +30,6 @@ def process_html(fn, lines):
 def process_tex(lines):
     """
     Remove unnecessary section titles from the LaTeX file.
-
     """
     new_lines = []
     for line in lines:
