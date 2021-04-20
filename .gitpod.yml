@@ -14,7 +14,7 @@ tasks:
       python setup.py build_ext --inplace
       echo "🛠 Completed rebuilding NumPy!! 🛠 "
       echo "📖 Building docs 📖 "
-      git submodule --init 
+      git submodule update --init
       cd doc
       make html
       echo "✨ Pre-build complete! You can close this terminal ✨ "
