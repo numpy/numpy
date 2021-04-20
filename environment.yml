@@ -19,7 +19,7 @@ dependencies:
   - mypy=0.812
   - typing_extensions
   # For building docs
-  - sphinx=3.5.2
+  - sphinx=3.5.4
   - numpydoc=1.1.0
   - ipython
   - scipy
