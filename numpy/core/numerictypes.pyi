@@ -13,7 +13,35 @@ from typing import (
     List,
 )
 
-from numpy import generic, ndarray, dtype
+from numpy import (
+    ndarray,
+    dtype,
+    generic,
+    bool_,
+    ubyte,
+    ushort,
+    uintc,
+    uint,
+    ulonglong,
+    byte,
+    short,
+    intc,
+    int_,
+    longlong,
+    half,
+    single,
+    double,
+    longdouble,
+    csingle,
+    cdouble,
+    clongdouble,
+    datetime64,
+    timedelta64,
+    object_,
+    str_,
+    bytes_,
+    void,
+)
 
 from numpy.core._type_aliases import (
     sctypeDict as sctypeDict,
@@ -76,4 +104,37 @@ def find_common_type(
 cast: _typedict[_CastFunc]
 nbytes: _typedict[int]
 typecodes: _TypeCodes
-ScalarType: Tuple[type, ...]
+ScalarType: Tuple[
+    Type[int],
+    Type[float],
+    Type[complex],
+    Type[int],
+    Type[bool],
+    Type[bytes],
+    Type[str],
+    Type[memoryview],
+    Type[bool_],
+    Type[csingle],
+    Type[cdouble],
+    Type[clongdouble],
+    Type[half],
+    Type[single],
+    Type[double],
+    Type[longdouble],
+    Type[byte],
+    Type[short],
+    Type[intc],
+    Type[int_],
+    Type[longlong],
+    Type[timedelta64],
+    Type[datetime64],
+    Type[object_],
+    Type[bytes_],
+    Type[str_],
+    Type[ubyte],
+    Type[ushort],
+    Type[uintc],
+    Type[uint],
+    Type[ulonglong],
+    Type[void],
+]

@@ -511,8 +511,15 @@ cast = _typedict()
 for key in _concrete_types:
     cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
+
+def _scalar_type_key(typ):
+    """A ``key`` function for `sorted`."""
+    dt = dtype(typ)
+    return (dt.kind.lower(), dt.itemsize)
+
+
 ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
-ScalarType.extend(_concrete_types)
+ScalarType += sorted(_concrete_types, key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 
 
