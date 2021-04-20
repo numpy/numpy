@@ -29,3 +29,60 @@ def empty_like(
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> NDArray[Any]: ...
+
+@overload
+def array(
+    object: object,
+    dtype: _DTypeLike[_SCT],
+    *,
+    copy: bool = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    ndmin: int = ...,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def array(
+    object: object,
+    dtype: DTypeLike = ...,
+    *,
+    copy: bool = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    ndmin: int = ...,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def zeros(
+    shape: _ShapeLike,
+    dtype: _DTypeLike[_SCT],
+    order: _OrderCF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def zeros(
+    shape: _ShapeLike,
+    dtype: DTypeLike = ...,
+    order: _OrderCF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: _DTypeLike[_SCT],
+    order: _OrderCF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: DTypeLike = ...,
+    order: _OrderCF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...

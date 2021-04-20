@@ -295,7 +295,10 @@ from numpy.core.einsumfunc import (
 )
 
 from numpy.core.multiarray import (
+    array as array,
     empty_like as empty_like,
+    empty as empty,
+    zeros as zeros,
 )
 
 from numpy.core.numeric import (
@@ -3419,31 +3422,6 @@ class str_(character, str):
 
 unicode_ = str_
 str0 = str_
-
-def array(
-    object: object,
-    dtype: DTypeLike = ...,
-    *,
-    copy: bool = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def zeros(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def empty(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
 
 #
 # Constants
