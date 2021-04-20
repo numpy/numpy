@@ -2896,6 +2896,7 @@ class floating(inexact[_NBit1]):
     __radd__: _FloatOp[_NBit1]
     __sub__: _FloatOp[_NBit1]
     __rsub__: _FloatOp[_NBit1]
+    __matmul__: _FloatOp[_NBit1]
     __mul__: _FloatOp[_NBit1]
     __rmul__: _FloatOp[_NBit1]
     __truediv__: _FloatOp[_NBit1]
