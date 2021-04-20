@@ -2542,16 +2542,18 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 skip_transfer = 1;
             }
 
-            /* If the data type requires zero-inititialization */
-            if (PyDataType_FLAGCHK(dtypes[iop], NPY_NEEDS_INIT)) {
-                NPY_IT_DBG_PRINT("Iterator: Buffer requires init, "
-                                    "memsetting to 0\n");
-                memset(ptrs[iop], 0, dtypes[iop]->elsize*op_transfersize);
-                /* Can't skip the transfer in this case */
-                skip_transfer = 0;
-            }
-
-            if (!skip_transfer) {
+            /*
+             * Copy data to the buffers if necessary.
+             *
+             * We always copy if the operand has references. In that case
+             * a "write" function must be in use that either copies or clears
+             * the buffer.
+             * This write from buffer call does not check for skip-transfer
+             * so we have to assume the buffer is cleared.  For dtypes that
+             * do not have references, we can assume that the write function
+             * will leave the source (buffer) unmodified.
+             */
+            if (!skip_transfer || PyDataType_REFCHK(dtypes[iop])) {
                 NPY_IT_DBG_PRINT2("Iterator: Copying operand %d to "
                                 "buffer (%d items)\n",
                                 (int)iop, (int)op_transfersize);
@@ -2567,16 +2569,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 }
             }
         }
-        else if (ptrs[iop] == buffers[iop]) {
-            /* If the data type requires zero-inititialization */
-            if (PyDataType_FLAGCHK(dtypes[iop], NPY_NEEDS_INIT)) {
-                NPY_IT_DBG_PRINT1("Iterator: Write-only buffer for "
-                                    "operand %d requires init, "
-                                    "memsetting to 0\n", (int)iop);
-                memset(ptrs[iop], 0, dtypes[iop]->elsize*transfersize);
-            }
-        }
-
     }
 
     /*
