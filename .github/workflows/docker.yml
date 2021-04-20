@@ -4,6 +4,7 @@ on:
   push: 
     branches:
     - main
+    - trallard/**
     paths:
     - './environment.yml'
     tags:
@@ -14,7 +15,7 @@ jobs:
     name: Build base Docker image 
     runs-on: ubuntu-latest
     environment: numpy-dev
-    if: "github.repository_owner == 'numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    if: "github.repository_owner == 'trallard' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     steps:
       - name: Clone repository
         uses: actions/checkout@v2
@@ -53,7 +54,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           tags: |
-            numpy/numpy-dev:${{ steps.getrefs.outputs.date }}-${{ steps.getrefs.outputs.branch}}-${{ steps.getrefs.outputs.sha8 }}, numpy/numpy-dev:latest
+            trallard/numpy-dev:${{ steps.getrefs.outputs.date }}-${{ steps.getrefs.outputs.branch}}-${{ steps.getrefs.outputs.sha8 }}, trallard/numpy-dev:latest
       - name: Image digest 
         # Return details of the image build: sha and shell
         run: echo ${{ steps.docker_build.outputs.digest }}

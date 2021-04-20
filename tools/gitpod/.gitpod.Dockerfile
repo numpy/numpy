@@ -1,6 +1,6 @@
 # Doing a local shallow clone - keeps the container secure
 # and much slimmer than usins COPY directly
-ARG BASE_CONTAINER="numpy/numpy-dev:latest"
+ARG BASE_CONTAINER="trallard/numpy-dev:latest"
 FROM gitpod/workspace-base:latest as clone
 
 COPY --chown=gitpod . /tmp/numpy_repo
@@ -39,7 +39,3 @@ RUN rm -rf ${WORKSPACE}
 
 # -----------------------------------------------------------------------------
 USER gitpod
-
-
-
-# docker build --rm --build-arg BASE_CONTAINER=trallard/numpy-dev:latest -f "./tools/gitpod/.gitpod.Dockerfile" -t trallard/numpy-gitpod:latest "."

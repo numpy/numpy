@@ -12,6 +12,13 @@ tasks:
       cp tools/docker_dev/settings.json .vscode/settings.json
       python setup.py build_ext --inplace
       echo "🛠 \e[35m\e[1m Completed rebuilding NumPy!! 🛠 "
+      echo "📖 \e[35m\e[1m Building docs 📖 "
+      git submodule --init 
+      python -m pip install -r doc_requirements.txt
+      cd doc
+      make html
+      echo "✨ \e[35m\e[1m pre-build complete! You can close this terminal ✨ "
+  
 
 # --------------------------------------------------------
 # exposing ports for liveserve
