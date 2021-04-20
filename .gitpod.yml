@@ -4,7 +4,7 @@
 # https://www.gitpod.io/docs/config-start-tasks/#configuring-the-terminal
 # -------------------------------------------------------------------------
 
-image: trallard/numpy-gitpod:latest
+image: numpy/numpy-gitpod:latest
 tasks:
   - name: Prepare development
     init: |

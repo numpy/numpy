@@ -3,7 +3,7 @@ name: Build Gitpod Docker image
 on:
   push:
     branches:
-      - trallard/**
+      - feature/**
   schedule:
     - cron: "0 0 * * *" # nightly
 
@@ -51,7 +51,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           tags: |
-            trallard/numpy-gitpod:${{ steps.getrefs.outputs.date }}-${{ steps.getrefs.outputs.branch}}-${{ steps.getrefs.outputs.sha8 }}, trallard/numpy-gitpod:latest
+            numpy/numpy-gitpod:${{ steps.getrefs.outputs.date }}-${{ steps.getrefs.outputs.branch}}-${{ steps.getrefs.outputs.sha8 }}, numpy/numpy-gitpod:latest
       - name: Image digest 
         # Return details of the image build: sha and shell
         run: echo ${{ steps.docker_build.outputs.digest }}
