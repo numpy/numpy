@@ -33,10 +33,11 @@ echo "export PYTHONPATH=${WORKSPACE}" >>~/.bashrc
 
 # ensure we can use conda
 echo ". ${CONDA_DIR}/etc/profile.d/conda.sh" >>~/.profile
+echo "conda activate $CONDA_ENV" >>~/.bashrc
 
 # Set up ccache for compilers for this Dockerfile
 # REF: https://github.com/conda-forge/compilers-feedstock/issues/31
-# echo "conda activate $CONDA_ENV" >>~/.startuprc
+echo "conda activate $CONDA_ENV" >>~/.startuprc
 echo "export CC=\"ccache \$CC\"" >>~/.startuprc
 echo "export CXX=\"ccache \$CXX\"" >>~/.startuprc
 echo "export F77=\"ccache \$F77\"" >>~/.startuprc

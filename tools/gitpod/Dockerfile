@@ -42,13 +42,9 @@ RUN wget -q -O mambaforge3.sh \
 COPY ./tools/gitpod/workspace_config /usr/local/bin/workspace_config
 
 RUN chmod a+rx /usr/local/bin/workspace_config && \
-    workspace_config
-
-# makes conda activate command for this Dockerfile
-# RUN echo ". ${CONDA_DIR}/etc/profile.d/conda.sh" >> ~/.profile
-
-# enables conda for interactive sessions
-RUN conda init bash
+    workspace_config && \
+    # enables conda for interactive sessions
+    conda init bash
 
 # Install numpy dev dependencies
 COPY environment.yml /tmp/environment.yml
@@ -61,4 +57,6 @@ RUN mamba env create -f /tmp/environment.yml -n ${CONDA_ENV} && \
     conda clean --all -f -y && \
     rm -rf /tmp/*  
 
+# -----------------------------------------------------------------------------
+# Always make sure we are not root
 USER gitpod
