@@ -305,7 +305,7 @@ abs_ptrdiff(char *a, char *b)
  */
 #define IS_OUTPUT_BLOCKABLE_UNARY(esizein, esizeout, vsize) \
     ((steps[0] & (esizein-1)) == 0 && \
-     steps[1] == (esizeout) && labs(steps[0]) < MAX_STEP_SIZE && \
+     steps[1] == (esizeout) && llabs(steps[0]) < MAX_STEP_SIZE && \
      (nomemoverlap(args[1], steps[1] * dimensions[0], args[0], steps[0] * dimensions[0])))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
