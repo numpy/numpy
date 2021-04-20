@@ -777,34 +777,38 @@ def array_split(ary, indices_or_sections, axis=0):
         try:
             len(indices_or_sections)
         except TypeError:
-            raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
+            raise ValueError('Axis is a tuple, so indices_or_sections must'
+                             'be of the same length as axis.')
 
         # Verify there is an index or section for every axis.
         if len(indices_or_sections) != len(axis):
-            raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
+            raise ValueError('Axis is a tuple, so indices_or_sections must'
+                             'be of the same length as axis.')
 
-        # Create a list that will store the size of the resulting split per axis.
+        # Create a list that will store the size of the split per axis.
         dimensions = []
         sub_matrices = [ary]
 
         for i in range(len(axis)):
             splitter = indices_or_sections[i]
             try:
-                # The array will be split by indices for this axis, so the resulting size will be
-                # the amount of indices + 1.
+                # The array will be split by indices for this axis,
+                # so the resulting size will be the amount of indices + 1.
                 dimensions.append(len(splitter) + 1)
             except TypeError:
-                # The array will be split in N parts for this axis, so the resulting size
-                # will be N.
+                # The array will be split in N parts for this axis,
+                # so the resulting size will be N.
                 dimensions.append(splitter)
 
             res = []
             for element in sub_matrices:
-                res.extend(array_split(element, indices_or_sections[i], axis[i]))
+                res.extend(
+                    array_split(element, indices_or_sections[i], axis[i]))
 
             sub_matrices = res
 
-        # Create an object array that will hold the sub-matrices resulting from the split.
+        # Create an object array that will hold the sub-matrices
+        # resulting from the split.
         object_array = empty(len(sub_matrices), dtype=object)
 
         for i, sub_matrix in enumerate(sub_matrices):
@@ -947,10 +951,12 @@ def split(ary, indices_or_sections, axis=0):
         try:
             len(indices_or_sections)
         except TypeError:
-            raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
+            raise ValueError('Axis is a tuple, so indices_or_sections must'
+                             'be of the same length as axis.')
 
         if len(indices_or_sections) != len(axis):
-            raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
+            raise ValueError('Axis is a tuple, so indices_or_sections must'
+                             'be of the same length as axis.')
 
         for i in range(len(axis)):
             verify_equal_division(indices_or_sections[i], axis[i])
