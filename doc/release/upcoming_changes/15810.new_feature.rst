@@ -1,13 +1,20 @@
 `numpy.split` and `numpy.array_split` now accept a tuple for ``axis``
 ---------------------------------------------------------------------
-Both `numpy.split` and `numpy.array_split` now accept a tuple for the ``axis`` parameter.
-This tuple denotes the axes over which the input array will be split. This means N-dimensional
-arrays can now be split over N dimensions in a single call to `numpy.split` or `numpy.array_split`.
-When making an N-dimensional split, the output is an N-dimensional object array.
-Do note that when ``axis`` is a ``tuple``, it must be specified how the array must be split over each axis.
-Therefore, ``indices_or_sections`` must be a list containing as many elements as there are axes in
-``axis``. Also note that these elements can also be lists themselves, to allow for splitting on indices
-instead of splitting in parts, just like a one-dimensional call to `numpy.split` or `numpy.array_split`.
+Both `numpy.split` and `numpy.array_split` now accept a tuple
+for the ``axis`` parameter. This tuple denotes the axes over
+which the input array will be split. This means N-dimensional
+arrays can now be split over N dimensions in a single call
+to `numpy.split` or `numpy.array_split`.
+When making an N-dimensional split, the output is an N-dimensional
+object array.
+Do note that when ``axis`` is a ``tuple``, it must be specified how
+the array must be split over each axis. Therefore,
+``indices_or_sections`` must be a list containing as many elements
+as there are axes in ``axis``. Also note that these elements can
+also be lists themselves, to allow for splitting on indices
+instead of splitting in parts, just like a one-dimensional call
+to `numpy.split` or `numpy.array_split`.
 
-To use this new functionality, write ``np.split(array, [4, 2], (0, 1))`` or ``np.array_split(array, [4, 2], (0, 1))``
-to split ``array`` in ``4`` parts over axis ``0`` and then in ``2`` parts over axis ``1``.
+To use this new functionality, write ``np.split(array, [4, 2], axis=(0, 1))``
+or ``np.array_split(array, [4, 2], axis=(0, 1))`` to split ``array`` in ``4``
+parts over axis ``0`` and then in ``2`` parts over axis ``1``.

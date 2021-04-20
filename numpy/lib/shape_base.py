@@ -5,7 +5,7 @@ from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, array, asanyarray
     )
 from numpy.core.fromnumeric import reshape, transpose
-from numpy.core.multiarray import normalize_axis_index
+from numpy.core.multiarray import normalize_axis_index, empty
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
 from numpy.core.numeric import normalize_axis_tuple

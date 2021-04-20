@@ -319,6 +319,16 @@ class TestExpandDims:
 
 class TestArraySplit:
 
+    def test_zero_dimensional_split(self):
+        matrix = np.reshape(np.arange(16), (4, 4))
+
+        ret = split(matrix, [], axis=())
+        assert_equal(ret.ndim, 0)
+        assert_equal(ret[()], matrix)
+
+        # too many split arguments
+        assert_raises(ValueError, split, matrix, [3], axis=())
+
     def test_two_dimensional_two_integer_remainder_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
@@ -334,8 +344,6 @@ class TestArraySplit:
         desired[7] = np.array([[14]])
         desired[8] = np.array([[15]])
         desired = np.reshape(desired, (3, 3))
-
-        print(res)
 
         assert(res.shape == desired.shape)
 
@@ -590,12 +598,11 @@ class TestSplit:
             compare_results(element, desired[i])
 
         res = split(matrix, [2, 2], (0, 1))
-        desired = np.empty(4, dtype=object)
-        desired[0] = np.array([[0, 1], [4, 5]])
-        desired[1] = np.array([[2, 3], [6, 7]])
-        desired[2] = np.array([[8, 9], [12, 13]])
-        desired[3] = np.array([[10, 11], [14, 15]])
-        desired = np.reshape(desired, (2, 2))
+        desired = np.empty((2, 2), dtype=object)
+        desired[0, 0] = np.array([[0, 1], [4, 5]])
+        desired[0, 1] = np.array([[2, 3], [6, 7]])
+        desired[1, 0] = np.array([[8, 9], [12, 13]])
+        desired[1, 1] = np.array([[10, 11], [14, 15]])
 
         assert (res.shape == desired.shape)
 
