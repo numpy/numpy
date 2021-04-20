@@ -335,35 +335,40 @@ class _Config:
             return {}
 
         on_x86 = self.cc_on_x86 or self.cc_on_x64
-        is_unix = self.cc_is_gcc or self.cc_is_clang or self.cc_is_clang_cl
-
-        if on_x86 and is_unix: return dict(
-            SSE    = dict(flags="-msse"),
-            SSE2   = dict(flags="-msse2"),
-            SSE3   = dict(flags="-msse3"),
-            SSSE3  = dict(flags="-mssse3"),
-            SSE41  = dict(flags="-msse4.1"),
-            POPCNT = dict(flags="-mpopcnt"),
-            SSE42  = dict(flags="-msse4.2"),
-            AVX    = dict(flags="-mavx"),
-            F16C   = dict(flags="-mf16c"),
-            XOP    = dict(flags="-mxop"),
-            FMA4   = dict(flags="-mfma4"),
-            FMA3   = dict(flags="-mfma"),
-            AVX2   = dict(flags="-mavx2"),
-            AVX512F = dict(flags="-mavx512f"),
-            AVX512CD = dict(flags="-mavx512cd"),
-            AVX512_KNL = dict(flags="-mavx512er -mavx512pf"),
-            AVX512_KNM = dict(
-                flags="-mavx5124fmaps -mavx5124vnniw -mavx512vpopcntdq"
-            ),
-            AVX512_SKX = dict(flags="-mavx512vl -mavx512bw -mavx512dq"),
-            AVX512_CLX = dict(flags="-mavx512vnni"),
-            AVX512_CNL = dict(flags="-mavx512ifma -mavx512vbmi"),
-            AVX512_ICL = dict(
-                flags="-mavx512vbmi2 -mavx512bitalg -mavx512vpopcntdq"
-            )
+        is_gcc_or_clang = (
+                self.cc_is_gcc or
+                self.cc_is_clang or
+                self.cc_is_clang_cl
         )
+
+        if on_x86 and is_gcc_or_clang:
+            return dict(
+                SSE=dict(flags="-msse"),
+                SSE2=dict(flags="-msse2"),
+                SSE3=dict(flags="-msse3"),
+                SSSE3=dict(flags="-mssse3"),
+                SSE41=dict(flags="-msse4.1"),
+                POPCNT=dict(flags="-mpopcnt"),
+                SSE42=dict(flags="-msse4.2"),
+                AVX=dict(flags="-mavx"),
+                F16C=dict(flags="-mf16c"),
+                XOP=dict(flags="-mxop"),
+                FMA4=dict(flags="-mfma4"),
+                FMA3=dict(flags="-mfma"),
+                AVX2=dict(flags="-mavx2"),
+                AVX512F=dict(flags="-mavx512f"),
+                AVX512CD=dict(flags="-mavx512cd"),
+                AVX512_KNL=dict(flags="-mavx512er -mavx512pf"),
+                AVX512_KNM=dict(
+                    flags="-mavx5124fmaps -mavx5124vnniw -mavx512vpopcntdq"
+                ),
+                AVX512_SKX=dict(flags="-mavx512vl -mavx512bw -mavx512dq"),
+                AVX512_CLX=dict(flags="-mavx512vnni"),
+                AVX512_CNL=dict(flags="-mavx512ifma -mavx512vbmi"),
+                AVX512_ICL=dict(
+                    flags="-mavx512vbmi2 -mavx512bitalg -mavx512vpopcntdq"
+                )
+            )
         if on_x86 and self.cc_is_icc: return dict(
             SSE    = dict(flags="-msse"),
             SSE2   = dict(flags="-msse2"),
@@ -509,7 +514,7 @@ class _Config:
             return partial
 
 
-        if self.cc_on_aarch64 and is_unix: return dict(
+        if self.cc_on_aarch64 and is_gcc_or_clang: return dict(
             NEON = dict(
                 implies="NEON_FP16 NEON_VFPV4 ASIMD", autovec=True
             ),
@@ -532,7 +537,7 @@ class _Config:
                 flags="-march=armv8.2-a+fp16fml"
             ),
         )
-        if self.cc_on_armhf and is_unix: return dict(
+        if self.cc_on_armhf and is_gcc_or_clang: return dict(
             NEON = dict(
                 flags="-mfpu=neon"
             ),
@@ -554,7 +559,6 @@ class _Config:
             ASIMDFHM = dict(
                 flags="-march=armv8.2-a+fp16fml"
             )
-        )
         # TODO: ARM MSVC
         return {}
 
@@ -2419,10 +2423,9 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             "unsupported" if self.cc_on_noarch else self.cc_march)
         ))
         platform_rows.append(("Compiler", (
-            "unix-like"   if self.cc_is_nocc   else self.cc_name)
+            "unix-like" if self.cc_is_nocc else self.cc_name)
         ))
         ########## baseline ##########
-        # TODO: Fix this
         if self.cc_noopt or not hasattr(self, "_requested_baseline"):
             baseline_rows.append(("Requested", "optimization disabled"))
         else:
@@ -2444,7 +2447,6 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         ))
 
         ########## dispatch ##########
-        # TODO: Fix this
         if self.cc_noopt or not hasattr(self, "_requested_dispatch"):
             baseline_rows.append(("Requested", "optimization disabled"))
         else:

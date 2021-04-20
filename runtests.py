@@ -432,7 +432,7 @@ def build_project(args):
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
     cvars = sysconfig.get_config_vars()
-    compiler = env.get('CC') or cvars.get('CC', '')
+    compiler = args.compiler or env.get('CC') or cvars.get('CC', '')
     if 'gcc' in compiler:
         # Check that this isn't clang masquerading as gcc.
         if sys.platform != 'darwin' or 'gnu-gcc' in compiler:
