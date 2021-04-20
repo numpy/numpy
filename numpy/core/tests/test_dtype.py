@@ -1097,18 +1097,36 @@ class TestPromotion:
              (2**32-1, np.complex128),
              (np.float16(2), np.complex64),
              (np.float32(2), np.complex64),
-             (np.float128(2), np.complex64),
+             (np.longdouble(2), np.complex64),
              (np.nextafter(np.longdouble(1.7e308), 0.), np.complex128),
              (np.longdouble(1.7e308), np.clongdouble),
              ])
-    def test_complex_value_based(self, other, expected):
-        # This would change if we modfiy the value based promotion
+    def test_complex_other_value_based(self, other, expected):
+        # This would change if we modify the value based promotion
         min_complex = np.dtype(np.complex64)
 
         res = np.result_type(other, min_complex)
         assert res == expected
         # Check the same for a simple ufunc call that uses the same logic:
         res = np.minimum(other, np.ones(3, dtype=min_complex)).dtype
+        assert res == expected
+
+    @pytest.mark.parametrize(["other", "expected"],
+                 [(np.bool_, np.complex128),
+                  (np.int64, np.complex128),
+                  (np.float16, np.complex64),
+                  (np.float32, np.complex64),
+                  (np.float64, np.complex128),
+                  (np.longdouble, np.clongdouble),
+                  ])
+    def test_complex_scalar_value_based(self, other, expected):
+        # This would change if we modify the value based promotion
+        complex_scalar = 1j
+
+        res = np.result_type(other, complex_scalar)
+        assert res == expected
+        # Check the same for a simple ufunc call that uses the same logic:
+        res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
         assert res == expected
 
     @pytest.mark.parametrize(["dtypes", "expected"],
