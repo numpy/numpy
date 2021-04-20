@@ -1,10 +1,56 @@
-image: thomasjpfan/numpy-gitpod:latest
-tasks:
-  # The base image complied numpy with ccache enabled. This second build
-  # should be faster since it is using the cache.
-  - init: python setup.py build_ext -i
+# Rebuilding NumPy on init - rather than on prebuild: this ensures
+# that even forks do have a usable freshly built NumPy
+# Might delegate this later to prebuild with Q2 improvements on gitpod
+# https://www.gitpod.io/docs/config-start-tasks/#configuring-the-terminal
+# -------------------------------------------------------------------------
 
+image: trallard/numpy-gitpod:latest
+tasks:
+  - name: Prepare development
+    init: |
+      mkdir -p .vscode
+      cp tools/docker_dev/settings.json .vscode/settings.json
+      python setup.py build_ext --inplace
+      echo "🛠 \e[35m\e[1m Completed rebuilding NumPy!! 🛠 "
+
+# --------------------------------------------------------
+# exposing ports for liveserve
+ports:
+  - port: 5500
+    onOpen: notify
+
+# --------------------------------------------------------
+# some useful extensions to have
+vscode:
+  extensions:
+    - eamodio.gitlens
+    - njpwerner.autodocstring
+    - lextudio.restructuredtext
+    - ritwickdey.liveserver
+    - ms-python.python
+    - yzhang.markdown-all-in-one
+    - bungcip.better-toml
+    - mhutchie.git-graph
+
+# --------------------------------------------------------
+# using prebuilds for the container - note: atm this only
+# works for the NumPy repo
+# With this configuration the prebuild will happen on push to master 
 github:
   prebuilds:
+    # enable for master branch
     master: true
-    branches: true
+    # enable for other branches (defaults to false) 
+    branches: false 
+    # enable for pull requests coming from this repo (defaults to true) 
+    pullRequests: false
+    # enable for pull requests coming from forks (defaults to false)
+    pullRequestsFromForks: false
+    # add a check to pull requests (defaults to true)
+    addCheck: false
+    # add a "Review in Gitpod" button as a comment to pull requests (defaults to false)
+    addComment: false
+    # add a "Review in Gitpod" button to the pull request's description (defaults to false)
+    addBadge: false
+    # add a label once the prebuild is ready to pull requests (defaults to false)
+    addLabel: false
