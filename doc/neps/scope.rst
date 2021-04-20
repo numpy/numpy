@@ -14,7 +14,8 @@ Here, we describe aspects of N-d array computation that are within scope for Num
 
   - NumPy is a *de facto* standard for array APIs in Python
   - Indexing and fast iteration over elements (ufunc)
-  - Interoperability protocols with other data container implementations (like `__array_ufunc__`).
+  - Interoperability protocols with other data container implementations (like
+    :ref:`__array_ufunc__ and __array_function__ <basics.dispatch>`.
 
 - **Python API and a C API** to the ndarray's methods and attributes.
 
@@ -35,7 +36,8 @@ Here, we describe aspects of N-d array computation that are within scope for Num
 
 - NumPy provides some **infrastructure for other packages in the scientific Python ecosystem**:
 
-  - numpy.distutils (build support for C++, Fortran, BLAS/LAPACK, and other relevant libraries for scientific computing
+  - numpy.distutils (build support for C++, Fortran, BLAS/LAPACK, and other
+    relevant libraries for scientific computing)
   - f2py (generating bindings for Fortran code)
   - testing utilities
 

@@ -40,11 +40,11 @@ class TestRegression:
         # numbers with this large sample
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / float(N)
-        msg = "Frequency was %f, should be > 0.45" % freq
+        msg = f'Frequency was {freq:f}, should be > 0.45'
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / float(N)
-        msg = "Frequency was %f, should be < 0.23" % freq
+        msg = f'Frequency was {freq:f}, should be < 0.23'
         assert_(freq < 0.23, msg)
 
     def test_shuffle_mixed_dimension(self):

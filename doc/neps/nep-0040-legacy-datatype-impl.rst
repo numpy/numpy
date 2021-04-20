@@ -6,21 +6,22 @@ NEP 40 — Legacy Datatype Implementation in NumPy
 
 :title: Legacy Datatype Implementation in NumPy
 :Author: Sebastian Berg
-:Status: Draft
+:Status: Final
 :Type: Informational
 :Created: 2019-07-17
 
 
 .. note::
 
-    This NEP is part of a series of NEPs encompassing first information
-    about the previous dtype implementation and issues with it in NEP 40
-    (this document).
-    `NEP 41 <NEP41>`_ then provides an overview and generic design choices for the refactor.
-    Further NEPs 42 and 43 go into the technical details of the datatype
-    and universal function related internal and external API changes.
-    In some cases it may be necessary to consult the other NEPs for a full
-    picture of the desired changes and why these changes are necessary.
+    This NEP is first in a series:
+
+    - NEP 40 (this document) explains the shortcomings of NumPy's dtype implementation.
+
+    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
+
+    - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
+
+    - NEP 43 describes the new design's API for universal functions.
 
 
 
@@ -31,7 +32,7 @@ As a preparation to further NumPy enhancement proposals 41, 42, and 43. This
 NEP details the current status of NumPy datatypes as of NumPy 1.18.
 It describes some of the technical aspects and concepts that
 motivated the other proposals.
-For more general information most readers should begin by reading `NEP 41 <NEP41>`_
+For more general information most readers should begin by reading :ref:`NEP 41 <NEP41>`
 and use this document only as a reference or for additional details.
 
 
@@ -42,6 +43,8 @@ This section describes some central concepts and provides a brief overview
 of the current implementation of dtypes as well as a discussion.
 In many cases subsections will be split roughly to first describe the
 current implementation and then follow with an "Issues and Discussion" section.
+
+.. _parametric-datatype-discussion:
 
 Parametric Datatypes
 ^^^^^^^^^^^^^^^^^^^^
@@ -109,11 +112,11 @@ This is useful for example in expressions such as::
 In this expression, the python value (which originally has no datatype) is
 represented as an ``int8`` or ``int16`` (the smallest possible data type).
 
-NumPy currently does this even for NumPy scalars and zero dimensional arrays,
+NumPy currently does this even for NumPy scalars and zero-dimensional arrays,
 so that replacing ``5`` with ``np.int64(5)`` or ``np.array(5, dtype="int64")``
-will lead to the same results, and thus ignores the existing datatype.
-The same logic also applies to floating point scalars, which are allowed to
-lose precision.
+in the above expression will lead to the same results, and thus ignores the
+existing datatype. The same logic also applies to floating-point scalars,
+which are allowed to lose precision.
 The behavior is not used when both inputs are scalars, so that
 ``5 + np.int8(5)`` returns the default integer size (32 or 64-bit) and not
 an ``np.int8``.
@@ -180,8 +183,8 @@ These issues do not need to solved right away:
   scalars behave much like NumPy arrays, a feature that general Python objects
   do not have.
 * Seamless integration probably requires that ``np.array(scalar)`` finds the
-  correct DType automatically since some operations (such as indexing) are
-  return the scalar instead of a 0D array.
+  correct DType automatically since some operations (such as indexing) return
+  the scalar instead of a 0D array.
   This is problematic if multiple users independently decide to implement
   for example a DType for ``decimal.Decimal``.
 
@@ -207,7 +210,7 @@ Many datatype-specific functions are defined within a C structure called
 :c:type:`PyArray_ArrFuncs`, which is part of each ``dtype`` instance and
 has a similarity to Python's ``PyNumberMethods``.
 For user-defined datatypes this structure is exposed to the user, making
-ABI-compatible changes changes impossible.
+ABI-compatible changes impossible.
 This structure holds important information such as how to copy or cast,
 and provides space for pointers to functions, such as comparing elements,
 converting to bool, or sorting.
@@ -251,6 +254,8 @@ the NumPy scalars currently **do** provide a type hierarchy, consisting of abstr
 types such as ``np.inexact`` (see figure below).
 In fact, some control flow within NumPy currently uses
 ``issubclass(a.dtype.type, np.inexact)``.
+
+.. _nep-0040_dtype-hierarchy:
 
 .. figure:: _static/nep-0040_dtype-hierarchy.png
 
@@ -334,7 +339,7 @@ Each of these signatures is associated with a single inner-loop function defined
 in C, which does the actual calculation, and may be called multiple times.
 
 The main step in finding the correct inner-loop function is to call a
-:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from 
+:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from
 the provided input arrays
 and will determine the full type signature (including output dtype) to be executed.
 
@@ -365,7 +370,7 @@ It is currently only possible for user defined functions to be found/resolved
 if any of the inputs (or the outputs) has the user datatype, since it uses the
 `OO->O` signature.
 For example, given that a ufunc loop to implement ``fraction_divide(int, int)
--> Fraction`` has been implemented, 
+-> Fraction`` has been implemented,
 the call ``fraction_divide(4, 5)`` (with no specific output dtype) will fail
 because the loop that
 includes the user datatype ``Fraction`` (as output) can only be found if any of
@@ -571,7 +576,7 @@ Related Work
 ------------
 
 * Julia types are an interesting blueprint for a type hierarchy, and define
-  abstract and concrete types [julia-types]_. 
+  abstract and concrete types [julia-types]_.
 
 * In Julia promotion can occur based on abstract types. If a promoter is
   defined, it will cast the inputs and then Julia can then retry to find
@@ -606,7 +611,7 @@ the following provides a subset for more recent ones:
 
   * https://hackmd.io/ok21UoAQQmOtSVk6keaJhw and https://hackmd.io/s/ryTFaOPHE
     (2019-04-30) Proposals for subclassing implementation approach.
-  
+
   * Discussion about the calling convention of ufuncs and need for more
     powerful UFuncs: https://github.com/numpy/numpy/issues/12518
 

@@ -1,0 +1,7 @@
+contact_links:
+  - name: Question/Help/Support
+    url: https://numpy.org/gethelp/
+    about: "If you have a question, please look at the listed resources available on the website."
+  - name: Development-related matters
+    url: https://numpy.org/community/
+    about: "If you would like to discuss development-related matters or need help from the NumPy team, see our community's communication channels."

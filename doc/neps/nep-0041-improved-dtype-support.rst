@@ -8,28 +8,28 @@ NEP 41 — First step towards a new Datatype System
 :Author: Sebastian Berg
 :Author: Stéfan van der Walt
 :Author: Matti Picus
-:Status: Draft
+:Status: Accepted
 :Type: Standard Track
 :Created: 2020-02-03
-
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2020-April/080573.html and https://mail.python.org/pipermail/numpy-discussion/2020-March/080495.html
 
 .. note::
 
-    This NEP is part of a series of NEPs encompassing first information
-    about the previous dtype implementation and issues with it in
-    `NEP 40 <NEP40>`_.
-    NEP 41 (this document) then provides an overview and generic design
-    choices for the refactor.
-    Further NEPs 42 and 43 go into the technical details of the datatype
-    and universal function related internal and external API changes.
-    In some cases it may be necessary to consult the other NEPs for a full
-    picture of the desired changes and why these changes are necessary.
+    This NEP is second in a series:
+
+    - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
+
+    - NEP 41 (this document) gives an overview of our proposed replacement.
+
+    - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
+
+    - NEP 43 describes the new design's API for universal functions.
 
 
 Abstract
 --------
 
-`Datatypes <data-type-objects-dtype>` in NumPy describe how to interpret each
+:ref:`Datatypes <arrays.dtypes>` in NumPy describe how to interpret each
 element in arrays. NumPy provides ``int``, ``float``, and ``complex`` numerical
 types, as well as string, datetime, and structured datatype capabilities.
 The growing Python community, however, has need for more diverse datatypes.
@@ -61,7 +61,8 @@ Motivation
 
 One of the main issues with the current API is the definition of typical
 functions such as addition and multiplication for parametric datatypes
-(see also `NEP 40 <NEP40>`_) which require additional steps to determine the output type.
+(see also :ref:`NEP 40 <NEP40>`)
+which require additional steps to determine the output type.
 For example when adding two strings of length 4, the result is a string
 of length 8, which is different from the input.
 Similarly, a datatype which embeds a physical unit must calculate the new unit
@@ -144,7 +145,8 @@ in more details in the detailed description section:
    Storage information such as itemsize and byteorder can differ between
    different dtype instances (e.g. "S3" vs. "S8") and will remain part of the instance.
    This means that in the long run the current lowlevel access to dtype methods
-   will be removed (see ``PyArray_ArrFuncs`` in `NEP 40 <NEP40>`_).
+   will be removed (see ``PyArray_ArrFuncs`` in
+   :ref:`NEP 40 <NEP40>`).
 
 2. The current NumPy scalars will *not* change, they will not be instances of
    datatypes. This will also be true for new datatypes, scalars will not be
@@ -225,7 +227,7 @@ Simple Numerical Types
 """"""""""""""""""""""
 
 Mainly used where memory is a consideration, lower-precision numeric types
-such as :ref:```bfloat16`` <https://en.wikipedia.org/wiki/Bfloat16_floating-point_format>`
+such as `bfloat16 <https://en.wikipedia.org/wiki/Bfloat16_floating-point_format>`_
 are common in other computational frameworks.
 For these types the definitions of things such as ``np.common_type`` and
 ``np.can_cast`` are some of the most important interfaces. Once they
@@ -390,7 +392,7 @@ numerical dtypes since there is no "universal" output type::
 In fact ``np.result_type(meters, seconds)`` must error without context
 of the operation being done.
 This example highlights how the specific ufunc loop
-(loop with known, specific DTypes as inputs), has to be able to to make
+(loop with known, specific DTypes as inputs), has to be able to make
 certain decisions before the actual calculation can start.
 
 
@@ -410,27 +412,28 @@ multiple development stages are required:
 
 * Phase II: Incrementally define or rework API
 
-  * Create a new and easily extensible API for defining new datatypes
-    and related functionality. (NEP 42)
+  * Incrementally define all necessary functionality through methods and
+    properties on the DType (NEP 42):
 
-  * Incrementally define all necessary functionality through the new API (NEP 42):
+    * The properties of the class hierarchy and DType class itself,
+      including methods not covered by the following, most central, points.
+    * The functionality that will support dtype casting using ``arr.astype()``
+      and casting related operations such as ``np.common_type``.
+    * The implementation of item access and storage, and the way shape and
+      dtype are determined when creating an array with ``np.array()``
+    * Create a public C-API to define new DTypes.
 
-    * Defining operations such as ``np.common_type``.
-    * Allowing to define casting between datatypes.
-    * Add functionality necessary to create a numpy array from Python scalars
-      (i.e. ``np.array(...)``).
-    * …
+  * Restructure how universal functions work (NEP 43), to allow extending
+    a `~numpy.ufunc` such as ``np.add`` for user-defined datatypes
+    such as Units:
 
-  * Restructure how universal functions work (NEP 43), in order to:
-
-    * make it possible to allow a `~numpy.ufunc` such as ``np.add`` to be
-      extended by user-defined datatypes such as Units.
-
-    * allow efficient lookup for the correct implementation for user-defined
-      datatypes.
-
-    * enable reuse of existing code. Units should be able to use the
-      normal math loops and add additional logic to determine output type.
+    * Refactor how the low-level C functions are organized to make it
+      extensible and flexible enough for complicated DTypes such as Units.
+    * Implement registration and efficient lookup for these low-level C
+      functions as defined by the user.
+    * Define how promotion will be used to implement behaviour when casting
+      is required. For example ``np.float64(3) + np.int32(3)`` promotes the
+      ``int32`` to a ``float64``.
 
 * Phase III: Growth of NumPy and Scientific Python Ecosystem capabilities:
 
@@ -512,22 +515,22 @@ are not yet fully clear, we anticipate, and accept the following changes:
 
 * **C-API**:
 
-    * In old versions of NumPy ``PyArray_DescrCheck`` is a macro which uses
-      ``type(dtype) is np.dtype``. When compiling against an old NumPy version,
-      the macro may have to be replaced with the corresponding
-      ``PyObject_IsInstance`` call. (If this is a problem, we could backport
-      fixing the macro)
+  * In old versions of NumPy ``PyArray_DescrCheck`` is a macro which uses
+    ``type(dtype) is np.dtype``. When compiling against an old NumPy version,
+    the macro may have to be replaced with the corresponding
+    ``PyObject_IsInstance`` call. (If this is a problem, we could backport
+    fixing the macro)
 
-   * The UFunc machinery changes will break *limited* parts of the current
-     implementation. Replacing e.g. the default ``TypeResolver`` is expected
-     to remain supported for a time, although optimized masked inner loop iteration
-     (which is not even used *within* NumPy) will no longer be supported.
+  * The UFunc machinery changes will break *limited* parts of the current
+    implementation. Replacing e.g. the default ``TypeResolver`` is expected
+    to remain supported for a time, although optimized masked inner loop iteration
+    (which is not even used *within* NumPy) will no longer be supported.
 
-   * All functions currently defined on the dtypes, such as
-     ``PyArray_Descr->f->nonzero``, will be defined and accessed differently.
-     This means that in the long run lowlevel access code will
-     have to be changed to use the new API. Such changes are expected to be
-     necessary in very few project.
+  * All functions currently defined on the dtypes, such as
+    ``PyArray_Descr->f->nonzero``, will be defined and accessed differently.
+    This means that in the long run lowlevel access code will
+    have to be changed to use the new API. Such changes are expected to be
+    necessary in very few project.
 
 * **dtype implementors (C-API)**:
 
@@ -539,16 +542,16 @@ are not yet fully clear, we anticipate, and accept the following changes:
     At least in some code paths, a similar mechanism is already used.
 
   * The ``scalarkind`` slot and registration of scalar casting will be
-     removed/ignored without replacement.
-     It currently allows partial value-based casting.
-     The ``PyArray_ScalarKind`` function will continue to work for builtin types,
-     but will not be used internally and be deprecated.
+    removed/ignored without replacement.
+    It currently allows partial value-based casting.
+    The ``PyArray_ScalarKind`` function will continue to work for builtin types,
+    but will not be used internally and be deprecated.
 
-   * Currently user dtypes are defined as instances of ``np.dtype``.
-     The creation works by the user providing a prototype instance.
-     NumPy will need to modify at least the type during registration.
-     This has no effect for either ``rational`` or ``quaternion`` and mutation
-     of the structure seems unlikely after registration.
+  * Currently user dtypes are defined as instances of ``np.dtype``.
+    The creation works by the user providing a prototype instance.
+    NumPy will need to modify at least the type during registration.
+    This has no effect for either ``rational`` or ``quaternion`` and mutation
+    of the structure seems unlikely after registration.
 
 Since there is a fairly large API surface concerning datatypes, further changes
 or the limitation certain function to currently existing datatypes is
@@ -581,9 +584,10 @@ special methods move from the dtype instances to methods on the new DType class.
 This is the typical design pattern used in Python.
 Organizing these methods and information in a more Pythonic way provides a
 solid foundation for refining and extending the API in the future.
-The current API cannot be extended due to how it is exposed publically.
+The current API cannot be extended due to how it is exposed publicly.
 This means for example that the methods currently stored in ``PyArray_ArrFuncs``
-on each datatype (see `NEP 40 <NEP40>`_) will be defined differently in the future and
+on each datatype (see :ref:`NEP 40 <NEP40>`)
+will be defined differently in the future and
 deprecated in the long run.
 
 The most prominent visible side effect of this will be that
@@ -601,11 +605,64 @@ Inheritance, however, appears problematic and a complexity best avoided
 Further, subclasses may be more interesting for interoperability for
 example with GPU backends (CuPy) storing additional methods related to the
 GPU rather than as a mechanism to define new datatypes.
-A class hierarchy does provides value, this may be achieved by
+A class hierarchy does provides value, and one can be achieved by
 allowing the creation of *abstract* datatypes.
 An example for an abstract datatype would be the datatype equivalent of
 ``np.floating``, representing any floating point number.
 These can serve the same purpose as Python's abstract base classes.
+
+This NEP chooses to duplicate the scalar hierarchy fully or in part.
+The main reason is to uncouple the implementation of the DType and scalar.
+To add a DType to NumPy, in theory the scalar will not need to be
+modified or know about NumPy. Also note that the categorical DType as
+currently implemented in pandas does not have a scalar correspondence
+making it less straight forward to rely on scalars to implement behaviour.
+While DType and Scalar describe the same concept/type (e.g. an `int64`),
+it seems practical to split out the information and functionality necessary
+for numpy into the DType class.
+
+The dtype instances provide parameters and storage options
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+From a computer science point of view a type defines the *value space*
+(all possible values its instances can take) and their *behaviour*.
+As proposed in this NEP, the DType class defines value space and behaviour.
+The ``dtype`` instance can be seen as part of the value, so that the typical
+Python ``instance`` corresponds to ``dtype + element`` (where *element* is the
+data stored in the array).
+An alternative view would be to define value space and behaviour on the
+``dtype`` instances directly.
+These two options are presented in the following figure and compared to
+similar Python implementation patterns:
+
+.. image:: _static/nep-0041-type-sketch-no-fonts.svg
+
+The difference is in how parameters, such as string length or the datetime
+units (``ms``, ``ns``, ...), and storage options, such as byte-order, are handled.
+When implementing a Python (scalar) ``type`` parameters, for example the datetimes
+unit, will be stored in the instance.
+This is the design NEP 42 tries to mimic, however, the parameters are now part
+of the dtype instance, meaning that part of the data stored in the instance
+is shared by all array elements.
+As mentioned previously, this means that the Python ``instance`` corresponds
+to the ``dtype + element`` stored in a NumPy array.
+
+An more advanced approach in Python is to use a class factory and an abstract
+base class (ABC).
+This allows moving the parameter into the dynamically created ``type`` and
+behaviour implementation may be specific to those parameters.
+An alternative approach might use this model and implemented behaviour
+directly on the ``dtype`` instance.
+
+We believe that the version as proposed here is easier to work with and understand.
+Python class factories are not commonly used and NumPy does not use code
+specialized for dtype parameters or byte-orders.
+Making such specialization easier to implement such specialization does not
+seem to be a priority.
+One result of this choice is that some DTypes may only have a singleton instance
+if they have no parameters or storage variation.
+However, all of the NumPy dtypes require dynamically created instances due
+to allowing metadata to be attached.
 
 
 Scalars should not be instances of the datatypes (2)
@@ -684,8 +741,9 @@ C-API Changes to the UFunc Machinery (4)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Proposed changes to the UFunc machinery will be part of NEP 43.
-However, the following changes will be necessary (see `NEP 40 <NEP40>`_ for a detailed
-description of the current implementation and its issues):
+However, the following changes will be necessary
+(see :ref:`NEP 40 <NEP40>`
+for a detailed description of the current implementation and its issues):
 
 * The current UFunc type resolution must be adapted to allow better control
   for user-defined dtypes as well as resolve current inconsistencies.
@@ -704,7 +762,15 @@ functions after handling the unit related computations.
 Discussion
 ----------
 
-See `NEP 40 <NEP40>`_ for a list of previous meetings and discussions.
+See :ref:`NEP 40 <NEP40>`
+for a list of previous meetings and discussions.
+
+Additional discussion around this specific NEP has occured on both
+the mailing list and the pull request:
+
+* `Mailing list discussion <https://mail.python.org/pipermail/numpy-discussion/2020-March/080481.html>`_
+* `NEP 41 pull request <https://github.com/numpy/numpy/pull/15506>`_
+* `Pull request thread on Dtype hierarchy and Scalars <https://github.com/numpy/numpy/pull/15506#discussion_r390016298>`_
 
 
 References

@@ -45,6 +45,9 @@ workdir = tempfile.mkdtemp()
 os.chdir(workdir)
 
 run(['git', 'init'])
+# ensure the working branch is called "main"
+# (`--initial-branch=main` appared to have failed on older git versions):
+run(['git', 'checkout', '-b', 'main'])
 run(['git', 'remote', 'add', 'origin',  args.remote])
 run(['git', 'config', '--local', 'user.name', args.committer])
 run(['git', 'config', '--local', 'user.email', args.email])
@@ -56,7 +59,7 @@ run(['git', 'commit', '--allow-empty', '-m', args.message], stdout=False)
 
 print('- uploading as %s <%s>' % (args.committer, args.email))
 if args.force:
-    run(['git', 'push', 'origin', 'master', '--force'])
+    run(['git', 'push', 'origin', 'main', '--force'])
 else:
     print('\n!! No `--force` argument specified; aborting')
     print('!! Before enabling that flag, make sure you know what it does\n')

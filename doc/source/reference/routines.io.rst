@@ -56,6 +56,7 @@ Memory mapping files
    :toctree: generated/
 
    memmap
+   lib.format.open_memmap
 
 Text formatting options
 -----------------------
@@ -85,7 +86,6 @@ Data sources
 Binary Format Description
 -------------------------
 .. autosummary::
-   :template: autosummary/minimal_module.rst
    :toctree: generated/
 
-    lib.format
+   lib.format

@@ -1,3 +1,5 @@
+.. _NEP00:
+
 ===========================
 NEP 0 — Purpose and Process
 ===========================
@@ -232,7 +234,9 @@ Header Preamble
 
 Each NEP must begin with a header preamble.  The headers
 must appear in the following order.  Headers marked with ``*`` are
-optional.  All other headers are required. ::
+optional.  All other headers are required.
+
+.. code-block:: rst
 
     :Author: <list of authors' real names and optionally, email addresses>
     :Status: <Draft | Active | Accepted | Deferred | Rejected |
@@ -249,9 +253,13 @@ The Author header lists the names, and optionally the email addresses
 of all the authors of the NEP.  The format of the Author header
 value must be
 
+.. code-block:: rst
+
     Random J. User <address@dom.ain>
 
 if the email address is included, and just
+
+.. code-block:: rst
 
     Random J. User
 
@@ -270,7 +278,7 @@ References and Footnotes
 
 .. [1] This historical record is available by the normal git commands
    for retrieving older revisions, and can also be browsed on
-   `GitHub <https://github.com/numpy/numpy/tree/master/doc/neps>`_.
+   `GitHub <https://github.com/numpy/numpy/tree/main/doc/neps>`_.
 
 .. [2] The URL for viewing NEPs on the web is
    https://www.numpy.org/neps/.

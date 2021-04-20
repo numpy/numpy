@@ -1,5 +1,0 @@
-``keepdims`` parameter for `numpy.count_nonzero`
-------------------------------------------------
-The parameter ``keepdims`` was added to `numpy.count_nonzero`. The
-parameter has the same meaning as it does in reduction functions such
-as `numpy.sum` or `numpy.mean`.

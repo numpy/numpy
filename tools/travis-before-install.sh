@@ -9,6 +9,14 @@ free -m
 df -h
 ulimit -a
 
+sudo apt update
+sudo apt install gfortran eatmydata libgfortran5
+
+if [ "$USE_DEBUG" ]
+then
+    sudo apt install python3-dbg python3-dev python3-setuptools
+fi
+
 mkdir builds
 pushd builds
 
@@ -29,7 +37,7 @@ gcc --version
 
 popd
 
-pip install --upgrade pip
+pip install --upgrade pip 'setuptools<49.2.0' wheel
 
 # 'setuptools', 'wheel' and 'cython' are build dependencies.  This information
 # is stored in pyproject.toml, but there is not yet a standard way to install
@@ -41,8 +49,7 @@ pip install --upgrade pip
 # A specific version of cython is required, so we read the cython package
 # requirement using `grep cython test_requirements.txt` instead of simply
 # writing 'pip install setuptools wheel cython'.
-# urllib3 is needed for openblas_support
-pip install setuptools wheel urllib3 `grep cython test_requirements.txt`
+pip install `grep cython test_requirements.txt`
 
 if [ -n "$DOWNLOAD_OPENBLAS" ]; then
   pwd

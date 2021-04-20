@@ -27,7 +27,7 @@ class TestEinsum:
                           optimize=do_opt)
 
             # order parameter must be a valid order
-            assert_raises(TypeError, np.einsum, "", 0, order='W',
+            assert_raises(ValueError, np.einsum, "", 0, order='W',
                           optimize=do_opt)
 
             # casting parameter must be a valid casting
@@ -93,6 +93,10 @@ class TestEinsum:
                 a = np.ones((3, 3, 4, 5, 6))
                 b = np.ones((3, 4, 5))
                 np.einsum('aabcb,abc', a, b)
+
+            # Check order kwarg, asanyarray allows 1d to pass through
+            assert_raises(ValueError, np.einsum, "i->i", np.arange(6).reshape(-1, 1),
+                          optimize=do_opt, order='d')
 
     def test_einsum_views(self):
         # pass-through
@@ -272,6 +276,13 @@ class TestEinsum:
             assert_equal(np.einsum("ii", a, optimize=do_opt),
                          np.trace(a).astype(dtype))
             assert_equal(np.einsum(a, [0, 0], optimize=do_opt),
+                         np.trace(a).astype(dtype))
+
+            # gh-15961: should accept numpy int64 type in subscript list
+            np_array = np.asarray([0, 0])
+            assert_equal(np.einsum(a, np_array, optimize=do_opt),
+                         np.trace(a).astype(dtype))
+            assert_equal(np.einsum(a, list(np_array), optimize=do_opt),
                          np.trace(a).astype(dtype))
 
         # multiply(a, b)
@@ -869,6 +880,41 @@ class TestEinsum:
         g = np.arange(64).reshape(2, 4, 8)
         self.optimize_compare('obk,ijk->ioj', operands=[g, g])
 
+    def test_output_order(self):
+        # Ensure output order is respected for optimize cases, the below
+        # conraction should yield a reshaped tensor view
+        # gh-16415
+
+        a = np.ones((2, 3, 5), order='F')
+        b = np.ones((4, 3), order='F')
+
+        for opt in [True, False]:
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='a', optimize=opt)
+            assert_(tmp.flags.f_contiguous)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='f', optimize=opt)
+            assert_(tmp.flags.f_contiguous)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='c', optimize=opt)
+            assert_(tmp.flags.c_contiguous)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='k', optimize=opt)
+            assert_(tmp.flags.c_contiguous is False)
+            assert_(tmp.flags.f_contiguous is False)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, optimize=opt)
+            assert_(tmp.flags.c_contiguous is False)
+            assert_(tmp.flags.f_contiguous is False)
+
+        c = np.ones((4, 3), order='C')
+        for opt in [True, False]:
+            tmp = np.einsum('...ft,mf->...mt', a, c, order='a', optimize=opt)
+            assert_(tmp.flags.c_contiguous)
+
+        d = np.ones((2, 3, 5), order='C')
+        for opt in [True, False]:
+            tmp = np.einsum('...ft,mf->...mt', d, c, order='a', optimize=opt)
+            assert_(tmp.flags.c_contiguous)
 
 class TestEinsumPath:
     def build_operands(self, string, size_dict=global_size_dict):

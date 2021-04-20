@@ -63,17 +63,13 @@ at `SciPy <https://www.scipy.org>`_.
 How to import NumPy
 -------------------
 
-Any time you want to use a package or library in your code, you first need to
-make it accessible.
-
-In order to start using NumPy and all of the functions available in NumPy,
-you'll need to import it. This can be easily done with this import statement::
+To access NumPy and its functions import it in your Python code like this::
 
   import numpy as np
 
-(We shorten ``numpy`` to ``np`` in order to save time and also to keep code
-standardized so that anyone working with your code can easily understand and
-run it.)
+We shorten the imported name to ``np`` for better readability of code using
+NumPy. This is a widely adopted convention that you should follow so that
+anyone working with your code can easily understand it.
 
 Reading the example code
 ------------------------
@@ -100,8 +96,8 @@ What’s the difference between a Python list and a NumPy array?
 NumPy gives you an enormous range of fast and efficient ways of creating arrays
 and manipulating numerical data inside them. While a Python list can contain
 different data types within a single list, all of the elements in a NumPy array
-should be homogenous. The mathematical operations that are meant to be performed
-on arrays would be extremely inefficient if the arrays weren't homogenous.
+should be homogeneous. The mathematical operations that are meant to be performed
+on arrays would be extremely inefficient if the arrays weren't homogeneous.
 
 **Why use NumPy?**
 
@@ -871,10 +867,11 @@ Creating matrices
 You can pass Python lists of lists to create a 2-D array (or "matrix") to
 represent them in NumPy. ::
 
-  >>> data = np.array([[1, 2], [3, 4]])
+  >>> data = np.array([[1, 2], [3, 4], [5, 6]])
   >>> data
   array([[1, 2],
-         [3, 4]])
+         [3, 4],
+         [5, 6]])
 
 .. image:: images/np_create_matrix.png
 
@@ -883,7 +880,8 @@ Indexing and slicing operations are useful when you're manipulating matrices::
   >>> data[0, 1]
   2
   >>> data[1:3]
-  array([[3, 4]])
+  array([[3, 4],
+         [5, 6]])
   >>> data[0:2, 0]
   array([1, 3])
 
@@ -892,11 +890,11 @@ Indexing and slicing operations are useful when you're manipulating matrices::
 You can aggregate matrices the same way you aggregated vectors::
 
   >>> data.max()
-  4
+  6
   >>> data.min()
   1
   >>> data.sum()
-  10
+  21
 
 .. image:: images/np_matrix_aggregation.png
 
@@ -904,9 +902,9 @@ You can aggregate all the values in a matrix and you can aggregate them across
 columns or rows using the ``axis`` parameter::
 
   >>> data.max(axis=0)
-  array([3, 4])
+  array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4])
+  array([2, 4, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
@@ -1090,7 +1088,7 @@ To learn more about finding the unique elements in an array, see `unique`.
 Transposing and reshaping a matrix
 ----------------------------------
 
-*This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T()``
+*This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T``
 
 -----
 
@@ -1114,7 +1112,7 @@ You simply need to pass in the new dimensions that you want for the matrix. ::
 
 .. image:: images/np_reshape.png
 
-You can also use ``.transpose`` to reverse or change the axes of an array
+You can also use ``.transpose()`` to reverse or change the axes of an array
 according to the values you specify.
 
 If you start with this array::
@@ -1131,6 +1129,13 @@ You can transpose your array with ``arr.transpose()``. ::
          [1, 4],
          [2, 5]])
 
+You can also use ``arr.T``::
+
+    >>> arr.T
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+
 To learn more about transposing and reshaping arrays, see `transpose` and
 `reshape`.
 
@@ -1138,12 +1143,12 @@ To learn more about transposing and reshaping arrays, see `transpose` and
 How to reverse an array
 -----------------------
 
-*This section covers* ``np.flip``
+*This section covers* ``np.flip()``
 
 -----
 
 NumPy's ``np.flip()`` function allows you to flip, or reverse, the contents of
-an array along an axis. When using ``np.flip``, specify the array you would like
+an array along an axis. When using ``np.flip()``, specify the array you would like
 to reverse and the axis. If you don't specify the axis, NumPy will reverse the
 contents along all of the axes of your input array.
 
@@ -1531,19 +1536,19 @@ Importing and exporting a CSV
 -----------------------------
 
 .. save a csv
-   
+
    >>> with open('music.csv', 'w') as fid:
    ...     n = fid.write('Artist,Genre,Listeners,Plays\n')
    ...     n = fid.write('Billie Holiday,Jazz,1300000,27000000\n')
    ...     n = fid.write('Jimmie Hendrix,Rock,2700000,70000000\n')
    ...     n = fid.write('Miles Davis,Jazz,1500000,48000000\n')
    ...     n = fid.write('SIA,Pop,2000000,74000000\n')
-   
+
 
 
 It's simple to read in a CSV that contains existing information. The best and
 easiest way to do this is to use
-`Pandas <https://pandas.pydata.org/getpandas.html>`_. ::
+`Pandas <https://pandas.pydata.org>`_. ::
 
   >>> import pandas as pd
 
@@ -1665,9 +1670,8 @@ For example, you can plot a 1D array like this::
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
-  >>> from mpl_toolkits.mplot3d import Axes3D
   >>> fig = plt.figure()
-  >>> ax = Axes3D(fig)
+  >>> ax = fig.add_subplot(projection='3d')
   >>> X = np.arange(-5, 5, 0.15)
   >>> Y = np.arange(-5, 5, 0.15)
   >>> X, Y = np.meshgrid(X, Y)

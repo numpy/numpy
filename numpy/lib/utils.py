@@ -1,5 +1,6 @@
 import os
 import sys
+import textwrap
 import types
 import re
 import warnings
@@ -8,9 +9,6 @@ from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
-
-# getargspec and formatargspec were removed in Python 3.6
-from numpy.compat import getargspec, formatargspec
 
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
@@ -117,6 +115,7 @@ class _Deprecate:
                         break
                     skip += len(line) + 1
                 doc = doc[skip:]
+            depdoc = textwrap.indent(depdoc, ' ' * indent)
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
         try:
@@ -194,7 +193,32 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
-deprecate_with_doc = lambda msg: _Deprecate(message=msg)
+
+def deprecate_with_doc(msg):
+    """
+    Deprecates a function and includes the deprecation in its docstring.
+    
+    This function is used as a decorator. It returns an object that can be 
+    used to issue a DeprecationWarning, by passing the to-be decorated 
+    function as argument, this adds warning to the to-be decorated function's 
+    docstring and returns the new function object.
+    
+    See Also
+    --------
+    deprecate : Decorate a function such that it issues a `DeprecationWarning` 
+    
+    Parameters
+    ----------
+    msg : str
+        Additional explanation of the deprecation. Displayed in the 
+        docstring after the warning.
+
+    Returns
+    -------
+    obj : object
+
+    """
+    return _Deprecate(message=msg)  
 
 
 #--------------------------------------------
@@ -552,9 +576,12 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                   file=output
                   )
 
-    elif inspect.isfunction(object):
+    elif inspect.isfunction(object) or inspect.ismethod(object):
         name = object.__name__
-        arguments = formatargspec(*getargspec(object))
+        try:
+            arguments = str(inspect.signature(object))
+        except Exception:
+            arguments = "()"
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
@@ -566,18 +593,10 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
     elif inspect.isclass(object):
         name = object.__name__
-        arguments = "()"
         try:
-            if hasattr(object, '__init__'):
-                arguments = formatargspec(
-                        *getargspec(object.__init__.__func__)
-                        )
-                arglist = arguments.split(', ')
-                if len(arglist) > 1:
-                    arglist[1] = "("+arglist[1]
-                    arguments = ", ".join(arglist[1:])
+            arguments = str(inspect.signature(object))
         except Exception:
-            pass
+            arguments = "()"
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
@@ -593,37 +612,17 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
             print(inspect.getdoc(object), file=output)
 
         methods = pydoc.allmethods(object)
-        if methods != []:
+
+        public_methods = [meth for meth in methods if meth[0] != '_']
+        if public_methods:
             print("\n\nMethods:\n", file=output)
-            for meth in methods:
-                if meth[0] == '_':
-                    continue
+            for meth in public_methods:
                 thisobj = getattr(object, meth, None)
                 if thisobj is not None:
                     methstr, other = pydoc.splitdoc(
                             inspect.getdoc(thisobj) or "None"
                             )
                 print("  %s  --  %s" % (meth, methstr), file=output)
-
-    elif inspect.ismethod(object):
-        name = object.__name__
-        arguments = formatargspec(
-                *getargspec(object.__func__)
-                )
-        arglist = arguments.split(', ')
-        if len(arglist) > 1:
-            arglist[1] = "("+arglist[1]
-            arguments = ", ".join(arglist[1:])
-        else:
-            arguments = "()"
-
-        if len(name+arguments) > maxwidth:
-            argstr = _split_line(name, arguments, maxwidth)
-        else:
-            argstr = name + arguments
-
-        print(" " + argstr + "\n", file=output)
-        print(inspect.getdoc(object), file=output)
 
     elif hasattr(object, '__doc__'):
         print(inspect.getdoc(object), file=output)
@@ -1016,10 +1015,11 @@ def _median_nancheck(data, result, axis, out):
         Input data to median function
     result : Array or MaskedArray
         Result of median function
-    axis : {int, sequence of int, None}, optional
-        Axis or axes along which the median was computed.
+    axis : int
+        Axis along which the median was computed.
     out : ndarray, optional
         Output array in which to place the result.
+
     Returns
     -------
     median : scalar or ndarray
@@ -1027,8 +1027,7 @@ def _median_nancheck(data, result, axis, out):
     """
     if data.size == 0:
         return result
-    data = np.moveaxis(data, axis, -1)
-    n = np.isnan(data[..., -1])
+    n = np.isnan(data.take(-1, axis=axis))
     # masked NaN values are ok
     if np.ma.isMaskedArray(n):
         n = n.filled(False)

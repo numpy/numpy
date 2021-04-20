@@ -2,16 +2,11 @@
 #include <Python.h>
 #include "structmember.h"
 
-#if PY_VERSION_HEX >= 0x03060000
 #include <pymem.h>
 /* public api in 3.7 */
 #if PY_VERSION_HEX < 0x03070000
 #define PyTraceMalloc_Track _PyTraceMalloc_Track
 #define PyTraceMalloc_Untrack _PyTraceMalloc_Untrack
-#endif
-#else
-#define PyTraceMalloc_Track(...)
-#define PyTraceMalloc_Untrack(...)
 #endif
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -47,6 +42,32 @@ typedef struct {
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
 
+static int _madvise_hugepage = 1;
+
+
+/*
+ * This function enables or disables the use of `MADV_HUGEPAGE` on Linux
+ * by modifying the global static `_madvise_hugepage`.
+ * It returns the previous value of `_madvise_hugepage`.
+ *
+ * It is exposed to Python as `np.core.multiarray._set_madvise_hugepage`.
+ */
+NPY_NO_EXPORT PyObject *
+_set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
+{
+    int was_enabled = _madvise_hugepage;
+    int enabled = PyObject_IsTrue(enabled_obj);
+    if (enabled < 0) {
+        return NULL;
+    }
+    _madvise_hugepage = enabled;
+    if (was_enabled) {
+        Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+}
+
+
 /* as the cache is managed in global variables verify the GIL is held */
 
 /*
@@ -75,7 +96,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #endif
 #ifdef NPY_OS_LINUX
         /* allow kernel allocating huge pages for large arrays */
-        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u)))) {
+        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u))) && _madvise_hugepage) {
             npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
             npy_uintp length = nelem * esz - offset;
             /**

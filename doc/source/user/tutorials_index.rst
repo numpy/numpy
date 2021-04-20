@@ -11,9 +11,6 @@ classes contained in the package, see the :ref:`API reference <reference>`.
 .. toctree::
    :maxdepth: 1
 
-   basics
-   misc
-   numpy-for-matlab-users
    tutorial-svd
-   building
-   c-info
+   tutorial-ma
+

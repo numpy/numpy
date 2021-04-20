@@ -22,6 +22,7 @@ def nep_metadata():
 
     meta_re = r':([a-zA-Z\-]*): (.*)'
 
+    has_provisional = False
     neps = {}
     print('Loading metadata for:')
     for source in sources:
@@ -58,6 +59,8 @@ def nep_metadata():
                     f'NEP {nr} is Accepted/Rejected/Withdrawn but '
                     'has no Resolution tag'
                 )
+        if tags['Status'] == 'Provisional':
+            has_provisional = True
 
         neps[nr] = tags
 
@@ -95,7 +98,7 @@ def nep_metadata():
                     f'been set to Superseded'
                 )
 
-    return {'neps': neps}
+    return {'neps': neps, 'has_provisional': has_provisional}
 
 
 infile = 'index.rst.tmpl'

@@ -1,3 +1,5 @@
+.. _NEP37:
+
 ===================================================
 NEP 37 — A dispatch protocol for NumPy-like modules
 ===================================================
@@ -13,8 +15,8 @@ Abstract
 --------
 
 NEP-18's ``__array_function__`` has been a mixed success. Some projects (e.g.,
-dask, CuPy, xarray, sparse, Pint) have enthusiastically adopted it. Others
-(e.g., PyTorch, JAX, SciPy) have been more reluctant. Here we propose a new
+dask, CuPy, xarray, sparse, Pint, MXNet) have enthusiastically adopted it.
+Others (e.g., JAX) have been more reluctant. Here we propose a new
 protocol, ``__array_module__``, that we expect could eventually subsume most
 use-cases for ``__array_function__``. The protocol requires explicit adoption
 by both users and library authors, which ensures backwards compatibility, and
@@ -26,32 +28,33 @@ Why ``__array_function__`` hasn't been enough
 
 There are two broad ways in which NEP-18 has fallen short of its goals:
 
-1. **Maintainability concerns**. `__array_function__` has significant
+1. **Backwards compatibility concerns**. `__array_function__` has significant
    implications for libraries that use it:
 
-   - Projects like `PyTorch
-     <https://github.com/pytorch/pytorch/issues/22402>`_, `JAX
-     <https://github.com/google/jax/issues/1565>`_ and even `scipy.sparse
-     <https://github.com/scipy/scipy/issues/10362>`_ have been reluctant to
-     implement `__array_function__` in part because they are concerned about
-     **breaking existing code**: users expect NumPy functions like
+   - `JAX <https://github.com/google/jax/issues/1565>`_ has been reluctant
+     to implement ``__array_function__`` in part because it is concerned about
+     breaking existing code: users expect NumPy functions like
      ``np.concatenate`` to return NumPy arrays. This is a fundamental
      limitation of the ``__array_function__`` design, which we chose to allow
      overriding the existing ``numpy`` namespace.
+     Libraries like Dask and CuPy have looked at and accepted the backwards
+     incompatibility impact of ``__array_function__``; it would still have been
+     better for them if that impact didn't exist.
+
+     Note that projects like `PyTorch
+     <https://github.com/pytorch/pytorch/issues/22402>`_ and `scipy.sparse
+     <https://github.com/scipy/scipy/issues/10362>`_ have also not
+     adopted ``__array_function__`` yet, because they don't have a
+     NumPy-compatible API or semantics. In the case of PyTorch, that is likely
+     to be added in the future. ``scipy.sparse`` is in the same situation as
+     ``numpy.matrix``: its semantics are not compatible with ``numpy.ndarray``
+     and therefore adding ``__array_function__`` (except to return ``NotImplemented``
+     perhaps) is not a healthy idea.
    - ``__array_function__`` currently requires an "all or nothing" approach to
      implementing NumPy's API. There is no good pathway for **incremental
      adoption**, which is particularly problematic for established projects
      for which adopting ``__array_function__`` would result in breaking
      changes.
-   - It is no longer possible to use **aliases to NumPy functions** within
-     modules that support overrides. For example, both CuPy and JAX set
-     ``result_type = np.result_type``.
-   - Implementing **fall-back mechanisms** for unimplemented NumPy functions
-     by using NumPy's implementation is hard to get right (but see the
-     `version from dask <https://github.com/dask/dask/pull/5043>`_), because
-     ``__array_function__`` does not present a consistent interface.
-     Converting all arguments of array type requires recursing into generic
-     arguments of the form ``*args, **kwargs``.
 
 2. **Limitations on what can be overridden.** ``__array_function__`` has some
    important gaps, most notably array creation and coercion functions:
@@ -70,6 +73,19 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
      <https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_ proposal for
      a separate ``np.duckarray`` function, but this still does not resolve how
      to cast one duck array into a type matching another duck array.
+
+Other maintainability concerns that were raised include:
+
+- It is no longer possible to use **aliases to NumPy functions** within
+  modules that support overrides. For example, both CuPy and JAX set
+  ``result_type = np.result_type`` and now have to wrap use of
+  ``np.result_type`` in their own ``result_type`` function instead.
+- Implementing **fall-back mechanisms** for unimplemented NumPy functions
+  by using NumPy's implementation is hard to get right (but see the
+  `version from dask <https://github.com/dask/dask/pull/5043>`_), because
+  ``__array_function__`` does not present a consistent interface.
+  Converting all arguments of array type requires recursing into generic
+  arguments of the form ``*args, **kwargs``.
 
 ``get_array_module`` and the ``__array_module__`` protocol
 ----------------------------------------------------------
@@ -493,23 +509,27 @@ Both ``__array_ufunc__`` and ``__array_function__`` have implicit control over
 dispatching: the dispatched functions are determined via the appropriate
 protocols in every function call. This generalizes well to handling many
 different types of objects, as evidenced by its use for implementing arithmetic
-operators in Python, but it has two downsides:
+operators in Python, but it has an important downside for **readability**:
+it is not longer immediately evident to readers of code what happens when a
+function is called, because the function's implementation could be overridden
+by any of its arguments.
 
-1. *Speed*: it imposes additional overhead in every function call, because each
-   function call needs to inspect each of its arguments for overrides. This is
-   why arithmetic on builtin Python numbers is slow.
-2. *Readability*: it is not longer immediately evident to readers of code what
-   happens when a function is called, because the function's implementation
-   could be overridden by any of its arguments.
+The **speed** implications are:
 
-In contrast, importing a new library (e.g., ``import  dask.array as da``) with
-an API matching NumPy is entirely explicit. There is no overhead from dispatch
-or ambiguity about which implementation is being used.
+- When using a *duck-array type*, ``get_array_module`` means type checking only
+  needs to happen once inside each function that supports duck typing, whereas
+  with ``__array_function__`` it happens every time a NumPy function is called.
+  Obvious it's going to depend on the function, but if a typical duck-array
+  supporting function calls into other NumPy functions 3-5 times this is a factor
+  of 3-5x more overhead.
+- When using *NumPy arrays*, ``get_array_module`` is one extra call per
+  function (``__array_function__`` overhead remains the same), which means a
+  small amount of extra overhead.
 
 Explicit and implicit choice of implementations are not mutually exclusive
 options. Indeed, most implementations of NumPy API overrides via
-``__array_function__`` that we are familiar with (namely, dask, CuPy and
-sparse, but not Pint) also include an explicit way to use their version of
+``__array_function__`` that we are familiar with (namely, Dask, CuPy and
+Sparse, but not Pint) also include an explicit way to use their version of
 NumPy's API by importing a module directly (``dask.array``, ``cupy`` or
 ``sparse``, respectively).
 

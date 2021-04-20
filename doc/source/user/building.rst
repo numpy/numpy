@@ -6,6 +6,10 @@ Building from source
 A general overview of building NumPy from source is given here, with detailed
 instructions for specific platforms given separately.
 
+..
+  This page is referenced from numpy/numpy/__init__.py. Please keep its
+  location in sync with the link there.
+
 Prerequisites
 -------------
 
@@ -23,11 +27,11 @@ Building NumPy requires the following software installed:
    Various NumPy modules use FORTRAN 77 libraries, so you'll also need a
    FORTRAN 77 compiler installed.
 
-   Note that NumPy is developed mainly using GNU compilers. Compilers from
-   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Portland,
-   Lahey, HP, IBM, Microsoft are only supported in the form of community
-   feedback, and may not work out of the box. GCC 4.x (and later) compilers
-   are recommended.
+   Note that NumPy is developed mainly using GNU compilers and tested on
+   MSVC and Clang compilers. Compilers from other vendors such as Intel,
+   Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only supported
+   in the form of community feedback, and may not work out of the box.
+   GCC 4.x (and later) compilers are recommended. On ARM64 (aarch64) GCC 8.x (and later) are recommended.
 
 3) Linear Algebra libraries
 
@@ -107,6 +111,8 @@ means that g77 has been used (note: g77 is no longer supported for building NumP
 If libgfortran.so is a dependency, gfortran has been used. If both are dependencies,
 this means both have been used, which is almost always a very bad idea.
 
+.. _accelerated-blas-lapack-libraries:
+
 Accelerated BLAS/LAPACK libraries
 ---------------------------------
 
@@ -117,14 +123,22 @@ in the ``site.cfg.example`` file.
 BLAS
 ~~~~
 
+Note that both BLAS and CBLAS interfaces are needed for a properly
+optimized build of NumPy.
+
 The default order for the libraries are:
 
 1. MKL
 2. BLIS
 3. OpenBLAS
 4. ATLAS
-5. Accelerate (MacOS)
-6. BLAS (NetLIB)
+5. BLAS (NetLIB)
+
+The detection of BLAS libraries may be bypassed by defining the environment
+variable ``NPY_BLAS_LIBS`` , which should contain the exact linker flags you
+want to use (interface is assumed to be Fortran 77).  Also define
+``NPY_CBLAS_LIBS`` (even empty if CBLAS is contained in your BLAS library) to
+trigger use of CBLAS and avoid slow fallback code for matrix calculations.
 
 If you wish to build against OpenBLAS but you also have BLIS available one
 may predefine the order of searching via the environment variable
@@ -137,6 +151,16 @@ will prefer to use ATLAS, then BLIS, then OpenBLAS and as a last resort MKL.
 If neither of these exists the build will fail (names are compared
 lower case).
 
+Alternatively one may use ``!`` or ``^`` to negate all items::
+
+        NPY_BLAS_ORDER='^blas,atlas' python setup.py build
+
+will allow using anything **but** NetLIB BLAS and ATLAS libraries, the order of the above
+list is retained.
+
+One cannot mix negation and positives, nor have multiple negations, such cases will
+raise an error.
+
 LAPACK
 ~~~~~~
 
@@ -146,9 +170,11 @@ The default order for the libraries are:
 2. OpenBLAS
 3. libFLAME
 4. ATLAS
-5. Accelerate (MacOS)
-6. LAPACK (NetLIB)
+5. LAPACK (NetLIB)
 
+The detection of LAPACK libraries may be bypassed by defining the environment
+variable ``NPY_LAPACK_LIBS``, which should contain the exact linker flags you
+want to use (language is assumed to be Fortran 77).
 
 If you wish to build against OpenBLAS but you also have MKL available one
 may predefine the order of searching via the environment variable
@@ -160,6 +186,24 @@ for instance::
 will prefer to use ATLAS, then OpenBLAS and as a last resort MKL.
 If neither of these exists the build will fail (names are compared
 lower case).
+
+Alternatively one may use ``!`` or ``^`` to negate all items::
+
+        NPY_LAPACK_ORDER='^lapack' python setup.py build
+
+will allow using anything **but** the NetLIB LAPACK library, the order of the above
+list is retained.
+
+One cannot mix negation and positives, nor have multiple negations, such cases will
+raise an error.
+
+.. deprecated:: 1.20
+  The native libraries on macOS, provided by Accelerate, are not fit for use
+  in NumPy since they have bugs that cause wrong output under easily reproducible
+  conditions. If the vendor fixes those bugs, the library could be reinstated,
+  but until then users compiling for themselves should use another linear
+  algebra library or use the built-in (but slower) default, see the next
+  section.
 
 
 Disabling ATLAS and other accelerated libraries

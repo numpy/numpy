@@ -381,14 +381,13 @@ A list of current Institutional Partners is maintained at the page
 Document history
 ================
 
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
+https://github.com/numpy/numpy/commits/main/doc/source/dev/governance/governance.rst
 
 Acknowledgements
 ================
 
 Substantial portions of this document were adapted from the
-`Jupyter/IPython project's governance document
-<https://github.com/jupyter/governance/blob/master/governance.md>`_.
+`Jupyter/IPython project's governance document <https://github.com/jupyter/governance>`_
 
 License
 =======

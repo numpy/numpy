@@ -244,11 +244,6 @@ class _fromnxfunction:
         the new masked array version of the function. A note on application
         of the function to the mask is appended.
 
-        .. warning::
-          If the function docstring already contained a Notes section, the
-          new docstring will have two Notes sections instead of appending a note
-          to the existing section.
-
         Parameters
         ----------
         None
@@ -258,9 +253,9 @@ class _fromnxfunction:
         doc = getattr(npfunc, '__doc__', None)
         if doc:
             sig = self.__name__ + ma.get_object_signature(npfunc)
-            locdoc = "Notes\n-----\nThe function is applied to both the _data"\
-                     " and the _mask, if any."
-            return '\n'.join((sig, doc, locdoc))
+            doc = ma.doc_note(doc, "The function is applied to both the _data "
+                                   "and the _mask, if any.")
+            return '\n\n'.join((sig, doc))
         return
 
     def __call__(self, *args, **params):
@@ -811,7 +806,7 @@ def compress_nd(x, axis=None):
     ----------
     x : array_like, MaskedArray
         The array to operate on. If not a MaskedArray instance (or if no array
-        elements are masked, `x` is interpreted as a MaskedArray with `mask`
+        elements are masked), `x` is interpreted as a MaskedArray with `mask`
         set to `nomask`.
     axis : tuple of ints or int, optional
         Which dimensions to suppress slices from can be configured with this
@@ -906,11 +901,11 @@ def compress_rows(a):
     Suppress whole rows of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
@@ -923,11 +918,11 @@ def compress_cols(a):
     Suppress whole columns of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
@@ -1222,7 +1217,7 @@ def union1d(ar1, ar2):
 
     The output is always a masked array. See `numpy.union1d` for more details.
 
-    See also
+    See Also
     --------
     numpy.union1d : Equivalent function for ndarrays.
 
@@ -1327,7 +1322,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
-        form as `x`.
+        shape as `x`.
     rowvar : bool, optional
         If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
@@ -1488,7 +1483,7 @@ class MAxisConcatenator(AxisConcatenator):
         # deprecate that class. In preparation, we use the unmasked version
         # to construct the matrix (with copy=False for backwards compatibility
         # with the .view)
-        data = super(MAxisConcatenator, cls).makemat(arr.data, copy=False)
+        data = super().makemat(arr.data, copy=False)
         return array(data, mask=arr.mask)
 
     def __getitem__(self, key):
@@ -1496,7 +1491,7 @@ class MAxisConcatenator(AxisConcatenator):
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
 
-        return super(MAxisConcatenator, self).__getitem__(key)
+        return super().__getitem__(key)
 
 
 class mr_class(MAxisConcatenator):
@@ -1646,7 +1641,7 @@ def flatnotmasked_contiguous(a):
     slice_list : list
         A sorted sequence of `slice` objects (start index, end index).
 
-        ..versionchanged:: 1.15.0
+        .. versionchanged:: 1.15.0
             Now returns an empty list instead of None for a fully masked array
 
     See Also

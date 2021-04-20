@@ -6,6 +6,8 @@
 #include <intrin.h>
 #endif
 
+#include <assert.h>
+
 /* Inline generators for internal use */
 static NPY_INLINE uint32_t next_uint32(bitgen_t *bitgen_state) {
   return bitgen_state->next_uint32(bitgen_state->state);
@@ -20,7 +22,7 @@ static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
 
 /* Random generators for external use */
 float random_standard_uniform_f(bitgen_t *bitgen_state) {
-    return next_float(bitgen_state); 
+    return next_float(bitgen_state);
 }
 
 double random_standard_uniform(bitgen_t *bitgen_state) {
@@ -45,7 +47,7 @@ static double standard_exponential_unlikely(bitgen_t *bitgen_state,
                                                 uint8_t idx, double x) {
   if (idx == 0) {
     /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-    return ziggurat_exp_r - log(1.0 - next_double(bitgen_state));
+    return ziggurat_exp_r - npy_log1p(-next_double(bitgen_state));
   } else if ((fe_double[idx - 1] - fe_double[idx]) * next_double(bitgen_state) +
                  fe_double[idx] <
              exp(-x)) {
@@ -82,7 +84,7 @@ static float standard_exponential_unlikely_f(bitgen_t *bitgen_state,
                                                  uint8_t idx, float x) {
   if (idx == 0) {
     /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-    return ziggurat_exp_r_f - logf(1.0f - next_float(bitgen_state));
+    return ziggurat_exp_r_f - npy_log1pf(-next_float(bitgen_state));
   } else if ((fe_float[idx - 1] - fe_float[idx]) * next_float(bitgen_state) +
                  fe_float[idx] <
              expf(-x)) {
@@ -119,7 +121,7 @@ void random_standard_exponential_inv_fill(bitgen_t * bitgen_state, npy_intp cnt,
 {
   npy_intp i;
   for (i = 0; i < cnt; i++) {
-    out[i] = -log(1.0 - next_double(bitgen_state));
+    out[i] = -npy_log1p(-next_double(bitgen_state));
   }
 }
 
@@ -127,7 +129,7 @@ void random_standard_exponential_inv_fill_f(bitgen_t * bitgen_state, npy_intp cn
 {
   npy_intp i;
   for (i = 0; i < cnt; i++) {
-    out[i] = -log(1.0 - next_float(bitgen_state));
+    out[i] = -npy_log1p(-next_float(bitgen_state));
   }
 }
 
@@ -153,8 +155,8 @@ double random_standard_normal(bitgen_t *bitgen_state) {
     if (idx == 0) {
       for (;;) {
         /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-        xx = -ziggurat_nor_inv_r * log(1.0 - next_double(bitgen_state));
-        yy = -log(1.0 - next_double(bitgen_state));
+        xx = -ziggurat_nor_inv_r * npy_log1p(-next_double(bitgen_state));
+        yy = -npy_log1p(-next_double(bitgen_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r + xx)
                                      : ziggurat_nor_r + xx;
@@ -194,8 +196,8 @@ float random_standard_normal_f(bitgen_t *bitgen_state) {
     if (idx == 0) {
       for (;;) {
         /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-        xx = -ziggurat_nor_inv_r_f * logf(1.0f - next_float(bitgen_state));
-        yy = -logf(1.0f - next_float(bitgen_state));
+        xx = -ziggurat_nor_inv_r_f * npy_log1pf(-next_float(bitgen_state));
+        yy = -npy_log1pf(-next_float(bitgen_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r_f + xx)
                                      : ziggurat_nor_r_f + xx;
@@ -340,7 +342,7 @@ uint64_t random_uint(bitgen_t *bitgen_state) {
  * using logfactorial(k) instead.
  */
 double random_loggam(double x) {
-  double x0, x2, xp, gl, gl0;
+  double x0, x2, lg2pi, gl, gl0;
   RAND_INT_TYPE k, n;
 
   static double a[10] = {8.333333333333333e-02, -2.777777777777778e-03,
@@ -348,23 +350,25 @@ double random_loggam(double x) {
                          8.417508417508418e-04, -1.917526917526918e-03,
                          6.410256410256410e-03, -2.955065359477124e-02,
                          1.796443723688307e-01, -1.39243221690590e+00};
-  x0 = x;
-  n = 0;
+
   if ((x == 1.0) || (x == 2.0)) {
     return 0.0;
-  } else if (x <= 7.0) {
+  } else if (x < 7.0) {
     n = (RAND_INT_TYPE)(7 - x);
-    x0 = x + n;
+  } else {
+    n = 0;
   }
-  x2 = 1.0 / (x0 * x0);
-  xp = 2 * M_PI;
+  x0 = x + n;
+  x2 = (1.0 / x0) * (1.0 / x0);
+  /* log(2 * M_PI) */
+  lg2pi = 1.8378770664093453e+00;
   gl0 = a[9];
   for (k = 8; k >= 0; k--) {
     gl0 *= x2;
     gl0 += a[k];
   }
-  gl = gl0 / x0 + 0.5 * log(xp) + (x0 - 0.5) * log(x0) - x0;
-  if (x <= 7.0) {
+  gl = gl0 / x0 + 0.5 * lg2pi + (x0 - 0.5) * log(x0) - x0;
+  if (x < 7.0) {
     for (k = 1; k <= n; k++) {
       gl -= log(x0 - 1.0);
       x0 -= 1.0;
@@ -504,7 +508,7 @@ double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) {
 }
 
 double random_rayleigh(bitgen_t *bitgen_state, double mode) {
-  return mode * sqrt(-2.0 * log(1.0 - next_double(bitgen_state)));
+  return mode * sqrt(2.0 * random_standard_exponential(bitgen_state));
 }
 
 double random_standard_t(bitgen_t *bitgen_state, double df) {
@@ -839,6 +843,7 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
     return NPY_NAN;
   }
   if (kappa < 1e-8) {
+    /* Use a uniform for very small values of kappa */
     return M_PI * (2 * next_double(bitgen_state) - 1);
   } else {
     /* with double precision rho is zero until 1.4e-8 */
@@ -849,9 +854,23 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
        */
       s = (1. / kappa + kappa);
     } else {
-      double r = 1 + sqrt(1 + 4 * kappa * kappa);
-      double rho = (r - sqrt(2 * r)) / (2 * kappa);
-      s = (1 + rho * rho) / (2 * rho);
+      if (kappa <= 1e6) {
+        /* Path for 1e-5 <= kappa <= 1e6 */
+        double r = 1 + sqrt(1 + 4 * kappa * kappa);
+        double rho = (r - sqrt(2 * r)) / (2 * kappa);
+        s = (1 + rho * rho) / (2 * rho);
+      } else {
+        /* Fallback to wrapped normal distribution for kappa > 1e6 */
+        result = mu + sqrt(1. / kappa) * random_standard_normal(bitgen_state);
+        /* Ensure result is within bounds */
+        if (result < -M_PI) {
+          result += 2*M_PI;
+        }
+        if (result > M_PI) {
+          result -= 2*M_PI;
+        }
+        return result;
+      }
     }
 
     while (1) {
@@ -887,17 +906,11 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
   }
 }
 
-/*
- * RAND_INT_TYPE is used to share integer generators with RandomState which
- * used long in place of int64_t. If changing a distribution that uses
- * RAND_INT_TYPE, then the original unmodified copy must be retained for
- * use in RandomState by copying to the legacy distributions source file.
- */
-RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
+int64_t random_logseries(bitgen_t *bitgen_state, double p) {
   double q, r, U, V;
-  RAND_INT_TYPE result;
+  int64_t result;
 
-  r = log(1.0 - p);
+  r = npy_log1p(-p);
 
   while (1) {
     V = next_double(bitgen_state);
@@ -907,7 +920,7 @@ RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
     U = next_double(bitgen_state);
     q = 1.0 - exp(r * U);
     if (V <= q * q) {
-      result = (RAND_INT_TYPE)floor(1 + log(V) / log(q));
+      result = (int64_t)floor(1 + log(V) / log(q));
       if ((result < 1) || (V == 0.0)) {
         continue;
       } else {
@@ -921,6 +934,14 @@ RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
   }
 }
 
+/*
+ * RAND_INT_TYPE is used to share integer generators with RandomState which
+ * used long in place of int64_t. If changing a distribution that uses
+ * RAND_INT_TYPE, then the original unmodified copy must be retained for
+ * use in RandomState by copying to the legacy distributions source file.
+ */
+
+/* Still used but both generator and mtrand via legacy_random_geometric */
 RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
   double U;
   RAND_INT_TYPE X;
@@ -938,11 +959,11 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
   return X;
 }
 
-RAND_INT_TYPE random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (RAND_INT_TYPE)ceil(log(1.0 - next_double(bitgen_state)) / log(1.0 - p));
+int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
+  return (int64_t)ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
 }
 
-RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p) {
+int64_t random_geometric(bitgen_t *bitgen_state, double p) {
   if (p >= 0.333333333333333333333333) {
     return random_geometric_search(bitgen_state, p);
   } else {
@@ -967,7 +988,7 @@ RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
      * just reject this value. This function then models a Zipf
      * distribution truncated to sys.maxint.
      */
-    if (X > RAND_INT_MAX || X < 1.0) {
+    if (X > (double)RAND_INT_MAX || X < 1.0) {
       continue;
     }
 
@@ -1149,6 +1170,8 @@ static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
    */
   const uint64_t rng_excl = rng + 1;
 
+  assert(rng != 0xFFFFFFFFFFFFFFFFULL);
+
 #if __SIZEOF_INT128__
   /* 128-bit uint available (e.g. GCC/clang). `m` is the __uint128_t scaled
    * integer. */
@@ -1239,6 +1262,8 @@ static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
   uint64_t m;
   uint32_t leftover;
 
+  assert(rng != 0xFFFFFFFFUL);
+
   /* Generate a scaled random number. */
   m = ((uint64_t)next_uint32(bitgen_state)) * rng_excl;
 
@@ -1272,6 +1297,8 @@ static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
 
   uint32_t m;
   uint16_t leftover;
+
+  assert(rng != 0xFFFFU);
 
   /* Generate a scaled random number. */
   m = ((uint32_t)buffered_uint16(bitgen_state, bcnt, buf)) * rng_excl;
@@ -1308,6 +1335,9 @@ static NPY_INLINE uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
   uint16_t m;
   uint8_t leftover;
 
+  assert(rng != 0xFFU);
+
+
   /* Generate a scaled random number. */
   m = ((uint16_t)buffered_uint8(bitgen_state, bcnt, buf)) * rng_excl;
 
@@ -1337,6 +1367,14 @@ uint64_t random_bounded_uint64(bitgen_t *bitgen_state, uint64_t off,
     return off;
   } else if (rng <= 0xFFFFFFFFUL) {
     /* Call 32-bit generator if range in 32-bit. */
+    if (rng == 0xFFFFFFFFUL) {
+      /*
+       * The 32-bit Lemire method does not handle rng=0xFFFFFFFF, so we'll
+       * call next_uint32 directly.  This also works when use_masked is True,
+       * so we handle both cases here.
+       */
+      return off + (uint64_t) next_uint32(bitgen_state);
+    }
     if (use_masked) {
       return off + buffered_bounded_masked_uint32(bitgen_state, rng, mask, NULL,
                                                   NULL);
@@ -1450,22 +1488,34 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
       out[i] = off;
     }
   } else if (rng <= 0xFFFFFFFFUL) {
-    uint32_t buf = 0;
-    int bcnt = 0;
-
     /* Call 32-bit generator if range in 32-bit. */
-    if (use_masked) {
-      /* Smallest bit mask >= max */
-      uint64_t mask = gen_mask(rng);
 
+    /*
+     * The 32-bit Lemire method does not handle rng=0xFFFFFFFF, so we'll
+     * call next_uint32 directly.  This also works when use_masked is True,
+     * so we handle both cases here.
+     */
+    if (rng == 0xFFFFFFFFUL) {
       for (i = 0; i < cnt; i++) {
-        out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
-                                                      &bcnt, &buf);
+        out[i] = off + (uint64_t) next_uint32(bitgen_state);
       }
     } else {
-      for (i = 0; i < cnt; i++) {
-        out[i] = off +
-                 buffered_bounded_lemire_uint32(bitgen_state, rng, &bcnt, &buf);
+      uint32_t buf = 0;
+      int bcnt = 0;
+
+      if (use_masked) {
+        /* Smallest bit mask >= max */
+        uint64_t mask = gen_mask(rng);
+
+        for (i = 0; i < cnt; i++) {
+          out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
+                                                        &bcnt, &buf);
+        }
+      } else {
+        for (i = 0; i < cnt; i++) {
+          out[i] = off +
+                   buffered_bounded_lemire_uint32(bitgen_state, rng, &bcnt, &buf);
+        }
       }
     }
   } else if (rng == 0xFFFFFFFFFFFFFFFFULL) {

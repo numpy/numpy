@@ -85,7 +85,7 @@ class LinalgCase:
         do(self.a, self.b, tags=self.tags)
 
     def __repr__(self):
-        return "<LinalgCase: %s>" % (self.name,)
+        return f'<LinalgCase: {self.name}>'
 
 
 def apply_tag(tag, cases):
@@ -348,10 +348,10 @@ class LinalgTestCase:
 
             try:
                 case.check(self.do)
-            except Exception:
-                msg = "In test case: %r\n\n" % case
+            except Exception as e:
+                msg = f'In test case: {case!r}\n\n'
                 msg += traceback.format_exc()
-                raise AssertionError(msg)
+                raise AssertionError(msg) from e
 
 
 class LinalgSquareTestCase(LinalgTestCase):
@@ -1732,7 +1732,7 @@ class TestCholesky:
 
             b = np.matmul(c, c.transpose(t).conj())
             assert_allclose(b, a,
-                            err_msg="{} {}\n{}\n{}".format(shape, dtype, a, c),
+                            err_msg=f'{shape} {dtype}\n{a}\n{c}',
                             atol=500 * a.shape[0] * np.finfo(dtype).eps)
 
     def test_0_size(self):
@@ -1929,6 +1929,41 @@ class TestMultiDot:
 
         # the result should be a scalar
         assert_equal(multi_dot([A1d, B, C, D1d]).shape, ())
+
+    def test_three_arguments_and_out(self):
+        # multi_dot with three arguments uses a fast hand coded algorithm to
+        # determine the optimal order. Therefore test it separately.
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 6))
+        C = np.random.random((6, 2))
+
+        out = np.zeros((6, 2))
+        ret = multi_dot([A, B, C], out=out)
+        assert out is ret
+        assert_almost_equal(out, A.dot(B).dot(C))
+        assert_almost_equal(out, np.dot(A, np.dot(B, C)))
+
+    def test_two_arguments_and_out(self):
+        # separate code path with two arguments
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 6))
+        out = np.zeros((6, 6))
+        ret = multi_dot([A, B], out=out)
+        assert out is ret
+        assert_almost_equal(out, A.dot(B))
+        assert_almost_equal(out, np.dot(A, B))
+
+    def test_dynamic_programing_optimization_and_out(self):
+        # multi_dot with four or more arguments uses the dynamic programing
+        # optimization and therefore deserve a separate test
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 6))
+        C = np.random.random((6, 2))
+        D = np.random.random((2, 1))
+        out = np.zeros((6, 1))
+        ret = multi_dot([A, B, C, D], out=out)
+        assert out is ret
+        assert_almost_equal(out, A.dot(B).dot(C).dot(D))
 
     def test_dynamic_programming_logic(self):
         # Test for the dynamic programming part

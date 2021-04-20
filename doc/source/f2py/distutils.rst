@@ -2,6 +2,8 @@
 Using via `numpy.distutils`
 =============================
 
+.. currentmodule:: numpy.distutils.core
+
 :mod:`numpy.distutils` is part of NumPy extending standard Python ``distutils``
 to deal with Fortran sources and F2PY signature files, e.g. compile Fortran
 sources, call F2PY to construct extension modules, etc.

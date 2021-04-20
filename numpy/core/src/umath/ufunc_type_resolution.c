@@ -12,6 +12,11 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+// printif debug tracing
+#ifndef NPY_UF_DBG_TRACING
+    #define NPY_UF_DBG_TRACING 0
+#endif
+
 #include <stdbool.h>
 
 #include "Python.h"
@@ -36,39 +41,20 @@ npy_casting_to_py_object(NPY_CASTING casting)
 {
     switch (casting) {
         case NPY_NO_CASTING:
-            return PyUString_FromString("no");
+            return PyUnicode_FromString("no");
         case NPY_EQUIV_CASTING:
-            return PyUString_FromString("equiv");
+            return PyUnicode_FromString("equiv");
         case NPY_SAFE_CASTING:
-            return PyUString_FromString("safe");
+            return PyUnicode_FromString("safe");
         case NPY_SAME_KIND_CASTING:
-            return PyUString_FromString("same_kind");
+            return PyUnicode_FromString("same_kind");
         case NPY_UNSAFE_CASTING:
-            return PyUString_FromString("unsafe");
+            return PyUnicode_FromString("unsafe");
         default:
-            return PyInt_FromLong(casting);
+            return PyLong_FromLong(casting);
     }
 }
 
-
-static const char *
-npy_casting_to_string(NPY_CASTING casting)
-{
-    switch (casting) {
-        case NPY_NO_CASTING:
-            return "'no'";
-        case NPY_EQUIV_CASTING:
-            return "'equiv'";
-        case NPY_SAFE_CASTING:
-            return "'safe'";
-        case NPY_SAME_KIND_CASTING:
-            return "'same_kind'";
-        case NPY_UNSAFE_CASTING:
-            return "'unsafe'";
-        default:
-            return "<unknown>";
-    }
-}
 
 /**
  * Always returns -1 to indicate the exception was raised, for convenience
@@ -125,14 +111,18 @@ raise_no_loop_found_error(
         return -1;
     }
     for (i = 0; i < ufunc->nargs; ++i) {
-        Py_INCREF(dtypes[i]);
-        PyTuple_SET_ITEM(dtypes_tup, i, (PyObject *)dtypes[i]);
+        PyObject *tmp = Py_None;
+        if (dtypes[i] != NULL) {
+            tmp = (PyObject *)dtypes[i];
+        }
+        Py_INCREF(tmp);
+        PyTuple_SET_ITEM(dtypes_tup, i, tmp);
     }
 
     /* produce an error object */
     exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
     Py_DECREF(dtypes_tup);
-    if (exc_value == NULL){
+    if (exc_value == NULL) {
         return -1;
     }
     PyErr_SetObject(exc_type, exc_value);
@@ -255,21 +245,6 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
     return 0;
 }
 
-/*
- * Returns a new reference to type if it is already NBO, otherwise
- * returns a copy converted to NBO.
- */
-static PyArray_Descr *
-ensure_dtype_nbo(PyArray_Descr *type)
-{
-    if (PyArray_ISNBO(type->byteorder)) {
-        Py_INCREF(type);
-        return type;
-    }
-    else {
-        return PyArray_DescrNewByteorder(type, NPY_NATIVE);
-    }
-}
 
 /*UFUNC_API
  *
@@ -358,39 +333,65 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (type_tup == NULL) {
-        /* Input types are the result type */
-        out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
-        if (out_dtypes[0] == NULL) {
-            return -1;
+        /*
+         * DEPRECATED NumPy 1.20, 2020-12.
+         * This check is required to avoid the FutureWarning that
+         * ResultType will give for number->string promotions.
+         * (We never supported flexible dtypes here.)
+         */
+        if (!PyArray_ISFLEXIBLE(operands[0]) &&
+                !PyArray_ISFLEXIBLE(operands[1])) {
+            out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+        }
+        else {
+            /* Not doing anything will lead to a loop no found error. */
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
         }
         out_dtypes[1] = out_dtypes[0];
         Py_INCREF(out_dtypes[1]);
     }
     else {
-        PyObject *item;
-        PyArray_Descr *dtype = NULL;
-
+        PyArray_Descr *descr;
         /*
-         * If the type tuple isn't a single-element tuple, let the
-         * default type resolution handle this one.
+         * If the type tuple was originally a single element (probably),
+         * issue a deprecation warning, but otherwise accept it.  Since the
+         * result dtype is always boolean, this is not actually valid unless it
+         * is `object` (but if there is an object input we already deferred).
          */
-        if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
+        if (PyTuple_Check(type_tup) && PyTuple_GET_SIZE(type_tup) == 3 &&
+                PyTuple_GET_ITEM(type_tup, 0) == Py_None &&
+                PyTuple_GET_ITEM(type_tup, 1) == Py_None &&
+                PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 2))) {
+            descr = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 2);
+            if (descr->type_num == NPY_OBJECT) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "using `dtype=object` (or equivalent signature) will "
+                        "return object arrays in the future also when the "
+                        "inputs do not already have `object` dtype.") < 0) {
+                    return -1;
+                }
+            }
+            else if (descr->type_num != NPY_BOOL) {
+                if (DEPRECATE(
+                        "using `dtype=` in comparisons is only useful for "
+                        "`dtype=object` (and will do nothing for bool). "
+                        "This operation will fail in the future.") < 0) {
+                    return -1;
+                }
+            }
+        }
+        else {
+            /* Usually a failure, but let the the default version handle it */
             return PyUFunc_DefaultTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
         }
 
-        item = PyTuple_GET_ITEM(type_tup, 0);
-
-        if (item == Py_None) {
-            PyErr_SetString(PyExc_ValueError,
-                    "require data type in the type tuple");
-            return -1;
-        }
-        else if (!PyArray_DescrConverter(item, &dtype)) {
-            return -1;
-        }
-
-        out_dtypes[0] = ensure_dtype_nbo(dtype);
+        Py_INCREF(descr);
+        out_dtypes[0] = ensure_dtype_nbo(descr);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -517,6 +518,30 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
         }
         else {
+            int iop;
+            npy_bool has_flexible = 0;
+            npy_bool has_object = 0;
+            for (iop = 0; iop < ufunc->nin; iop++) {
+                if (PyArray_ISOBJECT(operands[iop])) {
+                    has_object = 1;
+                }
+                if (PyArray_ISFLEXIBLE(operands[iop])) {
+                    has_flexible = 1;
+                }
+            }
+            if (NPY_UNLIKELY(has_flexible && !has_object)) {
+                /*
+                 * DEPRECATED NumPy 1.20, 2020-12.
+                 * This check is required to avoid the FutureWarning that
+                 * ResultType will give for number->string promotions.
+                 * (We never supported flexible dtypes here.)
+                 */
+                for (iop = 0; iop < ufunc->nin; iop++) {
+                    out_dtypes[iop] = PyArray_DESCR(operands[iop]);
+                    Py_INCREF(out_dtypes[iop]);
+                }
+                return raise_no_loop_found_error(ufunc, out_dtypes);
+            }
             out_dtypes[0] = PyArray_ResultType(ufunc->nin, operands, 0, NULL);
         }
         if (out_dtypes[0] == NULL) {
@@ -524,34 +549,42 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         }
     }
     else {
-        PyObject *item;
-        PyArray_Descr *dtype = NULL;
-
         /*
-         * If the type tuple isn't a single-element tuple, let the
-         * default type resolution handle this one.
+         * This is a fast-path, since all descriptors will be identical, mainly
+         * when only a single descriptor was passed (which would set the out
+         * one in the tuple), there is no need to check all loops.
          */
-        if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
+        PyArray_Descr *descr = NULL;
+        if (PyTuple_CheckExact(type_tup) &&
+                PyTuple_GET_SIZE(type_tup) == nop) {
+            for (int i = 0; i < nop; i++) {
+                PyObject *item = PyTuple_GET_ITEM(type_tup, i);
+                if (item == Py_None) {
+                    continue;
+                }
+                if (!PyArray_DescrCheck(item)) {
+                    /* Defer to default resolver (will raise an error there) */
+                    descr = NULL;
+                    break;
+                }
+                if (descr != NULL && descr != (PyArray_Descr *)item) {
+                    /* Descriptor mismatch: try with default (probable error) */
+                    descr = NULL;
+                    break;
+                }
+                descr = (PyArray_Descr *)item;
+            }
+        }
+        if (descr == NULL) {
+            /* in all bad/unlikely cases, use the default type resolver: */
             return PyUFunc_DefaultTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
         }
-
-        item = PyTuple_GET_ITEM(type_tup, 0);
-
-        if (item == Py_None) {
-            PyErr_SetString(PyExc_ValueError,
-                    "require data type in the type tuple");
-            return -1;
+        else if (descr->type_num == PyArray_DESCR(operands[0])->type_num) {
+            /* Prefer the input descriptor if it matches (preserve metadata) */
+            descr = PyArray_DESCR(operands[0]);
         }
-        else if (!PyArray_DescrConverter(item, &dtype)) {
-            return -1;
-        }
-
-        out_dtypes[0] = ensure_dtype_nbo(dtype);
-        Py_DECREF(dtype);
-        if (out_dtypes[0] == NULL) {
-            return -1;
-        }
+        out_dtypes[0] = ensure_dtype_nbo(descr);
     }
 
     /* All types are the same - copy the first one to the rest */
@@ -1355,7 +1388,6 @@ find_userloop(PyUFuncObject *ufunc,
                 void **out_innerloopdata)
 {
     npy_intp i, nin = ufunc->nin, j, nargs = nin + ufunc->nout;
-    PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1375,7 +1407,7 @@ find_userloop(PyUFuncObject *ufunc,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1387,9 +1419,11 @@ find_userloop(PyUFuncObject *ufunc,
             else if (obj == NULL) {
                 continue;
             }
-            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-                 funcdata != NULL;
-                 funcdata = funcdata->next) {
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
+            for (; funcdata != NULL; funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
 
                 for (j = 0; j < nargs; ++j) {
@@ -1763,7 +1797,6 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
                         char *out_err_dst_typecode)
 {
     npy_intp i, nop = self->nin + self->nout;
-    PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1783,7 +1816,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1795,9 +1828,11 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             else if (obj == NULL) {
                 continue;
             }
-            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-                 funcdata != NULL;
-                 funcdata = funcdata->next) {
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
+            for (; funcdata != NULL; funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 switch (ufunc_loop_matches(self, op,
                             input_casting, output_casting,
@@ -1835,7 +1870,6 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                         PyArray_Descr **out_dtype)
 {
     int i, j, nin = self->nin, nop = nin + self->nout;
-    PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1850,7 +1884,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1863,9 +1897,11 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                 continue;
             }
 
-            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-                 funcdata != NULL;
-                 funcdata = funcdata->next) {
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
+            for (; funcdata != NULL; funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 int matched = 1;
 
@@ -2042,11 +2078,10 @@ type_tuple_type_resolver(PyUFuncObject *self,
                         int any_object,
                         PyArray_Descr **out_dtype)
 {
-    npy_intp i, j, n, nin = self->nin, nop = nin + self->nout;
-    int n_specified = 0;
+    int i, j, nin = self->nin, nop = nin + self->nout;
     int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
     const char *ufunc_name;
-    int no_castable_output, use_min_scalar;
+    int no_castable_output = 0, use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
@@ -2056,105 +2091,45 @@ type_tuple_type_resolver(PyUFuncObject *self,
     use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
 
     /* Fill in specified_types from the tuple or string */
-    if (PyTuple_Check(type_tup)) {
-        int nonecount = 0;
-        n = PyTuple_GET_SIZE(type_tup);
-        if (n != 1 && n != nop) {
-            PyErr_Format(PyExc_ValueError,
-                         "a type-tuple must be specified "
-                         "of length 1 or %d for ufunc '%s'", (int)nop,
-                         ufunc_get_name_cstr(self));
+    const char *bad_type_tup_msg = (
+            "Only NumPy must call `ufunc->type_resolver()` explicitly. "
+            "NumPy ensures that a type-tuple is normalized now to be a tuple "
+            "only containing None or descriptors.  If anything else is passed "
+            "(you are seeing this message), the `type_resolver()` was called "
+            "directly by a third party. "
+            "This is unexpected, please inform the NumPy developers about it. "
+            "Also note that `type_resolver` will be phased out, since it must "
+            "be replaced.");
+
+    if (PyTuple_CheckExact(type_tup)) {
+        Py_ssize_t n = PyTuple_GET_SIZE(type_tup);
+        if (n != nop) {
+            PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
             return -1;
         }
-
-        for (i = 0; i < n; ++i) {
+        for (i = 0; i < nop; ++i) {
             PyObject *item = PyTuple_GET_ITEM(type_tup, i);
             if (item == Py_None) {
                 specified_types[i] = NPY_NOTYPE;
-                ++nonecount;
             }
             else {
-                PyArray_Descr *dtype = NULL;
-                if (!PyArray_DescrConverter(item, &dtype)) {
+                if (!PyArray_DescrCheck(item)) {
+                    PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
                     return -1;
                 }
-                specified_types[i] = dtype->type_num;
-                Py_DECREF(dtype);
+                specified_types[i] = ((PyArray_Descr *)item)->type_num;
             }
         }
-
-        if (nonecount == n) {
-            PyErr_SetString(PyExc_ValueError,
-                    "the type-tuple provided to the ufunc "
-                    "must specify at least one none-None dtype");
-            return -1;
-        }
-
-        n_specified = n;
     }
-    else if (PyBytes_Check(type_tup) || PyUnicode_Check(type_tup)) {
-        Py_ssize_t length;
-        char *str;
-        PyObject *str_obj = NULL;
-
-        if (PyUnicode_Check(type_tup)) {
-            str_obj = PyUnicode_AsASCIIString(type_tup);
-            if (str_obj == NULL) {
-                return -1;
-            }
-            type_tup = str_obj;
-        }
-
-        if (PyBytes_AsStringAndSize(type_tup, &str, &length) < 0) {
-            Py_XDECREF(str_obj);
-            return -1;
-        }
-        if (length != 1 && (length != nop + 2 ||
-                                str[nin] != '-' || str[nin+1] != '>')) {
-            PyErr_Format(PyExc_ValueError,
-                                 "a type-string for %s, "   \
-                                 "requires 1 typecode, or "
-                                 "%d typecode(s) before " \
-                                 "and %d after the -> sign",
-                                 ufunc_get_name_cstr(self),
-                                 self->nin, self->nout);
-            Py_XDECREF(str_obj);
-            return -1;
-        }
-        if (length == 1) {
-            PyArray_Descr *dtype;
-            n_specified = 1;
-            dtype = PyArray_DescrFromType(str[0]);
-            if (dtype == NULL) {
-                Py_XDECREF(str_obj);
-                return -1;
-            }
-            specified_types[0] = dtype->type_num;
-            Py_DECREF(dtype);
-        }
-        else {
-            PyArray_Descr *dtype;
-            n_specified = (int)nop;
-
-            for (i = 0; i < nop; ++i) {
-                npy_intp istr = i < nin ? i : i+2;
-
-                dtype = PyArray_DescrFromType(str[istr]);
-                if (dtype == NULL) {
-                    Py_XDECREF(str_obj);
-                    return -1;
-                }
-                specified_types[i] = dtype->type_num;
-                Py_DECREF(dtype);
-            }
-        }
-        Py_XDECREF(str_obj);
+    else {
+        PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
+        return -1;
     }
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
         switch (type_tuple_userloop_type_resolver(self,
-                        n_specified, specified_types,
+                        nop, specified_types,
                         op, casting,
                         any_object, use_min_scalar,
                         out_dtype)) {
@@ -2175,19 +2150,13 @@ type_tuple_type_resolver(PyUFuncObject *self,
             types[j] = orig_types[j];
         }
 
-        if (n_specified == nop) {
-            for (j = 0; j < nop; ++j) {
-                if (types[j] != specified_types[j] &&
-                        specified_types[j] != NPY_NOTYPE) {
-                    break;
-                }
-            }
-            if (j < nop) {
-                /* no match */
-                continue;
+        for (j = 0; j < nop; ++j) {
+            if (types[j] != specified_types[j] &&
+                    specified_types[j] != NPY_NOTYPE) {
+                break;
             }
         }
-        else if (types[nin] != specified_types[0]) {
+        if (j < nop) {
             /* no match */
             continue;
         }

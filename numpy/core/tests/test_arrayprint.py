@@ -45,7 +45,7 @@ class TestArrayRepr:
                 return obj
 
             def __getitem__(self, ind):
-                ret = super(sub, self).__getitem__(ind)
+                ret = super().__getitem__(ind)
                 return sub(ret)
 
         # test that object + subclass is OK:
@@ -67,7 +67,7 @@ class TestArrayRepr:
                 return obj
 
             def __getitem__(self, ind):
-                ret = super(sub, self).__getitem__(ind)
+                ret = super().__getitem__(ind)
                 return sub(ret)
 
         x = sub(1)
@@ -101,7 +101,7 @@ class TestArrayRepr:
         # gh-10663
         class DuckCounter(np.ndarray):
             def __getitem__(self, item):
-                result = super(DuckCounter, self).__getitem__(item)
+                result = super().__getitem__(item)
                 if not isinstance(result, DuckCounter):
                     result = result[...].view(DuckCounter)
                 return result
@@ -395,6 +395,81 @@ class TestArray2String:
             "[ 'xxxxx']"
         )
 
+    def test_multiline_repr(self):
+        class MultiLine:
+            def __repr__(self):
+                return "Line 1\nLine 2"
+
+        a = np.array([[None, MultiLine()], [MultiLine(), None]])
+
+        assert_equal(
+            np.array2string(a),
+            '[[None Line 1\n'
+            '       Line 2]\n'
+            ' [Line 1\n'
+            '  Line 2 None]]'
+        )
+        assert_equal(
+            np.array2string(a, max_line_width=5),
+            '[[None\n'
+            '  Line 1\n'
+            '  Line 2]\n'
+            ' [Line 1\n'
+            '  Line 2\n'
+            '  None]]'
+        )
+        assert_equal(
+            repr(a),
+            'array([[None, Line 1\n'
+            '              Line 2],\n'
+            '       [Line 1\n'
+            '        Line 2, None]], dtype=object)'
+        )
+
+        class MultiLineLong:
+            def __repr__(self):
+                return "Line 1\nLooooooooooongestLine2\nLongerLine 3"
+
+        a = np.array([[None, MultiLineLong()], [MultiLineLong(), None]])
+        assert_equal(
+            repr(a),
+            'array([[None, Line 1\n'
+            '              LooooooooooongestLine2\n'
+            '              LongerLine 3          ],\n'
+            '       [Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          , None]], dtype=object)'
+        )
+        assert_equal(
+            np.array_repr(a, 20),
+            'array([[None,\n'
+            '        Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          ],\n'
+            '       [Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          ,\n'
+            '        None]],\n'
+            '      dtype=object)'
+        )
+
+    def test_nested_array_repr(self):
+        a = np.empty((2, 2), dtype=object)
+        a[0, 0] = np.eye(2)
+        a[0, 1] = np.eye(3)
+        a[1, 0] = None
+        a[1, 1] = np.ones((3, 1))
+        assert_equal(
+            repr(a),
+            'array([[array([[1., 0.],\n'
+            '               [0., 1.]]), array([[1., 0., 0.],\n'
+            '                                  [0., 1., 0.],\n'
+            '                                  [0., 0., 1.]])],\n'
+            '       [None, array([[1.],\n'
+            '                     [1.],\n'
+            '                     [1.]])]], dtype=object)'
+        )
+
     @given(hynp.from_dtype(np.dtype("U")))
     def test_any_text(self, text):
         # This test checks that, given any value that can be represented in an
@@ -684,6 +759,10 @@ class TestPrintOptions:
         assert_equal(repr(c),
             "array([1.00000000+1.00000000j, 1.12345679+1.12345679j])")
 
+        # test unique special case (gh-18609)
+        a = np.float64.fromhex('-1p-97')
+        assert_equal(np.float64(np.array2string(a, floatmode='unique')), a)
+
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
         # use * for non-finite imaginary part
@@ -847,6 +926,9 @@ class TestPrintOptions:
         assert_raises(ValueError, np.set_printoptions, threshold=float('nan'))
         assert_raises(TypeError, np.set_printoptions, threshold='1')
         assert_raises(TypeError, np.set_printoptions, threshold=b'1')
+
+        assert_raises(TypeError, np.set_printoptions, precision='1')
+        assert_raises(TypeError, np.set_printoptions, precision=1.5)
 
 def test_unicode_object_array():
     expected = "array(['é'], dtype=object)"

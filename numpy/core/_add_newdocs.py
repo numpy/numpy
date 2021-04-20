@@ -9,9 +9,8 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 
 """
 
-from numpy.core import numerictypes as _numerictypes
-from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
+from numpy.core.overrides import array_function_like_doc
 
 ###############################################################################
 #
@@ -378,7 +377,7 @@ add_newdoc('numpy.core', 'nditer',
     ...    while not it.finished:
     ...        it[0] = lamdaexpr(*it[1:])
     ...        it.iternext()
-    ...        return it.operands[0]
+    ...    return it.operands[0]
 
     >>> a = np.arange(5)
     >>> b = np.ones(5)
@@ -606,6 +605,7 @@ add_newdoc('numpy.core', 'broadcast',
     --------
     broadcast_arrays
     broadcast_to
+    broadcast_shapes
 
     Examples
     --------
@@ -786,7 +786,8 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
+    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
+          like=None)
 
     Create an array.
 
@@ -820,7 +821,7 @@ add_newdoc('numpy.core.multiarray', 'array',
         ===== ========= ===================================================
 
         When ``copy=False`` and a copy is made for other reasons, the result is
-        the same as if ``copy=True``, with some exceptions for `A`, see the
+        the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
@@ -829,6 +830,9 @@ add_newdoc('numpy.core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be pre-pended to the shape as
         needed to meet this requirement.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -895,11 +899,250 @@ add_newdoc('numpy.core.multiarray', 'array',
     matrix([[1, 2],
             [3, 4]])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'asarray',
+    """
+    asarray(a, dtype=None, order=None, *, like=None)
+
+    Convert the input to an array.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes lists, lists of tuples, tuples, tuples of tuples, tuples
+        of lists and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'C'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
+        Array interpretation of `a`.  No copy is performed if the input
+        is already an ndarray with matching dtype and order.  If `a` is a
+        subclass of ndarray, a base class ndarray is returned.
+
+    See Also
+    --------
+    asanyarray : Similar function which passes through subclasses.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
+    Examples
+    --------
+    Convert a list into an array:
+
+    >>> a = [1, 2]
+    >>> np.asarray(a)
+    array([1, 2])
+
+    Existing arrays are not copied:
+
+    >>> a = np.array([1, 2])
+    >>> np.asarray(a) is a
+    True
+
+    If `dtype` is set, array is copied only if dtype does not match:
+
+    >>> a = np.array([1, 2], dtype=np.float32)
+    >>> np.asarray(a, dtype=np.float32) is a
+    True
+    >>> np.asarray(a, dtype=np.float64) is a
+    False
+
+    Contrary to `asanyarray`, ndarray subclasses are not passed through:
+
+    >>> issubclass(np.recarray, np.ndarray)
+    True
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> np.asarray(a) is a
+    False
+    >>> np.asanyarray(a) is a
+    True
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'asanyarray',
+    """
+    asanyarray(a, dtype=None, order=None, *, like=None)
+
+    Convert the input to an ndarray, but pass ndarray subclasses through.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes scalars, lists, lists of tuples, tuples, tuples of tuples,
+        tuples of lists, and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'C'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray or an ndarray subclass
+        Array interpretation of `a`.  If `a` is an ndarray or a subclass
+        of ndarray, it is returned as-is and no copy is performed.
+
+    See Also
+    --------
+    asarray : Similar function which always returns ndarrays.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and
+                        Infs.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
+    Examples
+    --------
+    Convert a list into an array:
+
+    >>> a = [1, 2]
+    >>> np.asanyarray(a)
+    array([1, 2])
+
+    Instances of `ndarray` subclasses are passed through as-is:
+
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> np.asanyarray(a) is a
+    True
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
+    """
+    ascontiguousarray(a, dtype=None, *, like=None)
+
+    Return a contiguous array (ndim >= 1) in memory (C order).
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    dtype : str or dtype object, optional
+        Data-type of returned array.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
+        Contiguous array of same shape and content as `a`, with type `dtype`
+        if specified.
+
+    See Also
+    --------
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    require : Return an ndarray that satisfies requirements.
+    ndarray.flags : Information about the memory layout of the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> np.ascontiguousarray(x, dtype=np.float32)
+    array([[0., 1., 2.],
+           [3., 4., 5.]], dtype=float32)
+    >>> x.flags['C_CONTIGUOUS']
+    True
+
+    Note: This function returns an array with at least one-dimension (1-d)
+    so it will not preserve 0-d arrays.
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'asfortranarray',
+    """
+    asfortranarray(a, dtype=None, *, like=None)
+
+    Return an array (ndim >= 1) laid out in Fortran order in memory.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    dtype : str or dtype object, optional
+        By default, the data-type is inferred from the input data.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
+        The input `a` in Fortran, or column-major, order.
+
+    See Also
+    --------
+    ascontiguousarray : Convert input to a contiguous (C order) array.
+    asanyarray : Convert input to an ndarray with either row or
+        column-major memory order.
+    require : Return an ndarray that satisfies requirements.
+    ndarray.flags : Information about the memory layout of the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> y = np.asfortranarray(x)
+    >>> x.flags['F_CONTIGUOUS']
+    False
+    >>> y.flags['F_CONTIGUOUS']
+    True
+
+    Note: This function returns an array with at least one-dimension (1-d)
+    so it will not preserve 0-d arrays.
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'empty',
     """
-    empty(shape, dtype=float, order='C')
+    empty(shape, dtype=float, order='C', *, like=None)
 
     Return a new array of given shape and type, without initializing entries.
 
@@ -914,6 +1157,9 @@ add_newdoc('numpy.core.multiarray', 'empty',
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -946,7 +1192,10 @@ add_newdoc('numpy.core.multiarray', 'empty',
     array([[-1073741821, -1067949133],
            [  496041986,    19249760]])                     #uninitialized
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'scalar',
     """
@@ -964,7 +1213,7 @@ add_newdoc('numpy.core.multiarray', 'scalar',
 
 add_newdoc('numpy.core.multiarray', 'zeros',
     """
-    zeros(shape, dtype=float, order='C')
+    zeros(shape, dtype=float, order='C', *, like=None)
 
     Return a new array of given shape and type, filled with zeros.
 
@@ -979,6 +1228,9 @@ add_newdoc('numpy.core.multiarray', 'zeros',
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1013,7 +1265,10 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     array([(0, 0), (0, 0)],
           dtype=[('x', '<i4'), ('y', '<i4')])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'set_typeDict',
     """set_typeDict(dict)
@@ -1025,7 +1280,7 @@ add_newdoc('numpy.core.multiarray', 'set_typeDict',
 
 add_newdoc('numpy.core.multiarray', 'fromstring',
     """
-    fromstring(string, dtype=float, count=-1, sep='')
+    fromstring(string, dtype=float, count=-1, sep='', *, like=None)
 
     A new 1-D array initialized from text data in a string.
 
@@ -1058,6 +1313,9 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
             text, the binary mode of `fromstring` will first encode it into
             bytes using either utf-8 (python 3) or the default encoding
             (python 2), neither of which produce sane results.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1081,7 +1339,10 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     >>> np.fromstring('1, 2', dtype=int, sep=',')
     array([1, 2])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     """
@@ -1122,19 +1383,22 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
-    fromiter(iterable, dtype, count=-1)
+    fromiter(iter, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
 
     Parameters
     ----------
-    iterable : iterable object
+    iter : iterable object
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.
     count : int, optional
         The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1152,11 +1416,14 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'fromfile',
     """
-    fromfile(file, dtype=float, count=-1, sep='', offset=0)
+    fromfile(file, dtype=float, count=-1, sep='', offset=0, *, like=None)
 
     Construct an array from data in a text or binary file.
 
@@ -1195,6 +1462,9 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Only permitted for binary files.
 
         .. versionadded:: 1.17.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     See also
     --------
@@ -1241,11 +1511,14 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
     array([((10, 0), 98.25)],
           dtype=[('time', [('min', '<i8'), ('sec', '<i8')]), ('temp', '<f8')])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'frombuffer',
     """
-    frombuffer(buffer, dtype=float, count=-1, offset=0)
+    frombuffer(buffer, dtype=float, count=-1, offset=0, *, like=None)
 
     Interpret a buffer as a 1-dimensional array.
 
@@ -1259,6 +1532,9 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
         Start reading the buffer from this offset (in bytes); default: 0.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Notes
     -----
@@ -1283,7 +1559,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     >>> np.frombuffer(b'\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
     array([1, 2, 3], dtype=uint8)
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core', 'fastCopyAndTranspose',
     """_fastCopyAndTranspose(a)""")
@@ -1293,7 +1572,7 @@ add_newdoc('numpy.core.multiarray', 'correlate',
 
 add_newdoc('numpy.core.multiarray', 'arange',
     """
-    arange([start,] stop[, step,], dtype=None)
+    arange([start,] stop[, step,], dtype=None, *, like=None)
 
     Return evenly spaced values within a given interval.
 
@@ -1307,14 +1586,14 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     Parameters
     ----------
-    start : number, optional
+    start : integer or real, optional
         Start of interval.  The interval includes this value.  The default
         start value is 0.
-    stop : number
+    stop : integer or real
         End of interval.  The interval does not include this value, except
         in some cases where `step` is not an integer and floating point
         round-off affects the length of `out`.
-    step : number, optional
+    step : integer or real, optional
         Spacing between values.  For any output `out`, this is the distance
         between two adjacent values, ``out[i+1] - out[i]``.  The default
         step size is 1.  If `step` is specified as a position argument,
@@ -1322,6 +1601,9 @@ add_newdoc('numpy.core.multiarray', 'arange',
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1350,7 +1632,10 @@ add_newdoc('numpy.core.multiarray', 'arange',
     >>> np.arange(3,7,2)
     array([3, 5])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', '_get_ndarray_c_version',
     """_get_ndarray_c_version()
@@ -1525,7 +1810,7 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
         Controls the memory layout of the output. 'C' means it should
         be C contiguous. 'F' means it should be Fortran contiguous,
         'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
-        'K' means it should be as close to the layout as the inputs as
+        'K' means it should be as close to the layout of the inputs as
         is possible, including arbitrarily permuted axes.
         Default is 'K'.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
@@ -2521,7 +2806,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     """
-    a.all(axis=None, out=None, keepdims=False)
+    a.all(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if all elements evaluate to True.
 
@@ -2536,7 +2821,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """
-    a.any(axis=None, out=None, keepdims=False)
+    a.any(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -2568,7 +2853,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
     """
     a.argmin(axis=None, out=None)
 
-    Return indices of the minimum values along the given axis of `a`.
+    Return indices of the minimum values along the given axis.
 
     Refer to `numpy.argmin` for detailed documentation.
 
@@ -2828,13 +3113,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible. (Note that this function and :func:`numpy.copy` are very
-        similar, but have different default values for their order=
-        arguments.)
+        similar but have different default values for their order=
+        arguments, and this function always passes sub-classes through.)
 
     See also
     --------
-    numpy.copy
+    numpy.copy : Similar function with different default behavior
     numpy.copyto
+
+    Notes
+    -----
+    This function is the preferred method for creating an array copy.  The
+    function :func:`numpy.copy` is similar, but it defaults to using order 'K',
+    and will not pass sub-classes through by default.
 
     Examples
     --------
@@ -3193,7 +3484,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
     """
-    a.mean(axis=None, dtype=None, out=None, keepdims=False)
+    a.mean(axis=None, dtype=None, out=None, keepdims=False, *, where=True)
 
     Returns the average of the array elements along given axis.
 
@@ -3223,7 +3514,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
     """
-    arr.newbyteorder(new_order='S')
+    arr.newbyteorder(new_order='S', /)
 
     Return the array with the same data viewed with a different byte order.
 
@@ -3243,15 +3534,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
         below. `new_order` codes can be any of:
 
         * 'S' - swap dtype from current to opposite endian
-        * {'<', 'L'} - little endian
-        * {'>', 'B'} - big endian
-        * {'=', 'N'} - native order
+        * {'<', 'little'} - little endian
+        * {'>', 'big'} - big endian
+        * '=' - native order, equivalent to `sys.byteorder`
         * {'|', 'I'} - ignore (no change to byte order)
 
         The default value ('S') results in swapping the current
-        byte order. The code does a case-insensitive check on the first
-        letter of `new_order` for the alternatives above.  For example,
-        any of 'B' or 'b' or 'biggish' are valid to specify big-endian.
+        byte order.
 
 
     Returns
@@ -3647,7 +3936,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
         actual implementation will vary with datatype. The 'mergesort' option
         is retained for backwards compatibility.
 
-        .. versionchanged:: 1.15.0.
+        .. versionchanged:: 1.15.0
            The 'stable' option was added.
 
     order : str or list of str, optional
@@ -3753,7 +4042,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
     """
     a.squeeze(axis=None)
 
-    Remove single-dimensional entries from the shape of `a`.
+    Remove axes of length one from `a`.
 
     Refer to `numpy.squeeze` for full documentation.
 
@@ -3766,7 +4055,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -3938,18 +4227,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     Construct Python bytes containing the raw data bytes in the array.
 
     Constructs Python bytes showing a copy of the raw contents of
-    data memory. The bytes object can be produced in either 'C' or 'Fortran',
-    or 'Any' order (the default is 'C'-order). 'Any' order means C-order
-    unless the F_CONTIGUOUS flag in the array is set, in which case it
-    means 'Fortran' order.
+    data memory. The bytes object is produced in C-order by default.
+    This behavior is controlled by the ``order`` parameter.
 
     .. versionadded:: 1.9.0
 
     Parameters
     ----------
-    order : {'C', 'F', None}, optional
-        Order of the data for multidimensional arrays:
-        C, Fortran, or the same as for the original array.
+    order : {'C', 'F', 'A'}, optional
+        Controls the memory layout of the bytes object. 'C' means C-order,
+        'F' means F-order, 'A' (short for *Any*) means 'F' if `a` is
+        Fortran contiguous, 'C' otherwise. Default is 'C'.
 
     Returns
     -------
@@ -4030,6 +4318,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
     See Also
     --------
+    transpose : Equivalent function
     ndarray.T : Array property returning the array transposed.
     ndarray.reshape : Give a new shape to an array without changing its data.
 
@@ -4054,7 +4343,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the variance of the array elements, along given axis.
 
@@ -4394,6 +4683,14 @@ add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     and then throwing away the ufunc.
     """)
 
+add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
+    """
+    _set_madvise_hugepage(enabled: bool) -> bool
+
+    Set  or unset use of ``madvise (2)`` MADV_HUGEPAGE support when
+    allocating the array data. Returns the previously set value.
+    See `global_state` for more information.
+    """)
 
 add_newdoc('numpy.core._multiarray_tests', 'format_float_OSprintf_g',
     """
@@ -4452,10 +4749,8 @@ add_newdoc('numpy.core', 'ufunc',
 
     A detailed explanation of ufuncs can be found in the docs for :ref:`ufuncs`.
 
-    Calling ufuncs:
-    ===============
+    **Calling ufuncs:** ``op(*x[, out], where=True, **kwargs)``
 
-    op(*x[, out], where=True, **kwargs)
     Apply `op` to the arguments `*x` elementwise, broadcasting the arguments.
 
     The broadcasting rules are:
@@ -4686,14 +4981,14 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
+    reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
-    Reduces `a`'s dimension by one, by applying ufunc along one axis.
+    Reduces `array`'s dimension by one, by applying ufunc along one axis.
 
-    Let :math:`a.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
-    :math:`ufunc.reduce(a, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
+    Let :math:`array.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
+    :math:`ufunc.reduce(array, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
     the result of iterating `j` over :math:`range(N_i)`, cumulatively applying
-    ufunc to each :math:`a[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
+    ufunc to each :math:`array[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
     For a one-dimensional array, reduce produces results equivalent to:
     ::
 
@@ -4706,7 +5001,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
     Parameters
     ----------
-    a : array_like
+    array : array_like
         The array to act on.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a reduction is performed.
@@ -4739,7 +5034,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the original `array`.
 
         .. versionadded:: 1.7.0
     initial : scalar, optional
@@ -4753,7 +5048,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
-        of `a`, and selects elements to include in the reduction. Note
+        of `array`, and selects elements to include in the reduction. Note
         that for ufuncs like ``minimum`` that do not have an identity
         defined, one has to pass in also ``initial``.
 
@@ -4895,28 +5190,28 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
 
 add_newdoc('numpy.core', 'ufunc', ('reduceat',
     """
-    reduceat(a, indices, axis=0, dtype=None, out=None)
+    reduceat(array, indices, axis=0, dtype=None, out=None)
 
     Performs a (local) reduce with specified slices over a single axis.
 
     For i in ``range(len(indices))``, `reduceat` computes
-    ``ufunc.reduce(a[indices[i]:indices[i+1]])``, which becomes the i-th
+    ``ufunc.reduce(array[indices[i]:indices[i+1]])``, which becomes the i-th
     generalized "row" parallel to `axis` in the final result (i.e., in a
     2-D array, for example, if `axis = 0`, it becomes the i-th row, but if
     `axis = 1`, it becomes the i-th column).  There are three exceptions to this:
 
     * when ``i = len(indices) - 1`` (so for the last index),
-      ``indices[i+1] = a.shape[axis]``.
+      ``indices[i+1] = array.shape[axis]``.
     * if ``indices[i] >= indices[i + 1]``, the i-th generalized "row" is
-      simply ``a[indices[i]]``.
-    * if ``indices[i] >= len(a)`` or ``indices[i] < 0``, an error is raised.
+      simply ``array[indices[i]]``.
+    * if ``indices[i] >= len(array)`` or ``indices[i] < 0``, an error is raised.
 
     The shape of the output depends on the size of `indices`, and may be
-    larger than `a` (this happens if ``len(indices) > a.shape[axis]``).
+    larger than `array` (this happens if ``len(indices) > array.shape[axis]``).
 
     Parameters
     ----------
-    a : array_like
+    array : array_like
         The array to act on.
     indices : array_like
         Paired indices, comma separated (not colon), specifying slices to
@@ -4946,14 +5241,15 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     -----
     A descriptive example:
 
-    If `a` is 1-D, the function `ufunc.accumulate(a)` is the same as
-    ``ufunc.reduceat(a, indices)[::2]`` where `indices` is
+    If `array` is 1-D, the function `ufunc.accumulate(array)` is the same as
+    ``ufunc.reduceat(array, indices)[::2]`` where `indices` is
     ``range(len(array) - 1)`` with a zero placed
     in every other element:
-    ``indices = zeros(2 * len(a) - 1)``, ``indices[1::2] = range(1, len(a))``.
+    ``indices = zeros(2 * len(array) - 1)``,
+    ``indices[1::2] = range(1, len(array))``.
 
-    Don't be fooled by this attribute's name: `reduceat(a)` is not
-    necessarily smaller than `a`.
+    Don't be fooled by this attribute's name: `reduceat(array)` is not
+    necessarily smaller than `array`.
 
     Examples
     --------
@@ -5001,8 +5297,8 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     """))
 
 add_newdoc('numpy.core', 'ufunc', ('outer',
-    """
-    outer(A, B, **kwargs)
+    r"""
+    outer(A, B, /, **kwargs)
 
     Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
 
@@ -5035,7 +5331,13 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
     See Also
     --------
-    numpy.outer
+    numpy.outer : A less powerful version of ``np.multiply.outer``
+                  that `ravel`\ s all inputs to 1D. This exists
+                  primarily for compatibility with old code.
+
+    tensordot : ``np.tensordot(a, b, axes=((), ()))`` and
+                ``np.multiply.outer(a, b)`` behave same for all
+                dimensions of a and b.
 
     Examples
     --------
@@ -5066,7 +5368,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
 add_newdoc('numpy.core', 'ufunc', ('at',
     """
-    at(a, indices, b=None)
+    at(a, indices, b=None, /)
 
     Performs unbuffered in place operation on operand 'a' for elements
     specified by 'indices'. For addition ufunc, this method is equivalent to
@@ -5130,7 +5432,7 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
 add_newdoc('numpy.core.multiarray', 'dtype',
     """
-    dtype(obj, align=False, copy=False)
+    dtype(dtype, align=False, copy=False)
 
     Create a data type object.
 
@@ -5140,7 +5442,7 @@ add_newdoc('numpy.core.multiarray', 'dtype',
 
     Parameters
     ----------
-    obj
+    dtype
         Object to be converted to a data type object.
     align : bool, optional
         Add padding to the fields to match what a C compiler would output
@@ -5482,6 +5784,45 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
+    """
+    Either ``None`` or a readonly dictionary of metadata (mappingproxy).
+
+    The metadata field can be set using any dictionary at data-type
+    creation. NumPy currently has no uniform approach to propagating
+    metadata; although some array operations preserve it, there is no
+    guarantee that others will.
+
+    .. warning::
+
+        Although used in certain projects, this feature was long undocumented
+        and is not well supported. Some aspects of metadata propagation
+        are expected to change in the future.
+
+    Examples
+    --------
+
+    >>> dt = np.dtype(float, metadata={"key": "value"})
+    >>> dt.metadata["key"]
+    'value'
+    >>> arr = np.array([1, 2, 3], dtype=dt)
+    >>> arr.dtype.metadata
+    mappingproxy({'key': 'value'})
+
+    Adding arrays with identical datatypes currently preserves the metadata:
+
+    >>> (arr + arr).dtype.metadata
+    mappingproxy({'key': 'value'})
+
+    But if the arrays have different dtype metadata, the metadata may be 
+    dropped:
+
+    >>> dt2 = np.dtype(float, metadata={"key2": "value2"})
+    >>> arr2 = np.array([3, 2, 1], dtype=dt2)
+    >>> (arr + arr2).dtype.metadata is None
+    True  # The metadata field is cleared so None is returned
+    """))
+
 add_newdoc('numpy.core.multiarray', 'dtype', ('name',
     """
     A bit-width name for this data-type.
@@ -5638,7 +5979,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('type',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     """
-    newbyteorder(new_order='S')
+    newbyteorder(new_order='S', /)
 
     Return a new dtype with a different byte order.
 
@@ -5652,14 +5993,10 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
         byte order.  `new_order` codes can be any of:
 
         * 'S' - swap dtype from current to opposite endian
-        * {'<', 'L'} - little endian
-        * {'>', 'B'} - big endian
-        * {'=', 'N'} - native order
+        * {'<', 'little'} - little endian
+        * {'>', 'big'} - big endian
+        * '=' - native order
         * {'|', 'I'} - ignore (no change to byte order)
-
-        The code does a case-insensitive check on the first letter of
-        `new_order` for these alternatives.  For example, any of '>'
-        or 'B' or 'b' or 'brian' are valid to specify big-endian.
 
     Returns
     -------
@@ -5887,29 +6224,21 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 
 # Attributes
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('T',
+def refer_to_array_attribute(attr, method=True):
+    docstring = """
+    Scalar {} identical to the corresponding array attribute.
+
+    Please see `ndarray.{}`.
     """
-    Not implemented (virtual attribute)
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    provide a uniform API.
+    return attr, docstring.format("method" if method else "attribute", attr)
 
-    See also the corresponding attribute of the derived class of interest.
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('T', method=False))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('base',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('base', method=False))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('data',
     """Pointer to start of data."""))
@@ -5949,309 +6278,84 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('strides',
 
 # Methods
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('all',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('all'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('any'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('argmax'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('argmin'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('any',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('argsort'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('astype'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('byteswap'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('choose'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('argmax',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('clip'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('compress'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('conjugate'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('copy'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('argmin',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('cumprod'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('cumsum'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('diagonal'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('dump'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('argsort',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('dumps'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('fill'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('flatten'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('getfield'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('astype',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('item'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('itemset'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('max'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('mean'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('byteswap',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('choose',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('clip',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('compress',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('conjugate',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('copy',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('cumprod',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('cumsum',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('diagonal',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('dump',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('dumps',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('fill',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('flatten',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('getfield',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('item',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('itemset',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('max',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('mean',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('min',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('min'))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     """
-    newbyteorder(new_order='S')
+    newbyteorder(new_order='S', /)
 
     Return a new `dtype` with a different byte order.
 
@@ -6260,9 +6364,9 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     The `new_order` code can be any from the following:
 
     * 'S' - swap dtype from current to opposite endian
-    * {'<', 'L'} - little endian
-    * {'>', 'B'} - big endian
-    * {'=', 'N'} - native order
+    * {'<', 'little'} - little endian
+    * {'>', 'big'} - big endian
+    * '=' - native order
     * {'|', 'I'} - ignore (no change to byte order)
 
     Parameters
@@ -6270,9 +6374,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     new_order : str, optional
         Byte order to force; a value from the byte order specifications
         above.  The default value ('S') results in swapping the current
-        byte order. The code does a case-insensitive check on the first
-        letter of `new_order` for the alternatives above.  For example,
-        any of 'B' or 'b' or 'biggish' are valid to specify big-endian.
+        byte order.
 
 
     Returns
@@ -6282,305 +6384,80 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
 
     """))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('nonzero',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('nonzero'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('prod'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('ptp'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('put'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('prod',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('ravel'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('repeat'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('reshape'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('resize'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('ptp',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('round'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('searchsorted'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('setfield'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('setflags'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('put',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('sort'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('squeeze'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('std'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('sum'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('ravel',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('swapaxes'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('take'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('tofile'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('tolist'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('repeat',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('tostring'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('trace'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('transpose'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('var'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('reshape',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('resize',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('round',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('searchsorted',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('setfield',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('setflags',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('sort',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('squeeze',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('std',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('sum',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('swapaxes',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('take',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('tofile',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('tolist',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('tostring',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('trace',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('transpose',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('var',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('view',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('view'))
 
 
 ##############################################################################
@@ -6648,183 +6525,3 @@ add_newdoc('numpy.core.numerictypes', 'character',
     Abstract base class of all character string scalar types.
 
     """)
-
-
-##############################################################################
-#
-# Documentation for concrete scalar classes
-#
-##############################################################################
-
-def numeric_type_aliases(aliases):
-    def type_aliases_gen():
-        for alias, doc in aliases:
-            try:
-                alias_type = getattr(_numerictypes, alias)
-            except AttributeError:
-                # The set of aliases that actually exist varies between platforms
-                pass
-            else:
-                yield (alias_type, alias, doc)
-    return list(type_aliases_gen())
-
-
-possible_aliases = numeric_type_aliases([
-    ('int8', '8-bit signed integer (-128 to 127)'),
-    ('int16', '16-bit signed integer (-32768 to 32767)'),
-    ('int32', '32-bit signed integer (-2147483648 to 2147483647)'),
-    ('int64', '64-bit signed integer (-9223372036854775808 to 9223372036854775807)'),
-    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'),
-    ('uint8', '8-bit unsigned integer (0 to 255)'),
-    ('uint16', '16-bit unsigned integer (0 to 65535)'),
-    ('uint32', '32-bit unsigned integer (0 to 4294967295)'),
-    ('uint64', '64-bit unsigned integer (0 to 18446744073709551615)'),
-    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'),
-    ('float16', '16-bit-precision floating-point number type: sign bit, 5 bits exponent, 10 bits mantissa'),
-    ('float32', '32-bit-precision floating-point number type: sign bit, 8 bits exponent, 23 bits mantissa'),
-    ('float64', '64-bit precision floating-point number type: sign bit, 11 bits exponent, 52 bits mantissa'),
-    ('float96', '96-bit extended-precision floating-point number type'),
-    ('float128', '128-bit extended-precision floating-point number type'),
-    ('complex64', 'Complex number type composed of 2 32-bit-precision floating-point numbers'),
-    ('complex128', 'Complex number type composed of 2 64-bit-precision floating-point numbers'),
-    ('complex192', 'Complex number type composed of 2 96-bit extended-precision floating-point numbers'),
-    ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
-    ])
-
-
-def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
-    o = getattr(_numerictypes, obj)
-
-    character_code = dtype(o).char
-    canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``np.{}``.\n    ".format(obj)
-    alias_doc = ''.join("Alias: ``np.{}``.\n    ".format(alias) for alias in fixed_aliases)
-    alias_doc += ''.join("Alias *on this platform*: ``np.{}``: {}.\n    ".format(alias, doc)
-                         for (alias_type, alias, doc) in possible_aliases if alias_type is o)
-
-    docstring = """
-    {doc}
-    Character code: ``'{character_code}'``.
-    {canonical_name_doc}{alias_doc}
-    """.format(doc=doc.strip(), character_code=character_code,
-               canonical_name_doc=canonical_name_doc, alias_doc=alias_doc)
-
-    add_newdoc('numpy.core.numerictypes', obj, docstring)
-
-
-add_newdoc_for_scalar_type('bool_', ['bool8'],
-    """
-    Boolean type (True or False), stored as a byte.
-    """)
-
-add_newdoc_for_scalar_type('byte', [],
-    """
-    Signed integer type, compatible with C ``char``.
-    """)
-
-add_newdoc_for_scalar_type('short', [],
-    """
-    Signed integer type, compatible with C ``short``.
-    """)
-
-add_newdoc_for_scalar_type('intc', [],
-    """
-    Signed integer type, compatible with C ``int``.
-    """)
-
-add_newdoc_for_scalar_type('int_', [],
-    """
-    Signed integer type, compatible with Python `int` anc C ``long``.
-    """)
-
-add_newdoc_for_scalar_type('longlong', [],
-    """
-    Signed integer type, compatible with C ``long long``.
-    """)
-
-add_newdoc_for_scalar_type('ubyte', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned char``.
-    """)
-
-add_newdoc_for_scalar_type('ushort', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned short``.
-    """)
-
-add_newdoc_for_scalar_type('uintc', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned int``.
-    """)
-
-add_newdoc_for_scalar_type('uint', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned long``.
-    """)
-
-add_newdoc_for_scalar_type('ulonglong', [],
-    """
-    Signed integer type, compatible with C ``unsigned long long``.
-    """)
-
-add_newdoc_for_scalar_type('half', [],
-    """
-    Half-precision floating-point number type.
-    """)
-
-add_newdoc_for_scalar_type('single', [],
-    """
-    Single-precision floating-point number type, compatible with C ``float``.
-    """)
-
-add_newdoc_for_scalar_type('double', ['float_'],
-    """
-    Double-precision floating-point number type, compatible with Python `float`
-    and C ``double``.
-    """)
-
-add_newdoc_for_scalar_type('longdouble', ['longfloat'],
-    """
-    Extended-precision floating-point number type, compatible with C
-    ``long double`` but not necessarily with IEEE 754 quadruple-precision.
-    """)
-
-add_newdoc_for_scalar_type('csingle', ['singlecomplex'],
-    """
-    Complex number type composed of two single-precision floating-point
-    numbers.
-    """)
-
-add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'],
-    """
-    Complex number type composed of two double-precision floating-point
-    numbers, compatible with Python `complex`.
-    """)
-
-add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'],
-    """
-    Complex number type composed of two extended-precision floating-point
-    numbers.
-    """)
-
-add_newdoc_for_scalar_type('object_', [],
-    """
-    Any Python object.
-    """)
-
-# TODO: work out how to put this on the base class, np.floating
-for float_name in ('half', 'single', 'double', 'longdouble'):
-    add_newdoc('numpy.core.numerictypes', float_name, ('as_integer_ratio',
-        """
-        {ftype}.as_integer_ratio() -> (int, int)
-
-        Return a pair of integers, whose ratio is exactly equal to the original
-        floating point number, and with a positive denominator.
-        Raise OverflowError on infinities and a ValueError on NaNs.
-
-        >>> np.{ftype}(10.0).as_integer_ratio()
-        (10, 1)
-        >>> np.{ftype}(0.0).as_integer_ratio()
-        (0, 1)
-        >>> np.{ftype}(-.25).as_integer_ratio()
-        (-1, 4)
-        """.format(ftype=float_name)))

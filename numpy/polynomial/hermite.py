@@ -233,7 +233,11 @@ def hermline(off, scl):
 
     See Also
     --------
-    polyline, chebline
+    numpy.polynomial.polynomial.polyline
+    numpy.polynomial.chebyshev.chebline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite_e.hermeline
 
     Examples
     --------
@@ -286,7 +290,11 @@ def hermfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, chebfromroots, hermefromroots
+    numpy.polynomial.polynomial.polyfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.chebyshev.chebfromroots
+    numpy.polynomial.hermite_e.hermefromroots
 
     Examples
     --------
@@ -1194,7 +1202,7 @@ def hermvander2d(x, y, deg):
     -------
     vander2d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        :math:`order = (deg[0]+1)*(deg[1]+1)`.  The dtype will be the same
         as the converted `x` and `y`.
 
     See Also
@@ -1248,7 +1256,7 @@ def hermvander3d(x, y, z, deg):
     -------
     vander3d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        :math:`order = (deg[0]+1)*(deg[1]+1)*(deg[2]+1)`.  The dtype will
         be the same as the converted `x`, `y`, and `z`.
 
     See Also
@@ -1303,7 +1311,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         information from the singular value decomposition is also returned.
     w : array_like, shape (`M`,), optional
         Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        ``(x[i],y[i])`` to the fit is weighted by ``w[i]``. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
@@ -1322,7 +1330,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         sv -- singular values of the scaled Vandermonde matrix
         rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Warns
     -----
@@ -1336,11 +1344,15 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, lagfit, polyfit, hermefit
+    numpy.polynomial.chebyshev.chebfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.laguerre.lagfit
+    numpy.polynomial.polynomial.polyfit
+    numpy.polynomial.hermite_e.hermefit
     hermval : Evaluates a Hermite series.
     hermvander : Vandermonde matrix of Hermite series.
     hermweight : Hermite weight function
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1369,8 +1381,8 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     Fits using Hermite series are probably most useful when the data can be
     approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Hermite
-    weight. In that case the weight ``sqrt(w(x[i])`` should be used
-    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
+    weight. In that case the weight ``sqrt(w(x[i]))`` should be used
+    together with data values ``y[i]/sqrt(w(x[i]))``. The weight function is
     available as `hermweight`.
 
     References
@@ -1457,7 +1469,11 @@ def hermroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, chebroots, hermeroots
+    numpy.polynomial.polynomial.polyroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.chebyshev.chebroots
+    numpy.polynomial.hermite_e.hermeroots
 
     Notes
     -----
@@ -1675,7 +1691,6 @@ class Hermite(ABCPolyBase):
     _fromroots = staticmethod(hermfromroots)
 
     # Virtual properties
-    nickname = 'herm'
     domain = np.array(hermdomain)
     window = np.array(hermdomain)
     basis_name = 'H'
