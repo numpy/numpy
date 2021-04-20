@@ -10,14 +10,15 @@ tasks:
     init: |
       mkdir -p .vscode
       cp tools/gitpod/settings.json .vscode/settings.json
+      conda activate numpy-dev
       python setup.py build_ext --inplace
-      echo "🛠 \e[35m\e[1m Completed rebuilding NumPy!! 🛠 "
-      echo "📖 \e[35m\e[1m Building docs 📖 "
+      echo "🛠 Completed rebuilding NumPy!! 🛠 "
+      echo "📖 Building docs 📖 "
       git submodule --init 
       python -m pip install -r doc_requirements.txt
       cd doc
       make html
-      echo "✨ \e[35m\e[1m pre-build complete! You can close this terminal ✨ "
+      echo "✨ Pre-build complete! You can close this terminal ✨ "
   
 
 # --------------------------------------------------------

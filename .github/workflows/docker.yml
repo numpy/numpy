@@ -1,11 +1,13 @@
 name: Build Base Docker Image
 
 on:
-  push:
+  push: 
     branches:
-      - feature/**
-  schedule:
-    - cron: "0 0 * * *" # nightly
+    - main
+    paths:
+    - './environment.yml'
+    tags:
+      - '*'
       
 jobs: 
   build:
