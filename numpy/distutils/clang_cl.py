@@ -2,7 +2,8 @@
 Build/Install NumPy on Windows with clang-cl using (powershell syntax)
 
 Short:
-python setup.py build --compiler=clang-cl install
+python setup.py config --compiler=clang-cl `
+                build --compiler=clang-cl install
 
 Full:
 python setup.py config --compiler=clang-cl `
@@ -11,7 +12,9 @@ python setup.py config --compiler=clang-cl `
                 install
 
 Develop mode:
-python setup.py build_ext -i --compiler=clang-cl develop
+python setup.py config --compiler=clang-cl `
+                build --compiler=clang-cl `
+                develop
 
 Run tests:
 python runtests.py --compiler=clang-cl
@@ -110,6 +113,8 @@ class ClangCL(MSVCCompiler):
             )
 
         # Forbid compiling 32 on 64-bit LLVM and vice versa
+        # platform_bits captures the memory model of the Python interpreter,
+        # not the underlying operating system
         target = "i686" if platform_bits == 32 else "x86_64"
         if target not in clang_full_ver:
             raise RuntimeError(
@@ -128,6 +133,7 @@ class ClangCL(MSVCCompiler):
 
         # Need to block MS includes except those from Visual Studio 14.0
         # since they include intrinsics that break clang
+        # see: https://stackoverflow.com/questions/36086328
         def retain_include(path):
             blocked = ("Windows Kits", "MSVC", "2019")
             keep = True
