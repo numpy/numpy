@@ -29,7 +29,7 @@ except ImportError:
     class MSVCCompiler:
         def __init__(self, verbose=0, dry_run=0, force=0):
             raise NotImplementedError(
-                "ClangLC can only be run on Windows when MSVCCompiler can "
+                "ClangCL can only be run on Windows when MSVCCompiler can "
                 "be imported from distutils._msvccompiler"
             )
 
