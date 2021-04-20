@@ -8601,6 +8601,10 @@ def test_npymath_complex():
 
 
 def test_npymath_complex_by_type():
+
+    if sys.platform == 'OpenVMS':
+        pytest.xfail("CRTL issues with complex functions")
+
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
         npy_cabsf, npy_cargf, npy_cabs, npy_carg, npy_cabsl, npy_cargl)

@@ -1205,7 +1205,7 @@ class TestRandomDist:
         alpha = np.array([0.02, 0.04, 0.03])
         exact_mean = alpha / alpha.sum()
         random = Generator(MT19937(self.seed))
-        sample = random.dirichlet(alpha, size=20000000)
+        sample = random.dirichlet(alpha, size=20000000 if not sys.platform == 'OpenVMS' else 2000000)
         sample_mean = sample.mean(axis=0)
         assert_allclose(sample_mean, exact_mean, rtol=1e-3)
 

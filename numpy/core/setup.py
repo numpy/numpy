@@ -703,6 +703,11 @@ def configuration(parent_package='',top_path=None):
     DEFINE_MACROS=[]
     if is_msvc:
         EXTRA_COMPILE_ARGS = ['/GL-']
+    if is_openvms:
+        EXTRA_COMPILE_ARGS = [
+            # '/STAND=C99',
+            # '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
+        ]
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
@@ -987,21 +992,26 @@ def configuration(parent_package='',top_path=None):
         join('src', 'common', 'npy_cpu_features.c.src'),
         ],
         extra_compile_args=EXTRA_COMPILE_ARGS,
-        extra_link_args=EXTRA_LINK_ARGS,)
+        extra_link_args=EXTRA_LINK_ARGS
+        )
 
     #######################################################################
     #                   custom rational dtype module                      #
     #######################################################################
 
     config.add_extension('_rational_tests',
-                    sources=[join('src', 'umath', '_rational_tests.c.src')])
+                    sources=[join('src', 'umath', '_rational_tests.c.src')],
+                    extra_compile_args=EXTRA_COMPILE_ARGS,
+                    )
 
     #######################################################################
     #                        struct_ufunc_test module                     #
     #######################################################################
 
     config.add_extension('_struct_ufunc_tests',
-                    sources=[join('src', 'umath', '_struct_ufunc_tests.c.src')])
+                    sources=[join('src', 'umath', '_struct_ufunc_tests.c.src')],
+                    extra_compile_args=EXTRA_COMPILE_ARGS,
+                    )
 
 
     #######################################################################
@@ -1009,7 +1019,9 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_operand_flag_tests',
-                    sources=[join('src', 'umath', '_operand_flag_tests.c.src')])
+                    sources=[join('src', 'umath', '_operand_flag_tests.c.src')],
+                    extra_compile_args=EXTRA_COMPILE_ARGS,
+                    )
 
     #######################################################################
     #                        SIMD module                                  #
@@ -1031,7 +1043,8 @@ def configuration(parent_package='',top_path=None):
         join('src', '_simd', '_simd_convert.inc'),
         join('src', '_simd', '_simd_easyintrin.inc'),
         join('src', '_simd', '_simd_vector.inc'),
-    ])
+    ], extra_compile_args=EXTRA_COMPILE_ARGS,
+    )
 
     config.add_subpackage('tests')
     config.add_data_dir('tests/data')

@@ -8,6 +8,7 @@ from numpy.testing import (
     assert_raises_regex,
     )
 from numpy.compat import pickle
+import sys
 
 # Use pytz to test out various time zones if available
 try:

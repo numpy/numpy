@@ -734,7 +734,7 @@ legacy_@name@_format@kind@(@type@ val)
     if (
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
         // OpenVMS compiler has a bug: long double Nan is equal to any value
-        (!isnan(val.real)) &&
+        (!npy_isnan(val.real)) &&
 #endif
         val.real == 0.0 && npy_signbit(val.real) == 0) {
         PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
@@ -906,7 +906,7 @@ c@name@type_@kind@(PyObject *self)
     if (
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
         // OpenVMS compiler has a bug: long double Nan is equal to any value
-        (!isnan(val.real)) &&
+        (!npy_isnan(val.real)) &&
 #endif
         val.real == 0.0 && npy_signbit(val.real) == 0) {
         istr = @name@type_@kind@_either(val.imag, trim, trim, 0);

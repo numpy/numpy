@@ -501,10 +501,37 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**begin repeat1
  * #kind = atan2,hypot,pow,copysign#
  * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
+ * #IS_ATAN = 1,0,0,0#
  */
 #ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
+    #if defined(__VMS) && @IS_ATAN@
+    if (npy_isnan(x) || npy_isnan(y)) {
+        return NPY_NAN@C@;
+    } else if (x == 0) {
+        @type@ z = 0;
+        if (npy_signbit(y)) {
+            @type@ z = NPY_PI@c@;
+        }
+        return npy_copysign@c@(z, x);
+    } else if (npy_isinf(x) && npy_isinf(y)) {
+        @type@ z = NPY_PI_4@c@;
+        if (npy_signbit(y)) {
+            z *= 3;
+        }
+        return npy_copysign@c@(z, x);
+    } else if (npy_isfinite(x) && npy_isinf(y) && !npy_signbit(y)) {
+        @type@ z = 0;
+        return npy_copysign@c@(z, x);
+    } else if (npy_isfinite(y) && npy_isinf(x)) {
+        @type@ z = NPY_PI_2@c@;
+        return npy_copysign@c@(z, x);
+    } else if (y == 0) {
+        @type@ z = NPY_PI_2@c@;
+        return npy_copysign@c@(z, x);
+    }
+    #endif
     return @kind@@c@(x, y);
 }
 #endif
@@ -528,6 +555,17 @@ npy_@kind@@c@(@type@ x, @type@ y)
             npy_set_floatstatus_invalid();
         }
     }
+    #if defined(__VMS)
+    if (npy_isnan(x) || npy_isnan(y)) {
+        return NPY_NAN@C@;
+    } else if (npy_isinf(x)) {
+        return NPY_NAN@C@;
+    } else if (y == 0) {
+        return NPY_NAN@C@;
+    } else if (x == 0) {
+        return x;
+    }
+    #endif
     return @kind@@c@(x, y);
 }
 #endif
@@ -740,7 +778,11 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
             div -= 1.0@c@;
         }
     }
+#ifdef __VMS
+    else if (fp_classify(mod) == FP_ZERO) {
+#else
     else {
+#endif
         /* if mod is zero ensure correct sign */
         mod = npy_copysign@c@(0, b);
     }
@@ -751,7 +793,11 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
         if (div - floordiv > 0.5@c@)
             floordiv += 1.0@c@;
     }
+#ifdef __VMS
+    else if (fp_classify(div) == FP_ZERO) {
+#else
     else {
+#endif
         /* if div is zero ensure correct sign */
         floordiv = npy_copysign@c@(0, a/b);
     }

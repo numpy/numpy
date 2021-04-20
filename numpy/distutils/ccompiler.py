@@ -296,6 +296,17 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
             self._setup_compile(output_dir, macros, include_dirs, sources,
                                 depends, extra_postargs)
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+    if self.compiler_type == 'openvms':
+        cc_args += [
+            '/STAND=C99',
+            '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
+            ]
+        if debug:
+            cc_args += [
+                '/WARNINGS=DISABLE=ALL',
+                '/LIST',
+                '/SHOW=ALL',
+            ]
     display = "compile options: '%s'" % (' '.join(cc_args))
     if extra_postargs:
         display += "\nextra options: '%s'" % (' '.join(extra_postargs))
@@ -671,7 +682,7 @@ def CCompiler_cxx_compiler(self):
         The C++ compiler, as a `CCompiler` instance.
 
     """
-    if self.compiler_type in ('msvc', 'intelw', 'intelemw'):
+    if self.compiler_type in ('msvc', 'intelw', 'intelemw', 'openvms'):
         return self
 
     cxx = copy(self)

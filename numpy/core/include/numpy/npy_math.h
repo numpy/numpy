@@ -7,6 +7,10 @@ extern "C" {
 
 #include <numpy/npy_common.h>
 
+#ifdef __VMS
+#include <fp.h>
+#endif
+
 #include <math.h>
 #ifdef __SUNPRO_CC
 #include <sunmath.h>
@@ -234,47 +238,60 @@ double npy_spacing(double x);
 
 /* use builtins to avoid function calls in tight loops
  * only available if npy_config.h is available (= numpys own build) */
-#ifdef HAVE___BUILTIN_ISNAN     // __VMS
-    #define npy_isnan(x) __builtin_isnan(x)
+#if defined(__VMS)
+    #define npy_isnan(x) (fp_classify(x) == FP_NAN)
 #else
-    #ifndef NPY_HAVE_DECL_ISNAN
-        #define npy_isnan(x) ((x) != (x))
+    #ifdef HAVE___BUILTIN_ISNAN     // __VMS
+        #define npy_isnan(x) __builtin_isnan(x)
     #else
-        #if defined(_MSC_VER) && (_MSC_VER < 1900)
-            #define npy_isnan(x) _isnan((x))
+        #ifndef NPY_HAVE_DECL_ISNAN
+            #define npy_isnan(x) ((x) != (x))
         #else
-            #define npy_isnan(x) isnan(x)
+            #if defined(_MSC_VER) && (_MSC_VER < 1900)
+                #define npy_isnan(x) _isnan((x))
+            #else
+                #define npy_isnan(x) isnan(x)
+            #endif
         #endif
     #endif
 #endif
 
 
 /* only available if npy_config.h is available (= numpys own build) */
-#ifdef HAVE___BUILTIN_ISFINITE  // __VMS
-    #define npy_isfinite(x) __builtin_isfinite(x)
+#if defined(__VMS)
+    #define npy_isfinite(x) \
+        (!(fp_classify(x) == FP_INFINITE || fp_classify(x) == FP_NAN))
 #else
-    #ifndef NPY_HAVE_DECL_ISFINITE
-        #ifdef _MSC_VER
-            #define npy_isfinite(x) _finite((x))
-        #else
-            #define npy_isfinite(x) !npy_isnan((x) + (-x))
-        #endif
+    #ifdef HAVE___BUILTIN_ISFINITE  // __VMS
+        #define npy_isfinite(x) __builtin_isfinite(x)
     #else
-        #define npy_isfinite(x) isfinite((x))
+        #ifndef NPY_HAVE_DECL_ISFINITE
+            #ifdef _MSC_VER
+                #define npy_isfinite(x) _finite((x))
+            #else
+                #define npy_isfinite(x) !npy_isnan((x) + (-x))
+            #endif
+        #else
+            #define npy_isfinite(x) isfinite((x))
+        #endif
     #endif
 #endif
 
 /* only available if npy_config.h is available (= numpys own build) */
-#ifdef HAVE___BUILTIN_ISINF // __VMS
-    #define npy_isinf(x) __builtin_isinf(x)
+#if defined(__VMS)
+    #define npy_isinf(x) (fp_classify(x) == FP_INFINITE)
 #else
-    #ifndef NPY_HAVE_DECL_ISINF
-        #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
+    #ifdef HAVE___BUILTIN_ISINF // __VMS
+        #define npy_isinf(x) __builtin_isinf(x)
     #else
-        #if defined(_MSC_VER) && (_MSC_VER < 1900)
-            #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
+        #ifndef NPY_HAVE_DECL_ISINF
+            #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
         #else
-            #define npy_isinf(x) isinf((x))
+            #if defined(_MSC_VER) && (_MSC_VER < 1900)
+                #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
+            #else
+                #define npy_isinf(x) isinf((x))
+            #endif
         #endif
     #endif
 #endif

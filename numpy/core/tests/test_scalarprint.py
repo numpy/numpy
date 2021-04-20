@@ -203,8 +203,12 @@ class TestRealScalars:
         assert_equal(fpos64('324', unique=False, precision=5, fractional=False), "324.00")
 
     def test_dragon4_interface(self):
+        
+        if sys.platform == 'OpenVMS':
+            pytest.xfail("float128 issues")
+
         tps = [np.float16, np.float32, np.float64]
-        if hasattr(np, 'float128') and sys.platform != 'OpenVMS':
+        if hasattr(np, 'float128'):
             tps.append(np.float128)
 
         fpos = np.format_float_positional

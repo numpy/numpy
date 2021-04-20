@@ -95,6 +95,7 @@ def test_complex_inf_nan(dtype):
         complex(-np.nan, 1): "(nan+1j)",
         complex(1, -np.nan): "(1+nanj)",
     }
+
     for c, s in TESTS.items():
         assert_equal(str(dtype(c)), s)
 

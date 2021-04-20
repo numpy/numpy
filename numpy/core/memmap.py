@@ -254,7 +254,7 @@ class memmap(ndarray):
                 fid.seek(bytes - 1, 0)
                 fid.write(b'\0')
                 fid.flush()
-                fsync(fid.fileno())     // OpenVMS
+                fsync(fid.fileno())     # OpenVMS
 
             if mode == 'c':
                 acc = mmap.ACCESS_COPY

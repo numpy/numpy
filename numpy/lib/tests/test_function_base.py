@@ -1141,6 +1141,8 @@ class TestGradient:
 class TestAngle:
 
     def test_basic(self):
+        if sys.platform == 'OpenVMS':
+            pytest.xfail("CRTL issues")
         x = [1 + 3j, np.sqrt(2) / 2.0 + 1j * np.sqrt(2) / 2,
              1, 1j, -1, -1j, 1 - 3j, -1 + 3j]
         y = angle(x)

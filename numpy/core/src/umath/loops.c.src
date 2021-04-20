@@ -570,7 +570,7 @@ NPY_NO_EXPORT void
 /**begin repeat1
  * #isa = , _avx2#
  * #ISA = , AVX2#
- * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX2#
+ * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX2)#
  * #ATTR = , NPY_GCC_TARGET_AVX2#
  */
 
@@ -1787,7 +1787,7 @@ NPY_NO_EXPORT void
             const @type@ in2 = *(@type@ *)ip2;
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
             // OpenVMS has a bug: long double NaN fails most of all operations
-            *((npy_bool *)op1) = !isnan@c@(in1) && !isnan@c@(in2) && (in1 @OP@ in2);
+            *((npy_bool *)op1) = !npy_isnan(in1) && !npy_isnan(in2) && (in1 @OP@ in2);
 #else
             *((npy_bool *)op1) = in1 @OP@ in2;
 #endif
