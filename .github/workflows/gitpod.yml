@@ -6,7 +6,6 @@ on:
       - feature/**
   schedule:
     - cron: "0 0 * * *" # nightly
-
 jobs:
   build:
     name: Build Gitpod Docker image 

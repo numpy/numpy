@@ -14,7 +14,7 @@ jobs:
     name: Build base Docker image 
     runs-on: ubuntu-latest
     environment: numpy-dev
-    if: "github.repository_owner == 'trallard' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    if: "github.repository_owner == 'numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     steps:
       - name: Clone repository
         uses: actions/checkout@v2

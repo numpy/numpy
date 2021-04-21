@@ -1,7 +1,7 @@
 # Doing a local shallow clone - keeps the container secure
 # and much slimmer than using COPY directly or making a 
 # remote clone
-ARG BASE_CONTAINER="trallard/numpy-dev:latest"
+ARG BASE_CONTAINER="numpy/numpy-dev:latest"
 FROM gitpod/workspace-base:latest as clone
 
 COPY --chown=gitpod . /tmp/numpy_repo
