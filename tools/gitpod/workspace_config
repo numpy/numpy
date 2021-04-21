@@ -36,7 +36,7 @@ if [[ ! -f "/etc/profile.d/conda.sh" ]]; then
     ln -s ${CONDA_DIR}/etc/profile.d/conda.sh /etc/profile.d/conda.sh
 fi
 echo ". ${CONDA_DIR}/etc/profile.d/conda.sh" >>~/.bashrc
-echo "conda activate scipy-dev" >>~/.bashrc
+echo "conda activate numpy-dev" >>~/.bashrc
 
 # Enable prompt color in the skeleton .bashrc
 # hadolint ignore=SC2016
