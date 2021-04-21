@@ -319,20 +319,31 @@ class TestExpandDims:
 
 class TestArraySplit:
 
-    def test_zero_dimensional_split(self):
-        matrix = np.reshape(np.arange(16), (4, 4))
-
-        ret = split(matrix, [], axis=())
-        assert_equal(ret.ndim, 0)
-        assert_equal(ret[()], matrix)
-
-        # too many split arguments
-        assert_raises(ValueError, split, matrix, [3], axis=())
-
     def test_two_dimensional_two_integer_remainder_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
         res = array_split(matrix, [3, 3], (0, 1))
+        desired = np.empty(9, dtype=object)
+        desired[0] = np.array([[0, 1], [4, 5]])
+        desired[1] = np.array([[2], [6]])
+        desired[2] = np.array([[3], [7]])
+        desired[3] = np.array([[8, 9]])
+        desired[4] = np.array([[10]])
+        desired[5] = np.array([[11]])
+        desired[6] = np.array([[12, 13]])
+        desired[7] = np.array([[14]])
+        desired[8] = np.array([[15]])
+        desired = np.reshape(desired, (3, 3))
+
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
+
+    def test_two_dimensional_two_integer_broadcast_remainder_split(self):
+        matrix = np.reshape(np.arange(16), (4, 4))
+
+        res = array_split(matrix, 3, (0, 1))
         desired = np.empty(9, dtype=object)
         desired[0] = np.array([[0, 1], [4, 5]])
         desired[1] = np.array([[2], [6]])
@@ -364,6 +375,22 @@ class TestArraySplit:
         desired[6] = np.array([[12, 13]])
         desired[7] = np.array([[14, 15]])
         desired = np.reshape(desired, (4, 2))
+
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
+
+    def test_two_dimensional_two_integer_broadcast_split(self):
+        matrix = np.reshape(np.arange(16), (4, 4))
+
+        res = array_split(matrix, 2, (0, 1))
+        desired = np.empty(4, dtype=object)
+        desired[0] = np.array([[0, 1], [4, 5]])
+        desired[1] = np.array([[2, 3], [6, 7]])
+        desired[2] = np.array([[8, 9], [12, 13]])
+        desired[3] = np.array([[10, 11], [14, 15]])
+        desired = np.reshape(desired, (2, 2))
 
         assert(res.shape == desired.shape)
 
@@ -426,7 +453,6 @@ class TestArraySplit:
 
     def test_two_dimensional_input_guard(self):
         matrix = np.reshape(np.arange(16), (4, 4))
-        assert_raises(ValueError, array_split, matrix, 1, (0, 1))
         assert_raises(ValueError, array_split, matrix, [1], (0, 1))
 
     def test_integer_0_split(self):
@@ -609,12 +635,48 @@ class TestSplit:
         for i, element in enumerate(res):
             compare_results(element, desired[i])
 
+    def test_equal_two_dimensional_broadcast_split(self):
+        matrix = np.reshape(np.arange(16), (4, 4))
+
+        res = split(matrix, 2, (0, 1))
+        desired = np.empty(4, dtype=object)
+        desired[0] = np.array([[0, 1], [4, 5]])
+        desired[1] = np.array([[2, 3], [6, 7]])
+        desired[2] = np.array([[8, 9], [12, 13]])
+        desired[3] = np.array([[10, 11], [14, 15]])
+        desired = np.reshape(desired, (2, 2))
+
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
+
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
+
     def test_unequal_two_dimensional_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
         assert_raises(ValueError, split, matrix, [3, 2], (0, 1))
         assert_raises(ValueError, split, matrix, [2, 3], (0, 1))
         assert_raises(ValueError, split, matrix, [2], (0, 1))
         assert_raises(ValueError, split, matrix, 3, (0, 1))
+
+    def test_zero_dimensional_split(self):
+        matrix = np.reshape(np.arange(16), (4, 4))
+
+        ret = split(matrix, [], axis=())
+        assert_equal(ret.ndim, 0)
+        assert_equal(ret[()], matrix)
+
+        ret = split(matrix, 3, axis=())
+        assert_equal(ret.ndim, 0)
+        assert_equal(ret[()], matrix)
+
+        # too many split arguments
+        assert_raises(ValueError, split, matrix, [3], axis=())
+
 
 
 class TestColumnStack:

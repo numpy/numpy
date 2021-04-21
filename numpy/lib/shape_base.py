@@ -769,20 +769,33 @@ def array_split(ary, indices_or_sections, axis=0):
                                                   [7]])],
            [array([[8, 9]]), array([[10]]), array([[11]])],
            [array([[12, 13]]), array([[14]]), array([[15]])]], dtype=object)
+    >>> x = np.reshape(np.arange(16), (4, 4))
+    >>> np.array_split(x, 3, (0, 1))
+    array([[array([[0, 1],
+                   [4, 5]]), array([[2],
+                                    [6]]), array([[3],
+                                                  [7]])],
+           [array([[8, 9]]), array([[10]]), array([[11]])],
+           [array([[12, 13]]), array([[14]]), array([[15]])]], dtype=object)
     """
     # If axis is a tuple, assume an N-dimensional split.
     if isinstance(axis, tuple):
 
-        try:
-            len(indices_or_sections)
-        except TypeError:
-            raise ValueError('Axis is a tuple, so indices_or_sections must'
-                             'be of the same length as axis.')
+        # If indices_or_sections is an int, assume we want to perform the
+        # same split over all axes.
+        if isinstance(indices_or_sections, int):
+            indices_or_sections = [indices_or_sections] * len(axis)
+        else:
+            try:
+                len(indices_or_sections)
+            except TypeError:
+                raise ValueError('Axis is a tuple, so indices_or_sections must'
+                                 ' be of the same length as axis or an int.')
 
-        # Verify there is an index or section for every axis.
-        if len(indices_or_sections) != len(axis):
-            raise ValueError('Axis is a tuple, so indices_or_sections must'
-                             'be of the same length as axis.')
+            # Verify there is an index or section for every axis.
+            if len(indices_or_sections) != len(axis):
+                raise ValueError('Axis is a tuple, so indices_or_sections must'
+                                 ' be of the same length as axis or an int.')
 
         # Create a list that will store the size of the split per axis.
         dimensions = []
@@ -882,7 +895,8 @@ def split(ary, indices_or_sections, axis=0):
         axis ``0`` would be split on ``2`` and axis ``1`` on ``3``.
         Therefore, note that if `axis` is a tuple, `indices_or_sections`
         must be a list that might contain a list as one or more
-        of its elements.
+        of its elements, or `indices_or_sections` must be an int in
+        which case the same split is performed over all axes.
 
     Returns
     -------
@@ -896,7 +910,7 @@ def split(ary, indices_or_sections, axis=0):
         a split does not result in equal division.
 
         If `axis` is a tuple and `indices_or_sections`
-        is not a list or contains an unequal number of elements
+        is a list that contains an unequal number of elements
         to `axis`.
 
     See Also
@@ -931,6 +945,13 @@ def split(ary, indices_or_sections, axis=0):
            [array([[4, 5]]), array([[6, 7]])],
            [array([[8, 9]]), array([[10, 11]])],
            [array([[12, 13]]), array([[14, 15]])]], dtype=object)
+    >>> x = np.reshape(np.arange(16), (4, 4))
+    >>> np.split(x, 2, (0, 1))
+    array([[array([[0, 1],
+                   [4, 5]]), array([[2, 3],
+                                    [6, 7]])], [array([[8,  9],
+                                                       [12, 13]]),
+            array([[10, 11], [14, 15]])]], dtype=object)
     """
 
     def verify_equal_division(indices_or_sections, axis):
@@ -945,18 +966,25 @@ def split(ary, indices_or_sections, axis=0):
 
     # If axis is a tuple, assume an N-dimensional split.
     if isinstance(axis, tuple):
-        try:
-            len(indices_or_sections)
-        except TypeError:
-            raise ValueError('Axis is a tuple, so indices_or_sections must'
-                             'be of the same length as axis.')
 
-        if len(indices_or_sections) != len(axis):
-            raise ValueError('Axis is a tuple, so indices_or_sections must'
-                             'be of the same length as axis.')
+        # If indices_or_sections is an int, assume we want to perform the
+        # same split over all axes.
+        if isinstance(indices_or_sections, int):
+            for i in range(len(axis)):
+                verify_equal_division(indices_or_sections, axis[i])
+        else:
+            try:
+                len(indices_or_sections)
+            except TypeError:
+                raise ValueError('Axis is a tuple, so indices_or_sections must'
+                                 ' be of the same length as axis.')
 
-        for i in range(len(axis)):
-            verify_equal_division(indices_or_sections[i], axis[i])
+            if len(indices_or_sections) != len(axis):
+                raise ValueError('Axis is a tuple, so indices_or_sections must'
+                                 ' be of the same length as axis.')
+
+            for i in range(len(axis)):
+                verify_equal_division(indices_or_sections[i], axis[i])
 
         return array_split(ary, indices_or_sections, axis)
 
