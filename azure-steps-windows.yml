@@ -76,7 +76,7 @@ steps:
 - powershell: |
     $env:Path="$env:Path;C:\Program Files\LLVM\bin"
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
-    python setup.py build --compiler=clang-cl bdist_wheel
+    python setup.py config --compiler=clang-cl bdist_wheel
 
     ls dist -r | Foreach-Object {
         python -m pip install $_.FullName
