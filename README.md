@@ -51,7 +51,7 @@ comment on a relevant issue that is already open.
 Our preferred channels of communication are all public, but if you’d like to
 speak to us in private first, contact our community coordinators at
 numpy-team@googlegroups.com or on Slack (write numpy-team@googlegroups.com for
-an invite).
+an invitation).
 
 We also have a biweekly community call, details of which are announced on the
 mailing list. You are very welcome to join. 
