@@ -2426,7 +2426,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             "unix-like" if self.cc_is_nocc else self.cc_name)
         ))
         ########## baseline ##########
-        if self.cc_noopt or not hasattr(self, "_requested_baseline"):
+        if self.cc_noopt:
             baseline_rows.append(("Requested", "optimization disabled"))
         else:
             baseline_rows.append(("Requested", repr(self._requested_baseline)))
@@ -2447,7 +2447,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         ))
 
         ########## dispatch ##########
-        if self.cc_noopt or not hasattr(self, "_requested_dispatch"):
+        if self.cc_noopt:
             baseline_rows.append(("Requested", "optimization disabled"))
         else:
             dispatch_rows.append(("Requested", repr(self._requested_dispatch)))

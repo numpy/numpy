@@ -11,6 +11,9 @@ python setup.py config --compiler=clang-cl `
                 build_ext --compiler=clang-cl `
                 install
 
+Wheel:
+python setup.py config --compiler=clang-cl bdist_wheel
+
 Develop mode:
 python setup.py config --compiler=clang-cl `
                 build --compiler=clang-cl `

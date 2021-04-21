@@ -12,7 +12,7 @@ or using
 
 .. code-block::
 
-   python setup.py build_ext -i --compiler=clang-cl develop
+   python setup.py config --compiler=clang-cl build --compiler=clang-cl develop
 
 to install NumPy in-place when developing. ``runtests.py`` has also been
 improved to accept the ``--compiler`` flag and to pass it to the build
