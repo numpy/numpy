@@ -431,7 +431,7 @@ Now, to build our approximation, we first need to make sure that our singular
 values are ready for multiplication, so we build our ``Sigma`` matrix similarly
 to what we did before. The ``Sigma`` array must have dimensions
 ``(3, 768, 1024)``. In order to add the singular values to the diagonal of
-``Sigma``, we will use the ``fill_diagonal`` function from NumPy, using each of
+``Sigma``, we will use the `numpy.fill_diagonal` function from NumPy, using each of
 the 3 rows in ``s`` as the diagonal for each of the 3 matrices in ``Sigma``:
 
 ::
