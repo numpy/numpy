@@ -949,9 +949,10 @@ def split(ary, indices_or_sections, axis=0):
     >>> np.split(x, 2, (0, 1))
     array([[array([[0, 1],
                    [4, 5]]), array([[2, 3],
-                                    [6, 7]])], [array([[8,  9],
-                                                       [12, 13]]),
-            array([[10, 11], [14, 15]])]], dtype=object)
+                                    [6, 7]])],
+           [array([[ 8,  9],
+                   [12, 13]]), array([[10, 11],
+                                      [14, 15]])]], dtype=object)
     """
 
     def verify_equal_division(indices_or_sections, axis):
