@@ -3957,11 +3957,11 @@ def _quantile_is_valid(q):
     # avoid expensive reductions, relevant for arrays with < O(1000) elements
     if q.ndim == 1 and q.size < 10:
         for i in range(q.size):
-            if q[i] < 0.0 or q[i] > 1.0:
+            if not (0.0 <= q[i] <= 1.0):
                 return False
     else:
         # faster than any()
-        if np.count_nonzero(q < 0.0) or np.count_nonzero(q > 1.0):
+        if not (np.all(0 <= q) and np.all(q <= 1)):
             return False
     return True
 

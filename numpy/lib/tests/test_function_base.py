@@ -2750,6 +2750,10 @@ class TestPercentile:
         assert_equal(p, Fraction(7, 4))
         assert_equal(type(p), Fraction)
 
+        p = np.percentile(x, [Fraction(50)])
+        assert_equal(p, np.array([Fraction(7, 4)]))
+        assert_equal(type(p), np.ndarray)
+
     def test_api(self):
         d = np.ones(5)
         np.percentile(d, 5, None, None, False)
@@ -3144,6 +3148,16 @@ class TestPercentile:
         assert_equal(np.percentile(
             a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
 
+    def test_nan_q(self):
+        # GH18830
+        with pytest.raises(ValueError, match="Percentiles must be in"):
+            np.percentile([1, 2, 3, 4.0], np.nan)
+        with pytest.raises(ValueError, match="Percentiles must be in"):
+            np.percentile([1, 2, 3, 4.0], [np.nan])
+        q = np.linspace(1.0, 99.0, 16)
+        q[0] = np.nan
+        with pytest.raises(ValueError, match="Percentiles must be in"):
+            np.percentile([1, 2, 3, 4.0], q)
 
 class TestQuantile:
     # most of this is already tested by TestPercentile
@@ -3179,6 +3193,14 @@ class TestQuantile:
         q = np.quantile(x, Fraction(1, 2))
         assert_equal(q, Fraction(7, 4))
         assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, [Fraction(1, 2)])
+        assert_equal(q, np.array([Fraction(7, 4)]))
+        assert_equal(type(q), np.ndarray)
+
+        q = np.quantile(x, [[Fraction(1, 2)]])
+        assert_equal(q, np.array([[Fraction(7, 4)]]))
+        assert_equal(type(q), np.ndarray)
 
         # repeat with integral input but fractional quantile
         x = np.arange(8)
