@@ -327,6 +327,10 @@ from numpy.core.numerictypes import (
     issubdtype as issubdtype,
     sctype2char as sctype2char,
     find_common_type as find_common_type,
+    nbytes as nbytes,
+    cast as cast,
+    ScalarType as ScalarType,
+    typecodes as typecodes,
 )
 
 from numpy.core.shape_base import (
@@ -503,14 +507,6 @@ class vectorize:
     ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
-
-# Placeholders for miscellaneous objects
-# NOTE: `cast` and `nbytes` are in fact instances of a `dict` subclass that
-# converts passed `DTypeLike` objects into the actual keys (`np.generic`)
-ScalarType: Tuple[Type[Any], ...]
-cast: Dict[DTypeLike, Callable[..., ndarray[Any, dtype[Any]]]]
-nbytes: Dict[DTypeLike, int]
-typecodes: Dict[str, str]
 
 # Placeholders for Python-based functions
 def angle(z, deg=...): ...
