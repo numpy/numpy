@@ -326,7 +326,6 @@ from ._array_like import (
     _RecursiveSequence,
     _SupportsArray,
     _ArrayND,
-    _ArrayOrScalar,
     _ArrayLikeInt,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
