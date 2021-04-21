@@ -3677,13 +3677,14 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return mean(part[indexer], axis=axis, out=out)
 
 
-def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           interpolation=None, keepdims=None):
+def _percentile_dispatcher(a, q, axis=None, weights=None, out=None,
+                           overwrite_input=None, interpolation=None,
+                           keepdims=None):
     return (a, q, out)
 
 
 @array_function_dispatch(_percentile_dispatcher)
-def percentile(a, q, axis=None, out=None,
+def percentile(a, q, axis=None, weights=None, out=None,
                overwrite_input=False, interpolation='linear', keepdims=False):
     """
     Compute the q-th percentile of the data along the specified axis.
@@ -3704,6 +3705,27 @@ def percentile(a, q, axis=None, out=None,
 
         .. versionchanged:: 1.9.0
             A tuple of axes is supported
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the average according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis), or such that
+        weights.ndim == a.ndim and that `weights` and `a` are broadcastable.
+        If `weights=None`, then all data in `a` are assumed to have a weight
+        equal to one.
+
+        Weights cannot:
+            * be negative
+            * sum to 0
+        However, they can be
+            * 0, as long as they do not sum to 0
+            * less than 1.  In this case, all weights are re-normalized by
+              the lowest non-zero weight prior to computation.
+
+        For implementation details on how weights are used, please refer to
+        :func:`quantile`.
+
+        .. versionadded:: 1.15.0
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -3820,22 +3842,38 @@ def percentile(a, q, axis=None, out=None,
         ax.legend()
         plt.show()
 
+    some examples with weights:
+
+    >>> np.percentile(a, q=50, weights=np.ones(6).reshape(2,3))
+    3.5
+    >>> np.percentile(a, q=50, axis=0, weights=[1, 1])
+    array([6.5, 4.5, 2.5])
+    >>> np.percentile(a, q=50, axis=1, weights=[1, 1, 1])
+    array([ 7.,  2.])
+    >>> np.percentile(a, q=50, axis=1, weights=[0, 1, 2])
+    array([ 4.,  1.])
+    >>> np.percentile(a, q=[25, 50, 75], axis=1, weights=[0, 1, 2])
+    array([[4. , 1. ],
+           [4. , 1. ],
+           [5.5, 1.5]])
+
     """
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, interpolation, keepdims)
+        a, q, axis, weights, out, overwrite_input, interpolation, keepdims)
 
 
-def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         interpolation=None, keepdims=None):
+def _quantile_dispatcher(a, q, axis=None, weights=None, out=None,
+                         overwrite_input=None, interpolation=None,
+                         keepdims=None):
     return (a, q, out)
 
 
 @array_function_dispatch(_quantile_dispatcher)
-def quantile(a, q, axis=None, out=None,
+def quantile(a, q, axis=None, weights=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
     Compute the q-th quantile of the data along the specified axis.
@@ -3853,6 +3891,24 @@ def quantile(a, q, axis=None, out=None,
         Axis or axes along which the quantiles are computed. The
         default is to compute the quantile(s) along a flattened
         version of the array.
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the average according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis), or such that
+        weights.ndim == a.ndim and that `weights` and `a` are broadcastable.
+        If `weights=None`, then all data in `a` are assumed to have a weight
+        equal to one.
+
+        Weights cannot:
+            * be negative
+            * sum to 0
+        However, they can be
+            * 0, as long as they do not sum to 0
+            * less than 1.  In this case, all weights are re-normalized by
+              the lowest non-zero weight prior to computation.
+
+        .. versionadded:: 1.15.0
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -3908,6 +3964,80 @@ def quantile(a, q, axis=None, out=None,
     the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
     same as the maximum if ``q=1.0``.
 
+    In the simplest case, where all weights are integers,
+    the `weights` argument can be seen as repeating the data in the sample.
+    For example, if a = [1,2,3] and weights = [1,2,3], this will be identical
+    to the case where there are no weights and a = [1,2,2,3,3,3], with the
+    quantiles interpolated in the cumulative probability space of the
+    expanded array.
+
+    The algorithm is illustrated here:
+
+    >>> a = np.array([3, 5, 4])
+    >>> q = [0.25, 0.5, 0.75]
+    >>> axis = 0
+    >>> weights = [1, 3, 2]
+
+    Upon expansion, and converting q to quantile space ([0, 1])::
+
+        value       3   4   4   4   5   5
+        cum_prob    0  .2  .4  .6  .8   1
+        q=0.25            4
+        q=0.5                 4
+        q=0.75                    4.75
+
+    returns [4, 4, 4.75], based on the linear interpolation scheme.
+
+    Note that even though the number 4 comprises 50% of the entries,
+    its quantile band only spans [0.2, 0.6].  By the same token,
+    the number 5 spans [0.8, 1].  In the "transition band" [0.6, 0.8],
+    one must interpolate between the values 4 and 5.  Similarly for [0, 0.2].
+
+    In this method, the computation of weighted quantile uses
+    normalized cumulative weights, with boundary conditions and renormalization
+    to maintain consistency with the case where all weights are integers.
+
+    The method works when all weights are >= 1.  If a weight is < 1,
+    then all weights on the same axis are renormalized.
+
+    Our boundary condition requires that the left-most value represents the
+    0-th quantile.  That means, to compute the correct quantile bands, we
+    subtract a unit weight from the left end::
+
+        index (i)                0            1            2
+        value (v_i)              3            4            5
+        weight (w_i)             0            3            2    (total = 5)
+        norm. cum. weight        0           0.6           1
+
+    The normalized cumulative weights will equate the upper quantile bounds
+    associated with v_i.
+
+    To obtain the lower bounds, we compute the transition band width from i
+    to i+1 as t_i = (u_{i+1} - u_i) / w_{i+1}::
+
+        upper_bound (u_i)        0           0.6           1
+        trans. band width (t_i)       0.2           0.2
+
+    The lower quantile bounds are then computed as l_i = u_{i-1} + t_{i-1},
+    for i > 0::
+
+        lower_bound (l_i)        0           0.2          0.8
+
+    Some re-arrangement gives::
+
+        lower quantile bounds    0           0.2          0.8
+        upper quantile bounds    0           0.6           1
+
+    Combining and resorting the new lower/upper bounds of the bands gives::
+
+        new line up         3       3       4       4       5       5
+        quantile bounds     0       0       .2      .6      .8      1
+        q=0.25                                 4
+        q=0.5                                     4
+        q=0.75                                          4.75
+
+    returns [4, 4, 4.75]
+
     Examples
     --------
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
@@ -3933,18 +4063,35 @@ def quantile(a, q, axis=None, out=None,
     >>> np.quantile(b, 0.5, axis=1, overwrite_input=True)
     array([7.,  2.])
     >>> assert not np.all(a == b)
+
+    >>> np.quantile(a, q=0.5, weights=np.ones(6).reshape(2,3))
+    3.5
+    >>> np.quantile(a, q=0.5, axis=0, weights=[1, 1])
+    array([6.5, 4.5, 2.5])
+    >>> np.quantile(a, q=0.5, axis=1, weights=[1, 1, 1])
+    array([ 7.,  2.])
+    >>> np.quantile(a, q=0.5, axis=1, weights=[0, 1, 2])
+    array([ 4.,  1.])
+    >>> np.quantile(a, q=[0.25, 0.5, 0.75], axis=1, weights=[0, 1, 2])
+    array([[4. , 1. ],
+           [4. , 1. ],
+           [5.5, 1.5]])
     """
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, interpolation, keepdims)
+        a, q, axis, weights, out, overwrite_input, interpolation, keepdims)
 
 
-def _quantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
-                        interpolation='linear', keepdims=False):
+def _quantile_unchecked(a, q, axis=None, weights=None, out=None,
+                        overwrite_input=False, interpolation='linear',
+                        keepdims=False):
     """Assumes that q is in [0, 1], and is an ndarray"""
-    r, k = _ureduce(a, func=_quantile_ureduce_func, q=q, axis=axis, out=out,
+    wgt = _validate_weights(a, q, axis, weights)
+
+    r, k = _ureduce(a, func=_quantile_ureduce_func, q=q, axis=axis,
+                    weights=wgt, out=out,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims:
@@ -3977,8 +4124,77 @@ def _lerp(a, b, t, out=None):
     return lerp_interpolation
 
 
-def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                           interpolation='linear', keepdims=False):
+def _validate_weights(a, q, axis, weights):
+    if weights is None:
+        return None
+
+    a = asanyarray(a)
+    wgt = np.asanyarray(weights)
+
+    if not np.issubdtype(wgt.dtype, np.number):
+        # convert every element to np.float
+        # raises ValueError if any element fails to convert
+        wgt = wgt.astype(float)
+
+    if np.isnan(wgt).any():
+        raise ValueError("No weight can be NaN.")
+
+    if (wgt < 0).any():
+        raise ValueError("Negative weight not allowed.")
+
+    if issubclass(a.dtype.type, np.bool_):
+        raise TypeError("Boolean weights not supported")
+    elif issubclass(a.dtype.type, np.integer):
+        result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
+    else:
+        result_dtype = np.result_type(a.dtype, wgt.dtype)
+
+    # determine if the weights can be applied to the array
+    if a.shape == wgt.shape or wgt.size == 1:
+        broadcastable = True
+    elif a.ndim == wgt.ndim:  # same ndim, but some dims can be size = 1
+        broadcastable = all([a_dim == w_dim or w_dim == 1
+                             for a_dim, w_dim
+                             in zip(a.shape, wgt.shape)])
+    else:
+        broadcastable = False
+
+    if not broadcastable:  # 1-D array needs preprocessing before broadcast
+        if axis is None:
+            raise TypeError(
+                "Axis must be specified when shapes of a and weights "
+                "differ and not broadcastable.")
+        if wgt.ndim != 1:
+            raise TypeError(
+                "1D weights expected when shapes of a and weights differ "
+                " and not broadcastable.")
+        if wgt.shape[0] != a.shape[axis]:
+            raise ValueError(
+                "Length of weights not compatible with specified axis.")
+        # set up wgt to broadcast along axis
+        wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+        wgt = wgt.swapaxes(-1, axis)
+    else:  # same shape, or at least broadcastable
+        if axis is None:
+            # to avoid ap = a.flatten() in _quantile_ureduce_func,
+            # we explicitly set axis
+            axis = tuple(range(a.ndim))
+
+    scl = wgt.sum(axis=axis, dtype=result_dtype)
+    if np.any(scl == 0.0):
+        raise ZeroDivisionError(
+            "Weights sum to zero, can't be normalized")
+
+    # Obtain a weights array of the same shape as reduced a
+    wgt = np.broadcast_to(wgt, a.shape)
+    wgt, _ = _ureduce(wgt, func=lambda x, **kwargs: x, axis=axis)
+
+    return wgt
+
+
+def _quantile_ureduce_func(a, q, axis=None, weights=None, out=None,
+                           overwrite_input=False, interpolation='linear',
+                           keepdims=False):
     a = asarray(a)
 
     # ufuncs cause 0d array results to decay to scalars (see gh-13105), which
@@ -3987,7 +4203,10 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     # array.
     not_scalar = np.asanyarray
 
-    # prepare a for partitioning
+    if a.size == 1:  # all quantiles point to the same value
+        return np.repeat(a, q.size)
+
+    # prepare a for partioning
     if overwrite_input:
         if axis is None:
             ap = a.ravel()
@@ -4008,17 +4227,20 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         # before.
         raise ValueError("q must be a scalar or 1d")
 
-    Nx = ap.shape[axis]
-    indices = not_scalar(q * (Nx - 1))
-    # round fractional indices according to interpolation method
+    if weights is None:
+        Nx = ap.shape[axis]
+        indices = not_scalar(q * (Nx - 1))
+    else:
+        ap, indices, Nx = _indices_for_weighted_quantile(ap, q, axis, weights)
+
     if interpolation == 'lower':
-        indices = floor(indices).astype(intp)
+        indices = np.floor(indices).astype(intp)
     elif interpolation == 'higher':
-        indices = ceil(indices).astype(intp)
+        indices = np.ceil(indices).astype(intp)
     elif interpolation == 'midpoint':
-        indices = 0.5 * (floor(indices) + ceil(indices))
+        indices = 0.5 * (np.floor(indices) + np.ceil(indices))
     elif interpolation == 'nearest':
-        indices = around(indices).astype(intp)
+        indices = np.around(indices).astype(intp)
     elif interpolation == 'linear':
         pass  # keep index as fraction and interpolate
     else:
@@ -4029,7 +4251,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `ap` to be first.
     ap = np.moveaxis(ap, axis, 0)
-    del axis
 
     if np.issubdtype(indices.dtype, np.integer):
         # take the points along axis
@@ -4037,7 +4258,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         if np.issubdtype(a.dtype, np.inexact):
             # may contain nan, which would sort to the end
             ap.partition(concatenate((indices.ravel(), [-1])), axis=0)
-            n = np.isnan(ap[-1])
+            n = np.isnan(ap[-1:, ...])
         else:
             # cannot contain nan
             ap.partition(indices.ravel(), axis=0)
@@ -4046,30 +4267,47 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         r = take(ap, indices, axis=0, out=out)
 
     else:
-        # weight the points above and below the indices
+        if indices.ndim > 1:
+            # need to move axis to 0 just like ap
+            indices = np.moveaxis(indices, axis, 0)
 
+        # weight the points above and below the indices
         indices_below = not_scalar(floor(indices)).astype(intp)
         indices_above = not_scalar(indices_below + 1)
         indices_above[indices_above > Nx - 1] = Nx - 1
 
-        if np.issubdtype(a.dtype, np.inexact):
-            # may contain nan, which would sort to the end
-            ap.partition(concatenate((
-                indices_below.ravel(), indices_above.ravel(), [-1]
-            )), axis=0)
-            n = np.isnan(ap[-1])
+        weights_above = not_scalar(indices - indices_below)
+
+        if weights is None:
+
+            if np.issubdtype(a.dtype, np.inexact):
+                # may contain nan, which would sort to the end
+                ap.partition(concatenate((
+                    indices_below.ravel(), indices_above.ravel(), [-1]
+                )), axis=0)
+                n = np.isnan(ap[-1:, ...])
+            else:
+                # cannot contain nan
+                ap.partition(concatenate((
+                    indices_below.ravel(), indices_above.ravel()
+                )), axis=0)
+                n = np.array(False, dtype=bool)
+
+            x_below = take(ap, indices_below, axis=0)
+            x_above = take(ap, indices_above, axis=0)
+
+            weights_shape = indices.shape + (1,) * (ap.ndim - 1)
+            weights_above = weights_above.reshape(weights_shape)
         else:
-            # cannot contain nan
-            ap.partition(concatenate((
-                indices_below.ravel(), indices_above.ravel()
-            )), axis=0)
+            x_below = np.take_along_axis(ap, indices_below, axis=0)
+            x_above = np.take_along_axis(ap, indices_above, axis=0)
             n = np.array(False, dtype=bool)
 
-        weights_shape = indices.shape + (1,) * (ap.ndim - 1)
-        weights_above = not_scalar(indices - indices_below).reshape(weights_shape)
-
-        x_below = take(ap, indices_below, axis=0)
-        x_above = take(ap, indices_above, axis=0)
+            if q.ndim == 0:
+                # scalar q leads to point dim that needs to be squeezed out
+                x_below = x_below.squeeze(axis=0)
+                x_above = x_above.squeeze(axis=0)
+                weights_above = weights_above.squeeze(axis=0)
 
         r = _lerp(x_below, x_above, weights_above, out=out)
 
@@ -4079,9 +4317,221 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             # can't write to a scalar
             r = a.dtype.type(np.nan)
         else:
-            r[..., n] = a.dtype.type(np.nan)
+            r[..., n.squeeze(0)] = a.dtype.type(np.nan)
 
     return r
+
+
+def _indices_for_weighted_quantile(ap, q, axis, weights):
+    """
+    Computes the indices of weighted quantiles along axis.
+
+    Because of the extensive use of np.vectorize, axis is swapped to and kept
+    at -1 throughout this method.  It is then swapped back before
+    returning.
+
+    Parameters
+    ----------
+    ap : array_like
+        Array where weighted quantiles are evaluated along axis.
+    q : array_like
+        Quantiles sought.
+    axis : int
+        Axis along which to evaluate quantiles.  Will be moved to -1 for
+        np.vectorize operations.
+    weights : array_like
+        An array of weights associated with the values in `ap`.
+
+    Returns
+    -------
+    ap : array_like
+        An expanded twice as large as the input `ap` array to perform
+        interpolation on.  The axis of interest is moved to -1.
+    indices : array_like
+        Indices along the -1 axis of ap to interpolate.  All floats.
+    Nx : scalar
+        Length of the axis of ap.
+
+    Notes
+    -----
+    This method performs the bulk of the weighted quantile calculations
+    outlined in :func:`quantile`.  Assuming
+
+    >>> ap = np.array([4, 6, 5])
+    >>> q = [0.25, 0.5, 0.75]
+    >>> axis = 0
+    >>> weights = [3, 0, 2]
+
+    The algorithm here does the following in order:
+
+    1.) filter out cells in ap where weight=0.  This gives
+
+    >>> ap
+    array([4, nan, 5])
+
+    2.) sort ap (and re-ordering weights accordingly)
+
+    >>> ap_sorted
+    array([4, 5, nan])
+    >>> ws_sorted
+    array([3, 2, 0])
+
+    3.) normalize weights
+
+    >>> ws_sorted  # in this case nothing happens because all weights >= 1
+    array([3, 2, 0])
+
+    4.) enforce boundary condition by subtracting left-most weight by 1
+
+    >>> ws_sorted
+    array([2, 2, 0])
+
+    5.) compute quantile band upper bounds via normalized cumulative weights
+
+    >>> prob_band_upper_bounds
+    array([0.5, 1.0])
+
+    6.) calculate transition band widths (upper bounds / weights)
+
+    >>> transition_band_width
+    array([0.25, 0.25])
+
+    7.) obtain quantile band lower bounds, which is prior band upper bound +
+        transition band width
+
+    >>> prob_band_lower_bounds
+    array([0.0, 0.75])
+
+    8.) compute indices along ap (now twice as large) where q resides
+
+    >>> ap
+    array([4, 4, 5, 5])
+    >>> quantile_bounds
+    array([0.0, 0.5, 0.75, 1.0])
+    >>> q
+    [0.25, 0.5, 0.75]
+    >>> indices
+    array([0.5, 1.0, 2.0])
+
+    Applying indices to ap renders [4, 4, 5] for the prescribed q.  This is
+    expected if one simply expands the original ap_sorted by its weights::
+
+        ap          4       4       4       5       5
+        quantiles   0.     .25     .5      .75      1.
+        q                  .25     .5      .75
+    """
+    # first move to axis -1 for np.vectorize
+    ap = np.swapaxes(ap.astype('f8'), axis, -1)
+    weights = np.swapaxes(weights.astype('f8'), axis, -1)
+
+    # (1) values with weight=0 are made nan and later sorted to end of array
+    if (weights == 0).any():
+        ap[weights == 0] = np.nan
+
+    def _sort_by_index(vector, vec_indices):
+        return vector[vec_indices]
+    # this func vectorizes sort along axis
+    arraysort = np.vectorize(_sort_by_index, signature='(i),(i)->(i)')
+
+    # (2) compute the sorted data array.  NaNs are sorted to the end of array
+    ind_sorted = np.argsort(ap, axis=-1)  # sort values long axis
+    ap_sorted = arraysort(ap, ind_sorted)
+
+    # align the weights to the sorted data array
+    ws_sorted = arraysort(weights, ind_sorted)
+
+    del ind_sorted, weights
+
+    # along axis -1,
+    # (3) normalize weights by the smallest non-zero weight
+    # (4) if more than 1 weights, subtract the first one by unit weight
+    def _normalize_and_set_boundary(ws):  # ws is a 1-D vector
+        w_vec = ws.copy()
+        inds = w_vec > 0
+        if (w_vec[inds] < 1).any():
+            w_vec[inds] = w_vec[inds] / w_vec[inds].min()
+        if len(w_vec) > 1:
+            w_vec[0] -= 1
+        return w_vec
+
+    normalize_and_bound = np.vectorize(_normalize_and_set_boundary,
+                                       signature='(i)->(i)')
+    ws_sorted = normalize_and_bound(ws_sorted)
+
+    nonzero_w_inds = ws_sorted > 0
+
+    # compute the cumulative weights
+    cum_w = ws_sorted.cumsum(axis=-1)
+    cum_w_max = cum_w.max(axis=-1, keepdims=True)
+
+    # (5) compute the upper bounds of probability bands
+    # upper bound is just the normalized cumulative weight
+    prob_band_upper_bounds = cum_w / cum_w_max
+
+    del cum_w, cum_w_max
+
+    # (6) finding lower bound requires computing the transition band width,
+    # from the prior band's right edge to the current band's left edge,
+    # which is (current band upper bound - prior band upper bound) / weight
+    # first need the prior band upper bound
+    prior_band_upper_bounds = np.roll(prob_band_upper_bounds, 1, axis=-1)
+    prior_band_upper_bounds[..., 0] = 0  # nothing prior to left-most band
+
+    # the weight denominator could contain 0's (due to input or nans)
+    # so the division is only performed where weight > 0 (nonzero_w_inds)
+    transition_band_width = ws_sorted  # to initialize
+    # transition_band_width inherits the fact that
+    # band width == 0 where weight == 0
+    transition_band_width[nonzero_w_inds] =\
+        ((prob_band_upper_bounds[nonzero_w_inds] -
+          prior_band_upper_bounds[nonzero_w_inds]) /
+         ws_sorted[nonzero_w_inds])  # ok to overwrite ws_sorted
+
+    del ws_sorted, nonzero_w_inds
+
+    # the transition_band_width computed should align with the left band
+    # it bounds to, so it's rolled to the left by 1 position
+    transition_band_width = np.roll(transition_band_width, -1, axis=-1)
+
+    # (7) the lower bound to the current probability band is equal to
+    # prior band's upper bound + prior band's transition band width,
+    # so we sum and then roll to the right by 1 position
+    prob_band_lower_bounds =\
+        np.roll(prob_band_upper_bounds + transition_band_width, 1, axis=-1)
+    prob_band_lower_bounds[..., 0] = 0  # boundary condition on the left
+
+    del transition_band_width
+
+    # combine and riffle shuffle
+    quantile_bounds = np.concatenate([prob_band_upper_bounds,
+                                      prob_band_lower_bounds],
+                                     axis=-1)
+    quantile_bounds[..., 0::2] = prob_band_lower_bounds
+    quantile_bounds[..., 1::2] = prob_band_upper_bounds
+
+    del prob_band_lower_bounds, prob_band_upper_bounds
+
+    ap = np.concatenate([ap_sorted, ap_sorted], axis=-1)
+    ap[..., 0::2] = ap_sorted
+    ap[..., 1::2] = ap_sorted
+
+    del ap_sorted
+
+    # (8) interpolate for indices where q sits along axis of ap
+    Nx = ap.shape[-1]
+    indices_hard = np.arange(Nx)
+    vec_interp_func = np.vectorize(np.interp, signature='(n),(m),(m)->(n)')
+    if q.ndim == 0:  # 0-d array fails for vectorized interpolator
+        q = q[None]
+    indices = vec_interp_func(q, quantile_bounds, indices_hard)
+
+    del quantile_bounds, indices_hard
+
+    # after vectorized interpolation is over, move axis back from -1
+    ap = np.swapaxes(ap, axis, -1)
+    indices = np.swapaxes(indices, axis, -1)
+
+    return ap, indices, Nx
 
 
 def _trapz_dispatcher(y, x=None, dx=None, axis=None):
@@ -4115,7 +4565,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         a single axis by the trapezoidal rule. If 'y' is a 1-dimensional array,
         then the result is a float. If 'n' is greater than 1, then the result
         is an 'n-1' dimensional array.
-        
+
     See Also
     --------
     sum, cumsum
