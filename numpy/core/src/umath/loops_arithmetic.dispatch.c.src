@@ -41,48 +41,82 @@
  * #signed = 0*4, 1*4#
  */
 #if @signed@
-static NPY_INLINE npyv_@sfx@
-simd_floor_divide_@sfx@(npyv_lanetype_@sfx@ *src, const npyv_@sfx@x3 divisor, npyv_lanetype_@sfx@ scalar)
+static NPY_INLINE void
+simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
-    npyv_@sfx@ a, nsign_d, nsign_a, diff_sign, to_ninf, trunc, floor;
+    npyv_@sfx@  a, nsign_d, nsign_a, diff_sign, to_ninf, trunc, floor, neg, vzero;
     npyv_b@len@ greater_min, noverflow;
+    npy_bool    raise;
+    npy_uint64  tobits;
 
-    nsign_d   = npyv_setall_@sfx@(scalar < 0);
-    a         = npyv_load_@sfx@(src);
-    nsign_a   = npyv_cvt_@sfx@_b@len@(npyv_cmplt_@sfx@(a, nsign_d));
-    nsign_a   = npyv_and_@sfx@((npyv_@sfx@)nsign_a, npyv_setall_@sfx@(1));
-    diff_sign = npyv_sub_@sfx@((npyv_@sfx@)nsign_a, nsign_d);
-    to_ninf   = npyv_xor_@sfx@((npyv_@sfx@)nsign_a, nsign_d);
-    trunc     = npyv_divc_@sfx@(npyv_add_@sfx@(a, diff_sign), divisor);
+    npyv_lanetype_@sfx@ *src   = (npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ scalar = *(npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_@sfx@ *dst   = (npyv_lanetype_@sfx@ *) args[2];
+    const int vstep            = npyv_nlanes_@sfx@;
+    const npyv_@sfx@x3 divisor = npyv_divisor_@sfx@(scalar);
 
     if (NPY_UNLIKELY(-1 == scalar)) {
-        greater_min = npyv_cmpgt_@sfx@(a, npyv_setall_@sfx@(NPY_MIN_INT@len@));
-        noverflow   = npyv_cvt_b@len@_@sfx@(npyv_setall_@sfx@(-1));
-        noverflow   = npyv_and_b@len@(noverflow, greater_min);
-        if (npyv_tobits_b@len@(noverflow) != (((npy_uint64)1) << npyv_nlanes_@sfx@)-1) {
+        noverflow = npyv_cvt_b@len@_@sfx@(npyv_setall_@sfx@(-1));
+        vzero     = npyv_zero_@sfx@();
+        for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+            a           = npyv_load_@sfx@(src);
+            greater_min = npyv_cmpgt_@sfx@(a, npyv_setall_@sfx@(NPY_MIN_INT@len@));
+            noverflow   = npyv_and_b@len@(noverflow, greater_min);
+            neg         = npyv_ifsub_@sfx@(greater_min, vzero, a, vzero);
+
+            npyv_store_@sfx@(dst, neg);
+        }
+        tobits = npyv_tobits_b@len@(noverflow);
+    #if npyv_nlanes_@sfx@ == 64
+        raise = (~tobits) != 0;
+    #else
+        raise = tobits != (1ULL << vstep)-1;
+    #endif
+
+        for (; len > 0; --len, ++src, ++dst) {
+            npyv_lanetype_@sfx@ a = *src;
+            if (a == NPY_MIN_INT@len@) {
+                raise = NPY_TRUE;
+                *dst  = 0;
+            } else {
+                *dst = -a;
+            }
+        }
+        if (raise) {
             npy_set_floatstatus_divbyzero();
         }
-        floor = npyv_ifsub_@sfx@(greater_min, trunc, to_ninf, npyv_zero_@sfx@());
-    }
-    else {
-        floor = npyv_sub_@sfx@(trunc, to_ninf);
+    } else {
+        for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+            nsign_d   = npyv_setall_@sfx@(scalar < 0);
+            a         = npyv_load_@sfx@(src);
+            nsign_a   = npyv_cvt_@sfx@_b@len@(npyv_cmplt_@sfx@(a, nsign_d));
+            nsign_a   = npyv_and_@sfx@(nsign_a, npyv_setall_@sfx@(1));
+            diff_sign = npyv_sub_@sfx@(nsign_a, nsign_d);
+            to_ninf   = npyv_xor_@sfx@(nsign_a, nsign_d);
+            trunc     = npyv_divc_@sfx@(npyv_add_@sfx@(a, diff_sign), divisor);
+            floor     = npyv_sub_@sfx@(trunc, to_ninf);
+
+            npyv_store_@sfx@(dst, floor);
+        }
+
+        for (; len > 0; --len, ++src, ++dst) {
+            const npyv_lanetype_@sfx@ a = *src;
+            if (scalar == 0 || (a == (npyv_lanetype_@sfx@)NPY_MIN_INT@len@ && scalar == (npyv_lanetype_@sfx@)-1)) {
+                 npy_set_floatstatus_divbyzero();
+                 *dst = 0;
+            } else {
+                *dst = a / scalar;
+                /* Negative quotients needs to be rounded down */
+                if (((a > 0) != (scalar > 0)) && (*dst * scalar != a)) {
+                    *dst = *dst - 1;
+                }
+            }
+        }
     }
 
-    return floor;
+    npyv_cleanup();
 }
 #else
-static NPY_INLINE npyv_@sfx@
-simd_floor_divide_@sfx@(npyv_lanetype_@sfx@ *src, const npyv_@sfx@x3 divisor, npyv_lanetype_@sfx@ scalar)
-{
-    npyv_@sfx@ a, c;
-
-    a = npyv_load_@sfx@(src);
-    c = npyv_divc_@sfx@(a, divisor);
-
-    return c;
-}
-#endif
-
 static NPY_INLINE void
 simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
@@ -93,7 +127,8 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
     const npyv_@sfx@x3 divisor = npyv_divisor_@sfx@(scalar);
 
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
-        npyv_@sfx@ c = simd_floor_divide_@sfx@(src, divisor, scalar);
+        npyv_@sfx@ a = npyv_load_@sfx@(src);
+        npyv_@sfx@ c = npyv_divc_@sfx@(a, divisor);
         npyv_store_@sfx@(dst, c);
     }
 
@@ -104,17 +139,12 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
              *dst = 0;
         } else {
             *dst = a / scalar;
-#if @signed@
-            /* Negative quotients needs to be rounded down */
-            if (((a > 0) != (scalar > 0)) && (*dst * scalar != a)) {
-                *dst = *dst - 1;
-            }
-#endif
         }
     }
 
     npyv_cleanup();
 }
+#endif
 /**end repeat**/
 #endif
 
@@ -159,8 +189,6 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
  */
 #if NPY_BITSOF_@TYPE@ == 64 && !defined(NPY_HAVE_VSX4) && (defined(NPY_HAVE_VSX) || defined(NPY_HAVE_NEON))
     #undef TO_SIMD_SFX
-    #undef SIMD_TYPE
-    #undef SIMD_DIVIDE
 #endif
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(SIMD_DIVIDE)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
