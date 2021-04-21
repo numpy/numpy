@@ -59,7 +59,7 @@ that are run; but if it is greater than 1, then the tests will also provide
 warnings on missing tests. So if you want to run every test and get
 messages about which modules don't have tests::
 
-  >>> numpy.test(label='full', verbose=2) # or numpy.test('full', 2)
+  >>> numpy.test(label='full', verbose=2)  # or numpy.test('full', 2)
 
 Finally, if you are only interested in testing a subset of NumPy, for
 example, the ``core`` module, use the following::
@@ -101,7 +101,7 @@ module called ``test_yyy.py``.  If you only need to test one aspect of
 ``zzz``, you can simply add a test function::
 
   def test_zzz():
-      assert_(zzz() == 'Hello from zzz')
+      assert zzz() == 'Hello from zzz'
 
 More often, we need to group a number of tests together, so we create
 a test class::
@@ -110,6 +110,7 @@ a test class::
 
   # import xxx symbols
   from numpy.xxx.yyy import zzz
+  import pytest
 
   class TestZzz:
       def test_simple(self):
@@ -132,6 +133,7 @@ should be preferred over their legacy counterparts
 :func:`numpy.testing.assert_raises` and :func:`numpy.testing.assert_warns`,
 since the pytest variants are more broadly used and allow more explicit
 targeting of warnings and errors when used with the ``match`` regex.
+
 
 Note that ``test_`` functions or methods should not have a docstring, because
 that makes it hard to identify the test from the output of running the test
@@ -292,12 +294,12 @@ from one in `numpy/linalg/tests/test_linalg.py
 
   class LinalgTestCase:
       def test_single(self):
-          a = array([[1.,2.], [3.,4.]], dtype=single)
+          a = array([[1., 2.], [3., 4.]], dtype=single)
           b = array([2., 1.], dtype=single)
           self.do(a, b)
 
       def test_double(self):
-          a = array([[1.,2.], [3.,4.]], dtype=double)
+          a = array([[1., 2.], [3., 4.]], dtype=double)
           b = array([2., 1.], dtype=double)
           self.do(a, b)
 
@@ -306,14 +308,14 @@ from one in `numpy/linalg/tests/test_linalg.py
   class TestSolve(LinalgTestCase):
       def do(self, a, b):
           x = linalg.solve(a, b)
-          assert_almost_equal(b, dot(a, x))
-          assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
+          assert_allclose(b, dot(a, x))
+          assert imply(isinstance(b, matrix), isinstance(x, matrix))
 
   class TestInv(LinalgTestCase):
       def do(self, a, b):
           a_inv = linalg.inv(a)
-          assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
-          assert_(imply(isinstance(a, matrix), isinstance(a_inv, matrix)))
+          assert_allclose(dot(a, a_inv), identity(asarray(a).shape[0]))
+          assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
 
 In this case, we wanted to test solving a linear algebra problem using
 matrices of several data types, using ``linalg.solve`` and
