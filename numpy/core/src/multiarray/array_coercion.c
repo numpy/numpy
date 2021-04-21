@@ -573,7 +573,7 @@ npy_new_coercion_cache(
  * @param current
  * @return next coercion cache object (or NULL)
  */
-NPY_NO_EXPORT NPY_INLINE coercion_cache_obj *
+NPY_NO_EXPORT coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current)
 {
     coercion_cache_obj *next = current->next;
@@ -588,7 +588,7 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
     return next;
 }
 
-NPY_NO_EXPORT NPY_INLINE void
+NPY_NO_EXPORT void
 npy_free_coercion_cache(coercion_cache_obj *next) {
     /* We only need to check from the last used cache pos */
     while (next != NULL) {
