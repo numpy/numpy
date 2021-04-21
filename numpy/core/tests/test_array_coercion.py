@@ -149,7 +149,7 @@ class TestStringDiscovery:
         # For comparison, the current default array path upgrades the dtype,
         # even (or especially) when the array is empty.
         assert np.array([], dtype=type(scalar)).dtype.itemsize != 0
-        # but now not if a concret empty string was found:
+        # but now not if a concrete empty string was found:
         assert np.array([b''], dtype=type(scalar)).dtype.itemsize == 0
 
     @pytest.mark.parametrize("obj",
