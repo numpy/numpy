@@ -3960,7 +3960,6 @@ def _quantile_is_valid(q):
             if not (0.0 <= q[i] <= 1.0):
                 return False
     else:
-        # faster than any()
         if not (np.all(0 <= q) and np.all(q <= 1)):
             return False
     return True
