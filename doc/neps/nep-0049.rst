@@ -29,9 +29,69 @@ Motivation and Scope
 
 Users may wish to override the internal data memory routines with ones of their
 own. Two such use-cases are to ensure data alignment and to pin certain
-allocations to certain NUMA cores.
+allocations to certain NUMA cores. This desire for alignment was disucssed
+multiple times on the mailing list `in 2005`_,  and in `issue 5312`_ in 2014,
+which led to `PR 5457` and more mailing list discussions here_ `and here`_. In
+a comment on the issue `from 2017`_, a user described how 64-byte alignment
+improved performance by 40x.
 
-User who wish to change the NumPy data memory management routines will use
+Also related is `issue 14177` around the use of ``madvise`` and huge pages on
+Linux.
+
+Various tracing and profiling libraries like filprofiler_ or `electric fence`_
+override ``malloc``.
+
+The long CPython discussion of `BPO 18835`_  began with discussing the need for
+``PyMem_Alloc32`` and ``PyMem_Alloc64``.  The early conclusion was that the
+cost (of wasted padding) vs. the benifit of aligned memory is best left to the
+user, but then evolves into a discussion of various proposals to deal with
+memory allocations, including `PEP 445`_ `memory interfaces`_ to
+``PyTraceMalloc_Track`` which apparently was explictly added for NumPy.
+
+Allowing users to implement different strategies via the NumPy C-API will
+enable exploration of this rich area of possible optimizations. The intention
+is to create a flexible enough interface without burdening normative users.
+
+_`issue 5312`: https://github.com/numpy/numpy/issues/5312 
+_`from 2017`: https://github.com/numpy/numpy/issues/5312#issuecomment-315234656
+_`in 2005`: https://numpy-discussion.scipy.narkive.com/MvmMkJcK/numpy-arrays-data-allocation-and-simd-alignement
+_`here`: http://numpy-discussion.10968.n7.nabble.com/Aligned-configurable-memory-allocation-td39712.html
+_`and here`: http://numpy-discussion.10968.n7.nabble.com/Numpy-s-policy-for-releasing-memory-td1533.html
+_`issue 14177`: https://github.com/numpy/numpy/issues/14177
+_`filprofiler`: https://github.com/pythonspeed/filprofiler/blob/master/design/allocator-overrides.md
+_`electric fence`: https://github.com/boundarydevices/efence
+_`memory interfaces`: https://docs.python.org/3/c-api/memory.html#customize-memory-allocators
+_`BPO 18835`: https://bugs.python.org/issue18835
+_`PEP 445`: https://www.python.org/dev/peps/pep-0445/
+
+Usage and Impact
+----------------
+
+The new functions can only be accessed via the NumPy C-API. An example is
+included later in the NEP. The added ``struct`` will increase the size of the
+``ndarray`` object. It is a necessary price to be paid for this approach. We
+can be reasonably sure that the change in size will have a minimal impact on
+end-user code because NumPy version 1.20 already changed the object size.
+
+The implementation preserves the use of ``PyTraceMalloc_Track`` to track
+allocations already present in NumPy.
+
+Backward compatibility
+----------------------
+
+The design will not break backward compatibility. Projects that were assigning
+to the ``ndarray->data`` pointer were already breaking the current memory
+management strategy (backed by ``npy_alloc_cache``) and should restore
+``ndarray->data`` before calling ``Py_DECREF``. As mentioned above, the change
+in size should not impact end-users.
+
+Detailed description
+--------------------
+
+High level design
+=================
+
+Users who wish to change the NumPy data memory management routines will use
 :c:func:`PyDataMem_SetHandler`, which uses a :c:type:`PyDataMem_Handler`
 structure to hold pointers to functions used to manage the data memory. The
 calls are wrapped by internal routines to call :c:func:`PyTraceMalloc_Track`,
@@ -46,30 +106,8 @@ time of its instantiation, and these will be used to reallocate or free the
 data memory of the instance. Internally NumPy may use ``memcpy` or ``memset``
 on the data ``ptr``.
 
-Usage and Impact
-----------------
-
-The new functions can only be accessed via the NumPy C-API. An example is
-included later in the NEP. The added ``struct`` will increase the size of the
-``ndarray`` object. It is one of the major drawbacks of this approach. We can
-be reasonably sure that the change in size will have a minimal impact on
-end-user code because NumPy version 1.20 already changed the object size.
-
-Backward compatibility
-----------------------
-
-The design will not break backward compatibility. Projects that were assigning
-to the ``ndarray->data`` pointer were already breaking the current memory
-management strategy (backed by ``npy_alloc_cache``) and should restore
-``ndarray->data`` before calling ``Py_DECREF``. As mentioned above, the change
-in size should not impact end-users.
-
-Detailed description
---------------------
-
 NumPy C-API functions
 =====================
-
 
 .. c:type:: PyDataMem_Handler
 
@@ -118,7 +156,6 @@ For an example of setting up and using the PyDataMem_Handler, see the test in
     manipulation
 
 
-
 .. c:function:: PyDataMem_EventHookFunc * PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook, void *user_data, void **old_data)
 
     Sets the allocation event hook for numpy array data.
@@ -146,11 +183,14 @@ Sample code
 
 This code adds a 64-byte header to each ``data`` pointer and stores information
 about the allocation in the header. Before calling ``free``, a check ensures
-the ``sz`` argument is correct ::
+the ``sz`` argument is correct.
+
+.. code-block:: c
 
     #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
     #include <numpy/arrayobject.h>
     NPY_NO_EXPORT void *
+
     shift_alloc(size_t sz) {
         char *real = (char *)malloc(sz + 64);
         if (real == NULL) {
@@ -159,6 +199,7 @@ the ``sz`` argument is correct ::
         snprintf(real, 64, "originally allocated %ld", (unsigned long)sz);
         return (void *)(real + 64);
     }
+
     NPY_NO_EXPORT void *
     shift_zero(size_t sz, size_t cnt) {
         char *real = (char *)calloc(sz + 64, cnt);
@@ -169,6 +210,7 @@ the ``sz`` argument is correct ::
                  (unsigned long)sz);
         return (void *)(real + 64);
     }
+
     NPY_NO_EXPORT void
     shift_free(void * p, npy_uintp sz) {
         if (p == NULL) {
@@ -196,6 +238,7 @@ the ``sz`` argument is correct ::
             }
         }
     }
+
     NPY_NO_EXPORT void *
     shift_realloc(void * p, npy_uintp sz) {
         if (p != NULL) {
@@ -216,6 +259,7 @@ the ``sz`` argument is correct ::
             return (void *)(real + 64);
         }
     }
+
     static PyDataMem_Handler new_handler = {
         "secret_data_allocator",
         shift_alloc,      /* alloc */
@@ -233,7 +277,6 @@ the ``sz`` argument is correct ::
         }
         return PyUnicode_FromString(
                         PyDataMem_GetHandlerName((PyArrayObject*)args));
-    
     };
 
     static PyObject* mem_policy_set_new_policy(PyObject *self, PyObject *args)
@@ -244,7 +287,6 @@ the ``sz`` argument is correct ::
      
     };
     
-
     static PyObject* mem_policy_set_old_policy(PyObject *self, PyObject *args)
     {
     
@@ -290,16 +332,14 @@ The NEP has been implemented in `PR  17582`_.
 Alternatives
 ------------
 
-These were discussed in `issue 17467`_. `PR 5457`_ proposed a
-global interface for specifying aligned allocations. Alignment can be
-crucial for some applications, but in general is just extra overhead, so it
-should be configurable by the user/app. ``PyArray_malloc_aligned`` and
-friends were added to NumPy with the random API refactor. and are used there
-for performance.
+These were discussed in `issue 17467`_. `PR 5457`_  and `PR 5470`_ proposed a
+global interface for specifying aligned allocations. 
 
-`PR 5470`_ had two parts: configurable `PyDataMem*` overrides and a hook
-mechanism. The hook mechanism was merged but the part described by this NEP
-was not.
+``PyArray_malloc_aligned`` and friends were added to NumPy with the random API
+refactor. and are used there for performance.
+
+`PR 390`_ had two parts: expose `PyDataMem_*` via the NumPy C-API, and a hook
+mechanism. The PR was merged with no example code for using these features.
 
 Discussion
 ----------
@@ -318,6 +358,7 @@ References and Footnotes
 .. _`PR 17582`: https://github.com/numpy/numpy/pull/17582
 .. _`PR 5457`: https://github.com/numpy/numpy/pull/5457
 .. _`PR 5470`: https://github.com/numpy/numpy/pull/5470
+.. _`PR 390`: https://github.com/numpy/numpy/pull/390
 .. _`issue 17467`: https://github.com/numpy/numpy/issues/17467
 .. _`comment in the PR`: https://github.com/numpy/numpy/pull/17582#issuecomment-809145547
 .. _pnumpy: https://quansight.github.io/pnumpy/stable/index.html
