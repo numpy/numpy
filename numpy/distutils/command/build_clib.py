@@ -271,6 +271,7 @@ class build_clib(old_build_clib):
         # filtering C dispatch-table sources when optimization is not disabled,
         # otherwise treated as normal sources.
         copt_c_sources = []
+        copt_cxx_sources = []
         copt_baseline_flags = []
         copt_macros = []
         if not self.disable_optimization:
@@ -280,15 +281,34 @@ class build_clib(old_build_clib):
             include_dirs.append(dispatch_hpath)
 
             copt_build_src = None if self.inplace else bsrc_dir
-            copt_c_sources = [
-                c_sources.pop(c_sources.index(src))
-                for src in c_sources[:] if src.endswith(".dispatch.c")
-            ]
+            for _srcs, _dst, _ext in (
+                ((c_sources,), copt_c_sources, ('.dispatch.c',)),
+                ((c_sources, cxx_sources), copt_cxx_sources,
+                    ('.dispatch.cpp', '.dispatch.cxx'))
+            ):
+                for _src in _srcs:
+                    _dst += [
+                        _src.pop(_src.index(s))
+                        for s in _src[:] if s.endswith(_ext)
+                    ]
             copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
         else:
             copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
 
         objects = []
+        if copt_cxx_sources:
+            log.info("compiling C++ dispatch-able sources")
+            objects += self.compiler_opt.try_dispatch(
+                copt_c_sources,
+                output_dir=self.build_temp,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_postargs,
+                ccompiler=cxx_compiler
+            )
+
         if copt_c_sources:
             log.info("compiling C dispatch-able sources")
             objects += self.compiler_opt.try_dispatch(copt_c_sources,

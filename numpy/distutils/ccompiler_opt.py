@@ -543,14 +543,14 @@ class _Distutils:
     def __init__(self, ccompiler):
         self._ccompiler = ccompiler
 
-    def dist_compile(self, sources, flags, **kwargs):
+    def dist_compile(self, sources, flags, ccompiler=None, **kwargs):
         """Wrap CCompiler.compile()"""
         assert(isinstance(sources, list))
         assert(isinstance(flags, list))
         flags = kwargs.pop("extra_postargs", []) + flags
-        return self._ccompiler.compile(
-            sources, extra_postargs=flags, **kwargs
-        )
+        if not ccompiler:
+            ccompiler = self._ccompiler
+        return ccompiler.compile(sources, extra_postargs=flags, **kwargs)
 
     def dist_test(self, source, flags):
         """Return True if 'CCompiler.compile()' able to compile
@@ -2143,7 +2143,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         """
         return self.parse_dispatch_names
 
-    def try_dispatch(self, sources, src_dir=None, **kwargs):
+    def try_dispatch(self, sources, src_dir=None, ccompiler=None, **kwargs):
         """
         Compile one or more dispatch-able sources and generates object files,
         also generates abstract C config headers and macros that
@@ -2165,6 +2165,11 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         src_dir : str
             Path of parent directory for the generated headers and wrapped sources.
             If None(default) the files will generated in-place.
+
+        ccompiler: CCompiler
+            Distutils `CCompiler` instance to be used for compilation.
+            If None (default), the provided instance during the initialization
+            will be used instead.
 
         **kwargs : any
             Arguments to pass on to the `CCompiler.compile()`
@@ -2220,7 +2225,9 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         #   among them.
         objects = []
         for flags, srcs in to_compile.items():
-            objects += self.dist_compile(srcs, list(flags), **kwargs)
+            objects += self.dist_compile(
+                srcs, list(flags), ccompiler=ccompiler, **kwargs
+            )
         return objects
 
     def generate_dispatch_header(self, header_path):
@@ -2454,7 +2461,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         return wrap_path
 
     def _generate_config(self, output_dir, dispatch_src, targets, has_baseline=False):
-        config_path = os.path.basename(dispatch_src).replace(".c", ".h")
+        config_path = os.path.basename(dispatch_src)
+        config_path = os.path.splitext(config_path)[0] + '.h'
         config_path = os.path.join(output_dir, config_path)
         # check if targets didn't change to avoid recompiling
         cache_hash = self.cache_hash(targets, has_baseline)
