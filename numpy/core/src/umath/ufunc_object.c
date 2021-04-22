@@ -1033,65 +1033,6 @@ check_for_trivial_loop(PyUFuncObject *ufunc,
     return 1;
 }
 
-static void
-trivial_two_operand_loop(PyArrayObject **op,
-                    PyUFuncGenericFunction innerloop,
-                    void *innerloopdata)
-{
-    char *data[2];
-    npy_intp count[2], stride[2];
-    int needs_api;
-    NPY_BEGIN_THREADS_DEF;
-
-    needs_api = PyDataType_REFCHK(PyArray_DESCR(op[0])) ||
-                PyDataType_REFCHK(PyArray_DESCR(op[1]));
-
-    PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(op[0], op[1],
-                                            count[0],
-                                            data[0], data[1],
-                                            stride[0], stride[1]);
-    count[1] = count[0];
-    NPY_UF_DBG_PRINT1("two operand loop count %d\n", (int)count[0]);
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS_THRESHOLDED(count[0]);
-    }
-
-    innerloop(data, count, stride, innerloopdata);
-
-    NPY_END_THREADS;
-}
-
-static void
-trivial_three_operand_loop(PyArrayObject **op,
-                    PyUFuncGenericFunction innerloop,
-                    void *innerloopdata)
-{
-    char *data[3];
-    npy_intp count[3], stride[3];
-    int needs_api;
-    NPY_BEGIN_THREADS_DEF;
-
-    needs_api = PyDataType_REFCHK(PyArray_DESCR(op[0])) ||
-                PyDataType_REFCHK(PyArray_DESCR(op[1])) ||
-                PyDataType_REFCHK(PyArray_DESCR(op[2]));
-
-    PyArray_PREPARE_TRIVIAL_TRIPLE_ITERATION(op[0], op[1], op[2],
-                                            count[0],
-                                            data[0], data[1], data[2],
-                                            stride[0], stride[1], stride[2]);
-    count[1] = count[0];
-    count[2] = count[0];
-    NPY_UF_DBG_PRINT1("three operand loop count %d\n", (int)count[0]);
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS_THRESHOLDED(count[0]);
-    }
-
-    innerloop(data, count, stride, innerloopdata);
-
-    NPY_END_THREADS;
-}
 
 /*
  * Calls the given __array_prepare__ function on the operand *op,
@@ -1164,6 +1105,145 @@ prepare_ufunc_output(PyUFuncObject *ufunc,
 
     return 0;
 }
+
+
+/*
+ * Check whether a trivial loop is possible and call the innerloop if it is.
+ * A trivial loop is defined as one where a single strided inner-loop call
+ * is possible.
+ *
+ * This function only supports a single output (due to the overlap check).
+ * It always accepts 0-D arrays and will broadcast them.  The function will
+ * cannot broadcast any other array (as it requires a single stride).
+ * The function accepts all 1-D arrays, and N-D arrays that are either all
+ * C- or all F-contiguous.
+ *
+ * Returns -2 if a trivial loop is not possible, 0 on success and -1 on error.
+ */
+static NPY_INLINE int
+try_trivial_single_output_loop(PyUFuncObject *ufunc,
+        PyArrayObject *op[], PyArray_Descr *dtypes[],
+        NPY_ORDER order, PyObject *arr_prep[], ufunc_full_args full_args,
+        PyUFuncGenericFunction innerloop, void *innerloopdata)
+{
+    int nin = ufunc->nin;
+    int nop = nin + 1;
+    assert(ufunc->nout == 1);
+
+    /* The order of all N-D contiguous operands, can be fixed by `order` */
+    int operation_order = 0;
+    if (order == NPY_CORDER) {
+        operation_order = NPY_ARRAY_C_CONTIGUOUS;
+    }
+    else if (order == NPY_FORTRANORDER) {
+        operation_order = NPY_ARRAY_F_CONTIGUOUS;
+    }
+
+    int operation_ndim = 0;
+    npy_intp *operation_shape = NULL;
+    npy_intp fixed_strides[NPY_MAXARGS];
+
+    for (int iop = 0; iop < nop; iop++) {
+        if (op[iop] == NULL) {
+            /* The out argument may be NULL (and only that one); fill later */
+            assert(iop == nin);
+            continue;
+        }
+
+        int op_ndim = PyArray_NDIM(op[iop]);
+
+        /* Special case 0-D since we can handle broadcasting using a 0-stride */
+        if (op_ndim == 0) {
+            fixed_strides[iop] = 0;
+            continue;
+        }
+
+        /* First non 0-D op: fix dimensions, shape (order is fixed later) */
+        if (operation_ndim == 0) {
+            operation_ndim = op_ndim;
+            operation_shape = PyArray_SHAPE(op[iop]);
+        }
+        else if (op_ndim != operation_ndim) {
+            return -2;  /* dimension mismatch (except 0-d ops) */
+        }
+        else if (!PyArray_CompareLists(
+                operation_shape, PyArray_DIMS(op[iop]), op_ndim)) {
+            return -2;  /* shape mismatch */
+        }
+
+        if (op_ndim == 1) {
+            fixed_strides[iop] = PyArray_STRIDES(op[iop])[0];
+        }
+        else {
+            fixed_strides[iop] = PyArray_ITEMSIZE(op[iop]);  /* contiguous */
+
+            /* This op must match the operation order (and be contiguous) */
+            int op_order = (PyArray_FLAGS(op[iop]) &
+                            (NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS));
+            if (op_order == 0) {
+                return -2;  /* N-dimensional op must be contiguous */
+            }
+            else if (operation_order == 0) {
+                operation_order = op_order;  /* op fixes order */
+            }
+            else if (operation_order != op_order) {
+                return -2;
+            }
+        }
+    }
+
+    if (op[nin] == NULL) {
+        Py_INCREF(dtypes[nin]);
+        op[nin] = (PyArrayObject *) PyArray_NewFromDescr(&PyArray_Type,
+                dtypes[nin], operation_ndim, operation_shape,
+                NULL, NULL, operation_order==NPY_ARRAY_F_CONTIGUOUS, NULL);
+        if (op[nin] == NULL) {
+            return -1;
+        }
+        fixed_strides[nin] = dtypes[nin]->elsize;
+    }
+    else {
+        /* If any input overlaps with the output, we use the full path. */
+        for (int iop = 0; iop < nin; iop++) {
+            if (!PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(
+                    op[iop], op[nin],
+                    PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                    PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
+                return -2;
+            }
+        }
+    }
+
+    /* Call the __prepare_array__ if necessary */
+    if (prepare_ufunc_output(ufunc, &op[nin],
+            arr_prep[0], full_args, 0) < 0) {
+        return -1;
+    }
+
+    /*
+     * We can use the trivial (single inner-loop call) optimization
+     * and `fixed_strides` holds the strides for that call.
+     */
+    char *data[NPY_MAXARGS];
+    npy_intp count = PyArray_MultiplyList(operation_shape, operation_ndim);
+    int needs_api = 0;
+    NPY_BEGIN_THREADS_DEF;
+
+    for (int iop = 0; iop < nop; iop++) {
+        data[iop] = PyArray_BYTES(op[iop]);
+        needs_api |= PyDataType_REFCHK(dtypes[iop]);
+    }
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
+    }
+
+    innerloop(data, &count, fixed_strides, innerloopdata);
+
+    NPY_END_THREADS;
+    return 0;
+}
+
 
 static int
 iterator_loop(PyUFuncObject *ufunc,
@@ -1325,7 +1405,6 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
                     ufunc_full_args full_args,
                     npy_uint32 *op_flags)
 {
-    npy_intp nin = ufunc->nin, nout = ufunc->nout;
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
     int needs_api = 0;
@@ -1336,113 +1415,12 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
     }
 
     /* First check for the trivial cases that don't need an iterator */
-    if (trivial_loop_ok) {
-        if (nin == 1 && nout == 1) {
-            if (op[1] == NULL &&
-                        (order == NPY_ANYORDER || order == NPY_KEEPORDER) &&
-                        PyArray_TRIVIALLY_ITERABLE(op[0])) {
-                Py_INCREF(dtypes[1]);
-                op[1] = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                             dtypes[1],
-                             PyArray_NDIM(op[0]),
-                             PyArray_DIMS(op[0]),
-                             NULL, NULL,
-                             PyArray_ISFORTRAN(op[0]) ?
-                                            NPY_ARRAY_F_CONTIGUOUS : 0,
-                             NULL);
-                if (op[1] == NULL) {
-                    return -1;
-                }
-
-                /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(ufunc, &op[1],
-                                    arr_prep[0], full_args, 0) < 0) {
-                    return -1;
-                }
-
-                NPY_UF_DBG_PRINT("trivial 1 input with allocated output\n");
-                trivial_two_operand_loop(op, innerloop, innerloopdata);
-
-                return 0;
-            }
-            else if (op[1] != NULL &&
-                        PyArray_NDIM(op[1]) >= PyArray_NDIM(op[0]) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
-                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
-                                                        PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
-
-                /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(ufunc, &op[1],
-                                    arr_prep[0], full_args, 0) < 0) {
-                    return -1;
-                }
-
-                NPY_UF_DBG_PRINT("trivial 1 input\n");
-                trivial_two_operand_loop(op, innerloop, innerloopdata);
-
-                return 0;
-            }
-        }
-        else if (nin == 2 && nout == 1) {
-            if (op[2] == NULL &&
-                        (order == NPY_ANYORDER || order == NPY_KEEPORDER) &&
-                        PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1],
-                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ,
-                                                        PyArray_TRIVIALLY_ITERABLE_OP_READ)) {
-                PyArrayObject *tmp;
-                /*
-                 * Have to choose the input with more dimensions to clone, as
-                 * one of them could be a scalar.
-                 */
-                if (PyArray_NDIM(op[0]) >= PyArray_NDIM(op[1])) {
-                    tmp = op[0];
-                }
-                else {
-                    tmp = op[1];
-                }
-                Py_INCREF(dtypes[2]);
-                op[2] = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                 dtypes[2],
-                                 PyArray_NDIM(tmp),
-                                 PyArray_DIMS(tmp),
-                                 NULL, NULL,
-                                 PyArray_ISFORTRAN(tmp) ?
-                                                NPY_ARRAY_F_CONTIGUOUS : 0,
-                                 NULL);
-                if (op[2] == NULL) {
-                    return -1;
-                }
-
-                /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(ufunc, &op[2],
-                                    arr_prep[0], full_args, 0) < 0) {
-                    return -1;
-                }
-
-                NPY_UF_DBG_PRINT("trivial 2 input with allocated output\n");
-                trivial_three_operand_loop(op, innerloop, innerloopdata);
-
-                return 0;
-            }
-            else if (op[2] != NULL &&
-                    PyArray_NDIM(op[2]) >= PyArray_NDIM(op[0]) &&
-                    PyArray_NDIM(op[2]) >= PyArray_NDIM(op[1]) &&
-                    PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2],
-                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
-                                                      PyArray_TRIVIALLY_ITERABLE_OP_READ,
-                                                      PyArray_TRIVIALLY_ITERABLE_OP_NOREAD)) {
-
-                /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(ufunc, &op[2],
-                                    arr_prep[0], full_args, 0) < 0) {
-                    return -1;
-                }
-
-                NPY_UF_DBG_PRINT("trivial 2 input\n");
-                trivial_three_operand_loop(op, innerloop, innerloopdata);
-
-                return 0;
-            }
+    if (trivial_loop_ok && ufunc->nout == 1) {
+        int fast_path_result = try_trivial_single_output_loop(ufunc,
+                op, dtypes, order, arr_prep, full_args,
+                innerloop, innerloopdata);
+        if (fast_path_result != -2) {
+            return fast_path_result;
         }
     }
 
@@ -1450,7 +1428,6 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
      * If no trivial loop matched, an iterator is required to
      * resolve broadcasting, etc
      */
-
     NPY_UF_DBG_PRINT("iterator loop\n");
     if (iterator_loop(ufunc, op, dtypes, order,
                     buffersize, arr_prep, full_args,

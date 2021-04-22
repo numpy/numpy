@@ -792,7 +792,7 @@ class TestUFunc:
         check(np.add, a, ind, a[25:75])
 
     def test_unary_ufunc_1d_manual(self):
-        # Exercise branches in PyArray_EQUIVALENTLY_ITERABLE
+        # Exercise ufunc fast-paths (that avoid creation of an `np.nditer`)
 
         def check(a, b):
             a_orig = a.copy()
