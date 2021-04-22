@@ -1,20 +1,14 @@
-Cython API for random
----------------------
-
-.. currentmodule:: numpy.random
-
-Typed versions of many of the `Generator` and `BitGenerator` methods as well as
-the classes themselves can be accessed directly from Cython via
-
-.. code-block:: cython
-
-    cimport numpy.random
-
 C API for random
 ----------------
 
-Access to various distributions is available via Cython or C-wrapper libraries
-like CFFI. All the functions accept a :c:type:`bitgen_t` as their first argument.
+.. currentmodule:: numpy.random
+
+Access to various distributions below is available via Cython or C-wrapper
+libraries like CFFI. All the functions accept a :c:type:`bitgen_t` as their
+first argument.  To access these from Cython or C, you must link with the
+``npyrandom`` library which is part of the NumPy distribution, located in
+``numpy/random/lib``.
+
 
 .. c:type:: bitgen_t
 
@@ -46,9 +40,9 @@ The functions are named with the following conventions:
 - The functions without "standard" in their name require additional parameters
   to describe the distributions.
 
-- ``zig`` in the name are based on a ziggurat lookup algorithm is used instead
-  of calculating the ``log``, which is significantly faster. The non-ziggurat
-  variants are used in corner cases and for legacy compatibility.
+- Functions with ``inv`` in their name are based on the slower inverse method
+  instead of a ziggurat lookup algorithm, which is significantly faster. The
+  non-ziggurat variants are used in corner cases and for legacy compatibility.
 
 
 .. c:function:: double random_standard_uniform(bitgen_t *bitgen_state)
@@ -58,6 +52,8 @@ The functions are named with the following conventions:
 .. c:function:: double random_standard_exponential(bitgen_t *bitgen_state)
 
 .. c:function:: void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
+
+.. c:function:: void random_standard_exponential_inv_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
 
 .. c:function:: double random_standard_normal(bitgen_t* bitgen_state)
 
@@ -74,6 +70,8 @@ The functions are named with the following conventions:
 .. c:function:: float random_standard_exponential_f(bitgen_t *bitgen_state)
 
 .. c:function:: void random_standard_exponential_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
+
+.. c:function:: void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
 
 .. c:function:: float random_standard_normal_f(bitgen_t* bitgen_state)
 
@@ -187,6 +185,5 @@ Generate a single integer
 
 Generate random uint64 numbers in closed interval [off, off + rng].
 
-.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state, npy_uint64 off, npy_uint64 rng, npy_uint64 mask, bint use_masked)
-
+.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state, npy_uint64 off, npy_uint64 rng, npy_uint64 mask, bool use_masked)
 

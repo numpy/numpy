@@ -1,9 +1,0 @@
-``subok`` option for `numpy.copy`
----------------------------------
-A new kwarg, ``subok``, was added to `numpy.copy` to allow users to toggle the 
-behavior of `numpy.copy` with respect to array subclasses. The default value
-is ``False`` which is consistent with the behavior of `numpy.copy` for 
-previous numpy versions. To create a copy that preserves an array subclass with
-`numpy.copy`, call ``np.copy(arr, subok=True)``. This addition better documents
-that the default behavior of `numpy.copy` differs from the 
-`numpy.ndarray.copy` method which respects array subclasses by default.

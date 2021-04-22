@@ -71,7 +71,7 @@ Exceptions are NumPy arrays that must have type code ``'c'`` or
 
 A string can have arbitrary length when using it as a string argument
 to F2PY generated wrapper function. If the length is greater than
-expected, the string is truncated. If the length is smaller that
+expected, the string is truncated. If the length is smaller than
 expected, additional memory is allocated and filled with ``\0``.
 
 Because Python strings are immutable, an ``intent(inout)`` argument

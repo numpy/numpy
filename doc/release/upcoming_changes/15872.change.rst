@@ -1,6 +1,0 @@
-`Fixed `eigh` and `cholesky` methods in `numpy.random.multivariate_normal``
----------------------------------------------------------------------------
-
-Previously, when passing `method='eigh'` or `method='cholesky'`,
-`numpy.random.multivariate_normal` produced samples from the wrong
-distribution. This is now fixed.

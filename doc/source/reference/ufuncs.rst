@@ -1,5 +1,7 @@
 .. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
+.. currentmodule:: numpy
+
 .. _ufuncs:
 
 ************************************
@@ -7,8 +9,6 @@ Universal functions (:class:`ufunc`)
 ************************************
 
 .. note: XXX: section might need to be made more reference-guideish...
-
-.. currentmodule:: numpy
 
 .. index: ufunc, universal function, arithmetic, operation
 
@@ -109,7 +109,7 @@ The output of the ufunc (and its methods) is not necessarily an
 :class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
 Indeed, if any input defines an :obj:`~class.__array_ufunc__` method,
 control will be passed completely to that function, i.e., the ufunc is
-`overridden <ufuncs.overrides>`_.
+:ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
 all output arrays will be passed to the :obj:`~class.__array_prepare__` and
@@ -298,6 +298,11 @@ them by defining certain special methods.  For details, see
 :class:`ufunc`
 ==============
 
+.. autosummary::
+   :toctree: generated/
+
+   numpy.ufunc
+
 .. _ufuncs.kwargs:
 
 Optional keyword arguments
@@ -334,6 +339,19 @@ advanced usage and will not typically be used.
     default), then this corresponds to the entire output being filled.
     Note that outputs not explicitly filled are left with their
     uninitialized values.
+
+    .. versionadded:: 1.13
+
+    Operations where ufunc input and output operands have memory overlap are
+    defined to be the same as for equivalent operations where there
+    is no memory overlap.  Operations affected make temporary copies
+    as needed to eliminate data dependency.  As detecting these cases
+    is computationally expensive, a heuristic is used, which may in rare
+    cases result in needless temporary copies.  For operations where the
+    data dependency is simple enough for the heuristic to analyze,
+    temporary copies will not be made even if the arrays overlap, if it
+    can be deduced copies are not necessary.  As an example,
+    ``np.add(a, b, out=a)`` will not involve copies.
 
 *where*
 
@@ -380,7 +398,7 @@ advanced usage and will not typically be used.
     result as a dimension with size one, so that the result will broadcast
     correctly against the inputs. This option can only be used for generalized
     ufuncs that operate on inputs that all have the same number of core
-    dimensions and with outputs that have no core dimensions , i.e., with
+    dimensions and with outputs that have no core dimensions, i.e., with
     signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
     the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
@@ -610,8 +628,8 @@ Math operations
     for large calculations. If your arrays are large, complicated
     expressions can take longer than absolutely necessary due to the
     creation and (later) destruction of temporary calculation
-    spaces. For example, the expression ``G = a * b + c`` is equivalent to
-    ``t1 = A * B; G = T1 + C; del t1``. It will be more quickly executed
+    spaces. For example, the expression ``G = A * B + C`` is equivalent to
+    ``T1 = A * B; G = T1 + C; del T1``. It will be more quickly executed
     as ``G = A * B; add(G, C, G)`` which is the same as
     ``G = A * B; G += C``.
 

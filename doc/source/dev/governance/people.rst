@@ -7,56 +7,43 @@ Steering council
 ----------------
 
 * Sebastian Berg
-
-* Jaime Fernández del Río
-
 * Ralf Gommers
-
 * Charles Harris
-
-* Nathaniel Smith
-
-* Julian Taylor
-
-* Pauli Virtanen
-
-* Eric Wieser
-
-* Marten van Kerkwijk
-
 * Stephan Hoyer
-
-* Allan Haldane
-
-* Stefan van der Walt
+* Melissa Weber Mendonça
+* Inessa Pawson
+* Matti Picus
+* Stéfan van der Walt
+* Eric Wieser
 
 
 Emeritus members
 ----------------
 
-* Travis Oliphant - Project Founder / Emeritus Leader (served: 2005-2012)
-
-* Alex Griffing (served: 2015-2017)
+* Travis Oliphant -- project founder / emeritus leader (2005-2012)
+* Alex Griffing (2015-2017)
+* Marten van Kerkwijk (2017-2019)
+* Allan Haldane (2015-2021)
+* Nathaniel Smith (2012-2021)
+* Julian Taylor (2013-2021)
+* Pauli Virtanen (2008-2021)
+* Jaime Fernández del Río (2014-2021)
 
 
 NumFOCUS Subcommittee
 ---------------------
 
-* Chuck Harris
-
+* Charles Harris
 * Ralf Gommers
-
-* Jaime Fernández del Río
-
+* Melissa Weber Mendonça
 * Sebastian Berg
-
 * External member: Thomas Caswell
 
 
 Institutional Partners
 ----------------------
 
-* UC Berkeley (Stefan van der Walt, Matti Picus, Tyler Reddy, Sebastian Berg)
+* UC Berkeley (Stéfan van der Walt, Sebastian Berg, Ross Barnowski)
 
-* Quansight (Ralf Gommers, Hameer Abbasi)
+* Quansight (Ralf Gommers, Melissa Weber Mendonça, Mars Lee, Matti Picus, Pearu Peterson)
 

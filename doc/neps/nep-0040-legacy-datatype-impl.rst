@@ -6,21 +6,22 @@ NEP 40 — Legacy Datatype Implementation in NumPy
 
 :title: Legacy Datatype Implementation in NumPy
 :Author: Sebastian Berg
-:Status: Draft
+:Status: Final
 :Type: Informational
 :Created: 2019-07-17
 
 
 .. note::
 
-    This NEP is part of a series of NEPs encompassing first information
-    about the previous dtype implementation and issues with it in NEP 40
-    (this document).
-    `NEP 41 <NEP41>`_ then provides an overview and generic design choices for the refactor.
-    Further NEPs 42 and 43 go into the technical details of the datatype
-    and universal function related internal and external API changes.
-    In some cases it may be necessary to consult the other NEPs for a full
-    picture of the desired changes and why these changes are necessary.
+    This NEP is first in a series:
+
+    - NEP 40 (this document) explains the shortcomings of NumPy's dtype implementation.
+
+    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
+
+    - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
+
+    - NEP 43 describes the new design's API for universal functions.
 
 
 
@@ -31,7 +32,7 @@ As a preparation to further NumPy enhancement proposals 41, 42, and 43. This
 NEP details the current status of NumPy datatypes as of NumPy 1.18.
 It describes some of the technical aspects and concepts that
 motivated the other proposals.
-For more general information most readers should begin by reading `NEP 41 <NEP41>`_
+For more general information most readers should begin by reading :ref:`NEP 41 <NEP41>`
 and use this document only as a reference or for additional details.
 
 
@@ -42,6 +43,8 @@ This section describes some central concepts and provides a brief overview
 of the current implementation of dtypes as well as a discussion.
 In many cases subsections will be split roughly to first describe the
 current implementation and then follow with an "Issues and Discussion" section.
+
+.. _parametric-datatype-discussion:
 
 Parametric Datatypes
 ^^^^^^^^^^^^^^^^^^^^
@@ -252,6 +255,8 @@ types such as ``np.inexact`` (see figure below).
 In fact, some control flow within NumPy currently uses
 ``issubclass(a.dtype.type, np.inexact)``.
 
+.. _nep-0040_dtype-hierarchy:
+
 .. figure:: _static/nep-0040_dtype-hierarchy.png
 
    **Figure:** Hierarchy of NumPy scalar types reproduced from the reference
@@ -334,7 +339,7 @@ Each of these signatures is associated with a single inner-loop function defined
 in C, which does the actual calculation, and may be called multiple times.
 
 The main step in finding the correct inner-loop function is to call a
-:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from 
+:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from
 the provided input arrays
 and will determine the full type signature (including output dtype) to be executed.
 
@@ -365,7 +370,7 @@ It is currently only possible for user defined functions to be found/resolved
 if any of the inputs (or the outputs) has the user datatype, since it uses the
 `OO->O` signature.
 For example, given that a ufunc loop to implement ``fraction_divide(int, int)
--> Fraction`` has been implemented, 
+-> Fraction`` has been implemented,
 the call ``fraction_divide(4, 5)`` (with no specific output dtype) will fail
 because the loop that
 includes the user datatype ``Fraction`` (as output) can only be found if any of
@@ -571,7 +576,7 @@ Related Work
 ------------
 
 * Julia types are an interesting blueprint for a type hierarchy, and define
-  abstract and concrete types [julia-types]_. 
+  abstract and concrete types [julia-types]_.
 
 * In Julia promotion can occur based on abstract types. If a promoter is
   defined, it will cast the inputs and then Julia can then retry to find
@@ -606,7 +611,7 @@ the following provides a subset for more recent ones:
 
   * https://hackmd.io/ok21UoAQQmOtSVk6keaJhw and https://hackmd.io/s/ryTFaOPHE
     (2019-04-30) Proposals for subclassing implementation approach.
-  
+
   * Discussion about the calling convention of ufuncs and need for more
     powerful UFuncs: https://github.com/numpy/numpy/issues/12518
 

@@ -11,8 +11,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-__version__ = "$Revision: 1.60 $"[10:-1]
-
 from . import __version__
 f2py_version = __version__.version
 
@@ -309,7 +307,7 @@ def getstrlength(var):
             len = a['*']
         elif 'len' in a:
             len = a['len']
-    if re.match(r'\(\s*([*]|[:])\s*\)', len) or re.match(r'([*]|[:])', len):
+    if re.match(r'\(\s*(\*|:)\s*\)', len) or re.match(r'(\*|:)', len):
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
                 repr(var)))

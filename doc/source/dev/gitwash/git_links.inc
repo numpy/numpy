@@ -2,7 +2,7 @@
    and name substitutions.  It may be included in many files,
    therefore it should only contain link targets and name
    substitutions.  Try grepping for "^\.\. _" to find plausible
-   candidates for this list.  
+   candidates for this list.
 
 .. NOTE: reST targets are
    __not_case_sensitive__, so only one target definition is needed for
@@ -16,9 +16,9 @@
 .. _subversion: http://subversion.tigris.org/
 .. _git cheat sheet: http://cheat.errtheblog.com/s/git
 .. _pro git book: https://git-scm.com/book/
-.. _git svn crash course: https://git-scm.com/course/svn.html
+.. _git svn crash course: https://git.wiki.kernel.org/index.php/GitSvnCrashCourse
 .. _learn.github: https://learn.github.com/
-.. _network graph visualizer: https://github.com/blog/39-say-hello-to-the-network-graph-visualizer
+.. _network graph visualizer: https://github.blog/2008-04-10-say-hello-to-the-network-graph-visualizer/
 .. _git user manual: https://www.kernel.org/pub/software/scm/git/docs/user-manual.html
 .. _git tutorial: https://www.kernel.org/pub/software/scm/git/docs/gittutorial.html
 .. _git community book: https://book.git-scm.com/
@@ -41,18 +41,18 @@
 .. _git config: https://www.kernel.org/pub/software/scm/git/docs/git-config.html
 .. _why the -a flag?: http://www.gitready.com/beginner/2009/01/18/the-staging-area.html
 .. _git staging area: http://www.gitready.com/beginner/2009/01/18/the-staging-area.html
-.. _tangled working copy problem: https://tomayko.com/writings/the-thing-about-git 
-.. _git management: http://kerneltrap.org/Linux/Git_Management
+.. _tangled working copy problem: https://tomayko.com/writings/the-thing-about-git
+.. _git management: https://web.archive.org/web/20090328043540/http://kerneltrap.org/Linux/Git_Management
 .. _linux git workflow: https://www.mail-archive.com/dri-devel@lists.sourceforge.net/msg39091.html
-.. _ipython git workflow: http://mail.python.org/pipermail/ipython-dev/2010-October/006746.html
+.. _ipython git workflow: https://mail.python.org/pipermail/ipython-dev/2010-October/005632.html
 .. _git parable: http://tom.preston-werner.com/2009/05/19/the-git-parable.html
 .. _git foundation: http://matthew-brett.github.com/pydagogue/foundation.html
-.. _numpy/master: https://github.com/numpy/numpy
+.. _numpy/main: https://github.com/numpy/numpy
 .. _git cherry-pick: https://www.kernel.org/pub/software/scm/git/docs/git-cherry-pick.html
 .. _git blame: https://www.kernel.org/pub/software/scm/git/docs/git-blame.html
-.. _this blog post: https://github.com/blog/612-introducing-github-compare-view 
-.. _this article on merging conflicts:  https://git-scm.com/book/en/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts 
-.. _learn git: https://www.atlassian.com/git/tutorials/
+.. _this blog post: https://github.com/blog/612-introducing-github-compare-view
+.. _this article on merging conflicts:  https://git-scm.com/book/en/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts
+.. _learn git:  https://try.github.io/
 .. _filing pull requests: https://help.github.com/articles/using-pull-requests/#initiating-the-pull-request
 .. _pull request review: https://help.github.com/articles/using-pull-requests/#reviewing-the-pull-request
 

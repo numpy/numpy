@@ -1,3 +1,5 @@
+.. _NEP12:
+
 ============================================
 NEP 12 — Missing Data Functionality in NumPy
 ============================================
@@ -926,7 +928,7 @@ to access the array elements. This python indexing still goes through the
 Python API, so the NA handling and error checking in numpy still can work
 like normal and fail if the inputs have NAs which cannot fit in the output
 array. In this case it fails when trying to convert the NA into an integer
-to set in in the output.
+to set in the output.
 
 The next version of the code introduces more efficient indexing. This
 operates based on Python's buffer protocol. This causes Cython to call
@@ -954,6 +956,8 @@ so the later code will raise exceptions as desired.
 ************************
 C Implementation Details
 ************************
+
+.. highlight:: c
 
 The first version to implement is the array masks, because it is
 the more general approach. The mask itself is an array, but since
@@ -1157,32 +1161,32 @@ Acknowledgments
 In addition to feedback from Travis Oliphant and others at Enthought,
 this NEP has been revised based on a great deal of feedback from
 the NumPy-Discussion mailing list. The people participating in
-the discussion are::
+the discussion are:
 
-    Nathaniel Smith
-    Robert Kern
-    Charles Harris
-    Gael Varoquaux
-    Eric Firing
-    Keith Goodman
-    Pierre GM
-    Christopher Barker
-    Josef Perktold
-    Ben Root
-    Laurent Gautier
-    Neal Becker
-    Bruce Southey
-    Matthew Brett
-    Wes McKinney
-    Lluís
-    Olivier Delalleau
-    Alan G Isaac
-    E. Antero Tammi
-    Jason Grout
-    Dag Sverre Seljebotn
-    Joe Harrington
-    Gary Strangman
-    Chris Jordan-Squire
-    Peter
+- Nathaniel Smith
+- Robert Kern
+- Charles Harris
+- Gael Varoquaux
+- Eric Firing
+- Keith Goodman
+- Pierre GM
+- Christopher Barker
+- Josef Perktold
+- Ben Root
+- Laurent Gautier
+- Neal Becker
+- Bruce Southey
+- Matthew Brett
+- Wes McKinney
+- Lluís
+- Olivier Delalleau
+- Alan G Isaac
+- E. Antero Tammi
+- Jason Grout
+- Dag Sverre Seljebotn
+- Joe Harrington
+- Gary Strangman
+- Chris Jordan-Squire
+- Peter
 
 I apologize if I missed anyone.

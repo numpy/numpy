@@ -1,14 +1,14 @@
 from numpy.testing import (assert_, assert_array_equal)
 import numpy as np
 import pytest
-from numpy.random import Generator, MT19937
+from numpy.random import Generator, MT19937, RandomState
 
 mt19937 = Generator(MT19937())
 
 
 class TestRegression:
 
-    def test_VonMises_range(self):
+    def test_vonmises_range(self):
         # Make sure generated random variables are in [-pi, pi].
         # Regression test for ticket #986.
         for mu in np.linspace(-7., 7., 5):
@@ -33,11 +33,11 @@ class TestRegression:
         # numbers with this large sample
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / float(N)
-        msg = "Frequency was %f, should be > 0.45" % freq
+        msg = f'Frequency was {freq:f}, should be > 0.45'
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / float(N)
-        msg = "Frequency was %f, should be < 0.23" % freq
+        msg = f'Frequency was {freq:f}, should be < 0.23'
         assert_(freq < 0.23, msg)
 
     def test_shuffle_mixed_dimension(self):

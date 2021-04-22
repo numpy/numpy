@@ -39,6 +39,7 @@ Modules in :mod:`numpy.distutils`
    :toctree: generated/
 
    ccompiler
+   ccompiler_opt
    cpuinfo.cpu
    core.Extension
    exec_command

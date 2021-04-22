@@ -4,6 +4,22 @@
 Contributing to NumPy
 #####################
 
+.. TODO: this is hidden because there's a bug in the pydata theme that won't render TOC items under headers
+
+.. toctree::
+   :hidden:
+
+   Git Basics <gitwash/index>
+   development_environment
+   development_workflow
+   development_advanced_debugging
+   ../benchmarking
+   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
+   releasing
+   governance/index
+   howto-docs
+
+
 Not a coder? Not a problem! NumPy is multi-faceted, and we can use a lot of help.
 These are all activities we'd like to get help with (they're all important, so
 we list them in alphabetical order):
@@ -62,8 +78,8 @@ Here's the short summary, complete TOC links are below:
 
    * Pull the latest changes from upstream::
 
-      git checkout master
-      git pull upstream master
+      git checkout main
+      git pull upstream main
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
@@ -107,7 +123,8 @@ Here's the short summary, complete TOC links are below:
      overall code quality benefits.  Therefore, please don't let the review
      discourage you from contributing: its only aim is to improve the quality
      of project, not to criticize (we are, after all, very grateful for the
-     time you're donating!).
+     time you're donating!). See our :ref:`Reviewer Guidelines
+     <reviewer-guidelines>` for more information.
 
    * To update your PR, make your changes on your local repository, commit,
      **run tests, and only if they succeed** push to your fork. As soon as
@@ -140,8 +157,7 @@ Here's the short summary, complete TOC links are below:
 
    If your change introduces a deprecation, make sure to discuss this first on
    GitHub or the mailing list first. If agreement on the deprecation is
-   reached, follow `NEP 23 deprecation policy <http://www.numpy.org/neps/
-   nep-0023-backwards-compatibility.html>`_  to add the deprecation.
+   reached, follow :ref:`NEP 23 deprecation policy <NEP23>`  to add the deprecation.
 
 6. Cross referencing issues
 
@@ -157,13 +173,15 @@ Here's the short summary, complete TOC links are below:
 For a more detailed discussion, read on and follow the links at the bottom of
 this page.
 
-Divergence between ``upstream/master`` and your feature branch
---------------------------------------------------------------
+Divergence between ``upstream/main`` and your feature branch
+------------------------------------------------------------
 
 If GitHub indicates that the branch of your Pull Request can no longer
 be merged automatically, you have to incorporate changes that have been made
 since you started into your branch. Our recommended way to do this is to
-:ref:`rebase on master<rebasing-on-master>`.
+:ref:`rebase on main <rebasing-on-main>`.
+
+.. _guidelines:
 
 Guidelines
 ----------
@@ -172,9 +190,11 @@ Guidelines
 * All code should be `documented <https://numpydoc.readthedocs.io/
   en/latest/format.html#docstring-standard>`_.
 * No changes are ever committed without review and approval by a core
-  team member.Please ask politely on the PR or on the `mailing list`_ if you
+  team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
 
+.. _stylistic-guidelines:
+  
 Stylistic Guidelines
 --------------------
 
@@ -189,7 +209,7 @@ Stylistic Guidelines
 
    import numpy as np
 
-* For C code, see the :ref:`numpy-c-style-guide<style_guide>`
+* For C code, see :ref:`NEP 45 <NEP45>`.
 
 
 Test coverage
@@ -218,6 +238,8 @@ and then run::
 This will create a report in ``build/coverage``, which can be viewed with::
 
   $ firefox build/coverage/index.html
+
+.. _building-docs:
 
 Building docs
 -------------
@@ -256,7 +278,7 @@ From the ``doc/`` directory:
     git submodule update --init
 
 The documentation includes mathematical formulae with LaTeX formatting.
-A working LaTeX document production system 
+A working LaTeX document production system
 (e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
 proper rendering of the LaTeX math in the documentation.
 
@@ -278,12 +300,13 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
-   conduct/code_of_conduct
    Git Basics <gitwash/index>
    development_environment
    development_workflow
+   development_advanced_debugging
+   reviewer_guidelines
    ../benchmarking
-   style_guide
+   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
    releasing
    governance/index
    howto-docs
@@ -291,4 +314,4 @@ The rest of the story
 NumPy-specific workflow is in :ref:`numpy-development-workflow
 <development-workflow>`.
 
-.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-devel
+.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-discussion

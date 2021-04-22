@@ -25,11 +25,11 @@ cdef uint64_t MAXSIZE = <uint64_t>sys.maxsize
 cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method):
     """Benchmark command used by BitGenerator"""
     cdef Py_ssize_t i
-    if method==u'uint64':
+    if method=='uint64':
         with lock, nogil:
             for i in range(cnt):
                 bitgen.next_uint64(bitgen.state)
-    elif method==u'double':
+    elif method=='double':
         with lock, nogil:
             for i in range(cnt):
                 bitgen.next_double(bitgen.state)
@@ -121,8 +121,8 @@ cdef object prepare_cffi(bitgen_t *bitgen):
     """
     try:
         import cffi
-    except ImportError:
-        raise ImportError('cffi cannot be imported.')
+    except ImportError as e:
+        raise ImportError('cffi cannot be imported.') from e
 
     ffi = cffi.FFI()
     _cffi = interface(<uintptr_t>bitgen.state,
@@ -218,13 +218,48 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
     return out
 
 
-cdef check_output(object out, object dtype, object size):
+cdef validate_output_shape(iter_shape, np.ndarray output):
+    cdef np.npy_intp *dims
+    cdef np.npy_intp ndim, i
+    cdef bint error
+    dims = np.PyArray_DIMS(output)
+    ndim = np.PyArray_NDIM(output)
+    output_shape = tuple((dims[i] for i in range(ndim)))
+    if iter_shape != output_shape:
+        raise ValueError(
+            f"Output size {output_shape} is not compatible with broadcast "
+            f"dimensions of inputs {iter_shape}."
+        )
+
+
+cdef check_output(object out, object dtype, object size, bint require_c_array):
+    """
+    Check user-supplied output array properties and shape
+    
+    Parameters
+    ----------
+    out : {ndarray, None}
+        The array to check.  If None, returns immediately.
+    dtype : dtype
+        The required dtype of out.
+    size : {None, int, tuple[int]}
+        The size passed.  If out is an ndarray, verifies that the shape of out
+        matches size.
+    require_c_array : bool
+        Whether out must be a C-array.  If False, out can be either C- or F-
+        ordered.  If True, must be C-ordered. In either case, must be
+        contiguous, writable, aligned and in native byte-order.
+    """
     if out is None:
         return
     cdef np.ndarray out_array = <np.ndarray>out
-    if not (np.PyArray_CHKFLAGS(out_array, np.NPY_CARRAY) or
-            np.PyArray_CHKFLAGS(out_array, np.NPY_FARRAY)):
-        raise ValueError('Supplied output array is not contiguous, writable or aligned.')
+    if not (np.PyArray_ISCARRAY(out_array) or
+            (np.PyArray_ISFARRAY(out_array) and not require_c_array)):
+        req = "C-" if require_c_array else ""
+        raise ValueError(
+            f'Supplied output array must be {req}contiguous, writable, '
+            f'aligned, and in machine byte-order.'
+        )
     if out_array.dtype != dtype:
         raise TypeError('Supplied output array has the wrong type. '
                         'Expected {0}, got {1}'.format(np.dtype(dtype), out_array.dtype))
@@ -250,7 +285,7 @@ cdef object double_fill(void *func, bitgen_t *state, object size, object lock, o
             return out_val
 
     if out is not None:
-        check_output(out, np.float64, size)
+        check_output(out, np.float64, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.double)
@@ -274,7 +309,7 @@ cdef object float_fill(void *func, bitgen_t *state, object size, object lock, ob
             return out_val
 
     if out is not None:
-        check_output(out, np.float32, size)
+        check_output(out, np.float32, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.float32)
@@ -296,7 +331,7 @@ cdef object float_fill_from_double(void *func, bitgen_t *state, object size, obj
             return <float>random_func(state)
 
     if out is not None:
-        check_output(out, np.float32, size)
+        check_output(out, np.float32, size, False)
         out_array = <np.ndarray>out
     else:
         out_array = <np.ndarray>np.empty(size, np.float32)
@@ -404,6 +439,7 @@ cdef object cont_broadcast_1(void *func, void *state, object size, object lock,
     randoms_data = <double *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
 
     with lock, nogil:
         for i in range(n):
@@ -441,6 +477,8 @@ cdef object cont_broadcast_2(void *func, void *state, object size, object lock,
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -482,6 +520,8 @@ cdef object cont_broadcast_3(void *func, void *state, object size, object lock,
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew4(randoms, a_arr, b_arr, c_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -502,7 +542,7 @@ cdef object cont(void *func, void *state, object size, object lock, int narg,
     cdef np.ndarray a_arr, b_arr, c_arr
     cdef double _a = 0.0, _b = 0.0, _c = 0.0
     cdef bint is_scalar = True
-    check_output(out, np.float64, size)
+    check_output(out, np.float64, size, narg > 0)
     if narg > 0:
         a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
@@ -611,6 +651,8 @@ cdef object discrete_broadcast_d(void *func, void *state, object size, object lo
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -645,6 +687,8 @@ cdef object discrete_broadcast_dd(void *func, void *state, object size, object l
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -680,6 +724,8 @@ cdef object discrete_broadcast_di(void *func, void *state, object size, object l
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -719,6 +765,8 @@ cdef object discrete_broadcast_iii(void *func, void *state, object size, object 
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew4(randoms, a_arr, b_arr, c_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -750,6 +798,8 @@ cdef object discrete_broadcast_i(void *func, void *state, object size, object lo
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -923,6 +973,7 @@ cdef object cont_broadcast_1_f(void *func, bitgen_t *state, object size, object 
     randoms_data = <float *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
 
     with lock, nogil:
         for i in range(n):
@@ -941,7 +992,7 @@ cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
     cdef float _a
     cdef bint is_scalar = True
     cdef int requirements = np.NPY_ALIGNED | np.NPY_FORCECAST
-    check_output(out, np.float32, size)
+    check_output(out, np.float32, size, True)
     a_arr = <np.ndarray>np.PyArray_FROMANY(a, np.NPY_FLOAT32, 0, 0, requirements)
     is_scalar = np.PyArray_NDIM(a_arr) == 0
 

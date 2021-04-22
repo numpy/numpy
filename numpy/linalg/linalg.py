@@ -176,10 +176,9 @@ def _to_native_byte_order(*arrays):
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.dtype.type is type:
-            cast_arrays = cast_arrays + (_fastCT(a),)
-        else:
-            cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
+        if a.dtype.type is not type:
+            a = a.astype(type)
+        cast_arrays = cast_arrays + (_fastCT(a),)
     if len(cast_arrays) == 1:
         return cast_arrays[0]
     else:
@@ -362,13 +361,13 @@ def solve(a, b):
 
     Examples
     --------
-    Solve the system of equations ``3 * x0 + x1 = 9`` and ``x0 + 2 * x1 = 8``:
+    Solve the system of equations ``x0 + 2 * x1 = 1`` and ``3 * x0 + 5 * x1 = 2``:
 
-    >>> a = np.array([[3,1], [1,2]])
-    >>> b = np.array([9,8])
+    >>> a = np.array([[1, 2], [3, 5]])
+    >>> b = np.array([1, 2])
     >>> x = np.linalg.solve(a, b)
     >>> x
-    array([2.,  3.])
+    array([-1.,  1.])
 
     Check that the solution is correct:
 
@@ -902,7 +901,7 @@ def qr(a, mode='reduced'):
             warnings.warn(msg, DeprecationWarning, stacklevel=3)
             mode = 'economic'
         else:
-            raise ValueError("Unrecognized mode '%s'" % mode)
+            raise ValueError(f"Unrecognized mode '{mode}'")
 
     a, wrap = _makearray(a)
     _assert_2d(a)
@@ -2172,13 +2171,14 @@ def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Computes the vector x that approximatively solves the equation
+    Computes the vector `x` that approximatively solves the equation
     ``a @ x = b``. The equation may be under-, well-, or over-determined
     (i.e., the number of linearly independent rows of `a` can be less than,
     equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
     is the "exact" solution of the equation. Else, `x` minimizes the
-    Euclidean 2-norm :math:`|| b - a x ||`.
+    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing 
+    solutions, the one with the smallest 2-norm :math:`||x||` is returned.
 
     Parameters
     ----------
@@ -2207,8 +2207,8 @@ def lstsq(a, b, rcond="warn"):
         Least-squares solution. If `b` is two-dimensional,
         the solutions are in the `K` columns of `x`.
     residuals : {(1,), (K,), (0,)} ndarray
-        Sums of residuals; squared Euclidean 2-norm for each column in
-        ``b - a*x``.
+        Sums of squared residuals: Squared Euclidean 2-norm for each column in
+        ``b - a @ x``.
         If the rank of `a` is < N or M <= N, this is an empty array.
         If `b` is 1-dimensional, this is a (1,) shape array.
         Otherwise the shape is (K,).
@@ -2559,7 +2559,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # special case for speedup
             s = (x.conj() * x).real
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
-        # None of the str-type keywords for ord ('fro', 'nuc') 
+        # None of the str-type keywords for ord ('fro', 'nuc')
         # are valid for vectors
         elif isinstance(ord, str):
             raise ValueError(f"Invalid norm order '{ord}' for vectors")
@@ -2660,7 +2660,7 @@ def multi_dot(arrays, *, out=None):
 
     See Also
     --------
-    dot : dot multiplication with two arguments.
+    numpy.dot : dot multiplication with two arguments.
 
     References
     ----------

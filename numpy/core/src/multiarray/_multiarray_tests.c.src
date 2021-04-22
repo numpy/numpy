@@ -7,10 +7,10 @@
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
 #include "common.h"
+#include "npy_argparse.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
-#include "common.h"
-
+#include "array_method.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -19,6 +19,25 @@
 #endif
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
+
+static PyObject *
+argparse_example_function(PyObject *NPY_UNUSED(mod),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+    int arg1;
+    PyObject *arg2, *arg3, *arg4;
+    if (npy_parse_arguments("func", args, len_args, kwnames,
+            "", &PyArray_PythonPyIntFromInt, &arg1,
+            "arg2", NULL, &arg2,
+            "|arg3", NULL, &arg3,
+            "$arg3", NULL, &arg4,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
@@ -37,6 +56,7 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
 }
 
 #include "npy_pycompat.h"
+
 
 /** Function to test calling via ctypes */
 EXPORT(void*) forward_pointer(void *x)
@@ -178,17 +198,20 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     /* Compute boundaries for the neighborhood iterator */
     for (i = 0; i < 2 * PyArray_NDIM(ax); ++i) {
         PyObject* bound;
+
         bound = PySequence_GetItem(b, i);
         if (bound == NULL) {
             goto clean_itx;
         }
-        if (!PyInt_Check(bound)) {
+        /* PyLong_AsSsize checks for PyLong */
+        bounds[i] = PyLong_AsSsize_t(bound);
+        if (error_converting(bounds[i])) {
+            PyErr_Clear();
             PyErr_SetString(PyExc_ValueError,
-                    "bound not long");
+                    "bound is invalid");
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
         Py_DECREF(bound);
     }
 
@@ -337,17 +360,20 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     /* Compute boundaries for the neighborhood iterator */
     for (i = 0; i < 2 * PyArray_NDIM(ax); ++i) {
         PyObject* bound;
+
         bound = PySequence_GetItem(b1, i);
         if (bound == NULL) {
             goto clean_itx;
         }
-        if (!PyInt_Check(bound)) {
+        /* PyLong_AsSsize checks for PyLong */
+        bounds[i] = PyLong_AsSsize_t(bound);
+        if (error_converting(bounds[i])) {
+            PyErr_Clear();
             PyErr_SetString(PyExc_ValueError,
-                    "bound not long");
+                    "bound is invalid");
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
         Py_DECREF(bound);
     }
 
@@ -361,17 +387,20 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
 
     for (i = 0; i < 2 * PyArray_NDIM(ax); ++i) {
         PyObject* bound;
+
         bound = PySequence_GetItem(b2, i);
         if (bound == NULL) {
             goto clean_itx;
         }
-        if (!PyInt_Check(bound)) {
+        /* PyLong_AsSsize checks for PyLong */
+        bounds[i] = PyLong_AsSsize_t(bound);
+        if (error_converting(bounds[i])) {
+            PyErr_Clear();
             PyErr_SetString(PyExc_ValueError,
-                    "bound not long");
+                    "bound is invalid");
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
         Py_DECREF(bound);
     }
 
@@ -609,6 +638,105 @@ fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
     }
     descr = PyArray_DescrNewFromType(NPY_FLOAT64);
     return PyArray_FromString(string, -1, descr, -1, " ");
+}
+
+
+/*
+ * Create a custom field dtype from an existing void one (and test some errors).
+ * The dtypes created by this function may be not be usable (or even crash
+ * while using).
+ */
+static PyObject *
+create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
+{
+    PyArray_Descr *dtype;
+    PyTypeObject *scalar_type;
+    PyTypeObject *original_type = NULL;
+    int error_path;
+
+    if (!PyArg_ParseTuple(args, "O!O!i",
+            &PyArrayDescr_Type, &dtype,
+            &PyType_Type, &scalar_type,
+            &error_path)) {
+        return NULL;
+    }
+    /* check that the result should be more or less valid */
+    if (dtype->type_num != NPY_VOID || dtype->fields == NULL ||
+            !PyDict_CheckExact(dtype->fields) ||
+            PyTuple_Size(dtype->names) != 1 ||
+            !PyDataType_REFCHK(dtype) ||
+            dtype->elsize != sizeof(PyObject *)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Bad dtype passed to test function, must be an object "
+                "containing void with a single field.");
+        return NULL;
+    }
+
+    /* Copy and then appropriate this dtype */
+    original_type = Py_TYPE(dtype);
+    dtype = PyArray_DescrNew(dtype);
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    Py_INCREF(scalar_type);
+    Py_SETREF(dtype->typeobj, scalar_type);
+    if (error_path == 1) {
+        /* Test that we reject this, if fields was not already set */
+        Py_SETREF(dtype->fields, NULL);
+    }
+    else if (error_path == 2) {
+        /*
+         * Test that we reject this if the type is not set to something that
+         * we are pretty sure can be safely replaced.
+         */
+        Py_SET_TYPE(dtype, scalar_type);
+    }
+    else if (error_path != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "invalid error argument to test function.");
+    }
+    if (PyArray_RegisterDataType(dtype) < 0) {
+        /* Fix original type in the error_path == 2 case and delete it */
+        Py_SET_TYPE(dtype, original_type);
+        Py_DECREF(dtype);
+        return NULL;
+    }
+    Py_INCREF(dtype);  /* hold on to the original (leaks a reference) */
+    return (PyObject *)dtype;
+}
+
+
+PyObject *
+corrupt_or_fix_bufferinfo(PyObject *dummy, PyObject *obj)
+{
+    void **buffer_info_ptr;
+    if (PyArray_Check(obj)) {
+        buffer_info_ptr = &((PyArrayObject_fields *)obj)->_buffer_info;
+    }
+    else if (PyArray_IsScalar(obj, Void)) {
+        buffer_info_ptr = &((PyVoidScalarObject *)obj)->_buffer_info;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                "argument must be an array or void scalar");
+        return NULL;
+    }
+    if (*buffer_info_ptr == NULL) {
+        /* set to an invalid value (as a subclass might accidentally) */
+        *buffer_info_ptr = obj;
+        assert(((uintptr_t)obj & 7) == 0);
+    }
+    else if (*buffer_info_ptr == obj) {
+        /* Reset to a NULL (good value) */
+        *buffer_info_ptr = NULL;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                "buffer was already exported, this test doesn't support that");
+        return NULL;
+    }
+    Py_RETURN_NONE;
 }
 
 
@@ -905,6 +1033,79 @@ get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
 }
 
 
+static PyObject *
+get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
+{
+    PyObject *result = PyList_New(0);
+    if (result == NULL) {
+        return NULL;
+    }
+    PyObject *classes = PyObject_CallMethod(
+            (PyObject *)&PyArrayDescr_Type, "__subclasses__", "");
+    if (classes == NULL) {
+        return NULL;
+    }
+    Py_SETREF(classes, PySequence_Fast(classes, NULL));
+    if (classes == NULL) {
+        goto fail;
+    }
+
+    Py_ssize_t nclass = PySequence_Length(classes);
+    for (Py_ssize_t  i = 0; i < nclass; i++) {
+        PyArray_DTypeMeta *from_dtype = (
+                (PyArray_DTypeMeta *)PySequence_Fast_GET_ITEM(classes, i));
+        if (from_dtype->abstract) {
+            /*
+             * TODO: In principle probably needs to recursively check this,
+             *       also we may allow casts to abstract dtypes at some point.
+             */
+            continue;
+        }
+
+        PyObject *to_dtype, *cast_obj;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(from_dtype->castingimpls, &pos, &to_dtype, &cast_obj)) {
+            if (cast_obj == Py_None) {
+                continue;
+            }
+            PyArrayMethodObject *cast = (PyArrayMethodObject *)cast_obj;
+
+            /* Pass some information about this cast out! */
+            PyObject *cast_info = Py_BuildValue("{sOsOsisisisisisssi}",
+                    "from", from_dtype,
+                    "to", to_dtype,
+                    "legacy", (cast->name != NULL &&
+                               strncmp(cast->name, "legacy_", 7) == 0),
+                    "casting", cast->casting & ~_NPY_CAST_IS_VIEW,
+                    "requires_pyapi", cast->flags & NPY_METH_REQUIRES_PYAPI,
+                    "supports_unaligned",
+                        cast->flags & NPY_METH_SUPPORTS_UNALIGNED,
+                    "no_floatingpoint_errors",
+                        cast->flags & NPY_METH_NO_FLOATINGPOINT_ERRORS,
+                    "name", cast->name,
+                    "cast_is_view",
+                        cast->casting & _NPY_CAST_IS_VIEW);
+            if (cast_info == NULL) {
+                goto fail;
+            }
+            int res = PyList_Append(result, cast_info);
+            Py_DECREF(cast_info);
+            if (res < 0) {
+                goto fail;
+            }
+        }
+    }
+    Py_DECREF(classes);
+    return result;
+
+  fail:
+    Py_XDECREF(classes);
+    Py_XDECREF(result);
+    return NULL;
+}
+
+
 /*
  * Test C-api level item getting.
  */
@@ -1155,11 +1356,11 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
     }
 
     for (j = 0; j < nterms; ++j) {
-        terms[j].a = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(A, j));
+        terms[j].a = (npy_int64)PyLong_AsSsize_t(PyTuple_GET_ITEM(A, j));
         if (error_converting(terms[j].a)) {
             goto fail;
         }
-        terms[j].ub = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(U, j));
+        terms[j].ub = (npy_int64)PyLong_AsSsize_t(PyTuple_GET_ITEM(U, j));
         if (error_converting(terms[j].ub)) {
             goto fail;
         }
@@ -1735,8 +1936,8 @@ get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
 /**begin repeat
  * #N = 1,2,3#
  */
-    alignment = PyInt_FromLong(_ALIGN(struct TestStruct@N@));
-    size = PyInt_FromLong(sizeof(struct TestStruct@N@));
+    alignment = PyLong_FromLong(_ALIGN(struct TestStruct@N@));
+    size = PyLong_FromLong(sizeof(struct TestStruct@N@));
     val = PyTuple_Pack(2, alignment, size);
     Py_DECREF(alignment);
     Py_DECREF(size);
@@ -1902,7 +2103,7 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
         PyOS_snprintf(str, sizeof(str), "%.*g", precision, val);
     }
 
-    return PyUString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 
@@ -1938,6 +2139,18 @@ getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
     return ret;
 }
 
+
+static PyObject *
+uses_new_casts(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+#if NPY_USE_NEW_CASTINGIMPL
+    Py_RETURN_TRUE;
+#else
+    Py_RETURN_FALSE;
+#endif
+}
+
+
 static PyObject *
 run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
@@ -1952,7 +2165,7 @@ run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SWAP: return PyUnicode_FromString("NPY_SWAP");
         case NPY_IGNORE: return PyUnicode_FromString("NPY_IGNORE");
     }
-    return PyInt_FromLong(byteorder);
+    return PyLong_FromLong(byteorder);
 }
 
 static PyObject *
@@ -1967,7 +2180,7 @@ run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
         case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
     }
-    return PyInt_FromLong(kind);
+    return PyLong_FromLong(kind);
 }
 
 static PyObject *
@@ -1980,7 +2193,7 @@ run_selectkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     switch (kind) {
         case NPY_INTROSELECT: return PyUnicode_FromString("NPY_INTROSELECT");
     }
-    return PyInt_FromLong(kind);
+    return PyLong_FromLong(kind);
 }
 
 static PyObject *
@@ -1994,7 +2207,7 @@ run_searchside_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SEARCHLEFT: return PyUnicode_FromString("NPY_SEARCHLEFT");
         case NPY_SEARCHRIGHT: return PyUnicode_FromString("NPY_SEARCHRIGHT");
     }
-    return PyInt_FromLong(side);
+    return PyLong_FromLong(side);
 }
 
 static PyObject *
@@ -2010,7 +2223,7 @@ run_order_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_FORTRANORDER: return PyUnicode_FromString("NPY_FORTRANORDER");
         case NPY_KEEPORDER: return PyUnicode_FromString("NPY_KEEPORDER");
     }
-    return PyInt_FromLong(order);
+    return PyLong_FromLong(order);
 }
 
 static PyObject *
@@ -2025,7 +2238,7 @@ run_clipmode_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_WRAP: return PyUnicode_FromString("NPY_WRAP");
         case NPY_RAISE: return PyUnicode_FromString("NPY_RAISE");
     }
-    return PyInt_FromLong(mode);
+    return PyLong_FromLong(mode);
 }
 
 static PyObject *
@@ -2041,12 +2254,30 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SAFE_CASTING: return PyUnicode_FromString("NPY_SAFE_CASTING");
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
+        default: return PyLong_FromLong(casting);
     }
-    return PyInt_FromLong(casting);
 }
 
+static PyObject *
+run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    PyArray_Dims dims = {NULL, -1};
+    if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter, &dims)) {
+        return NULL;
+    }
+    if (dims.len == -1) {
+        Py_RETURN_NONE;
+    }
+
+    PyObject *tup = PyArray_IntTupleFromIntp(dims.len, dims.ptr);
+    PyDimMem_FREE(dims.ptr);
+    return tup;
+}
 
 static PyMethodDef Multiarray_TestsMethods[] = {
+    {"argparse_example_function",
+         (PyCFunction)argparse_example_function,
+         METH_KEYWORDS | METH_FASTCALL, NULL},
     {"IsPythonScalar",
         IsPythonScalar,
         METH_VARARGS, NULL},
@@ -2067,6 +2298,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"fromstring_null_term_c_api",
         fromstring_null_term_c_api,
+        METH_O, NULL},
+    {"create_custom_field_dtype",
+        create_custom_field_dtype,
+        METH_VARARGS, NULL},
+    {"corrupt_or_fix_bufferinfo",
+        corrupt_or_fix_bufferinfo,
         METH_O, NULL},
     {"incref_elide",
         incref_elide,
@@ -2104,6 +2341,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_c_wrapping_array",
         get_c_wrapping_array,
         METH_O, NULL},
+    {"get_all_cast_information",
+        get_all_cast_information,
+        METH_NOARGS,
+        "Return a list with info on all available casts. Some of the info"
+        "may differ for an actual cast if it uses value-based casting "
+        "(flexible types)."},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},
@@ -2164,6 +2407,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"getset_numericops",
         getset_numericops,
         METH_NOARGS, NULL},
+    {"uses_new_casts",
+            uses_new_casts,
+            METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
@@ -2217,6 +2463,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"run_casting_converter",
         run_casting_converter,
+        METH_VARARGS, NULL},
+    {"run_intp_converter",
+        run_intp_converter,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

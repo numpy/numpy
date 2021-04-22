@@ -1,5 +1,0 @@
-The ``numpy.ndarray`` constructor no longer interprets ``strides=()`` as ``strides=None``
------------------------------------------------------------------------------------------
-The former has changed to have the expected meaning of setting
-`numpy.ndarray.strides` to ``()``, while the latter continues to result in
-strides being chosen automatically.

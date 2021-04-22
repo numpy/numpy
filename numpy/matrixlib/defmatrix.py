@@ -329,7 +329,7 @@ class matrix(N.ndarray):
         Parameters
         ----------
         axis : None or int or tuple of ints, optional
-            Selects a subset of the single-dimensional entries in the shape.
+            Selects a subset of the axes of length one in the shape.
             If an axis is selected with shape entry greater than one,
             an error is raised.
 
@@ -829,9 +829,9 @@ class matrix(N.ndarray):
         """
         M, N = self.shape
         if M == N:
-            from numpy.dual import inv as func
+            from numpy.linalg import inv as func
         else:
-            from numpy.dual import pinv as func
+            from numpy.linalg import pinv as func
         return asmatrix(func(self))
 
     @property
@@ -1024,8 +1024,8 @@ def _from_string(str, gdict, ldict):
             except KeyError:
                 try:
                     thismat = gdict[col]
-                except KeyError:
-                    raise KeyError("%s not found" % (col,))
+                except KeyError as e:
+                    raise NameError(f"name {col!r} is not defined") from None
 
             coltup.append(thismat)
         rowtup.append(concatenate(coltup, axis=-1))

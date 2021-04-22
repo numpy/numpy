@@ -43,10 +43,7 @@ except ImportError:
     from random import SystemRandom
     randbits = SystemRandom().getrandbits
 
-try:
-    from threading import Lock
-except ImportError:
-    from dummy_threading import Lock
+from threading import Lock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -382,13 +379,22 @@ cdef class SeedSequence():
         -------
         entropy_array : 1D uint32 array
         """
-        # Convert run-entropy, program-entropy, and the spawn key into uint32
+        # Convert run-entropy and the spawn key into uint32
         # arrays and concatenate them.
 
         # We MUST have at least some run-entropy. The others are optional.
         assert self.entropy is not None
         run_entropy = _coerce_to_uint32_array(self.entropy)
         spawn_entropy = _coerce_to_uint32_array(self.spawn_key)
+        if len(spawn_entropy) > 0 and len(run_entropy) < self.pool_size:
+            # Explicitly fill out the entropy with 0s to the pool size to avoid
+            # conflict with spawn keys. We changed this in 1.19.0 to fix
+            # gh-16539. In order to preserve stream-compatibility with
+            # unspawned SeedSequences with small entropy inputs, we only do
+            # this when a spawn_key is specified.
+            diff = self.pool_size - len(run_entropy)
+            run_entropy = np.concatenate(
+                [run_entropy, np.zeros(diff, dtype=np.uint32)])
         entropy_array = np.concatenate([run_entropy, spawn_entropy])
         return entropy_array
 
@@ -498,7 +504,7 @@ cdef class BitGenerator():
         lock.
 
     See Also
-    -------
+    --------
     SeedSequence
     """
 
@@ -578,8 +584,8 @@ cdef class BitGenerator():
         """
         return random_raw(&self._bitgen, self.lock, size, output)
 
-    def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
-        '''Used in tests'''
+    def _benchmark(self, Py_ssize_t cnt, method='uint64'):
+        """Used in tests"""
         return benchmark(&self._bitgen, self.lock, cnt, method)
 
     @property

@@ -1,7 +1,0 @@
-Use AVX512 intrinsic to implement ``np.exp`` when input is ``np.float64``
---------------------------------------------------------------------------
-Use AVX512 intrinsic to implement ``np.exp`` when input is ``np.float64``, 
-which can improve the performance of ``np.exp`` with ``np.float64`` input 5-7x
-faster than before. The _multiarray_umath.so module has grown about 63 KB on 
-linux64.
-

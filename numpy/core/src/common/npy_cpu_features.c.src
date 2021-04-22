@@ -1,6 +1,7 @@
 #include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h" // To guarantee the CPU baseline definitions are in scope.
 #include "numpy/npy_common.h" // for NPY_INLINE
-#include "numpy/npy_cpu.h" // To guarantee of having CPU definitions in scope.
+#include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
 /******************** Private Definitions *********************/
 
@@ -12,6 +13,18 @@ static unsigned char npy__cpu_have[NPY_CPU_FEATURE_MAX];
 // Almost detect all CPU features in runtime
 static void
 npy__cpu_init_features(void);
+/*
+ * Disable CPU dispatched features at runtime if environment variable
+ * 'NPY_DISABLE_CPU_FEATURES' is defined.
+ * Multiple features can be present, and separated by space, comma, or tab.
+ * Raises an error if parsing fails or if the feature was not enabled
+*/
+static int
+npy__cpu_try_disable_env(void);
+
+/* Ensure the build's CPU baseline features are supported at runtime */
+static int
+npy__cpu_validate_baseline(void);
 
 /******************** Public Definitions *********************/
 
@@ -27,6 +40,12 @@ NPY_VISIBILITY_HIDDEN int
 npy_cpu_init(void)
 {
     npy__cpu_init_features();
+    if (npy__cpu_validate_baseline() < 0) {
+        return -1;
+    }
+    if (npy__cpu_try_disable_env() < 0) {
+        return -1;
+    }
     return 0;
 }
 
@@ -55,6 +74,210 @@ npy_cpu_features_dict(void)
     return dict;
 }
 
+#define NPY__CPU_PYLIST_APPEND_CB(FEATURE, LIST) \
+    item = PyUnicode_FromString(NPY_TOSTRING(FEATURE)); \
+    if (item == NULL) { \
+        Py_DECREF(LIST); \
+        return NULL; \
+    } \
+    PyList_SET_ITEM(LIST, index++, item);
+
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_baseline_list(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
+    PyObject *list = PyList_New(NPY_WITH_CPU_BASELINE_N), *item;
+    int index = 0;
+    if (list != NULL) {
+        NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_PYLIST_APPEND_CB, list)
+    }
+    return list;
+#else
+    return PyList_New(0);
+#endif
+}
+
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_dispatch_list(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_N > 0
+    PyObject *list = PyList_New(NPY_WITH_CPU_DISPATCH_N), *item;
+    int index = 0;
+    if (list != NULL) {
+        NPY_WITH_CPU_DISPATCH_CALL(NPY__CPU_PYLIST_APPEND_CB, list)
+    }
+    return list;
+#else
+    return PyList_New(0);
+#endif
+}
+
+/******************** Private Definitions *********************/
+#define NPY__CPU_FEATURE_ID_CB(FEATURE, WITH_FEATURE)     \
+    if (strcmp(NPY_TOSTRING(FEATURE), WITH_FEATURE) == 0) \
+        return NPY_CAT(NPY_CPU_FEATURE_, FEATURE);
+/**
+ * Returns CPU feature's ID, if the 'feature' was part of baseline
+ * features that had been configured via --cpu-baseline
+ * otherwise it returns 0
+*/
+static NPY_INLINE int
+npy__cpu_baseline_fid(const char *feature)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
+    NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_FEATURE_ID_CB, feature)
+#endif
+    return 0;
+}
+/**
+ * Returns CPU feature's ID, if the 'feature' was part of dispatched
+ * features that had been configured via --cpu-dispatch
+ * otherwise it returns 0
+*/
+static NPY_INLINE int
+npy__cpu_dispatch_fid(const char *feature)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_N > 0
+    NPY_WITH_CPU_DISPATCH_CALL(NPY__CPU_FEATURE_ID_CB, feature)
+#endif
+    return 0;
+}
+
+static int
+npy__cpu_validate_baseline(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
+    char baseline_failure[sizeof(NPY_WITH_CPU_BASELINE) + 1];
+    char *fptr = &baseline_failure[0];
+
+    #define NPY__CPU_VALIDATE_CB(FEATURE, DUMMY)                  \
+        if (!npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)]) { \
+            const int size = sizeof(NPY_TOSTRING(FEATURE));       \
+            memcpy(fptr, NPY_TOSTRING(FEATURE), size);            \
+            fptr[size] = ' '; fptr += size + 1;                   \
+        }
+    NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_VALIDATE_CB, DUMMY) // extra arg for msvc
+    *fptr = '\0';
+
+    if (baseline_failure[0] != '\0') {
+        *(fptr-1) = '\0'; // trim the last space
+        PyErr_Format(PyExc_RuntimeError,
+            "NumPy was built with baseline optimizations: \n"
+            "(" NPY_WITH_CPU_BASELINE ") but your machine doesn't support:\n(%s).",
+            baseline_failure
+        );
+        return -1;
+    }
+#endif
+    return 0;
+}
+
+static int
+npy__cpu_try_disable_env(void)
+{
+    char *disenv = getenv("NPY_DISABLE_CPU_FEATURES");
+    if (disenv == NULL || disenv[0] == 0) {
+        return 0;
+    }
+    #define NPY__CPU_ENV_ERR_HEAD \
+        "During parsing environment variable 'NPY_DISABLE_CPU_FEATURES':\n"
+
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_N > 0
+    #define NPY__MAX_VAR_LEN 1024 // More than enough for this era
+    size_t var_len = strlen(disenv) + 1;
+    if (var_len > NPY__MAX_VAR_LEN) {
+        PyErr_Format(PyExc_RuntimeError,
+            "Length of environment variable 'NPY_DISABLE_CPU_FEATURES' is %d, only %d accepted",
+            var_len, NPY__MAX_VAR_LEN - 1
+        );
+        return -1;
+    }
+    char disable_features[NPY__MAX_VAR_LEN];
+    memcpy(disable_features, disenv, var_len);
+
+    char nexist[NPY__MAX_VAR_LEN];
+    char *nexist_cur = &nexist[0];
+
+    char notsupp[sizeof(NPY_WITH_CPU_DISPATCH) + 1];
+    char *notsupp_cur = &notsupp[0];
+
+    //comma and space including (htab, vtab, CR, LF, FF)
+    const char *delim = ", \t\v\r\n\f";
+    char *feature = strtok(disable_features, delim);
+    while (feature) {
+        if (npy__cpu_baseline_fid(feature) > 0) {
+            PyErr_Format(PyExc_RuntimeError,
+                NPY__CPU_ENV_ERR_HEAD
+                "You cannot disable CPU feature '%s', since it is part of "
+                "the baseline optimizations:\n"
+                "(" NPY_WITH_CPU_BASELINE ").",
+                feature
+            );
+            return -1;
+        }
+        // check if the feature is part of dispatched features
+        int feature_id = npy__cpu_dispatch_fid(feature);
+        if (feature_id == 0) {
+            int flen = strlen(feature);
+            memcpy(nexist_cur, feature, flen);
+            nexist_cur[flen] = ' '; nexist_cur += flen + 1;
+            goto next;
+        }
+        // check if the feature supported by the running machine
+        if (!npy__cpu_have[feature_id]) {
+            int flen = strlen(feature);
+            memcpy(notsupp_cur, feature, flen);
+            notsupp_cur[flen] = ' '; notsupp_cur += flen + 1;
+            goto next;
+        }
+        // Finaly we can disable it
+        npy__cpu_have[feature_id] = 0;
+    next:
+        feature = strtok(NULL, delim);
+    }
+
+    *nexist_cur = '\0';
+    if (nexist[0] != '\0') {
+        *(nexist_cur-1) = '\0'; // trim the last space
+        if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                NPY__CPU_ENV_ERR_HEAD
+                "You cannot disable CPU features (%s), since "
+                "they are not part of the dispatched optimizations\n"
+                "(" NPY_WITH_CPU_DISPATCH ").",
+                nexist
+        ) < 0) {
+            return -1;
+        }
+    }
+
+    *notsupp_cur = '\0';
+    if (notsupp[0] != '\0') {
+        *(notsupp_cur-1) = '\0'; // trim the last space
+        if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                NPY__CPU_ENV_ERR_HEAD
+                "You cannot disable CPU features (%s), since "
+                "they are not supported by your machine.",
+                notsupp
+        ) < 0) {
+            return -1;
+        }
+    }
+#else
+    if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+            NPY__CPU_ENV_ERR_HEAD
+            "You cannot use environment variable 'NPY_DISABLE_CPU_FEATURES', since "
+        #ifdef NPY_DISABLE_OPTIMIZATION
+            "the NumPy library was compiled with optimization disabled."
+        #else
+            "the NumPy library was compiled without any dispatched optimizations."
+        #endif
+    ) < 0) {
+        return -1;
+    }
+#endif
+    return 0;
+}
+
 /****************************************************************
  * This section is reserved to defining @npy__cpu_init_features
  * for each CPU architecture, please try to keep it clean. Ty
@@ -76,11 +299,13 @@ npy__cpu_getxcr0(void)
 #if defined(_MSC_VER) || defined (__INTEL_COMPILER)
     return _xgetbv(0);
 #elif defined(__GNUC__) || defined(__clang__)
+    /* named form of xgetbv not supported on OSX, so must use byte form, see:
+     * https://github.com/asmjit/asmjit/issues/78
+    */
     unsigned int eax, edx;
-    __asm__("xgetbv" : "=a" (eax), "=d" (edx) : "c" (0));
-    return (eax | (unsigned long long)edx << 32);
+    __asm(".byte 0x0F, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(0));
+    return eax;
 #else
-    // TODO: handle other x86 compilers
     return 0;
 #endif
 }
@@ -110,7 +335,6 @@ npy__cpu_cpuid(int reg[4], int func_id)
         );
     #endif
 #else
-    // TODO: handle other x86 compilers
     reg[0] = 0;
 #endif
 }
@@ -123,8 +347,15 @@ npy__cpu_init_features(void)
     // validate platform support
     int reg[] = {0, 0, 0, 0};
     npy__cpu_cpuid(reg, 0);
-    if (reg[0] == 0)
-        return;
+    if (reg[0] == 0) {
+       npy__cpu_have[NPY_CPU_FEATURE_MMX]  = 1;
+       npy__cpu_have[NPY_CPU_FEATURE_SSE]  = 1;
+       npy__cpu_have[NPY_CPU_FEATURE_SSE2] = 1;
+       #ifdef NPY_CPU_AMD64
+           npy__cpu_have[NPY_CPU_FEATURE_SSE3] = 1;
+       #endif
+       return;
+    }
 
     npy__cpu_cpuid(reg, 1);
     npy__cpu_have[NPY_CPU_FEATURE_MMX]    = (reg[3] & (1 << 23)) != 0;
@@ -269,40 +500,32 @@ npy__cpu_init_features_arm8(void)
     npy__cpu_have[NPY_CPU_FEATURE_ASIMD]      = 1;
 }
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 /*
  * we aren't sure of what kind kernel or clib we deal with
  * so we play it safe
 */
 #include <stdio.h>
-#include <fcntl.h>
-
-#define NPY__HWCAP  16
-#define NPY__HWCAP2 26
-
-// arch/arm/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_HALF   (1 << 1)
-#define NPY__HWCAP_NEON   (1 << 12)
-#define NPY__HWCAP_VFPv3  (1 << 13)
-#define NPY__HWCAP_VFPv4  (1 << 16)
-#define NPY__HWCAP2_AES   (1 << 0)
-#define NPY__HWCAP2_PMULL (1 << 1)
-#define NPY__HWCAP2_SHA1  (1 << 2)
-#define NPY__HWCAP2_SHA2  (1 << 3)
-#define NPY__HWCAP2_CRC32 (1 << 4)
-// arch/arm64/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_FP       (1 << 0)
-#define NPY__HWCAP_ASIMD    (1 << 1)
-#define NPY__HWCAP_FPHP     (1 << 9)
-#define NPY__HWCAP_ASIMDHP  (1 << 10)
-#define NPY__HWCAP_ASIMDDP  (1 << 20)
-#define NPY__HWCAP_ASIMDFHM (1 << 23)
+#include "npy_cpuinfo_parser.h"
 
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
+#ifdef __FreeBSD__
+__attribute__((weak)) int elf_aux_info(int, void *, int); // linker should handle it
+
+static unsigned long getauxval(unsigned long k)
+{
+    unsigned long val = 0ul;
+    if (elf_aux_info == 0 || elf_aux_info((int)k, (void *)&val, (int)sizeof(val)) != 0) {
+    	return 0ul;
+    }
+    return val;
+}
+#endif
 static int
 npy__cpu_init_features_linux(void)
 {
     unsigned long hwcap = 0, hwcap2 = 0;
+    #ifdef __linux__
     if (getauxval != 0) {
         hwcap = getauxval(NPY__HWCAP);
     #ifdef __arm__
@@ -329,27 +552,41 @@ npy__cpu_init_features_linux(void)
             close(fd);
         }
     }
+    #else
+    hwcap = getauxval(NPY__HWCAP);
+    #ifdef __arm__
+    hwcap2 = getauxval(NPY__HWCAP2);
+    #endif
+    #endif
     if (hwcap == 0 && hwcap2 == 0) {
+    #ifdef __linux__
         /*
-         * FIXME: failback to compiler definitions,
-         * BTW we can parse /proc/cpuinfo for badly patched kernels
+         * try parsing with /proc/cpuinfo, if sandboxed
+         * failback to compiler definitions
         */
-        return 0;
+        if(!get_feature_from_proc_cpuinfo(&hwcap, &hwcap2)) {
+            return 0;
+        }
+    #else
+    	return 0;
+    #endif
     }
 #ifdef __arm__
     // Detect Arm8 (aarch32 state)
     if ((hwcap2 & NPY__HWCAP2_AES)  || (hwcap2 & NPY__HWCAP2_SHA1)  ||
         (hwcap2 & NPY__HWCAP2_SHA2) || (hwcap2 & NPY__HWCAP2_PMULL) ||
         (hwcap2 & NPY__HWCAP2_CRC32))
+    {
+        hwcap = hwcap2;
 #else
     if (1)
-#endif
     {
         if (!(hwcap & (NPY__HWCAP_FP | NPY__HWCAP_ASIMD))) {
             // Is this could happen? maybe disabled by kernel
             // BTW this will break the baseline of AARCH64
             return 1;
         }
+#endif
         npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = (hwcap & NPY__HWCAP_FPHP)     != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
@@ -357,9 +594,10 @@ npy__cpu_init_features_linux(void)
         npy__cpu_init_features_arm8();
     } else {
         npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & (NPY__HWCAP_NEON | NPY__HWCAP_VFPv3 |
-                                                              NPY__HWCAP_HALF)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & (NPY__HWCAP_NEON | NPY__HWCAP_VFPv4)) != 0;
+        if (npy__cpu_have[NPY_CPU_FEATURE_NEON]) {
+            npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & NPY__HWCAP_HALF) != 0;
+            npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & NPY__HWCAP_VFPv4) != 0;
+        }
     }
     return 1;
 }
@@ -374,7 +612,7 @@ npy__cpu_init_features(void)
         return;
 #endif
     // We have nothing else todo
-#if defined(NPY_HAVE_NEON_ARM8) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
+#if defined(NPY_HAVE_ASIMD) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
     #if defined(NPY_HAVE_FPHP) || defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     npy__cpu_have[NPY_CPU_FEATURE_FPHP] = 1;
     #endif
@@ -406,5 +644,13 @@ npy__cpu_init_features(void)
 static void
 npy__cpu_init_features(void)
 {
+    /*
+     * just in case if the compiler doesn't respect ANSI
+     * but for knowing paltforms it still nessecery, because @npy__cpu_init_features
+     * may called multiple of times and we need to clear the disabled features by
+     * ENV Var or maybe in the future we can support other methods like
+     * global variables, go back to @npy__cpu_try_disable_env for more understanding
+     */
+    memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
 }
 #endif

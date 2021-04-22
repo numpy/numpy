@@ -1,5 +1,7 @@
 import warnings
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
         assert_, assert_raises, assert_equal, assert_warns,
@@ -211,18 +213,18 @@ class TestRandint:
 
     def test_repeatability(self):
         import hashlib
-        # We use a md5 hash of generated sequences of 1000 samples
+        # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool': '7dd3170d7aa461d201a65f8bcf3944b0',
-               'int16': '1b7741b80964bb190c50d541dca1cac1',
-               'int32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'int64': '17db902806f448331b5a758d7d2ee672',
-               'int8': '27dd30c4e08a797063dffac2490b0be6',
-               'uint16': '1b7741b80964bb190c50d541dca1cac1',
-               'uint32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'uint64': '17db902806f448331b5a758d7d2ee672',
-               'uint8': '27dd30c4e08a797063dffac2490b0be6'}
+        tgt = {'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
+               'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
+               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}
 
         for dt in self.itype[1:]:
             np.random.seed(1234)
@@ -233,13 +235,13 @@ class TestRandint:
             else:
                 val = self.rfunc(0, 6, size=1000, dtype=dt).byteswap()
 
-            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            res = hashlib.sha256(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
         np.random.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
-        res = hashlib.md5(val).hexdigest()
+        res = hashlib.sha256(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
     def test_int64_uint64_corner_case(self):
@@ -509,6 +511,58 @@ class TestRandomDist:
             np.random.shuffle(b)
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
+
+    @pytest.mark.parametrize("random",
+            [np.random, np.random.RandomState(), np.random.default_rng()])
+    def test_shuffle_untyped_warning(self, random):
+        # Create a dict works like a sequence but isn't one
+        values = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+        with pytest.warns(UserWarning,
+                match="you are shuffling a 'dict' object") as rec:
+            random.shuffle(values)
+        assert "test_random" in rec[0].filename
+
+    @pytest.mark.parametrize("random",
+        [np.random, np.random.RandomState(), np.random.default_rng()])
+    @pytest.mark.parametrize("use_array_like", [True, False])
+    def test_shuffle_no_object_unpacking(self, random, use_array_like):
+        class MyArr(np.ndarray):
+            pass
+
+        items = [
+            None, np.array([3]), np.float64(3), np.array(10), np.float64(7)
+        ]
+        arr = np.array(items, dtype=object)
+        item_ids = {id(i) for i in items}
+        if use_array_like:
+            arr = arr.view(MyArr)
+
+        # The array was created fine, and did not modify any objects:
+        assert all(id(i) in item_ids for i in arr)
+
+        if use_array_like and not isinstance(random, np.random.Generator):
+            # The old API gives incorrect results, but warns about it.
+            with pytest.warns(UserWarning,
+                    match="Shuffling a one dimensional array.*"):
+                random.shuffle(arr)
+        else:
+            random.shuffle(arr)
+            assert all(id(i) in item_ids for i in arr)
+
+    def test_shuffle_memoryview(self):
+        # gh-18273
+        # allow graceful handling of memoryviews
+        # (treat the same as arrays)
+        np.random.seed(self.seed)
+        a = np.arange(5).data
+        np.random.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 4, 3, 2])
+        rng = np.random.RandomState(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 2, 3, 4])
+        rng = np.random.default_rng(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [4, 1, 0, 3, 2])
 
     def test_beta(self):
         np.random.seed(self.seed)

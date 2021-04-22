@@ -57,9 +57,3 @@ class TestAccuracy:
                         outval = outval[perm]
                         maxulperr = data_subset['ulperr'].max()
                         assert_array_max_ulp(npfunc(inval), outval, maxulperr)
-
-    def test_ignore_nan_ulperror(self):
-        # Ignore ULP differences between various NAN's
-        nan1_f32 = np.array(str_to_float('0xffffffff'), dtype=np.float32)
-        nan2_f32 = np.array(str_to_float('0x7fddbfbf'), dtype=np.float32)
-        assert_array_max_ulp(nan1_f32, nan2_f32, 0)

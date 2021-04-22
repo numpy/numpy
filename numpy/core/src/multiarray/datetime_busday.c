@@ -834,24 +834,23 @@ static int
 PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
 {
     PyObject *obj = roll_in;
-    char *str;
-    Py_ssize_t len;
 
-    /* Make obj into an ASCII string */
-    Py_INCREF(obj);
-    if (PyUnicode_Check(obj)) {
-        /* accept unicode input */
-        PyObject *obj_str;
-        obj_str = PyUnicode_AsASCIIString(obj);
+    /* Make obj into an UTF8 string */
+    if (PyBytes_Check(obj)) {
+        /* accept bytes input */
+        PyObject *obj_str = PyUnicode_FromEncodedObject(obj, NULL, NULL);
         if (obj_str == NULL) {
-            Py_DECREF(obj);
             return 0;
         }
-        Py_DECREF(obj);
         obj = obj_str;
     }
+    else {
+        Py_INCREF(obj);
+    }
 
-    if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
+    Py_ssize_t len;
+    char const *str = PyUnicode_AsUTF8AndSize(obj, &len);
+    if (str == NULL) {
         Py_DECREF(obj);
         return 0;
     }
@@ -935,8 +934,8 @@ NPY_NO_EXPORT PyObject *
 array_busday_offset(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"dates", "offsets", "roll",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates", "offsets", "roll",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *offsets_in = NULL, *out_in = NULL;
 
@@ -1066,8 +1065,8 @@ NPY_NO_EXPORT PyObject *
 array_busday_count(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"begindates", "enddates",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"begindates", "enddates",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_begin_in = NULL, *dates_end_in = NULL, *out_in = NULL;
 
@@ -1211,8 +1210,8 @@ NPY_NO_EXPORT PyObject *
 array_is_busday(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"dates",
-                      "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates",
+                             "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *out_in = NULL;
 

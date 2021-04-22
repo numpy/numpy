@@ -9,7 +9,8 @@ Tutorial: Linear algebra on n-dimensional arrays
    import numpy as np
    np.random.seed(1)
 
-**Prerequisites**
+Prerequisites
+-------------
 
 Before reading this tutorial, you should know a bit of Python. If you
 would like to refresh your memory, take a look at the
@@ -19,7 +20,8 @@ If you want to be able to run the examples in this tutorial, you should also
 have `matplotlib <https://matplotlib.org/>`_ and `SciPy <https://scipy.org>`_
 installed on your computer.
 
-**Learner profile**
+Learner profile
+---------------
 
 This tutorial is for people who have a basic understanding of linear
 algebra and arrays in NumPy and want to understand how n-dimensional
@@ -28,7 +30,8 @@ you don't know how to apply common functions to n-dimensional arrays (without
 using for-loops), or if you want to understand axis and shape properties for
 n-dimensional arrays, this tutorial might be of help.
 
-**Learning Objectives**
+Learning Objectives
+-------------------
 
 After this tutorial, you should be able to:
 
@@ -38,7 +41,8 @@ After this tutorial, you should be able to:
   arrays without using for-loops;
 - Understand axis and shape properties for n-dimensional arrays.
 
-**Content**
+Content
+-------
 
 In this tutorial, we will use a `matrix decomposition
 <https://en.wikipedia.org/wiki/Matrix_decomposition>`_ from linear algebra, the
@@ -78,7 +82,8 @@ We can see the image using the `matplotlib.pyplot.imshow` function::
    If you are executing the commands above in the IPython shell, it might be
    necessary to use the command ``plt.show()`` to show the image window. 
 		     
-**Shape, axis and array properties**
+Shape, axis and array properties
+--------------------------------
 
 Note that, in linear algebra, the dimension of a vector refers to the number of
 entries in an array. In NumPy, it instead defines the number of axes. For
@@ -162,7 +167,8 @@ syntax::
     >>> green_array = img_array[:, :, 1]
     >>> blue_array = img_array[:, :, 2]
 
-**Operations on an axis**
+Operations on an axis
+---------------------
 
 It is possible to use methods from linear algebra to approximate an existing set
 of data. Here, we will use the `SVD (Singular Value Decomposition)
@@ -290,7 +296,8 @@ diagonal and with the appropriate dimensions for multiplying: in our case,
 Now, we want to check if the reconstructed ``U @ Sigma @ Vt`` is
 close to the original ``img_gray`` matrix.
 
-**Approximation**
+Approximation
+-------------
 
 The `linalg` module includes a ``norm`` function, which
 computes the norm of a vector or matrix represented in a NumPy array. For
@@ -360,7 +367,8 @@ Now, you can go ahead and repeat this experiment with other values of `k`, and
 each of your experiments should give you a slightly better (or worse) image
 depending on the value you choose.
 
-**Applying to all colors**
+Applying to all colors
+----------------------
 
 Now we want to do the same kind of operation, but to all three colors. Our
 first instinct might be to repeat the same operation we did above to each color
@@ -411,7 +419,8 @@ matrices into the approximation. Now, note that
 To build the final approximation matrix, we must understand how multiplication
 across different axes works.
 
-**Products with n-dimensional arrays**
+Products with n-dimensional arrays
+----------------------------------
 
 If you have worked before with only one- or two-dimensional arrays in NumPy,
 you might use `numpy.dot` and `numpy.matmul` (or the ``@`` operator)
@@ -422,7 +431,7 @@ Now, to build our approximation, we first need to make sure that our singular
 values are ready for multiplication, so we build our ``Sigma`` matrix similarly
 to what we did before. The ``Sigma`` array must have dimensions
 ``(3, 768, 1024)``. In order to add the singular values to the diagonal of
-``Sigma``, we will use the ``fill_diagonal`` function from NumPy, using each of
+``Sigma``, we will use the `numpy.fill_diagonal` function from NumPy, using each of
 the 3 rows in ``s`` as the diagonal for each of the 3 matrices in ``Sigma``:
 
 ::
@@ -495,7 +504,8 @@ Even though the image is not as sharp, using a small number of ``k`` singular
 values (compared to the original set of 768 values), we can recover many of the
 distinguishing features from this image.
 
-**Final words**
+Final words
+-----------
 
 Of course, this is not the best method to *approximate* an image.
 However, there is, in fact, a result in linear algebra that says that the
@@ -504,7 +514,8 @@ terms of the norm of the difference. For more information, see *G. H. Golub and
 C. F. Van Loan, Matrix Computations, Baltimore, MD, Johns Hopkins University
 Press, 1985*.
 
-**Further reading**
+Further reading
+---------------
 
 -  :doc:`Python tutorial <python:tutorial/index>`
 -  :ref:`reference`

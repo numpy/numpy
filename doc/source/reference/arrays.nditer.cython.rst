@@ -5,7 +5,7 @@ Those who want really good performance out of their low level operations
 should strongly consider directly using the iteration API provided
 in C, but for those who are not comfortable with C or C++, Cython
 is a good middle ground with reasonable performance tradeoffs. For
-the :class:`nditer` object, this means letting the iterator take care
+the :class:`~numpy.nditer` object, this means letting the iterator take care
 of broadcasting, dtype conversion, and buffering, while giving the inner
 loop to Cython.
 
