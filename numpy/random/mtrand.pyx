@@ -23,7 +23,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_GT_1, LEGACY_CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
-            validate_output_shape
+            validate_output_shape, convert_floating
         )
 
 cdef extern from "numpy/random/distributions.h":
@@ -922,8 +922,7 @@ cdef class RandomState:
                 if np.issubdtype(p.dtype, np.floating):
                     atol = max(atol, np.sqrt(np.finfo(p.dtype).eps))
 
-            p = <np.ndarray>np.PyArray_FROM_OTF(
-                p, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+            p = <np.ndarray>convert_floating(p)
             pix = <double*>np.PyArray_DATA(p)
 
             if p.ndim != 1:
@@ -3377,7 +3376,7 @@ cdef class RandomState:
         cdef long *randoms_data
         cdef np.broadcast it
 
-        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        p_arr = <np.ndarray>convert_floating(p)
         is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
         n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_LONG, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
@@ -4229,8 +4228,9 @@ cdef class RandomState:
         cdef long ni
 
         d = len(pvals)
-        parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        parr = <np.ndarray>convert_floating(pvals)
+        if np.PyArray_NDIM(parr) != 1:
+            raise ValueError("pvals must be a 1d array")
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):

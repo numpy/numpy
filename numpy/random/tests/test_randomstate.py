@@ -660,6 +660,17 @@ class TestRandomDist:
         contig = random.choice(5, 3, p=np.ascontiguousarray(p[::2]))
         assert_array_equal(non_contig, contig)
 
+    def test_choice_longdouble(self):
+        random.seed(self.seed)
+        p = np.array([.4, .4, .2])
+        actual = random.choice([0, 1, 2], size=2, p=p)
+        
+        random.seed(self.seed)
+        p = np.array([.4, .4, .2], dtype=np.longdouble)
+        actual_128 = random.choice([0, 1, 2], size=2, p=p)
+        
+        assert_equal(actual, actual_128)
+
     def test_bytes(self):
         random.seed(self.seed)
         actual = random.bytes(10)

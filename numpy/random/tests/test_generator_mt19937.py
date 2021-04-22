@@ -921,6 +921,17 @@ class TestRandomDist:
         res = hashlib.sha256(actual.view(np.int8)).hexdigest()
         assert_(choice_hash == res)
 
+    def test_choice_longdouble(self):
+        random = Generator(MT19937(self.seed))
+        p = np.array([.4, .4, .2])
+        actual = random.choice([0, 1, 2], size=2, p=p)
+
+        random = Generator(MT19937(self.seed))
+        p = np.array([.4, .4, .2], dtype=np.longdouble)
+        actual_128 = random.choice([0, 1, 2], size=2, p=p)
+
+        assert_equal(actual, actual_128)
+
     def test_bytes(self):
         random = Generator(MT19937(self.seed))
         actual = random.bytes(10)

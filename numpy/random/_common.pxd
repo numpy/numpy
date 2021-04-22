@@ -67,6 +67,8 @@ cdef double kahan_sum(double *darr, np.npy_intp n)
 cdef inline double uint64_to_double(uint64_t rnd) nogil:
     return (rnd >> 11) * (1.0 / 9007199254740992.0)
 
+cdef np.ndarray convert_floating(object prob)
+
 cdef object double_fill(void *func, bitgen_t *state, object size, object lock, object out)
 
 cdef object float_fill(void *func, bitgen_t *state, object size, object lock, object out)

@@ -272,6 +272,31 @@ cdef check_output(object out, object dtype, object size, bint require_c_array):
             raise ValueError('size must match out.shape when used together')
 
 
+cdef np.ndarray convert_floating(object prob):
+    """
+    Convert array-like floating to float64 
+    
+    Parameters
+    ----------
+    prob : array_like
+        Probabilities to convert
+
+    Returns
+    -------
+    prob_arr : ndarray
+        An double array that is aligned and c-contiguous. If prob is an
+        ndarray with a longdouble dtype, force casts to double. Otherwise
+        uses safe casting.
+    """
+    cdef int requirements = np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS
+
+    if np.PyArray_Check(prob) and np.issubdtype(prob.dtype, np.longdouble):
+        # Force cast to allow longdouble, others are safe
+        requirements |= np.NPY_ARRAY_FORCECAST
+
+    return <np.ndarray>np.PyArray_FROM_OTF(prob, np.NPY_DOUBLE, requirements)
+
+
 cdef object double_fill(void *func, bitgen_t *state, object size, object lock, object out):
     cdef random_double_fill random_func = (<random_double_fill>func)
     cdef double out_val
