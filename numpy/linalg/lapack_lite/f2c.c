@@ -567,7 +567,7 @@ if( (abi = b->i) < 0.f)
 	abi = - abi;
 if( abr <= abi )
 	{
-	  /*Let IEEE Infinties handle this ;( */
+	  /*Let IEEE Infinities handle this ;( */
 	  /*if(abi == 0)
 		sig_die("complex division by zero", 1);*/
 	ratio = b->r / b->i ;
@@ -603,7 +603,7 @@ if( (abi = b->i) < 0.)
 	abi = - abi;
 if( abr <= abi )
 	{
-	  /*Let IEEE Infinties handle this ;( */
+	  /*Let IEEE Infinities handle this ;( */
 	  /*if(abi == 0)
 		sig_die("complex division by zero", 1);*/
 	ratio = b->r / b->i ;

@@ -1,0 +1,21 @@
+
+Contributors
+============
+
+A total of 4 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Eric Wieser
+* Julian Taylor
+* Matti Picus
+
+Pull requests merged
+====================
+
+A total of 4 pull requests were merged for this release.
+
+* `#11985 <https://github.com/numpy/numpy/pull/11985>`__: BUG: fix cached allocations without the GIL
+* `#11986 <https://github.com/numpy/numpy/pull/11986>`__: BUG: Undo behavior change in ma.masked_values(shrink=True)
+* `#11987 <https://github.com/numpy/numpy/pull/11987>`__: BUG: fix refcount leak in PyArray_AdaptFlexibleDType
+* `#11995 <https://github.com/numpy/numpy/pull/11995>`__: TST: Add Python 3.7 testing to NumPy 1.14.

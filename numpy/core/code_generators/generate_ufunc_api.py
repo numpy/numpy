@@ -1,12 +1,9 @@
-from __future__ import division, print_function
-
 import os
 import genapi
 
 import numpy_api
 
-from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
+from genapi import TypeApi, FunctionApi
 
 h_template = r"""
 #ifdef _UMATHMODULE
@@ -36,11 +33,12 @@ static void **PyUFunc_API=NULL;
 static NPY_INLINE int
 _import_umath(void)
 {
-  PyObject *numpy = PyImport_ImportModule("numpy.core.umath");
+  PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {
-      PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import");
+      PyErr_SetString(PyExc_ImportError,
+                      "numpy.core._multiarray_umath failed to import");
       return -1;
   }
   c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
@@ -50,21 +48,12 @@ _import_umath(void)
       return -1;
   }
 
-#if PY_VERSION_HEX >= 0x03000000
   if (!PyCapsule_CheckExact(c_api)) {
       PyErr_SetString(PyExc_RuntimeError, "_UFUNC_API is not PyCapsule object");
       Py_DECREF(c_api);
       return -1;
   }
   PyUFunc_API = (void **)PyCapsule_GetPointer(c_api, NULL);
-#else
-  if (!PyCObject_Check(c_api)) {
-      PyErr_SetString(PyExc_RuntimeError, "_UFUNC_API is not PyCObject object");
-      Py_DECREF(c_api);
-      return -1;
-  }
-  PyUFunc_API = (void **)PyCObject_AsVoidPtr(c_api);
-#endif
   Py_DECREF(c_api);
   if (PyUFunc_API == NULL) {
       PyErr_SetString(PyExc_RuntimeError, "_UFUNC_API is NULL pointer");
@@ -73,12 +62,6 @@ _import_umath(void)
   return 0;
 }
 
-#if PY_VERSION_HEX >= 0x03000000
-#define NUMPY_IMPORT_UMATH_RETVAL NULL
-#else
-#define NUMPY_IMPORT_UMATH_RETVAL
-#endif
-
 #define import_umath() \
     do {\
         UFUNC_NOFPE\
@@ -86,7 +69,7 @@ _import_umath(void)
             PyErr_Print();\
             PyErr_SetString(PyExc_ImportError,\
                     "numpy.core.umath failed to import");\
-            return NUMPY_IMPORT_UMATH_RETVAL;\
+            return NULL;\
         }\
     } while(0)
 

@@ -1,6 +1,4 @@
 # http://g95.sourceforge.net/
-from __future__ import division, absolute_import, print_function
-
 from numpy.distutils.fcompiler import FCompiler
 
 compilers = ['G95FCompiler']
@@ -39,7 +37,6 @@ class G95FCompiler(FCompiler):
 
 if __name__ == '__main__':
     from distutils import log
+    from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
-    compiler = G95FCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    print(customized_fcompiler('g95').get_version())

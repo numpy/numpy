@@ -1,12 +1,12 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 import numpy as np
+from numpy.core._rational_tests import rational
+import pytest
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_array_equal,
-     assert_raises, HAS_REFCOUNT
-)
+     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
+     HAS_REFCOUNT
+    )
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
@@ -40,57 +40,38 @@ def test_array_array():
         assert_equal(old_refcount, sys.getrefcount(np.float64))
 
     # test string
-    S2 = np.dtype((str, 2))
-    S3 = np.dtype((str, 3))
-    S5 = np.dtype((str, 5))
+    S2 = np.dtype((bytes, 2))
+    S3 = np.dtype((bytes, 3))
+    S5 = np.dtype((bytes, 5))
+    assert_equal(np.array(b"1.0", dtype=np.float64),
+                 np.ones((), dtype=np.float64))
+    assert_equal(np.array(b"1.0").dtype, S3)
+    assert_equal(np.array(b"1.0", dtype=bytes).dtype, S3)
+    assert_equal(np.array(b"1.0", dtype=S2), np.array(b"1."))
+    assert_equal(np.array(b"1", dtype=S5), np.ones((), dtype=S5))
+
+    # test string
+    U2 = np.dtype((str, 2))
+    U3 = np.dtype((str, 3))
+    U5 = np.dtype((str, 5))
     assert_equal(np.array("1.0", dtype=np.float64),
                  np.ones((), dtype=np.float64))
-    assert_equal(np.array("1.0").dtype, S3)
-    assert_equal(np.array("1.0", dtype=str).dtype, S3)
-    assert_equal(np.array("1.0", dtype=S2), np.array("1."))
-    assert_equal(np.array("1", dtype=S5), np.ones((), dtype=S5))
-
-    # test unicode
-    _unicode = globals().get("unicode")
-    if _unicode:
-        U2 = np.dtype((_unicode, 2))
-        U3 = np.dtype((_unicode, 3))
-        U5 = np.dtype((_unicode, 5))
-        assert_equal(np.array(_unicode("1.0"), dtype=np.float64),
-                     np.ones((), dtype=np.float64))
-        assert_equal(np.array(_unicode("1.0")).dtype, U3)
-        assert_equal(np.array(_unicode("1.0"), dtype=_unicode).dtype, U3)
-        assert_equal(np.array(_unicode("1.0"), dtype=U2),
-                     np.array(_unicode("1.")))
-        assert_equal(np.array(_unicode("1"), dtype=U5),
-                     np.ones((), dtype=U5))
+    assert_equal(np.array("1.0").dtype, U3)
+    assert_equal(np.array("1.0", dtype=str).dtype, U3)
+    assert_equal(np.array("1.0", dtype=U2), np.array(str("1.")))
+    assert_equal(np.array("1", dtype=U5), np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)
     assert_(hasattr(builtins, 'get'))
 
-    # test buffer
-    _buffer = builtins.get("buffer")
-    if _buffer and sys.version_info[:3] >= (2, 7, 5):
-        # This test fails for earlier versions of Python.
-        # Evidently a bug got fixed in 2.7.5.
-        dat = np.array(_buffer('1.0'), dtype=np.float64)
-        assert_equal(dat, [49.0, 46.0, 48.0])
-        assert_(dat.dtype.type is np.float64)
+    # test memoryview
+    dat = np.array(memoryview(b'1.0'), dtype=np.float64)
+    assert_equal(dat, [49.0, 46.0, 48.0])
+    assert_(dat.dtype.type is np.float64)
 
-        dat = np.array(_buffer(b'1.0'))
-        assert_equal(dat, [49, 46, 48])
-        assert_(dat.dtype.type is np.uint8)
-
-    # test memoryview, new version of buffer
-    _memoryview = builtins.get("memoryview")
-    if _memoryview:
-        dat = np.array(_memoryview(b'1.0'), dtype=np.float64)
-        assert_equal(dat, [49.0, 46.0, 48.0])
-        assert_(dat.dtype.type is np.float64)
-
-        dat = np.array(_memoryview(b'1.0'))
-        assert_equal(dat, [49, 46, 48])
-        assert_(dat.dtype.type is np.uint8)
+    dat = np.array(memoryview(b'1.0'))
+    assert_equal(dat, [49, 46, 48])
+    assert_(dat.dtype.type is np.uint8)
 
     # test array interface
     a = np.array(100.0, dtype=np.float64)
@@ -161,6 +142,16 @@ def test_array_array():
     assert_equal(np.array([(1.0,) * 10] * 10, dtype=np.float64),
                  np.ones((10, 10), dtype=np.float64))
 
+@pytest.mark.parametrize("array", [True, False])
+def test_array_impossible_casts(array):
+    # All builtin types can forst cast as least theoretically
+    # but user dtypes cannot necessarily.
+    rt = rational(1, 2)
+    if array:
+        rt = np.array(rt)
+    with assert_raises(TypeError):
+        np.array(rt, dtype="M8")
+
 
 def test_fastCopyAndTranspose():
     # 0D array
@@ -224,22 +215,25 @@ def test_array_astype():
     b = a.astype('f4', subok=0, copy=False)
     assert_(a is b)
 
-    a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
+    class MyNDArray(np.ndarray):
+        pass
 
-    # subok=True passes through a matrix
+    a = np.array([[0, 1, 2], [3, 4, 5]], dtype='f4').view(MyNDArray)
+
+    # subok=True passes through a subclass
     b = a.astype('f4', subok=True, copy=False)
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
     b = a.astype('i4', copy=False)
     assert_equal(a, b)
-    assert_equal(type(b), np.matrix)
+    assert_equal(type(b), MyNDArray)
 
-    # subok=False never returns a matrix
+    # subok=False never returns a subclass
     b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
-    assert_(type(b) is not np.matrix)
+    assert_(type(b) is not MyNDArray)
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
@@ -286,6 +280,78 @@ def test_array_astype():
 
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
+
+
+@pytest.mark.parametrize("dt", ["d", "f", "S13", "U32"])
+def test_array_astype_to_void(dt):
+    dt = np.dtype(dt)
+    arr = np.array([], dtype=dt)
+    assert arr.astype("V").dtype.itemsize == dt.itemsize
+
+def test_object_array_astype_to_void():
+    # This is different to `test_array_astype_to_void` as object arrays
+    # are inspected.  The default void is "V8" (8 is the length of double)
+    arr = np.array([], dtype="O").astype("V")
+    assert arr.dtype == "V8"
+
+@pytest.mark.parametrize("t",
+    np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
+)
+def test_array_astype_warning(t):
+    # test ComplexWarning when casting from complex to float or int
+    a = np.array(10, dtype=np.complex_)
+    assert_warns(np.ComplexWarning, a.astype, t)
+
+@pytest.mark.parametrize(["dtype", "out_dtype"],
+        [(np.bytes_, np.bool_),
+         (np.unicode_, np.bool_),
+         (np.dtype("S10,S9"), np.dtype("?,?"))])
+def test_string_to_boolean_cast(dtype, out_dtype):
+    """
+    Currently, for `astype` strings are cast to booleans effectively by
+    calling `bool(int(string)`. This is not consistent (see gh-9875) and
+    will eventually be deprecated.
+    """
+    arr = np.array(["10", "10\0\0\0", "0\0\0", "0"], dtype=dtype)
+    expected = np.array([True, True, False, False], dtype=out_dtype)
+    assert_array_equal(arr.astype(out_dtype), expected)
+
+@pytest.mark.parametrize(["dtype", "out_dtype"],
+        [(np.bytes_, np.bool_),
+         (np.unicode_, np.bool_),
+         (np.dtype("S10,S9"), np.dtype("?,?"))])
+def test_string_to_boolean_cast_errors(dtype, out_dtype):
+    """
+    These currently error out, since cast to integers fails, but should not
+    error out in the future.
+    """
+    for invalid in ["False", "True", "", "\0", "non-empty"]:
+        arr = np.array([invalid], dtype=dtype)
+        with assert_raises(ValueError):
+            arr.astype(out_dtype)
+
+@pytest.mark.parametrize("str_type", [str, bytes, np.str_, np.unicode_])
+@pytest.mark.parametrize("scalar_type",
+        [np.complex64, np.complex128, np.clongdouble])
+def test_string_to_complex_cast(str_type, scalar_type):
+    value = scalar_type(b"1+3j")
+    assert scalar_type(value) == 1+3j
+    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1+3j
+    assert np.array(value).astype(scalar_type)[()] == 1+3j
+    arr = np.zeros(1, dtype=scalar_type)
+    arr[0] = value
+    assert arr[0] == 1+3j
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_none_to_nan_cast(dtype):
+    # Note that at the time of writing this test, the scalar constructors
+    # reject None
+    arr = np.zeros(1, dtype=dtype)
+    arr[0] = None
+    assert np.isnan(arr)[0]
+    assert np.isnan(np.array(None, dtype=dtype))[()]
+    assert np.isnan(np.array([None], dtype=dtype))[0]
+    assert np.isnan(np.array(None).astype(dtype))[()]
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
@@ -513,5 +579,9 @@ def test_broadcast_arrays():
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
 
-if __name__ == "__main__":
-    run_module_suite()
+@pytest.mark.parametrize(["shape", "fill_value", "expected_output"],
+        [((2, 2), [5.0,  6.0], np.array([[5.0, 6.0], [5.0, 6.0]])),
+         ((3, 2), [1.0,  2.0], np.array([[1.0, 2.0], [1.0, 2.0], [1.0,  2.0]]))])
+def test_full_from_list(shape, fill_value, expected_output):
+    output = np.full(shape, fill_value)
+    assert_equal(output, expected_output)

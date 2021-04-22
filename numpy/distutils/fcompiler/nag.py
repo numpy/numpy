@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import re
 from numpy.distutils.fcompiler import FCompiler
@@ -21,7 +19,7 @@ class BaseNAGFCompiler(FCompiler):
     def get_flags_opt(self):
         return ['-O4']
     def get_flags_arch(self):
-        return ['']
+        return []
 
 class NAGFCompiler(BaseNAGFCompiler):
 
@@ -78,8 +76,7 @@ class NAGFORCompiler(BaseNAGFCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='nagfor')
-    compiler.customize()
+    from numpy.distutils import customized_fcompiler
+    compiler = customized_fcompiler(compiler='nagfor')
     print(compiler.get_version())
     print(compiler.get_flags_debug())

@@ -35,7 +35,7 @@
  * #CMP  = LT, LTE#
  */
 
-NPY_VISIBILITY_HIDDEN void
+NPY_NO_EXPORT void
 binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_len, npy_intp key_len,
                         npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
@@ -43,7 +43,12 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
 {
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
-    @type@ last_key_val = *(const @type@ *)key;
+    @type@ last_key_val;
+
+    if (key_len == 0) {
+        return;
+    }
+    last_key_val = *(const @type@ *)key;
 
     for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         const @type@ key_val = *(const @type@ *)key;
@@ -76,7 +81,7 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
     }
 }
 
-NPY_VISIBILITY_HIDDEN int
+NPY_NO_EXPORT int
 argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            const char *sort, char *ret,
                            npy_intp arr_len, npy_intp key_len,
@@ -86,7 +91,12 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
 {
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
-    @type@ last_key_val = *(const @type@ *)key;
+    @type@ last_key_val;
+
+    if (key_len == 0) {
+        return 0;
+    }
+    last_key_val = *(const @type@ *)key;
 
     for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         const @type@ key_val = *(const @type@ *)key;
@@ -143,7 +153,7 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
  * #CMP  = <, <=#
  */
 
-NPY_VISIBILITY_HIDDEN void
+NPY_NO_EXPORT void
 npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      npy_intp arr_len, npy_intp key_len,
                      npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
@@ -185,7 +195,7 @@ npy_binsearch_@side@(const char *arr, const char *key, char *ret,
     }
 }
 
-NPY_VISIBILITY_HIDDEN int
+NPY_NO_EXPORT int
 npy_argbinsearch_@side@(const char *arr, const char *key,
                         const char *sort, char *ret,
                         npy_intp arr_len, npy_intp key_len,

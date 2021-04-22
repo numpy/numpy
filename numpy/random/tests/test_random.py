@@ -1,18 +1,18 @@
-from __future__ import division, absolute_import, print_function
 import warnings
+
+import pytest
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, assert_, assert_raises, assert_equal, assert_warns,
+        assert_, assert_raises, assert_equal, assert_warns,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
         suppress_warnings
         )
 from numpy import random
 import sys
-import warnings
 
 
-class TestSeed(object):
+class TestSeed:
     def test_scalar(self):
         s = np.random.RandomState(0)
         assert_equal(s.randint(1000), 684)
@@ -44,13 +44,14 @@ class TestSeed(object):
 
     def test_invalid_array_shape(self):
         # gh-9832
-        assert_raises(ValueError, np.random.RandomState, np.array([], dtype=np.int64))
+        assert_raises(ValueError, np.random.RandomState,
+                      np.array([], dtype=np.int64))
         assert_raises(ValueError, np.random.RandomState, [[1, 2, 3]])
         assert_raises(ValueError, np.random.RandomState, [[1, 2, 3],
                                                           [4, 5, 6]])
 
 
-class TestBinomial(object):
+class TestBinomial:
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
         # binomial(0, p) should be zero for any p in [0, 1].
@@ -65,7 +66,7 @@ class TestBinomial(object):
         assert_raises(ValueError, random.binomial, 1, np.nan)
 
 
-class TestMultinomial(object):
+class TestMultinomial:
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 
@@ -92,8 +93,14 @@ class TestMultinomial(object):
         assert_raises(TypeError, np.random.multinomial, 1, p,
                       float(1))
 
+    def test_multidimensional_pvals(self):
+        assert_raises(ValueError, np.random.multinomial, 10, [[0, 1]])
+        assert_raises(ValueError, np.random.multinomial, 10, [[0], [1]])
+        assert_raises(ValueError, np.random.multinomial, 10, [[[0], [1]], [[1], [0]]])
+        assert_raises(ValueError, np.random.multinomial, 10, np.array([[0, 1], [1, 0]]))
 
-class TestSetState(object):
+
+class TestSetState:
     def setup(self):
         self.seed = 1234567890
         self.prng = random.RandomState(self.seed)
@@ -141,7 +148,7 @@ class TestSetState(object):
         self.prng.negative_binomial(0.5, 0.5)
 
 
-class TestRandint(object):
+class TestRandint:
 
     rfunc = np.random.randint
 
@@ -206,18 +213,18 @@ class TestRandint(object):
 
     def test_repeatability(self):
         import hashlib
-        # We use a md5 hash of generated sequences of 1000 samples
+        # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool': '7dd3170d7aa461d201a65f8bcf3944b0',
-               'int16': '1b7741b80964bb190c50d541dca1cac1',
-               'int32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'int64': '17db902806f448331b5a758d7d2ee672',
-               'int8': '27dd30c4e08a797063dffac2490b0be6',
-               'uint16': '1b7741b80964bb190c50d541dca1cac1',
-               'uint32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'uint64': '17db902806f448331b5a758d7d2ee672',
-               'uint8': '27dd30c4e08a797063dffac2490b0be6'}
+        tgt = {'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
+               'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
+               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}
 
         for dt in self.itype[1:]:
             np.random.seed(1234)
@@ -228,13 +235,13 @@ class TestRandint(object):
             else:
                 val = self.rfunc(0, 6, size=1000, dtype=dt).byteswap()
 
-            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            res = hashlib.sha256(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
-        # bools do not depend on endianess
+        # bools do not depend on endianness
         np.random.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
-        res = hashlib.md5(val).hexdigest()
+        res = hashlib.sha256(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
     def test_int64_uint64_corner_case(self):
@@ -269,7 +276,7 @@ class TestRandint(object):
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))
 
-        for dt in (bool, int, np.long):
+        for dt in (bool, int, np.compat.long):
             lbnd = 0 if dt is bool else np.iinfo(dt).min
             ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
@@ -279,7 +286,7 @@ class TestRandint(object):
             assert_equal(type(sample), dt)
 
 
-class TestRandomDist(object):
+class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
 
@@ -350,9 +357,9 @@ class TestRandomDist(object):
                           np.random.random_integers,
                           np.iinfo('l').max, np.iinfo('l').max)
 
-    def test_random_sample(self):
+    def test_random(self):
         np.random.seed(self.seed)
-        actual = np.random.random_sample((3, 2))
+        actual = np.random.random((3, 2))
         desired = np.array([[0.61879477158567997, 0.59162362775974664],
                             [0.88868358904449662, 0.89165480011560816],
                             [0.4575674820298663, 0.7781880808593471]])
@@ -401,6 +408,10 @@ class TestRandomDist(object):
         assert_raises(ValueError, sample, [1, 2], 3, p=[1.1, -0.1])
         assert_raises(ValueError, sample, [1, 2], 3, p=[0.4, 0.4])
         assert_raises(ValueError, sample, [1, 2, 3], 4, replace=False)
+        # gh-13087
+        assert_raises(ValueError, sample, [1, 2, 3], -2, replace=False)
+        assert_raises(ValueError, sample, [1, 2, 3], (-1,), replace=False)
+        assert_raises(ValueError, sample, [1, 2, 3], (-1, 1), replace=False)
         assert_raises(ValueError, sample, [1, 2, 3], 2,
                       replace=False, p=[1, 0, 0])
 
@@ -440,6 +451,21 @@ class TestRandomDist(object):
         assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
         assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
+        # Check zero-size
+        assert_equal(np.random.randint(0, 0, size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_equal(np.random.randint(0, -10, size=0).shape, (0,))
+        assert_equal(np.random.randint(10, 10, size=0).shape, (0,))
+        assert_equal(np.random.choice(0, size=0).shape, (0,))
+        assert_equal(np.random.choice([], size=(0,)).shape, (0,))
+        assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape,
+                     (3, 0, 4))
+        assert_raises(ValueError, np.random.choice, [], 10)
+
+    def test_choice_nan_probabilities(self):
+        a = np.array([42, 1, 2])
+        p = [None, None, None]
+        assert_raises(ValueError, np.random.choice, a, p=p)
+
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
@@ -458,10 +484,13 @@ class TestRandomDist(object):
                      lambda x: [(i, i) for i in x],
                      lambda x: np.asarray([[i, i] for i in x]),
                      lambda x: np.vstack([x, x]).T,
+                     # gh-11442
+                     lambda x: (np.asarray([(i, i) for i in x],
+                                           [("a", int), ("b", int)])
+                                .view(np.recarray)),
                      # gh-4270
                      lambda x: np.asarray([(i, i) for i in x],
-                                          [("a", object, 1),
-                                           ("b", np.int32, 1)])]:
+                                          [("a", object), ("b", np.int32)])]:
             np.random.seed(self.seed)
             alist = conv([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
             np.random.shuffle(alist)
@@ -483,6 +512,58 @@ class TestRandomDist(object):
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
 
+    @pytest.mark.parametrize("random",
+            [np.random, np.random.RandomState(), np.random.default_rng()])
+    def test_shuffle_untyped_warning(self, random):
+        # Create a dict works like a sequence but isn't one
+        values = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+        with pytest.warns(UserWarning,
+                match="you are shuffling a 'dict' object") as rec:
+            random.shuffle(values)
+        assert "test_random" in rec[0].filename
+
+    @pytest.mark.parametrize("random",
+        [np.random, np.random.RandomState(), np.random.default_rng()])
+    @pytest.mark.parametrize("use_array_like", [True, False])
+    def test_shuffle_no_object_unpacking(self, random, use_array_like):
+        class MyArr(np.ndarray):
+            pass
+
+        items = [
+            None, np.array([3]), np.float64(3), np.array(10), np.float64(7)
+        ]
+        arr = np.array(items, dtype=object)
+        item_ids = {id(i) for i in items}
+        if use_array_like:
+            arr = arr.view(MyArr)
+
+        # The array was created fine, and did not modify any objects:
+        assert all(id(i) in item_ids for i in arr)
+
+        if use_array_like and not isinstance(random, np.random.Generator):
+            # The old API gives incorrect results, but warns about it.
+            with pytest.warns(UserWarning,
+                    match="Shuffling a one dimensional array.*"):
+                random.shuffle(arr)
+        else:
+            random.shuffle(arr)
+            assert all(id(i) in item_ids for i in arr)
+
+    def test_shuffle_memoryview(self):
+        # gh-18273
+        # allow graceful handling of memoryviews
+        # (treat the same as arrays)
+        np.random.seed(self.seed)
+        a = np.arange(5).data
+        np.random.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 4, 3, 2])
+        rng = np.random.RandomState(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [0, 1, 2, 3, 4])
+        rng = np.random.default_rng(self.seed)
+        rng.shuffle(a)
+        assert_equal(np.asarray(a), [4, 1, 0, 3, 2])
+
     def test_beta(self):
         np.random.seed(self.seed)
         actual = np.random.beta(.1, .9, size=(3, 2))
@@ -494,7 +575,7 @@ class TestRandomDist(object):
 
     def test_binomial(self):
         np.random.seed(self.seed)
-        actual = np.random.binomial(100.123, .456, size=(3, 2))
+        actual = np.random.binomial(100, .456, size=(3, 2))
         desired = np.array([[37, 43],
                             [42, 48],
                             [46, 45]])
@@ -536,6 +617,12 @@ class TestRandomDist(object):
         # gh-2089
         alpha = np.array([5.4e-01, -1.0e-16])
         assert_raises(ValueError, np.random.mtrand.dirichlet, alpha)
+
+        # gh-15876
+        assert_raises(ValueError, random.dirichlet, [[5, 1]])
+        assert_raises(ValueError, random.dirichlet, [[5], [1]])
+        assert_raises(ValueError, random.dirichlet, [[[5], [1]], [[1], [5]]])
+        assert_raises(ValueError, random.dirichlet, np.array([[5, 1], [1, 5]]))
 
     def test_exponential(self):
         np.random.seed(self.seed)
@@ -591,7 +678,7 @@ class TestRandomDist(object):
 
     def test_hypergeometric(self):
         np.random.seed(self.seed)
-        actual = np.random.hypergeometric(10.1, 5.5, 14, size=(3, 2))
+        actual = np.random.hypergeometric(10, 5, 14, size=(3, 2))
         desired = np.array([[10, 10],
                             [10, 10],
                             [9, 9]])
@@ -672,7 +759,7 @@ class TestRandomDist(object):
         cov = [[1, 0], [0, 1]]
         size = (3, 2)
         actual = np.random.multivariate_normal(mean, cov, size)
-        desired = np.array([[[1.463620246718631, 11.73759122771936 ],
+        desired = np.array([[[1.463620246718631, 11.73759122771936],
                              [1.622445133300628, 9.771356667546383]],
                             [[2.154490787682787, 12.170324946056553],
                              [1.719909438201865, 9.230548443648306]],
@@ -699,6 +786,12 @@ class TestRandomDist(object):
         # and that it raises with RuntimeWarning check_valid='raises'
         assert_raises(ValueError, np.random.multivariate_normal, mean, cov,
                       check_valid='raise')
+
+        cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
+        with suppress_warnings() as sup:
+            np.random.multivariate_normal(mean, cov)
+            w = sup.record(RuntimeWarning)
+            assert len(w) == 0
 
     def test_negative_binomial(self):
         np.random.seed(self.seed)
@@ -759,7 +852,7 @@ class TestRandomDist(object):
                  [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
-        #   http://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
+        #   https://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
         # Consensus is that this is probably some gcc quirk that affects
         # rounding but not in any important way, so we just use a looser
         # tolerance on this test:
@@ -890,11 +983,14 @@ class TestRandomDist(object):
                 raise TypeError
 
         throwing_float = np.array(1.0).view(ThrowingFloat)
-        assert_raises(TypeError, np.random.uniform, throwing_float, throwing_float)
+        assert_raises(TypeError, np.random.uniform, throwing_float,
+                      throwing_float)
 
         class ThrowingInteger(np.ndarray):
             def __int__(self):
                 raise TypeError
+
+            __index__ = __int__
 
         throwing_int = np.array(1).view(ThrowingInteger)
         assert_raises(TypeError, np.random.hypergeometric, throwing_int, 1, 1)
@@ -930,7 +1026,8 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_weibull_0(self):
-        assert_equal(np.random.weibull(a=0), 0)
+        np.random.seed(self.seed)
+        assert_equal(np.random.weibull(a=0, size=12), np.zeros(12))
         assert_raises(ValueError, np.random.weibull, a=-0.)
 
     def test_zipf(self):
@@ -942,7 +1039,7 @@ class TestRandomDist(object):
         assert_array_equal(actual, desired)
 
 
-class TestBroadcast(object):
+class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
     def setup(self):
@@ -1336,6 +1433,8 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, wald, bad_mean, scale * 3)
         assert_raises(ValueError, wald, mean, bad_scale * 3)
+        assert_raises(ValueError, wald, 0.0, 1)
+        assert_raises(ValueError, wald, 0.5, 0.0)
 
     def test_triangular(self):
         left = [1]
@@ -1354,21 +1453,24 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one * 3, mode, right)
         assert_raises(ValueError, triangular, left * 3, bad_mode_one, right)
-        assert_raises(ValueError, triangular, bad_left_two * 3, bad_mode_two, right)
+        assert_raises(ValueError, triangular, bad_left_two * 3, bad_mode_two,
+                      right)
 
         self.setSeed()
         actual = triangular(left, mode * 3, right)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode * 3, right)
         assert_raises(ValueError, triangular, left, bad_mode_one * 3, right)
-        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two * 3, right)
+        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two * 3,
+                      right)
 
         self.setSeed()
         actual = triangular(left, mode, right * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode, right * 3)
         assert_raises(ValueError, triangular, left, bad_mode_one, right * 3)
-        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two, right * 3)
+        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two,
+                      right * 3)
 
     def test_binomial(self):
         n = [1]
@@ -1417,7 +1519,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, neg_binom, n, bad_p_two * 3)
 
     def test_poisson(self):
-        max_lam = np.random.RandomState().poisson_lam_max
+        max_lam = np.random.RandomState()._poisson_lam_max
 
         lam = [1]
         bad_lam_one = [-1]
@@ -1444,7 +1546,6 @@ class TestBroadcast(object):
         with np.errstate(invalid='ignore'):
             assert_raises(ValueError, zipf, np.nan)
             assert_raises(ValueError, zipf, [0, 0, np.nan])
-
 
     def test_geometric(self):
         p = [0.5]
@@ -1507,7 +1608,8 @@ class TestBroadcast(object):
         assert_raises(ValueError, logseries, bad_p_one * 3)
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
-class TestThread(object):
+
+class TestThread:
     # make sure each state produces the same sequence even in threads
     def setup(self):
         self.seeds = range(4)
@@ -1549,8 +1651,9 @@ class TestThread(object):
             out[...] = state.multinomial(10, [1/6.]*6, size=10000)
         self.check_function(gen_random, sz=(10000, 6))
 
+
 # See Issue #4263
-class TestSingleEltArrayInput(object):
+class TestSingleEltArrayInput:
     def setup(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])
@@ -1634,6 +1737,3 @@ class TestSingleEltArrayInput(object):
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
-
-if __name__ == "__main__":
-    run_module_suite()

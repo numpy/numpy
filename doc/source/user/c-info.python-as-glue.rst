@@ -163,27 +163,29 @@ be imported from Python::
     f2py -c -m add add.f
 
 This command leaves a file named add.{ext} in the current directory
-(where {ext} is the appropriate extension for a python extension
+(where {ext} is the appropriate extension for a Python extension
 module on your platform --- so, pyd, *etc.* ). This module may then be
 imported from Python. It will contain a method for each subroutine in
 add (zadd, cadd, dadd, sadd). The docstring of each method contains
 information about how the module method may be called::
 
     >>> import add
-    >>> print add.zadd.__doc__
-    zadd - Function signature:
-      zadd(a,b,c,n)
-    Required arguments:
-      a : input rank-1 array('D') with bounds (*)
-      b : input rank-1 array('D') with bounds (*)
-      c : input rank-1 array('D') with bounds (*)
-      n : input int
+    >>> print(add.zadd.__doc__)
+    zadd(a,b,c,n)
 
+    Wrapper for ``zadd``.
+
+    Parameters
+    ----------
+    a : input rank-1 array('D') with bounds (*)
+    b : input rank-1 array('D') with bounds (*)
+    c : input rank-1 array('D') with bounds (*)
+    n : input int
 
 Improving the basic interface
 -----------------------------
 
-The default interface is a very literal translation of the fortran
+The default interface is a very literal translation of the Fortran
 code into Python. The Fortran array arguments must now be NumPy arrays
 and the integer argument should be an integer. The interface will
 attempt to convert all arguments to their required types (and shapes)
@@ -192,7 +194,7 @@ about the semantics of the arguments (such that C is an output and n
 should really match the array sizes), it is possible to abuse this
 function in ways that can cause Python to crash. For example::
 
-    >>> add.zadd([1,2,3], [1,2], [3,4], 1000)
+    >>> add.zadd([1, 2, 3], [1, 2], [3, 4], 1000)
 
 will cause a program crash on most systems. Under the covers, the
 lists are being converted to proper arrays but then the underlying add
@@ -240,27 +242,32 @@ necessary to tell f2py that the value of n depends on the input a (so
 that it won't try to create the variable n until the variable a is
 created).
 
-After modifying ``add.pyf``, the new python module file can be generated
-by compiling both ``add.f95`` and ``add.pyf``::
+After modifying ``add.pyf``, the new Python module file can be generated
+by compiling both ``add.f`` and ``add.pyf``::
 
-    f2py -c add.pyf add.f95 
+    f2py -c add.pyf add.f
 
 The new interface has docstring::
 
     >>> import add
-    >>> print add.zadd.__doc__
-    zadd - Function signature:
-      c = zadd(a,b)
-    Required arguments:
-      a : input rank-1 array('D') with bounds (n)
-      b : input rank-1 array('D') with bounds (n)
-    Return objects:
-      c : rank-1 array('D') with bounds (n)
+    >>> print(add.zadd.__doc__)
+    c = zadd(a,b)
+
+    Wrapper for ``zadd``.
+
+    Parameters
+    ----------
+    a : input rank-1 array('D') with bounds (n)
+    b : input rank-1 array('D') with bounds (n)
+
+    Returns
+    -------
+    c : rank-1 array('D') with bounds (n)
 
 Now, the function can be called in a much more robust way::
 
-    >>> add.zadd([1,2,3],[4,5,6])
-    array([ 5.+0.j,  7.+0.j,  9.+0.j])
+    >>> add.zadd([1, 2, 3], [4, 5, 6])
+    array([5.+0.j, 7.+0.j, 9.+0.j])
 
 Notice the automatic conversion to the correct format that occurred.
 
@@ -269,7 +276,7 @@ Inserting directives in Fortran source
 --------------------------------------
 
 The nice interface can also be generated automatically by placing the
-variable directives as special comments in the original fortran code.
+variable directives as special comments in the original Fortran code.
 Thus, if I modify the source code to contain:
 
 .. code-block:: none
@@ -387,7 +394,7 @@ distribution of the ``add.f`` module (as part of the package
 
 Installation of the new package is easy using::
 
-    python setup.py install
+    pip install .
 
 assuming you have the proper permissions to write to the main site-
 packages directory for the version of Python you are using. For the
@@ -405,8 +412,8 @@ interface between Python and Fortran. There is decent documentation
 for f2py found in the numpy/f2py/docs directory where-ever NumPy is
 installed on your system (usually under site-packages). There is also
 more information on using f2py (including how to use it to wrap C
-codes) at http://www.scipy.org/Cookbook under the "Using NumPy with
-Other Languages" heading.
+codes) at https://scipy-cookbook.readthedocs.io under the "Interfacing
+With Other Languages" heading.
 
 The f2py method of linking compiled code is currently the most
 sophisticated and integrated approach. It allows clean separation of
@@ -655,7 +662,7 @@ To use ctypes you must
 
 2. Load the shared library.
 
-3. Convert the python objects to ctypes-understood arguments.
+3. Convert the Python objects to ctypes-understood arguments.
 
 4. Call the function from the library with the ctypes arguments.
 
@@ -671,7 +678,7 @@ simply have a shared library available to you). Items to remember are:
 - A shared library must be compiled in a special way ( *e.g.* using
   the ``-shared`` flag with gcc).
 
-- On some platforms (*e.g.* Windows) , a shared library requires a
+- On some platforms (*e.g.* Windows), a shared library requires a
   .def file that specifies the functions to be exported. For example a
   mylib.def file might contain::
 
@@ -744,14 +751,14 @@ around this restriction that allow ctypes to integrate with other
 objects.
 
 1. Don't set the argtypes attribute of the function object and define an
-   :obj:`_as_parameter_` method for the object you want to pass in. The
-   :obj:`_as_parameter_` method must return a Python int which will be passed
+   ``_as_parameter_`` method for the object you want to pass in. The
+   ``_as_parameter_`` method must return a Python int which will be passed
    directly to the function.
 
 2. Set the argtypes attribute to a list whose entries contain objects
    with a classmethod named from_param that knows how to convert your
    object to an object that ctypes can understand (an int/long, string,
-   unicode, or object with the :obj:`_as_parameter_` attribute).
+   unicode, or object with the ``_as_parameter_`` attribute).
 
 NumPy uses both methods with a preference for the second method
 because it can be safer. The ctypes attribute of the ndarray returns
@@ -764,7 +771,7 @@ correct type, shape, and has the correct flags set or risk nasty
 crashes if the data-pointer to inappropriate arrays are passed in.
 
 To implement the second method, NumPy provides the class-factory
-function :func:`ndpointer` in the :mod:`ctypeslib` module. This
+function :func:`ndpointer` in the :mod:`numpy.ctypeslib` module. This
 class-factory function produces an appropriate class that can be
 placed in an argtypes attribute entry of a ctypes function. The class
 will contain a from_param method which ctypes will use to convert any
@@ -802,7 +809,7 @@ Calling the function
 
 The function is accessed as an attribute of or an item from the loaded
 shared-library. Thus, if ``./mylib.so`` has a function named
-``cool_function1`` , I could access this function either as:
+``cool_function1``, I could access this function either as:
 
 .. code-block:: python
 
@@ -944,7 +951,7 @@ Linux system this is accomplished using::
 Which creates a shared_library named code.so in the current directory.
 On Windows don't forget to either add ``__declspec(dllexport)`` in front
 of void on the line preceding each function definition, or write a
-code.def file that lists the names of the functions to be exported.
+``code.def`` file that lists the names of the functions to be exported.
 
 A suitable Python interface to this shared library should be
 constructed. To do this create a file named interface.py with the
@@ -954,25 +961,25 @@ following lines at the top:
 
     __all__ = ['add', 'filter2d']
 
-    import numpy as N
+    import numpy as np
     import os
 
     _path = os.path.dirname('__file__')
-    lib = N.ctypeslib.load_library('code', _path)
-    _typedict = {'zadd' : complex, 'sadd' : N.single,
-                 'cadd' : N.csingle, 'dadd' : float}
+    lib = np.ctypeslib.load_library('code', _path)
+    _typedict = {'zadd' : complex, 'sadd' : np.single,
+                 'cadd' : np.csingle, 'dadd' : float}
     for name in _typedict.keys():
         val = getattr(lib, name)
         val.restype = None
         _type = _typedict[name]
-        val.argtypes = [N.ctypeslib.ndpointer(_type,
+        val.argtypes = [np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type,
+                        np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type,
+                        np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous,'\
                                 'writeable'),
-                        N.ctypeslib.c_intp]
+                        np.ctypeslib.c_intp]
 
 This code loads the shared library named ``code.{ext}`` located in the
 same path as this file. It then adds a return type of void to the
@@ -989,13 +996,13 @@ strides and shape of an ndarray) as the last two arguments.:
 .. code-block:: python
 
     lib.dfilter2d.restype=None
-    lib.dfilter2d.argtypes = [N.ctypeslib.ndpointer(float, ndim=2,
+    lib.dfilter2d.argtypes = [np.ctypeslib.ndpointer(float, ndim=2,
                                            flags='aligned'),
-                              N.ctypeslib.ndpointer(float, ndim=2,
+                              np.ctypeslib.ndpointer(float, ndim=2,
                                      flags='aligned, contiguous,'\
                                            'writeable'),
-                              ctypes.POINTER(N.ctypeslib.c_intp),
-                              ctypes.POINTER(N.ctypeslib.c_intp)]
+                              ctypes.POINTER(np.ctypeslib.c_intp),
+                              ctypes.POINTER(np.ctypeslib.c_intp)]
 
 Next, define a simple selection function that chooses which addition
 function to call in the shared library based on the data-type:
@@ -1020,11 +1027,11 @@ written simply as:
 
     def add(a, b):
         requires = ['CONTIGUOUS', 'ALIGNED']
-        a = N.asanyarray(a)
+        a = np.asanyarray(a)
         func, dtype = select(a.dtype)
-        a = N.require(a, dtype, requires)
-        b = N.require(b, dtype, requires)
-        c = N.empty_like(a)
+        a = np.require(a, dtype, requires)
+        b = np.require(b, dtype, requires)
+        c = np.empty_like(a)
         func(a,b,c,a.size)
         return c
 
@@ -1033,8 +1040,8 @@ and:
 .. code-block:: python
 
     def filter2d(a):
-        a = N.require(a, float, ['ALIGNED'])
-        b = N.zeros_like(a)
+        a = np.require(a, float, ['ALIGNED'])
+        b = np.zeros_like(a)
         lib.dfilter2d(a, b, a.ctypes.strides, a.ctypes.shape)
         return b
 

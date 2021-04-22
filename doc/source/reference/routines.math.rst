@@ -101,6 +101,14 @@ Floating point routines
    nextafter
    spacing
 
+Rational routines
+-----------------
+.. autosummary::
+   :toctree: generated/
+
+   lcm
+   gcd
+
 Arithmetic operations
 ---------------------
 .. autosummary::
@@ -133,6 +141,7 @@ Handling complex numbers
    real
    imag
    conj
+   conjugate
 
 
 Miscellaneous

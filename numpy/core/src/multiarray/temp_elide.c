@@ -7,6 +7,7 @@
 #include "numpy/arrayobject.h"
 
 #define NPY_NUMBER_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 /*
  * Functions used to try to avoid/elide temporaries in python expressions
@@ -61,12 +62,8 @@
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
 
-#if PY_VERSION_HEX >= 0x03060000
 /* TODO can pep523 be used to somehow? */
 #define PYFRAMEEVAL_FUNC "_PyEval_EvalFrameDefault"
-#else
-#define PYFRAMEEVAL_FUNC "PyEval_EvalFrameEx"
-#endif
 /*
  * Heuristic size of the array in bytes at which backtrace overhead generation
  * becomes less than speed gained by in-place operations. Depends on stack depth
@@ -165,7 +162,7 @@ check_callers(int * cannot)
             return 0;
         }
         /* get multiarray base address */
-        if (dladdr(&PyArray_SetNumericOps, &info)) {
+        if (dladdr(&PyArray_INCREF, &info)) {
             pos_ma_start = info.dli_fbase;
             pos_ma_end = info.dli_fbase;
         }
@@ -181,6 +178,7 @@ check_callers(int * cannot)
         Dl_info info;
         int in_python = 0;
         int in_multiarray = 0;
+
 #if NPY_ELIDE_DEBUG >= 2
         dladdr(buffer[i], &info);
         printf("%s(%p) %s(%p)\n", info.dli_fname, info.dli_fbase,
@@ -242,14 +240,14 @@ check_callers(int * cannot)
             }
             if (info.dli_sname &&
                     strcmp(info.dli_sname, PYFRAMEEVAL_FUNC) == 0) {
-                if (n_pyeval < sizeof(pyeval_addr) / sizeof(pyeval_addr[0])) {
+                if (n_pyeval < (npy_intp)ARRAY_SIZE(pyeval_addr)) {
                     /* store address to not have to dladdr it again */
                     pyeval_addr[n_pyeval++] = buffer[i];
                 }
                 ok = 1;
                 break;
             }
-            else if (n_py_addr < sizeof(py_addr) / sizeof(py_addr[0])) {
+            else if (n_py_addr < (npy_intp)ARRAY_SIZE(py_addr)) {
                 /* store other py function to not have to dladdr it again */
                 py_addr[n_py_addr++] = buffer[i];
             }
@@ -276,17 +274,19 @@ check_callers(int * cannot)
  * "cannot" is set to true if it cannot be done even with swapped arguments
  */
 static int
-can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
+can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
 {
     /*
      * to be a candidate the array needs to have reference count 1, be an exact
      * array of a basic type, own its data and size larger than threshold
      */
-    if (Py_REFCNT(alhs) != 1 || !PyArray_CheckExact(alhs) ||
+    PyArrayObject *alhs = (PyArrayObject *)olhs;
+    if (Py_REFCNT(olhs) != 1 || !PyArray_CheckExact(olhs) ||
             !PyArray_ISNUMBER(alhs) ||
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY) ||
+            PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
             PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }
@@ -329,22 +329,22 @@ can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
  * try eliding a binary op, if commutative is true also try swapped arguments
  */
 NPY_NO_EXPORT int
-try_binary_elide(PyArrayObject * m1, PyObject * m2,
+try_binary_elide(PyObject * m1, PyObject * m2,
                  PyObject * (inplace_op)(PyArrayObject * m1, PyObject * m2),
                  PyObject ** res, int commutative)
 {
     /* set when no elision can be done independent of argument order */
     int cannot = 0;
     if (can_elide_temp(m1, m2, &cannot)) {
-        *res = inplace_op(m1, m2);
+        *res = inplace_op((PyArrayObject *)m1, m2);
 #if NPY_ELIDE_DEBUG != 0
         puts("elided temporary in binary op");
 #endif
         return 1;
     }
     else if (commutative && !cannot) {
-        if (can_elide_temp((PyArrayObject *)m2, (PyObject *)m1, &cannot)) {
-            *res = inplace_op((PyArrayObject *)m2, (PyObject *)m1);
+        if (can_elide_temp(m2, m1, &cannot)) {
+            *res = inplace_op((PyArrayObject *)m2, m1);
 #if NPY_ELIDE_DEBUG != 0
             puts("elided temporary in commutative binary op");
 #endif

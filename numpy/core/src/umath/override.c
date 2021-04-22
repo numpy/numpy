@@ -5,303 +5,194 @@
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
 
-#include "ufunc_override.h"
 #include "override.h"
+#include "ufunc_override.h"
+
 
 /*
- * The following functions normalize ufunc arguments. The work done is similar
- * to what is done inside ufunc_object by get_ufunc_arguments for __call__ and
- * generalized ufuncs, and by PyUFunc_GenericReduction for the other methods.
- * It would be good to unify (see gh-8892).
+ * For each positional argument and each argument in a possible "out"
+ * keyword, look for overrides of the standard ufunc behaviour, i.e.,
+ * non-default __array_ufunc__ methods.
+ *
+ * Returns the number of overrides, setting corresponding objects
+ * in PyObject array ``with_override`` and the corresponding
+ * __array_ufunc__ methods in ``methods`` (both using new references).
+ *
+ * Only the first override for a given class is returned.
+ *
+ * Returns -1 on failure.
  */
+static int
+get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args,
+                          PyObject **with_override, PyObject **methods)
+{
+    int i;
+    int num_override_args = 0;
+    int narg, nout;
+
+    narg = (int)PyTuple_GET_SIZE(in_args);
+    /* It is valid for out_args to be NULL: */
+    nout = (out_args != NULL) ? (int)PyTuple_GET_SIZE(out_args) : 0;
+
+    for (i = 0; i < narg + nout; ++i) {
+        PyObject *obj;
+        int j;
+        int new_class = 1;
+
+        if (i < narg) {
+            obj = PyTuple_GET_ITEM(in_args, i);
+        }
+        else {
+            obj = PyTuple_GET_ITEM(out_args, i - narg);
+        }
+        /*
+         * Have we seen this class before?  If so, ignore.
+         */
+        for (j = 0; j < num_override_args; j++) {
+            new_class = (Py_TYPE(obj) != Py_TYPE(with_override[j]));
+            if (!new_class) {
+                break;
+            }
+        }
+        if (new_class) {
+            /*
+             * Now see if the object provides an __array_ufunc__. However, we should
+             * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
+             * any ndarray subclass instances that did not override __array_ufunc__.
+             */
+            PyObject *method = PyUFuncOverride_GetNonDefaultArrayUfunc(obj);
+            if (method == NULL) {
+                continue;
+            }
+            if (method == Py_None) {
+                PyErr_Format(PyExc_TypeError,
+                             "operand '%.200s' does not support ufuncs "
+                             "(__array_ufunc__=None)",
+                             obj->ob_type->tp_name);
+                Py_DECREF(method);
+                goto fail;
+            }
+            Py_INCREF(obj);
+            with_override[num_override_args] = obj;
+            methods[num_override_args] = method;
+            ++num_override_args;
+        }
+    }
+    return num_override_args;
+
+fail:
+    for (i = 0; i < num_override_args; i++) {
+        Py_DECREF(with_override[i]);
+        Py_DECREF(methods[i]);
+    }
+    return -1;
+}
+
 
 /*
- * ufunc() and ufunc.outer() accept 'sig' or 'signature';
- * normalize to 'signature'
+ * Build a dictionary from the keyword arguments, but replace out with the
+ * normalized version (and always pass it even if it was passed by position).
+ */
+static int
+initialize_normal_kwds(PyObject *out_args,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+        PyObject *normal_kwds)
+{
+    if (kwnames != NULL) {
+        for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(kwnames); i++) {
+            if (PyDict_SetItem(normal_kwds,
+                    PyTuple_GET_ITEM(kwnames, i), args[i + len_args]) < 0) {
+                return -1;
+            }
+        }
+    }
+    static PyObject *out_str = NULL;
+    if (out_str == NULL) {
+        out_str = PyUnicode_InternFromString("out");
+        if (out_str == NULL) {
+            return -1;
+        }
+    }
+
+    if (out_args != NULL) {
+        /* Replace `out` argument with the normalized version */
+        int res = PyDict_SetItem(normal_kwds, out_str, out_args);
+        if (res < 0) {
+            return -1;
+        }
+    }
+    else {
+        /* Ensure that `out` is not present. */
+        int res = PyDict_Contains(normal_kwds, out_str);
+        if (res < 0) {
+            return -1;
+        }
+        if (res) {
+            return PyDict_DelItem(normal_kwds, out_str);
+        }
+    }
+    return 0;
+}
+
+/*
+ * ufunc() and ufunc.outer() accept 'sig' or 'signature'.  We guarantee
+ * that it is passed as 'signature' by renaming 'sig' if present.
+ * Note that we have already validated that only one of them was passed
+ * before checking for overrides.
  */
 static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
-    PyObject* obj = PyDict_GetItemString(normal_kwds, "sig");
+    /* If the keywords include `sig` rename to `signature`. */
+    PyObject* obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");
+    if (obj == NULL && PyErr_Occurred()) {
+        return -1;
+    }
     if (obj != NULL) {
-        if (PyDict_GetItemString(normal_kwds, "signature")) {
-            PyErr_SetString(PyExc_TypeError,
-                            "cannot specify both 'sig' and 'signature'");
+        /*
+         * No INCREF or DECREF needed: got a borrowed reference above,
+         * and, unlike e.g. PyList_SetItem, PyDict_SetItem INCREF's it.
+         */
+        if (PyDict_SetItemString(normal_kwds, "signature", obj) < 0) {
             return -1;
         }
-        Py_INCREF(obj);
-        PyDict_SetItemString(normal_kwds, "signature", obj);
-        PyDict_DelItemString(normal_kwds, "sig");
+        if (PyDict_DelItemString(normal_kwds, "sig") < 0) {
+            return -1;
+        }
     }
     return 0;
 }
 
-static int
-normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
-                        PyObject **normal_args, PyObject **normal_kwds)
-{
-    /*
-     * ufunc.__call__(*args, **kwds)
-     */
-    npy_intp i;
-    int not_all_none;
-    npy_intp nin = ufunc->nin;
-    npy_intp nout = ufunc->nout;
-    npy_intp nargs = PyTuple_GET_SIZE(args);
-    PyObject *obj;
-
-    if (nargs < nin) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc() missing %"NPY_INTP_FMT" of %"NPY_INTP_FMT
-                     "required positional argument(s)", nin - nargs, nin);
-        return -1;
-    }
-    if (nargs > nin+nout) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc() takes from %"NPY_INTP_FMT" to %"NPY_INTP_FMT
-                     "arguments but %"NPY_INTP_FMT" were given",
-                     nin, nin+nout, nargs);
-        return -1;
-    }
-
-    *normal_args = PyTuple_GetSlice(args, 0, nin);
-    if (*normal_args == NULL) {
-        return -1;
-    }
-
-    /* If we have more args than nin, they must be the output variables.*/
-    if (nargs > nin) {
-        if(PyDict_GetItemString(*normal_kwds, "out")) {
-            PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('out') and position "
-                         "(%"NPY_INTP_FMT")", nin);
-            return -1;
-        }
-        for (i = nin; i < nargs; i++) {
-            not_all_none = (PyTuple_GET_ITEM(args, i) != Py_None);
-            if (not_all_none) {
-                break;
-            }
-        }
-        if (not_all_none) {
-            if (nargs - nin == nout) {
-                obj = PyTuple_GetSlice(args, nin, nargs);
-            }
-            else {
-                PyObject *item;
-
-                obj = PyTuple_New(nout);
-                if (obj == NULL) {
-                    return -1;
-                }
-                for (i = 0; i < nout; i++) {
-                    if (i + nin < nargs) {
-                        item = PyTuple_GET_ITEM(args, nin+i);
-                    }
-                    else {
-                        item = Py_None;
-                    }
-                    Py_INCREF(item);
-                    PyTuple_SET_ITEM(obj, i, item);
-                }
-            }
-            PyDict_SetItemString(*normal_kwds, "out", obj);
-            Py_DECREF(obj);
-        }
-    }
-    /* finally, ufuncs accept 'sig' or 'signature' normalize to 'signature' */
-    return normalize_signature_keyword(*normal_kwds);
-}
 
 static int
-normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
-                      PyObject **normal_args, PyObject **normal_kwds)
+copy_positional_args_to_kwargs(const char **keywords,
+        PyObject *const *args, Py_ssize_t len_args,
+        PyObject *normal_kwds)
 {
-    /*
-     * ufunc.reduce(a[, axis, dtype, out, keepdims])
-     */
-    npy_intp nargs = PyTuple_GET_SIZE(args);
-    npy_intp i;
-    PyObject *obj;
-    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
-
-    if (nargs < 1 || nargs > 5) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc.reduce() takes from 1 to 5 positional "
-                     "arguments but %"NPY_INTP_FMT" were given", nargs);
-        return -1;
-    }
-    *normal_args = PyTuple_GetSlice(args, 0, 1);
-    if (*normal_args == NULL) {
-        return -1;
-    }
-
-    for (i = 1; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
-            PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position "
-                         "(%"NPY_INTP_FMT")", kwlist[i], i);
-            return -1;
+    for (Py_ssize_t i = 0; i < len_args; i++) {
+        if (keywords[i] == NULL) {
+            /* keyword argument is either input or output and not set here */
+            continue;
         }
-        obj = PyTuple_GET_ITEM(args, i);
-        if (i == 3) {
-            /* remove out=None */
-            if (obj == Py_None) {
+        if (NPY_UNLIKELY(i == 5)) {
+            /*
+             * This is only relevant for reduce, which is the only one with
+             * 5 keyword arguments.
+             */
+            static PyObject *NoValue = NULL;
+            assert(strcmp(keywords[i], "initial") == 0);
+            npy_cache_import("numpy", "_NoValue", &NoValue);
+            if (args[i] == NoValue) {
                 continue;
             }
-            obj = PyTuple_GetSlice(args, 3, 4);
         }
-        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
-        if (i == 3) {
-            Py_DECREF(obj);
-        }
-    }
-    return 0;
-}
 
-static int
-normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
-                          PyObject **normal_args, PyObject **normal_kwds)
-{
-    /*
-     * ufunc.accumulate(a[, axis, dtype, out])
-     */
-    npy_intp nargs = PyTuple_GET_SIZE(args);
-    npy_intp i;
-    PyObject *obj;
-    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
-
-    if (nargs < 1 || nargs > 4) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc.accumulate() takes from 1 to 4 positional "
-                     "arguments but %"NPY_INTP_FMT" were given", nargs);
-        return -1;
-    }
-    *normal_args = PyTuple_GetSlice(args, 0, 1);
-    if (*normal_args == NULL) {
-        return -1;
-    }
-
-    for (i = 1; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
-            PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position "
-                         "(%"NPY_INTP_FMT")", kwlist[i], i);
+        int res = PyDict_SetItemString(normal_kwds, keywords[i], args[i]);
+        if (res < 0) {
             return -1;
         }
-        obj = PyTuple_GET_ITEM(args, i);
-        if (i == 3) {
-            /* remove out=None */
-            if (obj == Py_None) {
-                continue;
-            }
-            obj = PyTuple_GetSlice(args, 3, 4);
-        }
-        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
-        if (i == 3) {
-            Py_DECREF(obj);
-        }
     }
     return 0;
-}
-
-static int
-normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
-                    PyObject **normal_args, PyObject **normal_kwds)
-{
-    /*
-     * ufunc.reduceat(a, indicies[, axis, dtype, out])
-     * the number of arguments has been checked in PyUFunc_GenericReduction.
-     */
-    npy_intp i;
-    npy_intp nargs = PyTuple_GET_SIZE(args);
-    PyObject *obj;
-    static char *kwlist[] = {"array", "indices", "axis", "dtype", "out"};
-
-    if (nargs < 2 || nargs > 5) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc.reduceat() takes from 2 to 4 positional "
-                     "arguments but %"NPY_INTP_FMT" were given", nargs);
-        return -1;
-    }
-    /* a and indicies */
-    *normal_args = PyTuple_GetSlice(args, 0, 2);
-    if (*normal_args == NULL) {
-        return -1;
-    }
-
-    for (i = 2; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
-            PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position "
-                         "(%"NPY_INTP_FMT")", kwlist[i], i);
-            return -1;
-        }
-        obj = PyTuple_GET_ITEM(args, i);
-        if (i == 4) {
-            /* remove out=None */
-            if (obj == Py_None) {
-                continue;
-            }
-            obj = PyTuple_GetSlice(args, 4, 5);
-        }
-        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
-        if (i == 4) {
-            Py_DECREF(obj);
-        }
-    }
-    return 0;
-}
-
-static int
-normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
-                     PyObject **normal_args, PyObject **normal_kwds)
-{
-    /*
-     * ufunc.outer(*args, **kwds)
-     * all positional arguments should be inputs.
-     * for the keywords, we only need to check 'sig' vs 'signature'.
-     */
-    npy_intp nin = ufunc->nin;
-    npy_intp nargs = PyTuple_GET_SIZE(args);
-
-    if (nargs < nin) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc.outer() missing %"NPY_INTP_FMT" of %"NPY_INTP_FMT
-                     "required positional " "argument(s)", nin - nargs, nin);
-        return -1;
-    }
-    if (nargs > nin) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc.outer() takes %"NPY_INTP_FMT" arguments but"
-                     "%"NPY_INTP_FMT" were given", nin, nargs);
-        return -1;
-    }
-
-    *normal_args = PyTuple_GetSlice(args, 0, nin);
-    if (*normal_args == NULL) {
-        return -1;
-    }
-
-    /* ufuncs accept 'sig' or 'signature' normalize to 'signature' */
-    return normalize_signature_keyword(*normal_kwds);
-}
-
-static int
-normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
-                  PyObject **normal_args, PyObject **normal_kwds)
-{
-    /* ufunc.at(a, indices[, b]) */
-    npy_intp nargs = PyTuple_GET_SIZE(args);
-
-    if (nargs < 2 || nargs > 3) {
-        PyErr_Format(PyExc_TypeError,
-                     "ufunc.at() takes from 2 to 3 positional "
-                     "arguments but %"NPY_INTP_FMT" were given", nargs);
-        return -1;
-    }
-    *normal_args = PyTuple_GetSlice(args, 0, nargs);
-    return (*normal_args == NULL);
 }
 
 /*
@@ -317,33 +208,26 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
  */
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-                      PyObject *args, PyObject *kwds,
-                      PyObject **result)
+        PyObject *in_args, PyObject *out_args,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+        PyObject **result)
 {
-    int i;
-    int j;
     int status;
 
     int num_override_args;
     PyObject *with_override[NPY_MAXARGS];
     PyObject *array_ufunc_methods[NPY_MAXARGS];
 
-    PyObject *obj;
-    PyObject *other_obj;
-    PyObject *out;
-
     PyObject *method_name = NULL;
-    PyObject *normal_args = NULL; /* normal_* holds normalized arguments. */
     PyObject *normal_kwds = NULL;
 
     PyObject *override_args = NULL;
-    Py_ssize_t len;
 
     /*
      * Check inputs for overrides
      */
-    num_override_args = PyUFunc_WithOverride(
-        args, kwds, with_override, array_ufunc_methods);
+    num_override_args = get_array_ufunc_overrides(
+           in_args, out_args, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -354,115 +238,58 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
 
     /*
-     * Normalize ufunc arguments.
+     * Normalize ufunc arguments, note that any input and output arguments
+     * have already been stored in `in_args` and `out_args`.
      */
-
-    /* Build new kwds */
-    if (kwds && PyDict_CheckExact(kwds)) {
-
-        /* ensure out is always a tuple */
-        normal_kwds = PyDict_Copy(kwds);
-        out = PyDict_GetItemString(normal_kwds, "out");
-        if (out != NULL) {
-            int nout = ufunc->nout;
-
-            if (PyTuple_CheckExact(out)) {
-                int all_none = 1;
-
-                if (PyTuple_GET_SIZE(out) != nout) {
-                    PyErr_Format(PyExc_ValueError,
-                                 "The 'out' tuple must have exactly "
-                                 "%d entries: one per ufunc output", nout);
-                    goto fail;
-                }
-                for (i = 0; i < PyTuple_GET_SIZE(out); i++) {
-                    all_none = (PyTuple_GET_ITEM(out, i) == Py_None);
-                    if (!all_none) {
-                        break;
-                    }
-                }
-                if (all_none) {
-                    PyDict_DelItemString(normal_kwds, "out");
-                }
-            }
-            else {
-                /* not a tuple */
-                if (nout > 1 && DEPRECATE("passing a single argument to the "
-                                          "'out' keyword argument of a "
-                                          "ufunc with\n"
-                                          "more than one output will "
-                                          "result in an error in the "
-                                          "future") < 0) {
-                    /*
-                     * If the deprecation is removed, also remove the loop
-                     * below setting tuple items to None (but keep this future
-                     * error message.)
-                     */
-                    PyErr_SetString(PyExc_TypeError,
-                                    "'out' must be a tuple of arguments");
-                    goto fail;
-                }
-                if (out != Py_None) {
-                    /* not already a tuple and not None */
-                    PyObject *out_tuple = PyTuple_New(nout);
-
-                    if (out_tuple == NULL) {
-                        goto fail;
-                    }
-                    for (i = 1; i < nout; i++) {
-                        Py_INCREF(Py_None);
-                        PyTuple_SET_ITEM(out_tuple, i, Py_None);
-                    }
-                    /* out was borrowed ref; make it permanent */
-                    Py_INCREF(out);
-                    /* steals reference */
-                    PyTuple_SET_ITEM(out_tuple, 0, out);
-                    PyDict_SetItemString(normal_kwds, "out", out_tuple);
-                    Py_DECREF(out_tuple);
-                }
-                else {
-                    /* out=None; remove it */
-                    PyDict_DelItemString(normal_kwds, "out");
-                }
-            }
-        }
-    }
-    else {
-        normal_kwds = PyDict_New();
-    }
+    normal_kwds = PyDict_New();
     if (normal_kwds == NULL) {
         goto fail;
     }
+    if (initialize_normal_kwds(out_args,
+            args, len_args, kwnames, normal_kwds) < 0) {
+        goto fail;
+    }
 
-    /* decide what to do based on the method. */
+    /*
+     * Reduce-like methods can pass keyword arguments also by position,
+     * in which case the additional positional arguments have to be copied
+     * into the keyword argument dictionary. The `__call__` and `__outer__`
+     * method have to normalize sig and signature.
+     */
 
     /* ufunc.__call__ */
     if (strcmp(method, "__call__") == 0) {
-        status = normalize___call___args(ufunc, args, &normal_args,
-                                         &normal_kwds);
+        status = normalize_signature_keyword(normal_kwds);
     }
     /* ufunc.reduce */
     else if (strcmp(method, "reduce") == 0) {
-        status = normalize_reduce_args(ufunc, args, &normal_args,
-                                       &normal_kwds);
+        static const char *keywords[] = {
+                NULL, "axis", "dtype", NULL, "keepdims",
+                "initial", "where"};
+        status = copy_positional_args_to_kwargs(keywords,
+                args, len_args, normal_kwds);
     }
     /* ufunc.accumulate */
     else if (strcmp(method, "accumulate") == 0) {
-        status = normalize_accumulate_args(ufunc, args, &normal_args,
-                                           &normal_kwds);
+        static const char *keywords[] = {
+                NULL, "axis", "dtype", NULL};
+        status = copy_positional_args_to_kwargs(keywords,
+                args, len_args, normal_kwds);
     }
     /* ufunc.reduceat */
     else if (strcmp(method, "reduceat") == 0) {
-        status = normalize_reduceat_args(ufunc, args, &normal_args,
-                                         &normal_kwds);
+        static const char *keywords[] = {
+                NULL, NULL, "axis", "dtype", NULL};
+        status = copy_positional_args_to_kwargs(keywords,
+                args, len_args, normal_kwds);
     }
-    /* ufunc.outer */
+    /* ufunc.outer (identical to call) */
     else if (strcmp(method, "outer") == 0) {
-        status = normalize_outer_args(ufunc, args, &normal_args, &normal_kwds);
+        status = normalize_signature_keyword(normal_kwds);
     }
     /* ufunc.at */
     else if (strcmp(method, "at") == 0) {
-        status = normalize_at_args(ufunc, args, &normal_args, &normal_kwds);
+        status = 0;
     }
     /* unknown method */
     else {
@@ -475,12 +302,12 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    method_name = PyUString_FromString(method);
+    method_name = PyUnicode_FromString(method);
     if (method_name == NULL) {
         goto fail;
     }
 
-    len = PyTuple_GET_SIZE(normal_args);
+    int len = (int)PyTuple_GET_SIZE(in_args);
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
@@ -491,22 +318,19 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         *result = NULL;
 
         /* Choose an overriding argument */
-        for (i = 0; i < num_override_args; i++) {
-            obj = with_override[i];
-            if (obj == NULL) {
+        for (int i = 0; i < num_override_args; i++) {
+            override_obj = with_override[i];
+            if (override_obj == NULL) {
                 continue;
             }
 
-            /* Get the first instance of an overriding arg.*/
-            override_obj = obj;
-
             /* Check for sub-types to the right of obj. */
-            for (j = i + 1; j < num_override_args; j++) {
-                other_obj = with_override[j];
+            for (int j = i + 1; j < num_override_args; j++) {
+                PyObject *other_obj = with_override[j];
                 if (other_obj != NULL &&
-                    PyObject_Type(other_obj) != PyObject_Type(obj) &&
+                    Py_TYPE(other_obj) != Py_TYPE(override_obj) &&
                     PyObject_IsInstance(other_obj,
-                                        PyObject_Type(override_obj))) {
+                                        (PyObject *)Py_TYPE(override_obj))) {
                     override_obj = NULL;
                     break;
                 }
@@ -535,8 +359,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
         Py_INCREF(method_name);
         PyTuple_SET_ITEM(override_args, 2, method_name);
-        for (i = 0; i < len; i++) {
-            PyObject *item = PyTuple_GET_ITEM(normal_args, i);
+        for (int i = 0; i < len; i++) {
+            PyObject *item = PyTuple_GET_ITEM(in_args, i);
 
             Py_INCREF(item);
             PyTuple_SET_ITEM(override_args, i + 3, item);
@@ -597,11 +421,10 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 fail:
     status = -1;
 cleanup:
-    for (i = 0; i < num_override_args; i++) {
+    for (int i = 0; i < num_override_args; i++) {
         Py_XDECREF(with_override[i]);
         Py_XDECREF(array_ufunc_methods[i]);
     }
-    Py_XDECREF(normal_args);
     Py_XDECREF(method_name);
     Py_XDECREF(normal_kwds);
     return status;

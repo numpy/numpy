@@ -14,7 +14,7 @@ Signature files may contain arbitrary Fortran code (so that Fortran
 codes can be considered as signature files). F2PY silently ignores
 Fortran constructs that are irrelevant for creating the interface.
 However, this includes also syntax errors. So, be careful not making
-ones;-).
+ones ;-).
 
 In general, the contents of signature files is case-sensitive.  When
 scanning Fortran codes and writing a signature file, F2PY lowers all
@@ -303,7 +303,7 @@ Other statements:
       ``pymethoddef`` statement can be used only inside
       ``python module`` block.
 
-  __ http://www.python.org/doc/current/ext/ext.html
+  __ https://docs.python.org/extending/index.html
 
 Attributes
 ------------

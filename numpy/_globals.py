@@ -15,9 +15,6 @@ That was not the case when the singleton classes were defined in the numpy
 motivated this module.
 
 """
-from __future__ import division, absolute_import, print_function
-
-
 __ALL__ = [
     'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue'
     ]
@@ -39,7 +36,9 @@ class ModuleDeprecationWarning(DeprecationWarning):
     nose tester will let pass without making tests fail.
 
     """
-    pass
+
+
+ModuleDeprecationWarning.__module__ = 'numpy'
 
 
 class VisibleDeprecationWarning(UserWarning):
@@ -50,13 +49,43 @@ class VisibleDeprecationWarning(UserWarning):
     the usage is most likely a user bug.
 
     """
-    pass
 
 
-class _NoValue(object):
+VisibleDeprecationWarning.__module__ = 'numpy'
+
+
+class _NoValueType:
     """Special keyword value.
 
-    This class may be used as the default value assigned to a deprecated
-    keyword in order to check if it has been given a user defined value.
+    The instance of this class may be used as the default value assigned to a
+    keyword if no other obvious default (e.g., `None`) is suitable,
+
+    Common reasons for using this keyword are:
+
+    - A new keyword is added to a function, and that function forwards its
+      inputs to another function or method which can be defined outside of
+      NumPy. For example, ``np.std(x)`` calls ``x.std``, so when a ``keepdims``
+      keyword was added that could only be forwarded if the user explicitly
+      specified ``keepdims``; downstream array libraries may not have added
+      the same keyword, so adding ``x.std(..., keepdims=keepdims)``
+      unconditionally could have broken previously working code.
+    - A keyword is being deprecated, and a deprecation warning must only be
+      emitted when the keyword is used.
+
     """
-    pass
+    __instance = None
+    def __new__(cls):
+        # ensure that only one instance exists
+        if not cls.__instance:
+            cls.__instance = super().__new__(cls)
+        return cls.__instance
+
+    # needed for python 2 to preserve identity through a pickle
+    def __reduce__(self):
+        return (self.__class__, ())
+
+    def __repr__(self):
+        return "<no value>"
+
+
+_NoValue = _NoValueType()

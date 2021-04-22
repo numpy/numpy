@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import re
 import itertools
 
@@ -14,7 +12,7 @@ def isContinuation(line):
 
 COMMENT, STATEMENT, CONTINUATION = 0, 1, 2
 def lineType(line):
-    """Return the type of a line of Fortan code."""
+    """Return the type of a line of Fortran code."""
     if isBlank(line):
         return COMMENT
     elif isLabel(line):
@@ -26,7 +24,7 @@ def lineType(line):
     else:
         return STATEMENT
 
-class LineIterator(object):
+class LineIterator:
     """LineIterator(iterable)
 
     Return rstrip()'d lines from iterable, while keeping a count of the
@@ -46,15 +44,13 @@ class LineIterator(object):
         line = line.rstrip()
         return line
 
-    next = __next__
 
-
-class PushbackIterator(object):
+class PushbackIterator:
     """PushbackIterator(iterable)
 
     Return an iterator for which items can be pushed back into.
     Call the .pushback(item) method to have item returned as the next
-    value of .next().
+    value of next().
     """
     def __init__(self, iterable):
         object.__init__(self)
@@ -72,8 +68,6 @@ class PushbackIterator(object):
 
     def pushback(self, item):
         self.buffer.append(item)
-
-    next = __next__
 
 
 def fortranSourceLines(fo):
@@ -110,15 +104,14 @@ def getDependencies(filename):
     """For a Fortran source file, return a list of routines declared as EXTERNAL
     in it.
     """
-    fo = open(filename)
     external_pat = re.compile(r'^\s*EXTERNAL\s', re.I)
     routines = []
-    for lineno, line in fortranSourceLines(fo):
-        m = external_pat.match(line)
-        if m:
-            names = line = line[m.end():].strip().split(',')
-            names = [n.strip().lower() for n in names]
-            names = [n for n in names if n]
-            routines.extend(names)
-    fo.close()
+    with open(filename) as fo:
+        for lineno, line in fortranSourceLines(fo):
+            m = external_pat.match(line)
+            if m:
+                names = line = line[m.end():].strip().split(',')
+                names = [n.strip().lower() for n in names]
+                names = [n for n in names if n]
+                routines.extend(names)
     return routines

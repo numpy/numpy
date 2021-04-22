@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 takes templated file .xxx.src and produces .xxx file  where .xxx is
 .i or .c or .h, using the following template rules
@@ -78,16 +78,12 @@ Example:
         3, 3, jim
 
 """
-from __future__ import division, absolute_import, print_function
-
 
 __all__ = ['process_str', 'process_file']
 
 import os
 import sys
 import re
-
-from numpy.distutils.compat import get_exception
 
 # names for replacement that are already global.
 global_names = {}
@@ -141,7 +137,7 @@ def paren_repl(obj):
     numrep = obj.group(2)
     return ','.join([torep]*int(numrep))
 
-parenrep = re.compile(r"[(]([^)]*)[)]\*(\d+)")
+parenrep = re.compile(r"\(([^)]*)\)\*(\d+)")
 plainrep = re.compile(r"([^*]+)\*(\d+)")
 def parse_values(astr):
     # replaces all occurrences of '(a,b,c)*4' in astr
@@ -206,14 +202,12 @@ def parse_loop_header(loophead) :
     dlist = []
     if nsub is None :
         raise ValueError("No substitution variables found")
-    for i in range(nsub) :
-        tmp = {}
-        for name, vals in names :
-            tmp[name] = vals[i]
+    for i in range(nsub):
+        tmp = {name: vals[i] for name, vals in names}
         dlist.append(tmp)
     return dlist
 
-replace_re = re.compile(r"@([\w]+)@")
+replace_re = re.compile(r"@(\w+)@")
 def parse_string(astr, env, level, line) :
     lineno = "#line %d\n" % line
 
@@ -224,7 +218,7 @@ def parse_string(astr, env, level, line) :
             val = env[name]
         except KeyError:
             msg = 'line %d: no definition of key "%s"'%(line, name)
-            raise ValueError(msg)
+            raise ValueError(msg) from None
         return val
 
     code = [lineno]
@@ -242,8 +236,7 @@ def parse_string(astr, env, level, line) :
             code.append(replace_re.sub(replace, pref))
             try :
                 envlist = parse_loop_header(head)
-            except ValueError:
-                e = get_exception()
+            except ValueError as e:
                 msg = "line %d: %s" % (newline, e)
                 raise ValueError(msg)
             for newenv in envlist :
@@ -269,22 +262,21 @@ include_src_re = re.compile(r"(\n|\A)#include\s*['\"]"
 
 def resolve_includes(source):
     d = os.path.dirname(source)
-    fid = open(source)
-    lines = []
-    for line in fid:
-        m = include_src_re.match(line)
-        if m:
-            fn = m.group('name')
-            if not os.path.isabs(fn):
-                fn = os.path.join(d, fn)
-            if os.path.isfile(fn):
-                print('Including file', fn)
-                lines.extend(resolve_includes(fn))
+    with open(source) as fid:
+        lines = []
+        for line in fid:
+            m = include_src_re.match(line)
+            if m:
+                fn = m.group('name')
+                if not os.path.isabs(fn):
+                    fn = os.path.join(d, fn)
+                if os.path.isfile(fn):
+                    print('Including file', fn)
+                    lines.extend(resolve_includes(fn))
+                else:
+                    lines.append(line)
             else:
                 lines.append(line)
-        else:
-            lines.append(line)
-    fid.close()
     return lines
 
 def process_file(source):
@@ -292,9 +284,8 @@ def process_file(source):
     sourcefile = os.path.normcase(source).replace("\\", "\\\\")
     try:
         code = process_str(''.join(lines))
-    except ValueError:
-        e = get_exception()
-        raise ValueError('In "%s" loop at %s' % (sourcefile, e))
+    except ValueError as e:
+        raise ValueError('In "%s" loop at %s' % (sourcefile, e)) from None
     return '#line 1 "%s"\n%s' % (sourcefile, code)
 
 
@@ -315,8 +306,7 @@ def unique_key(adict):
     return newkey
 
 
-if __name__ == "__main__":
-
+def main():
     try:
         file = sys.argv[1]
     except IndexError:
@@ -331,7 +321,10 @@ if __name__ == "__main__":
     allstr = fid.read()
     try:
         writestr = process_str(allstr)
-    except ValueError:
-        e = get_exception()
-        raise ValueError("In %s loop at %s" % (file, e))
+    except ValueError as e:
+        raise ValueError("In %s loop at %s" % (file, e)) from None
+
     outfile.write(writestr)
+
+if __name__ == "__main__":
+    main()

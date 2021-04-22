@@ -1,9 +1,10 @@
 """ Functions for converting from DOS to UNIX line endings
 
 """
-from __future__ import division, absolute_import, print_function
+import os
+import re
+import sys
 
-import sys, re, os
 
 def dos2unix(file):
     "Replace CRLF with LF in argument files.  Print names of changed files."
@@ -11,7 +12,8 @@ def dos2unix(file):
         print(file, "Directory!")
         return
 
-    data = open(file, "rb").read()
+    with open(file, "rb") as fp:
+        data = fp.read()
     if '\0' in data:
         print(file, "Binary!")
         return
@@ -19,9 +21,8 @@ def dos2unix(file):
     newdata = re.sub("\r\n", "\n", data)
     if newdata != data:
         print('dos2unix:', file)
-        f = open(file, "wb")
-        f.write(newdata)
-        f.close()
+        with open(file, "wb") as f:
+            f.write(newdata)
         return file
     else:
         print(file, 'ok')
@@ -45,7 +46,8 @@ def unix2dos(file):
         print(file, "Directory!")
         return
 
-    data = open(file, "rb").read()
+    with open(file, "rb") as fp:
+        data = fp.read()
     if '\0' in data:
         print(file, "Binary!")
         return
@@ -53,9 +55,8 @@ def unix2dos(file):
     newdata = re.sub("\n", "\r\n", newdata)
     if newdata != data:
         print('unix2dos:', file)
-        f = open(file, "wb")
-        f.write(newdata)
-        f.close()
+        with open(file, "wb") as f:
+            f.write(newdata)
         return file
     else:
         print(file, 'ok')

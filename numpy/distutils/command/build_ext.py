@@ -1,11 +1,8 @@
 """ Modified version of build_ext that handles fortran source files.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
-import sys
-import shutil
+import subprocess
 from glob import glob
 
 from distutils.dep_util import newer_group
@@ -15,15 +12,14 @@ from distutils.errors import DistutilsFileError, DistutilsSetupError,\
 from distutils.file_util import copy_file
 
 from numpy.distutils import log
-from numpy.distutils.exec_command import exec_command
-from numpy.distutils.system_info import combine_paths, system_info
-from numpy.distutils.misc_util import filter_sources, has_f_sources, \
-    has_cxx_sources, get_ext_source_files, \
-    get_numpy_include_dirs, is_sequence, get_build_architecture, \
-    msvc_version
+from numpy.distutils.exec_command import filepath_from_subprocess_output
+from numpy.distutils.system_info import combine_paths
+from numpy.distutils.misc_util import (
+    filter_sources, get_ext_source_files, get_numpy_include_dirs,
+    has_cxx_sources, has_f_sources, is_sequence
+)
 from numpy.distutils.command.config_compiler import show_fortran_compilers
-
-
+from numpy.distutils.ccompiler_opt import new_ccompiler_opt, CCompilerOpt
 
 class build_ext (old_build_ext):
 
@@ -34,6 +30,16 @@ class build_ext (old_build_ext):
          "specify the Fortran compiler type"),
         ('parallel=', 'j',
          "number of parallel jobs"),
+        ('warn-error', None,
+         "turn all warnings into errors (-Werror)"),
+        ('cpu-baseline=', None,
+         "specify a list of enabled baseline CPU optimizations"),
+        ('cpu-dispatch=', None,
+         "specify a list of dispatched CPU optimizations"),
+        ('disable-optimization', None,
+         "disable CPU optimized code(dispatch,simd,fast...)"),
+        ('simd-test=', None,
+         "specify a list of CPU optimizations to be tested against NumPy SIMD interface"),
     ]
 
     help_options = old_build_ext.help_options + [
@@ -41,17 +47,24 @@ class build_ext (old_build_ext):
          show_fortran_compilers),
     ]
 
+    boolean_options = old_build_ext.boolean_options + ['warn-error', 'disable-optimization']
+
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
         self.parallel = None
+        self.warn_error = None
+        self.cpu_baseline = None
+        self.cpu_dispatch = None
+        self.disable_optimization = None
+        self.simd_test = None
 
     def finalize_options(self):
         if self.parallel:
             try:
                 self.parallel = int(self.parallel)
-            except ValueError:
-                raise ValueError("--parallel/-j argument must be an integer")
+            except ValueError as e:
+                raise ValueError("--parallel/-j argument must be an integer") from e
 
         # Ensure that self.include_dirs and self.distribution.include_dirs
         # refer to the same list object. finalize_options will modify
@@ -70,7 +83,15 @@ class build_ext (old_build_ext):
         self.include_dirs.extend(incl_dirs)
 
         old_build_ext.finalize_options(self)
-        self.set_undefined_options('build', ('parallel', 'parallel'))
+        self.set_undefined_options('build',
+                                        ('parallel', 'parallel'),
+                                        ('warn_error', 'warn_error'),
+                                        ('cpu_baseline', 'cpu_baseline'),
+                                        ('cpu_dispatch', 'cpu_dispatch'),
+                                        ('disable_optimization', 'disable_optimization'),
+                                        ('simd_test', 'simd_test')
+                                  )
+        CCompilerOpt.conf_target_groups["simd_test"] = self.simd_test
 
     def run(self):
         if not self.extensions:
@@ -117,10 +138,36 @@ class build_ext (old_build_ext):
                                      force=self.force)
         self.compiler.customize(self.distribution)
         self.compiler.customize_cmd(self)
+
+        if self.warn_error:
+            self.compiler.compiler.append('-Werror')
+            self.compiler.compiler_so.append('-Werror')
+
         self.compiler.show_customization()
 
+        if not self.disable_optimization:
+            dispatch_hpath = os.path.join("numpy", "distutils", "include", "npy_cpu_dispatch_config.h")
+            dispatch_hpath = os.path.join(self.get_finalized_command("build_src").build_src, dispatch_hpath)
+            opt_cache_path = os.path.abspath(
+                os.path.join(self.build_temp, 'ccompiler_opt_cache_ext.py')
+            )
+            self.compiler_opt = new_ccompiler_opt(
+                compiler=self.compiler, dispatch_hpath=dispatch_hpath,
+                cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
+                cache_path=opt_cache_path
+            )
+            if not self.compiler_opt.is_cached():
+                log.info("Detected changes on compiler optimizations, force rebuilding")
+                self.force = True
+
+            import atexit
+            def report():
+                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
+                log.info(self.compiler_opt.report(full=True))
+            atexit.register(report)
+
         # Setup directory for storing generated extra DLL files on Windows
-        self.extra_dll_dir = os.path.join(self.build_temp, 'extra-dll')
+        self.extra_dll_dir = os.path.join(self.build_temp, '.libs')
         if not os.path.isdir(self.extra_dll_dir):
             os.makedirs(self.extra_dll_dir)
 
@@ -262,18 +309,28 @@ class build_ext (old_build_ext):
         self.build_extensions()
 
         # Copy over any extra DLL files
-        runtime_lib_dir = os.path.join(
-            self.build_lib, self.distribution.get_name(), 'extra-dll')
-        for fn in os.listdir(self.extra_dll_dir):
-            if not fn.lower().endswith('.dll'):
-                continue
-            if not os.path.isdir(runtime_lib_dir):
-                os.makedirs(runtime_lib_dir)
-            runtime_lib = os.path.join(self.extra_dll_dir, fn)
-            copy_file(runtime_lib, runtime_lib_dir)
+        # FIXME: In the case where there are more than two packages,
+        # we blindly assume that both packages need all of the libraries,
+        # resulting in a larger wheel than is required. This should be fixed,
+        # but it's so rare that I won't bother to handle it.
+        pkg_roots = {
+            self.get_ext_fullname(ext.name).split('.')[0]
+            for ext in self.extensions
+        }
+        for pkg_root in pkg_roots:
+            shared_lib_dir = os.path.join(pkg_root, '.libs')
+            if not self.inplace:
+                shared_lib_dir = os.path.join(self.build_lib, shared_lib_dir)
+            for fn in os.listdir(self.extra_dll_dir):
+                if not os.path.isdir(shared_lib_dir):
+                    os.makedirs(shared_lib_dir)
+                if not fn.lower().endswith('.dll'):
+                    continue
+                runtime_lib = os.path.join(self.extra_dll_dir, fn)
+                copy_file(runtime_lib, shared_lib_dir)
 
-    def swig_sources(self, sources):
-        # Do nothing. Swig sources have beed handled in build_src command.
+    def swig_sources(self, sources, extensions=None):
+        # Do nothing. Swig sources have been handled in build_src command.
         return sources
 
     def build_extension(self, ext):
@@ -358,25 +415,54 @@ class build_ext (old_build_ext):
 
         include_dirs = ext.include_dirs + get_numpy_include_dirs()
 
+        # filtering C dispatch-table sources when optimization is not disabled,
+        # otherwise treated as normal sources.
+        copt_c_sources = []
+        copt_baseline_flags = []
+        copt_macros = []
+        if not self.disable_optimization:
+            bsrc_dir = self.get_finalized_command("build_src").build_src
+            dispatch_hpath = os.path.join("numpy", "distutils", "include")
+            dispatch_hpath = os.path.join(bsrc_dir, dispatch_hpath)
+            include_dirs.append(dispatch_hpath)
+
+            copt_build_src = None if self.inplace else bsrc_dir
+            copt_c_sources = [
+                c_sources.pop(c_sources.index(src))
+                for src in c_sources[:] if src.endswith(".dispatch.c")
+            ]
+            copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
+        else:
+            copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
+
         c_objects = []
+        if copt_c_sources:
+            log.info("compiling C dispatch-able sources")
+            c_objects += self.compiler_opt.try_dispatch(copt_c_sources,
+                                                        output_dir=output_dir,
+                                                        src_dir=copt_build_src,
+                                                        macros=macros + copt_macros,
+                                                        include_dirs=include_dirs,
+                                                        debug=self.debug,
+                                                        extra_postargs=extra_args,
+                                                        **kws)
         if c_sources:
             log.info("compiling C sources")
-            c_objects = self.compiler.compile(c_sources,
-                                              output_dir=output_dir,
-                                              macros=macros,
-                                              include_dirs=include_dirs,
-                                              debug=self.debug,
-                                              extra_postargs=extra_args,
-                                              **kws)
-
+            c_objects += self.compiler.compile(c_sources,
+                                               output_dir=output_dir,
+                                               macros=macros + copt_macros,
+                                               include_dirs=include_dirs,
+                                               debug=self.debug,
+                                               extra_postargs=extra_args + copt_baseline_flags,
+                                               **kws)
         if cxx_sources:
             log.info("compiling C++ sources")
             c_objects += cxx_compiler.compile(cxx_sources,
                                               output_dir=output_dir,
-                                              macros=macros,
+                                              macros=macros + copt_macros,
                                               include_dirs=include_dirs,
                                               debug=self.debug,
-                                              extra_postargs=extra_args,
+                                              extra_postargs=extra_args + copt_baseline_flags,
                                               **kws)
 
         extra_postargs = []
@@ -483,8 +569,11 @@ class build_ext (old_build_ext):
         objects = list(objects)
         unlinkable_fobjects = list(unlinkable_fobjects)
 
-        # Expand possible fake static libraries to objects
-        for lib in list(libraries):
+        # Expand possible fake static libraries to objects;
+        # make sure to iterate over a copy of the list as
+        # "fake" libraries will be removed as they are
+        # enountered
+        for lib in libraries[:]:
             for libdir in library_dirs:
                 fake_lib = os.path.join(libdir, lib + '.fobjects')
                 if os.path.isfile(fake_lib):
@@ -500,7 +589,7 @@ class build_ext (old_build_ext):
 
         # Wrap unlinkable objects to a linkable one
         if unlinkable_fobjects:
-            fobjects = [os.path.relpath(obj) for obj in unlinkable_fobjects]
+            fobjects = [os.path.abspath(obj) for obj in unlinkable_fobjects]
             wrapped = fcompiler.wrap_unlinkable_objects(
                     fobjects, output_dir=self.build_temp,
                     extra_dll_dir=self.extra_dll_dir)
@@ -548,9 +637,12 @@ class build_ext (old_build_ext):
             # correct path when compiling in Cygwin but with normal Win
             # Python
             if dir.startswith('/usr/lib'):
-                s, o = exec_command(['cygpath', '-w', dir], use_tee=False)
-                if not s:
-                    dir = o
+                try:
+                    dir = subprocess.check_output(['cygpath', '-w', dir])
+                except (OSError, subprocess.CalledProcessError):
+                    pass
+                else:
+                    dir = filepath_from_subprocess_output(dir)
             f_lib_dirs.append(dir)
         c_library_dirs.extend(f_lib_dirs)
 

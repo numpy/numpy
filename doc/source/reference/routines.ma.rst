@@ -67,10 +67,10 @@ Inspecting the array
    ma.size
    ma.is_masked
    ma.is_mask
+   ma.isMaskedArray
+   ma.isMA
+   ma.isarray
 
-   ma.MaskedArray.data
-   ma.MaskedArray.mask
-   ma.MaskedArray.recordmask
 
    ma.MaskedArray.all
    ma.MaskedArray.any
@@ -79,6 +79,12 @@ Inspecting the array
    ma.shape
    ma.size
 
+
+.. autosummary::
+
+    ma.MaskedArray.data
+    ma.MaskedArray.mask
+    ma.MaskedArray.recordmask
 
 _____
 
@@ -126,6 +132,7 @@ Changing the number of dimensions
 
    ma.MaskedArray.squeeze
 
+   ma.stack
    ma.column_stack
    ma.concatenate
    ma.dstack
@@ -141,12 +148,13 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   ma.column_stack
    ma.concatenate
-   ma.append
-   ma.dstack
-   ma.hstack
+   ma.stack
    ma.vstack
+   ma.hstack
+   ma.dstack
+   ma.column_stack
+   ma.append
 
 
 _____
@@ -259,17 +267,6 @@ Conversion operations
    ma.MaskedArray.tobytes
 
 
-Pickling and unpickling
-~~~~~~~~~~~~~~~~~~~~~~~
-.. autosummary::
-   :toctree: generated/
-
-   ma.dump
-   ma.dumps
-   ma.load
-   ma.loads
-
-
 Filling a masked array
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
@@ -278,13 +275,15 @@ Filling a masked array
    ma.common_fill_value
    ma.default_fill_value
    ma.maximum_fill_value
-   ma.maximum_fill_value
+   ma.minimum_fill_value
    ma.set_fill_value
 
    ma.MaskedArray.get_fill_value
    ma.MaskedArray.set_fill_value
-   ma.MaskedArray.fill_value
 
+.. autosummary::
+
+    ma.MaskedArray.fill_value
 
 _____
 
@@ -400,6 +399,7 @@ Miscellanea
    ma.allequal
    ma.allclose
    ma.apply_along_axis
+   ma.apply_over_axes
    ma.arange
    ma.choose
    ma.ediff1d

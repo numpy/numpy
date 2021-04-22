@@ -1,23 +1,35 @@
 # Makefile for Sphinx documentation
 #
 
-PYVER = 2.7
+# PYVER needs to be major.minor, just "3" doesn't work - it will result in
+# issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
+
+# Use explicit "version_info" indexing since make cannot handle colon characters, and
+# evaluate it now to allow easier debugging when printing the variable
+
+PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".format(v[0], v[1]))')
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
-SPHINXBUILD   = LANG=C sphinx-build
-PAPER         =
+SPHINXOPTS    ?=
+SPHINXBUILD   ?= LANG=C sphinx-build
+PAPER         ?=
+# For merging a documentation archive into a git checkout of numpy/doc
+# Turn a tag like v1.18.0 into 1.18
+# Use sed -n -e 's/patttern/match/p' to return a blank value if no match
+TAG ?= $(shell git describe --tag | sed -n -e's,v\([1-9]\.[0-9]*\)\.[0-9].*,\1,p')
 
 FILES=
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
+  $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
-        dist dist-build gitwash-update
+		dist dist-build gitwash-update version-check html-build latex-build \
+		merge-doc show
 
 #------------------------------------------------------------------------------
 
@@ -33,9 +45,12 @@ help:
 	@echo "  dist PYVER=... to make a distribution-ready tree"
 	@echo "  gitwash-update GITWASH=path/to/gitwash  update gitwash developer docs"
 	@echo "  upload USERNAME=... RELEASE=... to upload built docs to docs.scipy.org"
+	@echo "  merge-doc TAG=... to clone numpy/doc and archive documentation into it"
+	@echo "  show      to show the html output in a browser"
 
 clean:
-	-rm -rf build/* source/reference/generated
+	-rm -rf build/*
+	find . -name generated -type d -prune -exec rm -rf "{}" ";"
 
 gitwash-update:
 	rm -rf source/dev/gitwash
@@ -51,28 +66,48 @@ gitwash-update:
 
 # Build the current numpy version, and extract docs from it.
 # We have to be careful of some issues:
-# 
+#
 # - Everything must be done using the same Python version
 # - We must use eggs (otherwise they might override PYTHONPATH on import).
 # - Different versions of easy_install install to different directories (!)
 #
 
 
-INSTALL_DIR = $(CURDIR)/build/inst-dist/
+INSTALL_DIR = $(CURDIR)/build/inst-dist
 INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
 UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 
-DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" SPHINXOPTS="$(SPHINXOPTS)"
+DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" 
 
-dist:
+NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
+GITVER ?= $(shell cd ..; $(PYTHON) -c "import versioneer as v; print(v.get_versions()['full-revisionid'][:10])")
+
+version-check:
+ifeq "$(GITVER)" "Unknown"
+	# @echo sdist build with unlabeled sources
+else ifeq ("", "$(NUMPYVER)")
+	@echo numpy not found, cannot build documentation without successful \"import numpy\"
+	@exit 1
+else ifneq ($(NUMPYVER),$(GITVER))
+	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
+	@echo use '"make dist"' or '"GITVER=$(NUMPYVER) make $(MAKECMDGOALS) ..."'
+	@exit 1
+else
+	# for testing
+	# @echo installed numpy $(NUMPYVER) matches git version $(GITVER); exit 1
+endif
+
+
+dist: build/dist.tar.gz
+
+build/dist.tar.gz:
 	make $(DIST_VARS) real-dist
 
-real-dist: dist-build html html-scipyorg
-	test -d build/latex || make latex
+real-dist: dist-build html-build
+	test -d build/latex || make latex-build
 	make -C build/latex all-pdf
-	-test -d build/htmlhelp || make htmlhelp-build
 	-rm -rf build/dist
-	cp -r build/html-scipyorg build/dist
+	cp -r build/html build/dist
 	cd build/html && zip -9r ../dist/numpy-html.zip .
 	cp build/latex/numpy-ref.pdf build/dist
 	cp build/latex/numpy-user.pdf build/dist
@@ -86,7 +121,7 @@ dist-build:
 	install -d $(subst :, ,$(INSTALL_PPH))
 	$(PYTHON) `which easy_install` --prefix=$(INSTALL_DIR) ../dist/*.egg
 
-upload:
+upload: build/dist.tar.gz
 	# SSH must be correctly configured for this to work.
 	# Assumes that ``make dist`` was already run
 	# Example usage: ``make upload USERNAME=rgommers RELEASE=1.10.1``
@@ -103,6 +138,32 @@ upload:
 	ssh $(USERNAME)@docs.scipy.org rm $(UPLOAD_DIR)/dist.tar.gz
 	ssh $(USERNAME)@docs.scipy.org ln -snf numpy-$(RELEASE) /srv/docs_scipy_org/doc/numpy
 
+
+merge-doc: build/dist.tar.gz
+ifeq "$(TAG)" ""
+	echo tag "$(TAG)" not of the form 1.18;
+	exit 1;
+endif
+	@# Only clone if the directory does not exist
+	@if ! test -d build/merge; then \
+		git clone https://github.com/numpy/doc build/merge; \
+	fi;
+	@# Remove any old content and copy in the new, add it to git
+	-rm -rf build/merge/$(TAG)/*
+	-mkdir -p build/merge/$(TAG)
+	@# -C changes working directory
+	tar -C build/merge/$(TAG) -xf build/dist.tar.gz
+	git -C build/merge add $(TAG)
+	@# For now, the user must do this. If it is onerous, automate it and change
+	@# the instructions in doc/HOWTO_RELEASE.rst.txt
+	@echo " "
+	@echo New documentation archive added to ./build/merge.
+	@echo Now add/modify the appropriate section after
+	@echo "    <!-- insert here -->"
+	@echo in build/merge/index.html,
+	@echo then \"git commit\", \"git push\"
+
+
 #------------------------------------------------------------------------------
 # Basic Sphinx generation rules for different formats
 #------------------------------------------------------------------------------
@@ -112,7 +173,8 @@ build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
 	touch build/generate-stamp
 
-html: generate
+html: version-check html-build
+html-build: generate
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
@@ -123,9 +185,9 @@ html-scipyorg:
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -t scipyorg -b html $(ALLSPHINXOPTS) build/html-scipyorg $(FILES)
 	@echo
-	@echo "Build finished. The HTML pages are in build/html."
+	@echo "Build finished. The HTML pages are in build/html-scipyorg."
 
-pickle: generate
+pickle: generate version-check
 	mkdir -p build/pickle build/doctrees
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) build/pickle $(FILES)
 	@echo
@@ -135,7 +197,7 @@ pickle: generate
 
 web: pickle
 
-htmlhelp: generate
+htmlhelp: generate version-check
 	mkdir -p build/htmlhelp build/doctrees
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) build/htmlhelp $(FILES)
 	@echo
@@ -146,32 +208,33 @@ htmlhelp-build: htmlhelp build/htmlhelp/numpy.chm
 %.chm: %.hhp
 	-hhc.exe $^
 
-qthelp: generate
+qthelp: generate version-check
 	mkdir -p build/qthelp build/doctrees
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp $(FILES)
 
-latex: generate
+latex: version-check latex-build
+latex-build: generate
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex $(FILES)
 	$(PYTHON) postprocess.py tex build/latex/*.tex
-	perl -pi -e 's/\t(latex.*|pdflatex) (.*)/\t-$$1 -interaction batchmode $$2/' build/latex/Makefile
+	perl -pi -e 's/LATEXOPTS =/LATEXOPTS ?= --halt-on-error/' build/latex/Makefile
 	@echo
 	@echo "Build finished; the LaTeX files are in build/latex."
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
 	      "run these through (pdf)latex."
 
-coverage: build
+coverage: build version-check
 	mkdir -p build/coverage build/doctrees
 	$(SPHINXBUILD) -b coverage $(ALLSPHINXOPTS) build/coverage $(FILES)
 	@echo "Coverage finished; see c.txt and python.txt in build/coverage"
 
-changes: generate
+changes: generate version-check
 	mkdir -p build/changes build/doctrees
 	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) build/changes $(FILES)
 	@echo
 	@echo "The overview file is in build/changes."
 
-linkcheck: generate
+linkcheck: generate version-check
 	mkdir -p build/linkcheck build/doctrees
 	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) build/linkcheck $(FILES)
 	@echo
@@ -190,3 +253,7 @@ info:
 	@echo "Running Texinfo files through makeinfo..."
 	make -C build/texinfo info
 	@echo "makeinfo finished; the Info files are in build/texinfo."
+
+show:
+	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/build/html/index.html')"
+

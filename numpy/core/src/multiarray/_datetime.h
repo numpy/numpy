@@ -1,7 +1,7 @@
 #ifndef _NPY_PRIVATE__DATETIME_H_
 #define _NPY_PRIVATE__DATETIME_H_
 
-extern NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS];
+extern NPY_NO_EXPORT char const *_datetime_strings[NPY_DATETIME_NUMUNITS];
 extern NPY_NO_EXPORT int _days_per_month_table[2][12];
 
 NPY_NO_EXPORT void
@@ -38,6 +38,10 @@ create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit);
 NPY_NO_EXPORT PyArray_DatetimeMetaData *
 get_datetime_metadata_from_dtype(PyArray_Descr *dtype);
 
+NPY_NO_EXPORT int
+find_string_array_datetime64_type(PyArrayObject *arr,
+        PyArray_DatetimeMetaData *meta);
+
 /*
  * Both type1 and type2 must be either NPY_DATETIME or NPY_TIMEDELTA.
  * Applies the type promotion rules between the two types, returning
@@ -68,7 +72,7 @@ days_to_month_number(npy_datetime days);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
+parse_datetime_metadata_from_metastr(char const *metastr, Py_ssize_t len,
                                     PyArray_DatetimeMetaData *out_meta);
 
 
@@ -78,7 +82,7 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
  * contain its string length.
  */
 NPY_NO_EXPORT PyArray_Descr *
-parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len);
+parse_dtype_from_datetime_typestr(char const *typestr, Py_ssize_t len);
 
 /*
  * Converts a substring given by 'str' and 'len' into
@@ -88,7 +92,7 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT NPY_DATETIMEUNIT
-parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr);
+parse_datetime_unit_from_string(char const *str, Py_ssize_t len, char const *metastr);
 
 /*
  * Translate divisors into multiples of smaller units.
@@ -99,7 +103,7 @@ parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr);
  */
 NPY_NO_EXPORT int
 convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
-                                    int den, char *metastr);
+                                    int den, char const *metastr);
 
 /*
  * Determines whether the 'divisor' metadata divides evenly into
@@ -196,17 +200,15 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
                                         PyArray_DatetimeMetaData *out_meta);
 
 /*
- * 'ret' is a PyUString containing the datetime string, and this
- * function appends the metadata string to it.
+ * Returns datetime metadata as a new reference a Unicode object.
+ * Returns NULL on error.
  *
  * If 'skip_brackets' is true, skips the '[]'.
  *
- * This function steals the reference 'ret'
  */
 NPY_NO_EXPORT PyObject *
-append_metastr_to_string(PyArray_DatetimeMetaData *meta,
-                                    int skip_brackets,
-                                    PyObject *ret);
+metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets);
+
 
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date
@@ -370,5 +372,8 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
  */
 NPY_NO_EXPORT PyArray_Descr *
 find_object_datetime_type(PyObject *obj, int type_num);
+
+NPY_NO_EXPORT int
+PyArray_InitializeDatetimeCasts(void);
 
 #endif

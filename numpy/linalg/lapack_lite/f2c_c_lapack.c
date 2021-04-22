@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -37,19 +37,20 @@ static integer c__3 = 3;
 static integer c__2 = 2;
 static integer c__0 = 0;
 static integer c__65 = 65;
-static real c_b894 = 1.f;
+static integer c__9 = 9;
+static integer c__6 = 6;
+static real c_b328 = 0.f;
+static real c_b1034 = 1.f;
 static integer c__12 = 12;
 static integer c__49 = 49;
-static real c_b1087 = 0.f;
-static integer c__9 = 9;
-static real c_b1136 = -1.f;
+static real c_b1276 = -1.f;
 static integer c__13 = 13;
 static integer c__15 = 15;
 static integer c__14 = 14;
 static integer c__16 = 16;
 static logical c_false = FALSE_;
 static logical c_true = TRUE_;
-static real c_b2023 = .5f;
+static real c_b2435 = .5f;
 
 /* Subroutine */ int cgebak_(char *job, char *side, integer *n, integer *ilo,
 	integer *ihi, real *scale, integer *m, complex *v, integer *ldv,
@@ -269,9 +270,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double r_imag(complex *), c_abs(complex *);
 
     /* Local variables */
     static real c__, f, g;
@@ -663,9 +661,6 @@ L210:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     complex q__1;
-
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__;
@@ -1313,10 +1308,6 @@ L210:
     real r__1, r__2;
     complex q__1, q__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal), r_imag(complex *);
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, k, ihi;
     static real scl;
@@ -1831,9 +1822,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     complex q__1;
-
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__;
@@ -2697,15 +2685,743 @@ L50:
 
 } /* cgelqf_ */
 
+/* Subroutine */ int cgelsd_(integer *m, integer *n, integer *nrhs, complex *
+	a, integer *lda, complex *b, integer *ldb, real *s, real *rcond,
+	integer *rank, complex *work, integer *lwork, real *rwork, integer *
+	iwork, integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4;
+
+    /* Local variables */
+    static integer ie, il, mm;
+    static real eps, anrm, bnrm;
+    static integer itau, nlvl, iascl, ibscl;
+    static real sfmin;
+    static integer minmn, maxmn, itaup, itauq, mnthr, nwork;
+    extern /* Subroutine */ int cgebrd_(integer *, integer *, complex *,
+	    integer *, real *, real *, complex *, complex *, complex *,
+	    integer *, integer *), slabad_(real *, real *);
+    extern doublereal clange_(char *, integer *, integer *, complex *,
+	    integer *, real *);
+    extern /* Subroutine */ int cgelqf_(integer *, integer *, complex *,
+	    integer *, complex *, complex *, integer *, integer *), clalsd_(
+	    char *, integer *, integer *, integer *, real *, real *, complex *
+	    , integer *, real *, integer *, complex *, real *, integer *,
+	    integer *), clascl_(char *, integer *, integer *, real *,
+	    real *, integer *, integer *, complex *, integer *, integer *), cgeqrf_(integer *, integer *, complex *, integer *,
+	    complex *, complex *, integer *, integer *);
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int clacpy_(char *, integer *, integer *, complex
+	    *, integer *, complex *, integer *), claset_(char *,
+	    integer *, integer *, complex *, complex *, complex *, integer *), xerbla_(char *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static real bignum;
+    extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
+	    real *, integer *, integer *, real *, integer *, integer *), cunmbr_(char *, char *, char *, integer *, integer *,
+	    integer *, complex *, integer *, complex *, complex *, integer *,
+	    complex *, integer *, integer *), slaset_(
+	    char *, integer *, integer *, real *, real *, real *, integer *), cunmlq_(char *, char *, integer *, integer *, integer *,
+	    complex *, integer *, complex *, complex *, integer *, complex *,
+	    integer *, integer *);
+    static integer ldwork;
+    extern /* Subroutine */ int cunmqr_(char *, char *, integer *, integer *,
+	    integer *, complex *, integer *, complex *, complex *, integer *,
+	    complex *, integer *, integer *);
+    static integer liwork, minwrk, maxwrk;
+    static real smlnum;
+    static integer lrwork;
+    static logical lquery;
+    static integer nrwork, smlsiz;
+
+
+/*
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    CGELSD computes the minimum-norm solution to a real linear least
+    squares problem:
+        minimize 2-norm(| b - A*x |)
+    using the singular value decomposition (SVD) of A. A is an M-by-N
+    matrix which may be rank-deficient.
+
+    Several right hand side vectors b and solution vectors x can be
+    handled in a single call; they are stored as the columns of the
+    M-by-NRHS right hand side matrix B and the N-by-NRHS solution
+    matrix X.
+
+    The problem is solved in three steps:
+    (1) Reduce the coefficient matrix A to bidiagonal form with
+        Householder tranformations, reducing the original problem
+        into a "bidiagonal least squares problem" (BLS)
+    (2) Solve the BLS using a divide and conquer approach.
+    (3) Apply back all the Householder tranformations to solve
+        the original least squares problem.
+
+    The effective rank of A is determined by treating as zero those
+    singular values which are less than RCOND times the largest singular
+    value.
+
+    The divide and conquer algorithm makes very mild assumptions about
+    floating point arithmetic. It will work on machines with a guard
+    digit in add/subtract, or on those binary machines without guard
+    digits which subtract like the Cray X-MP, Cray Y-MP, Cray C-90, or
+    Cray-2. It could conceivably fail on hexadecimal or decimal machines
+    without guard digits, but we know of none.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of the matrix A. M >= 0.
+
+    N       (input) INTEGER
+            The number of columns of the matrix A. N >= 0.
+
+    NRHS    (input) INTEGER
+            The number of right hand sides, i.e., the number of columns
+            of the matrices B and X. NRHS >= 0.
+
+    A       (input/output) COMPLEX array, dimension (LDA,N)
+            On entry, the M-by-N matrix A.
+            On exit, A has been destroyed.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A. LDA >= max(1,M).
+
+    B       (input/output) COMPLEX array, dimension (LDB,NRHS)
+            On entry, the M-by-NRHS right hand side matrix B.
+            On exit, B is overwritten by the N-by-NRHS solution matrix X.
+            If m >= n and RANK = n, the residual sum-of-squares for
+            the solution in the i-th column is given by the sum of
+            squares of the modulus of elements n+1:m in that column.
+
+    LDB     (input) INTEGER
+            The leading dimension of the array B.  LDB >= max(1,M,N).
+
+    S       (output) REAL array, dimension (min(M,N))
+            The singular values of A in decreasing order.
+            The condition number of A in the 2-norm = S(1)/S(min(m,n)).
+
+    RCOND   (input) REAL
+            RCOND is used to determine the effective rank of A.
+            Singular values S(i) <= RCOND*S(1) are treated as zero.
+            If RCOND < 0, machine precision is used instead.
+
+    RANK    (output) INTEGER
+            The effective rank of A, i.e., the number of singular values
+            which are greater than RCOND*S(1).
+
+    WORK    (workspace/output) COMPLEX array, dimension (MAX(1,LWORK))
+            On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+
+    LWORK   (input) INTEGER
+            The dimension of the array WORK. LWORK must be at least 1.
+            The exact minimum amount of workspace needed depends on M,
+            N and NRHS. As long as LWORK is at least
+                2 * N + N * NRHS
+            if M is greater than or equal to N or
+                2 * M + M * NRHS
+            if M is less than N, the code will execute correctly.
+            For good performance, LWORK should generally be larger.
+
+            If LWORK = -1, then a workspace query is assumed; the routine
+            only calculates the optimal size of the array WORK and the
+            minimum sizes of the arrays RWORK and IWORK, and returns
+            these values as the first entries of the WORK, RWORK and
+            IWORK arrays, and no error message related to LWORK is issued
+            by XERBLA.
+
+    RWORK   (workspace) REAL array, dimension (MAX(1,LRWORK))
+            LRWORK >=
+               10*N + 2*N*SMLSIZ + 8*N*NLVL + 3*SMLSIZ*NRHS +
+               MAX( (SMLSIZ+1)**2, N*(1+NRHS) + 2*NRHS )
+            if M is greater than or equal to N or
+               10*M + 2*M*SMLSIZ + 8*M*NLVL + 3*SMLSIZ*NRHS +
+               MAX( (SMLSIZ+1)**2, N*(1+NRHS) + 2*NRHS )
+            if M is less than N, the code will execute correctly.
+            SMLSIZ is returned by ILAENV and is equal to the maximum
+            size of the subproblems at the bottom of the computation
+            tree (usually about 25), and
+               NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
+            On exit, if INFO = 0, RWORK(1) returns the minimum LRWORK.
+
+    IWORK   (workspace) INTEGER array, dimension (MAX(1,LIWORK))
+            LIWORK >= max(1, 3*MINMN*NLVL + 11*MINMN),
+            where MINMN = MIN( M,N ).
+            On exit, if INFO = 0, IWORK(1) returns the minimum LIWORK.
+
+    INFO    (output) INTEGER
+            = 0: successful exit
+            < 0: if INFO = -i, the i-th argument had an illegal value.
+            > 0:  the algorithm for computing the SVD failed to converge;
+                  if INFO = i, i off-diagonal elements of an intermediate
+                  bidiagonal form did not converge to zero.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input arguments.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    --s;
+    --work;
+    --rwork;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+    minmn = min(*m,*n);
+    maxmn = max(*m,*n);
+    lquery = *lwork == -1;
+    if (*m < 0) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*nrhs < 0) {
+	*info = -3;
+    } else if (*lda < max(1,*m)) {
+	*info = -5;
+    } else if (*ldb < max(1,maxmn)) {
+	*info = -7;
+    }
+
+/*
+       Compute workspace.
+       (Note: Comments in the code beginning "Workspace:" describe the
+       minimal amount of workspace needed at that point in the code,
+       as well as the preferred amount for good performance.
+       NB refers to the optimal block size for the immediately
+       following subroutine, as returned by ILAENV.)
+*/
+
+    if (*info == 0) {
+	minwrk = 1;
+	maxwrk = 1;
+	liwork = 1;
+	lrwork = 1;
+	if (minmn > 0) {
+	    smlsiz = ilaenv_(&c__9, "CGELSD", " ", &c__0, &c__0, &c__0, &c__0,
+		     (ftnlen)6, (ftnlen)1);
+	    mnthr = ilaenv_(&c__6, "CGELSD", " ", m, n, nrhs, &c_n1, (ftnlen)
+		    6, (ftnlen)1);
+/* Computing MAX */
+	    i__1 = (integer) (log((real) minmn / (real) (smlsiz + 1)) / log(
+		    2.f)) + 1;
+	    nlvl = max(i__1,0);
+	    liwork = minmn * 3 * nlvl + minmn * 11;
+	    mm = *m;
+	    if (*m >= *n && *m >= mnthr) {
+
+/*
+                Path 1a - overdetermined, with many more rows than
+                          columns.
+*/
+
+		mm = *n;
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n * ilaenv_(&c__1, "CGEQRF", " ", m, n,
+			 &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *nrhs * ilaenv_(&c__1, "CUNMQR", "LC",
+			m, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)2);
+		maxwrk = max(i__1,i__2);
+	    }
+	    if (*m >= *n) {
+
+/*
+                Path 1 - overdetermined or exactly determined.
+
+   Computing MAX
+   Computing 2nd power
+*/
+		i__3 = smlsiz + 1;
+		i__1 = i__3 * i__3, i__2 = *n * (*nrhs + 1) + (*nrhs << 1);
+		lrwork = *n * 10 + (*n << 1) * smlsiz + (*n << 3) * nlvl +
+			smlsiz * 3 * *nrhs + max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = (*n << 1) + (mm + *n) * ilaenv_(&c__1,
+			"CGEBRD", " ", &mm, n, &c_n1, &c_n1, (ftnlen)6, (
+			ftnlen)1);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = (*n << 1) + *nrhs * ilaenv_(&c__1,
+			"CUNMBR", "QLC", &mm, nrhs, n, &c_n1, (ftnlen)6, (
+			ftnlen)3);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = (*n << 1) + (*n - 1) * ilaenv_(&c__1,
+			"CUNMBR", "PLN", n, nrhs, n, &c_n1, (ftnlen)6, (
+			ftnlen)3);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = (*n << 1) + *n * *nrhs;
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = (*n << 1) + mm, i__2 = (*n << 1) + *n * *nrhs;
+		minwrk = max(i__1,i__2);
+	    }
+	    if (*n > *m) {
+/*
+   Computing MAX
+   Computing 2nd power
+*/
+		i__3 = smlsiz + 1;
+		i__1 = i__3 * i__3, i__2 = *n * (*nrhs + 1) + (*nrhs << 1);
+		lrwork = *m * 10 + (*m << 1) * smlsiz + (*m << 3) * nlvl +
+			smlsiz * 3 * *nrhs + max(i__1,i__2);
+		if (*n >= mnthr) {
+
+/*
+                   Path 2a - underdetermined, with many more columns
+                             than rows.
+*/
+
+		    maxwrk = *m + *m * ilaenv_(&c__1, "CGELQF", " ", m, n, &
+			    c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m << 1) *
+			    ilaenv_(&c__1, "CGEBRD", " ", m, m, &c_n1, &c_n1,
+			    (ftnlen)6, (ftnlen)1);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + *nrhs *
+			    ilaenv_(&c__1, "CUNMBR", "QLC", m, nrhs, m, &c_n1,
+			     (ftnlen)6, (ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m - 1) *
+			    ilaenv_(&c__1, "CUNMLQ", "LC", n, nrhs, m, &c_n1,
+			    (ftnlen)6, (ftnlen)2);
+		    maxwrk = max(i__1,i__2);
+		    if (*nrhs > 1) {
+/* Computing MAX */
+			i__1 = maxwrk, i__2 = *m * *m + *m + *m * *nrhs;
+			maxwrk = max(i__1,i__2);
+		    } else {
+/* Computing MAX */
+			i__1 = maxwrk, i__2 = *m * *m + (*m << 1);
+			maxwrk = max(i__1,i__2);
+		    }
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + *m * *nrhs;
+		    maxwrk = max(i__1,i__2);
+/*
+       XXX: Ensure the Path 2a case below is triggered.  The workspace
+       calculation should use queries for all routines eventually.
+   Computing MAX
+   Computing MAX
+*/
+		    i__3 = *m, i__4 = (*m << 1) - 4, i__3 = max(i__3,i__4),
+			    i__3 = max(i__3,*nrhs), i__4 = *n - *m * 3;
+		    i__1 = maxwrk, i__2 = (*m << 2) + *m * *m + max(i__3,i__4)
+			    ;
+		    maxwrk = max(i__1,i__2);
+		} else {
+
+/*                 Path 2 - underdetermined. */
+
+		    maxwrk = (*m << 1) + (*n + *m) * ilaenv_(&c__1, "CGEBRD",
+			    " ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = (*m << 1) + *nrhs * ilaenv_(&c__1,
+			    "CUNMBR", "QLC", m, nrhs, m, &c_n1, (ftnlen)6, (
+			    ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * ilaenv_(&c__1,
+			    "CUNMBR", "PLN", n, nrhs, m, &c_n1, (ftnlen)6, (
+			    ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = (*m << 1) + *m * *nrhs;
+		    maxwrk = max(i__1,i__2);
+		}
+/* Computing MAX */
+		i__1 = (*m << 1) + *n, i__2 = (*m << 1) + *m * *nrhs;
+		minwrk = max(i__1,i__2);
+	    }
+	}
+	minwrk = min(minwrk,maxwrk);
+	work[1].r = (real) maxwrk, work[1].i = 0.f;
+	iwork[1] = liwork;
+	rwork[1] = (real) lrwork;
+
+	if (*lwork < minwrk && ! lquery) {
+	    *info = -12;
+	}
+    }
+
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("CGELSD", &i__1);
+	return 0;
+    } else if (lquery) {
+	return 0;
+    }
+
+/*     Quick return if possible. */
+
+    if (*m == 0 || *n == 0) {
+	*rank = 0;
+	return 0;
+    }
+
+/*     Get machine parameters. */
+
+    eps = slamch_("P");
+    sfmin = slamch_("S");
+    smlnum = sfmin / eps;
+    bignum = 1.f / smlnum;
+    slabad_(&smlnum, &bignum);
+
+/*     Scale A if max entry outside range [SMLNUM,BIGNUM]. */
+
+    anrm = clange_("M", m, n, &a[a_offset], lda, &rwork[1]);
+    iascl = 0;
+    if (anrm > 0.f && anrm < smlnum) {
+
+/*        Scale matrix norm up to SMLNUM */
+
+	clascl_("G", &c__0, &c__0, &anrm, &smlnum, m, n, &a[a_offset], lda,
+		info);
+	iascl = 1;
+    } else if (anrm > bignum) {
+
+/*        Scale matrix norm down to BIGNUM. */
+
+	clascl_("G", &c__0, &c__0, &anrm, &bignum, m, n, &a[a_offset], lda,
+		info);
+	iascl = 2;
+    } else if (anrm == 0.f) {
+
+/*        Matrix all zero. Return zero solution. */
+
+	i__1 = max(*m,*n);
+	claset_("F", &i__1, nrhs, &c_b56, &c_b56, &b[b_offset], ldb);
+	slaset_("F", &minmn, &c__1, &c_b328, &c_b328, &s[1], &c__1)
+		;
+	*rank = 0;
+	goto L10;
+    }
+
+/*     Scale B if max entry outside range [SMLNUM,BIGNUM]. */
+
+    bnrm = clange_("M", m, nrhs, &b[b_offset], ldb, &rwork[1]);
+    ibscl = 0;
+    if (bnrm > 0.f && bnrm < smlnum) {
+
+/*        Scale matrix norm up to SMLNUM. */
+
+	clascl_("G", &c__0, &c__0, &bnrm, &smlnum, m, nrhs, &b[b_offset], ldb,
+		 info);
+	ibscl = 1;
+    } else if (bnrm > bignum) {
+
+/*        Scale matrix norm down to BIGNUM. */
+
+	clascl_("G", &c__0, &c__0, &bnrm, &bignum, m, nrhs, &b[b_offset], ldb,
+		 info);
+	ibscl = 2;
+    }
+
+/*     If M < N make sure B(M+1:N,:) = 0 */
+
+    if (*m < *n) {
+	i__1 = *n - *m;
+	claset_("F", &i__1, nrhs, &c_b56, &c_b56, &b[*m + 1 + b_dim1], ldb);
+    }
+
+/*     Overdetermined case. */
+
+    if (*m >= *n) {
+
+/*        Path 1 - overdetermined or exactly determined. */
+
+	mm = *m;
+	if (*m >= mnthr) {
+
+/*           Path 1a - overdetermined, with many more rows than columns */
+
+	    mm = *n;
+	    itau = 1;
+	    nwork = itau + *n;
+
+/*
+             Compute A=Q*R.
+             (RWorkspace: need N)
+             (CWorkspace: need N, prefer N*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cgeqrf_(m, n, &a[a_offset], lda, &work[itau], &work[nwork], &i__1,
+		     info);
+
+/*
+             Multiply B by transpose(Q).
+             (RWorkspace: need N)
+             (CWorkspace: need NRHS, prefer NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cunmqr_("L", "C", m, nrhs, n, &a[a_offset], lda, &work[itau], &b[
+		    b_offset], ldb, &work[nwork], &i__1, info);
+
+/*           Zero out below R. */
+
+	    if (*n > 1) {
+		i__1 = *n - 1;
+		i__2 = *n - 1;
+		claset_("L", &i__1, &i__2, &c_b56, &c_b56, &a[a_dim1 + 2],
+			lda);
+	    }
+	}
+
+	itauq = 1;
+	itaup = itauq + *n;
+	nwork = itaup + *n;
+	ie = 1;
+	nrwork = ie + *n;
+
+/*
+          Bidiagonalize R in A.
+          (RWorkspace: need N)
+          (CWorkspace: need 2*N+MM, prefer 2*N+(MM+N)*NB)
+*/
+
+	i__1 = *lwork - nwork + 1;
+	cgebrd_(&mm, n, &a[a_offset], lda, &s[1], &rwork[ie], &work[itauq], &
+		work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors of R.
+          (CWorkspace: need 2*N+NRHS, prefer 2*N+NRHS*NB)
+*/
+
+	i__1 = *lwork - nwork + 1;
+	cunmbr_("Q", "L", "C", &mm, nrhs, n, &a[a_offset], lda, &work[itauq],
+		&b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	clalsd_("U", &smlsiz, n, nrhs, &s[1], &rwork[ie], &b[b_offset], ldb,
+		rcond, rank, &work[nwork], &rwork[nrwork], &iwork[1], info);
+	if (*info != 0) {
+	    goto L10;
+	}
+
+/*        Multiply B by right bidiagonalizing vectors of R. */
+
+	i__1 = *lwork - nwork + 1;
+	cunmbr_("P", "L", "N", n, nrhs, n, &a[a_offset], lda, &work[itaup], &
+		b[b_offset], ldb, &work[nwork], &i__1, info);
+
+    } else /* if(complicated condition) */ {
+/* Computing MAX */
+	i__1 = *m, i__2 = (*m << 1) - 4, i__1 = max(i__1,i__2), i__1 = max(
+		i__1,*nrhs), i__2 = *n - *m * 3;
+	if (*n >= mnthr && *lwork >= (*m << 2) + *m * *m + max(i__1,i__2)) {
+
+/*
+          Path 2a - underdetermined, with many more columns than rows
+          and sufficient workspace for an efficient algorithm.
+*/
+
+	    ldwork = *m;
+/*
+   Computing MAX
+   Computing MAX
+*/
+	    i__3 = *m, i__4 = (*m << 1) - 4, i__3 = max(i__3,i__4), i__3 =
+		    max(i__3,*nrhs), i__4 = *n - *m * 3;
+	    i__1 = (*m << 2) + *m * *lda + max(i__3,i__4), i__2 = *m * *lda +
+		    *m + *m * *nrhs;
+	    if (*lwork >= max(i__1,i__2)) {
+		ldwork = *lda;
+	    }
+	    itau = 1;
+	    nwork = *m + 1;
+
+/*
+          Compute A=L*Q.
+          (CWorkspace: need 2*M, prefer M+M*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cgelqf_(m, n, &a[a_offset], lda, &work[itau], &work[nwork], &i__1,
+		     info);
+	    il = nwork;
+
+/*        Copy L to WORK(IL), zeroing out above its diagonal. */
+
+	    clacpy_("L", m, m, &a[a_offset], lda, &work[il], &ldwork);
+	    i__1 = *m - 1;
+	    i__2 = *m - 1;
+	    claset_("U", &i__1, &i__2, &c_b56, &c_b56, &work[il + ldwork], &
+		    ldwork);
+	    itauq = il + ldwork * *m;
+	    itaup = itauq + *m;
+	    nwork = itaup + *m;
+	    ie = 1;
+	    nrwork = ie + *m;
+
+/*
+          Bidiagonalize L in WORK(IL).
+          (RWorkspace: need M)
+          (CWorkspace: need M*M+4*M, prefer M*M+4*M+2*M*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cgebrd_(m, m, &work[il], &ldwork, &s[1], &rwork[ie], &work[itauq],
+		     &work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors of L.
+          (CWorkspace: need M*M+4*M+NRHS, prefer M*M+4*M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cunmbr_("Q", "L", "C", m, nrhs, m, &work[il], &ldwork, &work[
+		    itauq], &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	    clalsd_("U", &smlsiz, m, nrhs, &s[1], &rwork[ie], &b[b_offset],
+		    ldb, rcond, rank, &work[nwork], &rwork[nrwork], &iwork[1],
+		     info);
+	    if (*info != 0) {
+		goto L10;
+	    }
+
+/*        Multiply B by right bidiagonalizing vectors of L. */
+
+	    i__1 = *lwork - nwork + 1;
+	    cunmbr_("P", "L", "N", m, nrhs, m, &work[il], &ldwork, &work[
+		    itaup], &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Zero out below first M rows of B. */
+
+	    i__1 = *n - *m;
+	    claset_("F", &i__1, nrhs, &c_b56, &c_b56, &b[*m + 1 + b_dim1],
+		    ldb);
+	    nwork = itau + *m;
+
+/*
+          Multiply transpose(Q) by B.
+          (CWorkspace: need NRHS, prefer NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cunmlq_("L", "C", n, nrhs, m, &a[a_offset], lda, &work[itau], &b[
+		    b_offset], ldb, &work[nwork], &i__1, info);
+
+	} else {
+
+/*        Path 2 - remaining underdetermined cases. */
+
+	    itauq = 1;
+	    itaup = itauq + *m;
+	    nwork = itaup + *m;
+	    ie = 1;
+	    nrwork = ie + *m;
+
+/*
+          Bidiagonalize A.
+          (RWorkspace: need M)
+          (CWorkspace: need 2*M+N, prefer 2*M+(M+N)*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cgebrd_(m, n, &a[a_offset], lda, &s[1], &rwork[ie], &work[itauq],
+		    &work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors.
+          (CWorkspace: need 2*M+NRHS, prefer 2*M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    cunmbr_("Q", "L", "C", m, nrhs, n, &a[a_offset], lda, &work[itauq]
+		    , &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	    clalsd_("L", &smlsiz, m, nrhs, &s[1], &rwork[ie], &b[b_offset],
+		    ldb, rcond, rank, &work[nwork], &rwork[nrwork], &iwork[1],
+		     info);
+	    if (*info != 0) {
+		goto L10;
+	    }
+
+/*        Multiply B by right bidiagonalizing vectors of A. */
+
+	    i__1 = *lwork - nwork + 1;
+	    cunmbr_("P", "L", "N", n, nrhs, m, &a[a_offset], lda, &work[itaup]
+		    , &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+	}
+    }
+
+/*     Undo scaling. */
+
+    if (iascl == 1) {
+	clascl_("G", &c__0, &c__0, &anrm, &smlnum, n, nrhs, &b[b_offset], ldb,
+		 info);
+	slascl_("G", &c__0, &c__0, &smlnum, &anrm, &minmn, &c__1, &s[1], &
+		minmn, info);
+    } else if (iascl == 2) {
+	clascl_("G", &c__0, &c__0, &anrm, &bignum, n, nrhs, &b[b_offset], ldb,
+		 info);
+	slascl_("G", &c__0, &c__0, &bignum, &anrm, &minmn, &c__1, &s[1], &
+		minmn, info);
+    }
+    if (ibscl == 1) {
+	clascl_("G", &c__0, &c__0, &smlnum, &bnrm, n, nrhs, &b[b_offset], ldb,
+		 info);
+    } else if (ibscl == 2) {
+	clascl_("G", &c__0, &c__0, &bignum, &bnrm, n, nrhs, &b[b_offset], ldb,
+		 info);
+    }
+
+L10:
+    work[1].r = (real) maxwrk, work[1].i = 0.f;
+    iwork[1] = liwork;
+    rwork[1] = (real) lrwork;
+    return 0;
+
+/*     End of CGELSD */
+
+} /* cgelsd_ */
+
 /* Subroutine */ int cgeqr2_(integer *m, integer *n, complex *a, integer *lda,
 	 complex *tau, complex *work, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     complex q__1;
-
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, k;
@@ -3078,9 +3794,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, u_dim1, u_offset, vt_dim1, vt_offset, i__1,
 	    i__2, i__3;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, ie, il, ir, iu, blk;
@@ -5695,10 +6408,6 @@ L50:
     integer a_dim1, a_offset, i__1, i__2, i__3;
     complex q__1;
 
-    /* Builtin functions */
-    double c_abs(complex *);
-    void c_div(complex *, complex *, complex *);
-
     /* Local variables */
     static integer i__, j, jp;
     extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
@@ -6216,9 +6925,6 @@ L50:
     integer a_dim1, a_offset, i__1, i__2;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real eps;
     static integer inde;
@@ -6497,8 +7203,8 @@ L50:
 	sigma = rmax / anrm;
     }
     if (iscale == 1) {
-	clascl_(uplo, &c__0, &c__0, &c_b894, &sigma, n, n, &a[a_offset], lda,
-		info);
+	clascl_(uplo, &c__0, &c__0, &c_b1034, &sigma, n, n, &a[a_offset], lda,
+		 info);
     }
 
 /*     Call CHETRD to reduce Hermitian matrix to tridiagonal form. */
@@ -7161,7 +7867,7 @@ L50:
 	    i__3 = i__ - 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cher2k_(uplo, "No transpose", &i__3, &nb, &q__1, &a[i__ * a_dim1
-		    + 1], lda, &work[1], &ldwork, &c_b894, &a[a_offset], lda);
+		    + 1], lda, &work[1], &ldwork, &c_b1034, &a[a_offset], lda);
 
 /*
              Copy superdiagonal elements back into A, and diagonal
@@ -7210,7 +7916,7 @@ L50:
 	    i__3 = *n - i__ - nb + 1;
 	    q__1.r = -1.f, q__1.i = -0.f;
 	    cher2k_(uplo, "No transpose", &i__3, &nb, &q__1, &a[i__ + nb +
-		    i__ * a_dim1], lda, &work[nb + 1], &ldwork, &c_b894, &a[
+		    i__ * a_dim1], lda, &work[nb + 1], &ldwork, &c_b1034, &a[
 		    i__ + nb + (i__ + nb) * a_dim1], lda);
 
 /*
@@ -7255,9 +7961,6 @@ L50:
     real r__1, r__2, r__3;
     complex q__1;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static complex hl[2401]	/* was [49][49] */;
@@ -8178,9 +8881,6 @@ L50:
     integer i__1, i__2;
     complex q__1;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, ioff;
 
@@ -8480,9 +9180,6 @@ L50:
     real r__1;
     complex q__1;
 
-    /* Builtin functions */
-    double r_imag(complex *);
-
     /* Local variables */
     static integer i__, j, l;
     extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
@@ -8572,8 +9269,8 @@ L50:
     }
 
     l = *m * *n + 1;
-    sgemm_("N", "N", m, n, n, &c_b894, &rwork[1], m, &b[b_offset], ldb, &
-	    c_b1087, &rwork[l], m);
+    sgemm_("N", "N", m, n, n, &c_b1034, &rwork[1], m, &b[b_offset], ldb, &
+	    c_b328, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -8595,8 +9292,8 @@ L50:
 	}
 /* L60: */
     }
-    sgemm_("N", "N", m, n, n, &c_b894, &rwork[1], m, &b[b_offset], ldb, &
-	    c_b1087, &rwork[l], m);
+    sgemm_("N", "N", m, n, n, &c_b1034, &rwork[1], m, &b[b_offset], ldb, &
+	    c_b328, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -8623,9 +9320,6 @@ L50:
     /* System generated locals */
     real r__1, r__2, r__3, r__4;
     complex q__1;
-
-    /* Builtin functions */
-    double r_imag(complex *);
 
     /* Local variables */
     static real zi, zr;
@@ -8679,10 +9373,6 @@ L50:
     /* System generated locals */
     integer q_dim1, q_offset, qstore_dim1, qstore_offset, i__1, i__2;
     real r__1;
-
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
 
     /* Local variables */
     static integer i__, j, k, ll, iq, lgn, msd2, smm1, spm1, spm2;
@@ -9033,9 +9723,6 @@ L80:
     /* System generated locals */
     integer q_dim1, q_offset, i__1, i__2;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, k, n1, n2, iq, iw, iz, ptr, indx, curr, indxc, indxp;
     extern /* Subroutine */ int claed8_(integer *, integer *, integer *,
@@ -9338,9 +10025,6 @@ L80:
     integer q_dim1, q_offset, q2_dim1, q2_offset, i__1;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real c__;
     static integer i__, j;
@@ -9543,7 +10227,7 @@ L80:
     n1p1 = n1 + 1;
 
     if (*rho < 0.f) {
-	sscal_(&n2, &c_b1136, &z__[n1p1], &c__1);
+	sscal_(&n2, &c_b1276, &z__[n1p1], &c__1);
     }
 
 /*     Normalize z so that norm(z) = 1 */
@@ -9760,13 +10444,6 @@ L100:
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
     complex q__1, q__2, q__3, q__4, q__5, q__6, q__7;
-
-    /* Builtin functions */
-    double r_imag(complex *);
-    void r_cnjg(complex *, complex *);
-    double c_abs(complex *);
-    void c_sqrt(complex *, complex *), pow_ci(complex *, complex *, integer *)
-	    ;
 
     /* Local variables */
     static integer i__, j, k, l, m;
@@ -10801,15 +11478,1938 @@ L150:
 
 } /* clahr2_ */
 
+/* Subroutine */ int clals0_(integer *icompq, integer *nl, integer *nr,
+	integer *sqre, integer *nrhs, complex *b, integer *ldb, complex *bx,
+	integer *ldbx, integer *perm, integer *givptr, integer *givcol,
+	integer *ldgcol, real *givnum, integer *ldgnum, real *poles, real *
+	difl, real *difr, real *z__, integer *k, real *c__, real *s, real *
+	rwork, integer *info)
+{
+    /* System generated locals */
+    integer givcol_dim1, givcol_offset, difr_dim1, difr_offset, givnum_dim1,
+	    givnum_offset, poles_dim1, poles_offset, b_dim1, b_offset,
+	    bx_dim1, bx_offset, i__1, i__2, i__3, i__4, i__5;
+    real r__1;
+    complex q__1;
+
+    /* Local variables */
+    static integer i__, j, m, n;
+    static real dj;
+    static integer nlp1, jcol;
+    static real temp;
+    static integer jrow;
+    extern doublereal snrm2_(integer *, real *, integer *);
+    static real diflj, difrj, dsigj;
+    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
+	    complex *, integer *), sgemv_(char *, integer *, integer *, real *
+	    , real *, integer *, real *, integer *, real *, real *, integer *), csrot_(integer *, complex *, integer *, complex *,
+	    integer *, real *, real *);
+    extern doublereal slamc3_(real *, real *);
+    extern /* Subroutine */ int clascl_(char *, integer *, integer *, real *,
+	    real *, integer *, integer *, complex *, integer *, integer *), csscal_(integer *, real *, complex *, integer *),
+	    clacpy_(char *, integer *, integer *, complex *, integer *,
+	    complex *, integer *), xerbla_(char *, integer *);
+    static real dsigjp;
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    CLALS0 applies back the multiplying factors of either the left or the
+    right singular vector matrix of a diagonal matrix appended by a row
+    to the right hand side matrix B in solving the least squares problem
+    using the divide-and-conquer SVD approach.
+
+    For the left singular vector matrix, three types of orthogonal
+    matrices are involved:
+
+    (1L) Givens rotations: the number of such rotations is GIVPTR; the
+         pairs of columns/rows they were applied to are stored in GIVCOL;
+         and the C- and S-values of these rotations are stored in GIVNUM.
+
+    (2L) Permutation. The (NL+1)-st row of B is to be moved to the first
+         row, and for J=2:N, PERM(J)-th row of B is to be moved to the
+         J-th row.
+
+    (3L) The left singular vector matrix of the remaining matrix.
+
+    For the right singular vector matrix, four types of orthogonal
+    matrices are involved:
+
+    (1R) The right singular vector matrix of the remaining matrix.
+
+    (2R) If SQRE = 1, one extra Givens rotation to generate the right
+         null space.
+
+    (3R) The inverse transformation of (2L).
+
+    (4R) The inverse transformation of (1L).
+
+    Arguments
+    =========
+
+    ICOMPQ (input) INTEGER
+           Specifies whether singular vectors are to be computed in
+           factored form:
+           = 0: Left singular vector matrix.
+           = 1: Right singular vector matrix.
+
+    NL     (input) INTEGER
+           The row dimension of the upper block. NL >= 1.
+
+    NR     (input) INTEGER
+           The row dimension of the lower block. NR >= 1.
+
+    SQRE   (input) INTEGER
+           = 0: the lower block is an NR-by-NR square matrix.
+           = 1: the lower block is an NR-by-(NR+1) rectangular matrix.
+
+           The bidiagonal matrix has row dimension N = NL + NR + 1,
+           and column dimension M = N + SQRE.
+
+    NRHS   (input) INTEGER
+           The number of columns of B and BX. NRHS must be at least 1.
+
+    B      (input/output) COMPLEX array, dimension ( LDB, NRHS )
+           On input, B contains the right hand sides of the least
+           squares problem in rows 1 through M. On output, B contains
+           the solution X in rows 1 through N.
+
+    LDB    (input) INTEGER
+           The leading dimension of B. LDB must be at least
+           max(1,MAX( M, N ) ).
+
+    BX     (workspace) COMPLEX array, dimension ( LDBX, NRHS )
+
+    LDBX   (input) INTEGER
+           The leading dimension of BX.
+
+    PERM   (input) INTEGER array, dimension ( N )
+           The permutations (from deflation and sorting) applied
+           to the two blocks.
+
+    GIVPTR (input) INTEGER
+           The number of Givens rotations which took place in this
+           subproblem.
+
+    GIVCOL (input) INTEGER array, dimension ( LDGCOL, 2 )
+           Each pair of numbers indicates a pair of rows/columns
+           involved in a Givens rotation.
+
+    LDGCOL (input) INTEGER
+           The leading dimension of GIVCOL, must be at least N.
+
+    GIVNUM (input) REAL array, dimension ( LDGNUM, 2 )
+           Each number indicates the C or S value used in the
+           corresponding Givens rotation.
+
+    LDGNUM (input) INTEGER
+           The leading dimension of arrays DIFR, POLES and
+           GIVNUM, must be at least K.
+
+    POLES  (input) REAL array, dimension ( LDGNUM, 2 )
+           On entry, POLES(1:K, 1) contains the new singular
+           values obtained from solving the secular equation, and
+           POLES(1:K, 2) is an array containing the poles in the secular
+           equation.
+
+    DIFL   (input) REAL array, dimension ( K ).
+           On entry, DIFL(I) is the distance between I-th updated
+           (undeflated) singular value and the I-th (undeflated) old
+           singular value.
+
+    DIFR   (input) REAL array, dimension ( LDGNUM, 2 ).
+           On entry, DIFR(I, 1) contains the distances between I-th
+           updated (undeflated) singular value and the I+1-th
+           (undeflated) old singular value. And DIFR(I, 2) is the
+           normalizing factor for the I-th right singular vector.
+
+    Z      (input) REAL array, dimension ( K )
+           Contain the components of the deflation-adjusted updating row
+           vector.
+
+    K      (input) INTEGER
+           Contains the dimension of the non-deflated matrix,
+           This is the order of the related secular equation. 1 <= K <=N.
+
+    C      (input) REAL
+           C contains garbage if SQRE =0 and the C-value of a Givens
+           rotation related to the right null space if SQRE = 1.
+
+    S      (input) REAL
+           S contains garbage if SQRE =0 and the S-value of a Givens
+           rotation related to the right null space if SQRE = 1.
+
+    RWORK  (workspace) REAL array, dimension
+           ( K*(1+NRHS) + 2*NRHS )
+
+    INFO   (output) INTEGER
+            = 0:  successful exit.
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    bx_dim1 = *ldbx;
+    bx_offset = 1 + bx_dim1;
+    bx -= bx_offset;
+    --perm;
+    givcol_dim1 = *ldgcol;
+    givcol_offset = 1 + givcol_dim1;
+    givcol -= givcol_offset;
+    difr_dim1 = *ldgnum;
+    difr_offset = 1 + difr_dim1;
+    difr -= difr_offset;
+    poles_dim1 = *ldgnum;
+    poles_offset = 1 + poles_dim1;
+    poles -= poles_offset;
+    givnum_dim1 = *ldgnum;
+    givnum_offset = 1 + givnum_dim1;
+    givnum -= givnum_offset;
+    --difl;
+    --z__;
+    --rwork;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*icompq < 0 || *icompq > 1) {
+	*info = -1;
+    } else if (*nl < 1) {
+	*info = -2;
+    } else if (*nr < 1) {
+	*info = -3;
+    } else if (*sqre < 0 || *sqre > 1) {
+	*info = -4;
+    }
+
+    n = *nl + *nr + 1;
+
+    if (*nrhs < 1) {
+	*info = -5;
+    } else if (*ldb < n) {
+	*info = -7;
+    } else if (*ldbx < n) {
+	*info = -9;
+    } else if (*givptr < 0) {
+	*info = -11;
+    } else if (*ldgcol < n) {
+	*info = -13;
+    } else if (*ldgnum < n) {
+	*info = -15;
+    } else if (*k < 1) {
+	*info = -20;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("CLALS0", &i__1);
+	return 0;
+    }
+
+    m = n + *sqre;
+    nlp1 = *nl + 1;
+
+    if (*icompq == 0) {
+
+/*
+          Apply back orthogonal transformations from the left.
+
+          Step (1L): apply back the Givens rotations performed.
+*/
+
+	i__1 = *givptr;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    csrot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &givnum[i__ + givnum_dim1]);
+/* L10: */
+	}
+
+/*        Step (2L): permute rows of B. */
+
+	ccopy_(nrhs, &b[nlp1 + b_dim1], ldb, &bx[bx_dim1 + 1], ldbx);
+	i__1 = n;
+	for (i__ = 2; i__ <= i__1; ++i__) {
+	    ccopy_(nrhs, &b[perm[i__] + b_dim1], ldb, &bx[i__ + bx_dim1],
+		    ldbx);
+/* L20: */
+	}
+
+/*
+          Step (3L): apply the inverse of the left singular vector
+          matrix to BX.
+*/
+
+	if (*k == 1) {
+	    ccopy_(nrhs, &bx[bx_offset], ldbx, &b[b_offset], ldb);
+	    if (z__[1] < 0.f) {
+		csscal_(nrhs, &c_b1276, &b[b_offset], ldb);
+	    }
+	} else {
+	    i__1 = *k;
+	    for (j = 1; j <= i__1; ++j) {
+		diflj = difl[j];
+		dj = poles[j + poles_dim1];
+		dsigj = -poles[j + (poles_dim1 << 1)];
+		if (j < *k) {
+		    difrj = -difr[j + difr_dim1];
+		    dsigjp = -poles[j + 1 + (poles_dim1 << 1)];
+		}
+		if (z__[j] == 0.f || poles[j + (poles_dim1 << 1)] == 0.f) {
+		    rwork[j] = 0.f;
+		} else {
+		    rwork[j] = -poles[j + (poles_dim1 << 1)] * z__[j] / diflj
+			    / (poles[j + (poles_dim1 << 1)] + dj);
+		}
+		i__2 = j - 1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+		    if (z__[i__] == 0.f || poles[i__ + (poles_dim1 << 1)] ==
+			    0.f) {
+			rwork[i__] = 0.f;
+		    } else {
+			rwork[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				 / (slamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigj) - diflj) / (poles[i__ + (poles_dim1 <<
+				1)] + dj);
+		    }
+/* L30: */
+		}
+		i__2 = *k;
+		for (i__ = j + 1; i__ <= i__2; ++i__) {
+		    if (z__[i__] == 0.f || poles[i__ + (poles_dim1 << 1)] ==
+			    0.f) {
+			rwork[i__] = 0.f;
+		    } else {
+			rwork[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				 / (slamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigjp) + difrj) / (poles[i__ + (poles_dim1 <<
+				 1)] + dj);
+		    }
+/* L40: */
+		}
+		rwork[1] = -1.f;
+		temp = snrm2_(k, &rwork[1], &c__1);
+
+/*
+                Since B and BX are complex, the following call to SGEMV
+                is performed in two steps (real and imaginary parts).
+
+                CALL SGEMV( 'T', K, NRHS, ONE, BX, LDBX, WORK, 1, ZERO,
+      $                     B( J, 1 ), LDB )
+*/
+
+		i__ = *k + (*nrhs << 1);
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = *k;
+		    for (jrow = 1; jrow <= i__3; ++jrow) {
+			++i__;
+			i__4 = jrow + jcol * bx_dim1;
+			rwork[i__] = bx[i__4].r;
+/* L50: */
+		    }
+/* L60: */
+		}
+		sgemv_("T", k, nrhs, &c_b1034, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b328, &rwork[*k + 1], &c__1);
+		i__ = *k + (*nrhs << 1);
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = *k;
+		    for (jrow = 1; jrow <= i__3; ++jrow) {
+			++i__;
+			rwork[i__] = r_imag(&bx[jrow + jcol * bx_dim1]);
+/* L70: */
+		    }
+/* L80: */
+		}
+		sgemv_("T", k, nrhs, &c_b1034, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b328, &rwork[*k + 1 + *nrhs],
+			&c__1);
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = j + jcol * b_dim1;
+		    i__4 = jcol + *k;
+		    i__5 = jcol + *k + *nrhs;
+		    q__1.r = rwork[i__4], q__1.i = rwork[i__5];
+		    b[i__3].r = q__1.r, b[i__3].i = q__1.i;
+/* L90: */
+		}
+		clascl_("G", &c__0, &c__0, &temp, &c_b1034, &c__1, nrhs, &b[j
+			+ b_dim1], ldb, info);
+/* L100: */
+	    }
+	}
+
+/*        Move the deflated rows of BX to B also. */
+
+	if (*k < max(m,n)) {
+	    i__1 = n - *k;
+	    clacpy_("A", &i__1, nrhs, &bx[*k + 1 + bx_dim1], ldbx, &b[*k + 1
+		    + b_dim1], ldb);
+	}
+    } else {
+
+/*
+          Apply back the right orthogonal transformations.
+
+          Step (1R): apply back the new right singular vector matrix
+          to B.
+*/
+
+	if (*k == 1) {
+	    ccopy_(nrhs, &b[b_offset], ldb, &bx[bx_offset], ldbx);
+	} else {
+	    i__1 = *k;
+	    for (j = 1; j <= i__1; ++j) {
+		dsigj = poles[j + (poles_dim1 << 1)];
+		if (z__[j] == 0.f) {
+		    rwork[j] = 0.f;
+		} else {
+		    rwork[j] = -z__[j] / difl[j] / (dsigj + poles[j +
+			    poles_dim1]) / difr[j + (difr_dim1 << 1)];
+		}
+		i__2 = j - 1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+		    if (z__[j] == 0.f) {
+			rwork[i__] = 0.f;
+		    } else {
+			r__1 = -poles[i__ + 1 + (poles_dim1 << 1)];
+			rwork[i__] = z__[j] / (slamc3_(&dsigj, &r__1) - difr[
+				i__ + difr_dim1]) / (dsigj + poles[i__ +
+				poles_dim1]) / difr[i__ + (difr_dim1 << 1)];
+		    }
+/* L110: */
+		}
+		i__2 = *k;
+		for (i__ = j + 1; i__ <= i__2; ++i__) {
+		    if (z__[j] == 0.f) {
+			rwork[i__] = 0.f;
+		    } else {
+			r__1 = -poles[i__ + (poles_dim1 << 1)];
+			rwork[i__] = z__[j] / (slamc3_(&dsigj, &r__1) - difl[
+				i__]) / (dsigj + poles[i__ + poles_dim1]) /
+				difr[i__ + (difr_dim1 << 1)];
+		    }
+/* L120: */
+		}
+
+/*
+                Since B and BX are complex, the following call to SGEMV
+                is performed in two steps (real and imaginary parts).
+
+                CALL SGEMV( 'T', K, NRHS, ONE, B, LDB, WORK, 1, ZERO,
+      $                     BX( J, 1 ), LDBX )
+*/
+
+		i__ = *k + (*nrhs << 1);
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = *k;
+		    for (jrow = 1; jrow <= i__3; ++jrow) {
+			++i__;
+			i__4 = jrow + jcol * b_dim1;
+			rwork[i__] = b[i__4].r;
+/* L130: */
+		    }
+/* L140: */
+		}
+		sgemv_("T", k, nrhs, &c_b1034, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b328, &rwork[*k + 1], &c__1);
+		i__ = *k + (*nrhs << 1);
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = *k;
+		    for (jrow = 1; jrow <= i__3; ++jrow) {
+			++i__;
+			rwork[i__] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L150: */
+		    }
+/* L160: */
+		}
+		sgemv_("T", k, nrhs, &c_b1034, &rwork[*k + 1 + (*nrhs << 1)],
+			k, &rwork[1], &c__1, &c_b328, &rwork[*k + 1 + *nrhs],
+			&c__1);
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = j + jcol * bx_dim1;
+		    i__4 = jcol + *k;
+		    i__5 = jcol + *k + *nrhs;
+		    q__1.r = rwork[i__4], q__1.i = rwork[i__5];
+		    bx[i__3].r = q__1.r, bx[i__3].i = q__1.i;
+/* L170: */
+		}
+/* L180: */
+	    }
+	}
+
+/*
+          Step (2R): if SQRE = 1, apply back the rotation that is
+          related to the right null space of the subproblem.
+*/
+
+	if (*sqre == 1) {
+	    ccopy_(nrhs, &b[m + b_dim1], ldb, &bx[m + bx_dim1], ldbx);
+	    csrot_(nrhs, &bx[bx_dim1 + 1], ldbx, &bx[m + bx_dim1], ldbx, c__,
+		    s);
+	}
+	if (*k < max(m,n)) {
+	    i__1 = n - *k;
+	    clacpy_("A", &i__1, nrhs, &b[*k + 1 + b_dim1], ldb, &bx[*k + 1 +
+		    bx_dim1], ldbx);
+	}
+
+/*        Step (3R): permute rows of B. */
+
+	ccopy_(nrhs, &bx[bx_dim1 + 1], ldbx, &b[nlp1 + b_dim1], ldb);
+	if (*sqre == 1) {
+	    ccopy_(nrhs, &bx[m + bx_dim1], ldbx, &b[m + b_dim1], ldb);
+	}
+	i__1 = n;
+	for (i__ = 2; i__ <= i__1; ++i__) {
+	    ccopy_(nrhs, &bx[i__ + bx_dim1], ldbx, &b[perm[i__] + b_dim1],
+		    ldb);
+/* L190: */
+	}
+
+/*        Step (4R): apply back the Givens rotations performed. */
+
+	for (i__ = *givptr; i__ >= 1; --i__) {
+	    r__1 = -givnum[i__ + givnum_dim1];
+	    csrot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &r__1);
+/* L200: */
+	}
+    }
+
+    return 0;
+
+/*     End of CLALS0 */
+
+} /* clals0_ */
+
+/* Subroutine */ int clalsa_(integer *icompq, integer *smlsiz, integer *n,
+	integer *nrhs, complex *b, integer *ldb, complex *bx, integer *ldbx,
+	real *u, integer *ldu, real *vt, integer *k, real *difl, real *difr,
+	real *z__, real *poles, integer *givptr, integer *givcol, integer *
+	ldgcol, integer *perm, real *givnum, real *c__, real *s, real *rwork,
+	integer *iwork, integer *info)
+{
+    /* System generated locals */
+    integer givcol_dim1, givcol_offset, perm_dim1, perm_offset, difl_dim1,
+	    difl_offset, difr_dim1, difr_offset, givnum_dim1, givnum_offset,
+	    poles_dim1, poles_offset, u_dim1, u_offset, vt_dim1, vt_offset,
+	    z_dim1, z_offset, b_dim1, b_offset, bx_dim1, bx_offset, i__1,
+	    i__2, i__3, i__4, i__5, i__6;
+    complex q__1;
+
+    /* Local variables */
+    static integer i__, j, i1, ic, lf, nd, ll, nl, nr, im1, nlf, nrf, lvl,
+	    ndb1, nlp1, lvl2, nrp1, jcol, nlvl, sqre, jrow, jimag, jreal,
+	    inode, ndiml;
+    extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
+	    integer *, real *, real *, integer *, real *, integer *, real *,
+	    real *, integer *);
+    static integer ndimr;
+    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
+	    complex *, integer *), clals0_(integer *, integer *, integer *,
+	    integer *, integer *, complex *, integer *, complex *, integer *,
+	    integer *, integer *, integer *, integer *, real *, integer *,
+	    real *, real *, real *, real *, integer *, real *, real *, real *,
+	     integer *), xerbla_(char *, integer *), slasdt_(integer *
+	    , integer *, integer *, integer *, integer *, integer *, integer *
+	    );
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    CLALSA is an itermediate step in solving the least squares problem
+    by computing the SVD of the coefficient matrix in compact form (The
+    singular vectors are computed as products of simple orthorgonal
+    matrices.).
+
+    If ICOMPQ = 0, CLALSA applies the inverse of the left singular vector
+    matrix of an upper bidiagonal matrix to the right hand side; and if
+    ICOMPQ = 1, CLALSA applies the right singular vector matrix to the
+    right hand side. The singular vector matrices were generated in
+    compact form by CLALSA.
+
+    Arguments
+    =========
+
+    ICOMPQ (input) INTEGER
+           Specifies whether the left or the right singular vector
+           matrix is involved.
+           = 0: Left singular vector matrix
+           = 1: Right singular vector matrix
+
+    SMLSIZ (input) INTEGER
+           The maximum size of the subproblems at the bottom of the
+           computation tree.
+
+    N      (input) INTEGER
+           The row and column dimensions of the upper bidiagonal matrix.
+
+    NRHS   (input) INTEGER
+           The number of columns of B and BX. NRHS must be at least 1.
+
+    B      (input/output) COMPLEX array, dimension ( LDB, NRHS )
+           On input, B contains the right hand sides of the least
+           squares problem in rows 1 through M.
+           On output, B contains the solution X in rows 1 through N.
+
+    LDB    (input) INTEGER
+           The leading dimension of B in the calling subprogram.
+           LDB must be at least max(1,MAX( M, N ) ).
+
+    BX     (output) COMPLEX array, dimension ( LDBX, NRHS )
+           On exit, the result of applying the left or right singular
+           vector matrix to B.
+
+    LDBX   (input) INTEGER
+           The leading dimension of BX.
+
+    U      (input) REAL array, dimension ( LDU, SMLSIZ ).
+           On entry, U contains the left singular vector matrices of all
+           subproblems at the bottom level.
+
+    LDU    (input) INTEGER, LDU = > N.
+           The leading dimension of arrays U, VT, DIFL, DIFR,
+           POLES, GIVNUM, and Z.
+
+    VT     (input) REAL array, dimension ( LDU, SMLSIZ+1 ).
+           On entry, VT' contains the right singular vector matrices of
+           all subproblems at the bottom level.
+
+    K      (input) INTEGER array, dimension ( N ).
+
+    DIFL   (input) REAL array, dimension ( LDU, NLVL ).
+           where NLVL = INT(log_2 (N/(SMLSIZ+1))) + 1.
+
+    DIFR   (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, DIFL(*, I) and DIFR(*, 2 * I -1) record
+           distances between singular values on the I-th level and
+           singular values on the (I -1)-th level, and DIFR(*, 2 * I)
+           record the normalizing factors of the right singular vectors
+           matrices of subproblems on I-th level.
+
+    Z      (input) REAL array, dimension ( LDU, NLVL ).
+           On entry, Z(1, I) contains the components of the deflation-
+           adjusted updating row vector for subproblems on the I-th
+           level.
+
+    POLES  (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, POLES(*, 2 * I -1: 2 * I) contains the new and old
+           singular values involved in the secular equations on the I-th
+           level.
+
+    GIVPTR (input) INTEGER array, dimension ( N ).
+           On entry, GIVPTR( I ) records the number of Givens
+           rotations performed on the I-th problem on the computation
+           tree.
+
+    GIVCOL (input) INTEGER array, dimension ( LDGCOL, 2 * NLVL ).
+           On entry, for each I, GIVCOL(*, 2 * I - 1: 2 * I) records the
+           locations of Givens rotations performed on the I-th level on
+           the computation tree.
+
+    LDGCOL (input) INTEGER, LDGCOL = > N.
+           The leading dimension of arrays GIVCOL and PERM.
+
+    PERM   (input) INTEGER array, dimension ( LDGCOL, NLVL ).
+           On entry, PERM(*, I) records permutations done on the I-th
+           level of the computation tree.
+
+    GIVNUM (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, GIVNUM(*, 2 *I -1 : 2 * I) records the C- and S-
+           values of Givens rotations performed on the I-th level on the
+           computation tree.
+
+    C      (input) REAL array, dimension ( N ).
+           On entry, if the I-th subproblem is not square,
+           C( I ) contains the C-value of a Givens rotation related to
+           the right null space of the I-th subproblem.
+
+    S      (input) REAL array, dimension ( N ).
+           On entry, if the I-th subproblem is not square,
+           S( I ) contains the S-value of a Givens rotation related to
+           the right null space of the I-th subproblem.
+
+    RWORK  (workspace) REAL array, dimension at least
+           MAX( (SMLSZ+1)*NRHS*3, N*(1+NRHS) + 2*NRHS ).
+
+    IWORK  (workspace) INTEGER array.
+           The dimension must be at least 3 * N
+
+    INFO   (output) INTEGER
+            = 0:  successful exit.
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    bx_dim1 = *ldbx;
+    bx_offset = 1 + bx_dim1;
+    bx -= bx_offset;
+    givnum_dim1 = *ldu;
+    givnum_offset = 1 + givnum_dim1;
+    givnum -= givnum_offset;
+    poles_dim1 = *ldu;
+    poles_offset = 1 + poles_dim1;
+    poles -= poles_offset;
+    z_dim1 = *ldu;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    difr_dim1 = *ldu;
+    difr_offset = 1 + difr_dim1;
+    difr -= difr_offset;
+    difl_dim1 = *ldu;
+    difl_offset = 1 + difl_dim1;
+    difl -= difl_offset;
+    vt_dim1 = *ldu;
+    vt_offset = 1 + vt_dim1;
+    vt -= vt_offset;
+    u_dim1 = *ldu;
+    u_offset = 1 + u_dim1;
+    u -= u_offset;
+    --k;
+    --givptr;
+    perm_dim1 = *ldgcol;
+    perm_offset = 1 + perm_dim1;
+    perm -= perm_offset;
+    givcol_dim1 = *ldgcol;
+    givcol_offset = 1 + givcol_dim1;
+    givcol -= givcol_offset;
+    --c__;
+    --s;
+    --rwork;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*icompq < 0 || *icompq > 1) {
+	*info = -1;
+    } else if (*smlsiz < 3) {
+	*info = -2;
+    } else if (*n < *smlsiz) {
+	*info = -3;
+    } else if (*nrhs < 1) {
+	*info = -4;
+    } else if (*ldb < *n) {
+	*info = -6;
+    } else if (*ldbx < *n) {
+	*info = -8;
+    } else if (*ldu < *n) {
+	*info = -10;
+    } else if (*ldgcol < *n) {
+	*info = -19;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("CLALSA", &i__1);
+	return 0;
+    }
+
+/*     Book-keeping and  setting up the computation tree. */
+
+    inode = 1;
+    ndiml = inode + *n;
+    ndimr = ndiml + *n;
+
+    slasdt_(n, &nlvl, &nd, &iwork[inode], &iwork[ndiml], &iwork[ndimr],
+	    smlsiz);
+
+/*
+       The following code applies back the left singular vector factors.
+       For applying back the right singular vector factors, go to 170.
+*/
+
+    if (*icompq == 1) {
+	goto L170;
+    }
+
+/*
+       The nodes on the bottom level of the tree were solved
+       by SLASDQ. The corresponding left and right singular vector
+       matrices are in explicit form. First apply back the left
+       singular vector matrices.
+*/
+
+    ndb1 = (nd + 1) / 2;
+    i__1 = nd;
+    for (i__ = ndb1; i__ <= i__1; ++i__) {
+
+/*
+          IC : center row of each node
+          NL : number of rows of left  subproblem
+          NR : number of rows of right subproblem
+          NLF: starting row of the left   subproblem
+          NRF: starting row of the right  subproblem
+*/
+
+	i1 = i__ - 1;
+	ic = iwork[inode + i1];
+	nl = iwork[ndiml + i1];
+	nr = iwork[ndimr + i1];
+	nlf = ic - nl;
+	nrf = ic + 1;
+
+/*
+          Since B and BX are complex, the following call to SGEMM
+          is performed in two steps (real and imaginary parts).
+
+          CALL SGEMM( 'T', 'N', NL, NRHS, NL, ONE, U( NLF, 1 ), LDU,
+       $               B( NLF, 1 ), LDB, ZERO, BX( NLF, 1 ), LDBX )
+*/
+
+	j = nl * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nlf + nl - 1;
+	    for (jrow = nlf; jrow <= i__3; ++jrow) {
+		++j;
+		i__4 = jrow + jcol * b_dim1;
+		rwork[j] = b[i__4].r;
+/* L10: */
+	    }
+/* L20: */
+	}
+	sgemm_("T", "N", &nl, nrhs, &nl, &c_b1034, &u[nlf + u_dim1], ldu, &
+		rwork[(nl * *nrhs << 1) + 1], &nl, &c_b328, &rwork[1], &nl);
+	j = nl * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nlf + nl - 1;
+	    for (jrow = nlf; jrow <= i__3; ++jrow) {
+		++j;
+		rwork[j] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L30: */
+	    }
+/* L40: */
+	}
+	sgemm_("T", "N", &nl, nrhs, &nl, &c_b1034, &u[nlf + u_dim1], ldu, &
+		rwork[(nl * *nrhs << 1) + 1], &nl, &c_b328, &rwork[nl * *nrhs
+		+ 1], &nl);
+	jreal = 0;
+	jimag = nl * *nrhs;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nlf + nl - 1;
+	    for (jrow = nlf; jrow <= i__3; ++jrow) {
+		++jreal;
+		++jimag;
+		i__4 = jrow + jcol * bx_dim1;
+		i__5 = jreal;
+		i__6 = jimag;
+		q__1.r = rwork[i__5], q__1.i = rwork[i__6];
+		bx[i__4].r = q__1.r, bx[i__4].i = q__1.i;
+/* L50: */
+	    }
+/* L60: */
+	}
+
+/*
+          Since B and BX are complex, the following call to SGEMM
+          is performed in two steps (real and imaginary parts).
+
+          CALL SGEMM( 'T', 'N', NR, NRHS, NR, ONE, U( NRF, 1 ), LDU,
+      $               B( NRF, 1 ), LDB, ZERO, BX( NRF, 1 ), LDBX )
+*/
+
+	j = nr * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nrf + nr - 1;
+	    for (jrow = nrf; jrow <= i__3; ++jrow) {
+		++j;
+		i__4 = jrow + jcol * b_dim1;
+		rwork[j] = b[i__4].r;
+/* L70: */
+	    }
+/* L80: */
+	}
+	sgemm_("T", "N", &nr, nrhs, &nr, &c_b1034, &u[nrf + u_dim1], ldu, &
+		rwork[(nr * *nrhs << 1) + 1], &nr, &c_b328, &rwork[1], &nr);
+	j = nr * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nrf + nr - 1;
+	    for (jrow = nrf; jrow <= i__3; ++jrow) {
+		++j;
+		rwork[j] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L90: */
+	    }
+/* L100: */
+	}
+	sgemm_("T", "N", &nr, nrhs, &nr, &c_b1034, &u[nrf + u_dim1], ldu, &
+		rwork[(nr * *nrhs << 1) + 1], &nr, &c_b328, &rwork[nr * *nrhs
+		+ 1], &nr);
+	jreal = 0;
+	jimag = nr * *nrhs;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nrf + nr - 1;
+	    for (jrow = nrf; jrow <= i__3; ++jrow) {
+		++jreal;
+		++jimag;
+		i__4 = jrow + jcol * bx_dim1;
+		i__5 = jreal;
+		i__6 = jimag;
+		q__1.r = rwork[i__5], q__1.i = rwork[i__6];
+		bx[i__4].r = q__1.r, bx[i__4].i = q__1.i;
+/* L110: */
+	    }
+/* L120: */
+	}
+
+/* L130: */
+    }
+
+/*
+       Next copy the rows of B that correspond to unchanged rows
+       in the bidiagonal matrix to BX.
+*/
+
+    i__1 = nd;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	ic = iwork[inode + i__ - 1];
+	ccopy_(nrhs, &b[ic + b_dim1], ldb, &bx[ic + bx_dim1], ldbx);
+/* L140: */
+    }
+
+/*
+       Finally go through the left singular vector matrices of all
+       the other subproblems bottom-up on the tree.
+*/
+
+    j = pow_ii(&c__2, &nlvl);
+    sqre = 0;
+
+    for (lvl = nlvl; lvl >= 1; --lvl) {
+	lvl2 = (lvl << 1) - 1;
+
+/*
+          find the first node LF and last node LL on
+          the current level LVL
+*/
+
+	if (lvl == 1) {
+	    lf = 1;
+	    ll = 1;
+	} else {
+	    i__1 = lvl - 1;
+	    lf = pow_ii(&c__2, &i__1);
+	    ll = (lf << 1) - 1;
+	}
+	i__1 = ll;
+	for (i__ = lf; i__ <= i__1; ++i__) {
+	    im1 = i__ - 1;
+	    ic = iwork[inode + im1];
+	    nl = iwork[ndiml + im1];
+	    nr = iwork[ndimr + im1];
+	    nlf = ic - nl;
+	    nrf = ic + 1;
+	    --j;
+	    clals0_(icompq, &nl, &nr, &sqre, nrhs, &bx[nlf + bx_dim1], ldbx, &
+		    b[nlf + b_dim1], ldb, &perm[nlf + lvl * perm_dim1], &
+		    givptr[j], &givcol[nlf + lvl2 * givcol_dim1], ldgcol, &
+		    givnum[nlf + lvl2 * givnum_dim1], ldu, &poles[nlf + lvl2 *
+		     poles_dim1], &difl[nlf + lvl * difl_dim1], &difr[nlf +
+		    lvl2 * difr_dim1], &z__[nlf + lvl * z_dim1], &k[j], &c__[
+		    j], &s[j], &rwork[1], info);
+/* L150: */
+	}
+/* L160: */
+    }
+    goto L330;
+
+/*     ICOMPQ = 1: applying back the right singular vector factors. */
+
+L170:
+
+/*
+       First now go through the right singular vector matrices of all
+       the tree nodes top-down.
+*/
+
+    j = 0;
+    i__1 = nlvl;
+    for (lvl = 1; lvl <= i__1; ++lvl) {
+	lvl2 = (lvl << 1) - 1;
+
+/*
+          Find the first node LF and last node LL on
+          the current level LVL.
+*/
+
+	if (lvl == 1) {
+	    lf = 1;
+	    ll = 1;
+	} else {
+	    i__2 = lvl - 1;
+	    lf = pow_ii(&c__2, &i__2);
+	    ll = (lf << 1) - 1;
+	}
+	i__2 = lf;
+	for (i__ = ll; i__ >= i__2; --i__) {
+	    im1 = i__ - 1;
+	    ic = iwork[inode + im1];
+	    nl = iwork[ndiml + im1];
+	    nr = iwork[ndimr + im1];
+	    nlf = ic - nl;
+	    nrf = ic + 1;
+	    if (i__ == ll) {
+		sqre = 0;
+	    } else {
+		sqre = 1;
+	    }
+	    ++j;
+	    clals0_(icompq, &nl, &nr, &sqre, nrhs, &b[nlf + b_dim1], ldb, &bx[
+		    nlf + bx_dim1], ldbx, &perm[nlf + lvl * perm_dim1], &
+		    givptr[j], &givcol[nlf + lvl2 * givcol_dim1], ldgcol, &
+		    givnum[nlf + lvl2 * givnum_dim1], ldu, &poles[nlf + lvl2 *
+		     poles_dim1], &difl[nlf + lvl * difl_dim1], &difr[nlf +
+		    lvl2 * difr_dim1], &z__[nlf + lvl * z_dim1], &k[j], &c__[
+		    j], &s[j], &rwork[1], info);
+/* L180: */
+	}
+/* L190: */
+    }
+
+/*
+       The nodes on the bottom level of the tree were solved
+       by SLASDQ. The corresponding right singular vector
+       matrices are in explicit form. Apply them back.
+*/
+
+    ndb1 = (nd + 1) / 2;
+    i__1 = nd;
+    for (i__ = ndb1; i__ <= i__1; ++i__) {
+	i1 = i__ - 1;
+	ic = iwork[inode + i1];
+	nl = iwork[ndiml + i1];
+	nr = iwork[ndimr + i1];
+	nlp1 = nl + 1;
+	if (i__ == nd) {
+	    nrp1 = nr;
+	} else {
+	    nrp1 = nr + 1;
+	}
+	nlf = ic - nl;
+	nrf = ic + 1;
+
+/*
+          Since B and BX are complex, the following call to SGEMM is
+          performed in two steps (real and imaginary parts).
+
+          CALL SGEMM( 'T', 'N', NLP1, NRHS, NLP1, ONE, VT( NLF, 1 ), LDU,
+      $               B( NLF, 1 ), LDB, ZERO, BX( NLF, 1 ), LDBX )
+*/
+
+	j = nlp1 * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nlf + nlp1 - 1;
+	    for (jrow = nlf; jrow <= i__3; ++jrow) {
+		++j;
+		i__4 = jrow + jcol * b_dim1;
+		rwork[j] = b[i__4].r;
+/* L200: */
+	    }
+/* L210: */
+	}
+	sgemm_("T", "N", &nlp1, nrhs, &nlp1, &c_b1034, &vt[nlf + vt_dim1],
+		ldu, &rwork[(nlp1 * *nrhs << 1) + 1], &nlp1, &c_b328, &rwork[
+		1], &nlp1);
+	j = nlp1 * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nlf + nlp1 - 1;
+	    for (jrow = nlf; jrow <= i__3; ++jrow) {
+		++j;
+		rwork[j] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L220: */
+	    }
+/* L230: */
+	}
+	sgemm_("T", "N", &nlp1, nrhs, &nlp1, &c_b1034, &vt[nlf + vt_dim1],
+		ldu, &rwork[(nlp1 * *nrhs << 1) + 1], &nlp1, &c_b328, &rwork[
+		nlp1 * *nrhs + 1], &nlp1);
+	jreal = 0;
+	jimag = nlp1 * *nrhs;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nlf + nlp1 - 1;
+	    for (jrow = nlf; jrow <= i__3; ++jrow) {
+		++jreal;
+		++jimag;
+		i__4 = jrow + jcol * bx_dim1;
+		i__5 = jreal;
+		i__6 = jimag;
+		q__1.r = rwork[i__5], q__1.i = rwork[i__6];
+		bx[i__4].r = q__1.r, bx[i__4].i = q__1.i;
+/* L240: */
+	    }
+/* L250: */
+	}
+
+/*
+          Since B and BX are complex, the following call to SGEMM is
+          performed in two steps (real and imaginary parts).
+
+          CALL SGEMM( 'T', 'N', NRP1, NRHS, NRP1, ONE, VT( NRF, 1 ), LDU,
+      $               B( NRF, 1 ), LDB, ZERO, BX( NRF, 1 ), LDBX )
+*/
+
+	j = nrp1 * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nrf + nrp1 - 1;
+	    for (jrow = nrf; jrow <= i__3; ++jrow) {
+		++j;
+		i__4 = jrow + jcol * b_dim1;
+		rwork[j] = b[i__4].r;
+/* L260: */
+	    }
+/* L270: */
+	}
+	sgemm_("T", "N", &nrp1, nrhs, &nrp1, &c_b1034, &vt[nrf + vt_dim1],
+		ldu, &rwork[(nrp1 * *nrhs << 1) + 1], &nrp1, &c_b328, &rwork[
+		1], &nrp1);
+	j = nrp1 * *nrhs << 1;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nrf + nrp1 - 1;
+	    for (jrow = nrf; jrow <= i__3; ++jrow) {
+		++j;
+		rwork[j] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L280: */
+	    }
+/* L290: */
+	}
+	sgemm_("T", "N", &nrp1, nrhs, &nrp1, &c_b1034, &vt[nrf + vt_dim1],
+		ldu, &rwork[(nrp1 * *nrhs << 1) + 1], &nrp1, &c_b328, &rwork[
+		nrp1 * *nrhs + 1], &nrp1);
+	jreal = 0;
+	jimag = nrp1 * *nrhs;
+	i__2 = *nrhs;
+	for (jcol = 1; jcol <= i__2; ++jcol) {
+	    i__3 = nrf + nrp1 - 1;
+	    for (jrow = nrf; jrow <= i__3; ++jrow) {
+		++jreal;
+		++jimag;
+		i__4 = jrow + jcol * bx_dim1;
+		i__5 = jreal;
+		i__6 = jimag;
+		q__1.r = rwork[i__5], q__1.i = rwork[i__6];
+		bx[i__4].r = q__1.r, bx[i__4].i = q__1.i;
+/* L300: */
+	    }
+/* L310: */
+	}
+
+/* L320: */
+    }
+
+L330:
+
+    return 0;
+
+/*     End of CLALSA */
+
+} /* clalsa_ */
+
+/* Subroutine */ int clalsd_(char *uplo, integer *smlsiz, integer *n, integer
+	*nrhs, real *d__, real *e, complex *b, integer *ldb, real *rcond,
+	integer *rank, complex *work, real *rwork, integer *iwork, integer *
+	info)
+{
+    /* System generated locals */
+    integer b_dim1, b_offset, i__1, i__2, i__3, i__4, i__5, i__6;
+    real r__1;
+    complex q__1;
+
+    /* Local variables */
+    static integer c__, i__, j, k;
+    static real r__;
+    static integer s, u, z__;
+    static real cs;
+    static integer bx;
+    static real sn;
+    static integer st, vt, nm1, st1;
+    static real eps;
+    static integer iwk;
+    static real tol;
+    static integer difl, difr;
+    static real rcnd;
+    static integer jcol, irwb, perm, nsub, nlvl, sqre, bxst, jrow, irwu,
+	    jimag, jreal;
+    extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
+	    integer *, real *, real *, integer *, real *, integer *, real *,
+	    real *, integer *);
+    static integer irwib;
+    extern /* Subroutine */ int ccopy_(integer *, complex *, integer *,
+	    complex *, integer *);
+    static integer poles, sizei, irwrb, nsize;
+    extern /* Subroutine */ int csrot_(integer *, complex *, integer *,
+	    complex *, integer *, real *, real *);
+    static integer irwvt, icmpq1, icmpq2;
+    extern /* Subroutine */ int clalsa_(integer *, integer *, integer *,
+	    integer *, complex *, integer *, complex *, integer *, real *,
+	    integer *, real *, integer *, real *, real *, real *, real *,
+	    integer *, integer *, integer *, integer *, real *, real *, real *
+	    , real *, integer *, integer *), clascl_(char *, integer *,
+	    integer *, real *, real *, integer *, integer *, complex *,
+	    integer *, integer *);
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int slasda_(integer *, integer *, integer *,
+	    integer *, real *, real *, real *, integer *, real *, integer *,
+	    real *, real *, real *, real *, integer *, integer *, integer *,
+	    integer *, real *, real *, real *, real *, integer *, integer *),
+	    clacpy_(char *, integer *, integer *, complex *, integer *,
+	    complex *, integer *), claset_(char *, integer *, integer
+	    *, complex *, complex *, complex *, integer *), xerbla_(
+	    char *, integer *), slascl_(char *, integer *, integer *,
+	    real *, real *, integer *, integer *, real *, integer *, integer *
+	    );
+    extern integer isamax_(integer *, real *, integer *);
+    static integer givcol;
+    extern /* Subroutine */ int slasdq_(char *, integer *, integer *, integer
+	    *, integer *, integer *, real *, real *, real *, integer *, real *
+	    , integer *, real *, integer *, real *, integer *),
+	    slaset_(char *, integer *, integer *, real *, real *, real *,
+	    integer *), slartg_(real *, real *, real *, real *, real *
+	    );
+    static real orgnrm;
+    static integer givnum;
+    extern doublereal slanst_(char *, integer *, real *, real *);
+    extern /* Subroutine */ int slasrt_(char *, integer *, real *, integer *);
+    static integer givptr, nrwork, irwwrk, smlszp;
+
+
+/*
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
+
+
+    Purpose
+    =======
+
+    CLALSD uses the singular value decomposition of A to solve the least
+    squares problem of finding X to minimize the Euclidean norm of each
+    column of A*X-B, where A is N-by-N upper bidiagonal, and X and B
+    are N-by-NRHS. The solution X overwrites B.
+
+    The singular values of A smaller than RCOND times the largest
+    singular value are treated as zero in solving the least squares
+    problem; in this case a minimum norm solution is returned.
+    The actual singular values are returned in D in ascending order.
+
+    This code makes very mild assumptions about floating point
+    arithmetic. It will work on machines with a guard digit in
+    add/subtract, or on those binary machines without guard digits
+    which subtract like the Cray XMP, Cray YMP, Cray C 90, or Cray 2.
+    It could conceivably fail on hexadecimal or decimal machines
+    without guard digits, but we know of none.
+
+    Arguments
+    =========
+
+    UPLO   (input) CHARACTER*1
+           = 'U': D and E define an upper bidiagonal matrix.
+           = 'L': D and E define a  lower bidiagonal matrix.
+
+    SMLSIZ (input) INTEGER
+           The maximum size of the subproblems at the bottom of the
+           computation tree.
+
+    N      (input) INTEGER
+           The dimension of the  bidiagonal matrix.  N >= 0.
+
+    NRHS   (input) INTEGER
+           The number of columns of B. NRHS must be at least 1.
+
+    D      (input/output) REAL array, dimension (N)
+           On entry D contains the main diagonal of the bidiagonal
+           matrix. On exit, if INFO = 0, D contains its singular values.
+
+    E      (input/output) REAL array, dimension (N-1)
+           Contains the super-diagonal entries of the bidiagonal matrix.
+           On exit, E has been destroyed.
+
+    B      (input/output) COMPLEX array, dimension (LDB,NRHS)
+           On input, B contains the right hand sides of the least
+           squares problem. On output, B contains the solution X.
+
+    LDB    (input) INTEGER
+           The leading dimension of B in the calling subprogram.
+           LDB must be at least max(1,N).
+
+    RCOND  (input) REAL
+           The singular values of A less than or equal to RCOND times
+           the largest singular value are treated as zero in solving
+           the least squares problem. If RCOND is negative,
+           machine precision is used instead.
+           For example, if diag(S)*X=B were the least squares problem,
+           where diag(S) is a diagonal matrix of singular values, the
+           solution would be X(i) = B(i) / S(i) if S(i) is greater than
+           RCOND*max(S), and X(i) = 0 if S(i) is less than or equal to
+           RCOND*max(S).
+
+    RANK   (output) INTEGER
+           The number of singular values of A greater than RCOND times
+           the largest singular value.
+
+    WORK   (workspace) COMPLEX array, dimension (N * NRHS).
+
+    RWORK  (workspace) REAL array, dimension at least
+           (9*N + 2*N*SMLSIZ + 8*N*NLVL + 3*SMLSIZ*NRHS +
+           MAX( (SMLSIZ+1)**2, N*(1+NRHS) + 2*NRHS ),
+           where
+           NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
+
+    IWORK  (workspace) INTEGER array, dimension (3*N*NLVL + 11*N).
+
+    INFO   (output) INTEGER
+           = 0:  successful exit.
+           < 0:  if INFO = -i, the i-th argument had an illegal value.
+           > 0:  The algorithm failed to compute a singular value while
+                 working on the submatrix lying in rows and columns
+                 INFO/(N+1) through MOD(INFO,N+1).
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    --d__;
+    --e;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    --work;
+    --rwork;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*n < 0) {
+	*info = -3;
+    } else if (*nrhs < 1) {
+	*info = -4;
+    } else if (*ldb < 1 || *ldb < *n) {
+	*info = -8;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("CLALSD", &i__1);
+	return 0;
+    }
+
+    eps = slamch_("Epsilon");
+
+/*     Set up the tolerance. */
+
+    if (*rcond <= 0.f || *rcond >= 1.f) {
+	rcnd = eps;
+    } else {
+	rcnd = *rcond;
+    }
+
+    *rank = 0;
+
+/*     Quick return if possible. */
+
+    if (*n == 0) {
+	return 0;
+    } else if (*n == 1) {
+	if (d__[1] == 0.f) {
+	    claset_("A", &c__1, nrhs, &c_b56, &c_b56, &b[b_offset], ldb);
+	} else {
+	    *rank = 1;
+	    clascl_("G", &c__0, &c__0, &d__[1], &c_b1034, &c__1, nrhs, &b[
+		    b_offset], ldb, info);
+	    d__[1] = dabs(d__[1]);
+	}
+	return 0;
+    }
+
+/*     Rotate the matrix if it is lower bidiagonal. */
+
+    if (*(unsigned char *)uplo == 'L') {
+	i__1 = *n - 1;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    slartg_(&d__[i__], &e[i__], &cs, &sn, &r__);
+	    d__[i__] = r__;
+	    e[i__] = sn * d__[i__ + 1];
+	    d__[i__ + 1] = cs * d__[i__ + 1];
+	    if (*nrhs == 1) {
+		csrot_(&c__1, &b[i__ + b_dim1], &c__1, &b[i__ + 1 + b_dim1], &
+			c__1, &cs, &sn);
+	    } else {
+		rwork[(i__ << 1) - 1] = cs;
+		rwork[i__ * 2] = sn;
+	    }
+/* L10: */
+	}
+	if (*nrhs > 1) {
+	    i__1 = *nrhs;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		i__2 = *n - 1;
+		for (j = 1; j <= i__2; ++j) {
+		    cs = rwork[(j << 1) - 1];
+		    sn = rwork[j * 2];
+		    csrot_(&c__1, &b[j + i__ * b_dim1], &c__1, &b[j + 1 + i__
+			    * b_dim1], &c__1, &cs, &sn);
+/* L20: */
+		}
+/* L30: */
+	    }
+	}
+    }
+
+/*     Scale. */
+
+    nm1 = *n - 1;
+    orgnrm = slanst_("M", n, &d__[1], &e[1]);
+    if (orgnrm == 0.f) {
+	claset_("A", n, nrhs, &c_b56, &c_b56, &b[b_offset], ldb);
+	return 0;
+    }
+
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b1034, n, &c__1, &d__[1], n, info);
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b1034, &nm1, &c__1, &e[1], &nm1,
+	    info);
+
+/*
+       If N is smaller than the minimum divide size SMLSIZ, then solve
+       the problem with another solver.
+*/
+
+    if (*n <= *smlsiz) {
+	irwu = 1;
+	irwvt = irwu + *n * *n;
+	irwwrk = irwvt + *n * *n;
+	irwrb = irwwrk;
+	irwib = irwrb + *n * *nrhs;
+	irwb = irwib + *n * *nrhs;
+	slaset_("A", n, n, &c_b328, &c_b1034, &rwork[irwu], n);
+	slaset_("A", n, n, &c_b328, &c_b1034, &rwork[irwvt], n);
+	slasdq_("U", &c__0, n, n, n, &c__0, &d__[1], &e[1], &rwork[irwvt], n,
+		&rwork[irwu], n, &rwork[irwwrk], &c__1, &rwork[irwwrk], info);
+	if (*info != 0) {
+	    return 0;
+	}
+
+/*
+          In the real version, B is passed to SLASDQ and multiplied
+          internally by Q'. Here B is complex and that product is
+          computed below in two steps (real and imaginary parts).
+*/
+
+	j = irwb - 1;
+	i__1 = *nrhs;
+	for (jcol = 1; jcol <= i__1; ++jcol) {
+	    i__2 = *n;
+	    for (jrow = 1; jrow <= i__2; ++jrow) {
+		++j;
+		i__3 = jrow + jcol * b_dim1;
+		rwork[j] = b[i__3].r;
+/* L40: */
+	    }
+/* L50: */
+	}
+	sgemm_("T", "N", n, nrhs, n, &c_b1034, &rwork[irwu], n, &rwork[irwb],
+		n, &c_b328, &rwork[irwrb], n);
+	j = irwb - 1;
+	i__1 = *nrhs;
+	for (jcol = 1; jcol <= i__1; ++jcol) {
+	    i__2 = *n;
+	    for (jrow = 1; jrow <= i__2; ++jrow) {
+		++j;
+		rwork[j] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L60: */
+	    }
+/* L70: */
+	}
+	sgemm_("T", "N", n, nrhs, n, &c_b1034, &rwork[irwu], n, &rwork[irwb],
+		n, &c_b328, &rwork[irwib], n);
+	jreal = irwrb - 1;
+	jimag = irwib - 1;
+	i__1 = *nrhs;
+	for (jcol = 1; jcol <= i__1; ++jcol) {
+	    i__2 = *n;
+	    for (jrow = 1; jrow <= i__2; ++jrow) {
+		++jreal;
+		++jimag;
+		i__3 = jrow + jcol * b_dim1;
+		i__4 = jreal;
+		i__5 = jimag;
+		q__1.r = rwork[i__4], q__1.i = rwork[i__5];
+		b[i__3].r = q__1.r, b[i__3].i = q__1.i;
+/* L80: */
+	    }
+/* L90: */
+	}
+
+	tol = rcnd * (r__1 = d__[isamax_(n, &d__[1], &c__1)], dabs(r__1));
+	i__1 = *n;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    if (d__[i__] <= tol) {
+		claset_("A", &c__1, nrhs, &c_b56, &c_b56, &b[i__ + b_dim1],
+			ldb);
+	    } else {
+		clascl_("G", &c__0, &c__0, &d__[i__], &c_b1034, &c__1, nrhs, &
+			b[i__ + b_dim1], ldb, info);
+		++(*rank);
+	    }
+/* L100: */
+	}
+
+/*
+          Since B is complex, the following call to SGEMM is performed
+          in two steps (real and imaginary parts). That is for V * B
+          (in the real version of the code V' is stored in WORK).
+
+          CALL SGEMM( 'T', 'N', N, NRHS, N, ONE, WORK, N, B, LDB, ZERO,
+      $               WORK( NWORK ), N )
+*/
+
+	j = irwb - 1;
+	i__1 = *nrhs;
+	for (jcol = 1; jcol <= i__1; ++jcol) {
+	    i__2 = *n;
+	    for (jrow = 1; jrow <= i__2; ++jrow) {
+		++j;
+		i__3 = jrow + jcol * b_dim1;
+		rwork[j] = b[i__3].r;
+/* L110: */
+	    }
+/* L120: */
+	}
+	sgemm_("T", "N", n, nrhs, n, &c_b1034, &rwork[irwvt], n, &rwork[irwb],
+		 n, &c_b328, &rwork[irwrb], n);
+	j = irwb - 1;
+	i__1 = *nrhs;
+	for (jcol = 1; jcol <= i__1; ++jcol) {
+	    i__2 = *n;
+	    for (jrow = 1; jrow <= i__2; ++jrow) {
+		++j;
+		rwork[j] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L130: */
+	    }
+/* L140: */
+	}
+	sgemm_("T", "N", n, nrhs, n, &c_b1034, &rwork[irwvt], n, &rwork[irwb],
+		 n, &c_b328, &rwork[irwib], n);
+	jreal = irwrb - 1;
+	jimag = irwib - 1;
+	i__1 = *nrhs;
+	for (jcol = 1; jcol <= i__1; ++jcol) {
+	    i__2 = *n;
+	    for (jrow = 1; jrow <= i__2; ++jrow) {
+		++jreal;
+		++jimag;
+		i__3 = jrow + jcol * b_dim1;
+		i__4 = jreal;
+		i__5 = jimag;
+		q__1.r = rwork[i__4], q__1.i = rwork[i__5];
+		b[i__3].r = q__1.r, b[i__3].i = q__1.i;
+/* L150: */
+	    }
+/* L160: */
+	}
+
+/*        Unscale. */
+
+	slascl_("G", &c__0, &c__0, &c_b1034, &orgnrm, n, &c__1, &d__[1], n,
+		info);
+	slasrt_("D", n, &d__[1], info);
+	clascl_("G", &c__0, &c__0, &orgnrm, &c_b1034, n, nrhs, &b[b_offset],
+		ldb, info);
+
+	return 0;
+    }
+
+/*     Book-keeping and setting up some constants. */
+
+    nlvl = (integer) (log((real) (*n) / (real) (*smlsiz + 1)) / log(2.f)) + 1;
+
+    smlszp = *smlsiz + 1;
+
+    u = 1;
+    vt = *smlsiz * *n + 1;
+    difl = vt + smlszp * *n;
+    difr = difl + nlvl * *n;
+    z__ = difr + (nlvl * *n << 1);
+    c__ = z__ + nlvl * *n;
+    s = c__ + *n;
+    poles = s + *n;
+    givnum = poles + (nlvl << 1) * *n;
+    nrwork = givnum + (nlvl << 1) * *n;
+    bx = 1;
+
+    irwrb = nrwork;
+    irwib = irwrb + *smlsiz * *nrhs;
+    irwb = irwib + *smlsiz * *nrhs;
+
+    sizei = *n + 1;
+    k = sizei + *n;
+    givptr = k + *n;
+    perm = givptr + *n;
+    givcol = perm + nlvl * *n;
+    iwk = givcol + (nlvl * *n << 1);
+
+    st = 1;
+    sqre = 0;
+    icmpq1 = 1;
+    icmpq2 = 0;
+    nsub = 0;
+
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if ((r__1 = d__[i__], dabs(r__1)) < eps) {
+	    d__[i__] = r_sign(&eps, &d__[i__]);
+	}
+/* L170: */
+    }
+
+    i__1 = nm1;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if ((r__1 = e[i__], dabs(r__1)) < eps || i__ == nm1) {
+	    ++nsub;
+	    iwork[nsub] = st;
+
+/*
+             Subproblem found. First determine its size and then
+             apply divide and conquer on it.
+*/
+
+	    if (i__ < nm1) {
+
+/*              A subproblem with E(I) small for I < NM1. */
+
+		nsize = i__ - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+	    } else if ((r__1 = e[i__], dabs(r__1)) >= eps) {
+
+/*              A subproblem with E(NM1) not too small but I = NM1. */
+
+		nsize = *n - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+	    } else {
+
+/*
+                A subproblem with E(NM1) small. This implies an
+                1-by-1 subproblem at D(N), which is not solved
+                explicitly.
+*/
+
+		nsize = i__ - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+		++nsub;
+		iwork[nsub] = *n;
+		iwork[sizei + nsub - 1] = 1;
+		ccopy_(nrhs, &b[*n + b_dim1], ldb, &work[bx + nm1], n);
+	    }
+	    st1 = st - 1;
+	    if (nsize == 1) {
+
+/*
+                This is a 1-by-1 subproblem and is not solved
+                explicitly.
+*/
+
+		ccopy_(nrhs, &b[st + b_dim1], ldb, &work[bx + st1], n);
+	    } else if (nsize <= *smlsiz) {
+
+/*              This is a small subproblem and is solved by SLASDQ. */
+
+		slaset_("A", &nsize, &nsize, &c_b328, &c_b1034, &rwork[vt +
+			st1], n);
+		slaset_("A", &nsize, &nsize, &c_b328, &c_b1034, &rwork[u +
+			st1], n);
+		slasdq_("U", &c__0, &nsize, &nsize, &nsize, &c__0, &d__[st], &
+			e[st], &rwork[vt + st1], n, &rwork[u + st1], n, &
+			rwork[nrwork], &c__1, &rwork[nrwork], info)
+			;
+		if (*info != 0) {
+		    return 0;
+		}
+
+/*
+                In the real version, B is passed to SLASDQ and multiplied
+                internally by Q'. Here B is complex and that product is
+                computed below in two steps (real and imaginary parts).
+*/
+
+		j = irwb - 1;
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = st + nsize - 1;
+		    for (jrow = st; jrow <= i__3; ++jrow) {
+			++j;
+			i__4 = jrow + jcol * b_dim1;
+			rwork[j] = b[i__4].r;
+/* L180: */
+		    }
+/* L190: */
+		}
+		sgemm_("T", "N", &nsize, nrhs, &nsize, &c_b1034, &rwork[u +
+			st1], n, &rwork[irwb], &nsize, &c_b328, &rwork[irwrb],
+			 &nsize);
+		j = irwb - 1;
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = st + nsize - 1;
+		    for (jrow = st; jrow <= i__3; ++jrow) {
+			++j;
+			rwork[j] = r_imag(&b[jrow + jcol * b_dim1]);
+/* L200: */
+		    }
+/* L210: */
+		}
+		sgemm_("T", "N", &nsize, nrhs, &nsize, &c_b1034, &rwork[u +
+			st1], n, &rwork[irwb], &nsize, &c_b328, &rwork[irwib],
+			 &nsize);
+		jreal = irwrb - 1;
+		jimag = irwib - 1;
+		i__2 = *nrhs;
+		for (jcol = 1; jcol <= i__2; ++jcol) {
+		    i__3 = st + nsize - 1;
+		    for (jrow = st; jrow <= i__3; ++jrow) {
+			++jreal;
+			++jimag;
+			i__4 = jrow + jcol * b_dim1;
+			i__5 = jreal;
+			i__6 = jimag;
+			q__1.r = rwork[i__5], q__1.i = rwork[i__6];
+			b[i__4].r = q__1.r, b[i__4].i = q__1.i;
+/* L220: */
+		    }
+/* L230: */
+		}
+
+		clacpy_("A", &nsize, nrhs, &b[st + b_dim1], ldb, &work[bx +
+			st1], n);
+	    } else {
+
+/*              A large problem. Solve it using divide and conquer. */
+
+		slasda_(&icmpq1, smlsiz, &nsize, &sqre, &d__[st], &e[st], &
+			rwork[u + st1], n, &rwork[vt + st1], &iwork[k + st1],
+			&rwork[difl + st1], &rwork[difr + st1], &rwork[z__ +
+			st1], &rwork[poles + st1], &iwork[givptr + st1], &
+			iwork[givcol + st1], n, &iwork[perm + st1], &rwork[
+			givnum + st1], &rwork[c__ + st1], &rwork[s + st1], &
+			rwork[nrwork], &iwork[iwk], info);
+		if (*info != 0) {
+		    return 0;
+		}
+		bxst = bx + st1;
+		clalsa_(&icmpq2, smlsiz, &nsize, nrhs, &b[st + b_dim1], ldb, &
+			work[bxst], n, &rwork[u + st1], n, &rwork[vt + st1], &
+			iwork[k + st1], &rwork[difl + st1], &rwork[difr + st1]
+			, &rwork[z__ + st1], &rwork[poles + st1], &iwork[
+			givptr + st1], &iwork[givcol + st1], n, &iwork[perm +
+			st1], &rwork[givnum + st1], &rwork[c__ + st1], &rwork[
+			s + st1], &rwork[nrwork], &iwork[iwk], info);
+		if (*info != 0) {
+		    return 0;
+		}
+	    }
+	    st = i__ + 1;
+	}
+/* L240: */
+    }
+
+/*     Apply the singular values and treat the tiny ones as zero. */
+
+    tol = rcnd * (r__1 = d__[isamax_(n, &d__[1], &c__1)], dabs(r__1));
+
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+
+/*
+          Some of the elements in D can be negative because 1-by-1
+          subproblems were not solved explicitly.
+*/
+
+	if ((r__1 = d__[i__], dabs(r__1)) <= tol) {
+	    claset_("A", &c__1, nrhs, &c_b56, &c_b56, &work[bx + i__ - 1], n);
+	} else {
+	    ++(*rank);
+	    clascl_("G", &c__0, &c__0, &d__[i__], &c_b1034, &c__1, nrhs, &
+		    work[bx + i__ - 1], n, info);
+	}
+	d__[i__] = (r__1 = d__[i__], dabs(r__1));
+/* L250: */
+    }
+
+/*     Now apply back the right singular vectors. */
+
+    icmpq2 = 1;
+    i__1 = nsub;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	st = iwork[i__];
+	st1 = st - 1;
+	nsize = iwork[sizei + i__ - 1];
+	bxst = bx + st1;
+	if (nsize == 1) {
+	    ccopy_(nrhs, &work[bxst], n, &b[st + b_dim1], ldb);
+	} else if (nsize <= *smlsiz) {
+
+/*
+             Since B and BX are complex, the following call to SGEMM
+             is performed in two steps (real and imaginary parts).
+
+             CALL SGEMM( 'T', 'N', NSIZE, NRHS, NSIZE, ONE,
+      $                  RWORK( VT+ST1 ), N, RWORK( BXST ), N, ZERO,
+      $                  B( ST, 1 ), LDB )
+*/
+
+	    j = bxst - *n - 1;
+	    jreal = irwb - 1;
+	    i__2 = *nrhs;
+	    for (jcol = 1; jcol <= i__2; ++jcol) {
+		j += *n;
+		i__3 = nsize;
+		for (jrow = 1; jrow <= i__3; ++jrow) {
+		    ++jreal;
+		    i__4 = j + jrow;
+		    rwork[jreal] = work[i__4].r;
+/* L260: */
+		}
+/* L270: */
+	    }
+	    sgemm_("T", "N", &nsize, nrhs, &nsize, &c_b1034, &rwork[vt + st1],
+		     n, &rwork[irwb], &nsize, &c_b328, &rwork[irwrb], &nsize);
+	    j = bxst - *n - 1;
+	    jimag = irwb - 1;
+	    i__2 = *nrhs;
+	    for (jcol = 1; jcol <= i__2; ++jcol) {
+		j += *n;
+		i__3 = nsize;
+		for (jrow = 1; jrow <= i__3; ++jrow) {
+		    ++jimag;
+		    rwork[jimag] = r_imag(&work[j + jrow]);
+/* L280: */
+		}
+/* L290: */
+	    }
+	    sgemm_("T", "N", &nsize, nrhs, &nsize, &c_b1034, &rwork[vt + st1],
+		     n, &rwork[irwb], &nsize, &c_b328, &rwork[irwib], &nsize);
+	    jreal = irwrb - 1;
+	    jimag = irwib - 1;
+	    i__2 = *nrhs;
+	    for (jcol = 1; jcol <= i__2; ++jcol) {
+		i__3 = st + nsize - 1;
+		for (jrow = st; jrow <= i__3; ++jrow) {
+		    ++jreal;
+		    ++jimag;
+		    i__4 = jrow + jcol * b_dim1;
+		    i__5 = jreal;
+		    i__6 = jimag;
+		    q__1.r = rwork[i__5], q__1.i = rwork[i__6];
+		    b[i__4].r = q__1.r, b[i__4].i = q__1.i;
+/* L300: */
+		}
+/* L310: */
+	    }
+	} else {
+	    clalsa_(&icmpq2, smlsiz, &nsize, nrhs, &work[bxst], n, &b[st +
+		    b_dim1], ldb, &rwork[u + st1], n, &rwork[vt + st1], &
+		    iwork[k + st1], &rwork[difl + st1], &rwork[difr + st1], &
+		    rwork[z__ + st1], &rwork[poles + st1], &iwork[givptr +
+		    st1], &iwork[givcol + st1], n, &iwork[perm + st1], &rwork[
+		    givnum + st1], &rwork[c__ + st1], &rwork[s + st1], &rwork[
+		    nrwork], &iwork[iwk], info);
+	    if (*info != 0) {
+		return 0;
+	    }
+	}
+/* L320: */
+    }
+
+/*     Unscale and sort the singular values. */
+
+    slascl_("G", &c__0, &c__0, &c_b1034, &orgnrm, n, &c__1, &d__[1], n, info);
+    slasrt_("D", n, &d__[1], info);
+    clascl_("G", &c__0, &c__0, &orgnrm, &c_b1034, n, nrhs, &b[b_offset], ldb,
+	    info);
+
+    return 0;
+
+/*     End of CLALSD */
+
+} /* clalsd_ */
+
 doublereal clange_(char *norm, integer *m, integer *n, complex *a, integer *
 	lda, real *work)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
     real ret_val, r__1, r__2;
-
-    /* Builtin functions */
-    double c_abs(complex *), sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j;
@@ -10976,9 +13576,6 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
     real ret_val, r__1, r__2, r__3;
-
-    /* Builtin functions */
-    double c_abs(complex *), sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j;
@@ -11214,10 +13811,6 @@ doublereal clanhe_(char *norm, char *uplo, integer *n, complex *a, integer *
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8;
     complex q__1, q__2, q__3, q__4, q__5;
-
-    /* Builtin functions */
-    double r_imag(complex *);
-    void c_sqrt(complex *, complex *);
 
     /* Local variables */
     static integer i__, k;
@@ -12000,9 +14593,6 @@ L80:
     real r__1, r__2, r__3, r__4, r__5, r__6;
     complex q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
 
-    /* Builtin functions */
-    double r_imag(complex *);
-
     /* Local variables */
     static real s;
     static complex h21s, h31s;
@@ -12174,10 +14764,6 @@ L80:
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
     complex q__1, q__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, j;
@@ -12752,10 +15338,6 @@ L80:
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2, r__3, r__4, r__5, r__6;
     complex q__1, q__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, j;
@@ -13346,10 +15928,6 @@ L80:
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8;
     complex q__1, q__2, q__3, q__4, q__5;
-
-    /* Builtin functions */
-    double r_imag(complex *);
-    void c_sqrt(complex *, complex *);
 
     /* Local variables */
     static integer i__, k;
@@ -14135,10 +16713,6 @@ L80:
 	     i__4, i__5, i__6, i__7, i__8, i__9, i__10, i__11;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8, r__9, r__10;
     complex q__1, q__2, q__3, q__4, q__5, q__6, q__7, q__8;
-
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-    double r_imag(complex *);
 
     /* Local variables */
     static integer j, k, m, i2, j2, i4, j4, k1;
@@ -15482,9 +18056,6 @@ L80:
     real r__1;
     complex q__1;
 
-    /* Builtin functions */
-    double r_imag(complex *);
-
     /* Local variables */
     static integer i__, j, l;
     extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
@@ -15574,8 +18145,8 @@ L80:
     }
 
     l = *m * *n + 1;
-    sgemm_("N", "N", m, n, m, &c_b894, &a[a_offset], lda, &rwork[1], m, &
-	    c_b1087, &rwork[l], m);
+    sgemm_("N", "N", m, n, m, &c_b1034, &a[a_offset], lda, &rwork[1], m, &
+	    c_b328, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -15597,8 +18168,8 @@ L80:
 	}
 /* L60: */
     }
-    sgemm_("N", "N", m, n, m, &c_b894, &a[a_offset], lda, &rwork[1], m, &
-	    c_b1087, &rwork[l], m);
+    sgemm_("N", "N", m, n, m, &c_b1034, &a[a_offset], lda, &rwork[1], m, &
+	    c_b328, &rwork[l], m);
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
 	i__2 = *m;
@@ -15801,9 +18372,6 @@ L80:
     integer c_dim1, c_offset, t_dim1, t_offset, v_dim1, v_offset, work_dim1,
 	    work_offset, i__1, i__2, i__3, i__4, i__5;
     complex q__1, q__2;
-
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, j;
@@ -16645,9 +19213,6 @@ L80:
     real r__1, r__2;
     complex q__1, q__2;
 
-    /* Builtin functions */
-    double r_imag(complex *), r_sign(real *, real *);
-
     /* Local variables */
     static integer j, knt;
     static real beta;
@@ -17145,11 +19710,6 @@ L36:
     integer i__1;
     real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8, r__9, r__10;
     complex q__1, q__2, q__3;
-
-    /* Builtin functions */
-    double log(doublereal), pow_ri(real *, integer *), r_imag(complex *),
-	    sqrt(doublereal);
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static real d__;
@@ -18493,9 +21053,6 @@ L10:
     integer i__1, i__2, i__3;
     real r__1;
 
-    /* Builtin functions */
-    double r_imag(complex *);
-
     /* Local variables */
     static integer ix;
     static real temp1;
@@ -19149,10 +21706,6 @@ L10:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3, r__4;
     complex q__1, q__2, q__3, q__4;
-
-    /* Builtin functions */
-    double r_imag(complex *);
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, j;
@@ -19813,7 +22366,7 @@ L105:
 
 /*                 Scale x by 1/2. */
 
-		    csscal_(n, &c_b2023, &x[1], &c__1);
+		    csscal_(n, &c_b2435, &x[1], &c__1);
 		    *scale *= .5f;
 		}
 
@@ -20620,8 +23173,8 @@ L185:
 			    a[i__ + (i__ + ib) * a_dim1], lda, &c_b57, &a[i__
 			    * a_dim1 + 1], lda);
 		    i__3 = *n - i__ - ib + 1;
-		    cherk_("Upper", "No transpose", &ib, &i__3, &c_b894, &a[
-			    i__ + (i__ + ib) * a_dim1], lda, &c_b894, &a[i__
+		    cherk_("Upper", "No transpose", &ib, &i__3, &c_b1034, &a[
+			    i__ + (i__ + ib) * a_dim1], lda, &c_b1034, &a[i__
 			    + i__ * a_dim1], lda);
 		}
 /* L10: */
@@ -20650,8 +23203,8 @@ L185:
 			    a_dim1], lda);
 		    i__3 = *n - i__ - ib + 1;
 		    cherk_("Lower", "Conjugate transpose", &ib, &i__3, &
-			    c_b894, &a[i__ + ib + i__ * a_dim1], lda, &c_b894,
-			     &a[i__ + i__ * a_dim1], lda);
+			    c_b1034, &a[i__ + ib + i__ * a_dim1], lda, &
+			    c_b1034, &a[i__ + i__ * a_dim1], lda);
 		}
 /* L20: */
 	    }
@@ -20671,9 +23224,6 @@ L185:
     integer a_dim1, a_offset, i__1, i__2, i__3;
     real r__1;
     complex q__1, q__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer j;
@@ -21018,8 +23568,8 @@ L40:
 		i__3 = nb, i__4 = *n - j + 1;
 		jb = min(i__3,i__4);
 		i__3 = j - 1;
-		cherk_("Upper", "Conjugate transpose", &jb, &i__3, &c_b1136, &
-			a[j * a_dim1 + 1], lda, &c_b894, &a[j + j * a_dim1],
+		cherk_("Upper", "Conjugate transpose", &jb, &i__3, &c_b1276, &
+			a[j * a_dim1 + 1], lda, &c_b1034, &a[j + j * a_dim1],
 			lda);
 		cpotf2_("Upper", &jb, &a[j + j * a_dim1], lda, info);
 		if (*info != 0) {
@@ -21061,8 +23611,8 @@ L40:
 		i__3 = nb, i__4 = *n - j + 1;
 		jb = min(i__3,i__4);
 		i__3 = j - 1;
-		cherk_("Lower", "No transpose", &jb, &i__3, &c_b1136, &a[j +
-			a_dim1], lda, &c_b894, &a[j + j * a_dim1], lda);
+		cherk_("Lower", "No transpose", &jb, &i__3, &c_b1276, &a[j +
+			a_dim1], lda, &c_b1034, &a[j + j * a_dim1], lda);
 		cpotf2_("Lower", &jb, &a[j + j * a_dim1], lda, info);
 		if (*info != 0) {
 		    goto L30;
@@ -21348,9 +23898,6 @@ L40:
     integer i__1, i__2, i__3, i__4;
     complex q__1, q__2, q__3, q__4;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, ix, iy;
     static complex stemp;
@@ -21484,11 +24031,6 @@ L20:
     /* System generated locals */
     integer z_dim1, z_offset, i__1, i__2, i__3, i__4;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j, k, m;
@@ -21797,7 +24339,7 @@ L20:
 /*        If COMPZ = 'I', we simply call SSTEDC instead. */
 
 	if (icompz == 2) {
-	    slaset_("Full", n, n, &c_b1087, &c_b894, &rwork[1], n);
+	    slaset_("Full", n, n, &c_b328, &c_b1034, &rwork[1], n);
 	    ll = *n * *n + 1;
 	    i__1 = *lrwork - ll + 1;
 	    sstedc_("I", n, &d__[1], &e[1], &rwork[1], n, &rwork[ll], &i__1, &
@@ -21864,12 +24406,12 @@ L40:
 /*              Scale. */
 
 		orgnrm = slanst_("M", &m, &d__[start], &e[start]);
-		slascl_("G", &c__0, &c__0, &orgnrm, &c_b894, &m, &c__1, &d__[
+		slascl_("G", &c__0, &c__0, &orgnrm, &c_b1034, &m, &c__1, &d__[
 			start], &m, info);
 		i__1 = m - 1;
 		i__2 = m - 1;
-		slascl_("G", &c__0, &c__0, &orgnrm, &c_b894, &i__1, &c__1, &e[
-			start], &i__2, info);
+		slascl_("G", &c__0, &c__0, &orgnrm, &c_b1034, &i__1, &c__1, &
+			e[start], &i__2, info);
 
 		claed0_(n, &m, &d__[start], &e[start], &z__[start * z_dim1 +
 			1], ldz, &work[1], n, &rwork[1], &iwork[1], info);
@@ -21881,7 +24423,7 @@ L40:
 
 /*              Scale back. */
 
-		slascl_("G", &c__0, &c__0, &c_b894, &orgnrm, &m, &c__1, &d__[
+		slascl_("G", &c__0, &c__0, &c_b1034, &orgnrm, &m, &c__1, &d__[
 			start], &m, info);
 
 	    } else {
@@ -21954,9 +24496,6 @@ L70:
     /* System generated locals */
     integer z_dim1, z_offset, i__1, i__2;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
 
     /* Local variables */
     static real b, c__, f, g;
@@ -22285,7 +24824,7 @@ L60:
 /*        Form shift. */
 
 	g = (d__[l + 1] - p) / (e[l] * 2.f);
-	r__ = slapy2_(&g, &c_b894);
+	r__ = slapy2_(&g, &c_b1034);
 	g = d__[m] - p + e[l] / (g + r_sign(&r__, &g));
 
 	s = 1.f;
@@ -22411,7 +24950,7 @@ L110:
 /*        Form shift. */
 
 	g = (d__[l - 1] - p) / (e[l - 1] * 2.f);
-	r__ = slapy2_(&g, &c_b894);
+	r__ = slapy2_(&g, &c_b1034);
 	g = d__[m] - p + e[l - 1] / (g + r_sign(&r__, &g));
 
 	s = 1.f;
@@ -22557,10 +25096,6 @@ L160:
 	    i__2, i__3, i__4, i__5;
     real r__1, r__2, r__3;
     complex q__1, q__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, j, k, ii, ki, is;
@@ -23060,9 +25595,6 @@ L130:
     integer q_dim1, q_offset, t_dim1, t_offset, i__1, i__2, i__3;
     complex q__1;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer k, m1, m2, m3;
     static real cs;
@@ -23246,9 +25778,6 @@ L130:
     integer a_dim1, a_offset, i__1, i__2;
     complex q__1;
 
-    /* Builtin functions */
-    void c_div(complex *, complex *, complex *);
-
     /* Local variables */
     static integer j;
     static complex ajj;
@@ -23414,9 +25943,6 @@ L130:
     integer a_dim1, a_offset, i__1, i__2, i__3[2], i__4, i__5;
     complex q__1;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer j, jb, nb, nn;
@@ -24266,9 +26792,6 @@ L130:
     integer a_dim1, a_offset, i__1, i__2, i__3;
     complex q__1, q__2;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, l;
     extern /* Subroutine */ int cscal_(integer *, complex *, complex *,
@@ -24959,9 +27482,6 @@ L130:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
     complex q__1;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, i1, i2, i3, mi, ni, nq;
     static complex aii;
@@ -25173,9 +27693,6 @@ L130:
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
     complex q__1;
-
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, i1, i2, i3, ic, jc, mi, ni, nq;
@@ -25394,9 +27911,6 @@ L130:
     address a__1[2];
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3[2];
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;
@@ -25738,9 +28252,6 @@ L130:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i1, i2, nb, mi, nh, ni, nq, nw;
     static logical left;
@@ -25964,9 +28475,6 @@ L130:
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
     complex q__1;
-
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
 
     /* Local variables */
     static integer i__, i1, i2, i3, ic, jc, mi, ni, nq;
@@ -26194,9 +28702,6 @@ L130:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3[2], i__4,
 	    i__5;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer i__;
@@ -26503,9 +29008,6 @@ L130:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static complex t[4160]	/* was [65][64] */;
@@ -26804,9 +29306,6 @@ L130:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static complex t[4160]	/* was [65][64] */;
@@ -27103,9 +29602,6 @@ L130:
     address a__1[2];
     integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2, i__3;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;

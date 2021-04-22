@@ -1,0 +1,9 @@
+version: 1
+update_configs:
+  - package_manager: "python"
+    directory: "/"
+    update_schedule: "weekly"
+    commit_message:
+      prefix: "MAINT"
+    default_labels:
+      - "03 - Maintenance"

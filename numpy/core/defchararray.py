@@ -15,18 +15,20 @@ available in your version of Python.
 The preferred alias for `defchararray` is `numpy.char`.
 
 """
-from __future__ import division, absolute_import, print_function
-
+import functools
 import sys
-from .numerictypes import string_, unicode_, integer, object_, bool_, character
+from .numerictypes import (
+    string_, unicode_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
-from numpy.compat import asbytes, long
+from numpy.core.overrides import set_module
+from numpy.core import overrides
+from numpy.compat import asbytes
 import numpy
 
 __all__ = [
-    'chararray', 'equal', 'not_equal', 'greater_equal', 'less_equal',
+    'equal', 'not_equal', 'greater_equal', 'less_equal',
     'greater', 'less', 'str_len', 'add', 'multiply', 'mod', 'capitalize',
     'center', 'count', 'decode', 'encode', 'endswith', 'expandtabs',
     'find', 'index', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace',
@@ -39,13 +41,10 @@ __all__ = [
 
 
 _globalvar = 0
-if sys.version_info[0] >= 3:
-    _unicode = str
-    _bytes = bytes
-else:
-    _unicode = unicode
-    _bytes = str
-_len = len
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy.char')
+
 
 def _use_unicode(*args):
     """
@@ -56,7 +55,7 @@ def _use_unicode(*args):
     result should be unicode.
     """
     for x in args:
-        if (isinstance(x, _unicode) or
+        if (isinstance(x, str) or
                 issubclass(numpy.asarray(x).dtype.type, unicode_)):
             return unicode_
     return string_
@@ -75,7 +74,7 @@ def _clean_args(*args):
 
     Many of the Python string operations that have optional arguments
     do not use 'None' to indicate a default value.  In these cases,
-    we need to remove all `None` arguments, and those following them.
+    we need to remove all None arguments, and those following them.
     """
     newargs = []
     for chk in args:
@@ -95,6 +94,11 @@ def _get_num_chars(a):
     return a.itemsize
 
 
+def _binary_op_dispatcher(x1, x2):
+    return (x1, x2)
+
+
+@array_function_dispatch(_binary_op_dispatcher)
 def equal(x1, x2):
     """
     Return (x1 == x2) element-wise.
@@ -110,8 +114,8 @@ def equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -119,6 +123,8 @@ def equal(x1, x2):
     """
     return compare_chararrays(x1, x2, '==', True)
 
+
+@array_function_dispatch(_binary_op_dispatcher)
 def not_equal(x1, x2):
     """
     Return (x1 != x2) element-wise.
@@ -134,8 +140,8 @@ def not_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -143,6 +149,8 @@ def not_equal(x1, x2):
     """
     return compare_chararrays(x1, x2, '!=', True)
 
+
+@array_function_dispatch(_binary_op_dispatcher)
 def greater_equal(x1, x2):
     """
     Return (x1 >= x2) element-wise.
@@ -159,8 +167,8 @@ def greater_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -168,6 +176,8 @@ def greater_equal(x1, x2):
     """
     return compare_chararrays(x1, x2, '>=', True)
 
+
+@array_function_dispatch(_binary_op_dispatcher)
 def less_equal(x1, x2):
     """
     Return (x1 <= x2) element-wise.
@@ -183,8 +193,8 @@ def less_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -192,6 +202,8 @@ def less_equal(x1, x2):
     """
     return compare_chararrays(x1, x2, '<=', True)
 
+
+@array_function_dispatch(_binary_op_dispatcher)
 def greater(x1, x2):
     """
     Return (x1 > x2) element-wise.
@@ -207,8 +219,8 @@ def greater(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -216,6 +228,8 @@ def greater(x1, x2):
     """
     return compare_chararrays(x1, x2, '>', True)
 
+
+@array_function_dispatch(_binary_op_dispatcher)
 def less(x1, x2):
     """
     Return (x1 < x2) element-wise.
@@ -231,8 +245,8 @@ def less(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -240,6 +254,12 @@ def less(x1, x2):
     """
     return compare_chararrays(x1, x2, '<', True)
 
+
+def _unary_op_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_unary_op_dispatcher)
 def str_len(a):
     """
     Return len(a) element-wise.
@@ -253,12 +273,17 @@ def str_len(a):
     out : ndarray
         Output array of integers
 
-    See also
+    See Also
     --------
-    __builtin__.len
+    builtins.len
     """
-    return _vec_string(a, integer, '__len__')
+    # Note: __len__, etc. currently return ints, which are not C-integers.
+    # Generally intp would be expected for lengths, although int is sufficient
+    # due to the dtype itemsize limitation.
+    return _vec_string(a, int_, '__len__')
 
+
+@array_function_dispatch(_binary_op_dispatcher)
 def add(x1, x2):
     """
     Return element-wise string concatenation for two arrays of str or unicode.
@@ -285,6 +310,12 @@ def add(x1, x2):
     dtype = _use_unicode(arr1, arr2)
     return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
 
+
+def _multiply_dispatcher(a, i):
+    return (a,)
+
+
+@array_function_dispatch(_multiply_dispatcher)
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -309,14 +340,20 @@ def multiply(a, i):
     i_arr = numpy.asarray(i)
     if not issubclass(i_arr.dtype.type, integer):
         raise ValueError("Can only multiply by integers")
-    out_size = _get_num_chars(a_arr) * max(long(i_arr.max()), 0)
+    out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
         a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
 
+
+def _mod_dispatcher(a, values):
+    return (a, values)
+
+
+@array_function_dispatch(_mod_dispatcher)
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
-    (iterpolation), element-wise for a pair of array_likes of str
+    (interpolation), element-wise for a pair of array_likes of str
     or unicode.
 
     Parameters
@@ -331,7 +368,7 @@ def mod(a, values):
     out : ndarray
         Output array of str or unicode, depending on input types
 
-    See also
+    See Also
     --------
     str.__mod__
 
@@ -339,6 +376,8 @@ def mod(a, values):
     return _to_string_or_unicode_array(
         _vec_string(a, object_, '__mod__', (values,)))
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def capitalize(a):
     """
     Return a copy of `a` with only the first character of each element
@@ -359,7 +398,7 @@ def capitalize(a):
         Output array of str or unicode, depending on input
         types
 
-    See also
+    See Also
     --------
     str.capitalize
 
@@ -377,6 +416,11 @@ def capitalize(a):
     return _vec_string(a_arr, a_arr.dtype, 'capitalize')
 
 
+def _center_dispatcher(a, width, fillchar=None):
+    return (a,)
+
+
+@array_function_dispatch(_center_dispatcher)
 def center(a, width, fillchar=' '):
     """
     Return a copy of `a` with its elements centered in a string of
@@ -399,20 +443,25 @@ def center(a, width, fillchar=' '):
         Output array of str or unicode, depending on input
         types
 
-    See also
+    See Also
     --------
     str.center
 
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
 
 
+def _count_dispatcher(a, sub, start=None, end=None):
+    return (a,)
+
+
+@array_function_dispatch(_count_dispatcher)
 def count(a, sub, start=0, end=None):
     """
     Returns an array with the number of non-overlapping occurrences of
@@ -436,7 +485,7 @@ def count(a, sub, start=0, end=None):
     out : ndarray
         Output array of ints.
 
-    See also
+    See Also
     --------
     str.count
 
@@ -444,8 +493,7 @@ def count(a, sub, start=0, end=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.count(c, 'A')
     array([3, 1, 1])
     >>> np.char.count(c, 'aA')
@@ -456,9 +504,14 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    return _vec_string(a, integer, 'count', [sub, start] + _clean_args(end))
+    return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
 
 
+def _code_dispatcher(a, encoding=None, errors=None):
+    return (a,)
+
+
+@array_function_dispatch(_code_dispatcher)
 def decode(a, encoding=None, errors=None):
     """
     Calls `str.decode` element-wise.
@@ -481,7 +534,7 @@ def decode(a, encoding=None, errors=None):
     -------
     out : ndarray
 
-    See also
+    See Also
     --------
     str.decode
 
@@ -493,8 +546,7 @@ def decode(a, encoding=None, errors=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.encode(c, encoding='cp037')
     array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
         '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
@@ -505,6 +557,7 @@ def decode(a, encoding=None, errors=None):
         _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
 
 
+@array_function_dispatch(_code_dispatcher)
 def encode(a, encoding=None, errors=None):
     """
     Calls `str.encode` element-wise.
@@ -527,7 +580,7 @@ def encode(a, encoding=None, errors=None):
     -------
     out : ndarray
 
-    See also
+    See Also
     --------
     str.encode
 
@@ -540,6 +593,11 @@ def encode(a, encoding=None, errors=None):
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
 
 
+def _endswith_dispatcher(a, suffix, start=None, end=None):
+    return (a,)
+
+
+@array_function_dispatch(_endswith_dispatcher)
 def endswith(a, suffix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -562,7 +620,7 @@ def endswith(a, suffix, start=0, end=None):
     out : ndarray
         Outputs an array of bools.
 
-    See also
+    See Also
     --------
     str.endswith
 
@@ -572,18 +630,22 @@ def endswith(a, suffix, start=0, end=None):
     >>> s[0] = 'foo'
     >>> s[1] = 'bar'
     >>> s
-    array(['foo', 'bar'],
-        dtype='|S3')
+    array(['foo', 'bar'], dtype='<U3')
     >>> np.char.endswith(s, 'ar')
-    array([False,  True], dtype=bool)
+    array([False,  True])
     >>> np.char.endswith(s, 'a', start=1, end=2)
-    array([False,  True], dtype=bool)
+    array([False,  True])
 
     """
     return _vec_string(
         a, bool_, 'endswith', [suffix, start] + _clean_args(end))
 
 
+def _expandtabs_dispatcher(a, tabsize=None):
+    return (a,)
+
+
+@array_function_dispatch(_expandtabs_dispatcher)
 def expandtabs(a, tabsize=8):
     """
     Return a copy of each string element where all tab characters are
@@ -610,7 +672,7 @@ def expandtabs(a, tabsize=8):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.expandtabs
 
@@ -619,6 +681,7 @@ def expandtabs(a, tabsize=8):
         _vec_string(a, object_, 'expandtabs', (tabsize,)))
 
 
+@array_function_dispatch(_count_dispatcher)
 def find(a, sub, start=0, end=None):
     """
     For each element, return the lowest index in the string where
@@ -645,15 +708,16 @@ def find(a, sub, start=0, end=None):
     out : ndarray or int
         Output array of ints.  Returns -1 if `sub` is not found.
 
-    See also
+    See Also
     --------
     str.find
 
     """
     return _vec_string(
-        a, integer, 'find', [sub, start] + _clean_args(end))
+        a, int_, 'find', [sub, start] + _clean_args(end))
 
 
+@array_function_dispatch(_count_dispatcher)
 def index(a, sub, start=0, end=None):
     """
     Like `find`, but raises `ValueError` when the substring is not found.
@@ -673,14 +737,16 @@ def index(a, sub, start=0, end=None):
     out : ndarray
         Output array of ints.  Returns -1 if `sub` is not found.
 
-    See also
+    See Also
     --------
     find, str.find
 
     """
     return _vec_string(
-        a, integer, 'index', [sub, start] + _clean_args(end))
+        a, int_, 'index', [sub, start] + _clean_args(end))
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def isalnum(a):
     """
     Returns true for each element if all characters in the string are
@@ -699,12 +765,14 @@ def isalnum(a):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.isalnum
     """
     return _vec_string(a, bool_, 'isalnum')
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def isalpha(a):
     """
     Returns true for each element if all characters in the string are
@@ -723,12 +791,14 @@ def isalpha(a):
     out : ndarray
         Output array of bools
 
-    See also
+    See Also
     --------
     str.isalpha
     """
     return _vec_string(a, bool_, 'isalpha')
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def isdigit(a):
     """
     Returns true for each element if all characters in the string are
@@ -747,12 +817,14 @@ def isdigit(a):
     out : ndarray
         Output array of bools
 
-    See also
+    See Also
     --------
     str.isdigit
     """
     return _vec_string(a, bool_, 'isdigit')
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def islower(a):
     """
     Returns true for each element if all cased characters in the
@@ -772,12 +844,14 @@ def islower(a):
     out : ndarray
         Output array of bools
 
-    See also
+    See Also
     --------
     str.islower
     """
     return _vec_string(a, bool_, 'islower')
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def isspace(a):
     """
     Returns true for each element if there are only whitespace
@@ -797,12 +871,14 @@ def isspace(a):
     out : ndarray
         Output array of bools
 
-    See also
+    See Also
     --------
     str.isspace
     """
     return _vec_string(a, bool_, 'isspace')
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def istitle(a):
     """
     Returns true for each element if the element is a titlecased
@@ -821,12 +897,14 @@ def istitle(a):
     out : ndarray
         Output array of bools
 
-    See also
+    See Also
     --------
     str.istitle
     """
     return _vec_string(a, bool_, 'istitle')
 
+
+@array_function_dispatch(_unary_op_dispatcher)
 def isupper(a):
     """
     Returns true for each element if all cased characters in the
@@ -846,12 +924,18 @@ def isupper(a):
     out : ndarray
         Output array of bools
 
-    See also
+    See Also
     --------
     str.isupper
     """
     return _vec_string(a, bool_, 'isupper')
 
+
+def _join_dispatcher(sep, seq):
+    return (sep, seq)
+
+
+@array_function_dispatch(_join_dispatcher)
 def join(sep, seq):
     """
     Return a string which is the concatenation of the strings in the
@@ -869,7 +953,7 @@ def join(sep, seq):
     out : ndarray
         Output array of str or unicode, depending on input types
 
-    See also
+    See Also
     --------
     str.join
     """
@@ -877,6 +961,12 @@ def join(sep, seq):
         _vec_string(sep, object_, 'join', (seq,)))
 
 
+
+def _just_dispatcher(a, width, fillchar=None):
+    return (a,)
+
+
+@array_function_dispatch(_just_dispatcher)
 def ljust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` left-justified in a
@@ -898,20 +988,21 @@ def ljust(a, width, fillchar=' '):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.ljust
 
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
 
 
+@array_function_dispatch(_unary_op_dispatcher)
 def lower(a):
     """
     Return an array with the elements converted to lowercase.
@@ -930,24 +1021,27 @@ def lower(a):
     out : ndarray, {str, unicode}
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.lower
 
     Examples
     --------
     >>> c = np.array(['A1B C', '1BCA', 'BCA1']); c
-    array(['A1B C', '1BCA', 'BCA1'],
-          dtype='|S5')
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
     >>> np.char.lower(c)
-    array(['a1b c', '1bca', 'bca1'],
-          dtype='|S5')
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
 
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'lower')
 
 
+def _strip_dispatcher(a, chars=None):
+    return (a,)
+
+
+@array_function_dispatch(_strip_dispatcher)
 def lstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading characters
@@ -972,7 +1066,7 @@ def lstrip(a, chars=None):
     out : ndarray, {str, unicode}
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.lstrip
 
@@ -980,23 +1074,20 @@ def lstrip(a, chars=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
 
     The 'a' variable is unstripped from c[1] because whitespace leading.
 
     >>> np.char.lstrip(c, 'a')
-    array(['AaAaA', '  aA  ', 'bBABba'],
-        dtype='|S7')
+    array(['AaAaA', '  aA  ', 'bBABba'], dtype='<U7')
 
 
     >>> np.char.lstrip(c, 'A') # leaves c unchanged
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
-    ... # XXX: is this a regression? this line now returns False
+    ... # XXX: is this a regression? This used to return True
     ... # np.char.lstrip(c,'') does not modify c at all.
-    True
+    False
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, None)).all()
     True
 
@@ -1005,6 +1096,11 @@ def lstrip(a, chars=None):
     return _vec_string(a_arr, a_arr.dtype, 'lstrip', (chars,))
 
 
+def _partition_dispatcher(a, sep):
+    return (a,)
+
+
+@array_function_dispatch(_partition_dispatcher)
 def partition(a, sep):
     """
     Partition each element in `a` around `sep`.
@@ -1031,7 +1127,7 @@ def partition(a, sep):
         The output array will have an extra dimension with 3
         elements per input element.
 
-    See also
+    See Also
     --------
     str.partition
 
@@ -1040,6 +1136,11 @@ def partition(a, sep):
         _vec_string(a, object_, 'partition', (sep,)))
 
 
+def _replace_dispatcher(a, old, new, count=None):
+    return (a,)
+
+
+@array_function_dispatch(_replace_dispatcher)
 def replace(a, old, new, count=None):
     """
     For each element in `a`, return a copy of the string with all
@@ -1062,7 +1163,7 @@ def replace(a, old, new, count=None):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.replace
 
@@ -1072,6 +1173,7 @@ def replace(a, old, new, count=None):
             a, object_, 'replace', [old, new] + _clean_args(count)))
 
 
+@array_function_dispatch(_count_dispatcher)
 def rfind(a, sub, start=0, end=None):
     """
     For each element in `a`, return the highest index in the string
@@ -1095,15 +1197,16 @@ def rfind(a, sub, start=0, end=None):
     out : ndarray
        Output array of ints.  Return -1 on failure.
 
-    See also
+    See Also
     --------
     str.rfind
 
     """
     return _vec_string(
-        a, integer, 'rfind', [sub, start] + _clean_args(end))
+        a, int_, 'rfind', [sub, start] + _clean_args(end))
 
 
+@array_function_dispatch(_count_dispatcher)
 def rindex(a, sub, start=0, end=None):
     """
     Like `rfind`, but raises `ValueError` when the substring `sub` is
@@ -1124,15 +1227,16 @@ def rindex(a, sub, start=0, end=None):
     out : ndarray
        Output array of ints.
 
-    See also
+    See Also
     --------
     rfind, str.rindex
 
     """
     return _vec_string(
-        a, integer, 'rindex', [sub, start] + _clean_args(end))
+        a, int_, 'rindex', [sub, start] + _clean_args(end))
 
 
+@array_function_dispatch(_just_dispatcher)
 def rjust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` right-justified in a
@@ -1154,20 +1258,21 @@ def rjust(a, width, fillchar=' '):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.rjust
 
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
 
 
+@array_function_dispatch(_partition_dispatcher)
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
@@ -1194,7 +1299,7 @@ def rpartition(a, sep):
         type.  The output array will have an extra dimension with
         3 elements per input element.
 
-    See also
+    See Also
     --------
     str.rpartition
 
@@ -1203,6 +1308,11 @@ def rpartition(a, sep):
         _vec_string(a, object_, 'rpartition', (sep,)))
 
 
+def _split_dispatcher(a, sep=None, maxsplit=None):
+    return (a,)
+
+
+@array_function_dispatch(_split_dispatcher)
 def rsplit(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
@@ -1218,7 +1328,7 @@ def rsplit(a, sep=None, maxsplit=None):
     a : array_like of str or unicode
 
     sep : str or unicode, optional
-        If `sep` is not specified or `None`, any whitespace string
+        If `sep` is not specified or None, any whitespace string
         is a separator.
     maxsplit : int, optional
         If `maxsplit` is given, at most `maxsplit` splits are done,
@@ -1229,7 +1339,7 @@ def rsplit(a, sep=None, maxsplit=None):
     out : ndarray
        Array of list objects
 
-    See also
+    See Also
     --------
     str.rsplit, split
 
@@ -1240,6 +1350,11 @@ def rsplit(a, sep=None, maxsplit=None):
         a, object_, 'rsplit', [sep] + _clean_args(maxsplit))
 
 
+def _strip_dispatcher(a, chars=None):
+    return (a,)
+
+
+@array_function_dispatch(_strip_dispatcher)
 def rstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the trailing
@@ -1263,7 +1378,7 @@ def rstrip(a, chars=None):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.rstrip
 
@@ -1272,10 +1387,10 @@ def rstrip(a, chars=None):
     >>> c = np.array(['aAaAaA', 'abBABba'], dtype='S7'); c
     array(['aAaAaA', 'abBABba'],
         dtype='|S7')
-    >>> np.char.rstrip(c, 'a')
+    >>> np.char.rstrip(c, b'a')
     array(['aAaAaA', 'abBABb'],
         dtype='|S7')
-    >>> np.char.rstrip(c, 'A')
+    >>> np.char.rstrip(c, b'A')
     array(['aAaAa', 'abBABba'],
         dtype='|S7')
 
@@ -1284,6 +1399,7 @@ def rstrip(a, chars=None):
     return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
 
 
+@array_function_dispatch(_split_dispatcher)
 def split(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
@@ -1296,7 +1412,7 @@ def split(a, sep=None, maxsplit=None):
     a : array_like of str or unicode
 
     sep : str or unicode, optional
-       If `sep` is not specified or `None`, any whitespace string is a
+       If `sep` is not specified or None, any whitespace string is a
        separator.
 
     maxsplit : int, optional
@@ -1307,7 +1423,7 @@ def split(a, sep=None, maxsplit=None):
     out : ndarray
         Array of list objects
 
-    See also
+    See Also
     --------
     str.split, rsplit
 
@@ -1318,6 +1434,11 @@ def split(a, sep=None, maxsplit=None):
         a, object_, 'split', [sep] + _clean_args(maxsplit))
 
 
+def _splitlines_dispatcher(a, keepends=None):
+    return (a,)
+
+
+@array_function_dispatch(_splitlines_dispatcher)
 def splitlines(a, keepends=None):
     """
     For each element in `a`, return a list of the lines in the
@@ -1338,7 +1459,7 @@ def splitlines(a, keepends=None):
     out : ndarray
         Array of list objects
 
-    See also
+    See Also
     --------
     str.splitlines
 
@@ -1347,6 +1468,11 @@ def splitlines(a, keepends=None):
         a, object_, 'splitlines', _clean_args(keepends))
 
 
+def _startswith_dispatcher(a, prefix, start=None, end=None):
+    return (a,)
+
+
+@array_function_dispatch(_startswith_dispatcher)
 def startswith(a, prefix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -1369,7 +1495,7 @@ def startswith(a, prefix, start=0, end=None):
     out : ndarray
         Array of booleans
 
-    See also
+    See Also
     --------
     str.startswith
 
@@ -1378,6 +1504,7 @@ def startswith(a, prefix, start=0, end=None):
         a, bool_, 'startswith', [prefix, start] + _clean_args(end))
 
 
+@array_function_dispatch(_strip_dispatcher)
 def strip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading and
@@ -1401,7 +1528,7 @@ def strip(a, chars=None):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.strip
 
@@ -1409,23 +1536,20 @@ def strip(a, chars=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c)
-    array(['aAaAaA', 'aA', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', 'aA', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c, 'a') # 'a' unstripped from c[1] because whitespace leads
-    array(['AaAaA', '  aA  ', 'bBABb'],
-        dtype='|S7')
+    array(['AaAaA', '  aA  ', 'bBABb'], dtype='<U7')
     >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because (unprinted) ws trails
-    array(['aAaAa', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAa', '  aA  ', 'abBABba'], dtype='<U7')
 
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'strip', _clean_args(chars))
 
 
+@array_function_dispatch(_unary_op_dispatcher)
 def swapcase(a):
     """
     Return element-wise a copy of the string with
@@ -1445,7 +1569,7 @@ def swapcase(a):
     out : ndarray, {str, unicode}
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.swapcase
 
@@ -1463,6 +1587,7 @@ def swapcase(a):
     return _vec_string(a_arr, a_arr.dtype, 'swapcase')
 
 
+@array_function_dispatch(_unary_op_dispatcher)
 def title(a):
     """
     Return element-wise title cased version of string or unicode.
@@ -1484,7 +1609,7 @@ def title(a):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.title
 
@@ -1502,6 +1627,11 @@ def title(a):
     return _vec_string(a_arr, a_arr.dtype, 'title')
 
 
+def _translate_dispatcher(a, table, deletechars=None):
+    return (a,)
+
+
+@array_function_dispatch(_translate_dispatcher)
 def translate(a, table, deletechars=None):
     """
     For each element in `a`, return a copy of the string where all
@@ -1524,7 +1654,7 @@ def translate(a, table, deletechars=None):
     out : ndarray
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.translate
 
@@ -1538,6 +1668,7 @@ def translate(a, table, deletechars=None):
             a_arr, a_arr.dtype, 'translate', [table] + _clean_args(deletechars))
 
 
+@array_function_dispatch(_unary_op_dispatcher)
 def upper(a):
     """
     Return an array with the elements converted to uppercase.
@@ -1556,24 +1687,27 @@ def upper(a):
     out : ndarray, {str, unicode}
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.upper
 
     Examples
     --------
     >>> c = np.array(['a1b c', '1bca', 'bca1']); c
-    array(['a1b c', '1bca', 'bca1'],
-        dtype='|S5')
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
     >>> np.char.upper(c)
-    array(['A1B C', '1BCA', 'BCA1'],
-        dtype='|S5')
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
 
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'upper')
 
 
+def _zfill_dispatcher(a, width):
+    return (a,)
+
+
+@array_function_dispatch(_zfill_dispatcher)
 def zfill(a, width):
     """
     Return the numeric string left-filled with zeros
@@ -1592,18 +1726,19 @@ def zfill(a, width):
     out : ndarray, {str, unicode}
         Output array of str or unicode, depending on input type
 
-    See also
+    See Also
     --------
     str.zfill
 
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
 
 
+@array_function_dispatch(_unary_op_dispatcher)
 def isnumeric(a):
     """
     For each element, return True if there are only numeric
@@ -1625,7 +1760,7 @@ def isnumeric(a):
     out : ndarray, bool
         Array of booleans of same shape as `a`.
 
-    See also
+    See Also
     --------
     unicode.isnumeric
 
@@ -1635,6 +1770,7 @@ def isnumeric(a):
     return _vec_string(a, bool_, 'isnumeric')
 
 
+@array_function_dispatch(_unary_op_dispatcher)
 def isdecimal(a):
     """
     For each element, return True if there are only decimal
@@ -1643,7 +1779,7 @@ def isdecimal(a):
     Calls `unicode.isdecimal` element-wise.
 
     Decimal characters include digit characters, and all characters
-    that that can be used to form decimal-radix numbers,
+    that can be used to form decimal-radix numbers,
     e.g. ``U+0660, ARABIC-INDIC DIGIT ZERO``.
 
     Parameters
@@ -1656,7 +1792,7 @@ def isdecimal(a):
     out : ndarray, bool
         Array of booleans identical in shape to `a`.
 
-    See also
+    See Also
     --------
     unicode.isdecimal
 
@@ -1666,6 +1802,7 @@ def isdecimal(a):
     return _vec_string(a, bool_, 'isdecimal')
 
 
+@set_module('numpy')
 class chararray(ndarray):
     """
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
@@ -1698,7 +1835,7 @@ class chararray(ndarray):
     This constructor creates the array, using `buffer` (with `offset`
     and `strides`) if it is not ``None``. If `buffer` is ``None``, then
     constructs a new array with `strides` in "C order", unless both
-    ``len(shape) >= 2`` and ``order='Fortran'``, in which case `strides`
+    ``len(shape) >= 2`` and ``order='F'``, in which case `strides`
     is in "Fortran order".
 
     Methods
@@ -1775,7 +1912,7 @@ class chararray(ndarray):
     unicode : bool, optional
         Are the array elements of type unicode (True) or string (False).
         Default is False.
-    buffer : int, optional
+    buffer : object exposing the buffer interface or str, optional
         Memory address of the start of the array data.  Default is None,
         in which case a new array is created.
     offset : int, optional
@@ -1794,18 +1931,16 @@ class chararray(ndarray):
     >>> charar = np.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
-    chararray([['a', 'a', 'a'],
-           ['a', 'a', 'a'],
-           ['a', 'a', 'a']],
-          dtype='|S1')
+    chararray([[b'a', b'a', b'a'],
+               [b'a', b'a', b'a'],
+               [b'a', b'a', b'a']], dtype='|S1')
 
     >>> charar = np.chararray(charar.shape, itemsize=5)
     >>> charar[:] = 'abc'
     >>> charar
-    chararray([['abc', 'abc', 'abc'],
-           ['abc', 'abc', 'abc'],
-           ['abc', 'abc', 'abc']],
-          dtype='|S5')
+    chararray([[b'abc', b'abc', b'abc'],
+               [b'abc', b'abc', b'abc'],
+               [b'abc', b'abc', b'abc']], dtype='|S5')
 
     """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
@@ -1817,13 +1952,13 @@ class chararray(ndarray):
         else:
             dtype = string_
 
-        # force itemsize to be a Python long, since using NumPy integer
+        # force itemsize to be a Python int, since using NumPy integer
         # types results in itemsize.itemsize being used as the size of
         # strings in the new array.
-        itemsize = long(itemsize)
+        itemsize = int(itemsize)
 
-        if sys.version_info[0] >= 3 and isinstance(buffer, _unicode):
-            # On Py3, unicode objects do not have the buffer interface
+        if isinstance(buffer, str):
+            # unicode objects do not have the buffer interface
             filler = buffer
             buffer = None
         else:
@@ -1853,7 +1988,7 @@ class chararray(ndarray):
 
         if isinstance(val, character):
             temp = val.rstrip()
-            if _len(temp) == 0:
+            if len(temp) == 0:
                 val = ''
             else:
                 val = temp
@@ -1869,7 +2004,7 @@ class chararray(ndarray):
         """
         Return (self == other) element-wise.
 
-        See also
+        See Also
         --------
         equal
         """
@@ -1879,7 +2014,7 @@ class chararray(ndarray):
         """
         Return (self != other) element-wise.
 
-        See also
+        See Also
         --------
         not_equal
         """
@@ -1889,7 +2024,7 @@ class chararray(ndarray):
         """
         Return (self >= other) element-wise.
 
-        See also
+        See Also
         --------
         greater_equal
         """
@@ -1899,7 +2034,7 @@ class chararray(ndarray):
         """
         Return (self <= other) element-wise.
 
-        See also
+        See Also
         --------
         less_equal
         """
@@ -1909,7 +2044,7 @@ class chararray(ndarray):
         """
         Return (self > other) element-wise.
 
-        See also
+        See Also
         --------
         greater
         """
@@ -1919,7 +2054,7 @@ class chararray(ndarray):
         """
         Return (self < other) element-wise.
 
-        See also
+        See Also
         --------
         less
         """
@@ -1930,7 +2065,7 @@ class chararray(ndarray):
         Return (self + other), that is string concatenation,
         element-wise for a pair of array_likes of str or unicode.
 
-        See also
+        See Also
         --------
         add
         """
@@ -1941,7 +2076,7 @@ class chararray(ndarray):
         Return (other + self), that is string concatenation,
         element-wise for a pair of array_likes of `string_` or `unicode_`.
 
-        See also
+        See Also
         --------
         add
         """
@@ -1952,7 +2087,7 @@ class chararray(ndarray):
         Return (self * i), that is string multiple concatenation,
         element-wise.
 
-        See also
+        See Also
         --------
         multiply
         """
@@ -1963,7 +2098,7 @@ class chararray(ndarray):
         Return (self * i), that is string multiple concatenation,
         element-wise.
 
-        See also
+        See Also
         --------
         multiply
         """
@@ -1972,10 +2107,10 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (iterpolation), element-wise for a pair of array_likes of `string_`
+        (interpolation), element-wise for a pair of array_likes of `string_`
         or `unicode_`.
 
-        See also
+        See Also
         --------
         mod
         """
@@ -1984,7 +2119,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind='quicksort', order=None):
+    def argsort(self, axis=-1, kind=None, order=None):
         """
         Return the indices that sort the array lexicographically.
 
@@ -2010,7 +2145,7 @@ class chararray(ndarray):
         Return a copy of `self` with only the first character of each element
         capitalized.
 
-        See also
+        See Also
         --------
         char.capitalize
 
@@ -2022,7 +2157,7 @@ class chararray(ndarray):
         Return a copy of `self` with its elements centered in a
         string of length `width`.
 
-        See also
+        See Also
         --------
         center
         """
@@ -2033,7 +2168,7 @@ class chararray(ndarray):
         Returns an array with the number of non-overlapping occurrences of
         substring `sub` in the range [`start`, `end`].
 
-        See also
+        See Also
         --------
         char.count
 
@@ -2044,7 +2179,7 @@ class chararray(ndarray):
         """
         Calls `str.decode` element-wise.
 
-        See also
+        See Also
         --------
         char.decode
 
@@ -2055,7 +2190,7 @@ class chararray(ndarray):
         """
         Calls `str.encode` element-wise.
 
-        See also
+        See Also
         --------
         char.encode
 
@@ -2067,7 +2202,7 @@ class chararray(ndarray):
         Returns a boolean array which is `True` where the string element
         in `self` ends with `suffix`, otherwise `False`.
 
-        See also
+        See Also
         --------
         char.endswith
 
@@ -2079,7 +2214,7 @@ class chararray(ndarray):
         Return a copy of each string element where all tab characters are
         replaced by one or more spaces.
 
-        See also
+        See Also
         --------
         char.expandtabs
 
@@ -2091,7 +2226,7 @@ class chararray(ndarray):
         For each element, return the lowest index in the string where
         substring `sub` is found.
 
-        See also
+        See Also
         --------
         char.find
 
@@ -2102,7 +2237,7 @@ class chararray(ndarray):
         """
         Like `find`, but raises `ValueError` when the substring is not found.
 
-        See also
+        See Also
         --------
         char.index
 
@@ -2115,7 +2250,7 @@ class chararray(ndarray):
         are alphanumeric and there is at least one character, false
         otherwise.
 
-        See also
+        See Also
         --------
         char.isalnum
 
@@ -2128,7 +2263,7 @@ class chararray(ndarray):
         are alphabetic and there is at least one character, false
         otherwise.
 
-        See also
+        See Also
         --------
         char.isalpha
 
@@ -2140,7 +2275,7 @@ class chararray(ndarray):
         Returns true for each element if all characters in the string are
         digits and there is at least one character, false otherwise.
 
-        See also
+        See Also
         --------
         char.isdigit
 
@@ -2153,7 +2288,7 @@ class chararray(ndarray):
         string are lowercase and there is at least one cased character,
         false otherwise.
 
-        See also
+        See Also
         --------
         char.islower
 
@@ -2166,7 +2301,7 @@ class chararray(ndarray):
         characters in the string and there is at least one character,
         false otherwise.
 
-        See also
+        See Also
         --------
         char.isspace
 
@@ -2178,7 +2313,7 @@ class chararray(ndarray):
         Returns true for each element if the element is a titlecased
         string and there is at least one character, false otherwise.
 
-        See also
+        See Also
         --------
         char.istitle
 
@@ -2191,7 +2326,7 @@ class chararray(ndarray):
         string are uppercase and there is at least one character, false
         otherwise.
 
-        See also
+        See Also
         --------
         char.isupper
 
@@ -2203,7 +2338,7 @@ class chararray(ndarray):
         Return a string which is the concatenation of the strings in the
         sequence `seq`.
 
-        See also
+        See Also
         --------
         char.join
 
@@ -2215,7 +2350,7 @@ class chararray(ndarray):
         Return an array with the elements of `self` left-justified in a
         string of length `width`.
 
-        See also
+        See Also
         --------
         char.ljust
 
@@ -2227,7 +2362,7 @@ class chararray(ndarray):
         Return an array with the elements of `self` converted to
         lowercase.
 
-        See also
+        See Also
         --------
         char.lower
 
@@ -2239,7 +2374,7 @@ class chararray(ndarray):
         For each element in `self`, return a copy with the leading characters
         removed.
 
-        See also
+        See Also
         --------
         char.lstrip
 
@@ -2250,7 +2385,7 @@ class chararray(ndarray):
         """
         Partition each element in `self` around `sep`.
 
-        See also
+        See Also
         --------
         partition
         """
@@ -2261,7 +2396,7 @@ class chararray(ndarray):
         For each element in `self`, return a copy of the string with all
         occurrences of substring `old` replaced by `new`.
 
-        See also
+        See Also
         --------
         char.replace
 
@@ -2274,7 +2409,7 @@ class chararray(ndarray):
         where substring `sub` is found, such that `sub` is contained
         within [`start`, `end`].
 
-        See also
+        See Also
         --------
         char.rfind
 
@@ -2286,7 +2421,7 @@ class chararray(ndarray):
         Like `rfind`, but raises `ValueError` when the substring `sub` is
         not found.
 
-        See also
+        See Also
         --------
         char.rindex
 
@@ -2298,7 +2433,7 @@ class chararray(ndarray):
         Return an array with the elements of `self`
         right-justified in a string of length `width`.
 
-        See also
+        See Also
         --------
         char.rjust
 
@@ -2309,7 +2444,7 @@ class chararray(ndarray):
         """
         Partition each element in `self` around `sep`.
 
-        See also
+        See Also
         --------
         rpartition
         """
@@ -2320,7 +2455,7 @@ class chararray(ndarray):
         For each element in `self`, return a list of the words in
         the string, using `sep` as the delimiter string.
 
-        See also
+        See Also
         --------
         char.rsplit
 
@@ -2332,7 +2467,7 @@ class chararray(ndarray):
         For each element in `self`, return a copy with the trailing
         characters removed.
 
-        See also
+        See Also
         --------
         char.rstrip
 
@@ -2344,7 +2479,7 @@ class chararray(ndarray):
         For each element in `self`, return a list of the words in the
         string, using `sep` as the delimiter string.
 
-        See also
+        See Also
         --------
         char.split
 
@@ -2356,7 +2491,7 @@ class chararray(ndarray):
         For each element in `self`, return a list of the lines in the
         element, breaking at line boundaries.
 
-        See also
+        See Also
         --------
         char.splitlines
 
@@ -2368,7 +2503,7 @@ class chararray(ndarray):
         Returns a boolean array which is `True` where the string element
         in `self` starts with `prefix`, otherwise `False`.
 
-        See also
+        See Also
         --------
         char.startswith
 
@@ -2380,7 +2515,7 @@ class chararray(ndarray):
         For each element in `self`, return a copy with the leading and
         trailing characters removed.
 
-        See also
+        See Also
         --------
         char.strip
 
@@ -2392,7 +2527,7 @@ class chararray(ndarray):
         For each element in `self`, return a copy of the string with
         uppercase characters converted to lowercase and vice versa.
 
-        See also
+        See Also
         --------
         char.swapcase
 
@@ -2405,7 +2540,7 @@ class chararray(ndarray):
         string: words start with uppercase characters, all remaining cased
         characters are lowercase.
 
-        See also
+        See Also
         --------
         char.title
 
@@ -2419,7 +2554,7 @@ class chararray(ndarray):
         `deletechars` are removed, and the remaining characters have
         been mapped through the given translation table.
 
-        See also
+        See Also
         --------
         char.translate
 
@@ -2431,7 +2566,7 @@ class chararray(ndarray):
         Return an array with the elements of `self` converted to
         uppercase.
 
-        See also
+        See Also
         --------
         char.upper
 
@@ -2443,7 +2578,7 @@ class chararray(ndarray):
         Return the numeric string left-filled with zeros in a string of
         length `width`.
 
-        See also
+        See Also
         --------
         char.zfill
 
@@ -2455,7 +2590,7 @@ class chararray(ndarray):
         For each element in `self`, return True if there are only
         numeric characters in the element.
 
-        See also
+        See Also
         --------
         char.isnumeric
 
@@ -2467,7 +2602,7 @@ class chararray(ndarray):
         For each element in `self`, return True if there are only
         decimal characters in the element.
 
-        See also
+        See Also
         --------
         char.isdecimal
 
@@ -2519,7 +2654,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     unicode : bool, optional
         When true, the resulting `chararray` can contain Unicode
         characters, when false only 8-bit characters.  If unicode is
-        `None` and `obj` is one of the following:
+        None and `obj` is one of the following:
 
           - a `chararray`,
           - an ndarray of type `str` or `unicode`
@@ -2537,35 +2672,16 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
     """
-    if isinstance(obj, (_bytes, _unicode)):
+    if isinstance(obj, (bytes, str)):
         if unicode is None:
-            if isinstance(obj, _unicode):
+            if isinstance(obj, str):
                 unicode = True
             else:
                 unicode = False
 
         if itemsize is None:
-            itemsize = _len(obj)
-        shape = _len(obj) // itemsize
-
-        if unicode:
-            if sys.maxunicode == 0xffff:
-                # On a narrow Python build, the buffer for Unicode
-                # strings is UCS2, which doesn't match the buffer for
-                # NumPy Unicode types, which is ALWAYS UCS4.
-                # Therefore, we need to convert the buffer.  On Python
-                # 2.6 and later, we can use the utf_32 codec.  Earlier
-                # versions don't have that codec, so we convert to a
-                # numerical array that matches the input buffer, and
-                # then use NumPy to convert it to UCS4.  All of this
-                # should happen in native endianness.
-                obj = obj.encode('utf_32')
-            else:
-                obj = _unicode(obj)
-        else:
-            # Let the default Unicode -> string encoding (if any) take
-            # precedence.
-            obj = _bytes(obj)
+            itemsize = len(obj)
+        shape = len(obj) // itemsize
 
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj, order=order)
@@ -2604,7 +2720,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 (itemsize != obj.itemsize) or
                 (not unicode and isinstance(obj, unicode_)) or
                 (unicode and isinstance(obj, string_))):
-            obj = obj.astype((dtype, long(itemsize)))
+            obj = obj.astype((dtype, int(itemsize)))
         return obj
 
     if isinstance(obj, ndarray) and issubclass(obj.dtype.type, object):
@@ -2659,7 +2775,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     unicode : bool, optional
         When true, the resulting `chararray` can contain Unicode
         characters, when false only 8-bit characters.  If unicode is
-        `None` and `obj` is one of the following:
+        None and `obj` is one of the following:
 
           - a `chararray`,
           - an ndarray of type `str` or 'unicode`

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Build 'use others module data' mechanism for f2py2e.
@@ -15,8 +15,6 @@ $Date: 2000/09/10 12:35:43 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __version__ = "$Revision: 1.3 $"[10:-1]
 
 f2py_version = 'See `f2py -v`'

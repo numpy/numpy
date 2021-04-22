@@ -1,0 +1,26 @@
+
+Contributors
+============
+
+A total of 5 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Chris Burr +
+* Matti Picus
+* Qiming Sun +
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#14758 <https://github.com/numpy/numpy/pull/14758>`__: BLD: declare support for python 3.8
+* `#14781 <https://github.com/numpy/numpy/pull/14781>`__: BUG: random: biased samples from integers() with 8 or 16 bit...
+* `#14851 <https://github.com/numpy/numpy/pull/14851>`__: BUG: Fix _ctypes class circular reference. (#13808)
+* `#14852 <https://github.com/numpy/numpy/pull/14852>`__: BLD: add 'apt update' to shippable
+* `#14855 <https://github.com/numpy/numpy/pull/14855>`__: BUG: Fix `np.einsum` errors on Power9 Linux and z/Linux
+* `#14857 <https://github.com/numpy/numpy/pull/14857>`__: BUG: lib: Fix histogram problem with signed integer arrays.
+* `#14858 <https://github.com/numpy/numpy/pull/14858>`__: BLD: Prevent -flto from optimising long double representation...
+* `#14866 <https://github.com/numpy/numpy/pull/14866>`__: MAINT: move buffer.h -> npy_buffer.h to avoid conflicts

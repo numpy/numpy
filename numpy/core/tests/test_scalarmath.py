@@ -1,16 +1,19 @@
-from __future__ import division, absolute_import, print_function
-
+import contextlib
 import sys
 import warnings
 import itertools
 import operator
+import platform
+import pytest
+from hypothesis import given, settings, Verbosity, assume
+from hypothesis.strategies import sampled_from
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
-    suppress_warnings, dec, _gen_alignment_data,
-)
+    assert_, assert_equal, assert_raises, assert_almost_equal,
+    assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
+    assert_warns, assert_raises_regex,
+    )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -23,7 +26,7 @@ complex_floating_types = np.complexfloating.__subclasses__()
 
 # This compares scalarmath against ufuncs.
 
-class TestTypes(object):
+class TestTypes:
     def test_types(self):
         for atype in types:
             a = atype(1)
@@ -62,7 +65,7 @@ class TestTypes(object):
             np.add(1, 1)
 
 
-class TestBaseMath(object):
+class TestBaseMath:
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1
@@ -84,7 +87,7 @@ class TestBaseMath(object):
                 assert_almost_equal(np.square(inp2),
                                     np.multiply(inp2, inp2),  err_msg=msg)
                 # skip true divide for ints
-                if dt != np.int32 or (sys.version_info.major < 3 and not sys.py3kwarning):
+                if dt != np.int32:
                     assert_almost_equal(np.reciprocal(inp2),
                                         np.divide(1, inp2),  err_msg=msg)
 
@@ -108,7 +111,7 @@ class TestBaseMath(object):
         np.add(d, np.ones_like(d))
 
 
-class TestPower(object):
+class TestPower:
     def test_small_types(self):
         for t in [np.int8, np.int16, np.float16]:
             a = t(3)
@@ -134,7 +137,7 @@ class TestPower(object):
         # 1 ** -1 possible special case
         base = [np.array(1, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -144,7 +147,7 @@ class TestPower(object):
         # -1 ** -1 possible special case
         base = [np.array(-1, dt)[()] for dt in 'bhilq']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -154,7 +157,7 @@ class TestPower(object):
         # 2 ** -1 perhaps generic
         base = [np.array(2, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -182,7 +185,7 @@ class TestPower(object):
         a = 5
         b = 4
         c = 10
-        expected = pow(a, b, c)
+        expected = pow(a, b, c)  # noqa: F841
         for t in (np.int32, np.float32, np.complex64):
             # note that 3-operand power only dispatches on the first argument
             assert_raises(TypeError, operator.pow, t(a), b, c)
@@ -200,7 +203,7 @@ def _signs(dt):
         return (+1, -1)
 
 
-class TestModulus(object):
+class TestModulus:
 
     def test_modulus_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
@@ -276,6 +279,10 @@ class TestModulus(object):
         # Check nans, inf
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
+            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -290,9 +297,22 @@ class TestModulus(object):
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
+                for op in [floordiv_and_mod, divmod]:
+                    div, mod = op(fone, fzer)
+                    assert_(np.isinf(div)) and assert_(np.isnan(mod))
+
+    def test_inplace_floordiv_handling(self):
+        # issue gh-12927
+        # this only applies to in-place floordiv //=, because the output type
+        # promotes to float which does not fit
+        a = np.array([1, 2], np.int64)
+        b = np.array([1, 2], np.uint64)
+        pattern = 'could not be coerced to provided output parameter'
+        with assert_raises_regex(TypeError, pattern):
+            a //= b
 
 
-class TestComplexDivision(object):
+class TestComplexDivision:
     def test_zero_division(self):
         with np.errstate(all="ignore"):
             for t in [np.complex64, np.complex128]:
@@ -364,7 +384,7 @@ class TestComplexDivision(object):
                     assert_equal(result.imag, ex[1])
 
 
-class TestConversion(object):
+class TestConversion:
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
@@ -387,18 +407,18 @@ class TestConversion(object):
             assert_(res == tgt)
 
         for code in np.typecodes['AllInteger']:
-            res = np.typeDict[code](np.iinfo(code).max)
+            res = np.dtype(code).type(np.iinfo(code).max)
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 
     def test_int_raise_behaviour(self):
         def overflow_error_func(dtype):
-            np.typeDict[dtype](np.iinfo(dtype).max + 1)
+            dtype(np.iinfo(dtype).max + 1)
 
-        for code in 'lLqQ':
+        for code in [np.int_, np.uint, np.longlong, np.ulonglong]:
             assert_raises(OverflowError, overflow_error_func, code)
 
-    def test_longdouble_int(self):
+    def test_int_from_infinite_longdouble(self):
         # gh-627
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, int, x)
@@ -408,15 +428,34 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY)
-    def test_clongdouble___int__(self):
+    @pytest.mark.skipif(not IS_PYPY, reason="Test is PyPy only (gh-9972)")
+    def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
         with suppress_warnings() as sup:
             sup.record(np.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
-            self.assertEqual(len(sup.log), 1)
+            assert_equal(len(sup.log), 1)
+
+    @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+                        reason="long double is same as double")
+    @pytest.mark.skipif(platform.machine().startswith("ppc"),
+                        reason="IBM double double")
+    def test_int_from_huge_longdouble(self):
+        # Produce a longdouble that would overflow a double,
+        # use exponent that avoids bug in Darwin pow function.
+        exp = np.finfo(np.double).maxexp - 1
+        huge_ld = 2 * 1234 * np.longdouble(2) ** exp
+        huge_i = 2 * 1234 * 2 ** exp
+        assert_(huge_ld != np.inf)
+        assert_equal(int(huge_ld), huge_i)
+
+    def test_int_from_longdouble(self):
+        x = np.longdouble(1.5)
+        assert_equal(int(x), 1)
+        x = np.longdouble(-10.5)
+        assert_equal(int(x), -10)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer
@@ -481,7 +520,7 @@ class TestConversion(object):
         assert_(np.equal(np.datetime64('NaT'), None))
 
 
-#class TestRepr(object):
+#class TestRepr:
 #    def test_repr(self):
 #        for t in types:
 #            val = t(1197346475.0137341)
@@ -490,7 +529,7 @@ class TestConversion(object):
 #            assert_equal( val, val2 )
 
 
-class TestRepr(object):
+class TestRepr:
     def _test_type_repr(self, t):
         finfo = np.finfo(t)
         last_fraction_bit_idx = finfo.nexp + finfo.nmant
@@ -498,7 +537,7 @@ class TestRepr(object):
         storage_bytes = np.dtype(t).itemsize*8
         # could add some more types to the list below
         for which in ['small denorm', 'small norm']:
-            # Values from http://en.wikipedia.org/wiki/IEEE_754
+            # Values from https://en.wikipedia.org/wiki/IEEE_754
             constr = np.array([0x00]*storage_bytes, dtype=np.uint8)
             if which == 'small denorm':
                 byte = last_fraction_bit_idx // 8
@@ -520,12 +559,12 @@ class TestRepr(object):
         # long double test cannot work, because eval goes through a python
         # float
         for t in [np.float32, np.float64]:
-            yield self._test_type_repr, t
+            self._test_type_repr(t)
 
 
 if not IS_PYPY:
     # sys.getsizeof() is not valid on PyPy
-    class TestSizeOf(object):
+    class TestSizeOf:
 
         def test_equal_nbytes(self):
             for type in types:
@@ -537,22 +576,35 @@ if not IS_PYPY:
             assert_raises(TypeError, d.__sizeof__, "a")
 
 
-class TestMultiply(object):
+class TestMultiply:
     def test_seq_repeat(self):
         # Test that basic sequences get repeated when multiplied with
         # numpy integers. And errors are raised when multiplied with others.
         # Some of this behaviour may be controversial and could be open for
         # change.
+        accepted_types = set(np.typecodes["AllInteger"])
+        deprecated_types = {'?'}
+        forbidden_types = (
+            set(np.typecodes["All"]) - accepted_types - deprecated_types)
+        forbidden_types -= {'V'}  # can't default-construct void scalars
+
         for seq_type in (list, tuple):
             seq = seq_type([1, 2, 3])
-            for numpy_type in np.typecodes["AllInteger"]:
+            for numpy_type in accepted_types:
                 i = np.dtype(numpy_type).type(2)
                 assert_equal(seq * i, seq * int(i))
                 assert_equal(i * seq, int(i) * seq)
 
-            for numpy_type in np.typecodes["All"].replace("V", ""):
-                if numpy_type in np.typecodes["AllInteger"]:
-                    continue
+            for numpy_type in deprecated_types:
+                i = np.dtype(numpy_type).type()
+                assert_equal(
+                    assert_warns(DeprecationWarning, operator.mul, seq, i),
+                    seq * int(i))
+                assert_equal(
+                    assert_warns(DeprecationWarning, operator.mul, i, seq),
+                    int(i) * seq)
+
+            for numpy_type in forbidden_types:
                 i = np.dtype(numpy_type).type()
                 assert_raises(TypeError, operator.mul, seq, i)
                 assert_raises(TypeError, operator.mul, i, seq)
@@ -561,7 +613,7 @@ class TestMultiply(object):
         # Test that an array-like which does not know how to be multiplied
         # does not attempt sequence repeat (raise TypeError).
         # See also gh-7428.
-        class ArrayLike(object):
+        class ArrayLike:
             def __init__(self, arr):
                 self.arr = arr
             def __array__(self):
@@ -575,7 +627,7 @@ class TestMultiply(object):
             assert_array_equal(np.int_(3) * arr_like, np.full(3, 3))
 
 
-class TestNegative(object):
+class TestNegative:
     def test_exceptions(self):
         a = np.ones((), dtype=np.bool_)[()]
         assert_raises(TypeError, operator.neg, a)
@@ -589,7 +641,7 @@ class TestNegative(object):
                 assert_equal(operator.neg(a) + a, 0)
 
 
-class TestSubtract(object):
+class TestSubtract:
     def test_exceptions(self):
         a = np.ones((), dtype=np.bool_)[()]
         assert_raises(TypeError, operator.sub, a, a)
@@ -603,34 +655,136 @@ class TestSubtract(object):
                 assert_equal(operator.sub(a, a), 0)
 
 
-class TestAbs(object):
-    def _test_abs_func(self, absfunc):
-        for tp in floating_types + complex_floating_types:
-            x = tp(-1.5)
-            assert_equal(absfunc(x), 1.5)
-            x = tp(0.0)
-            res = absfunc(x)
-            # assert_equal() checks zero signedness
-            assert_equal(res, 0.0)
-            x = tp(-0.0)
-            res = absfunc(x)
-            assert_equal(res, 0.0)
+class TestAbs:
+    def _test_abs_func(self, absfunc, test_dtype):
+        x = test_dtype(-1.5)
+        assert_equal(absfunc(x), 1.5)
+        x = test_dtype(0.0)
+        res = absfunc(x)
+        # assert_equal() checks zero signedness
+        assert_equal(res, 0.0)
+        x = test_dtype(-0.0)
+        res = absfunc(x)
+        assert_equal(res, 0.0)
 
-            x = tp(np.finfo(tp).max)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).max)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).tiny)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).tiny)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).min)
-            assert_equal(absfunc(x), -x.real)
+        x = test_dtype(np.finfo(test_dtype).min)
+        assert_equal(absfunc(x), -x.real)
 
-    def test_builtin_abs(self):
-        self._test_abs_func(abs)
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_builtin_abs(self, dtype):
+        self._test_abs_func(abs, dtype)
 
-    def test_numpy_abs(self):
-        self._test_abs_func(np.abs)
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_numpy_abs(self, dtype):
+        self._test_abs_func(np.abs, dtype)
+
+class TestBitShifts:
+
+    @pytest.mark.parametrize('type_code', np.typecodes['AllInteger'])
+    @pytest.mark.parametrize('op',
+        [operator.rshift, operator.lshift], ids=['>>', '<<'])
+    def test_shift_all_bits(self, type_code, op):
+        """ Shifts where the shift amount is the width of the type or wider """
+        # gh-2449
+        dt = np.dtype(type_code)
+        nbits = dt.itemsize * 8
+        for val in [5, -5]:
+            for shift in [nbits, nbits + 4]:
+                val_scl = dt.type(val)
+                shift_scl = dt.type(shift)
+                res_scl = op(val_scl, shift_scl)
+                if val_scl < 0 and op is operator.rshift:
+                    # sign bit is preserved
+                    assert_equal(res_scl, -1)
+                else:
+                    assert_equal(res_scl, 0)
+
+                # Result on scalars should be the same as on arrays
+                val_arr = np.array([val]*32, dtype=dt)
+                shift_arr = np.array([shift]*32, dtype=dt)
+                res_arr = op(val_arr, shift_arr)
+                assert_equal(res_arr, res_scl)
 
 
-if __name__ == "__main__":
-    run_module_suite()
+@contextlib.contextmanager
+def recursionlimit(n):
+    o = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(n)
+        yield
+    finally:
+        sys.setrecursionlimit(o)
+
+
+objecty_things = [object(), None]
+reasonable_operators_for_scalars = [
+    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
+    operator.gt, operator.add, operator.floordiv, operator.mod,
+    operator.mul, operator.matmul, operator.pow, operator.sub,
+    operator.truediv,
+]
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+@settings(verbosity=Verbosity.verbose)
+def test_operator_object_left(o, op, type_):
+    try:
+        with recursionlimit(200):
+            op(o, type_(1))
+    except TypeError:
+        pass
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+def test_operator_object_right(o, op, type_):
+    try:
+        with recursionlimit(200):
+            op(type_(1), o)
+    except TypeError:
+        pass
+
+
+@given(sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types),
+       sampled_from(types))
+def test_operator_scalars(op, type1, type2):
+    try:
+        op(type1(1), type2(1))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_longdouble_inf_loop(op):
+    try:
+        op(np.longdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_clongdouble_inf_loop(op):
+    if op in {operator.mod} and False:
+        pytest.xfail("The modulo operator is known to be broken")
+    try:
+        op(np.clongdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass

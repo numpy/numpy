@@ -5,16 +5,11 @@
 :contact: pierregm_at_uga_dot_edu
 
 """
-from __future__ import division, absolute_import, print_function
-
-import warnings
-import pickle
-
 import numpy as np
 import numpy.ma as ma
 from numpy import recarray
 from numpy.ma import masked, nomask
-from numpy.testing import run_module_suite, temppath
+from numpy.testing import temppath
 from numpy.core.records import (
     fromrecords as recfromrecords, fromarrays as recfromarrays
     )
@@ -26,9 +21,10 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
+from numpy.compat import pickle
 
 
-class TestMRecords(object):
+class TestMRecords:
 
     ilist = [1, 2, 3, 4, 5]
     flist = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -288,12 +284,13 @@ class TestMRecords(object):
         # Test pickling
         base = self.base.copy()
         mrec = base.view(mrecarray)
-        _ = pickle.dumps(mrec)
-        mrec_ = pickle.loads(_)
-        assert_equal(mrec_.dtype, mrec.dtype)
-        assert_equal_records(mrec_._data, mrec._data)
-        assert_equal(mrec_._mask, mrec._mask)
-        assert_equal_records(mrec_._mask, mrec._mask)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            _ = pickle.dumps(mrec, protocol=proto)
+            mrec_ = pickle.loads(_)
+            assert_equal(mrec_.dtype, mrec.dtype)
+            assert_equal_records(mrec_._data, mrec._data)
+            assert_equal(mrec_._mask, mrec._mask)
+            assert_equal_records(mrec_._mask, mrec._mask)
 
     def test_filled(self):
         # Test filling the array
@@ -349,7 +346,7 @@ class TestMRecords(object):
                                       dtype=mult.dtype))
 
 
-class TestView(object):
+class TestView:
 
     def setup(self):
         (a, b) = (np.arange(10), np.random.rand(10))
@@ -387,7 +384,7 @@ class TestView(object):
 
 
 ##############################################################################
-class TestMRecordsImport(object):
+class TestMRecordsImport:
 
     _a = ma.array([1, 2, 3], mask=[0, 0, 1], dtype=int)
     _b = ma.array([1.1, 2.2, 3.3], mask=[0, 0, 1], dtype=float)
@@ -494,7 +491,3 @@ def test_record_array_with_object_field():
         dtype=[('a', int), ('b', object)])
     # getting an item used to fail
     y[1]
-
-
-if __name__ == "__main__":
-    run_module_suite()

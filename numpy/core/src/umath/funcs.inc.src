@@ -8,6 +8,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 
 /*
@@ -25,23 +26,19 @@ Py_square(PyObject *o)
 static PyObject *
 Py_get_one(PyObject *NPY_UNUSED(o))
 {
-    return PyInt_FromLong(1);
+    return PyLong_FromLong(1);
 }
 
 static PyObject *
 Py_reciprocal(PyObject *o)
 {
-    PyObject *one = PyInt_FromLong(1);
+    PyObject *one = PyLong_FromLong(1);
     PyObject *result;
 
     if (!one) {
         return NULL;
     }
-#if defined(NPY_PY3K)
     result = PyNumber_TrueDivide(one, o);
-#else
-    result = PyNumber_Divide(one, o);
-#endif
     Py_DECREF(one);
     return result;
 }
@@ -158,6 +155,118 @@ npy_ObjectLogicalNot(PyObject *i1)
     }
 }
 
+static PyObject *
+npy_ObjectFloor(PyObject *obj) {
+    static PyObject *math_floor_func = NULL;
+
+    npy_cache_import("math", "floor", &math_floor_func);
+    if (math_floor_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_floor_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectCeil(PyObject *obj) {
+    static PyObject *math_ceil_func = NULL;
+
+    npy_cache_import("math", "ceil", &math_ceil_func);
+    if (math_ceil_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_ceil_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectTrunc(PyObject *obj) {
+    static PyObject *math_trunc_func = NULL;
+
+    npy_cache_import("math", "trunc", &math_trunc_func);
+    if (math_trunc_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_trunc_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectGCD(PyObject *i1, PyObject *i2)
+{
+    PyObject *gcd = NULL;
+
+    /* use math.gcd if valid on the provided types */
+    {
+        static PyObject *math_gcd_func = NULL;
+
+        npy_cache_import("math", "gcd", &math_gcd_func);
+        if (math_gcd_func == NULL) {
+            return NULL;
+        }
+        gcd = PyObject_CallFunction(math_gcd_func, "OO", i1, i2);
+        if (gcd != NULL) {
+            return gcd;
+        }
+        /* silence errors, and fall back on pure-python gcd */
+        PyErr_Clear();
+    }
+
+    /* otherwise, use our internal one, written in python */
+    {
+        static PyObject *internal_gcd_func = NULL;
+
+        npy_cache_import("numpy.core._internal", "_gcd", &internal_gcd_func);
+        if (internal_gcd_func == NULL) {
+            return NULL;
+        }
+        gcd = PyObject_CallFunction(internal_gcd_func, "OO", i1, i2);
+        if (gcd == NULL) {
+            return NULL;
+        }
+        /* _gcd has some unusual behaviour regarding sign */
+        Py_SETREF(gcd, PyNumber_Absolute(gcd));
+        return gcd;
+    }
+}
+
+static PyObject *
+npy_ObjectLCM(PyObject *i1, PyObject *i2)
+{
+    /* lcm(a, b) = abs(a // gcd(a, b) * b) */
+
+    PyObject *gcd = npy_ObjectGCD(i1, i2);
+    PyObject *tmp;
+    if(gcd == NULL) {
+        return NULL;
+    }
+    /* Floor divide preserves integer types - we know the division will have
+     * no remainder
+     */
+    tmp = PyNumber_FloorDivide(i1, gcd);
+    Py_DECREF(gcd);
+    if(tmp == NULL) {
+        return NULL;
+    }
+
+    Py_SETREF(tmp, PyNumber_Multiply(tmp, i2));
+    if(tmp == NULL) {
+        return NULL;
+    }
+
+    /* even though we fix gcd to be positive, we need to do it again here */
+    Py_SETREF(tmp,  PyNumber_Absolute(tmp));
+    return tmp;
+}
+
+
+static PyObject *
+npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
+    PyObject *o = npy_ObjectMax(arr, min);
+    if (o == NULL) {
+        return NULL;
+    }
+    Py_SETREF(o, npy_ObjectMin(o, max));
+    return o;
+}
+
 /*
  *****************************************************************************
  **                           COMPLEX FUNCTIONS                             **
@@ -245,9 +354,9 @@ nc_exp2@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_expm1@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ a = npy_exp@c@(x->real);
-    r->real = a*npy_cos@c@(x->imag) - 1.0@c@;
-    r->imag = a*npy_sin@c@(x->imag);
+    @ftype@ a = npy_sin@c@(x->imag / 2);
+    r->real = npy_expm1@c@(x->real) * npy_cos@c@(x->imag) - 2 * a * a;
+    r->imag = npy_exp@c@(x->real) * npy_sin@c@(x->imag);
     return;
 }
 

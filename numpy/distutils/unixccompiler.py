@@ -2,20 +2,15 @@
 unixccompiler - can handle very long argument lists for ar.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
+import sys
+import subprocess
 
-from distutils.errors import DistutilsExecError, CompileError
-from distutils.unixccompiler import *
+from distutils.errors import CompileError, DistutilsExecError, LibError
+from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.ccompiler import replace_method
-from numpy.distutils.compat import get_exception
 from numpy.distutils.misc_util import _commandline_dep_string
-
-if sys.version_info[0] < 3:
-    from . import log
-else:
-    from numpy.distutils import log
+from numpy.distutils import log
 
 # Note that UnixCCompiler._compile appeared in Python 2.3
 def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
@@ -33,7 +28,8 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         self.compiler_so = ccomp
     # ensure OPT environment variable is read
     if 'OPT' in os.environ:
-        from distutils.sysconfig import get_config_vars
+        # XXX who uses this?
+        from sysconfig import get_config_vars
         opt = " ".join(os.environ['OPT'].split())
         gcv_opt = " ".join(get_config_vars('OPT')[0].split())
         ccomp_s = " ".join(self.compiler_so)
@@ -56,13 +52,19 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
     try:
         self.spawn(self.compiler_so + cc_args + [src, '-o', obj] + deps +
                    extra_postargs, display = display)
-    except DistutilsExecError:
-        msg = str(get_exception())
-        raise CompileError(msg)
+    except DistutilsExecError as e:
+        msg = str(e)
+        raise CompileError(msg) from None
 
     # add commandline flags to dependency file
-    with open(obj + '.d', 'a') as f:
-        f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
+    if deps:
+        # After running the compiler, the file created will be in EBCDIC
+        # but will not be tagged as such. This tags it so the file does not
+        # have multiple different encodings being written to it
+        if sys.platform == 'zos':
+            subprocess.check_output(['chtag', '-tc', 'IBM1047', obj + '.d'])
+        with open(obj + '.d', 'a') as f:
+            f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
 
 replace_method(UnixCCompiler, '_compile', UnixCCompiler__compile)
 
@@ -127,9 +129,9 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
             try:
                 self.spawn(self.ranlib + [output_filename],
                            display = display)
-            except DistutilsExecError:
-                msg = str(get_exception())
-                raise LibError(msg)
+            except DistutilsExecError as e:
+                msg = str(e)
+                raise LibError(msg) from None
     else:
         log.debug("skipping %s (up-to-date)", output_filename)
     return

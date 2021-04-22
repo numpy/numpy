@@ -1,21 +1,20 @@
-from __future__ import division, absolute_import, print_function
+import platform
+import pytest
 
 from numpy import array
-from numpy.compat import long
-from numpy.testing import run_module_suite, assert_, assert_raises, dec
+from numpy.testing import assert_, assert_raises
 from . import util
 
 
 class TestReturnReal(util.F2PyTest):
 
-    def check_function(self, t):
-        if t.__doc__.split()[0] in ['t0', 't4', 's0', 's4']:
+    def check_function(self, t, tname):
+        if tname in ['t0', 't4', 's0', 's4']:
             err = 1e-5
         else:
             err = 0.0
         assert_(abs(t(234) - 234.0) <= err)
         assert_(abs(t(234.6) - 234.6) <= err)
-        assert_(abs(t(long(234)) - 234.0) <= err)
         assert_(abs(t('234') - 234) <= err)
         assert_(abs(t('234.6') - 234.6) <= err)
         assert_(abs(t(-234) + 234) <= err)
@@ -31,7 +30,7 @@ class TestReturnReal(util.F2PyTest):
         assert_(abs(t(array([234], 'B')) - 234.) <= err)
         assert_(abs(t(array([234], 'f')) - 234.) <= err)
         assert_(abs(t(array([234], 'd')) - 234.) <= err)
-        if t.__doc__.split()[0] in ['t0', 't4', 's0', 's4']:
+        if tname in ['t0', 't4', 's0', 's4']:
             assert_(t(1e200) == t(1e300))  # inf
 
         #assert_raises(ValueError, t, array([234], 'S1'))
@@ -50,6 +49,11 @@ class TestReturnReal(util.F2PyTest):
             pass
 
 
+
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason="Prone to error when run with numpy/f2py/tests on mac os, "
+           "but not when run in isolation")
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"
     module_name = "c_ext_return_real"
@@ -82,10 +86,9 @@ end interface
 end python module c_ext_return_real
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t4,t8,s4,s8".split(","):
-            self.check_function(getattr(self.module, name))
+    @pytest.mark.parametrize('name', 't4,t8,s4,s8'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module, name), name)
 
 
 class TestF77ReturnReal(TestReturnReal):
@@ -137,10 +140,9 @@ cf2py    intent(out) td
        end
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
-            self.check_function(getattr(self.module, name))
+    @pytest.mark.parametrize('name', 't0,t4,t8,td,s0,s4,s8,sd'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module, name), name)
 
 
 class TestF90ReturnReal(TestReturnReal):
@@ -196,11 +198,6 @@ module f90_return_real
 end module f90_return_real
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
-            self.check_function(getattr(self.module.f90_return_real, name))
-
-
-if __name__ == "__main__":
-    run_module_suite()
+    @pytest.mark.parametrize('name', 't0,t4,t8,td,s0,s4,s8,sd'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module.f90_return_real, name), name)

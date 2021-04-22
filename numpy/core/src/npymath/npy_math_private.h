@@ -25,7 +25,6 @@
 #include "npy_fpmath.h"
 
 #include "numpy/npy_math.h"
-#include "numpy/npy_cpu.h"
 #include "numpy/npy_endian.h"
 #include "numpy/npy_common.h"
 
@@ -287,8 +286,7 @@ do {                                                            \
     typedef npy_uint32 ldouble_man_t;
     typedef npy_uint32 ldouble_exp_t;
     typedef npy_uint32 ldouble_sign_t;
-#elif defined(HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_BE) || \
-      defined(HAVE_LDOUBLE_IEEE_DOUBLE_BE)
+#elif defined(HAVE_LDOUBLE_IEEE_DOUBLE_BE)
     /* 64 bits IEEE double precision aligned on 16 bytes: used by ppc arch on
      * Mac OS X */
 
@@ -435,8 +433,8 @@ do {                                                            \
     typedef npy_uint32 ldouble_sign_t;
 #endif
 
-#if !defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) && \
-    !defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE)
+#if !defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE) && \
+    !defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE)
 /* Get the sign bit of x. x should be of type IEEEl2bitsrep */
 #define GET_LDOUBLE_SIGN(x) \
     (((x).a[LDBL_SIGN_INDEX] & LDBL_SIGN_MASK) >> LDBL_SIGN_SHIFT)
@@ -477,7 +475,7 @@ do {                                                            \
      ((x).a[LDBL_MANH_INDEX] & ~LDBL_MANH_MASK) |                       \
      (((IEEEl2bitsrep_part)(v) << LDBL_MANH_SHIFT) & LDBL_MANH_MASK))
 
-#endif /* #ifndef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE */
+#endif /* !HAVE_LDOUBLE_DOUBLE_DOUBLE_* */
 
 /*
  * Those unions are used to convert a pointer of npy_cdouble to native C99

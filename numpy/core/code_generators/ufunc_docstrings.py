@@ -9,7 +9,6 @@ for the ufuncs in numpy.core at the C level when the ufuncs are created
 at compile time.
 
 """
-from __future__ import division, absolute_import, print_function
 import textwrap
 
 docdict = {}
@@ -18,23 +17,50 @@ def get(name):
     return docdict.get(name)
 
 # common parameter text to all ufuncs
-_params_text = textwrap.dedent("""
-    out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If provided, it must have
-        a shape that the inputs broadcast to. If not provided or `None`,
-        a freshly-allocated array is returned. A tuple (possible only as a
-        keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-        Values of True indicate to calculate the ufunc at that position, values
-        of False indicate to leave the value in the output alone.
-    **kwargs
-        For other keyword-only arguments, see the
-        :ref:`ufunc docs <ufuncs.kwargs>`.
-""").strip()
+subst = {
+    'PARAMS': textwrap.dedent("""
+        out : ndarray, None, or tuple of ndarray and None, optional
+            A location into which the result is stored. If provided, it must have
+            a shape that the inputs broadcast to. If not provided or None,
+            a freshly-allocated array is returned. A tuple (possible only as a
+            keyword argument) must have length equal to the number of outputs.
+        where : array_like, optional
+            This condition is broadcast over the input. At locations where the
+            condition is True, the `out` array will be set to the ufunc result.
+            Elsewhere, the `out` array will retain its original value.
+            Note that if an uninitialized `out` array is created via the default
+            ``out=None``, locations within it where the condition is False will
+            remain uninitialized.
+        **kwargs
+            For other keyword-only arguments, see the
+            :ref:`ufunc docs <ufuncs.kwargs>`.
+    """).strip(),
+    'BROADCASTABLE_2': ("If ``x1.shape != x2.shape``, they must be "
+                        "broadcastable to a common\n    shape (which becomes "
+                        "the shape of the output)."),
+    'OUT_SCALAR_1': "This is a scalar if `x` is a scalar.",
+    'OUT_SCALAR_2': "This is a scalar if both `x1` and `x2` are scalars.",
+}
 
 def add_newdoc(place, name, doc):
     doc = textwrap.dedent(doc).strip()
-    doc = doc.replace('$PARAMS', _params_text)
+
+    skip = (
+        # gufuncs do not use the OUT_SCALAR replacement strings
+        'matmul',
+        # clip has 3 inputs, which is not handled by this
+        'clip',
+    )
+    if name[0] != '_' and name not in skip:
+        if '\nx :' in doc:
+            assert '$OUT_SCALAR_1' in doc, "in {}".format(name)
+        elif '\nx2 :' in doc or '\nx1, x2 :' in doc:
+            assert '$OUT_SCALAR_2' in doc, "in {}".format(name)
+        else:
+            assert False, "Could not detect number of inputs in {}".format(name)
+
+    for k, v in subst.items():
+        doc = doc.replace('$' + k, v)
 
     docdict['.'.join((place, name))] = doc
 
@@ -42,6 +68,8 @@ def add_newdoc(place, name, doc):
 add_newdoc('numpy.core.umath', 'absolute',
     """
     Calculate the absolute value element-wise.
+
+    ``np.abs`` is a shorthand for this function.
 
     Parameters
     ----------
@@ -55,6 +83,7 @@ add_newdoc('numpy.core.umath', 'absolute',
         An ndarray containing the absolute value of
         each element in `x`.  For complex input, ``a + ib``, the
         absolute value is :math:`\\sqrt{ a^2 + b^2 }`.
+        $OUT_SCALAR_1
 
     Examples
     --------
@@ -78,6 +107,13 @@ add_newdoc('numpy.core.umath', 'absolute',
     >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10], cmap='gray')
     >>> plt.show()
 
+    The `abs` function can be used as a shorthand for ``np.absolute`` on
+    ndarrays.
+
+    >>> x = np.array([-1.2, 1.2])
+    >>> abs(x)
+    array([1.2, 1.2])
+
     """)
 
 add_newdoc('numpy.core.umath', 'add',
@@ -87,16 +123,15 @@ add_newdoc('numpy.core.umath', 'add',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays to be added.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        The arrays to be added.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     add : ndarray or scalar
-        The sum of `x1` and `x2`, element-wise.  Returns a scalar if
-        both  `x1` and `x2` are scalars.
+        The sum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -113,6 +148,14 @@ add_newdoc('numpy.core.umath', 'add',
            [  3.,   5.,   7.],
            [  6.,   8.,  10.]])
 
+    The ``+`` operator can be used as a shorthand for ``np.add`` on ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 + x2
+    array([[ 0.,  2.,  4.],
+           [ 3.,  5.,  7.],
+           [ 6.,  8., 10.]])
     """)
 
 add_newdoc('numpy.core.umath', 'arccos',
@@ -132,9 +175,8 @@ add_newdoc('numpy.core.umath', 'arccos',
     -------
     angle : ndarray
         The angle of the ray intersecting the unit circle at the given
-        `x`-coordinate in radians [0, pi]. If `x` is a scalar then a
-        scalar is returned, otherwise an array of the same shape as `x`
-        is returned.
+        `x`-coordinate in radians [0, pi].
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -143,7 +185,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     Notes
     -----
     `arccos` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `cos(z) = x`. The convention is to return
+    many numbers `z` such that ``cos(z) = x``. The convention is to return
     the angle `z` whose real part lies in `[0, pi]`.
 
     For real-valued input data types, `arccos` always returns real output.
@@ -151,7 +193,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arccos` is a complex analytic function that
-    has branch cuts `[-inf, -1]` and `[1, inf]` and is continuous from
+    has branch cuts ``[-inf, -1]`` and `[1, inf]` and is continuous from
     above on the former and from below on the latter.
 
     The inverse `cos` is also known as `acos` or cos^-1.
@@ -192,6 +234,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     -------
     arccosh : ndarray
         Array of the same shape as `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -202,7 +245,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     -----
     `arccosh` is a multivalued function: for each `x` there are infinitely
     many numbers `z` such that `cosh(z) = x`. The convention is to return the
-    `z` whose imaginary part lies in `[-pi, pi]` and the real part in
+    `z` whose imaginary part lies in ``[-pi, pi]`` and the real part in
     ``[0, inf]``.
 
     For real-valued input data types, `arccosh` always returns real output.
@@ -217,7 +260,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
     .. [2] Wikipedia, "Inverse hyperbolic function",
-           http://en.wikipedia.org/wiki/Arccosh
+           https://en.wikipedia.org/wiki/Arccosh
 
     Examples
     --------
@@ -242,8 +285,8 @@ add_newdoc('numpy.core.umath', 'arcsin',
     -------
     angle : ndarray
         The inverse sine of each element in `x`, in radians and in the
-        closed interval ``[-pi/2, pi/2]``.  If `x` is a scalar, a scalar
-        is returned, otherwise an array.
+        closed interval ``[-pi/2, pi/2]``.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -294,8 +337,9 @@ add_newdoc('numpy.core.umath', 'arcsinh',
 
     Returns
     -------
-    out : ndarray
-        Array of of the same shape as `x`.
+    out : ndarray or scalar
+        Array of the same shape as `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -318,7 +362,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
     .. [2] Wikipedia, "Inverse hyperbolic function",
-           http://en.wikipedia.org/wiki/Arcsinh
+           https://en.wikipedia.org/wiki/Arcsinh
 
     Examples
     --------
@@ -340,10 +384,10 @@ add_newdoc('numpy.core.umath', 'arctan',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Out has the same shape as `x`.  Its real part is in
         ``[-pi/2, pi/2]`` (``arctan(+/-inf)`` returns ``+/-pi/2``).
-        It is a scalar if `x` is a scalar.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -362,7 +406,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arctan` is a complex analytic function that
-    has [`1j, infj`] and [`-1j, -infj`] as branch cuts, and is continuous
+    has [``1j, infj``] and [``-1j, -infj``] as branch cuts, and is continuous
     from the left on the former and from the right on the latter.
 
     The inverse tangent is also known as `atan` or tan^{-1}.
@@ -414,14 +458,15 @@ add_newdoc('numpy.core.umath', 'arctan2',
     x1 : array_like, real-valued
         `y`-coordinates.
     x2 : array_like, real-valued
-        `x`-coordinates. `x2` must be broadcastable to match the shape of
-        `x1` or vice versa.
+        `x`-coordinates.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     angle : ndarray
         Array of angles in radians, in the range ``[-pi, pi]``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -488,8 +533,9 @@ add_newdoc('numpy.core.umath', 'arctanh',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Array of the same shape as `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -498,7 +544,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     Notes
     -----
     `arctanh` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `tanh(z) = x`. The convention is to return
+    many numbers `z` such that ``tanh(z) = x``. The convention is to return
     the `z` whose imaginary part lies in `[-pi/2, pi/2]`.
 
     For real-valued input data types, `arctanh` always returns real output.
@@ -516,7 +562,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
     .. [2] Wikipedia, "Inverse hyperbolic function",
-           http://en.wikipedia.org/wiki/Arctanh
+           https://en.wikipedia.org/wiki/Arctanh
 
     Examples
     --------
@@ -537,12 +583,14 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     ----------
     x1, x2 : array_like
         Only integer and boolean types are handled.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -573,7 +621,15 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     >>> np.bitwise_and(np.array([2,5,255]), np.array([3,14,16]))
     array([ 2,  4, 16])
     >>> np.bitwise_and([True, True], [False, True])
-    array([False,  True], dtype=bool)
+    array([False,  True])
+
+    The ``&`` operator can be used as a shorthand for ``np.bitwise_and`` on
+    ndarrays.
+
+    >>> x1 = np.array([2, 5, 255])
+    >>> x2 = np.array([3, 14, 16])
+    >>> x1 & x2
+    array([ 2,  4, 16])
 
     """)
 
@@ -589,12 +645,14 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     ----------
     x1, x2 : array_like
         Only integer and boolean types are handled.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -626,11 +684,19 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     array([  6,   5, 255])
     >>> np.array([2, 5, 255]) | np.array([4, 4, 4])
     array([  6,   5, 255])
-    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647L], dtype=np.int32),
-    ...               np.array([4, 4, 4, 2147483647L], dtype=np.int32))
+    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647], dtype=np.int32),
+    ...               np.array([4, 4, 4, 2147483647], dtype=np.int32))
     array([         6,          5,        255, 2147483647])
     >>> np.bitwise_or([True, True], [False, True])
-    array([ True,  True], dtype=bool)
+    array([ True,  True])
+
+    The ``|`` operator can be used as a shorthand for ``np.bitwise_or`` on
+    ndarrays.
+
+    >>> x1 = np.array([2, 5, 255])
+    >>> x2 = np.array([4, 4, 4])
+    >>> x1 | x2
+    array([  6,   5, 255])
 
     """)
 
@@ -646,12 +712,14 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     ----------
     x1, x2 : array_like
         Only integer and boolean types are handled.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -680,7 +748,15 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     >>> np.bitwise_xor([31,3], [5,6])
     array([26,  5])
     >>> np.bitwise_xor([True, True], [False, True])
-    array([ True, False], dtype=bool)
+    array([ True, False])
+
+    The ``^`` operator can be used as a shorthand for ``np.bitwise_xor`` on
+    ndarrays.
+
+    >>> x1 = np.array([True, True])
+    >>> x2 = np.array([False, True])
+    >>> x1 ^ x2
+    array([ True, False])
 
     """)
 
@@ -689,7 +765,7 @@ add_newdoc('numpy.core.umath', 'ceil',
     Return the ceiling of the input, element-wise.
 
     The ceil of the scalar `x` is the smallest integer `i`, such that
-    `i >= x`.  It is often denoted as :math:`\\lceil x \\rceil`.
+    ``i >= x``.  It is often denoted as :math:`\\lceil x \\rceil`.
 
     Parameters
     ----------
@@ -701,10 +777,11 @@ add_newdoc('numpy.core.umath', 'ceil',
     -------
     y : ndarray or scalar
         The ceiling of each element in `x`, with `float` dtype.
+        $OUT_SCALAR_1
 
     See Also
     --------
-    floor, trunc, rint
+    floor, trunc, rint, fix
 
     Examples
     --------
@@ -732,10 +809,11 @@ add_newdoc('numpy.core.umath', 'trunc',
     -------
     y : ndarray or scalar
         The truncated value of each element in `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
-    ceil, floor, rint
+    ceil, floor, rint, fix
 
     Notes
     -----
@@ -766,6 +844,14 @@ add_newdoc('numpy.core.umath', 'conjugate',
     -------
     y : ndarray
         The complex conjugate of `x`, with same dtype as `y`.
+        $OUT_SCALAR_1
+
+    Notes
+    -----
+    `conj` is an alias for `conjugate`:
+
+    >>> np.conj is np.conjugate
+    True
 
     Examples
     --------
@@ -793,6 +879,7 @@ add_newdoc('numpy.core.umath', 'cos',
     -------
     y : ndarray
         The corresponding cosine values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -810,6 +897,7 @@ add_newdoc('numpy.core.umath', 'cos',
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
     >>> # Example of providing the optional output parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -818,7 +906,7 @@ add_newdoc('numpy.core.umath', 'cos',
     >>> np.cos(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
@@ -836,8 +924,9 @@ add_newdoc('numpy.core.umath', 'cosh',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Output array of same shape as `x`.
+        $OUT_SCALAR_1
 
     Examples
     --------
@@ -868,6 +957,7 @@ add_newdoc('numpy.core.umath', 'degrees',
     y : ndarray of floats
         The corresponding degree values; if `out` was supplied this is a
         reference to it.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -883,7 +973,7 @@ add_newdoc('numpy.core.umath', 'degrees',
             270.,  300.,  330.])
 
     >>> out = np.zeros((rad.shape))
-    >>> r = degrees(rad, out)
+    >>> r = np.degrees(rad, out)
     >>> np.all(r == out)
     True
 
@@ -903,6 +993,7 @@ add_newdoc('numpy.core.umath', 'rad2deg',
     -------
     y : ndarray
         The corresponding angle in degrees.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -940,12 +1031,14 @@ add_newdoc('numpy.core.umath', 'heaviside',
         Input values.
     x2 : array_like
         The value of the function when x1 is 0.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         The output array, element-wise Heaviside step function of `x1`.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -974,13 +1067,14 @@ add_newdoc('numpy.core.umath', 'divide',
         Dividend array.
     x2 : array_like
         Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or scalar
-        The quotient ``x1/x2``, element-wise. Returns a scalar if
-        both ``x1`` and ``x2`` are scalars.
+        The quotient ``x1/x2``, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1033,6 +1127,16 @@ add_newdoc('numpy.core.umath', 'divide',
     >>> np.divide(1, 0)
     0
 
+    The ``/`` operator can be used as a shorthand for ``np.divide`` on
+    ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = 2 * np.ones(3)
+    >>> x1 / x2
+    array([[0. , 0.5, 1. ],
+           [1.5, 2. , 2.5],
+           [3. , 3.5, 4. ]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'equal',
@@ -1042,13 +1146,16 @@ add_newdoc('numpy.core.umath', 'equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays of the same shape.
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1057,13 +1164,21 @@ add_newdoc('numpy.core.umath', 'equal',
     Examples
     --------
     >>> np.equal([0, 1, 3], np.arange(3))
-    array([ True,  True, False], dtype=bool)
+    array([ True,  True, False])
 
     What is compared are values, not types. So an int (1) and an array of
     length one can evaluate as True:
 
     >>> np.equal(1, np.ones(1))
-    array([ True], dtype=bool)
+    array([ True])
+
+    The ``==`` operator can be used as a shorthand for ``np.equal`` on
+    ndarrays.
+
+    >>> a = np.array([2, 4, 6])
+    >>> b = np.array([2, 4, 2])
+    >>> a == b
+    array([ True,  True, False])
 
     """)
 
@@ -1079,8 +1194,9 @@ add_newdoc('numpy.core.umath', 'exp',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Output array, element-wise exponential of `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1103,7 +1219,7 @@ add_newdoc('numpy.core.umath', 'exp',
     References
     ----------
     .. [1] Wikipedia, "Exponential function",
-           http://en.wikipedia.org/wiki/Exponential_function
+           https://en.wikipedia.org/wiki/Exponential_function
     .. [2] M. Abramovitz and I. A. Stegun, "Handbook of Mathematical Functions
            with Formulas, Graphs, and Mathematical Tables," Dover, 1964, p. 69,
            http://www.math.sfu.ca/~cbm/aands/page_69.htm
@@ -1143,8 +1259,9 @@ add_newdoc('numpy.core.umath', 'exp2',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Element-wise 2 to the power `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1170,13 +1287,14 @@ add_newdoc('numpy.core.umath', 'expm1',
     Parameters
     ----------
     x : array_like
-       Input values.
+        Input values.
     $PARAMS
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Element-wise exponential minus one: ``out = exp(x) - 1``.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1220,6 +1338,7 @@ add_newdoc('numpy.core.umath', 'fabs',
     -------
     y : ndarray or scalar
         The absolute values of `x`, the returned values are always floats.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1251,16 +1370,18 @@ add_newdoc('numpy.core.umath', 'floor',
     -------
     y : ndarray or scalar
         The floor of each element in `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
-    ceil, trunc, rint
+    ceil, trunc, rint, fix
 
     Notes
     -----
-    Some spreadsheet programs calculate the "floor-towards-zero", in other
-    words ``floor(-2.5) == -2``.  NumPy instead uses the definition of
-    `floor` where `floor(-2.5) == -3`.
+    Some spreadsheet programs calculate the "floor-towards-zero", where
+    ``floor(-2.5) == -2``.  NumPy instead uses the definition of
+    `floor` where `floor(-2.5) == -3`. The "floor-towards-zero"
+    function is called ``fix`` in NumPy.
 
     Examples
     --------
@@ -1274,7 +1395,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     """
     Return the largest integer smaller or equal to the division of the inputs.
     It is equivalent to the Python ``//`` operator and pairs with the
-    Python ``%`` (`remainder`), function so that ``b = a % b + b * (a // b)``
+    Python ``%`` (`remainder`), function so that ``a = a % b + b * (a // b)``
     up to roundoff.
 
     Parameters
@@ -1283,13 +1404,14 @@ add_newdoc('numpy.core.umath', 'floor_divide',
         Numerator.
     x2 : array_like
         Denominator.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray
         y = floor(`x1`/`x2`)
-
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1306,6 +1428,13 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     >>> np.floor_divide([1., 2., 3., 4.], 2.5)
     array([ 0.,  0.,  1.,  1.])
 
+    The ``//`` operator can be used as a shorthand for ``np.floor_divide``
+    on ndarrays.
+
+    >>> x1 = np.array([1., 2., 3., 4.])
+    >>> x1 // 2.5
+    array([0., 0., 1., 1.])
+
     """)
 
 add_newdoc('numpy.core.umath', 'fmod',
@@ -1320,15 +1449,17 @@ add_newdoc('numpy.core.umath', 'fmod',
     Parameters
     ----------
     x1 : array_like
-      Dividend.
+        Dividend.
     x2 : array_like
-      Divisor.
+        Divisor.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : array_like
-      The remainder of the division of `x1` by `x2`.
+        The remainder of the division of `x1` by `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1371,15 +1502,16 @@ add_newdoc('numpy.core.umath', 'greater',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
 
     See Also
@@ -1389,14 +1521,15 @@ add_newdoc('numpy.core.umath', 'greater',
     Examples
     --------
     >>> np.greater([4,2],[2,2])
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
-    If the inputs are ndarrays, then np.greater is equivalent to '>'.
+    The ``>`` operator can be used as a shorthand for ``np.greater`` on
+    ndarrays.
 
-    >>> a = np.array([4,2])
-    >>> b = np.array([2,2])
+    >>> a = np.array([4, 2])
+    >>> b = np.array([2, 2])
     >>> a > b
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     """)
 
@@ -1407,15 +1540,16 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1424,7 +1558,15 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     Examples
     --------
     >>> np.greater_equal([4, 2, 1], [2, 2, 2])
-    array([ True, True, False], dtype=bool)
+    array([ True, True, False])
+
+    The ``>=`` operator can be used as a shorthand for ``np.greater_equal``
+    on ndarrays.
+
+    >>> a = np.array([4, 2, 1])
+    >>> b = np.array([2, 2, 2])
+    >>> a >= b
+    array([ True,  True, False])
 
     """)
 
@@ -1441,12 +1583,14 @@ add_newdoc('numpy.core.umath', 'hypot',
     ----------
     x1, x2 : array_like
         Leg of the triangle(s).
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     z : ndarray
         The hypotenuse of the triangle(s).
+        $OUT_SCALAR_2
 
     Examples
     --------
@@ -1487,8 +1631,9 @@ add_newdoc('numpy.core.umath', 'invert',
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1507,41 +1652,46 @@ add_newdoc('numpy.core.umath', 'invert',
     References
     ----------
     .. [1] Wikipedia, "Two's complement",
-        http://en.wikipedia.org/wiki/Two's_complement
+        https://en.wikipedia.org/wiki/Two's_complement
 
     Examples
     --------
     We've seen that 13 is represented by ``00001101``.
     The invert or bit-wise NOT of 13 is then:
 
-    >>> np.invert(np.array([13], dtype=uint8))
-    array([242], dtype=uint8)
+    >>> x = np.invert(np.array(13, dtype=np.uint8))
+    >>> x
+    242
     >>> np.binary_repr(x, width=8)
-    '00001101'
-    >>> np.binary_repr(242, width=8)
     '11110010'
 
     The result depends on the bit-width:
 
-    >>> np.invert(np.array([13], dtype=uint16))
-    array([65522], dtype=uint16)
+    >>> x = np.invert(np.array(13, dtype=np.uint16))
+    >>> x
+    65522
     >>> np.binary_repr(x, width=16)
-    '0000000000001101'
-    >>> np.binary_repr(65522, width=16)
     '1111111111110010'
 
     When using signed integer types the result is the two's complement of
     the result for the unsigned type:
 
-    >>> np.invert(np.array([13], dtype=int8))
+    >>> np.invert(np.array([13], dtype=np.int8))
     array([-14], dtype=int8)
     >>> np.binary_repr(-14, width=8)
     '11110010'
 
     Booleans are accepted as well:
 
-    >>> np.invert(array([True, False]))
-    array([False,  True], dtype=bool)
+    >>> np.invert(np.array([True, False]))
+    array([False,  True])
+
+    The ``~`` operator can be used as a shorthand for ``np.invert`` on
+    ndarrays.
+
+    >>> x1 = np.array([True, False])
+    >>> ~x1
+    array([False,  True])
 
     """)
 
@@ -1560,15 +1710,9 @@ add_newdoc('numpy.core.umath', 'isfinite',
     Returns
     -------
     y : ndarray, bool
-        For scalar input, the result is a new boolean with value True
-        if the input is finite; otherwise the value is False (input is
-        either positive infinity, negative infinity or Not a Number).
-
-        For array input, the result is a boolean array with the same
-        dimensions as the input and the values are True if the
-        corresponding element of the input is finite; otherwise the values
-        are False (element is either positive infinity, negative infinity
-        or Not a Number).
+        True where ``x`` is not positive infinity, negative infinity,
+        or NaN; false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1599,7 +1743,7 @@ add_newdoc('numpy.core.umath', 'isfinite',
     >>> np.isfinite(np.NINF)
     False
     >>> np.isfinite([np.log(-1.),1.,np.log(0)])
-    array([False,  True, False], dtype=bool)
+    array([False,  True, False])
 
     >>> x = np.array([-np.inf, 0., np.inf])
     >>> y = np.array([2, 2, 2])
@@ -1626,18 +1770,8 @@ add_newdoc('numpy.core.umath', 'isinf',
     Returns
     -------
     y : bool (scalar) or boolean ndarray
-        For scalar input, the result is a new boolean with value True if
-        the input is positive or negative infinity; otherwise the value is
-        False.
-
-        For array input, the result is a boolean array with the same shape
-        as the input and the values are True where the corresponding
-        element of the input is positive or negative infinity; elsewhere
-        the values are False.  If a second argument was supplied the result
-        is stored there.  If the type of that array is a numeric type the
-        result is represented as zeros and ones, if the type is boolean
-        then as False and True, respectively.  The return value `y` is then
-        a reference to that array.
+        True where ``x`` is positive or negative infinity, false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1661,7 +1795,7 @@ add_newdoc('numpy.core.umath', 'isinf',
     >>> np.isinf(np.NINF)
     True
     >>> np.isinf([np.inf, -np.inf, 1.0, np.nan])
-    array([ True,  True, False, False], dtype=bool)
+    array([ True,  True, False, False])
 
     >>> x = np.array([-np.inf, 0., np.inf])
     >>> y = np.array([2, 2, 2])
@@ -1685,13 +1819,8 @@ add_newdoc('numpy.core.umath', 'isnan',
     Returns
     -------
     y : ndarray or bool
-        For scalar input, the result is a new boolean with value True if
-        the input is NaN; otherwise the value is False.
-
-        For array input, the result is a boolean array of the same
-        dimensions as the input and the values are True if the
-        corresponding element of the input is NaN; otherwise the values are
-        False.
+        True where ``x`` is NaN, false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1709,13 +1838,15 @@ add_newdoc('numpy.core.umath', 'isnan',
     >>> np.isnan(np.inf)
     False
     >>> np.isnan([np.log(-1.),1.,np.log(0)])
-    array([ True, False, False], dtype=bool)
+    array([ True, False, False])
 
     """)
 
 add_newdoc('numpy.core.umath', 'isnat',
     """
     Test element-wise for NaT (not a time) and return result as a boolean array.
+
+    .. versionadded:: 1.13.0
 
     Parameters
     ----------
@@ -1726,13 +1857,8 @@ add_newdoc('numpy.core.umath', 'isnat',
     Returns
     -------
     y : ndarray or bool
-        For scalar input, the result is a new boolean with value True if
-        the input is NaT; otherwise the value is False.
-
-        For array input, the result is a boolean array of the same
-        dimensions as the input and the values are True if the
-        corresponding element of the input is NaT; otherwise the values are
-        False.
+        True where ``x`` is NaT, false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1745,7 +1871,7 @@ add_newdoc('numpy.core.umath', 'isnat',
     >>> np.isnat(np.datetime64("2016-01-01"))
     False
     >>> np.isnat(np.array(["NaT", "2016-01-01"], dtype="datetime64[ns]"))
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     """)
 
@@ -1763,12 +1889,14 @@ add_newdoc('numpy.core.umath', 'left_shift',
         Input values.
     x2 : array_like of integer type
         Number of zeros to append to `x1`. Has to be non-negative.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     out : array of integer type
         Return `x1` with bits shifted `x2` times to the left.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1788,6 +1916,25 @@ add_newdoc('numpy.core.umath', 'left_shift',
     >>> np.left_shift(5, [1,2,3])
     array([10, 20, 40])
 
+    Note that the dtype of the second argument may change the dtype of the
+    result and can lead to unexpected results in some cases (see
+    :ref:`Casting Rules <ufuncs.casting>`):
+
+    >>> a = np.left_shift(np.uint8(255), 1) # Expect 254
+    >>> print(a, type(a)) # Unexpected result due to upcasting
+    510 <class 'numpy.int64'>
+    >>> b = np.left_shift(np.uint8(255), np.uint8(1))
+    >>> print(b, type(b))
+    254 <class 'numpy.uint8'>
+
+    The ``<<`` operator can be used as a shorthand for ``np.left_shift`` on
+    ndarrays.
+
+    >>> x1 = 5
+    >>> x2 = np.array([1, 2, 3])
+    >>> x1 << x2
+    array([10, 20, 40])
+
     """)
 
 add_newdoc('numpy.core.umath', 'less',
@@ -1797,15 +1944,16 @@ add_newdoc('numpy.core.umath', 'less',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1814,26 +1962,34 @@ add_newdoc('numpy.core.umath', 'less',
     Examples
     --------
     >>> np.less([1, 2], [2, 2])
-    array([ True, False], dtype=bool)
+    array([ True, False])
+
+    The ``<`` operator can be used as a shorthand for ``np.less`` on ndarrays.
+
+    >>> a = np.array([1, 2])
+    >>> b = np.array([2, 2])
+    >>> a < b
+    array([ True, False])
 
     """)
 
 add_newdoc('numpy.core.umath', 'less_equal',
     """
-    Return the truth value of (x1 =< x2) element-wise.
+    Return the truth value of (x1 <= x2) element-wise.
 
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1842,7 +1998,15 @@ add_newdoc('numpy.core.umath', 'less_equal',
     Examples
     --------
     >>> np.less_equal([4, 2, 1], [2, 2, 2])
-    array([False,  True,  True], dtype=bool)
+    array([False,  True,  True])
+
+    The ``<=`` operator can be used as a shorthand for ``np.less_equal`` on
+    ndarrays.
+
+    >>> a = np.array([4, 2, 1])
+    >>> b = np.array([2, 2, 2])
+    >>> a <= b
+    array([False,  True,  True])
 
     """)
 
@@ -1864,6 +2028,7 @@ add_newdoc('numpy.core.umath', 'log',
     -------
     y : ndarray
         The natural logarithm of `x`, element-wise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1888,7 +2053,7 @@ add_newdoc('numpy.core.umath', 'log',
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Logarithm". http://en.wikipedia.org/wiki/Logarithm
+    .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
     --------
@@ -1912,6 +2077,7 @@ add_newdoc('numpy.core.umath', 'log10',
     y : ndarray
         The logarithm to the base 10 of `x`, element-wise. NaNs are
         returned where x is negative.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1936,12 +2102,12 @@ add_newdoc('numpy.core.umath', 'log10',
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Logarithm". http://en.wikipedia.org/wiki/Logarithm
+    .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
     --------
     >>> np.log10([1e-15, -3.])
-    array([-15.,  NaN])
+    array([-15.,  nan])
 
     """)
 
@@ -1959,6 +2125,7 @@ add_newdoc('numpy.core.umath', 'log2',
     -------
     y : ndarray
         Base-2 logarithm of `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2007,12 +2174,14 @@ add_newdoc('numpy.core.umath', 'logaddexp',
     ----------
     x1, x2 : array_like
         Input values.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     result : ndarray
         Logarithm of ``exp(x1) + exp(x2)``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2048,12 +2217,14 @@ add_newdoc('numpy.core.umath', 'logaddexp2',
     ----------
     x1, x2 : array_like
         Input values.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     result : ndarray
         Base-2 logarithm of ``2**x1 + 2**x2``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2091,6 +2262,7 @@ add_newdoc('numpy.core.umath', 'log1p',
     -------
     y : ndarray
         Natural logarithm of `1 + x`, element-wise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2118,7 +2290,7 @@ add_newdoc('numpy.core.umath', 'log1p',
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Logarithm". http://en.wikipedia.org/wiki/Logarithm
+    .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
     --------
@@ -2136,14 +2308,16 @@ add_newdoc('numpy.core.umath', 'logical_and',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. `x1` and `x2` must be of the same shape.
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or bool
-        Boolean result with the same shape as `x1` and `x2` of the logical
-        AND operation on corresponding elements of `x1` and `x2`.
+        Boolean result of the logical AND operation applied to the elements
+        of `x1` and `x2`; the shape is determined by broadcasting.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2155,11 +2329,20 @@ add_newdoc('numpy.core.umath', 'logical_and',
     >>> np.logical_and(True, False)
     False
     >>> np.logical_and([True, False], [False, False])
-    array([False, False], dtype=bool)
+    array([False, False])
 
     >>> x = np.arange(5)
     >>> np.logical_and(x>1, x<4)
-    array([False, False,  True,  True, False], dtype=bool)
+    array([False, False,  True,  True, False])
+
+
+    The ``&`` operator can be used as a shorthand for ``np.logical_and`` on
+    boolean ndarrays.
+
+    >>> a = np.array([True, False])
+    >>> b = np.array([False, False])
+    >>> a & b
+    array([False, False])
 
     """)
 
@@ -2178,6 +2361,7 @@ add_newdoc('numpy.core.umath', 'logical_not',
     y : bool or ndarray of bool
         Boolean result with the same shape as `x` of the NOT operation
         on elements of `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2188,11 +2372,11 @@ add_newdoc('numpy.core.umath', 'logical_not',
     >>> np.logical_not(3)
     False
     >>> np.logical_not([True, False, 0, 1])
-    array([False,  True,  True, False], dtype=bool)
+    array([False,  True,  True, False])
 
     >>> x = np.arange(5)
     >>> np.logical_not(x<3)
-    array([False, False, False,  True,  True], dtype=bool)
+    array([False, False, False,  True,  True])
 
     """)
 
@@ -2204,14 +2388,15 @@ add_newdoc('numpy.core.umath', 'logical_or',
     ----------
     x1, x2 : array_like
         Logical OR is applied to the elements of `x1` and `x2`.
-        They have to be of the same shape.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or bool
-        Boolean result with the same shape as `x1` and `x2` of the logical
-        OR operation on elements of `x1` and `x2`.
+        Boolean result of the logical OR operation applied to the elements
+        of `x1` and `x2`; the shape is determined by broadcasting.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2223,11 +2408,19 @@ add_newdoc('numpy.core.umath', 'logical_or',
     >>> np.logical_or(True, False)
     True
     >>> np.logical_or([True, False], [False, False])
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     >>> x = np.arange(5)
     >>> np.logical_or(x < 1, x > 3)
-    array([ True, False, False, False,  True], dtype=bool)
+    array([ True, False, False, False,  True])
+
+    The ``|`` operator can be used as a shorthand for ``np.logical_or`` on
+    boolean ndarrays.
+
+    >>> a = np.array([True, False])
+    >>> b = np.array([False, False])
+    >>> a | b
+    array([ True, False])
 
     """)
 
@@ -2238,16 +2431,16 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     Parameters
     ----------
     x1, x2 : array_like
-        Logical XOR is applied to the elements of `x1` and `x2`.  They must
-        be broadcastable to the same shape.
+        Logical XOR is applied to the elements of `x1` and `x2`.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : bool or ndarray of bool
         Boolean result of the logical XOR operation applied to the elements
-        of `x1` and `x2`; the shape is determined by whether or not
-        broadcasting of one or both arrays was required.
+        of `x1` and `x2`; the shape is determined by broadcasting.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2258,17 +2451,17 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     >>> np.logical_xor(True, False)
     True
     >>> np.logical_xor([True, True, False, False], [True, False, True, False])
-    array([False,  True,  True, False], dtype=bool)
+    array([False,  True,  True, False])
 
     >>> x = np.arange(5)
     >>> np.logical_xor(x < 1, x > 3)
-    array([ True, False, False, False,  True], dtype=bool)
+    array([ True, False, False, False,  True])
 
     Simple example showing support of broadcasting
 
     >>> np.logical_xor(0, np.eye(2))
     array([[ True, False],
-           [False,  True]], dtype=bool)
+           [False,  True]])
 
     """)
 
@@ -2286,15 +2479,15 @@ add_newdoc('numpy.core.umath', 'maximum',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape, or shapes that can be broadcast to a single shape.
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or scalar
-        The maximum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The maximum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2325,7 +2518,7 @@ add_newdoc('numpy.core.umath', 'maximum',
            [ 0.5,  2. ]])
 
     >>> np.maximum([np.nan, 0, np.nan], [0, np.nan, np.nan])
-    array([ NaN,  NaN,  NaN])
+    array([nan, nan, nan])
     >>> np.maximum(np.Inf, 1)
     inf
 
@@ -2345,15 +2538,15 @@ add_newdoc('numpy.core.umath', 'minimum',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape, or shapes that can be broadcast to a single shape.
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or scalar
-        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The minimum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2384,7 +2577,7 @@ add_newdoc('numpy.core.umath', 'minimum',
            [ 0. ,  1. ]])
 
     >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([ NaN,  NaN,  NaN])
+    array([nan, nan, nan])
     >>> np.minimum(-np.Inf, 1)
     -inf
 
@@ -2404,15 +2597,15 @@ add_newdoc('numpy.core.umath', 'fmax',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape.
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or scalar
-        The maximum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The maximum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2444,7 +2637,7 @@ add_newdoc('numpy.core.umath', 'fmax',
            [ 0.5,  2. ]])
 
     >>> np.fmax([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([  0.,   0.,  NaN])
+    array([ 0.,  0., nan])
 
     """)
 
@@ -2462,15 +2655,15 @@ add_newdoc('numpy.core.umath', 'fmin',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape.
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or scalar
-        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The minimum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2502,8 +2695,179 @@ add_newdoc('numpy.core.umath', 'fmin',
            [ 0. ,  1. ]])
 
     >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([  0.,   0.,  NaN])
+    array([ 0.,  0., nan])
 
+    """)
+
+add_newdoc('numpy.core.umath', 'clip',
+    """
+    Clip (limit) the values in an array.
+
+    Given an interval, values outside the interval are clipped to
+    the interval edges.  For example, if an interval of ``[0, 1]``
+    is specified, values smaller than 0 become 0, and values larger
+    than 1 become 1.
+
+    Equivalent to but faster than ``np.minimum(np.maximum(a, a_min), a_max)``.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing elements to clip.
+    a_min : array_like
+        Minimum value.
+    a_max : array_like
+        Maximum value.
+    out : ndarray, optional
+        The results will be placed in this array. It may be the input
+        array for in-place clipping.  `out` must be of the right shape
+        to hold the output.  Its type is preserved.
+    $PARAMS
+
+    See Also
+    --------
+    numpy.clip :
+        Wrapper that makes the ``a_min`` and ``a_max`` arguments optional,
+        dispatching to one of `~numpy.core.umath.clip`,
+        `~numpy.core.umath.minimum`, and `~numpy.core.umath.maximum`.
+
+    Returns
+    -------
+    clipped_array : ndarray
+        An array with the elements of `a`, but where values
+        < `a_min` are replaced with `a_min`, and those > `a_max`
+        with `a_max`.
+    """)
+
+add_newdoc('numpy.core.umath', 'matmul',
+    """
+    Matrix product of two arrays.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that matches the signature `(n,k),(k,m)->(n,m)`. If not
+        provided or None, a freshly-allocated array is returned.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+        .. versionadded:: 1.16
+           Now handles ufunc kwargs
+
+    Returns
+    -------
+    y : ndarray
+        The matrix product of the inputs.
+        This is a scalar only when both x1, x2 are 1-d vectors.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `x1` is not the same size as
+        the second-to-last dimension of `x2`.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vdot : Complex-conjugating dot product.
+    tensordot : Sum products over arbitrary axes.
+    einsum : Einstein summation convention.
+    dot : alternative matrix product with different broadcasting rules.
+
+    Notes
+    -----
+
+    The behavior depends on the arguments in the following way.
+
+    - If both arguments are 2-D they are multiplied like conventional
+      matrices.
+    - If either argument is N-D, N > 2, it is treated as a stack of
+      matrices residing in the last two indexes and broadcast accordingly.
+    - If the first argument is 1-D, it is promoted to a matrix by
+      prepending a 1 to its dimensions. After matrix multiplication
+      the prepended 1 is removed.
+    - If the second argument is 1-D, it is promoted to a matrix by
+      appending a 1 to its dimensions. After matrix multiplication
+      the appended 1 is removed.
+
+    ``matmul`` differs from ``dot`` in two important ways:
+
+    - Multiplication by scalars is not allowed, use ``*`` instead.
+    - Stacks of matrices are broadcast together as if the matrices
+      were elements, respecting the signature ``(n,k),(k,m)->(n,m)``:
+
+      >>> a = np.ones([9, 5, 7, 4])
+      >>> c = np.ones([9, 5, 4, 3])
+      >>> np.dot(a, c).shape
+      (9, 5, 7, 9, 5, 3)
+      >>> np.matmul(a, c).shape
+      (9, 5, 7, 3)
+      >>> # n is 7, k is 4, m is 3
+
+    The matmul function implements the semantics of the ``@`` operator introduced
+    in Python 3.5 following :pep:`465`.
+
+    Examples
+    --------
+    For 2-D arrays it is the matrix product:
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([[4, 1],
+    ...               [2, 2]])
+    >>> np.matmul(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    For 2-D mixed with 1-D, the result is the usual.
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([1, 2])
+    >>> np.matmul(a, b)
+    array([1, 2])
+    >>> np.matmul(b, a)
+    array([1, 2])
+
+
+    Broadcasting is conventional for stacks of arrays
+
+    >>> a = np.arange(2 * 2 * 4).reshape((2, 2, 4))
+    >>> b = np.arange(2 * 2 * 4).reshape((2, 4, 2))
+    >>> np.matmul(a,b).shape
+    (2, 2, 2)
+    >>> np.matmul(a, b)[0, 1, 1]
+    98
+    >>> sum(a[0, 1, :] * b[0 , :, 1])
+    98
+
+    Vector, vector returns the scalar inner product, but neither argument
+    is complex-conjugated:
+
+    >>> np.matmul([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    Scalar multiplication raises an error.
+
+    >>> np.matmul([1,2], 3)
+    Traceback (most recent call last):
+    ...
+    ValueError: matmul: Input operand 1 does not have enough dimensions ...
+
+    The ``@`` operator can be used as a shorthand for ``np.matmul`` on
+    ndarrays.
+
+    >>> x1 = np.array([2j, 3j])
+    >>> x2 = np.array([2j, 3j])
+    >>> x1 @ x2
+    (-13+0j)
+
+    .. versionadded:: 1.10.0
     """)
 
 add_newdoc('numpy.core.umath', 'modf',
@@ -2523,8 +2887,10 @@ add_newdoc('numpy.core.umath', 'modf',
     -------
     y1 : ndarray
         Fractional part of `x`.
+        $OUT_SCALAR_1
     y2 : ndarray
         Integral part of `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -2552,13 +2918,14 @@ add_newdoc('numpy.core.umath', 'multiply',
     ----------
     x1, x2 : array_like
         Input arrays to be multiplied.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray
-        The product of `x1` and `x2`, element-wise. Returns a scalar if
-        both  `x1` and `x2` are scalars.
+        The product of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -2572,6 +2939,16 @@ add_newdoc('numpy.core.umath', 'multiply',
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
     >>> np.multiply(x1, x2)
+    array([[  0.,   1.,   4.],
+           [  0.,   4.,  10.],
+           [  0.,   7.,  16.]])
+
+    The ``*`` operator can be used as a shorthand for ``np.multiply`` on
+    ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 * x2
     array([[  0.,   1.,   4.],
            [  0.,   4.,  10.],
            [  0.,   7.,  16.]])
@@ -2592,10 +2969,18 @@ add_newdoc('numpy.core.umath', 'negative',
     -------
     y : ndarray or scalar
         Returned array or scalar: `y = -x`.
+        $OUT_SCALAR_1
 
     Examples
     --------
     >>> np.negative([1.,-1.])
+    array([-1.,  1.])
+
+    The unary ``-`` operator can be used as a shorthand for ``np.negative`` on
+    ndarrays.
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> -x1
     array([-1.,  1.])
 
     """)
@@ -2615,11 +3000,26 @@ add_newdoc('numpy.core.umath', 'positive',
     -------
     y : ndarray or scalar
         Returned array or scalar: `y = +x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
     Equivalent to `x.copy()`, but only defined for types that support
     arithmetic.
+
+    Examples
+    --------
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> np.positive(x1)
+    array([ 1., -1.])
+
+    The unary ``+`` operator can be used as a shorthand for ``np.positive`` on
+    ndarrays.
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> +x1
+    array([ 1., -1.])
 
     """)
 
@@ -2630,15 +3030,16 @@ add_newdoc('numpy.core.umath', 'not_equal',
     Parameters
     ----------
     x1, x2 : array_like
-      Input arrays.
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    not_equal : ndarray bool, scalar bool
-      For each element in `x1, x2`, return True if `x1` is not equal
-      to `x2` and False otherwise.
-
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2647,10 +3048,19 @@ add_newdoc('numpy.core.umath', 'not_equal',
     Examples
     --------
     >>> np.not_equal([1.,2.], [1., 3.])
-    array([False,  True], dtype=bool)
+    array([False,  True])
     >>> np.not_equal([1, 2], [[1, 3],[1, 4]])
     array([[False,  True],
-           [False,  True]], dtype=bool)
+           [False,  True]])
+
+    The ``!=`` operator can be used as a shorthand for ``np.not_equal`` on
+    ndarrays.
+
+    >>> a = np.array([1., 2.])
+    >>> b = np.array([1., 3.])
+    >>> a != b
+    array([False,  True])
+
 
     """)
 
@@ -2680,12 +3090,14 @@ add_newdoc('numpy.core.umath', 'power',
         The bases.
     x2 : array_like
         The exponents.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray
         The bases in `x1` raised to the exponents in `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2693,9 +3105,9 @@ add_newdoc('numpy.core.umath', 'power',
 
     Examples
     --------
-    Cube each element in a list.
+    Cube each element in an array.
 
-    >>> x1 = range(6)
+    >>> x1 = np.arange(6)
     >>> x1
     [0, 1, 2, 3, 4, 5]
     >>> np.power(x1, 3)
@@ -2716,6 +3128,14 @@ add_newdoc('numpy.core.umath', 'power',
     >>> np.power(x1, x2)
     array([[ 0,  1,  8, 27, 16,  5],
            [ 0,  1,  8, 27, 16,  5]])
+
+    The ``**`` operator can be used as a shorthand for ``np.power`` on
+    ndarrays.
+
+    >>> x2 = np.array([1, 2, 3, 3, 2, 1])
+    >>> x1 = np.arange(6)
+    >>> x1 ** x2
+    array([ 0,  1,  8, 27, 16,  5])
 
     """)
 
@@ -2738,12 +3158,14 @@ add_newdoc('numpy.core.umath', 'float_power',
         The bases.
     x2 : array_like
         The exponents.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray
         The bases in `x1` raised to the exponents in `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2791,6 +3213,7 @@ add_newdoc('numpy.core.umath', 'radians',
     -------
     y : ndarray
         The corresponding radian values.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2827,6 +3250,7 @@ add_newdoc('numpy.core.umath', 'deg2rad',
     -------
     y : ndarray
         The corresponding angle in radians.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2862,6 +3286,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
     -------
     y : ndarray
         Return array.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -2906,13 +3331,14 @@ add_newdoc('numpy.core.umath', 'remainder',
         Dividend array.
     x2 : array_like
         Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray
         The element-wise remainder of the quotient ``floor_divide(x1, x2)``.
-        Returns a scalar if both  `x1` and `x2` are scalars.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2925,12 +3351,20 @@ add_newdoc('numpy.core.umath', 'remainder',
     -----
     Returns 0 when `x2` is 0 and both `x1` and `x2` are (arrays of)
     integers.
+    ``mod`` is an alias of ``remainder``.
 
     Examples
     --------
     >>> np.remainder([4, 7], [2, 3])
     array([0, 1])
     >>> np.remainder(np.arange(7), 5)
+    array([0, 1, 2, 3, 4, 0, 1])
+
+    The ``%`` operator can be used as a shorthand for ``np.remainder`` on
+    ndarrays.
+
+    >>> x1 = np.arange(7)
+    >>> x1 % 5
     array([0, 1, 2, 3, 4, 0, 1])
 
     """)
@@ -2951,14 +3385,17 @@ add_newdoc('numpy.core.umath', 'divmod',
         Dividend array.
     x2 : array_like
         Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     out1 : ndarray
         Element-wise quotient resulting from floor division.
+        $OUT_SCALAR_2
     out2 : ndarray
         Element-wise remainder from floor division.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2970,6 +3407,13 @@ add_newdoc('numpy.core.umath', 'divmod',
     Examples
     --------
     >>> np.divmod(np.arange(5), 3)
+    (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
+
+    The `divmod` function can be used as a shorthand for ``np.divmod`` on
+    ndarrays.
+
+    >>> x = np.arange(5)
+    >>> divmod(x, 3)
     (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
 
     """)
@@ -2988,12 +3432,14 @@ add_newdoc('numpy.core.umath', 'right_shift',
         Input values.
     x2 : array_like, int
         Number of bits to remove at the right of `x1`.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     out : ndarray, int
         Return `x1` with bits shifted `x2` times to the right.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -3013,6 +3459,14 @@ add_newdoc('numpy.core.umath', 'right_shift',
     >>> np.right_shift(10, [1,2,3])
     array([5, 2, 1])
 
+    The ``>>`` operator can be used as a shorthand for ``np.right_shift`` on
+    ndarrays.
+
+    >>> x1 = 10
+    >>> x2 = np.array([1,2,3])
+    >>> x1 >> x2
+    array([5, 2, 1])
+
     """)
 
 add_newdoc('numpy.core.umath', 'rint',
@@ -3029,10 +3483,17 @@ add_newdoc('numpy.core.umath', 'rint',
     -------
     out : ndarray or scalar
         Output array is same shape and type as `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
-    ceil, floor, trunc
+    fix, ceil, floor, trunc
+
+    Notes
+    -----
+    For values exactly halfway between rounded decimal values, NumPy
+    rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
+    -0.5 and 0.5 round to 0.0, etc.
 
     Examples
     --------
@@ -3057,13 +3518,14 @@ add_newdoc('numpy.core.umath', 'sign',
     Parameters
     ----------
     x : array_like
-      Input values.
+        Input values.
     $PARAMS
 
     Returns
     -------
     y : ndarray
-      The sign of `x`.
+        The sign of `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3096,13 +3558,14 @@ add_newdoc('numpy.core.umath', 'signbit',
     -------
     result : ndarray of bool
         Output array, or reference to `out` if that was supplied.
+        $OUT_SCALAR_1
 
     Examples
     --------
     >>> np.signbit(-1.2)
     True
     >>> np.signbit(np.array([1, -2.3, 2.1]))
-    array([False,  True, False], dtype=bool)
+    array([False,  True, False])
 
     """)
 
@@ -3110,9 +3573,7 @@ add_newdoc('numpy.core.umath', 'copysign',
     """
     Change the sign of x1 to that of x2, element-wise.
 
-    If both arguments are arrays or sequences, they have to be of the same
-    length. If `x2` is a scalar, its sign will be copied to all elements of
-    `x1`.
+    If `x2` is a scalar, its sign will be copied to all elements of `x1`.
 
     Parameters
     ----------
@@ -3120,12 +3581,14 @@ add_newdoc('numpy.core.umath', 'copysign',
         Values to change the sign of.
     x2 : array_like
         The sign of `x2` is copied to `x1`.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         The values of `x1` with the sign of `x2`.
+        $OUT_SCALAR_2
 
     Examples
     --------
@@ -3153,12 +3616,14 @@ add_newdoc('numpy.core.umath', 'nextafter',
         Values to find the next representable value of.
     x2 : array_like
         The direction where to look for the next representable value of `x1`.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         The next representable values of `x1` in the direction of `x2`.
+        $OUT_SCALAR_2
 
     Examples
     --------
@@ -3166,7 +3631,7 @@ add_newdoc('numpy.core.umath', 'nextafter',
     >>> np.nextafter(1, 2) == eps + 1
     True
     >>> np.nextafter([1, 2], [2, 1]) == [eps + 1, 2 - eps]
-    array([ True,  True], dtype=bool)
+    array([ True,  True])
 
     """)
 
@@ -3182,8 +3647,9 @@ add_newdoc('numpy.core.umath', 'spacing',
 
     Returns
     -------
-    out : array_like
-        The spacing of values of `x1`.
+    out : ndarray or scalar
+        The spacing of values of `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3215,6 +3681,7 @@ add_newdoc('numpy.core.umath', 'sin',
     -------
     y : array_like
         The sine of each element of x.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3275,6 +3742,7 @@ add_newdoc('numpy.core.umath', 'sinh',
     -------
     y : ndarray
         The corresponding hyperbolic sine values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3297,6 +3765,7 @@ add_newdoc('numpy.core.umath', 'sinh',
     >>> # Discrepancy due to vagaries of floating point arithmetic.
 
     >>> # Example of providing the optional output parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.sinh([0.1], out1)
     >>> out2 is out1
     True
@@ -3305,13 +3774,13 @@ add_newdoc('numpy.core.umath', 'sinh',
     >>> np.sinh(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
 add_newdoc('numpy.core.umath', 'sqrt',
     """
-    Return the positive square-root of an array, element-wise.
+    Return the non-negative square-root of an array, element-wise.
 
     Parameters
     ----------
@@ -3328,6 +3797,7 @@ add_newdoc('numpy.core.umath', 'sqrt',
         negative reals are calculated).  If all of the elements in `x`
         are real, so is `y`, with negative elements returning ``nan``.
         If `out` was provided, `y` is a reference to it.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3349,8 +3819,8 @@ add_newdoc('numpy.core.umath', 'sqrt',
     >>> np.sqrt([4, -1, -3+4J])
     array([ 2.+0.j,  0.+1.j,  1.+2.j])
 
-    >>> np.sqrt([4, -1, numpy.inf])
-    array([  2.,  NaN,  Inf])
+    >>> np.sqrt([4, -1, np.inf])
+    array([ 2., nan, inf])
 
     """)
 
@@ -3372,6 +3842,7 @@ add_newdoc('numpy.core.umath', 'cbrt',
         An array of the same shape as `x`, containing the cube
         cube-root of each element in `x`.
         If `out` was provided, `y` is a reference to it.
+        $OUT_SCALAR_1
 
 
     Examples
@@ -3393,9 +3864,9 @@ add_newdoc('numpy.core.umath', 'square',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Element-wise `x*x`, of the same shape and dtype as `x`.
-        Returns scalar if `x` is a scalar.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3418,13 +3889,14 @@ add_newdoc('numpy.core.umath', 'subtract',
     ----------
     x1, x2 : array_like
         The arrays to be subtracted from each other.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray
-        The difference of `x1` and `x2`, element-wise.  Returns a scalar if
-        both  `x1` and `x2` are scalars.
+        The difference of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -3442,6 +3914,16 @@ add_newdoc('numpy.core.umath', 'subtract',
            [ 3.,  3.,  3.],
            [ 6.,  6.,  6.]])
 
+    The ``-`` operator can be used as a shorthand for ``np.subtract`` on
+    ndarrays.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 - x2
+    array([[0., 0., 0.],
+           [3., 3., 3.],
+           [6., 6., 6.]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'tan',
@@ -3453,13 +3935,14 @@ add_newdoc('numpy.core.umath', 'tan',
     Parameters
     ----------
     x : array_like
-      Input array.
+        Input array.
     $PARAMS
 
     Returns
     -------
     y : ndarray
-      The corresponding tangent values.
+        The corresponding tangent values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3479,6 +3962,7 @@ add_newdoc('numpy.core.umath', 'tan',
     >>>
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -3487,7 +3971,7 @@ add_newdoc('numpy.core.umath', 'tan',
     >>> np.cos(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
@@ -3507,6 +3991,7 @@ add_newdoc('numpy.core.umath', 'tanh',
     -------
     y : ndarray
         The corresponding hyperbolic tangent values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3520,7 +4005,7 @@ add_newdoc('numpy.core.umath', 'tanh',
            http://www.math.sfu.ca/~cbm/aands/
 
     .. [2] Wikipedia, "Hyperbolic function",
-           http://en.wikipedia.org/wiki/Hyperbolic_function
+           https://en.wikipedia.org/wiki/Hyperbolic_function
 
     Examples
     --------
@@ -3529,6 +4014,7 @@ add_newdoc('numpy.core.umath', 'tanh',
 
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.tanh([0.1], out1)
     >>> out2 is out1
     True
@@ -3537,7 +4023,7 @@ add_newdoc('numpy.core.umath', 'tanh',
     >>> np.tanh(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
@@ -3555,21 +4041,17 @@ add_newdoc('numpy.core.umath', 'true_divide',
         Dividend array.
     x2 : array_like
         Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
-    out : ndarray
-        Result is scalar if both inputs are scalar, ndarray otherwise.
+    out : ndarray or scalar
+        $OUT_SCALAR_2
 
     Notes
     -----
-    The floor division operator ``//`` was added in Python 2.2 making
-    ``//`` and ``/`` equivalent operators.  The default floor division
-    operation of ``/`` can be replaced by true division with ``from
-    __future__ import division``.
-
-    In Python 3.0, ``//`` is the floor division operator and ``/`` the
+    In Python, ``//`` is the floor division operator and ``/`` the
     true division operator.  The ``true_divide(x1, x2)`` function is
     equivalent to true division in Python.
 
@@ -3580,15 +4062,17 @@ add_newdoc('numpy.core.umath', 'true_divide',
     array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
 
     >>> x/4
-    array([0, 0, 0, 0, 1])
+    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
+
     >>> x//4
     array([0, 0, 0, 0, 1])
 
-    >>> from __future__ import division
-    >>> x/4
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-    >>> x//4
-    array([0, 0, 0, 0, 1])
+    The ``/`` operator can be used as a shorthand for ``np.true_divide`` on
+    ndarrays.
+
+    >>> x = np.arange(5)
+    >>> x / 4
+    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
 
     """)
 
@@ -3597,7 +4081,7 @@ add_newdoc('numpy.core.umath', 'frexp',
     Decompose the elements of x into mantissa and twos exponent.
 
     Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.
-    The mantissa is lies in the open interval(-1, 1), while the twos
+    The mantissa lies in the open interval(-1, 1), while the twos
     exponent is a signed integer.
 
     Parameters
@@ -3612,9 +4096,12 @@ add_newdoc('numpy.core.umath', 'frexp',
 
     Returns
     -------
-    (mantissa, exponent) : tuple of ndarrays, (float, int)
-        `mantissa` is a float array with values between -1 and 1.
-        `exponent` is an int array which represents the exponent of 2.
+    mantissa : ndarray
+        Floating values between -1 and 1.
+        $OUT_SCALAR_1
+    exponent : ndarray
+        Integer exponents of 2.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3651,12 +4138,14 @@ add_newdoc('numpy.core.umath', 'ldexp',
         Array of multipliers.
     x2 : array_like, int
         Array of twos exponents.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
     -------
     y : ndarray or scalar
         The result of ``x1 * 2**x2``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -3672,10 +4161,74 @@ add_newdoc('numpy.core.umath', 'ldexp',
     Examples
     --------
     >>> np.ldexp(5, np.arange(4))
-    array([  5.,  10.,  20.,  40.], dtype=float32)
+    array([ 5., 10., 20., 40.], dtype=float16)
 
     >>> x = np.arange(6)
     >>> np.ldexp(*np.frexp(x))
     array([ 0.,  1.,  2.,  3.,  4.,  5.])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'gcd',
+    """
+    Returns the greatest common divisor of ``|x1|`` and ``|x2|``
+
+    Parameters
+    ----------
+    x1, x2 : array_like, int
+        Arrays of values.
+        $BROADCASTABLE_2
+
+    Returns
+    -------
+    y : ndarray or scalar
+        The greatest common divisor of the absolute value of the inputs
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    lcm : The lowest common multiple
+
+    Examples
+    --------
+    >>> np.gcd(12, 20)
+    4
+    >>> np.gcd.reduce([15, 25, 35])
+    5
+    >>> np.gcd(np.arange(6), 20)
+    array([20,  1,  2,  1,  4,  5])
+
+    """)
+
+add_newdoc('numpy.core.umath', 'lcm',
+    """
+    Returns the lowest common multiple of ``|x1|`` and ``|x2|``
+
+    Parameters
+    ----------
+    x1, x2 : array_like, int
+        Arrays of values.
+        $BROADCASTABLE_2
+
+    Returns
+    -------
+    y : ndarray or scalar
+        The lowest common multiple of the absolute value of the inputs
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    gcd : The greatest common divisor
+
+    Examples
+    --------
+    >>> np.lcm(12, 20)
+    60
+    >>> np.lcm.reduce([3, 12, 20])
+    60
+    >>> np.lcm.reduce([40, 12, 20])
+    120
+    >>> np.lcm(np.arange(6), 20)
+    array([ 0, 20, 20, 60, 20, 20])
 
     """)

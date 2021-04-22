@@ -3,6 +3,11 @@ Set routines
 
 .. currentmodule:: numpy
 
+.. autosummary::
+   :toctree: generated/
+
+   lib.arraysetops
+
 Making proper sets
 ------------------
 .. autosummary::
@@ -17,7 +22,7 @@ Boolean operations
 
    in1d
    intersect1d
-   isin   
+   isin
    setdiff1d
    setxor1d
    union1d

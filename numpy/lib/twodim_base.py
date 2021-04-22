@@ -1,20 +1,27 @@
 """ Basic functions for manipulating 2d arrays
 
 """
-from __future__ import division, absolute_import, print_function
+import functools
 
 from numpy.core.numeric import (
-    absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
-    nonzero
+    asanyarray, arange, zeros, greater_equal, multiply, ones,
+    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
+    diagonal, nonzero, indices
     )
-from numpy.core import iinfo, transpose
+from numpy.core.overrides import set_array_function_like_doc, set_module
+from numpy.core import overrides
+from numpy.core import iinfo
+from numpy.lib.stride_tricks import broadcast_to
 
 
 __all__ = [
     'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
     'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
     'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 i1 = iinfo(int8)
@@ -33,12 +40,18 @@ def _min_int(low, high):
     return int64
 
 
+def _flip_dispatcher(m):
+    return (m,)
+
+
+@array_function_dispatch(_flip_dispatcher)
 def fliplr(m):
     """
-    Flip array in the left/right direction.
+    Reverse the order of elements along axis 1 (left/right).
 
-    Flip the entries in each row in the left/right direction.
-    Columns are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each row in the left/right
+    direction. Columns are preserved, but appear in a different order than
+    before.
 
     Parameters
     ----------
@@ -54,23 +67,25 @@ def fliplr(m):
     See Also
     --------
     flipud : Flip array in the up/down direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to m[:,::-1]. Requires the array to be at least 2-D.
+    Equivalent to ``m[:,::-1]`` or ``np.flip(m, axis=1)``.
+    Requires the array to be at least 2-D.
 
     Examples
     --------
     >>> A = np.diag([1.,2.,3.])
     >>> A
-    array([[ 1.,  0.,  0.],
-           [ 0.,  2.,  0.],
-           [ 0.,  0.,  3.]])
+    array([[1.,  0.,  0.],
+           [0.,  2.,  0.],
+           [0.,  0.,  3.]])
     >>> np.fliplr(A)
-    array([[ 0.,  0.,  1.],
-           [ 0.,  2.,  0.],
-           [ 3.,  0.,  0.]])
+    array([[0.,  0.,  1.],
+           [0.,  2.,  0.],
+           [3.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
     >>> np.all(np.fliplr(A) == A[:,::-1,...])
@@ -83,12 +98,13 @@ def fliplr(m):
     return m[:, ::-1]
 
 
+@array_function_dispatch(_flip_dispatcher)
 def flipud(m):
     """
-    Flip array in the up/down direction.
+    Reverse the order of elements along axis 0 (up/down).
 
-    Flip the entries in each column in the up/down direction.
-    Rows are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each column in the up/down
+    direction. Rows are preserved, but appear in a different order than before.
 
     Parameters
     ----------
@@ -104,24 +120,25 @@ def flipud(m):
     See Also
     --------
     fliplr : Flip array in the left/right direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to ``m[::-1,...]``.
-    Does not require the array to be two-dimensional.
+    Equivalent to ``m[::-1, ...]`` or ``np.flip(m, axis=0)``.
+    Requires the array to be at least 1-D.
 
     Examples
     --------
     >>> A = np.diag([1.0, 2, 3])
     >>> A
-    array([[ 1.,  0.,  0.],
-           [ 0.,  2.,  0.],
-           [ 0.,  0.,  3.]])
+    array([[1.,  0.,  0.],
+           [0.,  2.,  0.],
+           [0.,  0.,  3.]])
     >>> np.flipud(A)
-    array([[ 0.,  0.,  3.],
-           [ 0.,  2.,  0.],
-           [ 1.,  0.,  0.]])
+    array([[0.,  0.,  3.],
+           [0.,  2.,  0.],
+           [1.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
     >>> np.all(np.flipud(A) == A[::-1,...])
@@ -137,7 +154,13 @@ def flipud(m):
     return m[::-1, ...]
 
 
-def eye(N, M=None, k=0, dtype=float):
+def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
+@set_module('numpy')
+def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -153,6 +176,14 @@ def eye(N, M=None, k=0, dtype=float):
       to a lower diagonal.
     dtype : data-type, optional
       Data-type of the returned array.
+    order : {'C', 'F'}, optional
+        Whether the output should be stored in row-major (C-style) or
+        column-major (Fortran-style) order in memory.
+
+        .. versionadded:: 1.14.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -171,14 +202,16 @@ def eye(N, M=None, k=0, dtype=float):
     array([[1, 0],
            [0, 1]])
     >>> np.eye(3, k=1)
-    array([[ 0.,  1.,  0.],
-           [ 0.,  0.,  1.],
-           [ 0.,  0.,  0.]])
+    array([[0.,  1.,  0.],
+           [0.,  0.,  1.],
+           [0.,  0.,  0.]])
 
     """
+    if like is not None:
+        return _eye_with_like(N, M=M, k=k, dtype=dtype, order=order, like=like)
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype)
+    m = zeros((N, M), dtype=dtype, order=order)
     if k >= M:
         return m
     if k >= 0:
@@ -189,6 +222,16 @@ def eye(N, M=None, k=0, dtype=float):
     return m
 
 
+_eye_with_like = array_function_dispatch(
+    _eye_dispatcher
+)(eye)
+
+
+def _diag_dispatcher(v, k=None):
+    return (v,)
+
+
+@array_function_dispatch(_diag_dispatcher)
 def diag(v, k=0):
     """
     Extract a diagonal or construct a diagonal array.
@@ -260,6 +303,7 @@ def diag(v, k=0):
         raise ValueError("Input must be 1- or 2-d.")
 
 
+@array_function_dispatch(_diag_dispatcher)
 def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
@@ -308,10 +352,10 @@ def diagflat(v, k=0):
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0, n-k)
+        i = arange(0, n-k, dtype=intp)
         fi = i+k+i*n
     else:
-        i = arange(0, n+k)
+        i = arange(0, n+k, dtype=intp)
         fi = i+(i-k)*n
     res.flat[fi] = v
     if not wrap:
@@ -319,7 +363,13 @@ def diagflat(v, k=0):
     return wrap(res)
 
 
-def tri(N, M=None, k=0, dtype=float):
+def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
+@set_module('numpy')
+def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
 
@@ -336,12 +386,15 @@ def tri(N, M=None, k=0, dtype=float):
         and `k` > 0 is above.  The default is 0.
     dtype : dtype, optional
         Data type of the returned array.  The default is float.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
     tri : ndarray of shape (N, M)
         Array with its lower triangle filled with ones and zero elsewhere;
-        in other words ``T[i,j] == 1`` for ``i <= j + k``, 0 otherwise.
+        in other words ``T[i,j] == 1`` for ``j <= i + k``, 0 otherwise.
 
     Examples
     --------
@@ -351,11 +404,14 @@ def tri(N, M=None, k=0, dtype=float):
            [1, 1, 1, 1, 1]])
 
     >>> np.tri(3, 5, -1)
-    array([[ 0.,  0.,  0.,  0.,  0.],
-           [ 1.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  0.,  0.,  0.]])
+    array([[0.,  0.,  0.,  0.,  0.],
+           [1.,  0.,  0.,  0.,  0.],
+           [1.,  1.,  0.,  0.,  0.]])
 
     """
+    if like is not None:
+        return _tri_with_like(N, M=M, k=k, dtype=dtype, like=like)
+
     if M is None:
         M = N
 
@@ -368,6 +424,16 @@ def tri(N, M=None, k=0, dtype=float):
     return m
 
 
+_tri_with_like = array_function_dispatch(
+    _tri_dispatcher
+)(tri)
+
+
+def _trilu_dispatcher(m, k=None):
+    return (m,)
+
+
+@array_function_dispatch(_trilu_dispatcher)
 def tril(m, k=0):
     """
     Lower triangle of an array.
@@ -406,11 +472,12 @@ def tril(m, k=0):
     return where(mask, m, zeros(1, m.dtype))
 
 
+@array_function_dispatch(_trilu_dispatcher)
 def triu(m, k=0):
     """
     Upper triangle of an array.
 
-    Return a copy of a matrix with the elements below the `k`-th diagonal
+    Return a copy of an array with the elements below the `k`-th diagonal
     zeroed.
 
     Please refer to the documentation for `tril` for further details.
@@ -434,7 +501,12 @@ def triu(m, k=0):
     return where(mask, zeros(1, m.dtype), m)
 
 
+def _vander_dispatcher(x, N=None, increasing=None):
+    return (x,)
+
+
 # Originally borrowed from John Hunter and matplotlib
+@array_function_dispatch(_vander_dispatcher)
 def vander(x, N=None, increasing=False):
     """
     Generate a Vandermonde matrix.
@@ -502,7 +574,7 @@ def vander(x, N=None, increasing=False):
     of the differences between the values of the input vector:
 
     >>> np.linalg.det(np.vander(x))
-    48.000000000000043
+    48.000000000000043 # may vary
     >>> (5-3)*(5-2)*(5-1)*(3-2)*(3-1)*(2-1)
     48
 
@@ -525,7 +597,27 @@ def vander(x, N=None, increasing=False):
     return v
 
 
-def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
+def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
+                            weights=None, density=None):
+    yield x
+    yield y
+
+    # This terrible logic is adapted from the checks in histogram2d
+    try:
+        N = len(bins)
+    except TypeError:
+        N = 1
+    if N == 2:
+        yield from bins  # bins=[x, y]
+    else:
+        yield bins
+
+    yield weights
+
+
+@array_function_dispatch(_histogram2d_dispatcher)
+def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
+                density=None):
     """
     Compute the bi-dimensional histogram of two data samples.
 
@@ -555,9 +647,14 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         (if not specified explicitly in the `bins` parameters):
         ``[[xmin, xmax], [ymin, ymax]]``. All values outside of this range
         will be considered outliers and not tallied in the histogram.
+    density : bool, optional
+        If False, the default, returns the number of samples in each bin.
+        If True, returns the probability *density* function at the bin,
+        ``bin_count / sample_count / bin_area``.
     normed : bool, optional
-        If False, returns the number of samples in each bin. If True,
-        returns the bin density ``bin_count / sample_count / bin_area``.
+        An alias for the density argument that behaves identically. To avoid
+        confusion with the broken normed argument to `histogram`, `density`
+        should be preferred.
     weights : array_like, shape(N,), optional
         An array of values ``w_i`` weighing each sample ``(x_i, y_i)``.
         Weights are normalized to 1 if `normed` is True. If `normed` is
@@ -594,7 +691,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
 
     Examples
     --------
-    >>> import matplotlib as mpl
+    >>> from matplotlib.image import NonUniformImage
     >>> import matplotlib.pyplot as plt
 
     Construct a 2-D histogram with variable bin width. First define the bin
@@ -614,8 +711,9 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
 
     >>> fig = plt.figure(figsize=(7, 3))
     >>> ax = fig.add_subplot(131, title='imshow: square bins')
-    >>> plt.imshow(H, interpolation='nearest', origin='low',
+    >>> plt.imshow(H, interpolation='nearest', origin='lower',
     ...         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+    <matplotlib.image.AxesImage object at 0x...>
 
     :func:`pcolormesh <matplotlib.pyplot.pcolormesh>` can display actual edges:
 
@@ -623,13 +721,14 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     ...         aspect='equal')
     >>> X, Y = np.meshgrid(xedges, yedges)
     >>> ax.pcolormesh(X, Y, H)
+    <matplotlib.collections.QuadMesh object at 0x...>
 
     :class:`NonUniformImage <matplotlib.image.NonUniformImage>` can be used to
     display actual bin edges with interpolation:
 
     >>> ax = fig.add_subplot(133, title='NonUniformImage: interpolated',
     ...         aspect='equal', xlim=xedges[[0, -1]], ylim=yedges[[0, -1]])
-    >>> im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
+    >>> im = NonUniformImage(ax, interpolation='bilinear')
     >>> xcenters = (xedges[:-1] + xedges[1:]) / 2
     >>> ycenters = (yedges[:-1] + yedges[1:]) / 2
     >>> im.set_data(xcenters, ycenters, H)
@@ -645,12 +744,13 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         N = 1
 
     if N != 1 and N != 2:
-        xedges = yedges = asarray(bins, float)
+        xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
-    hist, edges = histogramdd([x, y], bins, range, normed, weights)
+    hist, edges = histogramdd([x, y], bins, range, normed, weights, density)
     return hist, edges[0], edges[1]
 
 
+@set_module('numpy')
 def mask_indices(n, mask_func, k=0):
     """
     Return the indices to access (n, n) arrays, given a masking function.
@@ -721,6 +821,7 @@ def mask_indices(n, mask_func, k=0):
     return nonzero(a != 0)
 
 
+@set_module('numpy')
 def tril_indices(n, k=0, m=None):
     """
     Return the indices for the lower-triangle of an (n, m) array.
@@ -777,7 +878,7 @@ def tril_indices(n, k=0, m=None):
     Both for indexing:
 
     >>> a[il1]
-    array([ 0,  4,  5,  8,  9, 10, 12, 13, 14, 15])
+    array([ 0,  4,  5, ..., 13, 14, 15])
 
     And for assigning values:
 
@@ -798,9 +899,17 @@ def tril_indices(n, k=0, m=None):
            [-10, -10, -10, -10]])
 
     """
-    return nonzero(tri(n, m, k=k, dtype=bool))
+    tri_ = tri(n, m, k=k, dtype=bool)
+
+    return tuple(broadcast_to(inds, tri_.shape)[tri_]
+                 for inds in indices(tri_.shape, sparse=True))
 
 
+def _trilu_indices_form_dispatcher(arr, k=None):
+    return (arr,)
+
+
+@array_function_dispatch(_trilu_indices_form_dispatcher)
 def tril_indices_from(arr, k=0):
     """
     Return the indices for the lower-triangle of arr.
@@ -829,6 +938,7 @@ def tril_indices_from(arr, k=0):
     return tril_indices(arr.shape[-2], k=k, m=arr.shape[-1])
 
 
+@set_module('numpy')
 def triu_indices(n, k=0, m=None):
     """
     Return the indices for the upper-triangle of an (n, m) array.
@@ -886,7 +996,7 @@ def triu_indices(n, k=0, m=None):
     Both for indexing:
 
     >>> a[iu1]
-    array([ 0,  1,  2,  3,  5,  6,  7, 10, 11, 15])
+    array([ 0,  1,  2, ..., 10, 11, 15])
 
     And for assigning values:
 
@@ -908,9 +1018,13 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
-    return nonzero(~tri(n, m, k=k-1, dtype=bool))
+    tri_ = ~tri(n, m, k=k - 1, dtype=bool)
+
+    return tuple(broadcast_to(inds, tri_.shape)[tri_]
+                 for inds in indices(tri_.shape, sparse=True))
 
 
+@array_function_dispatch(_trilu_indices_form_dispatcher)
 def triu_indices_from(arr, k=0):
     """
     Return the indices for the upper-triangle of arr.

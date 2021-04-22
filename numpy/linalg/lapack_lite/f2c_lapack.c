@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -475,10 +475,6 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
 {
     /* System generated locals */
     integer ret_val;
-
-    /* Builtin functions */
-    /* Subroutine */ int s_copy(char *, char *, ftnlen, ftnlen);
-    integer s_cmp(char *, char *, ftnlen, ftnlen);
 
     /* Local variables */
     static integer i__;
@@ -1394,10 +1390,6 @@ integer iparmq_(integer *ispec, char *name__, char *opts, integer *n, integer
     /* System generated locals */
     integer ret_val, i__1, i__2;
     real r__1;
-
-    /* Builtin functions */
-    double log(doublereal);
-    integer i_nint(real *);
 
     /* Local variables */
     static integer nh, ns;

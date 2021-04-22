@@ -1,93 +1,77 @@
-from __future__ import division, absolute_import, print_function
-
-'''
->>> p = np.poly1d([1.,2,3])
->>> p
-poly1d([ 1.,  2.,  3.])
->>> print(p)
-   2
-1 x + 2 x + 3
->>> q = np.poly1d([3.,2,1])
->>> q
-poly1d([ 3.,  2.,  1.])
->>> print(q)
-   2
-3 x + 2 x + 1
->>> print(np.poly1d([1.89999+2j, -3j, -5.12345678, 2+1j]))
-            3      2
-(1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)
->>> print(np.poly1d([-3, -2, -1]))
-    2
--3 x - 2 x - 1
-
->>> p(0)
-3.0
->>> p(5)
-38.0
->>> q(0)
-1.0
->>> q(5)
-86.0
-
->>> p * q
-poly1d([  3.,   8.,  14.,   8.,   3.])
->>> p / q
-(poly1d([ 0.33333333]), poly1d([ 1.33333333,  2.66666667]))
->>> p + q
-poly1d([ 4.,  4.,  4.])
->>> p - q
-poly1d([-2.,  0.,  2.])
->>> p ** 4
-poly1d([   1.,    8.,   36.,  104.,  214.,  312.,  324.,  216.,   81.])
-
->>> p(q)
-poly1d([  9.,  12.,  16.,   8.,   6.])
->>> q(p)
-poly1d([  3.,  12.,  32.,  40.,  34.])
-
->>> np.asarray(p)
-array([ 1.,  2.,  3.])
->>> len(p)
-2
-
->>> p[0], p[1], p[2], p[3]
-(3.0, 2.0, 1.0, 0)
-
->>> p.integ()
-poly1d([ 0.33333333,  1.        ,  3.        ,  0.        ])
->>> p.integ(1)
-poly1d([ 0.33333333,  1.        ,  3.        ,  0.        ])
->>> p.integ(5)
-poly1d([ 0.00039683,  0.00277778,  0.025     ,  0.        ,  0.        ,
-        0.        ,  0.        ,  0.        ])
->>> p.deriv()
-poly1d([ 2.,  2.])
->>> p.deriv(2)
-poly1d([ 2.])
-
->>> q = np.poly1d([1.,2,3], variable='y')
->>> print(q)
-   2
-1 y + 2 y + 3
->>> q = np.poly1d([1.,2,3], variable='lambda')
->>> print(q)
-        2
-1 lambda + 2 lambda + 3
-
->>> np.polydiv(np.poly1d([1,0,-1]), np.poly1d([1,1]))
-(poly1d([ 1., -1.]), poly1d([ 0.]))
-
-'''
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises, rundocs
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_allclose
     )
 
 
-class TestDocs(object):
-    def test_doctests(self):
-        return rundocs()
+class TestPolynomial:
+    def test_poly1d_str_and_repr(self):
+        p = np.poly1d([1., 2, 3])
+        assert_equal(repr(p), 'poly1d([1., 2., 3.])')
+        assert_equal(str(p),
+                     '   2\n'
+                     '1 x + 2 x + 3')
+
+        q = np.poly1d([3., 2, 1])
+        assert_equal(repr(q), 'poly1d([3., 2., 1.])')
+        assert_equal(str(q),
+                     '   2\n'
+                     '3 x + 2 x + 1')
+
+        r = np.poly1d([1.89999 + 2j, -3j, -5.12345678, 2 + 1j])
+        assert_equal(str(r),
+                     '            3      2\n'
+                     '(1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)')
+
+        assert_equal(str(np.poly1d([-3, -2, -1])),
+                     '    2\n'
+                     '-3 x - 2 x - 1')
+
+    def test_poly1d_resolution(self):
+        p = np.poly1d([1., 2, 3])
+        q = np.poly1d([3., 2, 1])
+        assert_equal(p(0), 3.0)
+        assert_equal(p(5), 38.0)
+        assert_equal(q(0), 1.0)
+        assert_equal(q(5), 86.0)
+
+    def test_poly1d_math(self):
+        # here we use some simple coeffs to make calculations easier
+        p = np.poly1d([1., 2, 4])
+        q = np.poly1d([4., 2, 1])
+        assert_equal(p/q, (np.poly1d([0.25]), np.poly1d([1.5, 3.75])))
+        assert_equal(p.integ(), np.poly1d([1/3, 1., 4., 0.]))
+        assert_equal(p.integ(1), np.poly1d([1/3, 1., 4., 0.]))
+
+        p = np.poly1d([1., 2, 3])
+        q = np.poly1d([3., 2, 1])
+        assert_equal(p * q, np.poly1d([3., 8., 14., 8., 3.]))
+        assert_equal(p + q, np.poly1d([4., 4., 4.]))
+        assert_equal(p - q, np.poly1d([-2., 0., 2.]))
+        assert_equal(p ** 4, np.poly1d([1., 8., 36., 104., 214., 312., 324., 216., 81.]))
+        assert_equal(p(q), np.poly1d([9., 12., 16., 8., 6.]))
+        assert_equal(q(p), np.poly1d([3., 12., 32., 40., 34.]))
+        assert_equal(p.deriv(), np.poly1d([2., 2.]))
+        assert_equal(p.deriv(2), np.poly1d([2.]))
+        assert_equal(np.polydiv(np.poly1d([1, 0, -1]), np.poly1d([1, 1])),
+                     (np.poly1d([1., -1.]), np.poly1d([0.])))
+
+    def test_poly1d_misc(self):
+        p = np.poly1d([1., 2, 3])
+        assert_equal(np.asarray(p), np.array([1., 2., 3.]))
+        assert_equal(len(p), 2)
+        assert_equal((p[0], p[1], p[2], p[3]), (3.0, 2.0, 1.0, 0))
+
+    def test_poly1d_variable_arg(self):
+        q = np.poly1d([1., 2, 3], variable='y')
+        assert_equal(str(q),
+                     '   2\n'
+                     '1 y + 2 y + 3')
+        q = np.poly1d([1., 2, 3], variable='lambda')
+        assert_equal(str(q),
+                     '        2\n'
+                     '1 lambda + 2 lambda + 3')
 
     def test_poly(self):
         assert_array_almost_equal(np.poly([3, -np.sqrt(2), np.sqrt(2)]),
@@ -136,26 +120,33 @@ class TestDocs(object):
         weights = np.arange(8, 1, -1)**2/7.0
 
         # Check exception when too few points for variance estimate. Note that
-        # the Bayesian estimate requires the number of data points to exceed
-        # degree + 3.
+        # the estimate requires the number of data points to exceed
+        # degree + 1
         assert_raises(ValueError, np.polyfit,
-                      [0, 1, 3], [0, 1, 3], deg=0, cov=True)
+                      [1], [1], deg=0, cov=True)
 
         # check 1D case
         m, cov = np.polyfit(x, y+err, 2, cov=True)
         est = [3.8571, 0.2857, 1.619]
         assert_almost_equal(est, m, decimal=4)
-        val0 = [[2.9388, -5.8776, 1.6327],
-                [-5.8776, 12.7347, -4.2449],
-                [1.6327, -4.2449, 2.3220]]
+        val0 = [[ 1.4694, -2.9388,  0.8163],
+                [-2.9388,  6.3673, -2.1224],
+                [ 0.8163, -2.1224,  1.161 ]]
         assert_almost_equal(val0, cov, decimal=4)
 
         m2, cov2 = np.polyfit(x, y+err, 2, w=weights, cov=True)
         assert_almost_equal([4.8927, -1.0177, 1.7768], m2, decimal=4)
-        val = [[8.7929, -10.0103, 0.9756],
-               [-10.0103, 13.6134, -1.8178],
-               [0.9756, -1.8178, 0.6674]]
+        val = [[ 4.3964, -5.0052,  0.4878],
+               [-5.0052,  6.8067, -0.9089],
+               [ 0.4878, -0.9089,  0.3337]]
         assert_almost_equal(val, cov2, decimal=4)
+
+        m3, cov3 = np.polyfit(x, y+err, 2, w=weights, cov="unscaled")
+        assert_almost_equal([4.8927, -1.0177, 1.7768], m3, decimal=4)
+        val = [[ 0.1473, -0.1677,  0.0163],
+               [-0.1677,  0.228 , -0.0304],
+               [ 0.0163, -0.0304,  0.0112]]
+        assert_almost_equal(val, cov3, decimal=4)
 
         # check 2D (n,1) case
         y = y[:, np.newaxis]
@@ -171,6 +162,29 @@ class TestDocs(object):
         assert_almost_equal(est, m[:, 1], decimal=4)
         assert_almost_equal(val0, cov[:, :, 0], decimal=4)
         assert_almost_equal(val0, cov[:, :, 1], decimal=4)
+
+        # check order 1 (deg=0) case, were the analytic results are simple
+        np.random.seed(123)
+        y = np.random.normal(size=(4, 10000))
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, deg=0, cov=True)
+        # Should get sigma_mean = sigma/sqrt(N) = 1./sqrt(4) = 0.5.
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
+        # Without scaling, since reduced chi2 is 1, the result should be the same.
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=np.ones(y.shape[0]),
+                               deg=0, cov="unscaled")
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_almost_equal(np.sqrt(cov.mean()), 0.5)
+        # If we estimate our errors wrong, no change with scaling:
+        w = np.full(y.shape[0], 1./0.5)
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov=True)
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
+        # But if we do not scale, our estimate for the error in the mean will
+        # differ.
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov="unscaled")
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_almost_equal(np.sqrt(cov.mean()), 0.25)
 
     def test_objects(self):
         from decimal import Decimal
@@ -213,6 +227,20 @@ class TestDocs(object):
         v = np.arange(1, 21)
         assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
 
+    def test_zero_poly_dtype(self):
+        """
+        Regression test for gh-16354.
+        """
+        z = np.array([0, 0, 0])
+        p = np.poly1d(z.astype(np.int64))
+        assert_equal(p.coeffs.dtype, np.int64)
+
+        p = np.poly1d(z.astype(np.float32))
+        assert_equal(p.coeffs.dtype, np.float32)
+
+        p = np.poly1d(z.astype(np.complex64))
+        assert_equal(p.coeffs.dtype, np.complex64)
+
     def test_poly_eq(self):
         p = np.poly1d([1, 2, 3])
         p2 = np.poly1d([1, 2, 4])
@@ -222,20 +250,33 @@ class TestDocs(object):
         assert_equal(p == p2, False)
         assert_equal(p != p2, True)
 
-    def test_poly_coeffs_immutable(self):
-        """ Coefficients should not be modifiable """
+    def test_polydiv(self):
+        b = np.poly1d([2, 6, 6, 1])
+        a = np.poly1d([-1j, (1+2j), -(2+1j), 1])
+        q, r = np.polydiv(b, a)
+        assert_equal(q.coeffs.dtype, np.complex128)
+        assert_equal(r.coeffs.dtype, np.complex128)
+        assert_equal(q*a + r, b)
+        
+        c = [1, 2, 3]
+        d = np.poly1d([1, 2, 3])
+        s, t = np.polydiv(c, d)
+        assert isinstance(s, np.poly1d)
+        assert isinstance(t, np.poly1d)
+        u, v = np.polydiv(d, c)
+        assert isinstance(u, np.poly1d)
+        assert isinstance(v, np.poly1d)
+
+    def test_poly_coeffs_mutable(self):
+        """ Coefficients should be modifiable """
         p = np.poly1d([1, 2, 3])
 
-        try:
-            # despite throwing an exception, this used to change state
-            p.coeffs += 1
-        except Exception:
-            pass
-        assert_equal(p.coeffs, [1, 2, 3])
+        p.coeffs += 1
+        assert_equal(p.coeffs, [2, 3, 4])
 
         p.coeffs[2] += 10
-        assert_equal(p.coeffs, [1, 2, 3])
+        assert_equal(p.coeffs, [2, 3, 14])
 
-
-if __name__ == "__main__":
-    run_module_suite()
+        # this never used to be allowed - let's not add features to deprecated
+        # APIs
+        assert_raises(AttributeError, setattr, p, 'coeffs', np.array(1))

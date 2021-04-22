@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -269,9 +269,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *), z_abs(doublecomplex *);
 
     /* Local variables */
     static doublereal c__, f, g;
@@ -663,9 +660,6 @@ L210:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublecomplex z__1;
-
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__;
@@ -1316,10 +1310,6 @@ L210:
     doublereal d__1, d__2;
     doublecomplex z__1, z__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal), d_imag(doublecomplex *);
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, k, ihi;
     static doublereal scl;
@@ -1839,9 +1829,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublecomplex z__1;
-
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__;
@@ -2721,9 +2708,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4;
 
-    /* Builtin functions */
-    double log(doublereal);
-
     /* Local variables */
     static integer ie, il, mm;
     static doublereal eps, anrm, bnrm;
@@ -3461,9 +3445,6 @@ L10:
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, k;
     static doublecomplex alpha;
@@ -3840,9 +3821,6 @@ L10:
     /* System generated locals */
     integer a_dim1, a_offset, u_dim1, u_offset, vt_dim1, vt_offset, i__1,
 	    i__2, i__3;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, ie, il, ir, iu, blk;
@@ -6471,10 +6449,6 @@ L10:
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    double z_abs(doublecomplex *);
-    void z_div(doublecomplex *, doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, jp;
     static doublereal sfmin;
@@ -6992,9 +6966,6 @@ L10:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal eps;
@@ -8042,9 +8013,6 @@ L10:
     doublecomplex z__1;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static doublecomplex hl[2401]	/* was [49][49] */;
     static integer kbot, nmin;
@@ -8968,9 +8936,6 @@ L10:
     integer i__1, i__2;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, ioff;
 
@@ -9271,9 +9236,6 @@ L10:
     doublereal d__1;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-
     /* Local variables */
     static integer i__, j, l;
     extern /* Subroutine */ int dgemm_(char *, char *, integer *, integer *,
@@ -9416,9 +9378,6 @@ L10:
     doublereal d__1, d__2, d__3, d__4;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-
     /* Local variables */
     static doublereal zi, zr;
     extern /* Subroutine */ int dladiv_(doublereal *, doublereal *,
@@ -9471,10 +9430,6 @@ L10:
     /* System generated locals */
     integer q_dim1, q_offset, qstore_dim1, qstore_offset, i__1, i__2;
     doublereal d__1;
-
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
 
     /* Local variables */
     static integer i__, j, k, ll, iq, lgn, msd2, smm1, spm1, spm2;
@@ -9824,9 +9779,6 @@ L80:
     /* System generated locals */
     integer q_dim1, q_offset, i__1, i__2;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, k, n1, n2, iq, iw, iz, ptr, indx, curr, indxc, indxp;
     extern /* Subroutine */ int dlaed9_(integer *, integer *, integer *,
@@ -10131,9 +10083,6 @@ L80:
     /* System generated locals */
     integer q_dim1, q_offset, q2_dim1, q2_offset, i__1;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal c__;
@@ -10553,13 +10502,6 @@ L100:
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6;
     doublecomplex z__1, z__2, z__3, z__4, z__5, z__6, z__7;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    void d_cnjg(doublecomplex *, doublecomplex *);
-    double z_abs(doublecomplex *);
-    void z_sqrt(doublecomplex *, doublecomplex *), pow_zi(doublecomplex *,
-	    doublecomplex *, integer *);
 
     /* Local variables */
     static integer i__, j, k, l, m;
@@ -11612,9 +11554,6 @@ L150:
     doublereal d__1;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-
     /* Local variables */
     static integer i__, j, m, n;
     static doublereal dj;
@@ -12153,10 +12092,6 @@ L150:
 	    z_dim1, z_offset, b_dim1, b_offset, bx_dim1, bx_offset, i__1,
 	    i__2, i__3, i__4, i__5, i__6;
     doublecomplex z__1;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    integer pow_ii(integer *, integer *);
 
     /* Local variables */
     static integer i__, j, i1, ic, lf, nd, ll, nl, nr, im1, nlf, nrf, lvl,
@@ -12807,10 +12742,6 @@ L330:
     integer b_dim1, b_offset, i__1, i__2, i__3, i__4, i__5, i__6;
     doublereal d__1;
     doublecomplex z__1;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *), log(doublereal), d_sign(doublereal *,
-	    doublereal *);
 
     /* Local variables */
     static integer c__, i__, j, k;
@@ -13550,9 +13481,6 @@ doublereal zlange_(char *norm, integer *m, integer *n, doublecomplex *a,
     integer a_dim1, a_offset, i__1, i__2;
     doublereal ret_val, d__1, d__2;
 
-    /* Builtin functions */
-    double z_abs(doublecomplex *), sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j;
     static doublereal sum, scale;
@@ -13718,9 +13646,6 @@ doublereal zlanhe_(char *norm, char *uplo, integer *n, doublecomplex *a,
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
     doublereal ret_val, d__1, d__2, d__3;
-
-    /* Builtin functions */
-    double z_abs(doublecomplex *), sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j;
@@ -13956,10 +13881,6 @@ doublereal zlanhe_(char *norm, char *uplo, integer *n, doublecomplex *a,
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6, d__7, d__8;
     doublecomplex z__1, z__2, z__3, z__4, z__5;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    void z_sqrt(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, k;
@@ -14745,9 +14666,6 @@ L80:
     doublereal d__1, d__2, d__3, d__4, d__5, d__6;
     doublecomplex z__1, z__2, z__3, z__4, z__5, z__6, z__7, z__8;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-
     /* Local variables */
     static doublereal s;
     static doublecomplex h21s, h31s;
@@ -14920,10 +14838,6 @@ L80:
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6;
     doublecomplex z__1, z__2;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, j;
@@ -15506,10 +15420,6 @@ L80:
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6;
     doublecomplex z__1, z__2;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, j;
@@ -16109,10 +16019,6 @@ L80:
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6, d__7, d__8;
     doublecomplex z__1, z__2, z__3, z__4, z__5;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    void z_sqrt(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, k;
@@ -16902,10 +16808,6 @@ L80:
 	     i__4, i__5, i__6, i__7, i__8, i__9, i__10, i__11;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6, d__7, d__8, d__9, d__10;
     doublecomplex z__1, z__2, z__3, z__4, z__5, z__6, z__7, z__8;
-
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-    double d_imag(doublecomplex *);
 
     /* Local variables */
     static integer j, k, m, i2, j2, i4, j4, k1;
@@ -18253,9 +18155,6 @@ L80:
     doublereal d__1;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-
     /* Local variables */
     static integer i__, j, l;
     extern /* Subroutine */ int dgemm_(char *, char *, integer *, integer *,
@@ -18574,9 +18473,6 @@ L80:
     integer c_dim1, c_offset, t_dim1, t_offset, v_dim1, v_offset, work_dim1,
 	    work_offset, i__1, i__2, i__3, i__4, i__5;
     doublecomplex z__1, z__2;
-
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, j;
@@ -19420,9 +19316,6 @@ L80:
     doublereal d__1, d__2;
     doublecomplex z__1, z__2;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *), d_sign(doublereal *, doublereal *);
-
     /* Local variables */
     static integer j, knt;
     static doublereal beta, alphi, alphr;
@@ -19922,11 +19815,6 @@ L36:
     integer i__1;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6, d__7, d__8, d__9, d__10;
     doublecomplex z__1, z__2, z__3;
-
-    /* Builtin functions */
-    double log(doublereal), pow_di(doublereal *, integer *), d_imag(
-	    doublecomplex *), sqrt(doublereal);
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static doublereal d__;
@@ -21272,9 +21160,6 @@ L10:
     integer i__1, i__2, i__3;
     doublereal d__1;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-
     /* Local variables */
     static integer ix;
     static doublereal temp1;
@@ -21930,10 +21815,6 @@ L10:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     doublereal d__1, d__2, d__3, d__4;
     doublecomplex z__1, z__2, z__3, z__4;
-
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, j;
@@ -23456,9 +23337,6 @@ L210:
     doublereal d__1;
     doublecomplex z__1, z__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer j;
     static doublereal ajj;
@@ -24133,9 +24011,6 @@ L40:
     integer i__1, i__2, i__3, i__4;
     doublecomplex z__1, z__2, z__3, z__4;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, ix, iy;
     static doublecomplex stemp;
@@ -24269,11 +24144,6 @@ L20:
     /* System generated locals */
     integer z_dim1, z_offset, i__1, i__2, i__3, i__4;
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j, k, m;
@@ -24741,9 +24611,6 @@ L70:
     /* System generated locals */
     integer z_dim1, z_offset, i__1, i__2;
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
 
     /* Local variables */
     static doublereal b, c__, f, g;
@@ -25345,10 +25212,6 @@ L160:
     doublereal d__1, d__2, d__3;
     doublecomplex z__1, z__2;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *);
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, k, ii, ki, is;
     static doublereal ulp;
@@ -25848,9 +25711,6 @@ L130:
     integer q_dim1, q_offset, t_dim1, t_offset, i__1, i__2, i__3;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer k, m1, m2, m3;
     static doublereal cs;
@@ -26035,9 +25895,6 @@ L130:
     integer a_dim1, a_offset, i__1, i__2;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    void z_div(doublecomplex *, doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer j;
     static doublecomplex ajj;
@@ -26203,9 +26060,6 @@ L130:
     integer a_dim1, a_offset, i__1, i__2, i__3[2], i__4, i__5;
     doublecomplex z__1;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer j, jb, nb, nn;
@@ -27059,9 +26913,6 @@ L130:
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublecomplex z__1, z__2;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, l;
     extern /* Subroutine */ int zscal_(integer *, doublecomplex *,
@@ -27757,9 +27608,6 @@ L130:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
     doublecomplex z__1;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, i1, i2, i3, mi, ni, nq;
     static doublecomplex aii;
@@ -27971,9 +27819,6 @@ L130:
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
     doublecomplex z__1;
-
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, i1, i2, i3, ic, jc, mi, ni, nq;
@@ -28192,9 +28037,6 @@ L130:
     address a__1[2];
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3[2];
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;
@@ -28534,9 +28376,6 @@ L130:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i1, i2, nb, mi, nh, ni, nq, nw;
     static logical left;
@@ -28760,9 +28599,6 @@ L130:
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
     doublecomplex z__1;
-
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
 
     /* Local variables */
     static integer i__, i1, i2, i3, ic, jc, mi, ni, nq;
@@ -28990,9 +28826,6 @@ L130:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3[2], i__4,
 	    i__5;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer i__;
@@ -29302,9 +29135,6 @@ L130:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static doublecomplex t[4160]	/* was [65][64] */;
@@ -29607,9 +29437,6 @@ L130:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static doublecomplex t[4160]	/* was [65][64] */;
@@ -29910,9 +29737,6 @@ L130:
     address a__1[2];
     integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2, i__3;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;

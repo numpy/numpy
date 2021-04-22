@@ -36,5 +36,23 @@
 0x0000000a = 9b8bce614655d3eb02acddcb508203cb
 
 # Version 11 (NumPy 1.13) Added PyArray_MapIterArrayCopyIfOverlap
-# Version 11 (NumPy 1.14) No Change
 0x0000000b = edb1ba83730c650fd9bc5772a919cda7
+
+# Version 12 (NumPy 1.14) Added PyArray_ResolveWritebackIfCopy,
+# PyArray_SetWritebackIfCopyBase and deprecated PyArray_SetUpdateIfCopyBase.
+# Version 12 (NumPy 1.15) No change.
+0x0000000c = a1bc756c5782853ec2e3616cf66869d8
+
+# Version 13 (NumPy 1.16)
+# Deprecate PyArray_SetNumericOps and PyArray_GetNumericOps,
+# Add fields core_dim_flags and core_dim_sizes to PyUFuncObject.
+# Add PyUFunc_FromFuncAndDataAndSignatureAndIdentity to ufunc_funcs_api.
+# Version 13 (NumPy 1.17) No change.
+# Version 13 (NumPy 1.18) No change.
+# Version 13 (NumPy 1.19) No change.
+0x0000000d = 5b0e8bbded00b166125974fc71e80a33
+
+# Version 14 (NumPy 1.20)
+# DType related API additions.
+# A new field was added to the end of PyArrayObject_fields.
+0x0000000e = 17a0f366e55ec05e5c5c149123478452

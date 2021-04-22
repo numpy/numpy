@@ -5,14 +5,12 @@
 extern "C" {
 #endif
 
+#include <numpy/npy_common.h>
+
 #include <math.h>
 #ifdef __SUNPRO_CC
 #include <sunmath.h>
 #endif
-#ifdef HAVE_NPY_CONFIG_H
-#include <npy_config.h>
-#endif
-#include <numpy/npy_common.h>
 
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
@@ -114,6 +112,45 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_SQRT1_2l  0.707106781186547524400844362104849039L /* 1/sqrt(2) */
 
 /*
+ * Integer functions.
+ */
+NPY_INPLACE npy_uint npy_gcdu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_uint npy_lcmu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_ulong npy_gcdul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulong npy_lcmul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulonglong npy_gcdull(npy_ulonglong a, npy_ulonglong b);
+NPY_INPLACE npy_ulonglong npy_lcmull(npy_ulonglong a, npy_ulonglong b);
+
+NPY_INPLACE npy_int npy_gcd(npy_int a, npy_int b);
+NPY_INPLACE npy_int npy_lcm(npy_int a, npy_int b);
+NPY_INPLACE npy_long npy_gcdl(npy_long a, npy_long b);
+NPY_INPLACE npy_long npy_lcml(npy_long a, npy_long b);
+NPY_INPLACE npy_longlong npy_gcdll(npy_longlong a, npy_longlong b);
+NPY_INPLACE npy_longlong npy_lcmll(npy_longlong a, npy_longlong b);
+
+NPY_INPLACE npy_ubyte npy_rshiftuhh(npy_ubyte a, npy_ubyte b);
+NPY_INPLACE npy_ubyte npy_lshiftuhh(npy_ubyte a, npy_ubyte b);
+NPY_INPLACE npy_ushort npy_rshiftuh(npy_ushort a, npy_ushort b);
+NPY_INPLACE npy_ushort npy_lshiftuh(npy_ushort a, npy_ushort b);
+NPY_INPLACE npy_uint npy_rshiftu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_uint npy_lshiftu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_ulong npy_rshiftul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulong npy_lshiftul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulonglong npy_rshiftull(npy_ulonglong a, npy_ulonglong b);
+NPY_INPLACE npy_ulonglong npy_lshiftull(npy_ulonglong a, npy_ulonglong b);
+
+NPY_INPLACE npy_byte npy_rshifthh(npy_byte a, npy_byte b);
+NPY_INPLACE npy_byte npy_lshifthh(npy_byte a, npy_byte b);
+NPY_INPLACE npy_short npy_rshifth(npy_short a, npy_short b);
+NPY_INPLACE npy_short npy_lshifth(npy_short a, npy_short b);
+NPY_INPLACE npy_int npy_rshift(npy_int a, npy_int b);
+NPY_INPLACE npy_int npy_lshift(npy_int a, npy_int b);
+NPY_INPLACE npy_long npy_rshiftl(npy_long a, npy_long b);
+NPY_INPLACE npy_long npy_lshiftl(npy_long a, npy_long b);
+NPY_INPLACE npy_longlong npy_rshiftll(npy_longlong a, npy_longlong b);
+NPY_INPLACE npy_longlong npy_lshiftll(npy_longlong a, npy_longlong b);
+
+/*
  * C99 double math funcs
  */
 NPY_INPLACE double npy_sin(double x);
@@ -165,7 +202,7 @@ double npy_spacing(double x);
 
 /* use builtins to avoid function calls in tight loops
  * only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISNAN
+#ifdef HAVE___BUILTIN_ISNAN
     #define npy_isnan(x) __builtin_isnan(x)
 #else
     #ifndef NPY_HAVE_DECL_ISNAN
@@ -181,7 +218,7 @@ double npy_spacing(double x);
 
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISFINITE
+#ifdef HAVE___BUILTIN_ISFINITE
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
     #ifndef NPY_HAVE_DECL_ISFINITE
@@ -196,7 +233,7 @@ double npy_spacing(double x);
 #endif
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISINF
+#ifdef HAVE___BUILTIN_ISINF
     #define npy_isinf(x) __builtin_isinf(x)
 #else
     #ifndef NPY_HAVE_DECL_ISINF
@@ -524,8 +561,17 @@ npy_clongdouble npy_catanhl(npy_clongdouble z);
 #define NPY_FPE_UNDERFLOW     4
 #define NPY_FPE_INVALID       8
 
-int npy_get_floatstatus(void);
+int npy_clear_floatstatus_barrier(char*);
+int npy_get_floatstatus_barrier(char*);
+/*
+ * use caution with these - clang and gcc8.1 are known to reorder calls
+ * to this form of the function which can defeat the check. The _barrier
+ * form of the call is preferable, where the argument is
+ * (char*)&local_variable
+ */
 int npy_clear_floatstatus(void);
+int npy_get_floatstatus(void);
+
 void npy_set_floatstatus_divbyzero(void);
 void npy_set_floatstatus_overflow(void);
 void npy_set_floatstatus_underflow(void);

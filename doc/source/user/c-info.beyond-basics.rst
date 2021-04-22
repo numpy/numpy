@@ -110,12 +110,12 @@ to a small(er) fraction of the total time. Even if the interior of the
 loop is performed without a function call it can be advantageous to
 perform the inner loop over the dimension with the highest number of
 elements to take advantage of speed enhancements available on micro-
-processors that use pipelining to enhance fundmental operations.
+processors that use pipelining to enhance fundamental operations.
 
 The :c:func:`PyArray_IterAllButAxis` ( ``array``, ``&dim`` ) constructs an
 iterator object that is modified so that it will not iterate over the
 dimension indicated by dim. The only restriction on this iterator
-object, is that the :c:func:`PyArray_Iter_GOTO1D` ( ``it``, ``ind`` ) macro
+object, is that the :c:func:`PyArray_ITER_GOTO1D` ( ``it``, ``ind`` ) macro
 cannot be used (thus flat indexing won't work either if you pass this
 object back to Python --- so you shouldn't do this). Note that the
 returned object from this routine is still usually cast to
@@ -172,8 +172,8 @@ iterators so that all that needs to be done to advance to the next element in
 each array is for PyArray_ITER_NEXT to be called for each of the inputs. This
 incrementing is automatically performed by
 :c:func:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
-multiterator ``obj`` as either a :c:type:`PyArrayMultiObject *` or a
-:c:type:`PyObject *<PyObject>`). The data from input number ``i`` is available using
+multiterator ``obj`` as either a :c:expr:`PyArrayMultiObject *` or a
+:c:expr:`PyObject *`). The data from input number ``i`` is available using
 :c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
 size as :c:func:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
 feature follows.
@@ -217,14 +217,13 @@ type will behave much like a regular data-type except ufuncs must have
 1-d loops registered to handle it separately. Also checking for
 whether or not other data-types can be cast "safely" to and from this
 new type or not will always return "can cast" unless you also register
-which types your new data-type can be cast to and from. Adding
-data-types is one of the less well-tested areas for NumPy 1.0, so
-there may be bugs remaining in the approach. Only add a new data-type
-if you can't do what you want to do using the OBJECT or VOID
-data-types that are already available. As an example of what I
-consider a useful application of the ability to add data-types is the
-possibility of adding a data-type of arbitrary precision floats to
-NumPy.
+which types your new data-type can be cast to and from.
+
+The NumPy source code includes an example of a custom data-type as part
+of its test suite. The file ``_rational_tests.c.src`` in the source code
+directory  ``numpy/numpy/core/src/umath/`` contains an implementation of
+a data-type that represents a rational number as the ratio of two 32 bit
+integers.
 
 .. index::
    pair: dtype; adding new
@@ -300,9 +299,10 @@ An example castfunc is:
 
     static void
     double_to_float(double *from, float* to, npy_intp n,
-           void* ig1, void* ig2);
-    while (n--) {
-          (*to++) = (double) *(from++);
+                    void* ignore1, void* ignore2) {
+        while (n--) {
+              (*to++) = (double) *(from++);
+        }
     }
 
 This could then be registered to convert doubles to floats using the
@@ -358,38 +358,6 @@ previously created. Then you call :c:func:`PyUFunc_RegisterLoopForType`
 this function is ``0`` if the process was successful and ``-1`` with
 an error condition set if it was not successful.
 
-.. c:function:: int PyUFunc_RegisterLoopForType( \
-        PyUFuncObject* ufunc, int usertype, PyUFuncGenericFunction function, \
-        int* arg_types, void* data)
-
-    *ufunc*
-
-        The ufunc to attach this loop to.
-
-    *usertype*
-
-        The user-defined type this loop should be indexed under. This number
-        must be a user-defined type or an error occurs.
-
-    *function*
-
-        The ufunc inner 1-d loop. This function must have the signature as
-        explained in Section `3 <#sec-creating-a-new>`__ .
-
-    *arg_types*
-
-        (optional) If given, this should contain an array of integers of at
-        least size ufunc.nargs containing the data-types expected by the loop
-        function. The data will be copied into a NumPy-managed structure so
-        the memory for this argument should be deleted after calling this
-        function. If this is NULL, then it will be assumed that all data-types
-        are of type usertype.
-
-    *data*
-
-        (optional) Specify any optional data needed by the function which will
-        be passed when the function is called.
-
 .. index::
    pair: dtype; adding new
 
@@ -432,7 +400,7 @@ describe the desired behavior of the type. Typically, a new
 C-structure is also created to contain the instance-specific
 information needed for each object of the type as well. For example,
 :c:data:`&PyArray_Type<PyArray_Type>` is a pointer to the type-object table for the ndarray
-while a :c:type:`PyArrayObject *` variable is a pointer to a particular instance
+while a :c:expr:`PyArrayObject *` variable is a pointer to a particular instance
 of an ndarray (one of the members of the ndarray structure is, in
 turn, a pointer to the type- object table :c:data:`&PyArray_Type<PyArray_Type>`). Finally
 :c:func:`PyType_Ready` (<pointer_to_type_object>) must be called for
@@ -481,7 +449,7 @@ type(s). In particular, to create a sub-type in C follow these steps:
    module dictionary so it can be accessed from Python.
 
 More information on creating sub-types in C can be learned by reading
-PEP 253 (available at http://www.python.org/dev/peps/pep-0253).
+PEP 253 (available at https://www.python.org/dev/peps/pep-0253).
 
 
 Specific features of ndarray sub-typing

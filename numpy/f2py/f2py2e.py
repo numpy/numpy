@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 f2py2e - Fortran to Python C/API generator. 2nd Edition.
@@ -14,8 +14,6 @@ $Date: 2005/05/06 08:31:19 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import pprint
@@ -28,20 +26,17 @@ from . import auxfuncs
 from . import cfuncs
 from . import f90mod_rules
 from . import __version__
+from . import capi_maps
 
 f2py_version = __version__.version
+numpy_version = __version__.version
 errmess = sys.stderr.write
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
 
-try:
-    from numpy import __version__ as numpy_version
-except ImportError:
-    numpy_version = 'N/A'
-
-__usage__ = """\
-Usage:
+__usage__ =\
+f"""Usage:
 
 1) To construct extension module sources:
 
@@ -98,8 +93,8 @@ Options:
   --[no-]latex-doc Create (or not) <modulename>module.tex.
                    Default is --no-latex-doc.
   --short-latex    Create 'incomplete' LaTeX document (without commands
-                   \\documentclass, \\tableofcontents, and \\begin{document},
-                   \\end{document}).
+                   \\documentclass, \\tableofcontents, and \\begin{{document}},
+                   \\end{{document}}).
 
   --[no-]rest-doc Create (or not) <modulename>module.rst.
                    Default is --no-rest-doc.
@@ -117,6 +112,9 @@ Options:
   --help-link [..] List system resources found by system_info.py. See also
                    --link-<resource> switch below. [..] is optional list
                    of resources names. E.g. try 'f2py --help-link lapack_opt'.
+
+  --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
+                   file. Default: .f2py_f2cmap in current directory.
 
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
@@ -165,17 +163,17 @@ Extra options (only effective with -c):
   array. Integer <int> sets the threshold for array sizes when
   a message should be shown.
 
-Version:     %s
-numpy Version: %s
-Requires:    Python 2.3 or higher.
+Version:     {f2py_version}
+numpy Version: {numpy_version}
+Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
+http://cens.ioc.ee/projects/f2py2e/"""
 
 
 def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
-    f, f2, f3, f5, f6, f7, f8, f9 = 1, 0, 0, 0, 0, 0, 0, 0
+    f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
     dolc = -1
     dolatexdoc = 0
@@ -226,6 +224,8 @@ def scaninputline(inputline):
             f8 = 1
         elif l == '--f2py-wrapper-output':
             f9 = 1
+        elif l == '--f2cmap':
+            f10 = 1
         elif l == '--overwrite-signature':
             options['h-overwrite'] = 1
         elif l == '-h':
@@ -267,9 +267,13 @@ def scaninputline(inputline):
         elif f9:
             f9 = 0
             options["f2py_wrapper_output"] = l
+        elif f10:
+            f10 = 0
+            options["f2cmap_file"] = l
         elif f == 1:
             try:
-                open(l).close()
+                with open(l):
+                    pass
                 files.append(l)
             except IOError as detail:
                 errmess('IOError: %s. Skipping file "%s".\n' %
@@ -311,6 +315,7 @@ def scaninputline(inputline):
     options['wrapfuncs'] = wrapfuncs
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
+    options.setdefault('f2cmap_file', None)
     return files, options
 
 
@@ -333,9 +338,8 @@ def callcrackfortran(files, options):
         if options['signsfile'][-6:] == 'stdout':
             sys.stdout.write(pyf)
         else:
-            f = open(options['signsfile'], 'w')
-            f.write(pyf)
-            f.close()
+            with open(options['signsfile'], 'w') as f:
+                f.write(pyf)
     if options["coutput"] is None:
         for mod in postlist:
             mod["coutput"] = "%smodule.c" % mod["name"]
@@ -396,8 +400,25 @@ def dict_append(d_out, d_in):
 
 
 def run_main(comline_list):
-    """Run f2py as if string.join(comline_list,' ') is used as a command line.
-    In case of using -h flag, return None.
+    """
+    Equivalent to running::
+
+        f2py <args>
+
+    where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
+    ``-h`` is used, this function returns a dictionary containing
+    information on generated modules and their dependencies on source
+    files.  For example, the command ``f2py -m scalar scalar.f`` can be
+    executed from Python as follows
+
+    You cannot build extension modules with this function, that is,
+    using ``-c`` is not allowed. Use ``compile`` command instead
+
+    Examples
+    --------
+    .. include:: run_main_session.dat
+        :literal:
+
     """
     crackfortran.reset_global_f2py_vars()
     f2pydir = os.path.dirname(os.path.abspath(cfuncs.__file__))
@@ -405,6 +426,7 @@ def run_main(comline_list):
     fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
     files, options = scaninputline(comline_list)
     auxfuncs.options = options
+    capi_maps.load_f2cmap_file(options['f2cmap_file'])
     postlist = callcrackfortran(files, options)
     isusedby = {}
     for i in range(len(postlist)):
@@ -489,14 +511,14 @@ def run_compile():
         remove_build_dir = 1
         build_dir = tempfile.mkdtemp()
 
-    _reg1 = re.compile(r'[-][-]link[-]')
+    _reg1 = re.compile(r'--link-')
     sysinfo_flags = [_m for _m in sys.argv[1:] if _reg1.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in sysinfo_flags]
     if sysinfo_flags:
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include')
+        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -514,11 +536,11 @@ def run_compile():
 
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
     _reg3 = re.compile(
-        r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)')
+        r'--((f(90)?compiler(-exec|)|compiler)=|help-compiler)')
     flib_flags = [_m for _m in sys.argv[1:] if _reg3.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in flib_flags]
     _reg4 = re.compile(
-        r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))')
+        r'--((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help-fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
@@ -547,7 +569,7 @@ def run_compile():
             del flib_flags[i]
         assert len(flib_flags) <= 2, repr(flib_flags)
 
-    _reg5 = re.compile(r'[-][-](verbose)')
+    _reg5 = re.compile(r'--(verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in setup_flags]
 
@@ -557,7 +579,7 @@ def run_compile():
     modulename = 'untitled'
     sources = sys.argv[1:]
 
-    for optname in ['--include_paths', '--include-paths']:
+    for optname in ['--include_paths', '--include-paths', '--f2cmap']:
         if optname in sys.argv:
             i = sys.argv.index(optname)
             f2py_flags.extend(sys.argv[i:i + 2])
@@ -578,7 +600,7 @@ def run_compile():
             if modulename:
                 break
 
-    extra_objects, sources = filter_files('', '[.](o|a|so)', sources)
+    extra_objects, sources = filter_files('', '[.](o|a|so|dylib)', sources)
     include_dirs, sources = filter_files('-I', '', sources, remove_prefix=1)
     library_dirs, sources = filter_files('-L', '', sources, remove_prefix=1)
     libraries, sources = filter_files('-l', '', sources, remove_prefix=1)
@@ -624,7 +646,9 @@ def run_compile():
     sys.argv.extend(['build',
                      '--build-temp', build_dir,
                      '--build-base', build_dir,
-                     '--build-platlib', '.'])
+                     '--build-platlib', '.',
+                     # disable CCompilerOpt
+                     '--disable-optimization'])
     if fc_flags:
         sys.argv.extend(['config_fc'] + fc_flags)
     if flib_flags:
@@ -644,13 +668,25 @@ def main():
         from numpy.distutils.system_info import show_all
         show_all()
         return
+
+    # Probably outdated options that were not working before 1.16
+    if '--g3-numpy' in sys.argv[1:]:
+        sys.stderr.write("G3 f2py support is not implemented, yet.\\n")
+        sys.exit(1)
+    elif '--2e-numeric' in sys.argv[1:]:
+        sys.argv.remove('--2e-numeric')
+    elif '--2e-numarray' in sys.argv[1:]:
+        # Note that this errors becaust the -DNUMARRAY argument is
+        # not recognized. Just here for back compatibility and the
+        # error message.
+        sys.argv.append("-DNUMARRAY")
+        sys.argv.remove('--2e-numarray')
+    elif '--2e-numpy' in sys.argv[1:]:
+        sys.argv.remove('--2e-numpy')
+    else:
+        pass
+
     if '-c' in sys.argv[1:]:
         run_compile()
     else:
         run_main(sys.argv[1:])
-
-# if __name__ == "__main__":
-#    main()
-
-
-# EOF

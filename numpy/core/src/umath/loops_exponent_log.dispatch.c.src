@@ -1,0 +1,1293 @@
+/*@targets
+ ** $maxopt baseline
+ ** (avx2 fma3) avx512f avx512_skx
+ **/
+
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include <float.h>
+
+#include "numpy/npy_math.h"
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+#include "npy_simd_data.h"
+
+// TODO: tweak & replace raw SIMD with NPYV
+
+/********************************************************************************
+ ** bunch of helper functions used in ISA_exp/log_FLOAT
+ ********************************************************************************/
+#if !defined(_MSC_VER) && defined(NPY_HAVE_AVX512F)
+    /**
+     * For somehow MSVC commit aggressive optimization lead
+     * to raises 'RuntimeWarning: RuntimeWarning: overflow encountered in exp'
+     *
+     * the issue mainly caused by '_mm512_maskz_loadu_ps', we need to
+     * investigate about it while moving to NPYV.
+     */
+    #define SIMD_AVX512F
+#elif defined(NPY_HAVE_AVX2) && defined(NPY_HAVE_FMA3)
+    #define SIMD_AVX2_FMA3
+#endif
+#if !defined(_MSC_VER) && defined(NPY_HAVE_AVX512_SKX)
+    #define SIMD_AVX512_SKX
+#endif
+#if defined(SIMD_AVX512F) && !(defined(__clang__) && (__clang_major__ < 10 || \
+                              (__clang_major__ == 10 && __clang_minor__ < 1)))
+    #define SIMD_AVX512F_NOCLANG_BUG
+#endif
+
+#ifdef SIMD_AVX2_FMA3
+
+static NPY_INLINE __m256
+fma_get_full_load_mask_ps(void)
+{
+    return _mm256_set1_ps(-1.0);
+}
+
+static NPY_INLINE __m256i
+fma_get_full_load_mask_pd(void)
+{
+    return _mm256_castpd_si256(_mm256_set1_pd(-1.0));
+}
+
+static NPY_INLINE __m256
+fma_get_partial_load_mask_ps(const npy_int num_elem, const npy_int num_lanes)
+{
+    float maskint[16] = {-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,
+                            1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0};
+    float* addr = maskint + num_lanes - num_elem;
+    return _mm256_loadu_ps(addr);
+}
+
+static NPY_INLINE __m256i
+fma_get_partial_load_mask_pd(const npy_int num_elem, const npy_int num_lanes)
+{
+    npy_int maskint[16] = {-1,-1,-1,-1,-1,-1,-1,-1,1,1,1,1,1,1,1,1};
+    npy_int* addr = maskint + 2*num_lanes - 2*num_elem;
+    return _mm256_loadu_si256((__m256i*) addr);
+}
+
+static NPY_INLINE __m256
+fma_masked_gather_ps(__m256 src,
+                     npy_float* addr,
+                     __m256i vindex,
+                     __m256 mask)
+{
+    return _mm256_mask_i32gather_ps(src, addr, vindex, mask, 4);
+}
+
+static NPY_INLINE __m256d
+fma_masked_gather_pd(__m256d src,
+                     npy_double* addr,
+                     __m128i vindex,
+                     __m256d mask)
+{
+    return _mm256_mask_i32gather_pd(src, addr, vindex, mask, 8);
+}
+
+static NPY_INLINE __m256
+fma_masked_load_ps(__m256 mask, npy_float* addr)
+{
+    return _mm256_maskload_ps(addr, _mm256_cvtps_epi32(mask));
+}
+
+static NPY_INLINE __m256d
+fma_masked_load_pd(__m256i mask, npy_double* addr)
+{
+    return _mm256_maskload_pd(addr, mask);
+}
+
+static NPY_INLINE __m256
+fma_set_masked_lanes_ps(__m256 x, __m256 val, __m256 mask)
+{
+    return _mm256_blendv_ps(x, val, mask);
+}
+
+static NPY_INLINE __m256d
+fma_set_masked_lanes_pd(__m256d x, __m256d val, __m256d mask)
+{
+    return _mm256_blendv_pd(x, val, mask);
+}
+
+static NPY_INLINE __m256
+fma_blend(__m256 x, __m256 y, __m256 ymask)
+{
+    return _mm256_blendv_ps(x, y, ymask);
+}
+
+static NPY_INLINE __m256
+fma_invert_mask_ps(__m256 ymask)
+{
+    return _mm256_andnot_ps(ymask, _mm256_set1_ps(-1.0));
+}
+
+static NPY_INLINE __m256i
+fma_invert_mask_pd(__m256i ymask)
+{
+    return _mm256_andnot_si256(ymask, _mm256_set1_epi32(0xFFFFFFFF));
+}
+
+static NPY_INLINE __m256
+fma_get_exponent(__m256 x)
+{
+    /*
+     * Special handling of denormals:
+     * 1) Multiply denormal elements with 2**100 (0x71800000)
+     * 2) Get the 8 bits of unbiased exponent
+     * 3) Subtract 100 from exponent of denormals
+     */
+
+    __m256 two_power_100 = _mm256_castsi256_ps(_mm256_set1_epi32(0x71800000));
+    __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
+    __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
+
+    /*
+     * It is necessary for temp1 to be volatile, a bug in clang optimizes it out which leads
+     * to an overflow warning in some cases. See https://github.com/numpy/numpy/issues/18005
+     */
+    volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    __m256 temp = _mm256_mul_ps(temp1, two_power_100);
+    x = _mm256_blendv_ps(x, temp, denormal_mask);
+
+    __m256 exp = _mm256_cvtepi32_ps(
+                    _mm256_sub_epi32(
+                        _mm256_srli_epi32(
+                            _mm256_castps_si256(x), 23),_mm256_set1_epi32(0x7E)));
+
+    __m256 denorm_exp = _mm256_sub_ps(exp, _mm256_set1_ps(100.0f));
+    return _mm256_blendv_ps(exp, denorm_exp, denormal_mask);
+}
+
+static NPY_INLINE __m256
+fma_get_mantissa(__m256 x)
+{
+    /*
+     * Special handling of denormals:
+     * 1) Multiply denormal elements with 2**100 (0x71800000)
+     * 2) Get the 23 bits of mantissa
+     * 3) Mantissa for denormals is not affected by the multiplication
+     */
+
+    __m256 two_power_100 = _mm256_castsi256_ps(_mm256_set1_epi32(0x71800000));
+    __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
+    __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
+
+    /*
+     * It is necessary for temp1 to be volatile, a bug in clang optimizes it out which leads
+     * to an overflow warning in some cases. See https://github.com/numpy/numpy/issues/18005
+     */
+    volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    __m256 temp = _mm256_mul_ps(temp1, two_power_100);
+    x = _mm256_blendv_ps(x, temp, denormal_mask);
+
+    __m256i mantissa_bits = _mm256_set1_epi32(0x7fffff);
+    __m256i exp_126_bits  = _mm256_set1_epi32(126 << 23);
+    return _mm256_castsi256_ps(
+                _mm256_or_si256(
+                    _mm256_and_si256(
+                        _mm256_castps_si256(x), mantissa_bits), exp_126_bits));
+}
+
+static NPY_INLINE __m256
+fma_scalef_ps(__m256 poly, __m256 quadrant)
+{
+    /*
+     * Handle denormals (which occur when quadrant <= -125):
+     * 1) This function computes poly*(2^quad) by adding the exponent of
+     poly to quad
+     * 2) When quad <= -125, the output is a denormal and the above logic
+     breaks down
+     * 3) To handle such cases, we split quadrant: -125 + (quadrant + 125)
+     * 4) poly*(2^-125) is computed the usual way
+     * 5) 2^(quad-125) can be computed by: 2 << abs(quad-125)
+     * 6) The final div operation generates the denormal
+     */
+     __m256 minquadrant = _mm256_set1_ps(-125.0f);
+     __m256 denormal_mask = _mm256_cmp_ps(quadrant, minquadrant, _CMP_LE_OQ);
+     if (_mm256_movemask_ps(denormal_mask) != 0x0000) {
+        __m256 quad_diff = _mm256_sub_ps(quadrant, minquadrant);
+        quad_diff = _mm256_sub_ps(_mm256_setzero_ps(), quad_diff);
+        quad_diff = _mm256_blendv_ps(_mm256_setzero_ps(), quad_diff, denormal_mask);
+        __m256i two_power_diff = _mm256_sllv_epi32(
+                                   _mm256_set1_epi32(1), _mm256_cvtps_epi32(quad_diff));
+        quadrant = _mm256_max_ps(quadrant, minquadrant); //keep quadrant >= -126
+        __m256i exponent = _mm256_slli_epi32(_mm256_cvtps_epi32(quadrant), 23);
+        poly = _mm256_castsi256_ps(
+                   _mm256_add_epi32(
+                       _mm256_castps_si256(poly), exponent));
+        __m256 denorm_poly = _mm256_div_ps(poly, _mm256_cvtepi32_ps(two_power_diff));
+        return _mm256_blendv_ps(poly, denorm_poly, denormal_mask);
+     }
+     else {
+        __m256i exponent = _mm256_slli_epi32(_mm256_cvtps_epi32(quadrant), 23);
+        poly = _mm256_castsi256_ps(
+                   _mm256_add_epi32(
+                       _mm256_castps_si256(poly), exponent));
+        return poly;
+     }
+}
+
+#endif // SIMD_AVX2_FMA3
+
+#ifdef SIMD_AVX512F
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+avx512_get_full_load_mask_ps(void)
+{
+    return 0xFFFF;
+}
+
+static NPY_INLINE __mmask8
+avx512_get_full_load_mask_pd(void)
+{
+    return 0xFF;
+}
+
+static NPY_INLINE __mmask16
+avx512_get_partial_load_mask_ps(const npy_int num_elem, const npy_int total_elem)
+{
+    return (0x0001 << num_elem) - 0x0001;
+}
+
+static NPY_INLINE __mmask8
+avx512_get_partial_load_mask_pd(const npy_int num_elem, const npy_int total_elem)
+{
+    return (0x01 << num_elem) - 0x01;
+}
+
+static NPY_INLINE __m512
+avx512_masked_gather_ps(__m512 src,
+                        npy_float* addr,
+                        __m512i vindex,
+                        __mmask16 kmask)
+{
+    return _mm512_mask_i32gather_ps(src, kmask, vindex, addr, 4);
+}
+
+static NPY_INLINE __m512d
+avx512_masked_gather_pd(__m512d src,
+                        npy_double* addr,
+                        __m256i vindex,
+                        __mmask8 kmask)
+{
+    return _mm512_mask_i32gather_pd(src, kmask, vindex, addr, 8);
+}
+
+static NPY_INLINE __m512
+avx512_masked_load_ps(__mmask16 mask, npy_float* addr)
+{
+    return _mm512_maskz_loadu_ps(mask, (__m512 *)addr);
+}
+
+static NPY_INLINE __m512d
+avx512_masked_load_pd(__mmask8 mask, npy_double* addr)
+{
+    return _mm512_maskz_loadu_pd(mask, (__m512d *)addr);
+}
+
+static NPY_INLINE __m512
+avx512_set_masked_lanes_ps(__m512 x, __m512 val, __mmask16 mask)
+{
+    return _mm512_mask_blend_ps(mask, x, val);
+}
+
+static NPY_INLINE __m512d
+avx512_set_masked_lanes_pd(__m512d x, __m512d val, __mmask8 mask)
+{
+    return _mm512_mask_blend_pd(mask, x, val);
+}
+
+static NPY_INLINE __m512
+avx512_blend(__m512 x, __m512 y, __mmask16 ymask)
+{
+    return _mm512_mask_mov_ps(x, ymask, y);
+}
+
+static NPY_INLINE __mmask16
+avx512_invert_mask_ps(__mmask16 ymask)
+{
+    return _mm512_knot(ymask);
+}
+
+static NPY_INLINE __mmask8
+avx512_invert_mask_pd(__mmask8 ymask)
+{
+    return _mm512_knot(ymask);
+}
+
+static NPY_INLINE __m512
+avx512_get_exponent(__m512 x)
+{
+    return _mm512_add_ps(_mm512_getexp_ps(x), _mm512_set1_ps(1.0f));
+}
+
+static NPY_INLINE __m512
+avx512_get_mantissa(__m512 x)
+{
+    return _mm512_getmant_ps(x, _MM_MANT_NORM_p5_1, _MM_MANT_SIGN_src);
+}
+
+static NPY_INLINE __m512
+avx512_scalef_ps(__m512 poly, __m512 quadrant)
+{
+    return _mm512_scalef_ps(poly, quadrant);
+}
+
+static NPY_INLINE __m512d
+avx512_permute_x4var_pd(__m512d t0,
+                        __m512d t1,
+                        __m512d t2,
+                        __m512d t3,
+                        __m512i index)
+{
+    __mmask8 lut_mask = _mm512_cmp_epi64_mask(
+                          _mm512_and_epi64(_mm512_set1_epi64(0x10ULL), index),
+                          _mm512_set1_epi64(0), _MM_CMPINT_GT);
+    __m512d res1 = _mm512_permutex2var_pd(t0, index, t1);
+    __m512d res2 = _mm512_permutex2var_pd(t2, index, t3);
+    return _mm512_mask_blend_pd(lut_mask, res1, res2);
+}
+
+static NPY_INLINE __m512d
+avx512_permute_x8var_pd(__m512d t0, __m512d t1, __m512d t2, __m512d t3,
+                        __m512d t4, __m512d t5, __m512d t6, __m512d t7,
+                        __m512i index)
+{
+    __mmask8 lut_mask = _mm512_cmp_epi64_mask(
+                          _mm512_and_epi64(_mm512_set1_epi64(0x20ULL), index),
+                          _mm512_set1_epi64(0), _MM_CMPINT_GT);
+    __m512d res1 = avx512_permute_x4var_pd(t0, t1, t2, t3, index);
+    __m512d res2 = avx512_permute_x4var_pd(t4, t5, t6, t7, index);
+    return _mm512_mask_blend_pd(lut_mask, res1, res2);
+}
+
+#endif // SIMD_AVX512F
+
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
+/**begin repeat
+ * #ISA = FMA, AVX512F#
+ * #isa = fma, avx512#
+ * #vtype = __m256, __m512#
+ * #vsize = 256, 512#
+ * #BYTES = 32, 64#
+ * #NUM_LANES = 8, 16#
+ * #mask = __m256, __mmask16#
+ * #vsub = , _mask#
+ * #or_masks =_mm256_or_ps, _mm512_kor#
+ * #and_masks =_mm256_and_ps, _mm512_kand#
+ * #xor_masks =_mm256_xor_ps, _mm512_kxor#
+ * #fmadd = _mm256_fmadd_ps, _mm512_fmadd_ps#
+ * #mask_to_int = _mm256_movemask_ps, #
+ * #full_mask= 0xFF, 0xFFFF#
+ * #masked_store = _mm256_maskstore_ps, _mm512_mask_storeu_ps#
+ * #cvtps_epi32 = _mm256_cvtps_epi32, #
+ * #CHK = SIMD_AVX2_FMA3, SIMD_AVX512F#
+ */
+#ifdef @CHK@
+/*
+ * Vectorized Cody-Waite range reduction technique
+ * Performs the reduction step x* = x - y*C in three steps:
+ * 1) x* = x - y*c1
+ * 2) x* = x - y*c2
+ * 3) x* = x - y*c3
+ * c1, c2 are exact floating points, c3 = C - c1 - c2 simulates higher precision
+ */
+static NPY_INLINE @vtype@
+simd_range_reduction(@vtype@ x, @vtype@ y, @vtype@ c1, @vtype@ c2, @vtype@ c3)
+{
+    @vtype@ reduced_x = @fmadd@(y, c1, x);
+    reduced_x = @fmadd@(y, c2, reduced_x);
+    reduced_x = @fmadd@(y, c3, reduced_x);
+    return reduced_x;
+}
+/*
+ * Vectorized implementation of exp using AVX2 and AVX512:
+ * 1) if x >= xmax; return INF (overflow)
+ * 2) if x <= xmin; return 0.0f (underflow)
+ * 3) Range reduction (using Coyd-Waite):
+ *      a) y = x - k*ln(2); k = rint(x/ln(2)); y \in [0, ln(2)]
+ * 4) Compute exp(y) = P/Q, ratio of 2 polynomials P and Q
+ *      b) P = 5th order and Q = 2nd order polynomials obtained from Remez's
+ *      algorithm (mini-max polynomial approximation)
+ * 5) Compute exp(x) = exp(y) * 2^k
+ * 6) Max ULP error measured across all 32-bit FP's = 2.52 (x = 0xc2781e37)
+ * 7) Max relative error measured across all 32-bit FP's= 2.1264E-07 (for the
+ * same x = 0xc2781e37)
+ */
+static void
+simd_exp_FLOAT(npy_float * op,
+                npy_float * ip,
+                const npy_intp array_size,
+                const npy_intp steps)
+{
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
+    npy_float xmax = 88.72283935546875f;
+    npy_float xmin = -103.97208404541015625f;
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_OUTPUT_BLOCKABLE_UNARY
+     */
+    npy_int32 indexarr[16];
+    for (npy_int32 ii = 0; ii < 16; ii++) {
+        indexarr[ii] = ii*stride;
+    }
+
+    /* Load up frequently used constants */
+    @vtype@ codyw_c1 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_LOGE_2_HIGHf);
+    @vtype@ codyw_c2 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_LOGE_2_LOWf);
+    @vtype@ exp_p0 = _mm@vsize@_set1_ps(NPY_COEFF_P0_EXPf);
+    @vtype@ exp_p1 = _mm@vsize@_set1_ps(NPY_COEFF_P1_EXPf);
+    @vtype@ exp_p2 = _mm@vsize@_set1_ps(NPY_COEFF_P2_EXPf);
+    @vtype@ exp_p3 = _mm@vsize@_set1_ps(NPY_COEFF_P3_EXPf);
+    @vtype@ exp_p4 = _mm@vsize@_set1_ps(NPY_COEFF_P4_EXPf);
+    @vtype@ exp_p5 = _mm@vsize@_set1_ps(NPY_COEFF_P5_EXPf);
+    @vtype@ exp_q0 = _mm@vsize@_set1_ps(NPY_COEFF_Q0_EXPf);
+    @vtype@ exp_q1 = _mm@vsize@_set1_ps(NPY_COEFF_Q1_EXPf);
+    @vtype@ exp_q2 = _mm@vsize@_set1_ps(NPY_COEFF_Q2_EXPf);
+    @vtype@ cvt_magic = _mm@vsize@_set1_ps(NPY_RINT_CVT_MAGICf);
+    @vtype@ log2e = _mm@vsize@_set1_ps(NPY_LOG2Ef);
+    @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
+    @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
+    @vtype@ poly, num_poly, denom_poly, quadrant;
+    @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
+
+    @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask;
+    @mask@ overflow_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
+    @mask@ load_mask = @isa@_get_full_load_mask_ps();
+    npy_intp num_remaining_elements = array_size;
+
+    while (num_remaining_elements > 0) {
+
+        if (num_remaining_elements < num_lanes) {
+            load_mask = @isa@_get_partial_load_mask_ps(num_remaining_elements,
+                                                       num_lanes);
+        }
+
+        @vtype@ x;
+        if (stride == 1) {
+            x = @isa@_masked_load_ps(load_mask, ip);
+        }
+        else {
+            x = @isa@_masked_gather_ps(zeros_f, ip, vindex, load_mask);
+        }
+
+        nan_mask = _mm@vsize@_cmp_ps@vsub@(x, x, _CMP_NEQ_UQ);
+        x = @isa@_set_masked_lanes_ps(x, zeros_f, nan_mask);
+
+        xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
+        xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
+        inf_mask = _mm@vsize@_cmp_ps@vsub@(x, inf, _CMP_EQ_OQ);
+        overflow_mask = @or_masks@(overflow_mask,
+                                    @xor_masks@(xmax_mask, inf_mask));
+
+        x = @isa@_set_masked_lanes_ps(x, zeros_f, @or_masks@(
+                                    @or_masks@(nan_mask, xmin_mask), xmax_mask));
+
+        quadrant = _mm@vsize@_mul_ps(x, log2e);
+
+        /* round to nearest */
+        quadrant = _mm@vsize@_add_ps(quadrant, cvt_magic);
+        quadrant = _mm@vsize@_sub_ps(quadrant, cvt_magic);
+
+        /* Cody-Waite's range reduction algorithm */
+        x = simd_range_reduction(x, quadrant, codyw_c1, codyw_c2, zeros_f);
+
+        num_poly = @fmadd@(exp_p5, x, exp_p4);
+        num_poly = @fmadd@(num_poly, x, exp_p3);
+        num_poly = @fmadd@(num_poly, x, exp_p2);
+        num_poly = @fmadd@(num_poly, x, exp_p1);
+        num_poly = @fmadd@(num_poly, x, exp_p0);
+        denom_poly = @fmadd@(exp_q2, x, exp_q1);
+        denom_poly = @fmadd@(denom_poly, x, exp_q0);
+        poly = _mm@vsize@_div_ps(num_poly, denom_poly);
+
+        /*
+         * compute val = poly * 2^quadrant; which is same as adding the
+         * exponent of quadrant to the exponent of poly. quadrant is an int,
+         * so extracting exponent is simply extracting 8 bits.
+         */
+        poly = @isa@_scalef_ps(poly, quadrant);
+
+        /*
+         * elem > xmax; return inf
+         * elem < xmin; return 0.0f
+         * elem = +/- nan, return nan
+         */
+        poly = @isa@_set_masked_lanes_ps(poly, _mm@vsize@_set1_ps(NPY_NANF), nan_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, inf, xmax_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, zeros_f, xmin_mask);
+
+        @masked_store@(op, @cvtps_epi32@(load_mask), poly);
+
+        ip += num_lanes*stride;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+
+    if (@mask_to_int@(overflow_mask)) {
+        npy_set_floatstatus_overflow();
+    }
+}
+
+/*
+ * Vectorized implementation of log using AVX2 and AVX512
+ * 1) if x < 0.0f; return -NAN (invalid input)
+ * 2) Range reduction: y = x/2^k;
+ *      a) y = normalized mantissa, k is the exponent (0.5 <= y < 1)
+ * 3) Compute log(y) = P/Q, ratio of 2 polynomials P and Q
+ *      b) P = 5th order and Q = 5th order polynomials obtained from Remez's
+ *      algorithm (mini-max polynomial approximation)
+ * 5) Compute log(x) = log(y) + k*ln(2)
+ * 6) Max ULP error measured across all 32-bit FP's = 3.83 (x = 0x3f486945)
+ * 7) Max relative error measured across all 32-bit FP's = 2.359E-07 (for same
+ * x = 0x3f486945)
+ */
+
+static void
+simd_log_FLOAT(npy_float * op,
+                npy_float * ip,
+                const npy_intp array_size,
+                const npy_intp steps)
+{
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_OUTPUT_BLOCKABLE_UNARY
+     */
+    npy_int32 indexarr[16];
+    for (npy_int32 ii = 0; ii < 16; ii++) {
+        indexarr[ii] = ii*stride;
+    }
+
+    /* Load up frequently used constants */
+    @vtype@ log_p0 = _mm@vsize@_set1_ps(NPY_COEFF_P0_LOGf);
+    @vtype@ log_p1 = _mm@vsize@_set1_ps(NPY_COEFF_P1_LOGf);
+    @vtype@ log_p2 = _mm@vsize@_set1_ps(NPY_COEFF_P2_LOGf);
+    @vtype@ log_p3 = _mm@vsize@_set1_ps(NPY_COEFF_P3_LOGf);
+    @vtype@ log_p4 = _mm@vsize@_set1_ps(NPY_COEFF_P4_LOGf);
+    @vtype@ log_p5 = _mm@vsize@_set1_ps(NPY_COEFF_P5_LOGf);
+    @vtype@ log_q0 = _mm@vsize@_set1_ps(NPY_COEFF_Q0_LOGf);
+    @vtype@ log_q1 = _mm@vsize@_set1_ps(NPY_COEFF_Q1_LOGf);
+    @vtype@ log_q2 = _mm@vsize@_set1_ps(NPY_COEFF_Q2_LOGf);
+    @vtype@ log_q3 = _mm@vsize@_set1_ps(NPY_COEFF_Q3_LOGf);
+    @vtype@ log_q4 = _mm@vsize@_set1_ps(NPY_COEFF_Q4_LOGf);
+    @vtype@ log_q5 = _mm@vsize@_set1_ps(NPY_COEFF_Q5_LOGf);
+    @vtype@ loge2 = _mm@vsize@_set1_ps(NPY_LOGE2f);
+    @vtype@ nan = _mm@vsize@_set1_ps(NPY_NANF);
+    @vtype@ neg_nan = _mm@vsize@_set1_ps(-NPY_NANF);
+    @vtype@ neg_inf = _mm@vsize@_set1_ps(-NPY_INFINITYF);
+    @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
+    @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
+    @vtype@ ones_f = _mm@vsize@_set1_ps(1.0f);
+    @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)indexarr);
+    @vtype@ poly, num_poly, denom_poly, exponent;
+
+    @mask@ inf_mask, nan_mask, sqrt2_mask, zero_mask, negx_mask;
+    @mask@ invalid_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
+    @mask@ divide_by_zero_mask = invalid_mask;
+    @mask@ load_mask = @isa@_get_full_load_mask_ps();
+    npy_intp num_remaining_elements = array_size;
+
+    while (num_remaining_elements > 0) {
+
+        if (num_remaining_elements < num_lanes) {
+            load_mask = @isa@_get_partial_load_mask_ps(num_remaining_elements,
+                                                       num_lanes);
+        }
+
+        @vtype@ x_in;
+        if (stride == 1) {
+            x_in = @isa@_masked_load_ps(load_mask, ip);
+        }
+        else {
+            x_in  = @isa@_masked_gather_ps(zeros_f, ip, vindex, load_mask);
+        }
+
+        negx_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_LT_OQ);
+        zero_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_EQ_OQ);
+        inf_mask = _mm@vsize@_cmp_ps@vsub@(x_in, inf, _CMP_EQ_OQ);
+        nan_mask = _mm@vsize@_cmp_ps@vsub@(x_in, x_in, _CMP_NEQ_UQ);
+        divide_by_zero_mask = @or_masks@(divide_by_zero_mask,
+                                        @and_masks@(zero_mask, load_mask));
+        invalid_mask = @or_masks@(invalid_mask, negx_mask);
+
+        @vtype@ x = @isa@_set_masked_lanes_ps(x_in, zeros_f, negx_mask);
+
+        /* set x = normalized mantissa */
+        exponent = @isa@_get_exponent(x);
+        x = @isa@_get_mantissa(x);
+
+        /* if x < sqrt(2) {exp = exp-1; x = 2*x} */
+        sqrt2_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(NPY_SQRT1_2f), _CMP_LE_OQ);
+        x = @isa@_blend(x, _mm@vsize@_add_ps(x,x), sqrt2_mask);
+        exponent = @isa@_blend(exponent,
+                               _mm@vsize@_sub_ps(exponent,ones_f), sqrt2_mask);
+
+        /* x = x - 1 */
+        x = _mm@vsize@_sub_ps(x, ones_f);
+
+        /* Polynomial approximation for log(1+x) */
+        num_poly = @fmadd@(log_p5, x, log_p4);
+        num_poly = @fmadd@(num_poly, x, log_p3);
+        num_poly = @fmadd@(num_poly, x, log_p2);
+        num_poly = @fmadd@(num_poly, x, log_p1);
+        num_poly = @fmadd@(num_poly, x, log_p0);
+        denom_poly = @fmadd@(log_q5, x, log_q4);
+        denom_poly = @fmadd@(denom_poly, x, log_q3);
+        denom_poly = @fmadd@(denom_poly, x, log_q2);
+        denom_poly = @fmadd@(denom_poly, x, log_q1);
+        denom_poly = @fmadd@(denom_poly, x, log_q0);
+        poly = _mm@vsize@_div_ps(num_poly, denom_poly);
+        poly = @fmadd@(exponent, loge2, poly);
+
+        /*
+         * x < 0.0f; return -NAN
+         * x = +/- NAN; return NAN
+         * x = 0.0f; return -INF
+         */
+        poly = @isa@_set_masked_lanes_ps(poly, nan, nan_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, neg_nan, negx_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, neg_inf, zero_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, inf, inf_mask);
+
+        @masked_store@(op, @cvtps_epi32@(load_mask), poly);
+
+        ip += num_lanes*stride;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+
+    if (@mask_to_int@(invalid_mask)) {
+        npy_set_floatstatus_invalid();
+    }
+    if (@mask_to_int@(divide_by_zero_mask)) {
+        npy_set_floatstatus_divbyzero();
+    }
+}
+#endif // @CHK@
+/**end repeat**/
+
+#ifdef SIMD_AVX512F_NOCLANG_BUG
+/*
+ * Vectorized implementation of exp double using AVX512
+ * Reference: Tang, P.T.P., "Table-driven implementation of the
+ *  exponential function in IEEE floating-point
+ *  arithmetic," ACM Transactions on Mathematical
+ *  Software, vol. 15, pp. 144-157, 1989.
+ * 1) if x > mTH_max or x is INF; return INF (overflow)
+ * 2) if x < mTH_min; return 0.0f (underflow)
+ * 3) if abs(x) < mTH_nearzero; return 1.0f + x
+ * 4) if x is Nan; return Nan
+ * 5) Range reduction:
+ *    x = (32m + j)ln2 / 32 + r; r in [-ln2/64, ln2/64]
+ * 6) exp(r) - 1 is approximated by a polynomial function p(r)
+ *    exp(x) = 2^m(2^(j/32) + 2^(j/32)p(r));
+ */
+static void
+AVX512F_exp_DOUBLE(npy_double * op,
+                npy_double * ip,
+                const npy_intp array_size,
+                const npy_intp steps)
+{
+    npy_intp num_remaining_elements = array_size;
+    const npy_intp stride = steps / (npy_intp)sizeof(npy_double);
+    const npy_int num_lanes = 64 / (npy_intp)sizeof(npy_double);
+    npy_int32 indexarr[8];
+    for (npy_int32 ii = 0; ii < 8; ii++) {
+        indexarr[ii] = ii*stride;
+    }
+
+    __m512d InvLn2N = _mm512_set1_pd(NPY_INV_LN2_MUL_32);
+    __m512d mShift = _mm512_set1_pd(NPY_RINT_CVT_MAGIC);
+    __m512d mNegL1 = _mm512_set1_pd(NPY_TANG_NEG_L1);
+    __m512d mNegL2 = _mm512_set1_pd(NPY_TANG_NEG_L2);
+    __m512i mMod = _mm512_set1_epi64(0x1f);
+    __m512d mA1 = _mm512_set1_pd(NPY_TANG_A1);
+    __m512d mA2 = _mm512_set1_pd(NPY_TANG_A2);
+    __m512d mA3 = _mm512_set1_pd(NPY_TANG_A3);
+    __m512d mA4 = _mm512_set1_pd(NPY_TANG_A4);
+    __m512d mA5 = _mm512_set1_pd(NPY_TANG_A5);
+    __m512d mTH_nearzero = _mm512_set1_pd(0x1p-54);
+    __m512d mTH_max = _mm512_set1_pd(0x1.62e42fefa39efp+9);
+    __m512d mTH_min = _mm512_set1_pd(-0x1.74910d52d3053p+9);
+    __m512d mTH_inf = _mm512_set1_pd(NPY_INFINITY);
+    __m512d zeros_d = _mm512_set1_pd(0.0f);
+    __m512d ones_d = _mm512_set1_pd(1.0f);
+    __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
+
+    __m512d mTable_top_0 = _mm512_loadu_pd(&(EXP_Table_top[8*0]));
+    __m512d mTable_top_1 = _mm512_loadu_pd(&(EXP_Table_top[8*1]));
+    __m512d mTable_top_2 = _mm512_loadu_pd(&(EXP_Table_top[8*2]));
+    __m512d mTable_top_3 = _mm512_loadu_pd(&(EXP_Table_top[8*3]));
+    __m512d mTable_tail_0 = _mm512_loadu_pd(&(EXP_Table_tail[8*0]));
+    __m512d mTable_tail_1 = _mm512_loadu_pd(&(EXP_Table_tail[8*1]));
+    __m512d mTable_tail_2 = _mm512_loadu_pd(&(EXP_Table_tail[8*2]));
+    __m512d mTable_tail_3 = _mm512_loadu_pd(&(EXP_Table_tail[8*3]));
+
+    __mmask8 overflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
+    __mmask8 load_mask = avx512_get_full_load_mask_pd();
+    __mmask8 xmin_mask, xmax_mask, inf_mask, nan_mask, nearzero_mask;
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < num_lanes) {
+            load_mask = avx512_get_partial_load_mask_pd(num_remaining_elements,
+                                                      num_lanes);
+        }
+
+        __m512d x;
+        if (1 == stride) {
+            x = avx512_masked_load_pd(load_mask, ip);
+        }
+        else {
+            x = avx512_masked_gather_pd(zeros_d, ip, vindex, load_mask);
+        }
+
+        nan_mask = _mm512_cmp_pd_mask(x, x, _CMP_NEQ_UQ);
+        x = avx512_set_masked_lanes_pd(x, zeros_d, nan_mask);
+        xmax_mask = _mm512_cmp_pd_mask(x, mTH_max, _CMP_GT_OQ);
+        xmin_mask = _mm512_cmp_pd_mask(x, mTH_min, _CMP_LT_OQ);
+        inf_mask = _mm512_cmp_pd_mask(x, mTH_inf, _CMP_EQ_OQ);
+        __m512i x_abs = _mm512_and_epi64(_mm512_castpd_si512(x),
+                                _mm512_set1_epi64(0x7FFFFFFFFFFFFFFF));
+        nearzero_mask = _mm512_cmp_pd_mask(_mm512_castsi512_pd(x_abs),
+                                    mTH_nearzero, _CMP_LT_OQ);
+        nearzero_mask = _mm512_kxor(nearzero_mask, nan_mask);
+        overflow_mask = _mm512_kor(overflow_mask,
+                                _mm512_kxor(xmax_mask, inf_mask));
+        x = avx512_set_masked_lanes_pd(x, zeros_d,
+                        _mm512_kor(_mm512_kor(nan_mask, xmin_mask),
+                            _mm512_kor(xmax_mask, nearzero_mask)));
+
+        /* z = x * 32/ln2 */
+        __m512d z = _mm512_mul_pd(x, InvLn2N);
+
+        /* round to nearest */
+        __m512d kd = _mm512_add_pd(z, mShift);
+        __m512i ki = _mm512_castpd_si512(kd);
+        kd = _mm512_sub_pd(kd, mShift);
+
+        /* r = (x + kd*mNegL1) + kd*mNegL2 */
+        __m512d r1 = _mm512_fmadd_pd(kd, mNegL1, x);
+        __m512d r2 = _mm512_mul_pd(kd, mNegL2);
+        __m512d r = _mm512_add_pd(r1,r2);
+
+        /* Polynomial approximation for exp(r) - 1 */
+        __m512d q = _mm512_fmadd_pd(mA5, r, mA4);
+        q = _mm512_fmadd_pd(q, r, mA3);
+        q = _mm512_fmadd_pd(q, r, mA2);
+        q = _mm512_fmadd_pd(q, r, mA1);
+        q = _mm512_mul_pd(q, r);
+        __m512d p = _mm512_fmadd_pd(r, q, r2);;
+        p = _mm512_add_pd(r1, p);
+
+        /* Get 2^(j/32) from lookup table */
+        __m512i j = _mm512_and_epi64(ki, mMod);
+        __m512d top = avx512_permute_x4var_pd(mTable_top_0, mTable_top_1,
+                                  mTable_top_2, mTable_top_3, j);
+        __m512d tail = avx512_permute_x4var_pd(mTable_tail_0, mTable_tail_1,
+                                  mTable_tail_2, mTable_tail_3, j);
+
+        /*
+         * s = top + tail;
+         * exp(x) = 2^m * (top + (tail + s * p));
+         */
+        __m512d s = _mm512_add_pd(top, tail);
+        __m512d res = _mm512_fmadd_pd(s, p, tail);
+        res = _mm512_add_pd(res, top);
+        res= _mm512_scalef_pd(res, _mm512_div_pd(kd, _mm512_set1_pd(32)));
+
+        /* return special cases */
+        res = avx512_set_masked_lanes_pd(res, _mm512_add_pd(x, ones_d),
+                                        nearzero_mask);
+        res = avx512_set_masked_lanes_pd(res, _mm512_set1_pd(NPY_NAN),
+                                        nan_mask);
+        res = avx512_set_masked_lanes_pd(res, mTH_inf, xmax_mask);
+        res = avx512_set_masked_lanes_pd(res, zeros_d, xmin_mask);
+
+        _mm512_mask_storeu_pd(op, load_mask, res);
+
+        ip += num_lanes * stride;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+    if (overflow_mask) {
+        npy_set_floatstatus_overflow();
+    }
+}
+/*
+ * Vectorized implementation of log double using AVX512
+ * Reference:
+ * [1] Tang, Ping Tak Peter. Table-lookup algorithms for elementary functions
+ *     and their error analysis. No. CONF-9106103-1. Argonne National Lab.,
+ *     IL (USA), 1991.
+ * [2] Tang, Ping-Tak Peter. "Table-driven implementation of the logarithm
+ *     function in IEEE floating-point arithmetic." ACM Transactions on
+ *     Mathematical Software (TOMS) 16.4 (1990): 378-400.
+ * [3] Muller, Jean-Michel. "Elementary functions: algorithms and
+ *     implementation." (2016).
+ * 1) if x = 0; return -INF
+ * 2) if x < 0; return NAN
+ * 3) if x is INF; return INF
+ * 4) if x is NAN; return NAN
+ * 5) if x on (1.0 - 0x1p-4, 1.0 + 0x1.09p-4), calling npy_log()
+ * 6) Range reduction:
+ *    log(x) = log(2^m * z)
+ *           = mln2 + log(z)
+ * 7) log(z) = log(z / c_k) + log(c_k);
+ *    where c_k = 1 + k/64, k = 0,1,...,64
+ *    s.t. |x - c_k| <= 1/128 when x on[1,2].
+ * 8) r = 2(x - c_k)/(x + c_k)
+ *    log(x/c_k) = log((1 + r/2) / (1 - r/2))
+ *               = p(r)
+ *               = 2((r/2) + 1/3*(r/2)^3 + 1/5*(r/2)^5 + ...)
+ */
+static void
+AVX512F_log_DOUBLE(npy_double * op,
+                npy_double * ip,
+                const npy_intp array_size,
+                const npy_intp steps)
+{
+    npy_intp num_remaining_elements = array_size;
+    const npy_intp stride = steps / (npy_intp)sizeof(npy_double);
+    const npy_int num_lanes = 64 / (npy_intp)sizeof(npy_double);
+    npy_int32 indexarr[8];
+    for (npy_int32 ii = 0; ii < 8; ii++) {
+        indexarr[ii] = ii*stride;
+    }
+
+    __m512d zeros_d = _mm512_set1_pd(0.0f);
+    __m512d ones_d = _mm512_set1_pd(1.0f);
+    __m512d mInf = _mm512_set1_pd(NPY_INFINITY);
+    __m512d mInv64 = _mm512_castsi512_pd(_mm512_set1_epi64(0x3f90000000000000));
+    __m512d mNeg_nan = _mm512_set1_pd(-NPY_NAN);
+    __m512d mNan = _mm512_set1_pd(NPY_NAN);
+    __m512d mNeg_inf = _mm512_set1_pd(-NPY_INFINITY);
+    __m512d mA1 = _mm512_set1_pd(NPY_TANG_LOG_A1);
+    __m512d mA2 = _mm512_set1_pd(NPY_TANG_LOG_A2);
+    __m512d mA3 = _mm512_set1_pd(NPY_TANG_LOG_A3);
+    __m512d mA4 = _mm512_set1_pd(NPY_TANG_LOG_A4);
+    __m512d mLN2HI = _mm512_set1_pd(NPY_TANG_LOG_LN2HI);
+    __m512d mLN2LO = _mm512_set1_pd(NPY_TANG_LOG_LN2LO);
+
+    __m512d mTo_glibc_min = _mm512_set1_pd(1.0 - 0x1p-4);
+    __m512d mTo_glibc_max = _mm512_set1_pd(1.0 + 0x1.09p-4);
+    __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
+
+    /* Load lookup table data */
+    /**begin repeat
+     * #i = 0, 1, 2, 3, 4, 5, 6, 7#
+     */
+
+    __m512d mLUT_TOP_@i@ = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*@i@]));
+    __m512d mLUT_TAIL_@i@ = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*@i@]));
+
+    /**end repeat**/
+
+    __mmask8 load_mask = avx512_get_full_load_mask_pd();
+    __mmask8 invalid_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
+    __mmask8 divide_by_zero_mask = invalid_mask;
+
+    __mmask8 inf_mask, nan_mask, zero_mask, negx_mask, denormal_mask,
+             glibc_mask;
+
+    __m512d x_in;
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < num_lanes) {
+            load_mask = avx512_get_partial_load_mask_pd(num_remaining_elements,
+                                                      num_lanes);
+        }
+
+        if (1 == stride) {
+            x_in = avx512_masked_load_pd(load_mask, ip);
+        }
+        else {
+            x_in = avx512_masked_gather_pd(zeros_d, ip, vindex, load_mask);
+        }
+
+        /* call glibc when x on [1.0 - 0x1p-4, 1.0 + 0x1.09p-4] */
+        __mmask8 m1 = _mm512_cmp_pd_mask(x_in, mTo_glibc_max, _CMP_LT_OQ);
+        __mmask8 m2 = _mm512_cmp_pd_mask(x_in, mTo_glibc_min, _CMP_GT_OQ);
+        glibc_mask =  m1 & m2;
+
+        if (glibc_mask != 0xFF) {
+            zero_mask = _mm512_cmp_pd_mask(x_in, zeros_d, _CMP_EQ_OQ);
+            inf_mask = _mm512_cmp_pd_mask(x_in, mInf, _CMP_EQ_OQ);
+            negx_mask = _mm512_cmp_pd_mask(x_in, zeros_d, _CMP_LT_OQ);
+            nan_mask = _mm512_cmp_pd_mask(x_in, x_in, _CMP_NEQ_UQ);
+
+            divide_by_zero_mask = divide_by_zero_mask | (zero_mask & load_mask);
+            invalid_mask = invalid_mask | negx_mask;
+
+            __m512d x = avx512_set_masked_lanes_pd(x_in, zeros_d, negx_mask);
+            __m512i ix = _mm512_castpd_si512(x);
+
+            /* Normalize x when it is denormal */
+            __m512i top12 = _mm512_and_epi64(ix,
+                                _mm512_set1_epi64(0xfff0000000000000));
+            denormal_mask = _mm512_cmp_epi64_mask(top12, _mm512_set1_epi64(0),
+                                _CMP_EQ_OQ);
+            denormal_mask = (~zero_mask) & denormal_mask;
+            ix = _mm512_castpd_si512(_mm512_mask_mul_pd(x, denormal_mask,
+                                    x, _mm512_set1_pd(0x1p52)));
+            ix = _mm512_mask_sub_epi64(ix, denormal_mask,
+                                    ix, _mm512_set1_epi64(52ULL << 52));
+
+            /*
+             * x = 2^k * z; where z in range [1,2]
+             */
+            __m512i tmp = _mm512_sub_epi64(ix,
+                              _mm512_set1_epi64(0x3ff0000000000000));
+            __m512i i = _mm512_and_epi64(_mm512_srai_epi64(tmp, 52 - 6),
+                            _mm512_set1_epi64(0x3fULL));
+            __m512i ik = _mm512_srai_epi64(tmp, 52);
+            __m512d z = _mm512_castsi512_pd(_mm512_sub_epi64(ix, _mm512_and_epi64(tmp,
+                            _mm512_set1_epi64(0xfff0000000000000))));
+            /* c = i/64 + 1 */
+            __m256i i_32 = _mm512_cvtepi64_epi32(i);
+            __m512d c = _mm512_fmadd_pd(_mm512_cvtepi32_pd(i_32), mInv64, ones_d);
+
+            /* u = 2 * (z - c) / (z + c) */
+            __m512d u = _mm512_div_pd(_mm512_sub_pd(z, c), _mm512_add_pd(z, c));
+            u = _mm512_mul_pd(_mm512_set1_pd(2.0), u);
+
+            /* v = u * u */
+            __m512d v = _mm512_mul_pd(u,u);
+
+            /* log(z/c) = u + u*v*(A1 + v*(A2 + v*(A3 + v*A4))) */
+            __m512d res = _mm512_fmadd_pd(v, mA4, mA3);
+            res = _mm512_fmadd_pd(v, res, mA2);
+            res = _mm512_fmadd_pd(v, res, mA1);
+            res = _mm512_mul_pd(v, res);
+            res = _mm512_fmadd_pd(u, res, u);
+
+            /* Load lookup table data */
+            __m512d c_hi = avx512_permute_x8var_pd(mLUT_TOP_0, mLUT_TOP_1,
+                            mLUT_TOP_2, mLUT_TOP_3, mLUT_TOP_4, mLUT_TOP_5,
+                            mLUT_TOP_6, mLUT_TOP_7, i);
+            __m512d c_lo = avx512_permute_x8var_pd(mLUT_TAIL_0, mLUT_TAIL_1,
+                              mLUT_TAIL_2, mLUT_TAIL_3, mLUT_TAIL_4, mLUT_TAIL_5,
+                              mLUT_TAIL_6, mLUT_TAIL_7, i);
+
+            /*
+             * log(x) = k * ln2_hi + c_hi +
+             *          k * ln2_lo + c_lo +
+             *          log(z/c)
+             */
+            __m256i ik_32 = _mm512_cvtepi64_epi32(ik);
+            __m512d k = _mm512_cvtepi32_pd(ik_32);
+            __m512d tt = _mm512_fmadd_pd(k, mLN2HI, c_hi);
+            __m512d tt2 = _mm512_fmadd_pd(k, mLN2LO, c_lo);
+            tt = _mm512_add_pd(tt, tt2);
+            res = _mm512_add_pd(tt, res);
+
+            /* return special cases */
+            res = avx512_set_masked_lanes_pd(res, mNan, nan_mask);
+            res = avx512_set_masked_lanes_pd(res, mNeg_nan, negx_mask);
+            res = avx512_set_masked_lanes_pd(res, mNeg_inf, zero_mask);
+            res = avx512_set_masked_lanes_pd(res, mInf, inf_mask);
+
+            _mm512_mask_storeu_pd(op, load_mask, res);
+        }
+
+        /* call glibc's log func when x around 1.0f */
+        if (glibc_mask != 0) {
+            double NPY_DECL_ALIGNED(64) ip_fback[8];
+            _mm512_store_pd(ip_fback, x_in);
+
+            for (int ii = 0; ii < 8; ++ii, glibc_mask >>= 1) {
+                if (glibc_mask & 0x01) {
+                    op[ii] = npy_log(ip_fback[ii]);
+                }
+            }
+        }
+        ip += num_lanes * stride;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+
+    if (invalid_mask) {
+        npy_set_floatstatus_invalid();
+    }
+    if (divide_by_zero_mask) {
+        npy_set_floatstatus_divbyzero();
+    }
+}
+#endif // AVX512F_NOCLANG_BUG
+
+#ifdef SIMD_AVX512_SKX
+/**begin repeat
+ * #type = npy_float, npy_double#
+ * #TYPE = FLOAT, DOUBLE#
+ * #num_lanes = 16, 8#
+ * #vsuffix = ps, pd#
+ * #mask = __mmask16, __mmask8#
+ * #vtype1 = __m512, __m512d#
+ * #vtype2 = __m512i, __m256i#
+ * #scale = 4, 8#
+ * #vindextype = __m512i, __m256i#
+ * #vindexsize = 512, 256#
+ * #vindexload = _mm512_loadu_si512, _mm256_loadu_si256#
+ * #vtype2_load = _mm512_maskz_loadu_epi32, _mm256_maskz_loadu_epi32#
+ * #vtype2_gather = _mm512_mask_i32gather_epi32, _mm256_mmask_i32gather_epi32#
+ * #vtype2_store = _mm512_mask_storeu_epi32, _mm256_mask_storeu_epi32#
+ * #vtype2_scatter = _mm512_mask_i32scatter_epi32, _mm256_mask_i32scatter_epi32#
+ * #setzero = _mm512_setzero_epi32, _mm256_setzero_si256#
+ */
+static NPY_INLINE void
+AVX512_SKX_ldexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_ip2 = steps[1]/(npy_intp)sizeof(int);
+    const npy_intp stride_op = steps[2]/(npy_intp)sizeof(@type@);
+    const npy_intp array_size = dimensions[0];
+    npy_intp num_remaining_elements = array_size;
+    @type@* ip1 = (@type@*) args[0];
+    int* ip2 = (int*) args[1];
+    @type@* op  = (@type@*) args[2];
+
+    @mask@ load_mask = avx512_get_full_load_mask_@vsuffix@();
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP
+     */
+
+    npy_int32 index_ip1[@num_lanes@], index_ip2[@num_lanes@], index_op[@num_lanes@];
+    for (npy_int32 ii = 0; ii < @num_lanes@; ii++) {
+        index_ip1[ii] = ii*stride_ip1;
+        index_ip2[ii] = ii*stride_ip2;
+        index_op[ii] = ii*stride_op;
+    }
+    @vindextype@ vindex_ip1 = @vindexload@((@vindextype@*)&index_ip1[0]);
+    @vindextype@ vindex_ip2 = @vindexload@((@vindextype@*)&index_ip2[0]);
+    @vindextype@ vindex_op  = @vindexload@((@vindextype@*)&index_op[0]);
+    @vtype1@ zeros_f = _mm512_setzero_@vsuffix@();
+    @vtype2@ zeros = @setzero@();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+        }
+        @vtype1@ x1;
+        @vtype2@ x2;
+        if (stride_ip1 == 1) {
+            x1 = avx512_masked_load_@vsuffix@(load_mask, ip1);
+        }
+        else {
+            x1 = avx512_masked_gather_@vsuffix@(zeros_f, ip1, vindex_ip1, load_mask);
+        }
+        if (stride_ip2 == 1) {
+            x2 = @vtype2_load@(load_mask, ip2);
+        }
+        else {
+            x2 = @vtype2_gather@(zeros, load_mask, vindex_ip2, ip2, 4);
+        }
+
+        @vtype1@ out = _mm512_scalef_@vsuffix@(x1, _mm512_cvtepi32_@vsuffix@(x2));
+
+        if (stride_op == 1) {
+            _mm512_mask_storeu_@vsuffix@(op, load_mask, out);
+        }
+        else {
+            /* scatter! */
+            _mm512_mask_i32scatter_@vsuffix@(op, load_mask, vindex_op, out, @scale@);
+        }
+
+        ip1 += @num_lanes@*stride_ip1;
+        ip2 += @num_lanes@*stride_ip2;
+        op += @num_lanes@*stride_op;
+        num_remaining_elements -= @num_lanes@;
+    }
+}
+
+static NPY_INLINE void
+AVX512_SKX_frexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_op1 = steps[1]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_op2 = steps[2]/(npy_intp)sizeof(int);
+    const npy_intp array_size = dimensions[0];
+    npy_intp num_remaining_elements = array_size;
+    @type@* ip1 = (@type@*) args[0];
+    @type@* op1  = (@type@*) args[1];
+    int* op2 = (int*) args[2];
+
+    @mask@ load_mask = avx512_get_full_load_mask_@vsuffix@();
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP
+     */
+
+    npy_int32 index_ip1[@num_lanes@], index_op1[@num_lanes@], index_op2[@num_lanes@];
+    for (npy_int32 ii = 0; ii < @num_lanes@; ii++) {
+        index_ip1[ii] = ii*stride_ip1;
+        index_op1[ii] = ii*stride_op1;
+        index_op2[ii] = ii*stride_op2;
+    }
+    @vindextype@ vindex_ip1 = @vindexload@((@vindextype@*)&index_ip1[0]);
+    @vindextype@ vindex_op1 = @vindexload@((@vindextype@*)&index_op1[0]);
+    @vindextype@ vindex_op2 = @vindexload@((@vindextype@*)&index_op2[0]);
+    @vtype1@ zeros_f = _mm512_setzero_@vsuffix@();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+        }
+        @vtype1@ x1;
+        if (stride_ip1 == 1) {
+            x1 = avx512_masked_load_@vsuffix@(load_mask, ip1);
+        }
+        else {
+            x1 = avx512_masked_gather_@vsuffix@(zeros_f, ip1, vindex_ip1, load_mask);
+        }
+
+        /*
+         * The x86 instructions vpgetmant and vpgetexp do not conform
+         * with NumPy's output for special floating points: NAN, +/-INF, +/-0.0
+         * We mask these values with spmask to avoid invalid exceptions.
+         */
+        @mask@ spmask =_mm512_knot(_mm512_fpclass_@vsuffix@_mask(
+                                                x1, 0b10011111));
+        @vtype1@ out1 = _mm512_maskz_getmant_@vsuffix@(
+                                spmask, x1, _MM_MANT_NORM_p5_1, _MM_MANT_SIGN_src);
+        out1 = _mm512_mask_mov_@vsuffix@(x1, spmask, out1);
+        @vtype2@ out2 = _mm512_cvt@vsuffix@_epi32(
+                            _mm512_maskz_add_@vsuffix@(spmask, _mm512_set1_@vsuffix@(1.0),
+                                _mm512_maskz_getexp_@vsuffix@(spmask, x1)));
+        if (stride_op1 == 1) {
+            _mm512_mask_storeu_@vsuffix@(op1, load_mask, out1);
+        }
+        else {
+            _mm512_mask_i32scatter_@vsuffix@(op1, load_mask, vindex_op1, out1, @scale@);
+        }
+        if (stride_op2 == 1) {
+            @vtype2_store@(op2, load_mask, out2);
+        }
+        else {
+            @vtype2_scatter@(op2, load_mask, vindex_op2, out2, 4);
+        }
+
+        ip1 += @num_lanes@*stride_ip1;
+        op1 += @num_lanes@*stride_op1;
+        op2 += @num_lanes@*stride_op2;
+        num_remaining_elements -= @num_lanes@;
+    }
+}
+/**end repeat**/
+#endif // SIMD_AVX512_SKX
+
+
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+/**begin repeat
+ * #func = exp, log#
+ * #scalarf = npy_expf, npy_logf#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+#if defined(SIMD_AVX2_FMA3) || defined(SIMD_AVX512F)
+    // third arg in `IS_OUTPUT_BLOCKABLE_UNARY` is dummy
+    // TODO: get ride of this macro during the move to NPYV
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), sizeof(npy_float), 64)) {
+        simd_@func@_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0]);
+    }
+    else {
+        UNARY_LOOP {
+            /*
+             * We use the AVX function to compute exp/log for scalar elements as well.
+             * This is needed to ensure the output of strided and non-strided
+             * cases match. SIMD code handles strided input cases, but not
+             * strided output.
+             */
+            simd_@func@_FLOAT((npy_float *)op1, (npy_float *)ip1, 1, steps[0]);
+        }
+    }
+#else
+    UNARY_LOOP {
+        const npy_float in1 = *(npy_float *)ip1;
+        *(npy_float *)op1 = @scalarf@(in1);
+    }
+#endif
+}
+/**end repeat**/
+
+/**begin repeat
+ * #func = exp, log#
+ * #scalar = npy_exp, npy_log#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+#ifdef SIMD_AVX512F_NOCLANG_BUG
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), sizeof(npy_double), 64)) {
+        AVX512F_@func@_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
+        return;
+    }
+#endif
+    UNARY_LOOP {
+        const npy_double in1 = *(npy_double *)ip1;
+        *(npy_double *)op1 = @scalar@(in1);
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double#
+ *  #TYPE = FLOAT, DOUBLE#
+ *  #c = f, #
+ *  #C = F, #
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_frexp)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+#ifdef SIMD_AVX512_SKX
+    if (IS_UNARY_TWO_OUT_SMALL_STEPS_AND_NOMEMOVERLAP) {
+        AVX512_SKX_frexp_@TYPE@(args, dimensions, steps);
+        return;
+    }
+#endif
+    UNARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = npy_frexp@c@(in1, (int *)op2);
+    }
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_ldexp)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+#ifdef SIMD_AVX512_SKX
+    if (IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
+        AVX512_SKX_ldexp_@TYPE@(args, dimensions, steps);
+        return;
+    }
+#endif
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const int in2 = *(int *)ip2;
+        *((@type@ *)op1) = npy_ldexp@c@(in1, in2);
+    }
+}
+/**end repeat**/

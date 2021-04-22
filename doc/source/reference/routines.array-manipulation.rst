@@ -9,6 +9,7 @@ Basic operations
    :toctree: generated/
 
     copyto
+    shape
 
 Changing array shape
 ====================
@@ -68,11 +69,12 @@ Joining arrays
 
    concatenate
    stack
-   column_stack
-   dstack
-   hstack
-   vstack
    block
+   vstack
+   hstack
+   dstack
+   column_stack
+   row_stack
 
 Splitting arrays
 ================

@@ -24,14 +24,14 @@ mixing scalar and array operations.
 
 Array scalars live in a hierarchy (see the Figure below) of data
 types. They can be detected using the hierarchy: For example,
-``isinstance(val, np.generic)`` will return :const:`True` if *val* is
+``isinstance(val, np.generic)`` will return :py:data:`True` if *val* is
 an array scalar object. Alternatively, what kind of array scalar is
 present can be determined using other members of the data type
 hierarchy. Thus, for example ``isinstance(val, np.complexfloating)``
-will return :const:`True` if *val* is a complex valued type, while
-:const:`isinstance(val, np.flexible)` will return true if *val* is one
-of the flexible itemsize array types (:class:`string`,
-:class:`unicode`, :class:`void`).
+will return :py:data:`True` if *val* is a complex valued type, while
+``isinstance(val, np.flexible)`` will return true if *val* is one
+of the flexible itemsize array types (:class:`str_`,
+:class:`bytes_`, :class:`void`).
 
 .. figure:: figures/dtype-hierarchy.png
 
@@ -40,6 +40,13 @@ of the flexible itemsize array types (:class:`string`,
    :class:`uintp` which just point to the integer type that holds a
    pointer for the platform. All the number types can be obtained
    using bit-width names as well.
+
+
+.. TODO - use something like this instead of the diagram above, as it generates
+   links to the classes and is a vector graphic. Unfortunately it looks worse
+   and the html <map> element providing the linked regions is misaligned.
+
+   .. inheritance-diagram:: byte short intc int_ longlong ubyte ushort uintc uint ulonglong half single double longdouble csingle cdouble clongdouble bool_ datetime64 timedelta64 object_ bytes_ str_ void
 
 .. [#] However, array scalars are immutable, so none of the array
        scalar attributes are settable.
@@ -51,42 +58,32 @@ of the flexible itemsize array types (:class:`string`,
 Built-in scalar types
 =====================
 
-The built-in scalar types are shown below. Along with their (mostly)
-C-derived names, the integer, float, and complex data-types are also
-available using a bit-width convention so that an array of the right
-size can always be ensured (e.g. :class:`int8`, :class:`float64`,
-:class:`complex128`). Two aliases (:class:`intp` and :class:`uintp`)
-pointing to the integer type that is sufficiently large to hold a C pointer
-are also provided. The C-like names are associated with character codes,
-which are shown in the table. Use of the character codes, however,
+The built-in scalar types are shown below. The C-like names are associated with character codes,
+which are shown in their descriptions. Use of the character codes, however,
 is discouraged.
 
 Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
 generic array scalar type:
 
-====================  ================================
-Array scalar type     Related Python type
-====================  ================================
-:class:`int_`         :class:`IntType` (Python 2 only)
-:class:`float_`       :class:`FloatType`
-:class:`complex_`     :class:`ComplexType`
-:class:`bytes_`       :class:`BytesType`
-:class:`unicode_`     :class:`UnicodeType`
-====================  ================================
+====================  ===========================  =============
+Array scalar type     Related Python type          Inherits?
+====================  ===========================  =============
+:class:`int_`         :class:`int`                 Python 2 only
+:class:`float_`       :class:`float`               yes
+:class:`complex_`     :class:`complex`             yes
+:class:`bytes_`       :class:`bytes`               yes
+:class:`str_`         :class:`str`                 yes
+:class:`bool_`        :class:`bool`                no
+:class:`datetime64`   :class:`datetime.datetime`   no
+:class:`timedelta64`  :class:`datetime.timedelta`  no
+====================  ===========================  =============
 
 The :class:`bool_` data type is very similar to the Python
-:class:`BooleanType` but does not inherit from it because Python's
-:class:`BooleanType` does not allow itself to be inherited from, and
+:class:`bool` but does not inherit from it because Python's
+:class:`bool` does not allow itself to be inherited from, and
 on the C-level the size of the actual bool data is not the same as a
 Python Boolean scalar.
-
-.. warning::
-
-   The :class:`bool_` type is not a subclass of the :class:`int_` type
-   (the :class:`bool_` is not even a number type). This is different
-   than Python's default implementation of :class:`bool` as a
-   sub-class of int.
 
 .. warning::
 
@@ -96,88 +93,185 @@ Python Boolean scalar.
 
 .. tip:: The default data type in NumPy is :class:`float_`.
 
-In the tables below, ``platform?`` means that the type may not be
-available on all platforms. Compatibility with different C or Python
-types is indicated: two types are compatible if their data is of the
-same size and interpreted in the same way.
+.. autoclass:: numpy.generic
+   :members: __init__
+   :exclude-members: __init__
 
-Booleans:
+.. autoclass:: numpy.number
+   :members: __init__
+   :exclude-members: __init__
 
-===================  =============================  ===============
-Type                 Remarks                        Character code
-===================  =============================  ===============
-:class:`bool_`       compatible: Python bool        ``'?'``
-:class:`bool8`       8 bits
-===================  =============================  ===============
+Integer types
+~~~~~~~~~~~~~
 
-Integers:
-
-===================  =============================  ===============
-:class:`byte`        compatible: C char             ``'b'``
-:class:`short`       compatible: C short            ``'h'``
-:class:`intc`        compatible: C int              ``'i'``
-:class:`int_`        compatible: Python int         ``'l'``
-:class:`longlong`    compatible: C long long        ``'q'``
-:class:`intp`        large enough to fit a pointer  ``'p'``
-:class:`int8`        8 bits
-:class:`int16`       16 bits
-:class:`int32`       32 bits
-:class:`int64`       64 bits
-===================  =============================  ===============
-
-Unsigned integers:
-
-===================  =============================  ===============
-:class:`ubyte`       compatible: C unsigned char    ``'B'``
-:class:`ushort`      compatible: C unsigned short   ``'H'``
-:class:`uintc`       compatible: C unsigned int     ``'I'``
-:class:`uint`        compatible: Python int         ``'L'``
-:class:`ulonglong`   compatible: C long long        ``'Q'``
-:class:`uintp`       large enough to fit a pointer  ``'P'``
-:class:`uint8`       8 bits
-:class:`uint16`      16 bits
-:class:`uint32`      32 bits
-:class:`uint64`      64 bits
-===================  =============================  ===============
-
-Floating-point numbers:
-
-===================  =============================  ===============
-:class:`half`                                       ``'e'``
-:class:`single`      compatible: C float            ``'f'``
-:class:`double`      compatible: C double
-:class:`float_`      compatible: Python float       ``'d'``
-:class:`longfloat`   compatible: C long float       ``'g'``
-:class:`float16`     16 bits
-:class:`float32`     32 bits
-:class:`float64`     64 bits
-:class:`float96`     96 bits, platform?
-:class:`float128`    128 bits, platform?
-===================  =============================  ===============
-
-Complex floating-point numbers:
-
-===================  =============================  ===============
-:class:`csingle`                                    ``'F'``
-:class:`complex_`    compatible: Python complex     ``'D'``
-:class:`clongfloat`                                 ``'G'``
-:class:`complex64`   two 32-bit floats
-:class:`complex128`  two 64-bit floats
-:class:`complex192`  two 96-bit floats,
-                     platform?
-:class:`complex256`  two 128-bit floats,
-                     platform?
-===================  =============================  ===============
-
-Any Python object:
-
-===================  =============================  ===============
-:class:`object_`     any Python object              ``'O'``
-===================  =============================  ===============
+.. autoclass:: numpy.integer
+   :members: __init__
+   :exclude-members: __init__
 
 .. note::
 
-   The data actually stored in :term:`object arrays <object array>`
+   The numpy integer types mirror the behavior of C integers, and can therefore
+   be subject to :ref:`overflow-errors`.
+
+Signed integer types
+++++++++++++++++++++
+
+.. autoclass:: numpy.signedinteger
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.byte
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.short
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.intc
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.int_
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.longlong
+   :members: __init__
+   :exclude-members: __init__
+
+Unsigned integer types
+++++++++++++++++++++++
+
+.. autoclass:: numpy.unsignedinteger
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.ubyte
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.ushort
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.uintc
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.uint
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.ulonglong
+   :members: __init__
+   :exclude-members: __init__
+
+Inexact types
+~~~~~~~~~~~~~
+
+.. autoclass:: numpy.inexact
+   :members: __init__
+   :exclude-members: __init__
+
+.. note::
+
+   Inexact scalars are printed using the fewest decimal digits needed to
+   distinguish their value from other values of the same datatype,
+   by judicious rounding. See the ``unique`` parameter of
+   `format_float_positional` and `format_float_scientific`.
+
+   This means that variables with equal binary values but whose datatypes are of
+   different precisions may display differently::
+
+       >>> f16 = np.float16("0.1")
+       >>> f32 = np.float32(f16)
+       >>> f64 = np.float64(f32)
+       >>> f16 == f32 == f64
+       True
+       >>> f16, f32, f64
+       (0.1, 0.099975586, 0.0999755859375)
+
+   Note that none of these floats hold the exact value :math:`\frac{1}{10}`;
+   ``f16`` prints as ``0.1`` because it is as close to that value as possible,
+   whereas the other types do not as they have more precision and therefore have
+   closer values.
+   
+   Conversely, floating-point scalars of different precisions which approximate
+   the same decimal value may compare unequal despite printing identically:
+   
+       >>> f16 = np.float16("0.1")
+       >>> f32 = np.float32("0.1")
+       >>> f64 = np.float64("0.1")
+       >>> f16 == f32 == f64
+       False
+       >>> f16, f32, f64
+       (0.1, 0.1, 0.1)
+
+Floating-point types
+++++++++++++++++++++
+
+.. autoclass:: numpy.floating
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.half
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.single
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.double
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.longdouble
+   :members: __init__
+   :exclude-members: __init__
+
+Complex floating-point types
+++++++++++++++++++++++++++++
+
+.. autoclass:: numpy.complexfloating
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.csingle
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.cdouble
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.clongdouble
+   :members: __init__
+   :exclude-members: __init__
+
+Other types
+~~~~~~~~~~~
+
+.. autoclass:: numpy.bool_
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.datetime64
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.timedelta64
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.object_
+   :members: __init__
+   :exclude-members: __init__
+
+.. note::
+
+   The data actually stored in object arrays
    (*i.e.*, arrays having dtype :class:`object_`) are references to
    Python objects, not the objects themselves. Hence, object arrays
    behave more like usual Python :class:`lists <list>`, in the sense
@@ -188,16 +282,28 @@ Any Python object:
    on item access, but instead returns the actual object that
    the array item refers to.
 
-The following data types are :term:`flexible`. They have no predefined
-size: the data they describe can be of different length in different
+.. index:: flexible
+
+The following data types are **flexible**: they have no predefined
+size and the data they describe can be of different length in different
 arrays. (In the character codes ``#`` is an integer denoting how many
 elements the data type consists of.)
 
-===================  ==============================  ========
-:class:`bytes_`      compatible: Python bytes        ``'S#'``
-:class:`unicode_`    compatible: Python unicode/str  ``'U#'``
-:class:`void`                                        ``'V#'``
-===================  ==============================  ========
+.. autoclass:: numpy.flexible
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.bytes_
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.str_
+   :members: __init__
+   :exclude-members: __init__
+
+.. autoclass:: numpy.void
+   :members: __init__
+   :exclude-members: __init__
 
 
 .. warning::
@@ -212,12 +318,125 @@ elements the data type consists of.)
    convention more consistent with other Python modules such as the
    :mod:`struct` module.
 
+.. _sized-aliases:
+
+Sized aliases
+~~~~~~~~~~~~~
+
+Along with their (mostly)
+C-derived names, the integer, float, and complex data-types are also
+available using a bit-width convention so that an array of the right
+size can always be ensured. Two aliases (:class:`numpy.intp` and :class:`numpy.uintp`)
+pointing to the integer type that is sufficiently large to hold a C pointer
+are also provided.
+
+.. note that these are documented with ..attribute because that is what
+   autoclass does for aliases under the hood.
+
+.. autoclass:: numpy.bool8
+
+.. attribute:: int8
+               int16
+               int32
+               int64
+
+   Aliases for the signed integer types (one of `numpy.byte`, `numpy.short`,
+   `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
+   of bits.
+
+   Compatible with the C99 ``int8_t``, ``int16_t``, ``int32_t``, and
+   ``int64_t``, respectively.
+
+.. attribute:: uint8
+               uint16
+               uint32
+               uint64
+
+   Alias for the unsigned integer types (one of `numpy.byte`, `numpy.short`,
+   `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
+   of bits.
+
+   Compatible with the C99 ``uint8_t``, ``uint16_t``, ``uint32_t``, and
+   ``uint64_t``, respectively.
+
+.. attribute:: intp
+
+   Alias for the signed integer type (one of `numpy.byte`, `numpy.short`,
+   `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
+   pointer.
+
+   Compatible with the C ``intptr_t``.
+
+   :Character code: ``'p'``
+
+.. attribute:: uintp
+
+   Alias for the unsigned integer type (one of `numpy.byte`, `numpy.short`,
+   `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
+   pointer.
+
+   Compatible with the C ``uintptr_t``.
+
+   :Character code: ``'P'``
+
+.. autoclass:: numpy.float16
+
+.. autoclass:: numpy.float32
+
+.. autoclass:: numpy.float64
+
+.. attribute:: float96
+               float128
+
+   Alias for `numpy.longdouble`, named after its size in bits.
+   The existence of these aliases depends on the platform.
+
+.. autoclass:: numpy.complex64
+
+.. autoclass:: numpy.complex128
+
+.. attribute:: complex192
+               complex256
+
+   Alias for `numpy.clongdouble`, named after its size in bits.
+   The existance of these aliases depends on the platform.
+
+Other aliases
+~~~~~~~~~~~~~
+
+The first two of these are conveniences which resemble the names of the
+builtin types, in the same style as `bool_`, `int_`, `str_`, `bytes_`, and
+`object_`:
+
+.. autoclass:: numpy.float_
+
+.. autoclass:: numpy.complex_
+
+Some more use alternate naming conventions for extended-precision floats and
+complex numbers:
+
+.. autoclass:: numpy.longfloat
+
+.. autoclass:: numpy.singlecomplex
+
+.. autoclass:: numpy.cfloat
+
+.. autoclass:: numpy.longcomplex
+
+.. autoclass:: numpy.clongfloat
+
+The following aliases originate from Python 2, and it is recommended that they
+not be used in new code.
+
+.. autoclass:: numpy.string_
+
+.. autoclass:: numpy.unicode_
 
 Attributes
 ==========
 
 The array scalar objects have an :obj:`array priority
-<__array_priority__>` of :c:data:`NPY_SCALAR_PRIORITY`
+<class.__array_priority__>` of :c:data:`NPY_SCALAR_PRIORITY`
 (-1,000,000.0). They also do not (yet) have a :attr:`ctypes <ndarray.ctypes>`
 attribute. Otherwise, they share the same attributes as arrays:
 
@@ -271,7 +490,6 @@ The exceptions to the above rules are given below:
 .. autosummary::
    :toctree: generated/
 
-   generic
    generic.__array__
    generic.__array_wrap__
    generic.squeeze

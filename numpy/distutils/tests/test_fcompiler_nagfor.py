@@ -1,7 +1,4 @@
-from __future__ import division, absolute_import, print_function
-
-from numpy.testing import assert_, run_module_suite
-
+from numpy.testing import assert_
 import numpy.distutils.fcompiler
 
 nag_version_strings = [('nagfor', 'NAG Fortran Compiler Release '
@@ -17,13 +14,9 @@ nag_version_strings = [('nagfor', 'NAG Fortran Compiler Release '
                         '431,435,437,446,459-460,463,472,494,496,503,508,'
                         '511,517,529,555,557,565)', '5.1')]
 
-class TestNagFCompilerVersions(object):
+class TestNagFCompilerVersions:
     def test_version_match(self):
         for comp, vs, version in nag_version_strings:
             fc = numpy.distutils.fcompiler.new_fcompiler(compiler=comp)
             v = fc.version_match(vs)
             assert_(v == version)
-
-
-if __name__ == '__main__':
-    run_module_suite()

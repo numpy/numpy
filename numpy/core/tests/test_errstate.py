@@ -1,13 +1,19 @@
-from __future__ import division, absolute_import, print_function
-
-import platform
+import pytest
+import sysconfig
 
 import numpy as np
-from numpy.testing import assert_, run_module_suite, dec
+from numpy.testing import assert_, assert_raises
 
+# The floating point emulation on ARM EABI systems lacking a hardware FPU is
+# known to be buggy. This is an attempt to identify these hosts. It may not
+# catch all possible cases, but it catches the known cases of gh-413 and
+# gh-15562.
+hosttype = sysconfig.get_config_var('HOST_GNU_TYPE')
+arm_softfloat = False if hosttype is None else hosttype.endswith('gnueabi')
 
-class TestErrstate(object):
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+class TestErrstate:
+    @pytest.mark.skipif(arm_softfloat,
+                        reason='platform/cpu issue with FPU (gh-413,-15562)')
     def test_invalid(self):
         with np.errstate(all='raise', under='ignore'):
             a = -np.arange(3)
@@ -15,13 +21,11 @@ class TestErrstate(object):
             with np.errstate(invalid='ignore'):
                 np.sqrt(a)
             # While this should fail!
-            try:
+            with assert_raises(FloatingPointError):
                 np.sqrt(a)
-            except FloatingPointError:
-                pass
-            else:
-                self.fail("Did not raise an invalid error")
 
+    @pytest.mark.skipif(arm_softfloat,
+                        reason='platform/cpu issue with FPU (gh-15562)')
     def test_divide(self):
         with np.errstate(all='raise', under='ignore'):
             a = -np.arange(3)
@@ -29,12 +33,11 @@ class TestErrstate(object):
             with np.errstate(divide='ignore'):
                 a // 0
             # While this should fail!
-            try:
+            with assert_raises(FloatingPointError):
                 a // 0
-            except FloatingPointError:
-                pass
-            else:
-                self.fail("Did not raise divide by zero error")
+            # As should this, see gh-15562
+            with assert_raises(FloatingPointError):
+                a // a
 
     def test_errcall(self):
         def foo(*args):
@@ -47,6 +50,10 @@ class TestErrstate(object):
                 assert_(np.geterrcall() is None, 'call is not None')
         assert_(np.geterrcall() is olderrcall, 'call is not olderrcall')
 
-
-if __name__ == "__main__":
-    run_module_suite()
+    def test_errstate_decorator(self):
+        @np.errstate(all='ignore')
+        def foo():
+            a = -np.arange(3)
+            a // 0
+            
+        foo()

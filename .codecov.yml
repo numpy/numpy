@@ -1,0 +1,14 @@
+codecov:
+  notify:
+    require_ci_to_pass: no
+    after_n_builds: 1
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+    changes: false
+comment: off

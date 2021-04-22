@@ -1,7 +1,5 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
-from distutils.core import *
+from distutils.core import Distribution
 
 if 'setuptools' in sys.modules:
     have_setuptools = True
@@ -27,7 +25,7 @@ from numpy.distutils.command import config, config_compiler, \
      build, build_py, build_ext, build_clib, build_src, build_scripts, \
      sdist, install_data, install_headers, install, bdist_rpm, \
      install_clib
-from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
+from numpy.distutils.misc_util import is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,
@@ -71,12 +69,14 @@ def _dict_append(d, **kws):
         else:
             raise TypeError(repr(type(dv)))
 
-def _command_line_ok(_cache=[]):
+def _command_line_ok(_cache=None):
     """ Return True if command line does not contain any
     help or display requests.
     """
     if _cache:
         return _cache[0]
+    elif _cache is None:
+        _cache = []
     ok = True
     display_opts = ['--'+n for n in Distribution.display_option_names]
     for o in Distribution.display_options:

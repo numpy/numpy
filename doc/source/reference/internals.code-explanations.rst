@@ -17,7 +17,7 @@ pieces of code. The purpose behind these explanations is to enable
 somebody to be able to understand the ideas behind the implementation
 somewhat more easily than just staring at the code. Perhaps in this
 way, the algorithms can be improved on, borrowed from, and/or
-optimized.
+optimized by more people.
 
 
 Memory model
@@ -133,9 +133,9 @@ Broadcasting
 .. index::
    single: broadcasting
 
-In Numeric, broadcasting was implemented in several lines of code
-buried deep in ufuncobject.c. In NumPy, the notion of broadcasting has
-been abstracted so that it can be performed in multiple places.
+In Numeric, the ancestor of Numpy, broadcasting was implemented in several
+lines of code buried deep in ufuncobject.c. In NumPy, the notion of broadcasting
+has been abstracted so that it can be performed in multiple places.
 Broadcasting is handled by the function :c:func:`PyArray_Broadcast`. This
 function requires a :c:type:`PyArrayMultiIterObject` (or something that is a
 binary equivalent) to be passed in. The :c:type:`PyArrayMultiIterObject` keeps
@@ -147,7 +147,8 @@ an iterator for each of the arrays being broadcast.
 The :c:func:`PyArray_Broadcast` function takes the iterators that have already
 been defined and uses them to determine the broadcast shape in each
 dimension (to create the iterators at the same time that broadcasting
-occurs then use the :c:func:`PyMultiIter_New` function). Then, the iterators are
+occurs then use the :c:func:`PyArray_MultiIterNew` function).
+Then, the iterators are
 adjusted so that each iterator thinks it is iterating over an array
 with the broadcast size. This is done by adjusting the iterators
 number of dimensions, and the shape in each dimension. This works
@@ -162,7 +163,7 @@ for the extended dimensions. It is done in exactly the same way in
 NumPy. The big difference is that now the array of strides is kept
 track of in a :c:type:`PyArrayIterObject`, the iterators involved in a
 broadcast result are kept track of in a :c:type:`PyArrayMultiIterObject`,
-and the :c:func:`PyArray_BroadCast` call implements the broad-casting rules.
+and the :c:func:`PyArray_Broadcast` call implements the broad-casting rules.
 
 
 Array Scalars
@@ -368,8 +369,9 @@ The output arguments (if any) are then processed and any missing
 return arrays are constructed. If any provided output array doesn't
 have the correct type (or is mis-aligned) and is smaller than the
 buffer size, then a new output array is constructed with the special
-UPDATEIFCOPY flag set so that when it is DECREF'd on completion of the
-function, its contents will be copied back into the output array.
+:c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag set. At the end of the function,
+:c:func:`PyArray_ResolveWritebackIfCopy` is called so that 
+its contents will be copied back into the output array.
 Iterators for the output arguments are then processed.
 
 Finally, the decision is made about how to execute the looping
@@ -508,10 +510,11 @@ of a different shape depending on whether the method is reduce,
 accumulate, or reduceat. If an output array is already provided, then
 it's shape is checked. If the output array is not C-contiguous,
 aligned, and of the correct data type, then a temporary copy is made
-with the UPDATEIFCOPY flag set. In this way, the methods will be able
+with the WRITEBACKIFCOPY flag set. In this way, the methods will be able
 to work with a well-behaved output array but the result will be copied
-back into the true output array when the method computation is
-complete. Finally, iterators are set up to loop over the correct axis
+back into the true output array when :c:func:`PyArray_ResolveWritebackIfCopy`
+is called at function completion.
+Finally, iterators are set up to loop over the correct axis
 (depending on the value of axis provided to the method) and the setup
 routine returns to the actual computation routine.
 

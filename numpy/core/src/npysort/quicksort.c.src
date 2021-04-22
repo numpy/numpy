@@ -85,7 +85,7 @@
  *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
  */
 
-int
+NPY_NO_EXPORT int
 quicksort_@suff@(void *start, npy_intp num, void *NOT_USED)
 {
     @type@ vp;
@@ -160,7 +160,7 @@ stack_pop:
 }
 
 
-int
+NPY_NO_EXPORT int
 aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *NOT_USED)
 {
     @type@ *v = vv;
@@ -253,7 +253,7 @@ stack_pop:
  * #type = npy_char, npy_ucs4#
  */
 
-int
+NPY_NO_EXPORT int
 quicksort_@suff@(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -341,7 +341,7 @@ stack_pop:
 }
 
 
-int
+NPY_NO_EXPORT int
 aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *varr)
 {
     @type@ *v = vv;
@@ -434,7 +434,7 @@ stack_pop:
  */
 
 
-int
+NPY_NO_EXPORT int
 npy_quicksort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -482,7 +482,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
             pj = pr - elsize;
             GENERIC_SWAP(pm, pj, elsize);
             /*
-             * Generic comparisons may be buggy, so don't rely on the sentinals
+             * Generic comparisons may be buggy, so don't rely on the sentinels
              * to keep the pointers from going out of bounds.
              */
             for (;;) {
@@ -539,7 +539,7 @@ stack_pop:
 }
 
 
-int
+NPY_NO_EXPORT int
 npy_aquicksort(void *vv, npy_intp* tosort, npy_intp num, void *varr)
 {
     char *v = vv;

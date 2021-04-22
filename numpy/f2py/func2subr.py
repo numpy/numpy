@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
@@ -13,8 +13,6 @@ $Date: 2004/11/26 11:13:06 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __version__ = "$Revision: 1.16 $"[10:-1]
 
 f2py_version = 'See `f2py -v`'
@@ -132,7 +130,7 @@ def createfuncwrapper(rout, signature=0):
             l = l + ', ' + fortranname
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
-            if line.lstrip().startswith('use '):
+            if line.lstrip().startswith('use ') and '__user__' not in line:
                 add(line)
 
     args = args[1:]
@@ -224,7 +222,7 @@ def createsubrwrapper(rout, signature=0):
 
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
-            if line.lstrip().startswith('use '):
+            if line.lstrip().startswith('use ') and '__user__' not in line:
                 add(line)
 
     dumped_args = []
@@ -249,7 +247,10 @@ def createsubrwrapper(rout, signature=0):
             pass
         else:
             add('interface')
-            add(rout['saved_interface'].lstrip())
+            for line in rout['saved_interface'].split('\n'):
+                if line.lstrip().startswith('use ') and '__user__' in line:
+                    continue
+                add(line)
             add('end interface')
 
     sargs = ', '.join([a for a in args if a not in extra_args])

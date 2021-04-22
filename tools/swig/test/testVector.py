@@ -1,9 +1,5 @@
-#! /usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
-import os
 import sys
 import unittest
 
@@ -29,7 +25,7 @@ class VectorTestCase(unittest.TestCase):
         "Test length function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         length = Vector.__dict__[self.typeStr + "Length"]
-        self.assertEquals(length([5, 12, 0]), 13)
+        self.assertEqual(length([5, 12, 0]), 13)
 
     # Test the (type IN_ARRAY1[ANY]) typemap
     def testLengthBadList(self):
@@ -64,7 +60,7 @@ class VectorTestCase(unittest.TestCase):
         "Test prod function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         prod = Vector.__dict__[self.typeStr + "Prod"]
-        self.assertEquals(prod([1, 2, 3, 4]), 24)
+        self.assertEqual(prod([1, 2, 3, 4]), 24)
 
     # Test the (type* IN_ARRAY1, int DIM1) typemap
     def testProdBadList(self):
@@ -92,7 +88,7 @@ class VectorTestCase(unittest.TestCase):
         "Test sum function"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         sum = Vector.__dict__[self.typeStr + "Sum"]
-        self.assertEquals(sum([5, 6, 7, 8]), 26)
+        self.assertEqual(sum([5, 6, 7, 8]), 26)
 
     # Test the (int DIM1, type* IN_ARRAY1) typemap
     def testSumBadList(self):
@@ -122,7 +118,7 @@ class VectorTestCase(unittest.TestCase):
         reverse = Vector.__dict__[self.typeStr + "Reverse"]
         vector = np.array([1, 2, 4], self.typeCode)
         reverse(vector)
-        self.assertEquals((vector == [4, 2, 1]).all(), True)
+        self.assertEqual((vector == [4, 2, 1]).all(), True)
 
     # Test the (type INPLACE_ARRAY1[ANY]) typemap
     def testReverseWrongDim(self):
@@ -225,8 +221,8 @@ class VectorTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         eoSplit = Vector.__dict__[self.typeStr + "EOSplit"]
         even, odd = eoSplit([1, 2, 3])
-        self.assertEquals((even == [1, 0, 3]).all(), True)
-        self.assertEquals((odd  == [0, 2, 0]).all(), True)
+        self.assertEqual((even == [1, 0, 3]).all(), True)
+        self.assertEqual((odd  == [0, 2, 0]).all(), True)
 
     # Test the (type* ARGOUT_ARRAY1, int DIM1) typemap
     def testTwos(self):
@@ -234,7 +230,7 @@ class VectorTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         twos = Vector.__dict__[self.typeStr + "Twos"]
         vector = twos(5)
-        self.assertEquals((vector == [2, 2, 2, 2, 2]).all(), True)
+        self.assertEqual((vector == [2, 2, 2, 2, 2]).all(), True)
 
     # Test the (type* ARGOUT_ARRAY1, int DIM1) typemap
     def testTwosNonInt(self):
@@ -249,7 +245,7 @@ class VectorTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         threes = Vector.__dict__[self.typeStr + "Threes"]
         vector = threes(6)
-        self.assertEquals((vector == [3, 3, 3, 3, 3, 3]).all(), True)
+        self.assertEqual((vector == [3, 3, 3, 3, 3, 3]).all(), True)
 
     # Test the (type* ARGOUT_ARRAY1, int DIM1) typemap
     def testThreesNonInt(self):

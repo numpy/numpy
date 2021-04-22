@@ -225,7 +225,7 @@ A total of 418 pull requests were merged for this release.
 * `#7240 <https://github.com/numpy/numpy/pull/7240>`__: Change 'pubic' to 'public'.
 * `#7241 <https://github.com/numpy/numpy/pull/7241>`__: MAINT: update doc/sphinxext to numpydoc 0.6.0, and fix up some...
 * `#7243 <https://github.com/numpy/numpy/pull/7243>`__: ENH: Adding support to the range keyword for estimation of the...
-* `#7246 <https://github.com/numpy/numpy/pull/7246>`__: DOC: metion writeable keyword in as_strided in release notes
+* `#7246 <https://github.com/numpy/numpy/pull/7246>`__: DOC: mention writeable keyword in as_strided in release notes
 * `#7247 <https://github.com/numpy/numpy/pull/7247>`__: TST: Fail quickly on AppVeyor for superseded PR builds
 * `#7248 <https://github.com/numpy/numpy/pull/7248>`__: DOC: remove link to documentation wiki editor from HOWTO_DOCUMENT.
 * `#7250 <https://github.com/numpy/numpy/pull/7250>`__: DOC,REL: Update 1.11.0 notes.
@@ -251,7 +251,7 @@ A total of 418 pull requests were merged for this release.
 * `#7292 <https://github.com/numpy/numpy/pull/7292>`__: Clarify error on repr failure in assert_equal.
 * `#7294 <https://github.com/numpy/numpy/pull/7294>`__: ENH: add support for BLIS to numpy.distutils
 * `#7295 <https://github.com/numpy/numpy/pull/7295>`__: DOC: understanding code and getting started section to dev doc
-* `#7296 <https://github.com/numpy/numpy/pull/7296>`__: Revert part of #3907 which incorrectly propogated MaskedArray...
+* `#7296 <https://github.com/numpy/numpy/pull/7296>`__: Revert part of #3907 which incorrectly propagated MaskedArray...
 * `#7299 <https://github.com/numpy/numpy/pull/7299>`__: DOC: Fix mismatched variable names in docstrings.
 * `#7300 <https://github.com/numpy/numpy/pull/7300>`__: DOC: dev: stop recommending keeping local master updated with...
 * `#7301 <https://github.com/numpy/numpy/pull/7301>`__: DOC: Update release notes
@@ -292,7 +292,7 @@ A total of 418 pull requests were merged for this release.
 * `#7407 <https://github.com/numpy/numpy/pull/7407>`__: BUG: Fix decref before incref for in-place accumulate
 * `#7410 <https://github.com/numpy/numpy/pull/7410>`__: DOC: add nanprod to the list of math routines
 * `#7414 <https://github.com/numpy/numpy/pull/7414>`__: Tweak corrcoef
-* `#7415 <https://github.com/numpy/numpy/pull/7415>`__: DOC: Documention fixes
+* `#7415 <https://github.com/numpy/numpy/pull/7415>`__: DOC: Documentation fixes
 * `#7416 <https://github.com/numpy/numpy/pull/7416>`__: BUG: Incorrect handling of range in `histogram` with automatic...
 * `#7418 <https://github.com/numpy/numpy/pull/7418>`__: DOC: Minor typo fix, hermefik -> hermefit.
 * `#7421 <https://github.com/numpy/numpy/pull/7421>`__: ENH: adds np.nancumsum and np.nancumprod
@@ -333,7 +333,7 @@ A total of 418 pull requests were merged for this release.
 * `#7534 <https://github.com/numpy/numpy/pull/7534>`__: MAINT: Update setup.py to reflect supported python versions.
 * `#7536 <https://github.com/numpy/numpy/pull/7536>`__: MAINT: Always use PyCapsule instead of PyCObject in mtrand.pyx
 * `#7539 <https://github.com/numpy/numpy/pull/7539>`__: MAINT: Cleanup of random stuff
-* `#7549 <https://github.com/numpy/numpy/pull/7549>`__: BUG: allow graceful recovery for no Liux compiler
+* `#7549 <https://github.com/numpy/numpy/pull/7549>`__: BUG: allow graceful recovery for no Linux compiler
 * `#7562 <https://github.com/numpy/numpy/pull/7562>`__: BUG: Fix test_from_object_array_unicode (test_defchararray.TestBasic)…
 * `#7565 <https://github.com/numpy/numpy/pull/7565>`__: BUG: Fix test_ctypeslib and test_indexing for debug interpreter
 * `#7566 <https://github.com/numpy/numpy/pull/7566>`__: MAINT: use manylinux1 wheel for cython
@@ -459,7 +459,7 @@ A total of 418 pull requests were merged for this release.
 * `#8016 <https://github.com/numpy/numpy/pull/8016>`__: BUG: Fix numpy.ma.median.
 * `#8018 <https://github.com/numpy/numpy/pull/8018>`__: BUG: Fixes return for np.ma.count if keepdims is True and axis...
 * `#8021 <https://github.com/numpy/numpy/pull/8021>`__: DOC: change all non-code instances of Numpy to NumPy
-* `#8027 <https://github.com/numpy/numpy/pull/8027>`__: ENH: Add platform indepedent lib dir to PYTHONPATH
+* `#8027 <https://github.com/numpy/numpy/pull/8027>`__: ENH: Add platform independent lib dir to PYTHONPATH
 * `#8028 <https://github.com/numpy/numpy/pull/8028>`__: DOC: Update 1.11.2 release notes.
 * `#8030 <https://github.com/numpy/numpy/pull/8030>`__: BUG: fix np.ma.median with only one non-masked value and an axis...
 * `#8038 <https://github.com/numpy/numpy/pull/8038>`__: MAINT: Update error message in rollaxis.

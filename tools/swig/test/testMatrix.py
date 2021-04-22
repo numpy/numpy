@@ -1,9 +1,5 @@
-#! /usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
-import os
 import sys
 import unittest
 
@@ -30,7 +26,7 @@ class MatrixTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         det = Matrix.__dict__[self.typeStr + "Det"]
         matrix = [[8, 7], [6, 9]]
-        self.assertEquals(det(matrix), 30)
+        self.assertEqual(det(matrix), 30)
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
     def testDetBadList(self):
@@ -69,7 +65,7 @@ class MatrixTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         max = Matrix.__dict__[self.typeStr + "Max"]
         matrix = [[6, 5, 4], [3, 2, 1]]
-        self.assertEquals(max(matrix), 6)
+        self.assertEqual(max(matrix), 6)
 
     # Test (type* IN_ARRAY2, int DIM1, int DIM2) typemap
     def testMaxBadList(self):
@@ -99,7 +95,7 @@ class MatrixTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         min = Matrix.__dict__[self.typeStr + "Min"]
         matrix = [[9, 8], [7, 6], [5, 4]]
-        self.assertEquals(min(matrix), 4)
+        self.assertEqual(min(matrix), 4)
 
     # Test (int DIM1, int DIM2, type* IN_ARRAY2) typemap
     def testMinBadList(self):
@@ -130,7 +126,7 @@ class MatrixTestCase(unittest.TestCase):
         scale = Matrix.__dict__[self.typeStr + "Scale"]
         matrix = np.array([[1, 2, 3], [2, 1, 2], [3, 2, 1]], self.typeCode)
         scale(matrix, 4)
-        self.assertEquals((matrix == [[4, 8, 12], [8, 4, 8], [12, 8, 4]]).all(), True)
+        self.assertEqual((matrix == [[4, 8, 12], [8, 4, 8], [12, 8, 4]]).all(), True)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
     def testScaleWrongDim(self):
@@ -236,8 +232,8 @@ class MatrixTestCase(unittest.TestCase):
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         luSplit = Matrix.__dict__[self.typeStr + "LUSplit"]
         lower, upper = luSplit([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        self.assertEquals((lower == [[1, 0, 0], [4, 5, 0], [7, 8, 9]]).all(), True)
-        self.assertEquals((upper == [[0, 2, 3], [0, 0, 6], [0, 0, 0]]).all(), True)
+        self.assertEqual((lower == [[1, 0, 0], [4, 5, 0], [7, 8, 9]]).all(), True)
+        self.assertEqual((upper == [[0, 2, 3], [0, 0, 6], [0, 0, 0]]).all(), True)
 
 ######################################################################
 

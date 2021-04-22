@@ -1,11 +1,10 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import re
 import sys
+import subprocess
 
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.exec_command import exec_command, find_executable
+from numpy.distutils.exec_command import find_executable
 from numpy.distutils.misc_util import make_temp_file
 from distutils import log
 
@@ -35,9 +34,13 @@ class IBMFCompiler(FCompiler):
             lslpp = find_executable('lslpp')
             xlf = find_executable('xlf')
             if os.path.exists(xlf) and os.path.exists(lslpp):
-                s, o = exec_command(lslpp + ' -Lc xlfcmp')
-                m = re.search(r'xlfcmp:(?P<version>\d+([.]\d+)+)', o)
-                if m: version = m.group('version')
+                try:
+                    o = subprocess.check_output([lslpp, '-Lc', 'xlfcmp'])
+                except (OSError, subprocess.CalledProcessError):
+                    pass
+                else:
+                    m = re.search(r'xlfcmp:(?P<version>\d+([.]\d+)+)', o)
+                    if m: version = m.group('version')
 
         xlf_dir = '/etc/opt/ibmcmp/xlf'
         if version is None and os.path.isdir(xlf_dir):
@@ -73,15 +76,14 @@ class IBMFCompiler(FCompiler):
                 xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
             fo, new_cfg = make_temp_file(suffix='_xlf.cfg')
             log.info('Creating '+new_cfg)
-            fi = open(xlf_cfg, 'r')
-            crt1_match = re.compile(r'\s*crt\s*[=]\s*(?P<path>.*)/crt1.o').match
-            for line in fi:
-                m = crt1_match(line)
-                if m:
-                    fo.write('crt = %s/bundle1.o\n' % (m.group('path')))
-                else:
-                    fo.write(line)
-            fi.close()
+            with open(xlf_cfg, 'r') as fi:
+                crt1_match = re.compile(r'\s*crt\s*=\s*(?P<path>.*)/crt1.o').match
+                for line in fi:
+                    m = crt1_match(line)
+                    if m:
+                        fo.write('crt = %s/bundle1.o\n' % (m.group('path')))
+                    else:
+                        fo.write(line)
             fo.close()
             opt.append('-F'+new_cfg)
         return opt
@@ -90,7 +92,6 @@ class IBMFCompiler(FCompiler):
         return ['-O3']
 
 if __name__ == '__main__':
+    from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
-    compiler = IBMFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    print(customized_fcompiler(compiler='ibm').get_version())

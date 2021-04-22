@@ -1,15 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Fortran to Python Interface Generator.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['run_main', 'compile', 'f2py_testing']
 
 import sys
+import subprocess
+import os
 
 from . import f2py2e
-from . import f2py_testing
 from . import diagnose
 
 run_main = f2py2e.run_main
@@ -21,19 +20,28 @@ def compile(source,
             extra_args='',
             verbose=True,
             source_fn=None,
-            extension='.f'
+            extension='.f',
+            full_output=False
            ):
     """
-    Build extension module from processing source with f2py.
+    Build extension module from a Fortran 77 source string with f2py.
 
     Parameters
     ----------
-    source : str
+    source : str or bytes
         Fortran source of module / subroutine to compile
+
+        .. versionchanged:: 1.16.0
+           Accept str as well as bytes
+
     modulename : str, optional
         The name of the compiled python module
-    extra_args : str, optional
+    extra_args : str or list, optional
         Additional parameters passed to f2py
+
+        .. versionchanged:: 1.16.0
+            A list of args may also be provided.
+
     verbose : bool, optional
         Print f2py output to screen
     source_fn : str, optional
@@ -47,28 +55,99 @@ def compile(source,
 
         .. versionadded:: 1.11.0
 
+    full_output : bool, optional
+        If True, return a `subprocess.CompletedProcess` containing
+        the stdout and stderr of the compile process, instead of just
+        the status code.
+
+        .. versionadded:: 1.20.0
+
+
+    Returns
+    -------
+    result : int or `subprocess.CompletedProcess`
+        0 on success, or a `subprocess.CompletedProcess` if
+        ``full_output=True``
+
+    Examples
+    --------
+    .. include:: compile_session.dat
+        :literal:
+
     """
-    from numpy.distutils.exec_command import exec_command
     import tempfile
+    import shlex
+
     if source_fn is None:
-        f = tempfile.NamedTemporaryFile(suffix=extension)
+        f, fname = tempfile.mkstemp(suffix=extension)
+        # f is a file descriptor so need to close it
+        # carefully -- not with .close() directly
+        os.close(f)
     else:
-        f = open(source_fn, 'w')
+        fname = source_fn
 
+    if not isinstance(source, str):
+        source = str(source, 'utf-8')
     try:
-        f.write(source)
-        f.flush()
+        with open(fname, 'w') as f:
+            f.write(source)
 
-        args = ' -c -m {} {} {}'.format(modulename, f.name, extra_args)
-        c = '{} -c "import numpy.f2py as f2py2e;f2py2e.main()" {}'
-        c = c.format(sys.executable, args)
-        status, output = exec_command(c)
-        if verbose:
-            print(output)
+        args = ['-c', '-m', modulename, f.name]
+
+        if isinstance(extra_args, str):
+            is_posix = (os.name == 'posix')
+            extra_args = shlex.split(extra_args, posix=is_posix)
+
+        args.extend(extra_args)
+
+        c = [sys.executable,
+             '-c',
+             'import numpy.f2py as f2py2e;f2py2e.main()'] + args
+        try:
+            cp = subprocess.run(c, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        except OSError:
+            # preserve historic status code used by exec_command()
+            cp = subprocess.CompletedProcess(c, 127, stdout=b'', stderr=b'')
+        else:
+            if verbose:
+                print(cp.stdout.decode())
     finally:
-        f.close()
-    return status
+        if source_fn is None:
+            os.remove(fname)
 
-from numpy.testing import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+    if full_output:
+        return cp
+    else:
+        return cp.returncode
+
+
+if sys.version_info[:2] >= (3, 7):
+    # module level getattr is only supported in 3.7 onwards
+    # https://www.python.org/dev/peps/pep-0562/
+    def __getattr__(attr):
+
+        # Avoid importing things that aren't needed for building
+        # which might import the main numpy module
+        if attr == "f2py_testing":
+            import numpy.f2py.f2py_testing as f2py_testing
+            return f2py_testing
+
+        elif attr == "test":
+            from numpy._pytesttester import PytestTester
+            test = PytestTester(__name__)
+            return test
+
+        else:
+            raise AttributeError("module {!r} has no attribute "
+                                 "{!r}".format(__name__, attr))
+
+    def __dir__():
+        return list(globals().keys() | {"f2py_testing", "test"})
+
+else:
+    from . import f2py_testing
+
+    from numpy._pytesttester import PytestTester
+    test = PytestTester(__name__)
+    del PytestTester

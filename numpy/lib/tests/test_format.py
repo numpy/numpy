@@ -1,5 +1,4 @@
-from __future__ import division, absolute_import, print_function
-
+# doctest
 r''' Test the .npy file format.
 
 Set up:
@@ -275,37 +274,20 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-
 import sys
 import os
 import shutil
 import tempfile
 import warnings
+import pytest
 from io import BytesIO
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    dec, SkipTest
+    assert_, assert_array_equal, assert_raises, assert_raises_regex,
+    assert_warns,
     )
 from numpy.lib import format
-
-
-tempdir = None
-
-# Module-level setup.
-
-
-def setup_module():
-    global tempdir
-    tempdir = tempfile.mkdtemp()
-
-
-def teardown_module():
-    global tempdir
-    if tempdir is not None and os.path.isdir(tempdir):
-        shutil.rmtree(tempdir)
-        tempdir = None
 
 
 # Generate some basic arrays to test with.
@@ -411,6 +393,7 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('<')),
     np.array(PbufferT, dtype=np.dtype(Pdescr).newbyteorder('>')),
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
+    np.zeros(1, dtype=[('c', ('<f8', (5,)), (2,))])
 ]
 
 
@@ -419,14 +402,14 @@ class BytesIOSRandomSize(BytesIO):
     def read(self, size=None):
         import random
         size = random.randint(1, size)
-        return super(BytesIOSRandomSize, self).read(size)
+        return super().read(size)
 
 
 def roundtrip(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIO(f.getvalue())
-    arr2 = format.read_array(f2)
+    arr2 = format.read_array(f2, allow_pickle=True)
     return arr2
 
 
@@ -454,20 +437,20 @@ def assert_equal_(o1, o2):
 def test_roundtrip():
     for arr in basic_arrays + record_arrays:
         arr2 = roundtrip(arr)
-        yield assert_array_equal, arr, arr2
+        assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_randsize():
     for arr in basic_arrays + record_arrays:
         if arr.dtype != object:
             arr2 = roundtrip_randsize(arr)
-            yield assert_array_equal, arr, arr2
+            assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_truncated():
     for arr in basic_arrays:
         if arr.dtype != object:
-            yield assert_raises, ValueError, roundtrip_truncated, arr
+            assert_raises(ValueError, roundtrip_truncated, arr)
 
 
 def test_long_str():
@@ -477,74 +460,84 @@ def test_long_str():
     assert_array_equal(long_str_arr, long_str_arr2)
 
 
-@dec.slow
-def test_memmap_roundtrip():
-    # Fixme: test crashes nose on windows.
-    if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
-        for arr in basic_arrays + record_arrays:
-            if arr.dtype.hasobject:
-                # Skip these since they can't be mmap'ed.
-                continue
-            # Write it out normally and through mmap.
-            nfn = os.path.join(tempdir, 'normal.npy')
-            mfn = os.path.join(tempdir, 'memmap.npy')
-            fp = open(nfn, 'wb')
-            try:
-                format.write_array(fp, arr)
-            finally:
-                fp.close()
+def test_memmap_roundtrip(tmpdir):
+    for i, arr in enumerate(basic_arrays + record_arrays):
+        if arr.dtype.hasobject:
+            # Skip these since they can't be mmap'ed.
+            continue
+        # Write it out normally and through mmap.
+        nfn = os.path.join(tmpdir, f'normal{i}.npy')
+        mfn = os.path.join(tmpdir, f'memmap{i}.npy')
+        with open(nfn, 'wb') as fp:
+            format.write_array(fp, arr)
 
-            fortran_order = (
-                arr.flags.f_contiguous and not arr.flags.c_contiguous)
-            ma = format.open_memmap(mfn, mode='w+', dtype=arr.dtype,
-                                    shape=arr.shape, fortran_order=fortran_order)
-            ma[...] = arr
-            del ma
+        fortran_order = (
+            arr.flags.f_contiguous and not arr.flags.c_contiguous)
+        ma = format.open_memmap(mfn, mode='w+', dtype=arr.dtype,
+                                shape=arr.shape, fortran_order=fortran_order)
+        ma[...] = arr
+        ma.flush()
 
-            # Check that both of these files' contents are the same.
-            fp = open(nfn, 'rb')
+        # Check that both of these files' contents are the same.
+        with open(nfn, 'rb') as fp:
             normal_bytes = fp.read()
-            fp.close()
-            fp = open(mfn, 'rb')
+        with open(mfn, 'rb') as fp:
             memmap_bytes = fp.read()
-            fp.close()
-            yield assert_equal_, normal_bytes, memmap_bytes
+        assert_equal_(normal_bytes, memmap_bytes)
 
-            # Check that reading the file using memmap works.
-            ma = format.open_memmap(nfn, mode='r')
-            del ma
+        # Check that reading the file using memmap works.
+        ma = format.open_memmap(nfn, mode='r')
+        ma.flush()
 
 
-def test_compressed_roundtrip():
+def test_compressed_roundtrip(tmpdir):
     arr = np.random.rand(200, 200)
-    npz_file = os.path.join(tempdir, 'compressed.npz')
+    npz_file = os.path.join(tmpdir, 'compressed.npz')
     np.savez_compressed(npz_file, arr=arr)
-    arr1 = np.load(npz_file)['arr']
+    with np.load(npz_file) as npz:
+        arr1 = npz['arr']
+    assert_array_equal(arr, arr1)
+
+
+# aligned
+dt1 = np.dtype('i1, i4, i1', align=True)
+# non-aligned, explicit offsets
+dt2 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
+                'offsets': [1, 6]})
+# nested struct-in-struct
+dt3 = np.dtype({'names': ['c', 'd'], 'formats': ['i4', dt2]})
+# field with '' name
+dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
+# titles
+dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
+                'offsets': [1, 6], 'titles': ['aa', 'bb']})
+# empty
+dt6 = np.dtype({'names': [], 'formats': [], 'itemsize': 8})
+
+@pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5, dt6])
+def test_load_padded_dtype(tmpdir, dt):
+    arr = np.zeros(3, dt)
+    for i in range(3):
+        arr[i] = i + 5
+    npz_file = os.path.join(tmpdir, 'aligned.npz')
+    np.savez(npz_file, arr=arr)
+    with np.load(npz_file) as npz:
+        arr1 = npz['arr']
     assert_array_equal(arr, arr1)
 
 
 def test_python2_python3_interoperability():
-    if sys.version_info[0] >= 3:
-        fname = 'win64python2.npy'
-    else:
-        fname = 'python3.npy'
+    fname = 'win64python2.npy'
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
     data = np.load(path)
     assert_array_equal(data, np.ones(2))
-
 
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
     # Python 2 and Python 3 and vice versa
     data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
-    if sys.version_info[0] >= 3:
-        xrange = range
-    else:
-        import __builtin__
-        xrange = __builtin__.xrange
-
-    expected = np.array([None, xrange, u'\u512a\u826f',
+    expected = np.array([None, range, u'\u512a\u826f',
                          b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
@@ -553,41 +546,40 @@ def test_pickle_python2_python3():
         path = os.path.join(data_dir, fname)
 
         for encoding in ['bytes', 'latin1']:
-            data_f = np.load(path, encoding=encoding)
+            data_f = np.load(path, allow_pickle=True, encoding=encoding)
             if fname.endswith('.npz'):
                 data = data_f['x']
                 data_f.close()
             else:
                 data = data_f
 
-            if sys.version_info[0] >= 3:
-                if encoding == 'latin1' and fname.startswith('py2'):
-                    assert_(isinstance(data[3], str))
-                    assert_array_equal(data[:-1], expected[:-1])
-                    # mojibake occurs
-                    assert_array_equal(data[-1].encode(encoding), expected[-1])
-                else:
-                    assert_(isinstance(data[3], bytes))
-                    assert_array_equal(data, expected)
+            if encoding == 'latin1' and fname.startswith('py2'):
+                assert_(isinstance(data[3], str))
+                assert_array_equal(data[:-1], expected[:-1])
+                # mojibake occurs
+                assert_array_equal(data[-1].encode(encoding), expected[-1])
             else:
+                assert_(isinstance(data[3], bytes))
                 assert_array_equal(data, expected)
 
-        if sys.version_info[0] >= 3:
-            if fname.startswith('py2'):
-                if fname.endswith('.npz'):
-                    data = np.load(path)
-                    assert_raises(UnicodeError, data.__getitem__, 'x')
-                    data.close()
-                    data = np.load(path, fix_imports=False, encoding='latin1')
-                    assert_raises(ImportError, data.__getitem__, 'x')
-                    data.close()
-                else:
-                    assert_raises(UnicodeError, np.load, path)
-                    assert_raises(ImportError, np.load, path,
-                                  encoding='latin1', fix_imports=False)
+        if fname.startswith('py2'):
+            if fname.endswith('.npz'):
+                data = np.load(path, allow_pickle=True)
+                assert_raises(UnicodeError, data.__getitem__, 'x')
+                data.close()
+                data = np.load(path, allow_pickle=True, fix_imports=False,
+                               encoding='latin1')
+                assert_raises(ImportError, data.__getitem__, 'x')
+                data.close()
+            else:
+                assert_raises(UnicodeError, np.load, path,
+                              allow_pickle=True)
+                assert_raises(ImportError, np.load, path,
+                              allow_pickle=True, fix_imports=False,
+                              encoding='latin1')
 
 
-def test_pickle_disallow():
+def test_pickle_disallow(tmpdir):
     data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     path = os.path.join(data_dir, 'py2-objarr.npy')
@@ -595,13 +587,68 @@ def test_pickle_disallow():
                   allow_pickle=False, encoding='latin1')
 
     path = os.path.join(data_dir, 'py2-objarr.npz')
-    f = np.load(path, allow_pickle=False, encoding='latin1')
-    assert_raises(ValueError, f.__getitem__, 'x')
+    with np.load(path, allow_pickle=False, encoding='latin1') as f:
+        assert_raises(ValueError, f.__getitem__, 'x')
 
-    path = os.path.join(tempdir, 'pickle-disabled.npy')
+    path = os.path.join(tmpdir, 'pickle-disabled.npy')
     assert_raises(ValueError, np.save, path, np.array([None], dtype=object),
                   allow_pickle=False)
 
+@pytest.mark.parametrize('dt', [
+    np.dtype(np.dtype([('a', np.int8),
+                       ('b', np.int16),
+                       ('c', np.int32),
+                      ], align=True),
+             (3,)),
+    np.dtype([('x', np.dtype({'names':['a','b'],
+                              'formats':['i1','i1'],
+                              'offsets':[0,4],
+                              'itemsize':8,
+                             },
+                    (3,)),
+               (4,),
+             )]),
+    np.dtype([('x',
+                   ('<f8', (5,)),
+                   (2,),
+               )]),
+    np.dtype([('x', np.dtype((
+        np.dtype((
+            np.dtype({'names':['a','b'],
+                      'formats':['i1','i1'],
+                      'offsets':[0,4],
+                      'itemsize':8}),
+            (3,)
+            )),
+        (4,)
+        )))
+        ]),
+    np.dtype([
+        ('a', np.dtype((
+            np.dtype((
+                np.dtype((
+                    np.dtype([
+                        ('a', int),
+                        ('b', np.dtype({'names':['a','b'],
+                                        'formats':['i1','i1'],
+                                        'offsets':[0,4],
+                                        'itemsize':8})),
+                    ]),
+                    (3,),
+                )),
+                (4,),
+            )),
+            (5,),
+        )))
+        ]),
+    ])
+
+def test_descr_to_dtype(dt):
+    dt1 = format.descr_to_dtype(dt.descr)
+    assert_equal_(dt1, dt)
+    arr1 = np.zeros(3, dt)
+    arr2 = roundtrip(arr1)
+    assert_array_equal(arr1, arr2)
 
 def test_version_2_0():
     f = BytesIO()
@@ -628,31 +675,33 @@ def test_version_2_0():
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
-@dec.slow
-def test_version_2_0_memmap():
+def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
-    tf = tempfile.mktemp('', 'mmap', dir=tempdir)
+    tf1 = os.path.join(tmpdir, f'version2_01.npy')
+    tf2 = os.path.join(tmpdir, f'version2_02.npy')
 
     # 1.0 requested but data cannot be saved this way
-    assert_raises(ValueError, format.open_memmap, tf, mode='w+', dtype=d.dtype,
+    assert_raises(ValueError, format.open_memmap, tf1, mode='w+', dtype=d.dtype,
                             shape=d.shape, version=(1, 0))
 
-    ma = format.open_memmap(tf, mode='w+', dtype=d.dtype,
+    ma = format.open_memmap(tf1, mode='w+', dtype=d.dtype,
                             shape=d.shape, version=(2, 0))
     ma[...] = d
-    del ma
+    ma.flush()
+    ma = format.open_memmap(tf1, mode='r')
+    assert_array_equal(ma, d)
 
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings('always', '', UserWarning)
-        ma = format.open_memmap(tf, mode='w+', dtype=d.dtype,
+        ma = format.open_memmap(tf2, mode='w+', dtype=d.dtype,
                                 shape=d.shape, version=None)
         assert_(w[0].category is UserWarning)
         ma[...] = d
-        del ma
+        ma.flush()
 
-    ma = format.open_memmap(tf, mode='r')
+    ma = format.open_memmap(tf2, mode='r')
     assert_array_equal(ma, d)
 
 
@@ -678,12 +727,9 @@ def test_write_version():
         (255, 255),
     ]
     for version in bad_versions:
-        try:
+        with assert_raises_regex(ValueError,
+                                 'we only support format version.*'):
             format.write_array(f, arr, version=version)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
 bad_version_magic = [
@@ -728,13 +774,13 @@ def test_read_magic():
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_magic), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_array), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_bad_magic_args():
@@ -807,11 +853,11 @@ def test_bad_header():
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
 
-def test_large_file_support():
+def test_large_file_support(tmpdir):
     if (sys.platform == 'win32' or sys.platform == 'cygwin'):
-        raise SkipTest("Unknown if Windows has sparse filesystems")
+        pytest.skip("Unknown if Windows has sparse filesystems")
     # try creating a large sparse file
-    tf_name = os.path.join(tempdir, 'sparse_file')
+    tf_name = os.path.join(tmpdir, 'sparse_file')
     try:
         # seek past end would work too, but linux truncate somewhat
         # increases the chances that we have a sparse filesystem and can
@@ -819,7 +865,7 @@ def test_large_file_support():
         import subprocess as sp
         sp.check_call(["truncate", "-s", "5368709120", tf_name])
     except Exception:
-        raise SkipTest("Could not create 5GB large file")
+        pytest.skip("Could not create 5GB large file")
     # write a small array to the end
     with open(tf_name, "wb") as f:
         f.seek(5368709120)
@@ -832,17 +878,18 @@ def test_large_file_support():
     assert_array_equal(r, d)
 
 
-@dec.slow
-@dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
-def test_large_archive():
+@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
+                    reason="test requires 64-bit system")
+@pytest.mark.slow
+def test_large_archive(tmpdir):
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.
     try:
         a = np.empty((2**30, 2), dtype=np.uint8)
     except MemoryError:
-        raise SkipTest("Could not create large file")
+        pytest.skip("Could not create large file")
 
-    fname = os.path.join(tempdir, "large_archive")
+    fname = os.path.join(tmpdir, "large_archive")
 
     with open(fname, "wb") as f:
         np.savez(f, arr=a)
@@ -853,5 +900,63 @@ def test_large_archive():
     assert_(a.shape == new_a.shape)
 
 
-if __name__ == "__main__":
-    run_module_suite()
+def test_empty_npz(tmpdir):
+    # Test for gh-9989
+    fname = os.path.join(tmpdir, "nothing.npz")
+    np.savez(fname)
+    with np.load(fname) as nps:
+        pass
+
+
+def test_unicode_field_names(tmpdir):
+    # gh-7391
+    arr = np.array([
+        (1, 3),
+        (1, 2),
+        (1, 3),
+        (1, 2)
+    ], dtype=[
+        ('int', int),
+        (u'\N{CJK UNIFIED IDEOGRAPH-6574}\N{CJK UNIFIED IDEOGRAPH-5F62}', int)
+    ])
+    fname = os.path.join(tmpdir, "unicode.npy")
+    with open(fname, 'wb') as f:
+        format.write_array(f, arr, version=(3, 0))
+    with open(fname, 'rb') as f:
+        arr2 = format.read_array(f)
+    assert_array_equal(arr, arr2)
+
+    # notifies the user that 3.0 is selected
+    with open(fname, 'wb') as f:
+        with assert_warns(UserWarning):
+            format.write_array(f, arr, version=None)
+
+
+@pytest.mark.parametrize('dt, fail', [
+    (np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
+                 metadata={'some': 'stuff'})]}), True),
+    (np.dtype(int, metadata={'some': 'stuff'}), False),
+    (np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}), False),
+    # recursive: metadata on the field of a dtype
+    (np.dtype({'names': ['a', 'b'], 'formats': [
+        float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
+    ]}), False)
+    ])
+def test_metadata_dtype(dt, fail):
+    # gh-14142
+    arr = np.ones(10, dtype=dt)
+    buf = BytesIO()
+    with assert_warns(UserWarning):
+        np.save(buf, arr)
+    buf.seek(0)
+    if fail:
+        with assert_raises(ValueError):
+            np.load(buf)
+    else:
+        arr2 = np.load(buf)
+        # BUG: assert_array_equal does not check metadata
+        from numpy.lib.format import _has_metadata
+        assert_array_equal(arr, arr2)
+        assert _has_metadata(arr.dtype)
+        assert not _has_metadata(arr2.dtype)
+

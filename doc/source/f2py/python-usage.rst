@@ -8,7 +8,7 @@ type objects.  Routine wrappers are callable ``fortran`` type objects
 while wrappers to Fortran data have attributes referring to data
 objects.
 
-All ``fortran`` type object have attribute ``_cpointer`` that contains
+All ``fortran`` type objects have attribute ``_cpointer`` that contains
 CObject referring to the C pointer of the corresponding Fortran/C
 function or variable in C level. Such CObjects can be used as a
 callback argument of F2PY generated functions to bypass Python C/API
@@ -34,7 +34,7 @@ Scalar arguments
 =================
 
 In general, a scalar argument of a F2PY generated wrapper function can
-be ordinary Python scalar (integer, float, complex number) as well as
+be an ordinary Python scalar (integer, float, complex number) as well as
 an arbitrary sequence object (list, tuple, array, string) of
 scalars. In the latter case, the first element of the sequence object
 is passed to Fortran routine as a scalar argument.
@@ -45,7 +45,7 @@ float), F2PY does not raise any exception. In complex to real
 type-casting only the real part of a complex number is used.
 
 ``intent(inout)`` scalar arguments are assumed to be array objects in
-order to *in situ* changes to be effective. It is recommended to use
+order to have *in situ* changes be effective. It is recommended to use
 arrays with proper type but also other types work.
 
 Consider the following Fortran 77 code:
@@ -71,12 +71,11 @@ Exceptions are NumPy arrays that must have type code ``'c'`` or
 
 A string can have arbitrary length when using it as a string argument
 to F2PY generated wrapper function. If the length is greater than
-expected, the string is truncated. If the length is smaller that
+expected, the string is truncated. If the length is smaller than
 expected, additional memory is allocated and filled with ``\0``.
 
 Because Python strings are immutable, an ``intent(inout)`` argument
-expects an array version of a string in order to *in situ* changes to
-be effective.
+expects an array version of a string in order to have *in situ* changes be effective.
 
 Consider the following Fortran 77 code:
 
@@ -99,7 +98,7 @@ arbitrary sequences that can be transformed to NumPy array objects.
 An exception is ``intent(inout)`` array arguments that always must be
 proper-contiguous and have proper type, otherwise an exception is
 raised. Another exception is ``intent(inplace)`` array arguments that
-attributes will be changed in-situ if the argument has different type
+attributes will be changed *in situ* if the argument has different type
 than expected (see ``intent(inplace)`` attribute for more
 information).
 
@@ -129,11 +128,9 @@ and C-contiguous if the order is as follows::
 
   A[0,0] A[0,1] A[1,0] A[1,1]
 
-To test whether an array is C-contiguous, use ``.iscontiguous()``
-method of NumPy arrays.  To test for Fortran contiguity, all
-F2PY generated extension modules provide a function
-``has_column_major_storage(<array>)``. This function is equivalent to
-``<array>.flags.f_contiguous`` but more efficient.
+To test whether an array is C-contiguous, use the ``.flags.c_contiguous``
+attribute of NumPy arrays.  To test for Fortran contiguity, use the
+``.flags.f_contiguous`` attribute.
 
 Usually there is no need to worry about how the arrays are stored in
 memory and whether the wrapped functions, being either Fortran or C
@@ -146,11 +143,9 @@ the physical memory in your computer, then a care must be taken to use
 always proper-contiguous and proper type arguments.
 
 To transform input arrays to column major storage order before passing
-them to Fortran routines, use a function
-``as_column_major_storage(<array>)`` that is provided by all F2PY
-generated extension modules.
+them to Fortran routines, use the function ``numpy.asfortranarray(<array>)``.
 
-Consider Fortran 77 code:
+Consider the following Fortran 77 code:
 
   .. include:: array.f
      :literal:
@@ -215,7 +210,7 @@ Sometimes a Fortran package may require that users provide routines
 that the package will use. F2PY can construct an interface to such
 routines so that Python functions could be called from Fortran.
 
-Consider the following `Fortran 77 subroutine`__ that takes an array
+Consider the following Fortran 77 subroutine that takes an array
 and applies a function ``func`` to its elements.
 
   .. include:: calculate.f
