@@ -252,6 +252,10 @@ def isreal(x):
     If element has complex type with zero complex part, the return value
     for that element is True.
 
+    Returns True for non-numeric input elements, since the input is
+    interpreted to be an object array for which imaginary units of a complex 
+    number is not defined.
+
     Parameters
     ----------
     x : array_like
@@ -271,6 +275,8 @@ def isreal(x):
     --------
     >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
     array([False,  True,  True,  True,  True, False])
+    >>> np.isreal(None, False, "imaginary", complex])
+    array([True, True, True, True])
 
     """
     return imag(x) == 0
