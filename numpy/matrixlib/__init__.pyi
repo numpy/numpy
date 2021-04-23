@@ -1,8 +1,11 @@
 from typing import Any, List
 
+from numpy import (
+    matrix as matrix,
+)
+
 __all__: List[str]
 
-matrix: Any
-bmat: Any
-mat: Any
-asmatrix: Any
+def bmat(obj, ldict=..., gdict=...): ...
+def asmatrix(data, dtype=...): ...
+mat = asmatrix
