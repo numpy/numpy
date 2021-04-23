@@ -138,7 +138,7 @@ def real(val):
     See Also
     --------
     real_if_close, imag, angle
-
+l
     Examples
     --------
     >>> a = np.array([1+2j, 3+4j, 5+6j])
@@ -252,9 +252,7 @@ def isreal(x):
     If element has complex type with zero complex part, the return value
     for that element is True.
 
-    Returns True for non-numeric input elements, since the input is
-    interpreted to be an object array for which imaginary units of a complex 
-    number is not defined.
+    .. note:: Returns all True for input elements which are not of complex type.
 
     Parameters
     ----------
@@ -266,6 +264,10 @@ def isreal(x):
     out : ndarray, bool
         Boolean array of same shape as `x`.
 
+    Notes
+    --------
+    Returns all True for non-complex array.
+
     See Also
     --------
     iscomplex
@@ -275,7 +277,9 @@ def isreal(x):
     --------
     >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
     array([False,  True,  True,  True,  True, False])
-    >>> np.isreal(None, False, "imaginary", complex])
+    
+    Returns True for all elements in input array which are not of complex type. 
+    >>> np.isreal([None, False, "imaginary", complex])
     array([True, True, True, True])
 
     """
