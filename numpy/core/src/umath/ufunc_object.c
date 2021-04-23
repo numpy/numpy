@@ -1113,7 +1113,7 @@ prepare_ufunc_output(PyUFuncObject *ufunc,
  * is possible.
  *
  * This function only supports a single output (due to the overlap check).
- * It always accepts 0-D arrays and will broadcast them.  The function will
+ * It always accepts 0-D arrays and will broadcast them.  The function
  * cannot broadcast any other array (as it requires a single stride).
  * The function accepts all 1-D arrays, and N-D arrays that are either all
  * C- or all F-contiguous.
