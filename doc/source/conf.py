@@ -160,6 +160,8 @@ html_theme = 'pydata_sphinx_theme'
 
 html_logo = '_static/numpylogo.svg'
 
+html_favicon = '_static/favicon/favicon.ico'
+
 html_theme_options = {
   "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
