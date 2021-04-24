@@ -252,7 +252,8 @@ def isreal(x):
     If element has complex type with zero complex part, the return value
     for that element is True.
 
-    .. note:: Returns all True for input elements which are not of complex type.
+    .. note:: Returns all True for input elements which are not of complex
+    type.
 
     Parameters
     ----------
