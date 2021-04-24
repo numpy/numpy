@@ -252,8 +252,9 @@ def isreal(x):
     If element has complex type with zero complex part, the return value
     for that element is True.
 
-    .. note:: Returns all True for input elements which are not of complex
-    type.
+    .. note::
+
+    Returns all True for input elements which are not of complex type.
 
     Parameters
     ----------
@@ -266,7 +267,7 @@ def isreal(x):
         Boolean array of same shape as `x`.
 
     Notes
-    --------
+    -----
     Returns all True for non-complex array.
 
     See Also
@@ -280,6 +281,7 @@ def isreal(x):
     array([False,  True,  True,  True,  True, False])
     
     Returns True for all elements in input array which are not of complex type. 
+
     >>> np.isreal([None, False, "imaginary", complex])
     array([True, True, True, True])
 
