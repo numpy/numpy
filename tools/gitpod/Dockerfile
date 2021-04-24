@@ -82,7 +82,8 @@ COPY ./tools/gitpod/workspace_config /usr/local/bin/workspace_config
 RUN chmod a+rx /usr/local/bin/workspace_config && \
     workspace_config
 
-# Copy conda environment file
+# Copy conda environment file into the container - this needs to exists inside 
+# the container to create a conda environment from it
 COPY environment.yml /tmp/environment.yml
 
 # -----------------------------------------------------------------------------

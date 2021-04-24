@@ -42,7 +42,7 @@ echo "conda activate numpy-dev" >>~/.bashrc
 # hadolint ignore=SC2016
 sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' /etc/skel/.bashrc
 
-# .gitpod.yml is configured to install scipy from /workspace/numpy
+# .gitpod.yml is configured to install numpy from /workspace/numpy
 echo "export PYTHONPATH=/workspace/numpy" >>~/.bashrc
 
 # Set up ccache for compilers for this Dockerfile
