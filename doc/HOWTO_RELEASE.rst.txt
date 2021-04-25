@@ -49,7 +49,7 @@ macports - see this `OSX wheel building summary
 
 Windows
 -------
-We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
+We build 32-bit and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
 We build NumPy using the `mingw-w64 toolchain`_ on Appveyor.
 
 
