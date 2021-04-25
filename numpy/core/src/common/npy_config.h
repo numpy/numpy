@@ -96,6 +96,18 @@
 #undef HAVE_POWL
 #endif
 
+#ifdef __CYGWIN__
+#undef HAVE_CASINHL
+#undef HAVE_CASINH
+#undef HAVE_CASINHF
+
+#undef HAVE_CSQRTF
+#undef HAVE_CSQRT
+
+#undef HAVE_LOG2
+#undef HAVE_CPOWL
+#endif
+
 /* Disable broken gnu trig functions */
 #if defined(HAVE_FEATURES_H)
 #include <features.h>
