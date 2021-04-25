@@ -22,7 +22,7 @@ and via the methods and attributes of the :class:`ndarray`.
 .. index:: view, base
 
 Different :class:`ndarrays <ndarray>` can share the same data, so that
-changes made in one :class:`ndarray` may be visible in another. That
+changes made in one :class:`ndarray` might be visible in another. That
 is, an ndarray can be a *"view"* to another ndarray, and the data it
 is referring to is taken care of by the *"base"* ndarray. ndarrays can
 also be views to memory owned by Python :class:`strings <str>` or
