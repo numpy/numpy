@@ -1371,10 +1371,10 @@ def test_dtype_persistence(dtype, mode):
 
 @pytest.mark.parametrize("append_mode", _append_modes.keys())
 @pytest.mark.parametrize("padding_mode", _all_modes.keys())
-def test_pad_to_shape(append_mode, padding_mode):
+def test_pad_to(append_mode, padding_mode):
     x = np.ones((3, 3))
     new_shape = (10, 10)
-    result = np.pad_to_size(
+    result = np.pad_to(
         x,
         new_shape,
         append_mode=append_mode,
