@@ -184,7 +184,6 @@ else:
 from numpy import (
     char as char,
     ctypeslib as ctypeslib,
-    emath as emath,
     fft as fft,
     lib as lib,
     linalg as linalg,
@@ -341,6 +340,10 @@ from numpy.core.shape_base import (
     hstack as hstack,
     stack as stack,
     vstack as vstack,
+)
+
+from numpy.lib import (
+    emath as emath,
 )
 
 from numpy.lib.index_tricks import (
