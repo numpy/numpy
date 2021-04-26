@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import (Optional, SupportsDLPack, SupportsBufferProtocol, Tuple,
-                         Union, array, device, dtype)
+    from ._types import (List, Optional, SupportsDLPack,
+                         SupportsBufferProtocol, Tuple, Union, array, device,
+                         dtype)
+    from collections.abc import Sequence
 from ._dtypes import _all_dtypes
 
 import numpy as np
@@ -134,6 +136,15 @@ def linspace(start: Union[int, float], stop: Union[int, float], num: int, /, *, 
         # Note: Device support is not yet implemented on ndarray
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
+
+def meshgrid(*arrays: Sequence[array], indexing: str = 'xy') -> List[array, ...]:
+    """
+    Array API compatible wrapper for :py:func:`np.meshgrid <numpy.meshgrid>`.
+
+    See its docstring for more information.
+    """
+    from ._array_object import ndarray
+    return [ndarray._new(array) for array in np.meshgrid(*[a._array for a in arrays], indexing=indexing)]
 
 def ones(shape: Union[int, Tuple[int, ...]], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
     """

@@ -116,13 +116,13 @@ from ._constants import e, inf, nan, pi
 
 __all__ += ['e', 'inf', 'nan', 'pi']
 
-from ._creation_functions import asarray, arange, empty, empty_like, eye, from_dlpack, full, full_like, linspace, ones, ones_like, zeros, zeros_like
+from ._creation_functions import asarray, arange, empty, empty_like, eye, from_dlpack, full, full_like, linspace, meshgrid, ones, ones_like, zeros, zeros_like
 
-__all__ += ['asarray', 'arange', 'empty', 'empty_like', 'eye', 'from_dlpack', 'full', 'full_like', 'linspace', 'ones', 'ones_like', 'zeros', 'zeros_like']
+__all__ += ['asarray', 'arange', 'empty', 'empty_like', 'eye', 'from_dlpack', 'full', 'full_like', 'linspace', 'meshgrid', 'ones', 'ones_like', 'zeros', 'zeros_like']
 
-from ._data_type_functions import finfo, iinfo, result_type
+from ._data_type_functions import broadcast_arrays, broadcast_to, can_cast, finfo, iinfo, result_type
 
-__all__ += ['finfo', 'iinfo', 'result_type']
+__all__ += ['broadcast_arrays', 'broadcast_to', 'can_cast', 'finfo', 'iinfo', 'result_type']
 
 from ._dtypes import int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, bool
 
