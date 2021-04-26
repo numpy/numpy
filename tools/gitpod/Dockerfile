@@ -1,74 +1,101 @@
-# Builds a development environment for gitpod by building numpy with
-# ccache enabled. When gitpod is prebuilding or starting up it clones
-# a branch into `/workspace/numpy`. The gitpod clone will build numpy
-# faster because it is using compliers with ccache enabled.
-FROM gitpod/workspace-base as clone
-
-COPY --chown=gitpod . /tmp/numpy_repo
-
-# We use a multistage build to create a shallow clone of the repo to avoid
-# having the complete git history in the build stage and reducing the image
-# size. During the build stage, the shallow clone is used to install the
-# dependencies and build numpy to populate the cache used by ccache. Building
-# numpy with setup.py uses versioneer.py which requires a git history.
-RUN git clone --depth 1 file:////tmp/numpy_repo /tmp/numpy
-
-FROM gitpod/workspace-base as build
-
-# gitpod/workspace-base needs at least one file here
-RUN touch /home/gitpod/.bashrc.d/empty
+#
+# Dockerfile for NumPy development
+#
+# Usage:
+# -------
+#
+# To make a local build of the container, from the 'Docker-dev' directory:
+# docker build  --rm -f "Dockerfile" -t <build-tag> "."
+#
+# To use the container use the following command. It assumes that you are in
+# the root folder of the NumPy git repository, making it available as
+# /home/numpy in the container. Whatever changes you make to that directory
+# are visible in the host and container.
+# The docker image is retrieved from the NumPy dockerhub repository
+#
+# docker run --rm -it -v $(pwd):/home/numpy numpy/numpy-dev:<image-tag>
+#
+# By default the container will activate the conda environment numpy-dev
+# which contains all the dependencies needed for NumPy development
+#
+# To build NumPy run: python setup.py build_ext --inplace
+#
+# To run the tests use: python runtests.py
+#
+# This image is based on: Ubuntu 20.04 (focal)
+# https://hub.docker.com/_/ubuntu/?tab=tags&name=focal
+# OS/ARCH: linux/amd64
+FROM gitpod/workspace-base:latest
 
 ARG MAMBAFORGE_VERSION="4.10.0-0"
 ARG CONDA_ENV=numpy-dev
 
-ENV CONDA_DIR=/home/gitpod/mambaforge3
-ENV PATH=$CONDA_DIR/bin:$PATH
 
+# ---- Configure environment ----
+ENV CONDA_DIR=/home/gitpod/mambaforge3 \
+    SHELL=/bin/bash
+ENV PATH=${CONDA_DIR}/bin:$PATH \
+    WORKSPACE=/workspace/numpy
+
+
+# -----------------------------------------------------------------------------
+# ---- Creating as root - note: make sure to change to gitpod in the end ----
 USER root
-RUN install-packages texlive-latex-extra dvisvgm
-USER gitpod
+
+# hadolint ignore=DL3008
+RUN apt-get update && \
+    apt-get install -yq --no-install-recommends \
+    ca-certificates \
+    dirmngr \
+    dvisvgm \
+    gnupg \
+    gpg-agent \
+    texlive-latex-extra \
+    vim && \
+    # this needs to be done after installing dirmngr
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0 && \
+    apt-add-repository https://cli.github.com/packages && \
+    apt-get install -yq --no-install-recommends \
+    gh && \
+    locale-gen en_US.UTF-8 && \
+    apt-get clean && \
+    rm -rf /var/cache/apt/* &&\
+    rm -rf /var/lib/apt/lists/* &&\
+    rm -rf /tmp/*
 
 # Allows this Dockerfile to activate conda environments
 SHELL ["/bin/bash", "--login", "-o", "pipefail", "-c"]
 
-# Install mambaforge3
+# -----------------------------------------------------------------------------
+# ---- Installing mamba  ----
 RUN wget -q -O mambaforge3.sh \
-    https://github.com/conda-forge/miniforge/releases/download/$MAMBAFORGE_VERSION/Mambaforge-$MAMBAFORGE_VERSION-Linux-x86_64.sh && \
-    bash mambaforge3.sh -p $CONDA_DIR -b && \
+    "https://github.com/conda-forge/miniforge/releases/download/$MAMBAFORGE_VERSION/Mambaforge-$MAMBAFORGE_VERSION-Linux-x86_64.sh" && \
+    bash mambaforge3.sh -p ${CONDA_DIR} -b && \
     rm mambaforge3.sh
 
-# makes conda activate command for this Dockerfile
-RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
-# enables conda for interactive sessions
-RUN conda init bash
+# -----------------------------------------------------------------------------
+# ---- Copy needed files ----
+# basic workspace configurations
+COPY ./tools/gitpod/workspace_config /usr/local/bin/workspace_config
 
-# Install numpy dev dependencies
-COPY --from=clone --chown=gitpod /tmp/numpy /workspace/numpy
-RUN mamba env create -f /workspace/numpy/environment.yml -n $CONDA_ENV && \
-    conda activate $CONDA_ENV && \
+RUN chmod a+rx /usr/local/bin/workspace_config && \
+    workspace_config
+
+# Copy conda environment file into the container - this needs to exists inside 
+# the container to create a conda environment from it
+COPY environment.yml /tmp/environment.yml
+
+# -----------------------------------------------------------------------------
+# ---- Create conda environment ----
+# Install NumPy dependencies
+RUN mamba env create -f /tmp/environment.yml && \
+    conda activate ${CONDA_ENV} && \
     mamba install ccache -y && \
-    conda clean --all -f -y
+    # needed for docs rendering later on
+    python -m pip install --no-cache-dir sphinx-autobuild && \
+    conda clean --all -f -y && \
+    rm -rf /tmp/*
 
-# Set up ccache for compilers for this Dockerfile and interactino sessions
-# Using `conda env config vars set` does not work with Docker
-# REF: https://github.com/conda-forge/compilers-feedstock/issues/31
-RUN echo "conda activate $CONDA_ENV" >> ~/.startuprc && \
-    echo "export CC=\"ccache \$CC\"" >> ~/.startuprc && \
-    echo "export CXX=\"ccache \$CXX\"" >> ~/.startuprc && \
-    echo "export F77=\"ccache \$F77\"" >> ~/.startuprc && \
-    echo "export F90=\"ccache \$F90\"" >> ~/.startuprc && \
-    echo "export GFORTRAN=\"ccache \$GFORTRAN\"" >> ~/.startuprc && \
-    echo "export FC=\"ccache \$FC\"" >> ~/.startuprc && \
-    echo "source ~/.startuprc" >> ~/.profile && \
-    echo "source ~/.startuprc" >> ~/.bashrc
-
-# Build numpy to populate the cache used by ccache
-RUN python /workspace/numpy/setup.py build_ext -i && \
-    ccache -s
-
-# .gitpod.yml is configured to install numpy from /workspace/numpy
-RUN echo "export PYTHONPATH=/workspace/numpy" >> ~/.bashrc
-
-# gitpod will load the repository into /workspace/numpy. We remove the
-# directoy from the image to prevent conflicts
-RUN sudo rm -rf /workspace/numpy
+# -----------------------------------------------------------------------------
+# Always make sure we are not root
+USER gitpod
