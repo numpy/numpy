@@ -3,9 +3,9 @@ name: Build Base Docker Image
 on:
   push: 
     branches:
-    - main
+      - main
     paths:
-    - './environment.yml'
+      - './environment.yml'
     tags:
       - '*'
       
