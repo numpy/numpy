@@ -49,13 +49,13 @@ Once you have authenticated to Gitpod through GitHub, you can install the `Gitpo
     :alt: NumPy repository with Gitpod button screenshot
 
 #. If you install the extension - you can click the **Gitpod** button to start a new workspace.
-#. Alternatively, if you do not want to install the browser extension you can visit https://gitpod.io/#https://github.com/USERNAME/NumPy replacing ``USERNAME`` with your GitHub username.
+#. Alternatively, if you do not want to install the browser extension, you can visit https://gitpod.io/#https://github.com/USERNAME/NumPy replacing ``USERNAME`` with your GitHub username.
 
 #. In both cases, this will open a new tab on your web browser and start building your development environment. Please note this can take a few minutes.
 
-#. Once the build is complete, you will be directed to your workspace, including VSCode and all the dependencies you need to work on NumPy. The first time you start your workspace, you will notice that there might be some actions running. This will ensure that you have a development version of NumPy installed and that the docs are being pre-built for you.
+#. Once the build is complete, you will be directed to your workspace, including the VSCode editor and all the dependencies you need to work on NumPy. The first time you start your workspace, you will notice that there might be some actions running. This will ensure that you have a development version of NumPy installed and that the docs are being pre-built for you.
 
-#. Once the build is complete, you can test the build by entering::
+#. Once the build is complete, you can :ref:`test the build<testing-builds>` by entering::
 
         python runtests.py -v
 
@@ -63,14 +63,14 @@ Once you have authenticated to Gitpod through GitHub, you can install the `Gitpo
 
 Quick workspace tour
 ---------------------
-Gitpod uses VSCode as the editor. If you have not used this editor before, you can check the Getting started `VSCode docs`_ to familiarise yourself with it.
+Gitpod uses VSCode as the editor. If you have not used this editor before, you can check the Getting started `VSCode docs`_ to familiarize yourself with it.
 
 Your workspace will look similar to the image below:
 
 .. image:: ./gitpod-imgs/gitpod-workspace.png
     :alt: Gitpod workspace screenshot
 
-.. note::  By default VSCode initialises with a light theme, you can change to a dark theme by with the keyboard shortcut :kbd:`Cmd-K Cmd-T` in Mac or :kbd:`Ctrl-K Ctrl-T` in Linux and Windows.
+.. note::  By default, VSCode initializes with a light theme. You can change to a dark theme by with the keyboard shortcut :kbd:`Cmd-K Cmd-T` in Mac or :kbd:`Ctrl-K Ctrl-T` in Linux and Windows.
 
 We have marked some important sections in the editor:
 
@@ -78,7 +78,7 @@ We have marked some important sections in the editor:
 #. Your current branch is always displayed in the status bar. You can also use this button to change or create branches.
 #. GitHub Pull Requests extension - you can use this to work with Pull Requests from your workspace.
 #. Marketplace extensions - we have added some essential extensions to the NumPy Gitpod. Still, you can also install other extensions or syntax highlighting themes for your user, and these will be preserved for you.
-#. Your workspace directory - by default is ``/workspace/numpy`` **do not change this** as this is the only directory preserved in Gitpod.
+#. Your workspace directory - by default, it is ``/workspace/numpy``. **Do not change this** as this is the only directory preserved in Gitpod.
 
 We have also pre-installed a few tools and VSCode extensions to help with the development experience:
 
@@ -89,11 +89,11 @@ We have also pre-installed a few tools and VSCode extensions to help with the de
 *  `VSCode autodocstrings extension <https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring>`_
 *  `VSCode Git Graph extension <https://marketplace.visualstudio.com/items?itemName=mhutchie.git-graph>`_
 
-Development workflow
+Development workflow with Gitpod
 -----------------------
 The  :ref:`development-workflow` section of this documentation contains information regarding the NumPy development workflow. Make sure to check this before working on your contributions.
 
-When using Gitpod git is pre configured for you:
+When using Gitpod, git is pre configured for you:
 
 #. You do not need to configure your git username, and email as this should be done for you as you authenticated through GitHub. You can check the git configuration with the command ``git config --list`` in your terminal.
 #. As you started your workspace from your own NumPy fork, you will by default have both "upstream "and "origin "added as remotes. You can verify this by typing ``git remote`` on your terminal or by clicking on the **branch name** on the status bar (see image below).
@@ -110,7 +110,7 @@ The documentation is pre-built during your workspace initialization. So once thi
 Option 1: Using Liveserve
 ***************************
 
-#. View the documentation in ``NumPy/doc/build/html``. You can start with "index.html "and browse, or you can jump straight to the file you're interested in.
+#. View the documentation in ``NumPy/doc/build/html``. You can start with ``index.html`` and browse, or you can jump straight to the file you're interested in.
 #. To see the rendered version of a page, you can right-click on the ``.html`` file and click on **Open with Live Serve**. Alternatively, you can open the file in the editor and click on the **Go live** button on the status bar.
 
     .. image:: ./gitpod-imgs/vscode-statusbar.png
@@ -151,7 +151,7 @@ FAQ's
 #. Can I install additional VSCode extensions?
     Absolutely! Any extensions you installed will be installed in your own workspace and preserved.
 
-#. I registered on Gitpod but I still cannot see a **Gitpod** button in my repositories
+#. I registered on Gitpod but I still cannot see a ``Gitpod`` button in my repositories
     Head to https://gitpod.io/integrations and make sure you are logged in. Hover over GitHub and click on the three buttons that appear on the right. Click on edit permissions and make sure you have ``user:email``, ``read:user``, and ``public_repo`` checked.
     Click on **Update Permissions** and confirm the changes in the GitHub application page.
 
