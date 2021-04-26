@@ -19,7 +19,7 @@ Gitpod
 Gitpod GitHub integration
 --------------------------
 
-To be able to use Gitpod, you will need tohave the Gitpod app installed on your GitHub account, so if
+To be able to use Gitpod, you will need to have the Gitpod app installed on your GitHub account, so if
 you do not have an account yet, you will need to create one first.
 
 Head over to the `Gitpod`_ website and click on the **Continue with GitHub** button. You will be redirected to the GitHub authentication page.
@@ -165,4 +165,3 @@ FAQ's
 .. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
 .. _create your own fork: https://help.github.com/en/articles/fork-a-repo
 .. _VSCode docs: https://code.visualstudio.com/docs/getstarted/tips-and-tricks
-
