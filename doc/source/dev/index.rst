@@ -11,6 +11,7 @@ Contributing to NumPy
 
    Git Basics <gitwash/index>
    development_environment
+   development_gitpod
    development_workflow
    development_advanced_debugging
    ../benchmarking
@@ -302,6 +303,7 @@ The rest of the story
 
    Git Basics <gitwash/index>
    development_environment
+   development_gitpod
    development_workflow
    development_advanced_debugging
    reviewer_guidelines
