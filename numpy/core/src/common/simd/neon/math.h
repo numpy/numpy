@@ -58,8 +58,18 @@ NPY_FINLINE npyv_f32 npyv_square_f32(npyv_f32 a)
 NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
 {
 #if NPY_SIMD_F64
-    const npyv_f32 one = vdupq_n_f32(1.0f);
-    return npyv_div_f32(one, a);
+    npyv_f64 recipe = vrecpeq_f64(a);
+    /**
+     * Newton-Raphson iteration:
+     *  x[n+1] = x[n] * (2-d * x[n])
+     * converges to (1/d) if x0 is the result of VRECPE applied to d.
+     *
+     * NOTE: at least 3 iterations is needed to improve precision
+     */
+    recipe = vmulq_f64(vrecpsq_f64(a, recipe), recipe);
+    recipe = vmulq_f64(vrecpsq_f64(a, recipe), recipe);
+    recipe = vmulq_f64(vrecpsq_f64(a, recipe), recipe);
+    return recipe;
 #else
     npyv_f32 recipe = vrecpeq_f32(a);
     /**
@@ -78,8 +88,18 @@ NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
 #if NPY_SIMD_F64
     NPY_FINLINE npyv_f64 npyv_recip_f64(npyv_f64 a)
     {
-        const npyv_f64 one = vdupq_n_f64(1.0);
-        return npyv_div_f64(one, a);
+        npyv_f64 recipe = vrecpeq_f64(a);
+        /**
+         * Newton-Raphson iteration:
+         *  x[n+1] = x[n] * (2-d * x[n])
+         * converges to (1/d) if x0 is the result of VRECPE applied to d.
+         *
+         * NOTE: at least 3 iterations is needed to improve precision
+         */
+        recipe = vmulq_f64(vrecpsq_f64(a, recipe), recipe);
+        recipe = vmulq_f64(vrecpsq_f64(a, recipe), recipe);
+        recipe = vmulq_f64(vrecpsq_f64(a, recipe), recipe);
+        return recipe;
     }
 #endif // NPY_SIMD_F64
 
