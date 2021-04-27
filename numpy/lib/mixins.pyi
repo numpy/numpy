@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 __all__: List[str]
 
 # NOTE: `NDArrayOperatorsMixin` is not formally an abstract baseclass,
-# even though it's relient on subclasses implementing `__array_ufunc__`
+# even though it's reliant on subclasses implementing `__array_ufunc__`
 
 class NDArrayOperatorsMixin(metaclass=ABCMeta):
     @abstractmethod
