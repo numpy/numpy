@@ -39,7 +39,7 @@
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_adds_u16, _mm256_adds_epu16)
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_adds_s16, _mm256_adds_epi16)
 #endif
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Subtraction
@@ -73,7 +73,7 @@
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_subs_u16, _mm256_subs_epu16)
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_subs_s16, _mm256_subs_epi16)
 #endif
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Multiplication
@@ -104,7 +104,7 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 #define npyv_mul_f64 _mm512_mul_pd
 
 // saturated
-// TODO: after implment Packs intrins
+// TODO: after implement Packs intrins
 
 /***************************
  * Integer Division
