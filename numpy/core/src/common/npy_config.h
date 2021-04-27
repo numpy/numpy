@@ -108,8 +108,13 @@
 #undef HAVE_CATANHF
 
 /* Loss of precision and branch cuts */
+#undef HAVE_CATANL
 #undef HAVE_CATAN
 #undef HAVE_CATANF
+
+/* Branch cuts */
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSH
 
 /* Branch cuts */
 #undef HAVE_CSQRTF
