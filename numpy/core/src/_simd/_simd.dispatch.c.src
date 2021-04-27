@@ -387,6 +387,11 @@ SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 #endif
 
+#if @fp_only@
+SIMD_IMPL_INTRIN_2(max_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_2(maxp_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+#endif
+
 /***************************
  * Mask operations
  ***************************/
@@ -605,6 +610,11 @@ SIMD_INTRIN_DEF(sumup_@sfx@)
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
+#endif
+
+#if @fp_only@
+SIMD_INTRIN_DEF(max_@sfx@)
+SIMD_INTRIN_DEF(maxp_@sfx@)
 #endif
 
 /***************************
