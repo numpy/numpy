@@ -134,7 +134,7 @@
 
 /* np.power(..., dtype=np.complex256) doesn't report overflow */
 #undef HAVE_CPOWL
-#undef HAVE_POWL
+#undef HAVE_CEXPL
 
 /* Builtin abs reports overflow */
 #undef HAVE_CABSL
