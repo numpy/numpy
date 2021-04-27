@@ -26,7 +26,7 @@
 #define npyv_adds_s8  _mm256_adds_epi8
 #define npyv_adds_u16 _mm256_adds_epu16
 #define npyv_adds_s16 _mm256_adds_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Subtraction
@@ -48,7 +48,7 @@
 #define npyv_subs_s8  _mm256_subs_epi8
 #define npyv_subs_u16 _mm256_subs_epu16
 #define npyv_subs_s16 _mm256_subs_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Multiplication
@@ -64,7 +64,7 @@
 #define npyv_mul_f64 _mm256_mul_pd
 
 // saturated
-// TODO: after implment Packs intrins
+// TODO: after implement Packs intrins
 
 /***************************
  * Integer Division

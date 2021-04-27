@@ -1888,7 +1888,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
  * @return 0 on success -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_AddCastingImplmentation(PyBoundArrayMethodObject *meth)
+PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
 {
     if (meth->method->nin != 1 || meth->method->nout != 1) {
         PyErr_SetString(PyExc_TypeError,
@@ -1955,7 +1955,7 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
     if (meth == NULL) {
         return -1;
     }
-    int res = PyArray_AddCastingImplmentation(meth);
+    int res = PyArray_AddCastingImplementation(meth);
     Py_DECREF(meth);
     if (res < 0) {
         return -1;

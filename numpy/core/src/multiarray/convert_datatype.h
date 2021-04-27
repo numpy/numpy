@@ -57,7 +57,7 @@ PyArray_FindConcatenationDescriptor(
         npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype);
 
 NPY_NO_EXPORT int
-PyArray_AddCastingImplmentation(PyBoundArrayMethodObject *meth);
+PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth);
 
 NPY_NO_EXPORT int
 PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private);

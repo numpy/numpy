@@ -25,7 +25,7 @@
 #define npyv_adds_s8  _mm_adds_epi8
 #define npyv_adds_u16 _mm_adds_epu16
 #define npyv_adds_s16 _mm_adds_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Subtraction
@@ -47,7 +47,7 @@
 #define npyv_subs_s8  _mm_subs_epi8
 #define npyv_subs_u16 _mm_subs_epu16
 #define npyv_subs_s16 _mm_subs_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Multiplication
@@ -83,7 +83,7 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
 #define npyv_mul_f64 _mm_mul_pd
 
 // saturated
-// TODO: after implment Packs intrins
+// TODO: after implement Packs intrins
 
 /***************************
  * Integer Division
