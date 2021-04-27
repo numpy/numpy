@@ -104,6 +104,9 @@
 #undef HAVE_CSQRTF
 #undef HAVE_CSQRT
 
+#undef HAVE_CASINF
+#undef HAVE_CASIN
+
 #undef HAVE_LOG2
 
 #undef HAVE_CPOWL
