@@ -102,8 +102,14 @@
 #undef HAVE_CASINH
 #undef HAVE_CASINHF
 
+/* Loss of precision */
+#undef HAVE_CATANHL
 #undef HAVE_CATANH
 #undef HAVE_CATANHF
+
+/* Loss of precision and branch cuts */
+#undef HAVE_CATAN
+#undef HAVE_CATANF
 
 /* Branch cuts */
 #undef HAVE_CSQRTF
@@ -114,6 +120,7 @@
 #undef HAVE_CASIN
 #undef HAVE_CASINL
 
+/* Branch cuts */
 #undef HAVE_CACOSF
 #undef HAVE_CACOS
 
