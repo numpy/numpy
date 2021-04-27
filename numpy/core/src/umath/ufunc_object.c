@@ -2457,7 +2457,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
     /* Fill in any allocated outputs */
     {
         PyArrayObject **operands = NpyIter_GetOperandArray(iter);
-        for (i = 0; i < nop; ++i) {
+        for (i = nin; i < nop; ++i) {
             if (op[i] == NULL) {
                 op[i] = operands[i];
                 Py_INCREF(op[i]);
@@ -2592,34 +2592,6 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
         if (!needs_api && !NpyIter_IterationNeedsAPI(iter)) {
             NPY_END_THREADS;
         }
-    } else {
-        /**
-         * For each output operand, check if it has non-zero size,
-         * and assign the identity if it does. For example, a dot
-         * product of two zero-length arrays will be a scalar,
-         * which has size one.
-         */
-        npy_bool reorderable;
-        PyObject *identity = _get_identity(ufunc, &reorderable);
-        if (identity == NULL) {
-            retval = -1;
-            goto fail;
-        }
-
-        for (i = nin; i < nop; ++i) {
-            if (PyArray_SIZE(op[i]) != 0) {
-                if (identity == Py_None) {
-                    PyErr_Format(PyExc_ValueError,
-                            "ufunc %s ",
-                            ufunc_name);
-                    Py_DECREF(identity);
-                    retval = -1;
-                    goto fail;
-                }
-                PyArray_FillWithScalar(op[i], identity);
-            }
-        }
-        Py_DECREF(identity);
     }
 
     /* Check whether any errors occurred during the loop */
