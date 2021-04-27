@@ -105,7 +105,12 @@
 #undef HAVE_CSQRT
 
 #undef HAVE_LOG2
+
 #undef HAVE_CPOWL
+#undef HAVE_POWL
+
+#undef HAVE_CABSL
+#undef HAVE_HYPOTL
 #endif
 
 /* Disable broken gnu trig functions */
