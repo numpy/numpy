@@ -57,10 +57,6 @@ NPY_FINLINE npyv_f32 npyv_square_f32(npyv_f32 a)
 // Reciprocal
 NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
 {
-#if NPY_SIMD_F64
-    const npyv_f32 one = vdupq_n_f32(1.0f);
-    return npyv_div_f32(one, a);
-#else
     npyv_f32 recipe = vrecpeq_f32(a);
     /**
      * Newton-Raphson iteration:
