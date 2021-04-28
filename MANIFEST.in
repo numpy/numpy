@@ -22,6 +22,7 @@ include numpy/*.pxd
 # Note that sub-directories that don't have __init__ are apparently not
 # included by 'recursive-include', so list those separately
 recursive-include numpy *
+recursive-include numpy/_build_utils *
 recursive-include numpy/linalg/lapack_lite *
 recursive-include tools *
 # Add sdist files whose use depends on local configuration.
