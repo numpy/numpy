@@ -18,7 +18,7 @@ def broadcast_arrays(*arrays: Sequence[array]) -> List[array]:
     from ._array_object import ndarray
     return [ndarray._new(array) for array in np.broadcast_arrays(*[a._array for a in arrays])]
 
-def broadcast_to(x: array, shape: Tuple[int, ...], /) -> array:
+def broadcast_to(x: array, /, shape: Tuple[int, ...]) -> array:
     """
     Array API compatible wrapper for :py:func:`np.broadcast_to <numpy.broadcast_to>`.
 
