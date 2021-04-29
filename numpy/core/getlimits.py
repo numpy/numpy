@@ -100,6 +100,7 @@ def _register_known_types():
     # Known parameters for float16
     # See docstring of MachAr class for description of parameters.
     f16 = ntypes.float16
+    smallest_subnormalf16 = nextafter(f16(0), f16(1), dtype=f16)
     float16_ma = MachArLike(f16,
                             machep=-10,
                             negep=-11,
@@ -115,12 +116,13 @@ def _register_known_types():
                             huge=f16(65504),
                             tiny=f16(2 ** -14),
                             smallest_normal=f16(2 ** -14),
-                            smallest_subnormal=f16(2 ** -24))
+                            smallest_subnormal=smallest_subnormalf16)
     _register_type(float16_ma, b'f\xae')
     _float_ma[16] = float16_ma
 
     # Known parameters for float32
     f32 = ntypes.float32
+    smallest_subnormalf32 = nextafter(f32(0), f32(1), dtype=f32)
     float32_ma = MachArLike(f32,
                             machep=-23,
                             negep=-24,
@@ -136,7 +138,7 @@ def _register_known_types():
                             huge=f32((1 - 2 ** -24) * 2**128),
                             tiny=exp2(f32(-126)),
                             smallest_normal=exp2(f32(-126)),
-                            smallest_subnormal=exp2(f32(-149)))
+                            smallest_subnormal=smallest_subnormalf32)
     _register_type(float32_ma, b'\xcd\xcc\xcc\xbd')
     _float_ma[32] = float32_ma
 
@@ -144,6 +146,7 @@ def _register_known_types():
     f64 = ntypes.float64
     epsneg_f64 = 2.0 ** -53.0
     tiny_f64 = 2.0 ** -1022.0
+    smallest_subnormalf64 = nextafter(f64(0), f64(1), dtype=f64)
     float64_ma = MachArLike(f64,
                             machep=-52,
                             negep=-53,
@@ -159,7 +162,7 @@ def _register_known_types():
                             huge=(1.0 - epsneg_f64) / tiny_f64 * f64(4),
                             tiny=tiny_f64,
                             smallest_normal=tiny_f64,
-                            smallest_subnormal=2.0 ** -1074.0)
+                            smallest_subnormal=smallest_subnormalf64)
     _register_type(float64_ma, b'\x9a\x99\x99\x99\x99\x99\xb9\xbf')
     _float_ma[64] = float64_ma
 
@@ -168,10 +171,7 @@ def _register_known_types():
     epsneg_f128 = exp2(ld(-113))
     tiny_f128 = exp2(ld(-16382))
     # The value for the smallest subnormal may be 0 on some hardware platforms
-    if hasattr(umath, 'nextafter'):
-        smallest_subnormalf128 = nextafter(ld(0), ld(1), dtype=ld)
-    else:
-        smallest_subnormalf128 = float64_ma.smallest_subnormal
+    smallest_subnormalf128 = nextafter(ld(0), ld(1), dtype=ld)
     # Ignore runtime error when this is not f128
     with numeric.errstate(all='ignore'):
         huge_f128 = (ld(1) - epsneg_f128) / tiny_f128 * ld(4)
@@ -202,10 +202,7 @@ def _register_known_types():
     epsneg_f80 = exp2(ld(-64))
     tiny_f80 = exp2(ld(-16382))
     # The value for the smallest subnormal may be 0 on some hardware platforms
-    if hasattr(umath, 'nextafter'):
-        smallest_subnormalf80 = nextafter(ld(0), ld(1), dtype=ld)
-    else:
-        smallest_subnormalf80 = float64_ma.smallest_subnormal
+    smallest_subnormalf80 = nextafter(ld(0), ld(1), dtype=ld)
     # Ignore runtime error when this is not f80
     with numeric.errstate(all='ignore'):
         huge_f80 = (ld(1) - epsneg_f80) / tiny_f80 * ld(4)
@@ -233,14 +230,9 @@ def _register_known_types():
     # https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
     # These numbers have the same exponent range as float64, but extended number of
     # digits in the significand.
-    huge_dd = (umath.nextafter(ld(inf), ld(0))
-                if hasattr(umath, 'nextafter')  # Missing on some platforms?
-                else float64_ma.huge)
+    huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
     # The value for the smallest subnormal may be 0 on some hardware platforms
-    if hasattr(umath, 'nextafter'):
-        smallest_subnormal_dd = nextafter(ld(0), ld(1), dtype=ld)
-    else:
-        smallest_subnormal_dd = float64_ma.smallest_subnormal
+    smallest_subnormal_dd = nextafter(ld(0), ld(1), dtype=ld)
     float_dd_ma = MachArLike(ld,
                              machep=-105,
                              negep=-106,
