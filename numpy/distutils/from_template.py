@@ -206,7 +206,7 @@ def process_str(allstr):
 
     return writestr
 
-include_src_re = re.compile(r"(\n|\A)\s*include\s*['\"](?P<name>[\w\d./\\]+[.]src)['\"]", re.I)
+include_src_re = re.compile(r"(\n|\A)\s*include\s*['\"](?P<name>[\w\d./\\]+\.src)['\"]", re.I)
 
 def resolve_includes(source):
     d = os.path.dirname(source)

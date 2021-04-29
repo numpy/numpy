@@ -14,6 +14,7 @@ function name, setup and teardown functions and so on - see
 
 """
 import collections.abc
+import warnings
 
 from .utils import SkipTest, assert_warns, HAS_REFCOUNT
 
@@ -23,6 +24,10 @@ __all__ = ['slow', 'setastest', 'skipif', 'knownfailureif', 'deprecated',
 
 def slow(t):
     """
+    .. deprecated:: 1.21
+        This decorator is retained for compatibility with the nose testing framework, which is being phased out.
+        Please use the nose2 or pytest frameworks instead.
+
     Label a test as 'slow'.
 
     The exact definition of a slow test is obviously both subjective and
@@ -52,12 +57,19 @@ def slow(t):
           print('Big, slow test')
 
     """
+    # Numpy 1.21, 2020-12-20
+    warnings.warn('the np.testing.dec decorators are included for nose support, and are '
+                'deprecated since NumPy v1.21. Use the nose2 or pytest frameworks instead.', DeprecationWarning, stacklevel=2)
 
     t.slow = True
     return t
 
 def setastest(tf=True):
     """
+    .. deprecated:: 1.21
+        This decorator is retained for compatibility with the nose testing framework, which is being phased out.
+        Please use the nose2 or pytest frameworks instead.
+
     Signals to nose that this function is or is not a test.
 
     Parameters
@@ -84,6 +96,9 @@ def setastest(tf=True):
           pass
 
     """
+    # Numpy 1.21, 2020-12-20
+    warnings.warn('the np.testing.dec decorators are included for nose support, and are '
+            'deprecated since NumPy v1.21. Use the nose2 or pytest frameworks instead.', DeprecationWarning, stacklevel=2)
     def set_test(t):
         t.__test__ = tf
         return t
@@ -91,6 +106,10 @@ def setastest(tf=True):
 
 def skipif(skip_condition, msg=None):
     """
+    .. deprecated:: 1.21
+        This decorator is retained for compatibility with the nose testing framework, which is being phased out.
+        Please use the nose2 or pytest frameworks instead.
+
     Make function raise SkipTest exception if a given condition is true.
 
     If the condition is a callable, it is used at runtime to dynamically
@@ -122,6 +141,10 @@ def skipif(skip_condition, msg=None):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
+
+        # Numpy 1.21, 2020-12-20
+        warnings.warn('the np.testing.dec decorators are included for nose support, and are '
+            'deprecated since NumPy v1.21. Use the nose2 or pytest frameworks instead.', DeprecationWarning, stacklevel=2)
 
         # Allow for both boolean or callable skip conditions.
         if isinstance(skip_condition, collections.abc.Callable):
@@ -167,6 +190,10 @@ def skipif(skip_condition, msg=None):
 
 def knownfailureif(fail_condition, msg=None):
     """
+    .. deprecated:: 1.21
+        This decorator is retained for compatibility with the nose testing framework, which is being phased out.
+        Please use the nose2 or pytest frameworks instead.
+
     Make function raise KnownFailureException exception if given condition is true.
 
     If the condition is a callable, it is used at runtime to dynamically
@@ -195,6 +222,10 @@ def knownfailureif(fail_condition, msg=None):
     function in order to transmit function name, and various other metadata.
 
     """
+    # Numpy 1.21, 2020-12-20
+    warnings.warn('the np.testing.dec decorators are included for nose support, and are '
+            'deprecated since NumPy v1.21. Use the nose2 or pytest frameworks instead.', DeprecationWarning, stacklevel=2)
+
     if msg is None:
         msg = 'Test skipped due to known failure'
 
@@ -221,6 +252,10 @@ def knownfailureif(fail_condition, msg=None):
 
 def deprecated(conditional=True):
     """
+    .. deprecated:: 1.21
+        This decorator is retained for compatibility with the nose testing framework, which is being phased out.
+        Please use the nose2 or pytest frameworks instead.
+
     Filter deprecation warnings while running the test suite.
 
     This decorator can be used to filter DeprecationWarning's, to avoid
@@ -249,6 +284,10 @@ def deprecated(conditional=True):
         # import time overhead at actual test-time.
         import nose
 
+        # Numpy 1.21, 2020-12-20
+        warnings.warn('the np.testing.dec decorators are included for nose support, and are '
+            'deprecated since NumPy v1.21. Use the nose2 or pytest frameworks instead.', DeprecationWarning, stacklevel=2)
+
         def _deprecated_imp(*args, **kwargs):
             # Poor man's replacement for the with statement
             with assert_warns(DeprecationWarning):
@@ -267,6 +306,10 @@ def deprecated(conditional=True):
 
 def parametrize(vars, input):
     """
+    .. deprecated:: 1.21
+        This decorator is retained for compatibility with the nose testing framework, which is being phased out.
+        Please use the nose2 or pytest frameworks instead.
+
     Pytest compatibility class. This implements the simplest level of
     pytest.mark.parametrize for use in nose as an aid in making the transition
     to pytest. It achieves that by adding a dummy var parameter and ignoring
@@ -278,6 +321,10 @@ def parametrize(vars, input):
 
     """
     from .parameterized import parameterized
+
+    # Numpy 1.21, 2020-12-20
+    warnings.warn('the np.testing.dec decorators are included for nose support, and are '
+            'deprecated since NumPy v1.21. Use the nose2 or pytest frameworks instead.', DeprecationWarning, stacklevel=2)
 
     return parameterized(input)
 

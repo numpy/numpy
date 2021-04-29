@@ -3,6 +3,7 @@ import operator
 import pytest
 import ctypes
 import gc
+import warnings
 
 import numpy as np
 from numpy.core._rational_tests import rational
@@ -153,6 +154,9 @@ class TestBuiltin:
                       'formats': ['f4', 'i4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
+        # But it is currently an equivalent cast:
+        assert np.can_cast(x, y, casting="equiv")
+
 
 class TestRecord:
     def test_equivalent_record(self):
@@ -747,8 +751,6 @@ class TestStructuredDtypeSparseFields:
     sparse_dtype = np.dtype([('a', {'names':['ab'], 'formats':['f'],
                                     'offsets':[4]}, (2, 3))])
 
-    @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
-    @pytest.mark.valgrind_error(reason="reads from uninitialized buffers.")
     def test_sparse_field_assignment(self):
         arr = np.zeros(3, self.dtype)
         sparse_arr = arr.view(self.sparse_dtype)
@@ -1015,7 +1017,12 @@ class TestPickling:
 
     def check_pickling(self, dtype):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
-            pickled = pickle.loads(pickle.dumps(dtype, proto))
+            buf = pickle.dumps(dtype, proto)
+            # The dtype pickling itself pickles `np.dtype` if it is pickled
+            # as a singleton `dtype` should be stored in the buffer:
+            assert b"_DType_reconstruct" not in buf
+            assert b"dtype" in buf
+            pickled = pickle.loads(buf)
             assert_equal(pickled, dtype)
             assert_equal(pickled.descr, dtype.descr)
             if dtype.metadata is not None:
@@ -1071,6 +1078,15 @@ class TestPickling:
         dt = np.dtype(int, metadata={'datum': 1})
         self.check_pickling(dt)
 
+    @pytest.mark.parametrize("DType",
+        [type(np.dtype(t)) for t in np.typecodes['All']] +
+        [np.dtype(rational), np.dtype])
+    def test_pickle_types(self, DType):
+        # Check that DTypes (the classes/types) roundtrip when pickling
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            roundtrip_DType = pickle.loads(pickle.dumps(DType, proto))
+            assert roundtrip_DType is DType
+
 
 def test_rational_dtype():
     # test for bug gh-5719
@@ -1103,7 +1119,7 @@ def test_keyword_argument():
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
-            dtype = "f8"
+            dtype = np.dtype("f8")
 
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
@@ -1127,22 +1143,21 @@ class TestFromDTypeAttribute:
             # what this should be useful for. Note that if np.void is used
             # numpy will think we are deallocating a base type [1.17, 2019-02].
             dtype = np.dtype("f,f")
-            pass
 
         np.dtype(dt)
         np.dtype(dt(1))
 
     def test_void_subtype_recursion(self):
-        class dt(np.void):
+        class vdt(np.void):
             pass
 
-        dt.dtype = dt
+        vdt.dtype = vdt
 
         with pytest.raises(RecursionError):
-            np.dtype(dt)
+            np.dtype(vdt)
 
         with pytest.raises(RecursionError):
-            np.dtype(dt(1))
+            np.dtype(vdt(1))
 
 
 class TestDTypeClasses:

@@ -94,4 +94,36 @@ NPY_FINLINE npyv_f64x2 npyv_zip_f64(__m256d a, __m256d b)
     return npyv_combine_f64(ab0, ab1);
 }
 
+// Reverse elements of each 64-bit lane
+NPY_FINLINE npyv_u8 npyv_rev64_u8(npyv_u8 a)
+{
+    const __m256i idx = _mm256_setr_epi8(
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8,
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8
+    );
+    return _mm256_shuffle_epi8(a, idx);
+}
+#define npyv_rev64_s8 npyv_rev64_u8
+
+NPY_FINLINE npyv_u16 npyv_rev64_u16(npyv_u16 a)
+{
+    const __m256i idx = _mm256_setr_epi8(
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9,
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9
+    );
+    return _mm256_shuffle_epi8(a, idx);
+}
+#define npyv_rev64_s16 npyv_rev64_u16
+
+NPY_FINLINE npyv_u32 npyv_rev64_u32(npyv_u32 a)
+{
+    return _mm256_shuffle_epi32(a, _MM_SHUFFLE(2, 3, 0, 1));
+}
+#define npyv_rev64_s32 npyv_rev64_u32
+
+NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
+{
+    return _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1));
+}
+
 #endif // _NPY_SIMD_AVX2_REORDER_H

@@ -1,6 +1,0 @@
-poly1d respects the dtype of all-zero argument
-----------------------------------------------
-Previously, constructing an instance of ``poly1d`` with all-zero
-coefficients would cast the coefficients to ``np.float64``.
-This affected the output dtype of methods which construct
-``poly1d`` instances internally, such as ``np.polymul``.

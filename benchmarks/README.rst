@@ -50,7 +50,7 @@ Compare change in benchmark results to another version/commit/branch::
 
     python runtests.py --bench-compare v1.6.2 bench_core
     python runtests.py --bench-compare 8bf4e9b bench_core
-    python runtests.py --bench-compare master bench_core
+    python runtests.py --bench-compare main bench_core
 
 All of the commands above display the results in plain text in
 the console, and the results are not saved for comparison with

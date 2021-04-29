@@ -3,8 +3,15 @@
 
 # download-wheels.py
 urllib3
-beatifulsoup4
+beautifulsoup4
 
 # changelog.py
 pygithub
 gitpython
+
+# uploading wheels
+twine
+
+# building and notes
+Paver
+towncrier

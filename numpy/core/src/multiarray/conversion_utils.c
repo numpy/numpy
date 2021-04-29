@@ -715,6 +715,78 @@ PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
     return NPY_SUCCEED;
 }
 
+static int correlatemode_parser(char const *str, Py_ssize_t length, void *data)
+{
+    NPY_CORRELATEMODE *val = (NPY_CORRELATEMODE *)data;
+    int is_exact = 0;
+
+    if (length < 1) {
+        return -1;
+    }
+    if (str[0] == 'V' || str[0] == 'v') {
+        *val = NPY_VALID;
+        is_exact = (length == 5 && strcmp(str, "valid") == 0);
+    }
+    else if (str[0] == 'S' || str[0] == 's') {
+        *val = NPY_SAME;
+        is_exact = (length == 4 && strcmp(str, "same") == 0);
+    }
+    else if (str[0] == 'F' || str[0] == 'f') {
+        *val = NPY_FULL;
+        is_exact = (length == 4 && strcmp(str, "full") == 0);
+    }
+    else {
+        return -1;
+    }
+
+    /* Filters out the case sensitive/non-exact
+     * match inputs and other inputs and outputs DeprecationWarning
+     */
+    if (!is_exact) {
+        /* Numpy 1.21, 2021-01-19 */
+        if (DEPRECATE("inexact matches and case insensitive matches for "
+                      "convolve/correlate mode are deprecated, please "
+                      "use one of 'valid', 'same', or 'full' instead.") < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+/*
+ * Convert an object to NPY_VALID / NPY_SAME / NPY_FULL
+ */
+NPY_NO_EXPORT int
+PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val)
+{
+    if (PyUnicode_Check(object)) {
+        return string_converter_helper(
+            object, (void *)val, correlatemode_parser, "mode",
+            "must be one of 'valid', 'same', or 'full'");
+    }
+
+    else {
+        /* For users passing integers */
+        int number = PyArray_PyIntAsInt(object);
+        if (error_converting(number)) {
+            PyErr_SetString(PyExc_TypeError,
+                        "convolve/correlate mode not understood");
+            return NPY_FAIL;
+        }
+        if (number <= (int) NPY_FULL
+                && number >= (int) NPY_VALID) {
+            *val = (NPY_CORRELATEMODE) number;
+            return NPY_SUCCEED;
+        }
+        else {
+            PyErr_Format(PyExc_ValueError,
+                    "integer convolve/correlate mode must be 0, 1, or 2");
+            return NPY_FAIL;
+        }
+    }
+}
+
 static int casting_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_CASTING *casting = (NPY_CASTING *)data;

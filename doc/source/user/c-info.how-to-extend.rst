@@ -174,7 +174,7 @@ rule. There are several converter functions defined in the NumPy C-API
 that may be of use. In particular, the :c:func:`PyArray_DescrConverter`
 function is very useful to support arbitrary data-type specification.
 This function transforms any valid data-type Python object into a
-:c:type:`PyArray_Descr *` object. Remember to pass in the address of the
+:c:expr:`PyArray_Descr *` object. Remember to pass in the address of the
 C-variables that should be filled in.
 
 There are lots of examples of how to use :c:func:`PyArg_ParseTuple`
@@ -192,7 +192,7 @@ It is important to keep in mind that you get a *borrowed* reference to
 the object when using the "O" format string. However, the converter
 functions usually require some form of memory handling. In this
 example, if the conversion is successful, *dtype* will hold a new
-reference to a :c:type:`PyArray_Descr *` object, while *input* will hold a
+reference to a :c:expr:`PyArray_Descr *` object, while *input* will hold a
 borrowed reference. Therefore, if this conversion were mixed with
 another conversion (say to an integer) and the data-type conversion
 was successful but the integer conversion failed, then you would need
@@ -213,9 +213,9 @@ The :c:func:`Py_BuildValue` (format_string, c_variables...) function makes
 it easy to build tuples of Python objects from C variables. Pay
 special attention to the difference between 'N' and 'O' in the format
 string or you can easily create memory leaks. The 'O' format string
-increments the reference count of the :c:type:`PyObject *<PyObject>` C-variable it
+increments the reference count of the :c:expr:`PyObject *` C-variable it
 corresponds to, while the 'N' format string steals a reference to the
-corresponding :c:type:`PyObject *<PyObject>` C-variable. You should use 'N' if you have
+corresponding :c:expr:`PyObject *` C-variable. You should use 'N' if you have
 already created a reference for the object and just want to give that
 reference to the tuple. You should use 'O' if you only have a borrowed
 reference to an object and need to create one to provide for the
@@ -510,7 +510,7 @@ by providing default values for common use cases.
 Getting at ndarray memory and accessing elements of the ndarray
 ---------------------------------------------------------------
 
-If obj is an ndarray (:c:type:`PyArrayObject *`), then the data-area of the
+If obj is an ndarray (:c:expr:`PyArrayObject *`), then the data-area of the
 ndarray is pointed to by the void* pointer :c:func:`PyArray_DATA` (obj) or
 the char* pointer :c:func:`PyArray_BYTES` (obj). Remember that (in general)
 this data-area may not be aligned according to the data-type, it may

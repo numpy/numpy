@@ -1308,7 +1308,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         information from the singular value decomposition is also returned.
     w : array_like, shape (`M`,), optional
         Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        ``(x[i],y[i])`` to the fit is weighted by ``w[i]``. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 

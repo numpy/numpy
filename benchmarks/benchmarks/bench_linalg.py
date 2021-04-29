@@ -91,8 +91,8 @@ class Linalg(Benchmark):
         # check that dtype is supported at all
         try:
             self.func(self.a[:2, :2])
-        except TypeError:
-            raise NotImplementedError()
+        except TypeError as e:
+            raise NotImplementedError() from e
 
     def time_op(self, op, typename):
         self.func(self.a)

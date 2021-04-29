@@ -1,4 +1,0 @@
-f2py generated code may return unicode instead of byte strings
---------------------------------------------------------------
-Some byte strings previously returned by f2py generated code may now be unicode
-strings. This results from the ongoing Python2 -> Python3 cleanup.

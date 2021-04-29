@@ -613,7 +613,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     --------
     numpy.sum : Sum across array propagating NaNs.
     isnan : Show which elements are NaN.
-    isfinite: Show which elements are not NaN or +/-inf.
+    isfinite : Show which elements are not NaN or +/-inf.
 
     Notes
     -----

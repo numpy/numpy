@@ -112,12 +112,12 @@ typedef enum TrimMode
     PyObject *\
     Dragon4_Positional_##Type(npy_type *val, DigitMode digit_mode,\
                               CutoffMode cutoff_mode, int precision,\
-                              int sign, TrimMode trim, int pad_left,\
-                              int pad_right);\
+                              int min_digits, int sign, TrimMode trim, \
+                              int pad_left, int pad_right);\
     PyObject *\
     Dragon4_Scientific_##Type(npy_type *val, DigitMode digit_mode,\
-                              int precision, int sign, TrimMode trim,\
-                              int pad_left, int exp_digits);
+                              int precision, int min_digits, int sign, \
+                              TrimMode trim, int pad_left, int exp_digits);
 
 make_dragon4_typedecl(Half, npy_half)
 make_dragon4_typedecl(Float, npy_float)
@@ -128,12 +128,13 @@ make_dragon4_typedecl(LongDouble, npy_longdouble)
 
 PyObject *
 Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
-                   int precision, int sign, TrimMode trim, int pad_left,
-                   int pad_right);
+                   int precision, int min_digits, int sign, TrimMode trim,
+                   int pad_left, int pad_right);
 
 PyObject *
 Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
-                   int sign, TrimMode trim, int pad_left, int exp_digits);
+                   int min_digits, int sign, TrimMode trim, int pad_left,
+                   int exp_digits);
 
 #endif
 

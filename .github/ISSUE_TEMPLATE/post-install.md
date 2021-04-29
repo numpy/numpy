@@ -15,7 +15,7 @@ labels: 32 - Installation
 
 <!-- If you are reporting a segfault please include a GDB traceback, which you
 can generate by following
-https://github.com/numpy/numpy/blob/master/doc/source/dev/development_environment.rst#debugging -->
+https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging -->
 
 <!-- Full error message, if any (starting from line Traceback: ...) -->
 

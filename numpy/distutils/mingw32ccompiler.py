@@ -566,7 +566,7 @@ def msvc_manifest_xml(maj, min):
         fullver = _MSVCRVER_TO_FULLVER[str(maj * 10 + min)]
     except KeyError:
         raise ValueError("Version %d,%d of MSVCRT not supported yet" %
-                         (maj, min))
+                         (maj, min)) from None
     # Don't be fooled, it looks like an XML, but it is not. In particular, it
     # should not have any space before starting, and its size should be
     # divisible by 4, most likely for alignment constraints when the xml is

@@ -13,23 +13,23 @@ and the masking of individual fields.
 #  first place, and then rename the invalid fields with a trailing
 #  underscore. Maybe we could just overload the parser function ?
 
+from numpy.ma import (
+    MAError, MaskedArray, masked, nomask, masked_array, getdata,
+    getmaskarray, filled
+)
+import numpy.ma as ma
 import warnings
 
 import numpy as np
 from numpy import (
-        bool_, dtype, ndarray, recarray, array as narray
-        )
+    bool_, dtype, ndarray, recarray, array as narray
+)
 from numpy.core.records import (
-        fromarrays as recfromarrays, fromrecords as recfromrecords
-        )
+    fromarrays as recfromarrays, fromrecords as recfromrecords
+)
 
 _byteorderconv = np.core.records._byteorderconv
 
-import numpy.ma as ma
-from numpy.ma import (
-        MAError, MaskedArray, masked, nomask, masked_array, getdata,
-        getmaskarray, filled
-        )
 
 _check_fill_value = ma.core._check_fill_value
 
@@ -37,7 +37,7 @@ _check_fill_value = ma.core._check_fill_value
 __all__ = [
     'MaskedRecords', 'mrecarray', 'fromarrays', 'fromrecords',
     'fromtextfile', 'addfield',
-    ]
+]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
 
@@ -199,7 +199,8 @@ class MaskedRecords(MaskedArray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError) as e:
-            raise AttributeError(f'record array has no attribute {attr}') from e
+            raise AttributeError(
+                f'record array has no attribute {attr}') from e
         # So far, so good
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
@@ -273,8 +274,9 @@ class MaskedRecords(MaskedArray):
         # Let's try to set the field
         try:
             res = fielddict[attr][:2]
-        except (TypeError, KeyError):
-            raise AttributeError(f'record array has no attribute {attr}')
+        except (TypeError, KeyError) as e:
+            raise AttributeError(
+                f'record array has no attribute {attr}') from e
 
         if val is masked:
             _fill_value = _localdict['_fill_value']
@@ -355,7 +357,7 @@ class MaskedRecords(MaskedArray):
         reprstr = [fmt % (f, getattr(self, f)) for f in self.dtype.names]
         reprstr.insert(0, 'masked_records(')
         reprstr.extend([fmt % ('    fill_value', self.fill_value),
-                         '              )'])
+                        '              )'])
         return str("\n".join(reprstr))
 
     def view(self, dtype=None, type=None):
@@ -483,6 +485,7 @@ class MaskedRecords(MaskedArray):
                 (self.__class__, self._baseclass, (0,), 'b',),
                 self.__getstate__())
 
+
 def _mrreconstruct(subtype, baseclass, baseshape, basetype,):
     """
     Build a new MaskedArray from the information stored in a pickle.
@@ -491,6 +494,7 @@ def _mrreconstruct(subtype, baseclass, baseshape, basetype,):
     _data = ndarray.__new__(baseclass, baseshape, basetype).view(subtype)
     _mask = ndarray.__new__(ndarray, baseshape, 'b1')
     return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
+
 
 mrecarray = MaskedRecords
 
@@ -656,8 +660,8 @@ def openfile(fname):
     # Try to open the file and guess its type
     try:
         f = open(fname)
-    except IOError:
-        raise IOError(f"No such file: '{fname}'")
+    except IOError as e:
+        raise IOError(f"No such file: '{fname}'") from e
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f
@@ -752,7 +756,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     newdata = recarray(_data.shape, newdtype)
     # Add the existing field
     [newdata.setfield(_data.getfield(*f), *f)
-         for f in _data.dtype.fields.values()]
+     for f in _data.dtype.fields.values()]
     # Add the new field
     newdata.setfield(newfield._data, *newdata.dtype.fields[newfieldname])
     newdata = newdata.view(MaskedRecords)
@@ -762,7 +766,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     newmask = recarray(_data.shape, newmdtype)
     # Add the old masks
     [newmask.setfield(_mask.getfield(*f), *f)
-         for f in _mask.dtype.fields.values()]
+     for f in _mask.dtype.fields.values()]
     # Add the mask of the new field
     newmask.setfield(getmaskarray(newfield),
                      *newmask.dtype.fields[newfieldname])

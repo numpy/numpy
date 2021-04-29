@@ -90,7 +90,6 @@
     NPYV_IMPL_AVX512_FROM_SI512_PS_2ARG(npyv_and_f32, _mm512_and_si512)
     NPYV_IMPL_AVX512_FROM_SI512_PD_2ARG(npyv_and_f64, _mm512_and_si512)
 #endif
-
 // OR
 #define npyv_or_u8  _mm512_or_si512
 #define npyv_or_s8  _mm512_or_si512
@@ -124,7 +123,6 @@
     NPYV_IMPL_AVX512_FROM_SI512_PS_2ARG(npyv_xor_f32, _mm512_xor_si512)
     NPYV_IMPL_AVX512_FROM_SI512_PD_2ARG(npyv_xor_f64, _mm512_xor_si512)
 #endif
-
 // NOT
 #define npyv_not_u8(A) _mm512_xor_si512(A, _mm512_set1_epi32(-1))
 #define npyv_not_s8  npyv_not_u8
@@ -140,6 +138,67 @@
 #else
     #define npyv_not_f32(A) _mm512_castsi512_ps(npyv_not_u32(_mm512_castps_si512(A)))
     #define npyv_not_f64(A) _mm512_castsi512_pd(npyv_not_u64(_mm512_castpd_si512(A)))
+#endif
+
+/***************************
+ * Logical (boolean)
+ ***************************/
+#ifdef NPY_HAVE_AVX512BW_MASK
+    #define npyv_and_b8  _kand_mask64
+    #define npyv_and_b16 _kand_mask32
+    #define npyv_or_b8   _kor_mask64
+    #define npyv_or_b16  _kor_mask32
+    #define npyv_xor_b8  _kxor_mask64
+    #define npyv_xor_b16 _kxor_mask32
+    #define npyv_not_b8  _knot_mask64
+    #define npyv_not_b16 _knot_mask32
+#elif defined(NPY_HAVE_AVX512BW)
+    NPY_FINLINE npyv_b8  npyv_and_b8(npyv_b8 a, npyv_b8 b)
+    { return a & b; }
+    NPY_FINLINE npyv_b16 npyv_and_b16(npyv_b16 a, npyv_b16 b)
+    { return a & b; }
+    NPY_FINLINE npyv_b8  npyv_or_b8(npyv_b8 a, npyv_b8 b)
+    { return a | b; }
+    NPY_FINLINE npyv_b16 npyv_or_b16(npyv_b16 a, npyv_b16 b)
+    { return a | b; }
+    NPY_FINLINE npyv_b8  npyv_xor_b8(npyv_b8 a, npyv_b8 b)
+    { return a ^ b; }
+    NPY_FINLINE npyv_b16 npyv_xor_b16(npyv_b16 a, npyv_b16 b)
+    { return a ^ b; }
+    NPY_FINLINE npyv_b8  npyv_not_b8(npyv_b8 a)
+    { return ~a; }
+    NPY_FINLINE npyv_b16 npyv_not_b16(npyv_b16 a)
+    { return ~a; }
+#else
+    #define npyv_and_b8  _mm512_and_si512
+    #define npyv_and_b16 _mm512_and_si512
+    #define npyv_or_b8   _mm512_or_si512
+    #define npyv_or_b16  _mm512_or_si512
+    #define npyv_xor_b8  _mm512_xor_si512
+    #define npyv_xor_b16 _mm512_xor_si512
+    #define npyv_not_b8  npyv_not_u8
+    #define npyv_not_b16 npyv_not_u8
+#endif
+
+#define npyv_and_b32 _mm512_kand
+#define npyv_or_b32  _mm512_kor
+#define npyv_xor_b32 _mm512_kxor
+#define npyv_not_b32 _mm512_knot
+
+#ifdef NPY_HAVE_AVX512DQ_MASK
+    #define npyv_and_b64 _kand_mask8
+    #define npyv_or_b64  _kor_mask8
+    #define npyv_xor_b64 _kxor_mask8
+    #define npyv_not_b64 _knot_mask8
+#else
+    NPY_FINLINE npyv_b64 npyv_and_b64(npyv_b64 a, npyv_b64 b)
+    { return (npyv_b64)_mm512_kand((npyv_b32)a, (npyv_b32)b); }
+    NPY_FINLINE npyv_b64 npyv_or_b64(npyv_b64 a, npyv_b64 b)
+    { return (npyv_b64)_mm512_kor((npyv_b32)a, (npyv_b32)b); }
+    NPY_FINLINE npyv_b64 npyv_xor_b64(npyv_b64 a, npyv_b64 b)
+    { return (npyv_b64)_mm512_kxor((npyv_b32)a, (npyv_b32)b); }
+    NPY_FINLINE npyv_b64 npyv_not_b64(npyv_b64 a)
+    { return (npyv_b64)_mm512_knot((npyv_b32)a); }
 #endif
 
 /***************************
@@ -255,5 +314,11 @@
 #define npyv_cmpgt_f64(A, B)  _mm512_cmp_pd_mask(A, B, _CMP_GT_OQ)
 #define npyv_cmpge_f32(A, B)  _mm512_cmp_ps_mask(A, B, _CMP_GE_OQ)
 #define npyv_cmpge_f64(A, B)  _mm512_cmp_pd_mask(A, B, _CMP_GE_OQ)
+
+// check special cases
+NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
+{ return _mm512_cmp_ps_mask(a, a, _CMP_ORD_Q); }
+NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
+{ return _mm512_cmp_pd_mask(a, a, _CMP_ORD_Q); }
 
 #endif // _NPY_SIMD_AVX512_OPERATORS_H

@@ -4,16 +4,16 @@
 # data, etc files to distribution (*for installation*).
 # Avoid using MANIFEST.in for that.
 #
-include MANIFEST.in
-include pyproject.toml
-include pytest.ini
-include *.txt
-include README.md
-include site.cfg.example
-include runtests.py
-include tox.ini
-include .coveragerc
-include test_requirements.txt
+# Files in top-level directory:
+include *.*
+# Exclude license file that we append to the main license when running
+# `python setup.py sdist`.  And exclude generated files in repo root.
+exclude LICENSES_bundled.txt
+exclude .*
+exclude azure-*.yml
+
+# Sub-directories. Included are: numpy/, doc/, benchmarks/, tools/
+include numpy/_version.py
 recursive-include numpy/random *.pyx *.pxd *.pyx.in *.pxd.in
 include numpy/py.typed
 include numpy/random/include/*
@@ -45,6 +45,3 @@ prune benchmarks/numpy
 # Exclude generated files
 prune */__pycache__
 global-exclude *.pyc *.pyo *.pyd *.swp *.bak *~
-# Exclude license file that we append to the main license when running
-# `python setup.py sdist`
-exclude LICENSES_bundled.txt

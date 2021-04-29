@@ -256,7 +256,7 @@ class TestConcatenate:
         r = np.concatenate((a, b), axis=None)
         assert_equal(r.size, a.size + len(b))
         assert_equal(r.dtype, a.dtype)
-        r = np.concatenate((a, b, c), axis=None)
+        r = np.concatenate((a, b, c), axis=None, dtype="U")
         d = array(['0.0', '1.0', '2.0', '3.0',
                    '0', '1', '2', 'x'])
         assert_array_equal(r, d)
@@ -343,7 +343,7 @@ class TestConcatenate:
         concatenate((a, b), out=np.empty(4))
 
     @pytest.mark.parametrize("axis", [None, 0])
-    @pytest.mark.parametrize("out_dtype", ["c8", "f4", "f8", ">f8", "i8"])
+    @pytest.mark.parametrize("out_dtype", ["c8", "f4", "f8", ">f8", "i8", "S4"])
     @pytest.mark.parametrize("casting",
             ['no', 'equiv', 'safe', 'same_kind', 'unsafe'])
     def test_out_and_dtype(self, axis, out_dtype, casting):
@@ -368,6 +368,33 @@ class TestConcatenate:
 
         with assert_raises(TypeError):
             concatenate(to_concat, out=out, dtype=out_dtype, axis=axis)
+
+    @pytest.mark.parametrize("axis", [None, 0])
+    @pytest.mark.parametrize("string_dt", ["S", "U", "S0", "U0"])
+    @pytest.mark.parametrize("arrs",
+            [([0.],), ([0.], [1]), ([0], ["string"], [1.])])
+    def test_dtype_with_promotion(self, arrs, string_dt, axis):
+        # Note that U0 and S0 should be deprecated eventually and changed to
+        # actually give the empty string result (together with `np.array`)
+        res = np.concatenate(arrs, axis=axis, dtype=string_dt, casting="unsafe")
+        # The actual dtype should be identical to a cast (of a double array):
+        assert res.dtype == np.array(1.).astype(string_dt).dtype
+
+    @pytest.mark.parametrize("axis", [None, 0])
+    def test_string_dtype_does_not_inspect(self, axis):
+        # The error here currently depends on NPY_USE_NEW_CASTINGIMPL as
+        # the new version rejects using the "default string length" of 64.
+        # The new behaviour is better, `np.array()` and `arr.astype()` would
+        # have to be used instead. (currently only raises due to unsafe cast)
+        with pytest.raises((ValueError, TypeError)):
+            np.concatenate(([None], [1]), dtype="S", axis=axis)
+        with pytest.raises((ValueError, TypeError)):
+            np.concatenate(([None], [1]), dtype="U", axis=axis)
+
+    @pytest.mark.parametrize("axis", [None, 0])
+    def test_subarray_error(self, axis):
+        with pytest.raises(TypeError, match=".*subarray dtype"):
+            np.concatenate(([1], [1]), dtype="(2,)i", axis=axis)
 
 
 def test_stack():

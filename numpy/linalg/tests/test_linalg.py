@@ -348,10 +348,10 @@ class LinalgTestCase:
 
             try:
                 case.check(self.do)
-            except Exception:
+            except Exception as e:
                 msg = f'In test case: {case!r}\n\n'
                 msg += traceback.format_exc()
-                raise AssertionError(msg)
+                raise AssertionError(msg) from e
 
 
 class LinalgSquareTestCase(LinalgTestCase):

@@ -292,7 +292,7 @@ included in the 1.9.0 release of numpy.
 Specifically, the file format.py in this directory implements the
 format as described here.
 
-    https://github.com/numpy/numpy/blob/master/numpy/lib/format.py
+    https://github.com/numpy/numpy/blob/main/numpy/lib/format.py
 
 
 References

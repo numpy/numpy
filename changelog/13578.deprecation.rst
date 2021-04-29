@@ -1,0 +1,7 @@
+The ``.dtype`` attribute must return a ``dtype``
+------------------------------------------------
+
+A ``DeprecationWarning`` is now given if the ``.dtype`` attribute
+of an object passed into ``np.dtype`` or as a ``dtype=obj`` argument
+is not a dtype. NumPy will stop attempting to recursively coerce the
+result of ``.dtype``.

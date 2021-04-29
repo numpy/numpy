@@ -1,14 +1,14 @@
 from numpy.testing import (assert_, assert_array_equal)
 import numpy as np
 import pytest
-from numpy.random import Generator, MT19937
+from numpy.random import Generator, MT19937, RandomState
 
 mt19937 = Generator(MT19937())
 
 
 class TestRegression:
 
-    def test_VonMises_range(self):
+    def test_vonmises_range(self):
         # Make sure generated random variables are in [-pi, pi].
         # Regression test for ticket #986.
         for mu in np.linspace(-7., 7., 5):

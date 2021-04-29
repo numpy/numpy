@@ -83,3 +83,18 @@ in C which iterates through arrays that may or may not be
 contiguous in memory.
 Most users will have no reason to change these; for details
 see the :ref:`memory layout <memory-layout>` documentation.
+
+Using the new casting implementation
+------------------------------------
+
+Within NumPy 1.20 it is possible to enable the new experimental casting
+implementation for testing purposes. To do this set::
+
+    NPY_USE_NEW_CASTINGIMPL=1
+
+Setting the flag is only useful to aid with NumPy developement to ensure the
+new version is bug free and should be avoided for production code.
+It is a helpful test for projects that either create custom datatypes or
+use for example complicated structured dtypes. The flag is expected to be
+removed in 1.21 with the new version being always in use.
+

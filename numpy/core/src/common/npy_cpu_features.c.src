@@ -500,7 +500,7 @@ npy__cpu_init_features_arm8(void)
     npy__cpu_have[NPY_CPU_FEATURE_ASIMD]      = 1;
 }
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 /*
  * we aren't sure of what kind kernel or clib we deal with
  * so we play it safe
@@ -509,10 +509,23 @@ npy__cpu_init_features_arm8(void)
 #include "npy_cpuinfo_parser.h"
 
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
+#ifdef __FreeBSD__
+__attribute__((weak)) int elf_aux_info(int, void *, int); // linker should handle it
+
+static unsigned long getauxval(unsigned long k)
+{
+    unsigned long val = 0ul;
+    if (elf_aux_info == 0 || elf_aux_info((int)k, (void *)&val, (int)sizeof(val)) != 0) {
+    	return 0ul;
+    }
+    return val;
+}
+#endif
 static int
 npy__cpu_init_features_linux(void)
 {
     unsigned long hwcap = 0, hwcap2 = 0;
+    #ifdef __linux__
     if (getauxval != 0) {
         hwcap = getauxval(NPY__HWCAP);
     #ifdef __arm__
@@ -539,7 +552,14 @@ npy__cpu_init_features_linux(void)
             close(fd);
         }
     }
+    #else
+    hwcap = getauxval(NPY__HWCAP);
+    #ifdef __arm__
+    hwcap2 = getauxval(NPY__HWCAP2);
+    #endif
+    #endif
     if (hwcap == 0 && hwcap2 == 0) {
+    #ifdef __linux__
         /*
          * try parsing with /proc/cpuinfo, if sandboxed
          * failback to compiler definitions
@@ -547,6 +567,9 @@ npy__cpu_init_features_linux(void)
         if(!get_feature_from_proc_cpuinfo(&hwcap, &hwcap2)) {
             return 0;
         }
+    #else
+    	return 0;
+    #endif
     }
 #ifdef __arm__
     // Detect Arm8 (aarch32 state)

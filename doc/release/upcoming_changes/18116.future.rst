@@ -1,0 +1,29 @@
+Promotion of strings with numbers and bools is deprecated
+---------------------------------------------------------
+Any promotion of numbers and strings is deprecated and will
+give a ``FutureWarning`` the main affected functionalities
+are:
+
+* `numpy.promote_types` and `numpy.result_type` which will raise
+  an error in this case in the future.
+* `numpy.concatenate` will raise an error when concatenating a string
+  and numeric array. You can use ``dtype="S"`` to explicitly request
+  a string result.
+* `numpy.array` and related functions will start returning ``object``
+  arrays because these functions use ``object`` as a fallback when
+  no common dtype can be found. (In this case setting the
+  ``FutureWarning`` to be raised will unfortunately lead to the new
+  behaviour)
+
+This will mainly affect code such as::
+
+    np.asarray(['string', 0])
+
+and::
+
+    np.concatenate((['string'], [0]))
+
+in both cases adding ``dtype="U"`` or ``dtype="S"`` will give the
+previous (string) result.
+
+Comparisons, universal functions, and casting are not affected by this.

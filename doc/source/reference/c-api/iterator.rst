@@ -370,7 +370,7 @@ Construction and Destruction
             arrays or structured arrays containing an object type)
             may be accepted and used in the iterator.  If this flag
             is enabled, the caller must be sure to check whether
-            :c:func:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
+            :c:expr:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
             it may not release the GIL during iteration.
 
         .. c:macro:: NPY_ITER_ZEROSIZE_OK
@@ -738,7 +738,7 @@ Construction and Destruction
     the iterator.  Any cached functions or pointers from the iterator
     must be retrieved again!
 
-    After calling this function, :c:func:`NpyIter_HasMultiIndex(iter)` will
+    After calling this function, :c:expr:`NpyIter_HasMultiIndex(iter)` will
     return false.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.

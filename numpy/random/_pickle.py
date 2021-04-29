@@ -19,7 +19,7 @@ def __generator_ctor(bit_generator_name='MT19937'):
 
     Parameters
     ----------
-    bit_generator_name: str
+    bit_generator_name : str
         String containing the core BitGenerator
 
     Returns
@@ -42,7 +42,7 @@ def __bit_generator_ctor(bit_generator_name='MT19937'):
 
     Parameters
     ----------
-    bit_generator_name: str
+    bit_generator_name : str
         String containing the name of the BitGenerator
 
     Returns
@@ -65,7 +65,7 @@ def __randomstate_ctor(bit_generator_name='MT19937'):
 
     Parameters
     ----------
-    bit_generator_name: str
+    bit_generator_name : str
         String containing the core BitGenerator
 
     Returns

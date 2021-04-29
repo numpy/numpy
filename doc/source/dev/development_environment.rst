@@ -57,7 +57,8 @@ When using pytest as a target (the default), you can
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
-build or installing to a virtualenv. See the FAQ below for details.
+build or installing to a virtualenv or a conda environment. See the FAQ below
+for details.
 
 .. note::
 
@@ -130,17 +131,27 @@ to see this output, you can run the ``build_src`` stage verbosely::
 
     $ python build build_src -v
 
-Using virtualenvs
------------------
+Using virtual environments
+--------------------------
 
 A frequently asked question is "How do I set up a development version of NumPy
 in parallel to a released version that I use to do my job/research?".
 
 One simple way to achieve this is to install the released version in
-site-packages, by using a binary installer or pip for example, and set
-up the development version in a virtualenv.  First install
+site-packages, by using pip or conda for example, and set
+up the development version in a virtual environment.
+
+If you use conda, we recommend creating a separate virtual environment for
+numpy development using the ``environment.yml`` file in the root of the repo
+(this will create the environment and install all development dependencies at
+once)::
+
+    $ conda env create -f environment.yml  # `mamba` works too for this command
+    $ conda activate numpy-dev
+
+If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named numpy-dev here) with::
+virtualenv (named ``numpy-dev`` here) with::
 
     $ virtualenv numpy-dev
 
@@ -188,6 +199,35 @@ For more extensive information, see :ref:`testing-guidelines`
 *Note: do not run the tests from the root directory of your numpy git repo without ``runtests.py``,
 that will result in strange test errors.*
 
+Running Linting
+---------------
+Lint checks can be performed on newly added lines of Python code.
+
+Install all dependent packages using pip::
+
+    $ python -m pip install -r linter_requirements.txt
+
+To run lint checks before committing new code, run::
+
+    $ python runtests.py --lint uncommitted
+
+To check all changes in newly added Python code of current branch with target branch, run::
+
+    $ python runtests.py --lint main
+
+If there are no errors, the script exits with no message. In case of errors::
+
+    $ python runtests.py --lint main
+    ./numpy/core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
+    1       E303 too many blank lines (3)
+
+It is advisable to run lint checks before pushing commits to a remote branch
+since the linter runs as part of the CI pipeline.
+
+For more details on Style Guidelines:
+
+   - `Python Style Guide`_
+   - `C Style Guide`_
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -206,6 +246,8 @@ repo, use one of::
     $ git checkout .
     $ git reset --hard
 
+
+.. _debugging:
 
 Debugging
 ---------
@@ -262,6 +304,8 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _virtualenvwrapper: http://www.doughellmann.com/projects/virtualenvwrapper/
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
+.. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
+.. _`C Style Guide`: https://numpy.org/neps/nep-0045-c_style_guide.html
 
 Understanding the code & getting started
 ----------------------------------------

@@ -40,9 +40,9 @@ The functions are named with the following conventions:
 - The functions without "standard" in their name require additional parameters
   to describe the distributions.
 
-- ``zig`` in the name are based on a ziggurat lookup algorithm is used instead
-  of calculating the ``log``, which is significantly faster. The non-ziggurat
-  variants are used in corner cases and for legacy compatibility.
+- Functions with ``inv`` in their name are based on the slower inverse method
+  instead of a ziggurat lookup algorithm, which is significantly faster. The
+  non-ziggurat variants are used in corner cases and for legacy compatibility.
 
 
 .. c:function:: double random_standard_uniform(bitgen_t *bitgen_state)
@@ -52,6 +52,8 @@ The functions are named with the following conventions:
 .. c:function:: double random_standard_exponential(bitgen_t *bitgen_state)
 
 .. c:function:: void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
+
+.. c:function:: void random_standard_exponential_inv_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
 
 .. c:function:: double random_standard_normal(bitgen_t* bitgen_state)
 
@@ -68,6 +70,8 @@ The functions are named with the following conventions:
 .. c:function:: float random_standard_exponential_f(bitgen_t *bitgen_state)
 
 .. c:function:: void random_standard_exponential_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
+
+.. c:function:: void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
 
 .. c:function:: float random_standard_normal_f(bitgen_t* bitgen_state)
 

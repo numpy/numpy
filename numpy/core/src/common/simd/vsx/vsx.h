@@ -2,9 +2,20 @@
     #error "Not a standalone header"
 #endif
 
+#if defined(__GNUC__) && __GNUC__ <= 7
+    /**
+      * GCC <= 7 produces ambiguous warning caused by -Werror=maybe-uninitialized,
+      * when certain intrinsics involved. `vec_ld` is one of them but it seemed to work fine,
+      * and suppressing the warning wouldn't affect its functionality.
+      */
+    #pragma GCC diagnostic ignored "-Wuninitialized"
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #define NPY_SIMD 128
 #define NPY_SIMD_WIDTH 16
 #define NPY_SIMD_F64 1
+#define NPY_SIMD_FMA3 1 // native support
 
 typedef __vector unsigned char      npyv_u8;
 typedef __vector signed char        npyv_s8;

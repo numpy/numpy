@@ -1,0 +1,6 @@
+``/usr/include`` removed from default include paths
+---------------------------------------------------
+The default include paths when building a package with ``numpy.distutils`` no
+longer include ``/usr/include``. This path is normally added by the compiler,
+and hardcoding it can be problematic. In case this causes a problem, please
+open an issue. A workaround is documented in PR 18658.

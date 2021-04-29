@@ -1,8 +1,0 @@
-``nickname`` attribute removed from ABCPolyBase
------------------------------------------------
-
-An abstract property ``nickname`` has been removed from  ``ABCPolyBase`` as it
-was no longer used in the derived convenience classes.
-This may affect users who have derived classes from ``ABCPolyBase`` and 
-overridden the methods for representation and display, e.g. ``__str__``, 
-``__repr__``, ``_repr_latex``, etc.

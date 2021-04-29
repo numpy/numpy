@@ -48,7 +48,8 @@ using the state of the `RandomState`:
 
 
 .. autoclass:: RandomState
-	:exclude-members:
+    :members: __init__
+    :exclude-members: __init__
 
 Seeding and State
 =================

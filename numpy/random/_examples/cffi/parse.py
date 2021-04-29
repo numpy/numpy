@@ -17,11 +17,20 @@ def parse_distributions_h(ffi, inc_dir):
                 continue
             s.append(line)
         ffi.cdef('\n'.join(s))
-            
+
     with open(os.path.join(inc_dir, 'random', 'distributions.h')) as fid:
         s = []
         in_skip = 0
+        ignoring = False
         for line in fid:
+            # check for and remove extern "C" guards
+            if ignoring:
+                if line.strip().startswith('#endif'):
+                    ignoring = False
+                continue
+            if line.strip().startswith('#ifdef __cplusplus'):
+                ignoring = True
+            
             # massage the include file
             if line.strip().startswith('#'):
                 continue

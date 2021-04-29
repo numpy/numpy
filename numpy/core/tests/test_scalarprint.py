@@ -9,7 +9,7 @@ import sys
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, assert_raises
 
 class TestRealScalars:
     def test_str(self):
@@ -176,7 +176,8 @@ class TestRealScalars:
                     "87538682506419718265533447265625")
 
         # largest numbers
-        assert_equal(fpos32(np.finfo(np.float32).max, **preckwd(0)),
+        f32x = np.finfo(np.float32).max
+        assert_equal(fpos32(f32x, **preckwd(0)),
                     "340282346638528859811704183484516925440.")
         assert_equal(fpos64(np.finfo(np.float64).max, **preckwd(0)),
                     "1797693134862315708145274237317043567980705675258449965989"
@@ -186,9 +187,65 @@ class TestRealScalars:
                     "6580855933212334827479782620414472316873817718091929988125"
                     "0404026184124858368.")
         # Warning: In unique mode only the integer digits necessary for
-        # uniqueness are computed, the rest are 0. Should we change this?
-        assert_equal(fpos32(np.finfo(np.float32).max, precision=0),
+        # uniqueness are computed, the rest are 0.
+        assert_equal(fpos32(f32x),
                     "340282350000000000000000000000000000000.")
+
+        # Further tests of zero-padding vs rounding in different combinations
+        # of unique, fractional, precision, min_digits
+        # precision can only reduce digits, not add them.
+        # min_digits can only extend digits, not reduce them.
+        assert_equal(fpos32(f32x, unique=True, fractional=True, precision=0),
+                    "340282350000000000000000000000000000000.")
+        assert_equal(fpos32(f32x, unique=True, fractional=True, precision=4),
+                    "340282350000000000000000000000000000000.")
+        assert_equal(fpos32(f32x, unique=True, fractional=True, min_digits=0),
+                    "340282346638528859811704183484516925440.")
+        assert_equal(fpos32(f32x, unique=True, fractional=True, min_digits=4),
+                    "340282346638528859811704183484516925440.0000")
+        assert_equal(fpos32(f32x, unique=True, fractional=True,
+                                    min_digits=4, precision=4),
+                    "340282346638528859811704183484516925440.0000")
+        assert_raises(ValueError, fpos32, f32x, unique=True, fractional=False,
+                                          precision=0)
+        assert_equal(fpos32(f32x, unique=True, fractional=False, precision=4),
+                    "340300000000000000000000000000000000000.")
+        assert_equal(fpos32(f32x, unique=True, fractional=False, precision=20),
+                    "340282350000000000000000000000000000000.")
+        assert_equal(fpos32(f32x, unique=True, fractional=False, min_digits=4),
+                    "340282350000000000000000000000000000000.")
+        assert_equal(fpos32(f32x, unique=True, fractional=False,
+                                  min_digits=20),
+                    "340282346638528859810000000000000000000.")
+        assert_equal(fpos32(f32x, unique=True, fractional=False,
+                                  min_digits=15),
+                    "340282346638529000000000000000000000000.")
+        assert_equal(fpos32(f32x, unique=False, fractional=False, precision=4),
+                    "340300000000000000000000000000000000000.")
+        # test that unique rounding is preserved when precision is supplied
+        # but no extra digits need to be printed (gh-18609)
+        a = np.float64.fromhex('-1p-97')
+        assert_equal(fsci64(a, unique=True), '-6.310887241768095e-30')
+        assert_equal(fsci64(a, unique=False, precision=15),
+                     '-6.310887241768094e-30')
+        assert_equal(fsci64(a, unique=True, precision=15),
+                     '-6.310887241768095e-30')
+        assert_equal(fsci64(a, unique=True, min_digits=15),
+                     '-6.310887241768095e-30')
+        assert_equal(fsci64(a, unique=True, precision=15, min_digits=15),
+                     '-6.310887241768095e-30')
+        # adds/remove digits in unique mode with unbiased rnding
+        assert_equal(fsci64(a, unique=True, precision=14),
+                     '-6.31088724176809e-30')
+        assert_equal(fsci64(a, unique=True, min_digits=16),
+                     '-6.3108872417680944e-30')
+        assert_equal(fsci64(a, unique=True, precision=16),
+                     '-6.310887241768095e-30')
+        assert_equal(fsci64(a, unique=True, min_digits=14),
+                     '-6.310887241768095e-30')
+        # test min_digits in unique mode with different rounding cases
+        assert_equal(fsci64('1e120', min_digits=3), '1.000e+120')
+        assert_equal(fsci64('1e100', min_digits=3), '1.000e+100')
 
         # test trailing zeros
         assert_equal(fpos32('1.0', unique=False, precision=3), "1.000")
@@ -200,7 +257,9 @@ class TestRealScalars:
         assert_equal(fsci32('1.5', unique=False, precision=3), "1.500e+00")
         assert_equal(fsci64('1.5', unique=False, precision=3), "1.500e+00")
         # gh-10713
-        assert_equal(fpos64('324', unique=False, precision=5, fractional=False), "324.00")
+        assert_equal(fpos64('324', unique=False, precision=5,
+                                   fractional=False), "324.00")
+
 
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]

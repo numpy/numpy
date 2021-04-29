@@ -165,3 +165,56 @@ class TestParamEval():
         params = {}
         ret = crackfortran.param_eval(n, varsn, v, g_params, params)
         assert ret == '3.14_dp'
+
+class TestExternal(util.F2PyTest):
+    # issue gh-17859: add external attribute support
+    code = """
+        integer(8) function external_as_statement(fcn)
+        implicit none
+        external fcn
+        integer(8) :: fcn
+        external_as_statement = fcn(0)
+        end
+
+        integer(8) function external_as_attribute(fcn)
+        implicit none
+        integer(8), external :: fcn
+        external_as_attribute = fcn(0)
+        end
+    """
+
+    def test_external_as_statement(self):
+        def incr(x):
+            return x + 123
+        r = self.module.external_as_statement(incr)
+        assert r == 123
+
+    def test_external_as_attribute(self):
+        def incr(x):
+            return x + 123
+        r = self.module.external_as_attribute(incr)
+        assert r == 123
+
+class TestCrackFortran(util.F2PyTest):
+
+    suffix = '.f90'
+
+    code = textwrap.dedent("""
+      subroutine gh2848( &
+        ! first 2 parameters
+        par1, par2,&
+        ! last 2 parameters
+        par3, par4)
+
+        integer, intent(in)  :: par1, par2
+        integer, intent(out) :: par3, par4
+
+        par3 = par1
+        par4 = par2
+
+      end subroutine gh2848
+    """)
+
+    def test_gh2848(self):
+        r = self.module.gh2848(1, 2)
+        assert r == (1, 2)

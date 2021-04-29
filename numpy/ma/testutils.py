@@ -134,8 +134,8 @@ def assert_equal(actual, desired, err_msg=''):
         msg = build_err_msg([actual, desired],
                             err_msg, header='', names=('x', 'y'))
         raise ValueError(msg)
-    actual = np.array(actual, copy=False, subok=True)
-    desired = np.array(desired, copy=False, subok=True)
+    actual = np.asanyarray(actual)
+    desired = np.asanyarray(desired)
     (actual_dtype, desired_dtype) = (actual.dtype, desired.dtype)
     if actual_dtype.char == "S" and desired_dtype.char == "S":
         return _assert_equal_on_sequences(actual.tolist(),

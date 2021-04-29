@@ -223,8 +223,8 @@ where our object creation housekeeping usually goes.
   new ndarray instance of its own class.  In practice this means that
   we, the authors of the code, will need to make a call to
   ``ndarray.__new__(MySubClass,...)``, a class-hierarchy prepared call to
-  ``super(MySubClass, cls).__new__(cls, ...)``, or do view casting of an
-  existing array (see below)
+  ``super().__new__(cls, ...)``, or do view casting of an existing array
+  (see below)
 * For view casting and new-from-template, the equivalent of
   ``ndarray.__new__(MySubClass,...`` is called, at the C level.
 
@@ -240,7 +240,7 @@ The following code allows us to look at the call sequences and arguments:
    class C(np.ndarray):
        def __new__(cls, *args, **kwargs):
            print('In __new__ with class %s' % cls)
-           return super(C, cls).__new__(cls, *args, **kwargs)
+           return super().__new__(cls, *args, **kwargs)
 
        def __init__(self, *args, **kwargs):
            # in practice you probably will not need or want an __init__
@@ -312,9 +312,8 @@ Simple example - adding an extra attribute to ndarray
           # ndarray input arguments.  This will call the standard
           # ndarray constructor, but return an object of our type.
           # It also triggers a call to InfoArray.__array_finalize__
-          obj = super(InfoArray, subtype).__new__(subtype, shape, dtype,
-                                                  buffer, offset, strides,
-                                                  order)
+          obj = super().__new__(subtype, shape, dtype,
+                                buffer, offset, strides, order)
           # set the new 'info' attribute to the value passed
           obj.info = info
           # Finally, we must return the newly created object:
@@ -486,8 +485,7 @@ following.
             if out_no:
                 info['outputs'] = out_no
 
-            results = super(A, self).__array_ufunc__(ufunc, method,
-                                                     *args, **kwargs)
+            results = super().__array_ufunc__(ufunc, method, *args, **kwargs)
             if results is NotImplemented:
                 return NotImplemented
 
@@ -600,7 +598,7 @@ some print statements:
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return super(MySubClass, self).__array_wrap__(self, out_arr, context)
+          return super().__array_wrap__(self, out_arr, context)
 
 We run a ufunc on an instance of our new array:
 

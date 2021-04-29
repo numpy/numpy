@@ -267,7 +267,7 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (NPY_CPU_HAVE_UNALIGNED_ACCESS && needle == 0 && stride == 1) {
+        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {

@@ -46,30 +46,30 @@ Floating point classification
     corresponding single and extension precision macro are available with the
     suffix F and L.
 
-.. c:function:: int npy_isnan(x)
+.. c:macro:: npy_isnan(x)
 
     This is a macro, and is equivalent to C99 isnan: works for single, double
     and extended precision, and return a non 0 value is x is a NaN.
 
-.. c:function:: int npy_isfinite(x)
+.. c:macro:: npy_isfinite(x)
 
     This is a macro, and is equivalent to C99 isfinite: works for single,
     double and extended precision, and return a non 0 value is x is neither a
     NaN nor an infinity.
 
-.. c:function:: int npy_isinf(x)
+.. c:macro:: npy_isinf(x)
 
     This is a macro, and is equivalent to C99 isinf: works for single, double
     and extended precision, and return a non 0 value is x is infinite (positive
     and negative).
 
-.. c:function:: int npy_signbit(x)
+.. c:macro:: npy_signbit(x)
 
     This is a macro, and is equivalent to C99 signbit: works for single, double
     and extended precision, and return a non 0 value is x has the signbit set
     (that is the number is negative).
 
-.. c:function:: double npy_copysign(double x, double y)
+.. c:macro:: npy_copysign(x, y)
 
     This is a function equivalent to C99 copysign: return x with the same sign
     as y. Works for any value, including inf and nan. Single and extended

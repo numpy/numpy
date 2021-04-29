@@ -209,6 +209,16 @@ def unique(ar, return_index=False, return_inverse=False,
     flattened subarrays are sorted in lexicographic order starting with the
     first element.
 
+    .. versionchanged: NumPy 1.21
+        If nan values are in the input array, a single nan is put
+        to the end of the sorted unique values.
+
+        Also for complex arrays all NaN values are considered equivalent
+        (no matter whether the NaN is in the real or imaginary part).
+        As the representant for the returned array the smallest one in the
+        lexicographical order is chosen - see np.sort for how the lexicographical
+        order is defined for complex arrays.
+
     Examples
     --------
     >>> np.unique([1, 1, 2, 2, 3, 3])
@@ -324,7 +334,16 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
-    mask[1:] = aux[1:] != aux[:-1]
+    if aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
+        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+        else:
+            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
+        mask[1:aux_firstnan] = (aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
+        mask[aux_firstnan] = True
+        mask[aux_firstnan + 1:] = False
+    else:
+        mask[1:] = aux[1:] != aux[:-1]
 
     ret = (aux[mask],)
     if return_index:
@@ -564,6 +583,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
+
+    # Ensure that iteration through object arrays yields size-1 arrays
+    if ar2.dtype == object:
+        ar2 = ar2.reshape(-1, 1)
 
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject

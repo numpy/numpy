@@ -12,5 +12,5 @@ post your idea on the [numpy-discussion mailing list]
 (https://mail.python.org/mailman/listinfo/numpy-discussion) to explain your
 reasoning in addition to opening an issue or pull request. You can also check
 out our [Contributor Guide]
-(https://github.com/numpy/numpy/blob/master/doc/source/dev/index.rst) if you
+(https://github.com/numpy/numpy/blob/main/doc/source/dev/index.rst) if you
 need more information. -->

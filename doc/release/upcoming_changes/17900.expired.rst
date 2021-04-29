@@ -1,0 +1,2 @@
+* The ``shape`` argument `numpy.unravel_index` cannot be passed
+  as ``dims`` keyword argument anymore. (Was deprecated in NumPy 1.16.)

@@ -1,0 +1,9 @@
+{
+    "restructuredtext.languageServer.disabled": true,
+    "restructuredtext.builtDocumentationPath": "${workspaceRoot}/doc/build/html",
+    "restructuredtext.confPath": "",
+    "restructuredtext.updateOnTextChanged": "true",
+    "restructuredtext.updateDelay": 300,
+    "restructuredtext.linter.disabled": true,
+    "python.pythonPath": "/home/gitpod/mambaforge3/envs/numpy-dev/bin/python"
+}

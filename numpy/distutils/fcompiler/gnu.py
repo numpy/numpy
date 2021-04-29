@@ -32,7 +32,8 @@ class GnuFCompiler(FCompiler):
         """Handle the different versions of GNU fortran compilers"""
         # Strip warning(s) that may be emitted by gfortran
         while version_string.startswith('gfortran: warning'):
-            version_string = version_string[version_string.find('\n') + 1:]
+            version_string =\
+                version_string[version_string.find('\n') + 1:].strip()
 
         # Gfortran versions from after 2010 will output a simple string
         # (usually "x.y", "x.y.z" or "x.y.z-q") for ``-dumpversion``; older
@@ -126,7 +127,7 @@ class GnuFCompiler(FCompiler):
                     target = '10.9'
                     s = f'Env. variable MACOSX_DEPLOYMENT_TARGET set to {target}'
                     warnings.warn(s, stacklevel=2)
-                os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = str(target)
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")

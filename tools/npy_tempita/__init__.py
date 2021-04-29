@@ -705,7 +705,7 @@ lead_whitespace_re = re.compile(r'^[\t ]*\n')
 
 def trim_lex(tokens):
     r"""
-    Takes a lexed set of tokens, and removes whitespace when there is
+    Takes a lexed list of tokens, and removes whitespace when there is
     a directive on a line by itself:
 
        >>> tokens = lex('{{if x}}\nx\n{{endif}}\ny', trim_whitespace=False)

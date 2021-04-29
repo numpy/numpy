@@ -782,7 +782,9 @@ class TestRegression:
         # Ticket #514
         s = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         t = []
-        np.hstack((t, s))
+        with pytest.warns(FutureWarning,
+                match="Promotion of numbers and bools to strings"):
+            np.hstack((t, s))
 
     def test_arr_transpose(self):
         # Ticket #516
@@ -1531,7 +1533,7 @@ class TestRegression:
             np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
-        dtypes = [x for x in np.typeDict.values()
+        dtypes = [x for x in np.sctypeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
         a = np.array([], np.bool_)  # not x[0] because it is unordered
@@ -1748,7 +1750,7 @@ class TestRegression:
             # it is designed to simulate an old API
             # expectation to guard against regression
             def squeeze(self):
-                return super(OldSqueeze, self).squeeze()
+                return super().squeeze()
 
         oldsqueeze = OldSqueeze(np.array([[1],[2],[3]]))
 
@@ -2102,7 +2104,8 @@ class TestRegression:
         assert_raises(TypeError, np.searchsorted, a, 1.2)
         # Ticket #2066, similar problem:
         dtype = np.format_parser(['i4', 'i4'], [], [])
-        a = np.recarray((2, ), dtype)
+        a = np.recarray((2,), dtype)
+        a[...] = [(1, 2), (3, 4)]
         assert_raises(TypeError, np.searchsorted, a, 1)
 
     def test_complex64_alignment(self):
@@ -2332,7 +2335,7 @@ class TestRegression:
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set
-        all_types = set(np.typeDict.values()) - {np.void}
+        all_types = set(np.sctypeDict.values()) - {np.void}
         for t in all_types:
             val = t()
 
@@ -2524,3 +2527,36 @@ class TestRegression:
 
         f = np.frompyfunc(cassé, 1, 1)
         assert str(f) == "<ufunc 'cassé (vectorized)'>"
+
+    @pytest.mark.parametrize("operation", [
+        'add', 'subtract', 'multiply', 'floor_divide',
+        'conjugate', 'fmod', 'square', 'reciprocal',
+        'power', 'absolute', 'negative', 'positive',
+        'greater', 'greater_equal', 'less',
+        'less_equal', 'equal', 'not_equal', 'logical_and',
+        'logical_not', 'logical_or', 'bitwise_and', 'bitwise_or',
+        'bitwise_xor', 'invert', 'left_shift', 'right_shift',
+        'gcd', 'lcm'
+        ]
+    )
+    @pytest.mark.parametrize("order", [
+        ('b->', 'B->'),
+        ('h->', 'H->'),
+        ('i->', 'I->'),
+        ('l->', 'L->'),
+        ('q->', 'Q->'),
+        ]
+    )
+    def test_ufunc_order(self, operation, order):
+        # gh-18075
+        # Ensure signed types before unsigned
+        def get_idx(string, str_lst):
+            for i, s in enumerate(str_lst):
+                if string in s:
+                    return i
+            raise ValueError(f"{string} not in list")
+        types = getattr(np, operation).types
+        assert get_idx(order[0], types) < get_idx(order[1], types), (
+                f"Unexpected types order of ufunc in {operation}"
+                f"for {order}. Possible fix: Use signed before unsigned"
+                "in generate_umath.py")

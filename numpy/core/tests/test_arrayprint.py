@@ -45,7 +45,7 @@ class TestArrayRepr:
                 return obj
 
             def __getitem__(self, ind):
-                ret = super(sub, self).__getitem__(ind)
+                ret = super().__getitem__(ind)
                 return sub(ret)
 
         # test that object + subclass is OK:
@@ -67,7 +67,7 @@ class TestArrayRepr:
                 return obj
 
             def __getitem__(self, ind):
-                ret = super(sub, self).__getitem__(ind)
+                ret = super().__getitem__(ind)
                 return sub(ret)
 
         x = sub(1)
@@ -101,7 +101,7 @@ class TestArrayRepr:
         # gh-10663
         class DuckCounter(np.ndarray):
             def __getitem__(self, item):
-                result = super(DuckCounter, self).__getitem__(item)
+                result = super().__getitem__(item)
                 if not isinstance(result, DuckCounter):
                     result = result[...].view(DuckCounter)
                 return result
@@ -759,6 +759,10 @@ class TestPrintOptions:
         assert_equal(repr(c),
             "array([1.00000000+1.00000000j, 1.12345679+1.12345679j])")
 
+        # test unique special case (gh-18609)
+        a = np.float64.fromhex('-1p-97')
+        assert_equal(np.float64(np.array2string(a, floatmode='unique')), a)
+
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
         # use * for non-finite imaginary part
@@ -922,6 +926,9 @@ class TestPrintOptions:
         assert_raises(ValueError, np.set_printoptions, threshold=float('nan'))
         assert_raises(TypeError, np.set_printoptions, threshold='1')
         assert_raises(TypeError, np.set_printoptions, threshold=b'1')
+
+        assert_raises(TypeError, np.set_printoptions, precision='1')
+        assert_raises(TypeError, np.set_printoptions, precision=1.5)
 
 def test_unicode_object_array():
     expected = "array(['é'], dtype=object)"

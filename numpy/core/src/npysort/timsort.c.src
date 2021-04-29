@@ -507,9 +507,7 @@ timsort_@suff@(void *start, npy_intp num, void *NPY_UNUSED(varr))
     ret = 0;
 cleanup:
 
-    if (buffer.pw != NULL) {
-        free(buffer.pw);
-    }
+    free(buffer.pw);
 
     return ret;
 }

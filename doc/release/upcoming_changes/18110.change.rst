@@ -1,0 +1,5 @@
+`numpy.piecewise` output class now matches the input class
+----------------------------------------------------------
+When `numpy.ndarray` subclasses are used on input to `numpy.piecewise`,
+they are passed on to the functions. The output will now be of the
+same subclass as well.

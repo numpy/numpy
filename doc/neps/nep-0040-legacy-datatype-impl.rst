@@ -6,7 +6,7 @@ NEP 40 — Legacy Datatype Implementation in NumPy
 
 :title: Legacy Datatype Implementation in NumPy
 :Author: Sebastian Berg
-:Status: Draft
+:Status: Final
 :Type: Informational
 :Created: 2019-07-17
 

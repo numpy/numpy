@@ -1,2 +1,0 @@
-* The 14-year deprecation of ``np.ctypeslib.ctypes_load_library`` is expired.
-  Use :func:`~numpy.ctypeslib.load_library` instead, which is identical.

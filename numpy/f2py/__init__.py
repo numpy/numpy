@@ -20,7 +20,8 @@ def compile(source,
             extra_args='',
             verbose=True,
             source_fn=None,
-            extension='.f'
+            extension='.f',
+            full_output=False
            ):
     """
     Build extension module from a Fortran 77 source string with f2py.
@@ -54,10 +55,19 @@ def compile(source,
 
         .. versionadded:: 1.11.0
 
+    full_output : bool, optional
+        If True, return a `subprocess.CompletedProcess` containing
+        the stdout and stderr of the compile process, instead of just
+        the status code.
+
+        .. versionadded:: 1.20.0
+
+
     Returns
     -------
-    result : int
-        0 on success
+    result : int or `subprocess.CompletedProcess`
+        0 on success, or a `subprocess.CompletedProcess` if
+        ``full_output=True``
 
     Examples
     --------
@@ -94,23 +104,22 @@ def compile(source,
              '-c',
              'import numpy.f2py as f2py2e;f2py2e.main()'] + args
         try:
-            output = subprocess.check_output(c)
-        except subprocess.CalledProcessError as exc:
-            status = exc.returncode
-            output = ''
+            cp = subprocess.run(c, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
         except OSError:
             # preserve historic status code used by exec_command()
-            status = 127
-            output = ''
+            cp = subprocess.CompletedProcess(c, 127, stdout=b'', stderr=b'')
         else:
-            status = 0
-            output = output.decode()
-        if verbose:
-            print(output)
+            if verbose:
+                print(cp.stdout.decode())
     finally:
         if source_fn is None:
             os.remove(fname)
-    return status
+
+    if full_output:
+        return cp
+    else:
+        return cp.returncode
 
 
 if sys.version_info[:2] >= (3, 7):

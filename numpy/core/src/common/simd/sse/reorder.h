@@ -81,4 +81,45 @@ NPYV_IMPL_SSE_ZIP(npyv_s64, s64, epi64)
 NPYV_IMPL_SSE_ZIP(npyv_f32, f32, ps)
 NPYV_IMPL_SSE_ZIP(npyv_f64, f64, pd)
 
+// Reverse elements of each 64-bit lane
+NPY_FINLINE npyv_u16 npyv_rev64_u16(npyv_u16 a)
+{
+#ifdef NPY_HAVE_SSSE3
+    const __m128i idx = _mm_setr_epi8(
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9
+    );
+    return _mm_shuffle_epi8(a, idx);
+#else
+    __m128i lo = _mm_shufflelo_epi16(a, _MM_SHUFFLE(0, 1, 2, 3));
+    return _mm_shufflehi_epi16(lo, _MM_SHUFFLE(0, 1, 2, 3));
+#endif
+}
+#define npyv_rev64_s16 npyv_rev64_u16
+
+NPY_FINLINE npyv_u8 npyv_rev64_u8(npyv_u8 a)
+{
+#ifdef NPY_HAVE_SSSE3
+    const __m128i idx = _mm_setr_epi8(
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8
+    );
+    return _mm_shuffle_epi8(a, idx);
+#else
+    __m128i rev16 = npyv_rev64_u16(a);
+    // swap 8bit pairs
+    return _mm_or_si128(_mm_slli_epi16(rev16, 8), _mm_srli_epi16(rev16, 8));
+#endif
+}
+#define npyv_rev64_s8 npyv_rev64_u8
+
+NPY_FINLINE npyv_u32 npyv_rev64_u32(npyv_u32 a)
+{
+    return _mm_shuffle_epi32(a, _MM_SHUFFLE(2, 3, 0, 1));
+}
+#define npyv_rev64_s32 npyv_rev64_u32
+
+NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
+{
+    return _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1));
+}
+
 #endif // _NPY_SIMD_SSE_REORDER_H

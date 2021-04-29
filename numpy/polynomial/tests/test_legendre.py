@@ -305,6 +305,9 @@ class TestIntegral:
         res = leg.legint(c2d, k=3, axis=1)
         assert_almost_equal(res, tgt)
 
+    def test_legint_zerointord(self):
+        assert_equal(leg.legint((1, 2, 3), 0), (1, 2, 3))
+
 
 class TestDerivative:
 
@@ -345,6 +348,9 @@ class TestDerivative:
         res = leg.legder(c2d, axis=1)
         assert_almost_equal(res, tgt)
 
+    def test_legder_orderhigherthancoeff(self):
+        c = (1, 2, 3, 4)
+        assert_equal(leg.legder(c, 4), [0])
 
 class TestVander:
     # some random values in [-1, 1)
@@ -392,6 +398,9 @@ class TestVander:
         # check shape
         van = leg.legvander3d([x1], [x2], [x3], [1, 2, 3])
         assert_(van.shape == (1, 5, 24))
+
+    def test_legvander_negdeg(self):
+        assert_raises(ValueError, leg.legvander, (1, 2, 3), -1)
 
 
 class TestFitting:
@@ -540,6 +549,9 @@ class TestMisc:
 
     def test_legline(self):
         assert_equal(leg.legline(3, 4), [3, 4])
+
+    def test_legline_zeroscl(self):
+        assert_equal(leg.legline(3, 0), [3])
 
     def test_leg2poly(self):
         for i in range(10):

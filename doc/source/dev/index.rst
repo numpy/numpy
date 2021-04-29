@@ -11,7 +11,9 @@ Contributing to NumPy
 
    Git Basics <gitwash/index>
    development_environment
+   development_gitpod
    development_workflow
+   development_advanced_debugging
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
    releasing
@@ -77,8 +79,8 @@ Here's the short summary, complete TOC links are below:
 
    * Pull the latest changes from upstream::
 
-      git checkout master
-      git pull upstream master
+      git checkout main
+      git pull upstream main
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
@@ -172,13 +174,13 @@ Here's the short summary, complete TOC links are below:
 For a more detailed discussion, read on and follow the links at the bottom of
 this page.
 
-Divergence between ``upstream/master`` and your feature branch
---------------------------------------------------------------
+Divergence between ``upstream/main`` and your feature branch
+------------------------------------------------------------
 
 If GitHub indicates that the branch of your Pull Request can no longer
 be merged automatically, you have to incorporate changes that have been made
 since you started into your branch. Our recommended way to do this is to
-:ref:`rebase on master<rebasing-on-master>`.
+:ref:`rebase on main <rebasing-on-main>`.
 
 .. _guidelines:
 
@@ -301,7 +303,9 @@ The rest of the story
 
    Git Basics <gitwash/index>
    development_environment
+   development_gitpod
    development_workflow
+   development_advanced_debugging
    reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>

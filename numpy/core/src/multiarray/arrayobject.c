@@ -434,7 +434,9 @@ array_dealloc(PyArrayObject *self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
-    _dealloc_cached_buffer_info((PyObject*)self);
+    if (_buffer_info_free(fa->_buffer_info, (PyObject *)self) < 0) {
+        PyErr_WriteUnraisable(NULL);
+    }
 
     if (fa->weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *)self);
@@ -1354,11 +1356,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     switch (cmp_op) {
     case Py_LT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other, n_ops.less);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.less);
         break;
     case Py_LE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other, n_ops.less_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.less_equal);
         break;
     case Py_EQ:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1408,9 +1412,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        result = PyArray_GenericBinaryFunction(self,
-                (PyObject *)other,
-                n_ops.equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, (PyObject *)other, n_ops.equal);
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1460,18 +1463,18 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
-                n_ops.not_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.greater);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.greater);
         break;
     case Py_GE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.greater_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.greater_equal);
         break;
     default:
         Py_INCREF(Py_NotImplemented);
@@ -1745,17 +1748,13 @@ array_free(PyObject * v)
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.ndarray",
-    .tp_basicsize = NPY_SIZEOF_PYARRAYOBJECT,
+    .tp_basicsize = sizeof(PyArrayObject_fields),
     /* methods */
     .tp_dealloc = (destructor)array_dealloc,
     .tp_repr = (reprfunc)array_repr,
     .tp_as_number = &array_as_number,
     .tp_as_sequence = &array_as_sequence,
     .tp_as_mapping = &array_as_mapping,
-    /*
-     * The tp_hash slot will be set PyObject_HashNotImplemented when the
-     * module is loaded.
-     */
     .tp_str = (reprfunc)array_str,
     .tp_as_buffer = &array_as_buffer,
     .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),

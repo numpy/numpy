@@ -398,8 +398,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ * #kind = atan2,hypot,pow,copysign#
+ * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
@@ -407,6 +407,32 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #ifndef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
+    return (@type@) npy_@kind@((double)x, (double) y);
+}
+#endif
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmod#
+ * #KIND = FMOD#
+ */
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifndef HAVE_MODF@C@
+NPY_INPLACE @type@
+npy_@kind@@c@(@type@ x, @type@ y)
+{
+    int are_inputs_inf = (npy_isinf(x) && npy_isinf(y));
+    /* force set invalid flag, doesnt raise by default on gcc < 8 */
+    if (npy_isnan(x) || npy_isnan(y)) {
+        npy_set_floatstatus_invalid();
+    }
+    if (are_inputs_inf || !y) {
+        if (!npy_isnan(x)) {
+            npy_set_floatstatus_invalid();
+        }
+    }
     return (@type@) npy_@kind@((double)x, (double) y);
 }
 #endif
@@ -473,12 +499,35 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ * #kind = atan2,hypot,pow,copysign#
+ * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
  */
 #ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
+    return @kind@@c@(x, y);
+}
+#endif
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmod#
+ * #KIND = FMOD#
+ */
+#ifdef HAVE_FMOD@C@
+NPY_INPLACE @type@
+npy_@kind@@c@(@type@ x, @type@ y)
+{
+    int are_inputs_inf = (npy_isinf(x) && npy_isinf(y));
+    /* force set invalid flag, doesnt raise by default on gcc < 8 */
+    if (npy_isnan(x) || npy_isnan(y)) {
+        npy_set_floatstatus_invalid();
+    }
+    if (are_inputs_inf || !y) {
+        if (!npy_isnan(x)) {
+            npy_set_floatstatus_invalid();
+        }
+    }
     return @kind@@c@(x, y);
 }
 #endif
@@ -625,6 +674,38 @@ NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 }
 
 /*
+ * Wrapper function for remainder edge cases
+ * Internally calls npy_divmod*
+ */
+NPY_INPLACE @type@
+npy_remainder@c@(@type@ a, @type@ b)
+{
+    @type@ mod;
+    if (NPY_UNLIKELY(!b)) {
+        mod = npy_fmod@c@(a, b);
+    } else {
+        npy_divmod@c@(a, b, &mod);
+    }
+    return mod;
+}
+
+NPY_INPLACE @type@
+npy_floor_divide@c@(@type@ a, @type@ b) {
+    @type@ div, mod;
+    if (NPY_UNLIKELY(!b)) {
+        div = a / b;
+        if (!a || npy_isnan(a)) {
+            npy_set_floatstatus_invalid();
+        } else {
+            npy_set_floatstatus_divbyzero();
+        }
+    } else {
+        div = npy_divmod@c@(a, b, &mod);
+    }
+    return div;
+}
+
+/*
  * Python version of divmod.
  *
  * The implementation is mostly copied from cpython 3.5.
@@ -634,12 +715,19 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 {
     @type@ div, mod, floordiv;
 
+    /* force set invalid flag, doesnt raise by default on gcc < 8 */
+    if (npy_isnan(a) || npy_isnan(b)) {
+        npy_set_floatstatus_invalid();
+    }
     mod = npy_fmod@c@(a, b);
-
-    if (!b) {
+    if (NPY_UNLIKELY(!b)) {
+        div = a / b;
+        if (a && !npy_isnan(a)) {
+            npy_set_floatstatus_divbyzero();
+        }
         /* If b == 0, return result of fmod. For IEEE is nan */
         *modulus = mod;
-        return mod;
+        return div;
     }
 
     /* a - mod should be very nearly an integer multiple of b */

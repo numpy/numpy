@@ -1,14 +1,13 @@
 .. _reference:
 
+.. module:: numpy
+
 ###############
 NumPy Reference
 ###############
 
 :Release: |version|
 :Date: |today|
-
-
-.. module:: numpy
 
 This reference manual details functions, modules, and objects
 included in NumPy, describing what they are and what they do.

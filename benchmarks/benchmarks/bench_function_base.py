@@ -47,6 +47,8 @@ class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
+        self.tall = np.random.random((10000, 20))
+        self.wide = np.random.random((20, 10000))
 
     def time_even(self):
         np.median(self.e)
@@ -65,6 +67,12 @@ class Median(Benchmark):
 
     def time_odd_small(self):
         np.median(self.o[:500], overwrite_input=True)
+
+    def time_tall(self):
+        np.median(self.tall, axis=-1)
+
+    def time_wide(self):
+        np.median(self.wide, axis=0)
 
 
 class Percentile(Benchmark):

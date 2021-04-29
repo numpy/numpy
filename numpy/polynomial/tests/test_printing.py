@@ -85,7 +85,7 @@ class TestStrUnicodeSuperSubscripts:
 class TestStrAscii:
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_unicode(self):
+    def use_ascii(self):
         poly.set_default_printstyle('ascii')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -161,7 +161,10 @@ class TestStrAscii:
 
 
 class TestLinebreaking:
-    poly.set_default_printstyle('ascii')
+
+    @pytest.fixture(scope='class', autouse=True)
+    def use_ascii(self):
+        poly.set_default_printstyle('ascii')
 
     def test_single_line_one_less(self):
         # With 'ascii' style, len(str(p)) is default linewidth - 1 (i.e. 74)
@@ -283,19 +286,19 @@ def test_nonnumeric_object_coefficients(coefs, tgt):
 
 class TestFormat:
     def test_format_unicode(self):
-        poly.Polynomial._use_unicode = False
+        poly.set_default_printstyle('ascii')
         p = poly.Polynomial([1, 2, 0, -1])
         assert_equal(format(p, 'unicode'), "1.0 + 2.0·x¹ + 0.0·x² - 1.0·x³")
 
     def test_format_ascii(self):
-        poly.Polynomial._use_unicode = True
+        poly.set_default_printstyle('unicode')
         p = poly.Polynomial([1, 2, 0, -1])
         assert_equal(
             format(p, 'ascii'), "1.0 + 2.0 x**1 + 0.0 x**2 - 1.0 x**3"
         )
 
     def test_empty_formatstr(self):
-        poly.Polynomial._use_unicode = False
+        poly.set_default_printstyle('ascii')
         p = poly.Polynomial([1, 2, 3])
         assert_equal(format(p), "1.0 + 2.0 x**1 + 3.0 x**2")
         assert_equal(f"{p}", "1.0 + 2.0 x**1 + 3.0 x**2")

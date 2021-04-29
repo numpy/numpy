@@ -1,0 +1,10 @@
+Improve performance of ``np.save`` and ``np.load`` for small arrays
+-------------------------------------------------------------------
+``np.save`` is now a lot faster for small arrays.
+
+``np.load`` is also faster for small arrays,
+but only when serializing with a version >= `(3, 0)`.
+
+Both are done by removing checks that are only relevant for Python 2,
+while still maintaining compatibility with arrays
+which might have been created by Python 2.

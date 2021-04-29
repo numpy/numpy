@@ -28,19 +28,18 @@ class SubArray(np.ndarray):
         return x
 
     def __array_finalize__(self, obj):
-        if callable(getattr(super(SubArray, self),
-                            '__array_finalize__', None)):
-            super(SubArray, self).__array_finalize__(obj)
+        if callable(getattr(super(), '__array_finalize__', None)):
+            super().__array_finalize__(obj)
         self.info = getattr(obj, 'info', {}).copy()
         return
 
     def __add__(self, other):
-        result = super(SubArray, self).__add__(other)
+        result = super().__add__(other)
         result.info['added'] = result.info.get('added', 0) + 1
         return result
 
     def __iadd__(self, other):
-        result = super(SubArray, self).__iadd__(other)
+        result = super().__iadd__(other)
         result.info['iadded'] = result.info.get('iadded', 0) + 1
         return result
 
@@ -51,7 +50,7 @@ subarray = SubArray
 class SubMaskedArray(MaskedArray):
     """Pure subclass of MaskedArray, keeping some info on subclass."""
     def __new__(cls, info=None, **kwargs):
-        obj = super(SubMaskedArray, cls).__new__(cls, **kwargs)
+        obj = super().__new__(cls, **kwargs)
         obj._optinfo['info'] = info
         return obj
 
@@ -123,12 +122,11 @@ class ComplicatedSubArray(SubArray):
     def __setitem__(self, item, value):
         # validation ensures direct assignment with ndarray or
         # masked_print_option will fail
-        super(ComplicatedSubArray, self).__setitem__(
-            item, self._validate_input(value))
+        super().__setitem__(item, self._validate_input(value))
 
     def __getitem__(self, item):
         # ensure getter returns our own class also for scalars
-        value = super(ComplicatedSubArray, self).__getitem__(item)
+        value = super().__getitem__(item)
         if not isinstance(value, np.ndarray):  # scalar
             value = value.__array__().view(ComplicatedSubArray)
         return value
@@ -143,7 +141,7 @@ class ComplicatedSubArray(SubArray):
         y[:] = value
 
     def __array_wrap__(self, obj, context=None):
-        obj = super(ComplicatedSubArray, self).__array_wrap__(obj, context)
+        obj = super().__array_wrap__(obj, context)
         if context is not None and context[0] is np.multiply:
             obj.info['multiplied'] = obj.info.get('multiplied', 0) + 1
 

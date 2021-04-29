@@ -93,6 +93,12 @@ class Core(Benchmark):
     def time_tril_l10x10(self):
         np.tril(self.l10x10)
 
+    def time_triu_indices_500(self):
+        np.triu_indices(500)
+
+    def time_tril_indices_500(self):
+        np.tril_indices(500)
+
 
 class Temporaries(Benchmark):
     def setup(self):
@@ -136,7 +142,7 @@ class CountNonzero(Benchmark):
     params = [
         [1, 2, 3],
         [100, 10000, 1000000],
-        [bool, int, str, object]
+        [bool, np.int8, np.int16, np.int32, np.int64, str, object]
     ]
 
     def setup(self, numaxes, size, dtype):
@@ -164,6 +170,9 @@ class PackBits(Benchmark):
 
     def time_packbits(self, dtype):
         np.packbits(self.d)
+
+    def time_packbits_little(self, dtype):
+        np.packbits(self.d, bitorder="little")
 
     def time_packbits_axis0(self, dtype):
         np.packbits(self.d2, axis=0)

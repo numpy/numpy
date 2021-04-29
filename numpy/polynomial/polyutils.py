@@ -509,7 +509,7 @@ def _fromroots(line_f, mul_f, roots):
         The ``<type>line`` function, such as ``polyline``
     mul_f : function(array_like, array_like) -> ndarray
         The ``<type>mul`` function, such as ``polymul``
-    roots :
+    roots
         See the ``<type>fromroots`` functions for more detail
     """
     if len(roots) == 0:
@@ -537,7 +537,7 @@ def _valnd(val_f, c, *args):
     ----------
     val_f : function(array_like, array_like, tensor: bool) -> array_like
         The ``<type>val`` function, such as ``polyval``
-    c, args :
+    c, args
         See the ``<type>val<n>d`` functions for more detail
     """
     args = [np.asanyarray(a) for a in args]
@@ -567,7 +567,7 @@ def _gridnd(val_f, c, *args):
     ----------
     val_f : function(array_like, array_like, tensor: bool) -> array_like
         The ``<type>val`` function, such as ``polyval``
-    c, args :
+    c, args
         See the ``<type>grid<n>d`` functions for more detail
     """
     for xi in args:
@@ -586,7 +586,7 @@ def _div(mul_f, c1, c2):
     ----------
     mul_f : function(array_like, array_like) -> array_like
         The ``<type>mul`` function, such as ``polymul``
-    c1, c2 :
+    c1, c2
         See the ``<type>div`` functions for more detail
     """
     # c1, c2 are trimmed copies
@@ -646,7 +646,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     ----------
     vander_f : function(array_like, int) -> ndarray
         The 1d vander function, such as ``polyvander``
-    c1, c2 :
+    c1, c2
         See the ``<type>fit`` functions for more detail
     """
     x = np.asarray(x) + 0.0
@@ -732,12 +732,12 @@ def _pow(mul_f, c, pow, maxpower):
 
     Parameters
     ----------
-    vander_f : function(array_like, int) -> ndarray
-        The 1d vander function, such as ``polyvander``
-    pow, maxpower :
-        See the ``<type>pow`` functions for more detail
     mul_f : function(array_like, array_like) -> ndarray
         The ``<type>mul`` function, such as ``polymul``
+    c : array_like
+        1-D array of array of series coefficients
+    pow, maxpower
+        See the ``<type>pow`` functions for more detail
     """
     # c is a trimmed copy
     [c] = as_series([c])

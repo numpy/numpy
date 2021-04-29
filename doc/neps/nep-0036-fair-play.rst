@@ -48,7 +48,7 @@ identifying the problematic release, locating alterations,
 and determining an appropriate course of action.
 
 During a community call on `October 16th, 2019
-<https://github.com/numpy/archive/blob/master/status_meetings/status-2019-10-16.md>`__
+<https://github.com/numpy/archive/blob/main/status_meetings/status-2019-10-16.md>`__
 the community resolved to draft guidelines on the distribution of
 modified NumPy versions.
 
@@ -129,7 +129,7 @@ Fair play rules
    discussion on the mailing list before monkeypatching NumPy.
 
 Questions and answers
--------------------
+---------------------
 
 **Q:** We would like to distribute an optimized version of NumPy that
 utilizes special instructions for our company's CPU.  You recommend

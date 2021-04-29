@@ -4,7 +4,7 @@ import re
 import sys
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '2.2.0'
+needs_sphinx = '3.2.0'
 
 
 # This is a nasty hack to use platform-agnostic names for types in the
@@ -94,11 +94,12 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-master_doc = 'contents'
+# Will change to `root_doc` in Sphinx 4
+master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2020, The SciPy community'
+copyright = '2008-2021, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -138,13 +139,18 @@ add_function_parentheses = False
 # output. They are ignored by default.
 #show_authors = False
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
-
 def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
     app.add_lexer('NumPyC', NumPyLexer)
+
+# While these objects do have type `module`, the names are aliases for modules
+# elsewhere. Sphinx does not support referring to modules by an aliases name,
+# so we make the alias look like a "real" module for it.
+# If we deemed it desirable, we could in future make these real modules, which
+# would make `from numpy.char import split` work.
+sys.modules['numpy.char'] = numpy.char
+sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -154,7 +160,10 @@ html_theme = 'pydata_sphinx_theme'
 
 html_logo = '_static/numpylogo.svg'
 
+html_favicon = '_static/favicon/favicon.ico'
+
 html_theme_options = {
+  "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
 }
@@ -280,11 +289,12 @@ intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('https://matplotlib.org', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
 }
 
 
@@ -437,7 +447,7 @@ def linkcode_resolve(domain, info):
         linespec = ""
 
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
            fn, linespec)
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (

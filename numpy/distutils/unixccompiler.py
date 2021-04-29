@@ -3,6 +3,8 @@ unixccompiler - can handle very long argument lists for ar.
 
 """
 import os
+import sys
+import subprocess
 
 from distutils.errors import CompileError, DistutilsExecError, LibError
 from distutils.unixccompiler import UnixCCompiler
@@ -52,10 +54,15 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
                    extra_postargs, display = display)
     except DistutilsExecError as e:
         msg = str(e)
-        raise CompileError(msg)
+        raise CompileError(msg) from None
 
     # add commandline flags to dependency file
     if deps:
+        # After running the compiler, the file created will be in EBCDIC
+        # but will not be tagged as such. This tags it so the file does not
+        # have multiple different encodings being written to it
+        if sys.platform == 'zos':
+            subprocess.check_output(['chtag', '-tc', 'IBM1047', obj + '.d'])
         with open(obj + '.d', 'a') as f:
             f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
 
@@ -124,7 +131,7 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
                            display = display)
             except DistutilsExecError as e:
                 msg = str(e)
-                raise LibError(msg)
+                raise LibError(msg) from None
     else:
         log.debug("skipping %s (up-to-date)", output_filename)
     return

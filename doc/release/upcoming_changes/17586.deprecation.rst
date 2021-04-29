@@ -1,0 +1,7 @@
+``np.typeDict`` has been formally deprecated
+--------------------------------------------
+``np.typeDict`` is a deprecated alias for ``np.sctypeDict`` and
+has been so for over 14 years (6689502_).
+A deprecation warning will now be issued whenever getting ``np.typeDict``.
+
+.. _6689502: https://github.com/numpy/numpy/commit/668950285c407593a368336ff2e737c5da84af7d

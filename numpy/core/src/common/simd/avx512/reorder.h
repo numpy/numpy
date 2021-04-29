@@ -167,4 +167,60 @@ NPY_FINLINE npyv_f64x2 npyv_zip_f64(__m512d a, __m512d b)
     return r;
 }
 
+// Reverse elements of each 64-bit lane
+NPY_FINLINE npyv_u8 npyv_rev64_u8(npyv_u8 a)
+{
+#ifdef NPY_HAVE_AVX512BW
+    const __m512i idx = npyv_set_u8(
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8,
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8,
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8,
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8
+    );
+    return _mm512_shuffle_epi8(a, idx);
+#else
+    const __m256i idx = _mm256_setr_epi8(
+        7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8,
+        7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8
+    );
+    __m256i lo = _mm256_shuffle_epi8(npyv512_lower_si256(a),  idx);
+    __m256i hi = _mm256_shuffle_epi8(npyv512_higher_si256(a), idx);
+    return npyv512_combine_si256(lo, hi);
+#endif
+}
+#define npyv_rev64_s8 npyv_rev64_u8
+
+NPY_FINLINE npyv_u16 npyv_rev64_u16(npyv_u16 a)
+{
+#ifdef NPY_HAVE_AVX512BW
+    const __m512i idx = npyv_set_u8(
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9,
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9,
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9,
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9
+    );
+    return _mm512_shuffle_epi8(a, idx);
+#else
+    const __m256i idx = _mm256_setr_epi8(
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9,
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9
+    );
+    __m256i lo = _mm256_shuffle_epi8(npyv512_lower_si256(a),  idx);
+    __m256i hi = _mm256_shuffle_epi8(npyv512_higher_si256(a), idx);
+    return npyv512_combine_si256(lo, hi);
+#endif
+}
+#define npyv_rev64_s16 npyv_rev64_u16
+
+NPY_FINLINE npyv_u32 npyv_rev64_u32(npyv_u32 a)
+{
+    return _mm512_shuffle_epi32(a, _MM_SHUFFLE(2, 3, 0, 1));
+}
+#define npyv_rev64_s32 npyv_rev64_u32
+
+NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
+{
+    return _mm512_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1));
+}
+
 #endif // _NPY_SIMD_AVX512_REORDER_H

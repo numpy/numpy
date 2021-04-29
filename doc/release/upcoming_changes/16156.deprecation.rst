@@ -1,5 +1,0 @@
-Deprecation of `numpy.dual`
----------------------------
-The module `numpy.dual` is deprecated.  Instead of importing functions
-from `numpy.dual`, the functions should be imported directly from NumPy
-or SciPy.

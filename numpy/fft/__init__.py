@@ -200,8 +200,12 @@ For examples, see the various functions.
 
 """
 
+from . import _pocketfft, helper
 from ._pocketfft import *
 from .helper import *
+
+__all__ = _pocketfft.__all__.copy()
+__all__ += helper.__all__
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

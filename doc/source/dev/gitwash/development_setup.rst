@@ -100,8 +100,8 @@ Make the local copy
 #. Set up your repository so ``git pull`` pulls from ``upstream`` by
    default: ::
 
-    git config branch.master.remote upstream
-    git config branch.master.merge refs/heads/master
+    git config branch.main.remote upstream
+    git config branch.main.merge refs/heads/main
 
 ******************************************************************************
 Look it over
@@ -109,17 +109,17 @@ Look it over
 
 #. The branches shown by ``git branch -a`` will include
 
-   - the ``master`` branch you just cloned on your own machine
-   - the ``master`` branch from your fork on GitHub, which git named
+   - the ``main`` branch you just cloned on your own machine
+   - the ``main`` branch from your fork on GitHub, which git named
      ``origin`` by default
-   - the ``master`` branch on the the main NumPy repo, which you named
+   - the ``main`` branch on the the main NumPy repo, which you named
      ``upstream``.
 
    ::
 
-     master
-     remotes/origin/master
-     remotes/upstream/master
+     main
+     remotes/origin/main
+     remotes/upstream/main
 
    If ``upstream`` isn't there, it will be added after you access the
    NumPy repo with a command like ``git fetch`` or ``git pull``.
@@ -139,8 +139,8 @@ Look it over
     user.name=Your Name
     remote.origin.url=git@github.com:your-github-id/numpy.git
     remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
-    branch.master.remote=upstream
-    branch.master.merge=refs/heads/master
+    branch.main.remote=upstream
+    branch.main.merge=refs/heads/main
     remote.upstream.url=https://github.com/numpy/numpy.git
     remote.upstream.fetch=+refs/heads/*:refs/remotes/upstream/*
 

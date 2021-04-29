@@ -35,18 +35,20 @@ Record arrays allow us to access fields as properties::
 """
 import os
 import warnings
-from collections import Counter, OrderedDict
+from collections import Counter
+from contextlib import nullcontext
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import (
-    os_fspath, contextlib_nullcontext
-)
+from numpy.compat import os_fspath
 from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
-__all__ = ['record', 'recarray', 'format_parser']
+__all__ = [
+    'record', 'recarray', 'format_parser',
+    'fromarrays', 'fromrecords', 'fromstring', 'fromfile', 'array',
+]
 
 
 ndarray = sb.ndarray
@@ -71,25 +73,14 @@ _byteorderconv = {'b':'>',
 # of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  '
 # are equally allowed
 
-numfmt = nt.typeDict
-
-# taken from OrderedDict recipes in the Python documentation
-# https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes
-class _OrderedCounter(Counter, OrderedDict):
-    """Counter that remembers the order elements are first encountered"""
-
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
-
-    def __reduce__(self):
-        return self.__class__, (OrderedDict(self),)
+numfmt = nt.sctypeDict
 
 
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     return [
         item
-        for item, counts in _OrderedCounter(list).items()
+        for item, counts in Counter(list).items()
         if counts > 1
     ]
 
@@ -242,12 +233,12 @@ class record(nt.void):
     def __repr__(self):
         if get_printoptions()['legacy'] == '1.13':
             return self.__str__()
-        return super(record, self).__repr__()
+        return super().__repr__()
 
     def __str__(self):
         if get_printoptions()['legacy'] == '1.13':
             return str(self.item())
-        return super(record, self).__str__()
+        return super().__str__()
 
     def __getattribute__(self, attr):
         if attr in ('setfield', 'getfield', 'dtype'):
@@ -516,7 +507,7 @@ class recarray(ndarray):
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
-        obj = super(recarray, self).__getitem__(indx)
+        obj = super().__getitem__(indx)
 
         # copy behavior of getattr, except that here
         # we might also be returning a single element
@@ -914,7 +905,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface.
         # Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
-        ctx = contextlib_nullcontext(fd)
+        ctx = nullcontext(fd)
     else:
         # open file
         ctx = open(os_fspath(fd), 'rb')
@@ -963,16 +954,16 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
 
     Parameters
     ----------
-    obj: any
+    obj : any
         Input object. See Notes for details on how various input types are
         treated.
-    dtype: data-type, optional
+    dtype : data-type, optional
         Valid dtype for array.
-    shape: int or tuple of ints, optional
+    shape : int or tuple of ints, optional
         Shape of each array.
-    offset: int, optional
+    offset : int, optional
         Position in the file or buffer to start reading from.
-    strides: tuple of ints, optional
+    strides : tuple of ints, optional
         Buffer (`buf`) is interpreted according to these strides (strides
         define how many bytes each array element, row, column, etc.
         occupy in memory).
@@ -980,7 +971,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         If `dtype` is ``None``, these arguments are passed to
         `numpy.format_parser` to construct a dtype. See that function for
         detailed documentation.
-    copy: bool, optional
+    copy : bool, optional
         Whether to copy the input object (True), or to use a reference instead.
         This option only applies when the input is an ndarray or recarray.
         Defaults to True.

@@ -381,7 +381,7 @@ A list of current Institutional Partners is maintained at the page
 Document history
 ================
 
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
+https://github.com/numpy/numpy/commits/main/doc/source/dev/governance/governance.rst
 
 Acknowledgements
 ================

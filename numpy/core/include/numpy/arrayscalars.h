@@ -149,6 +149,7 @@ typedef struct {
         PyArray_Descr *descr;
         int flags;
         PyObject *base;
+        void *_buffer_info;  /* private buffer info, tagged to allow warning */
 } PyVoidScalarObject;
 
 /* Macros

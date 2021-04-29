@@ -69,7 +69,7 @@ numpy on Windows 2000 with one million element arrays.
     *Figure 1*
 
     *In the simplest example of broadcasting, the scalar ``b`` is
-    stretched to become an array of with the same shape as ``a`` so the shapes
+    stretched to become an array of same shape as ``a`` so the shapes
     are compatible for element-by-element multiplication.*
 
 

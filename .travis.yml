@@ -16,6 +16,10 @@ addons:
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
 
+# Disable clone depth
+git:
+  depth: false
+
 cache:
   directories:
     - $HOME/.cache/pip

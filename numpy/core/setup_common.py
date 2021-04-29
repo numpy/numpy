@@ -40,7 +40,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000c - 1.14.x
 # 0x0000000c - 1.15.x
 # 0x0000000d - 1.16.x
-# 0x0000000e - 1.19.x
+# 0x0000000d - 1.19.x
+# 0x0000000e - 1.20.x
 C_API_VERSION = 0x0000000e
 
 class MismatchCAPIWarning(Warning):
@@ -50,7 +51,7 @@ def is_released(config):
     """Return True if a released version of numpy is detected."""
     from distutils.version import LooseVersion
 
-    v = config.get_version('../version.py')
+    v = config.get_version('../_version.py')
     if v is None:
         raise ValueError("Could not get version")
     pv = LooseVersion(vstring=v).version
@@ -316,8 +317,8 @@ def pyod(filename):
     out : seq
         list of lines of od output
 
-    Note
-    ----
+    Notes
+    -----
     We only implement enough to get the necessary information for long double
     representation, this is not intended as a compatible replacement for od.
     """

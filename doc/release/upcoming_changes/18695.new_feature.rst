@@ -1,0 +1,3 @@
+f2py now recognizes Fortran abstract interface blocks
+-----------------------------------------------------
+`np.f2py` can now parse abstract interface blocks.

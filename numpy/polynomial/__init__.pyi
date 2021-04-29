@@ -1,4 +1,15 @@
-from typing import Any
+from typing import Any, List
+
+from numpy.polynomial import (
+    chebyshev as chebyshev,
+    hermite as hermite,
+    hermite_e as hermite_e,
+    laguerre as laguerre,
+    legendre as legendre,
+    polynomial as polynomial,
+)
+
+__all__: List[str]
 
 Polynomial: Any
 Chebyshev: Any

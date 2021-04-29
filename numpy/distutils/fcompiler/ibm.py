@@ -77,7 +77,7 @@ class IBMFCompiler(FCompiler):
             fo, new_cfg = make_temp_file(suffix='_xlf.cfg')
             log.info('Creating '+new_cfg)
             with open(xlf_cfg, 'r') as fi:
-                crt1_match = re.compile(r'\s*crt\s*[=]\s*(?P<path>.*)/crt1.o').match
+                crt1_match = re.compile(r'\s*crt\s*=\s*(?P<path>.*)/crt1.o').match
                 for line in fi:
                     m = crt1_match(line)
                     if m:

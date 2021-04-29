@@ -552,7 +552,7 @@ PyArray_AssignFromCache_Recursive(
             else {
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
-                if (view < 0) {
+                if (view == NULL) {
                     goto fail;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
@@ -756,9 +756,11 @@ PyArray_NewFromDescr_int(
         Py_DECREF(descr);
         return NULL;
     }
+    fa->_buffer_info = NULL;
     fa->nd = nd;
     fa->dimensions = NULL;
     fa->data = NULL;
+
     if (data == NULL) {
         fa->flags = NPY_ARRAY_DEFAULT;
         if (flags) {
@@ -1148,7 +1150,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * bpo-32780
          * bpo-32782
          *
-         * Note that even if the above are fixed in master, we have to drop the
+         * Note that even if the above are fixed in main, we have to drop the
          * early patch versions of python to actually make use of the fixes.
          */
         if (!npy_ctypes_check(Py_TYPE(view->obj))) {
@@ -2122,7 +2124,16 @@ PyArray_FromInterface(PyObject *origin)
 
     if (iface == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                    PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                /* RecursionError and MemoryError are considered fatal */
+                return NULL;
+            }
+            /*
+             * This probably be deprecated, but at least shapely raised
+             * a NotImplementedError expecting it to be cleared (gh-17965)
+             */
+            PyErr_Clear();
         }
         return Py_NotImplemented;
     }
@@ -2390,7 +2401,13 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                /* RecursionError and MemoryError are considered fatal */
+                return NULL;
+            }
+            /* This probably be deprecated. */
+            PyErr_Clear();
         }
         return Py_NotImplemented;
     }
@@ -2528,8 +2545,6 @@ PyArray_EnsureAnyArray(PyObject *op)
 NPY_NO_EXPORT int
 PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 {
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
     NpyIter *dst_iter, *src_iter;
 
     NpyIter_IterNextFunc *dst_iternext, *src_iternext;
@@ -2538,9 +2553,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     npy_intp *dst_countptr, *src_countptr;
     npy_uint32 baseflags;
 
-    char *dst_data, *src_data;
     npy_intp dst_count, src_count, count;
-    npy_intp src_itemsize;
     npy_intp dst_size, src_size;
     int needs_api;
 
@@ -2612,7 +2625,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     /* Since buffering is disabled, we can cache the stride */
     src_stride = NpyIter_GetInnerStrideArray(src_iter)[0];
     src_countptr = NpyIter_GetInnerLoopSizePtr(src_iter);
-    src_itemsize = PyArray_DESCR(src)->elsize;
 
     if (dst_iternext == NULL || src_iternext == NULL) {
         NpyIter_Deallocate(dst_iter);
@@ -2629,14 +2641,14 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
      * we can pass them to this function to take advantage of
      * contiguous strides, etc.
      */
+    NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(
                     IsUintAligned(src) && IsAligned(src) &&
                     IsUintAligned(dst) && IsAligned(dst),
                     src_stride, dst_stride,
                     PyArray_DESCR(src), PyArray_DESCR(dst),
                     0,
-                    &stransfer, &transferdata,
-                    &needs_api) != NPY_SUCCEED) {
+                    &cast_info, &needs_api) != NPY_SUCCEED) {
         NpyIter_Deallocate(dst_iter);
         NpyIter_Deallocate(src_iter);
         return -1;
@@ -2648,15 +2660,15 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
     dst_count = *dst_countptr;
     src_count = *src_countptr;
-    dst_data = dst_dataptr[0];
-    src_data = src_dataptr[0];
+    char *args[2] = {src_dataptr[0], dst_dataptr[0]};
+    npy_intp strides[2] = {src_stride, dst_stride};
+
     int res = 0;
     for(;;) {
         /* Transfer the biggest amount that fits both */
         count = (src_count < dst_count) ? src_count : dst_count;
-        if (stransfer(
-                dst_data, dst_stride, src_data, src_stride,
-                count, src_itemsize, transferdata) < 0) {
+        if (cast_info.func(&cast_info.context,
+                args, &count, strides, cast_info.auxdata) < 0) {
             res = -1;
             break;
         }
@@ -2668,11 +2680,11 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
                 break;
             }
             dst_count = *dst_countptr;
-            dst_data = dst_dataptr[0];
+            args[1] = dst_dataptr[0];
         }
         else {
             dst_count -= count;
-            dst_data += count*dst_stride;
+            args[1] += count*dst_stride;
         }
 
         /* If we exhausted the src block, refresh it */
@@ -2682,17 +2694,17 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
                 break;
             }
             src_count = *src_countptr;
-            src_data = src_dataptr[0];
+            args[0] = src_dataptr[0];
         }
         else {
             src_count -= count;
-            src_data += count*src_stride;
+            args[0] += count*src_stride;
         }
     }
 
     NPY_END_THREADS;
 
-    NPY_AUXDATA_FREE(transferdata);
+    NPY_cast_info_xfree(&cast_info);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
     if (res > 0) {
@@ -2890,7 +2902,7 @@ _arange_safe_ceil_to_intp(double value)
             "arange: cannot compute length");
         return -1;
     }
-    if (!(NPY_MIN_INTP <= ivalue && ivalue <= NPY_MAX_INTP)) {
+    if (!((double)NPY_MIN_INTP <= ivalue && ivalue <= (double)NPY_MAX_INTP)) {
         PyErr_SetString(PyExc_OverflowError,
                 "arange: overflow while computing length");
         return -1;
@@ -3254,7 +3266,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     return NULL;
 }
 
-/* This array creation function steals the reference to dtype. */
+/* This array creation function does not steal the reference to dtype. */
 static PyArrayObject *
 array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nread)
 {
@@ -3282,7 +3294,6 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         if (fail) {
             PyErr_SetString(PyExc_IOError,
                             "could not seek in file");
-            Py_DECREF(dtype);
             return NULL;
         }
         num = numbytes / dtype->elsize;
@@ -3294,6 +3305,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
      */
     elsize = dtype->elsize;
 
+    Py_INCREF(dtype);  /* do not steal the original dtype. */
     r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &num,
                                               NULL, NULL, 0, NULL);
     if (r == NULL) {
@@ -3309,7 +3321,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
 /*
  * Create an array by reading from the given stream, using the passed
  * next_element and skip_separator functions.
- * As typical for array creation functions, it steals the reference to dtype.
+ * Does not steal the reference to dtype.
  */
 #define FROM_BUFFER_SIZE 4096
 static PyArrayObject *
@@ -3338,7 +3350,6 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                              NULL, NULL, 0, NULL);
     if (r == NULL) {
-        Py_DECREF(dtype);
         return NULL;
     }
 
@@ -3401,7 +3412,6 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         if (PyErr_Occurred()) {
             /* If an error is already set (unlikely), do not create new one */
             Py_DECREF(r);
-            Py_DECREF(dtype);
             return NULL;
         }
         /* 2019-09-12, NumPy 1.18 */
@@ -3413,7 +3423,6 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
     }
 
 fail:
-    Py_DECREF(dtype);
     if (err == 1) {
         PyErr_NoMemory();
     }
@@ -3479,20 +3488,26 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
                 (skip_separator) fromfile_skip_separator, NULL);
     }
     if (ret == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
     if (((npy_intp) nread) < num) {
-        /* Realloc memory for smaller number of elements */
-        const size_t nsize = PyArray_MAX(nread,1)*PyArray_DESCR(ret)->elsize;
+        /*
+         * Realloc memory for smaller number of elements, use original dtype
+         * which may have include a subarray (and is used for `nread`).
+         */
+        const size_t nsize = PyArray_MAX(nread,1) * dtype->elsize;
         char *tmp;
 
-        if((tmp = PyDataMem_RENEW(PyArray_DATA(ret), nsize)) == NULL) {
+        if ((tmp = PyDataMem_RENEW(PyArray_DATA(ret), nsize)) == NULL) {
+            Py_DECREF(dtype);
             Py_DECREF(ret);
             return PyErr_NoMemory();
         }
         ((PyArrayObject_fields *)ret)->data = tmp;
         PyArray_DIMS(ret)[0] = nread;
     }
+    Py_DECREF(dtype);
     return (PyObject *)ret;
 }
 
@@ -3703,6 +3718,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
                               (next_element) fromstr_next_element,
                               (skip_separator) fromstr_skip_separator,
                               end);
+        Py_DECREF(dtype);
     }
     return (PyObject *)ret;
 }

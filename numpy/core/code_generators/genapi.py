@@ -26,6 +26,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'array_assign_array.c'),
              join('multiarray', 'array_assign_scalar.c'),
              join('multiarray', 'array_coercion.c'),
+             join('multiarray', 'array_method.c'),
              join('multiarray', 'arrayobject.c'),
              join('multiarray', 'arraytypes.c.src'),
              join('multiarray', 'buffer.c'),
@@ -174,7 +175,7 @@ def split_arguments(argstr):
     def finish_arg():
         if current_argument:
             argstr = ''.join(current_argument).strip()
-            m = re.match(r'(.*(\s+|[*]))(\w+)$', argstr)
+            m = re.match(r'(.*(\s+|\*))(\w+)$', argstr)
             if m:
                 typename = m.group(1).strip()
                 name = m.group(3)
@@ -280,9 +281,11 @@ def find_functions(filename, tag='API'):
                     state = SCANNING
                 else:
                     function_args.append(line)
-        except Exception:
-            print(filename, lineno + 1)
+        except ParseError:
             raise
+        except Exception as e:
+            msg = "see chained exception for details"
+            raise ParseError(filename, lineno + 1, msg) from e
     fo.close()
     return functions
 

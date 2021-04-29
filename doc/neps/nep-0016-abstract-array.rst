@@ -141,7 +141,7 @@ Notes:
 In practice, either way we'd only do the full test after first
 checking for well-known types like ``ndarray``, ``list``, etc. `This
 is how NumPy currently checks for other double-underscore attributes
-<https://github.com/numpy/numpy/blob/master/numpy/core/src/private/get_attr_string.h>`__
+<https://github.com/numpy/numpy/blob/main/numpy/core/src/private/get_attr_string.h>`__
 and the same idea applies here to either approach. So these numbers
 won't affect the common case, just the case where we actually have an
 ``AbstractArray``, or else another third-party object that will end up
