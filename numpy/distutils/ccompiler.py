@@ -297,6 +297,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
                                 depends, extra_postargs)
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
     if self.compiler_type == 'openvms':
+        jobs = 0    # do not use multiprocessing
         cc_args += [
             '/STAND=C99',
             '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
