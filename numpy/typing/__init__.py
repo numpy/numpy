@@ -140,6 +140,20 @@ Timedelta64
 The `~numpy.timedelta64` class is not considered a subclass of `~numpy.signedinteger`,
 the former only inheriting from `~numpy.generic` while static type checking.
 
+0D arrays
+~~~~~~~~~
+
+During runtime numpy aggressively casts any passed 0D arrays into their
+corresponding `~numpy.generic` instance. Until the introduction of shape
+typing (see :pep:`646`) it is unfortunately not possible to make the
+necessary distinction between 0D and >0D arrays. While thus not strictly
+correct, all operations are that can potentially perform a 0D-array -> scalar
+cast are currently annotated as exclusively returning an `ndarray`.
+
+If it is known in advance that an operation _will_ perform a
+0D-array -> scalar cast, then one can consider manually remedying the
+situation with either `typing.cast` or a ``# type: ignore`` comment.
+
 API
 ---
 
