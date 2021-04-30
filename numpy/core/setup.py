@@ -10,10 +10,6 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from sysconfig import get_config_var
-
-from numpy._build_utils.apple_accelerate import (
-    uses_accelerate_framework
-    )
 from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 

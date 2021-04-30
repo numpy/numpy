@@ -6219,7 +6219,7 @@ class TestDot:
         s = aligned_array((100, 100), 15, np.float32)
         np.dot(s, m)  # this will always segfault if the bug is present
 
-        testdata = itertools.product((15,32), (10000,), (200,89), ('C','F'))
+        testdata = itertools.product((15, 32), (10000,), (200, 89), ('C', 'F'))
         for align, m, n, a_order in testdata:
             # Calculation in double precision
             A_d = np.random.rand(m, n)
