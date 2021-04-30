@@ -215,7 +215,7 @@ class ndarray:
         """
         # Note: This is an error here.
         if self._array.shape != ():
-            raise TypeError("bool is only allowed on arrays with shape ()")
+            raise TypeError("float is only allowed on arrays with shape ()")
         res = self._array.__float__()
         return res
 
@@ -372,7 +372,7 @@ class ndarray:
         """
         # Note: This is an error here.
         if self._array.shape != ():
-            raise TypeError("bool is only allowed on arrays with shape ()")
+            raise TypeError("int is only allowed on arrays with shape ()")
         res = self._array.__int__()
         return res
 
