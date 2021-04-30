@@ -315,6 +315,36 @@ class _SIMD_FP(_Test_Utility):
         data_square = [x*x for x in data]
         square = self.square(vdata)
         assert square == data_square
+        
+    def test_max(self):
+        """
+        Test intrinics:
+            npyv_max_##SFX
+            npyv_maxp_##SFX
+        """
+        data_a = self._data()
+        data_b = self._data(self.nlanes)
+        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
+        data_max = [max(a, b) for a, b in zip(data_a, data_b)]
+        _max = self.max(vdata_a, vdata_b)
+        assert _max == data_max
+        maxp = self.maxp(vdata_a, vdata_b)
+        assert maxp == data_max
+        # test IEEE standards
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        max_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
+                     (pinf, pinf, pinf), (pinf, 10, pinf), (10, pinf, pinf),
+                     (ninf, ninf, ninf), (ninf, 10, 10), (10, ninf, 10))
+        for case_operand1, case_operand2, desired in max_cases:
+            data_max = [desired]*self.nlanes
+            vdata_a = self.setall(case_operand1)
+            vdata_b = self.setall(case_operand2)
+            maxp = self.maxp(vdata_a, vdata_b)
+            assert maxp == pytest.approx(data_max, nan_ok=True)
+            if nan in (case_operand1, case_operand2, desired):
+                continue
+            _max = self.max(vdata_a, vdata_b)
+            assert _max == data_max
 
     def test_reciprocal(self):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
