@@ -1201,8 +1201,20 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_SimpleUniformOperationTypeResolver(ufunc,
+        int res = PyUFunc_SimpleUniformOperationTypeResolver(ufunc,
                 casting, operands, type_tup, out_dtypes);
+        if (res < 0 || out_dtypes[0]->type_num != NPY_BOOL) {
+            return res;
+        }
+        /*
+         * Hardcode that boolean division is handled by casting to int8,
+         * we could consider deprecating this (this is safe so no need to
+         * "validate casting" again.
+         */
+        Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_BYTE));
+        Py_SETREF(out_dtypes[1], PyArray_DescrFromType(NPY_BYTE));
+        Py_SETREF(out_dtypes[2], PyArray_DescrFromType(NPY_BYTE));
+        return res;
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
