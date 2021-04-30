@@ -288,7 +288,7 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
     } else {
         /* Find the specified ufunc inner loop, and fill in the dtypes */
         retval = type_tuple_type_resolver(ufunc, type_tup,
-                        operands, casting, any_object, out_dtypes);
+                        operands, input_casting, casting, any_object, out_dtypes);
     }
 
     return retval;
@@ -553,6 +553,11 @@ PyUFunc_SimpleUniformOperationTypeResolver(
          * This is a fast-path, since all descriptors will be identical, mainly
          * when only a single descriptor was passed (which would set the out
          * one in the tuple), there is no need to check all loops.
+         * Note that this also allows (None, None, float64) to resolve to
+         * (float64, float64, float64), even when the inputs do not match,
+         * i.e. fixing a single part of the signature can fix all of them.
+         * This is necessary to support `nextafter(1., inf, dtype=float32)`,
+         * where it is "clear" we want to cast 1. and inf to float32.
          */
         PyArray_Descr *descr = NULL;
         if (PyTuple_CheckExact(type_tup) &&
@@ -1196,8 +1201,8 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
+        return PyUFunc_SimpleUniformOperationTypeResolver(ufunc,
+                casting, operands, type_tup, out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -1656,6 +1661,9 @@ ufunc_loop_matches(PyUFuncObject *self,
         if (types[i] == NPY_OBJECT && !any_object && self->ntypes > 1) {
             return 0;
         }
+        if (types[i] == NPY_NOTYPE) {
+            continue;  /* Matched by being explicitly specified. */
+        }
 
         /*
          * If type num is NPY_VOID and struct dtypes have been passed in,
@@ -1705,6 +1713,9 @@ ufunc_loop_matches(PyUFuncObject *self,
      * outputs.
      */
     for (i = nin; i < nop; ++i) {
+        if (types[i] == NPY_NOTYPE) {
+            continue;  /* Matched by being explicitly specified. */
+        }
         if (op[i] != NULL) {
             PyArray_Descr *tmp = PyArray_DescrFromType(types[i]);
             if (tmp == NULL) {
@@ -1723,7 +1734,6 @@ ufunc_loop_matches(PyUFuncObject *self,
             Py_DECREF(tmp);
         }
     }
-
     return 1;
 }
 
@@ -1864,12 +1874,15 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                         int n_specified,
                         int *specified_types,
                         PyArrayObject **op,
+                        NPY_CASTING input_casting,
                         NPY_CASTING casting,
                         int any_object,
                         int use_min_scalar,
                         PyArray_Descr **out_dtype)
 {
     int i, j, nin = self->nin, nop = nin + self->nout;
+    assert(n_specified == nop);
+    int types[NPY_MAXARGS];
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1902,28 +1915,28 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                 return -1;
             }
             for (; funcdata != NULL; funcdata = funcdata->next) {
-                int *types = funcdata->arg_types;
-                int matched = 1;
+                int *orig_types = funcdata->arg_types;
 
-                if (n_specified == nop) {
-                    for (j = 0; j < nop; ++j) {
-                        if (types[j] != specified_types[j] &&
-                                    specified_types[j] != NPY_NOTYPE) {
-                            matched = 0;
-                            break;
-                        }
+                /* Copy the types into an int array for matching */
+                for (j = 0; j < nop; ++j) {
+                    if (specified_types[j] == NPY_NOTYPE) {
+                        types[j] = orig_types[j];
+                        continue;
                     }
-                } else {
-                    if (types[nin] != specified_types[0]) {
-                        matched = 0;
+                    if (orig_types[j] != specified_types[j]) {
+                        break;
                     }
+                    /* indicate that we do not have to check this type anymore. */
+                    types[j] = NPY_NOTYPE;
                 }
-                if (!matched) {
+
+                if (j != nop) {
+                    /* no match */
                     continue;
                 }
 
                 switch (ufunc_loop_matches(self, op,
-                            casting, casting,
+                            input_casting, casting,
                             any_object, use_min_scalar,
                             types, NULL,
                             &no_castable_output, &err_src_typecode,
@@ -1931,7 +1944,19 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                     /* It works */
                     case 1:
                         set_ufunc_loop_data_types(self, op,
-                            out_dtype, types, NULL);
+                            out_dtype, orig_types, NULL);
+                        /*
+                         * In principle, we only need to validate the
+                         * NPY_NOTYPE ones
+                         */
+                        if (PyUFunc_ValidateCasting(self,
+                                casting, op, out_dtype) < 0) {
+                            for (j = 0; j < self->nargs; j++) {
+                                Py_DECREF(out_dtype[j]);
+                                out_dtype[j] = NULL;
+                            }
+                            return -1;
+                        }
                         return 1;
                     /* Didn't match */
                     case 0:
@@ -2074,6 +2099,7 @@ NPY_NO_EXPORT int
 type_tuple_type_resolver(PyUFuncObject *self,
                         PyObject *type_tup,
                         PyArrayObject **op,
+                        NPY_CASTING input_casting,
                         NPY_CASTING casting,
                         int any_object,
                         PyArray_Descr **out_dtype)
@@ -2130,7 +2156,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
     if (self->userloops) {
         switch (type_tuple_userloop_type_resolver(self,
                         nop, specified_types,
-                        op, casting,
+                        op, input_casting, casting,
                         any_object, use_min_scalar,
                         out_dtype)) {
             /* Error */
@@ -2145,16 +2171,17 @@ type_tuple_type_resolver(PyUFuncObject *self,
     for (i = 0; i < self->ntypes; ++i) {
         char *orig_types = self->types + i*self->nargs;
 
-        /* Copy the types into an int array for matching */
+        /* Check specified types and copy into an int array for matching */
         for (j = 0; j < nop; ++j) {
-            types[j] = orig_types[j];
-        }
-
-        for (j = 0; j < nop; ++j) {
-            if (types[j] != specified_types[j] &&
-                    specified_types[j] != NPY_NOTYPE) {
+            if (specified_types[j] == NPY_NOTYPE) {
+                types[j] = orig_types[j];
+                continue;
+            }
+            if (orig_types[j] != specified_types[j]) {
                 break;
             }
+            /* indicate that we do not have to check this type anymore. */
+            types[j] = NPY_NOTYPE;
         }
         if (j < nop) {
             /* no match */
@@ -2162,7 +2189,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
         }
 
         switch (ufunc_loop_matches(self, op,
-                    casting, casting,
+                    input_casting, casting,
                     any_object, use_min_scalar,
                     types, NULL,
                     &no_castable_output, &err_src_typecode,
@@ -2174,8 +2201,20 @@ type_tuple_type_resolver(PyUFuncObject *self,
                 /* Cannot cast inputs */
                 continue;
             case 1:
-                /* Success */
+                /* Success, fill also the NPY_NOTYPE (cast from char to int) */
+                for (j = 0; j < nop; j++) {
+                    types[j] = orig_types[j];
+                }
                 set_ufunc_loop_data_types(self, op, out_dtype, types, NULL);
+                /* In principle, we only need to validate the NPY_NOTYPE ones */
+                if (PyUFunc_ValidateCasting(self, casting, op, out_dtype) < 0) {
+                    for (j = 0; j < self->nargs; j++) {
+                        Py_DECREF(out_dtype[j]);
+                        out_dtype[j] = NULL;
+                    }
+                    return -1;
+                }
+
                 return 0;
         }
     }

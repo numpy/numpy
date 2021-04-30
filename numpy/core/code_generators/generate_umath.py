@@ -902,7 +902,7 @@ defdict = {
 'nextafter':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.nextafter'),
-          None,
+          "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(flts),
           ),
 'spacing':
