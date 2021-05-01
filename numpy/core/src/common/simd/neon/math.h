@@ -103,4 +103,24 @@ NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
     #define npyv_maxp_f64 vmaxnmq_f64
 #endif // NPY_SIMD_F64
 
+// Minimum, natively mapping with no guarantees to handle NaN.
+#define npyv_min_f32 vminq_f32
+#define npyv_min_f64 vminq_f64
+// Minimum, supports IEEE floating-point arithmetic (IEC 60559),
+// - If one of the two vectors contains NaN, the equivalent element of the other vector is set
+// - Only if both corresponded elements are NaN, NaN is set. 
+#ifdef NPY_HAVE_ASIMD
+    #define npyv_minp_f32 vminnmq_f32
+#else
+    NPY_FINLINE npyv_f32 npyv_minp_f32(npyv_f32 a, npyv_f32 b)
+    { 
+        npyv_u32 nn_a = vceqq_f32(a, a);
+        npyv_u32 nn_b = vceqq_f32(b, b);
+        return vminq_f32(vbslq_f32(nn_a, a, b), vbslq_f32(nn_b, b, a));
+    } 
+#endif
+#if NPY_SIMD_F64
+    #define npyv_minp_f64 vminnmq_f64
+#endif // NPY_SIMD_F64
+
 #endif // _NPY_SIMD_SSE_MATH_H

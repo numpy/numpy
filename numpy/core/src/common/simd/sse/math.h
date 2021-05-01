@@ -56,4 +56,23 @@ NPY_FINLINE npyv_f64 npyv_maxp_f64(npyv_f64 a, npyv_f64 b)
     return npyv_select_f64(_mm_castpd_si128(nn), max, a);
 }
 
+// Minimum, natively mapping with no guarantees to handle NaN.
+#define npyv_min_f32 _mm_min_ps
+#define npyv_min_f64 _mm_min_pd
+// Minimum, supports IEEE floating-point arithmetic (IEC 60559),
+// - If one of the two vectors contains NaN, the equivalent element of the other vector is set
+// - Only if both corresponded elements are NaN, NaN is set. 
+NPY_FINLINE npyv_f32 npyv_minp_f32(npyv_f32 a, npyv_f32 b)
+{
+    __m128 nn  = _mm_cmpord_ps(b, b);
+    __m128 min = _mm_min_ps(a, b);
+    return npyv_select_f32(_mm_castps_si128(nn), min, a);
+}
+NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m128d nn  = _mm_cmpord_pd(b, b);
+    __m128d min = _mm_min_pd(a, b);
+    return npyv_select_f64(_mm_castpd_si128(nn), min, a);
+}
+
 #endif

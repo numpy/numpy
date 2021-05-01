@@ -56,4 +56,23 @@ NPY_FINLINE npyv_f64 npyv_maxp_f64(npyv_f64 a, npyv_f64 b)
     return _mm256_blendv_pd(a, max, nn);
 }
 
+// Minimum, natively mapping with no guarantees to handle NaN.
+#define npyv_min_f32 _mm256_min_ps
+#define npyv_min_f64 _mm256_min_pd
+// Minimum, supports IEEE floating-point arithmetic (IEC 60559),
+// - If one of the two vectors contains NaN, the equivalent element of the other vector is set
+// - Only if both corresponded elements are NaN, NaN is set. 
+NPY_FINLINE npyv_f32 npyv_minp_f32(npyv_f32 a, npyv_f32 b)
+{
+    __m256 nn  = _mm256_cmp_ps(b, b, _CMP_ORD_Q);
+    __m256 min = _mm256_min_ps(a, b);
+    return _mm256_blendv_ps(a, min, nn);
+}
+NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m256d nn  = _mm256_cmp_pd(b, b, _CMP_ORD_Q);
+    __m256d min = _mm256_min_pd(a, b);
+    return _mm256_blendv_pd(a, min, nn);
+}
+
 #endif
