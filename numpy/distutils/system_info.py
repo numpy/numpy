@@ -1754,13 +1754,6 @@ class lapack_opt_info(system_info):
                     'accelerate', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
 
-    def _calc_info_accelerate(self):
-        info = get_info('accelerate')
-        if info:
-            self.set_info(**info)
-            return True
-        return False
-
     def _calc_info_mkl(self):
         info = get_info('lapack_mkl')
         if info:
@@ -1807,6 +1800,13 @@ class lapack_opt_info(system_info):
                 if not lapack_info:
                     return False
                 dict_append(info, **lapack_info)
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_accelerate(self):
+        info = get_info('accelerate')
+        if info:
             self.set_info(**info)
             return True
         return False
@@ -1931,13 +1931,6 @@ class blas_opt_info(system_info):
                   'accelerate', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
 
-    def _calc_info_accelerate(self):
-        info = get_info('accelerate')
-        if info:
-            self.set_info(**info)
-            return True
-        return False
-
     def _calc_info_mkl(self):
         info = get_info('blas_mkl')
         if info:
@@ -1967,6 +1960,13 @@ class blas_opt_info(system_info):
             info = get_info('atlas_blas_threads')
         if not info:
             info = get_info('atlas_blas')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_accelerate(self):
+        info = get_info('accelerate')
         if info:
             self.set_info(**info)
             return True
