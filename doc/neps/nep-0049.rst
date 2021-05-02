@@ -14,15 +14,14 @@ Abstract
 The ``numpy.ndarray`` requires additional memory allocations
 to hold ``numpy.ndarray.strides``, ``numpy.ndarray.shape`` and
 ``numpy.ndarray.data`` attributes. These attributes are specially allocated
-after creating the python object in ``__new__`` method. The ``strides`` and
-``shape`` are stored in a piece of memory allocated internally.
+after creating the python object in ``__new__`` method.
 
 This NEP proposes a mechanism to override the memory management strategy used
 for ``ndarray->data`` with user-provided alternatives. This allocation holds
 the arrays data and is can be very large. As accessing this data often becomes
 a performance bottleneck, custom allocation strategies to guarantee data
 alignment or pinning allocations to specialized memory hardware can enable
-hardware-specific optimizations.
+hardware-specific optimizations. The other allocatations remain unchanged.
 
 Motivation and Scope
 --------------------
@@ -31,11 +30,11 @@ Users may wish to override the internal data memory routines with ones of their
 own. Two such use-cases are to ensure data alignment and to pin certain
 allocations to certain NUMA cores. This desire for alignment was disucssed
 multiple times on the mailing list `in 2005`_,  and in `issue 5312`_ in 2014,
-which led to `PR 5457` and more mailing list discussions here_ `and here`_. In
+which led to `PR 5457`_ and more mailing list discussions here_ `and here`_. In
 a comment on the issue `from 2017`_, a user described how 64-byte alignment
 improved performance by 40x.
 
-Also related is `issue 14177` around the use of ``madvise`` and huge pages on
+Also related is `issue 14177`_ around the use of ``madvise`` and huge pages on
 Linux.
 
 Various tracing and profiling libraries like filprofiler_ or `electric fence`_
@@ -52,24 +51,24 @@ Allowing users to implement different strategies via the NumPy C-API will
 enable exploration of this rich area of possible optimizations. The intention
 is to create a flexible enough interface without burdening normative users.
 
-_`issue 5312`: https://github.com/numpy/numpy/issues/5312 
-_`from 2017`: https://github.com/numpy/numpy/issues/5312#issuecomment-315234656
-_`in 2005`: https://numpy-discussion.scipy.narkive.com/MvmMkJcK/numpy-arrays-data-allocation-and-simd-alignement
-_`here`: http://numpy-discussion.10968.n7.nabble.com/Aligned-configurable-memory-allocation-td39712.html
-_`and here`: http://numpy-discussion.10968.n7.nabble.com/Numpy-s-policy-for-releasing-memory-td1533.html
-_`issue 14177`: https://github.com/numpy/numpy/issues/14177
-_`filprofiler`: https://github.com/pythonspeed/filprofiler/blob/master/design/allocator-overrides.md
-_`electric fence`: https://github.com/boundarydevices/efence
-_`memory interfaces`: https://docs.python.org/3/c-api/memory.html#customize-memory-allocators
-_`BPO 18835`: https://bugs.python.org/issue18835
-_`PEP 445`: https://www.python.org/dev/peps/pep-0445/
+.. _`issue 5312`: https://github.com/numpy/numpy/issues/5312
+.. _`from 2017`: https://github.com/numpy/numpy/issues/5312#issuecomment-315234656
+.. _`in 2005`: https://numpy-discussion.scipy.narkive.com/MvmMkJcK/numpy-arrays-data-allocation-and-simd-alignement
+.. _`here`: http://numpy-discussion.10968.n7.nabble.com/Aligned-configurable-memory-allocation-td39712.html
+.. _`and here`: http://numpy-discussion.10968.n7.nabble.com/Numpy-s-policy-for-releasing-memory-td1533.html
+.. _`issue 14177`: https://github.com/numpy/numpy/issues/14177
+.. _`filprofiler`: https://github.com/pythonspeed/filprofiler/blob/master/design/allocator-overrides.md
+.. _`electric fence`: https://github.com/boundarydevices/efence
+.. _`memory interfaces`: https://docs.python.org/3/c-api/memory.html#customize-memory-allocators
+.. _`BPO 18835`: https://bugs.python.org/issue18835
+.. _`PEP 445`: https://www.python.org/dev/peps/pep-0445/
 
 Usage and Impact
 ----------------
 
 The new functions can only be accessed via the NumPy C-API. An example is
-included later in the NEP. The added ``struct`` will increase the size of the
-``ndarray`` object. It is a necessary price to be paid for this approach. We
+included later in this NEP. The added ``struct`` will increase the size of the
+``ndarray`` object. It is a necessary price to pay for this approach. We
 can be reasonably sure that the change in size will have a minimal impact on
 end-user code because NumPy version 1.20 already changed the object size.
 
@@ -81,7 +80,7 @@ Backward compatibility
 
 The design will not break backward compatibility. Projects that were assigning
 to the ``ndarray->data`` pointer were already breaking the current memory
-management strategy (backed by ``npy_alloc_cache``) and should restore
+management strategy and should restore
 ``ndarray->data`` before calling ``Py_DECREF``. As mentioned above, the change
 in size should not impact end-users.
 
@@ -93,18 +92,14 @@ High level design
 
 Users who wish to change the NumPy data memory management routines will use
 :c:func:`PyDataMem_SetHandler`, which uses a :c:type:`PyDataMem_Handler`
-structure to hold pointers to functions used to manage the data memory. The
-calls are wrapped by internal routines to call :c:func:`PyTraceMalloc_Track`,
-:c:func:`PyTraceMalloc_Untrack`, and will use the
-:c:func:`PyDataMem_EventHookFunc` mechanism  already present in NumPy for
-auditing purposes. 
+structure to hold pointers to functions used to manage the data memory.
 
 Since a call to ``PyDataMem_SetHandler`` will change the default functions, but
 that function may be called during the lifetime of an ``ndarray`` object, each
 ``ndarray`` will carry with it the ``PyDataMem_Handler`` struct used at the
 time of its instantiation, and these will be used to reallocate or free the
-data memory of the instance. Internally NumPy may use ``memcpy` or ``memset``
-on the data ``ptr``.
+data memory of the instance. Internally NumPy may use ``memcpy`` or ``memset``
+on the pointer to the data memory.
 
 NumPy C-API functions
 =====================
@@ -131,51 +126,20 @@ NumPy C-API functions
         typedef void *(PyDataMem_ZeroedAllocFunc)(size_t nelems, size_t elsize);
         typedef void (PyDataMem_FreeFunc)(void *ptr, size_t size);
         typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
-        typedef void *(PyDataMem_CopyFunc)(void *dst, const void *src, size_t size);
 
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
    Sets a new allocation policy. If the input value is NULL, will reset
    the policy to the default. Returns the previous policy, NULL if the
    previous policy was the default. We wrap the user-provided functions
-   so they will still call the python and numpy memory management callback
-   hooks.
-    
+   so they will still call the Python and NumPy memory management callback
+   hooks. All the function pointers must be filled in, NULL is not accepted.
+
 .. c:function:: const char * PyDataMem_GetHandlerName(PyArrayObject *obj)
 
-   Return the const char name of the PyDataMem_Handler used by the
-   PyArrayObject. If NULL, return the name of the current global policy that
-   will be used to allocate data for the next PyArrayObject
-
-For an example of setting up and using the PyDataMem_Handler, see the test in
-:file:`numpy/core/tests/test_mem_policy.py`
-
-.. c:function:: void PyDataMem_EventHookFunc(void *inp, void *outp, size_t size, void *user_data);
-
-    This function will be called on NEW,FREE,RENEW calls in data memory
-    manipulation
-
-
-.. c:function:: PyDataMem_EventHookFunc * PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook, void *user_data, void **old_data)
-
-    Sets the allocation event hook for numpy array data.
-  
-    Returns a pointer to the previous hook or NULL.  If old_data is
-    non-NULL, the previous user_data pointer will be copied to it.
-  
-    If not NULL, hook will be called at the end of each PyDataMem_NEW/FREE/RENEW:
-
-    .. code-block:: c
-   
-        result = PyDataMem_NEW(size)        -> (*hook)(NULL, result, size, user_data)
-        PyDataMem_FREE(ptr)                 -> (*hook)(ptr, NULL, 0, user_data)
-        result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr, result, size, user_data)
-  
-    When the hook is called, the GIL will be held by the calling
-    thread.  The hook should be written to be reentrant, if it performs
-    operations that might cause new allocation events (such as the
-    creation/destruction numpy objects, or creating/destroying Python
-    objects which might cause a gc)
+   Return the const char name of the ``PyDataMem_Handler`` used by the
+   ``PyArrayObject``. If ``NULL``, return the name of the current global policy
+   that will be used to allocate data for the next ``PyArrayObject``.
 
 
 Sample code
@@ -270,7 +234,7 @@ the ``sz`` argument is correct.
 
     static PyObject* mem_policy_test_prefix(PyObject *self, PyObject *args)
     {
-    
+
         if (!PyArray_Check(args)) {
             PyErr_SetString(PyExc_ValueError,
                     "must be called with a numpy scalar or ndarray");
@@ -281,20 +245,20 @@ the ``sz`` argument is correct.
 
     static PyObject* mem_policy_set_new_policy(PyObject *self, PyObject *args)
     {
-    
+
          const PyDataMem_Handler *old = PyDataMem_SetHandler(&new_handler);
          return PyUnicode_FromString(old->name);
-     
+
     };
-    
+
     static PyObject* mem_policy_set_old_policy(PyObject *self, PyObject *args)
     {
-    
+
          const PyDataMem_Handler *old = PyDataMem_SetHandler(NULL);
          return PyUnicode_FromString(old->name);
-     
+
     };
-        
+
     static PyMethodDef methods[] = {
     {"test_prefix", (PyCFunction)mem_policy_test_prefix, METH_O},
     {"set_new_policy", (PyCFunction)mem_policy_set_new_policy, METH_NOARGS},
@@ -316,29 +280,29 @@ the ``sz`` argument is correct.
         import_array();
         return mod;
     }
- 
+
 
 Related Work
 ------------
 
-The NEP is being tracked by the pnumpy_ project and a `comment in the PR`_
+This NEP is being tracked by the pnumpy_ project and a `comment in the PR`_
 mentions use in orchestrating FPGA DMAs.
 
 Implementation
 --------------
 
-The NEP has been implemented in `PR  17582`_.
+This NEP has been implemented in `PR  17582`_.
 
 Alternatives
 ------------
 
 These were discussed in `issue 17467`_. `PR 5457`_  and `PR 5470`_ proposed a
-global interface for specifying aligned allocations. 
+global interface for specifying aligned allocations.
 
-``PyArray_malloc_aligned`` and friends were added to NumPy with the random API
-refactor. and are used there for performance.
+``PyArray_malloc_aligned`` and friends were added to NumPy with the
+`numpy.random` module API refactor. and are used there for performance.
 
-`PR 390`_ had two parts: expose `PyDataMem_*` via the NumPy C-API, and a hook
+`PR 390`_ had two parts: expose ``PyDataMem_*`` via the NumPy C-API, and a hook
 mechanism. The PR was merged with no example code for using these features.
 
 Discussion
