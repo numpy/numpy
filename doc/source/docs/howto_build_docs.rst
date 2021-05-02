@@ -27,7 +27,16 @@ additional parts required for building the documentation::
 
 In addition, building the documentation requires the Sphinx extension
 `plot_directive`, which is shipped with Matplotlib_. This Sphinx extension can
-be installed by installing Matplotlib. You will also need Python>=3.6.
+be installed by installing Matplotlib. You will also need Python>=3.6 and Doxygen.
+
+For installing Doxygen_, please check the official `download <https://www.doxygen.nl/download.html#srcbin>`_
+and `installation <https://www.doxygen.nl/manual/install.html>`_ pages, or if you
+are using Linux then you can install it through your distribution package manager.
+
+.. note::
+
+   Try to install a newer version of Doxygen_ > 1.8.10 otherwise you may get some warnings
+   during the build.
 
 Since large parts of the main documentation are obtained from numpy via
 ``import numpy`` and examining the docstrings, you will need to first build
@@ -82,6 +91,7 @@ on how to update https://numpy.org/doc.
 
 .. _Matplotlib: https://matplotlib.org/
 .. _HOWTO RELEASE: https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst.txt
+.. _Doxygen: https://www.doxygen.nl/index.html
 
 Sphinx extensions
 -----------------
