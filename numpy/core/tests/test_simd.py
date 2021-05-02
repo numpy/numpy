@@ -317,11 +317,6 @@ class _SIMD_FP(_Test_Utility):
         assert square == data_square
         
     def test_max(self):
-        """
-        Test intrinics:
-            npyv_max_##SFX
-            npyv_maxp_##SFX
-        """
         data_a = self._data()
         data_b = self._data(self.nlanes)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
@@ -345,6 +340,31 @@ class _SIMD_FP(_Test_Utility):
                 continue
             _max = self.max(vdata_a, vdata_b)
             assert _max == data_max
+
+    def test_min(self):
+        data_a = self._data()
+        data_b = self._data(self.nlanes)
+        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
+        data_min = [min(a, b) for a, b in zip(data_a, data_b)]
+        _min = self.min(vdata_a, vdata_b)
+        assert _min == data_min
+        minp = self.minp(vdata_a, vdata_b)
+        assert minp == data_min
+        # test IEEE standards
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        min_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
+                     (pinf, pinf, pinf), (pinf, 10, 10), (10, pinf, 10),
+                     (ninf, ninf, ninf), (ninf, 10, ninf), (10, ninf, ninf))
+        for case_operand1, case_operand2, desired in min_cases:
+            data_min = [desired]*self.nlanes
+            vdata_a = self.setall(case_operand1)
+            vdata_b = self.setall(case_operand2)
+            minp = self.minp(vdata_a, vdata_b)
+            assert minp == pytest.approx(data_min, nan_ok=True)
+            if nan in (case_operand1, case_operand2, desired):
+                continue
+            _min = self.min(vdata_a, vdata_b)
+            assert _min == data_min
 
     def test_reciprocal(self):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
