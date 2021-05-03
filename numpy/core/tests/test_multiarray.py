@@ -5053,17 +5053,17 @@ class TestIO:
 
         def dup_bigint(fd):
             return 2*68
-        
+
         old_dup = os.dup
         try:
             with open(self.filename, 'wb') as f:
                 self.x.tofile(f)
-                for dup in (dup_str, dup_bigint):
+                for dup, exc in ((dup_str, TypeError), (dup_bigint, OSError)):
                     os.dup = dup
-                    assert_raises(OSError, np.fromfile, f)
+                    assert_raises(exc, np.fromfile, f)
         finally:
             os.dup = old_dup
- 
+
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)
