@@ -5047,6 +5047,19 @@ class TestIO:
                     np.fromfile, self.filename, dtype=self.dtype,
                     sep=",", offset=1)
 
+    def test_fromfile_bad_dup(self):
+        def dup_str(fd):
+            return 'abc'
+
+        def dup_bigint(fd):
+            return 2*68
+        
+        old_dup = os.dup
+        with open(self.filename, 'wb') as f:
+            self.x.tofile(f)
+            for dup in (dup_str, dup_bigint):
+                assert_raises(OSError, np.fromfile, f)
+ 
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)
