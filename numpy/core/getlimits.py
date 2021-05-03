@@ -170,8 +170,10 @@ def _register_known_types():
     ld = ntypes.longdouble
     epsneg_f128 = exp2(ld(-113))
     tiny_f128 = exp2(ld(-16382))
-    # The value for the smallest subnormal may be 0 on some hardware platforms
     smallest_subnormalf128 = nextafter(ld(0), ld(1), dtype=ld)
+    if smallest_subnormalf128 == ld(0):
+        # The value of the smallest subnormal can be zero in some architectures
+        subnormal_zero_warning(ld)
     # Ignore runtime error when this is not f128
     with numeric.errstate(all='ignore'):
         huge_f128 = (ld(1) - epsneg_f128) / tiny_f128 * ld(4)
@@ -201,8 +203,10 @@ def _register_known_types():
     # Known parameters for float80 (Intel 80-bit extended precision)
     epsneg_f80 = exp2(ld(-64))
     tiny_f80 = exp2(ld(-16382))
-    # The value for the smallest subnormal may be 0 on some hardware platforms
     smallest_subnormalf80 = nextafter(ld(0), ld(1), dtype=ld)
+    if smallest_subnormalf80 == ld(0):
+        # The value of the smallest subnormal can be zero in some architectures
+        subnormal_zero_warning(ld)
     # Ignore runtime error when this is not f80
     with numeric.errstate(all='ignore'):
         huge_f80 = (ld(1) - epsneg_f80) / tiny_f80 * ld(4)
@@ -231,8 +235,10 @@ def _register_known_types():
     # These numbers have the same exponent range as float64, but extended number of
     # digits in the significand.
     huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
-    # The value for the smallest subnormal may be 0 on some hardware platforms
-    smallest_subnormal_dd = nextafter(ld(0), ld(1), dtype=ld)
+    smallest_subnormal_dd = exp2(ld(-16445))
+    if smallest_subnormal_dd == ld(0):
+        # The value of the smallest subnormal can be zero in some architectures
+        subnormal_zero_warning(ld)
     float_dd_ma = MachArLike(ld,
                              machep=-105,
                              negep=-106,
@@ -256,6 +262,13 @@ def _register_known_types():
     _register_type(float_dd_ma,
         b'\x9a\x99\x99\x99\x99\x99\xb9\xbf\x9a\x99\x99\x99\x99\x99Y<')
     _float_ma['dd'] = float_dd_ma
+
+
+def subnormal_zero_warning(dtype):
+    """Create a warning when the subnormal value is zero."""
+    warnings.warn(
+        'The value of the smallest subnormal of {} is zero.'.format(dtype),
+        UserWarning)
 
 
 def _get_machar(ftype):
