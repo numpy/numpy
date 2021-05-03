@@ -5055,10 +5055,14 @@ class TestIO:
             return 2*68
         
         old_dup = os.dup
-        with open(self.filename, 'wb') as f:
-            self.x.tofile(f)
-            for dup in (dup_str, dup_bigint):
-                assert_raises(OSError, np.fromfile, f)
+        try:
+            with open(self.filename, 'wb') as f:
+                self.x.tofile(f)
+                for dup in (dup_str, dup_bigint):
+                    os.dup = dup
+                    assert_raises(OSError, np.fromfile, f)
+        finally:
+            os.dup = old_dup
  
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
