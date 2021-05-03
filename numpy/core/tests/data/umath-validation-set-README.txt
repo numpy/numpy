@@ -1,5 +1,5 @@
 Steps to validate transcendental functions:
-1) Add a file 'umath-validation-set-<ufuncname>', where ufuncname is name of
+1) Add a file 'umath-validation-set-<ufuncname>.txt', where ufuncname is name of
    the function in NumPy you want to validate
 2) The file should contain 4 columns: dtype,input,expected output,ulperror
     a. dtype: one of np.float16, np.float32, np.float64
@@ -11,5 +11,5 @@ Steps to validate transcendental functions:
     d. ulperror: expected maximum ulp error of the function. This
        should be same across all rows of the same dtype. Otherwise, the function is
        tested for the maximum ulp error among all entries of that dtype.
-3) Add file umath-validation-set-<ufuncname> to the test file test_umath_accuracy.py
+3) Add file umath-validation-set-<ufuncname>.txt to the test file test_umath_accuracy.py
    which will then validate your ufunc.
