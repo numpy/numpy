@@ -2498,6 +2498,15 @@ def cumsum(a, axis=None, dtype=None, out=None):
     Arithmetic is modular when using integer types, and no error is
     raised on overflow.
 
+    Summation using sum() might not always equal to cumsum(),
+    As, NumPy uses a pairwise summation for many/most sums (not for 
+    cumsum, and only along the "fast" axis in memory), which gives a 
+    better numerical accuracy. So in the sum case, you are seeing a 
+    better numerical accuracy for free basically,as to the cumsum 
+    case this cannot be provided.
+    The comaprison between sum() and cumsum() for accuracy is illustrated
+    in the example using array 'b'.
+
     Examples
     --------
     >>> a = np.array([[1,2,3], [4,5,6]])
@@ -2515,6 +2524,15 @@ def cumsum(a, axis=None, dtype=None, out=None):
     >>> np.cumsum(a,axis=1)      # sum over columns for each of the 2 rows
     array([[ 1,  3,  6],
            [ 4,  9, 15]])
+
+    >>> b = np.array([1,2e-9,3e-9]*1000000)
+    >>> np.cumsum(b)
+    array([1.00000000e+00, 1.00000000e+00, 1.00000000e+00, ...,
+           1.00000001e+06, 1.00000001e+06, 1.00000001e+06])
+    >>> b.cumsum()[-1]
+    1000000.0050045159            # summation using cumsum() 
+    >>> b.sum()                    
+    1000000.0050000029            # summation using sum()
 
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
