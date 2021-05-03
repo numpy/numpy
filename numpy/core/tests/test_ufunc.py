@@ -457,6 +457,34 @@ class TestUfunc:
         float_dtype = type(np.dtype(np.float64))
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
+    @pytest.mark.parametrize("casting", ["unsafe", "same_kind", "safe"])
+    def test_partial_signature_mismatch(self, casting):
+        # If the second argument matches already, no need to specify it:
+        res = np.ldexp(np.float32(1.), np.int_(2), dtype="d")
+        assert res.dtype == "d"
+        res = np.ldexp(np.float32(1.), np.int_(2), signature=(None, None, "d"))
+        assert res.dtype == "d"
+
+        # ldexp only has a loop for long input as second argument, overriding
+        # the output cannot help with that (no matter the casting)
+        with pytest.raises(TypeError):
+            np.ldexp(1., np.uint64(3), dtype="d")
+        with pytest.raises(TypeError):
+            np.ldexp(1., np.uint64(3), signature=(None, None, "d"))
+
+    def test_use_output_signature_for_all_arguments(self):
+        # Test that providing only `dtype=` or `signature=(None, None, dtype)`
+        # is sufficient if falling back to a homogeneous signature works.
+        # In this case, the `intp, intp -> intp` loop is chosen.
+        res = np.power(1.5, 2.8, dtype=np.intp, casting="unsafe")
+        assert res == 1  # the cast happens first.
+        res = np.power(1.5, 2.8, signature=(None, None, np.intp),
+                       casting="unsafe")
+        assert res == 1
+        with pytest.raises(TypeError):
+            # the unsafe casting would normally cause errors though:
+            np.power(1.5, 2.8, dtype=np.intp)
+
     def test_signature_errors(self):
         with pytest.raises(TypeError,
                     match="the signature object to ufunc must be a string or"):
