@@ -2243,12 +2243,12 @@ type_tuple_type_resolver(PyUFuncObject *self,
     }
 
     /*
-     * When the user passed `dtype=dtype`, it gets translated to
+     * When the user passes `dtype=dtype`, it gets translated to
      * `signature=(None,)*nin + (dtype,)*nout`.  If the signature matches that
      * exactly (could be relaxed but that is not necessary for backcompat),
      * we also try `signature=(dtype,)*(nin+nout)`.
      * This used to be the main meaning for `dtype=dtype`, but some calls broke
-     * the expectation, and changing it, allows for `dtype=dtype` to be useful
+     * the expectation, and changing it allows for `dtype=dtype` to be useful
      * for ufuncs like `np.ldexp` in the future while also normalizing it to
      * a `signature` early on.
      */
