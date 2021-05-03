@@ -275,7 +275,7 @@ def subnormal_zero_warning(dtype):
     """
     warnings.warn(
         'The value of the smallest subnormal of {} is zero.'.format(dtype),
-        UserWarning)
+        UserWarning, stacklevel=2)
 
 
 def _get_machar(ftype):
