@@ -265,7 +265,14 @@ def _register_known_types():
 
 
 def subnormal_zero_warning(dtype):
-    """Create a warning when the subnormal value is zero."""
+    """
+    Create a warning when the subnormal value is zero.
+
+    Parameters
+    ----------
+    dtype : class
+        Numpy floating point type class (e.g. ``np.float64``)
+    """
     warnings.warn(
         'The value of the smallest subnormal of {} is zero.'.format(dtype),
         UserWarning)
