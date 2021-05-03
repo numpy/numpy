@@ -215,7 +215,7 @@ class _SIMD_FP32(_Test_Utility):
     def test_conversions(self):
         """
         Round to nearest even integer, assume CPU control register is set to rounding.
-        Test intrinics:
+        Test intrinsics:
             npyv_round_s32_##SFX
         """
         features = self._cpu_features()
@@ -238,7 +238,7 @@ class _SIMD_FP64(_Test_Utility):
     def test_conversions(self):
         """
         Round to nearest even integer, assume CPU control register is set to rounding.
-        Test intrinics:
+        Test intrinsics:
             npyv_round_s32_##SFX
         """
         vdata_a = self.load(self._data())
@@ -317,6 +317,11 @@ class _SIMD_FP(_Test_Utility):
         assert square == data_square
         
     def test_max(self):
+        """
+        Test intrinsics:
+            npyv_max_##SFX
+            npyv_maxp_##SFX
+        """
         data_a = self._data()
         data_b = self._data(self.nlanes)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
@@ -342,6 +347,11 @@ class _SIMD_FP(_Test_Utility):
             assert _max == data_max
 
     def test_min(self):
+        """
+        Test intrinsics:
+            npyv_min_##SFX
+            npyv_minp_##SFX
+        """
         data_a = self._data()
         data_b = self._data(self.nlanes)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
@@ -383,7 +393,7 @@ class _SIMD_FP(_Test_Utility):
 
     def test_special_cases(self):
         """
-        Compare Not NaN. Test intrinics:
+        Compare Not NaN. Test intrinsics:
             npyv_notnan_##SFX
         """
         nnan = self.notnan(self.setall(self._nan()))
@@ -722,7 +732,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_conversion_expand(self):
         """
-        Test expand intrinics:
+        Test expand intrinsics:
             npyv_expand_u16_u8
             npyv_expand_u32_u16
         """
@@ -785,7 +795,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_intdiv(self):
         """
-        Test integer division intrinics:
+        Test integer division intrinsics:
             npyv_divisor_##sfx
             npyv_divc_##sfx
         """
@@ -855,7 +865,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_reduce_sum(self):
         """
-        Test reduce sum intrinics:
+        Test reduce sum intrinsics:
             npyv_sum_##sfx
         """
         if self.sfx not in ("u32", "u64", "f32", "f64"):
@@ -870,7 +880,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_reduce_sumup(self):
         """
-        Test extend reduce sum intrinics:
+        Test extend reduce sum intrinsics:
             npyv_sumup_##sfx
         """
         if self.sfx not in ("u8", "u16"):
@@ -886,7 +896,7 @@ class _SIMD_ALL(_Test_Utility):
     def test_mask_conditional(self):
         """
         Conditional addition and subtraction for all supported data types.
-        Test intrinics:
+        Test intrinsics:
             npyv_ifadd_##SFX, npyv_ifsub_##SFX
         """
         vdata_a = self.load(self._data())
