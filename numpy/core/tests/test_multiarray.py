@@ -5052,7 +5052,7 @@ class TestIO:
             return 'abc'
 
         def dup_bigint(fd):
-            return 2*68
+            return 2**68
 
         old_dup = os.dup
         try:
