@@ -1201,20 +1201,8 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        int res = PyUFunc_SimpleUniformOperationTypeResolver(ufunc,
-                casting, operands, type_tup, out_dtypes);
-        if (res < 0 || out_dtypes[0]->type_num != NPY_BOOL) {
-            return res;
-        }
-        /*
-         * Hardcode that boolean division is handled by casting to int8,
-         * we could consider deprecating this (this is safe so no need to
-         * "validate casting" again.
-         */
-        Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_BYTE));
-        Py_SETREF(out_dtypes[1], PyArray_DescrFromType(NPY_BYTE));
-        Py_SETREF(out_dtypes[2], PyArray_DescrFromType(NPY_BYTE));
-        return res;
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                    type_tup, out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -2101,80 +2089,34 @@ linear_search_type_resolver(PyUFuncObject *self,
     return -1;
 }
 
-/*
- * Does a linear search for the inner loop of the ufunc specified by type_tup.
- *
- * Note that if an error is returned, the caller must free the non-zero
- * references in out_dtype.  This function does not do its own clean-up.
- */
-NPY_NO_EXPORT int
-type_tuple_type_resolver(PyUFuncObject *self,
-                        PyObject *type_tup,
-                        PyArrayObject **op,
-                        NPY_CASTING input_casting,
-                        NPY_CASTING casting,
-                        int any_object,
-                        PyArray_Descr **out_dtype)
+
+static int
+type_tuple_type_resolver_core(PyUFuncObject *self,
+        PyArrayObject **op,
+        NPY_CASTING input_casting, NPY_CASTING casting,
+        int specified_types[],
+        int any_object,
+        int no_castable_output, int use_min_scalar,
+        PyArray_Descr **out_dtype)
 {
-    int i, j, nin = self->nin, nop = nin + self->nout;
-    int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
-    const char *ufunc_name;
-    int no_castable_output = 0, use_min_scalar;
+    int i, j;
+    int nop = self->nargs;
+    int types[NPY_MAXARGS];
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
-    ufunc_name = ufunc_get_name_cstr(self);
-
-    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
-
-    /* Fill in specified_types from the tuple or string */
-    const char *bad_type_tup_msg = (
-            "Only NumPy must call `ufunc->type_resolver()` explicitly. "
-            "NumPy ensures that a type-tuple is normalized now to be a tuple "
-            "only containing None or descriptors.  If anything else is passed "
-            "(you are seeing this message), the `type_resolver()` was called "
-            "directly by a third party. "
-            "This is unexpected, please inform the NumPy developers about it. "
-            "Also note that `type_resolver` will be phased out, since it must "
-            "be replaced.");
-
-    if (PyTuple_CheckExact(type_tup)) {
-        Py_ssize_t n = PyTuple_GET_SIZE(type_tup);
-        if (n != nop) {
-            PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
-            return -1;
-        }
-        for (i = 0; i < nop; ++i) {
-            PyObject *item = PyTuple_GET_ITEM(type_tup, i);
-            if (item == Py_None) {
-                specified_types[i] = NPY_NOTYPE;
-            }
-            else {
-                if (!PyArray_DescrCheck(item)) {
-                    PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
-                    return -1;
-                }
-                specified_types[i] = ((PyArray_Descr *)item)->type_num;
-            }
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
-        return -1;
-    }
-
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
         switch (type_tuple_userloop_type_resolver(self,
-                        nop, specified_types,
-                        op, input_casting, casting,
-                        any_object, use_min_scalar,
-                        out_dtype)) {
+                nop, specified_types,
+                op, input_casting, casting,
+                any_object, use_min_scalar,
+                out_dtype)) {
             /* Error */
             case -1:
                 return -1;
-            /* Found matching loop */
+                /* Found matching loop */
             case 1:
                 return 0;
         }
@@ -2201,11 +2143,11 @@ type_tuple_type_resolver(PyUFuncObject *self,
         }
 
         switch (ufunc_loop_matches(self, op,
-                    input_casting, casting,
-                    any_object, use_min_scalar,
-                    types, NULL,
-                    &no_castable_output, &err_src_typecode,
-                    &err_dst_typecode)) {
+                input_casting, casting,
+                any_object, use_min_scalar,
+                types, NULL,
+                &no_castable_output, &err_src_typecode,
+                &err_dst_typecode)) {
             case -1:
                 /* Error */
                 return -1;
@@ -2226,8 +2168,117 @@ type_tuple_type_resolver(PyUFuncObject *self,
                     }
                     return -1;
                 }
-
                 return 0;
+        }
+    }
+    return -2;
+}
+
+/*
+ * Does a linear search for the inner loop of the ufunc specified by type_tup.
+ *
+ * Note that if an error is returned, the caller must free the non-zero
+ * references in out_dtype.  This function does not do its own clean-up.
+ */
+NPY_NO_EXPORT int
+type_tuple_type_resolver(PyUFuncObject *self,
+                        PyObject *type_tup,
+                        PyArrayObject **op,
+                        NPY_CASTING input_casting,
+                        NPY_CASTING casting,
+                        int any_object,
+                        PyArray_Descr **out_dtype)
+{
+    int nin = self->nin, nop = nin + self->nout;
+    int specified_types[NPY_MAXARGS];
+    const char *ufunc_name;
+    int no_castable_output = 0, use_min_scalar;
+
+    ufunc_name = ufunc_get_name_cstr(self);
+
+    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+
+    /* Fill in specified_types from the tuple or string */
+    const char *bad_type_tup_msg = (
+            "Only NumPy must call `ufunc->type_resolver()` explicitly. "
+            "NumPy ensures that a type-tuple is normalized now to be a tuple "
+            "only containing None or descriptors.  If anything else is passed "
+            "(you are seeing this message), the `type_resolver()` was called "
+            "directly by a third party. "
+            "This is unexpected, please inform the NumPy developers about it. "
+            "Also note that `type_resolver` will be phased out, since it must "
+            "be replaced.");
+
+    if (PyTuple_CheckExact(type_tup)) {
+        Py_ssize_t n = PyTuple_GET_SIZE(type_tup);
+        if (n != nop) {
+            PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
+            return -1;
+        }
+        for (int i = 0; i < nop; ++i) {
+            PyObject *item = PyTuple_GET_ITEM(type_tup, i);
+            if (item == Py_None) {
+                specified_types[i] = NPY_NOTYPE;
+            }
+            else {
+                if (!PyArray_DescrCheck(item)) {
+                    PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
+                    return -1;
+                }
+                specified_types[i] = ((PyArray_Descr *)item)->type_num;
+            }
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
+        return -1;
+    }
+
+    int res = type_tuple_type_resolver_core(self,
+            op, input_casting, casting, specified_types, any_object,
+            no_castable_output, use_min_scalar, out_dtype);
+
+    if (res != -2) {
+        return res;
+    }
+
+    /*
+     * When the user passed `dtype=dtype`, it gets translated to
+     * `signature=(None,)*nin + (dtype,)*nout`.  If the signature matches that
+     * exactly (could be relaxed but that is not necessary for backcompat),
+     * we also try `signature=(dtype,)*(nin+nout)`.
+     * This used to be the main meaning for `dtype=dtype`, but some calls broke
+     * the expectation, and changing it, allows for `dtype=dtype` to be useful
+     * for ufuncs like `np.ldexp` in the future while also normalizing it to
+     * a `signature` early on.
+     */
+    int homogeneous_type = NPY_NOTYPE;
+    if (self->nout > 0) {
+        homogeneous_type = specified_types[nin];
+        for (int i = nin+1; i < nop; i++) {
+            if (specified_types[i] != homogeneous_type) {
+                homogeneous_type = NPY_NOTYPE;
+                break;
+            }
+        }
+    }
+    if (homogeneous_type != NPY_NOTYPE) {
+        for (int i = 0; i < nin; i++) {
+            if (specified_types[i] != NPY_NOTYPE) {
+                homogeneous_type = NPY_NOTYPE;
+                break;
+            }
+            specified_types[i] = homogeneous_type;
+        }
+    }
+    if (homogeneous_type != NPY_NOTYPE) {
+        /* Try again with the homogeneous specified types. */
+        res = type_tuple_type_resolver_core(self,
+                op, input_casting, casting, specified_types, any_object,
+                no_castable_output, use_min_scalar, out_dtype);
+
+        if (res != -2) {
+            return res;
         }
     }
 

@@ -2201,8 +2201,8 @@ def test_ufunc_casterrors():
     # was aborted (this is not necessarily defined behaviour)
     assert out[-1] == 1
 
-    with pytest.raises(TypeError):
-        # Input "casting" failure (there is no intp out loop for object inputs)
+    with pytest.raises(ValueError):
+        # Input casting failure:
         np.add(arr, arr, out=out, dtype=np.intp, casting="unsafe")
 
     assert count == sys.getrefcount(value)

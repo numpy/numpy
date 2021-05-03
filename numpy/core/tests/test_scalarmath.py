@@ -307,7 +307,8 @@ class TestModulus:
         # promotes to float which does not fit
         a = np.array([1, 2], np.int64)
         b = np.array([1, 2], np.uint64)
-        with pytest.raises(TypeError, match=r"Cannot cast ufunc"):
+        pattern = 'could not be coerced to provided output parameter'
+        with assert_raises_regex(TypeError, pattern):
             a //= b
 
 

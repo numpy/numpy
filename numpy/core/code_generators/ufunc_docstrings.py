@@ -3628,9 +3628,9 @@ add_newdoc('numpy.core.umath', 'nextafter',
     Examples
     --------
     >>> eps = np.finfo(np.float64).eps
-    >>> np.nextafter(1., 2.) == eps + 1
+    >>> np.nextafter(1, 2) == eps + 1
     True
-    >>> np.nextafter([1., 2.], [2., 1.]) == [eps + 1, 2 - eps]
+    >>> np.nextafter([1, 2], [2, 1]) == [eps + 1, 2 - eps]
     array([ True,  True])
 
     """)
