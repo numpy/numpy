@@ -62,6 +62,22 @@ NPY_FINLINE npyv_f64 npyv_maxp_f64(npyv_f64 a, npyv_f64 b)
     __mmask8 nn = _mm512_cmp_pd_mask(b, b, _CMP_ORD_Q);
     return _mm512_mask_max_pd(a, nn, a, b);
 }
+// Maximum, integer operations
+#ifdef NPY_HAVE_AVX512BW
+    #define npyv_max_u8 _mm512_max_epu8
+    #define npyv_max_s8 _mm512_max_epi8
+    #define npyv_max_u16 _mm512_max_epu16
+    #define npyv_max_s16 _mm512_max_epi16
+#else
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_max_u8, _mm256_max_epu8)
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_max_s8, _mm256_max_epi8)
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_max_u16, _mm256_max_epu16)
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_max_s16, _mm256_max_epi16)
+#endif
+#define npyv_max_u32 _mm512_max_epu32
+#define npyv_max_s32 _mm512_max_epi32
+#define npyv_max_u64 _mm512_max_epu64
+#define npyv_max_s64 _mm512_max_epi64
 
 // Minimum, natively mapping with no guarantees to handle NaN.
 #define npyv_min_f32 _mm512_min_ps
@@ -79,5 +95,21 @@ NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
     __mmask8 nn = _mm512_cmp_pd_mask(b, b, _CMP_ORD_Q);
     return _mm512_mask_min_pd(a, nn, a, b);
 }
+// Minimum, integer operations
+#ifdef NPY_HAVE_AVX512BW
+    #define npyv_min_u8 _mm512_min_epu8
+    #define npyv_min_s8 _mm512_min_epi8
+    #define npyv_min_u16 _mm512_min_epu16
+    #define npyv_min_s16 _mm512_min_epi16
+#else
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_min_u8, _mm256_min_epu8)
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_min_s8, _mm256_min_epi8)
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_min_u16, _mm256_min_epu16)
+    NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_min_s16, _mm256_min_epi16)
+#endif
+#define npyv_min_u32 _mm512_min_epu32
+#define npyv_min_s32 _mm512_min_epi32
+#define npyv_min_u64 _mm512_min_epu64
+#define npyv_min_s64 _mm512_min_epi64
 
 #endif
