@@ -55,6 +55,21 @@ NPY_FINLINE npyv_f64 npyv_maxp_f64(npyv_f64 a, npyv_f64 b)
     __m256d max = _mm256_max_pd(a, b);
     return _mm256_blendv_pd(a, max, nn);
 }
+// Maximum, integer operations
+#define npyv_max_u8 _mm256_max_epu8
+#define npyv_max_s8 _mm256_max_epi8
+#define npyv_max_u16 _mm256_max_epu16
+#define npyv_max_s16 _mm256_max_epi16
+#define npyv_max_u32 _mm256_max_epu32
+#define npyv_max_s32 _mm256_max_epi32
+NPY_FINLINE npyv_u64 npyv_max_u64(npyv_u64 a, npyv_u64 b)
+{
+    return _mm256_blendv_epi8(b, a, npyv_cmpgt_u64(a, b));
+}
+NPY_FINLINE npyv_s64 npyv_max_s64(npyv_s64 a, npyv_s64 b)
+{
+    return _mm256_blendv_epi8(b, a, _mm256_cmpgt_epi64(a, b));
+}
 
 // Minimum, natively mapping with no guarantees to handle NaN.
 #define npyv_min_f32 _mm256_min_ps
@@ -73,6 +88,21 @@ NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
     __m256d nn  = _mm256_cmp_pd(b, b, _CMP_ORD_Q);
     __m256d min = _mm256_min_pd(a, b);
     return _mm256_blendv_pd(a, min, nn);
+}
+// Minimum, integer operations
+#define npyv_min_u8 _mm256_min_epu8
+#define npyv_min_s8 _mm256_min_epi8
+#define npyv_min_u16 _mm256_min_epu16
+#define npyv_min_s16 _mm256_min_epi16
+#define npyv_min_u32 _mm256_min_epu32
+#define npyv_min_s32 _mm256_min_epi32
+NPY_FINLINE npyv_u64 npyv_min_u64(npyv_u64 a, npyv_u64 b)
+{
+    return _mm256_blendv_epi8(b, a, npyv_cmplt_u64(a, b));
+}
+NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
+{
+    return _mm256_blendv_epi8(a, b, _mm256_cmpgt_epi64(a, b));
 }
 
 #endif

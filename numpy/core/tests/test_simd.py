@@ -208,6 +208,19 @@ class _SIMD_INT(_Test_Utility):
         subs = self.subs(vdata_a, vdata_b)
         assert subs == data_subs
 
+    def test_math_max_min(self):
+        data_a = self._data()
+        data_b = self._data(self.nlanes)
+        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
+
+        data_max = [max(a, b) for a, b in zip(data_a, data_b)]
+        simd_max = self.max(vdata_a, vdata_b)
+        assert simd_max == data_max
+
+        data_min = [min(a, b) for a, b in zip(data_a, data_b)]
+        simd_min = self.min(vdata_a, vdata_b)
+        assert simd_min == data_min
+
 class _SIMD_FP32(_Test_Utility):
     """
     To only test single precision
@@ -334,7 +347,8 @@ class _SIMD_FP(_Test_Utility):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
         max_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
                      (pinf, pinf, pinf), (pinf, 10, pinf), (10, pinf, pinf),
-                     (ninf, ninf, ninf), (ninf, 10, 10), (10, ninf, 10))
+                     (ninf, ninf, ninf), (ninf, 10, 10), (10, ninf, 10),
+                     (10, 0, 10), (10, -10, 10))
         for case_operand1, case_operand2, desired in max_cases:
             data_max = [desired]*self.nlanes
             vdata_a = self.setall(case_operand1)
@@ -364,7 +378,8 @@ class _SIMD_FP(_Test_Utility):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
         min_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
                      (pinf, pinf, pinf), (pinf, 10, 10), (10, pinf, 10),
-                     (ninf, ninf, ninf), (ninf, 10, ninf), (10, ninf, ninf))
+                     (ninf, ninf, ninf), (ninf, 10, ninf), (10, ninf, ninf),
+                     (10, 0, 0), (10, -10, -10))
         for case_operand1, case_operand2, desired in min_cases:
             data_min = [desired]*self.nlanes
             vdata_a = self.setall(case_operand1)
