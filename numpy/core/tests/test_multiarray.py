@@ -5047,6 +5047,7 @@ class TestIO:
                     np.fromfile, self.filename, dtype=self.dtype,
                     sep=",", offset=1)
 
+    @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
     def test_fromfile_bad_dup(self):
         def dup_str(fd):
             return 'abc'
