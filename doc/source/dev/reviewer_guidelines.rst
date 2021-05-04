@@ -124,24 +124,24 @@ It may be helpful to store some of these in GitHub's `saved
 replies <https://github.com/settings/replies/>`_ for reviewing:
 
 **Usage question**
-    ::
+    .. code-block:: md
 
         You are asking a usage question. The issue tracker is for bugs and new features.
         I'm going to close this issue, feel free to ask for help via our [help channels](https://numpy.org/gethelp/).
 
 **You’re welcome to update the docs**
-    ::
+    .. code-block:: md
 
         Please feel free to offer a pull request updating the documentation if you feel it could be improved.
 
 **Self-contained example for bug**
-    ::
+    .. code-block:: md
 
-        Please provide a [self-contained example code] (https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue.
+        Please provide a [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue.
         Ideally your example code should be minimal.
 
 **Software versions**
-    ::
+    .. code-block:: md
 
         To help diagnose your issue, please paste the output of:
         ```
@@ -150,31 +150,31 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
         Thanks.
 
 **Code blocks**
-    ::
+    .. code-block:: md
 
         Readability can be greatly improved if you [format](https://help.github.com/articles/creating-and-highlighting-code-blocks/) your code snippets and complete error messages appropriately.
         You can edit your issue descriptions and comments at any time to improve readability.
         This helps maintainers a lot. Thanks!
 
 **Linking to code**
-    ::
+    .. code-block:: md
 
         For clarity's sake, you can link to code like [this](https://help.github.com/articles/creating-a-permanent-link-to-a-code-snippet/).
 
 **Better description and title**
-    ::
+    .. code-block:: md
 
         Please make the title of the PR more descriptive.
         The title will become the commit message when this is merged.
         You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](https://docs.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
 
 **Regression test needed**
-    ::
+    .. code-block:: md
 
         Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
 **Don’t change unrelated**
-    ::
+    .. code-block:: md
 
         Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
 
