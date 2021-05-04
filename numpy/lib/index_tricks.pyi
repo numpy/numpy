@@ -17,6 +17,7 @@ from numpy import (
     ndindex as ndindex,
     ndarray,
     dtype,
+    integer,
     str_,
     bytes_,
     bool_,
@@ -33,7 +34,6 @@ from numpy.typing import (
     _NestedSequence,
     _RecursiveSequence,
     _ArrayND,
-    _ArrayOrScalar,
     _ArrayLikeInt,
 
     # DTypes
@@ -57,18 +57,33 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 
 __all__: List[str]
 
+@overload
+def unravel_index(  # type: ignore[misc]
+    indices: Union[int, integer[Any]],
+    shape: _ShapeLike,
+    order: _OrderCF = ...
+) -> Tuple[intp, ...]: ...
+@overload
 def unravel_index(
     indices: _ArrayLikeInt,
     shape: _ShapeLike,
     order: _OrderCF = ...
-) -> Tuple[_ArrayOrScalar[intp], ...]: ...
+) -> Tuple[_ArrayND[intp], ...]: ...
 
-def ravel_multi_index(
-    multi_index: ArrayLike,
+@overload
+def ravel_multi_index(  # type: ignore[misc]
+    multi_index: Sequence[Union[int, integer[Any]]],
     dims: _ShapeLike,
     mode: Union[_ModeKind, Tuple[_ModeKind, ...]] = ...,
     order: _OrderCF = ...
-) -> _ArrayOrScalar[intp]: ...
+) -> intp: ...
+@overload
+def ravel_multi_index(
+    multi_index: Sequence[_ArrayLikeInt],
+    dims: _ShapeLike,
+    mode: Union[_ModeKind, Tuple[_ModeKind, ...]] = ...,
+    order: _OrderCF = ...
+) -> _ArrayND[intp]: ...
 
 @overload
 def ix_(*args: _NestedSequence[_SupportsDType[_DType]]) -> Tuple[ndarray[Any, _DType], ...]: ...

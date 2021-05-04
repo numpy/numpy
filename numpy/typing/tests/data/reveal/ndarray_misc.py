@@ -16,24 +16,24 @@ B: SubClass
 
 reveal_type(f8.all())  # E: numpy.bool_
 reveal_type(A.all())  # E: numpy.bool_
-reveal_type(A.all(axis=0))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
-reveal_type(A.all(keepdims=True))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
+reveal_type(A.all(axis=0))  # E: Any
+reveal_type(A.all(keepdims=True))  # E: Any
 reveal_type(A.all(out=B))  # E: SubClass
 
 reveal_type(f8.any())  # E: numpy.bool_
 reveal_type(A.any())  # E: numpy.bool_
-reveal_type(A.any(axis=0))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
-reveal_type(A.any(keepdims=True))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
+reveal_type(A.any(axis=0))  # E: Any
+reveal_type(A.any(keepdims=True))  # E: Any
 reveal_type(A.any(out=B))  # E: SubClass
 
 reveal_type(f8.argmax())  # E: {intp}
 reveal_type(A.argmax())  # E: {intp}
-reveal_type(A.argmax(axis=0))  # E: Union[numpy.ndarray[Any, Any], {intp}]
+reveal_type(A.argmax(axis=0))  # E: Any
 reveal_type(A.argmax(out=B))  # E: SubClass
 
 reveal_type(f8.argmin())  # E: {intp}
 reveal_type(A.argmin())  # E: {intp}
-reveal_type(A.argmin(axis=0))  # E: Union[numpy.ndarray[Any, Any], {intp}]
+reveal_type(A.argmin(axis=0))  # E: Any
 reveal_type(A.argmin(out=B))  # E: SubClass
 
 reveal_type(f8.argsort())  # E: numpy.ndarray[Any, Any]
@@ -43,9 +43,9 @@ reveal_type(f8.astype(np.int64).choose([()]))  # E: numpy.ndarray[Any, Any]
 reveal_type(A.choose([0]))  # E: numpy.ndarray[Any, Any]
 reveal_type(A.choose([0], out=B))  # E: SubClass
 
-reveal_type(f8.clip(1))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.clip(1))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.clip(None, 1))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.clip(1))  # E: Any
+reveal_type(A.clip(1))  # E: Any
+reveal_type(A.clip(None, 1))  # E: Any
 reveal_type(A.clip(1, out=B))  # E: SubClass
 reveal_type(A.clip(None, 1, out=B))  # E: SubClass
 
@@ -69,38 +69,38 @@ reveal_type(f8.cumsum())  # E: numpy.ndarray[Any, Any]
 reveal_type(A.cumsum())  # E: numpy.ndarray[Any, Any]
 reveal_type(A.cumsum(out=B))  # E: SubClass
 
-reveal_type(f8.max())  # E: numpy.number[Any]
-reveal_type(A.max())  # E: numpy.number[Any]
-reveal_type(A.max(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.max(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.max())  # E: Any
+reveal_type(A.max())  # E: Any
+reveal_type(A.max(axis=0))  # E: Any
+reveal_type(A.max(keepdims=True))  # E: Any
 reveal_type(A.max(out=B))  # E: SubClass
 
-reveal_type(f8.mean())  # E: numpy.number[Any]
-reveal_type(A.mean())  # E: numpy.number[Any]
-reveal_type(A.mean(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.mean(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.mean())  # E: Any
+reveal_type(A.mean())  # E: Any
+reveal_type(A.mean(axis=0))  # E: Any
+reveal_type(A.mean(keepdims=True))  # E: Any
 reveal_type(A.mean(out=B))  # E: SubClass
 
-reveal_type(f8.min())  # E: numpy.number[Any]
-reveal_type(A.min())  # E: numpy.number[Any]
-reveal_type(A.min(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.min(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.min())  # E: Any
+reveal_type(A.min())  # E: Any
+reveal_type(A.min(axis=0))  # E: Any
+reveal_type(A.min(keepdims=True))  # E: Any
 reveal_type(A.min(out=B))  # E: SubClass
 
 reveal_type(f8.newbyteorder())  # E: {float64}
 reveal_type(A.newbyteorder())  # E: numpy.ndarray[Any, Any]
 reveal_type(B.newbyteorder('|'))  # E: SubClass
 
-reveal_type(f8.prod())  # E: numpy.number[Any]
-reveal_type(A.prod())  # E: numpy.number[Any]
-reveal_type(A.prod(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.prod(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.prod())  # E: Any
+reveal_type(A.prod())  # E: Any
+reveal_type(A.prod(axis=0))  # E: Any
+reveal_type(A.prod(keepdims=True))  # E: Any
 reveal_type(A.prod(out=B))  # E: SubClass
 
-reveal_type(f8.ptp())  # E: numpy.number[Any]
-reveal_type(A.ptp())  # E: numpy.number[Any]
-reveal_type(A.ptp(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.ptp(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.ptp())  # E: Any
+reveal_type(A.ptp())  # E: Any
+reveal_type(A.ptp(axis=0))  # E: Any
+reveal_type(A.ptp(keepdims=True))  # E: Any
 reveal_type(A.ptp(out=B))  # E: SubClass
 
 reveal_type(f8.round())  # E: {float64}
@@ -111,40 +111,40 @@ reveal_type(f8.repeat(1))  # E: numpy.ndarray[Any, Any]
 reveal_type(A.repeat(1))  # E: numpy.ndarray[Any, Any]
 reveal_type(B.repeat(1))  # E: numpy.ndarray[Any, Any]
 
-reveal_type(f8.std())  # E: numpy.number[Any]
-reveal_type(A.std())  # E: numpy.number[Any]
-reveal_type(A.std(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.std(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.std())  # E: Any
+reveal_type(A.std())  # E: Any
+reveal_type(A.std(axis=0))  # E: Any
+reveal_type(A.std(keepdims=True))  # E: Any
 reveal_type(A.std(out=B))  # E: SubClass
 
-reveal_type(f8.sum())  # E: numpy.number[Any]
-reveal_type(A.sum())  # E: numpy.number[Any]
-reveal_type(A.sum(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.sum(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.sum())  # E: Any
+reveal_type(A.sum())  # E: Any
+reveal_type(A.sum(axis=0))  # E: Any
+reveal_type(A.sum(keepdims=True))  # E: Any
 reveal_type(A.sum(out=B))  # E: SubClass
 
-reveal_type(f8.take(0))  # E: numpy.generic
-reveal_type(A.take(0))  # E: numpy.generic
+reveal_type(f8.take(0))  # E: Any
+reveal_type(A.take(0))  # E: Any
 reveal_type(A.take([0]))  # E: numpy.ndarray[Any, Any]
 reveal_type(A.take(0, out=B))  # E: SubClass
 reveal_type(A.take([0], out=B))  # E: SubClass
 
-reveal_type(f8.var())  # E: numpy.number[Any]
-reveal_type(A.var())  # E: numpy.number[Any]
-reveal_type(A.var(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
-reveal_type(A.var(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.var())  # E: Any
+reveal_type(A.var())  # E: Any
+reveal_type(A.var(axis=0))  # E: Any
+reveal_type(A.var(keepdims=True))  # E: Any
 reveal_type(A.var(out=B))  # E: SubClass
 
 reveal_type(A.argpartition([0]))  # E: numpy.ndarray[Any, Any]
 
 reveal_type(A.diagonal())  # E: numpy.ndarray[Any, Any]
 
-reveal_type(A.dot(1))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(A.dot(1))  # E: Any
 reveal_type(A.dot(1, out=B))  # E: SubClass
 
 reveal_type(A.nonzero())  # E: tuple[numpy.ndarray[Any, Any]]
 
 reveal_type(A.searchsorted([1]))  # E: numpy.ndarray[Any, Any]
 
-reveal_type(A.trace())  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
+reveal_type(A.trace())  # E: Any
 reveal_type(A.trace(out=B))  # E: SubClass

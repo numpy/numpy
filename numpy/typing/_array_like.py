@@ -132,7 +132,5 @@ _ArrayLikeInt = _ArrayLike[
 
 if TYPE_CHECKING:
     _ArrayND = ndarray[Any, dtype[_ScalarType]]
-    _ArrayOrScalar = Union[_ScalarType, _ArrayND[_ScalarType]]
 else:
     _ArrayND = Any
-    _ArrayOrScalar = Any
