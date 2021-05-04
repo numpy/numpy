@@ -1,4 +1,4 @@
-/*@targets $werror #simd_test*/
+/*@targets #simd_test*/
 #include "_simd.h"
 #include "_simd_inc.h"
 
