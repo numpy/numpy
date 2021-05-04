@@ -160,11 +160,12 @@ class build_ext (old_build_ext):
                 log.info("Detected changes on compiler optimizations, force rebuilding")
                 self.force = True
 
-            import atexit
-            def report():
+            def report(copt):
                 log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
-                log.info(self.compiler_opt.report(full=True))
-            atexit.register(report)
+                log.info(copt.report(full=True))
+
+            import atexit
+            atexit.register(report, self.compiler_opt)
 
         # Setup directory for storing generated extra DLL files on Windows
         self.extra_dll_dir = os.path.join(self.build_temp, '.libs')

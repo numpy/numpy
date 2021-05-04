@@ -132,12 +132,12 @@ class build_clib(old_build_clib):
                 log.info("Detected changes on compiler optimizations, force rebuilding")
                 self.force = True
 
-            import atexit
-            def report():
+            def report(copt):
                 log.info("\n########### CLIB COMPILER OPTIMIZATION ###########")
-                log.info(self.compiler_opt.report(full=True))
+                log.info(copt.report(full=True))
 
-            atexit.register(report)
+            import atexit
+            atexit.register(report, self.compiler_opt)
 
         if self.have_f_sources():
             from numpy.distutils.fcompiler import new_fcompiler
