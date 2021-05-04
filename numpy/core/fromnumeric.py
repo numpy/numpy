@@ -2523,13 +2523,10 @@ def cumsum(a, axis=None, dtype=None, out=None):
     ``cumsum(b)[-1]`` may not be equal to ``sum(b)``
 
     >>> b = np.array([1, 2e-9, 3e-9] * 1000000)
-    >>> np.cumsum(b)
-    array([1.00000000e+00, 1.00000000e+00, 1.00000000e+00, ...,
-           1.00000001e+06, 1.00000001e+06, 1.00000001e+06])
     >>> b.cumsum()[-1]
-    1000000.0050045159            # summation using cumsum() 
+    1000000.0050045159
     >>> b.sum()                    
-    1000000.0050000029            # summation using sum()
+    1000000.0050000029
 
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
