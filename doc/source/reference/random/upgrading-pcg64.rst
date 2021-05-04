@@ -132,22 +132,21 @@ additional protection from these low-bit collisions. To the `PCG author's
 credit <https://github.com/numpy/numpy/issues/13635#issuecomment-506088698>`_,
 she had developed a stronger output function in response to related discussions
 during the long birth of the new `BitGenerator` system. We NumPy developers
-(mostly me, Robert Kern, to be clear where the blame lies) chose to be
-"conservative" and use the XSL-RR variant that had undergone a longer period of
-testing at that time. The DXSM output function adopts a "xorshift-multiply"
-construction used in strong integer hashes that has much better avalanche
-properties than the XSL-RR output function. While there are "pathological"
-pairs of increments that induce "bad" additive constants that relate the two
-streams, the vast majority of pairs induce "good" additive constants that make
-the merely-distinct streams of LCG states into practically-independent output
-streams. Indeed, now the claim I once made about `PCG64` is actually true of
-`PCG64DXSM`: collisions are possible, but both streams have to simultaneously
-be both "close" in the 128 bit state space *and* "close" in the 127-bit
-increment space, so the negligible chance of colliding in the 128-bit internal
-`SeedSequence` pool is more likely. The DXSM output function is more
-computationally intensive than XSL-RR, but some optimizations in the LCG more
-than make up for the performance hit on most machines, so `PCG64DXSM` is
-a good, safe upgrade. There are, of course, an infinite number of stronger
-output functions that one could consider, but most will have a greater
-computational cost, and the DXSM output function has now received many CPU
-cycles of testing via ``PractRand`` at this time.
+chose to be "conservative" and use the XSL-RR variant that had undergone
+a longer period of testing at that time. The DXSM output function adopts
+a "xorshift-multiply" construction used in strong integer hashes that has much
+better avalanche properties than the XSL-RR output function. While there are
+"pathological" pairs of increments that induce "bad" additive constants that
+relate the two streams, the vast majority of pairs induce "good" additive
+constants that make the merely-distinct streams of LCG states into
+practically-independent output streams. Indeed, now the claim we once made
+about `PCG64` is actually true of `PCG64DXSM`: collisions are possible, but
+both streams have to simultaneously be both "close" in the 128 bit state space
+*and* "close" in the 127-bit increment space, so the negligible chance of
+colliding in the 128-bit internal `SeedSequence` pool would be more likely. The
+DXSM output function is more computationally intensive than XSL-RR, but some
+optimizations in the LCG more than make up for the performance hit on most
+machines, so `PCG64DXSM` is a good, safe upgrade. There are, of course, an
+infinite number of stronger output functions that one could consider, but most
+will have a greater computational cost, and the DXSM output function has now
+received many CPU cycles of testing via ``PractRand`` at this time.
