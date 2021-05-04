@@ -68,7 +68,7 @@ too much computational cost.
 One of these known weaknesses is that advancing the state of the LCG by steps
 numbering a power of two (``bg.advance(2**N)``) will leave the lower ``N`` bits
 identical to the state that was just left. For a single stream drawn from
-sequentially, this is of little consequence. The remaining ``128-N`` bits provide
+sequentially, this is of little consequence. The remaining :math:`128-N` bits provide
 plenty of pseudorandomness that will be mixed in for any practical ``N`` that can
 be observed in a single stream, which is why one does not need to worry about
 this if you only use a single stream in your application. Similarly, the
@@ -84,7 +84,7 @@ increment, then the pair of streams, when interleaved, will fail
 `PractRand <http://pracrand.sourceforge.net/>`_ in
 a reasonable amount of time, after drawing a few gigabytes of data. Following
 the standard Birthday Paradox calculations for a collision of 58 bits, we can
-see that we can create ``2**29``, or about half a billion, streams which is when
+see that we can create :math:`2^{29}`, or about half a billion, streams which is when
 the probability of such a collision becomes high. Half a billion streams is
 quite high, and the amount of data each stream needs to draw before the
 statistical correlations become apparent to even the strict ``PractRand`` tests
@@ -107,7 +107,7 @@ size inside of `SeedSequence` (and 128-bit collisions are in the
 
 One of the known properties of an LCG is that different increments create
 *distinct* streams, but with a known relationship. Each LCG has an orbit that
-traverses all ``2**128`` different 128-bit states. Two LCGs with different
+traverses all :math:`2^{128}` different 128-bit states. Two LCGs with different
 increments are related in that one can "rotate" the orbit of the first LCG
 (advance it by a number of steps that we can compute from the two increments)
 such that then both LCGs will always then have the same state, up to an
