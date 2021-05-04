@@ -88,10 +88,11 @@ territory ([2]_).
        estimate the naive upper bound on a napkin and take comfort knowing
        that the probability is actually lower.
 
-.. [2] In this calculation, we can ignore the amount of numbers drawn from each
-       stream. Each of the PRNGs we provide has some extra protection built in
+.. [2] In this calculation, we can mostly ignore the amount of numbers drawn from each
+       stream. See :ref:`upgrading-pcg64` for the technical details about
+       `PCG64`. The other PRNGs we provide have some extra protection built in
        that avoids overlaps if the `~SeedSequence` pools differ in the
-       slightest bit. `PCG64` has :math:`2^{127}` separate cycles
+       slightest bit. `PCG64DXSM` has :math:`2^{127}` separate cycles
        determined by the seed in addition to the position in the
        :math:`2^{128}` long period for each cycle, so one has to both get on or
        near the same cycle *and* seed a nearby position in the cycle.
@@ -155,6 +156,8 @@ are listed below.
 | MT19937         | :math:`2^{19937}`       | :math:`2^{128}`         | 32                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | PCG64           | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| PCG64DXSM       | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | Philox          | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
