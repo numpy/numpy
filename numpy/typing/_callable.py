@@ -43,11 +43,10 @@ from ._scalars import (
     _BoolLike_co,
     _IntLike_co,
     _FloatLike_co,
-    _ComplexLike_co,
     _NumberLike_co,
 )
 from . import NBitBase
-from ._array_like import ArrayLike, _ArrayOrScalar
+from ._array_like import _ArrayOrScalar
 
 if sys.version_info >= (3, 8):
     from typing import Protocol

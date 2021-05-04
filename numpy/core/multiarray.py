@@ -7,8 +7,6 @@ by importing from the extension module.
 """
 
 import functools
-import warnings
-
 from . import overrides
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403

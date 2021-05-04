@@ -20,10 +20,6 @@ import sys
 import os
 from pathlib import Path
 import io
-
-import abc
-from abc import ABC as abc_ABC
-
 try:
     import pickle5 as pickle
 except ImportError:

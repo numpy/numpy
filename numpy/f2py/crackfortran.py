@@ -139,7 +139,6 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-import io
 import sys
 import string
 import fileinput
@@ -1540,8 +1539,6 @@ def markinnerspaces(line):
             cc = c
         if c == cc:
             f = f + 1
-        elif c == cc:
-            f = f - 1
         elif c == ' ' and f == 1:
             l = l + '@_@'
             continue
@@ -2883,7 +2880,6 @@ def analyzevars(block):
                 if 'prefix' in block:
                     pr = block['prefix']
                     ispure = 0
-                    isrec = 1
                     pr1 = pr.replace('pure', '')
                     ispure = (not pr == pr1)
                     pr = pr1.replace('recursive', '')
