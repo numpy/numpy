@@ -209,7 +209,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
-static NPY_INLINE int
+static NPY_INLINE npy_uintp
 npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */

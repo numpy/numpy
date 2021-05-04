@@ -5047,6 +5047,24 @@ class TestIO:
                     np.fromfile, self.filename, dtype=self.dtype,
                     sep=",", offset=1)
 
+    @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
+    def test_fromfile_bad_dup(self):
+        def dup_str(fd):
+            return 'abc'
+
+        def dup_bigint(fd):
+            return 2**68
+
+        old_dup = os.dup
+        try:
+            with open(self.filename, 'wb') as f:
+                self.x.tofile(f)
+                for dup, exc in ((dup_str, TypeError), (dup_bigint, OSError)):
+                    os.dup = dup
+                    assert_raises(exc, np.fromfile, f)
+        finally:
+            os.dup = old_dup
+
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)

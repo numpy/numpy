@@ -539,7 +539,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     if (dot) {
         scalar_name = dot + 1;
     }
-    ssize_t name_length = strlen(scalar_name) + 14;
+    Py_ssize_t name_length = strlen(scalar_name) + 14;
 
     char *tp_name = malloc(name_length);
     if (tp_name == NULL) {
