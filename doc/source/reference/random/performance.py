@@ -53,7 +53,7 @@ for key in npfuncs:
     col[key] = 1000 * min(t)
 table['RandomState'] = pd.Series(col)
 
-columns = ['MT19937','PCG64','PCG64DXSM','Philox','SFC64', 'RandomState']
+columns = ['MT19937', 'PCG64', 'PCG64DXSM', 'Philox', 'SFC64', 'RandomState']
 table = pd.DataFrame(table)
 order = np.log(table).mean().sort_values().index
 table = table.T
