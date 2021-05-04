@@ -3,9 +3,9 @@ from timeit import repeat
 import pandas as pd
 
 import numpy as np
-from numpy.random import MT19937, PCG64, Philox, SFC64
+from numpy.random import MT19937, PCG64, PCG64DXSM, Philox, SFC64
 
-PRNGS = [MT19937, PCG64, Philox, SFC64]
+PRNGS = [MT19937, PCG64, PCG64DXSM, Philox, SFC64]
 
 funcs = {}
 integers = 'integers(0, 2**{bits},size=1000000, dtype="uint{bits}")'
@@ -53,7 +53,7 @@ for key in npfuncs:
     col[key] = 1000 * min(t)
 table['RandomState'] = pd.Series(col)
 
-columns = ['MT19937','PCG64','Philox','SFC64', 'RandomState']
+columns = ['MT19937','PCG64','PCG64DXSM','Philox','SFC64', 'RandomState']
 table = pd.DataFrame(table)
 order = np.log(table).mean().sort_values().index
 table = table.T
