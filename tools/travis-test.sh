@@ -36,6 +36,11 @@ setup_base()
   sysflags="$($PYTHON -c "from distutils import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
+  # SIMD extensions that need to be tested on both runtime and compile-time via (test_simd.py)
+  # any specified features will be ignored if they're not supported by compiler or platform
+  # note: it almost the same default value of --simd-test execpt adding policy `$werror` to treat all
+  # warnings as errors
+  simd_test="\$werror BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD"
   # We used to use 'setup.py install' here, but that has the terrible
   # behaviour that if a copy of the package is already installed in the
   # install location, then the new copy just gets dropped on top of it.
@@ -53,11 +58,11 @@ setup_base()
     # #if !HAVE_FFI_PREP_CIF_VAR && defined(__arm64__) && defined(__APPLE__)
     #
     export CFLAGS="$CFLAGS -Werror=undef"
-    $PIP install -v . 2>&1 | tee log
+    $PYTHON setup.py build --simd-test "$simd_test" install 2>&1 | tee log
   else
     # The job run with USE_DEBUG=1 on travis needs this.
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
-    $PYTHON setup.py build build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
+    $PYTHON setup.py build --simd-test "$simd_test" build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
     | grep -vE "ld returned 1|no files found matching" \
