@@ -201,6 +201,63 @@ pcg_setseq_128_xsl_rr_64_random_r(pcg_state_setseq_128 *rng) {
 #endif
 }
 
+static inline pcg128_t pcg128_mult_64(pcg128_t a, uint64_t b) {
+  uint64_t h1;
+  pcg128_t result;
+
+  h1 = a.high * b;
+  _pcg_mult64(a.low, b, &(result.high), &(result.low));
+  result.high += h1;
+  return result;
+}
+
+static inline void pcg_cm_step_r(pcg_state_setseq_128 *rng) {
+#if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
+  uint64_t h1;
+  pcg128_t product;
+
+  /* Manually inline the multiplication and addition using intrinsics */
+  h1 = rng->state.high * PCG_CHEAP_MULTIPLIER_128;
+  product.low =
+      _umul128(rng->state.low, PCG_CHEAP_MULTIPLIER_128, &(product.high));
+  product.high += h1;
+  _addcarry_u64(_addcarry_u64(0, product.low, rng->inc.low, &(rng->state.low)),
+                product.high, rng->inc.high, &(rng->state.high));
+  rng->state = product;
+#else
+  rng->state = pcg128_add(pcg128_mult_64(rng->state, PCG_CHEAP_MULTIPLIER_128),
+                           rng->inc);
+#endif
+}
+
+static inline uint64_t pcg_output_cm_128_64(pcg128_t state) {
+  uint64_t hi = state.high;
+  uint64_t lo = state.low;
+
+  lo |= 1;
+  hi ^= hi >> 32;
+  hi *= 0xda942042e4dd58b5ULL;
+  hi ^= hi >> 48;
+  hi *= lo;
+  return hi;
+}
+
+static inline void pcg_cm_srandom_r(pcg_state_setseq_128 *rng, pcg128_t initstate, pcg128_t initseq) {
+  rng->state = PCG_128BIT_CONSTANT(0ULL, 0ULL);
+  rng->inc.high = initseq.high << 1u;
+  rng->inc.high |= initseq.low >> 63u;
+  rng->inc.low = (initseq.low << 1u) | 1u;
+  pcg_cm_step_r(rng);
+  rng->state = pcg128_add(rng->state, initstate);
+  pcg_cm_step_r(rng);
+}
+
+static inline uint64_t pcg_cm_random_r(pcg_state_setseq_128* rng)
+{
+    uint64_t ret = pcg_output_cm_128_64(rng->state);
+    pcg_cm_step_r(rng);
+    return ret;
+}
 #else /* PCG_EMULATED_128BIT_MATH */
 
 static inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng) {
@@ -284,7 +341,8 @@ static inline void pcg_setseq_128_advance_r(pcg_state_setseq_128 *rng,
 
 static inline void pcg_cm_advance_r(pcg_state_setseq_128 *rng, pcg128_t delta) {
     rng->state = pcg_advance_lcg_128(rng->state, delta,
-                                     PCG_CHEAP_MULTIPLIER_128, rng->inc);
+                                     PCG_128BIT_CONSTANT(0, PCG_CHEAP_MULTIPLIER_128),
+                                     rng->inc);
 }
 
 typedef pcg_state_setseq_128 pcg64_random_t;
