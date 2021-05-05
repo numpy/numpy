@@ -465,6 +465,7 @@ simd_exp_FLOAT(npy_float * op,
 
     @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask;
     @mask@ overflow_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
+    @mask@ underflow_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
     @mask@ load_mask = @isa@_get_full_load_mask_ps();
     npy_intp num_remaining_elements = array_size;
 
@@ -491,6 +492,7 @@ simd_exp_FLOAT(npy_float * op,
         inf_mask = _mm@vsize@_cmp_ps@vsub@(x, inf, _CMP_EQ_OQ);
         overflow_mask = @or_masks@(overflow_mask,
                                     @xor_masks@(xmax_mask, inf_mask));
+        underflow_mask = @or_masks@(underflow_mask, xmin_mask);
 
         x = @isa@_set_masked_lanes_ps(x, zeros_f, @or_masks@(
                                     @or_masks@(nan_mask, xmin_mask), xmax_mask));
@@ -538,6 +540,10 @@ simd_exp_FLOAT(npy_float * op,
 
     if (@mask_to_int@(overflow_mask)) {
         npy_set_floatstatus_overflow();
+    }
+
+    if (@mask_to_int@(underflow_mask)) {
+        npy_set_floatstatus_underflow();
     }
 }
 
@@ -740,6 +746,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __m512d mTable_tail_3 = _mm512_loadu_pd(&(EXP_Table_tail[8*3]));
 
     __mmask8 overflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
+    __mmask8 underflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
     __mmask8 load_mask = avx512_get_full_load_mask_pd();
     __mmask8 xmin_mask, xmax_mask, inf_mask, nan_mask, nearzero_mask;
 
@@ -769,6 +776,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
         nearzero_mask = _mm512_kxor(nearzero_mask, nan_mask);
         overflow_mask = _mm512_kor(overflow_mask,
                                 _mm512_kxor(xmax_mask, inf_mask));
+        underflow_mask = _mm512_kor(underflow_mask, xmax_mask);
         x = avx512_set_masked_lanes_pd(x, zeros_d,
                         _mm512_kor(_mm512_kor(nan_mask, xmin_mask),
                             _mm512_kor(xmax_mask, nearzero_mask)));
@@ -827,6 +835,10 @@ AVX512F_exp_DOUBLE(npy_double * op,
     }
     if (overflow_mask) {
         npy_set_floatstatus_overflow();
+    }
+
+    if (underflow_mask) {
+        npy_set_floatstatus_underflow();
     }
 }
 /*
