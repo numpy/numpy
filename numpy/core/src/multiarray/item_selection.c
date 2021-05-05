@@ -30,6 +30,8 @@
 #include "array_coercion.h"
 #include "simd/simd.h"
 
+#include "stdbool.h"
+
 static NPY_GCC_OPT_3 NPY_INLINE int
 npy_fasttake_impl(
         char *dest, char *src, const npy_intp *indices,
@@ -2497,6 +2499,44 @@ finish:
     return nonzero_count;
 }
 
+
+bool nonzero_idxs_dispatcher_ND(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count, int ndims, bool is_C_layout) {
+    bool executed = false;
+    NPY_BEGIN_THREADS_DEF;
+
+    switch(ndims) {
+        case 1:
+        {
+            executed = nonzero_idxs_dispatcher1D_C(data, idxs, shape, strides, dtype, nonzero_count);
+            break;
+        }
+        case 2:
+        {
+            if (is_C_layout) {
+                executed = nonzero_idxs_dispatcher2D_C(data, idxs, shape, strides, dtype, nonzero_count);
+            }
+            else {
+                executed = nonzero_idxs_dispatcher2D_F(data, idxs, shape, strides, dtype, nonzero_count);                
+            }
+            break;
+        }
+        case 3:
+        {
+            if (is_C_layout) {
+                executed = nonzero_idxs_dispatcher3D_C(data, idxs, shape, strides, dtype, nonzero_count);
+            }
+            else {
+                executed = nonzero_idxs_dispatcher3D_F(data, idxs, shape, strides, dtype, nonzero_count);                
+            }
+            break;
+        }
+    }
+
+    NPY_END_THREADS;
+    return executed;
+}
+
+
 /*NUMPY_API
  * Nonzero
  *
@@ -2584,18 +2624,64 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
-    /* If it's a one-dimensional result, don't use an iterator */
-    if (ndim == 1) {
-        npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
-        char * data = PyArray_BYTES(self);
-        npy_intp stride = PyArray_STRIDE(self, 0);
-        npy_intp count = PyArray_DIM(self, 0);
-        NPY_BEGIN_THREADS_DEF;
+    /* nothing to do */
+    if (nonzero_count == 0) {
+        goto finish;
+    }
 
-        /* nothing to do */
-        if (nonzero_count == 0) {
+    npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
+    char * data = PyArray_BYTES(self);
+    int flags = PyArray_FLAGS(self);
+
+    bool can_be_optimized = false;
+    PyArrayObject* original_array = self;
+
+    if (PyArray_BASE(self) != NULL) {
+        original_array = (PyArrayObject*) PyArray_BASE(self);
+    } 
+
+    if (dtype->kind == 'b' || dtype->kind == 'i' || dtype->kind == 'u' || dtype->kind == 'f')
+        can_be_optimized = true;
+
+    if (can_be_optimized && (flags & NPY_ARRAY_ALIGNED) && PyArray_ISNOTSWAPPED(self) && PyArray_ISNOTSWAPPED(original_array)) { // Only apply the optimization if array is aligned and byteorder is not swapped.
+        bool to_jmp = false;
+        bool is_contiguous = true;
+        bool is_C_layout = false;
+
+        if (!(flags & NPY_ARRAY_C_CONTIGUOUS) && !(flags & NPY_ARRAY_F_CONTIGUOUS)) {
+            is_contiguous = false;
+        }
+        else if (flags & NPY_ARRAY_C_CONTIGUOUS) {
+            is_C_layout = true;
+        } 
+        /* No need to check for F_Contiguousness since if it is not C_contiguous and it is contiguous 
+        then it must be F_contiguous. Hence is_C_layout stays false to indicate F_contiguousness.*/
+
+        npy_intp* M_shape = PyArray_SHAPE(self);
+        npy_intp* M_strides = PyArray_STRIDES(self);
+        int M_type_num = dtype->type_num;
+        int M_dim = ndim;
+
+        if (is_contiguous && is_C_layout) { 
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, M_shape, M_strides, M_type_num, nonzero_count, M_dim, true);
+        }
+        else if (is_contiguous && !is_C_layout) { 
+            to_jmp = nonzero_idxs_dispatcher_ND((void*)data, multi_index, M_shape, M_strides, M_type_num, nonzero_count, M_dim, false);
+        }
+
+        if (to_jmp) {
+            added_count = nonzero_count;
             goto finish;
         }
+    }
+
+
+    /* If it's a one-dimensional result, don't use an iterator */
+    if (ndim == 1) {     
+        npy_intp stride = PyArray_STRIDE(self, 0);
+        npy_intp count = PyArray_DIM(self, 0);
+
+        NPY_BEGIN_THREADS_DEF;
 
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(count);
@@ -2650,6 +2736,7 @@ PyArray_Nonzero(PyArrayObject *self)
         NPY_END_THREADS;
 
         goto finish;
+
     }
 
     /*
@@ -2722,7 +2809,9 @@ PyArray_Nonzero(PyArrayObject *self)
 
     NpyIter_Deallocate(iter);
 
+
 finish:
+
     if (PyErr_Occurred()) {
         Py_DECREF(ret);
         return NULL;
@@ -2764,6 +2853,7 @@ finish:
 
     return ret_tuple;
 }
+
 
 /*
  * Gets a single item from the array, based on a single multi-index

@@ -5,6 +5,7 @@
 #include <array_method.h>
 #include "dtype_transfer.h"
 #include "mem_overlap.h"
+#include "stdbool.h"
 
 /* For PyArray_ macros used below */
 #include "numpy/ndarrayobject.h"
@@ -839,5 +840,12 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
                     stride3 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size3, arr3); \
                 }
+
+bool nonzero_idxs_dispatcher1D_C(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count);
+bool nonzero_idxs_dispatcher1D_F(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count); 
+bool nonzero_idxs_dispatcher2D_C(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count);
+bool nonzero_idxs_dispatcher2D_F(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count); 
+bool nonzero_idxs_dispatcher3D_C(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count);
+bool nonzero_idxs_dispatcher3D_F(void * data, npy_intp* idxs, npy_intp* shape, npy_intp* strides, int dtype, npy_intp nonzero_count); 
 
 #endif
