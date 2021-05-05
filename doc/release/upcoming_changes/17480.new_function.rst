@@ -1,0 +1,5 @@
+Add some ``numpy.ma.*`` methods
+-------------------------------
+The methods ``numpy.ma.ones_like``, ``numpy.ma.zeros_like``, ``numpy.ma.dsplit``,
+``numpy.ma.split``, ``numpy.ma.vsplit`` are now available. These methods are for
+``MaskedArray``, and behave the same as the original version (``numpy.*``).

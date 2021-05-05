@@ -143,6 +143,7 @@ nomask: Any
 nonzero: Any
 not_equal: Any
 ones: Any
+ones_like: Any
 outer: Any
 outerproduct: Any
 power: Any
@@ -182,6 +183,7 @@ true_divide: Any
 var: Any
 where: Any
 zeros: Any
+zeros_like: Any
 apply_along_axis: Any
 apply_over_axes: Any
 atleast_1d: Any
@@ -200,6 +202,7 @@ corrcoef: Any
 cov: Any
 diagflat: Any
 dot: Any
+dsplit: Any
 dstack: Any
 ediff1d: Any
 flatnotmasked_contiguous: Any
@@ -220,10 +223,12 @@ notmasked_contiguous: Any
 notmasked_edges: Any
 polyfit: Any
 row_stack: Any
+split: Any
 setdiff1d: Any
 setxor1d: Any
 stack: Any
 unique: Any
 union1d: Any
 vander: Any
+vsplit: Any
 vstack: Any
