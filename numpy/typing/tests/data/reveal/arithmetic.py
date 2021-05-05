@@ -217,9 +217,9 @@ reveal_type(AR + f4)  # E: Any
 # Int
 
 reveal_type(i8 + i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
-reveal_type(i8 + u8)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(i8 + u8)  # E: Any
 reveal_type(i8 + i4)  # E: numpy.signedinteger[numpy.typing._64Bit]
-reveal_type(i8 + u4)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(i8 + u4)  # E: Any
 reveal_type(i8 + b_)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(i8 + b)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(i8 + c)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
@@ -228,19 +228,19 @@ reveal_type(i8 + i)  # E: numpy.signedinteger[Any]
 reveal_type(i8 + AR)  # E: Any
 
 reveal_type(u8 + u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
-reveal_type(u8 + i4)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(u8 + i4)  # E: Any
 reveal_type(u8 + u4)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u8 + b_)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u8 + b)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u8 + c)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
 reveal_type(u8 + f)  # E: numpy.floating[numpy.typing._64Bit]
-reveal_type(u8 + i)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(u8 + i)  # E: Any
 reveal_type(u8 + AR)  # E: Any
 
 reveal_type(i8 + i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
-reveal_type(u8 + i8)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(u8 + i8)  # E: Any
 reveal_type(i4 + i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
-reveal_type(u4 + i8)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(u4 + i8)  # E: Any
 reveal_type(b_ + i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(b + i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(c + i8)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
@@ -249,13 +249,13 @@ reveal_type(i + i8)  # E: numpy.signedinteger[Any]
 reveal_type(AR + i8)  # E: Any
 
 reveal_type(u8 + u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
-reveal_type(i4 + u8)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(i4 + u8)  # E: Any
 reveal_type(u4 + u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(b_ + u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(b + u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(c + u8)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
 reveal_type(f + u8)  # E: numpy.floating[numpy.typing._64Bit]
-reveal_type(i + u8)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(i + u8)  # E: Any
 reveal_type(AR + u8)  # E: Any
 
 reveal_type(i4 + i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
@@ -265,11 +265,11 @@ reveal_type(i4 + b_)  # E: numpy.signedinteger[numpy.typing._32Bit]
 reveal_type(i4 + b)  # E: numpy.signedinteger[numpy.typing._32Bit]
 reveal_type(i4 + AR)  # E: Any
 
-reveal_type(u4 + i8)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
-reveal_type(u4 + i4)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(u4 + i8)  # E: Any
+reveal_type(u4 + i4)  # E: Any
 reveal_type(u4 + u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u4 + u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
-reveal_type(u4 + i)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(u4 + i)  # E: Any
 reveal_type(u4 + b_)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
 reveal_type(u4 + b)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
 reveal_type(u4 + AR)  # E: Any
@@ -281,11 +281,11 @@ reveal_type(b_ + i4)  # E: numpy.signedinteger[numpy.typing._32Bit]
 reveal_type(b + i4)  # E: numpy.signedinteger[numpy.typing._32Bit]
 reveal_type(AR + i4)  # E: Any
 
-reveal_type(i8 + u4)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
-reveal_type(i4 + u4)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(i8 + u4)  # E: Any
+reveal_type(i4 + u4)  # E: Any
 reveal_type(u8 + u4)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u4 + u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
 reveal_type(b_ + u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
 reveal_type(b + u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
-reveal_type(i + u4)  # E: Union[numpy.signedinteger[Any], numpy.floating[numpy.typing._64Bit]]
+reveal_type(i + u4)  # E: Any
 reveal_type(AR + u4)  # E: Any
