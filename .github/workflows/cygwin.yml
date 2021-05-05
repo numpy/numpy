@@ -44,6 +44,7 @@ jobs:
       - name: Build NumPy wheel
         run: |
           dash -c "/usr/bin/python3.7 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
+          dash -c "/usr/bin/python3.7 -m pip install -r test_requirements.txt"
           dash -c "/usr/bin/python3.7 setup.py bdist_wheel"
       - name: Install new NumPy
         run: |
