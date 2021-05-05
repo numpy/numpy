@@ -80,6 +80,8 @@ fmod: Any
 frombuffer: Any
 fromflex: Any
 fromfunction: Any
+full: Any
+full_like: Any
 getdata: Any
 getmask: Any
 getmaskarray: Any

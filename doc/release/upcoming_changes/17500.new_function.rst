@@ -1,0 +1,5 @@
+The methods ``full``, ``full_like`` are added to ``numpy.ma``
+-------------------------------------------------------------
+The two methods ``numpy.ma.full``, ``numpy.ma.full_like`` are now available.
+These methods are for ``MaskedArray``, and behave the same as the original
+version (``numpy.*``).
