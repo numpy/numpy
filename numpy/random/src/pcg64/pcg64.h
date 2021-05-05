@@ -223,7 +223,6 @@ static inline void pcg_cm_step_r(pcg_state_setseq_128 *rng) {
   product.high += h1;
   _addcarry_u64(_addcarry_u64(0, product.low, rng->inc.low, &(rng->state.low)),
                 product.high, rng->inc.high, &(rng->state.high));
-  rng->state = product;
 #else
   rng->state = pcg128_add(pcg128_mult_64(rng->state, PCG_CHEAP_MULTIPLIER_128),
                            rng->inc);
