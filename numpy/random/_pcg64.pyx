@@ -302,7 +302,10 @@ cdef class PCG64DXSM(BitGenerator):
     PCG-64 DXSM is a 128-bit implementation of O'Neill's permutation congruential
     generator ([1]_, [2]_). PCG-64 DXSM has a period of :math:`2^{128}` and supports
     advancing an arbitrary number of steps as well as :math:`2^{127}` streams.
-    The specific member of the PCG family that we use is PCG DXSM 128/64.
+    The specific member of the PCG family that we use is PCG CM DXSM 128/64. It
+    differs from ``PCG64`` in that it uses the stronger DXSM output function,
+    a 64-bit "cheap multiplier" in the LCG, and outputs from the state before
+    advancing it rather than advance-then-output.
 
     ``PCG64DXSM`` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
