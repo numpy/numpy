@@ -666,6 +666,11 @@ class TestUFunc:
     def test_unary_ufunc_call_fuzz(self):
         self.check_unary_fuzz(np.invert, None, np.int16)
 
+    @pytest.mark.slow
+    def test_unary_ufunc_call_complex_fuzz(self):
+        # Complex typically has a smaller alignment than itemsize
+        self.check_unary_fuzz(np.negative, None, np.complex128, count=500)
+
     def test_binary_ufunc_accumulate_fuzz(self):
         def get_out_axis_size(a, b, axis):
             if axis is None:
