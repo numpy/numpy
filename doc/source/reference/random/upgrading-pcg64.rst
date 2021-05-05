@@ -142,10 +142,10 @@ constants that make the merely-distinct streams of LCG states into
 practically-independent output streams. Indeed, now the claim we once made
 about `PCG64` is actually true of `PCG64DXSM`: collisions are possible, but
 both streams have to simultaneously be both "close" in the 128 bit state space
-*and* "close" in the 127-bit increment space, so the negligible chance of
-colliding in the 128-bit internal `SeedSequence` pool would be more likely. The
-DXSM output function is more computationally intensive than XSL-RR, but some
-optimizations in the LCG more than make up for the performance hit on most
+*and* "close" in the 127-bit increment space, so that would be less likely than
+the negligible chance of colliding in the 128-bit internal `SeedSequence` pool.
+The DXSM output function is more computationally intensive than XSL-RR, but
+some optimizations in the LCG more than make up for the performance hit on most
 machines, so `PCG64DXSM` is a good, safe upgrade. There are, of course, an
 infinite number of stronger output functions that one could consider, but most
 will have a greater computational cost, and the DXSM output function has now
