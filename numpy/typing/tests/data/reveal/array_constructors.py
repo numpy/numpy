@@ -88,6 +88,11 @@ reveal_type(np.atleast_2d(A))  # E: numpy.ndarray[Any, Any]
 
 reveal_type(np.atleast_3d(A))  # E: numpy.ndarray[Any, Any]
 
+reveal_type(np.atleast_nd(A, 0))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.atleast_nd(A, 2))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.atleast_nd(B, 2))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.atleast_nd(C, 2))  # E: numpy.ndarray[Any, Any]
+
 reveal_type(np.vstack([A, A]))  # E: numpy.ndarray[Any, Any]
 reveal_type(np.vstack([A, C]))  # E: numpy.ndarray[Any, Any]
 reveal_type(np.vstack([C, C]))  # E: numpy.ndarray[Any, Any]

@@ -127,6 +127,7 @@ Changing the number of dimensions
    ma.atleast_1d
    ma.atleast_2d
    ma.atleast_3d
+   ma.atleast_nd
    ma.expand_dims
    ma.squeeze
 
