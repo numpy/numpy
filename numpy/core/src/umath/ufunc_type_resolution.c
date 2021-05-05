@@ -555,7 +555,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
          * one in the tuple), there is no need to check all loops.
          * Note that this also allows (None, None, float64) to resolve to
          * (float64, float64, float64), even when the inputs do not match,
-         * i.e. fixing a single part of the signature can fix all of them.
+         * i.e. fixing the output part of the signature can fix all of them.
          * This is necessary to support `nextafter(1., inf, dtype=float32)`,
          * where it is "clear" we want to cast 1. and inf to float32.
          */
@@ -565,7 +565,12 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             for (int i = 0; i < nop; i++) {
                 PyObject *item = PyTuple_GET_ITEM(type_tup, i);
                 if (item == Py_None) {
-                    continue;
+                    if (i < ufunc->nin) {
+                        continue;
+                    }
+                    /* All outputs must be set (this could be relaxed) */
+                    descr = NULL;
+                    break;
                 }
                 if (!PyArray_DescrCheck(item)) {
                     /* Defer to default resolver (will raise an error there) */
