@@ -5,9 +5,12 @@ Performance
 
 Recommendation
 **************
-The recommended generator for general use is `PCG64`. It is
-statistically high quality, full-featured, and fast on most platforms, but
-somewhat slow when compiled for 32-bit processes.
+
+The recommended generator for general use is `PCG64` or its upgraded variant
+`PCG64DXSM` for heavily-parallel use cases. They are statistically high quality,
+full-featured, and fast on most platforms, but somewhat slow when compiled for
+32-bit processes. See :ref:`upgrading-pcg64` for details on when heavy
+parallelism would indicate using `PCG64DXSM`.
 
 `Philox` is fairly slow, but its statistical properties have
 very high quality, and it is easy to get assuredly-independent stream by using
