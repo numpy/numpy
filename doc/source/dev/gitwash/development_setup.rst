@@ -165,7 +165,7 @@ slightly. Instead of ::
 
 run ::
 
-  git clone git@github.com:numpy/numpy.git
+  git clone git@github.com:your-user-name/numpy.git
 
 and instead of showing an ``https`` URL,  ``git remote -v`` will show ::
 
