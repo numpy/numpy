@@ -2746,6 +2746,25 @@ def test_object_iter_cleanup():
     assert_raises(TypeError, np.logical_or.reduce, 
                              np.array([T(), T()], dtype='O'))
 
+def test_object_iter_cleanup_reduce():
+    # Similar as above, but a complex reduction case that was previously
+    # missed (see gh-18810).
+    # The following array is special in that it cannot be flattened:
+    arr = np.array([[None, 1], [-1, -1], [None, 2], [-1, -1]])[::2]
+    with pytest.raises(TypeError):
+        np.sum(arr)
+
+@pytest.mark.parametrize("arr", [
+        np.ones((8000, 4, 2), dtype=object)[:, ::2, :],
+        np.ones((8000, 4, 2), dtype=object, order="F")[:, ::2, :],
+        np.ones((8000, 4, 2), dtype=object)[:, ::2, :].copy("F")])
+def test_object_iter_cleanup_large_reduce(arr):
+    # More complicated calls are possible for large arrays:
+    out = np.ones(8000, dtype=np.intp)
+    # force casting with `dtype=object`
+    res = np.sum(arr, axis=(1, 2), dtype=object, out=out)
+    assert_array_equal(res, np.full(8000, 4, dtype=object))
+
 def test_iter_too_large():
     # The total size of the iterator must not exceed the maximum intp due
     # to broadcasting. Dividing by 1024 will keep it small enough to
