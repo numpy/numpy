@@ -6529,6 +6529,16 @@ class TestMatmul(MatmulCommon):
             c = c.astype(tgt.dtype)
         assert_array_equal(c, tgt)
 
+    def test_empty_out(self):
+        # Check that the output cannot be broadcast, so that it cannot be
+        # size zero when the outer dimensions (iterator size) has size zero.
+        arr = np.ones((0, 1, 1))
+        out = np.ones((1, 1, 1))
+        assert self.matmul(arr, arr).shape == (0, 1, 1)
+
+        with pytest.raises(ValueError, match=r"non-broadcastable"):
+            self.matmul(arr, arr, out=out)
+
     def test_out_contiguous(self):
         a = np.ones((5, 2), dtype=float)
         b = np.array([[1, 3], [5, 7]], dtype=float)
