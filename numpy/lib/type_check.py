@@ -264,8 +264,7 @@ def isreal(x):
 
     Notes
     -----
-    Returns all True for non-complex array.
-
+    `isreal` may behave unexpectedly for string or object arrays (see examples)
     See Also
     --------
     iscomplex
