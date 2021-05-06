@@ -448,8 +448,9 @@ advanced usage and will not typically be used.
     indicating the input and output types of a ufunc.
 
     This argument allows the user to specify exact DTypes to be used for the
-    calculation.  Casting will be used as necessary. The input DType
-    is not considered unless ``signature`` is ``None`` for that input.
+    calculation.  Casting will be used as necessary. The actual DType of the
+    input arrays is not considered unless ``signature`` is ``None`` for
+    that array.
 
     When all DTypes are fixed, a specific loop is chosen or an error raised
     if no matching loop exists.

@@ -1922,7 +1922,10 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             for (; funcdata != NULL; funcdata = funcdata->next) {
                 int *orig_types = funcdata->arg_types;
 
-                /* Copy the types into an int array for matching */
+                /*
+                 * Copy the types into an int array for matching
+                 * (Mostly duplicated in `type_tuple_type_resolver`)
+                 */
                 for (j = 0; j < nop; ++j) {
                     if (specified_types[j] == NPY_NOTYPE) {
                         types[j] = orig_types[j];
@@ -2121,7 +2124,7 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
             /* Error */
             case -1:
                 return -1;
-                /* Found matching loop */
+            /* Found matching loop */
             case 1:
                 return 0;
         }
@@ -2130,7 +2133,10 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
     for (i = 0; i < self->ntypes; ++i) {
         char *orig_types = self->types + i*self->nargs;
 
-        /* Check specified types and copy into an int array for matching */
+        /*
+         * Check specified types and copy into an int array for matching
+         * (Mostly duplicated in `type_tuple_userloop_type_resolver`)
+         */
         for (j = 0; j < nop; ++j) {
             if (specified_types[j] == NPY_NOTYPE) {
                 types[j] = orig_types[j];

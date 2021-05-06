@@ -26,7 +26,7 @@ This means it is now always equivalent to::
 to no loop being found in some cases, NumPy will normally also search
 for the loop::
 
-    signature("float64", "float64, "float64")
+    signature=("float64", "float64", "float64")
 
 if the first search failed.
 In the future, this behaviour may be customized to achieve the expected
