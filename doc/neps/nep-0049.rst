@@ -6,6 +6,7 @@ NEP 49 — Data allocation strategies
 :Status: Draft
 :Type: Standards Track
 :Created: 2021-04-18
+:Resolution: http://numpy-discussion.10968.n7.nabble.com/NEP-49-Data-allocation-strategies-tt49185.html
 
 
 Abstract
@@ -101,6 +102,11 @@ time of its instantiation, and these will be used to reallocate or free the
 data memory of the instance. Internally NumPy may use ``memcpy`` or ``memset``
 on the pointer to the data memory.
 
+The name of the handler will be exposed on the python level via a
+``numpy.core.multiarray.get_handler_name(arr)`` function. If called as
+``numpy.core.multiarray.get_handler_name()`` it will return the name of the
+global handler that will be used to allocate data for the next new `ndarrray`.
+
 NumPy C-API functions
 =====================
 
@@ -185,7 +191,7 @@ the ``sz`` argument is correct.
         if (strncmp(real, "originally allocated", 20) != 0) {
             fprintf(stdout, "uh-oh, unmatched shift_free, "
                     "no appropriate prefix\\n");
-            /* Make gcc crash by calling free on the wrong address */
+            /* Make the C runtime crash by calling free on the wrong address */
             free((char *)p + 10);
             /* free(real); */
         }
@@ -194,7 +200,7 @@ the ``sz`` argument is correct.
             if (i != sz) {
                 fprintf(stderr, "uh-oh, unmatched "
                         "shift_free(ptr, %d) but allocated %d\\n", sz, i);
-                /* Make gcc crash by calling free on the wrong address */
+                /* Make the C runtime crash by calling free on the wrong address */
                 /* free((char *)p + 10); */
                 free(real);
             }
