@@ -42,6 +42,10 @@ npy_free_cache_dim_array(PyArrayObject * arr)
 extern PyDataMem_Handler *current_allocator;
 extern PyDataMem_Handler default_allocator;
 
+NPY_NO_EXPORT PyObject *
+get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);
+
+
 #define PyArray_HANDLER(arr) ((PyArrayObject_fields*)(arr))->mem_handler
 
 #endif
