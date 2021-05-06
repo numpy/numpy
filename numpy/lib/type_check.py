@@ -275,8 +275,6 @@ def isreal(x):
     >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
     array([False,  True,  True,  True,  True, False])
     
-    .. note::
-    
     The function does not work on string arrays.
 
     >>> np.isreal([2j, "a"])
