@@ -265,6 +265,7 @@ def isreal(x):
     Notes
     -----
     `isreal` may behave unexpectedly for string or object arrays (see examples)
+
     See Also
     --------
     iscomplex
@@ -277,7 +278,8 @@ def isreal(x):
     
     The function does not work on string arrays.
 
-    >>> np.isreal([2j, "a"])
+    >>> a = np.array([2j, "a"], dtype="U")
+    >>> np.isreal(a)  # Warns about non-elementwise comparison
     False
     
     Returns True for all elements in input array of `dtype=object` even if 
