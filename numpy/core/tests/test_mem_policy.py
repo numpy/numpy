@@ -63,7 +63,7 @@ def get_module(tmp_path):
             if (strncmp(real, "originally allocated", 20) != 0) {
                 fprintf(stdout, "uh-oh, unmatched shift_free, "
                         "no appropriate prefix\\n");
-                /* Make gcc crash by calling free on the wrong address */
+                /* Make C runtime crash by calling free on the wrong address */
                 free((char *)p + 10);
                 /* free(real); */
             }
@@ -72,7 +72,7 @@ def get_module(tmp_path):
                 if (i != sz) {
                     fprintf(stderr, "uh-oh, unmatched "
                             "shift_free(ptr, %d) but allocated %d\\n", sz, i);
-                    /* Make gcc crash by calling free on the wrong address */
+                    /* Make C runtime crash by calling free on the wrong address */
                     /* free((char *)p + 10); */
                     free(real);
                 }
@@ -126,6 +126,8 @@ def get_module(tmp_path):
 def test_set_policy(get_module):
     a = np.arange(10)
     orig_policy = get_module.test_prefix(a)
+    assert orig_policy == np.core.multiarray.get_handler_name()
+    assert orig_policy == np.core.multiarray.get_handler_name(a)
     assert get_module.set_new_policy() == orig_policy
     if orig_policy == 'default_allocator':
         get_module.set_old_policy()

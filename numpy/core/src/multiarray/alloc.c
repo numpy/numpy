@@ -464,3 +464,14 @@ PyDataMem_GetHandlerName(PyArrayObject *obj)
     }
     return PyArray_HANDLER(obj)->name;
 }
+
+NPY_NO_EXPORT PyObject *
+get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj)
+{
+    const char * name = PyDataMem_GetHandlerName(obj);
+    if (name == NULL) {
+        return NULL;
+    }
+    if (! PyCheck
+    return PyUnicode_FromString(name);
+}
