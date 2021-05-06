@@ -4430,7 +4430,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"get_handler_name",
         (PyCFunction) get_handler_name,
-        METH_O, NULL},
+        METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",

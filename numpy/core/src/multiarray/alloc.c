@@ -466,12 +466,19 @@ PyDataMem_GetHandlerName(PyArrayObject *obj)
 }
 
 NPY_NO_EXPORT PyObject *
-get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj)
+get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    const char * name = PyDataMem_GetHandlerName(obj);
+    PyObject *arr=NULL;
+    if (!PyArg_ParseTuple(args, "|O:get_handler_name", &arr)) {
+        return NULL;
+    }
+    if (arr != NULL && !PyArray_Check(arr)) {
+         PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
+         return NULL;
+    }
+    const char * name = PyDataMem_GetHandlerName((PyArrayObject *)arr);
     if (name == NULL) {
         return NULL;
     }
-    if (! PyCheck
     return PyUnicode_FromString(name);
 }

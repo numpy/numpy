@@ -68,12 +68,11 @@ def get_module(tmp_path):
                 /* free(real); */
             }
             else {
-                int i = atoi(real +20);
+                npy_uintp i = (npy_uintp)atoi(real +20);
                 if (i != sz) {
-                    fprintf(stderr, "uh-oh, unmatched "
-                            "shift_free(ptr, %d) but allocated %d\\n", sz, i);
-                    /* Make C runtime crash by calling free on the wrong address */
-                    /* free((char *)p + 10); */
+                    fprintf(stderr, "uh-oh, unmatched shift_free"
+                            "(ptr, %ld) but allocated %ld\\n", sz, i);
+                    /* This happens in some places, only print */
                     free(real);
                 }
                 else {
