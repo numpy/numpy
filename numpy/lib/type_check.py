@@ -273,7 +273,8 @@ def isreal(x):
 
     Examples
     --------
-    >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
+    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
+    >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
     
     The function does not work on string arrays.
