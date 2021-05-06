@@ -4871,10 +4871,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             operands, signature,
             borrowed_operand_DTypes, force_legacy_promotion);
     if (ufuncimpl == NULL) {
-        if (!PyErr_Occurred()) {
-            raise_no_loop_found_error(
-                    ufunc, (PyObject **)borrowed_operand_DTypes);
-        }
         goto fail;
     }
 

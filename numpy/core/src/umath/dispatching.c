@@ -765,6 +765,9 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
             ops, signature, op_dtypes);
 
     if (info == NULL) {
+        if (!PyErr_Occurred()) {
+            raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+        }
         return NULL;
     }
 
