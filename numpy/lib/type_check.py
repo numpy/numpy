@@ -286,8 +286,15 @@ def isreal(x):
     Returns True for all elements in input array of `dtype=object` even if 
     any of the elements is complex.
 
-    >>> np.array([1+2j, ...], dtype=object)
-    array([True,  True])
+    >>> a = np.array([1, "2", 3+4j], dtype=object)
+    >>> np.isreal(a)
+    array([ True,  True,  True])
+    
+    isreal should not be used with object arrays
+    
+    >>> a = np.array([1+2j, 2+1j], dtype=object)
+    >>> np.isreal(a)
+    array([ True,  True])
 
     """
     return imag(x) == 0
