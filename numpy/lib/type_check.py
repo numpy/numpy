@@ -252,10 +252,6 @@ def isreal(x):
     If element has complex type with zero complex part, the return value
     for that element is True.
 
-    .. note::
-
-    Returns all True for input elements which are not of complex type.
-
     Parameters
     ----------
     x : array_like
@@ -280,10 +276,18 @@ def isreal(x):
     >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
     array([False,  True,  True,  True,  True, False])
     
-    Returns True for all elements in input array which are not of complex type. 
+    .. note::
+    
+    The function does not work on string arrays.
 
-    >>> np.isreal([None, False, "imaginary", complex])
-    array([True, True, True, True])
+    >>> np.isreal([2j, "a"])
+    False
+    
+    Returns True for all elements in input array of `dtype=object` even if 
+    any of the elements is complex.
+
+    >>> np.array([1+2j, ...], dtype=object)
+    array([True,  True])
 
     """
     return imag(x) == 0
