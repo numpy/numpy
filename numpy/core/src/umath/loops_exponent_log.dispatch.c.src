@@ -776,7 +776,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
         nearzero_mask = _mm512_kxor(nearzero_mask, nan_mask);
         overflow_mask = _mm512_kor(overflow_mask,
                                 _mm512_kxor(xmax_mask, inf_mask));
-        underflow_mask = _mm512_kor(underflow_mask, xmax_mask);
+        underflow_mask = _mm512_kor(underflow_mask, xmin_mask);
         x = avx512_set_masked_lanes_pd(x, zeros_d,
                         _mm512_kor(_mm512_kor(nan_mask, xmin_mask),
                             _mm512_kor(xmax_mask, nearzero_mask)));
