@@ -175,7 +175,7 @@ class TestUfuncGenericLoops:
                     ufunc(obj_arr)
             else:
                 res_obj = ufunc(obj_arr)
-                assert_array_equal(res_num.astype("O"), res_obj)
+                assert_array_almost_equal(res_num.astype("O"), res_obj)
 
 
 def _pickleable_module_global():
