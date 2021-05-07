@@ -66,9 +66,13 @@ def get_authors(revision_range):
     pre = set(re.findall(pat, this_repo.git.shortlog('-s', lst_release),
                          re.M))
 
-    # Homu is the author of auto merges, clean him out.
+    # Ignore the bot Homu.
     cur.discard('Homu')
     pre.discard('Homu')
+
+    # Ignore the bot dependabot-preview
+    cur.discard('dependabot-preview')
+    pre.discard('dependabot-preview')
 
     # Append '+' to new authors.
     authors = [s + u' +' for s in cur - pre] + [s for s in cur & pre]
@@ -92,8 +96,8 @@ def get_pull_requests(repo, revision_range):
     # From fast forward squash-merges
     commits = this_repo.git.log(
         '--oneline', '--no-merges', '--first-parent', revision_range)
-    issues = re.findall(u'^.*\\(\\#(\\d+)\\)$', commits, re.M)
-    prnums.extend(int(s) for s in issues)
+    issues = re.findall(u'^.*\\((\\#|gh-|gh-\\#)(\\d+)\\)$', commits, re.M)
+    prnums.extend(int(s[1]) for s in issues)
 
     # get PR data from github repo
     prnums.sort()
