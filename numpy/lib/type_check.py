@@ -283,7 +283,7 @@ def isreal(x):
     >>> np.isreal(a)  # Warns about non-elementwise comparison
     False
     
-    Returns True for all elements in input array of `dtype=object` even if 
+    Returns True for all elements in input array of ``dtype=object`` even if
     any of the elements is complex.
 
     >>> a = np.array([1, "2", 3+4j], dtype=object)
