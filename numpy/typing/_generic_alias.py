@@ -4,7 +4,6 @@ import sys
 import types
 from typing import (
     Any,
-    Callable,
     ClassVar,
     FrozenSet,
     Generator,
