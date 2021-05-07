@@ -1,7 +1,8 @@
 Ufunc ``signature=...`` and ``dtype=`` generalization and ``casting``
 ---------------------------------------------------------------------
-The behaviour for ``signature=...`` and ``dtype=...`` can differ in
-some cases to the previous behaviour.
+The behaviour for ``np.ufunc(1.0, 1.0, signature=...)`` or
+``np.ufunc(1.0, 1.0, dtype=...)`` can now yield different loops in 1.21
+compared to 1.20 because of changes in promotion.
 When ``signature`` was previously used, the casting check on inputs
 was relaxed, which could lead to downcasting inputs unsafely especially
 if combined with ``casting="unsafe"``.
@@ -12,9 +13,8 @@ this could lead to no loop being found (an error).
 In that case, it is necessary to provide the complete signature
 to enforce casting the inputs.
 If ``dtype="float64"`` is used or only outputs are set (e.g.
-``signature=(None, None, "float64")`` the behaviour should remain
-unchanged.  We expect that very few users are affected by
-this change.
+``signature=(None, None, "float64")`` the is unchanged.
+We expect that very few users are affected by this change.
 
 Further, the meaning of ``dtype="float64"`` has been slightly modified and
 now strictly enforces only the correct output (and not input) DTypes.
