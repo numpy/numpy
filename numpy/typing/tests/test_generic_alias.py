@@ -25,6 +25,8 @@ else:
 
 GETATTR_NAMES = sorted(set(dir(np.ndarray)) - _GenericAlias._ATTR_EXCEPTIONS)
 
+BUFFER = np.array([1], dtype=np.int64)
+BUFFER.setflags(write=False)
 
 def _get_subclass_mro(base: type) -> Tuple[type, ...]:
     class Subclass(base):  # type: ignore[misc,valid-type]
@@ -51,8 +53,8 @@ class TestGenericAlias:
         ("__eq__", lambda n: n == n),
         ("__ne__", lambda n: n != np.ndarray),
         ("__dir__", lambda n: dir(n)),
-        ("__call__", lambda n: n((5,), np.int64)),
-        ("__call__", lambda n: n(shape=(5,), dtype=np.int64)),
+        ("__call__", lambda n: n((1,), np.int64, BUFFER)),
+        ("__call__", lambda n: n(shape=(1,), dtype=np.int64, buffer=BUFFER)),
         ("subclassing", lambda n: _get_subclass_mro(n)),
         ("pickle", lambda n: n == pickle.loads(pickle.dumps(n))),
         ("__weakref__", lambda n: n == weakref.ref(n)()),
