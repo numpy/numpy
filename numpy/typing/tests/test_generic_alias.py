@@ -35,31 +35,28 @@ def _get_subclass_mro(base: type) -> Tuple[type, ...]:
 class TestGenericAlias:
     """Tests for `numpy.typing._generic_alias._GenericAlias`."""
 
-    @pytest.mark.parametrize(
-        "name,func",
-        [
-            ("__init__", lambda n: n),
-            ("__origin__", lambda n: n.__origin__),
-            ("__args__", lambda n: n.__args__),
-            ("__parameters__", lambda n: n.__parameters__),
-            ("__reduce__", lambda n: n.__reduce__()[1:]),
-            ("__reduce_ex__", lambda n: n.__reduce_ex__(1)[1:]),
-            ("__mro_entries__", lambda n: n.__mro_entries__([object])),
-            ("__hash__", lambda n: hash(n)),
-            ("__repr__", lambda n: repr(n)),
-            ("__getitem__", lambda n: n[np.float64]),
-            ("__getitem__", lambda n: n[ScalarType][np.float64]),
-            ("__getitem__", lambda n: n[Union[np.int64, ScalarType]][np.float64]),
-            ("__eq__", lambda n: n == n),
-            ("__ne__", lambda n: n != np.ndarray),
-            ("__dir__", lambda n: dir(n)),
-            ("__call__", lambda n: n((5,), np.int64)),
-            ("__call__", lambda n: n(shape=(5,), dtype=np.int64)),
-            ("subclassing", lambda n: _get_subclass_mro(n)),
-            ("pickle", lambda n: n == pickle.loads(pickle.dumps(n))),
-            ("__weakref__", lambda n: n == weakref.ref(n)()),
-        ]
-    )
+    @pytest.mark.parametrize("name,func", [
+        ("__init__", lambda n: n),
+        ("__origin__", lambda n: n.__origin__),
+        ("__args__", lambda n: n.__args__),
+        ("__parameters__", lambda n: n.__parameters__),
+        ("__reduce__", lambda n: n.__reduce__()[1:]),
+        ("__reduce_ex__", lambda n: n.__reduce_ex__(1)[1:]),
+        ("__mro_entries__", lambda n: n.__mro_entries__([object])),
+        ("__hash__", lambda n: hash(n)),
+        ("__repr__", lambda n: repr(n)),
+        ("__getitem__", lambda n: n[np.float64]),
+        ("__getitem__", lambda n: n[ScalarType][np.float64]),
+        ("__getitem__", lambda n: n[Union[np.int64, ScalarType]][np.float64]),
+        ("__eq__", lambda n: n == n),
+        ("__ne__", lambda n: n != np.ndarray),
+        ("__dir__", lambda n: dir(n)),
+        ("__call__", lambda n: n((5,), np.int64)),
+        ("__call__", lambda n: n(shape=(5,), dtype=np.int64)),
+        ("subclassing", lambda n: _get_subclass_mro(n)),
+        ("pickle", lambda n: n == pickle.loads(pickle.dumps(n))),
+        ("__weakref__", lambda n: n == weakref.ref(n)()),
+    ])
     def test_pass(self, name: str, func: FuncType) -> None:
         """Compare `types.GenericAlias` with its numpy-based backport.
 
@@ -75,7 +72,10 @@ class TestGenericAlias:
 
     @pytest.mark.parametrize("name", GETATTR_NAMES)
     def test_getattr(self, name: str) -> None:
-        """Test that `getattr` wraps around the underlying type (``__origin__``)."""
+        """Test that `getattr` wraps around the underlying type,
+        aka ``__origin__``.
+
+        """
         value = getattr(NDArray, name)
         value_ref1 = getattr(np.ndarray, name)
 
@@ -85,19 +85,16 @@ class TestGenericAlias:
         else:
             assert value == value_ref1
 
-    @pytest.mark.parametrize(
-        "name,exc_type,func",
-        [
-            ("__getitem__", TypeError, lambda n: n[()]),
-            ("__getitem__", TypeError, lambda n: n[Any, Any]),
-            ("__getitem__", TypeError, lambda n: n[Any][Any]),
-            ("__instancecheck__", TypeError, lambda n: isinstance(np.array(1), n)),
-            ("__subclasscheck__", TypeError, lambda n: issubclass(np.ndarray, n)),
-            ("__setattr__", AttributeError, lambda n: setattr(n, "__origin__", int)),
-            ("__setattr__", AttributeError, lambda n: setattr(n, "test", int)),
-            ("__getattribute__", AttributeError, lambda n: getattr(n, "test")),
-        ]
-    )
+    @pytest.mark.parametrize("name,exc_type,func", [
+        ("__getitem__", TypeError, lambda n: n[()]),
+        ("__getitem__", TypeError, lambda n: n[Any, Any]),
+        ("__getitem__", TypeError, lambda n: n[Any][Any]),
+        ("isinstance", TypeError, lambda n: isinstance(np.array(1), n)),
+        ("issublass", TypeError, lambda n: issubclass(np.ndarray, n)),
+        ("setattr", AttributeError, lambda n: setattr(n, "__origin__", int)),
+        ("setattr", AttributeError, lambda n: setattr(n, "test", int)),
+        ("getattr", AttributeError, lambda n: getattr(n, "test")),
+    ])
     def test_raise(
         self,
         name: str,
