@@ -8,11 +8,27 @@ from ._generic_alias import NDArray
 _docstrings_list = []
 
 
-def add_newdoc(name, value, doc):
+def add_newdoc(name: str, value: str, doc: str) -> None:
+    """Append ``_docstrings_list`` with a docstring for `name`.
+
+    Parameters
+    ----------
+    name : str
+        The name of the object.
+    value : str
+        A string-representation of the object.
+    doc : str
+        The docstring of the object.
+
+    """
     _docstrings_list.append((name, value, doc))
 
 
-def _parse_docstrings():
+def _parse_docstrings() -> str:
+    """Convert all docstrings in ``_docstrings_list`` into a single
+    sphinx-legible text block.
+
+    """
     type_list_ret = []
     for name, value, doc in _docstrings_list:
         s = textwrap.dedent(doc).replace("\n", "\n    ")
