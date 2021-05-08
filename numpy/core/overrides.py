@@ -1,6 +1,7 @@
 """Implementation of __array_function__ overrides from NEP-18."""
 import collections
 import functools
+import inspect
 import os
 import textwrap
 
@@ -32,6 +33,15 @@ def set_array_function_like_doc(public_api):
             array_function_like_doc,
         )
     return public_api
+
+
+def add_signature(function, docstring):
+    try:
+        function.__signature__ = inspect._signature_fromstr(
+            inspect.Signature, function,
+            docstring.strip().split('\n')[0])
+    except ValueError:
+        pass
 
 
 add_docstring(
@@ -212,6 +222,9 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
 
         if module is not None:
             public_api.__module__ = module
+
+        if docs_from_dispatcher and dispatcher.__doc__:
+            add_signature(public_api, dispatcher.__doc__)
 
         public_api._implementation = implementation
 
