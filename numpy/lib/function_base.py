@@ -1496,26 +1496,34 @@ def angle(z, deg=False):
     return a
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None):
+def _unwrap_dispatcher(p, discont=None, axis=None, *, min_val=None, max_val=None):
     return (p,)
 
 
 @array_function_dispatch(_unwrap_dispatcher)
-def unwrap(p, discont=pi, axis=-1):
+def unwrap(p, discont=None, axis=-1, *, min_val=-pi, max_val=pi):
     """
-    Unwrap by changing deltas between values to 2*pi complement.
-
-    Unwrap radian phase `p` by changing absolute jumps greater than
-    `discont` to their 2*pi complement along the given axis.
+    Unwrap by changing deltas between values to complement.
+    
+    For the default case where `min_val=-pi`, `max_val=pi`, `discont=pi`
+    It unwraps radian phase `p` by changing absolute jumps greater 
+    than `pi` to their 2*pi complement along the given axis.
+    
+    In general it unwrapps a signal `p` by changing absolute jumps 
+    greater than `discont` to their complementary values.
 
     Parameters
     ----------
     p : array_like
         Input array.
     discont : float, optional
-        Maximum discontinuity between values, default is ``pi``.
+        Maximum discontinuity between values, default is ``(max_val - min_val)/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
+    min_val : float, optional
+        Minimum value when sequence overflows, default is ``-pi``
+    max_val : float, optional
+        Maximum value when sequence underflows, default is ``pi``
 
     Returns
     -------
@@ -1528,9 +1536,9 @@ def unwrap(p, discont=pi, axis=-1):
 
     Notes
     -----
-    If the discontinuity in `p` is smaller than ``pi``, but larger than
-    `discont`, no unwrapping is done because taking the 2*pi complement
-    would only make the discontinuity larger.
+    If the discontinuity in `p` is smaller than ``(max_val-min_val)/2``, 
+    but larger than `discont`, no unwrapping is done because taking 
+    the complement would only make the discontinuity larger.
 
     Examples
     --------
@@ -1540,16 +1548,19 @@ def unwrap(p, discont=pi, axis=-1):
     array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531]) # may vary
     >>> np.unwrap(phase)
     array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
-
+    >>> unwrap([0, 1, 2, -1, 0], min_val=-1, max_val=3)
+    array([0., 1., 2., 3., 4.])
     """
+    if discont is None:
+        discont = (max_val - min_val)/2
     p = asarray(p)
     nd = p.ndim
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
-    ddmod = mod(dd + pi, 2*pi) - pi
-    _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
+    ddmod = mod(dd - min_val, max_val - min_val) + min_val
+    _nx.copyto(ddmod, max_val, where=(ddmod == min_val) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype='d')

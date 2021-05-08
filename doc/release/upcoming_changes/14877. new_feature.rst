@@ -1,0 +1,4 @@
+`numpy.unwrap` has new ``min_val`` and ``max_val`` arguments for handling non-radian wrapping
+---------------------------------------------------------------------------------------------
+The `unwrap` function has been improved to support other wrapping cases like overflow 
+with integers when these keyword-only arguments are given. The default behavior is unchanged.

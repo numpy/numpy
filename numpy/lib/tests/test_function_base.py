@@ -1799,6 +1799,22 @@ class TestUnwrap:
         # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
 
+    def test_minmax(self):
+        # check that unwrap removes jumps greater that 255
+        assert_array_equal(unwrap([1, 1 + 256], min_val=0, max_val=255), [1, 2])
+        # check that unwrap maintains continuity
+        assert_(np.all(diff(unwrap(rand(10) * 1000, min_val=0, max_val=255)) < 255))
+        # check simple case
+        simple_seq = np.array([0, 75, 150, 225, 300])
+        wrap_seq = np.mod(simple_seq, 255)
+        assert_array_equal(unwrap(wrap_seq, min_val=0, max_val=255), simple_seq)
+        # check custom discont value
+        uneven_seq = np.array([0, 75, 150, 225, 300, 553])
+        wrap_uneven = np.mod(uneven_seq, 255)
+        no_discont = unwrap(wrap_uneven, min_val=0, max_val=255)
+        assert_array_equal(no_discont, [0, 75, 150, 225, 300, 298])
+        sm_discont = unwrap(wrap_uneven, min_val=0, max_val=255, discont=2)
+        assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 553])
 
 class TestFilterwindows:
 
