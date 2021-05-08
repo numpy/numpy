@@ -123,6 +123,7 @@ NPY_NO_EXPORT int
 type_tuple_type_resolver(PyUFuncObject *self,
                          PyObject *type_tup,
                          PyArrayObject **op,
+                         NPY_CASTING input_casting,
                          NPY_CASTING casting,
                          int any_object,
                          PyArray_Descr **out_dtype);

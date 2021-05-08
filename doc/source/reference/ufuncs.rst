@@ -430,8 +430,10 @@ advanced usage and will not typically be used.
 
     .. versionadded:: 1.6
 
-    Overrides the dtype of the calculation and output arrays. Similar to
-    *signature*.
+    Overrides the DType of the output arrays the same way as the *signature*.
+    This should ensure a matching precision of the calculation.  The exact
+    calculation DTypes chosen may depend on the ufunc and the inputs may be
+    cast to this DType to perform the calculation.
 
 *subok*
 
@@ -442,20 +444,31 @@ advanced usage and will not typically be used.
 
 *signature*
 
-    Either a data-type, a tuple of data-types, or a special signature
-    string indicating the input and output types of a ufunc. This argument
-    allows you to provide a specific signature for the 1-d loop to use
-    in the underlying calculation. If the loop specified does not exist
-    for the ufunc, then a TypeError is raised. Normally, a suitable loop is
-    found automatically by comparing the input types with what is
-    available and searching for a loop with data-types to which all inputs
-    can be cast safely. This keyword argument lets you bypass that
-    search and choose a particular loop. A list of available signatures is
-    provided by the **types** attribute of the ufunc object. For backwards
-    compatibility this argument can also be provided as *sig*, although
-    the long form is preferred. Note that this should not be confused with
-    the generalized ufunc :ref:`signature <details-of-signature>` that is
-    stored in the **signature** attribute of the of the ufunc object.
+    Either a Dtype, a tuple of DTypes, or a special signature string
+    indicating the input and output types of a ufunc.
+
+    This argument allows the user to specify exact DTypes to be used for the
+    calculation.  Casting will be used as necessary. The actual DType of the
+    input arrays is not considered unless ``signature`` is ``None`` for
+    that array.
+
+    When all DTypes are fixed, a specific loop is chosen or an error raised
+    if no matching loop exists.
+    If some DTypes are not specified and left ``None``, the behaviour may
+    depend on the ufunc.
+    At this time, a list of available signatures is provided by the **types**
+    attribute of the ufunc.  (This list may be missing DTypes not defined
+    by NumPy.)
+
+    The ``signature`` only specifies the DType class/type.  For example, it
+    can specifiy that the operation should be ``datetime64`` or ``float64``
+    operation.  It does not specify the ``datetime64`` time-unit or the
+    ``float64`` byte-order.
+
+    For backwards compatibility this argument can also be provided as *sig*,
+    although the long form is preferred.  Note that this should not be
+    confused with the generalized ufunc :ref:`signature <details-of-signature>`
+    that is stored in the **signature** attribute of the of the ufunc object.
 
 *extobj*
 
