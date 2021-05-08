@@ -1,11 +1,19 @@
 import platform
 
+from distutils.spawn import find_executable as find_exe
 from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.ccompiler import simple_version_match
 if platform.system() == 'Windows':
-    from numpy.distutils.msvc9compiler import MSVCCompiler
+    from numpy.distutils._msvccompiler import MSVCCompiler
 
+def _find_exe(exe, paths=None):
+    executable = find_exe(exe, paths)
+    if not executable:
+        """If the executable is not found just return the original
+        program name,'exe'. """
+        executable = exe
+    return executable
 
 class IntelCCompiler(UnixCCompiler):
     """A modified Intel compiler compatible with a GCC-built Python."""
@@ -90,9 +98,9 @@ if platform.system() == 'Windows':
 
         def initialize(self, plat_name=None):
             MSVCCompiler.initialize(self, plat_name)
-            self.cc = self.find_exe('icl.exe')
-            self.lib = self.find_exe('xilib')
-            self.linker = self.find_exe('xilink')
+            self.cc = _find_exe('icl.exe')
+            self.lib = _find_exe('xilib')
+            self.linker = _find_exe('xilink')
             self.compile_options = ['/nologo', '/O3', '/MD', '/W3',
                                     '/Qstd=c99']
             self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
