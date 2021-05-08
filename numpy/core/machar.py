@@ -56,13 +56,19 @@ class MachAr:
     epsilon : float
         Same as `eps`.
     tiny : float
-        Same as `xmin`.
+        An alias for `smallest_normal`, kept for backwards compatibility.
     huge : float
         Same as `xmax`.
     precision : float
         ``- int(-log10(eps))``
     resolution : float
         ``- 10**(-precision)``
+    smallest_normal : float
+        The smallest positive floating point number with 1 as leading bit in
+        the mantissa following IEEE-754. Same as `xmin`.
+    smallest_subnormal : float
+        The smallest positive floating point number with 0 as leading bit in
+        the mantissa following IEEE-754.
 
     Parameters
     ----------
@@ -293,6 +299,8 @@ class MachAr:
             else:
                 xmax = xmax * beta
 
+        smallest_subnormal = abs(xmin / beta ** (it))
+
         self.ibeta = ibeta
         self.it = it
         self.negep = negep
@@ -316,6 +324,8 @@ class MachAr:
         self.epsilon = self.eps
         self.tiny = self.xmin
         self.huge = self.xmax
+        self.smallest_normal = self.xmin
+        self.smallest_subnormal = float_to_float(smallest_subnormal)
 
         import math
         self.precision = int(-math.log10(float_to_float(self.eps)))
@@ -333,6 +343,8 @@ class MachAr:
            'negep =%(negep)s  epsneg=%(_str_epsneg)s (beta**epsneg)\n'
            'minexp=%(minexp)s   xmin=%(_str_xmin)s (beta**minexp == tiny)\n'
            'maxexp=%(maxexp)s    xmax=%(_str_xmax)s ((1-epsneg)*beta**maxexp == huge)\n'
+           'smallest_normal=%(smallest_normal)s    '
+           'smallest_subnormal=%(smallest_subnormal)s\n'
            '---------------------------------------------------------------------\n'
            )
         return fmt % self.__dict__

@@ -47,7 +47,8 @@ class TestFinfo:
         for dt1, dt2 in dts:
             for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machar', 'machep',
                          'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
-                         'nmant', 'precision', 'resolution', 'tiny'):
+                         'nmant', 'precision', 'resolution', 'tiny',
+                         'smallest_normal', 'smallest_subnormal'):
                 assert_equal(getattr(finfo(dt1), attr),
                              getattr(finfo(dt2), attr), attr)
         assert_raises(ValueError, finfo, 'i4')
