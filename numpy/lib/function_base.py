@@ -4026,8 +4026,10 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             "'midpoint', or 'nearest'")
 
     # The dimensions of `q` are prepended to the output shape, so we need the
-    # axis being sampled from `ap` to be first.
-    ap = np.moveaxis(ap, axis, 0)
+    # axis being sampled from `ap` to be first.  But we only do so if axis!=0,
+    # as moveaxis is quite slow.
+    if axis:
+        ap = np.moveaxis(ap, axis, 0)
     del axis
 
     if np.issubdtype(indices.dtype, np.integer):
@@ -4073,7 +4075,8 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         r = _lerp(x_below, x_above, weights_above, out=out)
 
     # if any slice contained a nan, then all results on that slice are also nan
-    if np.any(n):
+    if (n.ndim == 1 and n[0]  # Fast-case for 1D.
+            or np.any(n)):
         if r.ndim == 0 and out is None:
             # can't write to a scalar
             r = a.dtype.type(np.nan)
