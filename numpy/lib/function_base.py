@@ -4758,12 +4758,12 @@ def append(arr, values, axis=None):
     return concatenate((arr, values), axis=axis)
 
 
-def _digitize_dispatcher(x, bins, right=None):
+def _digitize_dispatcher(x, bins, right=None, edge=None):
     return (x, bins)
 
 
 @array_function_dispatch(_digitize_dispatcher)
-def digitize(x, bins, right=False):
+def digitize(x, bins, right=False, edge=False):
     """
     Return the indices of the bins to which each value in input array belongs.
 
@@ -4792,6 +4792,10 @@ def digitize(x, bins, right=False):
         does not include the right edge. The left bin end is open in this
         case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
         monotonically increasing bins.
+    edge : bool, optional
+        Whether to include the last right edge if right==False or the first
+        left edge if right==True so that the whole interval from the least
+        to the greatest value of bins is covered.
 
     Returns
     -------
@@ -4807,7 +4811,7 @@ def digitize(x, bins, right=False):
 
     See Also
     --------
-    bincount, histogram, unique, searchsorted
+    bincount, histogram, unique, nextafter, searchsorted
 
     Notes
     -----
@@ -4863,6 +4867,31 @@ def digitize(x, bins, right=False):
     mono = _monotonicity(bins)
     if mono == 0:
         raise ValueError("bins must be monotonically increasing or decreasing")
+
+    if edge:
+        # =========  =============  ============================ ===== =====
+        # `right`    order of bins  returned index `i` satisfies delta index
+        # =========  =============  ============================ ===== =====
+        # ``False``  increasing     ``bins[i-1] <= x < bins[i]``   1    -1
+        # ``True``   increasing     ``bins[i-1] < x <= bins[i]``   -1    0
+        # ``False``  decreasing     ``bins[i-1] > x >= bins[i]``   1    0
+        # ``True``   decreasing     ``bins[i-1] >= x > bins[i]``   -1    -1
+        # =========  =============  ============================ ===== =====
+        delta = -1 if right else 1
+        idx = -1 if delta == mono else 0
+        if np.issubdtype(bins.dtype, _nx.integer):
+            if any(abs(bins) >= 2**63 - 1):
+                if np.issubdtype(bins.dtype, _nx.uint64  # unsigned case
+                                 ) and bins[idx] < 2**64 - 1:
+                    bins[idx] += _nx.uint64(delta)
+                else:
+                    raise RuntimeError('Overflow, bin values exceed 64-bit '
+                                       'precision')
+            else:
+                bins = _nx.int64(bins)
+                bins[idx] += delta
+        else:
+            bins[idx] = np.nextafter(bins[idx], bins[idx] + delta)
 
     # this is backwards because the arguments below are swapped
     side = 'left' if right else 'right'
