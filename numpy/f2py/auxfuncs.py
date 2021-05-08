@@ -18,6 +18,7 @@ import pprint
 import sys
 import types
 from functools import reduce
+from typing import Dict
 
 from . import __version__
 from . import cfuncs
@@ -640,7 +641,8 @@ def getcallstatement(rout):
     return getmultilineblock(rout, 'callstatement')
 
 
-def getcallprotoargument(rout, cb_map={}):
+def getcallprotoargument(rout, cb_map:Dict=None):
+    cb_map = cb_map or {}
     r = getmultilineblock(rout, 'callprotoargument', comment=0)
     if r:
         return r
@@ -795,7 +797,8 @@ def dictappend(rd, ar):
     return rd
 
 
-def applyrules(rules, d, var={}):
+def applyrules(rules, d, var:Dict=None):
+    var = var or {}
     ret = {}
     if isinstance(rules, list):
         for r in rules:
