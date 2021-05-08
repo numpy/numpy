@@ -97,17 +97,12 @@ npyiter_new(PyTypeObject *subtype, PyObject *NPY_UNUSED(args),
     return (PyObject *)self;
 }
 
+static npy_uint32
+single_global_flag_parser(char const *str, Py_ssize_t length, void *data);
+
 static int
 NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
 {
-    npy_uint32 tmpflags = 0;
-    int iflags, nflags;
-
-    PyObject *f;
-    char *str = NULL;
-    Py_ssize_t length = 0;
-    npy_uint32 flag;
-
     if (flags_in == NULL || flags_in == Py_None) {
         return 1;
     }
@@ -118,274 +113,275 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
         return 0;
     }
 
-    nflags = PySequence_Size(flags_in);
+    npy_uint32 tmpflags = 0;
+    int nflags = PySequence_Size(flags_in);
 
-    for (iflags = 0; iflags < nflags; ++iflags) {
-        f = PySequence_GetItem(flags_in, iflags);
+    for (int iflags = 0; iflags < nflags; ++iflags) {
+        PyObject *f = PySequence_GetItem(flags_in, iflags);
         if (f == NULL) {
             return 0;
         }
 
-        if (PyUnicode_Check(f)) {
-            /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
-                Py_DECREF(f);
-                return 0;
-            }
-            Py_DECREF(f);
-            f = f_str;
-        }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
-            Py_DECREF(f);
-            return 0;
-        }
-        /* Use switch statements to quickly isolate the right flag */
-        flag = 0;
-        switch (str[0]) {
-            case 'b':
-                if (strcmp(str, "buffered") == 0) {
-                    flag = NPY_ITER_BUFFERED;
-                }
-                break;
-            case 'c':
-                if (length >= 6) switch (str[5]) {
-                    case 'e':
-                        if (strcmp(str, "c_index") == 0) {
-                            flag = NPY_ITER_C_INDEX;
-                        }
-                        break;
-                    case 'i':
-                        if (strcmp(str, "copy_if_overlap") == 0) {
-                            flag = NPY_ITER_COPY_IF_OVERLAP;
-                        }
-                        break;
-                    case 'n':
-                        if (strcmp(str, "common_dtype") == 0) {
-                            flag = NPY_ITER_COMMON_DTYPE;
-                        }
-                        break;
-                }
-                break;
-            case 'd':
-                if (strcmp(str, "delay_bufalloc") == 0) {
-                    flag = NPY_ITER_DELAY_BUFALLOC;
-                }
-                break;
-            case 'e':
-                if (strcmp(str, "external_loop") == 0) {
-                    flag = NPY_ITER_EXTERNAL_LOOP;
-                }
-                break;
-            case 'f':
-                if (strcmp(str, "f_index") == 0) {
-                    flag = NPY_ITER_F_INDEX;
-                }
-                break;
-            case 'g':
-                /*
-                 * Documentation is grow_inner, but initial implementation
-                 * was growinner, so allowing for either.
-                 */
-                if (strcmp(str, "grow_inner") == 0 ||
-                            strcmp(str, "growinner") == 0) {
-                    flag = NPY_ITER_GROWINNER;
-                }
-                break;
-            case 'm':
-                if (strcmp(str, "multi_index") == 0) {
-                    flag = NPY_ITER_MULTI_INDEX;
-                }
-                break;
-            case 'r':
-                if (strcmp(str, "ranged") == 0) {
-                    flag = NPY_ITER_RANGED;
-                }
-                else if (strcmp(str, "refs_ok") == 0) {
-                    flag = NPY_ITER_REFS_OK;
-                }
-                else if (strcmp(str, "reduce_ok") == 0) {
-                    flag = NPY_ITER_REDUCE_OK;
-                }
-                break;
-            case 'z':
-                if (strcmp(str, "zerosize_ok") == 0) {
-                    flag = NPY_ITER_ZEROSIZE_OK;
-                }
-                break;
-        }
-        if (flag == 0) {
-            PyErr_Format(PyExc_ValueError,
-                    "Unexpected iterator global flag \"%s\"", str);
-            Py_DECREF(f);
-            return 0;
-        }
-        else {
-            tmpflags |= flag;
-        }
+        npy_uint32 flag;
+        int ret = convert_with_str_parser(
+            f, (void *)&flag, single_global_flag_parser, "iterator global flag",
+            "not recognized");
         Py_DECREF(f);
+        if (ret != NPY_SUCCEED) {
+            return 0;
+        }
+        tmpflags |= flag;
     }
 
     *flags |= tmpflags;
     return 1;
 }
 
+static npy_uint32
+single_global_flag_parser(char const *str, Py_ssize_t length, void *data)
+{
+    npy_uint32 *flag = (npy_uint32 *)data;
+
+    /* Use switch statements to quickly isolate the right flag */
+    switch (str[0]) {
+        case 'b':
+            if (strcmp(str, "buffered") == 0) {
+                *flag = NPY_ITER_BUFFERED;
+                return 0;
+            }
+            break;
+        case 'c':
+            if (length >= 6) switch (str[5]) {
+                case 'e':
+                    if (strcmp(str, "c_index") == 0) {
+                        *flag = NPY_ITER_C_INDEX;
+                        return 0;
+                    }
+                    break;
+                case 'i':
+                    if (strcmp(str, "copy_if_overlap") == 0) {
+                        *flag = NPY_ITER_COPY_IF_OVERLAP;
+                        return 0;
+                    }
+                    break;
+                case 'n':
+                    if (strcmp(str, "common_dtype") == 0) {
+                        *flag = NPY_ITER_COMMON_DTYPE;
+                        return 0;
+                    }
+                    break;
+            }
+            break;
+        case 'd':
+            if (strcmp(str, "delay_bufalloc") == 0) {
+                *flag = NPY_ITER_DELAY_BUFALLOC;
+                return 0;
+            }
+            break;
+        case 'e':
+            if (strcmp(str, "external_loop") == 0) {
+                *flag = NPY_ITER_EXTERNAL_LOOP;
+                return 0;
+            }
+            break;
+        case 'f':
+            if (strcmp(str, "f_index") == 0) {
+                *flag = NPY_ITER_F_INDEX;
+                return 0;
+            }
+            break;
+        case 'g':
+            /*
+             * Documentation is grow_inner, but initial implementation
+             * was growinner, so allowing for either.
+             */
+            if (strcmp(str, "grow_inner") == 0 ||
+                        strcmp(str, "growinner") == 0) {
+                *flag = NPY_ITER_GROWINNER;
+                return 0;
+            }
+            break;
+        case 'm':
+            if (strcmp(str, "multi_index") == 0) {
+                *flag = NPY_ITER_MULTI_INDEX;
+                return 0;
+            }
+            break;
+        case 'r':
+            if (strcmp(str, "ranged") == 0) {
+                *flag = NPY_ITER_RANGED;
+                return 0;
+            }
+            else if (strcmp(str, "refs_ok") == 0) {
+                *flag = NPY_ITER_REFS_OK;
+                return 0;
+            }
+            else if (strcmp(str, "reduce_ok") == 0) {
+                *flag = NPY_ITER_REDUCE_OK;
+                return 0;
+            }
+            break;
+        case 'z':
+            if (strcmp(str, "zerosize_ok") == 0) {
+                *flag = NPY_ITER_ZEROSIZE_OK;
+                return 0;
+            }
+            break;
+    }
+    return -1;
+}
+
+static npy_uint32
+single_op_flag_parser(char const *str, Py_ssize_t length, void *data);
+
 static int
 NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                          npy_uint32 *op_flags)
 {
-    int iflags, nflags;
-    npy_uint32 flag;
-
     if (!PyTuple_Check(op_flags_in) && !PyList_Check(op_flags_in)) {
         PyErr_SetString(PyExc_ValueError,
                 "op_flags must be a tuple or array of per-op flag-tuples");
         return 0;
     }
 
-    nflags = PySequence_Size(op_flags_in);
+    int nflags = PySequence_Size(op_flags_in);
 
     *op_flags = 0;
-    for (iflags = 0; iflags < nflags; ++iflags) {
-        PyObject *f;
-        char *str = NULL;
-        Py_ssize_t length = 0;
-
-        f = PySequence_GetItem(op_flags_in, iflags);
+    for (int iflags = 0; iflags < nflags; ++iflags) {
+        PyObject *f = PySequence_GetItem(op_flags_in, iflags);
         if (f == NULL) {
             return 0;
         }
-
-        if (PyUnicode_Check(f)) {
-            /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
-                Py_DECREF(f);
-                return 0;
-            }
-            Py_DECREF(f);
-            f = f_str;
-        }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
-            PyErr_Clear();
-            Py_DECREF(f);
-            PyErr_SetString(PyExc_ValueError,
-                   "op_flags must be a tuple or array of per-op flag-tuples");
-            return 0;
-        }
-
-        /* Use switch statements to quickly isolate the right flag */
-        flag = 0;
-        switch (str[0]) {
-            case 'a':
-                if (length > 2) switch(str[2]) {
-                    case 'i':
-                        if (strcmp(str, "aligned") == 0) {
-                            flag = NPY_ITER_ALIGNED;
-                        }
-                        break;
-                    case 'l':
-                        if (strcmp(str, "allocate") == 0) {
-                            flag = NPY_ITER_ALLOCATE;
-                        }
-                        break;
-                    case 'r':
-                        if (strcmp(str, "arraymask") == 0) {
-                            flag = NPY_ITER_ARRAYMASK;
-                        }
-                        break;
-                }
-                break;
-            case 'c':
-                if (strcmp(str, "copy") == 0) {
-                    flag = NPY_ITER_COPY;
-                }
-                if (strcmp(str, "contig") == 0) {
-                    flag = NPY_ITER_CONTIG;
-                }
-                break;
-            case 'n':
-                switch (str[1]) {
-                    case 'b':
-                        if (strcmp(str, "nbo") == 0) {
-                            flag = NPY_ITER_NBO;
-                        }
-                        break;
-                    case 'o':
-                        if (strcmp(str, "no_subtype") == 0) {
-                            flag = NPY_ITER_NO_SUBTYPE;
-                        }
-                        else if (strcmp(str, "no_broadcast") == 0) {
-                            flag = NPY_ITER_NO_BROADCAST;
-                        }
-                        break;
-                }
-                break;
-            case 'o':
-                if (strcmp(str, "overlap_assume_elementwise") == 0) {
-                    flag = NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-                }
-                break;
-            case 'r':
-                if (length > 4) switch (str[4]) {
-                    case 'o':
-                        if (strcmp(str, "readonly") == 0) {
-                            flag = NPY_ITER_READONLY;
-                        }
-                        break;
-                    case 'w':
-                        if (strcmp(str, "readwrite") == 0) {
-                            flag = NPY_ITER_READWRITE;
-                        }
-                        break;
-                }
-                break;
-            case 'u':
-                switch (str[1]) {
-                    case 'p':
-                        if (strcmp(str, "updateifcopy") == 0) {
-                            flag = NPY_ITER_UPDATEIFCOPY;
-                        }
-                        break;
-                }
-                break;
-            case 'v':
-                if (strcmp(str, "virtual") == 0) {
-                    flag = NPY_ITER_VIRTUAL;
-                }
-                break;
-            case 'w':
-                if (length > 5) switch (str[5]) {
-                    case 'o':
-                        if (strcmp(str, "writeonly") == 0) {
-                            flag = NPY_ITER_WRITEONLY;
-                        }
-                        break;
-                    case 'm':
-                        if (strcmp(str, "writemasked") == 0) {
-                            flag = NPY_ITER_WRITEMASKED;
-                        }
-                        break;
-                }
-                break;
-        }
-        if (flag == 0) {
-            PyErr_Format(PyExc_ValueError,
-                    "Unexpected per-op iterator flag \"%s\"", str);
-            Py_DECREF(f);
-            return 0;
-        }
-        else {
-            *op_flags |= flag;
-        }
+        npy_uint32 flag;
+        int ret = convert_with_str_parser(
+            f, (void *)&flag, single_op_flag_parser, "per-op iterator flag",
+            "not recognized");
         Py_DECREF(f);
+        if (ret != NPY_SUCCEED) {
+            return 0;
+        }
+
+        *op_flags |= flag;
     }
 
     return 1;
+}
+
+static int
+single_op_flag_parser(char const *str, Py_ssize_t length, void *data)
+{
+    npy_uint32 *flag = (npy_uint32 *)data;
+
+    /* Use switch statements to quickly isolate the right flag */
+    switch (str[0]) {
+        case 'a':
+            if (length > 2) switch(str[2]) {
+                case 'i':
+                    if (strcmp(str, "aligned") == 0) {
+                        *flag = NPY_ITER_ALIGNED;
+                        return 0;
+                    }
+                    break;
+                case 'l':
+                    if (strcmp(str, "allocate") == 0) {
+                        *flag = NPY_ITER_ALLOCATE;
+                        return 0;
+                    }
+                    break;
+                case 'r':
+                    if (strcmp(str, "arraymask") == 0) {
+                        *flag = NPY_ITER_ARRAYMASK;
+                        return 0;
+                    }
+                    break;
+            }
+            break;
+        case 'c':
+            if (strcmp(str, "copy") == 0) {
+                *flag = NPY_ITER_COPY;
+                return 0;
+            }
+            if (strcmp(str, "contig") == 0) {
+                *flag = NPY_ITER_CONTIG;
+                return 0;
+            }
+            break;
+        case 'n':
+            switch (str[1]) {
+                case 'b':
+                    if (strcmp(str, "nbo") == 0) {
+                        *flag = NPY_ITER_NBO;
+                        return 0;
+                    }
+                    break;
+                case 'o':
+                    if (strcmp(str, "no_subtype") == 0) {
+                        *flag = NPY_ITER_NO_SUBTYPE;
+                        return 0;
+                    }
+                    else if (strcmp(str, "no_broadcast") == 0) {
+                        *flag = NPY_ITER_NO_BROADCAST;
+                        return 0;
+                    }
+                    break;
+            }
+            break;
+        case 'o':
+            if (strcmp(str, "overlap_assume_elementwise") == 0) {
+                *flag = NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+                return 0;
+            }
+            break;
+        case 'r':
+            if (length > 4) switch (str[4]) {
+                case 'o':
+                    if (strcmp(str, "readonly") == 0) {
+                        *flag = NPY_ITER_READONLY;
+                        return 0;
+                    }
+                    break;
+                case 'w':
+                    if (strcmp(str, "readwrite") == 0) {
+                        *flag = NPY_ITER_READWRITE;
+                        return 0;
+                    }
+                    break;
+            }
+            break;
+        case 'u':
+            switch (str[1]) {
+                case 'p':
+                    if (strcmp(str, "updateifcopy") == 0) {
+                        *flag = NPY_ITER_UPDATEIFCOPY;
+                        return 0;
+                    }
+                    break;
+            }
+            break;
+        case 'v':
+            if (strcmp(str, "virtual") == 0) {
+                *flag = NPY_ITER_VIRTUAL;
+                return 0;
+            }
+            break;
+        case 'w':
+            if (length > 5) switch (str[5]) {
+                case 'o':
+                    if (strcmp(str, "writeonly") == 0) {
+                        *flag = NPY_ITER_WRITEONLY;
+                        return 0;
+                    }
+                    break;
+                case 'm':
+                    if (strcmp(str, "writemasked") == 0) {
+                        *flag = NPY_ITER_WRITEMASKED;
+                        return 0;
+                    }
+                    break;
+            }
+            break;
+    }
+    return -1;
 }
 
 static int
