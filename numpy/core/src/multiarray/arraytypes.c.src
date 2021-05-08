@@ -1007,48 +1007,14 @@ VOID_setitem(PyObject *op, void *input, void *vap)
 static PyObject *
 DATETIME_getitem(void *ip, void *vap)
 {
-    PyArrayObject *ap = vap;
-    npy_datetime dt;
-    PyArray_DatetimeMetaData *meta = NULL;
-
-    /* Get the datetime units metadata */
-    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
-    if (meta == NULL) {
-        return NULL;
-    }
-
-    if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        dt = *((npy_datetime *)ip);
-    }
-    else {
-        PyArray_DESCR(ap)->f->copyswap(&dt, ip, PyArray_ISBYTESWAPPED(ap), ap);
-    }
-
-    return convert_datetime_to_pyobject(dt, meta);
+    return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)vap), NULL);
 }
 
 
 static PyObject *
 TIMEDELTA_getitem(void *ip, void *vap)
 {
-    PyArrayObject *ap = vap;
-    npy_timedelta td;
-    PyArray_DatetimeMetaData *meta = NULL;
-
-    /* Get the datetime units metadata */
-    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(ap));
-    if (meta == NULL) {
-        return NULL;
-    }
-
-    if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
-        td = *((npy_timedelta *)ip);
-    }
-    else {
-        PyArray_DESCR(ap)->f->copyswap(&td, ip, PyArray_ISBYTESWAPPED(ap), ap);
-    }
-
-    return convert_timedelta_to_pyobject(td, meta);
+    return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)vap), NULL);
 }
 
 static int
