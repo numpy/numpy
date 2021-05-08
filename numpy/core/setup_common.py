@@ -127,20 +127,12 @@ OPTIONAL_HEADERS = [
 # optional gcc compiler builtins and their call arguments and optional a
 # required header and definition name (HAVE_ prepended)
 # call arguments are required as the compiler will do strict signature checking
-OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
-                       ("__builtin_isinf", '5.'),
-                       ("__builtin_isfinite", '5.'),
-                       ("__builtin_bswap32", '5u'),
-                       ("__builtin_bswap64", '5u'),
-                       ("__builtin_expect", '5, 0'),
-                       ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       # MMX only needed for icc, but some clangs don't have it
+OPTIONAL_INTRINSICS = [# MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
                        ("_mm_prefetch", '(float*)0, _MM_HINT_NTA',
                         "xmmintrin.h"),  # SSE
                        ("_mm_load_pd", '(double*)0', "emmintrin.h"),  # SSE2
-                       ("__builtin_prefetch", "(float*)0, 0, 3"),
                        # check that the linker can handle avx
                        ("__asm__ volatile", '"vpand %xmm1, %xmm2, %xmm3"',
                         "stdio.h", "LINK_AVX"),
@@ -154,6 +146,16 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX512_SKX"),
                        ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
+
+if sys.platform != 'zos':
+    OPTIONAL_INTRINSICS.append(("__builtin_expect", '5, 0'))
+    OPTIONAL_INTRINSICS.append(("__builtin_prefetch", "(float*)0, 0, 3"))
+    OPTIONAL_INTRINSICS.append(("__builtin_isnan", '5.'))
+    OPTIONAL_INTRINSICS.append(("__builtin_isfinite", '5.'))
+    OPTIONAL_INTRINSICS.append(("__builtin_isinf", '5.'))
+    OPTIONAL_INTRINSICS.append(("__builtin_bswap32", '5u'))
+    OPTIONAL_INTRINSICS.append(("__builtin_bswap64", '5u'))
+    OPTIONAL_INTRINSICS.append(("__builtin_mul_overflow", '5, 5, (int*)5'))
 
 # function attributes
 # tested via "int %s %s(void *);" % (attribute, name)

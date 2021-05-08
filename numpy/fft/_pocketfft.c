@@ -22,8 +22,15 @@
 #include "npy_config.h"
 #define restrict NPY_RESTRICT
 
+#ifdef __MVS__
+#define MAX(x,y) \
+    (((x) > (y)) ? (x) : (y))
+#define RALLOC(type,num) \
+  ((type *)malloc(MAX((1),(num)*sizeof(type))))
+#else
 #define RALLOC(type,num) \
   ((type *)malloc((num)*sizeof(type)))
+#endif
 #define DEALLOC(ptr) \
   do { free(ptr); (ptr)=NULL; } while(0)
 

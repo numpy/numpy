@@ -25,6 +25,13 @@
 
 static const char* umath_linalg_version_string = "0.1.5";
 
+#ifdef __MVS__
+#define MAX(x,y) (((x) > (y)) ? (x) : (y))
+#define CKMALLOC(size) (malloc(MAX((1),size)))
+#else
+#define CKMALLOC(size) (malloc(size))
+#endif
+
 /*
  ****************************************************************************
  *                        Debugging support                                 *
@@ -1106,7 +1113,7 @@ static void
     safe_m = m;
     matrix_size = safe_m * safe_m * sizeof(@typ@);
     pivot_size = safe_m * sizeof(fortran_int);
-    tmp_buff = (npy_uint8 *)malloc(matrix_size + pivot_size);
+    tmp_buff = (npy_uint8 *)CKMALLOC(matrix_size + pivot_size);
 
     if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
@@ -1149,7 +1156,7 @@ static void
     safe_m = m;
     matrix_size = safe_m * safe_m * sizeof(@typ@);
     pivot_size = safe_m * sizeof(fortran_int);
-    tmp_buff = (npy_uint8 *)malloc(matrix_size + pivot_size);
+    tmp_buff = (npy_uint8 *)CKMALLOC(matrix_size + pivot_size);
 
     if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
@@ -2949,7 +2956,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
     fortran_int lda = fortran_int_max(1, m);
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
-    mem_buff = malloc(a_size + b_size + s_size);
+    mem_buff = CKMALLOC(a_size + b_size + s_size);
 
     if (!mem_buff)
         goto error;

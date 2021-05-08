@@ -401,10 +401,10 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
  * #kind = atan2,hypot,pow,copysign#
  * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
  */
+#ifndef HAVE_@KIND@@C@
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-#ifndef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) npy_@kind@((double)x, (double) y);
@@ -416,10 +416,10 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
  * #kind = fmod#
  * #KIND = FMOD#
  */
+#ifndef HAVE_MODF@C@
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-#ifndef HAVE_MODF@C@
 NPY_INPLACE @type@
 npy_@kind@@c@(@type@ x, @type@ y)
 {
@@ -438,10 +438,10 @@ npy_@kind@@c@(@type@ x, @type@ y)
 #endif
 /**end repeat1**/
 
+#ifndef HAVE_MODF@C@
 #ifdef modf@c@
 #undef modf@c@
 #endif
-#ifndef HAVE_MODF@C@
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;

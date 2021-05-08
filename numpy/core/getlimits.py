@@ -4,6 +4,7 @@
 __all__ = ['finfo', 'iinfo']
 
 import warnings
+import sys
 
 from .machar import MachAr
 from .overrides import set_module
@@ -174,10 +175,12 @@ def _register_known_types():
                              huge=huge_f128,
                              tiny=tiny_f128)
     # IEEE 754 128-bit binary float
-    _register_type(float128_ma,
-        b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
-    _register_type(float128_ma,
-        b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
+    if sys.platform == 'zos':
+        _register_type(float128_ma,
+            b'\x00\x00\x00\x00\x00\x00\x00\xa0\x99\x99\x99\x99\x99\x99\xfb\xbf')
+    else:
+        _register_type(float128_ma,
+            b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
     _float_ma[128] = float128_ma
 
     # Known parameters for float80 (Intel 80-bit extended precision)
