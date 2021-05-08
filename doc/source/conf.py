@@ -84,6 +84,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.imgmath',
+    'breathe'
 ]
 
 imgmath_image_format = 'svg'
@@ -466,3 +467,11 @@ class NumPyLexer(CLexer):
             inherit,
         ],
     }
+
+
+# -----------------------------------------------------------------------------
+# Breathe & Doxygen
+# -----------------------------------------------------------------------------
+breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_default_project = "numpy"
+

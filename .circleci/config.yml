@@ -8,7 +8,7 @@ jobs:
     docker:
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: circleci/python:3.8.4
+      - image: cimg/base:2021.05
 
     working_directory: ~/repo
 
@@ -23,7 +23,8 @@ jobs:
           name: create virtual environment, install dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
+            sudo apt-get install -y python3.8 python3.8-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
+                                    texlive-latex-extra texlive-formats-extra latexmk texlive-xetex doxygen
             python3.8 -m venv venv
             . venv/bin/activate
 
@@ -58,7 +59,7 @@ jobs:
             . venv/bin/activate
             cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-n" make -e html || echo "ignoring errors for now, see gh-13114"
+            SPHINXOPTS="-j4 -n" make -e html || echo "ignoring errors for now, see gh-13114"
 
       - run:
           name: build devdocs
@@ -67,14 +68,14 @@ jobs:
             . venv/bin/activate
             cd doc
             make clean
-            SPHINXOPTS=-q make -e html
+            SPHINXOPTS="-j4 -q" make -e html
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS=-q make -e html
+            SPHINXOPTS="-j4 -q" make -e html
 
       - store_artifacts:
           path: doc/build/html/
