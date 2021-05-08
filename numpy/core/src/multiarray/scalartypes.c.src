@@ -251,9 +251,17 @@ genint_type_str(PyObject *self)
         return NULL;
     }
 
-    item_str = PyObject_Str(item);
+    item_str = PyUString_FromFormat("%s(%S)", Py_TYPE(self)->tp_name, item);
+
     Py_DECREF(item);
     return item_str;
+}
+
+static PyObject *
+genbool_type_str(PyObject *self)
+{
+    return PyUnicode_FromString(
+            ((PyBoolScalarObject *)self)->obval ? "numpy.True_" : "numpy.False_");
 }
 
 /*
@@ -3997,7 +4005,7 @@ initialize_numeric_types(void)
 
 
     /**begin repeat
-     * #Type = Bool, Byte, UByte, Short, UShort, Int, UInt, Long,
+     * #Type = Byte, UByte, Short, UShort, Int, UInt, Long,
      *         ULong, LongLong, ULongLong#
      */
 
@@ -4007,6 +4015,8 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
+    PyBoolArrType_Type.tp_str = genbool_type_str;
+    PyBoolArrType_Type.tp_repr = genbool_type_str;
 
 
     /**begin repeat
