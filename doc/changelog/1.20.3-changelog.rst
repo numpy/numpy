@@ -16,7 +16,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 13 pull requests were merged for this release.
+A total of 15 pull requests were merged for this release.
 
 * `#18763 <https://github.com/numpy/numpy/pull/18763>`__: BUG: Correct ``datetime64`` missing type overload for ``datetime.date``...
 * `#18764 <https://github.com/numpy/numpy/pull/18764>`__: MAINT: Remove ``__all__`` in favor of explicit re-exports
@@ -31,3 +31,5 @@ A total of 13 pull requests were merged for this release.
 * `#18924 <https://github.com/numpy/numpy/pull/18924>`__: MAINT, CI: treats _SIMD module build warnings as errors through...
 * `#18925 <https://github.com/numpy/numpy/pull/18925>`__: BUG: for MINGW, threads.h existence test requires GLIBC > 2.12
 * `#18941 <https://github.com/numpy/numpy/pull/18941>`__: BUG: Make changelog recognize gh- as a PR number prefix.
+* `#18948 <https://github.com/numpy/numpy/pull/18948>`__: REL, DOC: Prepare for the NumPy 1.20.3 release.
+* `#18953 <https://github.com/numpy/numpy/pull/18953>`__: BUG: Fix failing mypy test in 1.20.x.
