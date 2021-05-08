@@ -283,7 +283,11 @@ class TestDivision:
             with pytest.raises(FloatingPointError):
                 a // 0
             with pytest.raises(FloatingPointError):
-                a //= 0
+                b = a.copy()
+                b //= 0
+            if iinfo.min < 0:  # Verify overflow case
+                with pytest.raises(FloatingPointError):
+                    a // -1
 
             np.array([], dtype=input_dtype) // 0
 
