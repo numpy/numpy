@@ -6,7 +6,7 @@ import pytest
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
     vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
-    put_along_axis
+    put_along_axis, array_of_lists_to_array, array_to_array_of_lists
     )
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
@@ -709,6 +709,57 @@ class TestMayShareMemory:
         assert_(not np.may_share_memory(d[::2], d2))
         assert_(not np.may_share_memory(d[1:, ::-1], d2))
         assert_(np.may_share_memory(d2[1:, ::-1], d2))
+
+class TestArrayOfListsToArray(object):
+    def test_basic(self):
+        a = np.empty(2, dtype=object)
+        a[0] = list([1, 2])
+        a[1] = list([3, 4])
+        b = np.array([[1, 2], [3, 4]])
+        c = array_of_lists_to_array(a)
+
+        assert_equal(b, c)
+
+    def test_incompatible_lengths(self):
+        a = np.empty(2, dtype=object)
+        a[0] = list([1, 2, 3])
+        a[1] = list([4, 5])
+
+        with assert_raises(ValueError):
+            b = array_of_lists_to_array(a)
+
+    def test_not_list(self):
+        a = np.array([[1, 2], [3, 4]])
+        
+        with assert_raises(TypeError):
+            b = array_of_lists_to_array(a)
+
+
+class TestArrayToArrayOfLists(object):
+    def test_basic(self):
+        a = np.array([[[1, 2], [3, 4]]])
+        b = np.empty((1, 2), dtype=object)
+        b[0][0] = list([1, 2])
+        b[0][1] = list([3, 4])
+        c = array_to_array_of_lists(a, -2)
+
+        assert_equal(b, c)
+
+    def test_default(self):
+        a = np.array([[[1, 2], [3, 4]]])
+        b = np.empty(1, dtype=object)
+        b[0] = list([[1, 2], [3, 4]])
+        c = array_to_array_of_lists(a)
+
+        assert_equal(b, c)
+
+    def test_axis_error(self):
+        a = np.array([[1, 2], [3, 4]])
+
+        with assert_raises(ValueError):
+            array_to_array_of_lists(a, -1)
+        with assert_raises(ValueError):
+            array_to_array_of_lists(a, 1)
 
 
 # Utility

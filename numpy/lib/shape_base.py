@@ -2,7 +2,7 @@ import functools
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, zeros, outer, concatenate, array, asanyarray
+    asarray, zeros, outer, concatenate, array, asanyarray, empty
     )
 from numpy.core.fromnumeric import reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
@@ -18,7 +18,7 @@ __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
     'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
     'apply_along_axis', 'kron', 'tile', 'get_array_wrap', 'take_along_axis',
-    'put_along_axis'
+    'put_along_axis', 'array_of_lists_to_array', 'array_to_array_of_lists'
     ]
 
 
@@ -1258,3 +1258,103 @@ def tile(A, reps):
                 c = c.reshape(-1, n).repeat(nrep, 0)
             n //= dim_in
     return c.reshape(shape_out)
+
+def _safe_list_conversion(l):
+    if not isinstance(l, list):
+        raise TypeError('the values of the array must be lists')
+    return array(l)
+
+def _array_of_lists_to_array_dispatcher(a):
+    return (a)
+
+@array_function_dispatch(_array_of_lists_to_array_dispatcher)
+def array_of_lists_to_array(a):
+    """
+    Converts an array of lists into an array with those lists converted into arrays.
+
+    Parameters
+    ----------
+    a : array_like
+        The input array of lists.
+
+    Returns
+    -------
+    c : ndarray
+        The converted output array.
+
+    Raises
+    ------
+    TypeError
+        If the input array's values aren't lists.
+    ValueError
+        If the lists in the array aren't of the same length.
+
+    See Also
+    --------
+    array_to_array_of_lists : The inverse of this function.
+
+    Examples
+    --------
+    >>> a = np.char.split(np.array([['1 2'], ['3 4']]))
+    >>> a
+    >>> array([[list(['1', '2'])],
+               [list(['3', '4'])]], dtype=object)
+    >>> np.array_of_lists_to_array(a)
+    >>> array([[['1' '2']],
+               [['3' '4']]], dtype=np.str_)
+    """
+    
+    axis = -1
+    return apply_along_axis(lambda r: _safe_list_conversion(r[0]), axis, a[..., None])
+
+def _array_to_array_of_lists_dispatcher(a, axis = None):
+    return (a, axis)
+
+@array_function_dispatch(_array_to_array_of_lists_dispatcher)
+def array_to_array_of_lists(a, axis = 0):
+    """
+    Converts an array into an array of lists.
+    The axes up to the given axis are preserved.
+    The given axis contains lists containing the remaining axes of the array.
+    The given axis can't be the last axis of the given array,
+    as in this case no axes are left to be converted into lists.
+
+    Parameters
+    ----------
+    a : array_like
+        The input array.
+    axis : int, optional, default: 0
+        The axis to contain the lists.
+
+    Returns
+    -------
+    c : ndarray
+        The converted output array.
+
+    Raises
+    ------
+    ValueError
+        If the given axis is the last axis of the given array.
+
+    See Also
+    --------
+    array_of_lists_to_array : The inverse of this function.
+
+    Examples
+    --------
+    >>> a = np.array([[['1', '2'],
+                       ['3', '4']]], dtype=np.str_)
+    >>> np.array_to_array_of_lists(a, -2)
+    >>> array([[list(['1', '2'])],
+               [list(['3', '4'])]], dtype=object)
+    """
+
+    nd = a.ndim
+    axis = normalize_axis_index(axis, nd)
+    if axis == a.ndim - 1:
+        raise ValueError('the given axis can not be the last axis of the given array')
+    result = empty(a.shape[:axis + 1], dtype=object)
+    colon = (slice(None),)
+    dim_slice = colon * (axis + 1)
+    result[dim_slice] = a[dim_slice].tolist()
+    return result
