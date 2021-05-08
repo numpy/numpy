@@ -1363,8 +1363,9 @@ def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
     if a.size == 0:
-        return np.nanmean(a, axis, out=out, keepdims=keepdims)
-
+        #to return a nan for all quantiles
+        ans = [np.nanmean(a, axis, out=out, keepdims=keepdims) for _ in range(q.size)]
+        return np.array(ans)
     r, k = function_base._ureduce(
         a, func=_nanquantile_ureduce_func, q=q, axis=axis, out=out,
         overwrite_input=overwrite_input, interpolation=interpolation
