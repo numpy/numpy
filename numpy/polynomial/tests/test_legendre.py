@@ -479,6 +479,75 @@ class TestFitting:
         assert_almost_equal(leg.legval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
 
+    def test_legfit2d(self):
+        def f(x, y):
+            return x*(x - 1)*(y - 2)
+
+        def f2(x, y):
+            return x**4 + y**2 + 1
+
+        # Test exceptions
+        assert_raises(ValueError, leg.legfitnd, ([1], [1]), [1], -1)
+        assert_raises(TypeError, leg.legfitnd, ([[[1]]], [[1]]), [1], 0)
+        assert_raises(TypeError, leg.legfitnd, ([[1]], [[[1]]]), [1], 0)
+        assert_raises(TypeError, leg.legfitnd, ([], []), [1], 0)
+        assert_raises(TypeError, leg.legfitnd, ([1], [1]), [[[1]]], 0)
+        assert_raises(TypeError, leg.legfitnd, ([1, 2], [1, 2]), [1], 0)
+        assert_raises(TypeError, leg.legfitnd, ([1], [1]), [1, 2], 0)
+        assert_raises(TypeError, leg.legfitnd, ([1], [1]), [1], 0, w=[[[1]]])
+        assert_raises(TypeError, leg.legfitnd, ([1], [1]), [1], 0, w=[1, 1])
+        assert_raises(ValueError, leg.legfitnd, ([1], [1]), [1], [-1, -1])
+        assert_raises(ValueError, leg.legfitnd, ([1], [1]), [1], [2, -1, 6])
+        assert_raises(TypeError, leg.legfitnd, ([1], [1]), [1], [])
+
+        # Test fit
+        x = np.linspace(0, 2)
+        y = np.linspace(0, 2)
+        x, y = np.meshgrid(x, y)
+        z = f(x, y)
+        #
+        coef3 = leg.legfitnd((x, y), z, 3)
+        assert_equal(coef3.shape[0], 4)
+        assert_equal(coef3.shape[1], 4)
+        assert_almost_equal(leg.legvalnd((x, y), coef3), z)
+        coef3_2 = leg.legfitnd((x, y), z, [2, 3])
+        assert_equal(coef3_2.shape[0], 3)
+        assert_equal(coef3_2.shape[1], 4)
+        assert_almost_equal(leg.legvalnd((x, y), coef3_2), z)
+        #
+        coef4 = leg.legfitnd((x, y), z, 4)
+        assert_equal(coef4.shape[0], 5)
+        assert_equal(coef4.shape[1], 5)
+        assert_almost_equal(leg.legvalnd((x, y), coef4), z)
+        coef4 = leg.legfitnd((x, y), z, [2, 4])
+        assert_equal(coef4.shape[0], 3)
+        assert_equal(coef4.shape[1], 5)
+        assert_almost_equal(leg.legvalnd((x, y), coef4), z)
+        # test weighting
+        w = np.zeros_like(x)
+        zw = z.copy()
+        w[1::2] = 1
+        z[0::2] = 0
+        wcoef3 = leg.legfitnd((x, y), zw, 3, w=w)
+        assert_almost_equal(wcoef3, coef3)
+        wcoef3 = leg.legfitnd((x, y), zw, [2, 3], w=w)
+        assert_almost_equal(wcoef3, coef3_2)
+        # test scaling with complex values x points whose square
+        # is zero when summed.
+        x = [1, 1j, -1, -1j]
+        y = [1, 1j, -1, -1j]
+        assert_almost_equal(leg.legfitnd((x, y), x, 1, full=True)[0], [[0, 0.5], [0.5, 0]])
+        assert_almost_equal(leg.legfitnd((x, y), x, [1, 0], full=True)[0], [[0], [1]])
+        # test fitting only even Legendre polynomials
+        x = np.linspace(-1, 1)
+        y = np.linspace(-1, 1)
+        x, y = np.meshgrid(x, y)
+        z = f2(x, y)
+        coef1 = leg.legfitnd((x, y), z, 4)
+        assert_almost_equal(leg.legvalnd((x, y), coef1), z)
+        # coef2 = leg.legfitnd((x, y), z, [4, 2])
+        # assert_almost_equal(leg.legvalnd((x, y), coef2), z)
+        # assert_almost_equal(coef1[:, :3], coef2)
 
 class TestCompanion:
 

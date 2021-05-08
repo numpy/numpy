@@ -40,6 +40,7 @@ Arithmetic
    hermval
    hermval2d
    hermval3d
+   hermvalnd
    hermgrid2d
    hermgrid3d
 
@@ -65,6 +66,7 @@ Misc Functions
    hermweight
    hermcompanion
    hermfit
+   hermfitnd
    hermtrim
    hermline
    herm2poly
@@ -86,8 +88,8 @@ __all__ = [
     'hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline', 'hermadd',
     'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow', 'hermval',
     'hermder', 'hermint', 'herm2poly', 'poly2herm', 'hermfromroots',
-    'hermvander', 'hermfit', 'hermtrim', 'hermroots', 'Hermite',
-    'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d', 'hermvander2d',
+    'hermvander', 'hermfit', 'hermfitnd', 'hermtrim', 'hermroots', 'Hermite',
+    'hermval2d', 'hermval3d', 'hermvalnd', 'hermgrid2d', 'hermgrid3d', 'hermvander2d',
     'hermvander3d', 'hermcompanion', 'hermgauss', 'hermweight']
 
 hermtrim = pu.trimcoef
@@ -1104,6 +1106,57 @@ def hermgrid3d(x, y, z, c):
     return pu._gridnd(hermval, c, x, y, z)
 
 
+def hermvalnd(coords, c):
+    """
+    Evaluate a N-D polynomial at points coords.
+
+    This function returns the values:
+
+    .. math:: p(*coords) = \\sum_{i,j,k,...} c_{i,j,k,...} * x^i * y^j ... * z^k
+
+    The parameters are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars and
+    they must have the same shape after conversion. In either case, any coordinate
+    or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    coords[0].shape.
+
+    Parameters
+    ----------
+    coords : list of array_like, compatible object
+        The N dimensional series is evaluated at the points
+        `coords`, where each dimension must have the same shape.  If
+        any dimension is a list or tuple, it is first converted
+        to an ndarray, otherwise it is left unchanged and if it isn't an
+        ndarray it is  treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        sets of corresponding values from coords.
+
+    See Also
+    --------
+    polyval, polyval2d, polyval3d, polygrid2d, polygrid3d
+
+    Notes
+    -----
+
+    .. versionadded:: 1.20.0
+
+    """
+    return pu._valnd(hermval, c, *coords)
+
+
 def hermvander(x, deg):
     """Pseudo-Vandermonde matrix of given degree.
 
@@ -1401,6 +1454,135 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     """
     return pu._fit(hermvander, x, y, deg, rcond, full, w)
+
+def hermfitnd(coords, data, deg, rcond=None, full=False, w=None, max_degree=None):
+    """
+    N-D Least squares fit of Hermite series to data.
+
+    Return the coefficients of a Hermite series of degree `deg` that is the
+    least squares fit to the data values `z` given at points `(x, y)`. 
+
+    .. math::  p(x, y) = c_{00} + c_{10} * H_1(x) H_0(y) + ... + c_{nm} * H_n(x) H_m(y),
+
+    where `n` and `m` are `deg`.
+
+    Parameters
+    ----------
+    coords : list of array_like
+        x, y, z, ... coordinates, this defines the number of dimensions N
+    data : array_like
+        data values, of the same size and shape as each coordinate
+    deg : {int, n-tuple, n dimensional boolean array}, optional
+        maximum degree of the polynomial fit.
+        If given as an integer, it is used for each dimension.
+        If given as a tuple, each element gives the degree of that dimension.
+        If given as an array, each element specifies whether that coefficient should be
+        fitted or not, where the layout of the array is the same as the output coefficient matrix.
+        The default value is 1.
+    rcond : float, optional
+        Relative condition number of the fit. Singular values smaller than
+        this relative to the largest singular value will be ignored. The
+        default value is len(x)*eps, where eps is the relative precision of
+        the float type, about 2e-16 in most cases.
+    full : bool, optional
+        Switch determining nature of return value. When it is False (the
+        default) just the coefficients are returned, when True diagnostic
+        information from the singular value decomposition is also returned.
+    w : array_like, shape (`M`,), optional
+        Weights. If not None, the contribution of each point
+        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i]*y[i]``
+        all have the same variance.  The default value is None.
+    max_degree : int, optional
+        If given the maximum combined degree of the coefficients is limited
+        to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
+        The default is None.
+
+    Returns
+    -------
+    coef : ndarray, shape (`deg` + 1, `deg` + 1)
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
+
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
+
+    Warns
+    -----
+    RankWarning
+        The rank of the coefficient matrix in the least-squares fit is
+        deficient. The warning is only raised if `full` = False.  The
+        warnings can be turned off by
+
+        >>> import warnings
+        >>> warnings.simplefilter('ignore', np.RankWarning)
+
+    See Also
+    --------
+    chebfit, legfit, lagfit, polyfit, hermefit
+    hermval : Evaluates a Hermite series.
+    hermvander : Vandermonde matrix of Hermite series.
+    hermweight : Hermite weight function
+    linalg.lstsq : Computes a least-squares fit from the matrix.
+    scipy.interpolate.UnivariateSpline : Computes spline fits.
+
+    Notes
+    -----
+    The solution is the coefficients of the Hermite series `p` that
+    minimizes the sum of the weighted squared errors
+
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+
+    where the :math:`w_j` are the weights. This problem is solved by
+    setting up the (typically) overdetermined matrix equation
+
+    .. math:: V(x) * c = w * y,
+
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, `y` are the
+    observed values.  This equation is then solved using the singular value
+    decomposition of `V`.
+
+    If some of the singular values of `V` are so small that they are
+    neglected, then a `RankWarning` will be issued. This means that the
+    coefficient values may be poorly determined. Using a lower order fit
+    will usually get rid of the warning.  The `rcond` parameter can also be
+    set to a value smaller than its default, but the resulting fit may be
+    spurious and have large contributions from roundoff error.
+
+    Fits using Hermite series are probably most useful when the data can be
+    approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Hermite
+    weight. In that case the weight ``sqrt(w(x[i])`` should be used
+    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
+    available as `hermweight`.
+
+    References
+    ----------
+    .. [1] Wikipedia, "Curve fitting",
+           https://en.wikipedia.org/wiki/Curve_fitting
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermfit2d, hermval2d
+    >>> x = np.linspace(-10, 10)
+    >>> y = np.linspace(-10, 10)
+    >>> err = np.random.randn(len(x))/10
+    >>> z = hermval2d(x, y, [[1, 2], [1, 2]]) + err
+    >>> hermfit2d(x, y, z, 2)
+    array([[1.0218, 1.9986], [1.0218, 2.9999]]) # may vary
+
+    """
+    return pu._fitnd([hermvander] * len(coords), coords, data, deg, rcond, full, w, max_degree)
+
 
 
 def hermcompanion(c):

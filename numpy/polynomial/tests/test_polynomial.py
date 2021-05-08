@@ -582,6 +582,94 @@ class TestMisc:
         assert_almost_equal(poly.polyval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
 
+    def test_polyfitnd(self):
+        def f(x, y):
+            # x**2 y - x**2 - 2 x y + 2 x
+            return x * (x - 1) * (y - 2)
+
+        def f2(x, y):
+            return x**4 + y**2 + 1
+
+        # Test exceptions
+        assert_raises(ValueError, poly.polyfitnd, ([1], [1]), [1], -1)
+        assert_raises(TypeError, poly.polyfitnd, ([[[1]]], [[1]]), [1], 0)
+        assert_raises(TypeError, poly.polyfitnd, ([[[1]]], [[[1]]]), [1], 0)
+        assert_raises(TypeError, poly.polyfitnd, ([], []), [1], 0)
+        assert_raises(TypeError, poly.polyfitnd, ([1], [1]), [[[1]]], 0)
+        assert_raises(TypeError, poly.polyfitnd, ([1, 2], [1, 2]), [1], 0)
+        assert_raises(TypeError, poly.polyfitnd, ([1], [1]), [1, 2], 0)
+        assert_raises(TypeError, poly.polyfitnd, ([1], [1]), [1], 0, w=[[[1]]])
+        assert_raises(TypeError, poly.polyfitnd, ([1], [1]), [1], 0, w=[1, 1])
+        assert_raises(ValueError, poly.polyfitnd, ([1], [1]), [1], [-1, -1])
+        assert_raises(ValueError, poly.polyfitnd, ([1], [1]), [1], [2, -1, 6])
+        assert_raises(TypeError, poly.polyfitnd, ([1], [1]), [1], [])
+
+        # Test fit
+        x = np.linspace(0, 2)
+        y = np.linspace(0, 2)
+        x, y = np.meshgrid(x, y)
+        z = f(x, y)
+        #
+        coef3 = poly.polyfitnd((x, y), z, 3)
+        assert_equal(coef3.shape[0], 4)
+        assert_equal(coef3.shape[1], 4)
+        assert_almost_equal(poly.polyvalnd((x, y), coef3), z)
+        #
+        coef4 = poly.polyfitnd((x, y), z, 4)
+        assert_equal(coef4.shape[0], 5)
+        assert_equal(coef4.shape[1], 5)
+        assert_almost_equal(poly.polyvalnd((x, y), coef4), z)
+        # test max degree
+        coef3_max = poly.polyfitnd((x, y), z, 3, max_degree=3)
+        assert_equal(coef3_max.shape[0], 4)
+        assert_equal(coef3_max.shape[1], 4)
+        assert_equal(coef3_max[1, 3], 0)
+        assert_equal(coef3_max[2, 2], 0)
+        assert_equal(coef3_max[2, 3], 0)
+        assert_equal(coef3_max[3, 1], 0)
+        assert_equal(coef3_max[3, 2], 0)
+        assert_equal(coef3_max[3, 3], 0)
+        assert_almost_equal(poly.polyvalnd((x, y), coef3_max), z)
+        assert_almost_equal(coef3, coef3_max)
+        # test degrees for each dimension
+        coef3_dim = poly.polyfitnd((x, y), z, [2, 1])
+        assert_equal(coef3_dim.shape[0], 3)
+        assert_equal(coef3_dim.shape[1], 2)
+        assert_almost_equal(poly.polyvalnd((x, y), coef3_dim), z)
+        assert_almost_equal(coef3[:3, :2], coef3_dim)
+        # test specifying dimensions directly
+        deg = np.zeros((4, 4), dtype=int)
+        deg[1, 0] = deg[1, 1] = deg[2, 0] = deg[2, 1] = 1
+        coef3_deg = poly.polyfitnd((x, y), z, deg)
+        assert_equal(coef3_deg.shape[0], 4)
+        assert_equal(coef3_deg.shape[1], 4)
+        for i in range(4):
+            for j in range(4):
+                if deg[i, j] == 0:
+                    assert_equal(coef3_deg[i, j], 0)
+        assert_almost_equal(poly.polyvalnd((x, y), coef3_deg), z)
+        assert_almost_equal(coef3, coef3_deg)
+        # test weighting
+        w = np.zeros_like(x)
+        zw = z.copy()
+        w[1::2] = 1
+        zw[0::2] = 0
+        wcoef3 = poly.polyfitnd((x, y), zw, 3, w=w)
+        assert_almost_equal(wcoef3, coef3)
+        # test scaling with complex values x points whose square
+        # is zero when summed.
+        x = [1, 1j, -1, -1j]
+        y = [1, 1j, -1, -1j]
+        assert_almost_equal(poly.polyfitnd((x, y), x, 1, full=True)[0], [[0, 0.5], [0.5, 0]])
+        assert_almost_equal(poly.polyfitnd((x, y), x, [0, 1], full=True)[0], [[0, 1]])
+        # test fitting only even Polyendre polynomials
+        x = np.linspace(-1, 1)
+        y = np.linspace(-1, 1)
+        x, y = np.meshgrid(x, y)
+        z = f2(x, y)
+        coef1 = poly.polyfitnd((x, y), z, 4)
+        assert_almost_equal(poly.polyvalnd((x, y), coef1), z)
+
     def test_polytrim(self):
         coef = [2, -1, 1, 0]
 
