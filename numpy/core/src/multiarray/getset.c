@@ -384,7 +384,17 @@ array_data_set(PyArrayObject *self, PyObject *op)
     }
     if (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) {
         PyArray_XDECREF(self);
-        PyDataMem_FREE(PyArray_DATA(self));
+        size_t nbytes = PyArray_NBYTES(self);
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        if (nbytes == 0) {
+            PyArray_Descr *dtype = PyArray_DESCR(self);
+            nbytes = dtype->elsize ? dtype->elsize : 1;
+        }
+        PyDataMem_UserFREE(PyArray_DATA(self), nbytes,
+                           PyArray_HANDLER(self)->free);
     }
     if (PyArray_BASE(self)) {
         if ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) ||

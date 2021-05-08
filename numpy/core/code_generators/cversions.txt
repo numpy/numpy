@@ -56,3 +56,6 @@
 # DType related API additions.
 # A new field was added to the end of PyArrayObject_fields.
 0x0000000e = 17a0f366e55ec05e5c5c149123478452
+
+# Version 15 (NumPy 1.21) Configurable memory allocations
+0x0000000f = 4177738910303368a00be8b1ce9283d5

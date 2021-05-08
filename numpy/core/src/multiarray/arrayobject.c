@@ -492,7 +492,15 @@ array_dealloc(PyArrayObject *self)
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
             PyArray_XDECREF(self);
         }
-        npy_free_cache(fa->data, PyArray_NBYTES(self));
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        size_t nbytes = PyArray_NBYTES(self);
+        if (nbytes == 0) {
+            nbytes = fa->descr->elsize ? fa->descr->elsize : 1;
+        }
+        PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler->free);
     }
 
     /* must match allocation in PyArray_NewFromDescr */

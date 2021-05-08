@@ -140,9 +140,10 @@ npy_alloc_cache(npy_uintp sz)
 
 /* zero initialized data, sz is number of bytes to allocate */
 NPY_NO_EXPORT void *
-npy_alloc_cache_zero(npy_uintp sz)
+npy_alloc_cache_zero(size_t nmemb, size_t size)
 {
     void * p;
+    size_t sz = nmemb * size;
     NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
         p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
@@ -152,7 +153,7 @@ npy_alloc_cache_zero(npy_uintp sz)
         return p;
     }
     NPY_BEGIN_THREADS;
-    p = PyDataMem_NEW_ZEROED(sz, 1);
+    p = PyDataMem_NEW_ZEROED(nmemb, size);
     NPY_END_THREADS;
     return p;
 }
@@ -194,8 +195,8 @@ npy_free_cache_dim(void * p, npy_uintp sz)
 
 
 /* malloc/free/realloc hook */
-NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook;
-NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data;
+NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook = NULL;
+NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data = NULL;
 
 /*NUMPY_API
  * Sets the allocation event hook for numpy array data.
@@ -261,21 +262,21 @@ PyDataMem_NEW(size_t size)
  * Allocates zeroed memory for array data.
  */
 NPY_NO_EXPORT void *
-PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
+PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
 {
     void *result;
 
-    result = calloc(size, elsize);
+    result = calloc(nmemb, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
         if (_PyDataMem_eventhook != NULL) {
-            (*_PyDataMem_eventhook)(NULL, result, size * elsize,
+            (*_PyDataMem_eventhook)(NULL, result, nmemb * size,
                                     _PyDataMem_eventhook_user_data);
         }
         NPY_DISABLE_C_API
     }
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     return result;
 }
 
@@ -322,4 +323,162 @@ PyDataMem_RENEW(void *ptr, size_t size)
         NPY_DISABLE_C_API
     }
     return result;
+}
+
+/* Memory handler global default */
+PyDataMem_Handler default_allocator = {
+    "default_allocator",
+    npy_alloc_cache,      /* alloc */
+    npy_alloc_cache_zero, /* zeroed_alloc */
+    npy_free_cache,       /* free */
+    PyDataMem_RENEW       /* realloc */
+};
+
+PyDataMem_Handler *current_allocator = &default_allocator;
+
+int uo_index=0;   /* user_override index */
+
+/* Wrappers for user-assigned PyDataMem_Handlers */
+
+NPY_NO_EXPORT void *
+PyDataMem_UserNEW(size_t size, PyDataMem_AllocFunc *alloc)
+{
+    void *result;
+
+    if (alloc == npy_alloc_cache) {
+        // All the logic below is conditionally handled by npy_alloc_cache
+        return npy_alloc_cache(size);
+    }
+    assert(size != 0);
+    result = alloc(size);
+    if (_PyDataMem_eventhook != NULL) {
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(NULL, result, size,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        NPY_DISABLE_C_API
+    }
+    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    return result;
+}
+
+NPY_NO_EXPORT void *
+PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMem_ZeroedAllocFunc *zalloc)
+{
+    void *result;
+    if (zalloc == npy_alloc_cache_zero) {
+        // All the logic below is conditionally handled by npy_alloc_cache_zero
+        return npy_alloc_cache_zero(nmemb, size);
+    }
+
+    result = zalloc(nmemb, size);
+    if (_PyDataMem_eventhook != NULL) {
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(NULL, result, nmemb * size,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        NPY_DISABLE_C_API
+    }
+    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    return result;
+}
+
+NPY_NO_EXPORT void
+PyDataMem_UserFREE(void *ptr, size_t size, PyDataMem_FreeFunc *func)
+{
+    if (func == npy_free_cache) {
+        // All the logic below is conditionally handled by npy_free_cache
+        npy_free_cache(ptr, size);
+        return;
+    }
+    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    func(ptr, size);
+    if (_PyDataMem_eventhook != NULL) {
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(ptr, NULL, 0,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        NPY_DISABLE_C_API
+    }
+}
+
+NPY_NO_EXPORT void *
+PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMem_ReallocFunc *func)
+{
+    void *result;
+
+    assert(size != 0);
+    result = func(ptr, size);
+    if (result != ptr) {
+        PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    }
+    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (_PyDataMem_eventhook != NULL) {
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(ptr, result, size,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        NPY_DISABLE_C_API
+    }
+    return result;
+}
+
+/*NUMPY_API
+ * Sets a new allocation policy. If the input value is NULL, will reset
+ * the policy to the default. Returns the previous policy, NULL if the
+ * previous policy was the default. We wrap the user-provided functions
+ * so they will still call the python and numpy memory management callback
+ * hooks.
+ */
+NPY_NO_EXPORT const PyDataMem_Handler *
+PyDataMem_SetHandler(PyDataMem_Handler *handler)
+{
+    const PyDataMem_Handler *old = current_allocator;
+    if (handler) {
+        current_allocator = handler;
+    }
+    else {
+        current_allocator = &default_allocator;
+    }
+    return old;
+}
+
+/*NUMPY_API
+ * Return the const char name of the PyDataMem_Handler used by the
+ * PyArrayObject. If NULL, return the name of the current global policy that
+ * will be used to allocate data for the next PyArrayObject
+ */
+NPY_NO_EXPORT const char *
+PyDataMem_GetHandlerName(PyArrayObject *obj)
+{
+    if (obj == NULL) {
+        return current_allocator->name;
+    }
+    return PyArray_HANDLER(obj)->name;
+}
+
+NPY_NO_EXPORT PyObject *
+get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *arr=NULL;
+    if (!PyArg_ParseTuple(args, "|O:get_handler_name", &arr)) {
+        return NULL;
+    }
+    if (arr != NULL && !PyArray_Check(arr)) {
+         PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
+         return NULL;
+    }
+    const char * name = PyDataMem_GetHandlerName((PyArrayObject *)arr);
+    if (name == NULL) {
+        return NULL;
+    }
+    return PyUnicode_FromString(name);
 }
