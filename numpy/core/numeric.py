@@ -2436,21 +2436,33 @@ def array_equal(a1, a2, equal_nan=False):
     >>> np.array_equal(a, b, equal_nan=True)
     True
     """
+    import builtins
+
     try:
         a1, a2 = asarray(a1), asarray(a2)
     except Exception:
         return False
     if a1.shape != a2.shape:
         return False
-    if not equal_nan:
-        return bool(asarray(a1 == a2).all())
-    # Handling NaN values if equal_nan is True
-    a1nan, a2nan = isnan(a1), isnan(a2)
-    # NaN's occur at different locations
-    if not (a1nan == a2nan).all():
+
+    common_type_char = np.sctype2char(np.promote_types(a1.dtype, a2.dtype))
+    comp = asarray(a1 == a2)
+
+    if bool(comp.all()):
+        return True
+    elif not equal_nan:
         return False
-    # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
-    return bool(asarray(a1[~a1nan] == a2[~a1nan]).all())
+    elif common_type_char == "O":
+        # When isnan won't work, but there could be nan values
+        _isnan = np.vectorize(functools.partial(operator.is_, nan), otypes="?")
+    elif not builtins.any(t.startswith(common_type_char) for t in isnan.types):
+        # When there can't be nan values
+        return False
+    else:
+        # When we can use isnan
+        _isnan = isnan
+    # Check if all failed comparisons were due to nans
+    return all(comp | (_isnan(a1) & _isnan(a2)))
 
 
 def _array_equiv_dispatcher(a1, a2):
