@@ -129,8 +129,3 @@ _ArrayLikeInt = _ArrayLike[
     "dtype[integer[Any]]",
     int,
 ]
-
-if TYPE_CHECKING:
-    _ArrayND = ndarray[Any, dtype[_ScalarType]]
-else:
-    _ArrayND = Any

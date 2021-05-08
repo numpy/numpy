@@ -339,7 +339,6 @@ from ._array_like import (
     _NestedSequence,
     _RecursiveSequence,
     _SupportsArray,
-    _ArrayND,
     _ArrayLikeInt,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
@@ -353,6 +352,10 @@ from ._array_like import (
     _ArrayLikeVoid_co,
     _ArrayLikeStr_co,
     _ArrayLikeBytes_co,
+)
+from ._generic_alias import (
+    NDArray as NDArray,
+    _GenericAlias,
 )
 
 if __doc__ is not None:
