@@ -867,44 +867,44 @@ array_astype(PyArrayObject *self,
         Py_INCREF(self);
         return (PyObject *)self;
     }
-    else if (PyArray_CanCastArrayTo(self, dtype, casting)) {
-        PyArrayObject *ret;
-
-        /* This steals the reference to dtype, so no DECREF of dtype */
-        ret = (PyArrayObject *)PyArray_NewLikeArray(
-                                    self, order, dtype, subok);
-        if (ret == NULL) {
-            return NULL;
-        }
-        /* NumPy 1.20, 2020-10-01 */
-        if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) &&
-                DEPRECATE_FUTUREWARNING(
-                    "casting an array to a subarray dtype "
-                    "will not using broadcasting in the future, but cast each "
-                    "element to the new dtype and then append the dtype's shape "
-                    "to the new array. You can opt-in to the new behaviour, by "
-                    "additional field to the cast: "
-                    "`arr.astype(np.dtype([('f', dtype)]))['f']`.\n"
-                    "This may lead to a different result or to current failures "
-                    "succeeding.  "
-                    "(FutureWarning since NumPy 1.20)") < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-
-        if (PyArray_CopyInto(ret, self) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-
-        return (PyObject *)ret;
-    }
-    else {
+    if (!PyArray_CanCastArrayTo(self, dtype, casting)) {
+        PyErr_Clear();
         npy_set_invalid_cast_error(
                 PyArray_DESCR(self), dtype, casting, PyArray_NDIM(self) == 0);
         Py_DECREF(dtype);
         return NULL;
     }
+
+    PyArrayObject *ret;
+
+    /* This steals the reference to dtype, so no DECREF of dtype */
+    ret = (PyArrayObject *)PyArray_NewLikeArray(
+                                self, order, dtype, subok);
+    if (ret == NULL) {
+        return NULL;
+    }
+    /* NumPy 1.20, 2020-10-01 */
+    if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) &&
+            DEPRECATE_FUTUREWARNING(
+                "casting an array to a subarray dtype "
+                "will not use broadcasting in the future, but cast each "
+                "element to the new dtype and then append the dtype's shape "
+                "to the new array. You can opt-in to the new behaviour, by "
+                "additional field to the cast: "
+                "`arr.astype(np.dtype([('f', dtype)]))['f']`.\n"
+                "This may lead to a different result or to current failures "
+                "succeeding.  "
+                "(FutureWarning since NumPy 1.20)") < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    if (PyArray_CopyInto(ret, self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return (PyObject *)ret;
 }
 
 /* default sub-type implementation */

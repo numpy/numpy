@@ -17,7 +17,6 @@ from numpy.lib.stride_tricks import as_strided
 
 from numpy.testing import assert_array_equal
 from numpy.core._multiarray_umath import _get_castingimpl as get_castingimpl
-from numpy.core._multiarray_tests import uses_new_casts
 
 
 # Simple skips object, parametric and long double (unsupported by struct)
@@ -135,11 +134,7 @@ class TestChanges:
     def test_float_to_string(self, floating, string):
         assert np.can_cast(floating, string)
         # 100 is long enough to hold any formatted floating
-        if uses_new_casts():
-            assert np.can_cast(floating, f"{string}100")
-        else:
-            assert not np.can_cast(floating, f"{string}100")
-            assert np.can_cast(floating, f"{string}100", casting="same_kind")
+        assert np.can_cast(floating, f"{string}100")
 
     def test_to_void(self):
         # But in general, we do consider these safe:
@@ -147,17 +142,11 @@ class TestChanges:
         assert np.can_cast("S20", "V")
 
         # Do not consider it a safe cast if the void is too smaller:
-        if uses_new_casts():
-            assert not np.can_cast("d", "V1")
-            assert not np.can_cast("S20", "V1")
-            assert not np.can_cast("U1", "V1")
-            # Structured to unstructured is just like any other:
-            assert np.can_cast("d,i", "V", casting="same_kind")
-        else:
-            assert np.can_cast("d", "V1")
-            assert np.can_cast("S20", "V1")
-            assert np.can_cast("U1", "V1")
-            assert not np.can_cast("d,i", "V", casting="same_kind")
+        assert not np.can_cast("d", "V1")
+        assert not np.can_cast("S20", "V1")
+        assert not np.can_cast("U1", "V1")
+        # Structured to unstructured is just like any other:
+        assert np.can_cast("d,i", "V", casting="same_kind")
 
 
 class TestCasting:

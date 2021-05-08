@@ -197,7 +197,6 @@ stages:
     - script: python setup.py build -j 4 build_ext --inplace install
       displayName: 'Build NumPy without OpenBLAS and new casting'
       env:
-        NPY_USE_NEW_CASTINGIMPL: 1
         BLAS: None
         LAPACK: None
         ATLAS: None
