@@ -195,6 +195,11 @@ class _Config:
             opt = "-O3",
             werror = '-Werror'
         ),
+        clang_cl=dict(
+            native='-march=native',
+            opt="/O2",
+            werror='-Werror'
+        ),
         icc = dict(
             native = '-xHost',
             opt = '-O3',
@@ -307,35 +312,40 @@ class _Config:
             return {}
 
         on_x86 = self.cc_on_x86 or self.cc_on_x64
-        is_unix = self.cc_is_gcc or self.cc_is_clang
-
-        if on_x86 and is_unix: return dict(
-            SSE    = dict(flags="-msse"),
-            SSE2   = dict(flags="-msse2"),
-            SSE3   = dict(flags="-msse3"),
-            SSSE3  = dict(flags="-mssse3"),
-            SSE41  = dict(flags="-msse4.1"),
-            POPCNT = dict(flags="-mpopcnt"),
-            SSE42  = dict(flags="-msse4.2"),
-            AVX    = dict(flags="-mavx"),
-            F16C   = dict(flags="-mf16c"),
-            XOP    = dict(flags="-mxop"),
-            FMA4   = dict(flags="-mfma4"),
-            FMA3   = dict(flags="-mfma"),
-            AVX2   = dict(flags="-mavx2"),
-            AVX512F = dict(flags="-mavx512f"),
-            AVX512CD = dict(flags="-mavx512cd"),
-            AVX512_KNL = dict(flags="-mavx512er -mavx512pf"),
-            AVX512_KNM = dict(
-                flags="-mavx5124fmaps -mavx5124vnniw -mavx512vpopcntdq"
-            ),
-            AVX512_SKX = dict(flags="-mavx512vl -mavx512bw -mavx512dq"),
-            AVX512_CLX = dict(flags="-mavx512vnni"),
-            AVX512_CNL = dict(flags="-mavx512ifma -mavx512vbmi"),
-            AVX512_ICL = dict(
-                flags="-mavx512vbmi2 -mavx512bitalg -mavx512vpopcntdq"
-            )
+        is_gcc_or_clang = (
+                self.cc_is_gcc or
+                self.cc_is_clang or
+                self.cc_is_clang_cl
         )
+
+        if on_x86 and is_gcc_or_clang:
+            return dict(
+                SSE=dict(flags="-msse"),
+                SSE2=dict(flags="-msse2"),
+                SSE3=dict(flags="-msse3"),
+                SSSE3=dict(flags="-mssse3"),
+                SSE41=dict(flags="-msse4.1"),
+                POPCNT=dict(flags="-mpopcnt"),
+                SSE42=dict(flags="-msse4.2"),
+                AVX=dict(flags="-mavx"),
+                F16C=dict(flags="-mf16c"),
+                XOP=dict(flags="-mxop"),
+                FMA4=dict(flags="-mfma4"),
+                FMA3=dict(flags="-mfma"),
+                AVX2=dict(flags="-mavx2"),
+                AVX512F=dict(flags="-mavx512f"),
+                AVX512CD=dict(flags="-mavx512cd"),
+                AVX512_KNL=dict(flags="-mavx512er -mavx512pf"),
+                AVX512_KNM=dict(
+                    flags="-mavx5124fmaps -mavx5124vnniw -mavx512vpopcntdq"
+                ),
+                AVX512_SKX=dict(flags="-mavx512vl -mavx512bw -mavx512dq"),
+                AVX512_CLX=dict(flags="-mavx512vnni"),
+                AVX512_CNL=dict(flags="-mavx512ifma -mavx512vbmi"),
+                AVX512_ICL=dict(
+                    flags="-mavx512vbmi2 -mavx512bitalg -mavx512vpopcntdq"
+                )
+            )
         if on_x86 and self.cc_is_icc: return dict(
             SSE    = dict(flags="-msse"),
             SSE2   = dict(flags="-msse2"),
@@ -460,52 +470,54 @@ class _Config:
 
             return partial
 
-        if self.cc_on_aarch64 and is_unix: return dict(
-            NEON = dict(
-                implies="NEON_FP16 NEON_VFPV4 ASIMD", autovec=True
-            ),
-            NEON_FP16 = dict(
-                implies="NEON NEON_VFPV4 ASIMD", autovec=True
-            ),
-            NEON_VFPV4 = dict(
-                implies="NEON NEON_FP16 ASIMD", autovec=True
-            ),
-            ASIMD = dict(
-                implies="NEON NEON_FP16 NEON_VFPV4", autovec=True
-            ),
-            ASIMDHP = dict(
-                flags="-march=armv8.2-a+fp16"
-            ),
-            ASIMDDP = dict(
-                flags="-march=armv8.2-a+dotprod"
-            ),
-            ASIMDFHM = dict(
-                flags="-march=armv8.2-a+fp16fml"
-            ),
-        )
-        if self.cc_on_armhf and is_unix: return dict(
-            NEON = dict(
-                flags="-mfpu=neon"
-            ),
-            NEON_FP16 = dict(
-                flags="-mfpu=neon-fp16 -mfp16-format=ieee"
-            ),
-            NEON_VFPV4 = dict(
-                flags="-mfpu=neon-vfpv4",
-            ),
-            ASIMD = dict(
-                flags="-mfpu=neon-fp-armv8 -march=armv8-a+simd",
-            ),
-            ASIMDHP = dict(
-                flags="-march=armv8.2-a+fp16"
-            ),
-            ASIMDDP = dict(
-                flags="-march=armv8.2-a+dotprod",
-            ),
-            ASIMDFHM = dict(
-                flags="-march=armv8.2-a+fp16fml"
+        if self.cc_on_aarch64 and is_gcc_or_clang:
+            return dict(
+                NEON=dict(
+                    implies="NEON_FP16 NEON_VFPV4 ASIMD", autovec=True
+                ),
+                NEON_FP16=dict(
+                    implies="NEON NEON_VFPV4 ASIMD", autovec=True
+                ),
+                NEON_VFPV4=dict(
+                    implies="NEON NEON_FP16 ASIMD", autovec=True
+                ),
+                ASIMD=dict(
+                    implies="NEON NEON_FP16 NEON_VFPV4", autovec=True
+                ),
+                ASIMDHP=dict(
+                    flags="-march=armv8.2-a+fp16"
+                ),
+                ASIMDDP=dict(
+                    flags="-march=armv8.2-a+dotprod"
+                ),
+                ASIMDFHM=dict(
+                    flags="-march=armv8.2-a+fp16fml"
+                ),
             )
-        )
+        if self.cc_on_armhf and is_gcc_or_clang:
+            return dict(
+                NEON=dict(
+                    flags="-mfpu=neon"
+                ),
+                NEON_FP16=dict(
+                    flags="-mfpu=neon-fp16 -mfp16-format=ieee"
+                ),
+                NEON_VFPV4=dict(
+                    flags="-mfpu=neon-vfpv4",
+                ),
+                ASIMD=dict(
+                    flags="-mfpu=neon-fp-armv8 -march=armv8-a+simd",
+                ),
+                ASIMDHP=dict(
+                    flags="-march=armv8.2-a+fp16"
+                ),
+                ASIMDDP=dict(
+                    flags="-march=armv8.2-a+dotprod",
+                ),
+                ASIMDFHM=dict(
+                    flags="-march=armv8.2-a+fp16fml"
+                )
+            )
         # TODO: ARM MSVC
         return {}
 
@@ -873,6 +885,8 @@ class _CCompiler(object):
         if the compiler is unknown
     cc_is_clang : bool
         True if the compiler is Clang
+    cc_is_clang_cl : bool
+        True if the compiler is clang-cl
     cc_is_icc : bool
         True if the compiler is Intel compiler (unix like)
     cc_is_iccw : bool
@@ -911,6 +925,7 @@ class _CCompiler(object):
         )
         detect_compiler = (
             ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
+            ("cc_is_clang_cl", ".*clang-cl.*"),
             ("cc_is_clang",    ".*clang.*"),
             ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
             ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
@@ -976,7 +991,7 @@ class _CCompiler(object):
                 break
 
         self.cc_name = "unknown"
-        for name in ("gcc", "clang", "iccw", "icc", "msvc"):
+        for name in ("gcc", "clang", "clang_cl", "iccw", "icc", "msvc"):
             if getattr(self, "cc_is_" + name):
                 self.cc_name = name
                 break
@@ -1036,7 +1051,12 @@ class _CCompiler(object):
         ['-march=core-avx2']
         """
         assert(isinstance(flags, list))
-        if self.cc_is_gcc or self.cc_is_clang or self.cc_is_icc:
+        if (
+            self.cc_is_gcc
+            or self.cc_is_clang
+            or self.cc_is_clang_cl
+            or self.cc_is_icc
+        ):
             return self._cc_normalize_unix(flags)
 
         if self.cc_is_msvc or self.cc_is_iccw:
@@ -2338,7 +2358,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             "unsupported" if self.cc_on_noarch else self.cc_march)
         ))
         platform_rows.append(("Compiler", (
-            "unix-like"   if self.cc_is_nocc   else self.cc_name)
+            "unix-like" if self.cc_is_nocc else self.cc_name)
         ))
         ########## baseline ##########
         if self.cc_noopt:

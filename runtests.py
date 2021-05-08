@@ -152,6 +152,8 @@ def main(argv):
                               "--bench-compare=COMMIT to override HEAD with "
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
+    parser.add_argument("--compiler", "-c", default=None,
+                        help="Compiler string to pass to build")
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to pytest, asv, mypy, Python "
                              "or shell")
@@ -421,7 +423,7 @@ def build_project(args):
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
     cvars = sysconfig.get_config_vars()
-    compiler = env.get('CC') or cvars.get('CC', '')
+    compiler = args.compiler or env.get('CC') or cvars.get('CC', '')
     if 'gcc' in compiler:
         # Check that this isn't clang masquerading as gcc.
         if sys.platform != 'darwin' or 'gnu-gcc' in compiler:
@@ -451,6 +453,8 @@ def build_project(args):
             env['LDFLAGS'] = " ".join(cvars['LDSHARED'].split()[1:]) + ' --coverage'
 
     cmd += ["build"]
+    if args.compiler:
+        cmd += [f"--compiler={args.compiler}"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
     if args.warn_error:

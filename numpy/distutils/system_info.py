@@ -955,7 +955,7 @@ class system_info:
     def library_extensions(self):
         c = customized_ccompiler()
         static_exts = []
-        if c.compiler_type != 'msvc':
+        if c.compiler_type not in ('msvc', 'clang-cl'):
             # MSVC doesn't understand binutils
             static_exts.append('.a')
         if sys.platform == 'win32':
@@ -2198,7 +2198,7 @@ class openblas_info(blas_info):
 
         info = self.check_libs(lib_dirs, openblas_libs, [])
 
-        if c.compiler_type == "msvc" and info is None:
+        if c.compiler_type in ("msvc", "clang-cl") and info is None:
             from numpy.distutils.fcompiler import new_fcompiler
             f = new_fcompiler(c_compiler=c)
             if f and f.compiler_type == 'gnu95':
