@@ -71,7 +71,7 @@ class TestPublicPrivate():
             module foo
               public
               integer, private :: a
-              public :: setA
+              integer :: b
             contains
               subroutine setA(v)
                 integer, intent(in) :: v
@@ -84,6 +84,8 @@ class TestPublicPrivate():
         mod = mod[0]
         assert 'private' in mod['vars']['a']['attrspec']
         assert 'public' not in mod['vars']['a']['attrspec']
+        assert 'private' not in mod['vars']['b']['attrspec']
+        assert 'public' in mod['vars']['b']['attrspec']
         assert 'private' not in mod['vars']['seta']['attrspec']
         assert 'public' in mod['vars']['seta']['attrspec']
 
