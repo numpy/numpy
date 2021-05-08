@@ -1,0 +1,14 @@
+1D ``np.linalg.norm`` preserves float input types, even for scalar results
+--------------------------------------------------------------------------
+Previously, this would promote to ``float64`` when arbitrary orders were
+passed, despite not doing so under the simple cases::
+
+    >>> f32 = np.float32([1, 2])
+    >>> np.linalg.norm(f32, 2.0)
+    2.236068
+    >>> np.linalg.norm(f32, 3.0)
+    2.080083823051904  # numpy 1.19
+    2.0800838  # numpy 1.20
+
+This change affects only ``float32`` and ``float16`` vectors with ``ord``
+other than ``-Inf``, ``0``, ``1``, ``2``, and ``Inf``.
