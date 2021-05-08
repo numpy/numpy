@@ -574,7 +574,7 @@ class TestHistogramOptimBinNums:
                       500:  {'fd': 15, 'scott': 16, 'rice': 32,
                              'sturges': 20, 'auto': 20, 'stone': 80},
                       5000: {'fd': 33, 'scott': 33, 'rice': 69,
-                             'sturges': 27, 'auto': 33, 'stone': 80}
+                             'sturges': 27, 'auto': 17, 'stone': 80}
                      }
 
         for testlen, expectedResults in basic_test.items():
@@ -609,6 +609,44 @@ class TestHistogramOptimBinNums:
             assert_raises(TypeError, histogram, [1, 2, 3],
                           estimator, weights=[1, 2, 3])
 
+    def test_no_memory_error(self):
+        """
+        Check that large ranges and small IQRs do not raise MemoryError
+        when the bins method is set to 'auto'
+        """
+        x = np.array([ 2, 2, 2 - 1e-15, 2 - 1e-15, 1], dtype=np.float64)
+        a, b = histogram(x, bins='auto')
+        assert_equal(sum(a), 5)
+        assert_equal(len(b), 5)
+
+    def test_merged_bins_empty(self):
+        """
+        Check that merged histogram bins are empty
+        Bin merges can happen when bin type is set to 'auto' and defaults to 'fd'
+
+        All test values have been precomputed and shouldn't change
+        """
+        bin_merge_test = {
+              5000:   {'auto': (10000, 12, True)},
+              50_000:  {'auto': (100000, 16, True)},
+              100_000: {'auto': (200000, 16, True)}
+             }
+
+        for testlen, expectedResults in bin_merge_test.items():
+            x1 = np.linspace(-1000, -900, testlen // 5 * 2)
+            x2 = np.linspace(1, 100, testlen // 5 * 3)
+            x3 = np.linspace(1000, 1100, testlen)
+            x = np.hstack((x1, x2, x3))
+            for estimator, test_values in expectedResults.items():
+                hist_counts, hist_bin_edges = np.histogram(x, estimator, range = None)
+                vals, counts = np.unique(np.diff(hist_bin_edges), return_counts=True)
+                mode = vals[np.argmax(counts)]
+                merged_bins = np.where(np.diff(hist_bin_edges)>(mode*1.5))[0]
+                is_merged_bins_zero = np.count_nonzero(hist_counts[merged_bins]) == 0
+                total_counts, total_bins, merged_bins_zero = test_values
+                assert_equal(sum(hist_counts), total_counts)
+                assert_equal(len(hist_bin_edges), total_bins)
+                assert_equal(is_merged_bins_zero, merged_bins_zero)
 
 class TestHistogramdd:
 

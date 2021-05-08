@@ -269,6 +269,35 @@ def _hist_bin_auto(x, range):
         # limited variance, so we return a len dependent bw estimator
         return sturges_bw
 
+def _report_auto_method(x, range):
+    """
+    return the auto method used given an array
+
+    Parameters
+    ----------
+    x : array_like
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
+
+    Returns
+    -------
+    either 'fd' or 'sturges' - whichever has the smaller bin width
+
+    See Also
+    --------
+    _hist_bin_fd, _hist_bin_sturges
+    """
+    fd_bw = _hist_bin_fd(x, range)
+    sturges_bw = _hist_bin_sturges(x, range)
+    if fd_bw:
+        if fd_bw < sturges_bw:
+            return 'fd'
+        else:
+            return 'sturges'
+    else:
+        # limited variance, so we return a len dependent bw estimator
+        return 'sturges'
+
 # Private dict initialized at module load time
 _hist_bin_selectors = {'stone': _hist_bin_stone,
                        'auto': _hist_bin_auto,
@@ -356,6 +385,51 @@ def _unsigned_subtract(a, b):
         # signed to unsigned
         return np.subtract(a, b, casting='unsafe', dtype=dt)
 
+def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
+    """
+    Computes the bins used internally by `np.histogram(bins='auto')`.
+
+    TODO: consider leveraging np.unique(a, return_counts=True)
+    Immediately return the resulting edges and counts, which
+    avoids re-computing bin counts.
+    Significant speed up, but bypasses existing bin counting code.
+
+    Parameters
+    ==========
+    a : ndarray
+        Ravelled data array
+    first_edge, last_edge
+        Forwarded arguments from `_get_outer_edges`.
+    n_equal_bins : 
+        Forwarded arugment from _get_bin_edges,
+        this function only called when n_equal_bins > 2
+
+    Returns
+    =======
+    bin_edges : ndarray
+        Array of bin edges
+    """
+    keep = (a >= first_edge)
+    keep &= (a <= last_edge)
+    if not np.logical_and.reduce(keep):
+        a = a[keep]
+
+    if a.size == 0:
+        return np.array([0,1])
+
+    fd_width = _unsigned_subtract(last_edge, first_edge) / n_equal_bins
+    width = fd_width if (last_edge/fd_width <= 1e+16) else last_edge/1e+16 # fp resolution
+    zeroed_min = a - first_edge
+    quantized = np.floor_divide(zeroed_min, width) * width
+    left_edges = np.unique(quantized) # TODO: consider np.unique(a, return_counts=True)
+    right_edges = left_edges + width
+    extra_right_edges = right_edges + width # otherwise fp rounding can fill empty bins
+    edges = np.unique((left_edges, right_edges, extra_right_edges)) + first_edge
+
+    TOL = width/2
+    widths = np.concatenate(([width], np.diff(edges)))
+    bins = edges[widths>TOL][:-1] # remove fp artifacts, remove last extra right edge
+    return bins
 
 def _get_bin_edges(a, bins, range, weights):
     """
@@ -381,6 +455,8 @@ def _get_bin_edges(a, bins, range, weights):
     # parse the overloaded bins argument
     n_equal_bins = None
     bin_edges = None
+    width = None
+    auto_method = None
 
     if isinstance(bins, str):
         bin_name = bins
@@ -407,6 +483,8 @@ def _get_bin_edges(a, bins, range, weights):
         else:
             # Do not call selectors on empty arrays
             width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
+            if bin_name == 'auto':
+                auto_method = _report_auto_method(a,range)
             if width:
                 n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
             else:
@@ -443,6 +521,10 @@ def _get_bin_edges(a, bins, range, weights):
             bin_type = np.result_type(bin_type, float)
 
         # bin edges must be computed
+        if bins == 'auto' and auto_method == 'fd' and n_equal_bins > 2:
+            bin_edges = _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge)
+            return bin_edges, None
+        
         bin_edges = np.linspace(
             first_edge, last_edge, n_equal_bins + 1,
             endpoint=True, dtype=bin_type)
