@@ -30,6 +30,10 @@ class ABCPolyBase(abc.ABC):
         Series coefficients in order of increasing degree, i.e.,
         ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``, where
         ``P_i`` is the basis polynomials of degree ``i``.
+        Please note that these are coefficients in the scaled
+        domain, and that to get coefficients from the data domain, you
+        should use ``ABCPolyBase.convert().coef``.
+
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
@@ -289,7 +293,7 @@ class ABCPolyBase(abc.ABC):
 
     def __init__(self, coef, domain=None, window=None):
         [coef] = pu.as_series([coef], trim=False)
-        self.coef = coef
+        self._coef = coef
 
         if domain is not None:
             [domain] = pu.as_series([domain], trim=False)
@@ -392,6 +396,19 @@ class ABCPolyBase(abc.ABC):
                 "_str_term_ascii(cls, i, arg_str)"
             )
         return f" {cls.basis_name}_{i}({arg_str})"
+
+    @property
+    def coef(self):
+        """
+        Series coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``, where
+        ``P_i`` is the basis polynomials of degree ``i``.
+
+        Please note that these are coefficients in the scaled
+        domain, and that to get coefficients from the data domain, you
+        should use ``ABCPolyBase.convert().coef``.
+        """
+        return self._coef
 
     @classmethod
     def _repr_latex_term(cls, i, arg_str, needs_parens):
@@ -906,6 +923,10 @@ class ABCPolyBase(abc.ABC):
         `y` sampled at `x`. The domain of the returned instance can be
         specified and this will often result in a superior fit with less
         chance of ill conditioning.
+
+        Please note that ``Polynomial.coef`` are coefficients in the scaled
+        domain, and that to get coefficients from the data domain, you should
+        use ``Polynomial.convert().coef``.
 
         Parameters
         ----------
