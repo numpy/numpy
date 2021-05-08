@@ -1771,6 +1771,11 @@ class TestClip:
         selector = np.less(a, m) + 2*np.greater(a, M)
         return selector.choose((a, m, M), out=out)
 
+    def cx_clip(self, a, m, M, out=None):
+        # use slow-clip for complex case
+        return (self.clip(a.real, m.real, M.real)
+        + (1.0j * (self.clip(a.imag, m.imag, M.imag))))
+
     # Handy functions
     def _generate_data(self, n, m):
         return randn(n, m)
@@ -1870,7 +1875,7 @@ class TestClip:
         m = -0.5
         M = 1.
         ac = self.fastclip(a, m, M)
-        act = self.clip(a, m, M)
+        act = self.cx_clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
         # Test native input with complex double scalar min/max.
@@ -1878,7 +1883,7 @@ class TestClip:
         m = -0.5 + 1.j
         M = 1. + 2.j
         ac = self.fastclip(a, m, M)
-        act = self.clip(a, m, M)
+        act = self.cx_clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
     def test_clip_complex(self):
@@ -2364,7 +2369,6 @@ class TestClip:
                 # Commenting out the min_dims line allows zero-dimensional arrays,
                 # and zero-dimensional arrays containing NaN make the test fail.
                 min_dims=1
-  
             )
         )
         amin = data.draw(
