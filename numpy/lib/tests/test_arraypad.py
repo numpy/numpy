@@ -1356,7 +1356,7 @@ def test_memory_layout_persistence(mode):
     assert np.pad(x, 5, mode).flags["F_CONTIGUOUS"]
 
 
-@pytest.mark.parametrize("dtype", _numeric_dtypes)
+@pytest.mark.parametrize("dtype", _numeric_dtypes[:-3])
 @pytest.mark.parametrize("mode", _all_modes.keys())
 def test_dtype_persistence(dtype, mode):
     arr = np.zeros((3, 2, 1), dtype=dtype)

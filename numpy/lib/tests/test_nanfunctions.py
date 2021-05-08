@@ -65,7 +65,7 @@ class TestNanFunctions_MinMax:
             assert_almost_equal(res, tgt)
 
     def test_dtype_from_input(self):
-        codes = 'efdgFDG'
+        codes = 'efdg'
         for nf, rf in zip(self.nanfuncs, self.stdfuncs):
             for c in codes:
                 mat = np.eye(3, dtype=c)
