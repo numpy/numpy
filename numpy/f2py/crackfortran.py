@@ -916,6 +916,16 @@ def _resolvenameargspattern(line):
 
 
 def analyzeline(m, case, line):
+    """
+    Reads each line in the input file in sequence and updates global vars.
+
+    Effectively reads and collects information from the input file to the
+    global variable groupcache, a dictionary containing info about each part
+    of the fortran module.
+
+    At the end of analyzeline, information is filtered into the correct dict
+    keys, but parameter values and dimensions are not yet interpreted.
+    """
     global groupcounter, groupname, groupcache, grouplist, filepositiontext
     global currentfilename, f77modulename, neededinterface, neededmodule
     global expectbegin, gotnextfile, previous_context
@@ -1551,10 +1561,18 @@ def markinnerspaces(line):
 
 
 def updatevars(typespec, selector, attrspec, entitydecl):
+    """
+    Returns last_name, the variable name without special chars, parenthesis
+        or dimension specifiers.
+
+    Alters groupcache to add the name, typespec, attrspec (and possibly value)
+    of current variable.
+    """
     global groupcache, groupcounter
 
     last_name = None
     kindselect, charselect, typename = cracktypespec(typespec, selector)
+    # Clean up outer commas, whitespace and undesired chars from attrspec
     if attrspec:
         attrspec = [x.strip() for x in markoutercomma(attrspec).split('@,@')]
         l = []
@@ -2505,6 +2523,7 @@ def get_parameters(vars, global_params={}):
     for n in param_names:
         if '=' in vars[n]:
             v = vars[n]['=']
+
             if islogical(vars[n]):
                 v = v.lower()
                 for repl in [
@@ -2513,6 +2532,7 @@ def get_parameters(vars, global_params={}):
                     # TODO: test .eq., .neq., etc replacements.
                 ]:
                     v = v.replace(*repl)
+
             v = kind_re.sub(r'kind("\1")', v)
             v = selected_int_kind_re.sub(r'selected_int_kind(\1)', v)
 
@@ -2521,14 +2541,17 @@ def get_parameters(vars, global_params={}):
             # then we may easily remove those specifiers.
             # However, it may be that the user uses other specifiers...(!)
             is_replaced = False
+
             if 'kindselector' in vars[n]:
+                # Remove kind specifier (including those defined
+                # by parameters)
                 if 'kind' in vars[n]['kindselector']:
                     orig_v_len = len(v)
                     v = v.replace('_' + vars[n]['kindselector']['kind'], '')
                     # Again, this will be true if even a single specifier
                     # has been replaced, see comment above.
                     is_replaced = len(v) < orig_v_len
-                    
+
             if not is_replaced:
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
@@ -2558,10 +2581,11 @@ def get_parameters(vars, global_params={}):
                     l = markoutercomma(v[1:-1]).split('@,@')
 
             try:
-                params[n] = eval(v, g_params, params)
+                params[n] = param_eval(n, vars[n], v, g_params, params)
             except Exception as msg:
                 params[n] = v
-                outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
+                outmess('get_parameters: got "%s" on %s\n' % (msg, repr(n)))
+
             if isstring(vars[n]) and isinstance(params[n], int):
                 params[n] = chr(params[n])
             nl = n.lower()
@@ -2578,6 +2602,7 @@ def _eval_length(length, params):
     if length in ['(:)', '(*)', '*']:
         return '(*)'
     return _eval_scalar(length, params)
+
 
 _is_kind_number = re.compile(r'\d+_').match
 
@@ -2597,6 +2622,10 @@ def _eval_scalar(value, params):
 
 
 def analyzevars(block):
+    """
+    Sets correct dimension information for each variable/parameter
+    """
+
     global f90modulevars
 
     setmesstext(block)
@@ -2625,7 +2654,8 @@ def analyzevars(block):
             svars.append(n)
 
     params = get_parameters(vars, get_useparameters(block))
-
+    # At this point, params are read and interpreted, but
+    # the params used to define vars are not yet parsed
     dep_matches = {}
     name_match = re.compile(r'[A-Za-z][\w$]*').match
     for v in list(vars.keys()):
@@ -2726,18 +2756,17 @@ def analyzevars(block):
             if dim and 'dimension' not in vars[n]:
                 vars[n]['dimension'] = []
                 for d in rmbadname([x.strip() for x in markoutercomma(dim).split('@,@')]):
+                    # d is the expression inside the dimension declaration
                     star = '*'
                     if d == ':':
                         star = ':'
-                    if d in params:
-                        d = str(params[d])
-                    for p in list(params.keys()):
-                        re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
-                        m = re_1.match(d)
-                        while m:
-                            d = m.group('before') + \
-                                str(params[p]) + m.group('after')
-                            m = re_1.match(d)
+                    try:
+                        # the dimension for this variable depends on a
+                        # previously defined parameter
+                        d = param_parse(d, params)
+                    except (ValueError, IndexError, KeyError):
+                        pass
+
                     if d == star:
                         dl = [star]
                     else:
@@ -2945,6 +2974,154 @@ def analyzevars(block):
     return vars
 
 analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z', re.I)
+
+
+def param_eval(n, varsn, v, g_params, params):
+    """
+    Creates a dictionary of indices and values for each parameter in a
+    parameter array to be evaluated later.
+
+    WARNING: It is not possible to initialize multidimensional array
+    parameters e.g. dimension(-3:1, 4, 3:5) at this point. This is because in
+    Fortran initialization through array constructor requires the RESHAPE
+    intrinsic function. Since the right-hand side of the parameter declaration
+    is not executed in f2py, but rather at the compiled c/fortran extension,
+    later, it is not possible to execute a reshape of a parameter array.
+    One issue remains: if the user wants to access the array parameter from
+    python, we should either
+    1) allow them to access the parameter array using python standard indexing
+       (which is often incompatible with the original fortran indexing)
+    2) allow the parameter array to be accessed in python as a dictionary with
+       fortran indices as keys
+    We are choosing 2 for now.
+    """
+    dim_attrspecs = [item[9:] for item in varsn['attrspec']
+                     if item[:9] == 'dimension']
+    if len(dim_attrspecs) > 1:
+        raise ValueError('dimension may appear at most once.')
+    elif dim_attrspecs:
+        # This is an array parameter.
+        # First, we parse the dimension information
+        a = dim_attrspecs[0]
+        a = a.strip()
+        if a[0] != "(" or a[-1] != ")":
+            raise ValueError(f'dimension for {n} can\'t be parsed')
+        dimrange = a[1:-1]
+        dimrange = dimrange.split(',')
+        if len(dimrange) == 1:
+            # e.g. dimension(2) or dimension(-1:1)
+            dimrange = dimrange[0].split(':')
+            # now, dimrange is a list of 1 or 2 elements
+            if len(dimrange) == 1:
+                bound = param_parse(dimrange[0], params)
+                dimrange = range(1, int(bound)+1)
+            else:
+                lbound = param_parse(dimrange[0], params)
+                ubound = param_parse(dimrange[1], params)
+                dimrange = range(int(lbound), int(ubound)+1)
+        else:
+            outmess('param_eval: multidimensional array parameters not'
+                    ' supported: %s\n' % repr(n))
+
+        # Parse parameter value
+        v = (v[2:-2] if v.startswith('(/') else v).split(',')
+        v_eval = []
+        for item in v:
+            try:
+                item = eval(item, g_params, params)
+            except Exception as msg:
+                v_eval.append(item)
+                outmess('param_eval: got "%s" on %s\n' % (msg, repr(item)))
+            v_eval.append(item)
+
+        p = dict([])
+        for i in range(len(dimrange)):
+            p[dimrange[i]] = v_eval[i]
+    else:
+        try:
+            p = eval(v, g_params, params)
+        except Exception as msg:
+            p = v
+            outmess('param_eval: got "%s" on %s\n' % (msg, repr(v)))
+    return p
+
+
+def param_parse(d, params):
+    """Recursively parse array dimensions.
+
+    Parses the declaration of an array variable or parameter
+    `dimension` keyword, and is called recursively if the
+    dimension for this array is a previously defined parameter
+    (found in `params`).
+
+    Parameters
+    ----------
+    d : str
+        Fortran expression describing the dimension of an array.
+    params : dict
+        Previously parsed parameters declared in the Fortran source file.
+
+    Returns
+    -------
+    out : str
+        Parsed dimension expression.
+
+    Examples
+    --------
+
+    * If the line being analyzed is
+
+      `integer, parameter, dimension(2) :: pa = (/ 3, 5 /)`
+
+      then `d = 2` and we return immediately, with
+
+    >>> d = '2'
+    >>> param_parse(d, params)
+    2
+
+    * If the line being analyzed is
+
+      `integer, parameter, dimension(pa) :: pb = (/1, 2, 3/)`
+
+      then `d = 'pa'`; since `pa` is a previously parsed parameter,
+      and `pa = 3`, we call `param_parse` recursively, to obtain
+
+    >>> d = 'pa'
+    >>> params = {'pa': 3}
+    >>> param_parse(d, params)
+    3
+
+    * If the line being analyzed is
+
+      `integer, parameter, dimension(pa(1)) :: pb = (/1, 2, 3/)`
+
+      then `d = 'pa(1)'`; since `pa` is a previously parsed parameter,
+      and `pa(1) = 3`, we call `param_parse` recursively, to obtain
+
+    >>> d = 'pa(1)'
+    >>> params = dict(pa={1: 3, 2: 5})
+    >>> param_parse(d, params)
+    3
+    """
+    if d.find("(") != -1:
+        # this dimension expression is an array
+        dname = d[:d.find("(")]
+        ddims = d[d.find("(")+1:d.rfind(")")]
+        # this dimension expression is also a parameter;
+        # parse it recursively
+        index = int(param_parse(ddims, params))
+        return str(params[dname][index])
+    elif d in params:
+        return str(params[d])
+    else:
+        for p in list(params.keys()):
+            re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
+            m = re_1.match(d)
+            while m:
+                d = m.group('before') + \
+                    str(params[p]) + m.group('after')
+                m = re_1.match(d)
+        return d
 
 
 def expr2name(a, block, args=[]):

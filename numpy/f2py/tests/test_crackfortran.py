@@ -1,8 +1,7 @@
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_raises
 from . import util
 from numpy.f2py import crackfortran
-import tempfile
 import textwrap
 
 
@@ -86,6 +85,86 @@ class TestPublicPrivate():
         assert 'public' not in mod['vars']['a']['attrspec']
         assert 'private' not in mod['vars']['seta']['attrspec']
         assert 'public' in mod['vars']['seta']['attrspec']
+
+
+class TestParamEval():
+    # issue gh-11612, array parameter parsing
+    def test_param_eval_nested(self):
+        n = 'doubleparamarray'
+        varsn = {'typespec': 'real',
+                 'kindselector': {'kind': 'dp'},
+                 'attrspec': ['parameter', 'dimension(2)'],
+                 '=': '(/3.14_dp, 4._dp/)'}
+        v = '(/3.14, 4./)'
+        g_params = {}
+        for name, func in [('kind', crackfortran._kind_func),
+                           ('selected_int_kind',
+                            crackfortran._selected_int_kind_func),
+                           ('selected_real_kind',
+                            crackfortran._selected_real_kind_func)]:
+            if name not in g_params:
+                g_params[name] = func
+        params = {'dp': 8, 'intparamarray': {1: 3, 2: 5},
+                  'nested': {1: 1, 2: 2, 3: 3}}
+        ret = crackfortran.param_eval(n, varsn, v, g_params, params)
+        assert ret == {1: 3.14, 2: 4.0}
+
+    def test_param_eval_nonstandard_range(self):
+        n = 'myparamarray'
+        varsn = {'typespec': 'integer',
+                 'attrspec': ['parameter', 'dimension(-1:1)'],
+                 '=': '(/6, 3, 1/)'}
+        v = '(/ 6, 3, 1 /)'
+        g_params = {}
+        for name, func in [('kind', crackfortran._kind_func),
+                           ('selected_int_kind',
+                            crackfortran._selected_int_kind_func),
+                           ('selected_real_kind',
+                            crackfortran._selected_real_kind_func)]:
+            if name not in g_params:
+                g_params[name] = func
+        params = {}
+        ret = crackfortran.param_eval(n, varsn, v, g_params, params)
+        assert ret == {-1: 6, 0: 3, 1: 1}
+
+    def test_param_eval_duplicated_dimension(self):
+        n = 'myparamarray'
+        varsn = {'typespec': 'integer',
+                 'attrspec': ['parameter',
+                              'dimension(-1:1)',
+                              'dimension(3)'],
+                 '=': '(/6, 3, 1/)'}
+        v = '(/ 6, 3, 1 /)'
+        g_params = {}
+        for name, func in [('kind', crackfortran._kind_func),
+                           ('selected_int_kind',
+                            crackfortran._selected_int_kind_func),
+                           ('selected_real_kind',
+                            crackfortran._selected_real_kind_func)]:
+            if name not in g_params:
+                g_params[name] = func
+        params = {}
+        assert_raises(ValueError, crackfortran.param_eval, n, varsn, v,
+                      g_params, params)
+
+    def test_param_eval_non_array_param(self):
+        n = 'pi'
+        varsn = {'typespec': 'real',
+                 'kindselector': {'kind': 'dp'},
+                 'attrspec': ['parameter'],
+                 '=': '3.14_dp'}
+        v = '3.14_dp'
+        g_params = {}
+        for name, func in [('kind', crackfortran._kind_func),
+                           ('selected_int_kind',
+                            crackfortran._selected_int_kind_func),
+                           ('selected_real_kind',
+                            crackfortran._selected_real_kind_func)]:
+            if name not in g_params:
+                g_params[name] = func
+        params = {}
+        ret = crackfortran.param_eval(n, varsn, v, g_params, params)
+        assert ret == '3.14_dp'
 
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
