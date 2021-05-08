@@ -357,7 +357,7 @@ def _unsigned_subtract(a, b):
         return np.subtract(a, b, casting='unsafe', dtype=dt)
 
 
-def _get_bin_edges(a, bins, range, weights):
+def _get_bin_edges(a, bins, range, weights, fast):
     """
     Computes the bins used internally by `histogram`.
 
@@ -430,6 +430,11 @@ def _get_bin_edges(a, bins, range, weights):
         if np.any(bin_edges[:-1] > bin_edges[1:]):
             raise ValueError(
                 '`bins` must increase monotonically, when an array')
+        # Use the fast algorithm if the given bins are equally spaced or within
+        # numerical precision of being equally spaced and fast is True.
+        if _bins_are_equally_spaced(bin_edges, fast):
+            n_equal_bins = len(bin_edges) - 1
+            first_edge, last_edge = bin_edges[0], bin_edges[-1]
 
     else:
         raise ValueError('`bins` must be 1d, when an array')
@@ -450,6 +455,20 @@ def _get_bin_edges(a, bins, range, weights):
     else:
         return bin_edges, None
 
+def _bins_are_equally_spaced(bin_edges, fast):
+    # Some valid bin types can't be generated using linspace (e.g. datetime, timedelta)
+    # Bins are also not equally spaced if a RuntimeWarning is thrown because of nans/inf
+    try:
+        equally_spaced_bins = np.linspace(bin_edges[0], bin_edges[-1], num=len(bin_edges))
+    except (TypeError, DeprecationWarning, RuntimeWarning):
+        return False
+
+    try:
+        resolution = np.finfo(bin_edges.dtype).eps
+    except ValueError:
+        resolution = 0
+    return np.all(bin_edges == equally_spaced_bins) or (fast and np.allclose(
+            bin_edges, equally_spaced_bins, rtol=resolution, atol=0))
 
 def _search_sorted_inclusive(a, v):
     """
@@ -666,18 +685,18 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     """
     a, weights = _ravel_and_check_weights(a, weights)
-    bin_edges, _ = _get_bin_edges(a, bins, range, weights)
+    bin_edges, _ = _get_bin_edges(a, bins, range, weights, fast=False)
     return bin_edges
 
 
-def _histogram_dispatcher(
-        a, bins=None, range=None, normed=None, weights=None, density=None):
+def _histogram_dispatcher(a, bins=None, range=None, normed=None,
+                          weights=None, density=None, fast=None):
     return (a, bins, weights)
 
 
 @array_function_dispatch(_histogram_dispatcher)
 def histogram(a, bins=10, range=None, normed=None, weights=None,
-              density=None):
+              density=None, fast=False):
     r"""
     Compute the histogram of a dataset.
 
@@ -729,6 +748,10 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         width are chosen; it is not a probability *mass* function.
 
         Overrides the ``normed`` keyword if given.
+    fast : bool, optional
+        If ``True`` and bins is a sequence that is within numerical precision
+        of being equal width, the fast histogram algorithm is used on the
+        equal width bins. This has no effect if bins is not a sequence.
 
     Returns
     -------
@@ -790,7 +813,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
     """
     a, weights = _ravel_and_check_weights(a, weights)
 
-    bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
+    bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights, fast)
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
