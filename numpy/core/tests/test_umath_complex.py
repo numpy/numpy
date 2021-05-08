@@ -28,6 +28,12 @@ platform_skip = pytest.mark.skipif(xfail_complex_tests,
                                    reason="Inadequate C99 complex support")
 
 
+class TestCreciprocal:
+    def test_simple(self):
+        check = check_complex_value
+        f = np.reciprocal
+
+        check(f, 0, 0, np.inf, np.nan, True)
 
 class TestCexp:
     def test_simple(self):
