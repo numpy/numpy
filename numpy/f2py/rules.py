@@ -963,7 +963,8 @@ if (#varname#_cb.capi==Py_None) {
         'args_capi': {isrequired: ',&#varname#_capi'},
         'keys_capi': {isoptional: ',&#varname#_capi'},
         'pyobjfrom': {isintent_inout: '''\
-\tf2py_success = try_pyarr_from_#ctype#(#varname#_capi,#varname#);
+\tf2py_success = try_pyarr_from_#ctype#(#varname#_capi, #varname#,
+\t                                      slen(#varname#));
 \tif (f2py_success) {'''},
         'closepyobjfrom': {isintent_inout: '\t} /*if (f2py_success) of #varname# pyobjfrom*/'},
         'need': {isintent_inout: 'try_pyarr_from_#ctype#'},
