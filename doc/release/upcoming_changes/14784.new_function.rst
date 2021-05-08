@@ -1,0 +1,7 @@
+new function numpy.nancov added to numpy
+---------------------------------------------------------------------
+``numpy.nancov`` will estimate a covariance matrix while ignoring nan-values.
+
+Using ``np.nancov(x, pairwise=True)`` calculates pairwise covariance where the covariance of 2 variables will include all observations where neither variable is nan.
+
+The default behavior is ``pairwise=False`` to ignore all observations where any variable is nan.
