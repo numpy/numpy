@@ -1,0 +1,112 @@
+\documentclass{article}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows, matrix}
+\usetikzlibrary{arrows.meta}
+
+\usepackage{verbatim}
+\usepackage{pgf}
+\usepackage{mathrsfs}
+\usepackage{lscape}
+\begin{document}
+\pagestyle{empty}
+
+\tikzstyle{int}=[draw, minimum size=2.5em]
+\tikzstyle{intt}=[draw, minimum size=2.1em]
+\tikzstyle{init} = [pin edge={to-,thin,black}]
+\tikzstyle{person} = [rectangle, minimum width=3cm, minimum height=1cm,text centered,text width=2 cm, draw=black]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzstyle{personS}= [rectangle, minimum width=2cm, minimum height=1cm,text centered,text width=1.5 cm, draw=black]
+\tikzstyle{op}=[circle, minimum width=1cm, text centered,draw=black]
+\tikzstyle{process}=[rectangle, minimum width=3cm, minimum height=2.2cm, text centered, text width=2cm,draw=black]
+\tikzstyle{personM}= [rectangle, minimum width=3cm, minimum height=1cm,text centered,text width=1.5 cm, draw=black]
+
+\tikzstyle{what}=[rectangle, minimum width=3.5cm, minimum height=1.5cm, text centered, text width=3.5 cm, draw=black]
+\tikzstyle{how_single}=[rectangle, minimum width=3cm, minimum height=0.7cm, text centered, text width=3 cm, draw=black]
+\tikzstyle{how_two}=[rectangle, minimum width=4cm, minimum height=1.5, text centered, text width=4cm, draw=black]
+\tikzstyle{how_three}=[rectangle, minimum width=4cm, minimum height=1.7cm, text centered, text width=4 cm, draw=black]
+\tikzstyle{how_long}=[rectangle, minimum width=7cm, minimum height=0.7cm, text centered, text width=7 cm, draw=black]
+\tikzstyle{question}=[minimum width=2.5cm, minimum height=2cm, text centered, text width=2cm]
+
+%%%~~~~~~~~~~~~numpy~IO~read~write~~~~~~~~~~~~
+\begin{landscape}
+\begin{tikzpicture}[node distance=2.5cm]
+
+%% which type of files
+\node (hr) [what] {Human readible};
+\node (bn) [what, below of=hr] {Binary};
+\node (la) [what, below of=bn] {Large array};
+\node (js) [what, below of=la] {JSON};
+\node (q)  [question,left of=hr, xshift=-1cm] {Missing some values?};
+
+%% writing methods
+\node (w1) [how_single, right of=hr, xshift=3.5cm] {\texttt{numpy.savetxt}};
+\node (w2) [how_two, right of=bn, xshift=4cm] {\texttt{numpy.savez \\} \texttt{numpy.savez\_compress \\}};
+\node (w3) [how_single, right of=la, xshift=3.5cm, yshift=1cm] {\texttt{numpy.save}};
+\node (w4) [how_two, right of=la, xshift=4cm, yshift=-0.7cm] {\texttt{numpy.ndarray.tofile \\} \texttt{numpy.ndarray.tobytes}};
+\node (ot) [what, right of=js, xshift=3.75cm] {Write to files to be read by other tools};
+
+%% reading methods
+\node (r1) [how_single, left of=hr, xshift=-5cm, yshift=0.5cm] {\texttt{numpy.loadtxt}};
+\node (r2) [how_single, left of=hr, xshift=-5cm, yshift=-0.5cm] {\texttt{numpy.genfromtxt}};
+\node (r3) [how_long, left of=bn, xshift=-5cm, yshift=0.7cm] {\texttt{numpy.lib.format.open\_memmap}};
+\node (r4) [how_single, left of=bn, xshift=-5cm, yshift=-0.5cm] {\texttt{numpy.load}};
+
+\node (r5) [how_single, left of=la, xshift=-5cm, yshift=-0.5cm] {\texttt{numpy.memmap}};
+
+\node (r6) [how_long, below of=r5, yshift=-0.7cm] {\texttt{pandas.DataFrame.to\_numpy}};
+
+%% arrows
+\path[-stealth]
+    (hr.west) edge  (q.east);
+\path[-stealth]
+    (q.west) edge  node [above,yshift=1.0ex] {no} (r1.east);
+\path[-stealth]
+    (q.west) edge  node [below,yshift=-1.0ex] {yes} (r2.east);
+    
+\path[-stealth]
+    (bn.west) edge  (r3.east);
+\path[-stealth]
+    (bn.west) edge  ([yshift=1.0ex]r4.east);
+\path[-stealth]
+    (la.west) edge  ([yshift=-1.0ex]r4.east);
+\path[-stealth]
+    (la.west) edge  (r5.east);
+    
+\path[-stealth]
+    (hr.east) edge  (w1.west);
+\path[-stealth]
+    (bn.east) edge  ([yshift=1.0ex]w2.west);
+\path[-stealth]
+    (bn.east) edge  ([yshift=1.0ex]w3.west);
+\path[-stealth]
+    (la.east) edge  (w3.west);
+\path[-stealth]
+    (la.east) edge  (w4.west);
+\path[-stealth]
+    (ot.west) edge  ([yshift=-0.75cm]la.east);
+
+%% notes and remarks
+\node (note1) [above of=w1, yshift=-1.7cm] {only 1- or 2-dimensional arrays};    
+\node (note2) [above of=w2, yshift=-1.7cm] {multidimensional arrays};
+\node (note3) [below of=r4, xshift=-1cm,yshift=1.7cm] {for reading "binary blobs" use structured arrays};
+\node (note4) [above of=r6, yshift=-1.7cm] {to convert from pandas DataFrame to Numpy:};
+\node (note5) [below of=js, xshift=0.7cm, yshift=1.3cm] {Numpy arrays are not directly JSON serializable};
+
+%% "formating" nodes
+\node (empty1) [above of=hr, yshift=-0.5cm] {};
+\node (empty2) [below of=js, yshift=0.5cm] {};
+\node (read) [left of=empty1] {READ};
+\node (write) [right of=empty1] {WRITE};
+
+%% path separating read and write half
+\draw (empty1.north) -- (hr.north);
+\draw (hr.south) -- (bn.north);
+\draw (bn.south) -- (la.north);
+\draw (la.south) -- (js.north);
+\draw ([xshift=-0.7cm]note5.south) -- (empty2.south);
+\end{tikzpicture}
+\end{landscape}
+
+
+\end{document}
