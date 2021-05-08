@@ -172,10 +172,12 @@ typedef enum {
 #define NPY_NSORTS (NPY_STABLESORT + 1)
 
 
+
 typedef enum {
-        NPY_INTROSELECT=0
+        NPY_INTROSELECT=0,
+        NPY_FLOYDSELECT=1
 } NPY_SELECTKIND;
-#define NPY_NSELECTS (NPY_INTROSELECT + 1)
+#define NPY_NSELECTS (NPY_FLOYDSELECT + 1)
 
 
 typedef enum {

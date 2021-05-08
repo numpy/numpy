@@ -1,8 +1,9 @@
 import sys
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_raises, assert_array_equal, HAS_REFCOUNT
+    assert_, assert_raises, assert_array_equal, assert_almost_equal, HAS_REFCOUNT
     )
 
 
@@ -67,20 +68,32 @@ class TestTake:
         k = b'\xc3\xa4'.decode("UTF8")
         assert_raises(ValueError, d.take, 5, mode=k)
 
-    def test_empty_partition(self):
+    @pytest.mark.parametrize('kind', ['introselect', 'floydrivest'])
+    def test_empty_partition(self, kind):
         # In reference to github issue #6530
         a_original = np.array([0, 2, 4, 6, 8, 10])
         a = a_original.copy()
 
         # An empty partition should be a successful no-op
-        a.partition(np.array([], dtype=np.int16))
+        a.partition(np.array([], dtype=np.int16), kind=kind)
 
         assert_array_equal(a, a_original)
 
-    def test_empty_argpartition(self):
+    @pytest.mark.parametrize('kind', ['introselect', 'floydrivest'])
+    def test_empty_argpartition(self, kind):
         # In reference to github issue #6530
         a = np.array([0, 2, 4, 6, 8, 10])
-        a = a.argpartition(np.array([], dtype=np.int16))
+        a = a.argpartition(np.array([], dtype=np.int16), kind=kind)
 
         b = np.array([0, 1, 2, 3, 4, 5])
         assert_array_equal(a, b)
+        
+    def test_floydrivest(self):
+        #test correctness on array size > 600
+        np.random.seed(0)
+        a = np.random.rand(1000)
+        k = 500
+        x = np.partition(a, k, kind='floydrivest')[k]
+        y = sorted(a)[k]
+        assert_almost_equal(x, y)
+        

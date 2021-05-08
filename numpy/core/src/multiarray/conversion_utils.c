@@ -491,6 +491,10 @@ static int selectkind_parser(char const *str, Py_ssize_t length, void *data)
         *selectkind = NPY_INTROSELECT;
         return 0;
     }
+    else if (length == 11 && strcmp(str, "floydrivest") == 0) {
+        *selectkind = NPY_FLOYDSELECT;
+        return 0;
+    }
     else {
         return -1;
     }
@@ -504,7 +508,7 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 {
     return string_converter_helper(
         obj, (void *)selectkind, selectkind_parser, "select kind",
-        "must be 'introselect'");
+        "must be 'introselect' or 'floydrivest'");
 }
 
 static int searchside_parser(char const *str, Py_ssize_t length, void *data)
