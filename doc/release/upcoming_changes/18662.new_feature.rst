@@ -1,0 +1,5 @@
+Add support for array-likes in polynomial evaluation
+----------------------------------------------------------------------------
+
+Polynomial evaluation now accepts array-likes (e.g. lists) as its
+input argument, in addition to NumPy arrays.
