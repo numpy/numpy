@@ -34,9 +34,7 @@ import numpy.core.numerictypes as ntypes
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import (
-    getargspec, formatargspec, long, unicode, bytes
-    )
+from numpy.compat import long, unicode, bytes
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core._internal import recursive
@@ -135,8 +133,8 @@ def get_object_signature(obj):
 
     """
     try:
-        sig = formatargspec(*getargspec(obj))
-    except TypeError:
+        sig = str(inspect.signature(obj))
+    except ValueError:
         sig = ''
     return sig
 
