@@ -278,7 +278,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             Py_TYPE(self), PyArray_DESCR(self),
             ndim, dimensions, strides, PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
-            0, 1);
+            0);
     Py_DECREF(self);
     return (PyObject *)ret;
 }

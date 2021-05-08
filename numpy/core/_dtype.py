@@ -62,7 +62,7 @@ def _unpack_field(dtype, offset, title=None):
 
 def _isunsized(dtype):
     # PyDataType_ISUNSIZED
-    return dtype.itemsize == 0
+    return dtype.itemsize is None
 
 
 def _construction_repr(dtype, include_align=False, short=False):

@@ -17,8 +17,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr_int(
         PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         npy_intp const *dims, npy_intp const *strides, void *data,
-        int flags, PyObject *obj, PyObject *base, int zeroed,
-        int allow_emptystring);
+        int flags, PyObject *obj, PyObject *base, int zeroed);
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArrayWithShape(

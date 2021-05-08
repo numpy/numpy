@@ -661,8 +661,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr_int(
         PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         npy_intp const *dims, npy_intp const *strides, void *data,
-        int flags, PyObject *obj, PyObject *base, int zeroed,
-        int allow_emptystring)
+        int flags, PyObject *obj, PyObject *base, int zeroed)
 {
     PyArrayObject_fields *fa;
     int i;
@@ -682,8 +681,7 @@ PyArray_NewFromDescr_int(
         ret = PyArray_NewFromDescr_int(
                 subtype, descr,
                 nd, newdims, newstrides, data,
-                flags, obj, base,
-                zeroed, allow_emptystring);
+                flags, obj, base, zeroed);
         return ret;
     }
 
@@ -696,27 +694,31 @@ PyArray_NewFromDescr_int(
     }
 
     /* Check datatype element size */
-    nbytes = descr->elsize;
     if (PyDataType_ISUNSIZED(descr)) {
         if (!PyDataType_ISFLEXIBLE(descr)) {
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
             return NULL;
         }
-        else if (PyDataType_ISSTRING(descr) && !allow_emptystring &&
-                 data == NULL) {
+        else {
             PyArray_DESCR_REPLACE(descr);
             if (descr == NULL) {
                 return NULL;
             }
-            if (descr->type_num == NPY_STRING) {
-                nbytes = descr->elsize = 1;
-            }
-            else {
-                nbytes = descr->elsize = sizeof(npy_ucs4);
+            switch (descr->type_num) {
+                case NPY_STRING:
+                    descr->elsize = 1;
+                    break;
+                case NPY_UNICODE:
+                    descr->elsize = sizeof(npy_ucs4);
+                    break;
+                case NPY_VOID:
+                default:
+                    descr->elsize = 0;
             }
         }
     }
+    nbytes = descr->elsize;
 
     /* Check dimensions and multiply them to nbytes */
     for (i = 0; i < nd; i++) {
@@ -940,7 +942,7 @@ PyArray_NewFromDescrAndBase(
 {
     return PyArray_NewFromDescr_int(subtype, descr, nd,
                                     dims, strides, data,
-                                    flags, obj, base, 0, 0);
+                                    flags, obj, base, 0);
 }
 
 /*
@@ -2829,7 +2831,7 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
             &PyArray_Type, type,
             nd, dims, NULL, NULL,
             is_f_order, NULL, NULL,
-            1, 0);
+            1);
 
     if (ret == NULL) {
         return NULL;
@@ -3465,13 +3467,20 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         Py_DECREF(dtype);
         return NULL;
     }
+    if (PyDataType_ISUNSIZED(dtype)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Flexible dtypes must have an explicit size");
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
     if (dtype->elsize == 0) {
         /* Nothing to read, just create an empty array of the requested type */
         return PyArray_NewFromDescr_int(
                 &PyArray_Type, dtype,
                 1, &num, NULL, NULL,
                 0, NULL, NULL,
-                0, 1);
+                0);
     }
     if ((sep == NULL) || (strlen(sep) == 0)) {
         ret = array_fromfile_binary(fp, dtype, num, &nread);

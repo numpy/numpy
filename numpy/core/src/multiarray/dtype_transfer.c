@@ -573,7 +573,7 @@ wrap_copy_swap_function(
             &PyArray_Type, dtype,
             1, &shape, NULL, NULL,
             0, NULL, NULL,
-            0, 1);
+            0);
     if (data->arr == NULL) {
         PyMem_Free(data);
         return NPY_FAIL;
@@ -1322,7 +1322,7 @@ get_legacy_dtype_cast_function(
             &PyArray_Type, tmp_dtype,
             1, &shape, NULL, NULL,
             0, NULL, NULL,
-            0, 1);
+            0);
     if (data->aip == NULL) {
         PyMem_Free(data);
         return NPY_FAIL;
@@ -1349,7 +1349,7 @@ get_legacy_dtype_cast_function(
             &PyArray_Type, tmp_dtype,
             1, &shape, NULL, NULL,
             0, NULL, NULL,
-            0, 1);
+            0);
     if (data->aop == NULL) {
         Py_DECREF(data->aip);
         PyMem_Free(data);

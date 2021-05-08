@@ -524,6 +524,11 @@ _convert_from_array_descr(PyObject *obj, int align)
                     "Field elements must be tuples with at most 3 elements, got '%R'", item);
             goto fail;
         }
+        if (PyDataType_ISUNSIZED(conv)) {
+            PyErr_SetString(PyExc_ValueError,
+                "Flexible dtypes within compound dtypes must have a size");
+            goto fail;
+        }
         if ((PyDict_GetItemWithError(fields, name) != NULL)
              || (title
                  && PyUnicode_Check(title)
@@ -664,6 +669,11 @@ _convert_from_list(PyObject *obj, int align)
         PyArray_Descr *conv = _convert_from_any(
                 PyList_GET_ITEM(obj, i), align);
         if (conv == NULL) {
+            goto fail;
+        }
+        if (PyDataType_ISUNSIZED(conv)) {
+            PyErr_SetString(PyExc_ValueError,
+                "Flexible dtypes within compound dtypes must have a size");
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
@@ -1648,7 +1658,7 @@ _convert_from_str(PyObject *obj, int align)
     }
 
     int check_num = NPY_NOTYPE + 10;
-    int elsize = 0;
+    int elsize = -1;
     /* A typecode like 'd' */
     if (len == 1) {
         /* Python byte string characters are unsigned */
@@ -1687,7 +1697,7 @@ _convert_from_str(PyObject *obj, int align)
                     break;
 
                 default:
-                    if (elsize == 0) {
+                    if (elsize == -1) {
                         check_num = NPY_NOTYPE+10;
                     }
                     /* Support for generic processing c8, i4, f8, etc...*/
@@ -1885,8 +1895,6 @@ static PyMemberDef arraydescr_members[] = {
         T_INT, offsetof(PyArray_Descr, type_num), READONLY, NULL},
     {"byteorder",
         T_CHAR, offsetof(PyArray_Descr, byteorder), READONLY, NULL},
-    {"itemsize",
-        T_INT, offsetof(PyArray_Descr, elsize), READONLY, NULL},
     {"alignment",
         T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
@@ -2004,6 +2012,14 @@ arraydescr_ndim_get(PyArray_Descr *self)
     return PyLong_FromLong(ndim);
 }
 
+static PyObject *
+arraydescr_itemsize_get(PyArray_Descr *self)
+{
+    if (PyDataType_ISUNSIZED(self)) {
+        Py_RETURN_NONE;
+    }
+    return PyInt_FromLong(self->elsize);
+}
 
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
@@ -2309,6 +2325,9 @@ static PyGetSetDef arraydescr_getsets[] = {
         NULL, NULL},
     {"hasobject",
         (getter)arraydescr_hasobject_get,
+        NULL, NULL, NULL},
+    {"itemsize",
+        (getter)arraydescr_itemsize_get,
         NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };

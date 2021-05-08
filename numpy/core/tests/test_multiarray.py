@@ -1623,7 +1623,8 @@ class TestZeroSizeFlexible:
             zs = self._zeros(10, dt)
 
             # viewing as itself should be allowed
-            assert_equal(zs.view(dt).dtype, np.dtype(dt))
+            assert_equal(zs.view(dt).dtype, zs.dtype)
+            assert_equal(zs.view(zs.dtype).dtype, zs.dtype)
 
             # viewing as any non-empty type gives an empty result
             assert_equal(zs.view((dt, 1)).shape, (0,))

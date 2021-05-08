@@ -417,7 +417,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
             PyArray_BYTES(self) + offset,
             PyArray_FLAGS(self) & ~NPY_ARRAY_F_CONTIGUOUS,
             (PyObject *)self, (PyObject *)self,
-            0, 1);
+            0);
     return ret;
 }
 
@@ -1975,6 +1975,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_INCREF(typecode);
     nd = PyArray_IntpFromSequence(shape, dimensions, NPY_MAXDIMS);
     if (nd < 0) {
+        return NULL;
+    }
+    if (PyDataType_ISUNSIZED(PyArray_DESCR(self))) {
+        PyErr_SetString(PyExc_ValueError, "Missing data-type size.");
         return NULL;
     }
     size = PyArray_MultiplyList(dimensions, nd);

@@ -1,0 +1,12 @@
+``PyArray_Descr.elsize`` is now ``-1`` for unsized flexible dtypes
+------------------------------------------------------------------
+Previously it was ``0`` - but that made it impossible to distinguish unsized
+types (``U``) from sized-to-0 types (``U0``). A new C macro,
+``PyDataType_ISUNSIZED(descr)``, exists to check for this.
+
+From the python side, this manifests itself as::
+
+    >>> np.dtype(str).itemsize  # None
+    >>> np.dtype('U').itemsize  # None
+    >>> np.dtype('U0').itemsize
+    0

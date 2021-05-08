@@ -1,0 +1,4 @@
+Empty flexible dtypes, such as ``S0``, ``U0``, and ``V0``, are now supported
+----------------------------------------------------------------------------
+Previously, these were equivalent to ``S``, ``U``, and ``V``, which described
+a dtype that was not yet assigned a size.
