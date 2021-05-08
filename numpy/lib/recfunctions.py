@@ -17,6 +17,10 @@ from numpy.testing import suppress_warnings
 
 _check_fill_value = np.ma.core._check_fill_value
 
+# Make "recfunctions" available in numpy.lib for convenience, we could
+# make it a lazy import instead/additionally.
+np.lib.__all__.append("recfunctions")
+np.lib.__all__.sort()
 
 __all__ = [
     'append_fields', 'apply_along_fields', 'assign_fields_by_name',
