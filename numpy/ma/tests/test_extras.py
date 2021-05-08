@@ -13,7 +13,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_warns, suppress_warnings
+    assert_warns, suppress_warnings, assert_raises
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -291,6 +291,145 @@ class TestAverage:
                      average(a.imag, weights=wts, axis=1)*1j)
         assert_almost_equal(wav1.real, expected1.real)
         assert_almost_equal(wav1.imag, expected1.imag)
+
+    def test_average_float_dtype(self):
+        """Tests that float types are preserved for masked and unmasked inputs."""
+        data = np.ones((3, 3, 3), dtype=np.float32)
+        unmasked_average = average(data, axis=0)
+        assert_equal(unmasked_average.dtype, np.float32)
+
+        data_masked = masked_array(np.ones((3, 3, 3), dtype=np.float32),
+                                   np.ones((3, 3, 3), dtype=bool))
+        masked_average = average(data_masked, axis=0)
+        assert_equal(masked_average.dtype, np.float32)
+
+        data = np.ones((3, 3, 3), dtype=np.float64)
+        unmasked_average = average(data, axis=0)
+        assert_equal(unmasked_average.dtype, np.float64)
+
+        data_masked = masked_array(np.ones((3, 3, 3), dtype=np.float64),
+                                   np.ones((3, 3, 3), dtype=bool))
+        masked_average = average(data_masked, axis=0)
+        assert_equal(masked_average.dtype, np.float64)
+
+        data = np.ones((3, 3, 3), dtype=np.float16)
+        unmasked_average = average(data, axis=0)
+        assert_equal(unmasked_average.dtype, np.float16)
+
+        data_masked = masked_array(np.ones((3, 3, 3), dtype=np.float16),
+                                   np.ones((3, 3, 3), dtype=bool))
+        masked_average = average(data_masked, axis=0)
+        assert_equal(masked_average.dtype, np.float16)
+
+    def test_average_integral_dtype(self):
+        """Tests the integral rules, that is integral values become float64"""
+        data = np.ones((3, 3, 3), dtype=np.int8)
+        unmasked_average = average(data, axis=0)
+        assert_equal(unmasked_average.dtype, np.float64)
+
+        data_masked = masked_array(np.ones((3, 3, 3), dtype=np.int8),
+                                   np.ones((3, 3, 3), dtype=bool))
+        masked_average = average(data_masked, axis=0)
+        assert_equal(masked_average.dtype, np.float64)
+
+        data = np.ones((3, 3, 3), dtype=np.uint8)
+        unmasked_average = average(data, axis=0)
+        assert_equal(unmasked_average.dtype, np.float64)
+
+        data_masked = masked_array(np.ones((3, 3, 3), dtype=np.uint8),
+                                   np.ones((3, 3, 3), dtype=bool))
+        masked_average = average(data_masked, axis=0)
+        assert_equal(masked_average.dtype, np.float64)
+
+        data = np.ones((3, 3, 3), dtype=np.int32)
+        unmasked_average = average(data, axis=0)
+        assert_equal(unmasked_average.dtype, np.float64)
+
+        data_masked = masked_array(np.ones((3, 3, 3), dtype=np.int32),
+                                   np.ones((3, 3, 3), dtype=bool))
+        masked_average = average(data_masked, axis=0)
+        assert_equal(masked_average.dtype, np.float64)
+
+    @pytest.mark.skipif(not hasattr(np, 'float128') or not hasattr(np, 'complex256'),
+                        reason='Does not work on systems without float128 or complex256 dtypes.')
+    def test_average_minimal_dtype(self):
+        """Tests rules for type mangling: choose minimal type to represent result properly."""
+        a = masked_array(np.ones(5, dtype=np.float128))
+        w = masked_array(np.ones(5, dtype=np.complex64))
+        assert_equal(average(a, weights=w).dtype, np.complex256)
+
+        a = masked_array(np.ones(5, dtype=np.float128),
+                         np.zeros(5, dtype=bool))
+        w = masked_array(np.ones(5, dtype=np.complex64),
+                         np.zeros(5, dtype=bool))
+        assert_equal(average(a, weights=w), 1)
+        assert_equal(average(a, weights=w).dtype, np.complex256)
+
+    def test_average_masked_weights(self):
+        # weighted average of unmasked values
+        a = masked_array(np.arange(5),
+                         [False, False, True, False, False])
+        w = masked_array(np.arange(5),
+                         [False, True, False, False, False])
+        assert_equal(average(a, weights=w), 25 / 7)
+
+        # along different dimensions
+        a = masked_array(np.ones((1, 5)),
+                         [[False, False, True, False, False]])
+        w = masked_array(np.ones((1, 5)),
+                         [[False, True, False, False, False]])
+        assert_equal(average(a, weights=w), 1)
+        assert_equal(average(a, axis=0, weights=w), [1, 99., 99., 1, 1])
+        assert_equal(average(a, axis=1, weights=w), [1])
+
+        # different shapes for a and weights
+        a = masked_array([np.arange(5), np.arange(1, 6)],
+                         [[False, True, False, False, False]] * 2)
+        w = masked_array(np.arange(1, 6),
+                         [False, True, False, False, False])
+        assert_equal(average(a, axis=1, weights=w), [38 / 13, 51 / 13])
+
+        # no mask for a, but mask for weights; same shapes
+        a = masked_array(np.arange(5))
+        w = masked_array(np.arange(5),
+                         [False, True, False, True, False])
+        assert_equal(average(a, weights=w), 20 / 6)
+
+        # no mask for a, but mask for weights; different shapes
+        a = masked_array([np.arange(5), np.arange(1, 6)])
+        w = masked_array([1, 0],
+                         [False, True])
+        assert_equal(average(a, axis=0, weights=w).mask,
+                     [False, False, False, False, False])
+
+        # more complex new masks per axis
+        a = masked_array([np.arange(1, 6), np.arange(1, 6)])
+        w = masked_array([np.arange(1, 6), np.arange(1, 6)],
+                         [[True, True, True, True, True],
+                          [False, True, False, False, False]])
+        assert_equal(average(a, weights=w), 51 / 13)
+        assert_equal(average(a, axis=0, weights=w).mask,
+                     [False, True, False, False, False])
+        assert_equal(average(a, axis=1, weights=w).mask, [True, False])
+
+    def test_average_raises(self):
+        a = masked_array([np.arange(1, 6), np.arange(2, 7)])
+
+        # no axis given for different shapes of `a` and weights
+        assert_raises(TypeError, average, a, weights=np.arange(1, 6))
+        # weights not 1D for different shapes
+        assert_raises(TypeError, average, a, axis=0, weights=np.ones((2, 3)))
+        # weights dimension does not fit the axis dimension
+        assert_raises(ValueError, average, a, axis=0, weights=np.ones(3))
+
+    def test_div0_masking(self):
+        # See gh-14668 discussion:
+        # division by 0 should mask a value to retain backwards compatibility
+        x = masked_array([[1, 2]], mask=[[0, 1]])
+        w = masked_array([[0, 0]], mask=[[0, 0]])
+        avg = average(x, weights=w, axis=1)
+        exp = masked_array([9], mask=[True])
+        assert_equal(avg, exp)
 
 
 class TestConcatenator:

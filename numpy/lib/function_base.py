@@ -320,14 +320,13 @@ def average(a, axis=None, weights=None, returned=False):
         Return the average along the specified axis. When `returned` is `True`,
         return a tuple with the average as the first element and the sum
         of the weights as the second element. `sum_of_weights` is of the
-        same type as `retval`. The result dtype follows a genereal pattern.
+        same type as `retval`. The result dtype follows a general pattern.
         If `weights` is None, the result dtype will be that of `a` , or ``float64``
         if `a` is integral. Otherwise, if `weights` is not None and `a` is non-
         integral, the result type will be the type of lowest precision capable of
         representing values of both `a` and `weights`. If `a` happens to be
-        integral, the previous rules still applies but the result dtype will
+        integral, the previous rule still applies but the result dtype will
         at least be ``float64``.
-
     Raises
     ------
     ZeroDivisionError
