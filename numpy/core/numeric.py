@@ -936,12 +936,12 @@ def outer(a, b, out=None):
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
 
 
-def _tensordot_dispatcher(a, b, axes=None):
+def _tensordot_dispatcher(a, b, axes=None, out=None):
     return (a, b)
 
 
 @array_function_dispatch(_tensordot_dispatcher)
-def tensordot(a, b, axes=2):
+def tensordot(a, b, axes=2, out=None):
     """
     Compute tensor dot product along specified axes.
 
@@ -964,6 +964,14 @@ def tensordot(a, b, axes=2):
         * (2,) array_like
           Or, a list of axes to be summed over, first sequence applying to `a`,
           second to `b`. Both elements array_like must be of the same length.
+
+    out : ndarray, optional
+        Output argument. This must have the exact kind that would be returned
+        if it was not used. In particular, it must have the right type, must be
+        C-contiguous, and its dtype must be the dtype that would be returned
+        for `dot(a,b)`. This is a performance feature. Therefore, if these
+        conditions are not met, an exception is raised, instead of attempting
+        to be flexible.
 
     Returns
     -------
@@ -1016,6 +1024,14 @@ def tensordot(a, b, axes=2):
     ...       for n in range(4):
     ...         d[i,j] += a[k,n,i] * b[n,k,j]
     >>> c == d
+    array([[ True,  True],
+           [ True,  True],
+           [ True,  True],
+           [ True,  True],
+           [ True,  True]])
+    >>> e = np.zeros((5,2))
+    >>> _ = np.tensordot(a, b, axes=([1,0],[0,1]), out=e)
+    >>> e == d
     array([[ True,  True],
            [ True,  True],
            [ True,  True],
@@ -1127,10 +1143,36 @@ def tensordot(a, b, axes=2):
     newshape_b = (N2, int(multiply.reduce([bs[ax] for ax in notin])))
     oldb = [bs[axis] for axis in notin]
 
+    if out is not None:
+        correct = True
+        if isinstance(out, np.ndarray):
+            out = out.view(np.ndarray)
+            if out.shape != tuple(olda+oldb):
+                correct = False
+            else:
+                nout = out.reshape((newshape_a[0], newshape_b[1]))
+                if np.may_share_memory(nout, out):
+                    out = nout
+                else:
+                    correct = False
+        else: 
+            correct = False
+        if correct is False: 
+            raise TypeError("output array is not acceptable (must have"
+            "the right number of dimensions and be able to reshape"
+            "without creating copy)")
+
     at = a.transpose(newaxes_a).reshape(newshape_a)
     bt = b.transpose(newaxes_b).reshape(newshape_b)
-    res = dot(at, bt)
-    return res.reshape(olda + oldb)
+    
+    out = dot(at, bt, out)
+    nout = out.reshape(olda + oldb)
+    if np.shares_memory(nout, out):
+        out = nout
+    else:
+        raise TypeError("output array is not acceptable (must be able to"
+        "reshape without creating copy)")
+    return out
 
 
 def _roll_dispatcher(a, shift, axis=None):
