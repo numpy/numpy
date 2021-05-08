@@ -1,3 +1,5 @@
+import abc
+
 from distutils.core import Command
 from numpy.distutils import log
 
@@ -15,7 +17,45 @@ def show_fortran_compilers(_cache=None):
     dist = distutils.core._setup_distribution
     show_fcompilers(dist)
 
-class config_fc(Command):
+class config(Command, metaclass=abc.ABC):
+
+    @abstractmethod
+    def initialize_options(self):
+        pass
+
+    @abstractmethod
+    def finalize_options(self):
+        pass
+
+    def _finalize_options(self, msg, compiler):
+        log.info(msg)
+        build_clib = self.get_finalized_command('build_clib')
+        build_ext = self.get_finalized_command('build_ext')
+        config = self.get_finalized_command('config')
+        build = self.get_finalized_command('build')
+        cmd_list = [self, config, build_clib, build_ext, build]
+        for a in compiler:
+            l = []
+            for c in cmd_list:
+                v = getattr(c, a)
+                if v is not None:
+                    if not isinstance(v, str): v = v.compiler_type
+                    if v not in l: l.append(v)
+            if not l: v1 = None
+            else: v1 = l[0]
+            if len(l)>1:
+                log.warn('  commands have different --%s options: %s'\
+                         ', using first in list as default' % (a, l))
+            if v1:
+                for c in cmd_list:
+                    if getattr(c, a) is None: setattr(c, a, v1)
+        return
+
+    def run(self):
+        # Do nothing.
+        return
+
+class config_fc(config):
     """ Distutils command to hold user specified options
     to Fortran compilers.
 
@@ -57,33 +97,10 @@ class config_fc(Command):
         self.noarch = None
 
     def finalize_options(self):
-        log.info('unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options')
-        build_clib = self.get_finalized_command('build_clib')
-        build_ext = self.get_finalized_command('build_ext')
-        config = self.get_finalized_command('config')
-        build = self.get_finalized_command('build')
-        cmd_list = [self, config, build_clib, build_ext, build]
-        for a in ['fcompiler']:
-            l = []
-            for c in cmd_list:
-                v = getattr(c, a)
-                if v is not None:
-                    if not isinstance(v, str): v = v.compiler_type
-                    if v not in l: l.append(v)
-            if not l: v1 = None
-            else: v1 = l[0]
-            if len(l)>1:
-                log.warn('  commands have different --%s options: %s'\
-                         ', using first in list as default' % (a, l))
-            if v1:
-                for c in cmd_list:
-                    if getattr(c, a) is None: setattr(c, a, v1)
+        msg = 'unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options'
+        return self._finalize_options(msg, ['fcompiler'])
 
-    def run(self):
-        # Do nothing.
-        return
-
-class config_cc(Command):
+class config_cc(config):
     """ Distutils command to hold user specified options
     to C/C++ compilers.
     """
@@ -98,29 +115,5 @@ class config_cc(Command):
         self.compiler = None
 
     def finalize_options(self):
-        log.info('unifing config_cc, config, build_clib, build_ext, build commands --compiler options')
-        build_clib = self.get_finalized_command('build_clib')
-        build_ext = self.get_finalized_command('build_ext')
-        config = self.get_finalized_command('config')
-        build = self.get_finalized_command('build')
-        cmd_list = [self, config, build_clib, build_ext, build]
-        for a in ['compiler']:
-            l = []
-            for c in cmd_list:
-                v = getattr(c, a)
-                if v is not None:
-                    if not isinstance(v, str): v = v.compiler_type
-                    if v not in l: l.append(v)
-            if not l: v1 = None
-            else: v1 = l[0]
-            if len(l)>1:
-                log.warn('  commands have different --%s options: %s'\
-                         ', using first in list as default' % (a, l))
-            if v1:
-                for c in cmd_list:
-                    if getattr(c, a) is None: setattr(c, a, v1)
-        return
-
-    def run(self):
-        # Do nothing.
-        return
+        msg = 'unifing config_cc, config, build_clib, build_ext, build commands --compiler options'
+        return self._finalize_options(msg, ['compiler'])
