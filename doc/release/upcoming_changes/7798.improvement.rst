@@ -1,0 +1,16 @@
+Trailing Padding now supported in PEP3118 buffer inferface
+----------------------------------------------------------
+Previously, structured types with trailing padding such as
+`np.dtype({'formats': ['i1'], 'names': ['a'], 'itemsize': 4})` could not
+roundtrip through the PEP3118 interface using a memoryview, as in
+`a == np.array(memoryview(a))`.  Now, such trailing padding is preserved.
+
+More technically, the PEP3118 interface now supports PEP3118 format strings as
+follows: Within "T{}", in aligned @ mode, trailing padding is automatically
+assumed in the same way as C structs and numpy aligned dtypes. Outside of T{}
+trailing padding is not automatically added or assumed in inputs, following
+python's struct module, but is explicitly added by padding with "x" or unnamed
+zero-sized trailing elements. 0-sized unnamed elements, like "0i", can now be
+added anywhere in the format string, and in @ mode this will add padding bytes
+up to that type's alignment offset, and otherwise is ignored, as described in
+the python struct docs.
