@@ -1,0 +1,5 @@
+`ctypeslib.load_library` can now take any path-like object
+-----------------------------------------------------------------------
+All parameters in the can now take any :term:`python:path-like object`.
+This includes the likes of strings, bytes and objects implementing the
+:meth:`__fspath__<os.PathLike.__fspath__>` protocol.
