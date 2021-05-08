@@ -651,17 +651,19 @@ def matrix_power(a, n):
         return fmatmul(a, a)
 
     elif n == 3:
-        return fmatmul(fmatmul(a, a), a)
+        # create and use buffered space
+        buffer = fmatmul(a, a)
+        return fmatmul(buffer, a, out=buffer)
 
     # Use binary decomposition to reduce the number of matrix multiplications.
     # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
     # increasing powers of 2, and multiply into the result as needed.
     z = result = None
     while n > 0:
-        z = a if z is None else fmatmul(z, z)
+        z = a.copy() if z is None else fmatmul(z, z, out=z)
         n, bit = divmod(n, 2)
         if bit:
-            result = z if result is None else fmatmul(result, z)
+            result = z.copy() if result is None else fmatmul(result, z, out=result)
 
     return result
 
