@@ -844,13 +844,11 @@ array_scalar_forward(PyArrayObject *v,
                      PyObject *(*builtin_func)(PyObject *),
                      const char *where)
 {
-    PyObject *scalar;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only size-1 arrays can be"\
-                        " converted to Python scalars");
+    if (check_has_rank_0(v) < 0) {
         return NULL;
     }
 
+    PyObject *scalar;
     scalar = PyArray_GETITEM(v, PyArray_DATA(v));
     if (scalar == NULL) {
         return NULL;

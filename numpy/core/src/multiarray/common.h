@@ -317,3 +317,5 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
 #endif
 
+NPY_NO_EXPORT int
+check_has_rank_0(PyArrayObject *v);
