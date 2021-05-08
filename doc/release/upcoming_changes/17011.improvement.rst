@@ -1,0 +1,6 @@
+Call ``str`` automatically on third argument to functions like `assert_equal`
+-----------------------------------------------------------------------------
+
+The third argument to functions like `assert_equal` now has ``str`` called on
+it automatically. This way it mimics the built-in ``assert`` statement, where
+``assert_equal(a, b, obj)`` works like ``assert a == b, obj``.
