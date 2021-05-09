@@ -813,7 +813,7 @@ cdef class RandomState:
         .. versionadded:: 1.7.0
 
         .. note::
-            New code should use the ``choice`` method of a ``default_rng()``
+            New code should use the ``choice`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -851,6 +851,7 @@ cdef class RandomState:
         --------
         randint, shuffle, permutation
         Generator.choice: which should be used in new code
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2155,14 +2156,14 @@ cdef class RandomState:
         Does their energy intake deviate systematically from the recommended
         value of 7725 kJ? Our null hypothesis will be the absence of deviation,
         and the alternate hypothesis will be the presence of an effect that could be
-        either positive or negative, hence making our test 2-tailed. 
+        either positive or negative, hence making our test 2-tailed.
 
         Because we are estimating the mean and we have N=11 values in our sample,
-        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
-        compute the t statistic using the empirical mean and empirical standard 
-        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and
+        compute the t statistic using the empirical mean and empirical standard
+        deviation of our intake. We use a ddof of 1 to base the computation of our
         empirical standard deviation on an unbiased estimate of the variance (note:
-        the final estimate is not unbiased due to the concave nature of the square 
+        the final estimate is not unbiased due to the concave nature of the square
         root).
 
         >>> np.mean(intake)
@@ -2180,18 +2181,18 @@ cdef class RandomState:
         >>> s = np.random.standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        Does our t statistic land in one of the two critical regions found at 
+        Does our t statistic land in one of the two critical regions found at
         both tails of the distribution?
 
         >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
         0.018318  #random < 0.05, statistic is in critical region
 
-        The probability value for this 2-tailed test is about 1.83%, which is 
-        lower than the 5% pre-determined significance threshold. 
+        The probability value for this 2-tailed test is about 1.83%, which is
+        lower than the 5% pre-determined significance threshold.
 
         Therefore, the probability of observing values as extreme as our intake
-        conditionally on the null hypothesis being true is too low, and we reject 
-        the null hypothesis of no deviation. 
+        conditionally on the null hypothesis being true is too low, and we reject
+        the null hypothesis of no deviation.
 
         """
         return cont(&legacy_standard_t, &self._aug_state, size, self.lock, 1,
