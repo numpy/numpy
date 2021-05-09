@@ -1,9 +1,10 @@
 #include <immintrin.h>
 
-int main(void)
+int main(int argc, char **argv)
 {
+    __m512i a = _mm512_loadu_si512((const __m512i*)argv[argc-1]);
     /* VBMI2 */
-    __m512i a = _mm512_shrdv_epi64(_mm512_setzero_si512(), _mm512_setzero_si512(), _mm512_setzero_si512());
+    a = _mm512_shrdv_epi64(a, a, _mm512_setzero_si512());
     /* BITLAG */
     a = _mm512_popcnt_epi8(a);
     /* VPOPCNTDQ */
