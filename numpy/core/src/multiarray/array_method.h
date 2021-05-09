@@ -17,6 +17,7 @@ typedef enum {
      * setup/check. No function should set error flags and ignore them
      * since it would interfere with chaining operations (e.g. casting).
      */
+    /* TODO: Change this into a positive flag */
     NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 2,
     /* Whether the method supports unaligned access (not runtime) */
     NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
@@ -112,6 +113,15 @@ typedef struct PyArrayMethodObject_tag {
     PyArrayMethod_StridedLoop *contiguous_loop;
     PyArrayMethod_StridedLoop *unaligned_strided_loop;
     PyArrayMethod_StridedLoop *unaligned_contiguous_loop;
+    /*
+     * Private slot for the legacy ufunc wrapper, only necessary for
+     * datetime/timedelta support (due to metadata) and ufuncs with custom
+     * resolvers (in which case a dtype will also flexible, e.g. a void
+     * as used by `pyerfa`).
+     * (creates a reference cylce, but only after use and only for rare cases,
+     * e.g. numba will not notice this.)
+     */
+    PyObject *ufunc_for_resolution;
 } PyArrayMethodObject;
 
 
@@ -158,6 +168,14 @@ npy_default_get_strided_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+NPY_NO_EXPORT int
+PyArrayMethod_GetMaskedStridedLoop(
+        PyArrayMethod_Context *context,
+        int aligned,
+        npy_intp *fixed_strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
 
 /*
  * TODO: This function is the internal version, and its error paths may

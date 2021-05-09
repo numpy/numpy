@@ -1,0 +1,32 @@
+Ufunc ``signature=...`` and ``dtype=`` generalization and ``casting``
+---------------------------------------------------------------------
+The behaviour for ``signature=...`` and ``dtype=...`` can differ in
+some cases to the previous behaviour.
+When ``signature`` was previously used, the casting check on inputs
+was relaxed, which could lead to downcasting inputs unsafely especially
+if combined with ``casting="unsafe"``.
+
+Casting is now guranteed to be safe.  If a signature is only
+partially provided, for example using ``signature=("float64", None, None)``,
+this could lead to no loop being found (an error).
+In that case, it is necessary to provide the complete signature
+to enforce casting the inputs.
+Since NumPy special cases if only outputs (or ``dtype``) is provided,
+this should affect very few users.
+
+Further, the meaning of ``dtype="float64"`` has been slightly modified and
+now strictly enforces only the correct output (and not input) DTypes.
+This means it is now always equivalent to::
+
+    signature=(None, None, "float64")
+
+(If the ufunc has two inputs and one output).  Since, this could lead
+to no loop being found in some cases, NumPy will normally also search
+for the loop::
+
+    signature("float64", "float64, "float64")
+
+if the first search failed.
+In the future, this behaviour may be customized to achieve the expected
+results for more complex ufuncs.  (For some universal functions such as
+``np.ldexp`` inputs can have different DTypes.)

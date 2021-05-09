@@ -35,6 +35,7 @@
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "convert_datatype.h"
+#include "common.h"
 
 
 /*
@@ -417,6 +418,8 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
     res->method->nout = spec->nout;
     res->method->flags = spec->flags;
     res->method->casting = spec->casting;
+    /* Ufunc is set manually for some ArrayMethods for legacy support: */
+    res->method->ufunc_for_resolution = NULL;
     if (fill_arraymethod_from_slots(res, spec, private) < 0) {
         Py_DECREF(res);
         return NULL;
@@ -441,6 +444,7 @@ arraymethod_dealloc(PyObject *self)
     PyArrayMethodObject *meth;
     meth = ((PyArrayMethodObject *)self);
 
+    Py_CLEAR(meth->ufunc_for_resolution);
     PyMem_Free(meth->name);
 
     Py_TYPE(self)->tp_free(self);
@@ -461,13 +465,10 @@ static PyObject *
 boundarraymethod_repr(PyBoundArrayMethodObject *self)
 {
     int nargs = self->method->nin + self->method->nout;
-    PyObject *dtypes = PyTuple_New(nargs);
+    PyObject *dtypes = PyArray_TupleFromItems(
+            nargs, (PyObject **)self->dtypes, 0);
     if (dtypes == NULL) {
         return NULL;
-    }
-    for (int i = 0; i < nargs; i++) {
-        Py_INCREF(self->dtypes[i]);
-        PyTuple_SET_ITEM(dtypes, i, (PyObject *)self->dtypes[i]);
     }
     return PyUnicode_FromFormat(
             "<np._BoundArrayMethod `%s` for dtypes %S>",
@@ -743,6 +744,112 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
     Py_RETURN_NONE;
+}
+
+
+/*
+ * Support for masked inner-strided loops. These are currently ONLY used
+ * for normal ufuncs, and only a generic loop getter exists.
+ * It may make sense to generalize this in the future or allow specialization.
+ * Until then, the inner-loop signature is flexible.
+ */
+typedef struct {
+    NpyAuxData base;
+    PyArrayMethod_StridedLoop *unmasked_stridedloop;
+    NpyAuxData *unmasked_auxdata;
+    int nargs;
+    char *dataptrs[];
+} _masked_stridedloop_data;
+
+
+static void
+_masked_stridedloop_data_free(NpyAuxData *auxdata)
+{
+    _masked_stridedloop_data *data = (_masked_stridedloop_data *)auxdata;
+    NPY_AUXDATA_FREE(data->unmasked_auxdata);
+    PyMem_Free(data);
+}
+
+static int
+generic_masked_strided_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions,
+        const npy_intp *strides, NpyAuxData *_auxdata)
+{
+    _masked_stridedloop_data *auxdata = (_masked_stridedloop_data *)_auxdata;
+    int nargs = auxdata->nargs;
+    PyArrayMethod_StridedLoop *strided_loop = auxdata->unmasked_stridedloop;
+    NpyAuxData *strided_loop_auxdata = auxdata->unmasked_auxdata;
+
+    char **dataptrs = auxdata->dataptrs;
+    memcpy(dataptrs, data, nargs * sizeof(char *));
+    char *mask = data[nargs];
+    npy_intp mask_stride = strides[nargs];
+
+    npy_intp N = dimensions[0];
+    /* Process the data as runs of unmasked values */
+    do {
+        ssize_t subloopsize;
+
+        /* Skip masked values */
+        mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 1);
+        for (int i = 0; i < nargs; i++) {
+            dataptrs[i] += subloopsize * strides[i];
+        }
+        N -= subloopsize;
+
+        /* Process unmasked values */
+        mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 0);
+        if (strided_loop(context,
+                dataptrs, &subloopsize, strides, strided_loop_auxdata) != 0) {
+            return -1;
+        }
+        for (int i = 0; i < nargs; i++) {
+            dataptrs[i] += subloopsize * strides[i];
+        }
+        N -= subloopsize;
+    } while (N > 0);
+
+    return 0;
+}
+
+
+/*
+ * Identical to the `get_loop` functions and wraps it.  This adds support
+ * to a boolean mask being passed in as a last, additional, operand.
+ * The wrapped loop will only be called for unmasked elements.
+ * (Does not support `move_references` or inner dimensions!)
+ */
+NPY_NO_EXPORT int
+PyArrayMethod_GetMaskedStridedLoop(
+        PyArrayMethod_Context *context,
+        int aligned, npy_intp *fixed_strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    _masked_stridedloop_data *data;
+    int nargs = context->method->nin + context->method->nout;
+
+    /* Add working memory for the data pointers, to modify them in-place */
+    data = PyMem_Malloc(sizeof(_masked_stridedloop_data) +
+                        sizeof(char *) * nargs);
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    data->base.free = _masked_stridedloop_data_free;
+    data->base.clone = NULL;  /* not currently used */
+    data->unmasked_stridedloop = NULL;
+    data->nargs = nargs;
+
+    if (context->method->get_strided_loop(context,
+            aligned, 0, fixed_strides,
+            &data->unmasked_stridedloop, &data->unmasked_auxdata, flags) < 0) {
+        PyMem_Free(data);
+    }
+    *out_transferdata = (NpyAuxData *)data;
+    *out_loop = generic_masked_strided_loop;
+    return 0;
 }
 
 
