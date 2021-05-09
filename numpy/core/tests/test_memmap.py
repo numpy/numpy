@@ -4,7 +4,7 @@ import shutil
 import mmap
 import pytest
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryFile, mkstemp, mkdtemp
+from tempfile import NamedTemporaryFile, TemporaryFile, mkdtemp
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
@@ -46,8 +46,8 @@ class TestMemmap:
         assert_array_equal(self.data, newfp)
         assert_equal(newfp.flags.writeable, False)
 
-    def test_open_with_filename(self):
-        tmpname = mkstemp('', 'mmap', dir=self.tempdir)[1]
+    def test_open_with_filename(self, tmp_path):
+        tmpname = tmp_path / 'mmap'
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         fp[:] = self.data[:]
@@ -67,11 +67,11 @@ class TestMemmap:
         assert_equal(mode, fp.mode)
         del fp
 
-    def test_filename(self):
-        tmpname = mkstemp('', 'mmap', dir=self.tempdir)[1]
+    def test_filename(self, tmp_path):
+        tmpname = tmp_path / "mmap"
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
-        abspath = os.path.abspath(tmpname)
+        abspath = Path(os.path.abspath(tmpname))
         fp[:] = self.data[:]
         assert_equal(abspath, fp.filename)
         b = fp[:1]
@@ -79,8 +79,8 @@ class TestMemmap:
         del b
         del fp
 
-    def test_path(self):
-        tmpname = mkstemp('', 'mmap', dir=self.tempdir)[1]
+    def test_path(self, tmp_path):
+        tmpname = tmp_path / "mmap"
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
                        shape=self.shape)
         # os.path.realpath does not resolve symlinks on Windows
