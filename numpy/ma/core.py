@@ -8107,7 +8107,11 @@ class _convert2ma:
             # Add the signature of the function at the beginning of the doc
             if sig:
                 sig = "%s%s\n" % (self._func.__name__, sig)
-            doc = sig + doc
+            note_for_return_type = (
+                "\nNote: If input value is ``np.ma.MaskedArray``, "
+                "return value is also an ``np.ma.MaskedArray``."
+            )
+            doc = sig + doc + note_for_return_type
         return doc
 
     def __call__(self, *args, **params):
