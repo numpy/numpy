@@ -4,15 +4,6 @@ Utility classes and functions for the polynomial modules.
 This module provides: error and warning objects; a polynomial base class;
 and some routines used in both the `polynomial` and `chebyshev` modules.
 
-Error objects
--------------
-
-.. autosummary::
-   :toctree: generated/
-
-   PolyError            base class for this sub-package's errors.
-   PolyDomainError      raised when domains are mismatched.
-
 Warning objects
 ---------------
 
@@ -42,7 +33,7 @@ import warnings
 import numpy as np
 
 __all__ = [
-    'RankWarning', 'PolyError', 'PolyDomainError', 'as_series', 'trimseq',
+    'RankWarning', 'as_series', 'trimseq',
     'trimcoef', 'getdomain', 'mapdomain', 'mapparms']
 
 #
@@ -52,20 +43,6 @@ __all__ = [
 class RankWarning(UserWarning):
     """Issued by chebfit when the design matrix is rank deficient."""
     pass
-
-class PolyError(Exception):
-    """Base class for errors in this module."""
-    pass
-
-class PolyDomainError(PolyError):
-    """Issued by the generic Poly class when two domains don't match.
-
-    This is raised when an binary operation is passed Poly objects with
-    different domains.
-
-    """
-    pass
-
 
 #
 # Helper functions to convert inputs to 1-D arrays
