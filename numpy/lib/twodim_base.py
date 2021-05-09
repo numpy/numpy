@@ -705,7 +705,9 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> x = np.random.normal(2, 1, 100)
     >>> y = np.random.normal(1, 1, 100)
     >>> H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges))
-    >>> H = H.T  # Let each row list bins with common y range.
+    >>> # Histogram does not follow Cartesian convention (see Notes),
+    >>> # therefore transpose H for visualization purposes.
+    >>> H = H.T
 
     :func:`imshow <matplotlib.pyplot.imshow>` can only display square bins:
 
