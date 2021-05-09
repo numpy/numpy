@@ -21,14 +21,6 @@ Warning objects
 
    RankWarning  raised in least-squares fit for rank-deficient matrix.
 
-Base class
-----------
-
-.. autosummary::
-   :toctree: generated/
-
-   PolyBase Obsolete base class for the polynomial classes. Do not use.
-
 Functions
 ---------
 
@@ -51,7 +43,7 @@ import numpy as np
 
 __all__ = [
     'RankWarning', 'PolyError', 'PolyDomainError', 'as_series', 'trimseq',
-    'trimcoef', 'getdomain', 'mapdomain', 'mapparms', 'PolyBase']
+    'trimcoef', 'getdomain', 'mapdomain', 'mapparms']
 
 #
 # Warnings and Exceptions
@@ -74,21 +66,6 @@ class PolyDomainError(PolyError):
     """
     pass
 
-#
-# Base class for all polynomial types
-#
-
-class PolyBase:
-    """
-    Base class for all polynomial types.
-
-    Deprecated in numpy 1.9.0, use the abstract
-    ABCPolyBase class instead. Note that the latter
-    requires a number of virtual functions to be
-    implemented.
-
-    """
-    pass
 
 #
 # Helper functions to convert inputs to 1-D arrays
