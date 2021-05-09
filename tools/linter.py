@@ -9,6 +9,14 @@ CONFIG = os.path.join(
          'lint_diff.ini',
 )
 
+# NOTE: The `diff` and `exclude` options of pycodestyle seem to be
+# incompatible, so instead just exclude the necessary files when
+# computing the diff itself.
+EXCLUDE = (
+    "numpy/typing/tests/data/",
+    "numpy/__config__.py",
+)
+
 
 class DiffLinter:
     def __init__(self, branch):
@@ -29,11 +37,15 @@ class DiffLinter:
             print(f"Branch with name `{self.branch}` does not exist")
             sys.exit(1)
 
+        exclude = [f':(exclude){i}' for i in EXCLUDE]
         if uncommitted:
-            diff = self.repo.git.diff(self.head, '--unified=0', '***.py')
+            diff = self.repo.git.diff(
+                self.head, '--unified=0', '***.py', *exclude
+            )
         else:
-            diff = self.repo.git.diff(commit, self.head,
-                   '--unified=0', '***.py')
+            diff = self.repo.git.diff(
+                commit, self.head, '--unified=0', '***.py', *exclude
+            )
         return diff
 
     def run_pycodestyle(self, diff):

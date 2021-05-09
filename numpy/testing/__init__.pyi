@@ -7,11 +7,17 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
+from unittest import (
+    TestCase as TestCase,
+)
+
 from unittest.case import (
     SkipTest as SkipTest,
 )
 
 __all__: List[str]
+
+def run_module_suite(file_to_run=..., argv=...): ...
 
 class KnownFailureException(Exception): ...
 class IgnoreException(Exception): ...
