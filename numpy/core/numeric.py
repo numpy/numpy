@@ -2172,7 +2172,8 @@ _identity_with_like = array_function_dispatch(
 )(identity)
 
 
-def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None, casting=None):
+def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None,
+                         casting=None):
     return (a, b)
 
 
@@ -2250,7 +2251,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     return bool(res)
 
 
-def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None, casting=None):
+def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None,
+                        casting=None):
     return (a, b)
 
 
@@ -2342,7 +2344,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     y = asanyarray(b)
 
     if not np.can_cast(x.dtype, y.dtype, casting=casting):
-        raise TypeError("Cannot compare types '%s' and '%s' with casting rule %s" %(str(x.dtype), str(y.dtype), casting))
+        raise TypeError("Cannot compare types '%s' and '%s' with casting rule"
+                        " %s" %(str(x.dtype), str(y.dtype), casting))
 
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
@@ -2448,7 +2451,8 @@ def array_equal(a1, a2, equal_nan=False, casting='unsafe'):
         return False
 
     if not np.can_cast(a1.dtype, a2.dtype, casting=casting):
-        raise TypeError("Cannot compare types '%s' and '%s' with casting rule %s" %(str(a1.dtype), str(a2.dtype), casting))
+        raise TypeError("Cannot compare types '%s' and '%s' with casting rule"
+                        " %s" %(str(a1.dtype), str(a2.dtype), casting))
 
     if not equal_nan:
         return bool(asarray(a1 == a2).all())
@@ -2511,7 +2515,8 @@ def array_equiv(a1, a2, casting='unsafe'):
         return False
 
     if not np.can_cast(a1.dtype, a2.dtype, casting=casting):
-        raise TypeError("Cannot compare types '%s' and '%s' with casting rule %s" %(str(a1.dtype), str(a2.dtype), casting))
+        raise TypeError("Cannot compare types '%s' and '%s' with casting rule "
+                        "%s" %(str(a1.dtype), str(a2.dtype), casting))
 
     return bool(asarray(a1 == a2).all())
 
