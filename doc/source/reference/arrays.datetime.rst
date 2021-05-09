@@ -20,9 +20,9 @@ Basic Datetimes
 ===============
 
 The most basic way to create datetimes is from strings in
-ISO 8601 date or datetime format. The unit for internal storage
-is automatically selected from the form of the string, and can
-be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
+ISO 8601 date, datetime format or from integer to UNIX time. 
+The unit for internal storage is automatically selected from the 
+form of the string, and can be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
 :ref:`time unit <arrays.dtypes.timeunits>`. The date units are years ('Y'),
 months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
@@ -36,6 +36,11 @@ letters, for a "Not A Time" value.
 
     >>> np.datetime64('2005-02-25')
     numpy.datetime64('2005-02-25')
+    
+    UNIX time, by providing integer and a date unit:
+
+    >>> np.datetime64(1, 'Y')
+    numpy.datetime64('1971')   
 
     Using months for the unit:
 
