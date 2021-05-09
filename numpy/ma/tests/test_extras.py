@@ -1548,6 +1548,12 @@ class TestArraySetOps:
         a = np.array(['a', 'b', 'c'])
         b = np.array(['a', 'b', 's'])
         assert_array_equal(setdiff1d(a, b), np.array(['c']))
+    
+    def test_uint8_unique_mask(self):
+        # Regression test for gh-14804
+        m = np.ma.masked_array(np.array([50, 255, 1, 255, 1], dtype=np.uint8), mask=[False, False, True, False, True])
+        expected =[ 50, 255]
+        assert_equal(np.ma.unique(m).data, expected)
 
 
 class TestShapeBase:

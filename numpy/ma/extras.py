@@ -1075,7 +1075,7 @@ def unique(ar1, return_index=False, return_inverse=False):
     numpy.unique : Equivalent function for ndarrays.
 
     """
-    output = np.unique(ar1,
+    output = np.unique(ar1.data[~ar1.mask],
                        return_index=return_index,
                        return_inverse=return_inverse)
     if isinstance(output, tuple):
