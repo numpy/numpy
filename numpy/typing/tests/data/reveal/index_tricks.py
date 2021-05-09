@@ -27,15 +27,16 @@ reveal_type(iter(np.ndenumerate(AR_LIKE_U)))  # E: Iterator[Tuple[builtins.tuple
 reveal_type(iter(np.ndindex(1, 2, 3)))  # E: Iterator[builtins.tuple[builtins.int]]
 reveal_type(next(np.ndindex(1, 2, 3)))  # E: builtins.tuple[builtins.int]
 
-reveal_type(np.unravel_index([22, 41, 37], (7, 6)))  # E: tuple[Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]]
-reveal_type(np.unravel_index([31, 41, 13], (7, 6), order="F"))  # E: tuple[Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]]
-reveal_type(np.unravel_index(1621, (6, 7, 8, 9)))  # E: tuple[Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]]
+reveal_type(np.unravel_index([22, 41, 37], (7, 6)))  # E: tuple[numpy.ndarray[Any, numpy.dtype[{intp}]]]
+reveal_type(np.unravel_index([31, 41, 13], (7, 6), order="F"))  # E: tuple[numpy.ndarray[Any, numpy.dtype[{intp}]]]
+reveal_type(np.unravel_index(1621, (6, 7, 8, 9)))  # E: tuple[{intp}]
 
-reveal_type(np.ravel_multi_index(AR_LIKE_i, (7, 6)))  # E: Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]
-reveal_type(np.ravel_multi_index(AR_LIKE_i, (7, 6), order="F"))  # E: Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]
-reveal_type(np.ravel_multi_index(AR_LIKE_i, (4, 6), mode="clip"))  # E: Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]
-reveal_type(np.ravel_multi_index(AR_LIKE_i, (4, 4), mode=("clip", "wrap")))  # E: Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]
-reveal_type(np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9)))  # E: Union[{intp}, numpy.ndarray[Any, numpy.dtype[{intp}]]]
+reveal_type(np.ravel_multi_index([[1]], (7, 6)))  # E: numpy.ndarray[Any, numpy.dtype[{intp}]]
+reveal_type(np.ravel_multi_index(AR_LIKE_i, (7, 6)))  # E: {intp}
+reveal_type(np.ravel_multi_index(AR_LIKE_i, (7, 6), order="F"))  # E: {intp}
+reveal_type(np.ravel_multi_index(AR_LIKE_i, (4, 6), mode="clip"))  # E: {intp}
+reveal_type(np.ravel_multi_index(AR_LIKE_i, (4, 4), mode=("clip", "wrap")))  # E: {intp}
+reveal_type(np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9)))  # E: {intp}
 
 reveal_type(np.mgrid[1:1:2])  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 reveal_type(np.mgrid[1:1:2, None:10])  # E: numpy.ndarray[Any, numpy.dtype[Any]]

@@ -1,10 +1,11 @@
 from typing import Any, overload, TypeVar, List, Union
 
-from numpy import floating, bool_, ndarray
+from numpy import floating, bool_, object_, ndarray
 from numpy.typing import (
+    _ArrayND,
+    _FloatLike_co,
     _ArrayLikeFloat_co,
     _ArrayLikeObject_co,
-    _ArrayOrScalar,
 )
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
@@ -12,15 +13,20 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 __all__: List[str]
 
 @overload
+def fix(  # type: ignore[misc]
+    x: _FloatLike_co,
+    out: None = ...,
+) -> floating[Any]: ...
+@overload
 def fix(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> _ArrayOrScalar[floating[Any]]: ...
+) -> _ArrayND[floating[Any]]: ...
 @overload
 def fix(
     x: _ArrayLikeObject_co,
     out: None = ...,
-) -> Any: ...
+) -> _ArrayND[object_]: ...
 @overload
 def fix(
     x: Union[_ArrayLikeFloat_co, _ArrayLikeObject_co],
@@ -28,10 +34,15 @@ def fix(
 ) -> _ArrayType: ...
 
 @overload
+def isposinf(  # type: ignore[misc]
+    x: _FloatLike_co,
+    out: None = ...,
+) -> bool_: ...
+@overload
 def isposinf(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> _ArrayOrScalar[bool_]: ...
+) -> _ArrayND[bool_]: ...
 @overload
 def isposinf(
     x: _ArrayLikeFloat_co,
@@ -39,10 +50,15 @@ def isposinf(
 ) -> _ArrayType: ...
 
 @overload
+def isneginf(  # type: ignore[misc]
+    x: _FloatLike_co,
+    out: None = ...,
+) -> bool_: ...
+@overload
 def isneginf(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> _ArrayOrScalar[bool_]: ...
+) -> _ArrayND[bool_]: ...
 @overload
 def isneginf(
     x: _ArrayLikeFloat_co,

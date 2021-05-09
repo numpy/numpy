@@ -1,0 +1,340 @@
+===================================
+NEP 49 — Data allocation strategies
+===================================
+
+:Author: Matti Picus
+:Status: Draft
+:Type: Standards Track
+:Created: 2021-04-18
+:Resolution: http://numpy-discussion.10968.n7.nabble.com/NEP-49-Data-allocation-strategies-tt49185.html
+
+
+Abstract
+--------
+
+The ``numpy.ndarray`` requires additional memory allocations
+to hold ``numpy.ndarray.strides``, ``numpy.ndarray.shape`` and
+``numpy.ndarray.data`` attributes. These attributes are specially allocated
+after creating the python object in ``__new__`` method.
+
+This NEP proposes a mechanism to override the memory management strategy used
+for ``ndarray->data`` with user-provided alternatives. This allocation holds
+the data and can be very large. As accessing this data often becomes
+a performance bottleneck, custom allocation strategies to guarantee data
+alignment or pinning allocations to specialized memory hardware can enable
+hardware-specific optimizations. The other allocations remain unchanged.
+
+Motivation and Scope
+--------------------
+
+Users may wish to override the internal data memory routines with ones of their
+own. Two such use-cases are to ensure data alignment and to pin certain
+allocations to certain NUMA cores. This desire for alignment was discussed
+multiple times on the mailing list `in 2005`_,  and in `issue 5312`_ in 2014,
+which led to `PR 5457`_ and more mailing list discussions here_ `and here`_. In
+a comment on the issue `from 2017`_, a user described how 64-byte alignment
+improved performance by 40x.
+
+Also related is `issue 14177`_ around the use of ``madvise`` and huge pages on
+Linux.
+
+Various tracing and profiling libraries like filprofiler_ or `electric fence`_
+override ``malloc``.
+
+The long CPython discussion of `BPO 18835`_  began with discussing the need for
+``PyMem_Alloc32`` and ``PyMem_Alloc64``.  The early conclusion was that the
+cost (of wasted padding) vs. the benifit of aligned memory is best left to the
+user, but then evolves into a discussion of various proposals to deal with
+memory allocations, including `PEP 445`_ `memory interfaces`_ to
+``PyTraceMalloc_Track`` which apparently was explictly added for NumPy.
+
+Allowing users to implement different strategies via the NumPy C-API will
+enable exploration of this rich area of possible optimizations. The intention
+is to create a flexible enough interface without burdening normative users.
+
+.. _`issue 5312`: https://github.com/numpy/numpy/issues/5312
+.. _`from 2017`: https://github.com/numpy/numpy/issues/5312#issuecomment-315234656
+.. _`in 2005`: https://numpy-discussion.scipy.narkive.com/MvmMkJcK/numpy-arrays-data-allocation-and-simd-alignement
+.. _`here`: http://numpy-discussion.10968.n7.nabble.com/Aligned-configurable-memory-allocation-td39712.html
+.. _`and here`: http://numpy-discussion.10968.n7.nabble.com/Numpy-s-policy-for-releasing-memory-td1533.html
+.. _`issue 14177`: https://github.com/numpy/numpy/issues/14177
+.. _`filprofiler`: https://github.com/pythonspeed/filprofiler/blob/master/design/allocator-overrides.md
+.. _`electric fence`: https://github.com/boundarydevices/efence
+.. _`memory interfaces`: https://docs.python.org/3/c-api/memory.html#customize-memory-allocators
+.. _`BPO 18835`: https://bugs.python.org/issue18835
+.. _`PEP 445`: https://www.python.org/dev/peps/pep-0445/
+
+Usage and Impact
+----------------
+
+The new functions can only be accessed via the NumPy C-API. An example is
+included later in this NEP. The added ``struct`` will increase the size of the
+``ndarray`` object. It is a necessary price to pay for this approach. We
+can be reasonably sure that the change in size will have a minimal impact on
+end-user code because NumPy version 1.20 already changed the object size.
+
+The implementation preserves the use of ``PyTraceMalloc_Track`` to track
+allocations already present in NumPy.
+
+Backward compatibility
+----------------------
+
+The design will not break backward compatibility. Projects that were assigning
+to the ``ndarray->data`` pointer were already breaking the current memory
+management strategy and should restore
+``ndarray->data`` before calling ``Py_DECREF``. As mentioned above, the change
+in size should not impact end-users.
+
+Detailed description
+--------------------
+
+High level design
+=================
+
+Users who wish to change the NumPy data memory management routines will use
+:c:func:`PyDataMem_SetHandler`, which uses a :c:type:`PyDataMem_Handler`
+structure to hold pointers to functions used to manage the data memory.
+
+Since a call to ``PyDataMem_SetHandler`` will change the default functions, but
+that function may be called during the lifetime of an ``ndarray`` object, each
+``ndarray`` will carry with it the ``PyDataMem_Handler`` struct used at the
+time of its instantiation, and these will be used to reallocate or free the
+data memory of the instance. Internally NumPy may use ``memcpy`` or ``memset``
+on the pointer to the data memory.
+
+The name of the handler will be exposed on the python level via a
+``numpy.core.multiarray.get_handler_name(arr)`` function. If called as
+``numpy.core.multiarray.get_handler_name()`` it will return the name of the
+global handler that will be used to allocate data for the next new `ndarrray`.
+
+NumPy C-API functions
+=====================
+
+.. c:type:: PyDataMem_Handler
+
+    A struct to hold function pointers used to manipulate memory
+
+    .. code-block:: c
+
+        typedef struct {
+            char name[128];  /* multiple of 64 to keep the struct aligned */
+            PyDataMem_AllocFunc *alloc;
+            PyDataMem_ZeroedAllocFunc *zeroed_alloc;
+            PyDataMem_FreeFunc *free;
+            PyDataMem_ReallocFunc *realloc;
+        } PyDataMem_Handler;
+
+    where the function's signatures are
+
+    .. code-block:: c
+
+        typedef void *(PyDataMem_AllocFunc)(size_t size);
+        typedef void *(PyDataMem_ZeroedAllocFunc)(size_t nelems, size_t elsize);
+        typedef void (PyDataMem_FreeFunc)(void *ptr, size_t size);
+        typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
+
+.. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
+
+   Sets a new allocation policy. If the input value is ``NULL``, will reset
+   the policy to the default. Returns the previous policy, ``NULL`` if the
+   previous policy was the default. We wrap the user-provided functions
+   so they will still call the Python and NumPy memory management callback
+   hooks. All the function pointers must be filled in, ``NULL`` is not
+   accepted.
+
+.. c:function:: const char * PyDataMem_GetHandlerName(PyArrayObject *obj)
+
+   Return the const char name of the ``PyDataMem_Handler`` used by the
+   ``PyArrayObject``. If ``NULL``, return the name of the current global policy
+   that will be used to allocate data for the next ``PyArrayObject``.
+
+
+Sample code
+===========
+
+This code adds a 64-byte header to each ``data`` pointer and stores information
+about the allocation in the header. Before calling ``free``, a check ensures
+the ``sz`` argument is correct.
+
+.. code-block:: c
+
+    #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+    #include <numpy/arrayobject.h>
+    NPY_NO_EXPORT void *
+
+    shift_alloc(size_t sz) {
+        char *real = (char *)malloc(sz + 64);
+        if (real == NULL) {
+            return NULL;
+        }
+        snprintf(real, 64, "originally allocated %ld", (unsigned long)sz);
+        return (void *)(real + 64);
+    }
+
+    NPY_NO_EXPORT void *
+    shift_zero(size_t sz, size_t cnt) {
+        char *real = (char *)calloc(sz + 64, cnt);
+        if (real == NULL) {
+            return NULL;
+        }
+        snprintf(real, 64, "originally allocated %ld via zero",
+                 (unsigned long)sz);
+        return (void *)(real + 64);
+    }
+
+    NPY_NO_EXPORT void
+    shift_free(void * p, npy_uintp sz) {
+        if (p == NULL) {
+            return ;
+        }
+        char *real = (char *)p - 64;
+        if (strncmp(real, "originally allocated", 20) != 0) {
+            fprintf(stdout, "uh-oh, unmatched shift_free, "
+                    "no appropriate prefix\\n");
+            /* Make the C runtime crash by calling free on the wrong address */
+            free((char *)p + 10);
+            /* free(real); */
+        }
+        else {
+            int i = atoi(real +20);
+            if (i != sz) {
+                fprintf(stderr, "uh-oh, unmatched "
+                        "shift_free(ptr, %d) but allocated %d\\n", sz, i);
+                /* Make the C runtime crash by calling free on the wrong address */
+                /* free((char *)p + 10); */
+                free(real);
+            }
+            else {
+                free(real);
+            }
+        }
+    }
+
+    NPY_NO_EXPORT void *
+    shift_realloc(void * p, npy_uintp sz) {
+        if (p != NULL) {
+            char *real = (char *)p - 64;
+            if (strncmp(real, "originally allocated", 20) != 0) {
+                fprintf(stdout, "uh-oh, unmatched shift_realloc\\n");
+                return realloc(p, sz);
+            }
+            return (void *)((char *)realloc(real, sz + 64) + 64);
+        }
+        else {
+            char *real = (char *)realloc(p, sz + 64);
+            if (real == NULL) {
+                return NULL;
+            }
+            snprintf(real, 64, "originally allocated "
+                     "%ld  via realloc", (unsigned long)sz);
+            return (void *)(real + 64);
+        }
+    }
+
+    static PyDataMem_Handler new_handler = {
+        "secret_data_allocator",
+        shift_alloc,      /* alloc */
+        shift_zero,       /* zeroed_alloc */
+        shift_free,       /* free */
+        shift_realloc     /* realloc */
+    };
+
+    static PyObject* mem_policy_test_prefix(PyObject *self, PyObject *args)
+    {
+
+        if (!PyArray_Check(args)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "must be called with a numpy scalar or ndarray");
+        }
+        return PyUnicode_FromString(
+                        PyDataMem_GetHandlerName((PyArrayObject*)args));
+    };
+
+    static PyObject* mem_policy_set_new_policy(PyObject *self, PyObject *args)
+    {
+
+         const PyDataMem_Handler *old = PyDataMem_SetHandler(&new_handler);
+         return PyUnicode_FromString(old->name);
+
+    };
+
+    static PyObject* mem_policy_set_old_policy(PyObject *self, PyObject *args)
+    {
+
+         const PyDataMem_Handler *old = PyDataMem_SetHandler(NULL);
+         return PyUnicode_FromString(old->name);
+
+    };
+
+    static PyMethodDef methods[] = {
+    {"test_prefix", (PyCFunction)mem_policy_test_prefix, METH_O},
+    {"set_new_policy", (PyCFunction)mem_policy_set_new_policy, METH_NOARGS},
+    {"set_old_policy", (PyCFunction)mem_policy_set_old_policy, METH_NOARGS},
+    { NULL }
+    };
+
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "mem_policy",  /* m_name */
+        NULL,           /* m_doc */
+        -1,             /* m_size */
+        methods,        /* m_methods */
+    };
+
+    PyMODINIT_FUNC
+    PyInit_mem_policy(void) {
+    PyObject *mod = PyModule_Create(&moduledef);
+        import_array();
+        return mod;
+    }
+
+
+Related Work
+------------
+
+This NEP is being tracked by the pnumpy_ project and a `comment in the PR`_
+mentions use in orchestrating FPGA DMAs.
+
+Implementation
+--------------
+
+This NEP has been implemented in `PR  17582`_.
+
+Alternatives
+------------
+
+These were discussed in `issue 17467`_. `PR 5457`_  and `PR 5470`_ proposed a
+global interface for specifying aligned allocations.
+
+``PyArray_malloc_aligned`` and friends were added to NumPy with the
+`numpy.random` module API refactor. and are used there for performance.
+
+`PR 390`_ had two parts: expose ``PyDataMem_*`` via the NumPy C-API, and a hook
+mechanism. The PR was merged with no example code for using these features.
+
+Discussion
+----------
+
+Not yet discussed on the mailing list.
+
+
+References and Footnotes
+------------------------
+
+.. [1] Each NEP must either be explicitly labeled as placed in the public domain (see
+   this NEP as an example) or licensed under the `Open Publication License`_.
+
+.. _Open Publication License: https://www.opencontent.org/openpub/
+
+.. _`PR 17582`: https://github.com/numpy/numpy/pull/17582
+.. _`PR 5457`: https://github.com/numpy/numpy/pull/5457
+.. _`PR 5470`: https://github.com/numpy/numpy/pull/5470
+.. _`PR 390`: https://github.com/numpy/numpy/pull/390
+.. _`issue 17467`: https://github.com/numpy/numpy/issues/17467
+.. _`comment in the PR`: https://github.com/numpy/numpy/pull/17582#issuecomment-809145547
+.. _pnumpy: https://quansight.github.io/pnumpy/stable/index.html
+
+Copyright
+---------
+
+This document has been placed in the public domain. [1]_

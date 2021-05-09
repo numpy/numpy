@@ -1,0 +1,11 @@
+Enable Accelerate Framework
+----------------------------
+With the release of macOS 11.3, several different issues that
+numpy was encountering when using Accelerate Framework's
+implementation of BLAS and LAPACK should be resolved.  This
+change enables the Accelerate Framework as an option on macOS.
+If additional issues are found, please file a bug report
+against Accelerate using the developer feedback assistant
+tool (https://developer.apple.com/bug-reporting/). We
+intend to address issues promptly and plan to continue
+supporting and updating our BLAS and LAPACK libraries.

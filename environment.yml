@@ -1,6 +1,8 @@
 # To use:
+#
 #   $ conda env create -f environment.yml  # `mamba` works too for this command
 #   $ conda activate numpy-dev
+#
 name: numpy-dev
 channels:
   - conda-forge

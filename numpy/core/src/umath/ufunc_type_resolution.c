@@ -548,7 +548,12 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
                 }
-                return raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
+                raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
+                for (iop = 0; iop < ufunc->nin; iop++) {
+                    Py_DECREF(out_dtypes[iop]);
+                    out_dtypes[iop] = NULL;
+                }
+                return -1;
             }
             out_dtypes[0] = PyArray_ResultType(ufunc->nin, operands, 0, NULL);
         }

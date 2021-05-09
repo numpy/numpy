@@ -5,10 +5,8 @@ on:
     branches:
       - main
     paths:
-      - './environment.yml'
-    tags:
-      - '*'
-      
+      - 'environment.yml'
+
 jobs: 
   build:
     name: Build base Docker image 

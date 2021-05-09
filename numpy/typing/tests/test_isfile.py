@@ -10,7 +10,6 @@ FILES = [
     ROOT / "__init__.pyi",
     ROOT / "char.pyi",
     ROOT / "ctypeslib.pyi",
-    ROOT / "emath.pyi",
     ROOT / "rec.pyi",
     ROOT / "core" / "__init__.pyi",
     ROOT / "distutils" / "__init__.pyi",

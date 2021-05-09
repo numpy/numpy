@@ -1,4 +1,4 @@
-/*@targets $werror #simd_test*/
+/*@targets #simd_test*/
 #include "_simd.h"
 #include "_simd_inc.h"
 
@@ -387,6 +387,14 @@ SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 #endif
 
+#if @fp_only@
+/**begin repeat1
+ * #intrin  = max, maxp, min, minp#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+#endif
+
 /***************************
  * Mask operations
  ***************************/
@@ -602,6 +610,14 @@ SIMD_INTRIN_DEF(sumup_@sfx@)
 #if @fp_only@
 /**begin repeat1
  * #intrin  = sqrt, recip, abs, square#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif
+
+#if @fp_only@
+/**begin repeat1
+ * #intrin  = max, maxp, min, minp#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/

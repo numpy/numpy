@@ -545,7 +545,9 @@ cppmacros['OLDPYNUM'] = """\
 """
 cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
 #ifndef F2PY_THREAD_LOCAL_DECL
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) \\
+      || defined(_WIN32) || defined(_WIN64) \\
+      || defined(__MINGW32__) || defined(__MINGW64__)
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
 #elif defined(__STDC_VERSION__) \\
       && (__STDC_VERSION__ >= 201112L) \\

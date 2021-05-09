@@ -1,0 +1,5 @@
+Placeholder annotations have been improved
+------------------------------------------
+All placeholder annotations, that were previously annotated as ``typing.Any``,
+have been improved. Where appropiate they have been replaced with explicit
+function definitions, classes or other miscellaneous objects.

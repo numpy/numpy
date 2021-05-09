@@ -123,21 +123,26 @@ class build_clib(old_build_clib):
             opt_cache_path = os.path.abspath(
                 os.path.join(self.build_temp, 'ccompiler_opt_cache_clib.py')
             )
+            if hasattr(self, "compiler_opt"):
+                # By default `CCompilerOpt` update the cache at the exit of
+                # the process, which may lead to duplicate building
+                # (see build_extension()/force_rebuild) if run() called
+                # multiple times within the same os process/thread without
+                # giving the chance the previous instances of `CCompilerOpt`
+                # to update the cache.
+                self.compiler_opt.cache_flush()
+
             self.compiler_opt = new_ccompiler_opt(
                 compiler=self.compiler, dispatch_hpath=dispatch_hpath,
                 cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
                 cache_path=opt_cache_path
             )
-            if not self.compiler_opt.is_cached():
-                log.info("Detected changes on compiler optimizations, force rebuilding")
-                self.force = True
+            def report(copt):
+                log.info("\n########### CLIB COMPILER OPTIMIZATION ###########")
+                log.info(copt.report(full=True))
 
             import atexit
-            def report():
-                log.info("\n########### CLIB COMPILER OPTIMIZATION ###########")
-                log.info(self.compiler_opt.report(full=True))
-
-            atexit.register(report)
+            atexit.register(report, self.compiler_opt)
 
         if self.have_f_sources():
             from numpy.distutils.fcompiler import new_fcompiler
@@ -212,7 +217,12 @@ class build_clib(old_build_clib):
         lib_file = compiler.library_filename(lib_name,
                                              output_dir=self.build_clib)
         depends = sources + build_info.get('depends', [])
-        if not (self.force or newer_group(depends, lib_file, 'newer')):
+
+        force_rebuild = self.force
+        if not self.disable_optimization and not self.compiler_opt.is_cached():
+            log.debug("Detected changes on compiler optimizations")
+            force_rebuild = True
+        if not (force_rebuild or newer_group(depends, lib_file, 'newer')):
             log.debug("skipping '%s' library (up-to-date)", lib_name)
             return
         else:

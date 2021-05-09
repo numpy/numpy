@@ -375,22 +375,6 @@ default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 so_ext = get_shared_lib_extension()
 
 
-def is_symlink_to_accelerate(filename):
-    accelpath = '/System/Library/Frameworks/Accelerate.framework'
-    return (sys.platform == 'darwin' and os.path.islink(filename) and
-            os.path.realpath(filename).startswith(accelpath))
-
-
-_accel_msg = (
-    'Found {filename}, but that file is a symbolic link to the '
-    'MacOS Accelerate framework, which is not supported by NumPy. '
-    'You must configure the build to use a different optimized library, '
-    'or disable the use of optimized BLAS and LAPACK by setting the '
-    'environment variables NPY_BLAS_ORDER="" and NPY_LAPACK_ORDER="" '
-    'before building NumPy.'
-)
-
-
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
     1) System-wide directory (directory-location of this module)
@@ -539,6 +523,7 @@ def get_info(name, notfound_action=0):
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
+          'accelerate': accelerate_info,      # use blas_opt instead
           'openblas64_': openblas64__info,
           'openblas64__lapack': openblas64__lapack_info,
           'openblas_ilp64': openblas_ilp64_info,
@@ -1029,9 +1014,6 @@ class system_info:
             for prefix in lib_prefixes:
                 p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
-                    # p[0] is the full path to the binary library file.
-                    if is_symlink_to_accelerate(p[0]):
-                        raise RuntimeError(_accel_msg.format(filename=p[0]))
                     break
             if p:
                 assert len(p) == 1
@@ -1766,8 +1748,10 @@ def get_atlas_version(**config):
 
 class lapack_opt_info(system_info):
     notfounderror = LapackNotFoundError
+
     # List of all known LAPACK libraries, in the default order
-    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'lapack']
+    lapack_order = ['mkl', 'openblas', 'flame',
+                    'accelerate', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
 
     def _calc_info_mkl(self):
@@ -1942,7 +1926,9 @@ class lapack64__opt_info(lapack_ilp64_opt_info):
 class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
     # List of all known BLAS libraries, in the default order
-    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'blas']
+
+    blas_order = ['mkl', 'blis', 'openblas',
+                  'accelerate', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
 
     def _calc_info_mkl(self):
@@ -2494,8 +2480,6 @@ class accelerate_info(system_info):
                     'accelerate' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
@@ -2504,8 +2488,6 @@ class accelerate_info(system_info):
                       'veclib' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
