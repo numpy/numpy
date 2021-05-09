@@ -205,6 +205,8 @@ jobs:
   pypy37:
     needs: [smoke_test, lint]
     runs-on: ubuntu-latest
+    env:
+      USE_GDB: 1
     steps:
     - uses: actions/checkout@v2
       with:
