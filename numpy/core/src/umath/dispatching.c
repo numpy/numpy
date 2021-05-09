@@ -1,7 +1,38 @@
 /*
  * This file implements universal function dispatching and promotion (which
  * is necessary to happen before dispatching).
- * As such it works on the UFunc object.
+ * This is part of the UFunc object.  Promotion and dispatching uses the
+ * following things:
+ *
+ * - operand_DTypes:  The datatypes as passed in by the user.
+ * - signature: The DTypes fixed by the user with `dtype=` or `signature=`.
+ * - ufunc._loops: A list of all ArrayMethods and promoters, it contains
+ *   tuples `(dtypes, ArrayMethod)` or `(dtypes, promoter)`.
+ * - ufunc._dispatch_cache: A cache to store previous promotion and/or
+ *   dispatching results.
+ * - The actual arrays are used to support the old code paths where necessary.
+ *   (this includes any value-based casting/promotion logic)
+ *
+ * In general, `operand_Dtypes` is always overridden by `signature`.  If a
+ * DType is included in the `signature` it must match precisely.
+ *
+ * The process of dispatching and promotion can be summarized in the following
+ * steps:
+ *
+ * 1. Override any `operand_DTypes` from `signature`.
+ * 2. Check if the new `operand_Dtypes` is cached (got to 4. if it is)
+ * 3. Find the best matching "loop".  This is done using multiple dispatching
+ *    on all `operand_DTypes` and loop `dtypes`.  A matching loop must be
+ *    one whose DTypes are superclasses of the `operand_DTypes` (that are
+ *    defined).  The best matching loop must be better than any other matching
+ *    loop.  This result is cached.
+ * 4. If the found loop is a promoter: We call the promoter. It can modify
+ *    the `operand_DTypes` currently.  Then go back to step 2.
+ *    (The promoter can call arbitrary code, so it could even add the matching
+ *    loop first.)
+ * 5. The final `ArrayMethod` is found, its registered `dtypes` is copied
+ *    into the `signature` so that it is available to the ufunc loop.
+ *
  */
 #include <Python.h>
 
@@ -27,6 +58,15 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[]);
 
 
+/**
+ * Function to add a new loop to the ufunc.  This mainly appends it to the
+ * list (as it currently is just a list).
+ *
+ * @param ufunc The universal function to add the loop to.
+ * @param info The tuple (dtype_tuple, ArrayMethod/promoter).
+ * @param ignore_duplicate If 1 and a loop with the same `dtype_tuple` is
+ *        found, the function does nothing.
+ */
 static int
 add_ufunc_loop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 {
@@ -108,6 +148,9 @@ resolve_implementation_info(PyUFuncObject *ufunc,
          */
 
         npy_bool matches = NPY_TRUE;
+        // TODO: Should this mainly check inputs for matching? I.e. if
+        //       an output is not part of `signature`, it doesn't strictly
+        //       have to match (may need to pass `signature` here to do that!)
         for (Py_ssize_t i = 0; i < nargs; i++) {
             PyArray_DTypeMeta *given_dtype = op_dtypes[i];
             PyArray_DTypeMeta *resolver_dtype = (
@@ -293,7 +336,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                      * Instead, only support the case where they are
                      * identical.
                      */
-                    // TODO: Document the above comment (figure out if OK)
+                    /* TODO: Document the above comment, may need relaxing? */
                     current_best = -1;
                     break;
                 }
@@ -342,6 +385,11 @@ resolve_implementation_info(PyUFuncObject *ufunc,
 }
 
 
+/*
+ * Helper to call a python defined promoter function (packing the arguments
+ * and unpacking the result).
+ * TODO: This function is currently untested.
+ */
 static int
 call_python_promoter(PyUFuncObject *ufunc, PyObject *promoter,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
@@ -423,6 +471,14 @@ call_python_promoter(PyUFuncObject *ufunc, PyObject *promoter,
 }
 
 
+/*
+ * A promoter can currently be either a C-Capsule containing a promoter
+ * function pointer, or a Python function.  Both of these can at this time
+ * only return new operation DTypes (i.e. mutate the input while leaving
+ * those defined by the `signature` unmodified).
+ *
+ * TODO: This function is currently untested.
+ */
 static PyObject *
 call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
@@ -430,9 +486,6 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
 {
     int nargs = ufunc->nargs;
     PyObject *resolved_info = NULL;
-    PyObject *dtypes_tuple = NULL;
-    PyObject *signature_tuple = NULL;
-    PyObject *operands_tuple = NULL;
 
     int promoter_result;
     PyArray_DTypeMeta *new_op_dtypes[NPY_MAXARGS];
@@ -445,10 +498,9 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
             return NULL;
         }
         promoter_result = promoter_function(ufunc,
-                op_dtypes, signature, operands, new_op_dtypes);
+                op_dtypes, signature, new_op_dtypes);
     }
     else {
-        /* Do not pass operands to python, since nobody should use them. */
         promoter_result = call_python_promoter(ufunc, promoter,
                 op_dtypes, signature, new_op_dtypes);
     }
@@ -469,9 +521,6 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
     Py_LeaveRecursiveCall();
 
   finish:
-    Py_XDECREF(dtypes_tuple);
-    Py_XDECREF(signature_tuple);
-    Py_XDECREF(operands_tuple);
     for (int i = 0; i < nargs; i++) {
         Py_XDECREF(new_op_dtypes[i]);
     }
