@@ -771,12 +771,12 @@ If you start with this array::
 
   >>> b = np.array([[1, 1], [2, 2]])
 
-You can sum the rows with::
+You can sum over the axis of rows with::
 
   >>> b.sum(axis=0)
   array([3, 3])
 
-You can sum the columns with::
+You can sum over the axis of columns with::
 
   >>> b.sum(axis=1)
   array([2, 4])

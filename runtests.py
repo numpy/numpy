@@ -8,7 +8,10 @@ Examples::
 
     $ python runtests.py
     $ python runtests.py -s {SAMPLE_SUBMODULE}
+    $ # Run a standalone test function:
     $ python runtests.py -t {SAMPLE_TEST}
+    $ # Run a test defined as a method of a TestXXX class:
+    $ python runtests.py -t {SAMPLE_TEST2}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
@@ -43,6 +46,7 @@ Provide target branch name or `uncommitted` to check before committing:
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
+SAMPLE_TEST2 = "numpy/core/tests/test_memmap.py::TestMemmap::test_open_with_filename"
 SAMPLE_SUBMODULE = "linalg"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
