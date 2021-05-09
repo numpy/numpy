@@ -99,7 +99,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2021, The SciPy community'
+copyright = '2008-2021, The NumPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
