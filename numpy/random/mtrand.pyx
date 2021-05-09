@@ -384,7 +384,7 @@ cdef class RandomState:
           (b - a) * random_sample() + a
 
         .. note::
-            New code should use the ``random`` method of a ``default_rng()``
+            New code should use the ``random`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -403,6 +403,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.random: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
@@ -454,7 +455,7 @@ cdef class RandomState:
         It is often seen in Bayesian inference and order statistics.
 
         .. note::
-            New code should use the ``beta`` method of a ``default_rng()``
+            New code should use the ``beta`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -477,6 +478,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.beta: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
         """
         return cont(&legacy_beta, &self._aug_state, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
@@ -504,7 +506,7 @@ cdef class RandomState:
         between page requests to Wikipedia [2]_.
 
         .. note::
-            New code should use the ``exponential`` method of a ``default_rng()``
+            New code should use the ``exponential`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -526,6 +528,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.exponential: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         References
         ----------
@@ -553,7 +556,7 @@ cdef class RandomState:
         with a scale parameter of 1.
 
         .. note::
-            New code should use the ``standard_exponential`` method of a ``default_rng()``
+            New code should use the ``standard_exponential`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -571,6 +574,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.standard_exponential: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
@@ -654,7 +658,7 @@ cdef class RandomState:
         `high` is None (the default), then results are from [0, `low`).
 
         .. note::
-            New code should use the ``integers`` method of a ``default_rng()``
+            New code should use the ``integers`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -689,6 +693,7 @@ cdef class RandomState:
             interval [`low`, `high`], and 1 is the lowest value if `high` is
             omitted.
         Generator.integers: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
@@ -775,7 +780,7 @@ cdef class RandomState:
         Return random bytes.
 
         .. note::
-            New code should use the ``bytes`` method of a ``default_rng()``
+            New code should use the ``bytes`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -791,6 +796,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.bytes: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
@@ -1024,7 +1030,7 @@ cdef class RandomState:
         by `uniform`.
 
         .. note::
-            New code should use the ``uniform`` method of a ``default_rng()``
+            New code should use the ``uniform`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1057,6 +1063,7 @@ cdef class RandomState:
                ``rand(2,2)`` would generate a 2-by-2 array of floats,
                uniformly distributed over ``[0, 1)``.
         Generator.uniform: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1192,7 +1199,7 @@ cdef class RandomState:
             other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
         .. note::
-            New code should use the ``standard_normal`` method of a ``default_rng()``
+            New code should use the ``standard_normal`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         If positive int_like arguments are provided, `randn` generates an array
@@ -1219,6 +1226,7 @@ cdef class RandomState:
         standard_normal : Similar, but takes a tuple as its argument.
         normal : Also accepts mu and sigma arguments.
         Generator.standard_normal: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1346,7 +1354,7 @@ cdef class RandomState:
         Draw samples from a standard Normal distribution (mean=0, stdev=1).
 
         .. note::
-            New code should use the ``standard_normal`` method of a ``default_rng()``
+            New code should use the ``standard_normal`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1368,6 +1376,7 @@ cdef class RandomState:
             Equivalent function with additional ``loc`` and ``scale`` arguments
             for setting the mean and standard deviation.
         Generator.standard_normal: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1421,7 +1430,7 @@ cdef class RandomState:
         unique distribution [2]_.
 
         .. note::
-            New code should use the ``normal`` method of a ``default_rng()``
+            New code should use the ``normal`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1447,6 +1456,7 @@ cdef class RandomState:
         scipy.stats.norm : probability density function, distribution or
             cumulative density function, etc.
         Generator.normal: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1521,7 +1531,7 @@ cdef class RandomState:
         shape (sometimes designated "k") and scale=1.
 
         .. note::
-            New code should use the ``standard_gamma`` method of a ``default_rng()``
+            New code should use the ``standard_gamma`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1544,6 +1554,7 @@ cdef class RandomState:
         scipy.stats.gamma : probability density function, distribution or
             cumulative density function, etc.
         Generator.standard_gamma: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1602,7 +1613,7 @@ cdef class RandomState:
         "theta"), where both parameters are > 0.
 
         .. note::
-            New code should use the ``gamma`` method of a ``default_rng()``
+            New code should use the ``gamma`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1628,6 +1639,7 @@ cdef class RandomState:
         scipy.stats.gamma : probability density function, distribution or
             cumulative density function, etc.
         Generator.gamma: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1691,7 +1703,7 @@ cdef class RandomState:
         variates.
 
         .. note::
-            New code should use the ``f`` method of a ``default_rng()``
+            New code should use the ``f`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1716,6 +1728,7 @@ cdef class RandomState:
         scipy.stats.f : probability density function, distribution or
             cumulative density function, etc.
         Generator.f: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1779,7 +1792,7 @@ cdef class RandomState:
         `nonc` is the non-centrality parameter.
 
         .. note::
-            New code should use the ``noncentral_f`` method of a ``default_rng()``
+            New code should use the ``noncentral_f`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1809,6 +1822,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.noncentral_f: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1864,7 +1878,7 @@ cdef class RandomState:
         is often used in hypothesis testing.
 
         .. note::
-            New code should use the ``chisquare`` method of a ``default_rng()``
+            New code should use the ``chisquare`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1891,6 +1905,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.chisquare: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -1937,7 +1952,7 @@ cdef class RandomState:
         the :math:`\\chi^2` distribution.
 
         .. note::
-            New code should use the ``noncentral_chisquare`` method of a ``default_rng()``
+            New code should use the ``noncentral_chisquare`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -1963,6 +1978,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.noncentral_chisquare: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2023,7 +2039,7 @@ cdef class RandomState:
         Also known as the Lorentz distribution.
 
         .. note::
-            New code should use the ``standard_cauchy`` method of a ``default_rng()``
+            New code should use the ``standard_cauchy`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2041,6 +2057,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.standard_cauchy: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2099,7 +2116,7 @@ cdef class RandomState:
         distribution (`standard_normal`).
 
         .. note::
-            New code should use the ``standard_t`` method of a ``default_rng()``
+            New code should use the ``standard_t`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2120,6 +2137,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.standard_t: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2216,7 +2234,7 @@ cdef class RandomState:
         distribution.
 
         .. note::
-            New code should use the ``vonmises`` method of a ``default_rng()``
+            New code should use the ``vonmises`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2241,6 +2259,7 @@ cdef class RandomState:
         scipy.stats.vonmises : probability density function, distribution, or
             cumulative density function, etc.
         Generator.vonmises: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2314,7 +2333,7 @@ cdef class RandomState:
         remaining 80 percent of the range.
 
         .. note::
-            New code should use the ``pareto`` method of a ``default_rng()``
+            New code should use the ``pareto`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2339,6 +2358,7 @@ cdef class RandomState:
         scipy.stats.genpareto : probability density function, distribution or
             cumulative density function, etc.
         Generator.pareto: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2408,7 +2428,7 @@ cdef class RandomState:
         :math:`\\lambda` is just :math:`X = \\lambda(-ln(U))^{1/a}`.
 
         .. note::
-            New code should use the ``weibull`` method of a ``default_rng()``
+            New code should use the ``weibull`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2433,6 +2453,7 @@ cdef class RandomState:
         scipy.stats.genextreme
         gumbel
         Generator.weibull: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2504,7 +2525,7 @@ cdef class RandomState:
         Also known as the power function distribution.
 
         .. note::
-            New code should use the ``power`` method of a ``default_rng()``
+            New code should use the ``power`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2530,6 +2551,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.power: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2615,7 +2637,7 @@ cdef class RandomState:
         random variables.
 
         .. note::
-            New code should use the ``laplace`` method of a ``default_rng()``
+            New code should use the ``laplace`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2639,6 +2661,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.laplace: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2706,7 +2729,7 @@ cdef class RandomState:
         Notes and References below.
 
         .. note::
-            New code should use the ``gumbel`` method of a ``default_rng()``
+            New code should use the ``gumbel`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2734,6 +2757,7 @@ cdef class RandomState:
         scipy.stats.genextreme
         weibull
         Generator.gumbel: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2828,7 +2852,7 @@ cdef class RandomState:
         parameters, loc (location or mean, also median), and scale (>0).
 
         .. note::
-            New code should use the ``logistic`` method of a ``default_rng()``
+            New code should use the ``logistic`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2854,6 +2878,7 @@ cdef class RandomState:
         scipy.stats.logistic : probability density function, distribution or
             cumulative density function, etc.
         Generator.logistic: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -2915,7 +2940,7 @@ cdef class RandomState:
         underlying normal distribution it is derived from.
 
         .. note::
-            New code should use the ``lognormal`` method of a ``default_rng()``
+            New code should use the ``lognormal`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -2941,6 +2966,7 @@ cdef class RandomState:
         scipy.stats.lognorm : probability density function, distribution,
             cumulative density function, etc.
         Generator.lognormal: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3028,7 +3054,7 @@ cdef class RandomState:
         Rayleigh.
 
         .. note::
-            New code should use the ``rayleigh`` method of a ``default_rng()``
+            New code should use the ``rayleigh`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3049,6 +3075,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.rayleigh: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3110,7 +3137,7 @@ cdef class RandomState:
         unit distance and distance covered in unit time.
 
         .. note::
-            New code should use the ``wald`` method of a ``default_rng()``
+            New code should use the ``wald`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3133,6 +3160,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.wald: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3183,7 +3211,7 @@ cdef class RandomState:
         directly define the shape of the pdf.
 
         .. note::
-            New code should use the ``triangular`` method of a ``default_rng()``
+            New code should use the ``triangular`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3210,6 +3238,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.triangular: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3290,7 +3319,7 @@ cdef class RandomState:
         input as a float, but it is truncated to an integer in use)
 
         .. note::
-            New code should use the ``binomial`` method of a ``default_rng()``
+            New code should use the ``binomial`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3317,6 +3346,7 @@ cdef class RandomState:
         scipy.stats.binom : probability density function, distribution or
             cumulative density function, etc.
         Generator.binomial: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3440,7 +3470,7 @@ cdef class RandomState:
         is > 0 and `p` is in the interval [0, 1].
 
         .. note::
-            New code should use the ``negative_binomial`` method of a ``default_rng()``
+            New code should use the ``negative_binomial`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3465,6 +3495,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.negative_binomial: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3525,7 +3556,7 @@ cdef class RandomState:
         for large N.
 
         .. note::
-            New code should use the ``poisson`` method of a ``default_rng()``
+            New code should use the ``poisson`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3548,6 +3579,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.poisson: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3612,7 +3644,7 @@ cdef class RandomState:
         frequency table.
 
         .. note::
-            New code should use the ``zipf`` method of a ``default_rng()``
+            New code should use the ``zipf`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3635,6 +3667,7 @@ cdef class RandomState:
         scipy.stats.zipf : probability density function, distribution, or
             cumulative density function, etc.
         Generator.zipf: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3702,7 +3735,7 @@ cdef class RandomState:
         where `p` is the probability of success of an individual trial.
 
         .. note::
-            New code should use the ``geometric`` method of a ``default_rng()``
+            New code should use the ``geometric`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3723,6 +3756,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.geometric: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
@@ -3756,7 +3790,7 @@ cdef class RandomState:
         than or equal to the sum ``ngood + nbad``).
 
         .. note::
-            New code should use the ``hypergeometric`` method of a ``default_rng()``
+            New code should use the ``hypergeometric`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3787,6 +3821,7 @@ cdef class RandomState:
         scipy.stats.hypergeom : probability density function, distribution or
             cumulative density function, etc.
         Generator.hypergeometric: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3887,7 +3922,7 @@ cdef class RandomState:
         shape parameter, 0 < ``p`` < 1.
 
         .. note::
-            New code should use the ``logseries`` method of a ``default_rng()``
+            New code should use the ``logseries`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -3910,6 +3945,7 @@ cdef class RandomState:
         scipy.stats.logser : probability density function, distribution or
             cumulative density function, etc.
         Generator.logseries: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -3980,7 +4016,7 @@ cdef class RandomState:
         squared) of the one-dimensional normal distribution.
 
         .. note::
-            New code should use the ``multivariate_normal`` method of a ``default_rng()``
+            New code should use the ``multivariate_normal`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -4013,6 +4049,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.multivariate_normal: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -4154,7 +4191,7 @@ cdef class RandomState:
         outcome was ``i``.
 
         .. note::
-            New code should use the ``multinomial`` method of a ``default_rng()``
+            New code should use the ``multinomial`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -4183,6 +4220,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.multinomial: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
@@ -4285,7 +4323,7 @@ cdef class RandomState:
         inference.
 
         .. note::
-            New code should use the ``dirichlet`` method of a ``default_rng()``
+            New code should use the ``dirichlet`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -4311,6 +4349,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.dirichlet: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Notes
         -----
@@ -4431,7 +4470,7 @@ cdef class RandomState:
         their contents remains the same.
 
         .. note::
-            New code should use the ``shuffle`` method of a ``default_rng()``
+            New code should use the ``shuffle`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -4446,6 +4485,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.shuffle: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
@@ -4551,7 +4591,7 @@ cdef class RandomState:
         first index.
 
         .. note::
-            New code should use the ``permutation`` method of a ``default_rng()``
+            New code should use the ``permutation`` method of a ``Generator``
             instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
@@ -4569,6 +4609,7 @@ cdef class RandomState:
         See Also
         --------
         Generator.permutation: which should be used for new code.
+        Generator.default_rng: Recommended constructor for `Generator`.
 
         Examples
         --------
