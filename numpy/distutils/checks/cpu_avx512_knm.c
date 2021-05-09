@@ -1,9 +1,9 @@
 #include <immintrin.h>
 
-int main(void)
+int main(int argc, char **argv)
 {
-    __m512i a = _mm512_setzero_si512();
-    __m512 b = _mm512_setzero_ps();
+    __m512i a = _mm512_loadu_si512((const __m512i*)argv[argc-1]);
+    __m512 b = _mm512_loadu_ps((const __m512*)argv[argc-2]);
 
     /* 4FMAPS */
     b = _mm512_4fmadd_ps(b, b, b, b, b, NULL);
