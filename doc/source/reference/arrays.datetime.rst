@@ -37,7 +37,7 @@ letters, for a "Not A Time" value.
     >>> np.datetime64('2005-02-25')
     numpy.datetime64('2005-02-25')
     
-    UNIX time, by providing integer and a date unit:
+    UNIX time, by providing integer and a date unit :
 
     >>> np.datetime64(1, 'Y')
     numpy.datetime64('1971')   
