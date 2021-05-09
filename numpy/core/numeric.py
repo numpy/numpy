@@ -2172,12 +2172,12 @@ _identity_with_like = array_function_dispatch(
 )(identity)
 
 
-def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
+def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None, casting=None):
     return (a, b)
 
 
 @array_function_dispatch(_allclose_dispatcher)
-def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
 
@@ -2250,12 +2250,12 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     return bool(res)
 
 
-def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
+def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None, casting=None):
     return (a, b)
 
 
 @array_function_dispatch(_isclose_dispatcher)
-def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     """
     Returns a boolean array where two arrays are element-wise equal within a
     tolerance.
@@ -2341,6 +2341,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     x = asanyarray(a)
     y = asanyarray(b)
 
+    if not np.can_cast(x.dtype, y.dtype, casting=casting):
+        raise TypeError("Cannot compare types '%s' and '%s' with casting rule %s" %(str(x.dtype), str(y.dtype), casting))
+
+
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
     # (e.g., for numpy.ma).
@@ -2378,12 +2382,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         return cond[()]  # Flatten 0d arrays to scalars
 
 
-def _array_equal_dispatcher(a1, a2, equal_nan=None):
+def _array_equal_dispatcher(a1, a2, equal_nan=None, casting=None):
     return (a1, a2)
 
 
 @array_function_dispatch(_array_equal_dispatcher)
-def array_equal(a1, a2, equal_nan=False):
+def array_equal(a1, a2, equal_nan=False, casting='unsafe'):
     """
     True if two arrays have the same shape and elements, False otherwise.
 
@@ -2442,6 +2446,10 @@ def array_equal(a1, a2, equal_nan=False):
         return False
     if a1.shape != a2.shape:
         return False
+
+    if not np.can_cast(a1.dtype, a2.dtype, casting=casting):
+        raise TypeError("Cannot compare types '%s' and '%s' with casting rule %s" %(str(a1.dtype), str(a2.dtype), casting))
+
     if not equal_nan:
         return bool(asarray(a1 == a2).all())
     # Handling NaN values if equal_nan is True
@@ -2453,12 +2461,12 @@ def array_equal(a1, a2, equal_nan=False):
     return bool(asarray(a1[~a1nan] == a2[~a1nan]).all())
 
 
-def _array_equiv_dispatcher(a1, a2):
+def _array_equiv_dispatcher(a1, a2, casting=None):
     return (a1, a2)
 
 
 @array_function_dispatch(_array_equiv_dispatcher)
-def array_equiv(a1, a2):
+def array_equiv(a1, a2, casting='unsafe'):
     """
     Returns True if input arrays are shape consistent and all elements equal.
 
@@ -2501,6 +2509,9 @@ def array_equiv(a1, a2):
         multiarray.broadcast(a1, a2)
     except Exception:
         return False
+
+    if not np.can_cast(a1.dtype, a2.dtype, casting=casting):
+        raise TypeError("Cannot compare types '%s' and '%s' with casting rule %s" %(str(a1.dtype), str(a2.dtype), casting))
 
     return bool(asarray(a1 == a2).all())
 
