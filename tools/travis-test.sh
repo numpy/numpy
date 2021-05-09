@@ -108,10 +108,10 @@ run_test()
   fi
 
   if [ -n "$USE_GDB" ]; then
-￼   COMMAND="gdb --return-child-result --batch --eval-command=run --eval-command=bt --args $PYTHON"
-￼ else
-￼   COMMAND=$PYTHON
-￼ fi
+    COMMAND="gdb --return-child-result --batch --eval-command=run --eval-command=bt --args $PYTHON"
+  else
+    COMMAND=$PYTHON
+  fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
