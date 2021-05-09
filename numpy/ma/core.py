@@ -1936,8 +1936,8 @@ def masked_where(condition, a, copy=True):
     result = a.view(cls)
     # Assign to *.mask so that structured masks are handled correctly.
     result.mask = _shrink_mask(cond)
-    # There is no view of a boolean so when 'a' is a MaskedArray with nomask the
-    # update to the result's mask has no effect.
+    # There is no view of a boolean so when 'a' is a MaskedArray with nomask
+    # the update to the result's mask has no effect.
     if not copy and hasattr(a, '_mask') and getmask(a) is nomask:
         a._mask = result._mask.view()
     return result

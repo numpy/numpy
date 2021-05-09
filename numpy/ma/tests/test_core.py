@@ -5178,12 +5178,12 @@ def test_masked_array():
 def test_masked_array_no_copy():
     # check nomask array is updated in place
     a = np.ma.array([1, 2, 3, 4])
-    _ = np.ma.masked_where(a==3, a, copy=False)
-    assert_array_equal(a.mask, [False, False,  True, False])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [False, False, True, False])
     # check masked array is updated in place
     a = np.ma.array([1, 2, 3, 4], mask=[1, 0, 0, 0])
-    _ = np.ma.masked_where(a==3, a, copy=False)
-    assert_array_equal(a.mask, [True, False,  True, False])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [True, False, True, False])
 
 def test_append_masked_array():
     a = np.ma.masked_equal([1,2,3], value=2)
