@@ -4,7 +4,7 @@ import shutil
 import mmap
 import pytest
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
+from tempfile import NamedTemporaryFile, TemporaryFile, mkstemp, mkdtemp
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
@@ -47,7 +47,7 @@ class TestMemmap:
         assert_equal(newfp.flags.writeable, False)
 
     def test_open_with_filename(self):
-        tmpname = mktemp('', 'mmap', dir=self.tempdir)
+        tmpname = mkstemp('', 'mmap', dir=self.tempdir)[1]
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         fp[:] = self.data[:]
@@ -68,7 +68,7 @@ class TestMemmap:
         del fp
 
     def test_filename(self):
-        tmpname = mktemp('', 'mmap', dir=self.tempdir)
+        tmpname = mkstemp('', 'mmap', dir=self.tempdir)[1]
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         abspath = os.path.abspath(tmpname)
@@ -80,7 +80,7 @@ class TestMemmap:
         del fp
 
     def test_path(self):
-        tmpname = mktemp('', 'mmap', dir=self.tempdir)
+        tmpname = mkstemp('', 'mmap', dir=self.tempdir)[1]
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
                        shape=self.shape)
         # os.path.realpath does not resolve symlinks on Windows

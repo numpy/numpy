@@ -4818,7 +4818,7 @@ class TestIO:
         self.x[0,:, 1] = [np.nan, np.inf, -np.inf, np.nan]
         self.dtype = self.x.dtype
         self.tempdir = tempfile.mkdtemp()
-        self.filename = tempfile.mktemp(dir=self.tempdir)
+        self.filename = tempfile.mkstemp(dir=self.tempdir)[1]
 
     def teardown(self):
         shutil.rmtree(self.tempdir)
