@@ -41,7 +41,7 @@ reveal_type(np.require(B, requirements="A"))  # E: SubClass
 reveal_type(np.require(C))  # E: numpy.ndarray[Any, Any]
 
 reveal_type(np.linspace(0, 10))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.linspace(0, 10, retstep=True))  # E: Tuple[numpy.ndarray[Any, Any], numpy.inexact[Any]]
+reveal_type(np.linspace(0, 10, retstep=True))  # E: Tuple[numpy.ndarray[Any, Any], Any]
 reveal_type(np.logspace(0, 10))  # E: numpy.ndarray[Any, Any]
 reveal_type(np.geomspace(1, 10))  # E: numpy.ndarray[Any, Any]
 

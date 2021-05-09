@@ -187,6 +187,7 @@ numpy/random/legacy/*.c
 numpy/random/_mtrand/randint_helpers.pxi
 numpy/random/bounded_integers.pyx
 numpy/random/bounded_integers.pxd
+numpy/random/lib/npyrandom.lib
 tools/swig/test/Array_wrap.cxx
 tools/swig/test/Farray_wrap.cxx
 tools/swig/test/Farray.py
