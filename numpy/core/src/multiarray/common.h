@@ -313,7 +313,7 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
             tmp = Py_None;
         }
         Py_INCREF(tmp);
-        PyTuple_SET_ITEM(tuple, i, items[i]);
+        PyTuple_SET_ITEM(tuple, i, tmp);
     }
     return tuple;
 }
