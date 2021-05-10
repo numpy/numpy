@@ -46,10 +46,8 @@ The best way to work on NumPy as a contributor is by making a fork of the
 repository first.
 
 #. Browse to the `NumPy repository on GitHub`_ and `create your own fork`_.
-
 #. Browse to your fork. Your fork will have a URL like 
-#. https://github.com/melissawm/NumPy, except with your GitHub username in 
-#. place of "melissawm".
+    https://github.com/melissawm/NumPy, except with your GitHub username in place of ``melissawm``.
 
 Starting Gitpod
 ----------------
@@ -78,7 +76,7 @@ repository:
    might be some actions running. This will ensure that you have a development 
    version of NumPy installed and that the docs are being pre-built for you.
 
-#. Once the build is complete, you can :ref:`test the build<testing-builds>` by 
+#. When your workspace is ready, you can :ref:`test the build<testing-builds>` by 
    entering::
 
         $ python runtests.py -v
