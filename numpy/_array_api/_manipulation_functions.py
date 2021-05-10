@@ -56,7 +56,7 @@ def squeeze(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) 
 
     See its docstring for more information.
     """
-    return ndarray._array(np.squeeze(x._array, axis=axis))
+    return ndarray._new(np.squeeze(x._array, axis=axis))
 
 def stack(arrays: Tuple[array, ...], /, *, axis: int = 0) -> array:
     """
@@ -65,4 +65,4 @@ def stack(arrays: Tuple[array, ...], /, *, axis: int = 0) -> array:
     See its docstring for more information.
     """
     arrays = tuple(a._array for a in arrays)
-    return ndarray._array(np.stack(arrays, axis=axis))
+    return ndarray._new(np.stack(arrays, axis=axis))
