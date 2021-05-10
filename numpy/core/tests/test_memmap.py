@@ -1,10 +1,9 @@
 import sys
 import os
-import shutil
 import mmap
 import pytest
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryFile, mkdtemp
+from tempfile import NamedTemporaryFile, TemporaryFile
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
@@ -18,7 +17,6 @@ from numpy.testing import (
 class TestMemmap:
     def setup(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
-        self.tempdir = mkdtemp()
         self.shape = (3, 4)
         self.dtype = 'float32'
         self.data = arange(12, dtype=self.dtype)
@@ -30,7 +28,6 @@ class TestMemmap:
         if IS_PYPY:
             break_cycles()
             break_cycles()
-        shutil.rmtree(self.tempdir)
 
     def test_roundtrip(self):
         # Write data to file
