@@ -216,15 +216,12 @@ FAQ's and troubleshooting
     Absolutely! Any extensions you installed will be installed in your own 
     workspace and preserved.
 
-#. I registered on Gitpod but I still cannot see a ``Gitpod`` button in my 
-   repositories
-
+#. I registered on Gitpod but I still cannot see a ``Gitpod`` button in my repositories.
     Head to https://gitpod.io/integrations and make sure you are logged in. 
     Hover over GitHub and click on the three buttons that appear on the right. 
     Click on edit permissions and make sure you have ``user:email``, 
-    ``read:user``, and ``public_repo`` checked.
-    Click on **Update Permissions** and confirm the changes in the 
-    GitHub application page.
+    ``read:user``, and ``public_repo`` checked. Click on **Update Permissions** 
+    and confirm the changes in the GitHub application page.
 
     .. image:: ./gitpod-imgs/gitpod-edit-permissions-gh.png
         :alt: Gitpod integrations - edit GH permissions screenshot
@@ -235,16 +232,29 @@ FAQ's and troubleshooting
     shut down after 3 minutes.
 
 #. My terminal is blank - there is no cursor and it's completely unresponsive
-    Unfortunately this is a known-issue on Gitpod's side. You can sort this issue in two ways:
+    Unfortunately this is a known-issue on Gitpod's side. You can sort this 
+    issue in two ways:
 
     #. Create a new Gitpod workspace altogether.
     #. Head to your `Gitpod dashboard <https://gitpod.io/workspaces>`_ and locate 
-        the running workspace. Hover on it and click on the **three dots menu** 
-        and then click on **Stop**. When the workspace is completely stopped you 
-        can click on its name to restart it again.   
+       the running workspace. Hover on it and click on the **three dots menu** 
+       and then click on **Stop**. When the workspace is completely stopped you 
+       can click on its name to restart it again.   
 
-    .. image:: ./gitpod-imgs/gitpod-dashboard-stop.png
-        :alt: Gitpod dashboard and workspace menu screenshot
+       .. image:: ./gitpod-imgs/gitpod-dashboard-stop.png
+           :alt: Gitpod dashboard and workspace menu screenshot
+
+#. I authenticated through GitHub but I still cannot commit to the repository 
+   through Gitpod. 
+
+    Head to https://gitpod.io/integrations and make sure you are logged in. 
+    Hover over GitHub and click on the three buttons that appear on the right. 
+    Click on edit permissions and make sure you have ``public_repo`` checked.
+    Click on **Update Permissions** and confirm the changes in the 
+    GitHub application page.
+
+    .. image:: ./gitpod-imgs/gitpod-edit-permissions-repo.png
+        :alt: Gitpod integrations - edit GH repository permissions screenshot
 
 .. _Gitpod: https://www.gitpod.io/
 .. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
