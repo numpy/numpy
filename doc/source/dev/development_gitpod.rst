@@ -198,7 +198,7 @@ If you want to see the final output with the ``html`` theme you will need to
 rebuild the docs with ``make html`` and use Live Serve as described in option 1.
 
 FAQ's and troubleshooting
-----------------------------
+-------------------------
 
 #. How long is my Gitpod workspace kept for?
     Your stopped workspace will be kept for 14 days and deleted afterwards if 
