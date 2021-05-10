@@ -1,6 +1,7 @@
 """ Test functions for limits module.
 
 """
+import warnings
 import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
@@ -111,6 +112,16 @@ def test_known_types():
     elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
         # IEE 754 128-bit
         assert_ma_equal(ld_ma, _float_ma[128])
+
+
+def test_subnormal_warning():
+    """Test that the subnormal is zero warning is being raised."""
+    ld_ma = _discovered_machar(np.longdouble)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        ld_ma.smallest_subnormal
+        # This test may fail on some platforms
+        assert len(w) == 0
 
 
 def test_plausible_finfo():
