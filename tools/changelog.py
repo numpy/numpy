@@ -57,25 +57,34 @@ A total of %d pull requests were merged for this release.
 
 
 def get_authors(revision_range):
-    pat = u'^.*\\t(.*)$'
     lst_release, cur_release = [r.strip() for r in revision_range.split('..')]
+    authors_pat = u'^.*\\t(.*)$'
 
     # authors, in current release and previous to current release.
-    cur = set(re.findall(pat, this_repo.git.shortlog('-s', revision_range),
-                         re.M))
-    pre = set(re.findall(pat, this_repo.git.shortlog('-s', lst_release),
-                         re.M))
+    cur = this_repo.git.shortlog('-s', revision_range)
+    pre = this_repo.git.shortlog('-s', lst_release)
+    authors_cur = set(re.findall(authors_pat, cur, re.M))
+    authors_pre = set(re.findall(authors_pat, pre, re.M))
+
+    # include co-authors
+    grp = '--group=trailer:co-authored-by'
+    cur = this_repo.git.shortlog('-s', grp, revision_range)
+    pre = this_repo.git.shortlog('-s', grp, lst_release)
+    authors_cur |= set(re.findall(authors_pat, cur, re.M))
+    authors_pre |= set(re.findall(authors_pat, pre, re.M))
 
     # Ignore the bot Homu.
-    cur.discard('Homu')
-    pre.discard('Homu')
+    authors_cur.discard('Homu')
+    authors_pre.discard('Homu')
 
     # Ignore the bot dependabot-preview
-    cur.discard('dependabot-preview')
-    pre.discard('dependabot-preview')
+    authors_cur.discard('dependabot-preview')
+    authors_pre.discard('dependabot-preview')
 
     # Append '+' to new authors.
-    authors = [s + u' +' for s in cur - pre] + [s for s in cur & pre]
+    authors_new = [s + u' +' for s in authors_cur - authors_pre]
+    authors_old = [s for s in authors_cur & authors_pre]
+    authors = authors_new + authors_old
     authors.sort()
     return authors
 
