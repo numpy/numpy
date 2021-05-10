@@ -2330,33 +2330,43 @@ class TestMeshgrid:
 
 
 class TestPiecewise:
-
-    def test_simple(self):
-        # Condition is single bool list
+    def test_condition_is_single_bool_list(self):
         x = piecewise([0, 0], [True, False], [1])
         assert_array_equal(x, [1, 0])
+        # Should possibly deprecate this behavior
+        # assert_raises(ValueError, piecewise, [0, 0], [True, False], [1])
 
-        # List of conditions: single bool list
+    def test_condition_is_list_of_single_bool_list(self):
         x = piecewise([0, 0], [[True, False]], [1])
         assert_array_equal(x, [1, 0])
 
-        # Conditions is single bool array
+    def test_conditions_is_single_bool_array(self):
         x = piecewise([0, 0], np.array([True, False]), [1])
         assert_array_equal(x, [1, 0])
 
-        # Condition is single int array
-        x = piecewise([0, 0], np.array([1, 0]), [1])
+    def test_conditions_is_list_of_single_bool_array(self):
+        x = piecewise([0, 0], [np.array([True, False])], [1])
         assert_array_equal(x, [1, 0])
 
-        # List of conditions: int array
+    def test_condition_is_single_int_array(self):
+        x = piecewise([0, 0], np.array([1, 0]), [1])
+        assert_array_equal(x, [1, 0])
+        # Should possibly deprecate this behavior
+        # assert_raises(ValueError, piecewise, [0, 0], np.array([1, 0]), [1])
+
+    def test_condition_is_list_of_single_int_array(self):
         x = piecewise([0, 0], [np.array([1, 0])], [1])
         assert_array_equal(x, [1, 0])
 
+    def test_condition_is_list_of_single_bool_list_on_function(self):
         x = piecewise([0, 0], [[False, True]], [lambda x:-1])
         assert_array_equal(x, [0, -1])
 
+    def test_to_few_functions(self):
         assert_raises_regex(ValueError, '1 or 2 functions are expected',
             piecewise, [0, 0], [[False, True]], [])
+
+    def test_to_many_functions(self):
         assert_raises_regex(ValueError, '1 or 2 functions are expected',
             piecewise, [0, 0], [[False, True]], [1, 2, 3])
 
@@ -2369,25 +2379,28 @@ class TestPiecewise:
         assert_equal(x, 4)
 
     def test_default(self):
-        # No value specified for x[1], should be 0
-        x = piecewise([1, 2], [True, False], [2])
-        assert_array_equal(x, [2, 0])
 
-        # Should set x[1] to 3
-        x = piecewise([1, 2], [True, False], [2, 3])
-        assert_array_equal(x, [2, 3])
+        for cond in [[True, False], [[True, False]]]:
+            # No value specified for x[1], should be 0
+            x = piecewise([1, 2], cond, [2])
+            assert_array_equal(x, [2, 0])
+
+            # Should set x[1] to 3
+            x = piecewise([1, 2], cond, [2, 3])
+            assert_array_equal(x, [2, 3])
 
     def test_0d(self):
         x = np.array(3)
-        y = piecewise(x, x > 3, [4, 0])
-        assert_(y.ndim == 0)
-        assert_(y == 0)
+        for cond in [x > 3, [x > 3]]:
+            y = piecewise(x, cond, [4, 0])
+            assert_(np.ndim(y) == 0)
+            assert_(y == 0)
 
         x = 5
-        y = piecewise(x, [True, False], [1, 0])
-        assert_(y.ndim == 0)
-        assert_(y == 1)
-
+        for cond in [[True, False], [[True], [False]]]:
+            y = piecewise(x, cond, [1, 0])
+            assert_(np.ndim(y) == 0)
+            assert_(y == 1)
         # With 3 ranges (It was failing, before)
         y = piecewise(x, [False, False, True], [1, 2, 3])
         assert_array_equal(y, 3)
@@ -2413,7 +2426,80 @@ class TestPiecewise:
         y = piecewise(x, [c], [1, 2])
         assert_equal(y, 2)
 
+    def test_ticket_5729(self):
+        """Piecewise bug with scalar domains and more than 2 conditions"""
+        val = piecewise(3, [True, False, False], [4, 2, 0])
+        assert_(val == 4)
+        val = np.piecewise(3, [True, False], [4, 2])
+        assert_(val == 4)
+
+    def test_abs_function(self):
+        x = np.linspace(-2.5, 2.5, 6)
+        vals = piecewise(x, [x < 0, x >= 0], [lambda x: -x, lambda x: x])
+        assert_array_equal(vals,
+                           [2.5, 1.5, 0.5, 0.5, 1.5, 2.5])
+
+    def test_abs_function_with_scalar(self):
+        x = np.array(-2.5)
+        vals = piecewise(x, [x < 0, x >= 0], [lambda x: -x, lambda x: x])
+        assert_(vals == 2.5)
+
+    def test_otherwise_condition(self):
+        x = np.linspace(-2.5, 2.5, 6)
+        vals = piecewise(x, [x < 0, ], [lambda x: -x, lambda x: x])
+        assert_array_equal(vals, [2.5, 1.5, 0.5, 0.5, 1.5, 2.5])
+
+    def test_passing_further_args_to_fun(self):
+        def fun0(x, y, scale=1.):
+            return -x*y/scale
+
+        def fun1(x, y, scale=1.):
+            return x*y/scale
+        x = np.linspace(-2.5, 2.5, 6)
+        vals = piecewise(x, [x < 0, ], [fun0, fun1], 2., scale=2.)
+        assert_array_equal(vals, [2.5, 1.5, 0.5, 0.5, 1.5, 2.5])
+
+    def test_step_function(self):
+        x = np.linspace(-2.5, 2.5, 6)
+        vals = piecewise(x, [x < 0, x >= 0], [-1, 1])
+        assert_array_equal(vals, [-1., -1., -1., 1., 1., 1.])
+
+    def test_step_function_with_scalar(self):
+        x = 1
+        vals = piecewise(x, [x < 0, x >= 0], [-1, 1])
+        assert_(vals == 1)
+
+    def test_function_with_two_args(self):
+        x = np.linspace(-2, 2, 5)
+        X, Y = np.meshgrid(x, x)
+        vals = piecewise[2](X, Y, [X * Y < 0, ],
+                            [lambda x, y: -x * y, lambda x, y: x * y])
+        assert_array_equal(vals, [[4., 2., -0., 2., 4.],
+                                  [2., 1., -0., 1., 2.],
+                                  [-0., -0., 0., 0., 0.],
+                                  [2., 1., 0., 1., 2.],
+                                  [4., 2., 0., 2., 4.]])
+
+    def test_alternative_fill_value_and_function_with_two_args(self):
+        x = np.linspace(-2, 2, 5)
+        X, Y = np.meshgrid(x, x)
+        vals = piecewise[2](X, Y, [X * Y < -0.5, X * Y > 0.5],
+                            [lambda x, y: -x * y, lambda x, y: x * y, np.nan])
+        nan = np.nan
+        assert_array_equal(vals, [[4., 2., nan, 2., 4.],
+                                  [2., 1., nan, 1., 2.],
+                                  [nan, nan, nan, nan, nan],
+                                  [2., 1., nan, 1., 2.],
+                                  [4., 2., nan, 2., 4.]])
+
+    def test_many_arguments(self):
+        # This used to be limited by NPY_MAXARGS == 32
+        conditions = [np.array([False])] * 100
+        choices = [np.array([1])] * 100
+        piecewise(1, conditions, choices)
+
     def test_multidimensional_extrafunc(self):
+        """See ticket #5737"""
         x = np.array([[-2.5, -1.5, -0.5],
                       [0.5, 1.5, 2.5]])
         y = piecewise(x, [x < 0, x >= 2], [-1, 1, 3])
@@ -2421,10 +2507,13 @@ class TestPiecewise:
                                         [3., 3., 1.]]))
 
     def test_subclasses(self):
+        """See xref gh-18110:
+        API: make piecewise subclass safe using use zeros_like.
+        """
         class subclass(np.ndarray):
             pass
         x = np.arange(5.).view(subclass)
-        r = piecewise(x, [x<2., x>=4], [-1., 1., 0.])
+        r = piecewise(x, [x < 2., x >= 4], [-1., 1., 0.])
         assert_equal(type(r), subclass)
         assert_equal(r, [-1., -1., 0., 0., 1.])
 

@@ -1,0 +1,23 @@
+`numpy.piecewise` now handles multivariate functions
+----------------------------------------------------
+The new piecewise function allows to evaluate conditionally multivariate functions
+of the type :math:`f(x_1, x_2,... ,x_n)`, i.e., functions that have arbitrary
+number N of input arguments.
+For a single variate function the call is the same as before (for N=1):
+
+    numpy.piecewise(
+        arr_like,
+        [cond1, cond2, cond3],
+        [func1, func2, func3, func_default],
+        *func_args, **func_kwargs)
+
+whereas for a multivariate function with N variables the call is updated to (N>1):
+
+    numpy.piecewise[N](
+        arr_like_1,
+        arr_like_2,
+        ....
+        arr_like_N,
+        [cond1, cond2, cond3],
+        [func1, func2, func3, func_default],
+        *func_args, **func_kwargs)
