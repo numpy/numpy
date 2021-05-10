@@ -1,6 +1,6 @@
 cython==0.29.23
 wheel<0.36.3
-setuptools<49.2.0
+setuptools<56.3.0
 hypothesis==6.10.1
 pytest==6.2.3
 pytz==2021.1
