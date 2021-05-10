@@ -122,7 +122,7 @@ def norm(x: array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, kee
     """
     # Note: this is different from the default behavior
     if axis == None and x.ndim > 2:
-        x = x.flatten()
+        x = ndarray._new(x._array.flatten())
     # Note: this function is being imported from a nondefault namespace
     return ndarray._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
 
