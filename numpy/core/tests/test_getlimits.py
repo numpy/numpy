@@ -115,13 +115,24 @@ def test_known_types():
 
 
 def test_subnormal_warning():
-    """Test that the subnormal is zero warning is being raised."""
+    """Test that the subnormal is zero warning is not being raised."""
     ld_ma = _discovered_machar(np.longdouble)
+    bytes = np.dtype(np.longdouble).itemsize
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
-        ld_ma.smallest_subnormal
-        # This test may fail on some platforms
-        assert len(w) == 0
+        if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
+            # 80-bit extended precision
+            ld_ma.smallest_subnormal
+            assert len(w) == 0
+        elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
+            # IEE 754 128-bit
+            ld_ma.smallest_subnormal
+            assert len(w) == 0
+        else:
+            # Double double
+            ld_ma.smallest_subnormal
+            # This test may fail on some platforms
+            assert len(w) == 0
 
 
 def test_plausible_finfo():
