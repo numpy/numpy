@@ -135,12 +135,12 @@ before working on your contributions.
 When using Gitpod, git is pre configured for you:
 
 #. You do not need to configure your git username, and email as this should be 
-#. done for you as you authenticated through GitHub. You can check the git 
-#. configuration with the command ``git config --list`` in your terminal.
+   done for you as you authenticated through GitHub. You can check the git 
+   configuration with the command ``git config --list`` in your terminal.
 #. As you started your workspace from your own NumPy fork, you will by default 
-#. have both "upstream "and "origin "added as remotes. You can verify this by 
-#. typing ``git remote`` on your terminal or by clicking on the **branch name** 
-#. on the status bar (see image below).
+   have both "upstream "and "origin "added as remotes. You can verify this by 
+   typing ``git remote`` on your terminal or by clicking on the **branch name** 
+   on the status bar (see image below).
 
 .. image:: ./gitpod-imgs/NumPy-gitpod-branches.png
     :alt: Gitpod workspace branches plugin screenshot
@@ -199,8 +199,8 @@ uses the rst extension with docutils.
 If you want to see the final output with the ``html`` theme you will need to 
 rebuild the docs with ``make html`` and use Live Serve as described in option 1.
 
-FAQ's
------
+FAQ's and troubleshooting
+----------------------------
 
 #. How long is my Gitpod workspace kept for?
     Your stopped workspace will be kept for 14 days and deleted afterwards if 
@@ -233,6 +233,18 @@ FAQ's
     If you keep your workspace open in a browser tab but don't interact with it, 
     it will shut down after 30 minutes. If you close the browser tab, it will 
     shut down after 3 minutes.
+
+#. My terminal is blank - there is no cursor and it's completely unresponsive
+    Unfortunately this is a known-issue on Gitpod's side. You can sort this issue in two ways:
+
+    #. Create a new Gitpod workspace altogether.
+    #. Head to your `Gitpod dashboard <https://gitpod.io/workspaces>`_ and locate 
+        the running workspace. Hover on it and click on the **three dots menu** 
+        and then click on **Stop**. When the workspace is completely stopped you 
+        can click on its name to restart it again.   
+
+    .. image:: ./gitpod-imgs/gitpod-dashboard-stop.png
+        :alt: Gitpod dashboard and workspace menu screenshot
 
 .. _Gitpod: https://www.gitpod.io/
 .. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
