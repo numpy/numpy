@@ -1,0 +1,9 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.20.4 Release Notes
+==========================
+
+NumPy 1.20.4 is a bugfix release containing several fixes merged to the main
+branch after the NumPy 1.20.3 release. The Python versions supported are
+3.7-3.9.
