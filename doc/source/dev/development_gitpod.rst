@@ -230,6 +230,7 @@ FAQ's and troubleshooting
     shut down after 3 minutes.
 
 #. My terminal is blank - there is no cursor and it's completely unresponsive
+
     Unfortunately this is a known-issue on Gitpod's side. You can sort this 
     issue in two ways:
 
