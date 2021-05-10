@@ -22,6 +22,7 @@ Dependencies
 
 - gitpython
 - pygithub
+- git >= 2.29.0
 
 Some code was copied from scipy `tools/gh_list.py` and `tools/authors.py`.
 
@@ -58,20 +59,15 @@ A total of %d pull requests were merged for this release.
 
 def get_authors(revision_range):
     lst_release, cur_release = [r.strip() for r in revision_range.split('..')]
-    authors_pat = u'^.*\\t(.*)$'
+    authors_pat = r'^.*\t(.*)$'
 
-    # authors, in current release and previous to current release.
-    cur = this_repo.git.shortlog('-s', revision_range)
-    pre = this_repo.git.shortlog('-s', lst_release)
+    # authors and co-authors in current and previous releases.
+    grp1 = '--group=author'
+    grp2 = '--group=trailer:co-authored-by'
+    cur = this_repo.git.shortlog('-s', grp1, grp2, revision_range)
+    pre = this_repo.git.shortlog('-s', grp1, grp2, lst_release)
     authors_cur = set(re.findall(authors_pat, cur, re.M))
     authors_pre = set(re.findall(authors_pat, pre, re.M))
-
-    # include co-authors
-    grp = '--group=trailer:co-authored-by'
-    cur = this_repo.git.shortlog('-s', grp, revision_range)
-    pre = this_repo.git.shortlog('-s', grp, lst_release)
-    authors_cur |= set(re.findall(authors_pat, cur, re.M))
-    authors_pre |= set(re.findall(authors_pat, pre, re.M))
 
     # Ignore the bot Homu.
     authors_cur.discard('Homu')
@@ -82,7 +78,7 @@ def get_authors(revision_range):
     authors_pre.discard('dependabot-preview')
 
     # Append '+' to new authors.
-    authors_new = [s + u' +' for s in authors_cur - authors_pre]
+    authors_new = [s + ' +' for s in authors_cur - authors_pre]
     authors_old = [s for s in authors_cur & authors_pre]
     authors = authors_new + authors_old
     authors.sort()
@@ -95,17 +91,17 @@ def get_pull_requests(repo, revision_range):
     # From regular merges
     merges = this_repo.git.log(
         '--oneline', '--merges', revision_range)
-    issues = re.findall(u"Merge pull request \\#(\\d*)", merges)
+    issues = re.findall(r"Merge pull request \#(\d*)", merges)
     prnums.extend(int(s) for s in issues)
 
     # From Homu merges (Auto merges)
-    issues = re. findall(u"Auto merge of \\#(\\d*)", merges)
+    issues = re. findall(r"Auto merge of \#(\d*)", merges)
     prnums.extend(int(s) for s in issues)
 
     # From fast forward squash-merges
     commits = this_repo.git.log(
         '--oneline', '--no-merges', '--first-parent', revision_range)
-    issues = re.findall(u'^.*\\((\\#|gh-|gh-\\#)(\\d+)\\)$', commits, re.M)
+    issues = re.findall(r'^.*\((\#|gh-|gh-\#)(\d+)\)$', commits, re.M)
     prnums.extend(int(s[1]) for s in issues)
 
     # get PR data from github repo
@@ -122,31 +118,31 @@ def main(token, revision_range):
 
     # document authors
     authors = get_authors(revision_range)
-    heading = u"Contributors"
+    heading = "Contributors"
     print()
     print(heading)
-    print(u"="*len(heading))
+    print("="*len(heading))
     print(author_msg % len(authors))
 
     for s in authors:
-        print(u'* ' + s)
+        print('* ' + s)
 
     # document pull requests
     pull_requests = get_pull_requests(github_repo, revision_range)
-    heading = u"Pull requests merged"
-    pull_msg = u"* `#{0} <{1}>`__: {2}"
+    heading = "Pull requests merged"
+    pull_msg = "* `#{0} <{1}>`__: {2}"
 
     print()
     print(heading)
-    print(u"="*len(heading))
+    print("="*len(heading))
     print(pull_request_msg % len(pull_requests))
 
     for pull in pull_requests:
-        title = re.sub(u"\\s+", u" ", pull.title.strip())
+        title = re.sub(r"\s+", " ", pull.title.strip())
         if len(title) > 60:
-            remainder = re.sub(u"\\s.*$", u"...", title[60:])
+            remainder = re.sub(r"\s.*$", "...", title[60:])
             if len(remainder) > 20:
-                remainder = title[:80] + u"..."
+                remainder = title[:80] + "..."
             else:
                 title = title[:60] + remainder
         print(pull_msg.format(pull.number, pull.html_url, title))
