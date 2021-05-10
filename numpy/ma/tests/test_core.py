@@ -5175,6 +5175,16 @@ def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
 
+def test_masked_array_no_copy():
+    # check nomask array is updated in place
+    a = np.ma.array([1, 2, 3, 4])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [False, False, True, False])
+    # check masked array is updated in place
+    a = np.ma.array([1, 2, 3, 4], mask=[1, 0, 0, 0])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [True, False, True, False])
+
 def test_append_masked_array():
     a = np.ma.masked_equal([1,2,3], value=2)
     b = np.ma.masked_equal([4,3,2], value=2)
@@ -5212,7 +5222,6 @@ def test_append_masked_array_along_axis():
     expected = expected.reshape((3,3))
     assert_array_equal(result.data, expected.data)
     assert_array_equal(result.mask, expected.mask)
-
 
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
