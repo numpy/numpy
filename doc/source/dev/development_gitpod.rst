@@ -47,7 +47,7 @@ repository first.
 
 #. Browse to the `NumPy repository on GitHub`_ and `create your own fork`_.
 #. Browse to your fork. Your fork will have a URL like 
-    https://github.com/melissawm/NumPy, except with your GitHub username in place of ``melissawm``.
+   https://github.com/melissawm/NumPy, except with your GitHub username in place of ``melissawm``.
 
 Starting Gitpod
 ----------------
