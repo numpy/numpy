@@ -224,7 +224,7 @@ add_newdoc_for_scalar_type('datetime64', [],
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
-     >>> np.datetime64('1980', 'Y')
+    >>> np.datetime64('1980', 'Y')
     numpy.datetime64('1980')   
     >>> np.datetime64(10, 'D')
     numpy.datetime64('1970-01-11')
