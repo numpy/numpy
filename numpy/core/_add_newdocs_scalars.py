@@ -220,7 +220,8 @@ add_newdoc_for_scalar_type('datetime64', [],
     """
     If created from a 64-bit integer, it represents an offset from
     ``1970-01-01T00:00:00``.
-    If created from string, shown as ISO 8601 date or datetime format.
+    If created from string, the string must be in ISO 8601 date
+    or datetime format.
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
