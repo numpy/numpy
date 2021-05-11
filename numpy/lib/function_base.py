@@ -559,7 +559,7 @@ def _piecewise(ndim, *inargs, **func_kwargs):
 
 
 class _Piecewise:
-    """
+    r"""
     Evaluate a piecewise-defined function.
 
     Given a set of conditions and corresponding functions, evaluate each
@@ -568,7 +568,7 @@ class _Piecewise:
     Parameters
     ----------
     xi : tuple of ndarrays or scalars
-        input arguments to the functions in funclist, i.e., 
+        input arguments to the functions in funclist, i.e.,
         xi=(x0, x1,...., xn).
     condlist : list of bool arrays or bool scalars
         Each boolean array corresponds to a function in `funclist`.  Wherever
