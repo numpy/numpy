@@ -568,7 +568,8 @@ class _Piecewise:
     Parameters
     ----------
     xi : tuple of ndarrays or scalars
-        input arguments to the functions in funclist, ie., xi=(x0, x1,...., xn).
+        input arguments to the functions in funclist, i.e., 
+        xi=(x0, x1,...., xn).
     condlist : list of bool arrays or bool scalars
         Each boolean array corresponds to a function in `funclist`.  Wherever
         `condlist[i]` is True, `funclist[i](x0,x1,...,xn)` is used as the
@@ -581,8 +582,8 @@ class _Piecewise:
         If one extra function is given, i.e. if
         ``len(funclist) == len(condlist) + 1``, then that extra function
         is the default value, used wherever all conditions are false.
-        When multiple conditions are satisfied, the last one encountered
-        in `condlist` is used.
+        When multiple overlapping conditions are satisfied, the last one
+        encountered in `condlist` is used.
     funclist : list of callables, f(*xi, *funcargs, **funckwargs), or scalars
         Each function is evaluated over `x` wherever its corresponding
         condition is True.  It should take an array as input and give an array
