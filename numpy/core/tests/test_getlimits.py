@@ -116,7 +116,8 @@ def test_known_types():
 
 def test_subnormal_warning():
     """Test that the subnormal is zero warning is not being raised."""
-    ld_ma = _discovered_machar(np.longdouble)
+    with np.errstate(all='ignore'):
+        ld_ma = _discovered_machar(np.longdouble)
     bytes = np.dtype(np.longdouble).itemsize
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
