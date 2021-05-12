@@ -1718,21 +1718,32 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def itemset(self, __value: Any) -> None: ...
     @overload
     def itemset(self, __item: _ShapeLike, __value: Any) -> None: ...
+
     @overload
     def resize(self, __new_shape: _ShapeLike, *, refcheck: bool = ...) -> None: ...
     @overload
     def resize(self, *new_shape: SupportsIndex, refcheck: bool = ...) -> None: ...
+
     def setflags(
         self, write: bool = ..., align: bool = ..., uic: bool = ...
     ) -> None: ...
+
     def squeeze(
-        self: _ArraySelf, axis: Union[SupportsIndex, Tuple[SupportsIndex, ...]] = ...
+        self: _ArraySelf,
+        axis: Union[SupportsIndex, Tuple[SupportsIndex, ...]] = ...,
     ) -> _ArraySelf: ...
-    def swapaxes(self: _ArraySelf, axis1: SupportsIndex, axis2: SupportsIndex) -> _ArraySelf: ...
+
+    def swapaxes(
+        self: _ArraySelf,
+        axis1: SupportsIndex,
+        axis2: SupportsIndex,
+    ) -> _ArraySelf: ...
+
     @overload
     def transpose(self: _ArraySelf, __axes: _ShapeLike) -> _ArraySelf: ...
     @overload
     def transpose(self: _ArraySelf, *axes: SupportsIndex) -> _ArraySelf: ...
+
     def argpartition(
         self,
         kth: _ArrayLikeInt_co,
@@ -1740,18 +1751,22 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         kind: _PartitionKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> ndarray: ...
+
     def diagonal(
         self: _ArraySelf,
         offset: SupportsIndex = ...,
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
     ) -> _ArraySelf: ...
+
     @overload
     def dot(self, b: ArrayLike, out: None = ...) -> ndarray: ...
     @overload
     def dot(self, b: ArrayLike, out: _NdArraySubClass = ...) -> _NdArraySubClass: ...
+
     # `nonzero()` is deprecated for 0d arrays/generics
     def nonzero(self) -> Tuple[ndarray, ...]: ...
+
     def partition(
         self,
         kth: _ArrayLikeInt_co,
@@ -1759,26 +1774,37 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         kind: _PartitionKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> None: ...
+
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
     def put(
-        self, ind: _ArrayLikeInt_co, v: ArrayLike, mode: _ModeKind = ...
+        self,
+        ind: _ArrayLikeInt_co,
+        v: ArrayLike,
+        mode: _ModeKind = ...,
     ) -> None: ...
+
     def searchsorted(
         self,  # >= 1D array
         v: ArrayLike,
         side: _SortSide = ...,
         sorter: Optional[_ArrayLikeInt_co] = ...,  # 1D int array
     ) -> ndarray: ...
+
     def setfield(
-        self, val: ArrayLike, dtype: DTypeLike, offset: SupportsIndex = ...
+        self,
+        val: ArrayLike,
+        dtype: DTypeLike,
+        offset: SupportsIndex = ...,
     ) -> None: ...
+
     def sort(
         self,
         axis: SupportsIndex = ...,
         kind: Optional[_SortKind] = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> None: ...
+
     @overload
     def trace(
         self,  # >= 2D array
@@ -1829,17 +1855,18 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         axis: Optional[SupportsIndex] = ...,
     ) -> ndarray[Any, _DType_co]: ...
 
-    # Many of these special methods are irrelevant currently, since protocols
-    # aren't supported yet. That said, I'm adding them for completeness.
-    # https://docs.python.org/3/reference/datamodel.html
     def __int__(self) -> int: ...
+
     def __float__(self) -> float: ...
+
     def __complex__(self) -> complex: ...
+
+    def __index__(self) -> int: ...
+
     def __len__(self) -> int: ...
     def __setitem__(self, key, value): ...
     def __iter__(self) -> Any: ...
     def __contains__(self, key) -> bool: ...
-    def __index__(self) -> int: ...
 
     # The last overload is for catching recursive objects whose
     # nesting is too deep.
