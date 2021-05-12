@@ -11,8 +11,6 @@ from numpy import (
     generic,
     _OrderKACF,
     _OrderACF,
-    _ArrayLikeBool,
-    _ArrayLikeIntOrBool,
     _ModeKind,
     _PartitionKind,
     _SortKind,
@@ -23,6 +21,8 @@ from numpy.typing import (
     ArrayLike,
     _ShapeLike,
     _Shape,
+    _ArrayLikeBool_co,
+    _ArrayLikeInt_co,
     _NumberLike_co,
 )
 
@@ -52,7 +52,7 @@ _Number = TypeVar("_Number", bound=number)
 # 4. An array-like object comes in; an ndarray or generic comes out
 def take(
     a: ArrayLike,
-    indices: _ArrayLikeIntOrBool,
+    indices: _ArrayLikeInt_co,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
     mode: _ModeKind = ...,
@@ -65,7 +65,7 @@ def reshape(
 ) -> ndarray: ...
 
 def choose(
-    a: _ArrayLikeIntOrBool,
+    a: _ArrayLikeInt_co,
     choices: ArrayLike,
     out: Optional[ndarray] = ...,
     mode: _ModeKind = ...,
@@ -73,13 +73,13 @@ def choose(
 
 def repeat(
     a: ArrayLike,
-    repeats: _ArrayLikeIntOrBool,
+    repeats: _ArrayLikeInt_co,
     axis: Optional[int] = ...,
 ) -> ndarray: ...
 
 def put(
     a: ndarray,
-    ind: _ArrayLikeIntOrBool,
+    ind: _ArrayLikeInt_co,
     v: ArrayLike,
     mode: _ModeKind = ...,
 ) -> None: ...
@@ -97,7 +97,7 @@ def transpose(
 
 def partition(
     a: ArrayLike,
-    kth: _ArrayLikeIntOrBool,
+    kth: _ArrayLikeInt_co,
     axis: Optional[int] = ...,
     kind: _PartitionKind = ...,
     order: Union[None, str, Sequence[str]] = ...,
@@ -105,7 +105,7 @@ def partition(
 
 def argpartition(
     a: ArrayLike,
-    kth: _ArrayLikeIntOrBool,
+    kth: _ArrayLikeInt_co,
     axis: Optional[int] = ...,
     kind: _PartitionKind = ...,
     order: Union[None, str, Sequence[str]] = ...,
@@ -156,14 +156,14 @@ def searchsorted(
     a: ArrayLike,
     v: _Scalar,
     side: _SortSide = ...,
-    sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
+    sorter: Optional[_ArrayLikeInt_co] = ...,  # 1D int array
 ) -> intp: ...
 @overload
 def searchsorted(
     a: ArrayLike,
     v: ArrayLike,
     side: _SortSide = ...,
-    sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
+    sorter: Optional[_ArrayLikeInt_co] = ...,  # 1D int array
 ) -> ndarray: ...
 
 def resize(
@@ -235,7 +235,7 @@ def sum(
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 @overload
@@ -288,7 +288,7 @@ def amax(
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 def amin(
@@ -297,7 +297,7 @@ def amin(
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 # TODO: `np.prod()``: For object arrays `initial` does not necessarily
@@ -314,7 +314,7 @@ def prod(
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 def cumprod(

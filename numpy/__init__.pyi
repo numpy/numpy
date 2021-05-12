@@ -1207,14 +1207,6 @@ _PartitionKind = Literal["introselect"]
 _SortKind = Literal["quicksort", "mergesort", "heapsort", "stable"]
 _SortSide = Literal["left", "right"]
 
-_ArrayLikeBool = Union[_BoolLike_co, Sequence[_BoolLike_co], ndarray]
-_ArrayLikeIntOrBool = Union[
-    _IntLike_co,
-    ndarray,
-    Sequence[_IntLike_co],
-    Sequence[Sequence[Any]],  # TODO: wait for support for recursive types
-]
-
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
 class _ArrayOrScalarCommon:
@@ -1482,7 +1474,7 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def max(
@@ -1491,7 +1483,7 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1518,7 +1510,7 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def min(
@@ -1527,7 +1519,7 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     def newbyteorder(
@@ -1543,7 +1535,7 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def prod(
@@ -1553,7 +1545,7 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1573,7 +1565,7 @@ class _ArrayOrScalarCommon:
 
     def repeat(
         self,
-        repeats: _ArrayLikeIntOrBool,
+        repeats: _ArrayLikeInt_co,
         axis: Optional[SupportsIndex] = ...,
     ) -> ndarray: ...
 
@@ -1617,7 +1609,7 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def sum(
@@ -1627,7 +1619,7 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool = ...,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1641,7 +1633,7 @@ class _ArrayOrScalarCommon:
     @overload
     def take(
         self,
-        indices: _ArrayLikeIntOrBool,
+        indices: _ArrayLikeInt_co,
         axis: Optional[SupportsIndex] = ...,
         out: None = ...,
         mode: _ModeKind = ...,
@@ -1649,7 +1641,7 @@ class _ArrayOrScalarCommon:
     @overload
     def take(
         self,
-        indices: _ArrayLikeIntOrBool,
+        indices: _ArrayLikeInt_co,
         axis: Optional[SupportsIndex] = ...,
         out: _NdArraySubClass = ...,
         mode: _ModeKind = ...,
@@ -1761,7 +1753,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def transpose(self: _ArraySelf, *axes: SupportsIndex) -> _ArraySelf: ...
     def argpartition(
         self,
-        kth: _ArrayLikeIntOrBool,
+        kth: _ArrayLikeInt_co,
         axis: Optional[SupportsIndex] = ...,
         kind: _PartitionKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
@@ -1780,7 +1772,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def nonzero(self) -> Tuple[ndarray, ...]: ...
     def partition(
         self,
-        kth: _ArrayLikeIntOrBool,
+        kth: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
         kind: _PartitionKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
@@ -1788,13 +1780,13 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
     def put(
-        self, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _ModeKind = ...
+        self, ind: _ArrayLikeInt_co, v: ArrayLike, mode: _ModeKind = ...
     ) -> None: ...
     def searchsorted(
         self,  # >= 1D array
         v: ArrayLike,
         side: _SortSide = ...,
-        sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
+        sorter: Optional[_ArrayLikeInt_co] = ...,  # 1D int array
     ) -> ndarray: ...
     def setfield(
         self, val: ArrayLike, dtype: DTypeLike, offset: SupportsIndex = ...
