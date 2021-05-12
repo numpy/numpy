@@ -1676,6 +1676,7 @@ _NumberType = TypeVar("_NumberType", bound=number[Any])
 _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 
 _T = TypeVar("_T")
+_T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
 _Casting = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
 
@@ -1685,6 +1686,9 @@ _ArrayFloat_co = _ArrayND[Union[bool_, integer[Any], floating[Any]]]
 _ArrayComplex_co = _ArrayND[Union[bool_, integer[Any], floating[Any], complexfloating[Any, Any]]]
 _ArrayNumber_co = _ArrayND[Union[bool_, number[Any]]]
 _ArrayTD64_co = _ArrayND[Union[bool_, integer[Any], timedelta64]]
+
+class _SupportsItem(Protocol[_T_co]):
+    def item(self, __args: Any) -> _T_co: ...
 
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @property
@@ -1728,10 +1732,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def fill(self, value: Any) -> None: ...
     @property
     def flat(self: _NdArraySubClass) -> flatiter[_NdArraySubClass]: ...
+
+    # Use the same output type as that of the underlying `generic`
     @overload
-    def item(self, *args: SupportsIndex) -> Any: ...
+    def item(
+        self: ndarray[Any, dtype[_SupportsItem[_T]]],  # type: ignore[type-var]
+        *args: SupportsIndex,
+    ) -> _T: ...
     @overload
-    def item(self, __args: Tuple[SupportsIndex, ...]) -> Any: ...
+    def item(
+        self: ndarray[Any, dtype[_SupportsItem[_T]]],  # type: ignore[type-var]
+        __args: Tuple[SupportsIndex, ...],
+    ) -> _T: ...
+
     @overload
     def itemset(self, __value: Any) -> None: ...
     @overload
