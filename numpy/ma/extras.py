@@ -617,7 +617,7 @@ def average(a, axis=None, weights=None, returned=False):
             wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape, subok=True)
             wgt = wgt.swapaxes(-1, axis)
 
-        if m is nomask:
+        if m is not nomask:
             wgt = wgt*(~a.mask)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
