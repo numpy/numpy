@@ -5246,7 +5246,7 @@ class TestIO:
 
     def test_read_shorter_than_count_subarray(self, tmp_filename):
         # Test that requesting more values does not cause any problems
-        # in conjuction with subarray dimensions being absored into the
+        # in conjunction with subarray dimensions being absorbed into the
         # array dimension.
         expected = np.arange(511 * 10, dtype="i").reshape(-1, 10)
 
