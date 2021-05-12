@@ -5080,29 +5080,49 @@ class TestIO:
         y = np.fromfile(filename, **kw)
         assert_array_equal(y, value)
 
-    @pytest.fixture(params=[True, False])
-    def comma_decimal_point_locale(self, request):
-        if request.param:
+    @pytest.fixture(params=["period", "comma"])
+    def decimal_sep_localization(self, request):
+        """
+        Including this fixture in a test will automatically
+        execute it with both types of decimal separator.
+
+        So::
+
+            def test_decimal(decimal_sep_localization):
+                pass
+
+        is equivalent to the following two tests::
+
+            def test_decimal_period_separator():
+                pass
+
+            def test_decimal_comma_separator():
+                with CommaDecimalPointLocale():
+                    pass
+        """
+        if request.param == "period":
+            yield
+        elif request.param == "comma":
             with CommaDecimalPointLocale():
                 yield
         else:
-            yield
+            assert False, request.param
 
-    def test_nan(self, tmp_filename, comma_decimal_point_locale):
+    def test_nan(self, tmp_filename, decimal_sep_localization):
         self._check_from(
             b"nan +nan -nan NaN nan(foo) +NaN(BAR) -NAN(q_u_u_x_)",
             [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
             tmp_filename,
             sep=' ')
 
-    def test_inf(self, tmp_filename, comma_decimal_point_locale):
+    def test_inf(self, tmp_filename, decimal_sep_localization):
         self._check_from(
             b"inf +inf -inf infinity -Infinity iNfInItY -inF",
             [np.inf, np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf],
             tmp_filename,
             sep=' ')
 
-    def test_numbers(self, tmp_filename, comma_decimal_point_locale):
+    def test_numbers(self, tmp_filename, decimal_sep_localization):
         self._check_from(
             b"1.234 -1.234 .3 .3e55 -123133.1231e+133",
             [1.234, -1.234, .3, .3e55, -123133.1231e+133],
@@ -5144,7 +5164,7 @@ class TestIO:
     def test_string(self, tmp_filename):
         self._check_from(b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, sep=',')
 
-    def test_counted_string(self, tmp_filename, comma_decimal_point_locale):
+    def test_counted_string(self, tmp_filename, decimal_sep_localization):
         self._check_from(
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, count=4, sep=',')
         self._check_from(
@@ -5161,13 +5181,13 @@ class TestIO:
             b'1 2  3     4   ', [1, 2, 3], tmp_filename, count=3, dtype=int,
             sep=' ')
 
-    def test_ascii(self, tmp_filename, comma_decimal_point_locale):
+    def test_ascii(self, tmp_filename, decimal_sep_localization):
         self._check_from(
             b'1 , 2 , 3 , 4', [1., 2., 3., 4.], tmp_filename, sep=',')
         self._check_from(
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, dtype=float, sep=',')
 
-    def test_malformed(self, tmp_filename, comma_decimal_point_locale):
+    def test_malformed(self, tmp_filename, decimal_sep_localization):
         with assert_warns(DeprecationWarning):
             self._check_from(
                 b'1.234 1,234', [1.234, 1.], tmp_filename, sep=' ')
@@ -5190,7 +5210,7 @@ class TestIO:
         assert_(y.dtype == '?')
         assert_array_equal(y, v)
 
-    def test_tofile_sep(self, tmp_filename, comma_decimal_point_locale):
+    def test_tofile_sep(self, tmp_filename, decimal_sep_localization):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         with open(tmp_filename, 'w') as f:
             x.tofile(f, sep=',')
@@ -5200,7 +5220,7 @@ class TestIO:
         y = np.array([float(p) for p in s.split(',')])
         assert_array_equal(x,y)
 
-    def test_tofile_format(self, tmp_filename, comma_decimal_point_locale):
+    def test_tofile_format(self, tmp_filename, decimal_sep_localization):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         with open(tmp_filename, 'w') as f:
             x.tofile(f, sep=',', format='%.2f')
