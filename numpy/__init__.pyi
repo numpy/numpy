@@ -1623,31 +1623,6 @@ class _ArrayOrScalarCommon:
     ) -> _NdArraySubClass: ...
 
     @overload
-    def take(
-        self,
-        indices: _IntLike_co,
-        axis: Optional[SupportsIndex] = ...,
-        out: None = ...,
-        mode: _ModeKind = ...,
-    ) -> Any: ...
-    @overload
-    def take(
-        self,
-        indices: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
-        out: None = ...,
-        mode: _ModeKind = ...,
-    ) -> ndarray: ...
-    @overload
-    def take(
-        self,
-        indices: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
-        out: _NdArraySubClass = ...,
-        mode: _ModeKind = ...,
-    ) -> _NdArraySubClass: ...
-
-    @overload
     def var(
         self,
         axis: Optional[_ShapeLike] = ...,
@@ -1828,6 +1803,32 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
+
+    @overload
+    def take(  # type: ignore[misc]
+        self: ndarray[Any, dtype[_ScalarType]],
+        indices: _IntLike_co,
+        axis: Optional[SupportsIndex] = ...,
+        out: None = ...,
+        mode: _ModeKind = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def take(  # type: ignore[misc]
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: Optional[SupportsIndex] = ...,
+        out: None = ...,
+        mode: _ModeKind = ...,
+    ) -> ndarray[Any, _DType_co]: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: Optional[SupportsIndex] = ...,
+        out: _NdArraySubClass = ...,
+        mode: _ModeKind = ...,
+    ) -> _NdArraySubClass: ...
+
     # Many of these special methods are irrelevant currently, since protocols
     # aren't supported yet. That said, I'm adding them for completeness.
     # https://docs.python.org/3/reference/datamodel.html
@@ -2794,6 +2795,32 @@ class generic(_ArrayOrScalarCommon):
         self,
         __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
     ) -> Any: ...
+
+    @overload
+    def take(  # type: ignore[misc]
+        self: _ScalarType,
+        indices: _IntLike_co,
+        axis: Optional[SupportsIndex] = ...,
+        out: None = ...,
+        mode: _ModeKind = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def take(  # type: ignore[misc]
+        self: _ScalarType,
+        indices: _ArrayLikeInt_co,
+        axis: Optional[SupportsIndex] = ...,
+        out: None = ...,
+        mode: _ModeKind = ...,
+    ) -> ndarray[Any, dtype[_ScalarType]]: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: Optional[SupportsIndex] = ...,
+        out: _NdArraySubClass = ...,
+        mode: _ModeKind = ...,
+    ) -> _NdArraySubClass: ...
+
     def squeeze(
         self: _ScalarType, axis: Union[Literal[0], Tuple[()]] = ...
     ) -> _ScalarType: ...
