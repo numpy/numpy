@@ -1098,8 +1098,10 @@ class TestPromotion:
              (np.float16(2), np.complex64),
              (np.float32(2), np.complex64),
              (np.longdouble(2), np.complex64),
-             (np.nextafter(np.longdouble(1.7e308), 0.), np.complex128),
-             (np.longdouble(1.7e308), np.clongdouble),
+             # Base of the double value to sidestep any rounding issues:
+             (np.longdouble(np.nextafter(1.7e308, 0.)), np.complex128),
+             # Additionally use "nextafter" so the cast can't round down:
+             (np.longdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
              ])
     def test_complex_other_value_based(self, other, expected):
         # This would change if we modify the value based promotion
