@@ -67,3 +67,19 @@ reveal_type(np.cfloat())  # E: {cdouble}
 reveal_type(np.clongdouble())  # E: {clongdouble}
 reveal_type(np.clongfloat())  # E: {clongdouble}
 reveal_type(np.longcomplex())  # E: {clongdouble}
+
+reveal_type(np.bool_().item())  # E: bool
+reveal_type(np.int_().item())  # E: int
+reveal_type(np.uint64().item())  # E: int
+reveal_type(np.float32().item())  # E: float
+reveal_type(np.complex128().item())  # E: complex
+reveal_type(np.str_().item())  # E: str
+reveal_type(np.bytes_().item())  # E: bytes
+
+reveal_type(np.bool_().tolist())  # E: bool
+reveal_type(np.int_().tolist())  # E: int
+reveal_type(np.uint64().tolist())  # E: int
+reveal_type(np.float32().tolist())  # E: float
+reveal_type(np.complex128().tolist())  # E: complex
+reveal_type(np.str_().tolist())  # E: str
+reveal_type(np.bytes_().tolist())  # E: bytes

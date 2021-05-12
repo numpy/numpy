@@ -6,17 +6,19 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-from typing import cast
+from __future__ import annotations
+
+from typing import cast, Any
 import numpy as np
 
 class SubClass(np.ndarray): ...
 
 i4 = np.int32(1)
-A = np.array([[1]], dtype=np.int32)
+A: np.ndarray[Any, np.dtype[np.int32]] = np.array([[1]], dtype=np.int32)
 B0 = np.empty((), dtype=np.int32).view(SubClass)
 B1 = np.empty((1,), dtype=np.int32).view(SubClass)
 B2 = np.empty((1, 1), dtype=np.int32).view(SubClass)
-C = np.array([0, 1, 2], dtype=np.int32)
+C: np.ndarray[Any, np.dtype[np.int32]] = np.array([0, 1, 2], dtype=np.int32)
 D = np.empty(3).view(SubClass)
 
 i4.all()
@@ -157,3 +159,6 @@ A.trace(out=B0)
 
 void = cast(np.void, np.array(1, dtype=[("f", np.float64)]).take(0))
 void.setfield(10, np.float64)
+
+A.item(0)
+C.item(0)
