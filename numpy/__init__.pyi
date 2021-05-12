@@ -1563,12 +1563,6 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
 
-    def repeat(
-        self,
-        repeats: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
-    ) -> ndarray: ...
-
     @overload
     def round(
         self: _ArraySelf,
@@ -1828,6 +1822,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         out: _NdArraySubClass = ...,
         mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
+
+    def repeat(
+        self,
+        repeats: _ArrayLikeInt_co,
+        axis: Optional[SupportsIndex] = ...,
+    ) -> ndarray[Any, _DType_co]: ...
 
     # Many of these special methods are irrelevant currently, since protocols
     # aren't supported yet. That said, I'm adding them for completeness.
@@ -2820,6 +2820,12 @@ class generic(_ArrayOrScalarCommon):
         out: _NdArraySubClass = ...,
         mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
+
+    def repeat(
+        self: _ScalarType,
+        repeats: _ArrayLikeInt_co,
+        axis: Optional[SupportsIndex] = ...,
+    ) -> ndarray[Any, dtype[_ScalarType]]: ...
 
     def squeeze(
         self: _ScalarType, axis: Union[Literal[0], Tuple[()]] = ...
