@@ -2778,7 +2778,7 @@ class generic(_ArrayOrScalarCommon):
     @property
     def flat(self: _ScalarType) -> flatiter[ndarray[Any, dtype[_ScalarType]]]: ...
     def item(
-        self: _ScalarType,
+        self,
         __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
     ) -> Any: ...
     def squeeze(
@@ -2820,6 +2820,11 @@ class number(generic, Generic[_NBit1]):  # type: ignore
 
 class bool_(generic):
     def __init__(self, __value: object = ...) -> None: ...
+    def item(
+        self,
+        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+    ) -> bool: ...
+    def tolist(self) -> bool: ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
@@ -2881,7 +2886,8 @@ class _DatetimeScalar(Protocol):
     @property
     def year(self) -> int: ...
 
-
+# TODO: `item`/`tolist` returns either `dt.date`, `dt.datetime` or `int`
+# depending on the unit
 class datetime64(generic):
     @overload
     def __init__(
@@ -2920,6 +2926,11 @@ else:
 class integer(number[_NBit1]):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
     # sub-classes (`int64`, `uint32`, etc)
+    def item(
+        self,
+        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+    ) -> int: ...
+    def tolist(self) -> int: ...
     def __index__(self) -> int: ...
     __truediv__: _IntTrueDiv[_NBit1]
     __rtruediv__: _IntTrueDiv[_NBit1]
@@ -2978,6 +2989,8 @@ int0 = signedinteger[_NBitIntP]
 int_ = signedinteger[_NBitInt]
 longlong = signedinteger[_NBitLongLong]
 
+# TODO: `item`/`tolist` returns either `dt.timedelta` or `int`
+# depending on the unit
 class timedelta64(generic):
     def __init__(
         self,
@@ -3057,6 +3070,11 @@ _FloatType = TypeVar('_FloatType', bound=floating)
 
 class floating(inexact[_NBit1]):
     def __init__(self, __value: _FloatValue = ...) -> None: ...
+    def item(
+        self,
+        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+    ) -> float: ...
+    def tolist(self) -> float: ...
     __add__: _FloatOp[_NBit1]
     __radd__: _FloatOp[_NBit1]
     __sub__: _FloatOp[_NBit1]
@@ -3091,6 +3109,11 @@ longfloat = floating[_NBitLongDouble]
 
 class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
     def __init__(self, __value: _ComplexValue = ...) -> None: ...
+    def item(
+        self,
+        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+    ) -> complex: ...
+    def tolist(self) -> complex: ...
     @property
     def real(self) -> floating[_NBit1]: ...  # type: ignore[override]
     @property
@@ -3123,6 +3146,9 @@ longcomplex = complexfloating[_NBitLongDouble, _NBitLongDouble]
 
 class flexible(generic): ...  # type: ignore
 
+# TODO: `item`/`tolist` returns either `bytes` or `tuple`
+# depending on whether or not it's used as an opaque bytes sequence
+# or a structure
 class void(flexible):
     def __init__(self, __value: Union[_IntLike_co, bytes]) -> None: ...
     @property
@@ -3151,6 +3177,11 @@ class bytes_(character, bytes):
     def __init__(
         self, __value: str, encoding: str = ..., errors: str = ...
     ) -> None: ...
+    def item(
+        self,
+        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+    ) -> bytes: ...
+    def tolist(self) -> bytes: ...
 
 string_ = bytes_
 bytes0 = bytes_
@@ -3162,6 +3193,11 @@ class str_(character, str):
     def __init__(
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
+    def item(
+        self,
+        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+    ) -> str: ...
+    def tolist(self) -> str: ...
 
 unicode_ = str_
 str0 = str_
