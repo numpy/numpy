@@ -8,12 +8,9 @@ class LaplaceInplace(Benchmark):
     param_names = ['update']
 
     def setup(self, update):
-        N = 150
-        Niter = 1000
-        dx = 0.1
-        dy = 0.1
-        dx2 = (dx * dx)
-        dy2 = (dy * dy)
+        N, Nitter = 150, 1000
+        dx, dy = 0.1, 0.1
+        dx2, dy2 = (dx * dx), (dy * dy)
 
         def num_update(u, dx2, dy2):
             u[1:(-1), 1:(-1)] = ((((u[2:, 1:(-1)] + u[:(-2), 1:(-1)]) * dy2) +
