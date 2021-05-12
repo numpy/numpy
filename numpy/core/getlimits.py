@@ -33,11 +33,11 @@ def _fr1(a):
 class MachArLike:
     """ Object to simulate MachAr instance """
     def __init__(self, ftype, *, eps, epsneg, huge, tiny, smallest_normal,
-                 ibeta, hardcode_smallest_subnormal=False, **kwargs):
+                 ibeta, smallest_subnormal=None, **kwargs):
         self.params = _MACHAR_PARAMS[ftype]
         self.ftype = ftype
         self.title = self.params['title']
-        self.hardcode_smallest_subnormal = hardcode_smallest_subnormal
+        self._smallest_subnormal = smallest_subnormal
         # Parameter types same as for discovered MachAr object.
         self.epsilon = self.eps = self.float_to_float(eps)
         self.epsneg = self.float_to_float(epsneg)
@@ -70,14 +70,10 @@ class MachArLike:
         UserWarning
             If the calculated value for the smallest subnormal is zero.
         """
-        ld = ntypes.longdouble
-        if self.hardcode_smallest_subnormal:
-            # It is preferred to hardcode this value here because in some
-            # platforms nextafter will return not expected values.
-            value = exp2(ld(-16445))
-        else:
+        if not self._smallest_subnormal:
             value = nextafter(self.ftype(0), self.ftype(1), dtype=self.ftype)
-
+        else:
+            value = self._smallest_subnormal
         # Check that the calculated value is not zero, in case it is raise a
         # warning.
         if self.ftype(0) == value:
@@ -293,11 +289,11 @@ def _register_known_types():
                              irnd=5,
                              ngrd=0,
                              eps=exp2(ld(-105)),
-                             epsneg= exp2(ld(-106)),
+                             epsneg=exp2(ld(-106)),
                              huge=huge_dd,
                              tiny=exp2(ld(-1022)),
                              smallest_normal=exp2(ld(-1022)),
-                             hardcode_smallest_subnormal=True)
+                             smallest_subnormal=exp2(ld(-16445)))
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
         b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf')
