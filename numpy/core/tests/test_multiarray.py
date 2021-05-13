@@ -6946,6 +6946,13 @@ class TestNeighborhoodIter:
                 x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
+        # Test with start in the middle
+        r = [np.array([[4, 0, 1], [4, 2, 3]], dtype=dt),
+             np.array([[0, 1, 4], [2, 3, 4]], dtype=dt)]
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'], 2)
+        assert_array_equal(l, r)
+
     def test_mirror2d(self, dt):
         x = np.array([[0, 1], [2, 3]], dtype=dt)
         r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt),
