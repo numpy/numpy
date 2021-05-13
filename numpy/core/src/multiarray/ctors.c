@@ -2105,6 +2105,39 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
     return PyObject_RichCompareBool(typestr, typestr2, Py_EQ);
 }
 
+
+/*
+ * A helper function to transition away from ignoring errors during
+ * special attribute lookups during array coercion.
+ */
+static NPY_INLINE int
+deprecated_lookup_error_clearing(PyTypeObject *type, char *attribute)
+{
+    PyObject *exc_type, *exc_value, *traceback;
+    PyErr_Fetch(&exc_type, &exc_value, &traceback);
+
+    /* DEPRECATED 2021-05-12, NumPy 1.21. */
+    int res = PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+            "An error was ignored while fetching the attribute `%s` from an "
+            "object of type '%s'.  With the exception of `AttributeError` "
+            "NumPy will always raise this error in the future.  Raise this "
+            "deprecation warning to see the original error. "
+            "(Warning added NumPy 1.21)", attribute, type->tp_name);
+
+    if (res < 0) {
+        npy_PyErr_ChainExceptionsCause(exc_type, exc_value, traceback);
+        return -1;
+    }
+    else {
+        /* `PyErr_Fetch` cleared the original error, delete the references */
+        Py_DECREF(exc_type);
+        Py_XDECREF(exc_value);
+        Py_XDECREF(traceback);
+        return 0;
+    }
+}
+
+
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *origin)
@@ -2129,11 +2162,10 @@ PyArray_FromInterface(PyObject *origin)
                 /* RecursionError and MemoryError are considered fatal */
                 return NULL;
             }
-            /*
-             * This probably be deprecated, but at least shapely raised
-             * a NotImplementedError expecting it to be cleared (gh-17965)
-             */
-            PyErr_Clear();
+            if (deprecated_lookup_error_clearing(
+                    Py_TYPE(origin), "__array_interface__") < 0) {
+                return NULL;
+            }
         }
         return Py_NotImplemented;
     }
@@ -2406,8 +2438,10 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
                 /* RecursionError and MemoryError are considered fatal */
                 return NULL;
             }
-            /* This probably be deprecated. */
-            PyErr_Clear();
+            if (deprecated_lookup_error_clearing(
+                    Py_TYPE(op), "__array__") < 0) {
+                return NULL;
+            }
         }
         return Py_NotImplemented;
     }
