@@ -1772,7 +1772,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
      */
     x->contiguous = 0;
 
-    /* update the coordinates */
+    /* update the coordinates if x was contiguous before */
     PyArray_ITER_GOTO1D(x, x->index);
 
     PyArrayNeighborhoodIter_Reset(ret);
