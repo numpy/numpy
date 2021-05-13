@@ -1729,15 +1729,15 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     ) -> None: ...
 
     def squeeze(
-        self: _ArraySelf,
+        self,
         axis: Union[SupportsIndex, Tuple[SupportsIndex, ...]] = ...,
-    ) -> _ArraySelf: ...
+    ) -> ndarray[Any, _DType_co]: ...
 
     def swapaxes(
-        self: _ArraySelf,
+        self,
         axis1: SupportsIndex,
         axis2: SupportsIndex,
-    ) -> _ArraySelf: ...
+    ) -> ndarray[Any, _DType_co]: ...
 
     @overload
     def transpose(self: _ArraySelf, __axes: _ShapeLike) -> _ArraySelf: ...
@@ -1753,11 +1753,11 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     ) -> ndarray: ...
 
     def diagonal(
-        self: _ArraySelf,
+        self,
         offset: SupportsIndex = ...,
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
-    ) -> _ArraySelf: ...
+    ) -> ndarray[Any, _DType_co]: ...
 
     @overload
     def dot(self, b: ArrayLike, out: None = ...) -> ndarray: ...
