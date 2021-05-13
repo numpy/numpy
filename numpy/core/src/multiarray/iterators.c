@@ -1772,6 +1772,9 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
      */
     x->contiguous = 0;
 
+    /* update the coordinates */
+    PyArray_ITER_GOTO1D(x, x->index);
+
     PyArrayNeighborhoodIter_Reset(ret);
 
     return (PyObject*)ret;
