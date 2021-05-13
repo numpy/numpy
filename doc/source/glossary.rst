@@ -166,10 +166,10 @@ Glossary
 
 
    array scalar
-       An :doc:` array scalar <reference/arrays.scalars>` is an instance of the types/classes float32, float64, 
+       An :doc:`array scalar <reference/arrays.scalars>` is an instance of the types/classes float32, float64, 
        etc.. For uniformity in handling operands, NumPy treats a scalar as 
-       an array of zero dimension. In contrast, a 0-dimensional array is an :doc:` ndarray <reference/arrays.ndarray>` instance 
-       containing precisely one array scalar. 
+       an array of zero dimension. In contrast, a 0-dimensional array is an :doc:`ndarray <reference/arrays.ndarray>` instance 
+       containing precisely one value. 
 
 
    axis
