@@ -8,7 +8,9 @@ function-based counterpart in `../from_numeric.py`.
 
 from __future__ import annotations
 
+import operator
 from typing import cast, Any
+
 import numpy as np
 
 class SubClass(np.ndarray): ...
@@ -162,3 +164,22 @@ void.setfield(10, np.float64)
 
 A.item(0)
 C.item(0)
+
+A.ravel()
+C.ravel()
+
+A.flatten()
+C.flatten()
+
+A.reshape(1)
+C.reshape(3)
+
+int(np.array(1.0, dtype=np.float64))
+int(np.array("1", dtype=np.str_))
+
+float(np.array(1.0, dtype=np.float64))
+float(np.array("1", dtype=np.str_))
+
+complex(np.array(1.0, dtype=np.float64))
+
+operator.index(np.array(1, dtype=np.int64))
