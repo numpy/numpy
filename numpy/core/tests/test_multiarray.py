@@ -5982,6 +5982,7 @@ class TestStats:
         res = dat.var(1)
         assert_(res.info == dat.info)
 
+
 class TestVdot:
     def test_basic(self):
         dt_numeric = np.typecodes['AllFloat'] + np.typecodes['AllInteger']
@@ -8706,6 +8707,15 @@ class TestArrayFinalize:
 
         a = np.array(1).view(SavesBase)
         assert_(a.saved_base is a.base)
+
+    def test_bad_finalize(self):
+        class BadAttributeArray(np.ndarray):
+            @property
+            def __array_finalize__(self):
+                raise RuntimeError("boohoo!")
+
+        with pytest.raises(RuntimeError, match="boohoo!"):
+            np.arange(10).view(BadAttributeArray)
 
     def test_lifetime_on_error(self):
         # gh-11237
