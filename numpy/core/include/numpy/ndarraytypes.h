@@ -858,8 +858,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /*
-     * Dual use the ENSUREARRAY flag, to indicate that this was a converted
-     * python float, int, or complex.
+     * Dual use of the ENSUREARRAY flag, to indicate that this was converted
+     * from a python float, int, or complex.
      * An array using this flag must be a temporary array that can never
      * leave the C internals of NumPy.  Even if it does, ENSUREARRAY is
      * absolutely safe to abuse, since it already is a base class array :).

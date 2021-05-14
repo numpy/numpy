@@ -16,7 +16,7 @@
  * operations.  This is unfortunately surprisingly complicated to get right
  * due to the value based logic NumPy uses and the fact that NumPy has
  * no clear (non-transitive) type promotion hierarchy.
- * Unlike most languages `int32 + float2 -> float64` instead of `float2`.
+ * Unlike most languages `int32 + float32 -> float64` instead of `float32`.
  * The other complicated thing is value-based-promotion, which means that
  * in many cases a Python 1, may end up as an `int8` or `uint8`.
  *
