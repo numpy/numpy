@@ -2098,6 +2098,15 @@ class TestUfunc:
         with pytest.raises(TypeError):
             ufunc(a, a, signature=signature)
 
+    @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_support_anything(self, ufunc):
+        # The logical ufuncs support even input that can't be promoted:
+        a = np.array('1')
+        c = np.array([1., 2.])
+        assert_array_equal(ufunc(a, c), ufunc([True, True], True))
+        assert ufunc.reduce(a) == True
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.
@@ -2331,7 +2340,7 @@ def test_reduce_casterrors(offset):
     out = np.array(-1, dtype=np.intp)
 
     count = sys.getrefcount(value)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         # This is an unsafe cast, but we currently always allow that:
         np.add.reduce(arr, dtype=np.intp, out=out)
     assert count == sys.getrefcount(value)
@@ -2340,3 +2349,18 @@ def test_reduce_casterrors(offset):
     # if the error happened immediately.
     # This does not define behaviour, the output is invalid and thus undefined
     assert out[()] < value * offset
+
+
+@pytest.mark.parametrize("method",
+        [np.add.accumulate, np.add.reduce,
+         pytest.param(lambda x: np.add.reduceat(x, [0]), id="reduceat")])
+def test_reducelike_floaterrors(method):
+    # adding inf and -inf creates an invalid float and should give a warning
+    arr = np.array([np.inf, 0, -np.inf])
+    with np.errstate(all="warn"):
+        with pytest.warns(RuntimeWarning, match="invalid value"):
+            method(arr)
+
+    with np.errstate(all="raise"):
+        with pytest.raises(FloatingPointError):
+            method(arr)
