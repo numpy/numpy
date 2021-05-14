@@ -1102,6 +1102,13 @@ class TestPromotion:
              (np.longdouble(np.nextafter(1.7e308, 0.)), np.complex128),
              # Additionally use "nextafter" so the cast can't round down:
              (np.longdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
+             # repeat for complex scalars:
+             (np.complex64(2), np.complex64),
+             (np.clongdouble(2), np.complex64),
+             # Base of the double value to sidestep any rounding issues:
+             (np.clongdouble(np.nextafter(1.7e308, 0.) * 1j), np.complex128),
+             # Additionally use "nextafter" so the cast can't round down:
+             (np.clongdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
              ])
     def test_complex_other_value_based(self, other, expected):
         # This would change if we modify the value based promotion
@@ -1120,6 +1127,9 @@ class TestPromotion:
                   (np.float32, np.complex64),
                   (np.float64, np.complex128),
                   (np.longdouble, np.clongdouble),
+                  (np.complex64, np.complex64),
+                  (np.complex128, np.complex128),
+                  (np.clongdouble, np.clongdouble),
                   ])
     def test_complex_scalar_value_based(self, other, expected):
         # This would change if we modify the value based promotion
