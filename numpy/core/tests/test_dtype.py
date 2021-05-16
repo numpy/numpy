@@ -1162,10 +1162,21 @@ class TestPromotion:
 
         assert np.result_type(other, rational(1, 2)) == expected
 
-    @pytest.mark.parametrize(["dtypes", "expected"],
-            [([np.uint16, np.int16, np.float16], np.float32),
+    @pytest.mark.parametrize(["dtypes", "expected"], [
+             # These promotions are not associative/commutative:
+             ([np.uint16, np.int16, np.float16], np.float32),
              ([np.uint16, np.int8, np.float16], np.float32),
-             ([np.uint8, np.int16, np.float16], np.float32)])
+             ([np.uint8, np.int16, np.float16], np.float32),
+             # The following promotions are not ambiguous, but cover code
+             # paths of abstract promotion (no particular logic being tested)
+             ([1, 1, np.float64], np.float64),
+             ([1, 1., np.complex128], np.complex128),
+             ([1, 1j, np.float64], np.complex128),
+             ([1., 1., np.int64], np.float64),
+             ([1., 1j, np.float64], np.complex128),
+             ([1j, 1j, np.float64], np.complex128),
+             ([1, True, np.bool_], np.int_),
+            ])
     def test_permutations_do_not_influence_result(self, dtypes, expected):
         # Tests that most permutations do not influence the result.  In the
         # above some uint and int combintations promote to a larger integer
