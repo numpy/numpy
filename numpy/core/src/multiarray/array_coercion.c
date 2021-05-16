@@ -205,7 +205,7 @@ _PyArray_MapPyTypeToDType(
  * @param pytype Python Type to look up
  * @return DType, None if it a known non-scalar, or NULL if an unknown object.
  */
-NPY_NO_EXPORT NPY_INLINE PyArray_DTypeMeta *
+static NPY_INLINE PyArray_DTypeMeta *
 npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *DType;

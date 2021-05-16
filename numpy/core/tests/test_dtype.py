@@ -1141,6 +1141,27 @@ class TestPromotion:
         res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
         assert res == expected
 
+    def test_complex_pyscalar_promote_rational(self):
+        with pytest.raises(TypeError,
+                match=r".* do not have a common DType"):
+            np.result_type(1j, rational)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(1j, rational(1, 2))
+
+    @pytest.mark.parametrize(["other", "expected"],
+            [(1, rational), (1., np.float64)])
+    def test_float_int_pyscalar_promote_rational(self, other, expected):
+        # Note that rationals are a bit akward as they promote with float64
+        # or default ints, but not float16 or uint8/int8 (which looks
+        # inconsistent here)
+        with pytest.raises(TypeError,
+                match=r".* do not have a common DType"):
+            np.result_type(other, rational)
+
+        assert np.result_type(other, rational(1, 2)) == expected
+
     @pytest.mark.parametrize(["dtypes", "expected"],
             [([np.uint16, np.int16, np.float16], np.float32),
              ([np.uint16, np.int8, np.float16], np.float32),
