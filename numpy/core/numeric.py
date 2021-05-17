@@ -2202,6 +2202,15 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
         considered equal to NaN's in `b` in the output array.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
         .. versionadded:: 1.10.0
 
@@ -2281,6 +2290,15 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
         considered equal to NaN's in `b` in the output array.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
@@ -2402,6 +2420,15 @@ def array_equal(a1, a2, equal_nan=False, casting='unsafe'):
         Whether to compare NaN's as equal. If the dtype of a1 and a2 is
         complex, values will be considered equal if either the real or the
         imaginary component of a given value is ``nan``.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
         .. versionadded:: 1.19.0
 
@@ -2481,6 +2508,15 @@ def array_equiv(a1, a2, casting='unsafe'):
     ----------
     a1, a2 : array_like
         Input arrays.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
