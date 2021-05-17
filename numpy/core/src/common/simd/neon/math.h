@@ -153,4 +153,4 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
-#endif // _NPY_SIMD_SSE_MATH_H
+#endif // _NPY_SIMD_NEON_MATH_H
