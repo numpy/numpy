@@ -149,6 +149,7 @@ class ndarray:
         res = self._array.__abs__()
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __add__(self: array, other: array, /) -> array:
         """
         Performs the operation __add__.
@@ -196,6 +197,7 @@ class ndarray:
         """
         Performs the operation __dlpack_device__.
         """
+        # Note: device support is required for this
         res = self._array.__dlpack_device__()
         return self.__class__._new(res)
 
@@ -219,6 +221,7 @@ class ndarray:
         res = self._array.__float__()
         return res
 
+    @np.errstate(all='ignore')
     def __floordiv__(self: array, other: array, /) -> array:
         """
         Performs the operation __floordiv__.
@@ -434,6 +437,7 @@ class ndarray:
         res = self._array.__matmul__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __mod__(self: array, other: array, /) -> array:
         """
         Performs the operation __mod__.
@@ -444,6 +448,7 @@ class ndarray:
         res = self._array.__mod__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __mul__(self: array, other: array, /) -> array:
         """
         Performs the operation __mul__.
@@ -488,6 +493,7 @@ class ndarray:
         res = self._array.__pos__()
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __pow__(self: array, other: array, /) -> array:
         """
         Performs the operation __pow__.
@@ -523,6 +529,7 @@ class ndarray:
         res = self._array.__setitem__(key, asarray(value)._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __sub__(self: array, other: array, /) -> array:
         """
         Performs the operation __sub__.
@@ -533,6 +540,7 @@ class ndarray:
         res = self._array.__sub__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __truediv__(self: array, other: array, /) -> array:
         """
         Performs the operation __truediv__.
@@ -553,6 +561,7 @@ class ndarray:
         res = self._array.__xor__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __iadd__(self: array, other: array, /) -> array:
         """
         Performs the operation __iadd__.
@@ -564,6 +573,7 @@ class ndarray:
             raise RuntimeError
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __radd__(self: array, other: array, /) -> array:
         """
         Performs the operation __radd__.
@@ -593,6 +603,7 @@ class ndarray:
         res = self._array.__rand__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __ifloordiv__(self: array, other: array, /) -> array:
         """
         Performs the operation __ifloordiv__.
@@ -602,6 +613,7 @@ class ndarray:
         res = self._array.__ifloordiv__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __rfloordiv__(self: array, other: array, /) -> array:
         """
         Performs the operation __rfloordiv__.
@@ -656,6 +668,7 @@ class ndarray:
         res = self._array.__rmatmul__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __imod__(self: array, other: array, /) -> array:
         """
         Performs the operation __imod__.
@@ -665,6 +678,7 @@ class ndarray:
         res = self._array.__imod__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __rmod__(self: array, other: array, /) -> array:
         """
         Performs the operation __rmod__.
@@ -675,6 +689,7 @@ class ndarray:
         res = self._array.__rmod__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __imul__(self: array, other: array, /) -> array:
         """
         Performs the operation __imul__.
@@ -684,6 +699,7 @@ class ndarray:
         res = self._array.__imul__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __rmul__(self: array, other: array, /) -> array:
         """
         Performs the operation __rmul__.
@@ -713,6 +729,7 @@ class ndarray:
         res = self._array.__ror__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __ipow__(self: array, other: array, /) -> array:
         """
         Performs the operation __ipow__.
@@ -722,6 +739,7 @@ class ndarray:
         res = self._array.__ipow__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __rpow__(self: array, other: array, /) -> array:
         """
         Performs the operation __rpow__.
@@ -756,6 +774,7 @@ class ndarray:
         res = self._array.__rrshift__(other._array).astype(other.dtype)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __isub__(self: array, other: array, /) -> array:
         """
         Performs the operation __isub__.
@@ -765,6 +784,7 @@ class ndarray:
         res = self._array.__isub__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __rsub__(self: array, other: array, /) -> array:
         """
         Performs the operation __rsub__.
@@ -775,6 +795,7 @@ class ndarray:
         res = self._array.__rsub__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __itruediv__(self: array, other: array, /) -> array:
         """
         Performs the operation __itruediv__.
@@ -784,6 +805,7 @@ class ndarray:
         res = self._array.__itruediv__(other._array)
         return self.__class__._new(res)
 
+    @np.errstate(all='ignore')
     def __rtruediv__(self: array, other: array, /) -> array:
         """
         Performs the operation __rtruediv__.
@@ -829,7 +851,8 @@ class ndarray:
 
         See its docstring for more information.
         """
-        return self._array.device
+        # Note: device support is required for this
+        raise NotImplementedError("The device attribute is not yet implemented")
 
     @property
     def ndim(self):
