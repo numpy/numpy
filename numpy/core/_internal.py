@@ -363,7 +363,7 @@ class _ctypes:
         return self.data
 
     def get_shape(self):
-        """Deprecated getter for `_ctypes.shape` property.
+        """Deprecated getter for the `_ctypes.shape` property.
 
         .. deprecated:: 1.21
         """
@@ -372,7 +372,7 @@ class _ctypes:
         return self.shape
 
     def get_strides(self):
-        """Deprecated getter for `_ctypes.strides` property.
+        """Deprecated getter for the `_ctypes.strides` property.
 
         .. deprecated:: 1.21
         """
@@ -381,7 +381,7 @@ class _ctypes:
         return self.strides
 
     def get_as_parameter(self):
-        """Deprecated getter for `_ctypes._as_parameter_` property.
+        """Deprecated getter for the `_ctypes._as_parameter_` property.
 
         .. deprecated:: 1.21
         """
