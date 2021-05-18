@@ -8,6 +8,7 @@ import ast
 import re
 import sys
 import platform
+import warnings
 
 from .multiarray import dtype, array, ndarray
 try:
@@ -245,6 +246,15 @@ class _missing_ctypes:
             self.value = ptr
 
 
+# A dict mapping (deprecated) property getters to their respective property
+_CTYPES_DEPRECATED = {
+    "get_data": "data",
+    "get_shape": "shape",
+    "get_strides": "strides",
+    "get_as_parameter": "_as_parameter_",
+}
+
+
 class _ctypes:
     def __init__(self, array, ptr=None):
         self._arr = array
@@ -262,6 +272,14 @@ class _ctypes:
             self._zerod = True
         else:
             self._zerod = False
+
+    def __getattribute__(self, name):
+        # Numpy 1.21.0, 2021-05-18
+        if name in _CTYPES_DEPRECATED:
+            name_new = _CTYPES_DEPRECATED[name]
+            warnings.warn(f"{name!r} is deprecated. Use {name_new!r} instead",
+                          DeprecationWarning, stacklevel=2)
+        return super().__getattribute__(name)
 
     def data_as(self, obj):
         """
