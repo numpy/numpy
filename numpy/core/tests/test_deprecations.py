@@ -1183,7 +1183,8 @@ class TestCtypesGetter(_DeprecationTestCase):
         "name", ["get_data", "get_shape", "get_strides", "get_as_parameter"]
     )
     def test_deprecated(self, name: str) -> None:
-        self.assert_deprecated(lambda: getattr(self.ctypes, name))
+        func = getattr(self.ctypes, name)
+        self.assert_deprecated(lambda: func())
 
     @pytest.mark.parametrize(
         "name", ["data", "shape", "strides", "_as_parameter_"]

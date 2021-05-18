@@ -246,15 +246,6 @@ class _missing_ctypes:
             self.value = ptr
 
 
-# A dict mapping (deprecated) property getters to their respective property
-_CTYPES_DEPRECATED = {
-    "get_data": "data",
-    "get_shape": "shape",
-    "get_strides": "strides",
-    "get_as_parameter": "_as_parameter_",
-}
-
-
 class _ctypes:
     def __init__(self, array, ptr=None):
         self._arr = array
@@ -272,16 +263,6 @@ class _ctypes:
             self._zerod = True
         else:
             self._zerod = False
-
-    def __getattr__(self, name):
-        # Numpy 1.21.0, 2021-05-18
-        if name in _CTYPES_DEPRECATED:
-            name_new = _CTYPES_DEPRECATED[name]
-            warnings.warn(f"{name!r} is deprecated. Use {name_new!r} instead",
-                          DeprecationWarning, stacklevel=2)
-            return getattr(type(self), name_new).fget
-        else:
-            return super().__getattribute__(name)
 
     def data_as(self, obj):
         """
@@ -369,6 +350,46 @@ class _ctypes:
         Enables `c_func(some_array.ctypes)`
         """
         return self.data_as(ctypes.c_void_p)
+
+    # Numpy 1.21.0, 2021-05-18
+
+    def get_data(self):
+        """Deprecated getter for the `_ctypes.data` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_data" is deprecated. Use "data" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.data
+
+    def get_shape(self):
+        """Deprecated getter for `_ctypes.shape` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_shape" is deprecated. Use "shape" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.shape
+
+    def get_strides(self):
+        """Deprecated getter for `_ctypes.strides` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_strides" is deprecated. Use "strides" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.strides
+
+    def get_as_parameter(self):
+        """Deprecated getter for `_ctypes._as_parameter_` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn(
+            '"get_as_parameter" is deprecated. Use "_as_parameter_" instead',
+            DeprecationWarning, stacklevel=2,
+        )
+        return self._as_parameter_
 
 
 def _newnames(datatype, order):
