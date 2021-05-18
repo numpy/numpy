@@ -2203,7 +2203,7 @@ class TestSpecialMethods:
 
     def test_array_too_many_args(self):
 
-        class A(object):
+        class A:
             def __array__(self, dtype, context):
                 return np.zeros(1)
 
@@ -3220,7 +3220,7 @@ class TestSubclass:
         assert_equal(a+a, a)
 
 
-class TestFrompyfunc(object):
+class TestFrompyfunc:
 
     def test_identity(self):
         def mul(a, b):

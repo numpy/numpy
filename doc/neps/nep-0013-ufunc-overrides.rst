@@ -478,7 +478,7 @@ are not compatible, i.e., implementations should be something like::
         except AttributeError:
             return False
 
-    class ArrayLike(object):
+    class ArrayLike:
         ...
         def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
             ...
@@ -516,7 +516,7 @@ does not know how to deal with arrays and ufuncs, and thus has set
 ``__array_ufunc__`` to :obj:`None`, but does know how to do
 multiplication::
 
-    class MyObject(object):
+    class MyObject:
         __array_ufunc__ = None
         def __init__(self, value):
             self.value = value

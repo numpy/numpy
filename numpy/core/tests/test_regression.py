@@ -2462,7 +2462,7 @@ class TestRegression:
             np.array([T()])
 
     def test_2d__array__shape(self):
-        class T(object):
+        class T:
             def __array__(self):
                 return np.ndarray(shape=(0,0))
 

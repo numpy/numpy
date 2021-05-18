@@ -850,7 +850,7 @@ class _Cache:
             return ccb
         return cache_wrap_me
 
-class _CCompiler(object):
+class _CCompiler:
     """A helper class for `CCompilerOpt` containing all utilities that
     related to the fundamental compiler's functions.
 
