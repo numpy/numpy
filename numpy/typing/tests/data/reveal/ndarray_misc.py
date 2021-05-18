@@ -27,11 +27,6 @@ reveal_type(ctypes_obj.shape)  # E: ctypes.Array[ctypes.c_int64]
 reveal_type(ctypes_obj.strides)  # E: ctypes.Array[ctypes.c_int64]
 reveal_type(ctypes_obj._as_parameter_)  # E: ctypes.c_void_p
 
-reveal_type(ctypes_obj.get_data())  # E: int
-reveal_type(ctypes_obj.get_shape())  # E: ctypes.Array[ctypes.c_int64]
-reveal_type(ctypes_obj.get_strides())  # E: ctypes.Array[ctypes.c_int64]
-reveal_type(ctypes_obj.get_as_parameter())  # E: ctypes.c_void_p
-
 reveal_type(ctypes_obj.data_as(ct.c_void_p))  # E: ctypes.c_void_p
 reveal_type(ctypes_obj.shape_as(ct.c_longlong))  # E: ctypes.Array[ctypes.c_longlong]
 reveal_type(ctypes_obj.strides_as(ct.c_ubyte))  # E: ctypes.Array[ctypes.c_ubyte]
