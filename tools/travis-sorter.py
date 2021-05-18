@@ -103,7 +103,7 @@ def summarise(jobs):
     print("   " + "-" * end)
 
 
-class Job(object):
+class Job:
     def __init__(self, length):
         global count
         self.id = count
