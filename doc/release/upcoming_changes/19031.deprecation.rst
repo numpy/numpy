@@ -2,7 +2,7 @@ Four `ndarray.ctypes` methods have been deprecated
 --------------------------------------------------
 Four methods of the `ndarray.ctypes` object have been deprecated,
 as they are (undocumentated) implementation artifacts of their respective
-property.
+properties.
 
 The methods in question are:
 
