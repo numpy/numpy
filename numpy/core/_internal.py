@@ -273,13 +273,15 @@ class _ctypes:
         else:
             self._zerod = False
 
-    def __getattribute__(self, name):
+    def __getattr__(self, name):
         # Numpy 1.21.0, 2021-05-18
         if name in _CTYPES_DEPRECATED:
             name_new = _CTYPES_DEPRECATED[name]
             warnings.warn(f"{name!r} is deprecated. Use {name_new!r} instead",
                           DeprecationWarning, stacklevel=2)
-        return super().__getattribute__(name)
+            return getattr(type(self), name_new).fget
+        else:
+            return super().__getattribute__(name)
 
     def data_as(self, obj):
         """
@@ -367,12 +369,6 @@ class _ctypes:
         Enables `c_func(some_array.ctypes)`
         """
         return self.data_as(ctypes.c_void_p)
-
-    # kept for compatibility
-    get_data = data.fget
-    get_shape = shape.fget
-    get_strides = strides.fget
-    get_as_parameter = _as_parameter_.fget
 
 
 def _newnames(datatype, order):
