@@ -906,7 +906,7 @@ else:
 class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
     class DidntSkipException(Exception):
         pass
-    
+
     def test_slow(self):
         def _test_slow():
             @np.testing.dec.slow
@@ -1172,3 +1172,21 @@ class TestComparisonBadObjectDType(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.equal(1, 1, dtype=object))
         self.assert_deprecated(
                 lambda: np.equal(1, 1, sig=(None, None, object)))
+
+
+class TestCtypesGetter(_DeprecationTestCase):
+    # Deprecated 2021-05-18, Numpy 1.21.0
+    warning_cls = DeprecationWarning
+    ctypes = np.array([1]).ctypes
+
+    @pytest.mark.parametrize(
+        "name", ["get_data", "get_shape", "get_strides", "get_as_parameter"]
+    )
+    def test_deprecated(self, name: str) -> None:
+        self.assert_deprecated(lambda: getattr(self.ctypes, name))
+
+    @pytest.mark.parametrize(
+        "name", ["data", "shape", "strides", "_as_parameter_"]
+    )
+    def test_not_deprecated(self, name: str) -> None:
+        self.assert_not_deprecated(lambda: getattr(self.ctypes, name))
