@@ -664,10 +664,13 @@ class TestFloatExceptions:
                 overflow = 'overflow'
                 invalid = 'invalid'
 
-                self.assert_raises_fpe(underflow,
-                                       lambda a, b: a/b, ft_tiny, ft_max)
-                self.assert_raises_fpe(underflow,
-                                       lambda a, b: a*b, ft_tiny, ft_tiny)
+                # The value of tiny for double double is NaN, so we need to
+                # pass the assert
+                if not np.isnan(ft_tiny):
+                    self.assert_raises_fpe(underflow,
+                                        lambda a, b: a/b, ft_tiny, ft_max)
+                    self.assert_raises_fpe(underflow,
+                                        lambda a, b: a*b, ft_tiny, ft_tiny)
                 self.assert_raises_fpe(overflow,
                                        lambda a, b: a*b, ft_max, ftype(2))
                 self.assert_raises_fpe(overflow,
@@ -900,7 +903,7 @@ class TestTypes:
             promote_types = np.promote_types
 
         S = string_dtype
-        
+
         with pytest.warns(FutureWarning,
                 match="Promotion of numbers and bools to strings") as record:
             # Promote numeric with unsized string:
@@ -2364,7 +2367,7 @@ class TestClip:
                 # Commenting out the min_dims line allows zero-dimensional arrays,
                 # and zero-dimensional arrays containing NaN make the test fail.
                 min_dims=1
-  
+
             )
         )
         amin = data.draw(
