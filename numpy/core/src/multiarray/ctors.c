@@ -2118,10 +2118,10 @@ deprecated_lookup_error_clearing(PyTypeObject *type, char *attribute)
 
     /* DEPRECATED 2021-05-12, NumPy 1.21. */
     int res = PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-            "An error was ignored while fetching the attribute `%s` from an "
-            "object of type '%s'.  With the exception of `AttributeError` "
-            "NumPy will always raise this error in the future.  Raise this "
-            "deprecation warning to see the original error. "
+            "An exception was ignored while fetching the attribute `%s` from "
+            "an object of type '%s'.  With the exception of `AttributeError` "
+            "NumPy will always raise this exception in the future.  Raise this "
+            "deprecation warning to see the original exception. "
             "(Warning added NumPy 1.21)", attribute, type->tp_name);
 
     if (res < 0) {

@@ -1,8 +1,8 @@
-Errors will be raised during array-like creation
-------------------------------------------------
-When an object raised an error during access of the special
-attributes ``__array__`` or ``__array_interface__``, this error
+Exceptions will be raised during array-like creation
+----------------------------------------------------
+When an object raised an exception during access of the special
+attributes ``__array__`` or ``__array_interface__``, this exception
 was usually ignored.
-A warning is now given when the error is anything but AttributeError.
-To silence the warning, the type raising a warning has to be adapted
+A warning is now given when the exception is anything but AttributeError.
+To silence the warning, the type raising the exception has to be adapted
 to raise an ``AttributeError``.
