@@ -572,7 +572,11 @@ class TestUfunc:
                     dtout = np.dtype(tcout)
                     tgt = complex(x)/complex(y)
                     rtol = max(np.finfo(dtout).resolution, 1e-15)
-                    atol = max(np.finfo(dtout).tiny, 3e-308)
+                    # The value of tiny for double double is NaN
+                    if not np.isnan(np.finfo(dtout).tiny):
+                        atol = max(np.finfo(dtout).tiny, 3e-308)
+                    else:
+                        atol = 3e-308
                     res = np.true_divide(x, y, dtype=dtout)
                     if not np.isfinite(res):
                         continue
