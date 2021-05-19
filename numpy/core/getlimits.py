@@ -9,7 +9,7 @@ from .machar import MachAr
 from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
-from .numeric import array, inf
+from .numeric import array, inf, NaN
 from .umath import log10, exp2, nextafter
 from . import umath
 
@@ -278,6 +278,9 @@ def _register_known_types():
     # These numbers have the same exponent range as float64, but extended number of
     # digits in the significand.
     huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
+    # As the smallest_normal in double double is so hard to calculate we set
+    # it to NaN.
+    smallest_normal_dd = NaN
     float_dd_ma = MachArLike(ld,
                              machep=-105,
                              negep=-106,
@@ -291,8 +294,8 @@ def _register_known_types():
                              eps=exp2(ld(-105)),
                              epsneg=exp2(ld(-106)),
                              huge=huge_dd,
-                             tiny=exp2(ld(-1022)),
-                             smallest_normal=exp2(ld(-1022)),
+                             tiny=smallest_normal_dd,
+                             smallest_normal=smallest_normal_dd,
                              smallest_subnormal=exp2(ld(-16445)))
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
