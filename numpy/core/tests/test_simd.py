@@ -1,6 +1,7 @@
 # NOTE: Please avoid the use of numpy.testing since NPYV intrinsics
 # may be involved in their functionality.
 import pytest, math, re
+import itertools
 from numpy.core._simd import targets
 from numpy.core._multiarray_umath import __cpu_baseline__
 
@@ -820,8 +821,10 @@ class _SIMD_ALL(_Test_Utility):
         def trunc_div(a, d):
             """
             Divide towards zero works with large integers > 2^53,
-            equivalent to int(a/d)
+            and wrap around overflow similar to what C does.
             """
+            if d == -1 and a == int_min:
+                return a
             sign_a, sign_d = a < 0, d < 0
             if a == 0 or sign_a == sign_d:
                 return a // d
@@ -833,9 +836,9 @@ class _SIMD_ALL(_Test_Utility):
             0, 1, self.nlanes, int_max-self.nlanes,
             int_min, int_min//2 + 1
         )
-        divisors = (1, 2, self.nlanes, int_min, int_max, int_max//2)
+        divisors = (1, 2, 9, 13, self.nlanes, int_min, int_max, int_max//2)
 
-        for x, d in zip(rdata, divisors):
+        for x, d in itertools.product(rdata, divisors):
             data = self._data(x)
             vdata = self.load(data)
             data_divc = [trunc_div(a, d) for a in data]
@@ -848,7 +851,7 @@ class _SIMD_ALL(_Test_Utility):
 
         safe_neg = lambda x: -x-1 if -x > int_max else -x
         # test round divison for signed integers
-        for x, d in zip(rdata, divisors):
+        for x, d in itertools.product(rdata, divisors):
             d_neg = safe_neg(d)
             data = self._data(x)
             data_neg = [safe_neg(a) for a in data]
