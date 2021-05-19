@@ -1175,7 +1175,7 @@ class TestComparisonBadObjectDType(_DeprecationTestCase):
 
 
 class TestSpecialAttributeLookupFailure(_DeprecationTestCase):
-    message = r"An error was ignored while fetching the attribute"
+    message = r"An exception was ignored while fetching the attribute"
 
     class WeirdArrayLike:
         @property
