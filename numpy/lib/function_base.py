@@ -1495,9 +1495,10 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     difference from their predecessor of more than ``max(discont, period/2)``
     to their `period`-complementary values.
 
-    For the default case where `period` is :math:`2\pi` and is `discont` is :math:`\pi`,
-    this unwraps a radian phase `p` such that adjacent differences are never
-    greater than :math:`\pi` by adding :math:`2k\pi` for some integer :math:`k`.
+    For the default case where `period` is :math:`2\pi` and is `discont` is
+    :math:`\pi`, this unwraps a radian phase `p` such that adjacent differences
+    are never greater than :math:`\pi` by adding :math:`2k\pi` for some
+    integer :math:`k`.
 
     Parameters
     ----------
@@ -1505,12 +1506,14 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
         Input array.
     discont : float, optional
         Maximum discontinuity between values, default is ``period/2``. 
-        Values below ``period/2`` are treated as if they were ``period/2``. To have an effect
-        different from the default, `discont` should be larger than ``period/2``.
+        Values below ``period/2`` are treated as if they were ``period/2``.
+        To have an effect different from the default, `discont` should be
+        larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
     period: float, optional
-        Size of the range over which the input wraps. By default, it is ``2 pi``.
+        Size of the range over which the input wraps. By default, it is
+        ``2 pi``.
         
         .. versionadded:: 1.21.0
 
@@ -1567,9 +1570,11 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     interval_low = -interval_high
     ddmod = mod(dd - interval_low, period) + interval_low
     if boundary_ambiguous:
-        # for `mask = (abs(dd) == period/2)`, the above line made `ddmod[mask] == -period/2`.
-        # correct these such that `ddmod[mask] == sign(dd[mask])*period/2`.
-        _nx.copyto(ddmod, interval_high, where=(ddmod == interval_low) & (dd > 0))
+        # for `mask = (abs(dd) == period/2)`, the above line made
+        # `ddmod[mask] == -period/2`. correct these such that
+        # `ddmod[mask] == sign(dd[mask])*period/2`.
+        _nx.copyto(ddmod, interval_high,
+                   where=(ddmod == interval_low) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype=dtype)
