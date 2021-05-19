@@ -11,6 +11,7 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
+#include "common_dtype.h"
 #include "dtypemeta.h"
 
 #include "array_coercion.h"
@@ -205,7 +206,7 @@ _PyArray_MapPyTypeToDType(
  * @return DType, None if it a known non-scalar, or NULL if an unknown object.
  */
 static NPY_INLINE PyArray_DTypeMeta *
-discover_dtype_from_pytype(PyTypeObject *pytype)
+npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *DType;
 
@@ -263,7 +264,7 @@ discover_dtype_from_pyobject(
         }
     }
 
-    PyArray_DTypeMeta *DType = discover_dtype_from_pytype(Py_TYPE(obj));
+    PyArray_DTypeMeta *DType = npy_discover_dtype_from_pytype(Py_TYPE(obj));
     if (DType != NULL) {
         return DType;
     }
