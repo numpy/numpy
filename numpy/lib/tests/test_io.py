@@ -918,6 +918,14 @@ class TestLoadTxt(LoadTxtBase):
             x = np.loadtxt(c, dtype=dt)
             assert_array_equal(x, a)
 
+    def test_str_dtype_differing_lengths(self):
+        c = ["str1", "str2", "str3verylong"]
+
+        for dt in (str, np.bytes_):
+            a = np.array(["str1", "str2", "str3verylong"], dtype=dt)
+            x = np.loadtxt(c, dtype=dt)
+            assert_array_equal(x, a)
+
     def test_empty_file(self):
         with suppress_warnings() as sup:
             sup.filter(message="loadtxt: Empty input file:")
