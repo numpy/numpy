@@ -665,13 +665,11 @@ PyArray_NewFromDescr_int(
         int allow_emptystring)
 {
     PyArrayObject_fields *fa;
-    int i;
     npy_intp nbytes;
 
-    if ((unsigned int)nd > (unsigned int)NPY_MAXDIMS) {
+    if (nd > NPY_MAXDIMS || nd < 0) {
         PyErr_Format(PyExc_ValueError,
-                     "number of dimensions must be within [0, %d]",
-                     NPY_MAXDIMS);
+                "number of dimensions must be within [0, %d]", NPY_MAXDIMS);
         Py_DECREF(descr);
         return NULL;
     }
@@ -718,39 +716,6 @@ PyArray_NewFromDescr_int(
         }
     }
 
-    /* Check dimensions and multiply them to nbytes */
-    for (i = 0; i < nd; i++) {
-        npy_intp dim = dims[i];
-
-        if (dim == 0) {
-            /*
-             * Compare to PyArray_OverflowMultiplyList that
-             * returns 0 in this case.
-             */
-            continue;
-        }
-
-        if (dim < 0) {
-            PyErr_SetString(PyExc_ValueError,
-                "negative dimensions are not allowed");
-            Py_DECREF(descr);
-            return NULL;
-        }
-
-        /*
-         * Care needs to be taken to avoid integer overflow when
-         * multiplying the dimensions together to get the total size of the
-         * array.
-         */
-        if (npy_mul_with_overflow_intp(&nbytes, nbytes, dim)) {
-            PyErr_SetString(PyExc_ValueError,
-                "array is too big; `arr.size * arr.dtype.itemsize` "
-                "is larger than the maximum possible size.");
-            Py_DECREF(descr);
-            return NULL;
-        }
-    }
-
     fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
     if (fa == NULL) {
         Py_DECREF(descr);
@@ -786,26 +751,57 @@ PyArray_NewFromDescr_int(
             goto fail;
         }
         fa->strides = fa->dimensions + nd;
-        if (nd) {
-            memcpy(fa->dimensions, dims, sizeof(npy_intp)*nd);
+
+        /* Copy dimensions, check them, and find total array size `nbytes` */
+        for (int i = 0; i < nd; i++) {
+            fa->dimensions[i] = dims[i];
+
+            if (fa->dimensions[i] == 0) {
+                /*
+                 * Compare to PyArray_OverflowMultiplyList that
+                 * returns 0 in this case.
+                 */
+                continue;
+            }
+
+            if (fa->dimensions[i] < 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "negative dimensions are not allowed");
+                goto fail;
+            }
+
+            /*
+             * Care needs to be taken to avoid integer overflow when multiplying
+             * the dimensions together to get the total size of the array.
+             */
+            if (npy_mul_with_overflow_intp(&nbytes, nbytes, fa->dimensions[i])) {
+                PyErr_SetString(PyExc_ValueError,
+                        "array is too big; `arr.size * arr.dtype.itemsize` "
+                        "is larger than the maximum possible size.");
+                goto fail;
+            }
         }
-        if (strides == NULL) {  /* fill it in */
+
+        /* Fill the strides (or copy them if they were passed in) */
+        if (strides == NULL) {
+            /* fill the strides and set the contiguity flags */
             _array_fill_strides(fa->strides, dims, nd, descr->elsize,
                                 flags, &(fa->flags));
         }
         else {
-            /*
-             * we allow strides even when we create
-             * the memory, but be careful with this...
-             */
-            if (nd) {
-                memcpy(fa->strides, strides, sizeof(npy_intp)*nd);
+            /* User to provided strides (user is responsible for correctness) */
+            for (int i = 0; i < nd; i++) {
+                fa->strides[i] = strides[i];
             }
+            /* Since the strides were passed in must update contiguity */
+            PyArray_UpdateFlags((PyArrayObject *)fa,
+                    NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
         }
     }
     else {
-        fa->dimensions = fa->strides = NULL;
-        fa->flags |= NPY_ARRAY_F_CONTIGUOUS;
+        fa->dimensions = NULL;
+        fa->strides = NULL;
+        fa->flags |= NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS;
     }
 
     if (data == NULL) {
@@ -844,12 +840,11 @@ PyArray_NewFromDescr_int(
     fa->data = data;
 
     /*
-     * always update the flags to get the right CONTIGUOUS, ALIGN properties
-     * not owned data and input strides may not be aligned and on some
-     * platforms (debian sparc) malloc does not provide enough alignment for
-     * long double types
+     * Always update the aligned flag.  Not owned data or input strides may
+     * not be aligned. Also on some platforms (debian sparc) malloc does not
+     * provide enough alignment for long double types.
      */
-    PyArray_UpdateFlags((PyArrayObject *)fa, NPY_ARRAY_UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)fa, NPY_ARRAY_ALIGNED);
 
     /* Set the base object. It's important to do it here so that
      * __array_finalize__ below receives it
@@ -862,15 +857,20 @@ PyArray_NewFromDescr_int(
     }
 
     /*
-     * call the __array_finalize__
-     * method if a subtype.
-     * If obj is NULL, then call method with Py_None
+     * call the __array_finalize__ method if a subtype was requested.
+     * If obj is NULL use Py_None for the Python callback.
      */
-    if ((subtype != &PyArray_Type)) {
-        PyObject *res, *func, *args;
+    if (subtype != &PyArray_Type) {
+        PyObject *res, *func;
 
         func = PyObject_GetAttr((PyObject *)fa, npy_ma_str_array_finalize);
-        if (func && func != Py_None) {
+        if (func == NULL) {
+            goto fail;
+        }
+        else if (func == Py_None) {
+            Py_DECREF(func);
+        }
+        else {
             if (PyCapsule_CheckExact(func)) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
@@ -884,14 +884,10 @@ PyArray_NewFromDescr_int(
                 }
             }
             else {
-                args = PyTuple_New(1);
                 if (obj == NULL) {
-                    obj=Py_None;
+                    obj = Py_None;
                 }
-                Py_INCREF(obj);
-                PyTuple_SET_ITEM(args, 0, obj);
-                res = PyObject_Call(func, args, NULL);
-                Py_DECREF(args);
+                res = PyObject_CallFunctionObjArgs(func, obj, NULL);
                 Py_DECREF(func);
                 if (res == NULL) {
                     goto fail;
@@ -901,7 +897,6 @@ PyArray_NewFromDescr_int(
                 }
             }
         }
-        else Py_XDECREF(func);
     }
     return (PyObject *)fa;
 

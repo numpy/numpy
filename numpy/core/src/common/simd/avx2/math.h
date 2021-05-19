@@ -105,4 +105,4 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return _mm256_blendv_epi8(a, b, _mm256_cmpgt_epi64(a, b));
 }
 
-#endif
+#endif // _NPY_SIMD_AVX2_MATH_H

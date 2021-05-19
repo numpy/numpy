@@ -6,14 +6,17 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
+import operator
 from typing import Any
+
 import numpy as np
 
 class SubClass(np.ndarray): ...
 
 f8: np.float64
-AR_f8: np.ndarray[Any, np.dtype[np.float64]]
 B: SubClass
+AR_f8: np.ndarray[Any, np.dtype[np.float64]]
+AR_i8: np.ndarray[Any, np.dtype[np.int64]]
 AR_U: np.ndarray[Any, np.dtype[np.str_]]
 
 reveal_type(f8.all())  # E: numpy.bool_
@@ -137,19 +140,40 @@ reveal_type(AR_f8.var(axis=0))  # E: Any
 reveal_type(AR_f8.var(keepdims=True))  # E: Any
 reveal_type(AR_f8.var(out=B))  # E: SubClass
 
-reveal_type(AR_f8.argpartition([0]))  # E: numpy.ndarray[Any, Any]
+reveal_type(AR_f8.argpartition([0]))  # E: numpy.ndarray[Any, numpy.dtype[{intp}]]
 
 reveal_type(AR_f8.diagonal())  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
-reveal_type(AR_f8.dot(1))  # E: Any
+reveal_type(AR_f8.dot(1))  # E: numpy.ndarray[Any, Any]
+reveal_type(AR_f8.dot([1]))  # E: Any
 reveal_type(AR_f8.dot(1, out=B))  # E: SubClass
 
-reveal_type(AR_f8.nonzero())  # E: tuple[numpy.ndarray[Any, Any]]
+reveal_type(AR_f8.nonzero())  # E: tuple[numpy.ndarray[Any, numpy.dtype[{intp}]]]
 
-reveal_type(AR_f8.searchsorted([1]))  # E: numpy.ndarray[Any, Any]
+reveal_type(AR_f8.searchsorted(1))  # E: {intp}
+reveal_type(AR_f8.searchsorted([1]))  # E: numpy.ndarray[Any, numpy.dtype[{intp}]]
 
 reveal_type(AR_f8.trace())  # E: Any
 reveal_type(AR_f8.trace(out=B))  # E: SubClass
 
 reveal_type(AR_f8.item())  # E: float
 reveal_type(AR_U.item())  # E: str
+
+reveal_type(AR_f8.ravel())  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(AR_U.ravel())  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
+
+reveal_type(AR_f8.flatten())  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(AR_U.flatten())  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
+
+reveal_type(AR_f8.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(AR_U.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
+
+reveal_type(int(AR_f8))  # E: int
+reveal_type(int(AR_U))  # E: int
+
+reveal_type(float(AR_f8))  # E: float
+reveal_type(float(AR_U))  # E: float
+
+reveal_type(complex(AR_f8))  # E: complex
+
+reveal_type(operator.index(AR_i8))  # E: int

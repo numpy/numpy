@@ -2498,6 +2498,10 @@ def cumsum(a, axis=None, dtype=None, out=None):
     Arithmetic is modular when using integer types, and no error is
     raised on overflow.
 
+    ``cumsum(a)[-1]`` may not be equal to ``sum(a)`` for floating-point
+    values since ``sum`` may use a pairwise summation routine, reducing
+    the roundoff-error. See `sum` for more information.
+
     Examples
     --------
     >>> a = np.array([[1,2,3], [4,5,6]])
@@ -2515,6 +2519,14 @@ def cumsum(a, axis=None, dtype=None, out=None):
     >>> np.cumsum(a,axis=1)      # sum over columns for each of the 2 rows
     array([[ 1,  3,  6],
            [ 4,  9, 15]])
+
+    ``cumsum(b)[-1]`` may not be equal to ``sum(b)``
+
+    >>> b = np.array([1, 2e-9, 3e-9] * 1000000)
+    >>> b.cumsum()[-1]
+    1000000.0050045159
+    >>> b.sum()                    
+    1000000.0050000029
 
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)

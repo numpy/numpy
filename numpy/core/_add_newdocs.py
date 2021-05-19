@@ -2176,6 +2176,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     empty : Create an array, but leave its allocated memory unchanged (i.e.,
             it contains "garbage").
     dtype : Create a data-type.
+    numpy.typing.NDArray : A :term:`generic <generic type>` version
+                           of ndarray.
 
     Notes
     -----
@@ -5814,7 +5816,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
     >>> (arr + arr).dtype.metadata
     mappingproxy({'key': 'value'})
 
-    But if the arrays have different dtype metadata, the metadata may be 
+    But if the arrays have different dtype metadata, the metadata may be
     dropped:
 
     >>> dt2 = np.dtype(float, metadata={"key2": "value2"})

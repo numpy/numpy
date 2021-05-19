@@ -143,4 +143,4 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return npyv_select_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
-#endif
+#endif // _NPY_SIMD_SSE_MATH_H

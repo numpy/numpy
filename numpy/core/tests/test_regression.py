@@ -503,8 +503,8 @@ class TestRegression:
         assert_equal(np.arange(4, dtype='<c8').real.max(), 3.0)
 
     def test_object_array_from_list(self):
-        # Ticket #270
-        assert_(np.array([1, 'A', None]).shape == (3,))
+        # Ticket #270 (gh-868)
+        assert_(np.array([1, None, 'A']).shape == (3,))
 
     def test_multiple_assign(self):
         # Ticket #273
@@ -2052,18 +2052,18 @@ class TestRegression:
 
     def test_string_truncation(self):
         # Ticket #1990 - Data can be truncated in creation of an array from a
-        # mixed sequence of numeric values and strings
+        # mixed sequence of numeric values and strings (gh-2583)
         for val in [True, 1234, 123.4, complex(1, 234)]:
-            for tostr in [asunicode, asbytes]:
-                b = np.array([val, tostr('xx')])
+            for tostr, dtype in [(asunicode, "U"), (asbytes, "S")]:
+                b = np.array([val, tostr('xx')], dtype=dtype)
                 assert_equal(tostr(b[0]), tostr(val))
-                b = np.array([tostr('xx'), val])
+                b = np.array([tostr('xx'), val], dtype=dtype)
                 assert_equal(tostr(b[1]), tostr(val))
 
                 # test also with longer strings
-                b = np.array([val, tostr('xxxxxxxxxx')])
+                b = np.array([val, tostr('xxxxxxxxxx')], dtype=dtype)
                 assert_equal(tostr(b[0]), tostr(val))
-                b = np.array([tostr('xxxxxxxxxx'), val])
+                b = np.array([tostr('xxxxxxxxxx'), val], dtype=dtype)
                 assert_equal(tostr(b[1]), tostr(val))
 
     def test_string_truncation_ucs2(self):
@@ -2462,7 +2462,7 @@ class TestRegression:
             np.array([T()])
 
     def test_2d__array__shape(self):
-        class T(object):
+        class T:
             def __array__(self):
                 return np.ndarray(shape=(0,0))
 

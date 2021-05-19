@@ -407,7 +407,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     niterx2 = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
                     (PyArrayIterObject*)niterx1, bounds,
                     mode2, NULL);
-    if (niterx1 == NULL) {
+    if (niterx2 == NULL) {
         goto clean_niterx1;
     }
 

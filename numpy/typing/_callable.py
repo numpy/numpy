@@ -47,7 +47,8 @@ from ._scalars import (
     _NumberLike_co,
 )
 from . import NBitBase
-from ._array_like import ArrayLike, _ArrayND
+from ._array_like import ArrayLike
+from ._generic_alias import NDArray
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -336,7 +337,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: _T1) -> bool_: ...
         @overload
-        def __call__(self, __other: _T2) -> _ArrayND[bool_]: ...
+        def __call__(self, __other: _T2) -> NDArray[bool_]: ...
 
 else:
     _BoolOp = Any
