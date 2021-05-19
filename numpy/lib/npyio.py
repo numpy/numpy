@@ -1166,6 +1166,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             if X is None:
                 X = np.array(chunk, dtype)
             else:
+                # If using unsized string or byte dtype, make sure that the
+                # existing array is capable of storing the new data. If not,
+                # change the dtype so it is capable of doing so.
+                if (dtype.type in (np.str_, np.bytes_)
+                        and dtype.itemsize == 0):
+                    chunk = np.array(chunk, dtype)
+                    if chunk.dtype.itemsize > X.dtype.itemsize:
+                        X = X.astype(chunk.dtype)
                 nshape = list(X.shape)
                 pos = nshape[0]
                 nshape[0] += len(chunk)
