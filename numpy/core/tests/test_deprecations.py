@@ -1174,6 +1174,24 @@ class TestComparisonBadObjectDType(_DeprecationTestCase):
                 lambda: np.equal(1, 1, sig=(None, None, object)))
 
 
+class TestSpecialAttributeLookupFailure(_DeprecationTestCase):
+    message = r"An exception was ignored while fetching the attribute"
+
+    class WeirdArrayLike:
+        @property
+        def __array__(self):
+            raise RuntimeError("oops!")
+
+    class WeirdArrayInterface:
+        @property
+        def __array_interface__(self):
+            raise RuntimeError("oops!")
+
+    def test_deprecated(self):
+        self.assert_deprecated(lambda: np.array(self.WeirdArrayLike()))
+        self.assert_deprecated(lambda: np.array(self.WeirdArrayInterface()))
+
+
 class TestCtypesGetter(_DeprecationTestCase):
     # Deprecated 2021-05-18, Numpy 1.21.0
     warning_cls = DeprecationWarning
