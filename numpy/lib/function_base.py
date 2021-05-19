@@ -1540,14 +1540,14 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531]) # may vary
     >>> np.unwrap(phase)
     array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
-    >>> unwrap([0, 1, 2, -1, 0], period=4)
+    >>> np.unwrap([0, 1, 2, -1, 0], period=4)
     array([0, 1, 2, 3, 4])
-    >>> unwrap([ 1, 2, 3, 4, 5, 6, 1, 2, 3], period=6)
+    >>> np.unwrap([ 1, 2, 3, 4, 5, 6, 1, 2, 3], period=6)
     array([1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> unwrap([2, 3, 4, 5, 2, 3, 4, 5], period=4)
+    >>> np.unwrap([2, 3, 4, 5, 2, 3, 4, 5], period=4)
     array([2, 3, 4, 5, 6, 7, 8, 9])
     >>> phase_deg = np.mod(np.linspace(0 ,720, 19), 360) - 180
-    >>> unwrap(phase_deg, period=360)
+    >>> np.unwrap(phase_deg, period=360)
     array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
             180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
             540.])
