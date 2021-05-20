@@ -7,6 +7,7 @@ function-based counterpart in `../from_numeric.py`.
 """
 
 import operator
+import ctypes as ct
 from typing import Any
 
 import numpy as np
@@ -18,6 +19,17 @@ B: SubClass
 AR_f8: np.ndarray[Any, np.dtype[np.float64]]
 AR_i8: np.ndarray[Any, np.dtype[np.int64]]
 AR_U: np.ndarray[Any, np.dtype[np.str_]]
+
+ctypes_obj = AR_f8.ctypes
+
+reveal_type(ctypes_obj.data)  # E: int
+reveal_type(ctypes_obj.shape)  # E: ctypes.Array[ctypes.c_int64]
+reveal_type(ctypes_obj.strides)  # E: ctypes.Array[ctypes.c_int64]
+reveal_type(ctypes_obj._as_parameter_)  # E: ctypes.c_void_p
+
+reveal_type(ctypes_obj.data_as(ct.c_void_p))  # E: ctypes.c_void_p
+reveal_type(ctypes_obj.shape_as(ct.c_longlong))  # E: ctypes.Array[ctypes.c_longlong]
+reveal_type(ctypes_obj.strides_as(ct.c_ubyte))  # E: ctypes.Array[ctypes.c_ubyte]
 
 reveal_type(f8.all())  # E: numpy.bool_
 reveal_type(AR_f8.all())  # E: numpy.bool_
