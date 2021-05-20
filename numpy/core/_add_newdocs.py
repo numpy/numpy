@@ -5315,7 +5315,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
       r = empty(len(A),len(B))
       for i in range(len(A)):
           for j in range(len(B)):
-              r[i,j] = op(A[i], B[j]) # op = ufunc in question
+              r[i,j] = op(A[i], B[j])  # op = ufunc in question
 
     Parameters
     ----------
@@ -5325,6 +5325,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
         Second array
     kwargs : any
         Arguments to pass on to the ufunc. Typically `dtype` or `out`.
+        See `ufunc` for a comprehensive overview of all available arguments.
 
     Returns
     -------

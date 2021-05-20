@@ -105,7 +105,15 @@ from numpy.typing import (
     _BytesCodes,
     _VoidCodes,
     _ObjectCodes,
+
+    # Ufuncs
+    _UFunc_Nin1_Nout1,
+    _UFunc_Nin2_Nout1,
+    _UFunc_Nin1_Nout2,
+    _UFunc_Nin2_Nout2,
+    _GUFunc_Nin2_Nout1,
 )
+
 from numpy.typing._callable import (
     _BoolOp,
     _BoolBitOp,
@@ -176,9 +184,9 @@ from typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol, SupportsIndex, Final
+    from typing import Literal as L, Protocol, SupportsIndex, Final
 else:
-    from typing_extensions import Literal, Protocol, SupportsIndex, Final
+    from typing_extensions import Literal as L, Protocol, SupportsIndex, Final
 
 # Ensures that the stubs are picked up
 from numpy import (
@@ -896,7 +904,7 @@ def where(__condition, __x, __y): ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
-_ByteOrder = Literal["S", "<", ">", "=", "|", "L", "B", "N", "I"]
+_ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
 class dtype(Generic[_DTypeScalar_co]):
     names: Optional[Tuple[str, ...]]
@@ -1057,9 +1065,9 @@ class dtype(Generic[_DTypeScalar_co]):
 
     # NOTE: In the future 1-based multiplications will also yield `void` dtypes
     @overload
-    def __mul__(self, value: Literal[0]) -> None: ...  # type: ignore[misc]
+    def __mul__(self, value: L[0]) -> None: ...  # type: ignore[misc]
     @overload
-    def __mul__(self: _DType, value: Literal[1]) -> _DType: ...
+    def __mul__(self: _DType, value: L[1]) -> _DType: ...
     @overload
     def __mul__(self, value: int) -> dtype[void]: ...
 
@@ -1188,14 +1196,14 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __array__(self, __dtype: _DType) -> ndarray[Any, _DType]: ...
 
-_OrderKACF = Optional[Literal["K", "A", "C", "F"]]
-_OrderACF = Optional[Literal["A", "C", "F"]]
-_OrderCF = Optional[Literal["C", "F"]]
+_OrderKACF = Optional[L["K", "A", "C", "F"]]
+_OrderACF = Optional[L["A", "C", "F"]]
+_OrderCF = Optional[L["C", "F"]]
 
-_ModeKind = Literal["raise", "wrap", "clip"]
-_PartitionKind = Literal["introselect"]
-_SortKind = Literal["quicksort", "mergesort", "heapsort", "stable"]
-_SortSide = Literal["left", "right"]
+_ModeKind = L["raise", "wrap", "clip"]
+_PartitionKind = L["introselect"]
+_SortKind = L["quicksort", "mergesort", "heapsort", "stable"]
+_SortSide = L["left", "right"]
 
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
@@ -1266,7 +1274,7 @@ class _ArrayOrScalarCommon:
         self,
         axis: None = ...,
         out: None = ...,
-        keepdims: Literal[False] = ...,
+        keepdims: L[False] = ...,
     ) -> bool_: ...
     @overload
     def all(
@@ -1288,7 +1296,7 @@ class _ArrayOrScalarCommon:
         self,
         axis: None = ...,
         out: None = ...,
-        keepdims: Literal[False] = ...,
+        keepdims: L[False] = ...,
     ) -> bool_: ...
     @overload
     def any(
@@ -1627,7 +1635,7 @@ _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
-_Casting = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
+_Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
 _ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
 _ArrayInt_co = NDArray[Union[bool_, integer[Any]]]
@@ -2828,19 +2836,19 @@ class generic(_ArrayOrScalarCommon):
     @property
     def base(self) -> None: ...
     @property
-    def ndim(self) -> Literal[0]: ...
+    def ndim(self) -> L[0]: ...
     @property
-    def size(self) -> Literal[1]: ...
+    def size(self) -> L[1]: ...
     @property
     def shape(self) -> Tuple[()]: ...
     @property
     def strides(self) -> Tuple[()]: ...
-    def byteswap(self: _ScalarType, inplace: Literal[False] = ...) -> _ScalarType: ...
+    def byteswap(self: _ScalarType, inplace: L[False] = ...) -> _ScalarType: ...
     @property
     def flat(self: _ScalarType) -> flatiter[ndarray[Any, dtype[_ScalarType]]]: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> Any: ...
 
     @overload
@@ -2894,7 +2902,7 @@ class generic(_ArrayOrScalarCommon):
     ) -> ndarray[Any, dtype[_ScalarType]]: ...
 
     def squeeze(
-        self: _ScalarType, axis: Union[Literal[0], Tuple[()]] = ...
+        self: _ScalarType, axis: Union[L[0], Tuple[()]] = ...
     ) -> _ScalarType: ...
     def transpose(self: _ScalarType, __axes: Tuple[()] = ...) -> _ScalarType: ...
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
@@ -2934,7 +2942,7 @@ class bool_(generic):
     def __init__(self, __value: object = ...) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> bool: ...
     def tolist(self) -> bool: ...
     @property
@@ -3045,7 +3053,7 @@ class integer(number[_NBit1]):  # type: ignore
     # sub-classes (`int64`, `uint32`, etc)
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> int: ...
     def tolist(self) -> int: ...
     def __index__(self) -> int: ...
@@ -3192,7 +3200,7 @@ class floating(inexact[_NBit1]):
     def __init__(self, __value: _FloatValue = ...) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> float: ...
     def tolist(self) -> float: ...
     __add__: _FloatOp[_NBit1]
@@ -3231,7 +3239,7 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
     def __init__(self, __value: _ComplexValue = ...) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> complex: ...
     def tolist(self) -> complex: ...
     @property
@@ -3299,7 +3307,7 @@ class bytes_(character, bytes):
     ) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> bytes: ...
     def tolist(self) -> bytes: ...
 
@@ -3315,7 +3323,7 @@ class str_(character, str):
     ) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> str: ...
     def tolist(self) -> str: ...
 
@@ -3400,32 +3408,13 @@ UFUNC_PYVALS_NAME: Final[str]
 
 newaxis: None
 
+# See `npt._ufunc` for more concrete nin-/nout-specific stubs
 class ufunc:
     @property
     def __name__(self) -> str: ...
-    def __call__(
-        self,
-        *args: ArrayLike,
-        out: Optional[Union[ndarray, Tuple[ndarray, ...]]] = ...,
-        where: Optional[ndarray] = ...,
-        # The list should be a list of tuples of ints, but since we
-        # don't know the signature it would need to be
-        # Tuple[int, ...]. But, since List is invariant something like
-        # e.g. List[Tuple[int, int]] isn't a subtype of
-        # List[Tuple[int, ...]], so we can't type precisely here.
-        axes: List[Any] = ...,
-        axis: int = ...,
-        keepdims: bool = ...,
-        casting: _Casting = ...,
-        order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
-        subok: bool = ...,
-        signature: Union[str, Tuple[str]] = ...,
-        # In reality this should be a length of list 3 containing an
-        # int, an int, and a callable, but there's no way to express
-        # that.
-        extobj: List[Union[int, Callable]] = ...,
-    ) -> Any: ...
+    @property
+    def __doc__(self) -> str: ...
+    __call__: Callable[..., Any]
     @property
     def nin(self) -> int: ...
     @property
@@ -3455,109 +3444,105 @@ class ufunc:
     # raise a ValueError ufuncs with that don't accept two input
     # arguments and return one output argument. Because of that we
     # can't type them very precisely.
-    @property
-    def reduce(self) -> Any: ...
-    @property
-    def accumulate(self) -> Any: ...
-    @property
-    def reduceat(self) -> Any: ...
-    @property
-    def outer(self) -> Any: ...
+    reduce: Any
+    accumulate: Any
+    reduce: Any
+    outer: Any
     # Similarly at won't be defined for ufuncs that return multiple
     # outputs, so we can't type it very precisely.
-    @property
-    def at(self) -> Any: ...
+    at: Any
 
-absolute: ufunc
-add: ufunc
-arccos: ufunc
-arccosh: ufunc
-arcsin: ufunc
-arcsinh: ufunc
-arctan2: ufunc
-arctan: ufunc
-arctanh: ufunc
-bitwise_and: ufunc
-bitwise_not: ufunc
-bitwise_or: ufunc
-bitwise_xor: ufunc
-cbrt: ufunc
-ceil: ufunc
-conj: ufunc
-conjugate: ufunc
-copysign: ufunc
-cos: ufunc
-cosh: ufunc
-deg2rad: ufunc
-degrees: ufunc
-divide: ufunc
-divmod: ufunc
-equal: ufunc
-exp2: ufunc
-exp: ufunc
-expm1: ufunc
-fabs: ufunc
-float_power: ufunc
-floor: ufunc
-floor_divide: ufunc
-fmax: ufunc
-fmin: ufunc
-fmod: ufunc
-frexp: ufunc
-gcd: ufunc
-greater: ufunc
-greater_equal: ufunc
-heaviside: ufunc
-hypot: ufunc
-invert: ufunc
-isfinite: ufunc
-isinf: ufunc
-isnan: ufunc
-isnat: ufunc
-lcm: ufunc
-ldexp: ufunc
-left_shift: ufunc
-less: ufunc
-less_equal: ufunc
-log10: ufunc
-log1p: ufunc
-log2: ufunc
-log: ufunc
-logaddexp2: ufunc
-logaddexp: ufunc
-logical_and: ufunc
-logical_not: ufunc
-logical_or: ufunc
-logical_xor: ufunc
-matmul: ufunc
-maximum: ufunc
-minimum: ufunc
-mod: ufunc
-modf: ufunc
-multiply: ufunc
-negative: ufunc
-nextafter: ufunc
-not_equal: ufunc
-positive: ufunc
-power: ufunc
-rad2deg: ufunc
-radians: ufunc
-reciprocal: ufunc
-remainder: ufunc
-right_shift: ufunc
-rint: ufunc
-sign: ufunc
-signbit: ufunc
-sin: ufunc
-sinh: ufunc
-spacing: ufunc
-sqrt: ufunc
-square: ufunc
-subtract: ufunc
-tan: ufunc
-tanh: ufunc
-true_divide: ufunc
-trunc: ufunc
+# Parameters: `__name__`, `ntypes` and `identity`
+absolute: _UFunc_Nin1_Nout1[L['absolute'], L[20], None]
+add: _UFunc_Nin2_Nout1[L['add'], L[22], L[0]]
+arccos: _UFunc_Nin1_Nout1[L['arccos'], L[8], None]
+arccosh: _UFunc_Nin1_Nout1[L['arccosh'], L[8], None]
+arcsin: _UFunc_Nin1_Nout1[L['arcsin'], L[8], None]
+arcsinh: _UFunc_Nin1_Nout1[L['arcsinh'], L[8], None]
+arctan2: _UFunc_Nin2_Nout1[L['arctan2'], L[5], None]
+arctan: _UFunc_Nin1_Nout1[L['arctan'], L[8], None]
+arctanh: _UFunc_Nin1_Nout1[L['arctanh'], L[8], None]
+bitwise_and: _UFunc_Nin2_Nout1[L['bitwise_and'], L[12], L[-1]]
+bitwise_not: _UFunc_Nin1_Nout1[L['invert'], L[12], None]
+bitwise_or: _UFunc_Nin2_Nout1[L['bitwise_or'], L[12], L[0]]
+bitwise_xor: _UFunc_Nin2_Nout1[L['bitwise_xor'], L[12], L[0]]
+cbrt: _UFunc_Nin1_Nout1[L['cbrt'], L[5], None]
+ceil: _UFunc_Nin1_Nout1[L['ceil'], L[7], None]
+conj: _UFunc_Nin1_Nout1[L['conjugate'], L[18], None]
+conjugate: _UFunc_Nin1_Nout1[L['conjugate'], L[18], None]
+copysign: _UFunc_Nin2_Nout1[L['copysign'], L[4], None]
+cos: _UFunc_Nin1_Nout1[L['cos'], L[9], None]
+cosh: _UFunc_Nin1_Nout1[L['cosh'], L[8], None]
+deg2rad: _UFunc_Nin1_Nout1[L['deg2rad'], L[5], None]
+degrees: _UFunc_Nin1_Nout1[L['degrees'], L[5], None]
+divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
+divmod: _UFunc_Nin2_Nout2[L['divmod'], L[15], None]
+equal: _UFunc_Nin2_Nout1[L['equal'], L[23], None]
+exp2: _UFunc_Nin1_Nout1[L['exp2'], L[8], None]
+exp: _UFunc_Nin1_Nout1[L['exp'], L[10], None]
+expm1: _UFunc_Nin1_Nout1[L['expm1'], L[8], None]
+fabs: _UFunc_Nin1_Nout1[L['fabs'], L[5], None]
+float_power: _UFunc_Nin2_Nout1[L['float_power'], L[4], None]
+floor: _UFunc_Nin1_Nout1[L['floor'], L[7], None]
+floor_divide: _UFunc_Nin2_Nout1[L['floor_divide'], L[21], None]
+fmax: _UFunc_Nin2_Nout1[L['fmax'], L[21], None]
+fmin: _UFunc_Nin2_Nout1[L['fmin'], L[21], None]
+fmod: _UFunc_Nin2_Nout1[L['fmod'], L[15], None]
+frexp: _UFunc_Nin1_Nout2[L['frexp'], L[4], None]
+gcd: _UFunc_Nin2_Nout1[L['gcd'], L[11], L[0]]
+greater: _UFunc_Nin2_Nout1[L['greater'], L[23], None]
+greater_equal: _UFunc_Nin2_Nout1[L['greater_equal'], L[23], None]
+heaviside: _UFunc_Nin2_Nout1[L['heaviside'], L[4], None]
+hypot: _UFunc_Nin2_Nout1[L['hypot'], L[5], L[0]]
+invert: _UFunc_Nin1_Nout1[L['invert'], L[12], None]
+isfinite: _UFunc_Nin1_Nout1[L['isfinite'], L[20], None]
+isinf: _UFunc_Nin1_Nout1[L['isinf'], L[20], None]
+isnan: _UFunc_Nin1_Nout1[L['isnan'], L[20], None]
+isnat: _UFunc_Nin1_Nout1[L['isnat'], L[2], None]
+lcm: _UFunc_Nin2_Nout1[L['lcm'], L[11], None]
+ldexp: _UFunc_Nin2_Nout1[L['ldexp'], L[8], None]
+left_shift: _UFunc_Nin2_Nout1[L['left_shift'], L[11], None]
+less: _UFunc_Nin2_Nout1[L['less'], L[23], None]
+less_equal: _UFunc_Nin2_Nout1[L['less_equal'], L[23], None]
+log10: _UFunc_Nin1_Nout1[L['log10'], L[8], None]
+log1p: _UFunc_Nin1_Nout1[L['log1p'], L[8], None]
+log2: _UFunc_Nin1_Nout1[L['log2'], L[8], None]
+log: _UFunc_Nin1_Nout1[L['log'], L[10], None]
+logaddexp2: _UFunc_Nin2_Nout1[L['logaddexp2'], L[4], float]
+logaddexp: _UFunc_Nin2_Nout1[L['logaddexp'], L[4], float]
+logical_and: _UFunc_Nin2_Nout1[L['logical_and'], L[20], L[True]]
+logical_not: _UFunc_Nin1_Nout1[L['logical_not'], L[20], None]
+logical_or: _UFunc_Nin2_Nout1[L['logical_or'], L[20], L[False]]
+logical_xor: _UFunc_Nin2_Nout1[L['logical_xor'], L[19], L[False]]
+matmul: _GUFunc_Nin2_Nout1[L['matmul'], L[19], None]
+maximum: _UFunc_Nin2_Nout1[L['maximum'], L[21], None]
+minimum: _UFunc_Nin2_Nout1[L['minimum'], L[21], None]
+mod: _UFunc_Nin2_Nout1[L['remainder'], L[16], None]
+modf: _UFunc_Nin1_Nout2[L['modf'], L[4], None]
+multiply: _UFunc_Nin2_Nout1[L['multiply'], L[23], L[1]]
+negative: _UFunc_Nin1_Nout1[L['negative'], L[19], None]
+nextafter: _UFunc_Nin2_Nout1[L['nextafter'], L[4], None]
+not_equal: _UFunc_Nin2_Nout1[L['not_equal'], L[23], None]
+positive: _UFunc_Nin1_Nout1[L['positive'], L[19], None]
+power: _UFunc_Nin2_Nout1[L['power'], L[18], None]
+rad2deg: _UFunc_Nin1_Nout1[L['rad2deg'], L[5], None]
+radians: _UFunc_Nin1_Nout1[L['radians'], L[5], None]
+reciprocal: _UFunc_Nin1_Nout1[L['reciprocal'], L[18], None]
+remainder: _UFunc_Nin2_Nout1[L['remainder'], L[16], None]
+right_shift: _UFunc_Nin2_Nout1[L['right_shift'], L[11], None]
+rint: _UFunc_Nin1_Nout1[L['rint'], L[10], None]
+sign: _UFunc_Nin1_Nout1[L['sign'], L[19], None]
+signbit: _UFunc_Nin1_Nout1[L['signbit'], L[4], None]
+sin: _UFunc_Nin1_Nout1[L['sin'], L[9], None]
+sinh: _UFunc_Nin1_Nout1[L['sinh'], L[8], None]
+spacing: _UFunc_Nin1_Nout1[L['spacing'], L[4], None]
+sqrt: _UFunc_Nin1_Nout1[L['sqrt'], L[10], None]
+square: _UFunc_Nin1_Nout1[L['square'], L[18], None]
+subtract: _UFunc_Nin2_Nout1[L['subtract'], L[21], None]
+tan: _UFunc_Nin1_Nout1[L['tan'], L[8], None]
+tanh: _UFunc_Nin1_Nout1[L['tanh'], L[8], None]
+true_divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
+trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
 
 abs = absolute
 

@@ -173,7 +173,7 @@ else:
     def final(f): return f
 
 if not TYPE_CHECKING:
-    __all__ = ["ArrayLike", "DTypeLike", "NBitBase"]
+    __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
 else:
     # Ensure that all objects within this module are accessible while
     # static type checking. This includes private ones, as we need them
@@ -246,9 +246,6 @@ class _64Bit(_80Bit): ...  # type: ignore[misc]
 class _32Bit(_64Bit): ...  # type: ignore[misc]
 class _16Bit(_32Bit): ...  # type: ignore[misc]
 class _8Bit(_16Bit): ...  # type: ignore[misc]
-
-# Clean up the namespace
-del TYPE_CHECKING, final, List
 
 from ._nbit import (
     _NBitByte,
@@ -357,6 +354,24 @@ from ._generic_alias import (
     NDArray as NDArray,
     _GenericAlias,
 )
+
+if TYPE_CHECKING:
+    from ._ufunc import (
+        _UFunc_Nin1_Nout1,
+        _UFunc_Nin2_Nout1,
+        _UFunc_Nin1_Nout2,
+        _UFunc_Nin2_Nout2,
+        _GUFunc_Nin2_Nout1,
+    )
+else:
+    _UFunc_Nin1_Nout1 = NotImplemented
+    _UFunc_Nin2_Nout1 = NotImplemented
+    _UFunc_Nin1_Nout2 = NotImplemented
+    _UFunc_Nin2_Nout2 = NotImplemented
+    _GUFunc_Nin2_Nout1 = NotImplemented
+
+# Clean up the namespace
+del TYPE_CHECKING, final, List
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings
