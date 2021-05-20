@@ -50,7 +50,7 @@ def roll(x: array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Unio
     """
     return ndarray._new(np.roll(x._array, shift, axis=axis))
 
-def squeeze(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
+def squeeze(x: array, /, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
     """
     Array API compatible wrapper for :py:func:`np.squeeze <numpy.squeeze>`.
 

@@ -150,7 +150,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __add__(self: array, other: array, /) -> array:
+    def __add__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __add__.
         """
@@ -160,7 +160,7 @@ class ndarray:
         res = self._array.__add__(other._array)
         return self.__class__._new(res)
 
-    def __and__(self: array, other: array, /) -> array:
+    def __and__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __and__.
         """
@@ -201,7 +201,7 @@ class ndarray:
         res = self._array.__dlpack_device__()
         return self.__class__._new(res)
 
-    def __eq__(self: array, other: array, /) -> array:
+    def __eq__(self: array, other: Union[int, float, bool, array], /) -> array:
         """
         Performs the operation __eq__.
         """
@@ -222,7 +222,7 @@ class ndarray:
         return res
 
     @np.errstate(all='ignore')
-    def __floordiv__(self: array, other: array, /) -> array:
+    def __floordiv__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __floordiv__.
         """
@@ -232,7 +232,7 @@ class ndarray:
         res = self._array.__floordiv__(other._array)
         return self.__class__._new(res)
 
-    def __ge__(self: array, other: array, /) -> array:
+    def __ge__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __ge__.
         """
@@ -359,7 +359,7 @@ class ndarray:
         res = self._array.__getitem__(key)
         return self.__class__._new(res)
 
-    def __gt__(self: array, other: array, /) -> array:
+    def __gt__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __gt__.
         """
@@ -386,7 +386,7 @@ class ndarray:
         res = self._array.__invert__()
         return self.__class__._new(res)
 
-    def __le__(self: array, other: array, /) -> array:
+    def __le__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __le__.
         """
@@ -403,7 +403,7 @@ class ndarray:
         res = self._array.__len__()
         return self.__class__._new(res)
 
-    def __lshift__(self: array, other: array, /) -> array:
+    def __lshift__(self: array, other: Union[int, array], /) -> array:
         """
         Performs the operation __lshift__.
         """
@@ -416,7 +416,7 @@ class ndarray:
         res = self._array.__lshift__(other._array).astype(self.dtype)
         return self.__class__._new(res)
 
-    def __lt__(self: array, other: array, /) -> array:
+    def __lt__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __lt__.
         """
@@ -438,7 +438,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __mod__(self: array, other: array, /) -> array:
+    def __mod__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __mod__.
         """
@@ -449,7 +449,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __mul__(self: array, other: array, /) -> array:
+    def __mul__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __mul__.
         """
@@ -459,7 +459,7 @@ class ndarray:
         res = self._array.__mul__(other._array)
         return self.__class__._new(res)
 
-    def __ne__(self: array, other: array, /) -> array:
+    def __ne__(self: array, other: Union[int, float, bool, array], /) -> array:
         """
         Performs the operation __ne__.
         """
@@ -476,7 +476,7 @@ class ndarray:
         res = self._array.__neg__()
         return self.__class__._new(res)
 
-    def __or__(self: array, other: array, /) -> array:
+    def __or__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __or__.
         """
@@ -494,7 +494,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __pow__(self: array, other: array, /) -> array:
+    def __pow__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __pow__.
         """
@@ -506,7 +506,7 @@ class ndarray:
         # arrays, so we use pow() here instead.
         return pow(self, other)
 
-    def __rshift__(self: array, other: array, /) -> array:
+    def __rshift__(self: array, other: Union[int, array], /) -> array:
         """
         Performs the operation __rshift__.
         """
@@ -530,7 +530,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __sub__(self: array, other: array, /) -> array:
+    def __sub__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __sub__.
         """
@@ -541,7 +541,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __truediv__(self: array, other: array, /) -> array:
+    def __truediv__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __truediv__.
         """
@@ -551,7 +551,7 @@ class ndarray:
         res = self._array.__truediv__(other._array)
         return self.__class__._new(res)
 
-    def __xor__(self: array, other: array, /) -> array:
+    def __xor__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __xor__.
         """
@@ -562,7 +562,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __iadd__(self: array, other: array, /) -> array:
+    def __iadd__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __iadd__.
         """
@@ -574,7 +574,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __radd__(self: array, other: array, /) -> array:
+    def __radd__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __radd__.
         """
@@ -584,7 +584,7 @@ class ndarray:
         res = self._array.__radd__(other._array)
         return self.__class__._new(res)
 
-    def __iand__(self: array, other: array, /) -> array:
+    def __iand__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __iand__.
         """
@@ -593,7 +593,7 @@ class ndarray:
         res = self._array.__iand__(other._array)
         return self.__class__._new(res)
 
-    def __rand__(self: array, other: array, /) -> array:
+    def __rand__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __rand__.
         """
@@ -604,7 +604,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __ifloordiv__(self: array, other: array, /) -> array:
+    def __ifloordiv__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __ifloordiv__.
         """
@@ -614,7 +614,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __rfloordiv__(self: array, other: array, /) -> array:
+    def __rfloordiv__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __rfloordiv__.
         """
@@ -624,7 +624,7 @@ class ndarray:
         res = self._array.__rfloordiv__(other._array)
         return self.__class__._new(res)
 
-    def __ilshift__(self: array, other: array, /) -> array:
+    def __ilshift__(self: array, other: Union[int, array], /) -> array:
         """
         Performs the operation __ilshift__.
         """
@@ -633,7 +633,7 @@ class ndarray:
         res = self._array.__ilshift__(other._array)
         return self.__class__._new(res)
 
-    def __rlshift__(self: array, other: array, /) -> array:
+    def __rlshift__(self: array, other: Union[int, array], /) -> array:
         """
         Performs the operation __rlshift__.
         """
@@ -669,7 +669,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __imod__(self: array, other: array, /) -> array:
+    def __imod__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __imod__.
         """
@@ -679,7 +679,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __rmod__(self: array, other: array, /) -> array:
+    def __rmod__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __rmod__.
         """
@@ -690,7 +690,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __imul__(self: array, other: array, /) -> array:
+    def __imul__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __imul__.
         """
@@ -700,7 +700,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __rmul__(self: array, other: array, /) -> array:
+    def __rmul__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __rmul__.
         """
@@ -710,7 +710,7 @@ class ndarray:
         res = self._array.__rmul__(other._array)
         return self.__class__._new(res)
 
-    def __ior__(self: array, other: array, /) -> array:
+    def __ior__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __ior__.
         """
@@ -719,7 +719,7 @@ class ndarray:
         res = self._array.__ior__(other._array)
         return self.__class__._new(res)
 
-    def __ror__(self: array, other: array, /) -> array:
+    def __ror__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __ror__.
         """
@@ -730,7 +730,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __ipow__(self: array, other: array, /) -> array:
+    def __ipow__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __ipow__.
         """
@@ -740,7 +740,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __rpow__(self: array, other: array, /) -> array:
+    def __rpow__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __rpow__.
         """
@@ -752,7 +752,7 @@ class ndarray:
         # for 0-d arrays, so we use pow() here instead.
         return pow(other, self)
 
-    def __irshift__(self: array, other: array, /) -> array:
+    def __irshift__(self: array, other: Union[int, array], /) -> array:
         """
         Performs the operation __irshift__.
         """
@@ -761,7 +761,7 @@ class ndarray:
         res = self._array.__irshift__(other._array)
         return self.__class__._new(res)
 
-    def __rrshift__(self: array, other: array, /) -> array:
+    def __rrshift__(self: array, other: Union[int, array], /) -> array:
         """
         Performs the operation __rrshift__.
         """
@@ -775,7 +775,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __isub__(self: array, other: array, /) -> array:
+    def __isub__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __isub__.
         """
@@ -785,7 +785,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __rsub__(self: array, other: array, /) -> array:
+    def __rsub__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __rsub__.
         """
@@ -796,7 +796,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __itruediv__(self: array, other: array, /) -> array:
+    def __itruediv__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __itruediv__.
         """
@@ -806,7 +806,7 @@ class ndarray:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __rtruediv__(self: array, other: array, /) -> array:
+    def __rtruediv__(self: array, other: Union[int, float, array], /) -> array:
         """
         Performs the operation __rtruediv__.
         """
@@ -816,7 +816,7 @@ class ndarray:
         res = self._array.__rtruediv__(other._array)
         return self.__class__._new(res)
 
-    def __ixor__(self: array, other: array, /) -> array:
+    def __ixor__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __ixor__.
         """
@@ -825,7 +825,7 @@ class ndarray:
         res = self._array.__ixor__(other._array)
         return self.__class__._new(res)
 
-    def __rxor__(self: array, other: array, /) -> array:
+    def __rxor__(self: array, other: Union[int, bool, array], /) -> array:
         """
         Performs the operation __rxor__.
         """
