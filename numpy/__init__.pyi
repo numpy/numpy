@@ -176,9 +176,9 @@ from typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol, SupportsIndex, Final
+    from typing import Literal as L, Protocol, SupportsIndex, Final
 else:
-    from typing_extensions import Literal, Protocol, SupportsIndex, Final
+    from typing_extensions import Literal as L, Protocol, SupportsIndex, Final
 
 # Ensures that the stubs are picked up
 from numpy import (
@@ -896,7 +896,7 @@ def where(__condition, __x, __y): ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
-_ByteOrder = Literal["S", "<", ">", "=", "|", "L", "B", "N", "I"]
+_ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
 class dtype(Generic[_DTypeScalar_co]):
     names: Optional[Tuple[str, ...]]
@@ -1057,9 +1057,9 @@ class dtype(Generic[_DTypeScalar_co]):
 
     # NOTE: In the future 1-based multiplications will also yield `void` dtypes
     @overload
-    def __mul__(self, value: Literal[0]) -> None: ...  # type: ignore[misc]
+    def __mul__(self, value: L[0]) -> None: ...  # type: ignore[misc]
     @overload
-    def __mul__(self: _DType, value: Literal[1]) -> _DType: ...
+    def __mul__(self: _DType, value: L[1]) -> _DType: ...
     @overload
     def __mul__(self, value: int) -> dtype[void]: ...
 
@@ -1188,14 +1188,14 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __array__(self, __dtype: _DType) -> ndarray[Any, _DType]: ...
 
-_OrderKACF = Optional[Literal["K", "A", "C", "F"]]
-_OrderACF = Optional[Literal["A", "C", "F"]]
-_OrderCF = Optional[Literal["C", "F"]]
+_OrderKACF = Optional[L["K", "A", "C", "F"]]
+_OrderACF = Optional[L["A", "C", "F"]]
+_OrderCF = Optional[L["C", "F"]]
 
-_ModeKind = Literal["raise", "wrap", "clip"]
-_PartitionKind = Literal["introselect"]
-_SortKind = Literal["quicksort", "mergesort", "heapsort", "stable"]
-_SortSide = Literal["left", "right"]
+_ModeKind = L["raise", "wrap", "clip"]
+_PartitionKind = L["introselect"]
+_SortKind = L["quicksort", "mergesort", "heapsort", "stable"]
+_SortSide = L["left", "right"]
 
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
@@ -1266,7 +1266,7 @@ class _ArrayOrScalarCommon:
         self,
         axis: None = ...,
         out: None = ...,
-        keepdims: Literal[False] = ...,
+        keepdims: L[False] = ...,
     ) -> bool_: ...
     @overload
     def all(
@@ -1288,7 +1288,7 @@ class _ArrayOrScalarCommon:
         self,
         axis: None = ...,
         out: None = ...,
-        keepdims: Literal[False] = ...,
+        keepdims: L[False] = ...,
     ) -> bool_: ...
     @overload
     def any(
@@ -1627,7 +1627,7 @@ _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
-_Casting = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
+_Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
 _ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
 _ArrayInt_co = NDArray[Union[bool_, integer[Any]]]
@@ -2828,19 +2828,19 @@ class generic(_ArrayOrScalarCommon):
     @property
     def base(self) -> None: ...
     @property
-    def ndim(self) -> Literal[0]: ...
+    def ndim(self) -> L[0]: ...
     @property
-    def size(self) -> Literal[1]: ...
+    def size(self) -> L[1]: ...
     @property
     def shape(self) -> Tuple[()]: ...
     @property
     def strides(self) -> Tuple[()]: ...
-    def byteswap(self: _ScalarType, inplace: Literal[False] = ...) -> _ScalarType: ...
+    def byteswap(self: _ScalarType, inplace: L[False] = ...) -> _ScalarType: ...
     @property
     def flat(self: _ScalarType) -> flatiter[ndarray[Any, dtype[_ScalarType]]]: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> Any: ...
 
     @overload
@@ -2894,7 +2894,7 @@ class generic(_ArrayOrScalarCommon):
     ) -> ndarray[Any, dtype[_ScalarType]]: ...
 
     def squeeze(
-        self: _ScalarType, axis: Union[Literal[0], Tuple[()]] = ...
+        self: _ScalarType, axis: Union[L[0], Tuple[()]] = ...
     ) -> _ScalarType: ...
     def transpose(self: _ScalarType, __axes: Tuple[()] = ...) -> _ScalarType: ...
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
@@ -2934,7 +2934,7 @@ class bool_(generic):
     def __init__(self, __value: object = ...) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> bool: ...
     def tolist(self) -> bool: ...
     @property
@@ -3045,7 +3045,7 @@ class integer(number[_NBit1]):  # type: ignore
     # sub-classes (`int64`, `uint32`, etc)
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> int: ...
     def tolist(self) -> int: ...
     def __index__(self) -> int: ...
@@ -3192,7 +3192,7 @@ class floating(inexact[_NBit1]):
     def __init__(self, __value: _FloatValue = ...) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> float: ...
     def tolist(self) -> float: ...
     __add__: _FloatOp[_NBit1]
@@ -3231,7 +3231,7 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
     def __init__(self, __value: _ComplexValue = ...) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> complex: ...
     def tolist(self) -> complex: ...
     @property
@@ -3299,7 +3299,7 @@ class bytes_(character, bytes):
     ) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> bytes: ...
     def tolist(self) -> bytes: ...
 
@@ -3315,7 +3315,7 @@ class str_(character, str):
     ) -> None: ...
     def item(
         self,
-        __args: Union[Literal[0], Tuple[()], Tuple[Literal[0]]] = ...,
+        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
     ) -> str: ...
     def tolist(self) -> str: ...
 
