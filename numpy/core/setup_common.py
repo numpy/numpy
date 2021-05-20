@@ -194,7 +194,8 @@ OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fm
                                 ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
                                 'attribute_target_avx512_skx_with_intrinsics',
                                 '__mmask8 temp = _mm512_fpclass_pd_mask(_mm512_set1_pd(1.0), 0x01);\
-                                __m512i unused_temp = _mm512_castps_si512(_mm512_set1_ps(1.0));\
+                                __m512i unused_temp = \
+                                    _mm512_castps_si512(_mm512_set1_ps(1.0));\
                                 _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
                                 'immintrin.h'),
                                 ]
