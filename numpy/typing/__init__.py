@@ -173,7 +173,7 @@ else:
     def final(f): return f
 
 if not TYPE_CHECKING:
-    __all__ = ["ArrayLike", "DTypeLike", "NBitBase"]
+    __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
 else:
     # Ensure that all objects within this module are accessible while
     # static type checking. This includes private ones, as we need them
