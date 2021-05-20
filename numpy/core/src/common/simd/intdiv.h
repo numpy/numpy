@@ -204,14 +204,16 @@ NPY_FINLINE npyv_u8x3 npyv_divisor_u8(npy_uint8 d)
         sh1 = 1;  sh2 = l - 1;                     // shift counts
     }
     npyv_u8x3 divisor;
-    divisor.val[0] = npyv_setall_u8(m);
 #ifdef NPY_HAVE_SSE2 // SSE/AVX2/AVX512
+    divisor.val[0] = npyv_setall_u16(m);
     divisor.val[1] = npyv_set_u8(sh1);
     divisor.val[2] = npyv_set_u8(sh2);
 #elif defined(NPY_HAVE_VSX2)
+    divisor.val[0] = npyv_setall_u8(m);
     divisor.val[1] = npyv_setall_u8(sh1);
     divisor.val[2] = npyv_setall_u8(sh2);
 #elif defined(NPY_HAVE_NEON)
+    divisor.val[0] = npyv_setall_u8(m);
     divisor.val[1] = npyv_reinterpret_u8_s8(npyv_setall_s8(-sh1));
     divisor.val[2] = npyv_reinterpret_u8_s8(npyv_setall_s8(-sh2));
 #else
