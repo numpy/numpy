@@ -23,8 +23,8 @@ AR_U: np.ndarray[Any, np.dtype[np.str_]]
 ctypes_obj = AR_f8.ctypes
 
 reveal_type(ctypes_obj.data)  # E: int
-reveal_type(ctypes_obj.shape)  # E: ctypes.Array[ctypes.c_int64]
-reveal_type(ctypes_obj.strides)  # E: ctypes.Array[ctypes.c_int64]
+reveal_type(ctypes_obj.shape)  # E: ctypes.Array[{c_intp}]
+reveal_type(ctypes_obj.strides)  # E: ctypes.Array[{c_intp}]
 reveal_type(ctypes_obj._as_parameter_)  # E: ctypes.c_void_p
 
 reveal_type(ctypes_obj.data_as(ct.c_void_p))  # E: ctypes.c_void_p
