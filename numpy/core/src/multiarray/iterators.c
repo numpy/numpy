@@ -1067,13 +1067,13 @@ static PyMemberDef iter_members[] = {
 };
 
 static PyObject *
-iter_index_get(PyArrayIterObject *self)
+iter_index_get(PyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     return PyArray_PyIntFromIntp(self->index);
 }
 
 static PyObject *
-iter_coords_get(PyArrayIterObject *self)
+iter_coords_get(PyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     int nd;
     nd = PyArray_NDIM(self->ao);
@@ -1413,25 +1413,25 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 }
 
 static PyObject *
-arraymultiter_size_get(PyArrayMultiIterObject *self)
+arraymultiter_size_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     return PyArray_PyIntFromIntp(self->size);
 }
 
 static PyObject *
-arraymultiter_index_get(PyArrayMultiIterObject *self)
+arraymultiter_index_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     return PyArray_PyIntFromIntp(self->index);
 }
 
 static PyObject *
-arraymultiter_shape_get(PyArrayMultiIterObject *self)
+arraymultiter_shape_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     return PyArray_IntTupleFromIntp(self->nd, self->dimensions);
 }
 
 static PyObject *
-arraymultiter_iters_get(PyArrayMultiIterObject *self)
+arraymultiter_iters_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *res;
     int i, n;
