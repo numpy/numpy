@@ -1,8 +1,0 @@
-Remove deprecated ``PolyBase`` and unused ``PolyError`` and ``PolyDomainError``
--------------------------------------------------------------------------------
-
-The class ``PolyBase`` has been removed (deprecated in numpy 1.9.0). Please use
-the abstract ``ABCPolyBase`` class instead.
-
-Furthermore, the unused ``PolyError`` and ``PolyDomainError`` exceptions are
-removed from the `numpy.polynomial`.
