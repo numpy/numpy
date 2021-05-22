@@ -1,7 +1,0 @@
-Inexact matches for `numpy.convolve` and `numpy.correlate` are deprecated
--------------------------------------------------------------------------
-
-`numpy.convolve` and `numpy.correlate` now emits a warning when there are case
-insensitive and/or inexact matches found for ``mode`` argument in the functions.
-Pass full ``"same"``, ``"valid"``, ``"full"`` strings instead of
-``"s"``, ``"v"``, ``"f"`` for the ``mode`` argument.
