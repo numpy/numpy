@@ -8173,7 +8173,12 @@ fromfunction = _convert2ma('fromfunction')
 identity = _convert2ma(
     'identity', params=dict(fill_value=None, hardmask=False))
 indices = np.indices
-ones = _convert2ma('ones', params=dict(fill_value=None, hardmask=False))
+ones = _convert2ma(
+    'ones',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 ones_like = np.ones_like
 squeeze = np.squeeze
 zeros = _convert2ma(
