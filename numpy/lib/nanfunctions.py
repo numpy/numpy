@@ -1010,10 +1010,12 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     for i in range(np.count_nonzero(m.mask.ravel())):
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
                       stacklevel=4)
+
+    fill_value = np.timedelta64("NaT") if m.dtype.kind == "m" else np.nan
     if out is not None:
-        out[...] = m.filled(np.nan)
+        out[...] = m.filled(fill_value)
         return out
-    return m.filled(np.nan)
+    return m.filled(fill_value)
 
 
 def _nanmedian_dispatcher(
