@@ -965,7 +965,9 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     arr1d, overwrite_input = _remove_nan_1d(arr1d,
                                             overwrite_input=overwrite_input)
     if arr1d.size == 0:
-        return np.nan
+        # Ensure that a nan-esque scalar of the appropiate type (and unit)
+        # is returned for `timedelta64` and `complexfloating`
+        return np.array(np.nan).astype(arr1d.dtype, copy=False)[()]
 
     return np.median(arr1d, overwrite_input=overwrite_input)
 
