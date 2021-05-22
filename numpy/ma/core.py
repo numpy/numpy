@@ -8163,15 +8163,33 @@ class _convert2ma:
             result._hardmask = bool(_extras.get("hard_mask", False))
         return result
 
-arange = _convert2ma('arange', params=dict(fill_value=None, hardmask=False))
+arange = _convert2ma(
+    'arange', 
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='arange : ndarray',
+    np_ma_ret='arange : MaskedArray',
+)
 clip = np.clip
 diff = np.diff
-empty = _convert2ma('empty', params=dict(fill_value=None, hardmask=False))
-empty_like = _convert2ma('empty_like')
+empty = _convert2ma(
+    'empty', 
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
+empty_like = _convert2ma(
+    'empty_like',
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 frombuffer = _convert2ma('frombuffer')
 fromfunction = _convert2ma('fromfunction')
 identity = _convert2ma(
-    'identity', params=dict(fill_value=None, hardmask=False))
+    'identity', 
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 indices = np.indices
 ones = _convert2ma(
     'ones',
