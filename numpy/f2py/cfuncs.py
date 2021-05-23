@@ -479,35 +479,12 @@ cppmacros['STRINGMALLOC'] = """\
 cppmacros['STRINGFREE'] = """\
 #define STRINGFREE(str) do {if (!(str == NULL)) free(str);} while (0)
 """
-needs['STRINGPADN'] = ['string.h']
-cppmacros['STRINGPADN'] = """\
-/*
-STRINGPADN replaces nulls with padding from the right.
-
-`to` must have size of at least N bytes.
-
-If the `to[N-1]` is null (`\\0`), then replace it and all the
-preceeding nulls with the given padding.
-*/
-#define STRINGPADN(to, N, PADDING)                              \\
-    do {                                                        \\
-        int _m = (N);                                           \\
-        char *_to = (to);                                       \\
-        FAILNULL(_to);                                          \\
-        for (_m -= 1; _m >= 0 && _to[_m] == '\\0'; _m--) {      \\
-             _to[_m] = PADDING;                                 \\
-        }                                                       \\
-    } while (0)
-"""
 needs['STRINGCOPYN'] = ['string.h', 'FAILNULL']
 cppmacros['STRINGCOPYN'] = """\
 /*
 STRINGCOPYN copies N bytes.
 
 `to` and `from` buffers must have sizes of at least N bytes.
-
-If the last byte in `to` is null (`\\0`), then replace all the
-preceeding nulls with spaces.
 */
 #define STRINGCOPYN(to,from,N)                                  \\
     do {                                                        \\
@@ -649,7 +626,9 @@ cfuncs['try_pyarr_from_string'] = """\
 /*
   try_pyarr_from_string copies str[:len(obj)] to the data of an `ndarray`.
 
-  if the specified len==-1, str must be null-terminated.
+  If obj is an `ndarray`, it is assumed to be contiguous.
+
+  If the specified len==-1, str must be null-terminated.
 */
 static int try_pyarr_from_string(PyObject *obj,
                                  const string str, const int len) {
@@ -657,8 +636,8 @@ static int try_pyarr_from_string(PyObject *obj,
 fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
         (char*)str,len, obj);
 #endif
-    PyArrayObject *arr = NULL;
-    if (PyArray_Check(obj) && (!((arr = (PyArrayObject *)obj) == NULL))) {
+    if (PyArray_Check(obj)) {
+        PyArrayObject *arr = (PyArrayObject *)obj;
         string buf = PyArray_DATA(arr);
         npy_intp n = len;
         if (n == -1) {
@@ -680,7 +659,7 @@ capi_fail:
 needs['string_from_pyobj'] = ['string', 'STRINGMALLOC', 'STRINGCOPYN']
 cfuncs['string_from_pyobj'] = """\
 /*
-  Create a new string buffer from a Python string-like object.
+  Create a new string buffer `str` of at most length `len` from a Python string-like object `obj`.
 
   The string buffer has given size (len) or the size of inistr when len==-1.
 
@@ -703,8 +682,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
         buf = inistr;
     }
     else if (PyArray_Check(obj)) {
-        if ((arr = (PyArrayObject *)obj) == NULL)
-            goto capi_fail;
+        arr = (PyArrayObject *)obj;
         if (!ISCONTIGUOUS(arr)) {
             PyErr_SetString(PyExc_ValueError,
                             \"array object is non-contiguous.\");
@@ -754,8 +732,8 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
     }
     STRINGMALLOC(*str, *len);  // *str is allocated with size (*len + 1)
     if (n < *len) {
-       /* Pad fixed-width string with nulls */
-       memset(*str + n, '\\0', *len - n);
+        /* Pad fixed-width string with nulls */
+        memset(*str + n, '\\0', *len - n);
     }
     STRINGCOPYN(*str, buf, n);
     Py_XDECREF(tmp);
