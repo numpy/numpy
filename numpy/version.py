@@ -6,6 +6,6 @@ vinfo = get_versions()
 version: str = vinfo["version"]
 full_version: str = vinfo['version']
 git_revision: str = vinfo['full-revisionid']
-release = 'dev0' not in version
+release = 'dev0' not in version and '+' not in version
 
 del get_versions, vinfo
