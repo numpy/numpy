@@ -670,7 +670,6 @@ static int
 string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj,
                   const char *errmess)
 {
-    PyArrayObject *arr = NULL;
     PyObject *tmp = NULL;
     string buf = NULL;
     npy_intp n = -1;
@@ -683,7 +682,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
         buf = inistr;
     }
     else if (PyArray_Check(obj)) {
-        arr = (PyArrayObject *)obj;
+        PyArrayObject *arr = (PyArrayObject *)obj;
         if (!ISCONTIGUOUS(arr)) {
             PyErr_SetString(PyExc_ValueError,
                             \"array object is non-contiguous.\");
