@@ -1,6 +1,0 @@
-Distutils forces strict floating point model on clang
------------------------------------------------------
-NumPy distutils will now always add the ``-ffp-exception-behavior=strict``
-compiler flag when compiling with clang.  Clang defaults to a non-strict
-version, which allows the compiler to generate code that does not set
-floating point warnings/errors correctly.
