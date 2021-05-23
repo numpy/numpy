@@ -659,7 +659,8 @@ capi_fail:
 needs['string_from_pyobj'] = ['string', 'STRINGMALLOC', 'STRINGCOPYN']
 cfuncs['string_from_pyobj'] = """\
 /*
-  Create a new string buffer `str` of at most length `len` from a Python string-like object `obj`.
+  Create a new string buffer `str` of at most length `len` from a
+  Python string-like object `obj`.
 
   The string buffer has given size (len) or the size of inistr when len==-1.
 
