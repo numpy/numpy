@@ -76,8 +76,8 @@ if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
         def dtype(self) -> _DType_co: ...
 
 else:
-    _DTypeDict = Any
-    _SupportsDType = Any
+    _DTypeDict = NotImplemented
+    _SupportsDType = NotImplemented
 
 
 # Would create a dtype[np.void]
