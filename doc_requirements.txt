@@ -1,4 +1,4 @@
-sphinx==4.0.1
+sphinx==4.0.2
 numpydoc==1.1.0
 ipython
 scipy
