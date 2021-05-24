@@ -1346,16 +1346,16 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
 
 add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     """
-    compare_chararrays(a, b, cmp_op, rstrip)
+    compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
     comparison operator specified by `cmp_op`.
 
     Parameters
     ----------
-    a, b : array_like
+    a1, a2 : array_like
         Arrays to be compared.
-    cmp_op : {"<", "<=", "==", ">=", ">", "!="}
+    cmp : {"<", "<=", "==", ">=", ">", "!="}
         Type of comparison.
     rstrip : Boolean
         If True, the spaces at the end of Strings are removed before the comparison.
@@ -4475,7 +4475,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy.core.umath', 'frompyfunc',
     """
-    frompyfunc(func, nin, nout, *[, identity])
+    frompyfunc(func, /, nin, nout, *[, identity])
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
 
@@ -4589,7 +4589,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
 
 add_newdoc('numpy.core.umath', 'seterrobj',
     """
-    seterrobj(errobj)
+    seterrobj(errobj, /)
 
     Set the object that defines floating-point error handling.
 
