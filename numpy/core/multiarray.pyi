@@ -86,6 +86,14 @@ tracemalloc_domain: L[389047]
 
 @overload
 def empty_like(
+    prototype: _ArrayType,
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    shape: Optional[_ShapeLike] = ...,
+) -> _ArrayType: ...
+@overload
+def empty_like(
     prototype: _ArrayLike[_SCT],
     dtype: None = ...,
     order: _OrderKACF = ...,
@@ -117,6 +125,17 @@ def empty_like(
     shape: Optional[_ShapeLike] = ...,
 ) -> NDArray[Any]: ...
 
+@overload
+def array(
+    object: _ArrayType,
+    dtype: None = ...,
+    *,
+    copy: bool = ...,
+    order: _OrderKACF = ...,
+    subok: L[True],
+    ndmin: int = ...,
+    like: ArrayLike = ...,
+) -> _ArrayType: ...
 @overload
 def array(
     object: _ArrayLike[_SCT],
