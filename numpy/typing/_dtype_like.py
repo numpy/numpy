@@ -2,18 +2,14 @@ import sys
 from typing import Any, List, Sequence, Tuple, Union, Type, TypeVar, TYPE_CHECKING
 
 import numpy as np
+
+from . import _HAS_TYPING_EXTENSIONS
 from ._shape import _ShapeLike
 
 if sys.version_info >= (3, 8):
     from typing import Protocol, TypedDict
-    HAVE_PROTOCOL = True
-else:
-    try:
-        from typing_extensions import Protocol, TypedDict
-    except ImportError:
-        HAVE_PROTOCOL = False
-    else:
-        HAVE_PROTOCOL = True
+elif _HAS_TYPING_EXTENSIONS:
+    from typing_extensions import Protocol, TypedDict
 
 from ._char_codes import (
     _BoolCodes,
@@ -59,7 +55,7 @@ from ._char_codes import (
 
 _DTypeLikeNested = Any  # TODO: wait for support for recursive types
 
-if TYPE_CHECKING or HAVE_PROTOCOL:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
     # Mandatory keys
     class _DTypeDictBase(TypedDict):
         names: Sequence[str]

@@ -164,6 +164,18 @@ API
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
+    # typing_extensions is always available when type-checking
+    from typing_extensions import Literal as L
+    _HAS_TYPING_EXTENSIONS: L[True]
+else:
+    try:
+        import typing_extensions
+    except ImportError:
+        _HAS_TYPING_EXTENSIONS = False
+    else:
+        _HAS_TYPING_EXTENSIONS = True
+
+if TYPE_CHECKING:
     import sys
     if sys.version_info >= (3, 8):
         from typing import final

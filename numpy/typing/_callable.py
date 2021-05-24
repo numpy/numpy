@@ -45,21 +45,15 @@ from ._scalars import (
     _FloatLike_co,
     _NumberLike_co,
 )
-from . import NBitBase
+from . import NBitBase, _HAS_TYPING_EXTENSIONS
 from ._generic_alias import NDArray
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
-    HAVE_PROTOCOL = True
-else:
-    try:
-        from typing_extensions import Protocol
-    except ImportError:
-        HAVE_PROTOCOL = False
-    else:
-        HAVE_PROTOCOL = True
+elif _HAS_TYPING_EXTENSIONS:
+    from typing_extensions import Protocol
 
-if TYPE_CHECKING or HAVE_PROTOCOL:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
     _T1 = TypeVar("_T1")
     _T2 = TypeVar("_T2")
     _2Tuple = Tuple[_T1, _T1]

@@ -21,23 +21,20 @@ from numpy import (
     bytes_,
 )
 
+from . import _HAS_TYPING_EXTENSIONS
+from ._dtype_like import DTypeLike
+
 if sys.version_info >= (3, 8):
     from typing import Protocol
-    HAVE_PROTOCOL = True
-else:
-    try:
-        from typing_extensions import Protocol
-    except ImportError:
-        HAVE_PROTOCOL = False
-    else:
-        HAVE_PROTOCOL = True
+elif _HAS_TYPING_EXTENSIONS:
+    from typing_extensions import Protocol
 
 _T = TypeVar("_T")
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 _DType = TypeVar("_DType", bound="dtype[Any]")
 _DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 
-if TYPE_CHECKING or HAVE_PROTOCOL:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
     # The `_SupportsArray` protocol only cares about the default dtype
     # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
     # array.
