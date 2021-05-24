@@ -176,11 +176,7 @@ else:
         _HAS_TYPING_EXTENSIONS = True
 
 if TYPE_CHECKING:
-    import sys
-    if sys.version_info >= (3, 8):
-        from typing import final
-    else:
-        from typing_extensions import final
+    from typing_extensions import final
 else:
     def final(f): return f
 
