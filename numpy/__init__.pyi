@@ -295,6 +295,15 @@ from numpy.core.einsumfunc import (
 )
 
 from numpy.core.multiarray import (
+    ALLOW_THREADS as ALLOW_THREADS,
+    BUFSIZE as BUFSIZE,
+    CLIP as CLIP,
+    MAXDIMS as MAXDIMS,
+    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
+    RAISE as RAISE,
+    WRAP as WRAP,
+    tracemalloc_domain as tracemalloc_domain,
     array as array,
     empty_like as empty_like,
     empty as empty,
@@ -3454,9 +3463,7 @@ inf: Final[float]
 infty: Final[float]
 nan: Final[float]
 pi: Final[float]
-ALLOW_THREADS: Final[int]
-BUFSIZE: Final[int]
-CLIP: Final[int]
+
 ERR_CALL: Final[int]
 ERR_DEFAULT: Final[int]
 ERR_IGNORE: Final[int]
@@ -3469,17 +3476,11 @@ FPE_DIVIDEBYZERO: Final[int]
 FPE_INVALID: Final[int]
 FPE_OVERFLOW: Final[int]
 FPE_UNDERFLOW: Final[int]
-MAXDIMS: Final[int]
-MAY_SHARE_BOUNDS: Final[int]
-MAY_SHARE_EXACT: Final[int]
-RAISE: Final[int]
 SHIFT_DIVIDEBYZERO: Final[int]
 SHIFT_INVALID: Final[int]
 SHIFT_OVERFLOW: Final[int]
 SHIFT_UNDERFLOW: Final[int]
 UFUNC_BUFSIZE_DEFAULT: Final[int]
-WRAP: Final[int]
-tracemalloc_domain: Final[int]
 
 little_endian: Final[bool]
 True_: Final[bool_]

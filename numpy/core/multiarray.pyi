@@ -58,9 +58,9 @@ from numpy.typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, Literal as L
+    from typing import SupportsIndex, Final, Literal as L
 else:
-    from typing_extensions import SupportsIndex, Literal as L
+    from typing_extensions import SupportsIndex, Final, Literal as L
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
@@ -73,6 +73,16 @@ _DTypeLike = Union[
 _ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: List[str]
+
+ALLOW_THREADS: Final[int]
+BUFSIZE: Final[int]
+CLIP: Final[int]
+MAXDIMS: Final[int]
+MAY_SHARE_BOUNDS: Final[int]
+MAY_SHARE_EXACT: Final[int]
+RAISE: Final[int]
+WRAP: Final[int]
+tracemalloc_domain: Final[int]
 
 @overload
 def empty_like(
