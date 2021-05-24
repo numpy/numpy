@@ -360,6 +360,7 @@ from ._array_like import (
 )
 from ._generic_alias import (
     NDArray as NDArray,
+    _DType,
     _GenericAlias,
 )
 
