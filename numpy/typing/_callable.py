@@ -43,11 +43,9 @@ from ._scalars import (
     _BoolLike_co,
     _IntLike_co,
     _FloatLike_co,
-    _ComplexLike_co,
     _NumberLike_co,
 )
 from . import NBitBase
-from ._array_like import ArrayLike
 from ._generic_alias import NDArray
 
 if sys.version_info >= (3, 8):
