@@ -1,8 +1,13 @@
 # TODO: Sort out any and all missing functions in this namespace
 
+import os
 import sys
+import datetime as dt
 from typing import (
     Any,
+    Callable,
+    IO,
+    Iterable,
     Optional,
     overload,
     TypeVar,
@@ -14,15 +19,24 @@ from typing import (
 )
 
 from numpy import (
+    # Re-exports
     busdaycalendar as busdaycalendar,
-    ndarray,
-    dtype,
+    broadcast as broadcast,
+    dtype as dtype,
+    ndarray as ndarray,
+    nditer as nditer,
+
+    # The rest
+    nditer,
+    ufunc,
     str_,
     bool_,
     uint8,
     intp,
+    int_,
     float64,
     timedelta64,
+    datetime64,
     generic,
     unsignedinteger,
     signedinteger,
@@ -32,6 +46,7 @@ from numpy import (
     _OrderCF,
     _CastingKind,
     _ModeKind,
+    _SupportsBuffer,
 )
 
 from numpy.typing import (
@@ -53,8 +68,14 @@ from numpy.typing import (
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
+    _ArrayLikeDT64_co,
     _ArrayLikeObject_co,
+    _ArrayLikeStr_co,
+    _ArrayLikeBytes_co,
+    _ScalarLike_co,
     _IntLike_co,
+    _FloatLike_co,
+    _TD64Like_co,
 )
 
 if sys.version_info >= (3, 8):
@@ -65,12 +86,38 @@ else:
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
+# Subscriptable subsets of `npt.DTypeLike` and `npt.ArrayLike`
 _DTypeLike = Union[
     dtype[_SCT],
     Type[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
 _ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+
+# Valid time units
+_UnitKind = L[
+    "Y",
+    "M",
+    "D",
+    "h",
+    "m",
+    "s",
+    "ms",
+    "us", "μs",
+    "ns",
+    "ps",
+    "fs",
+    "as",
+]
+_RollKind = L[  # `raise` is deliberately excluded
+    "nat",
+    "forward",
+    "following",
+    "backward",
+    "preceding",
+    "modifiedfollowing",
+    "modifiedpreceding",
+]
 
 __all__: List[str]
 
@@ -537,3 +584,367 @@ def asfortranarray(
     *,
     like: ArrayLike = ...,
 ) -> NDArray[Any]: ...
+
+# In practice `List[Any]` is list with an int, int and a valid
+# `np.seterrcall()` object
+def geterrobj() -> List[Any]: ...
+def seterrobj(__errobj: List[Any]) -> None: ...
+
+def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype[Any]: ...
+
+# `sep` is a de facto mandatory argument, as its default value is deprecated
+@overload
+def fromstring(
+    string: str | bytes,
+    dtype: None = ...,
+    count: SupportsIndex = ...,
+    *,
+    sep: str,
+    like: ArrayLike = ...,
+) -> NDArray[float64]: ...
+@overload
+def fromstring(
+    string: str | bytes,
+    dtype: _DTypeLike[_SCT],
+    count: SupportsIndex = ...,
+    *,
+    sep: str,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def fromstring(
+    string: str | bytes,
+    dtype: DTypeLike,
+    count: SupportsIndex = ...,
+    *,
+    sep: str,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+def frompyfunc(
+    __func: Callable[..., Any],
+    nin: SupportsIndex,
+    nout: SupportsIndex,
+    *,
+    identity: Any = ...,
+) -> ufunc: ...
+
+@overload
+def fromfile(
+    file: str | bytes | os.PathLike[Any] | IO[Any],
+    dtype: None = ...,
+    count: SupportsIndex = ...,
+    sep: str = ...,
+    offset: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[float64]: ...
+@overload
+def fromfile(
+    file: str | bytes | os.PathLike[Any] | IO[Any],
+    dtype: _DTypeLike[_SCT],
+    count: SupportsIndex = ...,
+    sep: str = ...,
+    offset: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def fromfile(
+    file: str | bytes | os.PathLike[Any] | IO[Any],
+    dtype: DTypeLike,
+    count: SupportsIndex = ...,
+    sep: str = ...,
+    offset: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def fromiter(
+    iter: Iterable[Any],
+    dtype: _DTypeLike[_SCT],
+    count: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def fromiter(
+    iter: Iterable[Any],
+    dtype: DTypeLike,
+    count: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def frombuffer(
+    buffer: _SupportsBuffer,
+    dtype: None = ...,
+    count: SupportsIndex = ...,
+    offset: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[float64]: ...
+@overload
+def frombuffer(
+    buffer: _SupportsBuffer,
+    dtype: _DTypeLike[_SCT],
+    count: SupportsIndex = ...,
+    offset: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def frombuffer(
+    buffer: _SupportsBuffer,
+    dtype: DTypeLike,
+    count: SupportsIndex = ...,
+    offset: SupportsIndex = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def arange(  # type: ignore[misc]
+    __stop: _IntLike_co,
+    *,
+    dtype: None = ...,
+    like: ArrayLike = ...,
+) -> NDArray[signedinteger[Any]]: ...
+@overload
+def arange(  # type: ignore[misc]
+    start: _IntLike_co,
+    stop: _IntLike_co,
+    step: _IntLike_co = ...,
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[signedinteger[Any]]: ...
+@overload
+def arange(  # type: ignore[misc]
+    __stop: _FloatLike_co,
+    *,
+    dtype: None = ...,
+    like: ArrayLike = ...,
+) -> NDArray[floating[Any]]: ...
+@overload
+def arange(  # type: ignore[misc]
+    start: _FloatLike_co,
+    stop: _FloatLike_co,
+    step: _FloatLike_co = ...,
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[floating[Any]]: ...
+@overload
+def arange(
+    __stop: _TD64Like_co,
+    *,
+    dtype: None = ...,
+    like: ArrayLike = ...,
+) -> NDArray[timedelta64]: ...
+@overload
+def arange(
+    start: _TD64Like_co,
+    stop: _TD64Like_co,
+    step: _TD64Like_co = ...,
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[timedelta64]: ...
+@overload
+def arange(  # both start and stop must always be specified for datetime64
+    start: datetime64,
+    stop: datetime64,
+    step: datetime64 = ...,
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[datetime64]: ...
+@overload
+def arange(
+    __stop: Any,
+    *,
+    dtype: _DTypeLike[_SCT],
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def arange(
+    start: Any,
+    stop: Any,
+    step: Any = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def arange(
+    __stop: Any,
+    *,
+    dtype: DTypeLike,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+@overload
+def arange(
+    start: Any,
+    stop: Any,
+    step: Any = ...,
+    dtype: DTypeLike = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+def datetime_data(
+    __dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64],
+) -> Tuple[str, int]: ...
+
+# The datetime functions perform unsafe casts to `datetime64[D]`,
+# so a lot of different argument types are allowed here
+
+@overload
+def busday_count(  # type: ignore[misc]
+    begindates: _ScalarLike_co,
+    enddates: _ScalarLike_co,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> int_: ...
+@overload
+def busday_count(  # type: ignore[misc]
+    begindates: ArrayLike,
+    enddates: ArrayLike,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> NDArray[int_]: ...
+@overload
+def busday_count(
+    begindates: ArrayLike,
+    enddates: ArrayLike,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
+
+# `roll="raise"` is (more or less?) equivalent to `casting="safe"`
+@overload
+def busday_offset(  # type: ignore[misc]
+    dates: datetime64,
+    offsets: _TD64Like_co,
+    roll: L["raise"] = ...,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> datetime64: ...
+@overload
+def busday_offset(  # type: ignore[misc]
+    dates: _ArrayLike[datetime64],
+    offsets: _ArrayLikeTD64_co,
+    roll: L["raise"] = ...,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> NDArray[datetime64]: ...
+@overload
+def busday_offset(  # type: ignore[misc]
+    dates: _ArrayLike[datetime64],
+    offsets: _ArrayLike[timedelta64],
+    roll: L["raise"] = ...,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
+@overload
+def busday_offset(  # type: ignore[misc]
+    dates: _ScalarLike_co,
+    offsets: _ScalarLike_co,
+    roll: _RollKind,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> datetime64: ...
+@overload
+def busday_offset(  # type: ignore[misc]
+    dates: ArrayLike,
+    offsets: ArrayLike,
+    roll: _RollKind,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> NDArray[datetime64]: ...
+@overload
+def busday_offset(
+    dates: ArrayLike,
+    offsets: ArrayLike,
+    roll: _RollKind,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
+
+@overload
+def is_busday(  # type: ignore[misc]
+    dates: _ScalarLike_co,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> bool_: ...
+@overload
+def is_busday(  # type: ignore[misc]
+    dates: ArrayLike,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: None = ...,
+) -> NDArray[bool_]: ...
+@overload
+def is_busday(
+    dates: ArrayLike,
+    weekmask: ArrayLike = ...,
+    holidays: None | ArrayLike = ...,
+    busdaycal: None | busdaycalendar = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
+
+@overload
+def datetime_as_string(  # type: ignore[misc]
+    arr: datetime64,
+    unit: None | L["auto"] | _UnitKind = ...,
+    timezone: L["naive", "UTC", "local"] | dt.tzinfo = ...,
+    casting: _CastingKind = ...,
+) -> str_: ...
+@overload
+def datetime_as_string(
+    arr: _ArrayLikeDT64_co,
+    unit: None | L["auto"] | _UnitKind = ...,
+    timezone: L["naive", "UTC", "local"] | dt.tzinfo = ...,
+    casting: _CastingKind = ...,
+) -> NDArray[str_]: ...
+
+@overload
+def compare_chararrays(
+    a1: _ArrayLikeStr_co,
+    a2: _ArrayLikeStr_co,
+    cmp: L["<", "<=", "==", ">=", ">", "!="],
+    rstrip: bool,
+) -> NDArray[bool_]: ...
+@overload
+def compare_chararrays(
+    a1: _ArrayLikeBytes_co,
+    a2: _ArrayLikeBytes_co,
+    cmp: L["<", "<=", "==", ">=", ">", "!="],
+    rstrip: bool,
+) -> NDArray[bool_]: ...
+
+def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
