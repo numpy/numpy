@@ -387,32 +387,134 @@ def may_share_memory(
     max_work: Optional[int] = ...,
 ) -> bool: ...
 
-def asarray(
-    a: object,
-    dtype: DTypeLike = ...,
-    order: _OrderKACF = ...,
-    *,
-    like: ArrayLike = ...
-) -> ndarray: ...
 @overload
-def asanyarray(
-    a: _ArrayType,
+def asarray(
+    a: _ArrayLike[_SCT],
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def asarray(
+    a: object,
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+@overload
+def asarray(
+    a: Any,
+    dtype: _DTypeLike[_SCT],
+    order: _OrderKACF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def asarray(
+    a: Any,
+    dtype: DTypeLike,
+    order: _OrderKACF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def asanyarray(
+    a: _ArrayType,  # Preserve subclass-information
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    *,
+    like: ArrayLike = ...,
 ) -> _ArrayType: ...
 @overload
 def asanyarray(
-    a: object,
-    dtype: DTypeLike = ...,
+    a: _ArrayLike[_SCT],
+    dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...
-) -> ndarray: ...
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def asanyarray(
+    a: object,
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+@overload
+def asanyarray(
+    a: Any,
+    dtype: _DTypeLike[_SCT],
+    order: _OrderKACF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def asanyarray(
+    a: Any,
+    dtype: DTypeLike,
+    order: _OrderKACF = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
 def ascontiguousarray(
-    a: object, dtype: DTypeLike = ..., *, like: ArrayLike = ...
-) -> ndarray: ...
+    a: _ArrayLike[_SCT],
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def ascontiguousarray(
+    a: object,
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+@overload
+def ascontiguousarray(
+    a: Any,
+    dtype: _DTypeLike[_SCT],
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def ascontiguousarray(
+    a: Any,
+    dtype: DTypeLike,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
 def asfortranarray(
-    a: object, dtype: DTypeLike = ..., *, like: ArrayLike = ...
-) -> ndarray: ...
+    a: _ArrayLike[_SCT],
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def asfortranarray(
+    a: object,
+    dtype: None = ...,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
+@overload
+def asfortranarray(
+    a: Any,
+    dtype: _DTypeLike[_SCT],
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def asfortranarray(
+    a: Any,
+    dtype: DTypeLike,
+    *,
+    like: ArrayLike = ...,
+) -> NDArray[Any]: ...
