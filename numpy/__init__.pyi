@@ -1432,6 +1432,10 @@ _ArrayTD64_co = NDArray[Union[bool_, integer[Any], timedelta64]]
 # Introduce an alias for `dtype` to avoid naming conflicts.
 _dtype = dtype
 
+# `builtins.PyCapsule` unfortunately lacks annotations as of the moment;
+# use `Any` as a stopgap measure
+_PyCapsule = Any
+
 class _SupportsItem(Protocol[_T_co]):
     def item(self, args: Any, /) -> _T_co: ...
 
@@ -2439,6 +2443,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __ior__(self: NDArray[signedinteger[_NBit1]], other: _ArrayLikeInt_co) -> NDArray[signedinteger[_NBit1]]: ...
     @overload
     def __ior__(self: NDArray[object_], other: Any) -> NDArray[object_]: ...
+    @overload
+    def __ior__(self: NDArray[_ScalarType], other: _RecursiveSequence) -> NDArray[_ScalarType]: ...
+    @overload
+    def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
+    @overload
+    def __dlpack_device__(self) -> Tuple[L[1], L[0]]: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property

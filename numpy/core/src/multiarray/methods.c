@@ -31,6 +31,7 @@
 #include "alloc.h"
 
 #include <stdarg.h>
+#include "common/dlpack/dlpack.h"
 
 
 /* NpyArg_ParseKeywords
@@ -2762,6 +2763,158 @@ array_class_getitem(PyObject *cls, PyObject *args)
     generic_alias = NULL;
 #endif
     return generic_alias;
+
+#define NPY_DLPACK_CAPSULE_NAME "dltensor"
+#define NPY_DLPACK_USED_CAPSULE_NAME "used_dltensor"
+
+static void array_dlpack_capsule_deleter(PyObject *self)
+{
+    if (!PyCapsule_IsValid(self, NPY_DLPACK_CAPSULE_NAME)) {
+        if (!PyCapsule_IsValid(self, NPY_DLPACK_USED_CAPSULE_NAME)) {
+            PyErr_SetString(PyExc_RuntimeError, "Invalid capsule name.");
+        }
+        return;
+    }
+
+    DLManagedTensor *managed = 
+        (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_CAPSULE_NAME);
+    managed->deleter(managed);
+}
+
+static void array_dlpack_deleter(DLManagedTensor *self)
+{
+    PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
+    // This will also free the strides as it's one allocation.
+    PyMem_Free(self->dl_tensor.shape);
+    PyMem_Free(self);
+
+    PyArray_XDECREF(array);
+}
+
+static PyObject *
+array_dlpack(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *stream = Py_None;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
+            "$stream", NULL, &stream, NULL, NULL, NULL)) {
+        return NULL;
+    }
+
+    if (stream != Py_None) {
+        PyErr_SetString(PyExc_RuntimeError, "NumPy only supports "
+                "stream=None.");
+        return NULL;
+    }
+
+    npy_intp itemsize = PyArray_ITEMSIZE(self);
+    int ndim = PyArray_NDIM(self);
+    npy_intp *strides = PyArray_STRIDES(self);
+    npy_intp *shape = PyArray_SHAPE(self);
+
+    for (int i = 0; i < ndim; ++i) {
+        if (strides[i] % itemsize != 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "DLPack only supports strides which are a multiple of "
+                    "itemsize.");
+            return NULL;
+        }
+    }
+
+    DLDataType managed_dtype;
+    PyArray_Descr *dtype = PyArray_DESCR(self);
+
+    if (PyDataType_ISBYTESWAPPED(dtype)) {
+        PyErr_SetString(PyExc_TypeError, "DLPack only supports native "
+                    "byte swapping.");
+            return NULL;
+    }
+    
+    managed_dtype.bits = 8 * itemsize;
+    managed_dtype.lanes = 1;
+
+    if (PyDataType_ISSIGNED(dtype)) {
+        managed_dtype.code = kDLInt;
+    } else if (PyDataType_ISUNSIGNED(dtype)) {
+        managed_dtype.code = kDLUInt;
+    } else if (PyDataType_ISFLOAT(dtype)) {
+        // We can't be sure that the dtype is
+        // IEEE or padded.
+        if (itemsize > 8) {
+            PyErr_SetString(PyExc_TypeError, "DLPack only supports IEEE "
+                    "floating point types without padding.");
+            return NULL;
+        } 
+        managed_dtype.code = kDLFloat;
+    } else if (PyDataType_ISCOMPLEX(dtype)) {
+        // We can't be sure that the dtype is
+        // IEEE or padded.
+        if (itemsize > 16) {
+            PyErr_SetString(PyExc_TypeError, "DLPack only supports IEEE "
+                    "complex point types without padding.");
+            return NULL;
+        } 
+        managed_dtype.code = kDLComplex;
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "DLPack only supports signed/unsigned integers, float "
+                        "and complex dtypes.");
+        return NULL;
+    }
+
+    DLManagedTensor *managed = PyMem_Malloc(sizeof(DLManagedTensor));
+    if (managed == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    managed->dl_tensor.data = PyArray_DATA(self);
+    managed->dl_tensor.device.device_type = kDLCPU;
+    managed->dl_tensor.device.device_id = 0;
+    managed->dl_tensor.dtype = managed_dtype;
+
+
+    int64_t *managed_shape_strides = PyMem_Malloc(sizeof(int64_t) * ndim * 2);
+    if (managed_shape_strides == NULL) {
+        PyErr_NoMemory();
+        PyMem_Free(managed);
+        return NULL;
+    }
+
+    int64_t *managed_shape = managed_shape_strides;
+    int64_t *managed_strides = managed_shape_strides + ndim;
+    for (int i = 0; i < ndim; ++i) {
+        managed_shape[i] = shape[i];
+        // Strides in DLPack are items; in NumPy are bytes.
+        managed_strides[i] = strides[i] / itemsize;
+    }
+
+    managed->dl_tensor.ndim = ndim;
+    managed->dl_tensor.shape = managed_shape;
+    managed->dl_tensor.strides = managed_strides;
+    managed->dl_tensor.byte_offset = 0;
+    managed->manager_ctx = self;
+    managed->deleter = array_dlpack_deleter;
+
+    PyObject *capsule = PyCapsule_New(managed, NPY_DLPACK_CAPSULE_NAME,
+            array_dlpack_capsule_deleter);
+    if (capsule == NULL) {
+        PyMem_Free(managed);
+        PyMem_Free(managed_shape_strides);
+        return NULL;
+    }
+    
+    // the capsule holds a reference
+    PyArray_INCREF(self);
+    return capsule;
+}
+
+static PyObject *
+array_dlpack_device(PyArrayObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    return Py_BuildValue("ii", kDLCPU, 0);
+>>>>>>> ENH: Add the __dlpack__ and __dlpack_device__ methods to ndarray.
 }
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
@@ -2989,5 +3142,15 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"view",
         (PyCFunction)array_view,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    
+    // For data interchange between libraries
+    {"__dlpack__",
+        (PyCFunction)array_dlpack,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+
+    {"__dlpack_device__",
+        (PyCFunction)array_dlpack_device,
+        METH_NOARGS, NULL},
+    
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
