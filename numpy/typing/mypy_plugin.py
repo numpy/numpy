@@ -14,7 +14,7 @@ try:
     from mypy.build import PRI_MED
 
     _HookFunc = t.Callable[[AnalyzeTypeContext], Type]
-    MYPY_EX: t.Optional[ModuleNotFoundError] = None
+    MYPY_EX: None | ModuleNotFoundError = None
 except ModuleNotFoundError as ex:
     MYPY_EX = ex
 
@@ -90,7 +90,7 @@ if t.TYPE_CHECKING or MYPY_EX is None:
     class _NumpyPlugin(Plugin):
         """A plugin for assigning platform-specific `numpy.number` precisions."""
 
-        def get_type_analyze_hook(self, fullname: str) -> t.Optional[_HookFunc]:
+        def get_type_analyze_hook(self, fullname: str) -> None | _HookFunc:
             """Set the precision of platform-specific `numpy.number` subclasses.
 
             For example: `numpy.int_`, `numpy.longlong` and `numpy.longdouble`.
