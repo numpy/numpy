@@ -252,10 +252,6 @@ from numpy.core.fromnumeric import (
 )
 
 from numpy.core._asarray import (
-    asarray as asarray,
-    asanyarray as asanyarray,
-    ascontiguousarray as ascontiguousarray,
-    asfortranarray as asfortranarray,
     require as require,
 )
 
@@ -324,6 +320,10 @@ from numpy.core.multiarray import (
     unpackbits as unpackbits,
     shares_memory as shares_memory,
     may_share_memory as may_share_memory,
+    asarray as asarray,
+    asanyarray as asanyarray,
+    ascontiguousarray as ascontiguousarray,
+    asfortranarray as asfortranarray,
 )
 
 from numpy.core.numeric import (
