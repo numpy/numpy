@@ -10,7 +10,7 @@ import pytest
 import numpy as np
 from numpy.typing._generic_alias import _GenericAlias
 
-ScalarType = TypeVar("ScalarType", bound=np.generic)
+ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 DType = _GenericAlias(np.dtype, (ScalarType,))

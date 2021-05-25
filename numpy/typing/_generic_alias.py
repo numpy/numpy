@@ -196,7 +196,7 @@ if sys.version_info >= (3, 9):
 else:
     _GENERIC_ALIAS_TYPE = (_GenericAlias,)
 
-ScalarType = TypeVar("ScalarType", bound=np.generic)
+ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 
 if TYPE_CHECKING:
     NDArray = np.ndarray[Any, np.dtype[ScalarType]]
