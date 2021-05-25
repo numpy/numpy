@@ -11,6 +11,8 @@ import numpy as np
 from numpy.typing._generic_alias import _GenericAlias
 
 ScalarType = TypeVar("ScalarType", bound=np.generic)
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
 DType = _GenericAlias(np.dtype, (ScalarType,))
 NDArray = _GenericAlias(np.ndarray, (Any, DType))
 
@@ -50,6 +52,7 @@ class TestGenericAlias:
         ("__getitem__", lambda n: n[np.float64]),
         ("__getitem__", lambda n: n[ScalarType][np.float64]),
         ("__getitem__", lambda n: n[Union[np.int64, ScalarType]][np.float64]),
+        ("__getitem__", lambda n: n[Union[T1, T2]][np.float32, np.float64]),
         ("__eq__", lambda n: n == n),
         ("__ne__", lambda n: n != np.ndarray),
         ("__dir__", lambda n: dir(n)),
