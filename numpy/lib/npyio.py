@@ -586,6 +586,10 @@ def savez(file, *args, **kwds):
     inside the ZIP archive. Therefore, keys should be valid filenames.
     E.g., avoid keys that begin with ``/`` or contain ``.``.
 
+    When naming variables with keyword arguments, it is not possible to name a
+    variable ``file``, as this would cause the ``file`` argument to be defined
+    twice in the call to ``savez``.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
