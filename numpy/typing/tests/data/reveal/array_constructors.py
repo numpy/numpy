@@ -67,6 +67,41 @@ reveal_type(np.asfortranarray([1, 1.0]))  # E: numpy.ndarray[Any, numpy.dtype[An
 reveal_type(np.asfortranarray(A, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
 reveal_type(np.asfortranarray(A, dtype='c16'))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 
+reveal_type(np.fromstring("1 1 1", sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.fromstring(b"1 1 1", sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.fromstring("1 1 1", dtype=np.int64, sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(np.fromstring(b"1 1 1", dtype=np.int64, sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(np.fromstring("1 1 1", dtype="c16", sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.fromstring(b"1 1 1", dtype="c16", sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+
+reveal_type(np.fromfile("test.txt", sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.fromfile("test.txt", dtype=np.int64, sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(np.fromfile("test.txt", dtype="c16", sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+with open("test.txt") as f:
+    reveal_type(np.fromfile(f, sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+    reveal_type(np.fromfile(b"test.txt", sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+    reveal_type(np.fromfile(Path("test.txt"), sep=" "))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+
+reveal_type(np.fromiter("12345", np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.fromiter("12345", float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+
+reveal_type(np.frombuffer(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.frombuffer(A, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(np.frombuffer(A, dtype="c16"))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+
+reveal_type(np.arange(False, True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
+reveal_type(np.arange(10))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
+reveal_type(np.arange(0, 10, step=2))  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
+reveal_type(np.arange(10.0))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.arange(start=0, stop=10.0))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.arange(np.timedelta64(0)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(np.arange(0, np.timedelta64(10)))  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(np.arange(np.datetime64("0"), np.datetime64("10")))  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
+reveal_type(np.arange(10, dtype=np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.arange(0, 10, step=2, dtype=np.int16))  # E: numpy.ndarray[Any, numpy.dtype[{int16}]]
+reveal_type(np.arange(10, dtype=int))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.arange(0, 10, dtype="f8"))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+
 reveal_type(np.require(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.require(B))  # E: SubClass[{float64}]
 reveal_type(np.require(B, requirements=None))  # E: SubClass[{float64}]

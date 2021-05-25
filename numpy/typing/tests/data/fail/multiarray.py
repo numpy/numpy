@@ -10,7 +10,11 @@ AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
 AR_M: npt.NDArray[np.datetime64]
 
+M: np.datetime64
+
 AR_LIKE_f: List[float]
+
+def func(a: int) -> None: ...
 
 np.where(AR_b, 1)  # E: No overload variant
 
@@ -30,3 +34,16 @@ np.unpackbits(AR_u1, bitorder=">")  # E: incompatible type
 
 np.shares_memory(1, 1, max_work=i8)  # E: incompatible type
 np.may_share_memory(1, 1, max_work=i8)  # E: incompatible type
+
+np.arange(M)  # E: No overload variant
+np.arange(stop=10)  # E: No overload variant
+
+np.datetime_data(int)  # E: incompatible type
+
+np.busday_offset("2012", 10)  # E: incompatible type
+
+np.datetime_as_string("2012")  # E: incompatible type
+
+np.compare_chararrays("a", b"a", "==", False)  # E: No overload variant
+
+np.add_docstring(func, None)  # E: incompatible type
