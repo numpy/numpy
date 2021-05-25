@@ -33,7 +33,6 @@ from .core import (
 
 import numpy as np
 from numpy import ndarray, array as nxarray
-import numpy.core.umath as umath
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce

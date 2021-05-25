@@ -33,7 +33,6 @@ Record arrays allow us to access fields as properties::
   array([2., 2.])
 
 """
-import os
 import warnings
 from collections import Counter
 from contextlib import nullcontext
