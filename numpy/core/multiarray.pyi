@@ -74,15 +74,15 @@ _ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: List[str]
 
-ALLOW_THREADS: Final[int]
-BUFSIZE: Final[int]
-CLIP: Final[int]
-MAXDIMS: Final[int]
-MAY_SHARE_BOUNDS: Final[int]
-MAY_SHARE_EXACT: Final[int]
-RAISE: Final[int]
-WRAP: Final[int]
-tracemalloc_domain: Final[int]
+ALLOW_THREADS: Final[int]  # 0 or 1 (system-specific)
+BUFSIZE: L[8192]
+CLIP: L[0]
+WRAP: L[1]
+RAISE: L[2]
+MAXDIMS: L[32]
+MAY_SHARE_BOUNDS: L[0]
+MAY_SHARE_EXACT: L[-1]
+tracemalloc_domain: L[389047]
 
 @overload
 def empty_like(
