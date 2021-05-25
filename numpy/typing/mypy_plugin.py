@@ -62,10 +62,16 @@ def _get_extended_precision_list() -> t.List[str]:
 
 
 def _get_c_intp_name() -> str:
-    if np.ctypeslib.c_intp is np.intp:
-        return "c_int64"  # Plan B, in case `ctypes` fails to import
+    # Adapted from `np.core._internal._getintp_ctype`
+    char = np.dtype('p').char
+    if char == 'i':
+        return "c_int"
+    elif char == 'l':
+        return "c_long"
+    elif char == 'q':
+        return "c_longlong"
     else:
-        return np.ctypeslib.c_intp.__qualname__
+        return "c_long"
 
 
 #: A dictionary mapping type-aliases in `numpy.typing._nbit` to
