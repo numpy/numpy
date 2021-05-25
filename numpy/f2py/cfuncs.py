@@ -256,33 +256,6 @@ cppmacros['len..'] = """\
 #define old_size(var) PyArray_SIZE((PyArrayObject *)(capi_ ## var ## _tmp))
 /* #define index(i) capi_i ## i */
 #define slen(var) capi_ ## var ## _len
-#define size(var, ...) f2py_size((PyArrayObject *)(capi_ ## var ## _tmp), ## __VA_ARGS__, -1)
-"""
-needs['f2py_size'] = ['stdarg.h']
-cfuncs['f2py_size'] = """\
-static int f2py_size(PyArrayObject* var, ...)
-{
-  npy_int sz = 0;
-  npy_int dim;
-  npy_int rank;
-  va_list argp;
-  va_start(argp, var);
-  dim = va_arg(argp, npy_int);
-  if (dim==-1)
-    {
-      sz = PyArray_SIZE(var);
-    }
-  else
-    {
-      rank = PyArray_NDIM(var);
-      if (dim>=1 && dim<=rank)
-        sz = PyArray_DIM(var, dim-1);
-      else
-        fprintf(stderr, \"f2py_size: 2nd argument value=%d fails to satisfy 1<=value<=%d. Result will be 0.\\n\", dim, rank);
-    }
-  va_end(argp);
-  return sz;
-}
 """
 
 cppmacros[
