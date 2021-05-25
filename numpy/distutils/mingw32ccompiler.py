@@ -15,6 +15,7 @@ import re
 import textwrap
 
 # Overwrite certain distutils.ccompiler functions:
+import numpy.distutils.ccompiler  # noqa: F401
 from numpy.distutils import log
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
