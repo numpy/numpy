@@ -1536,6 +1536,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
         .. versionadded:: 1.20.0
 
+    Returns
+    -------
+    out : ndarray
+
     Notes
     -----
     If the buffer has data that is not in machine byte-order, this should
