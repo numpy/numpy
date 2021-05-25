@@ -63,7 +63,8 @@ def _reconstruct_alias(alias: _T, parameters: Iterator[TypeVar]) -> _T:
         elif isinstance(i, _GenericAlias):
             value = _reconstruct_alias(i, parameters)
         elif hasattr(i, "__parameters__"):
-            value = i[next(parameters)]
+            prm_tup = tuple(next(parameters) for _ in i.__parameters__)
+            value = i[prm_tup]
         else:
             value = i
         args.append(value)
