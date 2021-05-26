@@ -3105,7 +3105,7 @@ def show_all(argv=None):
             del show_only[show_only.index(name)]
         conf = c()
         conf.verbosity = 2
-        # required for verbosity settings to work correctly 
+        # we don't need the result, but we want the side effect of printing diagnostics
         r = conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))
