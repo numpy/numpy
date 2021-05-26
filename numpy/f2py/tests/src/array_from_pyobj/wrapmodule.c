@@ -93,7 +93,7 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
   PyObject *strides = NULL;
   char s[100];
   int i;
-  memset(s,0,100*sizeof(char));
+  memset(s,0,100);
   if (!PyArg_ParseTuple(capi_args,"O!|:wrap.attrs",
                         &PyArray_Type,&arr_capi))
     return NULL;

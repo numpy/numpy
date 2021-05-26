@@ -469,7 +469,7 @@ cppmacros['MEMCOPY'] = """\
 """
 cppmacros['STRINGMALLOC'] = """\
 #define STRINGMALLOC(str,len)\\
-    if ((str = (string)malloc(sizeof(char)*(len+1))) == NULL) {\\
+    if ((str = (string)malloc(len+1)) == NULL) {\\
         PyErr_SetString(PyExc_MemoryError, \"out of memory\");\\
         goto capi_fail;\\
     } else {\\
@@ -492,7 +492,7 @@ STRINGCOPYN copies N bytes.
         char *_to = (to);                                       \\
         char *_from = (from);                                   \\
         FAILNULL(_to); FAILNULL(_from);                         \\
-        (void)strncpy(_to, _from, sizeof(char)*_m);             \\
+        (void)strncpy(_to, _from, _m);             \\
     } while (0)
 """
 needs['STRINGCOPY'] = ['string.h', 'FAILNULL']
