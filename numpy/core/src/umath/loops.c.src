@@ -1563,6 +1563,28 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 /**end repeat**/
 
 /**begin repeat
+ *  #func = sin, cos#
+ */
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+DOUBLE_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+	const npy_double in1 = *(npy_double *)ip1;
+	*(npy_double *)op1 = npy_@func@(in1);
+    }
+}
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+DOUBLE_@func@_avx512_skx(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
+{
+    if (!run_unary_avx512_skx_@func@_DOUBLE(args, dimensions, steps)) {
+        DOUBLE_@func@(args, dimensions, steps, data);
+    }
+}
+/**end repeat**/
+
+/**begin repeat
  *  #func = rint, ceil, floor, trunc#
  *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
  */

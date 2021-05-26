@@ -152,6 +152,31 @@ run_unary_avx512_skx_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_
 /**end repeat**/
 
 /**begin repeat
+ * #func = sin, cos#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+AVX512_SKX_@func@_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps);
+#endif
+
+static NPY_INLINE int
+run_unary_avx512_skx_@func@_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+    if (IS_UNARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
+        AVX512_SKX_@func@_DOUBLE(args, dimensions, steps);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
+
+/**end repeat**/
+
+/**begin repeat
  * #type = npy_float, npy_double, npy_longdouble#
  * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  * #EXISTS = 1, 1, 0#
@@ -1243,6 +1268,72 @@ AVX512_SKX_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const
 }
 #endif
 /**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #func = sin, cos#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+AVX512_SKX_@func@_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    npy_double* ip = (npy_double*) args[0];
+    npy_double* op = (npy_double*) args[1];
+    const npy_intp array_size = dimensions[0];
+    const npy_intp stride_ip = steps[0] / (npy_intp)sizeof(npy_double);
+    const npy_intp stride_op = steps[1] / (npy_intp)sizeof(npy_double);
+    npy_intp num_remaining_elements = array_size;
+
+    __mmask8 load_mask = avx512_get_full_load_mask_pd();
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum
+     * index will fit in an int32 as a precondition for this function via
+     * IS_UNARY_SMALL_STEPS_AND_NOMEMOVERLAP
+     */
+
+    npy_int32 index_ip[8];
+    for (npy_int32 ii = 0; ii < 8; ii++) {
+        index_ip[ii] = ii*stride_ip;
+    }
+    npy_int32 index_op[8];
+    for (npy_int32 ii = 0; ii < 8; ii++) {
+        index_op[ii] = ii*stride_op;
+    }
+    const __m256i vindex_ip = _mm256_loadu_si256((__m256i*)&index_ip[0]);
+    const __m256i vindex_op = _mm256_loadu_si256((__m256i*)&index_op[0]);
+
+    const __m512d val_f = _mm512_setzero_pd();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < 8) {
+            load_mask = avx512_get_partial_load_mask_pd(num_remaining_elements, 8);
+        }
+
+        __m512d x1;
+        if (stride_ip == 1) {
+            x1 = _mm512_mask_loadu_pd(val_f, load_mask, ip);
+        }
+        else {
+            x1 = _mm512_mask_i32gather_pd(val_f, load_mask, vindex_ip, ip, 8);
+        }
+
+        __m512d out = __svml_@func@8(x1);
+
+        if (stride_op == 1) {
+            _mm512_mask_storeu_pd(op, load_mask, out);
+        }
+        else {
+            _mm512_mask_i32scatter_pd(op, load_mask, vindex_op, out, 8);
+        }
+
+        ip += 8*stride_ip;
+        op += 8*stride_op;
+        num_remaining_elements -= 8;
+    }
+}
+#endif
 /**end repeat**/
 
 /**begin repeat
