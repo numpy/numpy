@@ -924,7 +924,7 @@ add_newdoc('numpy.core.multiarray', 'asarray',
         'F' column-major (Fortran-style) memory representation.
         'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'K' (keep) preserve input order
-        Defaults to 'C'.
+        Defaults to 'K'.
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
