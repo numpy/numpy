@@ -128,10 +128,6 @@ def _realType(t, default=double):
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
 
-def _linalgRealType(t):
-    """Cast the type t to either double or cdouble."""
-    return double
-
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
     result_type = single

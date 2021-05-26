@@ -2839,13 +2839,6 @@ class MaskedArray(ndarray):
             _data = ndarray.view(_data, type(data))
         else:
             _data = ndarray.view(_data, cls)
-        # Backwards compatibility w/ numpy.core.ma.
-        if hasattr(data, '_mask') and not isinstance(data, ndarray):
-            _data._mask = data._mask
-            # FIXME: should we set `_data._sharedmask = True`? 
-            # Previously this set `_sharedmask = True`, but
-            # that didn't actually do anything as the variable was unused!
-
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
