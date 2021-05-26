@@ -1847,7 +1847,7 @@ def scan_setup_py():
 
 
 if __name__ == "__main__":
-    cmd = sys.argv[1]
+    cmd = sys.argv[0]
     if cmd == "setup":
         errors = do_setup()
         errors += scan_setup_py()
