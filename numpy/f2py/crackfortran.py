@@ -1127,6 +1127,7 @@ def analyzeline(m, case, line):
                         (m.group('this'), ll[:i]))
                 ll = ll + ','.join(groupcache[groupcounter]['args'])
         if i < 0:
+            i = 0
             pl = ''
         else:
             pl = ll[:i].strip()
@@ -2552,7 +2553,8 @@ def get_parameters(vars, global_params={}):
             elif iscomplex(vars[n]):
                 # FIXME complex numbers may also have exponents
                 if v[0] == '(' and v[-1] == ')':
-                    pass
+                    # FIXME, unused l looks like potential bug
+                    l = markoutercomma(v[1:-1]).split('@,@')
 
             try:
                 params[n] = eval(v, g_params, params)
@@ -2983,6 +2985,7 @@ def expr2name(a, block, args=[]):
 
 def analyzeargs(block):
     setmesstext(block)
+    implicitrules, attrrules = buildimplicitrules(block)
     if 'args' not in block:
         block['args'] = []
     args = []
