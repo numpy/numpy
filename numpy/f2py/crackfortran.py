@@ -2551,7 +2551,8 @@ def get_parameters(vars, global_params={}):
                 v = ''.join(tt)
 
             elif iscomplex(vars[n]):
-                outmess(f'get_parameters[TODO]: implement evaluation of complex expression {v}')
+                outmess(f'get_parameters[TODO]:'
+                 f'implement evaluation of complex expression {v}')
 
             try:
                 params[n] = eval(v, g_params, params)
