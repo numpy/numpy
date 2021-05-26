@@ -25,6 +25,7 @@ import subprocess
 import textwrap
 import warnings
 import builtins
+import re
 
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
@@ -46,8 +47,15 @@ builtins.__NUMPY_SETUP__ = True
 # The version components are changed from ints to strings, but only VERSION
 # seems to matter outside of this module and it was already a str.
 FULLVERSION = versioneer.get_version()
-ISRELEASED = 'dev' not in FULLVERSION
-MAJOR, MINOR, MICRO = FULLVERSION.split('.')[:3]
+print('fullversion: ', FULLVERSION)
+
+# Capture the version string:
+# 1.22.0.dev0+ ... -> ISRELEASED == False, VERSION == 1.22.0
+# 1.22.0rc1+ ... -> ISRELEASED == False, VERSION == 1.22.0
+# 1.22.0 ... -> ISRELEASED == True, VERSION == 1.22.0
+# 1.22.0rc1 ... -> ISRELEASED == True, VERSION == 1.22.0
+ISRELEASED = re.search(r'(dev|\+)', FULLVERSION) is None
+MAJOR, MINOR, MICRO = re.match(r'(\d+)\.(\d+)\.(\d+)', FULLVERSION).groups()
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above

@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-      
+      - maintenance/1.21.x
+
 jobs:
   build:
     name: Build Gitpod Docker image 
