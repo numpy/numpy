@@ -118,7 +118,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     int ndim;
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            obj, maxdims, shape, &cache, NULL, NULL, out_dtype);
+            obj, maxdims, shape, &cache, NULL, NULL, out_dtype, NPY_FALSE);
     if (ndim < 0) {
         return -1;
     }

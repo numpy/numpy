@@ -31,7 +31,7 @@ PyArray_DiscoverDTypeAndShape(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        PyArray_Descr **out_descr);
+        PyArray_Descr **out_descr, npy_bool object_fallback);
 
 NPY_NO_EXPORT int
 PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
@@ -39,7 +39,7 @@ PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
 
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),
-                           PyObject *args, PyObject *kwargs);
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames);
 
 
 /* Would make sense to inline the freeing functions everywhere */

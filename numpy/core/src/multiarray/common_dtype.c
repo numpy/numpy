@@ -26,6 +26,43 @@
  */
 
 
+/*
+ * Handle string promotion warnings.  Sometimes, the string must be the
+ * first DType, but a NULL return would be incorrect normally, so assume
+ * nobody gets it incorrect with strings.
+ */
+static NPY_INLINE void
+handle_string_promotion_deprecation(
+        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2,
+        PyArray_DTypeMeta **result, int object_fallback) {
+    if (NPY_LIKELY(*result != NULL) || PyErr_Occurred()) {
+        return;
+    }
+    if (object_fallback) {
+        *result = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+        return;
+    }
+    /* Deprecated 2020-12-19, NumPy 1.21. */
+    if (DEPRECATE_FUTUREWARNING(
+                "Promotion of numbers and bools to strings is deprecated. "
+                "In the future, code such as `np.concatenate((['string'], [0]))` "
+                "will raise an error, while `np.asarray(['string', 0])` will "
+                "return an array with `dtype=object`.  To avoid the warning "
+                "while retaining a string result use `dtype='U'` (or 'S').  "
+                "To get an array of Python objects use `dtype=object`. "
+                "(Warning added in NumPy 1.21)") < 0) {
+        return;
+    }
+    if (PyTypeNum_ISSTRING(dtype1->type_num)) {
+        *result = PyArray_DTypeFromTypeNum(dtype1->type_num);
+    }
+    else {
+        assert(PyTypeNum_ISSTRING(dtype2->type_num));
+        *result = PyArray_DTypeFromTypeNum(dtype2->type_num);
+    }
+}
+
+
 /**
  * This function defines the common DType operator.
  *
@@ -35,13 +72,19 @@
  *
  * TODO: Before exposure, we should review the return value (e.g. no error
  *       when no common DType is found).
+ *       Further, the `object_fallback` is probably only useful for the
+ *       string promotion deprecation.
  *
  * @param dtype1 DType class to find the common type for.
  * @param dtype2 Second DType class.
+ * @param object_fallback if not 0, `object` DType will be returned instead of
+ *        setting an error.
  * @return The common DType or NULL with an error set
  */
 NPY_NO_EXPORT NPY_INLINE PyArray_DTypeMeta *
-PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+PyArray_CommonDType(
+        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2,
+        int object_fallback)
 {
     if (dtype1 == dtype2) {
         Py_INCREF(dtype1);
@@ -55,11 +98,15 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
         Py_DECREF(common_dtype);
         common_dtype = dtype2->common_dtype(dtype2, dtype1);
     }
-    if (common_dtype == NULL) {
-        return NULL;
-    }
+
+    handle_string_promotion_deprecation(
+            dtype1, dtype2, &common_dtype, object_fallback);
+
     if (common_dtype == (PyArray_DTypeMeta *)Py_NotImplemented) {
         Py_DECREF(Py_NotImplemented);
+        if (object_fallback) {
+            return PyArray_DTypeFromTypeNum(NPY_OBJECT);
+        }
         PyErr_Format(PyExc_TypeError,
                 "The DTypes %S and %S do not have a common DType. "
                 "For example they cannot be stored in a single array unless "
@@ -139,6 +186,8 @@ reduce_dtypes_to_most_knowledgeable(
             }
 
             Py_XSETREF(res, dtypes[low]->common_dtype(dtypes[low], dtypes[high]));
+            handle_string_promotion_deprecation(
+                    dtypes[low], dtypes[high], &res, 0);
             if (res == NULL) {
                 return NULL;
             }
@@ -272,6 +321,8 @@ PyArray_PromoteDTypeSequence(
          */
         PyArray_DTypeMeta *promotion = main_dtype->common_dtype(
                 main_dtype, dtypes[i]);
+        handle_string_promotion_deprecation(
+                main_dtype, dtypes[i], &promotion, 0);
         if (promotion == NULL) {
             Py_XSETREF(result, NULL);
             goto finish;
@@ -305,7 +356,7 @@ PyArray_PromoteDTypeSequence(
          * The above promoted, now "reduce" with the current result; note that
          * in the typical cases we expect this step to be a no-op.
          */
-        Py_SETREF(result, PyArray_CommonDType(result, promotion));
+        Py_SETREF(result, PyArray_CommonDType(result, promotion, 0));
         Py_DECREF(promotion);
         if (result == NULL) {
             goto finish;

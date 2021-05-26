@@ -21,6 +21,10 @@ NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn);
 
 NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypes_int(
+        PyArray_Descr *type1, PyArray_Descr *type2, int object_fallback);
+
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_LegacyResultType(
         npy_intp narrs, PyArrayObject **arr,
         npy_intp ndtypes, PyArray_Descr **dtypes);

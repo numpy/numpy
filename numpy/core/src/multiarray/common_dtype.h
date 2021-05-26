@@ -8,7 +8,9 @@
 #include "dtypemeta.h"
 
 NPY_NO_EXPORT PyArray_DTypeMeta *
-PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
+PyArray_CommonDType(
+        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2,
+        int object_fallback);
 
 NPY_NO_EXPORT PyArray_DTypeMeta *
 PyArray_PromoteDTypeSequence(

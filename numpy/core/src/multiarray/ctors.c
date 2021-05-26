@@ -1552,7 +1552,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     Py_XDECREF(newtype);
 
     ndim = PyArray_DiscoverDTypeAndShape(op,
-            NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype);
+            NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor,
+            &dtype,  NPY_FALSE);
 
     Py_XDECREF(fixed_descriptor);
     Py_XDECREF(fixed_DType);

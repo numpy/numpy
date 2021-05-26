@@ -968,12 +968,17 @@ PyArray_FindConcatenationDescriptor(
 }
 
 
-/*NUMPY_API
- * Produces the smallest size and lowest kind type to which both
- * input types can be cast.
+/*
+ * Same as `PyArray_PromoteTypes`, but allows falling back to an object result
+ * when no common DType is found.  This is currently only needed for the
+ * string and number promotion deprecation!
+ *
+ * TODO: After this deprecation is over, the `object_fallback` may well be
+ *       useless!
  */
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
+PyArray_PromoteTypes_int(
+        PyArray_Descr *type1, PyArray_Descr *type2, int object_fallback)
 {
     PyArray_DTypeMeta *common_dtype;
     PyArray_Descr *res;
@@ -984,7 +989,8 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return type1;
     }
 
-    common_dtype = PyArray_CommonDType(NPY_DTYPE(type1), NPY_DTYPE(type2));
+    common_dtype = PyArray_CommonDType(
+            NPY_DTYPE(type1), NPY_DTYPE(type2), object_fallback);
     if (common_dtype == NULL) {
         return NULL;
     }
@@ -1019,6 +1025,18 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     Py_DECREF(common_dtype);
     return res;
 }
+
+
+/*NUMPY_API
+ * Produces the smallest size and lowest kind type to which both
+ * input types can be cast.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
+{
+    return PyArray_PromoteTypes_int(type1, type2, 0);
+}
+
 
 /*
  * Produces the smallest size and lowest kind type to which all

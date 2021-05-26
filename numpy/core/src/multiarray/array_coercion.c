@@ -9,6 +9,8 @@
 #include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
 
+#include "npy_argparse.h"
+
 #include "descriptor.h"
 #include "convert_datatype.h"
 #include "common_dtype.h"
@@ -93,6 +95,7 @@ enum _dtype_discovery_flags {
     DISCOVER_TUPLES_AS_ELEMENTS = 1 << 4,
     MAX_DIMS_WAS_REACHED = 1 << 5,
     DESCRIPTOR_WAS_SET = 1 << 6,
+    OBJECT_FALLBACK = 1 << 7,
 };
 
 
@@ -621,8 +624,9 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
         *out_descr = descr;
         return 0;
     }
-    PyArray_Descr *new_descr = PyArray_PromoteTypes(descr, *out_descr);
-    if (NPY_UNLIKELY(new_descr == NULL)) {
+    PyArray_Descr *new_descr = PyArray_PromoteTypes_int(
+            descr, *out_descr, (*flags & OBJECT_FALLBACK) != 0);
+    if (NPY_UNLIKELY(new_descr == NULL) && !(*flags & OBJECT_FALLBACK)) {
         if (fixed_DType != NULL || PyErr_ExceptionMatches(PyExc_FutureWarning)) {
             /*
              * If a DType is fixed, promotion must not fail. Do not catch
@@ -631,6 +635,7 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
              */
             return -1;
         }
+        /* TODO: Fully remove path in favor of the object-fallback mechanism! */
         PyErr_Clear();
         *flags |= PROMOTION_FAILED;
         /* Continue with object, since we may need the dimensionality */
@@ -1157,6 +1162,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *        The result may be unchanged (remain NULL) when converting a
  *        sequence with no elements. In this case it is callers responsibility
  *        to choose a default.
+ * @param object_fallback if 1 allow falling back to object transparently.
+ *        This kicks in for certain impossible Promotions and ragged arrays.
  * @return dimensions of the discovered object or -1 on error.
  *         WARNING: If (and only if) the output is a single array, the ndim
  *         returned _can_ exceed the maximum allowed number of dimensions.
@@ -1169,11 +1176,15 @@ PyArray_DiscoverDTypeAndShape(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        PyArray_Descr **out_descr)
+        PyArray_Descr **out_descr, npy_bool object_fallback)
 {
     coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
     enum _dtype_discovery_flags flags = 0;
+
+    if (object_fallback) {
+        flags = OBJECT_FALLBACK;
+    }
 
     /*
      * Support a passed in descriptor (but only if nothing was specified).
@@ -1473,19 +1484,22 @@ PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
  */
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),
-                           PyObject *args, PyObject *kwargs)
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    static char *kwlist[] = {"obj", "dtype", NULL};
-
     PyObject *obj;
     PyObject *dtype = NULL;
     PyArray_Descr *fixed_descriptor = NULL;
     PyArray_DTypeMeta *fixed_DType = NULL;
     npy_intp shape[NPY_MAXDIMS];
+    npy_bool object_fallback = NPY_FALSE;
 
-    if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "O|O:_discover_array_parameters", kwlist,
-            &obj, &dtype)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("_discover_array_parameters",
+            args, len_args, kwnames,
+            "obj", NULL, &obj,
+            "|dtype", NULL, &dtype,
+            "$object_fallback", &PyArray_BoolConverter, &object_fallback,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -1499,7 +1513,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
-            fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype);
+            fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype,
+            object_fallback);
     Py_XDECREF(fixed_DType);
     Py_XDECREF(fixed_descriptor);
     if (ndim < 0) {

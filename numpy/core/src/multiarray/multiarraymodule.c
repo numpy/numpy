@@ -4415,7 +4415,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
         METH_VARARGS, NULL},
     {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
      METH_VARARGS | METH_KEYWORDS, NULL},
     /* from umath */

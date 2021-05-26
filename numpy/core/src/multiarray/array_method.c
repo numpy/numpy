@@ -92,7 +92,7 @@ default_resolve_descriptors(
     PyArray_DTypeMeta *common_dtype = dtypes[0];
     assert(common_dtype != NULL);
     for (int i = 1; i < nin; i++) {
-        Py_SETREF(common_dtype, PyArray_CommonDType(common_dtype, dtypes[i]));
+        Py_SETREF(common_dtype, PyArray_CommonDType(common_dtype, dtypes[i], 0));
         if (common_dtype == NULL) {
             goto fail;
         }
