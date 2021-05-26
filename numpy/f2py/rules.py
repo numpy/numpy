@@ -562,7 +562,7 @@ rout_rules = [
         'callfortran':'#name#_return_value,#name#_return_value_len,',
         'callfortranroutine':['\t#name#_return_value_len = #rlength#;',
                               '\tif ((#name#_return_value = (string)malloc('
-                              '#name#_return_value_len+1) == NULL) {',
+                                  '#name#_return_value_len+1) == NULL) {',
                               '\t\tPyErr_SetString(PyExc_MemoryError, \"out of memory\");',
                               '\t\tf2py_success = 0;',
                               '\t} else {',
