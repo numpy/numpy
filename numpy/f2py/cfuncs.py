@@ -638,6 +638,7 @@ fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
 #endif
     if (PyArray_Check(obj)) {
         PyArrayObject *arr = (PyArrayObject *)obj;
+        assert(ISCONTIGUOUS(arr));
         string buf = PyArray_DATA(arr);
         npy_intp n = len;
         if (n == -1) {
