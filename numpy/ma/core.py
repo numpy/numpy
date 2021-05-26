@@ -2842,8 +2842,6 @@ class MaskedArray(ndarray):
         # Backwards compatibility w/ numpy.core.ma.
         if hasattr(data, '_mask') and not isinstance(data, ndarray):
             _data._mask = data._mask
-            # FIXME _sharedmask is never used.
-            _sharedmask = True
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)

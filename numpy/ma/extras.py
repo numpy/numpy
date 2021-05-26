@@ -743,7 +743,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
-        counts = count(asorted)
         idx, odd = divmod(count(asorted), 2)
         mid = asorted[idx + odd - 1:idx + 1]
         if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
