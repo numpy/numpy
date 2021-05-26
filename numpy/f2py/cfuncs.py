@@ -719,7 +719,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
         /* TODO: change the type of `len` so that we can remove this */
         if (n > NPY_MAX_INT) {
             PyErr_SetString(PyExc_OverflowError,
-                            "object too larger for a 32-bit int");
+                            "object too large for a 32-bit int");
             goto capi_fail;
         }
         *len = n;

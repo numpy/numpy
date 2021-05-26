@@ -27,7 +27,7 @@ class TestString(util.F2PyTest):
 class TestDocStringArguments(util.F2PyTest):
     suffix = '.f'
 
-    code = textwrap.dedent("""
+    code = """
 C FILE: STRING.F
       SUBROUTINE FOO(A,B,C,D)
       CHARACTER*5 A, B
@@ -49,7 +49,7 @@ Cf2py intent(inout) b,d
       PRINT*, "D=",D
       END
 C END OF FILE STRING.F
-        """)
+        """
 
     def test_example(self):
         a = np.array(b'123\0\0')
