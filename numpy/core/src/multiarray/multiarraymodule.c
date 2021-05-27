@@ -4351,7 +4351,8 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     }
 
     PyObject *new_capsule = PyCapsule_New(managed,
-            NPY_DLPACK_INTERNAL_CAPSULE_NAME, array_dlpack_capsule_deleter);
+            NPY_DLPACK_INTERNAL_CAPSULE_NAME,
+            array_dlpack_internal_capsule_deleter);
     if (new_capsule == NULL) {
         Py_XDECREF(capsule);
         Py_XDECREF(ret);

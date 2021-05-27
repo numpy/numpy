@@ -13,17 +13,28 @@
 // capsule.
 #define NPY_DLPACK_INTERNAL_CAPSULE_NAME "numpy_dltensor"
 
+/* This is exactly as mandated by dlpack */
 static void array_dlpack_capsule_deleter(PyObject *self)
 {
-    if (!PyCapsule_IsValid(self, NPY_DLPACK_CAPSULE_NAME) &&
-            !PyCapsule_IsValid(self, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
-        if (!PyCapsule_IsValid(self, NPY_DLPACK_USED_CAPSULE_NAME)) {
-            PyErr_SetString(PyExc_RuntimeError, "Invalid capsule name.");
-        }
+    if (PyCapsule_IsValid(self, NPY_DLPACK_USED_CAPSULE_NAME)) {
         return;
     }
     DLManagedTensor *managed = 
-        (DLManagedTensor *)PyCapsule_GetPointer(self, PyCapsule_GetName(self));
+        (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_CAPSULE_NAME);
+    if (managed == NULL) {
+        return;
+    }
+    managed->deleter(managed);
+}
+
+/* used internally */
+static void array_dlpack_internal_capsule_deleter(PyObject *self)
+{
+    DLManagedTensor *managed = 
+        (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+    if (managed == NULL) {
+        return;
+    }
     managed->deleter(managed);
 }
 
