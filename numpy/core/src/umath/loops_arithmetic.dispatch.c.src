@@ -82,7 +82,7 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
             nsign_a               = npyv_and_@sfx@(nsign_a, npyv_setall_@sfx@(1));
             npyv_@sfx@  diff_sign = npyv_sub_@sfx@(nsign_a, nsign_d);
             npyv_@sfx@  to_ninf   = npyv_xor_@sfx@(nsign_a, nsign_d);
-            npyv_@sfx@  trunc     = npyv_divc_@sfx@(npyv_add_@sfx@(a, diff_sign), divisor);
+            npyv_@sfx@  trunc     = npyv_divc_@sfx@(npyv_add_@sfx@(a, diff_sign), &divisor);
             npyv_@sfx@  floor     = npyv_sub_@sfx@(trunc, to_ninf);
             npyv_store_@sfx@(dst, floor);
         }
@@ -117,7 +117,7 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
 
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         npyv_@sfx@ a = npyv_load_@sfx@(src);
-        npyv_@sfx@ c = npyv_divc_@sfx@(a, divisor);
+        npyv_@sfx@ c = npyv_divc_@sfx@(a, &divisor);
         npyv_store_@sfx@(dst, c);
     }
 
