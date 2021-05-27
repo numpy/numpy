@@ -357,7 +357,7 @@ SIMD_IMPL_INTRIN_2(div_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 
 #if @intdiv_sup@
 SIMD_IMPL_INTRIN_1(divisor_@sfx@, v@sfx@x3, @sfx@)
-SIMD_IMPL_INTRIN_2(divc_@sfx@, v@sfx@, v@sfx@, v@sfx@x3)
+SIMD_IMPL_INTRIN_2_REFERNCE2(divc_@sfx@, v@sfx@, v@sfx@, v@sfx@x3)
 #endif // intdiv_sup
 
 #if @fused_sup@

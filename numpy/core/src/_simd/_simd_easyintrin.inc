@@ -73,6 +73,28 @@
         return simd_arg_to_obj(&ret);                     \
     }
 
+#define SIMD_IMPL_INTRIN_2_REFERNCE2(NAME, RET, IN0, IN1) \
+    static PyObject *simd__intrin_##NAME                  \
+    (PyObject* NPY_UNUSED(self), PyObject *args)          \
+    {                                                     \
+        simd_arg arg1 = {.dtype = simd_data_##IN0};       \
+        simd_arg arg2 = {.dtype = simd_data_##IN1};       \
+        if (!PyArg_ParseTuple(                            \
+            args, "O&O&:"NPY_TOSTRING(NAME),              \
+            simd_arg_converter, &arg1,                    \
+            simd_arg_converter, &arg2                     \
+        )) return NULL;                                   \
+        simd_data data = {.RET = npyv_##NAME(             \
+            arg1.data.IN0, &arg2.data.IN1                 \
+        )};                                               \
+        simd_arg_free(&arg1);                             \
+        simd_arg_free(&arg2);                             \
+        simd_arg ret = {                                  \
+            .data = data, .dtype = simd_data_##RET        \
+        };                                                \
+        return simd_arg_to_obj(&ret);                     \
+    }
+
 #define SIMD__REPEAT_2IMM(C, NAME, IN0) \
     C == arg2.data.u8 ? NPY_CAT(npyv_, NAME)(arg1.data.IN0, C) :
 
