@@ -31,7 +31,9 @@
 #include "alloc.h"
 
 #include <stdarg.h>
+
 #include "common/dlpack/dlpack.h"
+#include "common/npy_dlpack.h"
 
 
 /* NpyArg_ParseKeywords
@@ -2582,8 +2584,6 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 }
 
-
-
 static PyObject *
 array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -2781,15 +2781,16 @@ static void array_dlpack_capsule_deleter(PyObject *self)
     managed->deleter(managed);
 }
 
-static void array_dlpack_deleter(DLManagedTensor *self)
+static void
+array_dlpack_deleter(DLManagedTensor *self)
 {
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
     // This will also free the strides as it's one allocation.
     PyMem_Free(self->dl_tensor.shape);
     PyMem_Free(self);
-
-    PyArray_XDECREF(array);
+    Py_XDECREF(array);
 }
+
 
 static PyObject *
 array_dlpack(PyArrayObject *self,
@@ -2906,13 +2907,23 @@ array_dlpack(PyArrayObject *self,
     }
     
     // the capsule holds a reference
-    PyArray_INCREF(self);
+    Py_INCREF(self);
     return capsule;
 }
 
 static PyObject *
-array_dlpack_device(PyArrayObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
+    PyObject *base = PyArray_BASE(self);
+    if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
+        DLManagedTensor *managed = PyCapsule_GetPointer(base,
+                NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+        if (managed == NULL) {
+            return NULL;
+        }
+        return Py_BuildValue("ii", managed->dl_tensor.device.device_type,
+                managed->dl_tensor.device.device_id);
+    }
     return Py_BuildValue("ii", kDLCPU, 0);
 >>>>>>> ENH: Add the __dlpack__ and __dlpack_device__ methods to ndarray.
 }

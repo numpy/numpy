@@ -70,6 +70,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "get_attr_string.h"
 #include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
 
+#include "common/npy_dlpack.h"
+
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
@@ -4231,6 +4233,155 @@ _reload_guard(PyObject *NPY_UNUSED(self)) {
     Py_RETURN_NONE;
 }
 
+static void array_dlpack_deleter(DLManagedTensor *self)
+{
+    PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
+    // This will also free the strides as it's one allocation.
+    PyMem_Free(self->dl_tensor.shape);
+    PyMem_Free(self);
+    Py_XDECREF(array);
+}
+
+
+NPY_NO_EXPORT PyObject *
+from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
+    PyObject *capsule = PyObject_CallMethod(obj, "__dlpack__", NULL);
+    if (capsule == NULL) {
+        return NULL;
+    }
+
+    DLManagedTensor *managed = 
+        (DLManagedTensor *)PyCapsule_GetPointer(capsule,
+        NPY_DLPACK_CAPSULE_NAME);
+
+    if (managed == NULL) {
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    const int ndim = managed->dl_tensor.ndim;
+    if (ndim >= NPY_MAXDIMS) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "maxdims of DLPack tensor is higher than the supported "
+                "maxdims.");
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    if (managed->dl_tensor.device.device_type != kDLCPU &&
+            managed->dl_tensor.device.device_type != kDLCUDAHost) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Unsupported device in DLTensor.");
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    if (managed->dl_tensor.dtype.lanes != 1) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Unsupported lanes in DLTensor dtype.");
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    int typenum = -1;
+    const uint8_t bits = managed->dl_tensor.dtype.bits;
+    const npy_intp itemsize = bits / 8;
+    switch(managed->dl_tensor.dtype.code) {
+    case kDLInt:
+        switch (bits)
+        {
+            case 8: typenum = NPY_INT8; break;
+            case 16: typenum = NPY_INT16; break;
+            case 32: typenum = NPY_INT32; break;
+            case 64: typenum = NPY_INT64; break;
+        }
+        break;
+    case kDLUInt:
+        switch (bits)
+        {
+            case 8: typenum = NPY_UINT8; break;
+            case 16: typenum = NPY_UINT16; break;
+            case 32: typenum = NPY_UINT32; break;
+            case 64: typenum = NPY_UINT64; break;
+        }
+        break;
+    case kDLFloat:
+        switch (bits)
+        {
+            case 16: typenum = NPY_FLOAT16; break;
+            case 32: typenum = NPY_FLOAT32; break;
+            case 64: typenum = NPY_FLOAT64; break;
+        }
+        break;
+    case kDLComplex:
+        switch (bits)
+        {
+            case 64: typenum = NPY_COMPLEX64; break;
+            case 128: typenum = NPY_COMPLEX128; break;
+        }
+        break;
+    }
+
+    if (typenum == -1) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Unsupported dtype in DLTensor.");
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(typenum);
+    if (descr == NULL) {
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    npy_intp shape[NPY_MAXDIMS];
+    npy_intp strides[NPY_MAXDIMS];
+
+    for (int i = 0; i < ndim; ++i) {
+        shape[i] = managed->dl_tensor.shape[i];
+        strides[i] = managed->dl_tensor.strides[i] * itemsize;
+    }
+
+    char *data = (char *)managed->dl_tensor.data +
+            managed->dl_tensor.byte_offset;
+
+    PyObject *ret = PyArray_NewFromDescr(&PyArray_Type, descr, ndim, shape,
+            strides, data, 0, NULL);
+    if (ret == NULL) {
+        Py_XDECREF(capsule);
+        Py_XDECREF(descr);
+        return NULL;
+    }
+
+    PyObject *new_capsule = PyCapsule_New(managed,
+            NPY_DLPACK_INTERNAL_CAPSULE_NAME, array_dlpack_capsule_deleter);
+    if (new_capsule == NULL) {
+        Py_XDECREF(descr);
+        Py_XDECREF(ret);
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    if (PyArray_SetBaseObject((PyArrayObject *)ret, new_capsule) < 0) {
+        Py_XDECREF(descr);
+        Py_XDECREF(ret);
+        Py_XDECREF(new_capsule);
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    if (PyCapsule_SetName(capsule, NPY_DLPACK_USED_CAPSULE_NAME) < 0) {
+        Py_XDECREF(descr);
+        Py_XDECREF(ret);
+        Py_XDECREF(new_capsule);
+        Py_XDECREF(capsule);
+        return NULL;
+    }
+
+    Py_XDECREF(capsule);
+    return ret;
+}
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
@@ -4445,6 +4596,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
+    {"from_dlpack", (PyCFunction)from_dlpack,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

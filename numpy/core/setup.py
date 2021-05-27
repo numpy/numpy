@@ -740,6 +740,7 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     common_deps = [
+            join('src', 'common', 'dlpack', 'dlpack.h'),
             join('src', 'common', 'array_assign.h'),
             join('src', 'common', 'binop_override.h'),
             join('src', 'common', 'cblasfuncs.h'),
@@ -749,6 +750,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_cblas.h'),
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_ctypes.h'),
+            join('src', 'common', 'npy_dlpack.h'),
             join('src', 'common', 'npy_extint128.h'),
             join('src', 'common', 'npy_import.h'),
             join('src', 'common', 'npy_hashtable.h'),

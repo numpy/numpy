@@ -1573,6 +1573,11 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         array_function_like_doc,
     ))
 
+add_newdoc('numpy.core.multiarray', 'from_dlpack',
+    """
+    Create a NumPy array from a DLPack struct.
+    """)
+
 add_newdoc('numpy.core', 'fastCopyAndTranspose',
     """_fastCopyAndTranspose(a)""")
 
