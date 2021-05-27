@@ -102,128 +102,128 @@
  */
 // See simd/intdiv.h for more clarification
 // divide each unsigned 8-bit element by a precomputed divisor
-NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
+NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 *divisor)
 {
     const npyv_u8 mergeo_perm = {
         1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31
     };
     // high part of unsigned multiplication
-    npyv_u16 mul_even = vec_mule(a, divisor.val[0]);
-    npyv_u16 mul_odd  = vec_mulo(a, divisor.val[0]);
+    npyv_u16 mul_even = vec_mule(a, divisor->val[0]);
+    npyv_u16 mul_odd  = vec_mulo(a, divisor->val[0]);
     npyv_u8  mulhi    = (npyv_u8)vec_perm(mul_even, mul_odd, mergeo_perm);
     // floor(a/d)     = (mulhi + ((a-mulhi) >> sh1)) >> sh2
     npyv_u8 q         = vec_sub(a, mulhi);
-            q         = vec_sr(q, divisor.val[1]);
+            q         = vec_sr(q, divisor->val[1]);
             q         = vec_add(mulhi, q);
-            q         = vec_sr(q, divisor.val[2]);
+            q         = vec_sr(q, divisor->val[2]);
     return  q;
 }
 // divide each signed 8-bit element by a precomputed divisor
-NPY_FINLINE npyv_s8 npyv_divc_s8(npyv_s8 a, const npyv_s8x3 divisor)
+NPY_FINLINE npyv_s8 npyv_divc_s8(npyv_s8 a, const npyv_s8x3 *divisor)
 {
     const npyv_u8 mergeo_perm = {
         1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31
     };
     // high part of signed multiplication
-    npyv_s16 mul_even = vec_mule(a, divisor.val[0]);
-    npyv_s16 mul_odd  = vec_mulo(a, divisor.val[0]);
+    npyv_s16 mul_even = vec_mule(a, divisor->val[0]);
+    npyv_s16 mul_odd  = vec_mulo(a, divisor->val[0]);
     npyv_s8  mulhi    = (npyv_s8)vec_perm(mul_even, mul_odd, mergeo_perm);
     // q              = ((a + mulhi) >> sh1) - XSIGN(a)
     // trunc(a/d)     = (q ^ dsign) - dsign
-    npyv_s8 q         = vec_sra(vec_add(a, mulhi), (npyv_u8)divisor.val[1]);
+    npyv_s8 q         = vec_sra(vec_add(a, mulhi), (npyv_u8)divisor->val[1]);
             q         = vec_sub(q, vec_sra(a, npyv_setall_u8(7)));
-            q         = vec_sub(vec_xor(q, divisor.val[2]), divisor.val[2]);
+            q         = vec_sub(vec_xor(q, divisor->val[2]), divisor->val[2]);
     return  q;
 }
 // divide each unsigned 16-bit element by a precomputed divisor
-NPY_FINLINE npyv_u16 npyv_divc_u16(npyv_u16 a, const npyv_u16x3 divisor)
+NPY_FINLINE npyv_u16 npyv_divc_u16(npyv_u16 a, const npyv_u16x3 *divisor)
 {
     const npyv_u8 mergeo_perm = {
         2, 3, 18, 19, 6, 7, 22, 23, 10, 11, 26, 27, 14, 15, 30, 31
     };
     // high part of unsigned multiplication
-    npyv_u32 mul_even = vec_mule(a, divisor.val[0]);
-    npyv_u32 mul_odd  = vec_mulo(a, divisor.val[0]);
+    npyv_u32 mul_even = vec_mule(a, divisor->val[0]);
+    npyv_u32 mul_odd  = vec_mulo(a, divisor->val[0]);
     npyv_u16 mulhi    = (npyv_u16)vec_perm(mul_even, mul_odd, mergeo_perm);
     // floor(a/d)     = (mulhi + ((a-mulhi) >> sh1)) >> sh2
     npyv_u16 q        = vec_sub(a, mulhi);
-             q        = vec_sr(q, divisor.val[1]);
+             q        = vec_sr(q, divisor->val[1]);
              q        = vec_add(mulhi, q);
-             q        = vec_sr(q, divisor.val[2]);
+             q        = vec_sr(q, divisor->val[2]);
     return   q;
 }
 // divide each signed 16-bit element by a precomputed divisor (round towards zero)
-NPY_FINLINE npyv_s16 npyv_divc_s16(npyv_s16 a, const npyv_s16x3 divisor)
+NPY_FINLINE npyv_s16 npyv_divc_s16(npyv_s16 a, const npyv_s16x3 *divisor)
 {
     const npyv_u8 mergeo_perm = {
         2, 3, 18, 19, 6, 7, 22, 23, 10, 11, 26, 27, 14, 15, 30, 31
     };
     // high part of signed multiplication
-    npyv_s32 mul_even = vec_mule(a, divisor.val[0]);
-    npyv_s32 mul_odd  = vec_mulo(a, divisor.val[0]);
+    npyv_s32 mul_even = vec_mule(a, divisor->val[0]);
+    npyv_s32 mul_odd  = vec_mulo(a, divisor->val[0]);
     npyv_s16 mulhi    = (npyv_s16)vec_perm(mul_even, mul_odd, mergeo_perm);
     // q              = ((a + mulhi) >> sh1) - XSIGN(a)
     // trunc(a/d)     = (q ^ dsign) - dsign
-    npyv_s16 q        = vec_sra(vec_add(a, mulhi), (npyv_u16)divisor.val[1]);
+    npyv_s16 q        = vec_sra(vec_add(a, mulhi), (npyv_u16)divisor->val[1]);
              q        = vec_sub(q, vec_sra(a, npyv_setall_u16(15)));
-             q        = vec_sub(vec_xor(q, divisor.val[2]), divisor.val[2]);
+             q        = vec_sub(vec_xor(q, divisor->val[2]), divisor->val[2]);
     return   q;
 }
 // divide each unsigned 32-bit element by a precomputed divisor
-NPY_FINLINE npyv_u32 npyv_divc_u32(npyv_u32 a, const npyv_u32x3 divisor)
+NPY_FINLINE npyv_u32 npyv_divc_u32(npyv_u32 a, const npyv_u32x3 *divisor)
 {
 #if defined(__GNUC__) && __GNUC__ < 8
     // Doubleword integer wide multiplication supported by GCC 8+
     npyv_u64 mul_even, mul_odd;
-    __asm__ ("vmulouw %0,%1,%2" : "=v" (mul_even) : "v" (a), "v" (divisor.val[0]));
-    __asm__ ("vmuleuw %0,%1,%2" : "=v" (mul_odd)  : "v" (a), "v" (divisor.val[0]));
+    __asm__ ("vmulouw %0,%1,%2" : "=v" (mul_even) : "v" (a), "v" (divisor->val[0]));
+    __asm__ ("vmuleuw %0,%1,%2" : "=v" (mul_odd)  : "v" (a), "v" (divisor->val[0]));
 #else
     // Doubleword integer wide multiplication supported by GCC 8+
-    npyv_u64 mul_even = vec_mule(a, divisor.val[0]);
-    npyv_u64 mul_odd  = vec_mulo(a, divisor.val[0]);
+    npyv_u64 mul_even = vec_mule(a, divisor->val[0]);
+    npyv_u64 mul_odd  = vec_mulo(a, divisor->val[0]);
 #endif
     // high part of unsigned multiplication
     npyv_u32 mulhi    = vec_mergeo((npyv_u32)mul_even, (npyv_u32)mul_odd);
     // floor(x/d)     = (((a-mulhi) >> sh1) + mulhi) >> sh2
     npyv_u32 q        = vec_sub(a, mulhi);
-             q        = vec_sr(q, divisor.val[1]);
+             q        = vec_sr(q, divisor->val[1]);
              q        = vec_add(mulhi, q);
-             q        = vec_sr(q, divisor.val[2]);
+             q        = vec_sr(q, divisor->val[2]);
     return   q;
 }
 // divide each signed 32-bit element by a precomputed divisor (round towards zero)
-NPY_FINLINE npyv_s32 npyv_divc_s32(npyv_s32 a, const npyv_s32x3 divisor)
+NPY_FINLINE npyv_s32 npyv_divc_s32(npyv_s32 a, const npyv_s32x3 *divisor)
 {
 #if defined(__GNUC__) && __GNUC__ < 8
     // Doubleword integer wide multiplication supported by GCC8+
     npyv_s64 mul_even, mul_odd;
-    __asm__ ("vmulosw %0,%1,%2" : "=v" (mul_even) : "v" (a), "v" (divisor.val[0]));
-    __asm__ ("vmulesw %0,%1,%2" : "=v" (mul_odd)  : "v" (a), "v" (divisor.val[0]));
+    __asm__ ("vmulosw %0,%1,%2" : "=v" (mul_even) : "v" (a), "v" (divisor->val[0]));
+    __asm__ ("vmulesw %0,%1,%2" : "=v" (mul_odd)  : "v" (a), "v" (divisor->val[0]));
 #else
     // Doubleword integer wide multiplication supported by GCC8+
-    npyv_s64 mul_even = vec_mule(a, divisor.val[0]);
-    npyv_s64 mul_odd  = vec_mulo(a, divisor.val[0]);
+    npyv_s64 mul_even = vec_mule(a, divisor->val[0]);
+    npyv_s64 mul_odd  = vec_mulo(a, divisor->val[0]);
 #endif
     // high part of signed multiplication
     npyv_s32 mulhi    = vec_mergeo((npyv_s32)mul_even, (npyv_s32)mul_odd);
     // q              = ((a + mulhi) >> sh1) - XSIGN(a)
     // trunc(a/d)     = (q ^ dsign) - dsign
-    npyv_s32 q        = vec_sra(vec_add(a, mulhi), (npyv_u32)divisor.val[1]);
+    npyv_s32 q        = vec_sra(vec_add(a, mulhi), (npyv_u32)divisor->val[1]);
              q        = vec_sub(q, vec_sra(a, npyv_setall_u32(31)));
-             q        = vec_sub(vec_xor(q, divisor.val[2]), divisor.val[2]);
+             q        = vec_sub(vec_xor(q, divisor->val[2]), divisor->val[2]);
     return   q;
 }
 // divide each unsigned 64-bit element by a precomputed divisor
-NPY_FINLINE npyv_u64 npyv_divc_u64(npyv_u64 a, const npyv_u64x3 divisor)
+NPY_FINLINE npyv_u64 npyv_divc_u64(npyv_u64 a, const npyv_u64x3 *divisor)
 {
-    const npy_uint64 d = vec_extract(divisor.val[0], 0);
+    const npy_uint64 d = vec_extract(divisor->val[0], 0);
     return npyv_set_u64(vec_extract(a, 0) / d, vec_extract(a, 1) / d);
 }
 // divide each signed 64-bit element by a precomputed divisor (round towards zero)
-NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
+NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 *divisor)
 {
-    npyv_b64 overflow = npyv_and_b64(vec_cmpeq(a, npyv_setall_s64(-1LL << 63)), (npyv_b64)divisor.val[1]);
-    npyv_s64 d = vec_sel(divisor.val[0], npyv_setall_s64(1), overflow);
+    npyv_b64 overflow = npyv_and_b64(vec_cmpeq(a, npyv_setall_s64(-1LL << 63)), (npyv_b64)divisor->val[1]);
+    npyv_s64 d = vec_sel(divisor->val[0], npyv_setall_s64(1), overflow);
     return vec_div(a, d);
 }
 /***************************
