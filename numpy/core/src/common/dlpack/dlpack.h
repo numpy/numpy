@@ -1,3 +1,5 @@
+// Taken from:
+// https://github.com/dmlc/dlpack/blob/9b6176fdecb55e9bf39b16f08b96913ed3f275b4/include/dlpack/dlpack.h
 /*!
  *  Copyright (c) 2017 by Contributors
  * \file dlpack.h
