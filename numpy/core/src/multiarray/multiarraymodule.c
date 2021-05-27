@@ -4233,6 +4233,17 @@ _reload_guard(PyObject *NPY_UNUSED(self)) {
     Py_RETURN_NONE;
 }
 
+/* used internally */
+static void array_dlpack_internal_capsule_deleter(PyObject *self)
+{
+    DLManagedTensor *managed = 
+        (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+    if (managed == NULL) {
+        return;
+    }
+    managed->deleter(managed);
+}
+
 
 NPY_NO_EXPORT PyObject *
 from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
