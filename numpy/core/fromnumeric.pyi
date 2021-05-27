@@ -151,6 +151,14 @@ def argmin(
     out: Optional[ndarray] = ...,
 ) -> Any: ...
 
+def topk(
+    a: ArrayLike,
+    k: Optional[int] = ...,
+    axis: Optional[int] = ...,
+    largest: Optional[bool] = ...,
+    sorted: Optional[bool] = ...,
+) -> Tuple[ndarray, ndarray]: ...
+
 @overload
 def searchsorted(
     a: ArrayLike,
