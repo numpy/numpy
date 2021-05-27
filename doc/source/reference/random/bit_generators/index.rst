@@ -15,10 +15,10 @@ Supported BitGenerators
 
 The included BitGenerators are:
 
-* PCG-64 - The default. A fast generator that supports many parallel streams
-  and can be advanced by an arbitrary amount. See the documentation for
-  :meth:`~.PCG64.advance`. PCG-64 has a period of :math:`2^{128}`. See the `PCG
-  author's page`_ for more details about this class of PRNG.
+* PCG-64 - The default. A fast generator that can be advanced by an arbitrary
+  amount. See the documentation for :meth:`~.PCG64.advance`. PCG-64 has
+  a period of :math:`2^{128}`. See the `PCG author's page`_ for more details
+  about this class of PRNG.
 * MT19937 - The standard Python BitGenerator. Adds a `MT19937.jumped`
   function that returns a new generator with state as-if :math:`2^{128}` draws have
   been made.
@@ -104,6 +104,44 @@ publish them, drawing from a larger set of seeds is good practice.
 If you need to generate a good seed "offline", then ``SeedSequence().entropy``
 or using ``secrets.randbits(128)`` from the standard library are both
 convenient ways.
+
+If you need to run several stochastic simulations in parallel, best practice
+is to construct a random generator instance for each simulation. 
+To make sure that the random streams have distinct initial states, you can use
+the `spawn` method of `~SeedSequence`. For instance, here we construct a list
+of 12 instances:
+
+.. code-block:: python
+
+    from numpy.random import PCG64, SeedSequence
+    
+    # High quality initial entropy
+    entropy = 0x87351080e25cb0fad77a44a3be03b491
+    base_seq = SeedSequence(entropy)
+    child_seqs = base_seq.spawn(12)    # a list of 12 SeedSequences
+    generators = [PCG64(seq) for seq in child_seqs]
+
+.. end_block
+
+
+An alternative way is to use the fact that a `~SeedSequence` can be initialized
+by a tuple of elements. Here we use a base entropy value and an integer
+``worker_id``
+
+.. code-block:: python
+
+    from numpy.random import PCG64, SeedSequence
+
+    # High quality initial entropy
+    entropy = 0x87351080e25cb0fad77a44a3be03b491    
+    sequences = [SeedSequence((entropy, worker_id)) for worker_id in range(12)]
+    generators = [PCG64(seq) for seq in sequences]
+
+.. end_block
+
+Note that the sequences produced by the latter method will be distinct from
+those constructed via `~SeedSequence.spawn`.
+
 
 .. autosummary::
     :toctree: generated/

@@ -94,112 +94,180 @@ Python Boolean scalar.
 .. tip:: The default data type in NumPy is :class:`float_`.
 
 .. autoclass:: numpy.generic
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.number
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 Integer types
 ~~~~~~~~~~~~~
 
 .. autoclass:: numpy.integer
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
+
+.. note::
+
+   The numpy integer types mirror the behavior of C integers, and can therefore
+   be subject to :ref:`overflow-errors`.
 
 Signed integer types
 ++++++++++++++++++++
 
 .. autoclass:: numpy.signedinteger
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.byte
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.short
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.intc
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.int_
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.longlong
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 Unsigned integer types
 ++++++++++++++++++++++
 
 .. autoclass:: numpy.unsignedinteger
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.ubyte
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.ushort
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.uintc
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.uint
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.ulonglong
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 Inexact types
 ~~~~~~~~~~~~~
 
 .. autoclass:: numpy.inexact
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
+
+.. note::
+
+   Inexact scalars are printed using the fewest decimal digits needed to
+   distinguish their value from other values of the same datatype,
+   by judicious rounding. See the ``unique`` parameter of
+   `format_float_positional` and `format_float_scientific`.
+
+   This means that variables with equal binary values but whose datatypes are of
+   different precisions may display differently::
+
+       >>> f16 = np.float16("0.1")
+       >>> f32 = np.float32(f16)
+       >>> f64 = np.float64(f32)
+       >>> f16 == f32 == f64
+       True
+       >>> f16, f32, f64
+       (0.1, 0.099975586, 0.0999755859375)
+
+   Note that none of these floats hold the exact value :math:`\frac{1}{10}`;
+   ``f16`` prints as ``0.1`` because it is as close to that value as possible,
+   whereas the other types do not as they have more precision and therefore have
+   closer values.
+   
+   Conversely, floating-point scalars of different precisions which approximate
+   the same decimal value may compare unequal despite printing identically:
+   
+       >>> f16 = np.float16("0.1")
+       >>> f32 = np.float32("0.1")
+       >>> f64 = np.float64("0.1")
+       >>> f16 == f32 == f64
+       False
+       >>> f16, f32, f64
+       (0.1, 0.1, 0.1)
 
 Floating-point types
 ++++++++++++++++++++
 
 .. autoclass:: numpy.floating
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.half
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.single
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.double
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.longdouble
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 Complex floating-point types
 ++++++++++++++++++++++++++++
 
 .. autoclass:: numpy.complexfloating
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.csingle
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.cdouble
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.clongdouble
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 Other types
 ~~~~~~~~~~~
 
 .. autoclass:: numpy.bool_
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.datetime64
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.timedelta64
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.object_
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. note::
 
@@ -222,16 +290,20 @@ arrays. (In the character codes ``#`` is an integer denoting how many
 elements the data type consists of.)
 
 .. autoclass:: numpy.flexible
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.bytes_
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.str_
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 .. autoclass:: numpy.void
-   :exclude-members:
+   :members: __init__
+   :exclude-members: __init__
 
 
 .. warning::
@@ -245,6 +317,8 @@ elements the data type consists of.)
    H``, and ``u -> I``. These changes make the type character
    convention more consistent with other Python modules such as the
    :mod:`struct` module.
+
+.. _sized-aliases:
 
 Sized aliases
 ~~~~~~~~~~~~~
@@ -278,8 +352,8 @@ are also provided.
                uint32
                uint64
 
-   Alias for the unsigned integer types (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
+   Alias for the unsigned integer types (one of `numpy.ubyte`, `numpy.ushort`,
+   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) with the specified number
    of bits.
 
    Compatible with the C99 ``uint8_t``, ``uint16_t``, ``uint32_t``, and
@@ -297,8 +371,8 @@ are also provided.
 
 .. attribute:: uintp
 
-   Alias for the unsigned integer type (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
+   Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
+   `numpy.uintc`, `numpy.uint` and `np.ulonglong`) that is the same size as a
    pointer.
 
    Compatible with the C ``uintptr_t``.

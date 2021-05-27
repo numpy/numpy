@@ -25,7 +25,7 @@ nep-0019-rng-policy.html>`_ for context on the updated random Numpy number
 routines. The legacy `RandomState` random number routines are still
 available, but limited to a single BitGenerator. See :ref:`new-or-different` 
 for a complete list of improvements and differences from the legacy
-``Randomstate``.
+``RandomState``.
 
 For convenience and backward compatibility, a single `RandomState`
 instance's methods are imported into the numpy.random namespace, see
@@ -84,10 +84,10 @@ different
 .. code-block:: python
 
     try:
-        rg_integers = rg.integers
+        rng_integers = rng.integers
     except AttributeError:
-        rg_integers = rg.randint
-    a = rg_integers(1000)
+        rng_integers = rng.randint
+    a = rng_integers(1000)
 
 Seeds can be passed to any of the BitGenerators. The provided value is mixed
 via `SeedSequence` to spread a possible sequence of seeds across a wider
@@ -97,8 +97,8 @@ is wrapped with a `Generator`.
 .. code-block:: python
 
   from numpy.random import Generator, PCG64
-  rg = Generator(PCG64(12345))
-  rg.standard_normal()
+  rng = Generator(PCG64(12345))
+  rng.standard_normal()
   
 Here we use `default_rng` to create an instance of `Generator` to generate a 
 random float:
@@ -146,10 +146,10 @@ As a convenience NumPy  provides the `default_rng` function to hide these
 details:
   
 >>> from numpy.random import default_rng
->>> rg = default_rng(12345)
->>> print(rg)
+>>> rng = default_rng(12345)
+>>> print(rng)
 Generator(PCG64)
->>> print(rg.random())
+>>> print(rng.random())
 0.22733602246716966
   
 One can also instantiate `Generator` directly with a `BitGenerator` instance.
@@ -158,16 +158,16 @@ To use the default `PCG64` bit generator, one can instantiate it directly and
 pass it to `Generator`:
 
 >>> from numpy.random import Generator, PCG64
->>> rg = Generator(PCG64(12345))
->>> print(rg)
+>>> rng = Generator(PCG64(12345))
+>>> print(rng)
 Generator(PCG64)
 
 Similarly to use the older `MT19937` bit generator (not recommended), one can
 instantiate it directly and pass it to `Generator`:
 
 >>> from numpy.random import Generator, MT19937
->>> rg = Generator(MT19937(12345))
->>> print(rg)
+>>> rng = Generator(MT19937(12345))
+>>> print(rng)
 Generator(MT19937)
 
 What's New or Different

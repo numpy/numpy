@@ -16,6 +16,7 @@ Release Notes
     1.19.2 <release/1.19.2-notes>
     1.19.1 <release/1.19.1-notes>
     1.19.0 <release/1.19.0-notes>
+    1.18.5 <release/1.18.5-notes>
     1.18.4 <release/1.18.4-notes>
     1.18.3 <release/1.18.3-notes>
     1.18.2 <release/1.18.2-notes>

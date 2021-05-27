@@ -166,9 +166,10 @@ Glossary
 
 
    array scalar
-       For uniformity in handling operands, NumPy treats
-       a :doc:`scalar <reference/arrays.scalars>` as an array of zero
-       dimension.
+       An :doc:`array scalar <reference/arrays.scalars>` is an instance of the types/classes float32, float64, 
+       etc.. For uniformity in handling operands, NumPy treats a scalar as 
+       an array of zero dimension. In contrast, a 0-dimensional array is an :doc:`ndarray <reference/arrays.ndarray>` instance 
+       containing precisely one value. 
 
 
    axis
@@ -502,7 +503,7 @@ Glossary
 
        Some NumPy routines always return views, some always return copies, some
        may return one or the other, and for some the choice can be specified.
-       Responsiblity for managing views and copies falls to the programmer.
+       Responsibility for managing views and copies falls to the programmer.
        :func:`numpy.shares_memory` will check whether ``b`` is a view of
        ``a``, but an exact answer isn't always feasible, as the documentation
        page explains.

@@ -96,8 +96,8 @@ NOTES
   arguments must be enclosed in quotes.
 
 - The operand ``+`` is only added for nominal reasons, For example:
-  ``--cpu-basline= "min avx2"`` is equivalent to ``--cpu-basline="min + avx2"``.
-  ``--cpu-basline="min,avx2"`` is equivalent to ``--cpu-basline`="min,+avx2"``
+  ``--cpu-baseline= "min avx2"`` is equivalent to ``--cpu-baseline="min + avx2"``.
+  ``--cpu-baseline="min,avx2"`` is equivalent to ``--cpu-baseline`="min,+avx2"``
 
 - If the CPU feature is not supported by the user platform or
   compiler, it will be skipped rather than raising a fatal error.
