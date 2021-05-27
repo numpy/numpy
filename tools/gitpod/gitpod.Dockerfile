@@ -5,7 +5,9 @@ ARG BASE_CONTAINER="numpy/numpy-dev:latest"
 FROM gitpod/workspace-base:latest as clone
 
 COPY --chown=gitpod . /tmp/numpy_repo
-RUN git clone --depth 1 file:////tmp/numpy_repo /tmp/numpy
+
+# the clone should be deep enough for versioneer to work
+RUN git clone --depth=20 file:////tmp/numpy_repo /tmp/numpy
 
 # -----------------------------------------------------------------------------
 # Using the numpy-dev Docker image as a base
