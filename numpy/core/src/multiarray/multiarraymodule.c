@@ -4233,19 +4233,11 @@ _reload_guard(PyObject *NPY_UNUSED(self)) {
     Py_RETURN_NONE;
 }
 
-static void array_dlpack_deleter(DLManagedTensor *self)
-{
-    PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
-    // This will also free the strides as it's one allocation.
-    PyMem_Free(self->dl_tensor.shape);
-    PyMem_Free(self);
-    Py_XDECREF(array);
-}
-
 
 NPY_NO_EXPORT PyObject *
 from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
-    PyObject *capsule = PyObject_CallMethod(obj, "__dlpack__", NULL);
+    PyObject *capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
+            "__dlpack__", "O", obj);
     if (capsule == NULL) {
         return NULL;
     }
@@ -4260,7 +4252,7 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     }
 
     const int ndim = managed->dl_tensor.ndim;
-    if (ndim >= NPY_MAXDIMS) {
+    if (ndim > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_RuntimeError,
                 "maxdims of DLPack tensor is higher than the supported "
                 "maxdims.");
@@ -4268,8 +4260,11 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
         return NULL;
     }
 
-    if (managed->dl_tensor.device.device_type != kDLCPU &&
-            managed->dl_tensor.device.device_type != kDLCUDAHost) {
+    DLDeviceType device_type = managed->dl_tensor.device.device_type;
+    if (device_type != kDLCPU &&
+            device_type != kDLCUDAHost &&
+            device_type != kDLROCMHost &&
+            device_type != kDLCUDAManaged) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Unsupported device in DLTensor.");
         Py_XDECREF(capsule);
@@ -4340,6 +4335,7 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
 
     for (int i = 0; i < ndim; ++i) {
         shape[i] = managed->dl_tensor.shape[i];
+        // DLPack has elements as stride units, NumPy has bytes.
         strides[i] = managed->dl_tensor.strides[i] * itemsize;
     }
 
@@ -4357,25 +4353,20 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     PyObject *new_capsule = PyCapsule_New(managed,
             NPY_DLPACK_INTERNAL_CAPSULE_NAME, array_dlpack_capsule_deleter);
     if (new_capsule == NULL) {
-        Py_XDECREF(descr);
-        Py_XDECREF(ret);
         Py_XDECREF(capsule);
+        Py_XDECREF(ret);
         return NULL;
     }
 
     if (PyArray_SetBaseObject((PyArrayObject *)ret, new_capsule) < 0) {
-        Py_XDECREF(descr);
-        Py_XDECREF(ret);
-        Py_XDECREF(new_capsule);
         Py_XDECREF(capsule);
+        Py_XDECREF(ret);
         return NULL;
     }
 
     if (PyCapsule_SetName(capsule, NPY_DLPACK_USED_CAPSULE_NAME) < 0) {
-        Py_XDECREF(descr);
-        Py_XDECREF(ret);
-        Py_XDECREF(new_capsule);
         Py_XDECREF(capsule);
+        Py_XDECREF(ret);
         return NULL;
     }
 

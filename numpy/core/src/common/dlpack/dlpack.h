@@ -55,11 +55,19 @@ typedef enum {
   /*! \brief ROCm GPUs for AMD GPUs */
   kDLROCM = 10,
   /*!
+   * \brief Pinned ROCm CPU memory allocated by hipMallocHost
+   */
+  kDLROCMHost = 11,
+  /*!
    * \brief Reserved extension device type,
    * used for quickly test extension device
    * The semantics can differ depending on the implementation.
    */
   kDLExtDev = 12,
+  /*!
+   * \brief CUDA managed/unified memory allocated by cudaMallocManaged
+   */
+  kDLCUDAManaged = 13,
 } DLDeviceType;
 
 /*!
@@ -68,7 +76,10 @@ typedef enum {
 typedef struct {
   /*! \brief The device type used in the device. */
   DLDeviceType device_type;
-  /*! \brief The device index */
+  /*!
+   * \brief The device index.
+   * For vanilla CPU memory, pinned memory, or managed memory, this is set to 0.
+   */
   int device_id;
 } DLDevice;
 

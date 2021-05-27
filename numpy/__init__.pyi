@@ -1413,6 +1413,7 @@ _SupportsBuffer = Union[
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
+_T_contra = TypeVar("_T_contra", contravariant=True)
 _2Tuple = Tuple[_T, _T]
 _CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
@@ -4330,3 +4331,9 @@ class chararray(ndarray[_ShapeType, _CharDType]):
 
 # NOTE: Deprecated
 # class MachAr: ...
+
+class _SupportsDLPack(Protocol[_T_contra]):
+    def __dlpack__(self, *, stream: Optional[int] = ...) -> _PyCapsule: ...
+
+def from_dlpack(__obj: _SupportsDLPack[None]) -> NDArray[Any]: ...
+
