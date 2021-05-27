@@ -29,7 +29,7 @@
  *  1- npyv_{dtype}x3 npyv_divisor_{dtype} ({dtype} divisor);
  *     For computing the divisor parameters (multiplier + shifters + sign of divisor(signed only))
  *
- *  2- npyv_{dtype} npyv_divisor_{dtype} (npyv_{dtype} dividend, npyv_{dtype}x3 divisor_parms);
+ *  2- npyv_{dtype} npyv_divisor_{dtype} (npyv_{dtype} dividend, npyv_{dtype}x3 *divisor_parms);
  *     For performing the final division.
  *
  ** For example:
@@ -38,7 +38,7 @@
  *    npyv_s32x3 divisor = npyv_divisor_s32(x);   // init divisor params
  *    for (; len >= vstep; src += vstep, dst += vstep, len -= vstep) {
  *        npyv_s32 a = npyv_load_s32(*src);       // load s32 vector from memory
- *                 a = npyv_divc_s32(a, divisor); // divide all elements by x
+ *                 a = npyv_divc_s32(a, &divisor); // divide all elements by x
  *        npyv_store_s32(dst, a);                 // store s32 vector into memroy
  *    }
  *
