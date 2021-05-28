@@ -1,18 +1,14 @@
 import sys
 from typing import Any, TYPE_CHECKING
 
+from . import _HAS_TYPING_EXTENSIONS
+
 if sys.version_info >= (3, 8):
     from typing import Literal
-    HAVE_LITERAL = True
-else:
-    try:
-        from typing_extensions import Literal
-    except ImportError:
-        HAVE_LITERAL = False
-    else:
-        HAVE_LITERAL = True
+elif _HAS_TYPING_EXTENSIONS:
+    from typing_extensions import Literal
 
-if TYPE_CHECKING or HAVE_LITERAL:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
     _BoolCodes = Literal["?", "=?", "<?", ">?", "bool", "bool_", "bool8"]
 
     _UInt8Codes = Literal["uint8", "u1", "=u1", "<u1", ">u1"]
@@ -124,52 +120,52 @@ if TYPE_CHECKING or HAVE_LITERAL:
     ]
 
 else:
-    _BoolCodes = Any
+    _BoolCodes = NotImplemented
 
-    _UInt8Codes = Any
-    _UInt16Codes = Any
-    _UInt32Codes = Any
-    _UInt64Codes = Any
+    _UInt8Codes = NotImplemented
+    _UInt16Codes = NotImplemented
+    _UInt32Codes = NotImplemented
+    _UInt64Codes = NotImplemented
 
-    _Int8Codes = Any
-    _Int16Codes = Any
-    _Int32Codes = Any
-    _Int64Codes = Any
+    _Int8Codes = NotImplemented
+    _Int16Codes = NotImplemented
+    _Int32Codes = NotImplemented
+    _Int64Codes = NotImplemented
 
-    _Float16Codes = Any
-    _Float32Codes = Any
-    _Float64Codes = Any
+    _Float16Codes = NotImplemented
+    _Float32Codes = NotImplemented
+    _Float64Codes = NotImplemented
 
-    _Complex64Codes = Any
-    _Complex128Codes = Any
+    _Complex64Codes = NotImplemented
+    _Complex128Codes = NotImplemented
 
-    _ByteCodes = Any
-    _ShortCodes = Any
-    _IntCCodes = Any
-    _IntPCodes = Any
-    _IntCodes = Any
-    _LongLongCodes = Any
+    _ByteCodes = NotImplemented
+    _ShortCodes = NotImplemented
+    _IntCCodes = NotImplemented
+    _IntPCodes = NotImplemented
+    _IntCodes = NotImplemented
+    _LongLongCodes = NotImplemented
 
-    _UByteCodes = Any
-    _UShortCodes = Any
-    _UIntCCodes = Any
-    _UIntPCodes = Any
-    _UIntCodes = Any
-    _ULongLongCodes = Any
+    _UByteCodes = NotImplemented
+    _UShortCodes = NotImplemented
+    _UIntCCodes = NotImplemented
+    _UIntPCodes = NotImplemented
+    _UIntCodes = NotImplemented
+    _ULongLongCodes = NotImplemented
 
-    _HalfCodes = Any
-    _SingleCodes = Any
-    _DoubleCodes = Any
-    _LongDoubleCodes = Any
+    _HalfCodes = NotImplemented
+    _SingleCodes = NotImplemented
+    _DoubleCodes = NotImplemented
+    _LongDoubleCodes = NotImplemented
 
-    _CSingleCodes = Any
-    _CDoubleCodes = Any
-    _CLongDoubleCodes = Any
+    _CSingleCodes = NotImplemented
+    _CDoubleCodes = NotImplemented
+    _CLongDoubleCodes = NotImplemented
 
-    _StrCodes = Any
-    _BytesCodes = Any
-    _VoidCodes = Any
-    _ObjectCodes = Any
+    _StrCodes = NotImplemented
+    _BytesCodes = NotImplemented
+    _VoidCodes = NotImplemented
+    _ObjectCodes = NotImplemented
 
-    _DT64Codes = Any
-    _TD64Codes = Any
+    _DT64Codes = NotImplemented
+    _TD64Codes = NotImplemented

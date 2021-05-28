@@ -164,11 +164,19 @@ API
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    import sys
-    if sys.version_info >= (3, 8):
-        from typing import final
+    # typing_extensions is always available when type-checking
+    from typing_extensions import Literal as L
+    _HAS_TYPING_EXTENSIONS: L[True]
+else:
+    try:
+        import typing_extensions
+    except ImportError:
+        _HAS_TYPING_EXTENSIONS = False
     else:
-        from typing_extensions import final
+        _HAS_TYPING_EXTENSIONS = True
+
+if TYPE_CHECKING:
+    from typing_extensions import final
 else:
     def final(f): return f
 
@@ -204,14 +212,14 @@ class NBitBase:
     .. code-block:: python
 
         >>> from __future__ import annotations
-        >>> from typing import TypeVar, Union, TYPE_CHECKING
+        >>> from typing import TypeVar, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
 
         >>> T1 = TypeVar("T1", bound=npt.NBitBase)
         >>> T2 = TypeVar("T2", bound=npt.NBitBase)
 
-        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[Union[T1, T2]]:
+        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[T1 | T2]:
         ...     return a + b
 
         >>> a = np.float16()
@@ -352,6 +360,7 @@ from ._array_like import (
 )
 from ._generic_alias import (
     NDArray as NDArray,
+    _DType,
     _GenericAlias,
 )
 

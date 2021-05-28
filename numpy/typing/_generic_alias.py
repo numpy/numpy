@@ -199,6 +199,7 @@ else:
 ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 
 if TYPE_CHECKING:
+    _DType = np.dtype[ScalarType]
     NDArray = np.ndarray[Any, np.dtype[ScalarType]]
 elif sys.version_info >= (3, 9):
     _DType = types.GenericAlias(np.dtype, (ScalarType,))
