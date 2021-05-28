@@ -8163,6 +8163,7 @@ class _convert2ma:
             result._hardmask = bool(_extras.get("hard_mask", False))
         return result
 
+
 arange = _convert2ma(
     'arange', 
     params=dict(fill_value=None, hardmask=False),
@@ -8182,8 +8183,16 @@ empty_like = _convert2ma(
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
-frombuffer = _convert2ma('frombuffer')
-fromfunction = _convert2ma('fromfunction')
+frombuffer = _convert2ma(
+    'frombuffer',
+    np_ret='out : ndarray',
+    np_ma_ret='out: MaskedArray',
+)
+fromfunction = _convert2ma(
+   'fromfunction',
+   np_ret='fromfunction : any',
+   np_ma_ret='fromfunction: MaskedArray',
+)
 identity = _convert2ma(
     'identity', 
     params=dict(fill_value=None, hardmask=False),
