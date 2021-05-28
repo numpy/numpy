@@ -2827,12 +2827,14 @@ array_dlpack(PyArrayObject *self,
     npy_intp *strides = PyArray_STRIDES(self);
     npy_intp *shape = PyArray_SHAPE(self);
 
-    for (int i = 0; i < ndim; ++i) {
-        if (strides[i] % itemsize != 0) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "DLPack only supports strides which are a multiple of "
-                    "itemsize.");
-            return NULL;
+    if (!PyArray_IS_C_CONTIGUOUS(self) && PyArray_SIZE(self) != 1) {
+        for (int i = 0; i < ndim; ++i) {
+            if (strides[i] % itemsize != 0) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "DLPack only supports strides which are a multiple of "
+                        "itemsize.");
+                return NULL;
+            }
         }
     }
 
@@ -2906,7 +2908,10 @@ array_dlpack(PyArrayObject *self,
 
     managed->dl_tensor.ndim = ndim;
     managed->dl_tensor.shape = managed_shape;
-    managed->dl_tensor.strides = managed_strides;
+    managed->dl_tensor.strides = NULL;
+    if (PyArray_SIZE(self) != 1 && !PyArray_IS_C_CONTIGUOUS(self)) {
+        managed->dl_tensor.strides = managed_strides;
+    }
     managed->dl_tensor.byte_offset = 0;
     managed->manager_ctx = self;
     managed->deleter = array_dlpack_deleter;

@@ -4347,14 +4347,17 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     for (int i = 0; i < ndim; ++i) {
         shape[i] = managed->dl_tensor.shape[i];
         // DLPack has elements as stride units, NumPy has bytes.
-        strides[i] = managed->dl_tensor.strides[i] * itemsize;
+        if (managed->dl_tensor.strides != NULL)
+        {
+            strides[i] = managed->dl_tensor.strides[i] * itemsize;
+        }
     }
 
     char *data = (char *)managed->dl_tensor.data +
             managed->dl_tensor.byte_offset;
 
     PyObject *ret = PyArray_NewFromDescr(&PyArray_Type, descr, ndim, shape,
-            strides, data, 0, NULL);
+            managed->dl_tensor.strides != NULL ? strides : NULL, data, 0, NULL);
     if (ret == NULL) {
         Py_XDECREF(capsule);
         Py_XDECREF(descr);

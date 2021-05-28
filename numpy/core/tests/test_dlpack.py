@@ -84,6 +84,6 @@ class TestDLPack:
     @pytest.mark.parametrize("ndim", range(33))
     def test_higher_dims(self, ndim):
         shape = (1,) * ndim
-        x = np.zeros(shape, dtype=np.float64, order='C')
+        x = np.zeros(shape, dtype=np.float64)
 
         assert shape == np.from_dlpack(x).shape
