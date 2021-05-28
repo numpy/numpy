@@ -18,6 +18,10 @@ class TestDLPack:
         x = np.arange(5)
         x.__dlpack__(stream=None)
 
+        with pytest.raises(RuntimeError):
+            x.__dlpack__(stream=1)
+
+    def test_strides_not_multiple_of_itemsize(self):
         dt = np.dtype([('int', np.int32), ('char', np.int8)])
         y = np.zeros((5,), dtype=dt)
         z = y['int']
@@ -76,3 +80,10 @@ class TestDLPack:
 
         y5 = np.diagonal(x)
         assert_array_equal(y5, np.from_dlpack(y5))
+
+    @pytest.mark.parametrize("ndim", range(33))
+    def test_higher_dims(self, ndim):
+        shape = (1,) * ndim
+        x = np.zeros(shape, dtype=np.float64, order='C')
+
+        assert shape == np.from_dlpack(x).shape
