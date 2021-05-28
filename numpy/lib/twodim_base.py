@@ -439,7 +439,8 @@ def tril(m, k=0):
     Lower triangle of an array.
 
     Return a copy of an array with elements above the `k`-th diagonal zeroed.
-    For arrays with `ndim` exceeding 2, `tril` will apply to the final two axes.
+    For arrays with `ndim` exceeding 2, `tril` will apply to the final two
+    axes.
 
     Parameters
     ----------
