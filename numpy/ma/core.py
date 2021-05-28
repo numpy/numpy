@@ -8094,7 +8094,7 @@ class _convert2ma:
     """
     __doc__ = None
 
-    def __init__(self, funcname, params=None, np_ret=None, np_ma_ret=None):
+    def __init__(self, funcname, np_ret, np_ma_ret, params=None):
         self._func = getattr(np, funcname)
         self.__doc__ = self.getdoc(np_ret, np_ma_ret)
         self._extras = params or {}
@@ -8121,16 +8121,13 @@ class _convert2ma:
         ----------
         doc : str
             The documentation of the ``np`` method.
-        np_ret : Optional[str]
+        np_ret : str
             The return type string of the ``np`` method that we want to
             replace. (e.g. "out : ndarray")
-        np_ma_ret : Optional[str]
+        np_ma_ret : str
             The return type string of the ``np.ma`` method.
-            (e.g. "out : ndarray or MaskedArray")
+            (e.g. "out : MaskedArray")
         """
-        if np_ret is None:
-            return doc
-
         if np_ret not in doc:
             raise RuntimeError(
                 f"Failed to replace `{np_ret}` with `{np_ma_ret}`. "
@@ -8138,12 +8135,6 @@ class _convert2ma:
                 f"found in the docstring for `np.{self._func.__name__}`. "
                 f"Fix the docstring for `np.{self._func.__name__}` or "
                 "update the expected string for return type."
-            )
-
-        if np_ma_ret is None:
-            raise RuntimeError(
-                "You must also specify the string that will "
-                f"replace `{np_ret}`"
             )
 
         return doc.replace(np_ret, np_ma_ret)
