@@ -2,6 +2,7 @@ from typing import Any, TypeVar, Type, overload, Optional, Generic
 import ctypes as ct
 
 from numpy import ndarray
+from numpy.ctypeslib import c_intp
 
 _CastT = TypeVar("_CastT", bound=ct._CanCastTo)  # Copied from `ctypes.cast`
 _CT = TypeVar("_CT", bound=ct._CData)
@@ -15,18 +16,12 @@ class _ctypes(Generic[_PT]):
     def __new__(cls, array: ndarray[Any, Any], ptr: None = ...) -> _ctypes[None]: ...
     @overload
     def __new__(cls, array: ndarray[Any, Any], ptr: _PT) -> _ctypes[_PT]: ...
-
-    # NOTE: In practice `shape` and `strides` return one of the concrete
-    # platform dependant array-types (`c_int`, `c_long` or `c_longlong`)
-    # corresponding to C's `int_ptr_t`, as determined by `_getintp_ctype`
-    # TODO: Hook this in to the mypy plugin so that a more appropiate
-    # `ctypes._SimpleCData[int]` sub-type can be returned
     @property
     def data(self) -> _PT: ...
     @property
-    def shape(self) -> ct.Array[ct.c_int64]: ...
+    def shape(self) -> ct.Array[c_intp]: ...
     @property
-    def strides(self) -> ct.Array[ct.c_int64]: ...
+    def strides(self) -> ct.Array[c_intp]: ...
     @property
     def _as_parameter_(self) -> ct.c_void_p: ...
 
