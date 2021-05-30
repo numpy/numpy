@@ -87,3 +87,8 @@ class TestDLPack:
         x = np.zeros(shape, dtype=np.float64)
 
         assert shape == np.from_dlpack(x).shape
+
+    def test_dlpack_device(self):
+        x = np.arange(5)
+        assert x.__dlpack_device__() == (1, 0)
+        assert np.from_dlpack(x).__dlpack_device__() == (1, 0)

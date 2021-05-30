@@ -2805,6 +2805,23 @@ static void array_dlpack_capsule_deleter(PyObject *self)
     managed->deleter(managed);
 }
 
+static DLDevice
+array_get_dl_device(PyArrayObject *self) {
+    DLDevice ret;
+    ret.device_type = kDLCPU;
+    ret.device_id = 0;
+    PyObject *base = PyArray_BASE(self);
+    if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
+        DLManagedTensor *managed = PyCapsule_GetPointer(
+                base, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+        if (managed == NULL) {
+            return ret;
+        }
+        return managed->dl_tensor.device;
+    }
+    return ret;
+}
+
 static PyObject *
 array_dlpack(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -2886,8 +2903,11 @@ array_dlpack(PyArrayObject *self,
     }
 
     managed->dl_tensor.data = PyArray_DATA(self);
-    managed->dl_tensor.device.device_type = kDLCPU;
-    managed->dl_tensor.device.device_id = 0;
+    managed->dl_tensor.device = array_get_dl_device(self);
+    if (PyErr_Occurred()) {
+        PyMem_Free(managed);
+        return NULL;
+    }
     managed->dl_tensor.dtype = managed_dtype;
 
 
@@ -2932,18 +2952,11 @@ array_dlpack(PyArrayObject *self,
 static PyObject *
 array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
-    PyObject *base = PyArray_BASE(self);
-    if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
-        DLManagedTensor *managed = PyCapsule_GetPointer(base,
-                NPY_DLPACK_INTERNAL_CAPSULE_NAME);
-        if (managed == NULL) {
-            return NULL;
-        }
-        return Py_BuildValue("ii", managed->dl_tensor.device.device_type,
-                managed->dl_tensor.device.device_id);
+    DLDevice device = array_get_dl_device(self);
+    if (PyErr_Occurred()) {
+        return NULL;
     }
-    return Py_BuildValue("ii", kDLCPU, 0);
->>>>>>> ENH: Add the __dlpack__ and __dlpack_device__ methods to ndarray.
+    return Py_BuildValue("ii", device.device_type, device.device_id);
 }
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
