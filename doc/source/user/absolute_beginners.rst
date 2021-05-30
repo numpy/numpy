@@ -7,7 +7,7 @@ NumPy: the absolute basics for beginners
 
 Welcome to the absolute beginner's guide to NumPy! If you have comments or
 suggestions, please don’t hesitate to `reach out
-<https://mail.python.org/mailman/listinfo/numpy-discussion>`_!
+<https://numpy.org/community/>`_!
 
 
 Welcome to NumPy!
@@ -85,8 +85,7 @@ you would enter. Everything that doesn't have ``>>>`` in front of it
 is **output**, or the results of running your code. This is the style
 you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
 
-For more information, see `Documentation conventions
-<https://numpy.org/devdocs/doc_conventions.html>`_.
+For more information, see :ref:`documentation_conventions`.
 
 What’s the difference between a Python list and a NumPy array?
 --------------------------------------------------------------
