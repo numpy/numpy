@@ -460,11 +460,12 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
      * but that case is handled above).
      */
     else if (ar == 0. && ai == 0.) {
-        /* If br > 0 then result is 0 but contains sign opposite
+        /* 
+         * If br > 0 then result is 0 but contains sign opposite
          * of bi.
          * Else the result is undefined and we return (nan,nan)
          */
-         if ( br > 0) {
+         if (br > 0) {
              if (bi < 0) {
                  return npy_cpack@c@(0., 0.);
              }
@@ -474,7 +475,8 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
              
          }
          else {
-             /* Raising an invalid and returning
+             /* 
+              * Raising an invalid and returning
               * (nan, nan)
               */
               volatile @type@ tmp = NPY_INFINITY@C@;

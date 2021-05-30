@@ -856,12 +856,13 @@ class TestPower:
         assert_complex_equal(np.power(zero, 1-1j), zero)
         #Complex powers will negative real part or 0 (provided imaginary 
         # part is not zero) will generate a NAN and hence a RUNTIME warning
-        with pytest.warns(expected_warning=RuntimeWarning):
+        with pytest.warns(expected_warning=RuntimeWarning) as r:
             assert_complex_equal(np.power(zero, -1+1j), cnan)
             assert_complex_equal(np.power(zero, -2-3j), cnan)
             assert_complex_equal(np.power(zero, -7+0j), cnan)
             assert_complex_equal(np.power(zero, 0+1j), cnan)
             assert_complex_equal(np.power(zero, 0-1j), cnan)
+        assert len(r) == 5
 
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
