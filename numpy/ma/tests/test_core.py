@@ -2854,7 +2854,7 @@ class TestMaskedArrayInPlaceArithmetics:
     def test_inplace_floor_division_scalar_type(self):
         # Test of inplace division
         # Check for TypeError in case of unsupported types
-        unsupported = {np.complex64, np.complex128, np.complex256}
+        unsupported = {np.dtype(t).type for t in np.typecodes["Complex"]}
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
@@ -2876,7 +2876,7 @@ class TestMaskedArrayInPlaceArithmetics:
     def test_inplace_floor_division_array_type(self):
         # Test of inplace division
         # Check for TypeError in case of unsupported types
-        unsupported = {np.complex64, np.complex128, np.complex256}
+        unsupported = {np.dtype(t).type for t in np.typecodes["Complex"]}
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
