@@ -2308,8 +2308,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __floordiv__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...  # type: ignore[misc]
     @overload
-    def __floordiv__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...  # type: ignore[misc]
-    @overload
     def __floordiv__(self: NDArray[timedelta64], other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> NDArray[int64]: ...
     @overload
     def __floordiv__(self: NDArray[timedelta64], other: _ArrayLikeBool_co) -> NoReturn: ...
@@ -2335,8 +2333,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __rfloordiv__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> NDArray[signedinteger[Any]]: ...  # type: ignore[misc]
     @overload
     def __rfloordiv__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...  # type: ignore[misc]
-    @overload
-    def __rfloordiv__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...  # type: ignore[misc]
     @overload
     def __rfloordiv__(self: NDArray[timedelta64], other: _NestedSequence[_SupportsArray[dtype[timedelta64]]]) -> NDArray[int64]: ...
     @overload
@@ -3255,8 +3251,6 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
     __rmul__: _ComplexOp[_NBit1]
     __truediv__: _ComplexOp[_NBit1]
     __rtruediv__: _ComplexOp[_NBit1]
-    __floordiv__: _ComplexOp[_NBit1]
-    __rfloordiv__: _ComplexOp[_NBit1]
     __pow__: _ComplexOp[_NBit1]
     __rpow__: _ComplexOp[_NBit1]
 
