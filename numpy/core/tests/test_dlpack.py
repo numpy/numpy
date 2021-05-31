@@ -92,3 +92,12 @@ class TestDLPack:
         x = np.arange(5)
         assert x.__dlpack_device__() == (1, 0)
         assert np.from_dlpack(x).__dlpack_device__() == (1, 0)
+
+    def dlpack_deleter_exception(self):
+        x = np.arange(5)
+        _ = x.__dlpack__()
+        raise RuntimeError
+    
+    def test_dlpack_destructor_exception(self):
+        with pytest.raises(RuntimeError):
+            self.dlpack_deleter_exception()
