@@ -32,3 +32,11 @@ def test_valid_numpy_version():
         res = re.match(version_pattern + dev_suffix + '$', np.__version__)
 
     assert_(res is not None, np.__version__)
+
+
+def test_short_version():
+    # Check numpy.short_version actually exists
+    if np.version.release:
+        assert_(numpy.__version__ == numpy.version.short_version, "short_version in release")
+    else:
+        assert_(numpy.__version__.split("+")[0] == numpy.version.short_version, "short_version not in release")
