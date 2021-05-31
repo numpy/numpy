@@ -2792,7 +2792,7 @@ array_dlpack_deleter(DLManagedTensor *self)
 }
 
 /* This is exactly as mandated by dlpack */
-static void dlpack_capsule_deleter(PyObject *self){
+static void dlpack_capsule_deleter(PyObject *self) {
     if (PyCapsule_IsValid(self, "used_dltensor")) {
         return;
     }
@@ -2827,7 +2827,7 @@ array_get_dl_device(PyArrayObject *self) {
     ret.device_id = 0;
     PyObject *base = PyArray_BASE(self);
     // The outer if is due to the fact that NumPy arrays are on the CPU
-    // by default.
+    // by default (if not created from DLPack).
     if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
         DLManagedTensor *managed = PyCapsule_GetPointer(
                 base, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
@@ -2837,6 +2837,20 @@ array_get_dl_device(PyArrayObject *self) {
         return managed->dl_tensor.device;
     }
     return ret;
+}
+
+static char *
+array_get_dl_data(PyArrayObject *self) {
+    PyObject *base = PyArray_BASE(self);
+    if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
+        DLManagedTensor *managed = PyCapsule_GetPointer(
+                base, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+        if (managed == NULL) {
+            return NULL;
+        }
+        return managed->dl_tensor.data;
+    }
+    return PyArray_DATA(self);
 }
 
 static PyObject *
@@ -2913,18 +2927,23 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
+    DLDevice device = array_get_dl_device(self);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    char *data = array_get_dl_data(self);
+    if (data == NULL) {
+        return NULL;
+    }
+
     DLManagedTensor *managed = PyMem_Malloc(sizeof(DLManagedTensor));
     if (managed == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
 
-    managed->dl_tensor.data = PyArray_DATA(self);
-    managed->dl_tensor.device = array_get_dl_device(self);
-    if (PyErr_Occurred()) {
-        PyMem_Free(managed);
-        return NULL;
-    }
+    managed->dl_tensor.data = data;
+    managed->dl_tensor.device = device;
     managed->dl_tensor.dtype = managed_dtype;
 
 
@@ -2949,7 +2968,7 @@ array_dlpack(PyArrayObject *self,
     if (PyArray_SIZE(self) != 1 && !PyArray_IS_C_CONTIGUOUS(self)) {
         managed->dl_tensor.strides = managed_strides;
     }
-    managed->dl_tensor.byte_offset = 0;
+    managed->dl_tensor.byte_offset = (char *)PyArray_DATA(self) - data;
     managed->manager_ctx = self;
     managed->deleter = array_dlpack_deleter;
 

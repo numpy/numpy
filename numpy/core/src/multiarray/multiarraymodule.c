@@ -4384,7 +4384,7 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
         Py_XDECREF(ret);
         return NULL;
     }
-
+    
     Py_XDECREF(capsule);
     return ret;
 }
