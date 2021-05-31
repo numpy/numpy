@@ -144,3 +144,15 @@ reveal_type(round(f8, 3))  # E: {float64}
 if sys.version_info >= (3, 9):
     reveal_type(f8.__ceil__())  # E: int
     reveal_type(f8.__floor__())  # E: int
+
+reveal_type(i8.astype(float))  # E: Any
+reveal_type(i8.astype(np.float64))  # E: {float64}
+
+reveal_type(i8.view())  # E: {int64}
+reveal_type(i8.view(np.float64))  # E: {float64}
+reveal_type(i8.view(float))  # E: Any
+reveal_type(i8.view(np.float64, np.ndarray))  # E: {float64}
+
+reveal_type(i8.getfield(float))  # E: Any
+reveal_type(i8.getfield(np.float64))  # E: {float64}
+reveal_type(i8.getfield(np.float64, 8))  # E: {float64}
