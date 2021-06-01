@@ -1,113 +1,52 @@
-import sys
-import warnings
-from typing import Any, List, ClassVar, Tuple, Set
-
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
+from typing import List
 
 from unittest import (
     TestCase as TestCase,
 )
 
-from unittest.case import (
+from numpy.testing._private.utils import (
+    assert_equal as assert_equal,
+    assert_almost_equal as assert_almost_equal,
+    assert_approx_equal as assert_approx_equal,
+    assert_array_equal as assert_array_equal,
+    assert_array_less as assert_array_less,
+    assert_string_equal as assert_string_equal,
+    assert_array_almost_equal as assert_array_almost_equal,
+    assert_raises as assert_raises,
+    build_err_msg as build_err_msg,
+    decorate_methods as decorate_methods,
+    jiffies as jiffies,
+    memusage as memusage,
+    print_assert_equal as print_assert_equal,
+    raises as raises,
+    rundocs as rundocs,
+    runstring as runstring,
+    verbose as verbose,
+    measure as measure,
+    assert_ as assert_,
+    assert_array_almost_equal_nulp as assert_array_almost_equal_nulp,
+    assert_raises_regex as assert_raises_regex,
+    assert_array_max_ulp as assert_array_max_ulp,
+    assert_warns as assert_warns,
+    assert_no_warnings as assert_no_warnings,
+    assert_allclose as assert_allclose,
+    IgnoreException as IgnoreException,
+    clear_and_catch_warnings as clear_and_catch_warnings,
     SkipTest as SkipTest,
+    KnownFailureException as KnownFailureException,
+    temppath as temppath,
+    tempdir as tempdir,
+    IS_PYPY as IS_PYPY,
+    HAS_REFCOUNT as HAS_REFCOUNT,
+    suppress_warnings as suppress_warnings,
+    assert_array_compare as assert_array_compare,
+    _assert_valid_refcount as _assert_valid_refcount,
+    _gen_alignment_data as _gen_alignment_data,
+    assert_no_gc_cycles as assert_no_gc_cycles,
+    break_cycles as break_cycles,
+    HAS_LAPACK64 as HAS_LAPACK64,
 )
 
 __all__: List[str]
 
 def run_module_suite(file_to_run=..., argv=...): ...
-
-class KnownFailureException(Exception): ...
-class IgnoreException(Exception): ...
-
-class clear_and_catch_warnings(warnings.catch_warnings):
-    class_modules: ClassVar[Tuple[str, ...]]
-    modules: Set[str]
-    def __init__(self, record=..., modules=...): ...
-    def __enter__(self): ...
-    def __exit__(self, *exc_info): ...
-
-class suppress_warnings:
-    log: List[warnings.WarningMessage]
-    def __init__(self, forwarding_rule=...): ...
-    def filter(self, category=..., message=..., module=...): ...
-    def record(self, category=..., message=..., module=...): ...
-    def __enter__(self): ...
-    def __exit__(self, *exc_info): ...
-    def __call__(self, func): ...
-
-verbose: int
-IS_PYPY: Final[bool]
-HAS_REFCOUNT: Final[bool]
-HAS_LAPACK64: Final[bool]
-
-def assert_(val, msg=...): ...
-def memusage(processName=..., instance=...): ...
-def jiffies(_proc_pid_stat=..., _load_time=...): ...
-def build_err_msg(
-    arrays,
-    err_msg,
-    header=...,
-    verbose=...,
-    names=...,
-    precision=...,
-): ...
-def assert_equal(actual, desired, err_msg=..., verbose=...): ...
-def print_assert_equal(test_string, actual, desired): ...
-def assert_almost_equal(
-    actual,
-    desired,
-    decimal=...,
-    err_msg=...,
-    verbose=...,
-): ...
-def assert_approx_equal(
-    actual,
-    desired,
-    significant=...,
-    err_msg=...,
-    verbose=...,
-): ...
-def assert_array_compare(
-    comparison,
-    x,
-    y,
-    err_msg=...,
-    verbose=...,
-    header=...,
-    precision=...,
-    equal_nan=...,
-    equal_inf=...,
-): ...
-def assert_array_equal(x, y, err_msg=..., verbose=...): ...
-def assert_array_almost_equal(x, y, decimal=..., err_msg=..., verbose=...): ...
-def assert_array_less(x, y, err_msg=..., verbose=...): ...
-def runstring(astr, dict): ...
-def assert_string_equal(actual, desired): ...
-def rundocs(filename=..., raise_on_error=...): ...
-def raises(*args): ...
-def assert_raises(*args, **kwargs): ...
-def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs): ...
-def decorate_methods(cls, decorator, testmatch=...): ...
-def measure(code_str, times=..., label=...): ...
-def assert_allclose(
-    actual,
-    desired,
-    rtol=...,
-    atol=...,
-    equal_nan=...,
-    err_msg=...,
-    verbose=...,
-): ...
-def assert_array_almost_equal_nulp(x, y, nulp=...): ...
-def assert_array_max_ulp(a, b, maxulp=..., dtype=...): ...
-def assert_warns(warning_class, *args, **kwargs): ...
-def assert_no_warnings(*args, **kwargs): ...
-def tempdir(*args, **kwargs): ...
-def temppath(*args, **kwargs): ...
-def assert_no_gc_cycles(*args, **kwargs): ...
-def break_cycles(): ...
-def _assert_valid_refcount(op): ...
-def _gen_alignment_data(dtype=..., type=..., max_size=...): ...
