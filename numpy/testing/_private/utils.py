@@ -35,8 +35,7 @@ __all__ = [
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
-        '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
-        'break_cycles', 'HAS_LAPACK64'
+        'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64'
         ]
 
 
@@ -2518,4 +2517,3 @@ def _no_tracing(func):
             finally:
                 sys.settrace(original_trace)
         return wrapper
-

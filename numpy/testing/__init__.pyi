@@ -40,8 +40,6 @@ from numpy.testing._private.utils import (
     HAS_REFCOUNT as HAS_REFCOUNT,
     suppress_warnings as suppress_warnings,
     assert_array_compare as assert_array_compare,
-    _assert_valid_refcount as _assert_valid_refcount,
-    _gen_alignment_data as _gen_alignment_data,
     assert_no_gc_cycles as assert_no_gc_cycles,
     break_cycles as break_cycles,
     HAS_LAPACK64 as HAS_LAPACK64,
