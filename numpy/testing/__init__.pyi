@@ -47,4 +47,7 @@ from numpy.testing._private.utils import (
 
 __all__: List[str]
 
-def run_module_suite(file_to_run=..., argv=...): ...
+def run_module_suite(
+    file_to_run: None | str = ...,
+    argv: None | List[str] = ...,
+) -> None: ...
