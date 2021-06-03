@@ -926,7 +926,7 @@ class LstsqCases(LinalgSquareTestCase,
             (abs(np.asarray(a @ x - b)) ** 2).sum(axis=0),
             # lapack does not compute this for us, so we do not return it
             np.nan
-        )
+        ).view(type(x))
         assert_almost_equal(residuals, expect_resids)
         assert_equal(residuals.shape, expect_resids.shape)
         assert_(np.issubdtype(residuals.dtype, np.floating))
