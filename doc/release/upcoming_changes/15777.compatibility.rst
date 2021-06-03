@@ -1,0 +1,11 @@
+Changes to the ``residuals`` return value of `numpy.linalg.lstsq`
+-----------------------------------------------------------------
+
+This no longer returns a ``(0,)``-shaped array if no residuals are
+computed, instead returning `NaN`.
+
+For well-determined problems with ``rank == N == M``, this is now
+an array of zeros.
+
+When ``b`` is a 1d array, this is now a 0d array rather than a
+``(1,)``-shaped array.
