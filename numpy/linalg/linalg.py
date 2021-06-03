@@ -2187,7 +2187,7 @@ def lstsq(a, b, rcond="warn"):
     ----------
     a : (..., M, N) array_like
         "Coefficient" matrix.
-    b : {(M,), (..., M, K)} array_likey
+    b : {(M,), (..., M, K)} array_like
         Ordinate or "dependent variable" values. If `b` is two-dimensional,
         the least-squares solution is calculated for each of the `K` columns
         of `b`.
@@ -2212,7 +2212,8 @@ def lstsq(a, b, rcond="warn"):
     residuals : {(), (..., K,)} ndarray
         Sums of squared residuals: Squared Euclidean 2-norm for each column in
         ``b - a @ x``.
-        If the rank of `a` is < N (which is always true if M < N), this is filled with NaN.
+        If the rank of `a` is < N (which is always true if M < N), this is
+        filled with NaN.
         If `b` is 1-dimensional, this is a 0d array.
         Otherwise the shape is (K,).
 
