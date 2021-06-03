@@ -1318,8 +1318,9 @@ def searchsorted(a, v, side='left', sorter=None):
 
     Returns
     -------
-    indices : array of ints
-        Array of insertion points with the same shape as `v`.
+    indices : int or array of ints
+        Array of insertion points with the same shape as `v`,
+        or an integer if `v` is a scalar.
 
     See Also
     --------
@@ -2088,9 +2089,9 @@ def clip(a, a_min, a_max, out=None, **kwargs):
 
     Notes
     -----
-    When `a_min` is greater than `a_max`, `clip` returns an 
-    array in which all values are equal to `a_max`, 
-    as shown in the second example.  
+    When `a_min` is greater than `a_max`, `clip` returns an
+    array in which all values are equal to `a_max`,
+    as shown in the second example.
 
     Examples
     --------
@@ -2525,7 +2526,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
     >>> b = np.array([1, 2e-9, 3e-9] * 1000000)
     >>> b.cumsum()[-1]
     1000000.0050045159
-    >>> b.sum()                    
+    >>> b.sum()
     1000000.0050000029
 
     """
