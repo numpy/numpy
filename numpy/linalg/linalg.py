@@ -2268,7 +2268,7 @@ def lstsq(a, b, rcond="warn"):
     is_1d = b.ndim == 1
     if is_1d:
         b = b[:, newaxis]
-    _assert_2d(a, b)
+    _assert_stacked_2d(a, b)
     m, n = a.shape[-2:]
     m2, n_rhs = b.shape[-2:]
     if m != m2:
@@ -2317,8 +2317,10 @@ def lstsq(a, b, rcond="warn"):
         # we probably should squeeze resids too, but we can't
         # without breaking compatibility.
 
+    # Since matrices are stacked all the ranks will be same.
+    rank_val = rank[0] if a.ndim > 2 else rank
     # as documented
-    if rank != n or m <= n:
+    if rank_val != n or m <= n:
         resids = array([], result_real_t)
 
     # coerce output arrays
