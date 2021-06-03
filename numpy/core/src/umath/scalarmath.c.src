@@ -16,6 +16,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "npy_import.h"
 #include "npy_pycompat.h"
 
 #include "numpy/halffloat.h"
@@ -284,7 +285,11 @@ static void
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
     @type@ mod;
 
-    *out = npy_divmod@c@(a, b, &mod);
+    if (!b) {
+        *out = a / b;
+    } else {
+        *out = npy_divmod@c@(a, b, &mod);
+    }
 }
 
 
@@ -317,7 +322,11 @@ static void
 half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out) {
     npy_half mod;
 
-    *out = npy_half_divmod(a, b, &mod);
+    if (!b) {
+        *out = a / b;
+    } else {
+        *out = npy_half_divmod(a, b, &mod);
+    }
 }
 
 
@@ -728,6 +737,9 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
 {
     int ret;
     ret = _@name@_convert_to_ctype(a, arg1);
+    if (ret == -2) {
+        ret = -3;
+    }
     if (ret < 0) {
         return ret;
     }
@@ -793,15 +805,8 @@ static PyObject *
 {
     PyObject *ret;
     @type@ arg1, arg2;
-    /*
-     * NOTE: In gcc >= 4.1, the compiler will reorder floating point
-     *       operations and floating point error state checks. In
-     *       particular, the arithmetic operations were being reordered
-     *       so that the errors weren't caught.  Declaring this output
-     *       variable volatile was the minimal fix for the issue.
-     *       (Ticket #1671)
-     */
-    volatile @otype@ out;
+    @otype@ out;
+
 #if @twoout@
     @otype@ out2;
     PyObject *obj;
@@ -931,95 +936,13 @@ static PyObject *
  *          Double, LongDouble,
  *          CFloat, CDouble, CLongDouble#
  *
- * #isint = (1,0)*5,0*7#
+ * #isint = 1*10,0*7#
+ * #isuint = (0,1)*5,0*7#
  * #cmplx = 0*14,1*3#
  * #iszero = _IS_ZERO*10, npy_half_iszero, _IS_ZERO*6#
  * #zero = 0*10, NPY_HALF_ZERO, 0*6#
  * #one = 1*10, NPY_HALF_ONE, 1*6#
  */
-
-#if @cmplx@
-static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
-{
-    PyObject *ret;
-    @type@ arg1, arg2;
-    int retstatus;
-    int first;
-    @type@ out = {@zero@, @zero@};
-
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
-
-    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
-        case 0:
-            break;
-        case -1:
-            /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
-        case -2:
-            /* use default handling */
-            if (PyErr_Occurred()) {
-                return NULL;
-            }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
-        case -3:
-        default:
-            /*
-             * special case for longdouble and clongdouble
-             * because they have a recursive getitem in their dtype
-             */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-    }
-
-    if (modulo != Py_None) {
-        /* modular exponentiation is not implemented (gh-8804) */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-
-    npy_clear_floatstatus_barrier((char*)&out);
-
-    /*
-     * here we do the actual calculation with arg1 and arg2
-     * as a function call.
-     */
-    if (@iszero@(arg2.real) && @iszero@(arg2.imag)) {
-        out.real = @one@;
-        out.imag = @zero@;
-    }
-    else {
-        @name@_ctype_power(arg1, arg2, &out);
-    }
-
-    /* Check status flag.  If it is set, then look up what to do */
-    retstatus = npy_get_floatstatus_barrier((char*)&out);
-    if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
-            return NULL;
-        }
-        first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
-    }
-
-    ret = PyArrayScalar_New(@Name@);
-    if (ret == NULL) {
-        return NULL;
-    }
-    PyArrayScalar_ASSIGN(ret, @Name@, out);
-
-    return ret;
-}
-
-#elif @isint@
 
 static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *modulo)
@@ -1057,85 +980,25 @@ static PyObject *
         return Py_NotImplemented;
     }
 
+#if !@isint@
     npy_clear_floatstatus_barrier((char*)&out);
-
+#endif
     /*
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
      */
+#if @isint@ && !@isuint@
     if (arg2 < 0) {
         PyErr_SetString(PyExc_ValueError,
                 "Integers to negative integer powers are not allowed.");
         return NULL;
     }
+#endif
     @name@_ctype_power(arg1, arg2, &out);
 
-    ret = PyArrayScalar_New(@Name@);
-    if (ret == NULL) {
-        return NULL;
-    }
-    PyArrayScalar_ASSIGN(ret, @Name@, out);
-
-    return ret;
-}
-
-#else
-
-static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
-{
-    PyObject *ret;
-    @type@ arg1, arg2;
-    int retstatus;
-    int first;
-
-    @type@ out = @zero@;
-
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
-
-    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
-        case 0:
-            break;
-        case -1:
-            /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
-        case -2:
-            /* use default handling */
-            if (PyErr_Occurred()) {
-                return NULL;
-            }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
-        case -3:
-        default:
-            /*
-             * special case for longdouble and clongdouble
-             * because they have a recursive getitem in their dtype
-             */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-    }
-
-    if (modulo != Py_None) {
-        /* modular exponentiation is not implemented (gh-8804) */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-
-    npy_clear_floatstatus_barrier((char*)&out);
-
-    /*
-     * here we do the actual calculation with arg1 and arg2
-     * as a function call.
-     */
-    if (@iszero@(arg2)) {
-        out = @one@;
-    }
-    else {
-        @name@_ctype_power(arg1, arg2, &out);
-    }
-
+#if !@isint@
     /* Check status flag.  If it is set, then look up what to do */
-    retstatus = npy_get_floatstatus_barrier((char*)&out);
+    int retstatus = npy_get_floatstatus_barrier((char*)&out);
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
@@ -1144,13 +1007,14 @@ static PyObject *
                                 &errobj) < 0) {
             return NULL;
         }
-        first = 1;
+        int first = 1;
         if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
             Py_XDECREF(errobj);
             return NULL;
         }
         Py_XDECREF(errobj);
     }
+#endif
 
     ret = PyArrayScalar_New(@Name@);
     if (ret == NULL) {
@@ -1161,7 +1025,6 @@ static PyObject *
     return ret;
 }
 
-#endif
 
 /**end repeat**/
 #undef _IS_ZERO
@@ -1169,7 +1032,7 @@ static PyObject *
 
 /**begin repeat
  *
- * #name = cfloat, cdouble, clongdouble#
+ * #name = cfloat, cdouble#
  *
  */
 
@@ -1182,6 +1045,60 @@ static PyObject *
 #define @name@_@oper@ NULL
 
 /**end repeat1**/
+
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #oper = divmod, remainder#
+ *
+ */
+
+/* 
+Complex numbers do not support remainder operations. Unfortunately, 
+the type inference for long doubles is complicated, and if a remainder 
+operation is not defined - if the relevant field is left NULL - then 
+operations between long doubles and objects lead to an infinite recursion 
+instead of a TypeError. This should ensure that once everything gets
+converted to complex long doubles you correctly get a reasonably
+informative TypeError. This fixes the last part of bug gh-18548.
+*/
+
+static PyObject *
+clongdouble_@oper@(PyObject *a, PyObject *b)
+{
+    npy_clongdouble arg1, arg2;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, clongdouble_@oper@);
+
+    switch(_clongdouble_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+        case 0:
+            break;
+        case -1:
+            /* one of them can't be cast safely must be mixed-types*/
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        case -2:
+            /* use default handling */
+            if (PyErr_Occurred()) {
+                return NULL;
+            }
+            return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+        case -3:
+            /*
+             * special case for longdouble and clongdouble
+             * because they have a recursive getitem in their dtype
+             */
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+    }
+
+    /*
+     * here we do the actual calculation with arg1 and arg2
+     * as a function call.
+     */
+    PyErr_SetString(PyExc_TypeError, "complex long doubles do not support remainder");
+    return NULL;
+}
 
 /**end repeat**/
 
@@ -1339,13 +1256,9 @@ static int
 emit_complexwarning(void)
 {
     static PyObject *cls = NULL;
+    npy_cache_import("numpy.core", "ComplexWarning", &cls);
     if (cls == NULL) {
-        PyObject *mod;
-        mod = PyImport_ImportModule("numpy.core");
-        assert(mod != NULL);
-        cls = PyObject_GetAttrString(mod, "ComplexWarning");
-        assert(cls != NULL);
-        Py_DECREF(mod);
+        return -1;
     }
     return PyErr_WarnEx(cls,
             "Casting complex values to real discards the imaginary part", 1);

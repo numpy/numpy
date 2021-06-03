@@ -7,6 +7,9 @@ NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 NPY_NO_EXPORT int
+PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
+
+NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
 
 NPY_NO_EXPORT int
@@ -38,6 +41,9 @@ PyArray_TypestrConvert(int itemsize, int gentype);
 
 NPY_NO_EXPORT PyObject *
 PyArray_IntTupleFromIntp(int len, npy_intp const *vals);
+
+NPY_NO_EXPORT int
+PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val);
 
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);

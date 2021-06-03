@@ -29,6 +29,9 @@ Meta-NEPs (NEPs about NEPs or Processes)
 
    nep-template
 
+
+{% if has_provisional %}
+
 Provisional NEPs (provisionally accepted; interface may change)
 ---------------------------------------------------------------
 
@@ -38,6 +41,8 @@ Provisional NEPs (provisionally accepted; interface may change)
 {% for nep, tags in neps.items() if tags['Status'] == 'Provisional' %}
    {{ tags['Title'] }} <{{ tags['Filename'] }}>
 {% endfor %}
+
+{% endif %}
 
 
 Accepted NEPs (implementation in progress)

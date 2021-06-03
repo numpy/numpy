@@ -1,10 +1,10 @@
+.. currentmodule:: numpy
+
 .. _arrays.ndarray:
 
 ******************************************
 The N-dimensional array (:class:`ndarray`)
 ******************************************
-
-.. currentmodule:: numpy
 
 An :class:`ndarray` is a (usually fixed-size) multidimensional
 container of items of the same type and size. The number of dimensions
@@ -133,6 +133,11 @@ Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 single-segment, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
 
+.. note::
+
+    `Contiguous arrays` and `single-segment arrays` are synonymous
+    and are used interchangeably throughout the documentation.
+
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
@@ -158,10 +163,12 @@ base offset itself is a multiple of `self.itemsize`. Understanding
 
 .. note::
 
-    Points (1) and (2) are not yet applied by default. Beginning with
-    NumPy 1.8.0, they are applied consistently only if the environment
-    variable ``NPY_RELAXED_STRIDES_CHECKING=1`` was defined when NumPy
-    was built. Eventually this will become the default.
+    Points (1) and (2) can currently be disabled by the compile time
+    environmental variable ``NPY_RELAXED_STRIDES_CHECKING=0``,
+    which was the default before NumPy 1.10.
+    No users should have to do this. ``NPY_RELAXED_STRIDES_DEBUG=1``
+    can be used to help find errors when incorrectly relying on the strides
+    in C-extension code (see below warning).
 
     You can check whether this option was enabled when your NumPy was
     built by looking at the value of ``np.ones((10,1),
@@ -252,10 +259,10 @@ Array interface
 
 .. seealso:: :ref:`arrays.interface`.
 
-==========================  ===================================
-:obj:`__array_interface__`  Python-side of the array interface
-:obj:`__array_struct__`     C-side of the array interface
-==========================  ===================================
+==================================  ===================================
+:obj:`~object.__array_interface__`  Python-side of the array interface
+:obj:`~object.__array_struct__`     C-side of the array interface
+==================================  ===================================
 
 :mod:`ctypes` foreign function interface
 ----------------------------------------
@@ -462,7 +469,7 @@ Comparison operators:
    ndarray.__eq__
    ndarray.__ne__
 
-Truth value of an array (:func:`bool()`):
+Truth value of an array (:class:`bool() <bool>`):
 
 .. autosummary::
    :toctree: generated/
@@ -560,10 +567,8 @@ Matrix Multiplication:
 .. note::
 
    Matrix operators ``@`` and ``@=`` were introduced in Python 3.5
-   following PEP465. NumPy 1.10.0 has a preliminary implementation of ``@``
-   for testing purposes. Further documentation can be found in the
-   :func:`matmul` documentation.
-
+   following :pep:`465`, and the ``@`` operator has been introduced in NumPy
+   1.10.0. Further information can be found in the :func:`matmul` documentation.
 
 Special methods
 ===============
@@ -597,9 +602,9 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__setitem__
    ndarray.__contains__
 
-Conversion; the operations :func:`int()`, :func:`float()` and
-:func:`complex()`.
-. They work only on arrays that have one element in them
+Conversion; the operations :class:`int() <int>`,
+:class:`float() <float>` and :class:`complex() <complex>`.
+They work only on arrays that have one element in them
 and return the appropriate scalar.
 
 .. autosummary::

@@ -406,8 +406,9 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             Py_INCREF(x[0]);
             return x[0];
         }
-        else if (PyString_Check(x[0])) {
-            const char* s = PyString_AS_STRING(x[0]);
+        // TODO: allow construction from unicode strings
+        else if (PyBytes_Check(x[0])) {
+            const char* s = PyBytes_AS_STRING(x[0]);
             rational x;
             if (scan_rational(&s,&x)) {
                 const char* p;
@@ -429,7 +430,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         PyObject* y;
         int eq;
         x[i] = PyTuple_GET_ITEM(args, i);
-        n[i] = PyInt_AsLong(x[i]);
+        n[i] = PyLong_AsLong(x[i]);
         if (error_converting(n[i])) {
             if (PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Format(PyExc_TypeError,
@@ -440,7 +441,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             return 0;
         }
         /* Check that we had an exact integer */
-        y = PyInt_FromLong(n[i]);
+        y = PyLong_FromLong(n[i]);
         if (!y) {
             return 0;
         }
@@ -477,7 +478,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         else { \
             PyObject* y_; \
             int eq_; \
-            long n_ = PyInt_AsLong(object); \
+            long n_ = PyLong_AsLong(object); \
             if (error_converting(n_)) { \
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) { \
                     PyErr_Clear(); \
@@ -486,7 +487,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
                 } \
                 return 0; \
             } \
-            y_ = PyInt_FromLong(n_); \
+            y_ = PyLong_FromLong(n_); \
             if (!y_) { \
                 return 0; \
             } \
@@ -526,11 +527,11 @@ static PyObject*
 pyrational_repr(PyObject* self) {
     rational x = ((PyRational*)self)->r;
     if (d(x)!=1) {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "rational(%ld,%ld)",(long)x.n,(long)d(x));
     }
     else {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "rational(%ld)",(long)x.n);
     }
 }
@@ -539,11 +540,11 @@ static PyObject*
 pyrational_str(PyObject* self) {
     rational x = ((PyRational*)self)->r;
     if (d(x)!=1) {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "%ld/%ld",(long)x.n,(long)d(x));
     }
     else {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "%ld",(long)x.n);
     }
 }
@@ -590,7 +591,7 @@ RATIONAL_BINOP_2(floor_divide,
     }
 RATIONAL_UNOP(negative,rational,rational_negative(x),PyRational_FromRational)
 RATIONAL_UNOP(absolute,rational,rational_abs(x),PyRational_FromRational)
-RATIONAL_UNOP(int,long,rational_int(x),PyInt_FromLong)
+RATIONAL_UNOP(int,long,rational_int(x),PyLong_FromLong)
 RATIONAL_UNOP(float,double,rational_double(x),PyFloat_FromDouble)
 
 static PyObject*
@@ -646,12 +647,12 @@ static PyNumberMethods pyrational_as_number = {
 
 static PyObject*
 pyrational_n(PyObject* self, void* closure) {
-    return PyInt_FromLong(((PyRational*)self)->r.n);
+    return PyLong_FromLong(((PyRational*)self)->r.n);
 }
 
 static PyObject*
 pyrational_d(PyObject* self, void* closure) {
-    return PyInt_FromLong(d(((PyRational*)self)->r));
+    return PyLong_FromLong(d(((PyRational*)self)->r));
 }
 
 static PyGetSetDef pyrational_getset[] = {
@@ -662,7 +663,7 @@ static PyGetSetDef pyrational_getset[] = {
 
 static PyTypeObject PyRational_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "rational",                               /* tp_name */
+    "numpy.core._rational_tests.rational",  /* tp_name */
     sizeof(PyRational),                       /* tp_basicsize */
     0,                                        /* tp_itemsize */
     0,                                        /* tp_dealloc */
@@ -726,17 +727,17 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
         r = ((PyRational*)item)->r;
     }
     else {
-        long n = PyInt_AsLong(item);
+        long long n = PyLong_AsLongLong(item);
         PyObject* y;
         int eq;
         if (error_converting(n)) {
             return -1;
         }
-        y = PyInt_FromLong(n);
+        y = PyLong_FromLongLong(n);
         if (!y) {
             return -1;
         }
-        eq = PyObject_RichCompareBool(item,y,Py_EQ);
+        eq = PyObject_RichCompareBool(item, y, Py_EQ);
         Py_DECREF(y);
         if (eq<0) {
             return -1;
@@ -748,7 +749,7 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
         }
         r = make_rational_int(n);
     }
-    memcpy(data,&r,sizeof(rational));
+    memcpy(data, &r, sizeof(rational));
     return 0;
 }
 
@@ -1126,7 +1127,7 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     if (PyErr_Occurred()) {
         goto fail;
     }
-    numpy_str = PyUString_FromString("numpy");
+    numpy_str = PyUnicode_FromString("numpy");
     if (!numpy_str) {
         goto fail;
     }
@@ -1158,7 +1159,7 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     npyrational_arrfuncs.fill = npyrational_fill;
     npyrational_arrfuncs.fillwithscalar = npyrational_fillwithscalar;
     /* Left undefined: scanfunc, fromstr, sort, argsort */
-    Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
+    Py_SET_TYPE(&npyrational_descr, &PyArrayDescr_Type);
     npy_rational = PyArray_RegisterDataType(&npyrational_descr);
     if (npy_rational<0) {
         goto fail;

@@ -30,7 +30,9 @@ multiarray_scalar_bool_values = {
 multiarray_types_api = {
     'PyBigArray_Type':                  (1,),
     'PyArray_Type':                     (2,),
-    'PyArrayDescr_Type':                (3,),
+    # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
+    # the following also defines PyArrayDescr_TypeFull (Full appended)
+    'PyArrayDescr_Type':                (3, "PyArray_DTypeMeta"),
     'PyArrayFlags_Type':                (4,),
     'PyArrayIter_Type':                 (5,),
     'PyArrayMultiIter_Type':            (6,),

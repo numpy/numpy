@@ -3664,7 +3664,7 @@ PyObject *PyInit__umath_linalg(void)
         return NULL;
     }
 
-    version = PyString_FromString(umath_linalg_version_string);
+    version = PyUnicode_FromString(umath_linalg_version_string);
     if (version == NULL) {
         return NULL;
     }

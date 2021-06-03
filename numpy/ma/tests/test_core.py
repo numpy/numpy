@@ -34,8 +34,8 @@ from numpy.ma.core import (
     MAError, MaskError, MaskType, MaskedArray, abs, absolute, add, all,
     allclose, allequal, alltrue, angle, anom, arange, arccos, arccosh, arctan2,
     arcsin, arctan, argsort, array, asarray, choose, concatenate,
-    conjugate, cos, cosh, count, default_fill_value, diag, divide, empty,
-    empty_like, equal, exp, flatten_mask, filled, fix_invalid,
+    conjugate, cos, cosh, count, default_fill_value, diag, divide, doc_note,
+    empty, empty_like, equal, exp, flatten_mask, filled, fix_invalid,
     flatten_structured_array, fromflex, getmask, getmaskarray, greater,
     greater_equal, identity, inner, isMaskedArray, less, less_equal, log,
     log10, make_mask, make_mask_descr, mask_or, masked, masked_array,
@@ -215,6 +215,17 @@ class TestMaskedArray:
         y = array([1, 2, 3], mask=x._mask, copy=True)
         assert_(not np.may_share_memory(x.mask, y.mask))
 
+    def test_masked_singleton_array_creation_warns(self):
+        # The first works, but should not (ideally), there may be no way
+        # to solve this, however, as long as `np.ma.masked` is an ndarray.
+        np.array(np.ma.masked)
+        with pytest.warns(UserWarning):
+            # Tries to create a float array, using `float(np.ma.masked)`.
+            # We may want to define this is invalid behaviour in the future!
+            # (requiring np.ma.masked to be a known NumPy scalar probably
+            # with a DType.)
+            np.array([3., np.ma.masked])
+
     def test_creation_with_list_of_maskedarrays(self):
         # Tests creating a masked array from a list of masked arrays.
         x = array(np.arange(5), mask=[1, 0, 0, 0, 0])
@@ -227,11 +238,35 @@ class TestMaskedArray:
         assert_equal(data, [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0]])
         assert_(data.mask is nomask)
 
+    def test_creation_with_list_of_maskedarrays_no_bool_cast(self):
+        # Tests the regression in gh-18551
+        masked_str = np.ma.masked_array(['a', 'b'], mask=[True, False])
+        normal_int = np.arange(2)
+        res = np.ma.asarray([masked_str, normal_int], dtype="U21")
+        assert_array_equal(res.mask, [[True, False], [False, False]])
+
+        # The above only failed due a long chain of oddity, try also with
+        # an object array that cannot be converted to bool always:
+        class NotBool():
+            def __bool__(self):
+                raise ValueError("not a bool!")
+        masked_obj = np.ma.masked_array([NotBool(), 'b'], mask=[True, False])
+        # Check that the NotBool actually fails like we would expect:
+        with pytest.raises(ValueError, match="not a bool!"):
+            np.asarray([masked_obj], dtype=bool)
+
+        res = np.ma.asarray([masked_obj, normal_int])
+        assert_array_equal(res.mask, [[True, False], [False, False]])
+
     def test_creation_from_ndarray_with_padding(self):
         x = np.array([('A', 0)], dtype={'names':['f0','f1'],
                                         'formats':['S4','i8'],
                                         'offsets':[0,8]})
         array(x)  # used to fail due to 'V' padding field in x.dtype.descr
+
+    def test_unknown_keyword_parameter(self):
+        with pytest.raises(TypeError, match="unexpected keyword argument"):
+            MaskedArray([1, 2, 3], maks=[0, 1, 0])  # `mask` is misspelled.
 
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
@@ -446,6 +481,21 @@ class TestMaskedArray:
         copied.mask[1] = False
         assert_equal(copied.mask, [0, 0, 0])
         assert_equal(a.mask, [0, 1, 0])
+
+    def test_format(self):
+        a = array([0, 1, 2], mask=[False, True, False])
+        assert_equal(format(a), "[0 -- 2]")
+        assert_equal(format(masked), "--")
+        assert_equal(format(masked, ""), "--")
+
+        # Postponed from PR #15410, perhaps address in the future.
+        # assert_equal(format(masked, " >5"), "   --")
+        # assert_equal(format(masked, " <5"), "--   ")
+
+        # Expect a FutureWarning for using format_spec with MaskedElement
+        with assert_warns(FutureWarning):
+            with_format_string = format(masked, " >5")
+        assert_equal(with_format_string, "--")
 
     def test_str_repr(self):
         a = array([0, 1, 2], mask=[False, True, False])
@@ -1229,6 +1279,48 @@ class TestMaskedArrayArithmetic:
         assert_(x.min() is masked)
         assert_(x.max() is masked)
         assert_(x.ptp() is masked)
+
+    def test_minmax_dtypes(self):
+        # Additional tests on max/min for non-standard float and complex dtypes
+        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        a10 = 10.
+        an10 = -10.0
+        m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        xm = masked_array(x, mask=m1)
+        xm.set_fill_value(1e+20)
+        float_dtypes = [np.half, np.single, np.double,
+                        np.longdouble, np.cfloat, np.cdouble, np.clongdouble]
+        for float_dtype in float_dtypes:
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).max(),
+                         float_dtype(a10))
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).min(),
+                         float_dtype(an10))
+
+        assert_equal(xm.min(), an10)
+        assert_equal(xm.max(), a10)
+
+        # Non-complex type only test
+        for float_dtype in float_dtypes[:4]:
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).max(),
+                         float_dtype(a10))
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).min(),
+                         float_dtype(an10))
+
+        # Complex types only test
+        for float_dtype in float_dtypes[-3:]:
+            ym = masked_array([1e20+1j, 1e20-2j, 1e20-1j], mask=[0, 1, 0],
+                          dtype=float_dtype)
+            assert_equal(ym.min(), float_dtype(1e20-1j))
+            assert_equal(ym.max(), float_dtype(1e20+1j))
+
+            zm = masked_array([np.inf+2j, np.inf+3j, -np.inf-1j], mask=[0, 1, 0],
+                              dtype=float_dtype)
+            assert_equal(zm.min(), float_dtype(-np.inf-1j))
+            assert_equal(zm.max(), float_dtype(np.inf+2j))
+            
+            cmax = np.inf - 1j * np.finfo(np.float64).max
+            assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
+            assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
 
     def test_addsumprod(self):
         # Tests add, sum, product.
@@ -2680,7 +2772,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm += t(1)
                 assert_equal(xm, y + t(1))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_addition_array_type(self):
         # Test of inplace additions
@@ -2697,7 +2789,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y + a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_subtraction_scalar_type(self):
         # Test of inplace subtractions
@@ -2710,7 +2802,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm -= t(1)
                 assert_equal(xm, y - t(1))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_subtraction_array_type(self):
         # Test of inplace subtractions
@@ -2727,7 +2819,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y - a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_multiplication_scalar_type(self):
         # Test of inplace multiplication
@@ -2740,7 +2832,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm *= t(2)
                 assert_equal(xm, y * t(2))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_multiplication_array_type(self):
         # Test of inplace multiplication
@@ -2757,7 +2849,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y * a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_floor_division_scalar_type(self):
         # Test of inplace division
@@ -2793,7 +2885,7 @@ class TestMaskedArrayInPlaceArithmetics:
                     mask_or(mask_or(m, a.mask), (a == t(0)))
                 )
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_division_scalar_type(self):
         # Test of inplace division
@@ -2827,9 +2919,9 @@ class TestMaskedArrayInPlaceArithmetics:
                     warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
 
     def test_inplace_division_array_type(self):
         # Test of inplace division
@@ -2866,9 +2958,9 @@ class TestMaskedArrayInPlaceArithmetics:
                     warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
 
     def test_inplace_pow_type(self):
         # Test keeping data w/ (inplace) power
@@ -2886,7 +2978,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(x.data, xx_r.data)
                 assert_equal(x.mask, xx_r.mask)
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
 
 class TestMaskedArrayMethods:
@@ -2964,6 +3056,13 @@ class TestMaskedArrayMethods:
         # Test that the function works for MIN_INT integer typed arrays
         a = masked_array([np.iinfo(np.int_).min], dtype=np.int_)
         assert_(allclose(a, a))
+
+    def test_allclose_timedelta(self):
+        # Allclose currently works for timedelta64 as long as `atol` is
+        # an integer or also a timedelta64
+        a = np.array([[1, 2, 3, 4]], dtype="m8[ns]")
+        assert allclose(a, a, atol=0)
+        assert allclose(a, a, atol=np.timedelta64(1, "ns"))
 
     def test_allany(self):
         # Checks the any/all methods/functions.
@@ -3790,8 +3889,6 @@ class TestMaskedArrayMathMethods:
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
-    @pytest.mark.skipif(sys.platform=='win32' and sys.version_info < (3, 6),
-                        reason='Fails on Python < 3.6 on Windows, gh-9671')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
@@ -4535,7 +4632,7 @@ class TestMaskedArrayFunctions:
         class M(MaskedArray):
             pass
 
-        test = np.ma.compressed(M(shape=(0,1,2)))
+        test = np.ma.compressed(M([[[]], [[]]]))
         assert_equal(test.ndim, 1)
 
         # with .compressed() overridden
@@ -4543,7 +4640,7 @@ class TestMaskedArrayFunctions:
             def compressed(self):
                 return 42
 
-        test = np.ma.compressed(M(shape=(0,1,2)))
+        test = np.ma.compressed(M([[[]], [[]]]))
         assert_equal(test, 42)
 
     def test_convolve(self):
@@ -5078,6 +5175,16 @@ def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
 
+def test_masked_array_no_copy():
+    # check nomask array is updated in place
+    a = np.ma.array([1, 2, 3, 4])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [False, False, True, False])
+    # check masked array is updated in place
+    a = np.ma.array([1, 2, 3, 4], mask=[1, 0, 0, 0])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [True, False, True, False])
+
 def test_append_masked_array():
     a = np.ma.masked_equal([1,2,3], value=2)
     b = np.ma.masked_equal([4,3,2], value=2)
@@ -5115,7 +5222,6 @@ def test_append_masked_array_along_axis():
     expected = expected.reshape((3,3))
     assert_array_equal(result.data, expected.data)
     assert_array_equal(result.mask, expected.mask)
-
 
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
@@ -5226,3 +5332,33 @@ def test_mask_shape_assignment_does_not_break_masked():
     b = np.ma.array(1, mask=a.mask)
     b.shape = (1,)
     assert_equal(a.mask.shape, ())
+
+@pytest.mark.skipif(sys.flags.optimize > 1,
+                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
+def test_doc_note():
+    def method(self):
+        """This docstring
+
+        Has multiple lines
+
+        And notes
+
+        Notes
+        -----
+        original note
+        """
+        pass
+
+    expected_doc = """This docstring
+
+Has multiple lines
+
+And notes
+
+Notes
+-----
+note
+
+original note"""
+
+    assert_equal(np.ma.core.doc_note(method.__doc__, "note"), expected_doc)

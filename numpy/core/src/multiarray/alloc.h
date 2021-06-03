@@ -6,6 +6,9 @@
 
 #define NPY_TRACE_DOMAIN 389047
 
+NPY_NO_EXPORT PyObject *
+_set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj);
+
 NPY_NO_EXPORT void *
 npy_alloc_cache(npy_uintp sz);
 

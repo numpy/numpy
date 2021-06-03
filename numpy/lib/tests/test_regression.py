@@ -1,3 +1,5 @@
+import pytest
+
 import os
 
 import numpy as np
@@ -5,7 +7,6 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, _assert_valid_refcount,
     )
-from numpy.compat import unicode
 
 
 class TestRegression:
@@ -63,7 +64,8 @@ class TestRegression:
     def test_mem_string_concat(self):
         # Ticket #469
         x = np.array([])
-        np.append(x, 'asdasd\tasdasd')
+        with pytest.warns(FutureWarning):
+            np.append(x, 'asdasd\tasdasd')
 
     def test_poly_div(self):
         # Ticket #553
@@ -180,7 +182,7 @@ class TestRegression:
         # related to ticket #1405.
         include_dirs = [np.get_include()]
         for path in include_dirs:
-            assert_(isinstance(path, (str, unicode)))
+            assert_(isinstance(path, str))
             assert_(path != '')
 
     def test_polyder_return_type(self):

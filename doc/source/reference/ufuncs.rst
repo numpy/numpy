@@ -1,5 +1,7 @@
 .. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
+.. currentmodule:: numpy
+
 .. _ufuncs:
 
 ************************************
@@ -7,8 +9,6 @@ Universal functions (:class:`ufunc`)
 ************************************
 
 .. note: XXX: section might need to be made more reference-guideish...
-
-.. currentmodule:: numpy
 
 .. index: ufunc, universal function, arithmetic, operation
 
@@ -109,7 +109,7 @@ The output of the ufunc (and its methods) is not necessarily an
 :class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
 Indeed, if any input defines an :obj:`~class.__array_ufunc__` method,
 control will be passed completely to that function, i.e., the ufunc is
-`overridden <ufuncs.overrides>`_.
+:ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
 all output arrays will be passed to the :obj:`~class.__array_prepare__` and
@@ -266,7 +266,7 @@ can generate this table for your system with the code given in the Figure.
     S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
     U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
     V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
-    O - - - - - - - - - - - - - - - - - - - - - - Y Y - -
+    O - - - - - - - - - - - - - - - - - - - - - - - Y - -
     M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
     m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
 
@@ -297,6 +297,11 @@ them by defining certain special methods.  For details, see
 
 :class:`ufunc`
 ==============
+
+.. autosummary::
+   :toctree: generated/
+
+   numpy.ufunc
 
 .. _ufuncs.kwargs:
 
@@ -334,6 +339,19 @@ advanced usage and will not typically be used.
     default), then this corresponds to the entire output being filled.
     Note that outputs not explicitly filled are left with their
     uninitialized values.
+
+    .. versionadded:: 1.13
+
+    Operations where ufunc input and output operands have memory overlap are
+    defined to be the same as for equivalent operations where there
+    is no memory overlap.  Operations affected make temporary copies
+    as needed to eliminate data dependency.  As detecting these cases
+    is computationally expensive, a heuristic is used, which may in rare
+    cases result in needless temporary copies.  For operations where the
+    data dependency is simple enough for the heuristic to analyze,
+    temporary copies will not be made even if the arrays overlap, if it
+    can be deduced copies are not necessary.  As an example,
+    ``np.add(a, b, out=a)`` will not involve copies.
 
 *where*
 
@@ -380,7 +398,7 @@ advanced usage and will not typically be used.
     result as a dimension with size one, so that the result will broadcast
     correctly against the inputs. This option can only be used for generalized
     ufuncs that operate on inputs that all have the same number of core
-    dimensions and with outputs that have no core dimensions , i.e., with
+    dimensions and with outputs that have no core dimensions, i.e., with
     signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
     the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
@@ -412,8 +430,10 @@ advanced usage and will not typically be used.
 
     .. versionadded:: 1.6
 
-    Overrides the dtype of the calculation and output arrays. Similar to
-    *signature*.
+    Overrides the DType of the output arrays the same way as the *signature*.
+    This should ensure a matching precision of the calculation.  The exact
+    calculation DTypes chosen may depend on the ufunc and the inputs may be
+    cast to this DType to perform the calculation.
 
 *subok*
 
@@ -424,30 +444,41 @@ advanced usage and will not typically be used.
 
 *signature*
 
-    Either a data-type, a tuple of data-types, or a special signature
-    string indicating the input and output types of a ufunc. This argument
-    allows you to provide a specific signature for the 1-d loop to use
-    in the underlying calculation. If the loop specified does not exist
-    for the ufunc, then a TypeError is raised. Normally, a suitable loop is
-    found automatically by comparing the input types with what is
-    available and searching for a loop with data-types to which all inputs
-    can be cast safely. This keyword argument lets you bypass that
-    search and choose a particular loop. A list of available signatures is
-    provided by the **types** attribute of the ufunc object. For backwards
-    compatibility this argument can also be provided as *sig*, although
-    the long form is preferred. Note that this should not be confused with
-    the generalized ufunc :ref:`signature <details-of-signature>` that is
-    stored in the **signature** attribute of the of the ufunc object.
+    Either a Dtype, a tuple of DTypes, or a special signature string
+    indicating the input and output types of a ufunc.
+
+    This argument allows the user to specify exact DTypes to be used for the
+    calculation.  Casting will be used as necessary. The actual DType of the
+    input arrays is not considered unless ``signature`` is ``None`` for
+    that array.
+
+    When all DTypes are fixed, a specific loop is chosen or an error raised
+    if no matching loop exists.
+    If some DTypes are not specified and left ``None``, the behaviour may
+    depend on the ufunc.
+    At this time, a list of available signatures is provided by the **types**
+    attribute of the ufunc.  (This list may be missing DTypes not defined
+    by NumPy.)
+
+    The ``signature`` only specifies the DType class/type.  For example, it
+    can specifiy that the operation should be ``datetime64`` or ``float64``
+    operation.  It does not specify the ``datetime64`` time-unit or the
+    ``float64`` byte-order.
+
+    For backwards compatibility this argument can also be provided as *sig*,
+    although the long form is preferred.  Note that this should not be
+    confused with the generalized ufunc :ref:`signature <details-of-signature>`
+    that is stored in the **signature** attribute of the of the ufunc object.
 
 *extobj*
 
-    a list of length 1, 2, or 3 specifying the ufunc buffer-size, the
-    error mode integer, and the error call-back function. Normally, these
+    a list of length 3 specifying the ufunc buffer-size, the error
+    mode integer, and the error call-back function. Normally, these
     values are looked up in a thread-specific dictionary. Passing them
     here circumvents that look up and uses the low-level specification
-    provided for the error mode. This may be useful, for example, as an
-    optimization for calculations requiring many ufunc calls on small arrays
-    in a loop.
+    provided for the error mode. This may be useful, for example, as
+    an optimization for calculations requiring many ufunc calls on
+    small arrays in a loop.
 
 
 
@@ -610,8 +641,8 @@ Math operations
     for large calculations. If your arrays are large, complicated
     expressions can take longer than absolutely necessary due to the
     creation and (later) destruction of temporary calculation
-    spaces. For example, the expression ``G = a * b + c`` is equivalent to
-    ``t1 = A * B; G = T1 + C; del t1``. It will be more quickly executed
+    spaces. For example, the expression ``G = A * B + C`` is equivalent to
+    ``T1 = A * B; G = T1 + C; del T1``. It will be more quickly executed
     as ``G = A * B; add(G, C, G)`` which is the same as
     ``G = A * B; G += C``.
 

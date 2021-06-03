@@ -5,107 +5,32 @@ group: travis_latest
 os: linux
 dist: bionic
 
-# Travis whitelists the installable packages, additions can be requested
-#   https://github.com/travis-ci/apt-package-whitelist
+# Travis allows these packages, additions can be requested
+#   https://github.com/travis-ci/apt-package-safelist
 addons:
   apt:
     packages: &common_packages
       - gfortran
       - libgfortran5
-      - libgfortran3
       - libatlas-base-dev
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
+
+# Disable clone depth
+git:
+  depth: false
 
 cache:
   directories:
     - $HOME/.cache/pip
 
-stages:
-    # Do the style check and a single test job, don't proceed if it fails
-    - name: Initial tests
-    # Do the rest of the tests
-    - name: Comprehensive tests
-
-env:
-  global:
-    - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
-    # The following is generated with the command:
-    # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
-    - secure: "IEicLPrP2uW+jW51GRwkONQpdPqMVtQL5bdroqR/U8r9Tr\
-               XrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPow\
-               iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
-               ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
-
 jobs:
   include:
-    # Do all python versions without environment variables set
-    - stage: Initial tests
-      python: 3.8
-
-    - stage: Comprehensive tests
-      python: 3.6
-    - python: 3.7
-
-    - python: 3.6
-      env: USE_DEBUG=1
-      addons:
-        apt:
-          packages:
-            - *common_packages
-            - cython3-dbg
-            - python3-dbg
-            - python3-dev
-            - python3-setuptools
-
-    - python: 3.7
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
-
-    - python: 3.7
-      env: USE_SDIST=1
-
-    - python: 3.7
-      env:
-       - PYTHONOPTIMIZE=2
-       - BLAS=None
-       - LAPACK=None
-       - ATLAS=None
-       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
-       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
-       - USE_ASV=1
-
-    - python: 3.7
-      env:
-        - NPY_RELAXED_STRIDES_CHECKING=0
-        # use custom symbol-suffixed openblas build, not system ATLAS
-        - DOWNLOAD_OPENBLAS=1
-        - CHECK_BLAS=1
-        - NPY_USE_BLAS_ILP64=1
-      addons:
-        apt:
-          packages:
-            - gfortran
-            - eatmydata
-            - libgfortran5
-            - libgfortran3
-
-    - python: 3.7
-      env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
-
-    - python: 3.7
-      env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
-
-    - python: 3.7
-      env:
-       - BLAS=None
-       - LAPACK=None
-       - ATLAS=None
-
     - python: 3.7
       os: linux
       arch: ppc64le
       env:
-       # use ppc64le OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 
@@ -113,18 +38,18 @@ jobs:
       os: linux
       arch: s390x
       env:
-       # use s390x OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
+       - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
     - python: 3.7
       os: linux
-      arch: aarch64
+      arch: arm64
       env:
-       # use ppc64le OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
-
 
 
 before_install:
@@ -132,6 +57,3 @@ before_install:
 
 script:
   - ./tools/travis-test.sh
-
-after_success:
-  - ./tools/travis-upload-wheel.sh

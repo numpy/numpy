@@ -28,6 +28,7 @@ GRTAGS
 GSYMS
 GTAGS
 .cache
+.mypy_cache/
 
 # Compiled source #
 ###################
@@ -74,6 +75,7 @@ doc/cdoc/build
 ./.shelf
 MANIFEST
 .cache
+pip-wheel-metadata
 
 # Paver generated files #
 #########################
@@ -105,6 +107,11 @@ Thumbs.db
 ##########################
 /.pytest_cache
 
+# doc build generated files #
+#############################
+doc/source/savefig/
+
+
 # Things specific to this project #
 ###################################
 numpy/core/__svn_version__.py
@@ -113,9 +120,7 @@ numpy/__config__.py
 numpy/core/include/numpy/__multiarray_api.h
 numpy/core/include/numpy/__ufunc_api.h
 numpy/core/include/numpy/_numpyconfig.h
-numpy/version.py
 site.cfg
-setup.cfg
 .tox
 numpy/core/include/numpy/__multiarray_api.c
 numpy/core/include/numpy/__ufunc_api.c
@@ -125,12 +130,14 @@ numpy/core/include/numpy/multiarray_api.txt
 numpy/core/include/numpy/ufunc_api.txt
 numpy/core/lib/
 numpy/core/src/common/npy_binsearch.h
+numpy/core/src/common/npy_cpu_features.c
 numpy/core/src/common/npy_partition.h
 numpy/core/src/common/npy_sort.h
 numpy/core/src/common/templ_common.h
 numpy/core/src/multiarray/_multiarray_tests.c
 numpy/core/src/multiarray/arraytypes.c
 numpy/core/src/multiarray/einsum.c
+numpy/core/src/multiarray/einsum_sumprod.c
 numpy/core/src/multiarray/lowlevel_strided_loops.c
 numpy/core/src/multiarray/multiarray_tests.c
 numpy/core/src/multiarray/nditer_templ.c
@@ -163,6 +170,7 @@ numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c
 numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
+numpy/core/src/umath/loops_utils.h
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
 doc/source/**/generated/
@@ -170,6 +178,7 @@ benchmarks/results
 benchmarks/html
 benchmarks/env
 benchmarks/numpy
+benchmarks/_asv_compare.conf.json
 # cythonized files
 cythonize.dat
 numpy/random/_mtrand/_mtrand.c
@@ -178,6 +187,7 @@ numpy/random/legacy/*.c
 numpy/random/_mtrand/randint_helpers.pxi
 numpy/random/bounded_integers.pyx
 numpy/random/bounded_integers.pxd
+numpy/random/lib/npyrandom.lib
 tools/swig/test/Array_wrap.cxx
 tools/swig/test/Farray_wrap.cxx
 tools/swig/test/Farray.py
@@ -192,3 +202,20 @@ tools/swig/test/Tensor.py
 tools/swig/test/Vector.py
 tools/swig/test/Vector_wrap.cxx
 tools/swig/test/Array.py
+
+# SIMD generated files #
+###################################
+# config headers of dispatchable sources
+*.dispatch.h
+# wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
+*.dispatch.*.c
+# _simd module
+numpy/core/src/_simd/_simd.dispatch.c
+numpy/core/src/_simd/_simd_data.inc
+numpy/core/src/_simd/_simd_inc.h
+# umath module
+numpy/core/src/umath/loops_unary_fp.dispatch.c
+numpy/core/src/umath/loops_arithm_fp.dispatch.c
+numpy/core/src/umath/loops_arithmetic.dispatch.c
+numpy/core/src/umath/loops_trigonometric.dispatch.c
+numpy/core/src/umath/loops_exponent_log.dispatch.c

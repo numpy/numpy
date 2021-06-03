@@ -62,12 +62,8 @@
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
 
-#if PY_VERSION_HEX >= 0x03060000
 /* TODO can pep523 be used to somehow? */
 #define PYFRAMEEVAL_FUNC "_PyEval_EvalFrameDefault"
-#else
-#define PYFRAMEEVAL_FUNC "PyEval_EvalFrameEx"
-#endif
 /*
  * Heuristic size of the array in bytes at which backtrace overhead generation
  * becomes less than speed gained by in-place operations. Depends on stack depth
@@ -278,13 +274,14 @@ check_callers(int * cannot)
  * "cannot" is set to true if it cannot be done even with swapped arguments
  */
 static int
-can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
+can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
 {
     /*
      * to be a candidate the array needs to have reference count 1, be an exact
      * array of a basic type, own its data and size larger than threshold
      */
-    if (Py_REFCNT(alhs) != 1 || !PyArray_CheckExact(alhs) ||
+    PyArrayObject *alhs = (PyArrayObject *)olhs;
+    if (Py_REFCNT(olhs) != 1 || !PyArray_CheckExact(olhs) ||
             !PyArray_ISNUMBER(alhs) ||
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
@@ -332,22 +329,22 @@ can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
  * try eliding a binary op, if commutative is true also try swapped arguments
  */
 NPY_NO_EXPORT int
-try_binary_elide(PyArrayObject * m1, PyObject * m2,
+try_binary_elide(PyObject * m1, PyObject * m2,
                  PyObject * (inplace_op)(PyArrayObject * m1, PyObject * m2),
                  PyObject ** res, int commutative)
 {
     /* set when no elision can be done independent of argument order */
     int cannot = 0;
     if (can_elide_temp(m1, m2, &cannot)) {
-        *res = inplace_op(m1, m2);
+        *res = inplace_op((PyArrayObject *)m1, m2);
 #if NPY_ELIDE_DEBUG != 0
         puts("elided temporary in binary op");
 #endif
         return 1;
     }
     else if (commutative && !cannot) {
-        if (can_elide_temp((PyArrayObject *)m2, (PyObject *)m1, &cannot)) {
-            *res = inplace_op((PyArrayObject *)m2, (PyObject *)m1);
+        if (can_elide_temp(m2, m1, &cannot)) {
+            *res = inplace_op((PyArrayObject *)m2, m1);
 #if NPY_ELIDE_DEBUG != 0
             puts("elided temporary in commutative binary op");
 #endif

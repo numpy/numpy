@@ -13,16 +13,15 @@ support datetime functionality. The data type is called "datetime64",
 so named because "datetime" is already taken by the datetime library
 included in Python.
 
-.. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
-   in future versions of NumPy.
 
 Basic Datetimes
 ===============
 
-The most basic way to create datetimes is from strings in
-ISO 8601 date or datetime format. The unit for internal storage
-is automatically selected from the form of the string, and can
-be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
+The most basic way to create datetimes is from strings in ISO 8601 date 
+or datetime format. It is also possible to create datetimes from an integer by 
+offset relative to the Unix epoch (00:00:00 UTC on 1 January 1970).
+The unit for internal storage is automatically selected from the 
+form of the string, and can be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
 :ref:`time unit <arrays.dtypes.timeunits>`. The date units are years ('Y'),
 months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
@@ -36,6 +35,11 @@ letters, for a "Not A Time" value.
 
     >>> np.datetime64('2005-02-25')
     numpy.datetime64('2005-02-25')
+    
+    From an integer and a date unit, 1 year since the UNIX epoch:
+
+    >>> np.datetime64(1, 'Y')
+    numpy.datetime64('1971')   
 
     Using months for the unit:
 
@@ -218,7 +222,7 @@ And here are the time units:
    m       minute           +/- 1.7e13 years        [1.7e13 BC, 1.7e13 AD]
    s       second           +/- 2.9e11 years        [2.9e11 BC, 2.9e11 AD]
    ms      millisecond      +/- 2.9e8 years         [ 2.9e8 BC,  2.9e8 AD]
-   us      microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
+us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    ns      nanosecond       +/- 292 years           [  1678 AD,   2262 AD]
    ps      picosecond       +/- 106 days            [  1969 AD,   1970 AD]
    fs      femtosecond      +/- 2.6 hours           [  1969 AD,   1970 AD]

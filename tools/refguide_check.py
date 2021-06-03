@@ -19,11 +19,12 @@ another function, or deprecated, or ...)
 Another use of this helper script is to check validity of code samples
 in docstrings::
 
-    $ python refguide_check.py --doctests ma
+    $ python tools/refguide_check.py --doctests ma
 
 or in RST-based documentations::
 
-    $ python refguide_check.py --rst docs
+    $ python tools/refguide_check.py --rst doc/source
+
 """
 import copy
 import doctest
@@ -71,7 +72,6 @@ BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
     'core',
-    'doc.structured_arrays',
     'f2py',
     'linalg',
     'lib',
@@ -119,6 +119,18 @@ RST_SKIPLIST = [
     'doc/release',
     'doc/source/release',
     'c-info.ufunc-tutorial.rst',
+    'c-info.python-as-glue.rst',
+    'f2py.getting-started.rst',
+    'arrays.nditer.cython.rst',
+    # See PR 17222, these should be fixed
+    'basics.broadcasting.rst',
+    'basics.byteswapping.rst',
+    'basics.creation.rst',
+    'basics.dispatch.rst',
+    'basics.indexing.rst',
+    'basics.subclassing.rst',
+    'basics.types.rst',
+    'misc.rst',
 ]
 
 # these names are not required to be present in ALL despite being in
@@ -154,9 +166,8 @@ def short_path(path, cwd=None):
 
     Parameters
     ----------
-    path: str or None
-
-    cwd: str or None
+    path : str or None
+    cwd : str or None
 
     Returns
     -------
@@ -257,7 +268,7 @@ def get_all_dict(module):
         except ValueError:
             pass
     if not all_dict:
-        # Must be a pure documentation module like doc.structured_arrays
+        # Must be a pure documentation module
         all_dict.append('__doc__')
 
     # Modules are almost always private; real submodules need a separate
@@ -293,7 +304,7 @@ def compare(all_dict, others, names, module_name):
         List of non deprecated sub modules for module_name
     others : list
         List of sub modules for module_name
-    names :  set
+    names : set
         Set of function names or special directives present in
         docstring of module_name
     module_name : ModuleType
@@ -332,8 +343,8 @@ def is_deprecated(f):
     """
     Check if module `f` is deprecated
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     f : ModuleType
 
     Returns
@@ -385,8 +396,8 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
     output += "Objects in refguide: %i\n\n" % num_ref
 
     only_all, only_ref, missing = compare(all_dict, others, names, module_name)
-    dep_in_ref = set(only_ref).intersection(deprecated)
-    only_ref = set(only_ref).difference(deprecated)
+    dep_in_ref = only_ref.intersection(deprecated)
+    only_ref = only_ref.difference(deprecated)
 
     if len(dep_in_ref) > 0:
         output += "Deprecated objects in refguide::\n\n"
@@ -447,7 +458,7 @@ def validate_rst_syntax(text, name, dots=True):
         return False, "ERROR: %s: no documentation" % (name,)
 
     ok_unknown_items = set([
-        'mod', 'currentmodule', 'autosummary', 'data', 'attr',
+        'mod', 'doc', 'currentmodule', 'autosummary', 'data', 'attr',
         'obj', 'versionadded', 'versionchanged', 'module', 'class',
         'ref', 'func', 'toctree', 'moduleauthor', 'term', 'c:member',
         'sectionauthor', 'codeauthor', 'eq', 'doi', 'DOI', 'arXiv', 'arxiv'
@@ -768,13 +779,12 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
     Parameters
     ----------
-    tests: list
+    tests : list
 
     full_name : str
 
     verbose : bool
-
-    doctest_warning : bool
+    doctest_warnings : bool
 
     Returns
     -------
@@ -1034,7 +1044,7 @@ def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
     Yields
     ------
     path
-        Path of the directory and it's sub directories
+        Path of the directory and its sub directories
     """
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path

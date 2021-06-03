@@ -3,7 +3,12 @@ import warnings
 import sys
 import decimal
 from fractions import Fraction
+import math
 import pytest
+import hypothesis
+from hypothesis.extra.numpy import arrays
+import hypothesis.strategies as st
+
 
 import numpy as np
 from numpy import ma
@@ -21,7 +26,6 @@ from numpy.lib import (
     select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
     )
 
-from numpy.compat import long
 
 def get_mat(n):
     data = np.arange(n)
@@ -509,12 +513,11 @@ class TestInsert:
                      insert(a, 1, a[:, 2, :], axis=1))
 
     def test_0d(self):
-        # This is an error in the future
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(insert(a, [], 2, axis=0), np.array(2))
-            assert_(w[0].category is DeprecationWarning)
+        with pytest.raises(np.AxisError):
+            insert(a, [], 2, axis=0)
+        with pytest.raises(TypeError):
+            insert(a, [], 2, axis="nonsense")
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -543,6 +546,12 @@ class TestInsert:
         val = [(4, 'd')] * 2
         b = np.insert(a, [0, 2], val)
         assert_array_equal(b[[0, 3]], np.array(val, dtype=b.dtype))
+
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([1.0, 2.0]), [10, 20])
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([], dtype=float), [])
 
 
 class TestAmax:
@@ -804,10 +813,6 @@ class TestDelete:
         a_del = delete(self.a, indices)
         nd_a_del = delete(self.nd_a, indices, axis=1)
         msg = 'Delete failed for obj: %r' % indices
-        # NOTE: The cast should be removed after warning phase for bools
-        if not isinstance(indices, (slice, int, long, np.integer)):
-            indices = np.asarray(indices, dtype=np.intp)
-            indices = indices[(indices >= 0) & (indices < 5)]
         assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
         xor = setxor1d(nd_a_del[0,:, 0], self.nd_a[0, indices, 0])
@@ -823,19 +828,25 @@ class TestDelete:
                     self._check_inverse_of_slicing(s)
 
     def test_fancy(self):
-        # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', category=DeprecationWarning)
-            assert_raises(DeprecationWarning, delete, self.a, [100])
-            assert_raises(DeprecationWarning, delete, self.a, [-100])
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', category=FutureWarning)
-            self._check_inverse_of_slicing([0, -1, 2, 2])
-            obj = np.array([True, False, False], dtype=bool)
-            self._check_inverse_of_slicing(obj)
-            assert_(w[0].category is FutureWarning)
-            assert_(w[1].category is FutureWarning)
+        with pytest.raises(IndexError):
+            delete(self.a, [100])
+        with pytest.raises(IndexError):
+            delete(self.a, [-100])
+
+        self._check_inverse_of_slicing([0, -1, 2, 2])
+
+        self._check_inverse_of_slicing([True, False, False, True, False])
+
+        # not legal, indexing with these would change the dimension
+        with pytest.raises(ValueError):
+            delete(self.a, True)
+        with pytest.raises(ValueError):
+            delete(self.a, False)
+
+        # not enough items
+        with pytest.raises(ValueError):
+            delete(self.a, [False]*4)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
@@ -843,10 +854,10 @@ class TestDelete:
 
     def test_0d(self):
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(delete(a, [], axis=0), a)
-            assert_(w[0].category is DeprecationWarning)
+        with pytest.raises(np.AxisError):
+            delete(a, [], axis=0)
+        with pytest.raises(TypeError):
+            delete(a, [], axis="nonsense")
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -867,6 +878,12 @@ class TestDelete:
         # same ordering as 'k' and NOT become C ordered
         assert_equal(m.flags.c_contiguous, k.flags.c_contiguous)
         assert_equal(m.flags.f_contiguous, k.flags.f_contiguous)
+
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([1.0, 2.0]))
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([], dtype=float))
 
 
 class TestGradient:
@@ -1149,26 +1166,68 @@ class TestAngle:
 
 class TestTrimZeros:
 
-    """
-    Only testing for integer splits.
+    a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
+    b = a.astype(float)
+    c = a.astype(complex)
+    d = a.astype(object)
 
-    """
+    def values(self):
+        attr_names = ('a', 'b', 'c', 'd')
+        return (getattr(self, name) for name in attr_names)
 
     def test_basic(self):
-        a = np.array([0, 0, 1, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 2, 3, 4]))
+        slc = np.s_[2:-1]
+        for arr in self.values():
+            res = trim_zeros(arr)
+            assert_array_equal(res, arr[slc])
 
     def test_leading_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 4]))
+        slc = np.s_[:-1]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='b')
+            assert_array_equal(res, arr[slc])
 
     def test_trailing_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 0, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 0, 4]))
+        slc = np.s_[2:]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='F')
+            assert_array_equal(res, arr[slc])
 
+    def test_all_zero(self):
+        for _arr in self.values():
+            arr = np.zeros_like(_arr, dtype=_arr.dtype)
+
+            res1 = trim_zeros(arr, trim='B')
+            assert len(res1) == 0
+
+            res2 = trim_zeros(arr, trim='f')
+            assert len(res2) == 0
+
+    def test_size_zero(self):
+        arr = np.zeros(0)
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
+
+    @pytest.mark.parametrize(
+        'arr',
+        [np.array([0, 2**62, 0]),
+         np.array([0, 2**63, 0]),
+         np.array([0, 2**64, 0])]
+    )
+    def test_overflow(self, arr):
+        slc = np.s_[1:2]
+        res = trim_zeros(arr)
+        assert_array_equal(res, arr[slc])
+
+    def test_no_trim(self):
+        arr = np.array([None, 1, None])
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
+
+
+    def test_list_to_list(self):
+        res = trim_zeros(self.a.tolist())
+        assert isinstance(res, list)
 
 class TestExtins:
 
@@ -1209,6 +1268,16 @@ class TestExtins:
         assert_array_equal(a, ac)
 
 
+# _foo1 and _foo2 are used in some tests in TestVectorize.
+
+def _foo1(x, y=1.0):
+    return y*math.floor(x)
+
+
+def _foo2(x, y=1.0, z=0.0):
+    return y*math.floor(x) + z
+
+
 class TestVectorize:
 
     def test_simple(self):
@@ -1240,7 +1309,6 @@ class TestVectorize:
         assert_array_equal(y, x)
 
     def test_ufunc(self):
-        import math
         f = vectorize(math.cos)
         args = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
         r1 = f(args)
@@ -1260,6 +1328,63 @@ class TestVectorize:
         r1 = f(args, 2)
         r2 = np.array([3, 4, 5])
         assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order1(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: invalid number of arguments`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0), 1.0)
+        r2 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order2(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: non-broadcastable output operand with shape ()
+        # doesn't match the broadcast shape (3,)`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), 1.0)
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order3(self):
+        # gh-1620: The third call of f would crash with
+        # `ValueError: invalid number of arguments`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), y=1.0)
+        r3 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+        assert_array_equal(r1, r3)
+
+    def test_keywords_with_otypes_several_kwd_args1(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+        f = vectorize(_foo2, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(10.4, z=100)
+        r2 = f(10.4, y=-1)
+        r3 = f(10.4)
+        assert_equal(r1, _foo2(10.4, z=100))
+        assert_equal(r2, _foo2(10.4, y=-1))
+        assert_equal(r3, _foo2(10.4))
+
+    def test_keywords_with_otypes_several_kwd_args2(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+        f = vectorize(_foo2, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(z=100, x=10.4, y=-1)
+        r2 = f(1, 2, 3)
+        assert_equal(r1, _foo2(z=100, x=10.4, y=-1))
+        assert_equal(r2, _foo2(1, 2, 3))
 
     def test_keywords_no_func_code(self):
         # This needs to test a function that has keywords but
@@ -1673,6 +1798,24 @@ class TestUnwrap:
         assert_array_equal(unwrap([1, 1 + 2 * np.pi]), [1, 1])
         # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
+    
+    def test_period(self):
+        # check that unwrap removes jumps greater that 255
+        assert_array_equal(unwrap([1, 1 + 256], period=255), [1, 2])
+        # check that unwrap maintains continuity
+        assert_(np.all(diff(unwrap(rand(10) * 1000, period=255)) < 255))
+        # check simple case
+        simple_seq = np.array([0, 75, 150, 225, 300])
+        wrap_seq = np.mod(simple_seq, 255)
+        assert_array_equal(unwrap(wrap_seq, period=255), simple_seq)
+        # check custom discont value
+        uneven_seq = np.array([0, 75, 150, 225, 300, 430])
+        wrap_uneven = np.mod(uneven_seq, 250)
+        no_discont = unwrap(wrap_uneven, period=250)
+        assert_array_equal(no_discont, [0, 75, 150, 225, 300, 180])
+        sm_discont = unwrap(wrap_uneven, period=250, discont=140)
+        assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
+        assert sm_discont.dtype == wrap_uneven.dtype
 
 
 class TestFilterwindows:
@@ -1680,28 +1823,28 @@ class TestFilterwindows:
     def test_hanning(self):
         # check symmetry
         w = hanning(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
 
     def test_hamming(self):
         # check symmetry
         w = hamming(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
 
     def test_bartlett(self):
         # check symmetry
         w = bartlett(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
 
     def test_blackman(self):
         # check symmetry
         w = blackman(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
@@ -1898,6 +2041,12 @@ class TestCorrCoef:
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_corrcoef_dtype(self, test_type):
+        cast_A = self.A.astype(test_type)
+        res = corrcoef(cast_A, dtype=test_type)
+        assert test_type == res.dtype
+
 
 class TestCov:
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
@@ -1998,6 +2147,12 @@ class TestCov:
                             aweights=self.unit_weights),
                         self.res1)
 
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_cov_dtype(self, test_type):
+        cast_x1 = self.x1.astype(test_type)
+        res = cov(cast_x1, dtype=test_type)
+        assert test_type == res.dtype
+
 
 class Test_I0:
 
@@ -2006,8 +2161,9 @@ class Test_I0:
             i0(0.5),
             np.array(1.0634833707413234))
 
-        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549])
-        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049])
+        # need at least one test above 8, as the implementation is piecewise
+        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549, 10.0])
+        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049, 2815.71662847])
         assert_almost_equal(i0(A), expected)
         assert_almost_equal(i0(-A), expected)
 
@@ -2044,6 +2200,10 @@ class Test_I0:
 
         assert_array_equal(exp, res)
 
+    def test_complex(self):
+        a = np.array([0, 1 + 2j])
+        with pytest.raises(TypeError, match="i0 not supported for complex values"):
+            res = i0(a)
 
 class TestKaiser:
 
@@ -2165,6 +2325,27 @@ class TestMeshgrid:
         assert_equal(x[0, :], 0)
         assert_equal(x[1, :], X)
 
+    def test_nd_shape(self):
+        a, b, c, d, e = np.meshgrid(*([0] * i for i in range(1, 6)))
+        expected_shape = (2, 1, 3, 4, 5)
+        assert_equal(a.shape, expected_shape)
+        assert_equal(b.shape, expected_shape)
+        assert_equal(c.shape, expected_shape)
+        assert_equal(d.shape, expected_shape)
+        assert_equal(e.shape, expected_shape)
+
+    def test_nd_values(self):
+        a, b, c = np.meshgrid([0], [1, 2], [3, 4, 5])
+        assert_equal(a, [[[0, 0, 0]], [[0, 0, 0]]])
+        assert_equal(b, [[[1, 1, 1]], [[2, 2, 2]]])
+        assert_equal(c, [[[3, 4, 5]], [[3, 4, 5]]])
+
+    def test_nd_indexing(self):
+        a, b, c = np.meshgrid([0], [1, 2], [3, 4, 5], indexing='ij')
+        assert_equal(a, [[[0, 0, 0], [0, 0, 0]]])
+        assert_equal(b, [[[1, 1, 1], [2, 2, 2]]])
+        assert_equal(c, [[[3, 4, 5], [3, 4, 5]]])
+
 
 class TestPiecewise:
 
@@ -2257,6 +2438,14 @@ class TestPiecewise:
         assert_array_equal(y, np.array([[-1., -1., -1.],
                                         [3., 3., 1.]]))
 
+    def test_subclasses(self):
+        class subclass(np.ndarray):
+            pass
+        x = np.arange(5.).view(subclass)
+        r = piecewise(x, [x<2., x>=4], [-1., 1., 0.])
+        assert_equal(type(r), subclass)
+        assert_equal(r, [-1., -1., 0., 0., 1.])
+
 
 class TestBincount:
 
@@ -2343,6 +2532,15 @@ class TestBincount:
             np.bincount([1, 2, 3], [4, 5, 6])
         assert_equal(sys.getrefcount(np.dtype(np.intp)), intp_refcount)
         assert_equal(sys.getrefcount(np.dtype(np.double)), double_refcount)
+
+    @pytest.mark.parametrize("vals", [[[2, 2]], 2])
+    def test_error_not_1d(self, vals):
+        # Test that values has to be 1-D (both as array and nested list)
+        vals_arr = np.asarray(vals)
+        with assert_raises(ValueError):
+            np.bincount(vals_arr)
+        with assert_raises(ValueError):
+            np.bincount(vals)
 
 
 class TestInterp:
@@ -2569,6 +2767,10 @@ class TestPercentile:
         p = np.percentile(x, Fraction(50))
         assert_equal(p, Fraction(7, 4))
         assert_equal(type(p), Fraction)
+
+        p = np.percentile(x, [Fraction(50)])
+        assert_equal(p, np.array([Fraction(7, 4)]))
+        assert_equal(type(p), np.ndarray)
 
     def test_api(self):
         d = np.ones(5)
@@ -2964,6 +3166,16 @@ class TestPercentile:
         assert_equal(np.percentile(
             a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
 
+    def test_nan_q(self):
+        # GH18830
+        with pytest.raises(ValueError, match="Percentiles must be in"):
+            np.percentile([1, 2, 3, 4.0], np.nan)
+        with pytest.raises(ValueError, match="Percentiles must be in"):
+            np.percentile([1, 2, 3, 4.0], [np.nan])
+        q = np.linspace(1.0, 99.0, 16)
+        q[0] = np.nan
+        with pytest.raises(ValueError, match="Percentiles must be in"):
+            np.percentile([1, 2, 3, 4.0], q)
 
 class TestQuantile:
     # most of this is already tested by TestPercentile
@@ -3000,6 +3212,14 @@ class TestQuantile:
         assert_equal(q, Fraction(7, 4))
         assert_equal(type(q), Fraction)
 
+        q = np.quantile(x, [Fraction(1, 2)])
+        assert_equal(q, np.array([Fraction(7, 4)]))
+        assert_equal(type(q), np.ndarray)
+
+        q = np.quantile(x, [[Fraction(1, 2)]])
+        assert_equal(q, np.array([[Fraction(7, 4)]]))
+        assert_equal(type(q), np.ndarray)
+
         # repeat with integral input but fractional quantile
         x = np.arange(8)
         assert_equal(np.quantile(x, Fraction(1, 2)), Fraction(7, 2))
@@ -3015,6 +3235,74 @@ class TestQuantile:
         p = p.tolist()
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
+
+    def test_quantile_monotonic(self):
+        # GH 14685
+        # test that the return value of quantile is monotonic if p0 is ordered
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9,
+                                         8, 8, 7]) * 0.1, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+    @hypothesis.given(
+            arr=arrays(dtype=np.float64,
+                       shape=st.integers(min_value=3, max_value=1000),
+                       elements=st.floats(allow_infinity=False, allow_nan=False,
+                                          min_value=-1e300, max_value=1e300)))
+    def test_quantile_monotonic_hypo(self, arr):
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(arr, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+
+class TestLerp:
+    @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      t1=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      a = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300),
+                      b = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300))
+    def test_lerp_monotonic(self, t0, t1, a, b):
+        l0 = np.lib.function_base._lerp(a, b, t0)
+        l1 = np.lib.function_base._lerp(a, b, t1)
+        if t0 == t1 or a == b:
+            assert l0 == l1  # uninteresting
+        elif (t0 < t1) == (a < b):
+            assert l0 <= l1
+        else:
+            assert l0 >= l1
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_bounded(self, t, a, b):
+        if a <= b:
+            assert a <= np.lib.function_base._lerp(a, b, t) <= b
+        else:
+            assert b <= np.lib.function_base._lerp(a, b, t) <= a
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_symmetric(self, t, a, b):
+        # double subtraction is needed to remove the extra precision of t < 0.5
+        left = np.lib.function_base._lerp(a, b, 1 - (1 - t))
+        right = np.lib.function_base._lerp(b, a, 1 - t)
+        assert left == right
+
+    def test_lerp_0d_inputs(self):
+        a = np.array(2)
+        b = np.array(5)
+        t = np.array(0.2)
+        assert np.lib.function_base._lerp(a, b, t) == 2.6
 
 
 class TestMedian:
@@ -3271,11 +3559,49 @@ class TestAdd_newdoc:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
-        # test np.add_newdoc
+        # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_errors_are_ignored(self):
+        prev_doc = np.core.flatiter.index.__doc__
+        # nothing changed, but error ignored, this should probably
+        # give a warning (or even error) in the future.
+        np.add_newdoc("numpy.core", "flatiter", ("index", "bad docstring"))
+        assert prev_doc == np.core.flatiter.index.__doc__
+
+
+class TestAddDocstring():
+    # Test should possibly be moved, but it also fits to be close to
+    # the newdoc tests...
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_add_same_docstring(self):
+        # test for attributes (which are C-level defined)
+        np.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        np.add_docstring(func, func.__doc__)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_different_docstring_fails(self):
+        # test for attributes (which are C-level defined)
+        with assert_raises(RuntimeError):
+            np.add_docstring(np.ndarray.flat, "different docstring")
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        with assert_raises(RuntimeError):
+            np.add_docstring(func, "different docstring")
+
 
 class TestSortComplex:
 

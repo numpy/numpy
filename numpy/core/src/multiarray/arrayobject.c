@@ -41,7 +41,9 @@ maintainer email:  oliphant.travis@ieee.org
 #include "arraytypes.h"
 #include "scalartypes.h"
 #include "arrayobject.h"
+#include "conversion_utils.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "methods.h"
 #include "descriptor.h"
 #include "iterators.h"
@@ -56,6 +58,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "strfuncs.h"
 
 #include "binop_override.h"
+#include "array_coercion.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -234,136 +237,96 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 }
 
 
+/**
+ * Assign an arbitrary object a NumPy array. This is largely basically
+ * identical to PyArray_FromAny, but assigns directly to the output array.
+ *
+ * @param dest Array to be written to
+ * @param src_object Object to be assigned, array-coercion rules apply.
+ * @return 0 on success -1 on failures.
+ */
 /*NUMPY_API*/
 NPY_NO_EXPORT int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
     int ret = 0;
-    PyArrayObject *src;
+    PyArrayObject *view;
     PyArray_Descr *dtype = NULL;
-    int ndim = 0;
+    int ndim;
     npy_intp dims[NPY_MAXDIMS];
-
-    Py_INCREF(src_object);
-    /*
-     * Special code to mimic Numeric behavior for
-     * character arrays.
-     */
-    if (PyArray_DESCR(dest)->type == NPY_CHARLTR &&
-                                PyArray_NDIM(dest) > 0 &&
-                                PyString_Check(src_object)) {
-        npy_intp n_new, n_old;
-        char *new_string;
-        PyObject *tmp;
-
-        n_new = PyArray_DIMS(dest)[PyArray_NDIM(dest)-1];
-        n_old = PyString_Size(src_object);
-        if (n_new > n_old) {
-            new_string = malloc(n_new);
-            if (new_string == NULL) {
-                Py_DECREF(src_object);
-                PyErr_NoMemory();
-                return -1;
-            }
-            memcpy(new_string, PyString_AS_STRING(src_object), n_old);
-            memset(new_string + n_old, ' ', n_new - n_old);
-            tmp = PyString_FromStringAndSize(new_string, n_new);
-            free(new_string);
-            Py_DECREF(src_object);
-            src_object = tmp;
-        }
-    }
+    coercion_cache_obj *cache = NULL;
 
     /*
-     * Get either an array object we can copy from, or its parameters
-     * if there isn't a convenient array available.
+     * We have to set the maximum number of dimensions here to support
+     * sequences within object arrays.
      */
-    if (PyArray_GetArrayParamsFromObject_int(src_object,
-                PyArray_DESCR(dest), 0, &dtype, &ndim, dims, &src) < 0) {
-        Py_DECREF(src_object);
+    ndim = PyArray_DiscoverDTypeAndShape(src_object,
+            PyArray_NDIM(dest), dims, &cache,
+            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype);
+    if (ndim < 0) {
         return -1;
     }
 
-    /* If it's not an array, either assign from a sequence or as a scalar */
-    if (src == NULL) {
-        /* If the input is scalar */
-        if (ndim == 0) {
-            /* If there's one dest element and src is a Python scalar */
-            if (PyArray_IsScalar(src_object, Generic)) {
-                char *value;
-                int retcode;
-
-                value = scalar_value(src_object, dtype);
-                if (value == NULL) {
-                    Py_DECREF(dtype);
-                    Py_DECREF(src_object);
-                    return -1;
-                }
-
-                /* TODO: switch to SAME_KIND casting */
-                retcode = PyArray_AssignRawScalar(dest, dtype, value,
-                                        NULL, NPY_UNSAFE_CASTING);
-                Py_DECREF(dtype);
-                Py_DECREF(src_object);
-                return retcode;
-            }
-            /* Otherwise use the dtype's setitem function */
-            else {
-                if (PyArray_SIZE(dest) == 1) {
-                    Py_DECREF(dtype);
-                    Py_DECREF(src_object);
-                    ret = PyArray_SETITEM(dest, PyArray_DATA(dest), src_object);
-                    return ret;
-                }
-                else {
-                    src = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                                        dtype, 0, NULL, NULL,
-                                                        NULL, 0, NULL);
-                    if (src == NULL) {
-                        Py_DECREF(src_object);
-                        return -1;
-                    }
-                    if (PyArray_SETITEM(src, PyArray_DATA(src), src_object) < 0) {
-                        Py_DECREF(src_object);
-                        Py_DECREF(src);
-                        return -1;
-                    }
-                }
-            }
-        }
-        else {
-            /*
-             * If there are more than enough dims, use AssignFromSequence
-             * because it can handle this style of broadcasting.
-             */
-            if (ndim >= PyArray_NDIM(dest)) {
-                int res;
-                Py_DECREF(dtype);
-                res = PyArray_AssignFromSequence(dest, src_object);
-                Py_DECREF(src_object);
-                return res;
-            }
-            /* Otherwise convert to an array and do an array-based copy */
-            src = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                        dtype, ndim, dims, NULL, NULL,
-                                        PyArray_ISFORTRAN(dest), NULL);
-            if (src == NULL) {
-                Py_DECREF(src_object);
-                return -1;
-            }
-            if (PyArray_AssignFromSequence(src, src_object) < 0) {
-                Py_DECREF(src);
-                Py_DECREF(src_object);
-                return -1;
-            }
-        }
+    if (cache != NULL && !(cache->sequence)) {
+        /* The input is an array or array object, so assign directly */
+        assert(cache->converted_obj == src_object);
+        view = (PyArrayObject *)cache->arr_or_sequence;
+        Py_DECREF(dtype);
+        ret = PyArray_AssignArray(dest, view, NULL, NPY_UNSAFE_CASTING);
+        npy_free_coercion_cache(cache);
+        return ret;
     }
 
-    /* If it's an array, do a move (handling possible overlapping data) */
-    ret = PyArray_MoveInto(dest, src);
-    Py_DECREF(src);
-    Py_DECREF(src_object);
+    /*
+     * We may need to broadcast, due to shape mismatches, in this case
+     * create a temporary array first, and assign that after filling
+     * it from the sequences/scalar.
+     */
+    if (ndim != PyArray_NDIM(dest) ||
+            !PyArray_CompareLists(PyArray_DIMS(dest), dims, ndim)) {
+        /*
+         * Broadcasting may be necessary, so assign to a view first.
+         * This branch could lead to a shape mismatch error later.
+         */
+        assert (ndim <= PyArray_NDIM(dest));  /* would error during discovery */
+        view = (PyArrayObject *) PyArray_NewFromDescr(
+                &PyArray_Type, dtype, ndim, dims, NULL, NULL,
+                PyArray_FLAGS(dest) & NPY_ARRAY_F_CONTIGUOUS, NULL);
+        if (view == NULL) {
+            npy_free_coercion_cache(cache);
+            return -1;
+        }
+    }
+    else {
+        Py_DECREF(dtype);
+        view = dest;
+    }
+
+    /* Assign the values to `view` (whichever array that is) */
+    if (cache == NULL) {
+        /* single (non-array) item, assign immediately */
+        if (PyArray_Pack(
+                PyArray_DESCR(view), PyArray_DATA(view), src_object) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        if (PyArray_AssignFromCache(view, cache) < 0) {
+            goto fail;
+        }
+    }
+    if (view == dest) {
+        return 0;
+    }
+    ret = PyArray_AssignArray(dest, view, NULL, NPY_UNSAFE_CASTING);
+    Py_DECREF(view);
     return ret;
+
+  fail:
+    if (view != dest) {
+        Py_DECREF(view);
+    }
+    return -1;
 }
 
 
@@ -453,7 +416,7 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
     if (PyErr_WarnEx(warning, msg, 1) < 0) {
         PyObject * s;
 
-        s = PyUString_FromString("array_dealloc");
+        s = PyUnicode_FromString("array_dealloc");
         if (s) {
             PyErr_WriteUnraisable(s);
             Py_DECREF(s);
@@ -471,7 +434,9 @@ array_dealloc(PyArrayObject *self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
-    _dealloc_cached_buffer_info((PyObject*)self);
+    if (_buffer_info_free(fa->_buffer_info, (PyObject *)self) < 0) {
+        PyErr_WriteUnraisable(NULL);
+    }
 
     if (fa->weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *)self);
@@ -1391,11 +1356,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     switch (cmp_op) {
     case Py_LT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other, n_ops.less);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.less);
         break;
     case Py_LE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other, n_ops.less_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.less_equal);
         break;
     case Py_EQ:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1445,9 +1412,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        result = PyArray_GenericBinaryFunction(self,
-                (PyObject *)other,
-                n_ops.equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, (PyObject *)other, n_ops.equal);
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1497,18 +1463,18 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
-                n_ops.not_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.greater);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.greater);
         break;
     case Py_GE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.greater_equal);
+        result = PyArray_GenericBinaryFunction(
+                (PyObject *)self, other, n_ops.greater_equal);
         break;
     default:
         Py_INCREF(Py_NotImplemented);
@@ -1624,7 +1590,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     PyArray_Descr *descr = NULL;
     int itemsize;
     PyArray_Dims dims = {NULL, 0};
-    PyArray_Dims strides = {NULL, 0};
+    PyArray_Dims strides = {NULL, -1};
     PyArray_Chunk buffer;
     npy_longlong offset = 0;
     NPY_ORDER order = NPY_CORDER;
@@ -1645,7 +1611,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                      PyArray_BufferConverter,
                                      &buffer,
                                      &offset,
-                                     &PyArray_IntpConverter,
+                                     &PyArray_OptionalIntpConverter,
                                      &strides,
                                      &PyArray_OrderConverter,
                                      &order)) {
@@ -1660,7 +1626,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     itemsize = descr->elsize;
 
-    if (strides.ptr != NULL) {
+    if (strides.len != -1) {
         npy_intp nb, off;
         if (strides.len != dims.len) {
             PyErr_SetString(PyExc_ValueError,
@@ -1782,17 +1748,13 @@ array_free(PyObject * v)
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.ndarray",
-    .tp_basicsize = NPY_SIZEOF_PYARRAYOBJECT,
+    .tp_basicsize = sizeof(PyArrayObject_fields),
     /* methods */
     .tp_dealloc = (destructor)array_dealloc,
     .tp_repr = (reprfunc)array_repr,
     .tp_as_number = &array_as_number,
     .tp_as_sequence = &array_as_sequence,
     .tp_as_mapping = &array_as_mapping,
-    /*
-     * The tp_hash slot will be set PyObject_HashNotImplemented when the
-     * module is loaded.
-     */
     .tp_str = (reprfunc)array_str,
     .tp_as_buffer = &array_as_buffer,
     .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),

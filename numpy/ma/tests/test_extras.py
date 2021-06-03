@@ -64,6 +64,28 @@ class TestGeneric:
         control = array([[(1, (1, 1))]], mask=[[(1, (1, 1))]], dtype=dt)
         assert_equal(test, control)
 
+    def test_masked_all_with_object_nested(self):
+        # Test masked_all works with nested array with dtype of an 'object'
+        # refers to issue #15895
+        my_dtype = np.dtype([('b', ([('c', object)], (1,)))])
+        masked_arr = np.ma.masked_all((1,), my_dtype)
+
+        assert_equal(type(masked_arr['b']), np.ma.core.MaskedArray)
+        assert_equal(type(masked_arr['b']['c']), np.ma.core.MaskedArray)
+        assert_equal(len(masked_arr['b']['c']), 1)
+        assert_equal(masked_arr['b']['c'].shape, (1, 1))
+        assert_equal(masked_arr['b']['c']._fill_value.shape, ())
+    
+    def test_masked_all_with_object(self):
+        # same as above except that the array is not nested
+        my_dtype = np.dtype([('b', (object, (1,)))])
+        masked_arr = np.ma.masked_all((1,), my_dtype)
+
+        assert_equal(type(masked_arr['b']), np.ma.core.MaskedArray)
+        assert_equal(len(masked_arr['b']), 1)
+        assert_equal(masked_arr['b'].shape, (1, 1))
+        assert_equal(masked_arr['b']._fill_value.shape, ())
+
     def test_masked_all_like(self):
         # Tests masked_all
         # Standard dtype
@@ -269,6 +291,23 @@ class TestAverage:
                      average(a.imag, weights=wts, axis=1)*1j)
         assert_almost_equal(wav1.real, expected1.real)
         assert_almost_equal(wav1.imag, expected1.imag)
+
+    def test_masked_weights(self):
+        # Test with masked weights.
+        # (Regression test for https://github.com/numpy/numpy/issues/10438)
+        a = np.ma.array(np.arange(9).reshape(3, 3),
+                        mask=[[1, 0, 0], [1, 0, 0], [0, 0, 0]])
+        weights_unmasked = masked_array([5, 28, 31], mask=False)
+        weights_masked = masked_array([5, 28, 31], mask=[1, 0, 0])
+
+        avg_unmasked = average(a, axis=0,
+                               weights=weights_unmasked, returned=False)
+        expected_unmasked = np.array([6.0, 5.21875, 6.21875])
+        assert_almost_equal(avg_unmasked, expected_unmasked)
+
+        avg_masked = average(a, axis=0, weights=weights_masked, returned=False)
+        expected_masked = np.array([6.0, 5.576271186440678, 6.576271186440678])
+        assert_almost_equal(avg_masked, expected_masked)
 
 
 class TestConcatenator:

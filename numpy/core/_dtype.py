@@ -24,11 +24,11 @@ _kind_to_stem = {
 def _kind_name(dtype):
     try:
         return _kind_to_stem[dtype.kind]
-    except KeyError:
+    except KeyError as e:
         raise RuntimeError(
             "internal dtype error, unknown kind {!r}"
             .format(dtype.kind)
-        )
+        ) from None
 
 
 def __str__(dtype):
@@ -160,13 +160,13 @@ def _scalar_str(dtype, short):
 def _byte_order_str(dtype):
     """ Normalize byteorder to '<' or '>' """
     # hack to obtain the native and swapped byte order characters
-    swapped = np.dtype(int).newbyteorder('s')
-    native = swapped.newbyteorder('s')
+    swapped = np.dtype(int).newbyteorder('S')
+    native = swapped.newbyteorder('S')
 
     byteorder = dtype.byteorder
     if byteorder == '=':
         return native.byteorder
-    if byteorder == 's':
+    if byteorder == 'S':
         # TODO: this path can never be reached
         return swapped.byteorder
     elif byteorder == '|':
@@ -176,7 +176,7 @@ def _byte_order_str(dtype):
 
 
 def _datetime_metadata_str(dtype):
-    # TODO: this duplicates the C append_metastr_to_string
+    # TODO: this duplicates the C metastr_to_unicode functionality
     unit, count = np.datetime_data(dtype)
     if unit == 'generic':
         return ''

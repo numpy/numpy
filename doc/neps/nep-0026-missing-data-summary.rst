@@ -1,3 +1,5 @@
+.. _NEP26:
+
 ====================================================
 NEP 26 — Summary of Missing Data NEPs and discussion
 ====================================================
@@ -8,14 +10,14 @@ NEP 26 — Summary of Missing Data NEPs and discussion
 :Created: 2012-04-22
 
 *Context*: this NEP was written as summary of the large number of discussions
-and proposals (`NEP 12`_, `NEP 24`_, `NEP 25`_), regarding missing data
+and proposals (:ref:`NEP12`, :ref:`NEP24`, :ref:`NEP25`), regarding missing data
 functionality.
 
 The debate about how NumPy should handle missing data, a subject with
 many preexisting approaches, requirements, and conventions, has been long and
 contentious. There has been more than one proposal for how to implement
 support into NumPy, and there is a testable implementation which is
-merged into NumPy's current master. The vast number of emails and differing
+merged into NumPy's current main. The vast number of emails and differing
 points of view has made it difficult for interested parties to understand
 the issues and be comfortable with the direction NumPy is going.
 
@@ -349,7 +351,7 @@ dtypes can arrange for certain bitpatterns to be given NA semantics.
 One option is to copy numpy.ma closely, but with a more optimized
 implementation. (Or to simply optimize the existing implementation.)
 
-One option is that described in `NEP 12`_, for which an implementation
+One option is that described in `NEP12`, for which an implementation
 of mask-based missing data exists. This system is roughly:
 
 * There is both bitpattern and mask-based missing data, and both
@@ -364,7 +366,7 @@ of mask-based missing data exists. This system is roughly:
   a bitpattern NA to an array which supports both requires accessing
   the data by "peeking under the mask".
 
-Another option is that described in `NEP 24`_, which is to implement
+Another option is that described in `NEP24`, which is to implement
 bitpattern dtypes with NA semantics for the "statistical missing data"
 use case, and to also implement a totally independent API for masked
 arrays with ignore semantics and all mask manipulation done explicitly
@@ -563,7 +565,7 @@ Recommendations for Moving Forward
   we're going to have to figure out how to experiment with such
   changes out-of-core if NumPy is to continue to evolve without
   forking -- might as well do it now. The existing code can live in
-  master, disabled, or it can live in a branch -- it'll still be there
+  the main branch, be disabled, or live its own branch -- it'll still be there
   once we know what we're doing.
 
 **Mark** thinks we should:
@@ -574,8 +576,8 @@ Recommendations for Moving Forward
 A more detailed rationale for this recommendation is:
 
 * A solid preliminary NA-mask implementation is currently in NumPy
-  master. This implementation has been extensively tested
-  against scipy and other third-party packages, and has been in master
+  main. This implementation has been extensively tested
+  against scipy and other third-party packages, and has been in main
   in a stable state for a significant amount of time.
 * This implementation integrates deeply with the core, providing an
   interface which is usable in the same way R's NA support is. It
@@ -704,14 +706,14 @@ risk of reducing developer contribution.
 References and Footnotes
 ------------------------
 
-`NEP 12`_ describes Mark's NA-semantics/mask implementation/view based mask
+:ref:`NEP12` describes Mark's NA-semantics/mask implementation/view based mask
 handling API.
 
-`NEP 24`_ ("the alterNEP") was Nathaniel's initial attempt at separating MISSING
+:ref:`NEP24` ("the alterNEP") was Nathaniel's initial attempt at separating MISSING
 and IGNORED handling into bit-patterns versus masks, though there's a bunch
 he would change about the proposal at this point.
 
-`NEP 25`_ ("miniNEP 2") was a later attempt by Nathaniel to sketch out an
+:ref:`NEP25` ("miniNEP 2") was a later attempt by Nathaniel to sketch out an
 implementation strategy for NA dtypes.
 
 A further discussion overview page can be found at:
@@ -722,9 +724,3 @@ Copyright
 ---------
 
 This document has been placed in the public domain.
-
-.. _NEP 12: http://www.numpy.org/neps/nep-0012-missing-data.html
-
-.. _NEP 24: http://www.numpy.org/neps/nep-0024-missing-data-2.html
-
-.. _NEP 25: http://www.numpy.org/neps/nep-0025-missing-data-3.html

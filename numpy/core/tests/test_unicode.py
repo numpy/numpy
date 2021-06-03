@@ -1,10 +1,8 @@
 import numpy as np
-from numpy.compat import unicode
 from numpy.testing import assert_, assert_equal, assert_array_equal
 
 def buffer_length(arr):
-    if isinstance(arr, unicode):
-        arr = str(arr)
+    if isinstance(arr, str):
         if not arr:
             charmax = 0
         else:

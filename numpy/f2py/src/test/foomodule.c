@@ -121,7 +121,7 @@ void initfoo() {
     m = Py_InitModule("foo", foo_module_methods);
 
     d = PyModule_GetDict(m);
-    s = PyString_FromString("This module 'foo' demonstrates the usage of fortranobject.");
+    s = PyUnicode_FromString("This module 'foo' demonstrates the usage of fortranobject.");
     PyDict_SetItemString(d, "__doc__", s);
 
     /* Fortran objects: */

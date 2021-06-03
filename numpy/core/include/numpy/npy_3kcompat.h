@@ -28,6 +28,30 @@ extern "C" {
  * PyInt -> PyLong
  */
 
+
+/*
+ * This is a renamed copy of the Python non-limited API function _PyLong_AsInt. It is
+ * included here because it is missing from the PyPy API. It completes the PyLong_As*
+ * group of functions and can be useful in replacing PyInt_Check.
+ */
+static NPY_INLINE int
+Npy__PyLong_AsInt(PyObject *obj)
+{
+    int overflow;
+    long result = PyLong_AsLongAndOverflow(obj, &overflow);
+
+    /* INT_MAX and INT_MIN are defined in Python.h */
+    if (overflow || result > INT_MAX || result < INT_MIN) {
+        /* XXX: could be cute and give a different
+           message for overflow == -1 */
+        PyErr_SetString(PyExc_OverflowError,
+                        "Python int too large to convert to C int");
+        return -1;
+    }
+    return (int)result;
+}
+
+
 #if defined(NPY_PY3K)
 /* Return True only if the long fits in a C long */
 static NPY_INLINE int PyInt_Check(PyObject *op) {
@@ -38,6 +62,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     PyLong_AsLongAndOverflow(op, &overflow);
     return (overflow == 0);
 }
+
 
 #define PyInt_FromLong PyLong_FromLong
 #define PyInt_AsLong PyLong_AsLong
@@ -59,6 +84,16 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #  define NpySlice_GetIndicesEx(op, nop, start, end, step, slicelength) \
     PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
 #endif
+
+#if PY_VERSION_HEX < 0x030900a4
+    /* Introduced in https://github.com/python/cpython/commit/d2ec81a8c99796b51fb8c49b77a7fe369863226f */
+    #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)), (void)0)
+    /* Introduced in https://github.com/python/cpython/commit/b10dc3e7a11fcdb97e285882eba6da92594f90f9 */
+    #define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)), (void)0)
+    /* Introduced in https://github.com/python/cpython/commit/c86a11221df7e37da389f9c6ce6e47ea22dc44ff */
+    #define Py_SET_REFCNT(obj, refcnt) ((Py_REFCNT(obj) = (refcnt)), (void)0)
+#endif
+
 
 #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
 
@@ -181,6 +216,7 @@ static NPY_INLINE FILE*
 npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 {
     int fd, fd2, unbuf;
+    Py_ssize_t fd2_tmp;
     PyObject *ret, *os, *io, *io_raw;
     npy_off_t pos;
     FILE *handle;
@@ -216,8 +252,17 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     if (ret == NULL) {
         return NULL;
     }
-    fd2 = PyNumber_AsSsize_t(ret, NULL);
+    fd2_tmp = PyNumber_AsSsize_t(ret, PyExc_IOError);
     Py_DECREF(ret);
+    if (fd2_tmp == -1 && PyErr_Occurred()) {
+        return NULL;
+    }
+    if (fd2_tmp < INT_MIN || fd2_tmp > INT_MAX) {
+        PyErr_SetString(PyExc_IOError,
+                        "Getting an 'int' from os.dup() failed");
+        return NULL;
+    }
+    fd2 = (int)fd2_tmp;
 
     /* Convert to FILE* handle */
 #ifdef _WIN32
@@ -545,5 +590,6 @@ NpyCapsule_Check(PyObject *ptr)
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif /* _NPY_3KCOMPAT_H_ */

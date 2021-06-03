@@ -10,8 +10,7 @@ from . import multiarray as mu
 from . import overrides
 from . import umath as um
 from . import numerictypes as nt
-from ._asarray import asarray, array, asanyarray
-from .multiarray import concatenate
+from .multiarray import asarray, array, asanyarray, concatenate
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -308,7 +307,7 @@ def _choose_dispatcher(a, choices, out=None, mode=None):
 @array_function_dispatch(_choose_dispatcher)
 def choose(a, choices, out=None, mode='raise'):
     """
-    Construct an array from an index array and a set of arrays to choose from.
+    Construct an array from an index array and a list of arrays to choose from.
 
     First of all, if confused or uncertain, definitely look at the Examples -
     in its full generality, this function is less simple than it might
@@ -319,34 +318,34 @@ def choose(a, choices, out=None, mode='raise'):
 
     But this omits some subtleties.  Here is a fully general summary:
 
-    Given an "index" array (`a`) of integers and a sequence of `n` arrays
+    Given an "index" array (`a`) of integers and a sequence of ``n`` arrays
     (`choices`), `a` and each choice array are first broadcast, as necessary,
     to arrays of a common shape; calling these *Ba* and *Bchoices[i], i =
     0,...,n-1* we have that, necessarily, ``Ba.shape == Bchoices[i].shape``
-    for each `i`.  Then, a new array with shape ``Ba.shape`` is created as
+    for each ``i``.  Then, a new array with shape ``Ba.shape`` is created as
     follows:
 
-    * if ``mode=raise`` (the default), then, first of all, each element of
-      `a` (and thus `Ba`) must be in the range `[0, n-1]`; now, suppose that
-      `i` (in that range) is the value at the `(j0, j1, ..., jm)` position
-      in `Ba` - then the value at the same position in the new array is the
-      value in `Bchoices[i]` at that same position;
+    * if ``mode='raise'`` (the default), then, first of all, each element of
+      ``a`` (and thus ``Ba``) must be in the range ``[0, n-1]``; now, suppose
+      that ``i`` (in that range) is the value at the ``(j0, j1, ..., jm)``
+      position in ``Ba`` - then the value at the same position in the new array
+      is the value in ``Bchoices[i]`` at that same position;
 
-    * if ``mode=wrap``, values in `a` (and thus `Ba`) may be any (signed)
+    * if ``mode='wrap'``, values in `a` (and thus `Ba`) may be any (signed)
       integer; modular arithmetic is used to map integers outside the range
       `[0, n-1]` back into that range; and then the new array is constructed
       as above;
 
-    * if ``mode=clip``, values in `a` (and thus `Ba`) may be any (signed)
-      integer; negative integers are mapped to 0; values greater than `n-1`
-      are mapped to `n-1`; and then the new array is constructed as above.
+    * if ``mode='clip'``, values in `a` (and thus ``Ba``) may be any (signed)
+      integer; negative integers are mapped to 0; values greater than ``n-1``
+      are mapped to ``n-1``; and then the new array is constructed as above.
 
     Parameters
     ----------
     a : int array
-        This array must contain integers in `[0, n-1]`, where `n` is the number
-        of choices, unless ``mode=wrap`` or ``mode=clip``, in which cases any
-        integers are permissible.
+        This array must contain integers in ``[0, n-1]``, where ``n`` is the
+        number of choices, unless ``mode=wrap`` or ``mode=clip``, in which
+        cases any integers are permissible.
     choices : sequence of arrays
         Choice arrays. `a` and all of the choices must be broadcastable to the
         same shape.  If `choices` is itself an array (not recommended), then
@@ -355,12 +354,12 @@ def choose(a, choices, out=None, mode='raise'):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype. Note that `out` is always
-        buffered if `mode='raise'`; use other modes for better performance.
+        buffered if ``mode='raise'``; use other modes for better performance.
     mode : {'raise' (default), 'wrap', 'clip'}, optional
-        Specifies how indices outside `[0, n-1]` will be treated:
+        Specifies how indices outside ``[0, n-1]`` will be treated:
 
           * 'raise' : an exception is raised
-          * 'wrap' : value becomes value mod `n`
+          * 'wrap' : value becomes value mod ``n``
           * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
 
     Returns
@@ -459,6 +458,7 @@ def repeat(a, repeats, axis=None):
     See Also
     --------
     tile : Tile an array.
+    unique : Find the unique elements of an array.
 
     Examples
     --------
@@ -536,9 +536,9 @@ def put(a, ind, v, mode='raise'):
     """
     try:
         put = a.put
-    except AttributeError:
+    except AttributeError as e:
         raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(a).__name__))
+                        "not {name}".format(name=type(a).__name__)) from e
 
     return put(ind, v, mode=mode)
 
@@ -605,6 +605,8 @@ def transpose(a, axes=None):
 
     For an array a with two axes, transpose(a) gives the matrix transpose.
 
+    Refer to `numpy.ndarray.transpose` for full documentation.
+
     Parameters
     ----------
     a : array_like
@@ -624,6 +626,7 @@ def transpose(a, axes=None):
 
     See Also
     --------
+    ndarray.transpose : Equivalent method
     moveaxis
     argsort
 
@@ -648,6 +651,10 @@ def transpose(a, axes=None):
     >>> x = np.ones((1, 2, 3))
     >>> np.transpose(x, (1, 0, 2)).shape
     (2, 1, 3)
+
+    >>> x = np.ones((2, 3, 4, 5))
+    >>> np.transpose(x).shape
+    (5, 4, 3, 2)
 
     """
     return _wrapfunc(a, 'transpose', axes)
@@ -1370,21 +1377,28 @@ def resize(a, new_shape):
     reshaped_array : ndarray
         The new array is formed from the data in the old array, repeated
         if necessary to fill out the required number of elements.  The
-        data are repeated in the order that they are stored in memory.
+        data are repeated iterating over the array in C-order.
 
     See Also
     --------
+    np.reshape : Reshape an array without changing the total size.
+    np.pad : Enlarge and pad an array.
+    np.repeat : Repeat elements of an array.
     ndarray.resize : resize an array in-place.
 
     Notes
     -----
+    When the total size of the array does not change `~numpy.reshape` should
+    be used.  In most other cases either indexing (to reduce the size)
+    or padding (to increase the size) may be a more appropriate solution.
+
     Warning: This functionality does **not** consider axes separately,
     i.e. it does not apply interpolation/extrapolation.
-    It fills the return array with the required number of elements, taken
-    from `a` as they are laid out in memory, disregarding strides and axes.
-    (This is in case the new shape is smaller. For larger, see above.)
-    This functionality is therefore not suitable to resize images,
-    or data where each axis represents a separate and distinct entity.
+    It fills the return array with the required number of elements, iterating
+    over `a` in C-order, disregarding axes (and cycling back from the start if
+    the new shape is larger).  This functionality is therefore not suitable to
+    resize images, or data where each axis represents a separate and distinct
+    entity.
 
     Examples
     --------
@@ -1401,22 +1415,21 @@ def resize(a, new_shape):
     """
     if isinstance(new_shape, (int, nt.integer)):
         new_shape = (new_shape,)
+
     a = ravel(a)
-    Na = len(a)
-    total_size = um.multiply.reduce(new_shape)
-    if Na == 0 or total_size == 0:
-        return mu.zeros(new_shape, a.dtype)
 
-    n_copies = int(total_size / Na)
-    extra = total_size % Na
+    new_size = 1
+    for dim_length in new_shape:
+        new_size *= dim_length
+        if dim_length < 0:
+            raise ValueError('all elements of `new_shape` must be non-negative')
 
-    if extra != 0:
-        n_copies = n_copies + 1
-        extra = Na - extra
+    if a.size == 0 or new_size == 0:
+        # First case must zero fill. The second would have repeats == 0.
+        return np.zeros_like(a, shape=new_shape)
 
-    a = concatenate((a,) * n_copies)
-    if extra > 0:
-        a = a[:-extra]
+    repeats = -(-new_size // a.size)  # ceil division
+    a = concatenate((a,) * repeats)[:new_size]
 
     return reshape(a, new_shape)
 
@@ -1428,7 +1441,7 @@ def _squeeze_dispatcher(a, axis=None):
 @array_function_dispatch(_squeeze_dispatcher)
 def squeeze(a, axis=None):
     """
-    Remove single-dimensional entries from the shape of an array.
+    Remove axes of length one from `a`.
 
     Parameters
     ----------
@@ -1437,7 +1450,7 @@ def squeeze(a, axis=None):
     axis : None or int or tuple of ints, optional
         .. versionadded:: 1.7.0
 
-        Selects a subset of the single-dimensional entries in the
+        Selects a subset of the entries of length one in the
         shape. If an axis is selected with shape entry greater than
         one, an error is raised.
 
@@ -1456,7 +1469,7 @@ def squeeze(a, axis=None):
 
     See Also
     --------
-    expand_dims : The inverse operation, adding singleton dimensions
+    expand_dims : The inverse operation, adding entries of length one
     reshape : Insert, remove, and combine dimensions, and resize existing ones
 
     Examples
@@ -1829,11 +1842,11 @@ def nonzero(a):
     .. note::
 
        When called on a zero-d array or scalar, ``nonzero(a)`` is treated
-       as ``nonzero(atleast1d(a))``.
+       as ``nonzero(atleast_1d(a))``.
 
        .. deprecated:: 1.17.0
 
-          Use `atleast1d` explicitly if this behavior is deliberate.
+          Use `atleast_1d` explicitly if this behavior is deliberate.
 
     Parameters
     ----------
@@ -1930,7 +1943,7 @@ def shape(a):
 
     See Also
     --------
-    alen
+    len
     ndarray.shape : Equivalent array method.
 
     Examples
@@ -1996,8 +2009,8 @@ def compress(condition, a, axis=None, out=None):
     --------
     take, choose, diag, diagonal, select
     ndarray.compress : Equivalent method in ndarray
-    np.extract: Equivalent method when working on 1-D arrays
-    ufuncs-output-type
+    extract : Equivalent method when working on 1-D arrays
+    :ref:`ufuncs-output-type`
 
     Examples
     --------
@@ -2048,15 +2061,10 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     ----------
     a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like or None
-        Minimum value. If None, clipping is not performed on lower
-        interval edge. Not more than one of `a_min` and `a_max` may be
-        None.
-    a_max : scalar or array_like or None
-        Maximum value. If None, clipping is not performed on upper
-        interval edge. Not more than one of `a_min` and `a_max` may be
-        None. If `a_min` or `a_max` are array_like, then the three
-        arrays will be broadcasted to match their shapes.
+    a_min, a_max : array_like or None
+        Minimum and maximum value. If ``None``, clipping is not performed on
+        the corresponding edge. Only one of `a_min` and `a_max` may be
+        ``None``. Both are broadcast against `a`.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
@@ -2076,16 +2084,26 @@ def clip(a, a_min, a_max, out=None, **kwargs):
 
     See Also
     --------
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
+
+    Notes
+    -----
+    When `a_min` is greater than `a_max`, `clip` returns an 
+    array in which all values are equal to `a_max`, 
+    as shown in the second example.  
 
     Examples
     --------
     >>> a = np.arange(10)
-    >>> np.clip(a, 1, 8)
-    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.clip(a, 1, 8)
+    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
+    >>> np.clip(a, 8, 1)
+    array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
     >>> np.clip(a, 3, 6, out=a)
+    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    >>> a
     array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
     >>> a = np.arange(10)
     >>> a
@@ -2242,12 +2260,13 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
                           initial=initial, where=where)
 
 
-def _any_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out)
+def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
+                    where=np._NoValue):
+    return (a, where, out)
 
 
 @array_function_dispatch(_any_dispatcher)
-def any(a, axis=None, out=None, keepdims=np._NoValue):
+def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
 
@@ -2272,7 +2291,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         the same shape as the expected output and its type is preserved
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2284,6 +2303,12 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in checking for any `True` values.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -2316,6 +2341,9 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.any(np.nan)
     True
 
+    >>> np.any([[True, False], [False, False]], where=[[False], [True]])
+    False
+
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
     >>> z, o
@@ -2327,15 +2355,17 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
+                          keepdims=keepdims, where=where)
 
 
-def _all_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out)
+def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
+                    where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_all_dispatcher)
-def all(a, axis=None, out=None, keepdims=np._NoValue):
+def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether all array elements along a given axis evaluate to True.
 
@@ -2357,7 +2387,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         Alternate output array in which to place the result.
         It must have the same shape as the expected output and its
         type is preserved (e.g., if ``dtype(out)`` is float, the result
-        will consist of 0.0's and 1.0's). See `ufuncs-output-type` for more
+        will consist of 0.0's and 1.0's). See :ref:`ufuncs-output-type` for more
         details.
 
     keepdims : bool, optional
@@ -2370,6 +2400,12 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in checking for all `True` values.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -2402,13 +2438,17 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.all([1.0, np.nan])
     True
 
+    >>> np.all([[True, True], [False, True]], where=[[True], [False]])
+    True
+
     >>> o=np.array(False)
     >>> z=np.all([-1, 4, 5], out=o)
     >>> id(z), id(o), z
     (28293632, 28293632, array(True)) # may vary
 
     """
-    return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.logical_and, 'all', axis, None, out,
+                          keepdims=keepdims, where=where)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
@@ -2436,7 +2476,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
-        but the type will be cast if necessary. See `ufuncs-output-type` for
+        but the type will be cast if necessary. See :ref:`ufuncs-output-type` for
         more details.
 
     Returns
@@ -2447,19 +2487,20 @@ def cumsum(a, axis=None, dtype=None, out=None):
         result has the same size as `a`, and the same shape as `a` if
         `axis` is not None or `a` is a 1-d array.
 
-
     See Also
     --------
     sum : Sum array elements.
-
     trapz : Integration of array values using the composite trapezoidal rule.
-
-    diff :  Calculate the n-th discrete difference along given axis.
+    diff : Calculate the n-th discrete difference along given axis.
 
     Notes
     -----
     Arithmetic is modular when using integer types, and no error is
     raised on overflow.
+
+    ``cumsum(a)[-1]`` may not be equal to ``sum(a)`` for floating-point
+    values since ``sum`` may use a pairwise summation routine, reducing
+    the roundoff-error. See `sum` for more information.
 
     Examples
     --------
@@ -2479,6 +2520,14 @@ def cumsum(a, axis=None, dtype=None, out=None):
     array([[ 1,  3,  6],
            [ 4,  9, 15]])
 
+    ``cumsum(b)[-1]`` may not be equal to ``sum(b)``
+
+    >>> b = np.array([1, 2e-9, 3e-9] * 1000000)
+    >>> b.cumsum()[-1]
+    1000000.0050045159
+    >>> b.sum()                    
+    1000000.0050000029
+
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
 
@@ -2493,6 +2542,14 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     Range of values (maximum - minimum) along an axis.
 
     The name of the function comes from the acronym for 'peak to peak'.
+
+    .. warning::
+        `ptp` preserves the data type of the array. This means the
+        return value for an input of signed integers with n bits
+        (e.g. `np.int8`, `np.int16`, etc) is also a signed integer
+        with n bits.  In that case, peak-to-peak values greater than
+        ``2**(n-1)-1`` will be returned as negative values. An example
+        with a work-around is shown below.
 
     Parameters
     ----------
@@ -2531,16 +2588,33 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
-    >>> x
-    array([[0, 1],
-           [2, 3]])
-
-    >>> np.ptp(x, axis=0)
-    array([2, 2])
+    >>> x = np.array([[4, 9, 2, 10],
+    ...               [6, 9, 7, 12]])
 
     >>> np.ptp(x, axis=1)
-    array([1, 1])
+    array([8, 6])
+
+    >>> np.ptp(x, axis=0)
+    array([2, 0, 5, 2])
+
+    >>> np.ptp(x)
+    10
+
+    This example shows that a negative value can be returned when
+    the input is an array of signed integers.
+
+    >>> y = np.array([[1, 127],
+    ...               [0, 127],
+    ...               [-1, 127],
+    ...               [-2, 127]], dtype=np.int8)
+    >>> np.ptp(y, axis=1)
+    array([ 126,  127, -128, -127], dtype=int8)
+
+    A work-around is to use the `view()` method to view the result as
+    unsigned integers with the same bit width:
+
+    >>> np.ptp(y, axis=1).view(np.uint8)
+    array([126, 127, 128, 129], dtype=uint8)
 
     """
     kwargs = {}
@@ -2582,7 +2656,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2707,7 +2781,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2815,6 +2889,9 @@ def alen(a):
     """
     Return the length of the first dimension of the input array.
 
+    .. deprecated:: 1.18
+       `numpy.alen` is deprecated, use `len` instead.
+
     Parameters
     ----------
     a : array_like
@@ -2914,7 +2991,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     See Also
     --------
     ndarray.prod : equivalent method
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
@@ -3010,7 +3087,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     See Also
     --------
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
@@ -3156,7 +3233,7 @@ def around(a, decimals=0, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the output
-        values will be cast if necessary. See `ufuncs-output-type` for more
+        values will be cast if necessary. See :ref:`ufuncs-output-type` for more
         details.
 
     Returns
@@ -3237,12 +3314,14 @@ def around(a, decimals=0, out=None):
     return _wrapfunc(a, 'round', decimals=decimals, out=out)
 
 
-def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
-    return (a, out)
+def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None, *,
+                     where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_mean_dispatcher)
-def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
+def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
+         where=np._NoValue):
     """
     Compute the arithmetic mean along the specified axis.
 
@@ -3271,7 +3350,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -3283,6 +3362,11 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in the mean. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -3332,10 +3416,19 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.mean(a, dtype=np.float64)
     0.55000000074505806 # may vary
 
+    Specifying a where argument:
+    >>> a = np.array([[5, 9, 13], [14, 10, 12], [11, 15, 19]])
+    >>> np.mean(a)
+    12.0
+    >>> np.mean(a, where=[[True], [False], [False]])
+    9.0
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
             mean = a.mean
@@ -3348,13 +3441,14 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
                           out=out, **kwargs)
 
 
-def _std_dispatcher(
-        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
-    return (a, out)
+def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
+                    keepdims=None, *, where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_std_dispatcher)
-def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
+def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
+        where=np._NoValue):
     """
     Compute the standard deviation along the specified axis.
 
@@ -3397,6 +3491,12 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
+    where : array_like of bool, optional
+        Elements to include in the standard deviation.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
+
     Returns
     -------
     standard_deviation : ndarray, see dtype parameter above.
@@ -3406,22 +3506,23 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     See Also
     --------
     var, mean, nanmean, nanstd, nanvar
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
+    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where
+    ``x = abs(a - a.mean())**2``.
 
-    The average squared deviation is normally calculated as
-    ``x.sum() / N``, where ``N = len(x)``.  If, however, `ddof` is specified,
-    the divisor ``N - ddof`` is used instead. In standard statistical
-    practice, ``ddof=1`` provides an unbiased estimator of the variance
-    of the infinite population. ``ddof=0`` provides a maximum likelihood
-    estimate of the variance for normally distributed variables. The
-    standard deviation computed in this function is the square root of
-    the estimated variance, so even with ``ddof=1``, it will not be an
-    unbiased estimate of the standard deviation per se.
+    The average squared deviation is typically calculated as ``x.sum() / N``,
+    where ``N = len(x)``. If, however, `ddof` is specified, the divisor
+    ``N - ddof`` is used instead. In standard statistical practice, ``ddof=1``
+    provides an unbiased estimator of the variance of the infinite population.
+    ``ddof=0`` provides a maximum likelihood estimate of the variance for
+    normally distributed variables. The standard deviation computed in this
+    function is the square root of the estimated variance, so even with
+    ``ddof=1``, it will not be an unbiased estimate of the standard deviation
+    per se.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
@@ -3455,11 +3556,20 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     >>> np.std(a, dtype=np.float64)
     0.44999999925494177 # may vary
 
+    Specifying a where argument:
+
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> np.std(a)
+    2.614064523559687 # may vary
+    >>> np.std(a, where=[[True], [True], [False]])
+    2.0
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-
+    if where is not np._NoValue:
+        kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
             std = a.std
@@ -3472,13 +3582,14 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
                          **kwargs)
 
 
-def _var_dispatcher(
-        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
-    return (a, out)
+def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
+                    keepdims=None, *, where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_var_dispatcher)
-def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
+def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
+        where=np._NoValue):
     """
     Compute the variance along the specified axis.
 
@@ -3522,6 +3633,12 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
+    where : array_like of bool, optional
+        Elements to include in the variance. See `~numpy.ufunc.reduce` for
+        details.
+
+        .. versionadded:: 1.20.0
+
     Returns
     -------
     variance : ndarray, see dtype parameter above
@@ -3531,14 +3648,14 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     See Also
     --------
     std, mean, nanmean, nanstd, nanvar
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
     The variance is the average of the squared deviations from the mean,
-    i.e.,  ``var = mean(abs(x - x.mean())**2)``.
+    i.e.,  ``var = mean(x)``, where ``x = abs(a - a.mean())**2``.
 
-    The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
+    The mean is typically calculated as ``x.sum() / N``, where ``N = len(x)``.
     If, however, `ddof` is specified, the divisor ``N - ddof`` is used
     instead.  In standard statistical practice, ``ddof=1`` provides an
     unbiased estimator of the variance of a hypothetical infinite population.
@@ -3579,10 +3696,20 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     >>> ((1-0.55)**2 + (0.1-0.55)**2)/2
     0.2025
 
+    Specifying a where argument:
+
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> np.var(a)
+    6.833333333333333 # may vary
+    >>> np.var(a, where=[[True], [True], [False]])
+    4.0
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwargs['where'] = where
 
     if type(a) is not mu.ndarray:
         try:

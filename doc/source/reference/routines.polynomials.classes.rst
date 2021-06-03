@@ -65,11 +65,26 @@ window::
    >>> p.window
    array([-1.,  1.])
 
-Printing a polynomial yields a shorter form without the domain
-and window::
+Printing a polynomial yields the polynomial expression in a more familiar
+format::
 
    >>> print(p)
-   poly([1. 2. 3.])
+   1.0 + 2.0·x¹ + 3.0·x²
+
+Note that the string representation of polynomials uses Unicode characters
+by default (except on Windows) to express powers and subscripts. An ASCII-based
+representation is also available (default on Windows). The polynomial string
+format can be toggled at the package-level with the 
+`~numpy.polynomial.set_default_printstyle` function::
+
+   >>> numpy.polynomial.set_default_printstyle('ascii')
+   >>> print(p)
+   1.0 + 2.0 x**1 + 3.0 x**2
+
+or controlled for individual polynomial instances with string formatting::
+
+   >>> print(f"{p:unicode}")
+   1.0 + 2.0·x¹ + 3.0·x²
 
 We will deal with the domain and window when we get to fitting, for the moment
 we ignore them and run through the basic algebraic and arithmetic operations.
@@ -275,7 +290,8 @@ polynomials up to degree 5 are plotted below.
     >>> import matplotlib.pyplot as plt
     >>> from numpy.polynomial import Chebyshev as T
     >>> x = np.linspace(-1, 1, 100)
-    >>> for i in range(6): ax = plt.plot(x, T.basis(i)(x), lw=2, label="$T_%d$"%i)
+    >>> for i in range(6):
+    ...     ax = plt.plot(x, T.basis(i)(x), lw=2, label=f"$T_{i}$")
     ...
     >>> plt.legend(loc="upper left")
     <matplotlib.legend.Legend object at 0x3b3ee10>
@@ -289,7 +305,8 @@ The same plots over the range -2 <= `x` <= 2 look very different:
     >>> import matplotlib.pyplot as plt
     >>> from numpy.polynomial import Chebyshev as T
     >>> x = np.linspace(-2, 2, 100)
-    >>> for i in range(6): ax = plt.plot(x, T.basis(i)(x), lw=2, label="$T_%d$"%i)
+    >>> for i in range(6):
+    ...     ax = plt.plot(x, T.basis(i)(x), lw=2, label=f"$T_{i}$")
     ...
     >>> plt.legend(loc="lower right")
     <matplotlib.legend.Legend object at 0x3b3ee10>

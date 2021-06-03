@@ -3,10 +3,11 @@ import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, system_info
+    from numpy.distutils.system_info import (
+            get_info, system_info, lapack_opt_info, blas_opt_info)
     config = Configuration('linalg', parent_package, top_path)
 
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
 
     # Configure lapack_lite
 
@@ -74,6 +75,7 @@ def configuration(parent_package='', top_path=None):
         extra_info=lapack_info,
         libraries=['npymath'],
     )
+    config.add_data_files('*.pyi')
     return config
 
 if __name__ == '__main__':

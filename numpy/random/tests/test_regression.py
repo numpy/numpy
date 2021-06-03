@@ -3,7 +3,6 @@ from numpy.testing import (
     assert_, assert_array_equal, assert_raises,
     )
 from numpy import random
-from numpy.compat import long
 import numpy as np
 
 
@@ -41,19 +40,12 @@ class TestRegression:
         # numbers with this large sample
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / float(N)
-        msg = "Frequency was %f, should be > 0.45" % freq
+        msg = f'Frequency was {freq:f}, should be > 0.45'
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / float(N)
-        msg = "Frequency was %f, should be < 0.23" % freq
+        msg = f'Frequency was {freq:f}, should be < 0.23'
         assert_(freq < 0.23, msg)
-
-    def test_permutation_longs(self):
-        np.random.seed(1234)
-        a = np.random.permutation(12)
-        np.random.seed(1234)
-        b = np.random.permutation(long(12))
-        assert_array_equal(a, b)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074

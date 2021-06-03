@@ -1,9 +1,12 @@
+import contextlib
 import sys
 import warnings
 import itertools
 import operator
 import platform
 import pytest
+from hypothesis import given, settings, Verbosity, assume
+from hypothesis.strategies import sampled_from
 
 import numpy as np
 from numpy.testing import (
@@ -276,6 +279,10 @@ class TestModulus:
         # Check nans, inf
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
+            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -290,6 +297,9 @@ class TestModulus:
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
+                for op in [floordiv_and_mod, divmod]:
+                    div, mod = op(fone, fzer)
+                    assert_(np.isinf(div)) and assert_(np.isnan(mod))
 
     def test_inplace_floordiv_handling(self):
         # issue gh-12927
@@ -397,15 +407,15 @@ class TestConversion:
             assert_(res == tgt)
 
         for code in np.typecodes['AllInteger']:
-            res = np.typeDict[code](np.iinfo(code).max)
+            res = np.dtype(code).type(np.iinfo(code).max)
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 
     def test_int_raise_behaviour(self):
         def overflow_error_func(dtype):
-            np.typeDict[dtype](np.iinfo(dtype).max + 1)
+            dtype(np.iinfo(dtype).max + 1)
 
-        for code in 'lLqQ':
+        for code in [np.int_, np.uint, np.longlong, np.ulonglong]:
             assert_raises(OverflowError, overflow_error_func, code)
 
     def test_int_from_infinite_longdouble(self):
@@ -646,33 +656,33 @@ class TestSubtract:
 
 
 class TestAbs:
-    def _test_abs_func(self, absfunc):
-        for tp in floating_types + complex_floating_types:
-            x = tp(-1.5)
-            assert_equal(absfunc(x), 1.5)
-            x = tp(0.0)
-            res = absfunc(x)
-            # assert_equal() checks zero signedness
-            assert_equal(res, 0.0)
-            x = tp(-0.0)
-            res = absfunc(x)
-            assert_equal(res, 0.0)
+    def _test_abs_func(self, absfunc, test_dtype):
+        x = test_dtype(-1.5)
+        assert_equal(absfunc(x), 1.5)
+        x = test_dtype(0.0)
+        res = absfunc(x)
+        # assert_equal() checks zero signedness
+        assert_equal(res, 0.0)
+        x = test_dtype(-0.0)
+        res = absfunc(x)
+        assert_equal(res, 0.0)
 
-            x = tp(np.finfo(tp).max)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).max)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).tiny)
-            assert_equal(absfunc(x), x.real)
+        x = test_dtype(np.finfo(test_dtype).tiny)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).min)
-            assert_equal(absfunc(x), -x.real)
+        x = test_dtype(np.finfo(test_dtype).min)
+        assert_equal(absfunc(x), -x.real)
 
-    def test_builtin_abs(self):
-        self._test_abs_func(abs)
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_builtin_abs(self, dtype):
+        self._test_abs_func(abs, dtype)
 
-    def test_numpy_abs(self):
-        self._test_abs_func(np.abs)
-
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
+    def test_numpy_abs(self, dtype):
+        self._test_abs_func(np.abs, dtype)
 
 class TestBitShifts:
 
@@ -700,3 +710,115 @@ class TestBitShifts:
                 shift_arr = np.array([shift]*32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)
+
+
+class TestHash:
+    @pytest.mark.parametrize("type_code", np.typecodes['AllInteger'])
+    def test_integer_hashes(self, type_code):
+        scalar = np.dtype(type_code).type
+        for i in range(128):
+            assert hash(i) == hash(scalar(i))
+
+    @pytest.mark.parametrize("type_code", np.typecodes['AllFloat'])
+    def test_float_and_complex_hashes(self, type_code):
+        scalar = np.dtype(type_code).type
+        for val in [np.pi, np.inf, 3, 6.]:
+            numpy_val = scalar(val)
+            # Cast back to Python, in case the NumPy scalar has less precision
+            if numpy_val.dtype.kind == 'c':
+                val = complex(numpy_val)
+            else:
+                val = float(numpy_val)
+            assert val == numpy_val
+            print(repr(numpy_val), repr(val))
+            assert hash(val) == hash(numpy_val)
+
+        if hash(float(np.nan)) != hash(float(np.nan)):
+            # If Python distinguises different NaNs we do so too (gh-18833)
+            assert hash(scalar(np.nan)) != hash(scalar(np.nan))
+
+    @pytest.mark.parametrize("type_code", np.typecodes['Complex'])
+    def test_complex_hashes(self, type_code):
+        # Test some complex valued hashes specifically:
+        scalar = np.dtype(type_code).type
+        for val in [np.pi+1j, np.inf-3j, 3j, 6.+1j]:
+            numpy_val = scalar(val)
+            assert hash(complex(numpy_val)) == hash(numpy_val)
+
+
+@contextlib.contextmanager
+def recursionlimit(n):
+    o = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(n)
+        yield
+    finally:
+        sys.setrecursionlimit(o)
+
+
+objecty_things = [object(), None]
+reasonable_operators_for_scalars = [
+    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
+    operator.gt, operator.add, operator.floordiv, operator.mod,
+    operator.mul, operator.matmul, operator.pow, operator.sub,
+    operator.truediv,
+]
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+@settings(verbosity=Verbosity.verbose)
+def test_operator_object_left(o, op, type_):
+    try:
+        with recursionlimit(200):
+            op(o, type_(1))
+    except TypeError:
+        pass
+
+
+@given(sampled_from(objecty_things),
+       sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types))
+def test_operator_object_right(o, op, type_):
+    try:
+        with recursionlimit(200):
+            op(type_(1), o)
+    except TypeError:
+        pass
+
+
+@given(sampled_from(reasonable_operators_for_scalars),
+       sampled_from(types),
+       sampled_from(types))
+def test_operator_scalars(op, type1, type2):
+    try:
+        op(type1(1), type2(1))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_longdouble_inf_loop(op):
+    try:
+        op(np.longdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass
+
+
+@pytest.mark.parametrize("op", reasonable_operators_for_scalars)
+def test_clongdouble_inf_loop(op):
+    if op in {operator.mod} and False:
+        pytest.xfail("The modulo operator is known to be broken")
+    try:
+        op(np.clongdouble(3), None)
+    except TypeError:
+        pass
+    try:
+        op(None, np.longdouble(3))
+    except TypeError:
+        pass

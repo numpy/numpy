@@ -132,10 +132,9 @@ def poly2lag(pol):
 
     """
     [pol] = pu.as_series([pol])
-    deg = len(pol) - 1
     res = 0
-    for i in range(deg, -1, -1):
-        res = lagadd(lagmulx(res), pol[i])
+    for p in pol[::-1]:
+        res = lagadd(lagmulx(res), p)
     return res
 
 
@@ -215,8 +214,6 @@ def lagline(off, scl):
     """
     Laguerre series whose graph is a straight line.
 
-
-
     Parameters
     ----------
     off, scl : scalars
@@ -230,7 +227,11 @@ def lagline(off, scl):
 
     See Also
     --------
-    polyline, chebline
+    numpy.polynomial.polynomial.polyline
+    numpy.polynomial.chebyshev.chebline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.hermite.hermline
+    numpy.polynomial.hermite_e.hermeline
 
     Examples
     --------
@@ -283,7 +284,11 @@ def lagfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, chebfromroots, hermfromroots, hermefromroots
+    numpy.polynomial.polynomial.polyfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.chebyshev.chebfromroots
+    numpy.polynomial.hermite.hermfromroots
+    numpy.polynomial.hermite_e.hermefromroots
 
     Examples
     --------
@@ -1194,7 +1199,7 @@ def lagvander2d(x, y, deg):
     -------
     vander2d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        :math:`order = (deg[0]+1)*(deg[1]+1)`.  The dtype will be the same
         as the converted `x` and `y`.
 
     See Also
@@ -1248,7 +1253,7 @@ def lagvander3d(x, y, z, deg):
     -------
     vander3d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        :math:`order = (deg[0]+1)*(deg[1]+1)*(deg[2]+1)`.  The dtype will
         be the same as the converted `x`, `y`, and `z`.
 
     See Also
@@ -1303,7 +1308,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         information from the singular value decomposition is also returned.
     w : array_like, shape (`M`,), optional
         Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        ``(x[i],y[i])`` to the fit is weighted by ``w[i]``. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
@@ -1322,7 +1327,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         sv -- singular values of the scaled Vandermonde matrix
         rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Warns
     -----
@@ -1336,11 +1341,15 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, polyfit, hermfit, hermefit
+    numpy.polynomial.polynomial.polyfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.chebyshev.chebfit
+    numpy.polynomial.hermite.hermfit
+    numpy.polynomial.hermite_e.hermefit
     lagval : Evaluates a Laguerre series.
     lagvander : pseudo Vandermonde matrix of Laguerre series.
     lagweight : Laguerre weight function.
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1369,8 +1378,8 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     Fits using Laguerre series are probably most useful when the data can
     be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Laguerre
-    weight. In that case the weight ``sqrt(w(x[i])`` should be used
-    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
+    weight. In that case the weight ``sqrt(w(x[i]))`` should be used
+    together with data values ``y[i]/sqrt(w(x[i]))``. The weight function is
     available as `lagweight`.
 
     References
@@ -1456,7 +1465,11 @@ def lagroots(c):
 
     See Also
     --------
-    polyroots, legroots, chebroots, hermroots, hermeroots
+    numpy.polynomial.polynomial.polyroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.chebyshev.chebroots
+    numpy.polynomial.hermite.hermroots
+    numpy.polynomial.hermite_e.hermeroots
 
     Notes
     -----
@@ -1626,7 +1639,6 @@ class Laguerre(ABCPolyBase):
     _fromroots = staticmethod(lagfromroots)
 
     # Virtual properties
-    nickname = 'lag'
     domain = np.array(lagdomain)
     window = np.array(lagdomain)
     basis_name = 'L'

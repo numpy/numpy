@@ -1,15 +1,7 @@
-# NumPy static imports for Cython
+# NumPy static imports for Cython < 3.0
 #
 # If any of the PyArray_* functions are called, import_array must be
 # called first.
-#
-# This also defines backwards-compatibility buffer acquisition
-# code for use in Python 2.x (or Python <= 2.5 when NumPy starts
-# implementing PEP-3118 directly).
-#
-# Because of laziness, the format string of the buffer is statically
-# allocated. Increase the size if this is not enough, or submit a
-# patch to do this properly.
 #
 # Author: Dag Sverre Seljebotn
 #
@@ -26,6 +18,7 @@ cimport libc.stdio as stdio
 
 cdef extern from "Python.h":
     ctypedef int Py_intptr_t
+    bint PyObject_TypeCheck(object obj, PyTypeObject* type)
 
 cdef extern from "numpy/arrayobject.h":
     ctypedef Py_intptr_t npy_intp
@@ -220,18 +213,18 @@ cdef extern from "numpy/arrayobject.h":
         cdef int type_num
         cdef int itemsize "elsize"
         cdef int alignment
-        cdef dict fields
+        cdef object fields
         cdef tuple names
         # Use PyDataType_HASSUBARRAY to test whether this field is
         # valid (the pointer can be NULL). Most users should access
         # this field via the inline helper method PyDataType_SHAPE.
         cdef PyArray_ArrayDescr* subarray
 
-    ctypedef extern class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
+    ctypedef class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
         # Use through macros
         pass
 
-    ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
+    ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
         cdef int numiter
         cdef npy_intp size, index
         cdef int nd
@@ -254,20 +247,8 @@ cdef extern from "numpy/arrayobject.h":
             npy_intp *shape "dimensions"
             npy_intp *strides
             dtype descr  # deprecated since NumPy 1.7 !
-            PyObject* base
+            PyObject* base #  NOT PUBLIC, DO NOT USE !
 
-        # Note: This syntax (function definition in pxd files) is an
-        # experimental exception made for __getbuffer__ and __releasebuffer__
-        # -- the details of this may change.
-        def __getbuffer__(ndarray self, Py_buffer* info, int flags):
-            PyObject_GetBuffer(<object>self, info, flags);
-
-        def __releasebuffer__(ndarray self, Py_buffer* info):
-            # We should call a possible tp_bufferrelease(self, info) but no
-            # interface to that is exposed by cython or python. And currently
-            # the function is NULL in numpy, we rely on refcounting to release
-            # info when self is collected
-            pass
 
 
     ctypedef unsigned char      npy_bool
@@ -309,8 +290,8 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef long double  npy_float128
 
     ctypedef struct npy_cfloat:
-        double real
-        double imag
+        float real
+        float imag
 
     ctypedef struct npy_cdouble:
         double real
@@ -345,103 +326,107 @@ cdef extern from "numpy/arrayobject.h":
         int len
 
     int _import_array() except -1
+    # A second definition so _import_array isn't marked as used when we use it here.
+    # Do not use - subject to change any time.
+    int __pyx_import_array "_import_array"() except -1
 
     #
     # Macros from ndarrayobject.h
     #
-    bint PyArray_CHKFLAGS(ndarray m, int flags)
-    bint PyArray_IS_C_CONTIGUOUS(ndarray arr)
-    bint PyArray_IS_F_CONTIGUOUS(ndarray arr)
-    bint PyArray_ISCONTIGUOUS(ndarray m)
-    bint PyArray_ISWRITEABLE(ndarray m)
-    bint PyArray_ISALIGNED(ndarray m)
+    bint PyArray_CHKFLAGS(ndarray m, int flags) nogil
+    bint PyArray_IS_C_CONTIGUOUS(ndarray arr) nogil
+    bint PyArray_IS_F_CONTIGUOUS(ndarray arr) nogil
+    bint PyArray_ISCONTIGUOUS(ndarray m) nogil
+    bint PyArray_ISWRITEABLE(ndarray m) nogil
+    bint PyArray_ISALIGNED(ndarray m) nogil
 
-    int PyArray_NDIM(ndarray)
-    bint PyArray_ISONESEGMENT(ndarray)
-    bint PyArray_ISFORTRAN(ndarray)
-    int PyArray_FORTRANIF(ndarray)
+    int PyArray_NDIM(ndarray) nogil
+    bint PyArray_ISONESEGMENT(ndarray) nogil
+    bint PyArray_ISFORTRAN(ndarray) nogil
+    int PyArray_FORTRANIF(ndarray) nogil
 
-    void* PyArray_DATA(ndarray)
-    char* PyArray_BYTES(ndarray)
-    npy_intp* PyArray_DIMS(ndarray)
-    npy_intp* PyArray_STRIDES(ndarray)
-    npy_intp PyArray_DIM(ndarray, size_t)
-    npy_intp PyArray_STRIDE(ndarray, size_t)
+    void* PyArray_DATA(ndarray) nogil
+    char* PyArray_BYTES(ndarray) nogil
 
-    PyObject *PyArray_BASE(ndarray)  # returns borrowed reference!
-    PyArray_Descr *PyArray_DESCR(ndarray) # returns borrowed reference to dtype!
-    int PyArray_FLAGS(ndarray)
-    npy_intp PyArray_ITEMSIZE(ndarray)
-    int PyArray_TYPE(ndarray arr)
+    npy_intp* PyArray_DIMS(ndarray) nogil
+    npy_intp* PyArray_STRIDES(ndarray) nogil
+    npy_intp PyArray_DIM(ndarray, size_t) nogil
+    npy_intp PyArray_STRIDE(ndarray, size_t) nogil
+
+    PyObject *PyArray_BASE(ndarray) nogil  # returns borrowed reference!
+    PyArray_Descr *PyArray_DESCR(ndarray) nogil  # returns borrowed reference to dtype!
+    int PyArray_FLAGS(ndarray) nogil
+    npy_intp PyArray_ITEMSIZE(ndarray) nogil
+    int PyArray_TYPE(ndarray arr) nogil
 
     object PyArray_GETITEM(ndarray arr, void *itemptr)
     int PyArray_SETITEM(ndarray arr, void *itemptr, object obj)
 
-    bint PyTypeNum_ISBOOL(int)
-    bint PyTypeNum_ISUNSIGNED(int)
-    bint PyTypeNum_ISSIGNED(int)
-    bint PyTypeNum_ISINTEGER(int)
-    bint PyTypeNum_ISFLOAT(int)
-    bint PyTypeNum_ISNUMBER(int)
-    bint PyTypeNum_ISSTRING(int)
-    bint PyTypeNum_ISCOMPLEX(int)
-    bint PyTypeNum_ISPYTHON(int)
-    bint PyTypeNum_ISFLEXIBLE(int)
-    bint PyTypeNum_ISUSERDEF(int)
-    bint PyTypeNum_ISEXTENDED(int)
-    bint PyTypeNum_ISOBJECT(int)
+    bint PyTypeNum_ISBOOL(int) nogil
+    bint PyTypeNum_ISUNSIGNED(int) nogil
+    bint PyTypeNum_ISSIGNED(int) nogil
+    bint PyTypeNum_ISINTEGER(int) nogil
+    bint PyTypeNum_ISFLOAT(int) nogil
+    bint PyTypeNum_ISNUMBER(int) nogil
+    bint PyTypeNum_ISSTRING(int) nogil
+    bint PyTypeNum_ISCOMPLEX(int) nogil
+    bint PyTypeNum_ISPYTHON(int) nogil
+    bint PyTypeNum_ISFLEXIBLE(int) nogil
+    bint PyTypeNum_ISUSERDEF(int) nogil
+    bint PyTypeNum_ISEXTENDED(int) nogil
+    bint PyTypeNum_ISOBJECT(int) nogil
 
-    bint PyDataType_ISBOOL(dtype)
-    bint PyDataType_ISUNSIGNED(dtype)
-    bint PyDataType_ISSIGNED(dtype)
-    bint PyDataType_ISINTEGER(dtype)
-    bint PyDataType_ISFLOAT(dtype)
-    bint PyDataType_ISNUMBER(dtype)
-    bint PyDataType_ISSTRING(dtype)
-    bint PyDataType_ISCOMPLEX(dtype)
-    bint PyDataType_ISPYTHON(dtype)
-    bint PyDataType_ISFLEXIBLE(dtype)
-    bint PyDataType_ISUSERDEF(dtype)
-    bint PyDataType_ISEXTENDED(dtype)
-    bint PyDataType_ISOBJECT(dtype)
-    bint PyDataType_HASFIELDS(dtype)
-    bint PyDataType_HASSUBARRAY(dtype)
+    bint PyDataType_ISBOOL(dtype) nogil
+    bint PyDataType_ISUNSIGNED(dtype) nogil
+    bint PyDataType_ISSIGNED(dtype) nogil
+    bint PyDataType_ISINTEGER(dtype) nogil
+    bint PyDataType_ISFLOAT(dtype) nogil
+    bint PyDataType_ISNUMBER(dtype) nogil
+    bint PyDataType_ISSTRING(dtype) nogil
+    bint PyDataType_ISCOMPLEX(dtype) nogil
+    bint PyDataType_ISPYTHON(dtype) nogil
+    bint PyDataType_ISFLEXIBLE(dtype) nogil
+    bint PyDataType_ISUSERDEF(dtype) nogil
+    bint PyDataType_ISEXTENDED(dtype) nogil
+    bint PyDataType_ISOBJECT(dtype) nogil
+    bint PyDataType_HASFIELDS(dtype) nogil
+    bint PyDataType_HASSUBARRAY(dtype) nogil
 
-    bint PyArray_ISBOOL(ndarray)
-    bint PyArray_ISUNSIGNED(ndarray)
-    bint PyArray_ISSIGNED(ndarray)
-    bint PyArray_ISINTEGER(ndarray)
-    bint PyArray_ISFLOAT(ndarray)
-    bint PyArray_ISNUMBER(ndarray)
-    bint PyArray_ISSTRING(ndarray)
-    bint PyArray_ISCOMPLEX(ndarray)
-    bint PyArray_ISPYTHON(ndarray)
-    bint PyArray_ISFLEXIBLE(ndarray)
-    bint PyArray_ISUSERDEF(ndarray)
-    bint PyArray_ISEXTENDED(ndarray)
-    bint PyArray_ISOBJECT(ndarray)
-    bint PyArray_HASFIELDS(ndarray)
+    bint PyArray_ISBOOL(ndarray) nogil
+    bint PyArray_ISUNSIGNED(ndarray) nogil
+    bint PyArray_ISSIGNED(ndarray) nogil
+    bint PyArray_ISINTEGER(ndarray) nogil
+    bint PyArray_ISFLOAT(ndarray) nogil
+    bint PyArray_ISNUMBER(ndarray) nogil
+    bint PyArray_ISSTRING(ndarray) nogil
+    bint PyArray_ISCOMPLEX(ndarray) nogil
+    bint PyArray_ISPYTHON(ndarray) nogil
+    bint PyArray_ISFLEXIBLE(ndarray) nogil
+    bint PyArray_ISUSERDEF(ndarray) nogil
+    bint PyArray_ISEXTENDED(ndarray) nogil
+    bint PyArray_ISOBJECT(ndarray) nogil
+    bint PyArray_HASFIELDS(ndarray) nogil
 
-    bint PyArray_ISVARIABLE(ndarray)
+    bint PyArray_ISVARIABLE(ndarray) nogil
 
-    bint PyArray_SAFEALIGNEDCOPY(ndarray)
-    bint PyArray_ISNBO(char)              # works on ndarray.byteorder
-    bint PyArray_IsNativeByteOrder(char)  # works on ndarray.byteorder
-    bint PyArray_ISNOTSWAPPED(ndarray)
-    bint PyArray_ISBYTESWAPPED(ndarray)
+    bint PyArray_SAFEALIGNEDCOPY(ndarray) nogil
+    bint PyArray_ISNBO(char) nogil              # works on ndarray.byteorder
+    bint PyArray_IsNativeByteOrder(char) nogil # works on ndarray.byteorder
+    bint PyArray_ISNOTSWAPPED(ndarray) nogil
+    bint PyArray_ISBYTESWAPPED(ndarray) nogil
 
-    bint PyArray_FLAGSWAP(ndarray, int)
+    bint PyArray_FLAGSWAP(ndarray, int) nogil
 
-    bint PyArray_ISCARRAY(ndarray)
-    bint PyArray_ISCARRAY_RO(ndarray)
-    bint PyArray_ISFARRAY(ndarray)
-    bint PyArray_ISFARRAY_RO(ndarray)
-    bint PyArray_ISBEHAVED(ndarray)
-    bint PyArray_ISBEHAVED_RO(ndarray)
+    bint PyArray_ISCARRAY(ndarray) nogil
+    bint PyArray_ISCARRAY_RO(ndarray) nogil
+    bint PyArray_ISFARRAY(ndarray) nogil
+    bint PyArray_ISFARRAY_RO(ndarray) nogil
+    bint PyArray_ISBEHAVED(ndarray) nogil
+    bint PyArray_ISBEHAVED_RO(ndarray) nogil
 
 
-    bint PyDataType_ISNOTSWAPPED(dtype)
-    bint PyDataType_ISBYTESWAPPED(dtype)
+    bint PyDataType_ISNOTSWAPPED(dtype) nogil
+    bint PyDataType_ISBYTESWAPPED(dtype) nogil
 
     bint PyArray_DescrCheck(object)
 
@@ -461,10 +446,11 @@ cdef extern from "numpy/arrayobject.h":
     bint PyArray_IsPythonScalar(object)
     bint PyArray_IsAnyScalar(object)
     bint PyArray_CheckAnyScalar(object)
+
     ndarray PyArray_GETCONTIGUOUS(ndarray)
-    bint PyArray_SAMESHAPE(ndarray, ndarray)
-    npy_intp PyArray_SIZE(ndarray)
-    npy_intp PyArray_NBYTES(ndarray)
+    bint PyArray_SAMESHAPE(ndarray, ndarray) nogil
+    npy_intp PyArray_SIZE(ndarray) nogil
+    npy_intp PyArray_NBYTES(ndarray) nogil
 
     object PyArray_FROM_O(object)
     object PyArray_FROM_OF(object m, int flags)
@@ -477,16 +463,16 @@ cdef extern from "numpy/arrayobject.h":
     npy_intp PyArray_REFCOUNT(object)
     object PyArray_ContiguousFromAny(op, int, int min_depth, int max_depth)
     unsigned char PyArray_EquivArrTypes(ndarray a1, ndarray a2)
-    bint PyArray_EquivByteorders(int b1, int b2)
+    bint PyArray_EquivByteorders(int b1, int b2) nogil
     object PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
     object PyArray_SimpleNewFromData(int nd, npy_intp* dims, int typenum, void* data)
     #object PyArray_SimpleNewFromDescr(int nd, npy_intp* dims, dtype descr)
     object PyArray_ToScalar(void* data, ndarray arr)
 
-    void* PyArray_GETPTR1(ndarray m, npy_intp i)
-    void* PyArray_GETPTR2(ndarray m, npy_intp i, npy_intp j)
-    void* PyArray_GETPTR3(ndarray m, npy_intp i, npy_intp j, npy_intp k)
-    void* PyArray_GETPTR4(ndarray m, npy_intp i, npy_intp j, npy_intp k, npy_intp l)
+    void* PyArray_GETPTR1(ndarray m, npy_intp i) nogil
+    void* PyArray_GETPTR2(ndarray m, npy_intp i, npy_intp j) nogil
+    void* PyArray_GETPTR3(ndarray m, npy_intp i, npy_intp j, npy_intp k) nogil
+    void* PyArray_GETPTR4(ndarray m, npy_intp i, npy_intp j, npy_intp k, npy_intp l) nogil
 
     void PyArray_XDECREF_ERR(ndarray)
     # Cannot be supported due to out arg
@@ -614,7 +600,7 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_Choose (ndarray, object, ndarray, NPY_CLIPMODE)
     int PyArray_Sort (ndarray, int, NPY_SORTKIND)
     object PyArray_ArgSort (ndarray, int, NPY_SORTKIND)
-    object PyArray_SearchSorted (ndarray, object, NPY_SEARCHSIDE)
+    object PyArray_SearchSorted (ndarray, object, NPY_SEARCHSIDE, PyObject *)
     object PyArray_ArgMax (ndarray, int, ndarray)
     object PyArray_ArgMin (ndarray, int, ndarray)
     object PyArray_Reshape (ndarray, object)
@@ -767,72 +753,67 @@ cdef inline tuple PyDataType_SHAPE(dtype d):
     else:
         return ()
 
-cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset) except NULL:
-    # Recursive utility function used in __getbuffer__ to get format
-    # string. The new location in the format string is returned.
 
-    cdef dtype child
-    cdef int endian_detector = 1
-    cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)
-    cdef tuple fields
+cdef extern from "numpy/ndarrayobject.h":
+    PyTypeObject PyTimedeltaArrType_Type
+    PyTypeObject PyDatetimeArrType_Type
+    ctypedef int64_t npy_timedelta
+    ctypedef int64_t npy_datetime
 
-    for childname in descr.names:
-        fields = descr.fields[childname]
-        child, new_offset = fields
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct PyArray_DatetimeMetaData:
+        NPY_DATETIMEUNIT base
+        int64_t num
 
-        if (end - f) - <int>(new_offset - offset[0]) < 15:
-            raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
+cdef extern from "numpy/arrayscalars.h":
 
-        if ((child.byteorder == c'>' and little_endian) or
-            (child.byteorder == c'<' and not little_endian)):
-            raise ValueError(u"Non-native byte order not supported")
-            # One could encode it in the format string and have Cython
-            # complain instead, BUT: < and > in format strings also imply
-            # standardized sizes for datatypes, and we rely on native in
-            # order to avoid reencoding data types based on their size.
-            #
-            # A proper PEP 3118 exporter for other clients than Cython
-            # must deal properly with this!
+    # abstract types
+    ctypedef class numpy.generic [object PyObject]:
+        pass
+    ctypedef class numpy.number [object PyObject]:
+        pass
+    ctypedef class numpy.integer [object PyObject]:
+        pass
+    ctypedef class numpy.signedinteger [object PyObject]:
+        pass
+    ctypedef class numpy.unsignedinteger [object PyObject]:
+        pass
+    ctypedef class numpy.inexact [object PyObject]:
+        pass
+    ctypedef class numpy.floating [object PyObject]:
+        pass
+    ctypedef class numpy.complexfloating [object PyObject]:
+        pass
+    ctypedef class numpy.flexible [object PyObject]:
+        pass
+    ctypedef class numpy.character [object PyObject]:
+        pass
 
-        # Output padding bytes
-        while offset[0] < new_offset:
-            f[0] = 120 # "x"; pad byte
-            f += 1
-            offset[0] += 1
+    ctypedef struct PyDatetimeScalarObject:
+        # PyObject_HEAD
+        npy_datetime obval
+        PyArray_DatetimeMetaData obmeta
 
-        offset[0] += child.itemsize
+    ctypedef struct PyTimedeltaScalarObject:
+        # PyObject_HEAD
+        npy_timedelta obval
+        PyArray_DatetimeMetaData obmeta
 
-        if not PyDataType_HASFIELDS(child):
-            t = child.type_num
-            if end - f < 5:
-                raise RuntimeError(u"Format string allocated too short.")
-
-            # Until ticket #99 is fixed, use integers to avoid warnings
-            if   t == NPY_BYTE:        f[0] =  98 #"b"
-            elif t == NPY_UBYTE:       f[0] =  66 #"B"
-            elif t == NPY_SHORT:       f[0] = 104 #"h"
-            elif t == NPY_USHORT:      f[0] =  72 #"H"
-            elif t == NPY_INT:         f[0] = 105 #"i"
-            elif t == NPY_UINT:        f[0] =  73 #"I"
-            elif t == NPY_LONG:        f[0] = 108 #"l"
-            elif t == NPY_ULONG:       f[0] = 76  #"L"
-            elif t == NPY_LONGLONG:    f[0] = 113 #"q"
-            elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"
-            elif t == NPY_FLOAT:       f[0] = 102 #"f"
-            elif t == NPY_DOUBLE:      f[0] = 100 #"d"
-            elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"
-            elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf
-            elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd
-            elif t == NPY_CLONGDOUBLE: f[0] = 90; f[1] = 103; f += 1 # Zg
-            elif t == NPY_OBJECT:      f[0] = 79 #"O"
-            else:
-                raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
-            f += 1
-        else:
-            # Cython ignores struct boundary information ("T{...}"),
-            # so don't output it
-            f = _util_dtypestring(child, f, end, offset)
-    return f
+    ctypedef enum NPY_DATETIMEUNIT:
+        NPY_FR_Y
+        NPY_FR_M
+        NPY_FR_W
+        NPY_FR_D
+        NPY_FR_B
+        NPY_FR_h
+        NPY_FR_m
+        NPY_FR_s
+        NPY_FR_ms
+        NPY_FR_us
+        NPY_FR_ns
+        NPY_FR_ps
+        NPY_FR_fs
+        NPY_FR_as
 
 
 #
@@ -843,7 +824,7 @@ cdef extern from "numpy/ufuncobject.h":
 
     ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
-    ctypedef extern class numpy.ufunc [object PyUFuncObject, check_size ignore]:
+    ctypedef class numpy.ufunc [object PyUFuncObject, check_size ignore]:
         cdef:
             int nin, nout, nargs
             int identity
@@ -887,8 +868,6 @@ cdef extern from "numpy/ufuncobject.h":
           void **, char *, int, int, int, int, char *, char *, int)
     int PyUFunc_RegisterLoopForType(ufunc, int,
                                     PyUFuncGenericFunction, int *, void *)
-    int PyUFunc_GenericFunction \
-        (ufunc, PyObject *, PyObject *, PyArrayObject **)
     void PyUFunc_f_f_As_d_d \
          (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_d_d \
@@ -961,7 +940,7 @@ cdef inline object get_array_base(ndarray arr):
 # Cython code.
 cdef inline int import_array() except -1:
     try:
-        _import_array()
+        __pyx_import_array()
     except Exception:
         raise ImportError("numpy.core.multiarray failed to import")
 
@@ -976,3 +955,64 @@ cdef inline int import_ufunc() except -1:
         _import_umath()
     except Exception:
         raise ImportError("numpy.core.umath failed to import")
+
+cdef extern from *:
+    # Leave a marker that the NumPy declarations came from this file
+    # See https://github.com/cython/cython/issues/3573
+    """
+    /* NumPy API declarations from "numpy/__init__.pxd" */
+    """
+
+
+cdef inline bint is_timedelta64_object(object obj):
+    """
+    Cython equivalent of `isinstance(obj, np.timedelta64)`
+
+    Parameters
+    ----------
+    obj : object
+
+    Returns
+    -------
+    bool
+    """
+    return PyObject_TypeCheck(obj, &PyTimedeltaArrType_Type)
+
+
+cdef inline bint is_datetime64_object(object obj):
+    """
+    Cython equivalent of `isinstance(obj, np.datetime64)`
+
+    Parameters
+    ----------
+    obj : object
+
+    Returns
+    -------
+    bool
+    """
+    return PyObject_TypeCheck(obj, &PyDatetimeArrType_Type)
+
+
+cdef inline npy_datetime get_datetime64_value(object obj) nogil:
+    """
+    returns the int64 value underlying scalar numpy datetime64 object
+
+    Note that to interpret this as a datetime, the corresponding unit is
+    also needed.  That can be found using `get_datetime64_unit`.
+    """
+    return (<PyDatetimeScalarObject*>obj).obval
+
+
+cdef inline npy_timedelta get_timedelta64_value(object obj) nogil:
+    """
+    returns the int64 value underlying scalar numpy timedelta64 object
+    """
+    return (<PyTimedeltaScalarObject*>obj).obval
+
+
+cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
+    """
+    returns the unit part of the dtype for a numpy datetime64 object.
+    """
+    return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base

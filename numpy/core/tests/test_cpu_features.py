@@ -1,9 +1,54 @@
 import sys, platform, re, pytest
-
-from numpy.testing import assert_equal
 from numpy.core._multiarray_umath import __cpu_features__
 
-class AbstractTest(object):
+def assert_features_equal(actual, desired, fname):
+    __tracebackhide__ = True  # Hide traceback for py.test
+    actual, desired = str(actual), str(desired)
+    if actual == desired:
+        return
+    detected = str(__cpu_features__).replace("'", "")
+    try:
+        with open("/proc/cpuinfo", "r") as fd:
+            cpuinfo = fd.read(2048)
+    except Exception as err:
+        cpuinfo = str(err)
+
+    try:
+        import subprocess
+        auxv = subprocess.check_output(['/bin/true'], env=dict(LD_SHOW_AUXV="1"))
+        auxv = auxv.decode()
+    except Exception as err:
+        auxv = str(err)
+
+    import textwrap
+    error_report = textwrap.indent(
+"""
+###########################################
+### Extra debugging information
+###########################################
+-------------------------------------------
+--- NumPy Detections
+-------------------------------------------
+%s
+-------------------------------------------
+--- SYS / CPUINFO
+-------------------------------------------
+%s....
+-------------------------------------------
+--- SYS / AUXV
+-------------------------------------------
+%s
+""" % (detected, cpuinfo, auxv), prefix='\r')
+
+    raise AssertionError((
+        "Failure Detection\n"
+        " NAME: '%s'\n"
+        " ACTUAL: %s\n"
+        " DESIRED: %s\n"
+        "%s"
+    ) % (fname, actual, desired, error_report))
+
+class AbstractTest:
     features = []
     features_groups = {}
     features_map = {}
@@ -12,27 +57,39 @@ class AbstractTest(object):
     def load_flags(self):
         # a hook
         pass
-
     def test_features(self):
         self.load_flags()
         for gname, features in self.features_groups.items():
-            test_features = [self.features_map.get(f, f) in self.features_flags for f in features]
-            assert_equal(__cpu_features__.get(gname), all(test_features))
+            test_features = [self.cpu_have(f) for f in features]
+            assert_features_equal(__cpu_features__.get(gname), all(test_features), gname)
 
         for feature_name in self.features:
-            map_name = self.features_map.get(feature_name, feature_name)
-            cpu_have = map_name in self.features_flags
+            cpu_have = self.cpu_have(feature_name)
             npy_have = __cpu_features__.get(feature_name)
-            assert_equal(npy_have, cpu_have)
+            assert_features_equal(npy_have, cpu_have, feature_name)
 
-    def load_flags_proc(self, magic_key):
+    def cpu_have(self, feature_name):
+        map_names = self.features_map.get(feature_name, feature_name)
+        if isinstance(map_names, str):
+            return map_names in self.features_flags
+        for f in map_names:
+            if f in self.features_flags:
+                return True
+        return False
+
+    def load_flags_cpuinfo(self, magic_key):
+        self.features_flags = self.get_cpuinfo_item(magic_key)
+
+    def get_cpuinfo_item(self, magic_key):
+        values = set()
         with open('/proc/cpuinfo') as fd:
             for line in fd:
                 if not line.startswith(magic_key):
                     continue
                 flags_value = [s.strip() for s in line.split(':', 1)]
                 if len(flags_value) == 2:
-                    self.features_flags = self.features_flags.union(flags_value[1].upper().split())
+                    values = values.union(flags_value[1].upper().split())
+        return values
 
     def load_flags_auxv(self):
         import subprocess
@@ -75,7 +132,7 @@ class Test_X86_Features(AbstractTest):
         AVX5124FMAPS="AVX512_4FMAPS", AVX5124VNNIW="AVX512_4VNNIW", AVX512VPOPCNTDQ="AVX512_VPOPCNTDQ",
     )
     def load_flags(self):
-        self.load_flags_proc("flags")
+        self.load_flags_cpuinfo("flags")
 
 is_power = re.match("^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
@@ -97,8 +154,18 @@ class Test_ARM_Features(AbstractTest):
         NEON_VFPV4 = ["NEON", "VFPV4"],
     )
     def load_flags(self):
-        self.load_flags_proc("Features")
-        if re.match("^(aarch64|AARCH64)", platform.machine()):
+        self.load_flags_cpuinfo("Features")
+        arch = self.get_cpuinfo_item("CPU architecture")
+        # in case of mounting virtual filesystem of aarch64 kernel
+        is_rootfs_v8 = int('0'+next(iter(arch))) > 7 if arch else 0
+        if  re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
             self.features_map = dict(
                 NEON="ASIMD", HALF="ASIMD", VFPV4="ASIMD"
+            )
+        else:
+            self.features_map = dict(
+                # ELF auxiliary vector and /proc/cpuinfo on Linux kernel(armv8 aarch32)
+                # doesn't provide information about ASIMD, so we assume that ASIMD is supported
+                # if the kernel reports any one of the following ARM8 features.
+                ASIMD=("AES", "SHA1", "SHA2", "PMULL", "CRC32")
             )

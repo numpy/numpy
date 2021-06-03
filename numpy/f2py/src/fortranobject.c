@@ -30,6 +30,68 @@ F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj)
     return PyDict_SetItemString(dict, name, obj);
 }
 
+/*
+ * Python-only fallback for thread-local callback pointers
+ */
+void *F2PySwapThreadLocalCallbackPtr(char *key, void *ptr)
+{
+    PyObject *local_dict, *value;
+    void *prev;
+
+    local_dict = PyThreadState_GetDict();
+    if (local_dict == NULL) {
+        Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyThreadState_GetDict failed");
+    }
+
+    value = PyDict_GetItemString(local_dict, key);
+    if (value != NULL) {
+        prev = PyLong_AsVoidPtr(value);
+        if (PyErr_Occurred()) {
+           Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyLong_AsVoidPtr failed");
+        }
+    }
+    else {
+        prev = NULL;
+    }
+
+    value = PyLong_FromVoidPtr((void *)ptr);
+    if (value == NULL) {
+        Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyLong_FromVoidPtr failed");
+    }
+
+    if (PyDict_SetItemString(local_dict, key, value) != 0) {
+        Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyDict_SetItemString failed");
+    }
+
+    Py_DECREF(value);
+
+    return prev;
+}
+
+void *F2PyGetThreadLocalCallbackPtr(char *key)
+{
+    PyObject *local_dict, *value;
+    void *prev;
+
+    local_dict = PyThreadState_GetDict();
+    if (local_dict == NULL) {
+        Py_FatalError("F2PyGetThreadLocalCallbackPtr: PyThreadState_GetDict failed");
+    }
+
+    value = PyDict_GetItemString(local_dict, key);
+    if (value != NULL) {
+        prev = PyLong_AsVoidPtr(value);
+        if (PyErr_Occurred()) {
+           Py_FatalError("F2PyGetThreadLocalCallbackPtr: PyLong_AsVoidPtr failed");
+        }
+    }
+    else {
+        prev = NULL;
+    }
+
+    return prev;
+}
+
 /************************* FortranObject *******************************/
 
 typedef PyObject *(*fortranfunc)(PyObject *,PyObject *,PyObject *,void *);
@@ -151,6 +213,8 @@ format_def(char *buf, Py_ssize_t size, FortranDataDef def)
             return -1;
         }
         memcpy(p, notalloc, sizeof(notalloc));
+        p += sizeof(notalloc);
+        size -= sizeof(notalloc);
     }
 
     return p - buf;
@@ -193,7 +257,7 @@ fortran_doc(FortranDataDef def)
     }
     else {
         PyArray_Descr *d = PyArray_DescrFromType(def.type);
-        n = PyOS_snprintf(p, size, "'%c'-", d->type);
+        n = PyOS_snprintf(p, size, "%s : '%c'-", def.name, d->type);
         Py_DECREF(d);
         if (n < 0 || n >= size) {
             goto fail;
@@ -202,7 +266,7 @@ fortran_doc(FortranDataDef def)
         size -= n;
 
         if (def.data == NULL) {
-            n = format_def(p, size, def) == -1;
+            n = format_def(p, size, def);
             if (n < 0) {
                 goto fail;
             }
@@ -226,6 +290,7 @@ fortran_doc(FortranDataDef def)
             p += n;
             size -= n;
         }
+        
     }
     if (size <= 1) {
         goto fail;
@@ -734,7 +799,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
             && ARRAY_ISCOMPATIBLE(arr,type_num)
             && F2PY_CHECK_ALIGNMENT(arr, intent)
             ) {
-            if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
+            if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY_RO(arr):PyArray_ISFARRAY_RO(arr)) {
                 if ((intent & F2PY_INTENT_OUT)) {
                     Py_INCREF(arr);
                 }
@@ -742,9 +807,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
                 return arr;
             }
         }
-
         if (intent & F2PY_INTENT_INOUT) {
             strcpy(mess, "failed to initialize intent(inout) array");
+            /* Must use PyArray_IS*ARRAY because intent(inout) requires writable input */
             if ((intent & F2PY_INTENT_C) && !PyArray_ISCARRAY(arr))
                 strcat(mess, " -- input not contiguous");
             if (!(intent & F2PY_INTENT_C) && !PyArray_ISFARRAY(arr))

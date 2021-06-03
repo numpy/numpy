@@ -31,7 +31,7 @@ class PGroupFCompiler(FCompiler):
             'compiler_f77': ["pgfortran"],
             'compiler_fix': ["pgfortran", "-Mfixed"],
             'compiler_f90': ["pgfortran"],
-            'linker_so': ["pgfortran"],
+            'linker_so': ["<F90>"],
             'archiver': ["ar", "-cr"],
             'ranlib': ["ranlib"]
         }

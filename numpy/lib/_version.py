@@ -54,7 +54,7 @@ class NumpyVersion():
 
     def __init__(self, vstring):
         self.vstring = vstring
-        ver_main = re.match(r'\d[.]\d+[.]\d+', vstring)
+        ver_main = re.match(r'\d\.\d+\.\d+', vstring)
         if not ver_main:
             raise ValueError("Not a valid numpy version string")
 
@@ -151,5 +151,5 @@ class NumpyVersion():
     def __ge__(self, other):
         return self._compare(other) >= 0
 
-    def __repr(self):
+    def __repr__(self):
         return "NumpyVersion(%s)" % self.vstring
