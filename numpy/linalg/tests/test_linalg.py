@@ -922,7 +922,8 @@ class LstsqCases(LinalgSquareTestCase,
         assert_almost_equal(sv, sv.__array_wrap__(s))
         expect_resids = np.where(
             rank == n,
-            (abs(a @ x - b) ** 2).sum(axis=0),
+            # asarray prevents `**` being interpreted as matrix_power
+            (abs(np.asarray(a @ x - b)) ** 2).sum(axis=0),
             # lapack does not compute this for us, so we do not return it
             np.nan
         )
