@@ -2217,7 +2217,7 @@ def lstsq(a, b, rcond="warn"):
         If `b` is 1-dimensional, this is a 0d array.
         Otherwise the shape is (K,).
 
-        .. versionchanged:: 1.19.0
+        .. versionchanged:: 1.21.0
             This no longer returns a ``(0,)``-shaped array if no residuals are
             computed, instead returning `NaN`.
             For well-determined problems with ``rank == N == M``, this is now
@@ -2281,7 +2281,7 @@ def lstsq(a, b, rcond="warn"):
     is_1d = b.ndim == 1
     if is_1d:
         b = b[:, newaxis]
-    _assert_2d(a, b)
+    _assert_stacked_2d(a, b)
     m, n = a.shape[-2:]
     m2, n_rhs = b.shape[-2:]
     if m != m2:
