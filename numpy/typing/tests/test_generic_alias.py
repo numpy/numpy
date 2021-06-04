@@ -41,6 +41,12 @@ class TestGenericAlias:
 
     @pytest.mark.parametrize("name,func", [
         ("__init__", lambda n: n),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, Any)),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (Any,))),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (Any, Any))),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, T1)),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (T1,))),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (T1, T2))),
         ("__origin__", lambda n: n.__origin__),
         ("__args__", lambda n: n.__args__),
         ("__parameters__", lambda n: n.__parameters__),
