@@ -3814,13 +3814,23 @@ class TestMaskedArrayMathMethods:
         a = masked_array([1, 2, 3], dtype=object)
         assert_equal(a.mean(), 2)
         assert_equal(a.anom(), [-1, 0, 1])
-    
+
     def test_anom_shape(self):
         a = masked_array([1, 2, 3])
         assert_equal(a.anom().shape, a.shape)
         a.mask = True
         assert_equal(a.anom().shape, a.shape)
         assert_(np.ma.is_masked(a.anom()))
+
+    def test_anom(self):
+        a = masked_array(np.arange(1,7).reshape(2,3))
+        assert_equal(a.anom(), [[-2.5, -1.5, -0.5], [ 0.5, 1.5, 2.5]])
+        assert_equal(a.anom(axis=0), [[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]])
+        assert_equal(a.anom(axis=1), [[-1., 0., 1.],[-1., 0., 1.]])
+        a.mask = [[0,0,1],[0,1,0]]
+        assert_equal(format(a.anom()), '[[-2.25 -1.25 --]\n [0.75 -- 2.75]]')
+        assert_equal(format(a.anom(axis=0)), '[[-1.5 0.0 --]\n [1.5 -- 0.0]]')
+        assert_equal(format(a.anom(axis=1)), '[[-0.5 0.5 --]\n [-1.0 -- 1.0]]')
 
     def test_trace(self):
         # Tests trace on MaskedArrays.
