@@ -104,7 +104,7 @@ class _GenericAlias:
     def __init__(self, origin: type, args: Any) -> None:
         self._origin = origin
         self._args = args if isinstance(args, tuple) else (args,)
-        self._parameters = tuple(_parse_parameters(args))
+        self._parameters = tuple(_parse_parameters(self.__args__))
 
     @property
     def __call__(self) -> type:
