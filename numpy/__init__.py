@@ -283,7 +283,7 @@ else:
             else:
                 warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-                def _expired(*args, **kwds):
+                def _expired(*args, **kw):
                     raise RuntimeError(msg)
 
                 return _expired
