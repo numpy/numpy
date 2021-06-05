@@ -789,7 +789,8 @@ def qr(a, mode='reduced'):
     mode : {'reduced', 'complete', 'r', 'raw'}, optional
         If K = min(M, N), then
 
-        * 'reduced'  : returns q, r with dimensions (..., M, K), (..., K, N) (default)
+        * 'reduced'  : returns q, r with dimensions
+                       (..., M, K), (..., K, N) (default)
         * 'complete' : returns q, r with dimensions (..., M, M), (..., M, N)
         * 'r'        : returns r only with dimensions (..., K, N)
         * 'raw'      : returns h, tau with dimensions (..., N, M), (..., K,)
