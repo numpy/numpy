@@ -1105,41 +1105,6 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
         self.assert_deprecated(_test_parametrize)
 
 
-class TestStringPromotion(_DeprecationTestCase):
-    # Deprecated 2020-12-19, NumPy 1.21
-    warning_cls = FutureWarning
-    message = "Promotion of numbers and bools to strings is deprecated."
-
-    @pytest.mark.parametrize("dtype", "?bhilqpBHILQPefdgFDG")
-    @pytest.mark.parametrize("string_dt", ["S", "U"])
-    def test_deprecated(self, dtype, string_dt):
-        self.assert_deprecated(lambda: np.promote_types(dtype, string_dt))
-
-        # concatenate has to be able to promote to find the result dtype:
-        arr1 = np.ones(3, dtype=dtype)
-        arr2 = np.ones(3, dtype=string_dt)
-        self.assert_deprecated(lambda: np.concatenate((arr1, arr2), axis=0))
-        self.assert_deprecated(lambda: np.concatenate((arr1, arr2), axis=None))
-
-        self.assert_deprecated(lambda: np.array([arr1[0], arr2[0]]))
-
-    @pytest.mark.parametrize("dtype", "?bhilqpBHILQPefdgFDG")
-    @pytest.mark.parametrize("string_dt", ["S", "U"])
-    def test_not_deprecated(self, dtype, string_dt):
-        # The ufunc type resolvers run into this, but giving a futurewarning
-        # here is unnecessary (it ends up as an error anyway), so test that
-        # no warning is given:
-        arr1 = np.ones(3, dtype=dtype)
-        arr2 = np.ones(3, dtype=string_dt)
-
-        # Adding two arrays uses result_type normally, which would fail:
-        with pytest.raises(TypeError):
-            self.assert_not_deprecated(lambda: arr1 + arr2)
-        # np.equal uses a different type resolver:
-        with pytest.raises(TypeError):
-            self.assert_not_deprecated(lambda: np.equal(arr1, arr2))
-
-
 class TestSingleElementSignature(_DeprecationTestCase):
     # Deprecated 2021-04-01, NumPy 1.21
     message = r"The use of a length 1"
