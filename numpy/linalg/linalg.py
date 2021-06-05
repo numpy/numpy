@@ -869,9 +869,9 @@ def qr(a, mode='reduced'):
     >>> a = np.random.normal(size=(3, 2, 2)) # Stack of 2 x 2 matrices as input
     >>> q, r = np.linalg.qr(a)
     >>> q.shape
-    >>> (3, 2, 2)
+    (3, 2, 2)
     >>> r.shape
-    >>> (3, 2, 2)
+    (3, 2, 2)
     >>> np.allclose(a, np.matmul(q, r))
     True
 
