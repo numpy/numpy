@@ -100,7 +100,8 @@ def _raise_linalgerror_lstsq(err, flag):
     raise LinAlgError("SVD did not converge in Linear Least Squares")
 
 def _raise_linalgerror_qr_r_raw(err, flag):
-    raise LinAlgError("Illegal argument found while performing QR factorization")
+    raise LinAlgError("Illegal argument found while performing "
+                      "QR factorization")
 
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)  # make a copy
