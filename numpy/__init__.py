@@ -110,7 +110,8 @@ import sys
 import warnings
 
 from ._globals import (
-    ModuleDeprecationWarning, VisibleDeprecationWarning, _NoValue
+    ModuleDeprecationWarning, VisibleDeprecationWarning,
+    _NoValue, CopyMode
 )
 
 # We first need to detect if we're being called as part of the numpy setup
