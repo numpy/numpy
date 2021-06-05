@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Any, Sequence, TYPE_CHECKING, Union, TypeVar
+from typing import Any, Sequence, TYPE_CHECKING, Union, TypeVar, Generic
 
 from numpy import (
     ndarray,
@@ -43,7 +43,7 @@ if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
     class _SupportsArray(Protocol[_DType_co]):
         def __array__(self) -> ndarray[Any, _DType_co]: ...
 else:
-    _SupportsArray = Any
+    class _SupportsArray(Generic[_DType_co]): ...
 
 # TODO: Wait for support for recursive types
 _NestedSequence = Union[

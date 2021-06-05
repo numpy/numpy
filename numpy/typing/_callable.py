@@ -332,25 +332,25 @@ if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
         def __call__(self, __other: _T2) -> NDArray[bool_]: ...
 
 else:
-    _BoolOp = NotImplemented
-    _BoolBitOp = NotImplemented
-    _BoolSub = NotImplemented
-    _BoolTrueDiv = NotImplemented
-    _BoolMod = NotImplemented
-    _BoolDivMod = NotImplemented
-    _TD64Div = NotImplemented
-    _IntTrueDiv = NotImplemented
-    _UnsignedIntOp = NotImplemented
-    _UnsignedIntBitOp = NotImplemented
-    _UnsignedIntMod = NotImplemented
-    _UnsignedIntDivMod = NotImplemented
-    _SignedIntOp = NotImplemented
-    _SignedIntBitOp = NotImplemented
-    _SignedIntMod = NotImplemented
-    _SignedIntDivMod = NotImplemented
-    _FloatOp = NotImplemented
-    _FloatMod = NotImplemented
-    _FloatDivMod = NotImplemented
-    _ComplexOp = NotImplemented
-    _NumberOp = NotImplemented
-    _ComparisonOp = NotImplemented
+    _BoolOp = Any
+    _BoolBitOp = Any
+    _BoolSub = Any
+    _BoolTrueDiv = Any
+    _BoolMod = Any
+    _BoolDivMod = Any
+    _TD64Div = Any
+    _IntTrueDiv = Any
+    _UnsignedIntOp = Any
+    _UnsignedIntBitOp = Any
+    _UnsignedIntMod = Any
+    _UnsignedIntDivMod = Any
+    _SignedIntOp = Any
+    _SignedIntBitOp = Any
+    _SignedIntMod = Any
+    _SignedIntDivMod = Any
+    _FloatOp = Any
+    _FloatMod = Any
+    _FloatDivMod = Any
+    _ComplexOp = Any
+    _NumberOp = Any
+    _ComparisonOp = Any

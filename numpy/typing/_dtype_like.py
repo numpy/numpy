@@ -81,7 +81,7 @@ if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
         def dtype(self) -> _DType_co: ...
 
 else:
-    _DTypeDict = NotImplemented
+    _DTypeDict = Any
 
     class _SupportsDType: ...
     _SupportsDType = GenericAlias(_SupportsDType, _DType_co)

@@ -1,5 +1,5 @@
 import sys
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple, Union, Any
 
 from . import _HAS_TYPING_EXTENSIONS
 
@@ -8,7 +8,7 @@ if sys.version_info >= (3, 8):
 elif _HAS_TYPING_EXTENSIONS:
     from typing_extensions import SupportsIndex
 else:
-    SupportsIndex = NotImplemented
+    SupportsIndex = Any
 
 _Shape = Tuple[int, ...]
 

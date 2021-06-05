@@ -120,52 +120,52 @@ if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
     ]
 
 else:
-    _BoolCodes = NotImplemented
+    _BoolCodes = Any
 
-    _UInt8Codes = NotImplemented
-    _UInt16Codes = NotImplemented
-    _UInt32Codes = NotImplemented
-    _UInt64Codes = NotImplemented
+    _UInt8Codes = Any
+    _UInt16Codes = Any
+    _UInt32Codes = Any
+    _UInt64Codes = Any
 
-    _Int8Codes = NotImplemented
-    _Int16Codes = NotImplemented
-    _Int32Codes = NotImplemented
-    _Int64Codes = NotImplemented
+    _Int8Codes = Any
+    _Int16Codes = Any
+    _Int32Codes = Any
+    _Int64Codes = Any
 
-    _Float16Codes = NotImplemented
-    _Float32Codes = NotImplemented
-    _Float64Codes = NotImplemented
+    _Float16Codes = Any
+    _Float32Codes = Any
+    _Float64Codes = Any
 
-    _Complex64Codes = NotImplemented
-    _Complex128Codes = NotImplemented
+    _Complex64Codes = Any
+    _Complex128Codes = Any
 
-    _ByteCodes = NotImplemented
-    _ShortCodes = NotImplemented
-    _IntCCodes = NotImplemented
-    _IntPCodes = NotImplemented
-    _IntCodes = NotImplemented
-    _LongLongCodes = NotImplemented
+    _ByteCodes = Any
+    _ShortCodes = Any
+    _IntCCodes = Any
+    _IntPCodes = Any
+    _IntCodes = Any
+    _LongLongCodes = Any
 
-    _UByteCodes = NotImplemented
-    _UShortCodes = NotImplemented
-    _UIntCCodes = NotImplemented
-    _UIntPCodes = NotImplemented
-    _UIntCodes = NotImplemented
-    _ULongLongCodes = NotImplemented
+    _UByteCodes = Any
+    _UShortCodes = Any
+    _UIntCCodes = Any
+    _UIntPCodes = Any
+    _UIntCodes = Any
+    _ULongLongCodes = Any
 
-    _HalfCodes = NotImplemented
-    _SingleCodes = NotImplemented
-    _DoubleCodes = NotImplemented
-    _LongDoubleCodes = NotImplemented
+    _HalfCodes = Any
+    _SingleCodes = Any
+    _DoubleCodes = Any
+    _LongDoubleCodes = Any
 
-    _CSingleCodes = NotImplemented
-    _CDoubleCodes = NotImplemented
-    _CLongDoubleCodes = NotImplemented
+    _CSingleCodes = Any
+    _CDoubleCodes = Any
+    _CLongDoubleCodes = Any
 
-    _StrCodes = NotImplemented
-    _BytesCodes = NotImplemented
-    _VoidCodes = NotImplemented
-    _ObjectCodes = NotImplemented
+    _StrCodes = Any
+    _BytesCodes = Any
+    _VoidCodes = Any
+    _ObjectCodes = Any
 
-    _DT64Codes = NotImplemented
-    _TD64Codes = NotImplemented
+    _DT64Codes = Any
+    _TD64Codes = Any
