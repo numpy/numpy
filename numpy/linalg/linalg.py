@@ -783,15 +783,15 @@ def qr(a, mode='reduced'):
 
     Parameters
     ----------
-    a : array_like, shape (M, N)
-        Matrix to be factored.
+    a : array_like, shape (..., M, N)
+        A real or complex array with ``a.ndim >= 2``.
     mode : {'reduced', 'complete', 'r', 'raw'}, optional
         If K = min(M, N), then
 
-        * 'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
-        * 'complete' : returns q, r with dimensions (M, M), (M, N)
-        * 'r'        : returns r only with dimensions (K, N)
-        * 'raw'      : returns h, tau with dimensions (N, M), (K,)
+        * 'reduced'  : returns q, r with dimensions (..., M, K), (..., K, N) (default)
+        * 'complete' : returns q, r with dimensions (..., M, M), (..., M, N)
+        * 'r'        : returns r only with dimensions (..., K, N)
+        * 'raw'      : returns h, tau with dimensions (..., N, M), (..., K,)
 
         The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
         see the notes for more information. The default is 'reduced', and to
@@ -810,9 +810,13 @@ def qr(a, mode='reduced'):
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
         a is real/complex. The determinant may be either +/- 1 in that
-        case.
+        case. In case the number of dimensions in the input array is 
+        greater than 2 then a stack of the matrices with above properties 
+        is returned.
     r : ndarray of float or complex, optional
-        The upper-triangular matrix.
+        The upper-triangular matrix or a stack of upper-triangular
+        matrices if the number of dimensions in the input array is greater
+        than 2.
     (h, tau) : ndarrays of np.double or np.cdouble, optional
         The array h contains the Householder reflectors that generate q
         along with r. The tau array contains scaling factors for the
@@ -859,6 +863,14 @@ def qr(a, mode='reduced'):
     True
     >>> r2 = np.linalg.qr(a, mode='r')
     >>> np.allclose(r, r2)  # mode='r' returns the same r as mode='full'
+    True
+    >>> a = np.random.normal(size=(3, 2, 2)) # Stack of 2 x 2 matrices as input
+    >>> q, r = np.linalg.qr(a)
+    >>> q.shape
+    >>> (3, 2, 2)
+    >>> r.shape
+    >>> (3, 2, 2)
+    >>> np.allclose(a, np.matmul(q, r))
     True
 
     Example illustrating a common use of `qr`: solving of least squares
