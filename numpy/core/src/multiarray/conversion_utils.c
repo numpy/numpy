@@ -162,6 +162,11 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
     return PyArray_IntpConverter(obj, seq);
 }
 
+NPY_NO_EXPORT int
+PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copymode) {
+    return 0;
+}
+
 /*NUMPY_API
  * Get buffer chunk from object
  *

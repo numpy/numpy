@@ -830,13 +830,12 @@ array_astype(PyArrayObject *self,
     NPY_ORDER order = NPY_KEEPORDER;
     int forcecopy = 1, subok = 1;
     NPY_PREPARE_ARGPARSER;
-
     if (npy_parse_arguments("astype", args, len_args, kwnames,
             "dtype", &PyArray_DescrConverter, &dtype,
             "|order", &PyArray_OrderConverter, &order,
             "|casting", &PyArray_CastingConverter, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
-            "|copy", &PyArray_PythonPyIntFromInt, &forcecopy,
+            "|copy", &PyArray_CopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(dtype);
         return NULL;

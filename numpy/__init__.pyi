@@ -202,6 +202,7 @@ from numpy import (
     rec as rec,
     testing as testing,
     version as version,
+    CopyMode as CopyMode
 )
 
 from numpy.core.function_base import (
@@ -1232,7 +1233,7 @@ class _ArrayOrScalarCommon:
         order: _OrderKACF = ...,
         casting: _Casting = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: Union[bool, CopyMode[Any]] = ...,
     ) -> _ArraySelf: ...
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def dump(self, file: str) -> None: ...
