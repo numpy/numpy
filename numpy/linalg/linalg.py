@@ -925,10 +925,17 @@ def qr(a, mode='reduced'):
 
     # handle modes that don't return q
     if mode == 'r':
-        return wrap(triu(a))
+        r = triu(a[..., :mn, :])
+        if t != result_t:
+            r = r.astype(result_t, copy=False)
+        return wrap(r)
 
     if mode == 'raw':
-        return wrap(transpose(a)), tau
+        q = transpose(a)
+        if t != result_t:
+            q = q.astype(result_t, copy=False)
+            tau = tau.astype(result_t, copy=False)
+        return wrap(q), tau
 
     if mode == 'economic':
         if t != result_t :
@@ -951,7 +958,13 @@ def qr(a, mode='reduced'):
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_qr_r_raw)
     q = gufunc(a, tau, signature=signature, extobj=extobj)
-    return wrap(q), wrap(triu(a[:, :mc]))
+    r = triu(a[..., :mc, :])
+
+    if t != result_t:
+        q = q.astype(result_t, copy=False)
+        r = r.astype(result_t, copy=False)
+
+    return wrap(q), wrap(r)
 
 # Eigenvalues
 

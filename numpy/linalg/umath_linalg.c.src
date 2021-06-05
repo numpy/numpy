@@ -3372,6 +3372,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     {
         /* compute optimal work size */
         /* IS THE FOLLOWING METHOD CORRECT? */
+
         @ftyp@ work_size_query;
 
         params->WORK = &work_size_query;
@@ -3380,11 +3381,14 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int)work_size_query;
+        work_count = (fortran_int) *(@ftyp@*) params->WORK;
 
-        work_size  = (size_t) work_size_query * sizeof(@ftyp@);
     }
 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+                                    work_count > 0 ? work_count : -work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
     mem_buff2 = malloc(work_size);
     if (!mem_buff2)
         goto error;
@@ -3393,7 +3397,6 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     memset(work, 0, work_size);
 
     params->WORK = work;
-    params->LWORK = work_count;
 
     return 1;
  error:
@@ -3451,6 +3454,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     {
         /* compute optimal work size */
         /* IS THE FOLLOWING METHOD CORRECT? */
+
         @ftyp@ work_size_query;
 
         params->WORK = &work_size_query;
@@ -3459,10 +3463,14 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int)work_size_query.r;
+        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
 
-        work_size  = (size_t) work_size_query.r * sizeof(@ftyp@);
     }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+                                    work_count > 0 ? work_count : -work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
     mem_buff2 = malloc(work_size);
     if (!mem_buff2)
@@ -3472,7 +3480,6 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     memset(work, 0, work_size);
 
     params->WORK = work;
-    params->LWORK = work_count;
 
     return 1;
  error:
@@ -3631,7 +3638,6 @@ init_@lapack_func@(GQR_PARAMS_t *params,
     size_t safe_min_m_n = min_m_n;
     size_t safe_m = m;
     size_t safe_n = n;
-
     size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
     size_t q_size = safe_m * safe_min_m_n * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
@@ -3669,10 +3675,14 @@ init_@lapack_func@(GQR_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int)work_size_query;
+        work_count = (fortran_int) *(@ftyp@*) params->WORK;
 
-        work_size  = (size_t) work_size_query * sizeof(@ftyp@);
     }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+                                    work_count > 0 ? work_count : -work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
     mem_buff2 = malloc(work_size);
     if (!mem_buff2)
@@ -3682,7 +3692,6 @@ init_@lapack_func@(GQR_PARAMS_t *params,
     memset(work, 0, work_size);
 
     params->WORK = work;
-    params->LWORK = work_count;
 
     return 1;
  error:
@@ -3751,10 +3760,14 @@ init_@lapack_func@(GQR_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int)work_size_query.r;
+        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
 
-        work_size  = (size_t) work_size_query.r * sizeof(@ftyp@);
     }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+                                    work_count > 0 ? work_count : -work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
     mem_buff2 = malloc(work_size);
     if (!mem_buff2)
@@ -3862,6 +3875,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
                    fortran_int m,
                    fortran_int n)
 {
+    printf("Inside zungqr\n");
     npy_uint8 *mem_buff = NULL;
     npy_uint8 *mem_buff2 = NULL;
     npy_uint8 *a, *q, *tau, *work;
@@ -3871,7 +3885,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
     size_t safe_n = n;
 
     size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
-    size_t q_size = safe_m * safe_min_m_n * sizeof(@ftyp@);
+    size_t q_size = safe_m * safe_m * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
 
     fortran_int work_count;
@@ -3889,7 +3903,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
 
 
     params->M = m;
-    params->MC = min_m_n;
+    params->MC = m;
     params->MN = min_m_n;
     params->A = a;
     params->Q = q;
@@ -3907,10 +3921,14 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int)work_size_query;
+        work_count = (fortran_int) *(@ftyp@*) params->WORK;
 
-        work_size  = (size_t) work_size_query * sizeof(@ftyp@);
     }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+                                    work_count > 0 ? work_count : -work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
     mem_buff2 = malloc(work_size);
     if (!mem_buff2)
@@ -3920,7 +3938,6 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
     memset(work, 0, work_size);
 
     params->WORK = work;
-    params->LWORK = work_count;
 
     return 1;
  error:
@@ -3941,8 +3958,8 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
  */
 static inline int
 init_@lapack_func@_complete(GQR_PARAMS_t *params,
-                   fortran_int m,
-                   fortran_int n)
+                            fortran_int m,
+                            fortran_int n)
 {
     npy_uint8 *mem_buff = NULL;
     npy_uint8 *mem_buff2 = NULL;
@@ -3989,11 +4006,14 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int)work_size_query.r;
+        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
 
-        work_size  = (size_t) work_size_query.r * sizeof(@ftyp@);
     }
 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+                                    work_count > 0 ? work_count : -work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
     mem_buff2 = malloc(work_size);
     if (!mem_buff2)
         goto error;
