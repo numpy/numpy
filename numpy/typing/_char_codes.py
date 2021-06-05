@@ -8,7 +8,7 @@ if sys.version_info >= (3, 8):
 elif _HAS_TYPING_EXTENSIONS:
     from typing_extensions import Literal
 
-if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     _BoolCodes = Literal["?", "=?", "<?", ">?", "bool", "bool_", "bool8"]
 
     _UInt8Codes = Literal["uint8", "u1", "=u1", "<u1", ">u1"]

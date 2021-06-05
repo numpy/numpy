@@ -11,9 +11,6 @@ if sys.version_info >= (3, 8):
     from typing import Protocol, TypedDict
 elif _HAS_TYPING_EXTENSIONS:
     from typing_extensions import Protocol, TypedDict
-
-if sys.version_info >= (3, 9):
-    from types import GenericAlias
 else:
     from ._generic_alias import _GenericAlias as GenericAlias
 
@@ -62,7 +59,7 @@ from ._char_codes import (
 _DTypeLikeNested = Any  # TODO: wait for support for recursive types
 _DType_co = TypeVar("_DType_co", covariant=True, bound=DType[Any])
 
-if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     # Mandatory keys
     class _DTypeDictBase(TypedDict):
         names: Sequence[str]

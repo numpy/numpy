@@ -53,7 +53,7 @@ if sys.version_info >= (3, 8):
 elif _HAS_TYPING_EXTENSIONS:
     from typing_extensions import Protocol
 
-if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     _T1 = TypeVar("_T1")
     _T2 = TypeVar("_T2")
     _2Tuple = Tuple[_T1, _T1]

@@ -34,7 +34,7 @@ _ScalarType = TypeVar("_ScalarType", bound=generic)
 _DType = TypeVar("_DType", bound="dtype[Any]")
 _DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 
-if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     # The `_SupportsArray` protocol only cares about the default dtype
     # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
     # array.
