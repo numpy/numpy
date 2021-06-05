@@ -811,8 +811,8 @@ def qr(a, mode='reduced'):
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
         a is real/complex. The determinant may be either +/- 1 in that
-        case. In case the number of dimensions in the input array is 
-        greater than 2 then a stack of the matrices with above properties 
+        case. In case the number of dimensions in the input array is
+        greater than 2 then a stack of the matrices with above properties
         is returned.
     r : ndarray of float or complex, optional
         The upper-triangular matrix or a stack of upper-triangular
@@ -967,7 +967,7 @@ def qr(a, mode='reduced'):
             gufunc = _umath_linalg.qr_reduced_m
         else:
             gufunc = _umath_linalg.qr_reduced_n
-    
+
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_qr_r_raw)
     q = gufunc(a, tau, signature=signature, extobj=extobj)
@@ -2174,7 +2174,7 @@ def lstsq(a, b, rcond="warn"):
     equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
     is the "exact" solution of the equation. Else, `x` minimizes the
-    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing 
+    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing
     solutions, the one with the smallest 2-norm :math:`||x||` is returned.
 
     Parameters

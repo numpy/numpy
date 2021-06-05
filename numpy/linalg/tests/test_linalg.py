@@ -1711,7 +1711,7 @@ class TestQR:
             self.check_qr(m1)
             self.check_qr(m2)
             self.check_qr(m2.T)
-    
+
     def check_qr_stacked(self, a):
         # This test expects the argument `a` to be an ndarray or
         # a subclass of an ndarray of inexact type.
@@ -1768,9 +1768,9 @@ class TestQR:
                 B = np.asarray([[b1, b2], [b3, b4]], dtype=dt)
                 self.check_qr_stacked(A)
                 self.check_qr_stacked(B)
-                self.check_qr_stacked(A + 1.j*B) 
+                self.check_qr_stacked(A + 1.j*B)
 
-        np.random.set_state(curr_state)  
+        np.random.set_state(curr_state)
 
 class TestCholesky:
     # TODO: are there no other tests for cholesky?

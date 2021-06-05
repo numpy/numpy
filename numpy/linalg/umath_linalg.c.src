@@ -162,36 +162,36 @@ FNAME(zgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               double rwork[], fortran_int iwork[],
               fortran_int *info);
 
-extern fortran_int 
+extern fortran_int
 FNAME(sgeqrf)(fortran_int *m, fortran_int *n, float a[], fortran_int *lda,
               float tau[], float work[],
               fortran_int *lwork, fortran_int *info);
-extern fortran_int 
+extern fortran_int
 FNAME(cgeqrf)(fortran_int *m, fortran_int *n, f2c_complex a[], fortran_int *lda,
               f2c_complex tau[], f2c_complex work[],
               fortran_int *lwork, fortran_int *info);
-extern fortran_int 
+extern fortran_int
 FNAME(dgeqrf)(fortran_int *m, fortran_int *n, double a[], fortran_int *lda,
               double tau[], double work[],
               fortran_int *lwork, fortran_int *info);
-extern fortran_int 
+extern fortran_int
 FNAME(zgeqrf)(fortran_int *m, fortran_int *n, f2c_doublecomplex a[], fortran_int *lda,
               f2c_doublecomplex tau[], f2c_doublecomplex work[],
               fortran_int *lwork, fortran_int *info);
 
-extern fortran_int 
+extern fortran_int
 FNAME(sorgqr)(fortran_int *m, fortran_int *n, fortran_int *k, float a[], fortran_int *lda,
               float tau[], float work[],
               fortran_int *lwork, fortran_int *info);
-extern fortran_int 
+extern fortran_int
 FNAME(dorgqr)(fortran_int *m, fortran_int *n, fortran_int *k, double a[], fortran_int *lda,
               double tau[], double work[],
               fortran_int *lwork, fortran_int *info);
-extern fortran_int 
+extern fortran_int
 FNAME(cungqr)(fortran_int *m, fortran_int *n, fortran_int *k, f2c_complex a[],
               fortran_int *lda, f2c_complex tau[],
               f2c_complex work[], fortran_int *lwork, fortran_int *info);
-extern fortran_int 
+extern fortran_int
 FNAME(zungqr)(fortran_int *m, fortran_int *n, fortran_int *k, f2c_doublecomplex a[],
               fortran_int *lda, f2c_doublecomplex tau[],
               f2c_doublecomplex work[], fortran_int *lwork, fortran_int *info);
@@ -3385,7 +3385,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
                                     work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
@@ -3467,7 +3467,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
                                     work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
@@ -3679,7 +3679,7 @@ init_@lapack_func@(GQR_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
                                     work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
@@ -3764,7 +3764,7 @@ init_@lapack_func@(GQR_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
                                     work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
@@ -3925,7 +3925,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
                                     work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
@@ -4010,7 +4010,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n), 
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
                                     work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
