@@ -956,7 +956,7 @@ def qr(a, mode='reduced'):
             a = a.astype(result_t, copy=False)
         return wrap(a)
 
-    if mode == 'complete' and  m > n:
+    if mode == 'complete' and m > n:
         mc = m
         if m <= n:
             gufunc = _umath_linalg.qr_complete_m
