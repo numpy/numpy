@@ -3809,12 +3809,14 @@ static void
     GQR_PARAMS_t params;
     int error_occurred = get_fp_invalid_and_clear();
     fortran_int n, m;
+    size_t safe_min_m_n, safe_m;
 
     INIT_OUTER_LOOP_3
 
     m = (fortran_int)dimensions[0];
     n = (fortran_int)dimensions[1];
-
+    safe_min_m_n = fortran_int_min(m, n);
+    safe_m = m;
 
     if (init_@lapack_func@(&params, m, n)) {
         LINEARIZE_DATA_t a_in, tau_in, q_out;
@@ -3826,8 +3828,6 @@ static void
         BEGIN_OUTER_LOOP_3
             int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            size_t safe_min_m_n = fortran_int_min(m, n);
-            size_t safe_m = m;
             memcpy(params.Q, params.A, safe_min_m_n * safe_m * sizeof(@ftyp@));
             linearize_@TYPE@_matrix(params.TAU, args[1], &tau_in);
             not_ok = call_@lapack_func@(&params);
@@ -4033,11 +4033,14 @@ static void
     GQR_PARAMS_t params;
     int error_occurred = get_fp_invalid_and_clear();
     fortran_int n, m;
+    size_t safe_n, safe_m;
 
     INIT_OUTER_LOOP_3
 
     m = (fortran_int)dimensions[0];
     n = (fortran_int)dimensions[1];
+    safe_n = n;
+    safe_m = m;
 
 
     if (init_@lapack_func@_complete(&params, m, n)) {
@@ -4050,8 +4053,6 @@ static void
         BEGIN_OUTER_LOOP_3
             int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            size_t safe_n = n;
-            size_t safe_m = m;
             memcpy(params.Q, params.A, safe_n * safe_m * sizeof(@ftyp@));
             linearize_@TYPE@_matrix(params.TAU, args[1], &tau_in);
             not_ok = call_@lapack_func@(&params);
