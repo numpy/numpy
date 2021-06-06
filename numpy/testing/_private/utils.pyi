@@ -25,8 +25,16 @@ from typing import (
     Union,
 )
 
-from numpy import generic, dtype, number, object_, bool_
-from numpy.typing import NDArray, ArrayLike, DTypeLike
+from numpy import generic, dtype, number, object_, bool_, _FloatValue
+from numpy.typing import (
+    NDArray,
+    ArrayLike,
+    DTypeLike,
+    _ArrayLikeNumber_co,
+    _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeDT64_co,
+)
 
 from unittest.case import (
     SkipTest as SkipTest,
@@ -172,16 +180,17 @@ def print_assert_equal(
 ) -> None: ...
 
 def assert_almost_equal(
-    actual: ArrayLike,
-    desired: ArrayLike,
+    actual: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    desired: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     decimal: int = ...,
     err_msg: str = ...,
     verbose: bool = ...,
 ) -> None: ...
 
+# Anything that can be coerced into `builtins.float`
 def assert_approx_equal(
-    actual: ArrayLike,
-    desired: ArrayLike,
+    actual: _FloatValue,
+    desired: _FloatValue,
     significant: int = ...,
     err_msg: str = ...,
     verbose: bool = ...,
@@ -207,16 +216,31 @@ def assert_array_equal(
 ) -> None: ...
 
 def assert_array_almost_equal(
-    x: ArrayLike,
-    y: ArrayLike,
-    decimal: int = ...,
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    decimal: float = ...,
     err_msg: str = ...,
     verbose: bool = ...,
 ) -> None: ...
 
+@overload
 def assert_array_less(
-    x: ArrayLike,
-    y: ArrayLike,
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    err_msg: str = ...,
+    verbose: bool = ...,
+) -> None: ...
+@overload
+def assert_array_less(
+    x: _ArrayLikeTD64_co,
+    y: _ArrayLikeTD64_co,
+    err_msg: str = ...,
+    verbose: bool = ...,
+) -> None: ...
+@overload
+def assert_array_less(
+    x: _ArrayLikeDT64_co,
+    y: _ArrayLikeDT64_co,
     err_msg: str = ...,
     verbose: bool = ...,
 ) -> None: ...
@@ -277,9 +301,20 @@ def measure(
     label: None | str = ...,
 ) -> float: ...
 
+@overload
 def assert_allclose(
-    actual: ArrayLike,
-    desired: ArrayLike,
+    actual: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    desired: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    rtol: float = ...,
+    atol: float = ...,
+    equal_nan: bool = ...,
+    err_msg: str = ...,
+    verbose: bool = ...,
+) -> None: ...
+@overload
+def assert_allclose(
+    actual: _ArrayLikeTD64_co,
+    desired: _ArrayLikeTD64_co,
     rtol: float = ...,
     atol: float = ...,
     equal_nan: bool = ...,
@@ -288,14 +323,14 @@ def assert_allclose(
 ) -> None: ...
 
 def assert_array_almost_equal_nulp(
-    x: ArrayLike,
-    y: ArrayLike,
+    x: _ArrayLikeNumber_co,
+    y: _ArrayLikeNumber_co,
     nulp: float = ...,
 ) -> None: ...
 
 def assert_array_max_ulp(
-    a: ArrayLike,
-    b: ArrayLike,
+    a: _ArrayLikeNumber_co,
+    b: _ArrayLikeNumber_co,
     maxulp: float = ...,
     dtype: DTypeLike = ...,
 ) -> NDArray[Any]: ...
