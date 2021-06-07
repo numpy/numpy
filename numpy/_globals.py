@@ -93,7 +93,7 @@ class _NoValueType:
 
 _NoValue = _NoValueType()
 
-class CopyMode(enum.Enum):
+class CopyMode(enum.IntEnum):
 
     ALWAYS = 1
     IF_NEEDED = 0
@@ -108,3 +108,5 @@ class CopyMode(enum.Enum):
             return False
 
         raise TypeError(f"{self} is neither True nor False.")
+
+CopyMode.__module__ = 'numpy'

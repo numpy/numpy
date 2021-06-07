@@ -828,7 +828,7 @@ array_astype(PyArrayObject *self,
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    int forcecopy = 1, subok = 1;
+    PyNpCopyMode_Enum forcecopy = 1, subok = 1;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("astype", args, len_args, kwnames,
             "dtype", &PyArray_DescrConverter, &dtype,

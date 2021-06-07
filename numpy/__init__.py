@@ -133,7 +133,8 @@ else:
         raise ImportError(msg) from e
 
     __all__ = ['ModuleDeprecationWarning',
-               'VisibleDeprecationWarning']
+               'VisibleDeprecationWarning',
+               'CopyMode']
 
     # get the version using versioneer
     from ._version import get_versions

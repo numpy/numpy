@@ -2,6 +2,7 @@ import builtins
 import os
 import sys
 import datetime as dt
+import enum
 from abc import abstractmethod
 from types import TracebackType
 from contextlib import ContextDecorator
@@ -1233,7 +1234,7 @@ class _ArrayOrScalarCommon:
         order: _OrderKACF = ...,
         casting: _Casting = ...,
         subok: bool = ...,
-        copy: Union[bool, CopyMode[Any]] = ...,
+        copy: bool | CopyMode = ...,
     ) -> _ArraySelf: ...
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def dump(self, file: str) -> None: ...
@@ -3546,6 +3547,12 @@ true_divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
 trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
 
 abs = absolute
+
+class CopyMode(enum.IntEnum):
+
+    ALWAYS: L[1]
+    IF_NEEDED: L[0]
+    NEVER: L[2]
 
 # Warnings
 class ModuleDeprecationWarning(DeprecationWarning): ...

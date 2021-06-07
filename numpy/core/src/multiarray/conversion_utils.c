@@ -17,6 +17,8 @@
 #include "alloc.h"
 #include "npy_buffer.h"
 
+#include "npy_argparse.h"
+
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
 static npy_intp
@@ -164,7 +166,28 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
 
 NPY_NO_EXPORT int
 PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copymode) {
-    return 0;
+    if (obj == Py_None) {
+        PyErr_SetString(PyExc_ValueError,
+                        "NoneType copy mode not allowed. Please choose one of" 
+                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER");
+        return NPY_FAIL;
+    }
+
+    int int_copymode = -1;
+    PyArray_PythonPyIntFromInt(obj, &int_copymode);
+
+    if( int_copymode != ALWAYS && 
+        int_copymode != IF_NEEDED && 
+        int_copymode != NEVER ) {
+        PyErr_Format(PyExc_ValueError,
+                        "Unrecognized copy mode %d. Please choose one of" 
+                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER", 
+                         int_copymode);
+        return NPY_FAIL;
+    }
+
+    *copymode = (PyNpCopyMode_Enum) int_copymode;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
