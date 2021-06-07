@@ -1752,9 +1752,6 @@ class TestQR:
 
     def test_stacked_inputs(self):
 
-        curr_state = np.random.get_state()
-        np.random.seed(0)
-
         normal = np.random.normal
         sizes = [(3, 4), (4, 3), (4, 4), (3, 0), (0, 3)]
         dts = [np.float32, np.float64, np.complex64]
@@ -1770,7 +1767,6 @@ class TestQR:
                 self.check_qr_stacked(B)
                 self.check_qr_stacked(A + 1.j*B)
 
-        np.random.set_state(curr_state)
 
 class TestCholesky:
     # TODO: are there no other tests for cholesky?

@@ -3875,7 +3875,6 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
                    fortran_int m,
                    fortran_int n)
 {
-    printf("Inside zungqr\n");
     npy_uint8 *mem_buff = NULL;
     npy_uint8 *mem_buff2 = NULL;
     npy_uint8 *a, *q, *tau, *work;
