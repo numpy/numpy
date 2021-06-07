@@ -451,7 +451,11 @@ typedef struct {
         int len;
 } PyArray_Dims;
 
-typedef enum PyNpCopyMode {IF_NEEDED, ALWAYS, NEVER} PyNpCopyMode_Enum;
+typedef enum PyNpCopyMode {
+        NPY_IF_NEEDED, 
+        NPY_ALWAYS, 
+        NPY_NEVER
+} PyNpCopyMode_Enum;
 
 typedef struct {
         /*
@@ -913,6 +917,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_UPDATEIFCOPY    0x1000 /* Deprecated in 1.14 */
 #define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
+
+#define NPY_ARRAY_ENSURENOCOPY 0x4000
 
 /*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,

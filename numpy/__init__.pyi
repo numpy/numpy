@@ -203,7 +203,6 @@ from numpy import (
     rec as rec,
     testing as testing,
     version as version,
-    CopyMode as CopyMode
 )
 
 from numpy.core.function_base import (
@@ -3336,7 +3335,7 @@ def array(
     object: object,
     dtype: DTypeLike = ...,
     *,
-    copy: bool = ...,
+    copy: bool | CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,

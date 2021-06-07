@@ -176,9 +176,9 @@ PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copymode) {
     int int_copymode = -1;
     PyArray_PythonPyIntFromInt(obj, &int_copymode);
 
-    if( int_copymode != ALWAYS && 
-        int_copymode != IF_NEEDED && 
-        int_copymode != NEVER ) {
+    if( int_copymode != NPY_ALWAYS && 
+        int_copymode != NPY_IF_NEEDED && 
+        int_copymode != NPY_NEVER ) {
         PyErr_Format(PyExc_ValueError,
                         "Unrecognized copy mode %d. Please choose one of" 
                          "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER", 
