@@ -852,20 +852,29 @@ array_astype(PyArrayObject *self,
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if (!forcecopy && (order == NPY_KEEPORDER ||
-                       (order == NPY_ANYORDER &&
-                            (PyArray_IS_C_CONTIGUOUS(self) ||
-                            PyArray_IS_F_CONTIGUOUS(self))) ||
-                       (order == NPY_CORDER &&
-                            PyArray_IS_C_CONTIGUOUS(self)) ||
-                       (order == NPY_FORTRANORDER &&
-                            PyArray_IS_F_CONTIGUOUS(self))) &&
-                    (subok || PyArray_CheckExact(self)) &&
-                    PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
+    if ( (forcecopy == IF_NEEDED || forcecopy == NEVER) && 
+        (order == NPY_KEEPORDER ||
+        (order == NPY_ANYORDER &&
+            (PyArray_IS_C_CONTIGUOUS(self) ||
+            PyArray_IS_F_CONTIGUOUS(self))) ||
+        (order == NPY_CORDER &&
+            PyArray_IS_C_CONTIGUOUS(self)) ||
+        (order == NPY_FORTRANORDER &&
+            PyArray_IS_F_CONTIGUOUS(self))) &&
+    (subok || PyArray_CheckExact(self)) &&
+    PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
         Py_DECREF(dtype);
         Py_INCREF(self);
         return (PyObject *)self;
     }
+
+    if( forcecopy == NEVER ) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Unable to avoid copy while casting in np.CopyMode.NEVER");
+        Py_DECREF(dtype);
+        return NULL;
+    }
+    
     if (!PyArray_CanCastArrayTo(self, dtype, casting)) {
         PyErr_Clear();
         npy_set_invalid_cast_error(
