@@ -782,9 +782,7 @@ class TestRegression:
         # Ticket #514
         s = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         t = []
-        with pytest.warns(FutureWarning,
-                match="Promotion of numbers and bools to strings"):
-            np.hstack((t, s))
+        np.hstack((t, s))
 
     def test_arr_transpose(self):
         # Ticket #516

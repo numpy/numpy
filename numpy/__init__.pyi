@@ -1238,9 +1238,6 @@ class _ArrayOrScalarCommon:
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def dump(self, file: str) -> None: ...
     def dumps(self) -> bytes: ...
-    def getfield(
-        self: _ArraySelf, dtype: DTypeLike, offset: int = ...
-    ) -> _ArraySelf: ...
     def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
@@ -1249,14 +1246,6 @@ class _ArrayOrScalarCommon:
     ) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
-    @overload
-    def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
-    @overload
-    def view(self: _ArraySelf, dtype: DTypeLike = ...) -> _ArraySelf: ...
-    @overload
-    def view(
-        self, dtype: DTypeLike, type: Type[_NdArraySubClass]
-    ) -> _NdArraySubClass: ...
 
     # TODO: Add proper signatures
     def __getitem__(self, key) -> Any: ...
@@ -1638,6 +1627,12 @@ _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
 _Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
+_DTypeLike = Union[
+    dtype[_ScalarType],
+    Type[_ScalarType],
+    _SupportsDType[dtype[_ScalarType]],
+]
+
 _ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
 _ArrayInt_co = NDArray[Union[bool_, integer[Any]]]
 _ArrayFloat_co = NDArray[Union[bool_, integer[Any], floating[Any]]]
@@ -1874,6 +1869,53 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def reshape(
         self, *shape: SupportsIndex, order: _OrderACF = ...
     ) -> ndarray[Any, _DType_co]: ...
+
+    @overload
+    def astype(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        order: _OrderKACF = ...,
+        casting: _Casting = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> NDArray[_ScalarType]: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike,
+        order: _OrderKACF = ...,
+        casting: _Casting = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> NDArray[Any]: ...
+
+    @overload
+    def view(self: _ArraySelf) -> _ArraySelf: ...
+    @overload
+    def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
+    @overload
+    def view(self, dtype: _DTypeLike[_ScalarType]) -> NDArray[_ScalarType]: ...
+    @overload
+    def view(self, dtype: DTypeLike) -> NDArray[Any]: ...
+    @overload
+    def view(
+        self,
+        dtype: DTypeLike,
+        type: Type[_NdArraySubClass],
+    ) -> _NdArraySubClass: ...
+
+    @overload
+    def getfield(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        offset: SupportsIndex = ...
+    ) -> NDArray[_ScalarType]: ...
+    @overload
+    def getfield(
+        self,
+        dtype: DTypeLike,
+        offset: SupportsIndex = ...
+    ) -> NDArray[Any]: ...
 
     # Dispatch to the underlying `generic` via protocols
     def __int__(
@@ -2847,6 +2889,59 @@ class generic(_ArrayOrScalarCommon):
     def byteswap(self: _ScalarType, inplace: L[False] = ...) -> _ScalarType: ...
     @property
     def flat(self: _ScalarType) -> flatiter[ndarray[Any, dtype[_ScalarType]]]: ...
+
+    @overload
+    def astype(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        order: _OrderKACF = ...,
+        casting: _Casting = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike,
+        order: _OrderKACF = ...,
+        casting: _Casting = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> Any: ...
+
+    # NOTE: `view` will perform a 0D->scalar cast,
+    # thus the array `type` is irrelevant to the output type
+    @overload
+    def view(
+        self: _ScalarType,
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def view(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def view(
+        self,
+        dtype: DTypeLike,
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> Any: ...
+
+    @overload
+    def getfield(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        offset: SupportsIndex = ...
+    ) -> _ScalarType: ...
+    @overload
+    def getfield(
+        self,
+        dtype: DTypeLike,
+        offset: SupportsIndex = ...
+    ) -> Any: ...
+
     def item(
         self,
         __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
