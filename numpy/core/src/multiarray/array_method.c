@@ -210,10 +210,12 @@ validate_spec(PyArrayMethod_Spec *spec)
         case NPY_UNSAFE_CASTING:
             break;
         default:
-            PyErr_Format(PyExc_TypeError,
-                    "ArrayMethod has invalid casting `%d`. (method: %s)",
-                    spec->casting, spec->name);
-            return -1;
+            if (spec->casting != -1) {
+                PyErr_Format(PyExc_TypeError,
+                        "ArrayMethod has invalid casting `%d`. (method: %s)",
+                        spec->casting, spec->name);
+                return -1;
+            }
     }
 
     for (int i = 0; i < nargs; i++) {
@@ -301,6 +303,13 @@ fill_arraymethod_from_slots(
 
     /* Check whether the slots are valid: */
     if (meth->resolve_descriptors == &default_resolve_descriptors) {
+        if (spec->casting == -1) {
+            PyErr_Format(PyExc_TypeError,
+                    "Cannot set casting to -1 (invalid) when not providing "
+                    "the default `resolve_descriptors` function. "
+                    "(method: %s)", spec->name);
+            return -1;
+        }
         for (int i = 0; i < meth->nin + meth->nout; i++) {
             if (res->dtypes[i] == NULL) {
                 if (i < meth->nin) {
@@ -573,6 +582,8 @@ boundarraymethod__resolve_descripors(
     /*
      * The casting flags should be the most generic casting level (except the
      * cast-is-view flag.  If no input is parametric, it must match exactly.
+     *
+     * (Note that these checks are only debugging checks.)
      */
     int parametric = 0;
     for (int i = 0; i < nin + nout; i++) {
@@ -581,33 +592,33 @@ boundarraymethod__resolve_descripors(
             break;
         }
     }
-    if (!parametric) {
-        /*
-         * Non-parametric can only mismatch if it switches from no to equiv
-         * (e.g. due to byteorder changes).
-         */
-        if (self->method->casting != (casting & ~_NPY_CAST_IS_VIEW) &&
-                !(self->method->casting == NPY_NO_CASTING &&
-                  casting == NPY_EQUIV_CASTING)) {
+    if (self->method->casting != -1) {
+        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
+        if (self->method->casting !=
+                PyArray_MinCastSafety(cast, self->method->casting)) {
             PyErr_Format(PyExc_RuntimeError,
-                    "resolve_descriptors cast level did not match stored one "
-                    "(expected %d, got %d) for method %s",
-                    self->method->casting, (casting & ~_NPY_CAST_IS_VIEW),
-                    self->method->name);
+                    "resolve_descriptors cast level did not match stored one. "
+                    "(set level is %d, got %d for method %s)",
+                    self->method->casting, cast, self->method->name);
             Py_DECREF(result_tuple);
             return NULL;
         }
-    }
-    else {
-        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
-        if (cast != PyArray_MinCastSafety(cast, self->method->casting)) {
-            PyErr_Format(PyExc_RuntimeError,
-                    "resolve_descriptors cast level did not match stored one "
-                    "(expected %d, got %d) for method %s",
-                    self->method->casting, (casting & ~_NPY_CAST_IS_VIEW),
-                    self->method->name);
-            Py_DECREF(result_tuple);
-            return NULL;
+        if (!parametric) {
+            /*
+             * Non-parametric can only mismatch if it switches from equiv to no
+             * (e.g. due to byteorder changes).
+             */
+            if (cast != self->method->casting &&
+                    self->method->casting != NPY_EQUIV_CASTING) {
+                PyErr_Format(PyExc_RuntimeError,
+                        "resolve_descriptors cast level changed even though "
+                        "the cast is non-parametric where the only possible "
+                        "change should be from equivalent to no casting. "
+                        "(set level is %d, got %d for method %s)",
+                        self->method->casting, cast, self->method->name);
+                Py_DECREF(result_tuple);
+                return NULL;
+            }
         }
     }
 

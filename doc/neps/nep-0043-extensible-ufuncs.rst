@@ -262,8 +262,8 @@ to define string equality, will be added to a ufunc.
             if given_descrs[2] is None:
                 out_descr = DTypes[2]()
 
-            # The operation is always "safe" casting (most ufuncs are)
-            return (given_descrs[0], given_descrs[1], out_descr), "safe"
+            # The operation is always "no" casting (most ufuncs are)
+            return (given_descrs[0], given_descrs[1], out_descr), "no"
 
         def strided_loop(context, dimensions, data, strides, innerloop_data):
             """The 1-D strided loop, similar to those used in current ufuncs"""
@@ -434,7 +434,7 @@ a new ``ArrayMethod`` object:
 
         # Casting safety information (almost always "safe", necessary to
         # unify casting and universal functions)
-        casting: Casting = "safe"
+        casting: Casting = "no"
 
         # More general flags:
         flags: int
@@ -751,7 +751,7 @@ This step is required to allocate output arrays and has to happen before
 casting can be prepared.
 
 While the returned casting-safety (``NPY_CASTING``) will almost always be
-"safe" for universal functions, including it has two big advantages:
+"no" for universal functions, including it has two big advantages:
 
 * ``-1`` indicates that an error occurred. If a Python error is set, it will
   be raised.  If no Python error is set this will be considered an "impossible"
@@ -767,7 +767,7 @@ While the returned casting-safety (``NPY_CASTING``) will almost always be
   perspective. Currently, this would use ``int64 + int64 -> int64`` and then
   cast to ``int32``. An implementation that skips the cast would
   have to signal that it effectively includes the "same-kind" cast and is
-  thus not considered "safe".
+  thus not considered "no".
 
 
 ``get_loop`` method

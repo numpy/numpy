@@ -3952,7 +3952,6 @@ time_to_string_resolve_descriptors(
         return -1;
     }
 
-    assert(self->casting == NPY_UNSAFE_CASTING);
     return NPY_UNSAFE_CASTING;
 }
 
@@ -4059,7 +4058,7 @@ PyArray_InitializeDatetimeCasts()
         .name = "datetime_casts",
         .nin = 1,
         .nout = 1,
-        .casting = NPY_NO_CASTING,
+        .casting = NPY_UNSAFE_CASTING,
         .flags = NPY_METH_SUPPORTS_UNALIGNED,
         .slots = slots,
         .dtypes = dtypes,
