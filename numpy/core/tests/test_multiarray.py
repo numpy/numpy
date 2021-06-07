@@ -7745,6 +7745,186 @@ class TestNewBufferProtocol:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
 
 
+class TestArrayCreationCopyArgument(object):
+
+    true_vals = [True, np.CopyMode.ALWAYS, np.True_]
+    false_vals = [False, np.CopyMode.IF_NEEDED, np.False_]
+
+    def test_scalars(self):
+        
+        # Test both numpy and python scalars
+        for dtype in np.typecodes["All"]:
+            arr = np.zeros((), dtype=dtype)
+            scalar = arr[()]
+            pyscalar = arr.item(0)
+
+            # Test never-copy raises error:
+            assert_raises(ValueError, np.array, scalar, copy=np.CopyMode.NEVER)
+            assert_raises(ValueError, np.array, pyscalar, copy=np.CopyMode.NEVER)
+
+
+    def test_compatible_cast(self):
+
+        # Some types are compatible even though they are different, no
+        # copy is necessary for them. This is mostly true for some integers
+        def int_types(byteswap=False):
+            int_types = (np.typecodes["Integer"] +
+                         np.typecodes["UnsignedInteger"])
+            for int_type in int_types:
+                yield np.dtype(int_type)
+                if byteswap:
+                    yield np.dtype(int_type).newbyteorder()
+
+        for int1 in int_types():
+            for int2 in int_types(True):
+                arr = np.arange(10, dtype=int1)
+
+                for copy in self.true_vals:
+                    res = np.array(arr, copy=copy, dtype=int2)
+                    assert res is not arr and res.flags.owndata
+                    assert_array_equal(res, arr)
+
+
+
+                if int1 == int2:
+                    # Casting is not necessary, base check is sufficient here
+                    for copy in self.false_vals:
+                        res = np.array(arr, copy=copy, dtype=int2)
+                        assert res is arr or res.base is arr
+
+
+                    res = np.array(arr, copy=np.CopyMode.NEVER, dtype=int2)
+                    assert res is arr or res.base is arr
+
+
+                else:
+                    # Casting is necessary, assert copy works:
+                    for copy in self.false_vals:
+                        res = np.array(arr, copy=copy, dtype=int2)
+                        assert res is not arr and res.flags.owndata
+                        assert_array_equal(res, arr)
+
+
+                    assert_raises(ValueError, np.array,
+                                  arr, copy=np.CopyMode.NEVER, dtype=int2)
+
+
+    def test_buffer_interface(self):
+
+        # Buffer interface gives direct memory access (no copy)
+        arr = np.arange(10)
+        view = memoryview(arr)
+
+        # Checking bases is a bit tricky since numpy creates another
+        # memoryview, so use may_share_memory.
+        for copy in self.true_vals:
+            res = np.array(view, copy=copy)
+            assert not np.may_share_memory(arr, res)
+        for copy in self.false_vals:
+            res = np.array(view, copy=copy)
+            assert np.may_share_memory(arr, res)
+        res = np.array(view, copy=np.CopyMode.NEVER)
+        assert np.may_share_memory(arr, res)
+
+    def test_array_interfaces(self):
+        # Array interface gives direct memory access (much like a memoryview)
+        base_arr = np.arange(10)
+
+
+        class ArrayLike:
+            __array_interface__ = base_arr.__array_interface__
+
+        arr = ArrayLike()
+
+        for copy, val in [(True, None), (np.CopyMode.ALWAYS, None),
+                          (False, arr), (np.CopyMode.IF_NEEDED, arr),
+                          (np.CopyMode.NEVER, arr)]:
+            res = np.array(arr, copy=copy)
+            assert res.base is val
+
+    def test___array__(self):
+        base_arr = np.arange(10)
+
+        class ArrayLike:
+            def __array__(self):
+                # __array__ should return a copy, numpy cannot know this
+                # however.
+                return base_arr
+
+        arr = ArrayLike()
+
+        for copy in self.true_vals:
+            res = np.array(arr, copy=copy)
+            assert_array_equal(res, base_arr)
+            # An additional copy is currently forced by numpy in this case,
+            # you could argue, numpy does not trust the ArrayLike. This
+            # may be open for change:
+            assert res is not base_arr
+
+        for copy in self.false_vals:
+            res = np.array(arr, copy=False)
+            assert_array_equal(res, base_arr)
+            assert res is base_arr  # numpy trusts the ArrayLike
+
+        assert_raises(RuntimeError, np.array, arr, copy=np.CopyMode.NEVER)
+
+
+    @pytest.mark.parametrize(
+            "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
+    @pytest.mark.parametrize("order1", ["C", "F", None])
+    @pytest.mark.parametrize("order2", ["C", "F", "A", "K"])
+    def test_order_mismatch(self, arr, order1, order2):
+        # The order is the main (python side) reason that can cause
+        # a never-copy to fail.
+        # Prepare C-order, F-order and non-contiguous arrays:
+        arr = arr.copy(order1)
+        if order1 == "C":
+            assert arr.flags.c_contiguous
+        elif order1 == "F":
+            assert arr.flags.f_contiguous
+        elif arr.ndim != 0:
+            # Make array non-contiguous
+            arr = arr[::2, ::2]
+            assert not arr.flags.forc
+
+
+        # Whether a copy is necessary depends on the order of arr:
+        if order2 == "C":
+            no_copy_necessary = arr.flags.c_contiguous
+        elif order2 == "F":
+            no_copy_necessary = arr.flags.f_contiguous
+        else:
+            # Keeporder and Anyorder are OK with non-contiguous output.
+            # This is not consistent with the `astype` behaviour which
+            # enforces contiguity for "A". It is probably historic from when
+            # "K" did not exist.
+            no_copy_necessary = True
+
+
+        # Test it for both the array and a memoryview
+        for view in [arr, memoryview(arr)]:
+            for copy in self.true_vals:
+                res = np.array(view, copy=copy, order=order2)
+                assert res is not arr and res.flags.owndata
+                assert_array_equal(arr, res)
+
+
+            if no_copy_necessary:
+                for copy in self.false_vals:
+                    res = np.array(view, copy=copy, order=order2)
+                    # res.base.obj refers to the memoryview
+                    assert res is arr or res.base.obj is arr
+
+                res = np.array(view, copy=np.CopyMode.NEVER, order=order2)
+                assert res is arr or res.base.obj is arr
+            else:
+                for copy in self.false_vals:
+                    res = np.array(arr, copy=copy, order=order2)
+                    assert_array_equal(arr, res)
+                assert_raises(ValueError, np.array,
+                              view, copy=np.CopyMode.NEVER, order=order2)
+
+
 class TestArrayAttributeDeletion:
 
     def test_multiarray_writable_attributes_deletion(self):

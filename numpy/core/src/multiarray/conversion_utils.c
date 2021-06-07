@@ -168,8 +168,8 @@ NPY_NO_EXPORT int
 PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copymode) {
     if (obj == Py_None) {
         PyErr_SetString(PyExc_ValueError,
-                        "NoneType copy mode not allowed. Please choose one of" 
-                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER");
+                        "NoneType copy mode not allowed. Please choose one of " 
+                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER.");
         return NPY_FAIL;
     }
 
@@ -180,8 +180,8 @@ PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copymode) {
         int_copymode != NPY_IF_NEEDED && 
         int_copymode != NPY_NEVER ) {
         PyErr_Format(PyExc_ValueError,
-                        "Unrecognized copy mode %d. Please choose one of" 
-                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER", 
+                        "Unrecognized copy mode %d. Please choose one of " 
+                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER.", 
                          int_copymode);
         return NPY_FAIL;
     }
