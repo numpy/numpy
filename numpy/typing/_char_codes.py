@@ -1,18 +1,14 @@
 import sys
 from typing import Any, TYPE_CHECKING
 
+from . import _HAS_TYPING_EXTENSIONS
+
 if sys.version_info >= (3, 8):
     from typing import Literal
-    HAVE_LITERAL = True
-else:
-    try:
-        from typing_extensions import Literal
-    except ImportError:
-        HAVE_LITERAL = False
-    else:
-        HAVE_LITERAL = True
+elif _HAS_TYPING_EXTENSIONS:
+    from typing_extensions import Literal
 
-if TYPE_CHECKING or HAVE_LITERAL:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     _BoolCodes = Literal["?", "=?", "<?", ">?", "bool", "bool_", "bool8"]
 
     _UInt8Codes = Literal["uint8", "u1", "=u1", "<u1", ">u1"]

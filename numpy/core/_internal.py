@@ -8,6 +8,7 @@ import ast
 import re
 import sys
 import platform
+import warnings
 
 from .multiarray import dtype, array, ndarray
 try:
@@ -350,11 +351,45 @@ class _ctypes:
         """
         return self.data_as(ctypes.c_void_p)
 
-    # kept for compatibility
-    get_data = data.fget
-    get_shape = shape.fget
-    get_strides = strides.fget
-    get_as_parameter = _as_parameter_.fget
+    # Numpy 1.21.0, 2021-05-18
+
+    def get_data(self):
+        """Deprecated getter for the `_ctypes.data` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_data" is deprecated. Use "data" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.data
+
+    def get_shape(self):
+        """Deprecated getter for the `_ctypes.shape` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_shape" is deprecated. Use "shape" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.shape
+
+    def get_strides(self):
+        """Deprecated getter for the `_ctypes.strides` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_strides" is deprecated. Use "strides" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.strides
+
+    def get_as_parameter(self):
+        """Deprecated getter for the `_ctypes._as_parameter_` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn(
+            '"get_as_parameter" is deprecated. Use "_as_parameter_" instead',
+            DeprecationWarning, stacklevel=2,
+        )
+        return self._as_parameter_
 
 
 def _newnames(datatype, order):
@@ -808,11 +843,13 @@ def _ufunc_doc_signature_formatter(ufunc):
         ", order='K'"
         ", dtype=None"
         ", subok=True"
-        "[, signature"
-        ", extobj]"
     )
+
+    # NOTE: gufuncs may or may not support the `axis` parameter
     if ufunc.signature is None:
-        kwargs = ", where=True" + kwargs
+        kwargs = f", where=True{kwargs}[, signature, extobj]"
+    else:
+        kwargs += "[, signature, extobj, axes, axis]"
 
     # join all the parts together
     return '{name}({in_args}{out_args}, *{kwargs})'.format(

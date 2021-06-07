@@ -151,20 +151,26 @@ class build_ext (old_build_ext):
             opt_cache_path = os.path.abspath(
                 os.path.join(self.build_temp, 'ccompiler_opt_cache_ext.py')
             )
+            if hasattr(self, "compiler_opt"):
+                # By default `CCompilerOpt` update the cache at the exit of
+                # the process, which may lead to duplicate building
+                # (see build_extension()/force_rebuild) if run() called
+                # multiple times within the same os process/thread without
+                # giving the chance the previous instances of `CCompilerOpt`
+                # to update the cache.
+                self.compiler_opt.cache_flush()
+
             self.compiler_opt = new_ccompiler_opt(
                 compiler=self.compiler, dispatch_hpath=dispatch_hpath,
                 cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
                 cache_path=opt_cache_path
             )
-            if not self.compiler_opt.is_cached():
-                log.info("Detected changes on compiler optimizations, force rebuilding")
-                self.force = True
+            def report(copt):
+                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
+                log.info(copt.report(full=True))
 
             import atexit
-            def report():
-                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
-                log.info(self.compiler_opt.report(full=True))
-            atexit.register(report)
+            atexit.register(report, self.compiler_opt)
 
         # Setup directory for storing generated extra DLL files on Windows
         self.extra_dll_dir = os.path.join(self.build_temp, '.libs')
@@ -359,7 +365,11 @@ class build_ext (old_build_ext):
                                         self.get_ext_filename(fullname))
         depends = sources + ext.depends
 
-        if not (self.force or newer_group(depends, ext_filename, 'newer')):
+        force_rebuild = self.force
+        if not self.disable_optimization and not self.compiler_opt.is_cached():
+            log.debug("Detected changes on compiler optimizations")
+            force_rebuild = True
+        if not (force_rebuild or newer_group(depends, ext_filename, 'newer')):
             log.debug("skipping '%s' extension (up-to-date)", ext.name)
             return
         else:

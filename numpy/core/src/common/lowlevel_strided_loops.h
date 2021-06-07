@@ -647,25 +647,6 @@ npy_bswap8_unaligned(char * x)
  *          // Create iterator, etc...
  *      }
  *
- * Here is example code for a pair of arrays:
- *
- *      if (PyArray_TRIVIALLY_ITERABLE_PAIR(a1, a2)) {
- *          char *data1, *data2;
- *          npy_intp count, stride1, stride2;
- *
- *          PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(a1, a2, count,
- *                                  data1, data2, stride1, stride2);
- *
- *          while (count--) {
- *              // Use the data1 and data2 pointers
- *
- *              data1 += stride1;
- *              data2 += stride2;
- *          }
- *      }
- *      else {
- *          // Create iterator, etc...
- *      }
  */
 
 /*
@@ -776,16 +757,6 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                                             PyArray_STRIDE(arr, 0) : \
                                             PyArray_ITEMSIZE(arr)));
 
-#define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2, arr1_read, arr2_read) (   \
-                    PyArray_TRIVIALLY_ITERABLE(arr1) && \
-                        (PyArray_NDIM(arr2) == 0 || \
-                         PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) ||  \
-                         (PyArray_NDIM(arr1) == 0 && \
-                             PyArray_TRIVIALLY_ITERABLE(arr2) \
-                         ) \
-                        ) && \
-                        PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr1, arr2, arr1_read, arr2_read) \
-                        )
 #define PyArray_PREPARE_TRIVIAL_PAIR_ITERATION(arr1, arr2, \
                                         count, \
                                         data1, data2, \
@@ -797,47 +768,6 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                     data2 = PyArray_BYTES(arr2); \
                     stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1); \
                     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
-                }
-
-#define PyArray_TRIVIALLY_ITERABLE_TRIPLE(arr1, arr2, arr3, arr1_read, arr2_read, arr3_read) ( \
-                PyArray_TRIVIALLY_ITERABLE(arr1) && \
-                    ((PyArray_NDIM(arr2) == 0 && \
-                        (PyArray_NDIM(arr3) == 0 || \
-                            PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr3) \
-                        ) \
-                     ) || \
-                     (PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) && \
-                        (PyArray_NDIM(arr3) == 0 || \
-                            PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr3) \
-                        ) \
-                     ) || \
-                     (PyArray_NDIM(arr1) == 0 && \
-                        PyArray_TRIVIALLY_ITERABLE(arr2) && \
-                            (PyArray_NDIM(arr3) == 0 || \
-                                PyArray_EQUIVALENTLY_ITERABLE_BASE(arr2, arr3) \
-                            ) \
-                     ) \
-                    ) && \
-                    PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr1, arr2, arr1_read, arr2_read) && \
-                    PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr1, arr3, arr1_read, arr3_read) && \
-                    PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(arr2, arr3, arr2_read, arr3_read) \
-                )
-
-#define PyArray_PREPARE_TRIVIAL_TRIPLE_ITERATION(arr1, arr2, arr3, \
-                                        count, \
-                                        data1, data2, data3, \
-                                        stride1, stride2, stride3) { \
-                    npy_intp size1 = PyArray_SIZE(arr1); \
-                    npy_intp size2 = PyArray_SIZE(arr2); \
-                    npy_intp size3 = PyArray_SIZE(arr3); \
-                    count = ((size1 > size2) || size1 == 0) ? size1 : size2; \
-                    count = ((size3 > count) || size3 == 0) ? size3 : count; \
-                    data1 = PyArray_BYTES(arr1); \
-                    data2 = PyArray_BYTES(arr2); \
-                    data3 = PyArray_BYTES(arr3); \
-                    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1); \
-                    stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
-                    stride3 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size3, arr3); \
                 }
 
 #endif

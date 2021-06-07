@@ -292,6 +292,23 @@ class TestAverage:
         assert_almost_equal(wav1.real, expected1.real)
         assert_almost_equal(wav1.imag, expected1.imag)
 
+    def test_masked_weights(self):
+        # Test with masked weights.
+        # (Regression test for https://github.com/numpy/numpy/issues/10438)
+        a = np.ma.array(np.arange(9).reshape(3, 3),
+                        mask=[[1, 0, 0], [1, 0, 0], [0, 0, 0]])
+        weights_unmasked = masked_array([5, 28, 31], mask=False)
+        weights_masked = masked_array([5, 28, 31], mask=[1, 0, 0])
+
+        avg_unmasked = average(a, axis=0,
+                               weights=weights_unmasked, returned=False)
+        expected_unmasked = np.array([6.0, 5.21875, 6.21875])
+        assert_almost_equal(avg_unmasked, expected_unmasked)
+
+        avg_masked = average(a, axis=0, weights=weights_masked, returned=False)
+        expected_masked = np.array([6.0, 5.576271186440678, 6.576271186440678])
+        assert_almost_equal(avg_masked, expected_masked)
+
 
 class TestConcatenator:
     # Tests for mr_, the equivalent of r_ for masked arrays.

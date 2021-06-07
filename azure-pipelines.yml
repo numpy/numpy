@@ -19,7 +19,7 @@ stages:
   jobs:
 
   - job: Lint
-    condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/main'))  # skip for PR merges
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
     pool:
       vmImage: 'ubuntu-18.04'
     steps:
@@ -197,7 +197,6 @@ stages:
     - script: python setup.py build -j 4 build_ext --inplace install
       displayName: 'Build NumPy without OpenBLAS and new casting'
       env:
-        NPY_USE_NEW_CASTINGIMPL: 1
         BLAS: None
         LAPACK: None
         ATLAS: None

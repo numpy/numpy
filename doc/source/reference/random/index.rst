@@ -222,6 +222,9 @@ one of three ways:
 * :ref:`independent-streams`
 * :ref:`parallel-jumped`
 
+Users with a very large amount of parallelism will want to consult
+:ref:`upgrading-pcg64`.
+
 Concepts
 --------
 .. toctree::
@@ -230,6 +233,7 @@ Concepts
    generator
    Legacy Generator (RandomState) <legacy>
    BitGenerators, SeedSequences <bit_generators/index>
+   Upgrading PCG64 with PCG64DXSM <upgrading-pcg64>
 
 Features
 --------

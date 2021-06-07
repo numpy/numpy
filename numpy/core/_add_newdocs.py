@@ -924,7 +924,7 @@ add_newdoc('numpy.core.multiarray', 'asarray',
         'F' column-major (Fortran-style) memory representation.
         'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'K' (keep) preserve input order
-        Defaults to 'C'.
+        Defaults to 'K'.
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1535,6 +1535,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
 
     Notes
     -----
@@ -2176,6 +2180,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     empty : Create an array, but leave its allocated memory unchanged (i.e.,
             it contains "garbage").
     dtype : Create a data-type.
+    numpy.typing.NDArray : A :term:`generic <generic type>` version
+                           of ndarray.
 
     Notes
     -----
@@ -5313,7 +5319,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
       r = empty(len(A),len(B))
       for i in range(len(A)):
           for j in range(len(B)):
-              r[i,j] = op(A[i], B[j]) # op = ufunc in question
+              r[i,j] = op(A[i], B[j])  # op = ufunc in question
 
     Parameters
     ----------
@@ -5323,6 +5329,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
         Second array
     kwargs : any
         Arguments to pass on to the ufunc. Typically `dtype` or `out`.
+        See `ufunc` for a comprehensive overview of all available arguments.
 
     Returns
     -------
@@ -5814,7 +5821,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
     >>> (arr + arr).dtype.metadata
     mappingproxy({'key': 'value'})
 
-    But if the arrays have different dtype metadata, the metadata may be 
+    But if the arrays have different dtype metadata, the metadata may be
     dropped:
 
     >>> dt2 = np.dtype(float, metadata={"key2": "value2"})

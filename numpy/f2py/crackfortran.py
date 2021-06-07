@@ -139,7 +139,6 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-import io
 import sys
 import string
 import fileinput

@@ -83,10 +83,8 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
 ]
-
-imgmath_image_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -99,7 +97,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2021, The SciPy community'
+copyright = '2008-2021, The NumPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -187,6 +185,8 @@ htmlhelp_basename = 'numpy'
 if 'sphinx.ext.pngmath' in extensions:
     pngmath_use_preview = True
     pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+
+mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 
 plot_html_show_formats = False
 plot_html_show_source_link = False

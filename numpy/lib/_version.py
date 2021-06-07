@@ -151,5 +151,5 @@ class NumpyVersion():
     def __ge__(self, other):
         return self._compare(other) >= 0
 
-    def __repr(self):
+    def __repr__(self):
         return "NumpyVersion(%s)" % self.vstring

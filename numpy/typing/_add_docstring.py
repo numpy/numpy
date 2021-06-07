@@ -3,14 +3,32 @@
 import re
 import textwrap
 
+from ._generic_alias import NDArray
+
 _docstrings_list = []
 
 
-def add_newdoc(name, value, doc):
+def add_newdoc(name: str, value: str, doc: str) -> None:
+    """Append ``_docstrings_list`` with a docstring for `name`.
+
+    Parameters
+    ----------
+    name : str
+        The name of the object.
+    value : str
+        A string-representation of the object.
+    doc : str
+        The docstring of the object.
+
+    """
     _docstrings_list.append((name, value, doc))
 
 
-def _parse_docstrings():
+def _parse_docstrings() -> str:
+    """Convert all docstrings in ``_docstrings_list`` into a single
+    sphinx-legible text block.
+
+    """
     type_list_ret = []
     for name, value, doc in _docstrings_list:
         s = textwrap.dedent(doc).replace("\n", "\n    ")
@@ -90,6 +108,35 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
         >>> def as_dtype(d: npt.DTypeLike) -> np.dtype:
         ...     return np.dtype(d)
+
+    """)
+
+add_newdoc('NDArray', repr(NDArray),
+    """
+    A :term:`generic <generic type>` version of
+    `np.ndarray[Any, np.dtype[+ScalarType]] <numpy.ndarray>`.
+
+    Can be used during runtime for typing arrays with a given dtype
+    and unspecified shape.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> print(npt.NDArray)
+        numpy.ndarray[typing.Any, numpy.dtype[+ScalarType]]
+
+        >>> print(npt.NDArray[np.float64])
+        numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
+
+        >>> NDArrayInt = npt.NDArray[np.int_]
+        >>> a: NDArrayInt = np.arange(10)
+
+        >>> def func(a: npt.ArrayLike) -> npt.NDArray[Any]:
+        ...     return np.array(a)
 
     """)
 

@@ -5,6 +5,7 @@ import itertools
 import pytest
 import sys
 from fractions import Fraction
+from functools import reduce
 
 import numpy.core.umath as ncu
 from numpy.core import _umath_tests as ncu_tests
@@ -249,43 +250,115 @@ class TestDivision:
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
-    @pytest.mark.parametrize("input_dtype",
-            np.sctypes['int'] + np.sctypes['uint'])
-    def test_division_int_boundary(self, input_dtype):
-        iinfo = np.iinfo(input_dtype)
+    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
+        np.sctypes['int'] + np.sctypes['uint'], (
+            (
+                # dividend
+                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                # divisors
+                "np.arange(lsize, dtype=dtype),"
+                # scalar divisors
+                "range(15)"
+            ),
+            (
+                # dividend
+                "np.arange(fo.min, fo.min+lsize, dtype=dtype),"
+                # divisors
+                "np.arange(lsize//-2, lsize//2, dtype=dtype),"
+                # scalar divisors
+                "range(fo.min, fo.min + 15)"
+            ), (
+                # dividend
+                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                # divisors
+                "np.arange(lsize, dtype=dtype),"
+                # scalar divisors
+                "[1,3,9,13,neg, fo.min+1, fo.min//2, fo.max//3, fo.max//4]"
+            )
+        )
+    ))
+    def test_division_int_boundary(self, dtype, ex_val):
+        fo = np.iinfo(dtype)
+        neg = -1 if fo.min < 0 else 1
+        # Large enough to test SIMD loops and remaind elements
+        lsize = 512 + 7
+        a, b, divisors = eval(ex_val)
+        a_lst, b_lst = a.tolist(), b.tolist()
 
-        # Unsigned:
-        # Create list with 0, 25th, 50th, 75th percentile and max
-        if iinfo.min == 0:
-            lst = [0, iinfo.max//4, iinfo.max//2,
-                    int(iinfo.max/1.33), iinfo.max]
-            divisors = [iinfo.max//4, iinfo.max//2,
-                    int(iinfo.max/1.33), iinfo.max]
-        # Signed:
-        # Create list with min, 25th percentile, 0, 75th percentile, max
-        else:
-            lst = [iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max]
-            divisors = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
-        a = np.array(lst, dtype=input_dtype)
+        c_div = lambda n, d: (
+            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+        )
+        with np.errstate(divide='ignore'):
+            ac = a.copy()
+            ac //= b
+            div_ab = a // b
+        div_lst = [c_div(x, y) for x, y in zip(a_lst, b_lst)]
+
+        msg = "Integer arrays floor division check (//)"
+        assert all(div_ab == div_lst), msg
+        msg_eq = "Integer arrays floor division check (//=)"
+        assert all(ac == div_lst), msg_eq
 
         for divisor in divisors:
-            div_a = a // divisor
-            b = a.copy(); b //= divisor
-            div_lst = [i // divisor for i in lst]
+            ac = a.copy()
+            with np.errstate(divide='ignore'):
+                div_a = a // divisor
+                ac //= divisor
+            div_lst = [c_div(i, divisor) for i in a_lst]
 
-            msg = "Integer arrays floor division check (//)"
             assert all(div_a == div_lst), msg
-
-            msg = "Integer arrays floor division check (//=)"
-            assert all(div_a == b), msg
+            assert all(ac == div_lst), msg_eq
 
         with np.errstate(divide='raise'):
+            if 0 in b or (fo.min and -1 in b and fo.min in a):
+                # Verify overflow case
+                with pytest.raises(FloatingPointError):
+                    a // b
+            else:
+                a // b
+            if fo.min and fo.min in a:
+                with pytest.raises(FloatingPointError):
+                    a // -1
+            elif fo.min:
+                a // -1
             with pytest.raises(FloatingPointError):
                 a // 0
             with pytest.raises(FloatingPointError):
-                a //= 0
+                ac = a.copy()
+                ac //= 0
 
-            np.array([], dtype=input_dtype) // 0
+            np.array([], dtype=dtype) // 0
+
+    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
+        np.sctypes['int'] + np.sctypes['uint'], (
+            "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
+            "np.array([fo.min, 1, -2, 1, 1, 2, -3], dtype=dtype)",
+            "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
+            "np.arange(fo.max-(100*7), fo.max, 7, dtype=dtype)",
+        )
+    ))
+    def test_division_int_reduce(self, dtype, ex_val):
+        fo = np.iinfo(dtype)
+        a = eval(ex_val)
+        lst = a.tolist()
+        c_div = lambda n, d: (
+            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+        )
+
+        with np.errstate(divide='ignore'):
+            div_a = np.floor_divide.reduce(a)
+        div_lst = reduce(c_div, lst)
+        msg = "Reduce floor integer division check"
+        assert div_a == div_lst, msg
+
+        with np.errstate(divide='raise'):
+            with pytest.raises(FloatingPointError):
+                np.floor_divide.reduce(np.arange(-100, 100, dtype=dtype))
+            if fo.min:
+                with pytest.raises(FloatingPointError):
+                    np.floor_divide.reduce(
+                        np.array([fo.min, 1, -1], dtype=dtype)
+                    )
 
     @pytest.mark.parametrize(
             "dividend,divisor,quotient",
@@ -918,6 +991,12 @@ class TestSpecialFloats:
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
             assert_raises(FloatingPointError, np.exp, np.float64(800.))
             assert_raises(FloatingPointError, np.exp, np.float64(1E19))
+
+        with np.errstate(under='raise'):
+            assert_raises(FloatingPointError, np.exp, np.float32(-1000.))
+            assert_raises(FloatingPointError, np.exp, np.float32(-1E19))
+            assert_raises(FloatingPointError, np.exp, np.float64(-1000.))
+            assert_raises(FloatingPointError, np.exp, np.float64(-1E19))
 
     def test_log_values(self):
         with np.errstate(all='ignore'):
@@ -2197,7 +2276,7 @@ class TestSpecialMethods:
 
     def test_array_too_many_args(self):
 
-        class A(object):
+        class A:
             def __array__(self, dtype, context):
                 return np.zeros(1)
 
@@ -3214,7 +3293,7 @@ class TestSubclass:
         assert_equal(a+a, a)
 
 
-class TestFrompyfunc(object):
+class TestFrompyfunc:
 
     def test_identity(self):
         def mul(a, b):

@@ -494,11 +494,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     cov : bool or str, optional
         If given and not `False`, return not just the estimate but also its
         covariance matrix. By default, the covariance are scaled by
-        chi2/dof, where dof = M - (deg + 1), i.e., the weights are presumed 
-        to be unreliable except in a relative sense and everything is scaled 
-        such that the reduced chi2 is unity. This scaling is omitted if 
-        ``cov='unscaled'``, as is relevant for the case that the weights are 
-        1/sigma**2, with sigma known to be a reliable estimate of the 
+        chi2/dof, where dof = M - (deg + 1), i.e., the weights are presumed
+        to be unreliable except in a relative sense and everything is scaled
+        such that the reduced chi2 is unity. This scaling is omitted if
+        ``cov='unscaled'``, as is relevant for the case that the weights are
+        1/sigma**2, with sigma known to be a reliable estimate of the
         uncertainty.
 
     Returns
@@ -1394,9 +1394,9 @@ class poly1d:
     def __getitem__(self, val):
         ind = self.order - val
         if val > self.order:
-            return 0
+            return self.coeffs.dtype.type(0)
         if val < 0:
-            return 0
+            return self.coeffs.dtype.type(0)
         return self.coeffs[ind]
 
     def __setitem__(self, key, val):

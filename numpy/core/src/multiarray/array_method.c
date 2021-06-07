@@ -34,6 +34,7 @@
 #include "arrayobject.h"
 #include "array_method.h"
 #include "dtypemeta.h"
+#include "common_dtype.h"
 #include "convert_datatype.h"
 
 
@@ -422,7 +423,7 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
 
-    ssize_t length = strlen(spec->name);
+    Py_ssize_t length = strlen(spec->name);
     res->method->name = PyMem_Malloc(length + 1);
     if (res->method->name == NULL) {
         Py_DECREF(res);
@@ -625,7 +626,7 @@ boundarraymethod__simple_strided_call(
     PyArrayObject *arrays[NPY_MAXARGS];
     PyArray_Descr *descrs[NPY_MAXARGS];
     PyArray_Descr *out_descrs[NPY_MAXARGS];
-    ssize_t length = -1;
+    Py_ssize_t length = -1;
     int aligned = 1;
     char *args[NPY_MAXARGS];
     npy_intp strides[NPY_MAXARGS];

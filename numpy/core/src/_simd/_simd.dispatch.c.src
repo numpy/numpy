@@ -1,4 +1,4 @@
-/*@targets $werror #simd_test*/
+/*@targets #simd_test*/
 #include "_simd.h"
 #include "_simd_inc.h"
 
@@ -309,7 +309,7 @@ SIMD_IMPL_INTRIN_2IMM(shri_@sfx@, v@sfx@, v@sfx@, @shr_imm@)
 #endif // shl_imm
 
 /**begin repeat1
- * #intrin  = and, or, xor#
+ * #intrin = and, or, xor#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -317,7 +317,7 @@ SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_1(not_@sfx@, v@sfx@, v@sfx@)
 
 /**begin repeat1
- * #intrin  = cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
+ * #intrin = cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -334,14 +334,14 @@ SIMD_IMPL_INTRIN_1(expand_@esfx@_@sfx@, v@esfx@x2, v@sfx@)
  * Arithmetic
  ***************************/
 /**begin repeat1
- * #intrin  = add, sub#
+ * #intrin = add, sub#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 
 #if @sat_sup@
 /**begin repeat1
- * #intrin  = adds, subs#
+ * #intrin = adds, subs#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -362,7 +362,7 @@ SIMD_IMPL_INTRIN_2(divc_@sfx@, v@sfx@, v@sfx@, v@sfx@x3)
 
 #if @fused_sup@
 /**begin repeat1
- * #intrin  = muladd, mulsub, nmuladd, nmulsub#
+ * #intrin = muladd, mulsub, nmuladd, nmulsub#
  */
 SIMD_IMPL_INTRIN_3(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -381,15 +381,21 @@ SIMD_IMPL_INTRIN_1(sumup_@sfx@, @esfx@, v@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin  = sqrt, recip, abs, square#
+ * #intrin = sqrt, recip, abs, square#
  */
 SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 #endif
 
+/**begin repeat1
+ * #intrin = max, min#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
 #if @fp_only@
 /**begin repeat1
- * #intrin  = max, maxp, min, minp#
+ * #intrin = maxp, minp#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -546,7 +552,7 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 #endif // shl_imm
 
 /**begin repeat1
- * #intrin  = and, or, xor, not, cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
+ * #intrin = and, or, xor, not, cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
@@ -563,14 +569,14 @@ SIMD_INTRIN_DEF(expand_@esfx@_@sfx@)
  * Arithmetic
  ***************************/
 /**begin repeat1
- * #intrin  = add, sub#
+ * #intrin = add, sub#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 
 #if @sat_sup@
 /**begin repeat1
- * #intrin  = adds, subs#
+ * #intrin = adds, subs#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
@@ -591,7 +597,7 @@ SIMD_INTRIN_DEF(divc_@sfx@)
 
 #if @fused_sup@
 /**begin repeat1
- * #intrin  = muladd, mulsub, nmuladd, nmulsub#
+ * #intrin = muladd, mulsub, nmuladd, nmulsub#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
@@ -609,15 +615,21 @@ SIMD_INTRIN_DEF(sumup_@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin  = sqrt, recip, abs, square#
+ * #intrin = sqrt, recip, abs, square#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif
 
+/**begin repeat1
+ * #intrin = max, min#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
 #if @fp_only@
 /**begin repeat1
- * #intrin  = max, maxp, min, minp#
+ * #intrin = maxp, minp#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/

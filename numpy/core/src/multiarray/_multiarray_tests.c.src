@@ -87,7 +87,7 @@ static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
      * For each point in itx, copy the current neighborhood into an array which
      * is appended at the output list
      */
-    for (i = 0; i < itx->size; ++i) {
+    for (i = itx->index; i < itx->size; ++i) {
         PyArrayNeighborhoodIter_Reset(niterx);
 
         for (j = 0; j < PyArray_NDIM(itx->ao); ++j) {
@@ -130,7 +130,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
      * For each point in itx, copy the current neighborhood into an array which
      * is appended at the output list
      */
-    for (i = 0; i < itx->size; ++i) {
+    for (i = itx->index; i < itx->size; ++i) {
         PyArrayNeighborhoodIter_Reset(niterx);
 
         for (j = 0; j < PyArray_NDIM(itx->ao); ++j) {
@@ -161,10 +161,11 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     PyArrayObject *ax, *afill;
     PyArrayIterObject *itx;
     int i, typenum, mode, st;
+    Py_ssize_t idxstart = 0;
     npy_intp bounds[NPY_MAXDIMS*2];
     PyArrayNeighborhoodIterObject *niterx;
 
-    if (!PyArg_ParseTuple(args, "OOOi", &x, &b, &fill, &mode)) {
+    if (!PyArg_ParseTuple(args, "OOOi|n", &x, &b, &fill, &mode, &idxstart)) {
         return NULL;
     }
 
@@ -224,11 +225,19 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
         }
     }
 
+    if (idxstart >= itx->size) {
+        PyErr_SetString(PyExc_ValueError,
+                "start index not compatible with x input");
+        goto clean_itx;
+    }
+
     niterx = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
                     (PyArrayIterObject*)itx, bounds, mode, afill);
     if (niterx == NULL) {
         goto clean_afill;
     }
+
+    PyArray_ITER_GOTO1D((PyArrayIterObject*)itx, idxstart);
 
     switch (typenum) {
         case NPY_OBJECT:
@@ -407,7 +416,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     niterx2 = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
                     (PyArrayIterObject*)niterx1, bounds,
                     mode2, NULL);
-    if (niterx1 == NULL) {
+    if (niterx2 == NULL) {
         goto clean_niterx1;
     }
 
@@ -2141,17 +2150,6 @@ getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 
 
 static PyObject *
-uses_new_casts(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-#if NPY_USE_NEW_CASTINGIMPL
-    Py_RETURN_TRUE;
-#else
-    Py_RETURN_FALSE;
-#endif
-}
-
-
-static PyObject *
 run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
     char byteorder;
@@ -2407,9 +2405,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"getset_numericops",
         getset_numericops,
         METH_NOARGS, NULL},
-    {"uses_new_casts",
-            uses_new_casts,
-            METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
