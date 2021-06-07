@@ -1842,6 +1842,11 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
         !PyArray_ElementStrides(obj)) {
         PyObject *ret;
+        if( requires & NPY_ARRAY_ENSURENOCOPY ) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Unable to avoid copy while creating a new array.");
+            return NULL;
+        }
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
         Py_DECREF(obj);
         obj = ret;
@@ -1916,6 +1921,14 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
            !PyArray_EquivTypes(oldtype, newtype);
 
     if (copy) {
+
+        if( flags & NPY_ARRAY_ENSURENOCOPY ) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Unable to avoid copy while creating "
+                            "an array from given array.");
+            return NULL;
+        }
+
         NPY_ORDER order = NPY_KEEPORDER;
         int subok = 1;
 
@@ -1988,7 +2001,6 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             if (flags & NPY_ARRAY_ENSUREARRAY) {
                 subtype = &PyArray_Type;
             }
-
             ret = (PyArrayObject *)PyArray_View(arr, NULL, subtype);
             if (ret == NULL) {
                 return NULL;
