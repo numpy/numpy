@@ -29,8 +29,8 @@ Call for Contributions
 
 The NumPy project welcomes your expertise and enthusiasm!
 
-Small improvements or fixes are always appreciated; issues labeled as "good
-first issue" may be a good starting point. If you are considering larger
+Small improvements or fixes are always appreciated; issues labeled as ["good
+first issue"](https://github.com/numpy/numpy/labels/good%20first%20issue) may be a good starting point. If you are considering larger
 contributions to the source code, please contact us through the [mailing
 list](https://mail.python.org/mailman/listinfo/numpy-discussion) first. 
 
