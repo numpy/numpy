@@ -114,3 +114,15 @@ reveal_type(f8.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(c16.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{complex128}]]
 reveal_type(U.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
 reveal_type(S.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bytes_]]
+
+reveal_type(i8.astype(float))  # E: Any
+reveal_type(i8.astype(np.float64))  # E: {float64}
+
+reveal_type(i8.view())  # E: {int64}
+reveal_type(i8.view(np.float64))  # E: {float64}
+reveal_type(i8.view(float))  # E: Any
+reveal_type(i8.view(np.float64, np.ndarray))  # E: {float64}
+
+reveal_type(i8.getfield(float))  # E: Any
+reveal_type(i8.getfield(np.float64))  # E: {float64}
+reveal_type(i8.getfield(np.float64, 8))  # E: {float64}

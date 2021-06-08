@@ -44,8 +44,8 @@ Building NumPy requires the following software installed:
 2) Compilers
 
    To build any extension modules for Python, you'll need a C compiler.
-   Various NumPy modules use FORTRAN 77 libraries, so you'll also need a
-   FORTRAN 77 compiler installed.
+   While a FORTRAN 77 compiler is not necessary for building NumPy, it is needed to run
+   the ``numpy.f2py`` tests. These tests are skipped if the compiler is not auto-detected.
 
    Note that NumPy is developed mainly using GNU compilers and tested on
    MSVC and Clang compilers. Compilers from other vendors such as Intel,
