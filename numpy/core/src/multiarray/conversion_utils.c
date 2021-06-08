@@ -174,15 +174,29 @@ PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copymode) {
     }
 
     int int_copymode = -1;
-    PyArray_PythonPyIntFromInt(obj, &int_copymode);
+    PyObject* numpy_CopyMode = NULL;
+    npy_cache_import("numpy._globals", "CopyMode", &numpy_CopyMode);
+    if( numpy_CopyMode != NULL ) {
+        if(PyObject_IsInstance(obj, numpy_CopyMode)) {
+            PyObject* mode_value = PyObject_GetAttrString(obj, "value");
+            PyArray_PythonPyIntFromInt(mode_value, &int_copymode);
+        }
+    }
+
+    // If obj is not an instance of numpy.CopyMode then follow
+    // the conventional assumption that it must be value that
+    // can be converted to an integer.
+    if( int_copymode < 0 ) {
+        PyArray_PythonPyIntFromInt(obj, &int_copymode);
+    }
 
     if( int_copymode != NPY_ALWAYS && 
         int_copymode != NPY_IF_NEEDED && 
         int_copymode != NPY_NEVER ) {
-        PyErr_Format(PyExc_ValueError,
-                        "Unrecognized copy mode %d. Please choose one of " 
-                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER.", 
-                         int_copymode);
+        PyErr_SetString(PyExc_ValueError,
+                    "Unrecognized copy mode. Please choose one of " 
+                    "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER, "
+                    "True/np.True_, False/np.False_");
         return NPY_FAIL;
     }
 

@@ -93,7 +93,7 @@ class _NoValueType:
 
 _NoValue = _NoValueType()
 
-class CopyMode(enum.IntEnum):
+class CopyMode(enum.Enum):
 
     ALWAYS = 1
     IF_NEEDED = 0
