@@ -938,8 +938,8 @@ class ABCPolyBase(abc.ABC):
         w : array_like, shape (M,), optional
             Weights. If not None, the weight ``w[i]`` applies to the unsquared
             residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
-            chosen so that the errors of the products ``w[i]*y[i]`` all have the
-            same variance.  When using inverse-variance weighting, use
+            chosen so that the errors of the products ``w[i]*y[i]`` all have
+            the same variance.  When using inverse-variance weighting, use
             ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
             .. versionadded:: 1.5.0
