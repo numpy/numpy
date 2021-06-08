@@ -1282,7 +1282,7 @@ _array_from_array_like(PyObject *op,
             PyErr_Clear();
         }
         else {
-            tmp = _array_from_buffer_3118(memoryview);
+            tmp = _array_from_buffer_3118(memoryview); // Assume: never creates a copy
             Py_DECREF(memoryview);
             if (tmp == NULL) {
                 return NULL;
@@ -1324,7 +1324,7 @@ _array_from_array_like(PyObject *op,
      *      this should be changed!
      */
     if (!writeable && tmp == Py_NotImplemented) {
-        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
+        tmp = PyArray_FromArrayAttr(op, requested_dtype, context); // Assume: array was copied.
         if (tmp == NULL) {
             return NULL;
         }

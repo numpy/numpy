@@ -1163,6 +1163,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *         It might be nice to deprecate this? But it allows things such as
  *         `arr1d[...] = np.array([[1,2,3,4]])`
  */
+// Here we check whether a copy is being made or not. Check this function.
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape(
         PyObject *obj, int max_dims,
