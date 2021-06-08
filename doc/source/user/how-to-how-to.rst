@@ -107,7 +107,7 @@ part of NumPy (like its API) but aren't obligated to paint a broader picture.
 
 For more on tutorials, see the `tutorial how-to`_.
 
-.. _`tutorial how-to`: https://github.com/numpy/numpy-tutorials/blob/master/tutorial_style.ipynb
+.. _`tutorial how-to`: https://github.com/numpy/numpy-tutorials/blob/main/content/tutorial-style-guide.md
 
 
 ******************************************************************************
