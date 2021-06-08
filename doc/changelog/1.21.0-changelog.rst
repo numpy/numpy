@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 171 people contributed to this release.  People with a "+" by their
+A total of 173 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @8bitmp3 +
@@ -79,6 +79,7 @@ names contributed a patch for the first time.
 * Greg Lucas +
 * Hollow Man +
 * Holly Corbett +
+* I-Shen Leong +
 * Inessa Pawson
 * Isabela Presedo-Floyd
 * Ismael Jimenez +
@@ -90,6 +91,7 @@ names contributed a patch for the first time.
 * Jody Klymak +
 * Joseph Fox-Rabinovitz
 * Jérome Eertmans +
+* Jérôme Kieffer +
 * Kamil Choudhury +
 * Kasia Leszek +
 * Keller Meier +
@@ -180,7 +182,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 561 pull requests were merged for this release.
+A total of 571 pull requests were merged for this release.
 
 * `#13578 <https://github.com/numpy/numpy/pull/13578>`__: DEP: Deprecate `data_type.dtype` if attribute is not already...
 * `#15269 <https://github.com/numpy/numpy/pull/15269>`__: ENH: Implement faster keyword argument parsing capable of ``METH_FASTCALL``
@@ -743,3 +745,14 @@ A total of 561 pull requests were merged for this release.
 * `#19073 <https://github.com/numpy/numpy/pull/19073>`__: REL: Prepare 1.21.0 release
 * `#19074 <https://github.com/numpy/numpy/pull/19074>`__: BUG: Fix compile-time test of POPCNT
 * `#19075 <https://github.com/numpy/numpy/pull/19075>`__: BUG: Fix test_numpy_version.
+* `#19094 <https://github.com/numpy/numpy/pull/19094>`__: BUG: Fixed an issue wherein `_GenericAlias.__getitem__` would...
+* `#19100 <https://github.com/numpy/numpy/pull/19100>`__: BUG: Linter should only run on pull requests.
+* `#19120 <https://github.com/numpy/numpy/pull/19120>`__: BUG: Fix setup.py to work in maintenance branches.
+* `#19144 <https://github.com/numpy/numpy/pull/19144>`__: BUG: expose short_version as previously in version.py
+* `#19175 <https://github.com/numpy/numpy/pull/19175>`__: API: Delay string and number promotion deprecation/future warning
+* `#19178 <https://github.com/numpy/numpy/pull/19178>`__: BUG, SIMD: Fix detect host/native CPU features on ICC at compile-time
+* `#19180 <https://github.com/numpy/numpy/pull/19180>`__: BUG: Add -std=c99 to intel icc compiler flags on linux
+* `#19193 <https://github.com/numpy/numpy/pull/19193>`__: NEP: Accept NEP 35 as final
+* `#19194 <https://github.com/numpy/numpy/pull/19194>`__: MAINT, BUG: Adapt `castingimpl.casting` to denote a minimal level
+* `#19197 <https://github.com/numpy/numpy/pull/19197>`__: DOC: Prepare for NumPy 1.20.0rc2 release.
+

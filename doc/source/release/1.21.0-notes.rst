@@ -7,9 +7,10 @@ The NumPy 1.21.0 release highlights are
 
 * continued SIMD work covering more functions and platforms,
 * initial work on the new dtype infrastructure and casting,
+* universal2 wheels for Python 3.8 and Python 3.9 on Mac,
 * improved documentation,
 * improved annotations,
-* the new ``PCG64DXSM`` bitgenerator for random numbers.
+* new ``PCG64DXSM`` bitgenerator for random numbers.
 
 In addition there are the usual large number of bug fixes and other improvements.
 
