@@ -99,7 +99,7 @@ def _raise_linalgerror_svd_nonconvergence(err, flag):
 def _raise_linalgerror_lstsq(err, flag):
     raise LinAlgError("SVD did not converge in Linear Least Squares")
 
-def _raise_linalgerror_qr_r_raw(err, flag):
+def _raise_linalgerror_qr(err, flag):
     raise LinAlgError("Illegal argument found while performing "
                       "QR factorization")
 
@@ -934,7 +934,7 @@ def qr(a, mode='reduced'):
         gufunc = _umath_linalg.qr_r_raw_n
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
-    extobj = get_linalg_error_extobj(_raise_linalgerror_qr_r_raw)
+    extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
     tau = gufunc(a, signature=signature, extobj=extobj)
 
     # handle modes that don't return q
@@ -956,6 +956,10 @@ def qr(a, mode='reduced'):
             a = a.astype(result_t, copy=False)
         return wrap(a)
 
+    # mc is the number of columns in the resulting q
+    # matrix. If the mode is complete then it is 
+    # same as number of rows, and if the mode is reduced,
+    # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:
         mc = m
         if m <= n:
@@ -970,7 +974,7 @@ def qr(a, mode='reduced'):
             gufunc = _umath_linalg.qr_reduced_n
 
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
-    extobj = get_linalg_error_extobj(_raise_linalgerror_qr_r_raw)
+    extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
     q = gufunc(a, tau, signature=signature, extobj=extobj)
     r = triu(a[..., :mc, :])
 

@@ -4240,6 +4240,7 @@ static char lstsq_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
 };
 
+/* A, tau */
 static char qr_r_raw_types[] = {
     NPY_FLOAT,   NPY_FLOAT,
     NPY_DOUBLE,  NPY_DOUBLE,
@@ -4247,6 +4248,7 @@ static char qr_r_raw_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE,
 };
 
+/* A, tau, q */
 static char qr_reduced_types[] = {
     NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE,
@@ -4254,6 +4256,7 @@ static char qr_reduced_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
 };
 
+/* A, tau, q */
 static char qr_complete_types[] = {
     NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE,
