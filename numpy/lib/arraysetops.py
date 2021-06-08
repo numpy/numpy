@@ -427,31 +427,24 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     (array([1, 2, 4]), array([1, 2, 4]), array([1, 2, 4]))
 
     """
-    ar1 = np.asanyarray(ar1)
-    ar2 = np.asanyarray(ar2)
+    ar1 = np.asanyarray(ar1).ravel()
+    ar2 = np.asanyarray(ar2).ravel()
 
-    if not assume_unique:
-        if return_indices:
+    if not return_indices:
+        return np.asarray( list( set( ar1.tolist() ).intersection( set(ar2.tolist()) ) ) ) 
+
+    else: 
+        if not assume_unique:
             ar1, ind1 = unique(ar1, return_index=True)
             ar2, ind2 = unique(ar2, return_index=True)
-        else:
-            ar1 = unique(ar1)
-            ar2 = unique(ar2)
-    else:
-        ar1 = ar1.ravel()
-        ar2 = ar2.ravel()
 
-    aux = np.concatenate((ar1, ar2))
-    if return_indices:
+        aux = np.concatenate((ar1, ar2))
         aux_sort_indices = np.argsort(aux, kind='mergesort')
         aux = aux[aux_sort_indices]
-    else:
-        aux.sort()
 
-    mask = aux[1:] == aux[:-1]
-    int1d = aux[:-1][mask]
+        mask = aux[1:] == aux[:-1]
+        int1d = aux[:-1][mask]
 
-    if return_indices:
         ar1_indices = aux_sort_indices[:-1][mask]
         ar2_indices = aux_sort_indices[1:][mask] - ar1.size
         if not assume_unique:
@@ -459,8 +452,6 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
             ar2_indices = ind2[ar2_indices]
 
         return int1d, ar1_indices, ar2_indices
-    else:
-        return int1d
 
 
 def _setxor1d_dispatcher(ar1, ar2, assume_unique=None):
@@ -799,9 +790,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     Returns
     -------
     setdiff1d : ndarray
-        1D array of values in `ar1` that are not in `ar2`. The result
-        is sorted when `assume_unique=False`, but otherwise only sorted
-        if the input is sorted.
+        1D array of values in `ar1` that are not in `ar2`. 
 
     See Also
     --------
@@ -816,9 +805,6 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     array([1, 2])
 
     """
-    if assume_unique:
-        ar1 = np.asarray(ar1).ravel()
-    else:
-        ar1 = unique(ar1)
-        ar2 = unique(ar2)
-    return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+    ar1 = set(np.asarray(ar1).ravel().tolist())
+    ar2 = set(np.asarray(ar1).ravel().tolist())
+    return np.asarray(list(ar1 - ar2))
