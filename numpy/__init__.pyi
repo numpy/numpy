@@ -1227,14 +1227,6 @@ class _ArrayOrScalarCommon:
     def __deepcopy__(self: _ArraySelf, __memo: Optional[dict] = ...) -> _ArraySelf: ...
     def __eq__(self, other): ...
     def __ne__(self, other): ...
-    def astype(
-        self: _ArraySelf,
-        dtype: DTypeLike,
-        order: _OrderKACF = ...,
-        casting: _Casting = ...,
-        subok: bool = ...,
-        copy: bool | CopyMode = ...,
-    ) -> _ArraySelf: ...
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def dump(self, file: str) -> None: ...
     def dumps(self) -> bytes: ...
@@ -1877,7 +1869,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
         casting: _Casting = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | CopyMode = ...,
     ) -> NDArray[_ScalarType]: ...
     @overload
     def astype(
@@ -1886,7 +1878,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
         casting: _Casting = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | CopyMode = ...,
     ) -> NDArray[Any]: ...
 
     @overload
@@ -2897,7 +2889,7 @@ class generic(_ArrayOrScalarCommon):
         order: _OrderKACF = ...,
         casting: _Casting = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | CopyMode = ...,
     ) -> _ScalarType: ...
     @overload
     def astype(
@@ -2906,7 +2898,7 @@ class generic(_ArrayOrScalarCommon):
         order: _OrderKACF = ...,
         casting: _Casting = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | CopyMode = ...,
     ) -> Any: ...
 
     # NOTE: `view` will perform a 0D->scalar cast,
