@@ -7792,7 +7792,7 @@ class TestArrayCreationCopyArgument(object):
                         assert_array_equal(res, arr)
 
 
-                    assert_raises(RuntimeError, np.array,
+                    assert_raises(ValueError, np.array,
                                   arr, copy=np.CopyMode.NEVER, dtype=int2)
 
 
@@ -7908,7 +7908,7 @@ class TestArrayCreationCopyArgument(object):
                 for copy in self.false_vals:
                     res = np.array(arr, copy=copy, order=order2)
                     assert_array_equal(arr, res)
-                assert_raises(RuntimeError, np.array,
+                assert_raises(ValueError, np.array,
                               view, copy=np.CopyMode.NEVER, order=order2)
 
 

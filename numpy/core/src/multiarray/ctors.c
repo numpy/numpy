@@ -1843,7 +1843,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         !PyArray_ElementStrides(obj)) {
         PyObject *ret;
         if( requires & NPY_ARRAY_ENSURENOCOPY ) {
-            PyErr_SetString(PyExc_RuntimeError,
+            PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating a new array.");
             return NULL;
         }
@@ -1923,7 +1923,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     if (copy) {
 
         if( flags & NPY_ARRAY_ENSURENOCOPY ) {
-            PyErr_SetString(PyExc_RuntimeError,
+            PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating "
                             "an array from given array.");
             return NULL;

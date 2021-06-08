@@ -1582,7 +1582,7 @@ _array_fromobject_generic(
             }
             else {
                 if( copy == NPY_NEVER ) {
-                    PyErr_SetString(PyExc_RuntimeError,
+                    PyErr_SetString(PyExc_ValueError,
                                     "Unable to avoid copy while creating a new array.");
                     return NULL;
                 }
@@ -1601,7 +1601,7 @@ _array_fromobject_generic(
             }
             else {
                 if( copy == NPY_NEVER ) {
-                    PyErr_SetString(PyExc_RuntimeError,
+                    PyErr_SetString(PyExc_ValueError,
                                     "Unable to avoid copy while creating a new array.");
                     return NULL;
                 }
