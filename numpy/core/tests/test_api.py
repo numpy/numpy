@@ -618,7 +618,6 @@ def test_astype_copyflag():
     res_never = arr.astype(np.intp, copy=np.CopyMode.NEVER)
     assert np.may_share_memory(arr, res_never)
 
-
     # Simple tests for when a copy is necessary:
     res_false = arr.astype(np.float64, copy=False)
     assert_array_equal(res_false, arr)

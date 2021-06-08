@@ -109,4 +109,5 @@ class CopyMode(enum.Enum):
 
         raise TypeError(f"{self} is neither True nor False.")
 
+
 CopyMode.__module__ = 'numpy'

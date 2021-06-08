@@ -7791,18 +7791,14 @@ class TestArrayCreationCopyArgument(object):
                     assert res is not arr and res.flags.owndata
                     assert_array_equal(res, arr)
 
-
-
                 if int1 == int2:
                     # Casting is not necessary, base check is sufficient here
                     for copy in self.false_vals:
                         res = np.array(arr, copy=copy, dtype=int2)
                         assert res is arr or res.base is arr
 
-
                     res = np.array(arr, copy=np.CopyMode.NEVER, dtype=int2)
                     assert res is arr or res.base is arr
-
 
                 else:
                     # Casting is necessary, assert copy works:
@@ -7813,7 +7809,6 @@ class TestArrayCreationCopyArgument(object):
 
                     assert_raises(ValueError, np.array,
                                   arr, copy=np.CopyMode.NEVER, dtype=int2)
-
 
     def test_buffer_interface(self):
 
@@ -7835,7 +7830,6 @@ class TestArrayCreationCopyArgument(object):
     def test_array_interfaces(self):
         # Array interface gives direct memory access (much like a memoryview)
         base_arr = np.arange(10)
-
 
         class ArrayLike:
             __array_interface__ = base_arr.__array_interface__
@@ -7874,7 +7868,6 @@ class TestArrayCreationCopyArgument(object):
 
         assert np.array(arr, copy=np.CopyMode.NEVER) is base_arr
 
-
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
     @pytest.mark.parametrize("order1", ["C", "F", None])
@@ -7893,7 +7886,6 @@ class TestArrayCreationCopyArgument(object):
             arr = arr[::2, ::2]
             assert not arr.flags.forc
 
-
         # Whether a copy is necessary depends on the order of arr:
         if order2 == "C":
             no_copy_necessary = arr.flags.c_contiguous
@@ -7906,14 +7898,12 @@ class TestArrayCreationCopyArgument(object):
             # "K" did not exist.
             no_copy_necessary = True
 
-
         # Test it for both the array and a memoryview
         for view in [arr, memoryview(arr)]:
             for copy in self.true_vals:
                 res = np.array(view, copy=copy, order=order2)
                 assert res is not arr and res.flags.owndata
                 assert_array_equal(arr, res)
-
 
             if no_copy_necessary:
                 for copy in self.false_vals:
