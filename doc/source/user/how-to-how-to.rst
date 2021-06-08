@@ -105,10 +105,7 @@ deep dives intended to give understanding rather than immediate assistance,
 and `References`, which give complete, autoritative data on some concrete
 part of NumPy (like its API) but aren't obligated to paint a broader picture.
 
-For more on tutorials, see the `tutorial how-to`_.
-
-.. _`tutorial how-to`: https://github.com/numpy/numpy-tutorials/blob/main/content/tutorial-style-guide.md
-
+For more on tutorials, see :doc:`content/tutorial-style-guide`
 
 ******************************************************************************
 Is this page an example of a how-to?
