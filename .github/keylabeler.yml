@@ -1,0 +1,26 @@
+# Determines if we search the title (optional). Defaults to true.
+matchTitle: true
+
+# Determines if we search the body (optional). Defaults to true.
+matchBody: false
+
+# Determines if label matching is case sensitive (optional). Defaults to true.
+caseSensitive: false
+
+# Explicit keyword mappings to labels. Form of match:label. Required.
+labelMappings:
+  API: "30 - API"
+  BENCH: "28 - Benchmark"
+  BLD: "36 - Build"
+  BUG: "00 - Bug"
+  DEP: "07 - Deprecation"
+  DEV: "16 - Development"
+  DOC: "04 - Documentation"
+  ENH: "01 - Enhancement"
+  MAINT: "03 - Maintenance"
+  REV: "34 - Reversion"
+  # STY: ""
+  TST: "05 - Testing"
+  REL: "14 - Release"
+  WIP: "25 - WIP"
+  SIMD: "component: SIMD"
