@@ -3371,7 +3371,6 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
 
     {
         /* compute optimal work size */
-        /* IS THE FOLLOWING METHOD CORRECT? */
 
         @ftyp@ work_size_query;
 
@@ -3453,7 +3452,6 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
 
     {
         /* compute optimal work size */
-        /* IS THE FOLLOWING METHOD CORRECT? */
 
         @ftyp@ work_size_query;
 
@@ -3666,7 +3664,6 @@ init_@lapack_func@(GQR_PARAMS_t *params,
 
     {
         /* compute optimal work size */
-        /* IS THE FOLLOWING METHOD CORRECT? */
         @ftyp@ work_size_query;
 
         params->WORK = &work_size_query;
@@ -3751,7 +3748,6 @@ init_@lapack_func@(GQR_PARAMS_t *params,
 
     {
         /* compute optimal work size */
-        /* IS THE FOLLOWING METHOD CORRECT? */
         @ftyp@ work_size_query;
 
         params->WORK = &work_size_query;
@@ -3911,7 +3907,6 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
 
     {
         /* compute optimal work size */
-        /* IS THE FOLLOWING METHOD CORRECT? */
         @ftyp@ work_size_query;
 
         params->WORK = &work_size_query;
@@ -3996,7 +3991,6 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
 
     {
         /* compute optimal work size */
-        /* IS THE FOLLOWING METHOD CORRECT? */
         @ftyp@ work_size_query;
 
         params->WORK = &work_size_query;
