@@ -7750,6 +7750,17 @@ class TestArrayCreationCopyArgument(object):
     true_vals = [True, np.CopyMode.ALWAYS, np.True_]
     false_vals = [False, np.CopyMode.IF_NEEDED, np.False_]
 
+    def test_scalars(self):
+        # Test both numpy and python scalars
+        for dtype in np.typecodes["All"]:
+            arr = np.zeros((), dtype=dtype)
+            scalar = arr[()]
+            pyscalar = arr.item(0)
+
+            # Test never-copy raises error:
+            assert_raises(ValueError, np.array, scalar, copy=np.CopyMode.NEVER)
+            assert_raises(ValueError, np.array, pyscalar, copy=np.CopyMode.NEVER)
+
     def test_compatible_cast(self):
 
         # Some types are compatible even though they are different, no
