@@ -18,19 +18,31 @@ in several different formats.
 
 To build the documentation, you must first build NumPy.
 
-There are two options for building NumPy and its documentation- building with Gitpod or locally from source. Your choice depends on your operating system and familiarity with the command line.
+There are two options for building NumPy and its documentation- building with
+Gitpod or locally from source. Your choice depends on your operating system and
+familiarity with the command line.
 
 Gitpod
 ------------
-Gitpod is an open-source platform that automatically creates the correct development environment right in your browser, reducing the need to install local development environments and deal with incompatible dependencies.
 
-If you are a Windows user, unfamiliar with using the command line or building NumPy's documentation for the first time, it is often faster to build with Gitpod. Here are the in-depth instructions for building NumPy with `building NumPy with Gitpod`_.
+Gitpod is an open-source platform that automatically creates
+the correct development environment right in your browser, reducing the need to
+install local development environments and deal with incompatible dependencies.
+
+If you are a Windows user, unfamiliar with using the command line or building
+NumPy's documentation for the first time, it is often faster to build with
+Gitpod. Here are the in-depth instructions for building NumPy with `building
+NumPy with Gitpod`_.
 
 .. _building NumPy with Gitpod: https://numpy.org/devdocs/dev/development_gitpod.html
 
 Building locally
 ------------------
-Building locally on your machine gives you more granular control. If you are a MacOS or Linux user familiar with using the command line, you can continue with building NumPy locally by following the instructions below.
+
+Building locally on your machine gives you more granular control. If you are a
+MacOS or Linux user familiar with using the command line, you can continue with
+building NumPy locally by following the instructions below.
+
 
 Instructions
 ------------
