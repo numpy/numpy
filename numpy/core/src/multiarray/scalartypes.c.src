@@ -3184,7 +3184,11 @@ static npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
+#if PY_VERSION_HEX < 0x030B0000
     return _Py_HashDouble((double) PyArrayScalar_VAL(obj, @name@));
+#else
+    return _Py_HashDouble(obj, (double) PyArrayScalar_VAL(obj, @name@));
+#endif
 }
 
 /* borrowed from complex_hash */
@@ -3192,14 +3196,24 @@ static npy_hash_t
 c@lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
+#if PY_VERSION_HEX < 0x030B0000
     hashreal = _Py_HashDouble((double)
             PyArrayScalar_VAL(obj, C@name@).real);
+#else
+    hashreal = _Py_HashDouble(obj, (double)
+            PyArrayScalar_VAL(obj, C@name@).real);
+#endif
 
     if (hashreal == -1) {
         return -1;
     }
+#if PY_VERSION_HEX < 0x030B0000
     hashimag = _Py_HashDouble((double)
             PyArrayScalar_VAL(obj, C@name@).imag);
+#else
+    hashimag = _Py_HashDouble(obj, (double)
+            PyArrayScalar_VAL(obj, C@name@).imag);
+#endif
     if (hashimag == -1) {
         return -1;
     }
@@ -3214,7 +3228,11 @@ c@lname@_arrtype_hash(PyObject *obj)
 static npy_hash_t
 half_arrtype_hash(PyObject *obj)
 {
+#if PY_VERSION_HEX < 0x030B0000
     return _Py_HashDouble(npy_half_to_double(PyArrayScalar_VAL(obj, Half)));
+#else
+    return _Py_HashDouble(obj, npy_half_to_double(PyArrayScalar_VAL(obj, Half)));
+#endif
 }
 
 static npy_hash_t

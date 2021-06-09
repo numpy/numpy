@@ -62,7 +62,7 @@ get_dummy_stack_array(PyArrayObject *orig)
     PyArrayObject_fields new_fields;
     new_fields.flags = PyArray_FLAGS(orig);
     /* Set to NULL so the dummy object can be distinguished from the real one */
-    Py_TYPE(&new_fields) = NULL;
+    Py_SET_TYPE(&new_fields, NULL); // __VMS
     new_fields.base = (PyObject *)orig;
     return new_fields;
 }
