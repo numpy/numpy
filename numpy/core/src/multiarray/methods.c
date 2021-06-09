@@ -828,7 +828,8 @@ array_astype(PyArrayObject *self,
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyNpCopyMode_Enum forcecopy = 1, subok = 1;
+    PyNpCopyMode_Enum forcecopy = 1;
+    int subok = 1;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("astype", args, len_args, kwnames,
             "dtype", &PyArray_DescrConverter, &dtype,
@@ -852,7 +853,7 @@ array_astype(PyArrayObject *self,
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if ( (forcecopy == NPY_IF_NEEDED || forcecopy == NPY_NEVER) && 
+    if (forcecopy != NPY_ALWAYS && 
         (order == NPY_KEEPORDER ||
         (order == NPY_ANYORDER &&
             (PyArray_IS_C_CONTIGUOUS(self) ||

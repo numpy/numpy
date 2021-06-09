@@ -95,8 +95,8 @@ _NoValue = _NoValueType()
 
 class CopyMode(enum.Enum):
 
-    ALWAYS = 1
-    IF_NEEDED = 0
+    ALWAYS = True
+    IF_NEEDED = False
     NEVER = 2
 
     def __bool__(self):

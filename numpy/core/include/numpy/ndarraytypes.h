@@ -452,10 +452,10 @@ typedef struct {
 } PyArray_Dims;
 
 typedef enum PyNpCopyMode {
-        NPY_IF_NEEDED, 
-        NPY_ALWAYS, 
-        NPY_NEVER
-} PyNpCopyMode_Enum;
+        NPY_COPY_IF_NEEDED, 
+        NPY_COPY_ALWAYS, 
+        NPY_COPY_NEVER
+} PyArray_CopyMode;
 
 typedef struct {
         /*

@@ -176,17 +176,23 @@ PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copymode) {
     int int_copymode = -1;
     PyObject* numpy_CopyMode = NULL;
     npy_cache_import("numpy._globals", "CopyMode", &numpy_CopyMode);
-    if( numpy_CopyMode != NULL ) {
-        if(PyObject_IsInstance(obj, numpy_CopyMode)) {
-            PyObject* mode_value = PyObject_GetAttrString(obj, "value");
-            PyArray_PythonPyIntFromInt(mode_value, &int_copymode);
+    if (numpy_CopyMode == NULL) {
+        return NPY_FAIL;
+    }
+    if (PyObject_IsInstance(obj, numpy_CopyMode)) {
+        PyObject* mode_value = PyObject_GetAttrString(obj, "value");
+        if (mode_value == NULL) {
+            return NPY_FAIL;
+        }
+        if (!PyArray_PythonPyIntFromInt(mode_value, &int_copymode)) {
+            return NPY_FAIL;
         }
     }
 
     // If obj is not an instance of numpy.CopyMode then follow
     // the conventional assumption that it must be value that
     // can be converted to an integer.
-    if( int_copymode < 0 ) {
+    else {
         PyArray_PythonPyIntFromInt(obj, &int_copymode);
     }
 
