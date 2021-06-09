@@ -828,7 +828,7 @@ array_astype(PyArrayObject *self,
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyNpCopyMode_Enum forcecopy = 1;
+    PyArray_CopyMode forcecopy = 1;
     int subok = 1;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("astype", args, len_args, kwnames,
@@ -853,7 +853,7 @@ array_astype(PyArrayObject *self,
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if (forcecopy != NPY_ALWAYS && 
+    if (forcecopy != NPY_COPY_ALWAYS && 
         (order == NPY_KEEPORDER ||
         (order == NPY_ANYORDER &&
             (PyArray_IS_C_CONTIGUOUS(self) ||
@@ -869,7 +869,7 @@ array_astype(PyArrayObject *self,
         return (PyObject *)self;
     }
 
-    if( forcecopy == NPY_NEVER ) {
+    if( forcecopy == NPY_COPY_NEVER ) {
         PyErr_SetString(PyExc_ValueError,
                         "Unable to avoid copy while casting in np.CopyMode.NEVER");
         Py_DECREF(dtype);

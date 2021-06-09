@@ -1557,7 +1557,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 
 static NPY_INLINE PyObject *
 _array_fromobject_generic(
-        PyObject *op, PyArray_Descr *type, PyNpCopyMode_Enum copy, NPY_ORDER order,
+        PyObject *op, PyArray_Descr *type, PyArray_CopyMode copy, NPY_ORDER order,
         npy_bool subok, int ndmin)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
@@ -1574,14 +1574,14 @@ _array_fromobject_generic(
     if (PyArray_CheckExact(op) || (subok && PyArray_Check(op))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if ((copy == NPY_IF_NEEDED || copy == NPY_NEVER) && 
+            if ((copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER) && 
                 STRIDING_OK(oparr, order)) {
                 ret = oparr;
                 Py_INCREF(ret);
                 goto finish;
             }
             else {
-                if( copy == NPY_NEVER ) {
+                if( copy == NPY_COPY_NEVER ) {
                     PyErr_SetString(PyExc_ValueError,
                                     "Unable to avoid copy while creating a new array.");
                     return NULL;
@@ -1593,14 +1593,14 @@ _array_fromobject_generic(
         /* One more chance */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
-            if ((copy == NPY_IF_NEEDED || copy == NPY_NEVER) && 
+            if ((copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER) && 
                 STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
                 ret = oparr;
                 goto finish;
             }
             else {
-                if( copy == NPY_NEVER ) {
+                if( copy == NPY_COPY_NEVER ) {
                     PyErr_SetString(PyExc_ValueError,
                                     "Unable to avoid copy while creating a new array.");
                     return NULL;
@@ -1617,9 +1617,9 @@ _array_fromobject_generic(
         }
     }
 
-    if (copy == NPY_ALWAYS) {
+    if (copy == NPY_COPY_ALWAYS) {
         flags = NPY_ARRAY_ENSURECOPY;
-    } else if( copy == NPY_NEVER ) {
+    } else if( copy == NPY_COPY_NEVER ) {
         flags = NPY_ARRAY_ENSURENOCOPY;
     }
     if (order == NPY_CORDER) {
@@ -1665,7 +1665,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     npy_bool subok = NPY_FALSE;
-    PyNpCopyMode_Enum copy = NPY_ALWAYS;
+    PyArray_CopyMode copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;

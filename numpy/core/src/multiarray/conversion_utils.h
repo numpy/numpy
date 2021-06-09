@@ -10,7 +10,7 @@ NPY_NO_EXPORT int
 PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 NPY_NO_EXPORT int
-PyArray_CopyConverter(PyObject *obj, PyNpCopyMode_Enum *copyflag);
+PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copyflag);
 
 NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
