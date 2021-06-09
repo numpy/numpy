@@ -2984,7 +2984,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count);
+                                    work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
     mem_buff2 = malloc(work_size);
@@ -3029,7 +3029,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
 
-    fortran_int work_count;
+    fortran_int work_count_r, work_count_i, work_count;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
@@ -3060,7 +3060,11 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
+        work_count_r = (fortran_int) ((@ftyp@*)params->WORK)->r;
+        work_count_i = (fortran_int) ((@ftyp@*)params->WORK)->i;
+
+        work_count = (fortran_int) sqrt((fortran_doublereal) work_count_r*work_count_r + 
+                                        (fortran_doublereal) work_count_i*work_count_i);
 
     }
 
@@ -3276,7 +3280,7 @@ init_@lapack_func@(GQR_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count);
+                                    work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
@@ -3323,7 +3327,7 @@ init_@lapack_func@(GQR_PARAMS_t *params,
     size_t q_size = safe_m * safe_min_m_n * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
 
-    fortran_int work_count;
+    fortran_int work_count_r, work_count_i, work_count;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
@@ -3355,7 +3359,11 @@ init_@lapack_func@(GQR_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
+        work_count_r = (fortran_int) ((@ftyp@*)params->WORK)->r;
+        work_count_i = (fortran_int) ((@ftyp@*)params->WORK)->i;
+
+        work_count = (fortran_int) sqrt((fortran_doublereal) work_count_r*work_count_r + 
+                                        (fortran_doublereal) work_count_i*work_count_i);
 
     }
 
@@ -3519,7 +3527,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count);
+                                    work_count > 0 ? work_count : -work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
@@ -3566,7 +3574,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
     size_t q_size = safe_m * safe_m * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
 
-    fortran_int work_count;
+    fortran_int work_count_r, work_count_i, work_count;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
@@ -3598,7 +3606,11 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
+        work_count_r = (fortran_int) ((@ftyp@*)params->WORK)->r;
+        work_count_i = (fortran_int) ((@ftyp@*)params->WORK)->i;
+
+        work_count = (fortran_int) sqrt((fortran_doublereal) work_count_r*work_count_r + 
+                                        (fortran_doublereal) work_count_i*work_count_i);
 
     }
 
