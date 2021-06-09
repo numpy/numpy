@@ -252,12 +252,12 @@ class MaskedRecords(MaskedArray):
         try:
             # Is attr a generic attribute ?
             ret = object.__setattr__(self, attr, val)
-        except Exception:
+        except Exception as e:
             # Not a generic attribute: exit if it's not a valid field
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             optinfo = ndarray.__getattribute__(self, '_optinfo') or {}
             if not (attr in fielddict or attr in optinfo):
-                raise
+                raise AttributeError(f'fielddict or optinfo has no attribute {attr}') from None
         else:
             # Get the list of names
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
