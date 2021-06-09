@@ -4,6 +4,7 @@ import fnmatch
 import itertools
 import pytest
 import sys
+import os
 from fractions import Fraction
 from functools import reduce
 
@@ -16,6 +17,15 @@ from numpy.testing import (
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, assert_warns
     )
+
+def get_glibc_version():
+    ver = 0.0
+    try:
+        ver = float(os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1])
+    except:
+        print("Couldn't capture GLIBC version")
+
+    return ver
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -986,17 +996,20 @@ class TestSpecialFloats:
             yf = np.array(y, dtype=dt)
             assert_equal(np.exp(yf), xf)
 
-        with np.errstate(over='raise'):
-            assert_raises(FloatingPointError, np.exp, np.float32(100.))
-            assert_raises(FloatingPointError, np.exp, np.float32(1E19))
-            assert_raises(FloatingPointError, np.exp, np.float64(800.))
-            assert_raises(FloatingPointError, np.exp, np.float64(1E19))
+        # Older version of glibc may not raise the correct FP exceptions
+        # See: https://github.com/numpy/numpy/issues/19192
+        if (get_glibc_version() >= 2.17):
+            with np.errstate(over='raise'):
+                assert_raises(FloatingPointError, np.exp, np.float32(100.))
+                assert_raises(FloatingPointError, np.exp, np.float32(1E19))
+                assert_raises(FloatingPointError, np.exp, np.float64(800.))
+                assert_raises(FloatingPointError, np.exp, np.float64(1E19))
 
-        with np.errstate(under='raise'):
-            assert_raises(FloatingPointError, np.exp, np.float32(-1000.))
-            assert_raises(FloatingPointError, np.exp, np.float32(-1E19))
-            assert_raises(FloatingPointError, np.exp, np.float64(-1000.))
-            assert_raises(FloatingPointError, np.exp, np.float64(-1E19))
+            with np.errstate(under='raise'):
+                assert_raises(FloatingPointError, np.exp, np.float32(-1000.))
+                assert_raises(FloatingPointError, np.exp, np.float32(-1E19))
+                assert_raises(FloatingPointError, np.exp, np.float64(-1000.))
+                assert_raises(FloatingPointError, np.exp, np.float64(-1E19))
 
     def test_log_values(self):
         with np.errstate(all='ignore'):
