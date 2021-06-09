@@ -22,8 +22,8 @@ def get_glibc_version():
     ver = 0.0
     try:
         ver = float(os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1])
-    except:
-        print("Couldn't capture GLIBC version")
+    except Exception as inst:
+        print(inst)
 
     return ver
 
