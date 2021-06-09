@@ -32,7 +32,7 @@ static const char* umath_linalg_version_string = "0.1.5";
  */
 #define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
 #define STACK_TRACE do {} while (0)
-#ifdef __VMS
+#if defined(__VMS) && !defined(__cplusplus)
 #define __FUNCTION__ __func__
 #endif
 #define TRACE\
