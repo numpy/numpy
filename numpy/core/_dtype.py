@@ -28,7 +28,7 @@ def _kind_name(dtype):
         raise RuntimeError(
             "internal dtype error, unknown kind {!r}"
             .format(dtype.kind)
-        ) from None
+        ) from e
 
 
 def __str__(dtype):
