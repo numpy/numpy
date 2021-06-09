@@ -44,10 +44,10 @@ _concrete_types = {v.type for k, v in _concrete_typeinfo.items()}
 def _bits_of(obj):
     try:
         info = next(v for v in _concrete_typeinfo.values() if v.type is obj)
-    except StopIteration:
+    except StopIteration as e:
         if obj in _abstract_types.values():
             msg = "Cannot count the bits of an abstract type"
-            raise ValueError(msg) from None
+            raise ValueError(msg) from e
 
         # some third-party type - make a best-guess
         return dtype(obj).itemsize * 8
