@@ -217,7 +217,7 @@ class memmap(ndarray):
                 raise ValueError(
                     "mode must be one of {!r} (got {!r})"
                     .format(valid_filemodes + list(mode_equivalents.keys()), mode)
-                ) from None
+                ) from e
 
         if mode == 'w+' and shape is None:
             raise ValueError("shape must be given")
