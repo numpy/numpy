@@ -1,7 +1,7 @@
 import numpy as np
 cimport numpy as np
 
-from libc.stdint cimport uint32_t, uint64_t
+from libc.stdint cimport uint32_t, uint64_t, uintptr_t
 from ._common cimport uint64_to_double, wrap_int
 from numpy.random cimport BitGenerator
 
@@ -115,11 +115,16 @@ cdef class PCG64(BitGenerator):
     """
 
     cdef pcg64_state rng_state
-    cdef pcg64_random_t pcg64_random_state
+    # Pads with an extra 16 bytes so we can form an aligned allocation below.
+    assert sizeof(pcg64_random_t) == 32
+    cdef char pcg64_random_state[32 + 16]
 
     def __init__(self, seed=None):
         BitGenerator.__init__(self, seed)
-        self.rng_state.pcg_state = &self.pcg64_random_state
+        # Aligns the state to a 16-byte boundary. int128_t values must be
+        # 16-byte aligned on some platforms.
+        self.rng_state.pcg_state = <pcg64_random_t*>(
+          (<uintptr_t>(&self.pcg64_random_state) & ~15) + 16)
 
         self._bitgen.state = <void *>&self.rng_state
         self._bitgen.next_uint64 = &pcg64_uint64
