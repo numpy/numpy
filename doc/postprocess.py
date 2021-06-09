@@ -45,5 +45,6 @@ def process_tex(lines):
             new_lines.append(line)
     return new_lines
 
+# main function 
 if __name__ == "__main__":
     main()
