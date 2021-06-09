@@ -2868,407 +2868,6 @@ static void
 
 /**end repeat**/
 
-
-/* -------------------------------------------------------------------------- */
-                 /* least squares */
-
-typedef struct gelsd_params_struct
-{
-    fortran_int M;
-    fortran_int N;
-    fortran_int NRHS;
-    void *A;
-    fortran_int LDA;
-    void *B;
-    fortran_int LDB;
-    void *S;
-    void *RCOND;
-    fortran_int RANK;
-    void *WORK;
-    fortran_int LWORK;
-    void *RWORK;
-    void *IWORK;
-} GELSD_PARAMS_t;
-
-
-static inline void
-dump_gelsd_params(const char *name,
-                  GELSD_PARAMS_t *params)
-{
-    TRACE_TXT("\n%s:\n"\
-
-              "%14s: %18p\n"\
-              "%14s: %18p\n"\
-              "%14s: %18p\n"\
-              "%14s: %18p\n"\
-              "%14s: %18p\n"\
-              "%14s: %18p\n"\
-
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-
-              "%14s: %18p\n",
-
-              name,
-
-              "A", params->A,
-              "B", params->B,
-              "S", params->S,
-              "WORK", params->WORK,
-              "RWORK", params->RWORK,
-              "IWORK", params->IWORK,
-
-              "M", (int)params->M,
-              "N", (int)params->N,
-              "NRHS", (int)params->NRHS,
-              "LDA", (int)params->LDA,
-              "LDB", (int)params->LDB,
-              "LWORK", (int)params->LWORK,
-              "RANK", (int)params->RANK,
-
-              "RCOND", params->RCOND);
-}
-
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE#
-   #lapack_func=sgelsd,dgelsd#
-   #ftyp=fortran_real,fortran_doublereal#
- */
-
-static inline fortran_int
-call_@lapack_func@(GELSD_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
-                          params->A, &params->LDA,
-                          params->B, &params->LDB,
-                          params->S,
-                          params->RCOND, &params->RANK,
-                          params->WORK, &params->LWORK,
-                          params->IWORK,
-                          &rv);
-    return rv;
-}
-
-static inline int
-init_@lapack_func@(GELSD_PARAMS_t *params,
-                   fortran_int m,
-                   fortran_int n,
-                   fortran_int nrhs)
-{
-    npy_uint8 *mem_buff = NULL;
-    npy_uint8 *mem_buff2 = NULL;
-    npy_uint8 *a, *b, *s, *work, *iwork;
-    fortran_int min_m_n = fortran_int_min(m, n);
-    fortran_int max_m_n = fortran_int_max(m, n);
-    size_t safe_min_m_n = min_m_n;
-    size_t safe_max_m_n = max_m_n;
-    size_t safe_m = m;
-    size_t safe_n = n;
-    size_t safe_nrhs = nrhs;
-
-    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
-    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@ftyp@);
-    size_t s_size = safe_min_m_n * sizeof(@ftyp@);
-
-    fortran_int work_count;
-    size_t work_size;
-    size_t iwork_size;
-    fortran_int lda = fortran_int_max(1, m);
-    fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
-
-    mem_buff = malloc(a_size + b_size + s_size);
-
-    if (!mem_buff)
-        goto error;
-
-    a = mem_buff;
-    b = a + a_size;
-    s = b + b_size;
-
-
-    params->M = m;
-    params->N = n;
-    params->NRHS = nrhs;
-    params->A = a;
-    params->B = b;
-    params->S = s;
-    params->LDA = lda;
-    params->LDB = ldb;
-
-    {
-        /* compute optimal work size */
-        @ftyp@ work_size_query;
-        fortran_int iwork_size_query;
-
-        params->WORK = &work_size_query;
-        params->IWORK = &iwork_size_query;
-        params->RWORK = NULL;
-        params->LWORK = -1;
-
-        if (call_@lapack_func@(params) != 0)
-            goto error;
-
-        work_count = (fortran_int)work_size_query;
-
-        work_size  = (size_t) work_size_query * sizeof(@ftyp@);
-        iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
-    }
-
-    mem_buff2 = malloc(work_size + iwork_size);
-    if (!mem_buff2)
-        goto error;
-
-    work = mem_buff2;
-    iwork = work + work_size;
-
-    params->WORK = work;
-    params->RWORK = NULL;
-    params->IWORK = iwork;
-    params->LWORK = work_count;
-
-    return 1;
- error:
-    TRACE_TXT("%s failed init\n", __FUNCTION__);
-    free(mem_buff);
-    free(mem_buff2);
-    memset(params, 0, sizeof(*params));
-
-    return 0;
-}
-
-/**end repeat**/
-
-/**begin repeat
-   #TYPE=CFLOAT,CDOUBLE#
-   #ftyp=fortran_complex,fortran_doublecomplex#
-   #frealtyp=fortran_real,fortran_doublereal#
-   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
-   #lapack_func=cgelsd,zgelsd#
- */
-
-static inline fortran_int
-call_@lapack_func@(GELSD_PARAMS_t *params)
-{
-    fortran_int rv;
-    LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
-                          params->A, &params->LDA,
-                          params->B, &params->LDB,
-                          params->S,
-                          params->RCOND, &params->RANK,
-                          params->WORK, &params->LWORK,
-                          params->RWORK, params->IWORK,
-                          &rv);
-    return rv;
-}
-
-static inline int
-init_@lapack_func@(GELSD_PARAMS_t *params,
-                   fortran_int m,
-                   fortran_int n,
-                   fortran_int nrhs)
-{
-    npy_uint8 *mem_buff = NULL;
-    npy_uint8 *mem_buff2 = NULL;
-    npy_uint8 *a, *b, *s, *work, *iwork, *rwork;
-    fortran_int min_m_n = fortran_int_min(m, n);
-    fortran_int max_m_n = fortran_int_max(m, n);
-    size_t safe_min_m_n = min_m_n;
-    size_t safe_max_m_n = max_m_n;
-    size_t safe_m = m;
-    size_t safe_n = n;
-    size_t safe_nrhs = nrhs;
-
-    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
-    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@ftyp@);
-    size_t s_size = safe_min_m_n * sizeof(@frealtyp@);
-
-    fortran_int work_count;
-    size_t work_size, rwork_size, iwork_size;
-    fortran_int lda = fortran_int_max(1, m);
-    fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
-
-    mem_buff = malloc(a_size + b_size + s_size);
-
-    if (!mem_buff)
-        goto error;
-
-    a = mem_buff;
-    b = a + a_size;
-    s = b + b_size;
-
-
-    params->M = m;
-    params->N = n;
-    params->NRHS = nrhs;
-    params->A = a;
-    params->B = b;
-    params->S = s;
-    params->LDA = lda;
-    params->LDB = ldb;
-
-    {
-        /* compute optimal work size */
-        @ftyp@ work_size_query;
-        @frealtyp@ rwork_size_query;
-        fortran_int iwork_size_query;
-
-        params->WORK = &work_size_query;
-        params->IWORK = &iwork_size_query;
-        params->RWORK = &rwork_size_query;
-        params->LWORK = -1;
-
-        if (call_@lapack_func@(params) != 0)
-            goto error;
-
-        work_count = (fortran_int)work_size_query.r;
-
-        work_size  = (size_t )work_size_query.r * sizeof(@ftyp@);
-        rwork_size = (size_t)rwork_size_query * sizeof(@frealtyp@);
-        iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
-    }
-
-    mem_buff2 = malloc(work_size + rwork_size + iwork_size);
-    if (!mem_buff2)
-        goto error;
-
-    work = mem_buff2;
-    rwork = work + work_size;
-    iwork = rwork + rwork_size;
-
-    params->WORK = work;
-    params->RWORK = rwork;
-    params->IWORK = iwork;
-    params->LWORK = work_count;
-
-    return 1;
- error:
-    TRACE_TXT("%s failed init\n", __FUNCTION__);
-    free(mem_buff);
-    free(mem_buff2);
-    memset(params, 0, sizeof(*params));
-
-    return 0;
-}
-
-/**end repeat**/
-
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #REALTYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
-   #lapack_func=sgelsd,dgelsd,cgelsd,zgelsd#
-   #dot_func=sdot,ddot,cdotc,zdotc#
-   #typ     = npy_float, npy_double, npy_cfloat, npy_cdouble#
-   #basetyp = npy_float, npy_double, npy_float,  npy_double#
-   #ftyp = fortran_real, fortran_doublereal,
-           fortran_complex, fortran_doublecomplex#
-   #cmplx = 0, 0, 1, 1#
- */
-static inline void
-release_@lapack_func@(GELSD_PARAMS_t* params)
-{
-    /* A and WORK contain allocated blocks */
-    free(params->A);
-    free(params->WORK);
-    memset(params, 0, sizeof(*params));
-}
-
-/** Compute the squared l2 norm of a contiguous vector */
-static @basetyp@
-@TYPE@_abs2(@typ@ *p, npy_intp n) {
-    npy_intp i;
-    @basetyp@ res = 0;
-    for (i = 0; i < n; i++) {
-        @typ@ el = p[i];
-#if @cmplx@
-        res += el.real*el.real + el.imag*el.imag;
-#else
-        res += el*el;
-#endif
-    }
-    return res;
-}
-
-static void
-@TYPE@_lstsq(char **args, npy_intp const *dimensions, npy_intp const *steps,
-             void *NPY_UNUSED(func))
-{
-    GELSD_PARAMS_t params;
-    int error_occurred = get_fp_invalid_and_clear();
-    fortran_int n, m, nrhs;
-    fortran_int excess;
-
-    INIT_OUTER_LOOP_7
-
-    m = (fortran_int)dimensions[0];
-    n = (fortran_int)dimensions[1];
-    nrhs = (fortran_int)dimensions[2];
-    excess = m - n;
-
-    if (init_@lapack_func@(&params, m, n, nrhs)) {
-        LINEARIZE_DATA_t a_in, b_in, x_out, s_out, r_out;
-
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data_ex(&b_in, nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
-        init_linearize_data_ex(&x_out, nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
-        init_linearize_data(&r_out, 1, nrhs, 1, steps[6]);
-        init_linearize_data(&s_out, 1, fortran_int_min(n, m), 1, steps[7]);
-
-        BEGIN_OUTER_LOOP_7
-            int not_ok;
-            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            linearize_@TYPE@_matrix(params.B, args[1], &b_in);
-            params.RCOND = args[2];
-            not_ok = call_@lapack_func@(&params);
-            if (!not_ok) {
-                delinearize_@TYPE@_matrix(args[3], params.B, &x_out);
-                *(npy_int*) args[5] = params.RANK;
-                delinearize_@REALTYPE@_matrix(args[6], params.S, &s_out);
-
-                /* Note that linalg.lstsq discards this when excess == 0 */
-                if (excess >= 0 && params.RANK == n) {
-                    /* Compute the residuals as the square sum of each column */
-                    int i;
-                    char *resid = args[4];
-                    @ftyp@ *components = (@ftyp@ *)params.B + n;
-                    for (i = 0; i < nrhs; i++) {
-                        @ftyp@ *vector = components + i*m;
-                        /* Numpy and fortran floating types are the same size,
-                         * so this cast is safe */
-                        @basetyp@ abs2 = @TYPE@_abs2((@typ@ *)vector, excess);
-                        memcpy(
-                            resid + i*r_out.column_strides,
-                            &abs2, sizeof(abs2));
-                    }
-                }
-                else {
-                    /* Note that this is always discarded by linalg.lstsq */
-                    nan_@REALTYPE@_matrix(args[4], &r_out);
-                }
-            } else {
-                error_occurred = 1;
-                nan_@TYPE@_matrix(args[3], &x_out);
-                nan_@REALTYPE@_matrix(args[4], &r_out);
-                *(npy_int*) args[5] = -1;
-                nan_@REALTYPE@_matrix(args[6], &s_out);
-            }
-        END_OUTER_LOOP
-
-        release_@lapack_func@(&params);
-    }
-
-    set_fp_invalid_or_clear(error_occurred);
-}
-
-/**end repeat**/
-
 /* -------------------------------------------------------------------------- */
                  /* qr (modes - r, raw) */
 
@@ -4087,6 +3686,406 @@ static void
 
 /**end repeat**/
 
+/* -------------------------------------------------------------------------- */
+                 /* least squares */
+
+typedef struct gelsd_params_struct
+{
+    fortran_int M;
+    fortran_int N;
+    fortran_int NRHS;
+    void *A;
+    fortran_int LDA;
+    void *B;
+    fortran_int LDB;
+    void *S;
+    void *RCOND;
+    fortran_int RANK;
+    void *WORK;
+    fortran_int LWORK;
+    void *RWORK;
+    void *IWORK;
+} GELSD_PARAMS_t;
+
+
+static inline void
+dump_gelsd_params(const char *name,
+                  GELSD_PARAMS_t *params)
+{
+    TRACE_TXT("\n%s:\n"\
+
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+
+              "%14s: %18p\n",
+
+              name,
+
+              "A", params->A,
+              "B", params->B,
+              "S", params->S,
+              "WORK", params->WORK,
+              "RWORK", params->RWORK,
+              "IWORK", params->IWORK,
+
+              "M", (int)params->M,
+              "N", (int)params->N,
+              "NRHS", (int)params->NRHS,
+              "LDA", (int)params->LDA,
+              "LDB", (int)params->LDB,
+              "LWORK", (int)params->LWORK,
+              "RANK", (int)params->RANK,
+
+              "RCOND", params->RCOND);
+}
+
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE#
+   #lapack_func=sgelsd,dgelsd#
+   #ftyp=fortran_real,fortran_doublereal#
+ */
+
+static inline fortran_int
+call_@lapack_func@(GELSD_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
+                          params->A, &params->LDA,
+                          params->B, &params->LDB,
+                          params->S,
+                          params->RCOND, &params->RANK,
+                          params->WORK, &params->LWORK,
+                          params->IWORK,
+                          &rv);
+    return rv;
+}
+
+static inline int
+init_@lapack_func@(GELSD_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n,
+                   fortran_int nrhs)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *b, *s, *work, *iwork;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    fortran_int max_m_n = fortran_int_max(m, n);
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_max_m_n = max_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+    size_t safe_nrhs = nrhs;
+
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@ftyp@);
+    size_t s_size = safe_min_m_n * sizeof(@ftyp@);
+
+    fortran_int work_count;
+    size_t work_size;
+    size_t iwork_size;
+    fortran_int lda = fortran_int_max(1, m);
+    fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
+
+    mem_buff = malloc(a_size + b_size + s_size);
+
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    b = a + a_size;
+    s = b + b_size;
+
+
+    params->M = m;
+    params->N = n;
+    params->NRHS = nrhs;
+    params->A = a;
+    params->B = b;
+    params->S = s;
+    params->LDA = lda;
+    params->LDB = ldb;
+
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+        fortran_int iwork_size_query;
+
+        params->WORK = &work_size_query;
+        params->IWORK = &iwork_size_query;
+        params->RWORK = NULL;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int)work_size_query;
+
+        work_size  = (size_t) work_size_query * sizeof(@ftyp@);
+        iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
+    }
+
+    mem_buff2 = malloc(work_size + iwork_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+    iwork = work + work_size;
+
+    params->WORK = work;
+    params->RWORK = NULL;
+    params->IWORK = iwork;
+    params->LWORK = work_count;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=CFLOAT,CDOUBLE#
+   #ftyp=fortran_complex,fortran_doublecomplex#
+   #frealtyp=fortran_real,fortran_doublereal#
+   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
+   #lapack_func=cgelsd,zgelsd#
+ */
+
+static inline fortran_int
+call_@lapack_func@(GELSD_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
+                          params->A, &params->LDA,
+                          params->B, &params->LDB,
+                          params->S,
+                          params->RCOND, &params->RANK,
+                          params->WORK, &params->LWORK,
+                          params->RWORK, params->IWORK,
+                          &rv);
+    return rv;
+}
+
+static inline int
+init_@lapack_func@(GELSD_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n,
+                   fortran_int nrhs)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *b, *s, *work, *iwork, *rwork;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    fortran_int max_m_n = fortran_int_max(m, n);
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_max_m_n = max_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+    size_t safe_nrhs = nrhs;
+
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@ftyp@);
+    size_t s_size = safe_min_m_n * sizeof(@frealtyp@);
+
+    fortran_int work_count;
+    size_t work_size, rwork_size, iwork_size;
+    fortran_int lda = fortran_int_max(1, m);
+    fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
+
+    mem_buff = malloc(a_size + b_size + s_size);
+
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    b = a + a_size;
+    s = b + b_size;
+
+
+    params->M = m;
+    params->N = n;
+    params->NRHS = nrhs;
+    params->A = a;
+    params->B = b;
+    params->S = s;
+    params->LDA = lda;
+    params->LDB = ldb;
+
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+        @frealtyp@ rwork_size_query;
+        fortran_int iwork_size_query;
+
+        params->WORK = &work_size_query;
+        params->IWORK = &iwork_size_query;
+        params->RWORK = &rwork_size_query;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int)work_size_query.r;
+
+        work_size  = (size_t )work_size_query.r * sizeof(@ftyp@);
+        rwork_size = (size_t)rwork_size_query * sizeof(@frealtyp@);
+        iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
+    }
+
+    mem_buff2 = malloc(work_size + rwork_size + iwork_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+    rwork = work + work_size;
+    iwork = rwork + rwork_size;
+
+    params->WORK = work;
+    params->RWORK = rwork;
+    params->IWORK = iwork;
+    params->LWORK = work_count;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #REALTYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
+   #lapack_func=sgelsd,dgelsd,cgelsd,zgelsd#
+   #dot_func=sdot,ddot,cdotc,zdotc#
+   #typ     = npy_float, npy_double, npy_cfloat, npy_cdouble#
+   #basetyp = npy_float, npy_double, npy_float,  npy_double#
+   #ftyp = fortran_real, fortran_doublereal,
+           fortran_complex, fortran_doublecomplex#
+   #cmplx = 0, 0, 1, 1#
+ */
+static inline void
+release_@lapack_func@(GELSD_PARAMS_t* params)
+{
+    /* A and WORK contain allocated blocks */
+    free(params->A);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+/** Compute the squared l2 norm of a contiguous vector */
+static @basetyp@
+@TYPE@_abs2(@typ@ *p, npy_intp n) {
+    npy_intp i;
+    @basetyp@ res = 0;
+    for (i = 0; i < n; i++) {
+        @typ@ el = p[i];
+#if @cmplx@
+        res += el.real*el.real + el.imag*el.imag;
+#else
+        res += el*el;
+#endif
+    }
+    return res;
+}
+
+static void
+@TYPE@_lstsq(char **args, npy_intp const *dimensions, npy_intp const *steps,
+             void *NPY_UNUSED(func))
+{
+    GELSD_PARAMS_t params;
+    int error_occurred = get_fp_invalid_and_clear();
+    fortran_int n, m, nrhs;
+    fortran_int excess;
+
+    INIT_OUTER_LOOP_7
+
+    m = (fortran_int)dimensions[0];
+    n = (fortran_int)dimensions[1];
+    nrhs = (fortran_int)dimensions[2];
+    excess = m - n;
+
+    if (init_@lapack_func@(&params, m, n, nrhs)) {
+        LINEARIZE_DATA_t a_in, b_in, x_out, s_out, r_out;
+
+        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
+        init_linearize_data_ex(&b_in, nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
+        init_linearize_data_ex(&x_out, nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
+        init_linearize_data(&r_out, 1, nrhs, 1, steps[6]);
+        init_linearize_data(&s_out, 1, fortran_int_min(n, m), 1, steps[7]);
+
+        BEGIN_OUTER_LOOP_7
+            int not_ok;
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.B, args[1], &b_in);
+            params.RCOND = args[2];
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                delinearize_@TYPE@_matrix(args[3], params.B, &x_out);
+                *(npy_int*) args[5] = params.RANK;
+                delinearize_@REALTYPE@_matrix(args[6], params.S, &s_out);
+
+                /* Note that linalg.lstsq discards this when excess == 0 */
+                if (excess >= 0 && params.RANK == n) {
+                    /* Compute the residuals as the square sum of each column */
+                    int i;
+                    char *resid = args[4];
+                    @ftyp@ *components = (@ftyp@ *)params.B + n;
+                    for (i = 0; i < nrhs; i++) {
+                        @ftyp@ *vector = components + i*m;
+                        /* Numpy and fortran floating types are the same size,
+                         * so this cast is safe */
+                        @basetyp@ abs2 = @TYPE@_abs2((@typ@ *)vector, excess);
+                        memcpy(
+                            resid + i*r_out.column_strides,
+                            &abs2, sizeof(abs2));
+                    }
+                }
+                else {
+                    /* Note that this is always discarded by linalg.lstsq */
+                    nan_@REALTYPE@_matrix(args[4], &r_out);
+                }
+            } else {
+                error_occurred = 1;
+                nan_@TYPE@_matrix(args[3], &x_out);
+                nan_@REALTYPE@_matrix(args[4], &r_out);
+                *(npy_int*) args[5] = -1;
+                nan_@REALTYPE@_matrix(args[6], &s_out);
+            }
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+
+    set_fp_invalid_or_clear(error_occurred);
+}
+
+/**end repeat**/
+
 #pragma GCC diagnostic pop
 
 /* -------------------------------------------------------------------------- */
@@ -4157,10 +4156,10 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_N);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(lstsq);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(qr_r_raw);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(qr_reduced);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(qr_complete);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(lstsq);
 GUFUNC_FUNC_ARRAY_EIG(eig);
 GUFUNC_FUNC_ARRAY_EIG(eigvals);
 
@@ -4226,14 +4225,6 @@ static char svd_1_3_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE
 };
 
-/*  A,           b,           rcond,      x,           resid,      rank,    s,        */
-static char lstsq_types[] = {
-    NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,   NPY_FLOAT,  NPY_INT, NPY_FLOAT,
-    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,  NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
-    NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_INT, NPY_FLOAT,
-    NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
-};
-
 /* A, tau */
 static char qr_r_raw_types[] = {
     NPY_FLOAT,   NPY_FLOAT,
@@ -4256,6 +4247,14 @@ static char qr_complete_types[] = {
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE,
     NPY_CFLOAT,  NPY_CFLOAT,  NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
+};
+
+/*  A,           b,           rcond,      x,           resid,      rank,    s,        */
+static char lstsq_types[] = {
+    NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,   NPY_FLOAT,  NPY_INT, NPY_FLOAT,
+    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,  NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
+    NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_INT, NPY_FLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
 };
 
 typedef struct gufunc_descriptor_struct {
@@ -4450,24 +4449,6 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         eigvals_types
     },
     {
-        "lstsq_m",
-        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(m)",
-        "least squares on the last two dimensions and broadcast to the rest. \n"\
-        "For m <= n. \n",
-        4, 3, 4,
-        FUNC_ARRAY_NAME(lstsq),
-        lstsq_types
-    },
-    {
-        "lstsq_n",
-        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(n)",
-        "least squares on the last two dimensions and broadcast to the rest. \n"\
-        "For m >= n, meaning that residuals are produced. \n",
-        4, 3, 4,
-        FUNC_ARRAY_NAME(lstsq),
-        lstsq_types
-    },
-    {
         "qr_r_raw_m",
         "(m,n)->(m)",
         "Compute TAU vector for the last two dimensions \n"\
@@ -4520,6 +4501,24 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         4, 2, 1,
         FUNC_ARRAY_NAME(qr_complete),
         qr_complete_types
+    },
+    {
+        "lstsq_m",
+        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(m)",
+        "least squares on the last two dimensions and broadcast to the rest. \n"\
+        "For m <= n. \n",
+        4, 3, 4,
+        FUNC_ARRAY_NAME(lstsq),
+        lstsq_types
+    },
+    {
+        "lstsq_n",
+        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(n)",
+        "least squares on the last two dimensions and broadcast to the rest. \n"\
+        "For m >= n, meaning that residuals are produced. \n",
+        4, 3, 4,
+        FUNC_ARRAY_NAME(lstsq),
+        lstsq_types
     }
 };
 
