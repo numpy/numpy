@@ -771,7 +771,7 @@ def array_split(ary, indices_or_sections, axis=0):
         # handle array case.
         Nsections = len(indices_or_sections) + 1
         div_points = [0] + list(indices_or_sections) + [Ntotal]
-    except TypeError:
+    except TypeError as e:
         # indices_or_sections is a scalar, not an array.
         Nsections = int(indices_or_sections)
         if Nsections <= 0:
