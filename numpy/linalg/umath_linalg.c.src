@@ -3385,7 +3385,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+                                    work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
     mem_buff2 = malloc(work_size);
@@ -3466,7 +3466,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+                                    work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
@@ -3677,7 +3677,7 @@ init_@lapack_func@(GQR_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+                                    work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
@@ -3761,7 +3761,7 @@ init_@lapack_func@(GQR_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+                                    work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
@@ -3920,7 +3920,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+                                    work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
@@ -4004,7 +4004,7 @@ init_@lapack_func@_complete(GQR_PARAMS_t *params,
     }
 
     params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+                                    work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
     mem_buff2 = malloc(work_size);
