@@ -1,0 +1,3 @@
+Complex exponentiation bug fixed
+=================================
+Fixed #18378. ``np.power`` now returns the correct result for 0^{non-zero} complex numbers.
