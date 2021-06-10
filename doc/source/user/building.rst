@@ -3,7 +3,9 @@
 Building from source
 ====================
 
-There are two options for building NumPy- building with Gitpod or locally from source. Your choice depends on your operating system and familiarity with the command line.
+There are two options for building NumPy- building with Gitpod or locally from
+source. Your choice depends on your operating system and familiarity with the
+command line.
 
 Gitpod
 ------------
@@ -43,15 +45,16 @@ Building NumPy requires the following software installed:
 
 2) Compilers
 
-   To build any extension modules for Python, you'll need a C compiler.
-   While a FORTRAN 77 compiler is not necessary for building NumPy, it is needed to run
-   the ``numpy.f2py`` tests. These tests are skipped if the compiler is not auto-detected.
+   While a FORTRAN 77 compiler is not necessary for building NumPy, it is
+   needed to run the ``numpy.f2py`` tests. These tests are skipped if the
+   compiler is not auto-detected.
 
    Note that NumPy is developed mainly using GNU compilers and tested on
    MSVC and Clang compilers. Compilers from other vendors such as Intel,
-   Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only supported
-   in the form of community feedback, and may not work out of the box.
-   GCC 4.x (and later) compilers are recommended. On ARM64 (aarch64) GCC 8.x (and later) are recommended.
+   Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only
+   supported in the form of community feedback, and may not work out of the
+   box.  GCC 4.x (and later) compilers are recommended. On ARM64 (aarch64)
+   GCC 8.x (and later) are recommended.
 
 3) Linear Algebra libraries
 
@@ -87,7 +90,8 @@ To perform an in-place build that can be run from the source folder run::
 Testing
 -------
 
-Make sure to test your builds. To ensure everything stays in shape, see if all tests pass::
+Make sure to test your builds. To ensure everything stays in shape, see if
+all tests pass::
 
     $ python runtests.py -v -m full
 
@@ -125,11 +129,12 @@ For more information see::
 How to check the ABI of BLAS/LAPACK libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One relatively simple and reliable way to check for the compiler used to build
-a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used (note: g77 is no longer supported for building NumPy).
-If libgfortran.so is a dependency, gfortran has been used. If both are dependencies,
-this means both have been used, which is almost always a very bad idea.
+One relatively simple and reliable way to check for the compiler used to
+build a library is to use ldd on the library. If libg2c.so is a dependency,
+this means that g77 has been used (note: g77 is no longer supported for
+building NumPy). If libgfortran.so is a dependency, gfortran has been used.
+If both are dependencies, this means both have been used, which is almost
+always a very bad idea.
 
 .. _accelerated-blas-lapack-libraries:
 
@@ -175,11 +180,11 @@ Alternatively one may use ``!`` or ``^`` to negate all items::
 
         NPY_BLAS_ORDER='^blas,atlas' python setup.py build
 
-will allow using anything **but** NetLIB BLAS and ATLAS libraries, the order of the above
-list is retained.
+will allow using anything **but** NetLIB BLAS and ATLAS libraries, the order
+of the above list is retained.
 
-One cannot mix negation and positives, nor have multiple negations, such cases will
-raise an error.
+One cannot mix negation and positives, nor have multiple negations, such
+cases will raise an error.
 
 LAPACK
 ~~~~~~
@@ -211,19 +216,19 @@ Alternatively one may use ``!`` or ``^`` to negate all items::
 
         NPY_LAPACK_ORDER='^lapack' python setup.py build
 
-will allow using anything **but** the NetLIB LAPACK library, the order of the above
-list is retained.
+will allow using anything **but** the NetLIB LAPACK library, the order of
+the above list is retained.
 
-One cannot mix negation and positives, nor have multiple negations, such cases will
-raise an error.
+One cannot mix negation and positives, nor have multiple negations, such
+cases will raise an error.
 
 .. deprecated:: 1.20
   The native libraries on macOS, provided by Accelerate, are not fit for use
-  in NumPy since they have bugs that cause wrong output under easily reproducible
-  conditions. If the vendor fixes those bugs, the library could be reinstated,
-  but until then users compiling for themselves should use another linear
-  algebra library or use the built-in (but slower) default, see the next
-  section.
+  in NumPy since they have bugs that cause wrong output under easily
+  reproducible conditions. If the vendor fixes those bugs, the library could
+  be reinstated, but until then users compiling for themselves should use
+  another linear algebra library or use the built-in (but slower) default,
+  see the next section.
 
 
 Disabling ATLAS and other accelerated libraries
@@ -277,5 +282,6 @@ Supplying additional compiler flags
 
 Additional compiler flags can be supplied by setting the ``OPT``,
 ``FOPT`` (for Fortran), and ``CC`` environment variables.
-When providing options that should improve the performance of the code ensure
-that you also set ``-DNDEBUG`` so that debugging code is not executed.
+When providing options that should improve the performance of the code
+ensure that you also set ``-DNDEBUG`` so that debugging code is not
+executed.
