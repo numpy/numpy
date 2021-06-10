@@ -175,9 +175,7 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
 
     int int_copymode = -1;
     PyObject* numpy_CopyMode = NULL;
-    PyObject* numpy_bool_ = NULL;
     npy_cache_import("numpy._globals", "CopyMode", &numpy_CopyMode);
-    npy_cache_import("numpy", "bool_", &numpy_bool_);
 
     if (numpy_CopyMode != NULL && PyObject_IsInstance(obj, numpy_CopyMode)) {
         PyObject* mode_value = PyObject_GetAttrString(obj, "value");
@@ -187,43 +185,12 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
         if (!PyArray_PythonPyIntFromInt(mode_value, &int_copymode)) {
             return NPY_FAIL;
         }
-    } else if(numpy_bool_ != NULL && PyObject_IsInstance(obj, numpy_bool_)) {
-        /*
-        In Python 3.8.2, numpy.bool_ objects are not converted
-        to integers using PyLong_AsLong. Hence, the following
-        if condition checks whether the input obj is a numpy.bool_ object
-        and extracts the values by perfroming comparisions between
-        obj and numpy.True_/numpy.False_.
-        */
-        PyObject *numpy_True_ = NULL, *numpy_False_ = NULL;
-        npy_cache_import("numpy", "True_", &numpy_True_);
-        npy_cache_import("numpy", "False_", &numpy_False_);
-        if( numpy_True_ != NULL && 
-            PyObject_RichCompareBool(obj, numpy_True_, Py_EQ) ) {
-            int_copymode = 1;
-        } else if( numpy_False_ != NULL && 
-                   PyObject_RichCompareBool(obj, numpy_False_, Py_EQ) ) {
-            int_copymode = 0;
+    } else {
+        npy_bool bool_copymode;
+        if( !PyArray_BoolConverter(obj, &bool_copymode) ) {
+            return NPY_FAIL;
         }
-    } else if( PyBool_Check(obj) ) {
-        /*
-        In Python 3.8.2, Boolean objects are not converted
-        to integers using PyLong_AsLong. Hence, the following
-        if condition checks whether the input obj is a Boolean object
-        and extracts the values by perfroming comparisions between
-        obj and Py_True/Py_False.
-        */
-        if( PyObject_RichCompareBool(obj, Py_True, Py_EQ) ) {
-            int_copymode = 1;
-        } else if( PyObject_RichCompareBool(obj, Py_False, Py_EQ) ) {
-            int_copymode = 0;
-        }
-    }
-    else {
-        // If obj is not an instance of numpy.CopyMode then follow
-        // the conventional assumption that it must be value that
-        // can be converted to an integer.
-        PyArray_PythonPyIntFromInt(obj, &int_copymode);
+        int_copymode = (int) bool_copymode;
     }
 
     if( int_copymode != NPY_COPY_ALWAYS && 
