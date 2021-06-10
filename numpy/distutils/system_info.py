@@ -1342,8 +1342,6 @@ class atlas_info(system_info):
         lapack = None
         atlas_1 = None
         for d in lib_dirs:
-            # FIXME: lapack_atlas is unused
-            lapack_atlas = self.check_libs2(d, ['lapack_atlas'], [])
             atlas = self.check_libs2(d, atlas_libs, [])
             if atlas is not None:
                 lib_dirs2 = [d] + self.combine_paths(d, ['atlas*', 'ATLAS*'])
@@ -3107,8 +3105,6 @@ def show_all(argv=None):
             del show_only[show_only.index(name)]
         conf = c()
         conf.verbosity = 2
-        # FIXME: r not used
-        r = conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))
 

@@ -604,7 +604,6 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(d))
 
     if EXPECTED_KEYS != d.keys():
-        keys = sorted(d.keys())
         msg = "Header does not contain the correct keys: {!r}"
         raise ValueError(msg.format(d.keys()))
 
