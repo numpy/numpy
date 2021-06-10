@@ -19,7 +19,7 @@ It provides:
 
 Testing:
 
-NumPy requires `pytest`.  Tests can then be run after installation with:
+NumPy requires `pytest`.  Tests can then be run after installation of pytest with:
 
     python -c 'import numpy; numpy.test()'
 
