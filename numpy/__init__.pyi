@@ -3042,11 +3042,24 @@ class datetime64(generic):
 if sys.version_info >= (3, 8):
     _IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex, SupportsIndex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        SupportsIndex,
+        complex,  # `complex` is not a subtype of `SupportsComplex`
+    ]
 else:
     _IntValue = Union[SupportsInt, _CharLike_co]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        complex,
+    ]
 
 class integer(number[_NBit1]):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
