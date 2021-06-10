@@ -1210,8 +1210,7 @@ def argmax(a, axis=None, out=None, keepdims=False):
         if axis is None:
             new_shape = (1,)*a.ndim
         else:
-            curr_shape = a.shape
-            new_shape = list(curr_shape)
+            new_shape = list(a.shape)
             new_shape[axis] = 1
         return res.reshape(new_shape)
     
@@ -1314,8 +1313,7 @@ def argmin(a, axis=None, out=None, keepdims=False):
         if axis is None:
             new_shape = (1,)*a.ndim
         else:
-            curr_shape = a.shape
-            new_shape = list(curr_shape)
+            new_shape = list(a.shape)
             new_shape[axis] = 1
         return res.reshape(new_shape)
     
