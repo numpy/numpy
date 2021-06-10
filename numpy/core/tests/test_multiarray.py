@@ -4345,6 +4345,10 @@ class TestArgmax:
                 assert_(res.ndim == arr.ndim)
                 assert_(res.shape[axis] == 1)
 
+            # Testing for axis=None, keepdims=True
+            res = np.argmin(arr, axis=None, keepdims=True)
+            assert_(res.ndim == arr.ndim)
+            assert_(res.shape == (1,)*arr.ndim)
 
 class TestArgmin:
 
@@ -4511,7 +4515,11 @@ class TestArgmin:
                 res = np.argmin(arr, axis=axis, keepdims=True)
                 assert_(res.ndim == arr.ndim)
                 assert_(res.shape[axis] == 1)
-
+            
+            # Testing for axis=None, keepdims=True
+            res = np.argmin(arr, axis=None, keepdims=True)
+            assert_(res.ndim == arr.ndim)
+            assert_(res.shape == (1,)*arr.ndim)
 
 class TestMinMax:
 

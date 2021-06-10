@@ -1205,9 +1205,14 @@ def argmax(a, axis=None, out=None, keepdims=False):
     (2, 1, 4)
     """
     res = _wrapfunc(a, 'argmax', axis=axis, out=out)
+    
     if keepdims:
-        curr_shape = a.shape
-        new_shape = curr_shape[:axis] + (1,) + curr_shape[axis + 1:]
+        if axis is None:
+            new_shape = (1,)*a.ndim
+        else:
+            curr_shape = a.shape
+            new_shape = list(curr_shape)
+            new_shape[axis] = 1
         return res.reshape(new_shape)
     
     return res
@@ -1306,8 +1311,12 @@ def argmin(a, axis=None, out=None, keepdims=False):
     res = _wrapfunc(a, 'argmin', axis=axis, out=out)
 
     if keepdims:
-        curr_shape = a.shape
-        new_shape = curr_shape[:axis] + (1,) + curr_shape[axis + 1:]
+        if axis is None:
+            new_shape = (1,)*a.ndim
+        else:
+            curr_shape = a.shape
+            new_shape = list(curr_shape)
+            new_shape[axis] = 1
         return res.reshape(new_shape)
     
     return res
