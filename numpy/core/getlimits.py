@@ -32,29 +32,33 @@ def _fr1(a):
 
 class MachArLike:
     """ Object to simulate MachAr instance """
-    def __init__(self, ftype, *, eps, epsneg, huge, tiny, smallest_normal,
+    def __init__(self, ftype, *, eps, epsneg, huge, tiny,
                  ibeta, smallest_subnormal=None, **kwargs):
         self.params = _MACHAR_PARAMS[ftype]
         self.ftype = ftype
         self.title = self.params['title']
-        self._smallest_subnormal = smallest_subnormal
+        if not smallest_subnormal:
+            self._smallest_subnormal = nextafter(
+                self.ftype(0), self.ftype(1), dtype=self.ftype)
+        else:
+            self._smallest_subnormal = smallest_subnormal
         # Parameter types same as for discovered MachAr object.
-        self.epsilon = self.eps = self.float_to_float(eps)
-        self.epsneg = self.float_to_float(epsneg)
-        self.xmax = self.huge = self.float_to_float(huge)
-        self.xmin = self.tiny = self.float_to_float(tiny)
+        self.epsilon = self.eps = self._float_to_float(eps)
+        self.epsneg = self._float_to_float(epsneg)
+        self.xmax = self.huge = self._float_to_float(huge)
+        self.xmin = self.tiny = self._float_to_float(tiny)
         self.ibeta = self.params['itype'](ibeta)
-        self.smallest_normal = self.float_to_float(smallest_normal)
-        self._str_smallest_normal = self.float_to_str(self.smallest_normal)
+        self.smallest_normal = self._float_to_float(tiny)
+        self._str_smallest_normal = self._float_to_str(self.smallest_normal)
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
-        self.resolution = self.float_to_float(
-            self.float_conv(10) ** (-self.precision))
-        self._str_eps = self.float_to_str(self.eps)
-        self._str_epsneg = self.float_to_str(self.epsneg)
-        self._str_xmin = self.float_to_str(self.xmin)
-        self._str_xmax = self.float_to_str(self.xmax)
-        self._str_resolution = self.float_to_str(self.resolution)
+        self.resolution = self._float_to_float(
+            self._float_conv(10) ** (-self.precision))
+        self._str_eps = self._float_to_str(self.eps)
+        self._str_epsneg = self._float_to_str(self.epsneg)
+        self._str_xmin = self._float_to_str(self.xmin)
+        self._str_xmax = self._float_to_str(self.xmax)
+        self._str_resolution = self._float_to_str(self.resolution)
 
     @property
     def smallest_subnormal(self):
@@ -70,25 +74,22 @@ class MachArLike:
         UserWarning
             If the calculated value for the smallest subnormal is zero.
         """
-        if not self._smallest_subnormal:
-            value = nextafter(self.ftype(0), self.ftype(1), dtype=self.ftype)
-        else:
-            value = self._smallest_subnormal
-        # Check that the calculated value is not zero, in case it is raise a
+        # Check that the calculated value is not zero, in case it raises a
         # warning.
+        value = self._smallest_subnormal
         if self.ftype(0) == value:
             warnings.warn(
                 'The value of the smallest subnormal for {} type '
                 'is zero.'.format(self.ftype), UserWarning, stacklevel=2)
 
-        return self.float_to_float(value)
+        return self._float_to_float(value)
 
     @property
     def _str_smallest_subnormal(self):
         """Return the string representation of the smallest subnormal."""
-        return self.float_to_str(self.smallest_subnormal)
+        return self._float_to_str(self.smallest_subnormal)
 
-    def float_to_float(self, value):
+    def _float_to_float(self, value):
         """Converts float to float.
 
         Parameters
@@ -96,9 +97,9 @@ class MachArLike:
         value : float
             value to be converted.
         """
-        return _fr1(self.float_conv(value))
+        return _fr1(self._float_conv(value))
 
-    def float_conv(self, value):
+    def _float_conv(self, value):
         """Converts float to conv.
 
         Parameters
@@ -108,7 +109,7 @@ class MachArLike:
         """
         return array([value], self.ftype)
 
-    def float_to_str(self, value):
+    def _float_to_str(self, value):
         """Converts float to str.
 
         Parameters
@@ -172,8 +173,7 @@ def _register_known_types():
                             eps=exp2(f16(-10)),
                             epsneg=exp2(f16(-11)),
                             huge=f16(65504),
-                            tiny=f16(2 ** -14),
-                            smallest_normal=f16(2 ** -14))
+                            tiny=f16(2 ** -14))
     _register_type(float16_ma, b'f\xae')
     _float_ma[16] = float16_ma
 
@@ -192,8 +192,7 @@ def _register_known_types():
                             eps=exp2(f32(-23)),
                             epsneg=exp2(f32(-24)),
                             huge=f32((1 - 2 ** -24) * 2**128),
-                            tiny=exp2(f32(-126)),
-                            smallest_normal=exp2(f32(-126)))
+                            tiny=exp2(f32(-126)))
     _register_type(float32_ma, b'\xcd\xcc\xcc\xbd')
     _float_ma[32] = float32_ma
 
@@ -214,8 +213,7 @@ def _register_known_types():
                             eps=2.0 ** -52.0,
                             epsneg=epsneg_f64,
                             huge=(1.0 - epsneg_f64) / tiny_f64 * f64(4),
-                            tiny=tiny_f64,
-                            smallest_normal=tiny_f64)
+                            tiny=tiny_f64)
     _register_type(float64_ma, b'\x9a\x99\x99\x99\x99\x99\xb9\xbf')
     _float_ma[64] = float64_ma
 
@@ -239,8 +237,7 @@ def _register_known_types():
                              eps=exp2(ld(-112)),
                              epsneg=epsneg_f128,
                              huge=huge_f128,
-                             tiny=tiny_f128,
-                             smallest_normal=tiny_f128)
+                             tiny=tiny_f128)
     # IEEE 754 128-bit binary float
     _register_type(float128_ma,
         b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
@@ -267,8 +264,7 @@ def _register_known_types():
                             eps=exp2(ld(-63)),
                             epsneg=epsneg_f80,
                             huge=huge_f80,
-                            tiny=tiny_f80,
-                            smallest_normal=tiny_f80)
+                            tiny=tiny_f80)
     # float80, first 10 bytes containing actual storage
     _register_type(float80_ma, b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
     _float_ma[80] = float80_ma
@@ -295,7 +291,6 @@ def _register_known_types():
                              epsneg=exp2(ld(-106)),
                              huge=huge_dd,
                              tiny=smallest_normal_dd,
-                             smallest_normal=smallest_normal_dd,
                              smallest_subnormal=exp2(ld(-16445)))
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
