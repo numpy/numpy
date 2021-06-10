@@ -15,7 +15,7 @@ class NumpyVersion():
     """Parse and compare numpy version strings.
 
     NumPy has the following versioning scheme (numbers given are examples; they
-    can be > 9) in principle):
+    can be > 9 in principle):
 
     - Released version: '1.8.0', '1.8.1', etc.
     - Alpha: '1.8.0a1', '1.8.0a2', etc.
