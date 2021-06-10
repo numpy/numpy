@@ -7909,10 +7909,12 @@ class TestArrayCreationCopyArgument(object):
                 for copy in self.false_vals:
                     res = np.array(view, copy=copy, order=order2)
                     # res.base.obj refers to the memoryview
-                    assert res is arr or res.base.obj is arr
+                    if not IS_PYPY:
+                        assert res is arr or res.base.obj is arr
 
                 res = np.array(view, copy=np.CopyMode.NEVER, order=order2)
-                assert res is arr or res.base.obj is arr
+                if not IS_PYPY:
+                    assert res is arr or res.base.obj is arr
             else:
                 for copy in self.false_vals:
                     res = np.array(arr, copy=copy, order=order2)
