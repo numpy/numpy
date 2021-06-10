@@ -4333,6 +4333,17 @@ class TestArgmax:
         assert_equal(a.argmax(), 3)
         a[1] = 30
         assert_equal(a.argmax(), 1)
+    
+    def test_np_argmax_keepdims(self):
+
+        sizes = [(3,), (3, 2), (2, 3),
+                 (3, 3), (2, 3, 4), (4, 3, 2)]
+        for size in sizes:
+            arr = np.random.normal(size=size)
+            for axis in range(len(size)):
+                res = np.argmax(arr, axis=axis, keepdims=True)
+                assert_(res.ndim == arr.ndim)
+                assert_(res.shape[axis] == 1)
 
 
 class TestArgmin:
@@ -4489,6 +4500,17 @@ class TestArgmin:
         assert_equal(a.argmin(), 3)
         a[1] = 10
         assert_equal(a.argmin(), 1)
+    
+    def test_np_argmin_keepdims(self):
+
+        sizes = [(3,), (3, 2), (2, 3),
+                 (3, 3), (2, 3, 4), (4, 3, 2)]
+        for size in sizes:
+            arr = np.random.normal(size=size)
+            for axis in range(len(size)):
+                res = np.argmin(arr, axis=axis, keepdims=True)
+                assert_(res.ndim == arr.ndim)
+                assert_(res.shape[axis] == 1)
 
 
 class TestMinMax:
