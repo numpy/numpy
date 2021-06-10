@@ -1299,18 +1299,21 @@ class _ArrayOrScalarCommon:
         self,
         axis: None = ...,
         out: None = ...,
+        keepdims: L[False] = ...,
     ) -> intp: ...
     @overload
     def argmax(
         self,
         axis: _ShapeLike = ...,
         out: None = ...,
+        keepdims: bool = ...,
     ) -> Any: ...
     @overload
     def argmax(
         self,
         axis: Optional[_ShapeLike] = ...,
         out: _NdArraySubClass = ...,
+        keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1318,18 +1321,21 @@ class _ArrayOrScalarCommon:
         self,
         axis: None = ...,
         out: None = ...,
+        keepdims: L[False] = ...,
     ) -> intp: ...
     @overload
     def argmin(
         self,
         axis: _ShapeLike = ...,
-         out: None = ...,
+        out: None = ...,
+        keepdims: bool = ...,
     ) -> Any: ...
     @overload
     def argmin(
         self,
         axis: Optional[_ShapeLike] = ...,
         out: _NdArraySubClass = ...,
+        keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
 
     def argsort(

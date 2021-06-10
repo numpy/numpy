@@ -1115,7 +1115,7 @@ def argsort(a, axis=-1, kind=None, order=None):
 
 
 def _argmax_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out)
+    return (a, out, keepdims)
 
 
 @array_function_dispatch(_argmax_dispatcher)
@@ -1205,7 +1205,7 @@ def argmax(a, axis=None, out=None, keepdims=False):
     (2, 1, 4)
     """
     res = _wrapfunc(a, 'argmax', axis=axis, out=out)
-    
+
     if keepdims:
         if axis is None:
             new_shape = (1,)*a.ndim
@@ -1218,7 +1218,7 @@ def argmax(a, axis=None, out=None, keepdims=False):
 
 
 def _argmin_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out)
+    return (a, out, keepdims)
 
 
 @array_function_dispatch(_argmin_dispatcher)
