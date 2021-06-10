@@ -294,11 +294,33 @@ from numpy.core.einsumfunc import (
     einsum_path as einsum_path,
 )
 
+from numpy.core.multiarray import (
+    array as array,
+    empty_like as empty_like,
+    empty as empty,
+    zeros as zeros,
+    concatenate as concatenate,
+    inner as inner,
+    where as where,
+    lexsort as lexsort,
+    can_cast as can_cast,
+    min_scalar_type as min_scalar_type,
+    result_type as result_type,
+    dot as dot,
+    vdot as vdot,
+    bincount as bincount,
+    copyto as copyto,
+    putmask as putmask,
+    packbits as packbits,
+    unpackbits as unpackbits,
+    shares_memory as shares_memory,
+    may_share_memory as may_share_memory,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
     ones_like as ones_like,
-    empty_like as empty_like,
     full as full,
     full_like as full_like,
     count_nonzero as count_nonzero,
@@ -868,13 +890,9 @@ def busday_offset(
     busdaycal=...,
     out=...,
 ): ...
-def can_cast(from_, to, casting=...): ...
 def compare_chararrays(a, b, cmp_op, rstrip): ...
-def concatenate(__a, axis=..., out=..., dtype=..., casting=...): ...
-def copyto(dst, src, casting=..., where=...): ...
 def datetime_as_string(arr, unit=..., timezone=..., casting=...): ...
 def datetime_data(__dtype): ...
-def dot(a, b, out=...): ...
 def frombuffer(buffer, dtype=..., count=..., offset=..., *, like=...): ...
 def fromfile(
     file, dtype=..., count=..., sep=..., offset=..., *, like=...
@@ -883,24 +901,12 @@ def fromiter(iter, dtype, count=..., *, like=...): ...
 def frompyfunc(func, nin, nout, * identity): ...
 def fromstring(string, dtype=..., count=..., sep=..., *, like=...): ...
 def geterrobj(): ...
-def inner(a, b): ...
 def is_busday(
     dates, weekmask=..., holidays=..., busdaycal=..., out=...
 ): ...
-def lexsort(keys, axis=...): ...
-def may_share_memory(a, b, max_work=...): ...
-def min_scalar_type(a): ...
 def nested_iters(*args, **kwargs): ...  # TODO: Sort out parameters
 def promote_types(type1, type2): ...
-def putmask(a, mask, values): ...
-def result_type(*arrays_and_dtypes): ...
 def seterrobj(errobj): ...
-def shares_memory(a, b, max_work=...): ...
-def vdot(a, b): ...
-@overload
-def where(__condition): ...
-@overload
-def where(__condition, __x, __y): ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
@@ -1616,7 +1622,7 @@ _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
-_Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
+_CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
 _DTypeLike = Union[
     dtype[_ScalarType],
@@ -1866,7 +1872,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         dtype: _DTypeLike[_ScalarType],
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> NDArray[_ScalarType]: ...
@@ -1875,7 +1881,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         dtype: DTypeLike,
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> NDArray[Any]: ...
@@ -2886,7 +2892,7 @@ class generic(_ArrayOrScalarCommon):
         self,
         dtype: _DTypeLike[_ScalarType],
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> _ScalarType: ...
@@ -2895,7 +2901,7 @@ class generic(_ArrayOrScalarCommon):
         self,
         dtype: DTypeLike,
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> Any: ...
@@ -3429,31 +3435,6 @@ class str_(character, str):
 
 unicode_ = str_
 str0 = str_
-
-def array(
-    object: object,
-    dtype: DTypeLike = ...,
-    *,
-    copy: bool = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def zeros(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def empty(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
 
 #
 # Constants
