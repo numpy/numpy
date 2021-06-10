@@ -950,10 +950,6 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         return -1;
     }
 
-    ind = ((int)meta->base - (int)NPY_FR_Y)*2;
-    totry = _multiples_table[ind];
-    baseunit = _multiples_table[ind + 1];
-
     num = 3;
     if (meta->base == NPY_FR_W) {
         num = 4;
@@ -962,6 +958,7 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         num = 2;
     }
     if (meta->base >= NPY_FR_s) {
+        /* _multiplies_table only has entries up to NPY_FR_s */
         ind = ((int)NPY_FR_s - (int)NPY_FR_Y)*2;
         totry = _multiples_table[ind];
         baseunit = _multiples_table[ind + 1];
@@ -973,6 +970,11 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         if (meta->base == NPY_FR_as) {
             num = 0;
         }
+    }
+    else {
+        ind = ((int)meta->base - (int)NPY_FR_Y)*2;
+        totry = _multiples_table[ind];
+        baseunit = _multiples_table[ind + 1];
     }
 
     for (i = 0; i < num; i++) {
