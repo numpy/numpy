@@ -2,7 +2,8 @@
 #define _NPY_CALCULATION_H_
 
 NPY_NO_EXPORT PyObject*
-PyArray_ArgMax(PyArrayObject* self, int axis, PyArrayObject *out);
+PyArray_ArgMax(PyArrayObject* self, int axis, PyArrayObject *out, 
+               int keepdims);
 
 NPY_NO_EXPORT PyObject*
 PyArray_ArgMin(PyArrayObject* self, int axis, PyArrayObject *out);

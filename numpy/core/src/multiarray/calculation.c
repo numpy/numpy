@@ -38,7 +38,8 @@ power_of_ten(int n)
  * ArgMax
  */
 NPY_NO_EXPORT PyObject *
-PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
+PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out,
+               int keepdims)
 {
     PyArrayObject *ap = NULL, *rp = NULL;
     PyArray_ArgFunc* arg_func;

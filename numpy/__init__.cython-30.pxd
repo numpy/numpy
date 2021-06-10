@@ -643,7 +643,7 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_Sort (ndarray, int, NPY_SORTKIND)
     object PyArray_ArgSort (ndarray, int, NPY_SORTKIND)
     object PyArray_SearchSorted (ndarray, object, NPY_SEARCHSIDE, PyObject *)
-    object PyArray_ArgMax (ndarray, int, ndarray)
+    object PyArray_ArgMax (ndarray, int, ndarray, int)
     object PyArray_ArgMin (ndarray, int, ndarray)
     object PyArray_Reshape (ndarray, object)
     object PyArray_Newshape (ndarray, PyArray_Dims *, NPY_ORDER)

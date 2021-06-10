@@ -2014,7 +2014,8 @@ Calculation
 
 
 .. c:function:: PyObject* PyArray_ArgMax( \
-        PyArrayObject* self, int axis, PyArrayObject* out)
+        PyArrayObject* self, int axis, PyArrayObject* out, \
+        int keepdims)
 
     Equivalent to :meth:`ndarray.argmax<numpy.ndarray.argmax>` (*self*, *axis*). Return the index of
     the largest element of *self* along *axis*.
