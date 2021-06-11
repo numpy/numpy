@@ -2032,6 +2032,13 @@ Calculation
     Equivalent to :meth:`ndarray.argmin<numpy.ndarray.argmin>` (*self*, *axis*). Return the index of
     the smallest element of *self* along *axis*.
 
+.. c:function:: PyObject* PyArray_ArgMinKeepdims( \
+        PyArrayObject* self, int axis, PyArrayObject* out)
+
+    Equivalent to :meth:`ndarray.argmax<numpy.ndarray.argmin>` (*self*, *axis*). Return the index of
+    the smallest element of *self* along *axis*. The number of dimensions of the result matches with the
+    that of the input object.
+
 .. c:function:: PyObject* PyArray_Max( \
         PyArrayObject* self, int axis, PyArrayObject* out)
 

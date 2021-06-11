@@ -646,6 +646,7 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_ArgMax (ndarray, int, ndarray)
     object PyArray_ArgMaxKeepdims (ndarray, int, ndarray)
     object PyArray_ArgMin (ndarray, int, ndarray)
+    object PyArray_ArgMinKeepdims (ndarray, int, ndarray)
     object PyArray_Reshape (ndarray, object)
     object PyArray_Newshape (ndarray, PyArray_Dims *, NPY_ORDER)
     object PyArray_Squeeze (ndarray)

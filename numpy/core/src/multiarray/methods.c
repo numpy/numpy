@@ -317,16 +317,23 @@ array_argmin(PyArrayObject *self,
 {
     int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
+    npy_bool keepdims;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argmin", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", &PyArray_OutputConverter, &out,
+            "|keepdims", &PyArray_BoolConverter, &keepdims,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
-
-    PyObject *ret = PyArray_ArgMin(self, axis, out);
+    
+    PyObject *ret;
+    if( keepdims ) {
+        ret = PyArray_ArgMinKeepdims(self, axis, out);
+    } else {
+        ret = PyArray_ArgMin(self, axis, out);
+    }
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {
