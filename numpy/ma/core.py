@@ -3381,8 +3381,11 @@ class MaskedArray(ndarray):
                 _mask[indx] = mval
         elif not self._hardmask:
             # Set the data, then the mask
-            _data[indx] = dval
-            _mask[indx] = mval
+            if isinstance(indx, masked_array):
+                _data[indx.data] = dval
+            else:
+                _data[indx] = dval
+                _mask[indx] = mval
         elif hasattr(indx, 'dtype') and (indx.dtype == MaskType):
             indx = indx * umath.logical_not(_mask)
             _data[indx] = dval
