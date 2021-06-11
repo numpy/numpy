@@ -4001,6 +4001,7 @@ static PyObject *
 PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames, int operation)
 {
+
     int i, naxes=0, ndim;
     int axes[NPY_MAXDIMS];
 

@@ -17,6 +17,8 @@
 #include "calculation.h"
 #include "array_assign.h"
 
+#include "alloc.h"
+
 static double
 power_of_ten(int n)
 {
@@ -38,8 +40,7 @@ power_of_ten(int n)
  * ArgMax
  */
 NPY_NO_EXPORT PyObject *
-PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out,
-               int keepdims)
+PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 {
     PyArrayObject *ap = NULL, *rp = NULL;
     PyArray_ArgFunc* arg_func;
@@ -149,6 +150,41 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out,
     Py_DECREF(ap);
     Py_XDECREF(rp);
     return NULL;
+}
+
+NPY_NO_EXPORT PyObject*
+PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
+    PyArrayObject* ret = (PyArrayObject*)PyArray_ArgMax(op, axis, NULL);
+    PyArray_Dims newdims;
+    newdims.len = PyArray_NDIM(op);
+    newdims.ptr = npy_alloc_cache_dim(newdims.len);
+    npy_intp* currdim = PyArray_DIMS(op);
+    for( int dim = 0; dim < newdims.len; dim++ ) {
+        if( dim == axis || axis == NPY_MAXDIMS ) {
+            newdims.ptr[dim] = 1;
+        } else {
+            newdims.ptr[dim] = currdim[dim];
+        }
+    }
+
+    // If ret is same as out, then should we reshape or raise an error?
+    ret = (PyArrayObject*)PyArray_Newshape(ret, &newdims, NPY_CORDER);
+    if (out != NULL) {
+        if ((PyArray_NDIM(out) != PyArray_NDIM(ret)) ||
+                !PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ret),
+                                      PyArray_NDIM(out))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "output array dimensions do not match with that of result from np.argmax.");
+            Py_XDECREF(ret);
+            return NULL;
+        }
+        PyArray_CopyInto(out, ret);
+        Py_DECREF(ret);
+        ret = out;
+        Py_INCREF(ret);
+    }
+    npy_free_cache_dim_obj(newdims);
+    return (PyObject*)ret;
 }
 
 /*NUMPY_API

@@ -2014,11 +2014,17 @@ Calculation
 
 
 .. c:function:: PyObject* PyArray_ArgMax( \
-        PyArrayObject* self, int axis, PyArrayObject* out, \
-        int keepdims)
+        PyArrayObject* self, int axis, PyArrayObject* out)
 
     Equivalent to :meth:`ndarray.argmax<numpy.ndarray.argmax>` (*self*, *axis*). Return the index of
     the largest element of *self* along *axis*.
+
+.. c:function:: PyObject* PyArray_ArgMaxKeepdims( \
+        PyArrayObject* self, int axis, PyArrayObject* out)
+
+    Equivalent to :meth:`ndarray.argmax<numpy.ndarray.argmax>` (*self*, *axis*). Return the index of
+    the largest element of *self* along *axis*. The number of dimensions of the result matches with the
+    that of the input object.
 
 .. c:function:: PyObject* PyArray_ArgMin( \
         PyArrayObject* self, int axis, PyArrayObject* out)

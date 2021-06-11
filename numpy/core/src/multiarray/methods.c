@@ -284,7 +284,7 @@ array_argmax(PyArrayObject *self,
 {
     int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
-    int keepdims = -1;
+    npy_bool keepdims = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argmax", args, len_args, kwnames,
@@ -295,7 +295,12 @@ array_argmax(PyArrayObject *self,
         return NULL;
     }
 
-    PyObject *ret = PyArray_ArgMax(self, axis, out, keepdims);
+    PyObject *ret;
+    if( keepdims ) {
+        ret = PyArray_ArgMaxKeepdims(self, axis, out);
+    } else {
+        ret = PyArray_ArgMax(self, axis, out);
+    }
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {
