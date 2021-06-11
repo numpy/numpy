@@ -932,6 +932,25 @@ class TestTypes:
         # Promote with object:
         assert_equal(promote_types('O', S+'30'), np.dtype('O'))
 
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V6"), np.dtype("V10")],
+             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
+            ])
+    def test_invalid_void_promotion(self, dtype1, dtype2):
+        # Mainly test structured void promotion, which currently allows
+        # byte-swapping, but nothing else:
+        with pytest.raises(TypeError):
+            np.promote_types(dtype1, dtype2)
+
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V10"), np.dtype("V10")],
+             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
+             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
+             [np.dtype("i8,i8"), np.dtype("i4,i4")],
+            ])
+    def test_valid_void_promotion(self, dtype1, dtype2):
+        assert np.promote_types(dtype1, dtype2) == dtype1
+
     @pytest.mark.parametrize("dtype",
            list(np.typecodes["All"]) +
            ["i,i", "S3", "S100", "U3", "U100", rational])
@@ -1014,25 +1033,6 @@ class TestTypes:
         else:
             assert res_bs == res
         assert res_bs.metadata == res.metadata
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V6"), np.dtype("V10")],
-             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
-             [np.dtype("i8,i8"), np.dtype("i4,i4")],
-            ])
-    def test_invalid_void_promotion(self, dtype1, dtype2):
-        # Mainly test structured void promotion, which currently allows
-        # byte-swapping, but nothing else:
-        with pytest.raises(TypeError):
-            np.promote_types(dtype1, dtype2)
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V10"), np.dtype("V10")],
-             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
-             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
-            ])
-    def test_valid_void_promotion(self, dtype1, dtype2):
-        assert np.promote_types(dtype1, dtype2) is dtype1
 
     def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))

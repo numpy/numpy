@@ -180,11 +180,11 @@ class TestBuiltin:
                       'formats': ['i4', 'f4'],
                       'offsets': [0, 4]})
         y = np.dtype({'names': ['B', 'A'],
-                      'formats': ['f4', 'i4'],
+                      'formats': ['i4', 'f4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
-        # But it is currently an equivalent cast:
-        assert np.can_cast(x, y, casting="equiv")
+        # This is an safe cast (not equiv) due to the different names:
+        assert np.can_cast(x, y, casting="safe")
 
 
 class TestRecord:

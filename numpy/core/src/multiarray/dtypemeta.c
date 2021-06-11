@@ -401,26 +401,70 @@ void_ensure_canonical(PyArray_Descr *self)
 static PyArray_Descr *
 void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
-    /*
-     * We currently do not support promotion of void types unless they
-     * are equivalent.
-     */
-    if (!PyArray_CanCastTypeTo(descr1, descr2, NPY_EQUIV_CASTING)) {
-        if (descr1->subarray == NULL && descr1->names == NULL &&
-                descr2->subarray == NULL && descr2->names == NULL) {
+    if (descr1->subarray == NULL && descr1->names == NULL &&
+            descr2->subarray == NULL && descr2->names == NULL) {
+        if (descr1->elsize != descr2->elsize) {
             PyErr_SetString(PyExc_TypeError,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
+            return NULL;
         }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "invalid type promotion with structured datatype(s).");
-        }
-        return NULL;
+        Py_INCREF(descr1);
+        return descr1;
     }
-    Py_INCREF(descr1);
-    return descr1;
+
+    if (descr1->names != NULL && descr2->names != NULL) {
+        /* If both have fields promoting individual fields may be possible */
+        static PyObject *promote_fields_func = NULL;
+        npy_cache_import("numpy.core._internal", "_promote_fields",
+                &promote_fields_func);
+        if (promote_fields_func == NULL) {
+            return NULL;
+        }
+        PyObject *result = PyObject_CallFunctionObjArgs(promote_fields_func,
+                descr1, descr2, NULL);
+        if (result == NULL) {
+            return NULL;
+        }
+        if (!PyObject_TypeCheck(result, Py_TYPE(descr1))) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Internal NumPy error: `_promote_fields` did not return "
+                    "a valid descriptor object.");
+            Py_DECREF(result);
+            return NULL;
+        }
+        return (PyArray_Descr *)result;
+    }
+    else if (descr1->subarray != NULL && descr2->subarray != NULL) {
+        int cmp = PyObject_RichCompareBool(
+                descr1->subarray->shape, descr2->subarray->shape, Py_EQ);
+        if (error_converting(cmp)) {
+            return NULL;
+        }
+        if (!cmp) {
+            PyErr_SetString(PyExc_TypeError,
+                    "invalid type promotion with subarray datatypes "
+                    "(shape mismatch).");
+        }
+        PyArray_Descr *new_base = PyArray_PromoteTypes(
+                descr1->subarray->base, descr2->subarray->base);
+        if (new_base == NULL) {
+            return NULL;
+        }
+
+        PyArray_Descr *new_descr = PyArray_DescrNew(descr1);
+        if (new_descr == NULL) {
+            Py_DECREF(new_base);
+            return NULL;
+        }
+        Py_SETREF(new_descr->subarray->base, new_base);
+        return new_descr;
+    }
+
+    PyErr_SetString(PyExc_TypeError,
+            "invalid type promotion with structured datatype(s).");
+    return NULL;
 }
 
 NPY_NO_EXPORT int

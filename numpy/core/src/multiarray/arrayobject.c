@@ -1033,31 +1033,83 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 "Void-arrays can only be compared for equality.");
         return NULL;
     }
-    if (PyArray_HASFIELDS(self)) {
-        PyObject *res = NULL, *temp, *a, *b;
-        PyObject *key, *value, *temp2;
-        PyObject *op;
-        Py_ssize_t pos = 0;
+    if (PyArray_TYPE(other) != NPY_VOID) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot compare structured or void to non-void arrays.  "
+                "(This may return array of False in the future.)");
+        return NULL;
+    }
+    if (PyArray_HASFIELDS(self) && PyArray_HASFIELDS(other)) {
+        PyArray_Descr *self_descr = PyArray_DESCR(self);
+        PyArray_Descr *other_descr = PyArray_DESCR(other);
+
+        /* Use promotion to decide whether the comparison is valid */
+        PyArray_Descr *promoted = PyArray_PromoteTypes(self_descr, other_descr);
+        if (promoted == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Cannot compare structured arrays unless they have a "
+                    "common dtype.  I.e. `np.result_type(arr1, arr2)` must "
+                   "be defined.\n"
+                    "(This may return array of False in the future.)");
+            return NULL;
+        }
+        Py_DECREF(promoted);
+
         npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
 
-        op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
-        while (PyDict_Next(PyArray_DESCR(self)->fields, &pos, &key, &value)) {
-            if (NPY_TITLE_KEY(key, value)) {
-                continue;
-            }
-            a = array_subscript_asarray(self, key);
+        int field_count = PyTuple_GET_SIZE(self_descr->names);
+        if (field_count != PyTuple_GET_SIZE(other_descr->names)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Cannot compare structured dtypes with different number of "
+                    "fields.  (unreachable error please report to NumPy devs)");
+            return NULL;
+        }
+
+        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        PyObject *res = NULL;
+        for (int i = 0; i < field_count; ++i) {
+            PyObject *fieldname, *temp, *temp2;
+
+            fieldname = PyTuple_GET_ITEM(self_descr->names, i);
+            PyArrayObject *a = (PyArrayObject *)array_subscript_asarray(
+                    self, fieldname);
             if (a == NULL) {
                 Py_XDECREF(res);
                 return NULL;
             }
-            b = array_subscript_asarray(other, key);
+            fieldname = PyTuple_GET_ITEM(other_descr->names, i);
+            PyArrayObject *b = (PyArrayObject *)array_subscript_asarray(
+                    other, fieldname);
             if (b == NULL) {
                 Py_XDECREF(res);
                 Py_DECREF(a);
                 return NULL;
             }
-            temp = array_richcompare((PyArrayObject *)a,b,cmp_op);
+            /*
+             * If the fields were subarrays, the dimensions may have changed.
+             * In that case, the new shape (subarray part) must match exactly.
+             * (If this is 0, there is no subarray.)
+             */
+            int field_dims_a = PyArray_NDIM(a) - PyArray_NDIM(self);
+            int field_dims_b = PyArray_NDIM(b) - PyArray_NDIM(other);
+            if (field_dims_a != field_dims_b || (
+                    field_dims_a != 0 &&  /* neither is subarray */
+                    /* Compare only the added (subarray) dimensions: */
+                    !PyArray_CompareLists(
+                            PyArray_DIMS(a) + PyArray_NDIM(self),
+                            PyArray_DIMS(b) + PyArray_NDIM(other),
+                            field_dims_a))) {
+                PyErr_SetString(PyExc_TypeError,
+                        "Cannot compare subarrays with different shapes. "
+                        "(unreachable error, please report to NumPy devs.)");
+                Py_DECREF(a);
+                Py_DECREF(b);
+                Py_XDECREF(res);
+                return NULL;
+            }
+
+            temp = array_richcompare(a, (PyObject *)b, cmp_op);
             Py_DECREF(a);
             Py_DECREF(b);
             if (temp == NULL) {
@@ -1142,7 +1194,24 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         }
         return res;
     }
+    else if (PyArray_HASFIELDS(self) || PyArray_HASFIELDS(other)) {
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot compare structured with unstructured void.  "
+                "(This may return array of False in the future.)");
+        return NULL;
+    }
     else {
+        /*
+         * Since arrays absorb subarray descriptors, this path can only be
+         * reached when both arrays have unstructured voids "V<len>" dtypes.
+         */
+        if (PyArray_ITEMSIZE(self) != PyArray_ITEMSIZE(other)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "cannot compare unstructured voids of different length. "
+                    "Use bytes to compare. "
+                    "(This may return array of False in the future.)");
+            return NULL;
+        }
         /* compare as a string. Assumes self and other have same descr->type */
         return _strings_richcompare(self, other, cmp_op, 0);
     }
@@ -1345,28 +1414,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyArray_CheckCastSafety(
-                    NPY_EQUIV_CASTING,
-                    PyArray_DESCR(self), PyArray_DESCR(array_other), NULL);
-            if (_res < 0) {
-                PyErr_Clear();
-                _res = 0;
-            }
-            if (_res == 0) {
-                /* 2015-05-07, 1.10 */
-                Py_DECREF(array_other);
-                if (DEPRECATE_FUTUREWARNING(
-                        "elementwise == comparison failed and returning scalar "
-                        "instead; this will raise an error or perform "
-                        "elementwise comparison in the future.") < 0) {
-                    return NULL;
-                }
-                Py_INCREF(Py_False);
-                return Py_False;
-            }
-            else {
-                result = _void_compare(self, array_other, cmp_op);
-            }
+            result = _void_compare(self, array_other, cmp_op);
             Py_DECREF(array_other);
             return result;
         }
@@ -1400,29 +1448,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyArray_CheckCastSafety(
-                    NPY_EQUIV_CASTING,
-                    PyArray_DESCR(self), PyArray_DESCR(array_other), NULL);
-            if (_res < 0) {
-                PyErr_Clear();
-                _res = 0;
-            }
-            if (_res == 0) {
-                /* 2015-05-07, 1.10 */
-                Py_DECREF(array_other);
-                if (DEPRECATE_FUTUREWARNING(
-                        "elementwise != comparison failed and returning scalar "
-                        "instead; this will raise an error or perform "
-                        "elementwise comparison in the future.") < 0) {
-                    return NULL;
-                }
-                Py_INCREF(Py_True);
-                return Py_True;
-            }
-            else {
-                result = _void_compare(self, array_other, cmp_op);
-                Py_DECREF(array_other);
-            }
+            result = _void_compare(self, array_other, cmp_op);
+            Py_DECREF(array_other);
             return result;
         }
 

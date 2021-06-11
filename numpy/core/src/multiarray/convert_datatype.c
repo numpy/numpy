@@ -1013,7 +1013,7 @@ PyArray_FindConcatenationDescriptor(
         npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype)
 {
     if (requested_dtype == NULL) {
-        return PyArray_LegacyResultType(n, arrays, 0, NULL);
+        return PyArray_ResultType(n, arrays, 0, NULL);
     }
 
     PyArray_DTypeMeta *common_dtype;
@@ -3279,8 +3279,7 @@ can_cast_fields_safety(
 {
     Py_ssize_t field_count = PyTuple_Size(from->names);
     if (field_count != PyTuple_Size(to->names)) {
-        /* TODO: This should be rejected! */
-        return NPY_UNSAFE_CASTING;
+        return -1;
     }
 
     NPY_CASTING casting = NPY_NO_CASTING;
@@ -3292,18 +3291,41 @@ can_cast_fields_safety(
         if (from_tup == NULL) {
             return give_bad_field_error(from_key);
         }
-        PyArray_Descr *from_base = (PyArray_Descr*)PyTuple_GET_ITEM(from_tup, 0);
+        PyArray_Descr *from_base = (PyArray_Descr *) PyTuple_GET_ITEM(from_tup, 0);
 
-        /*
-         * TODO: This should use to_key (order), compare gh-15509 by
-         *       by Allan Haldane.  And raise an error on failure.
-         *       (Fixing that may also requires fixing/changing promotion.)
-         */
-        PyObject *to_tup = PyDict_GetItem(to->fields, from_key);
+        /* Check whether the field names match */
+        PyObject *to_key = PyTuple_GET_ITEM(to->names, i);
+        PyObject *to_tup = PyDict_GetItem(to->fields, to_key);
         if (to_tup == NULL) {
-            return NPY_UNSAFE_CASTING;
+            return give_bad_field_error(from_key);
         }
-        PyArray_Descr *to_base = (PyArray_Descr*)PyTuple_GET_ITEM(to_tup, 0);
+        PyArray_Descr *to_base = (PyArray_Descr *) PyTuple_GET_ITEM(to_tup, 0);
+
+        int cmp = PyUnicode_Compare(from_key, to_key);
+        if (error_converting(cmp)) {
+            return -1;
+        }
+        if (cmp != 0) {
+            /* Field name mismatch, consider this at most SAFE. */
+            casting = PyArray_MinCastSafety(casting, NPY_SAFE_CASTING);
+        }
+
+        /* Also check the title (denote mismatch as SAFE only) */
+        PyObject *from_title = from_key;
+        PyObject *to_title = to_key;
+        if (PyTuple_GET_SIZE(from_tup) > 2) {
+            from_title = PyTuple_GET_ITEM(from_tup, 2);
+        }
+        if (PyTuple_GET_SIZE(to_tup) > 2) {
+            to_title = PyTuple_GET_ITEM(to_tup, 2);
+        }
+        cmp = PyObject_RichCompareBool(from_title, to_title, Py_EQ);
+        if (error_converting(cmp)) {
+            return -1;
+        }
+        if (!cmp) {
+            casting = PyArray_MinCastSafety(casting, NPY_SAFE_CASTING);
+        }
 
         NPY_CASTING field_casting = PyArray_GetCastInfo(
                 from_base, to_base, NULL, &field_view_off);
@@ -3336,39 +3358,26 @@ can_cast_fields_safety(
             *view_offset = NPY_MIN_INTP;
         }
     }
-    if (*view_offset != 0) {
-        /* If the calculated `view_offset` is not 0, it can only be "equiv" */
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
-    }
 
     /*
-     * If the itemsize (includes padding at the end), fields, or names
-     * do not match, this cannot be a view and also not a "no" cast
-     * (identical dtypes).
-     * It may be possible that this can be relaxed in some cases.
+     * If the itemsize (includes padding at the end), does not match,
+     * this is not a "no" cast (identical dtypes) and may not be viewable.
      */
     if (from->elsize != to->elsize) {
         /*
          * The itemsize may mismatch even if all fields and formats match
          * (due to additional padding).
          */
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
+        casting = PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
+        if (from->elsize < to->elsize) {
+            *view_offset = NPY_MIN_INTP;
+        }
+    }
+    else if (*view_offset != 0) {
+        /* If the calculated `view_offset` is not 0, it can only be "equiv" */
+        casting = PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
     }
 
-    int cmp = PyObject_RichCompareBool(from->fields, to->fields, Py_EQ);
-    if (cmp != 1) {
-        if (cmp == -1) {
-            PyErr_Clear();
-        }
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
-    }
-    cmp = PyObject_RichCompareBool(from->names, to->names, Py_EQ);
-    if (cmp != 1) {
-        if (cmp == -1) {
-            PyErr_Clear();
-        }
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
-    }
     return casting;
 }
 
