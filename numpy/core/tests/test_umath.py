@@ -27,6 +27,7 @@ def get_glibc_version():
 
     return ver
 
+
 glibcver = get_glibc_version()
 glibc_newerthan_2_17 = pytest.mark.xfail(
         glibcver != '0.0' and glibcver < '2.17',
