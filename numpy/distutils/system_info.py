@@ -3107,7 +3107,7 @@ def show_all(argv=None):
         conf.verbosity = 2
         # we don't need the result, but we want
         # the side effect of printing diagnostics
-        r = conf.get_info()
+        conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))
 
