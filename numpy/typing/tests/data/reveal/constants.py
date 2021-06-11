@@ -16,8 +16,8 @@ reveal_type(np.nan)  # E: float
 reveal_type(np.pi)  # E: float
 
 reveal_type(np.ALLOW_THREADS)  # E: int
-reveal_type(np.BUFSIZE)  # E: int
-reveal_type(np.CLIP)  # E: int
+reveal_type(np.BUFSIZE)  # E: Literal[8192]
+reveal_type(np.CLIP)  # E: Literal[0]
 reveal_type(np.ERR_CALL)  # E: int
 reveal_type(np.ERR_DEFAULT)  # E: int
 reveal_type(np.ERR_IGNORE)  # E: int
@@ -30,17 +30,17 @@ reveal_type(np.FPE_DIVIDEBYZERO)  # E: int
 reveal_type(np.FPE_INVALID)  # E: int
 reveal_type(np.FPE_OVERFLOW)  # E: int
 reveal_type(np.FPE_UNDERFLOW)  # E: int
-reveal_type(np.MAXDIMS)  # E: int
-reveal_type(np.MAY_SHARE_BOUNDS)  # E: int
-reveal_type(np.MAY_SHARE_EXACT)  # E: int
-reveal_type(np.RAISE)  # E: int
+reveal_type(np.MAXDIMS)  # E: Literal[32]
+reveal_type(np.MAY_SHARE_BOUNDS)  # E: Literal[0]
+reveal_type(np.MAY_SHARE_EXACT)  # E: Literal[-1]
+reveal_type(np.RAISE)  # E: Literal[2]
 reveal_type(np.SHIFT_DIVIDEBYZERO)  # E: int
 reveal_type(np.SHIFT_INVALID)  # E: int
 reveal_type(np.SHIFT_OVERFLOW)  # E: int
 reveal_type(np.SHIFT_UNDERFLOW)  # E: int
 reveal_type(np.UFUNC_BUFSIZE_DEFAULT)  # E: int
-reveal_type(np.WRAP)  # E: int
-reveal_type(np.tracemalloc_domain)  # E: int
+reveal_type(np.WRAP)  # E: Literal[1]
+reveal_type(np.tracemalloc_domain)  # E: Literal[389047]
 
 reveal_type(np.little_endian)  # E: bool
 reveal_type(np.True_)  # E: numpy.bool_
