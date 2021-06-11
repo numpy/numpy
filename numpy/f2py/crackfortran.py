@@ -2551,7 +2551,7 @@ def get_parameters(vars, global_params={}):
                 v = ''.join(tt)
 
             elif iscomplex(vars[n]):
-                outmess(f'get_parameters[TODO]:'
+                outmess(f'get_parameters[TODO]: '
                         f'implement evaluation of complex expression {v}')
 
             try:
@@ -2983,7 +2983,7 @@ def expr2name(a, block, args=[]):
 
 def analyzeargs(block):
     setmesstext(block)
-    implicitrules = buildimplicitrules(block)[0]
+    implicitrules, _ = buildimplicitrules(block)
     if 'args' not in block:
         block['args'] = []
     args = []
