@@ -1,6 +1,8 @@
 import builtins
 import os
 import sys
+import mmap
+import array as _array
 import datetime as dt
 from abc import abstractmethod
 from types import TracebackType
@@ -1626,7 +1628,18 @@ _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 # have proper shape support
 _ShapeType = TypeVar("_ShapeType", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
-_BufferType = Union[ndarray, bytes, bytearray, memoryview]
+
+# There is currently no exhaustive way to type the buffer protocol,
+# as it is implemented exclusivelly in the C API (python/typing#593)
+_SupportsBuffer = Union[
+    bytes,
+    bytearray,
+    memoryview,
+    _array.array[Any],
+    mmap.mmap,
+    NDArray[Any],
+    generic,
+]
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -1668,7 +1681,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         cls: Type[_ArraySelf],
         shape: _ShapeLike,
         dtype: DTypeLike = ...,
-        buffer: _BufferType = ...,
+        buffer: _SupportsBuffer = ...,
         offset: int = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
