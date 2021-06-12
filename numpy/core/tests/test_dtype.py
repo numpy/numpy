@@ -88,6 +88,19 @@ class TestBuiltin:
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+    @pytest.mark.parametrize(
+        ['operator', 'expected'],
+        [('==', False), ('!=', True),
+        ('>', False), ('<', False),
+        ('>=', False), ('<=', False)])
+    def test_richcompare_invalid_dtype(self, operator, expected):
+        # Make sure objects that cannot be converted to valid
+        # dtypes results in False when compared to valid dtypes.
+        # Here 7 cannot be converted to dtype. No exceptions should be raised
+
+        assert eval(f"np.dtype(np.int32) {operator} 7") == expected,\
+                f"dtype richcompare failed for {operator}"
+
     @pytest.mark.parametrize("dtype",
              ['Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
               'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
