@@ -1204,6 +1204,8 @@ def argmax(a, axis=None, out=None, keepdims=False):
     >>> res.shape
     (2, 1, 4)
     """
+    if isinstance(a, np.matrix):
+        return _wrapfunc(a, 'argmax', axis=axis, out=out)
     return _wrapfunc(a, 'argmax', axis=axis, out=out, 
                         keepdims=keepdims)
 
@@ -1298,6 +1300,8 @@ def argmin(a, axis=None, out=None, keepdims=False):
     >>> res.shape
     (2, 1, 4)
     """
+    if isinstance(a, np.matrix):
+        return _wrapfunc(a, 'argmin', axis=axis, out=out)
     return _wrapfunc(a, 'argmin', axis=axis, out=out, keepdims=keepdims)
 
 
