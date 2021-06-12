@@ -3228,7 +3228,22 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 {
     PyArray_Descr *new = _convert_from_any(other, 0);
     if (new == NULL) {
-        return NULL;
+        /* Cannot convert `other` to dtype */
+
+        PyErr_Clear();
+
+        switch (cmp_op) {
+            case Py_LT:
+            case Py_LE:
+            case Py_EQ:
+            case Py_GT:
+            case Py_GE:
+                Py_RETURN_FALSE;
+            case Py_NE:
+                Py_RETURN_TRUE;
+            default:
+                Py_RETURN_NOTIMPLEMENTED;
+        }
     }
 
     npy_bool ret;
