@@ -167,7 +167,7 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
     PyArrayObject* ret = (PyArrayObject*)PyArray_ArgMax(op, axis_copy, NULL);
     PyArray_Dims newdims;
     newdims.len = PyArray_NDIM(op);
-    npy_intp dims[newdims.len];
+    npy_intp dims[NPY_MAXDIMS];
     newdims.ptr = dims;
     npy_intp* currdim = PyArray_DIMS(op);
     for( int dim = 0; dim < newdims.len; dim++ ) {
@@ -428,7 +428,7 @@ PyArray_ArgMinKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
         } else {
             newdims_len = PyArray_NDIM(ap);
         }
-        npy_intp newdims[newdims_len];
+        npy_intp newdims[NPY_MAXDIMS];
         for( int dim = 0; dim < newdims_len - 1; dim++ ) {
             if( axis_copy == NPY_MAXDIMS ) {
                 newdims[dim] = 1;
