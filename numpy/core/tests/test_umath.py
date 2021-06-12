@@ -19,11 +19,10 @@ from numpy.testing import (
     )
 
 def get_glibc_version():
-    ver = '0.0'
     try:
         ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
     except Exception as inst:
-        print(inst)
+        ver = '0.0'
 
     return ver
 
