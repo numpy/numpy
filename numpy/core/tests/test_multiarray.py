@@ -4512,7 +4512,6 @@ class TestArgmin:
         a[1] = 10
         assert_equal(a.argmin(), 1)
     
-    # Avoid until np.argmin is ready to support keepdims
     def test_np_argmin_keepdims(self):
 
         sizes = [(3,), (3, 2), (2, 3),
