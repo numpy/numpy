@@ -4340,7 +4340,7 @@ class TestArgmax:
                  (3, 3), (2, 3, 4), (4, 3, 2)]
         for size in sizes:
             arr = np.random.normal(size=size)
-            for axis in range(len(size)):
+            for axis in range(-len(size), len(size)):
                 res = np.argmax(arr, axis=axis, keepdims=True)
                 assert_(res.ndim == arr.ndim)
                 assert_(res.shape[axis] == 1)
@@ -4519,10 +4519,14 @@ class TestArgmin:
                  (3, 3), (2, 3, 4), (4, 3, 2)]
         for size in sizes:
             arr = np.random.normal(size=size)
-            for axis in range(len(size)):
+            for axis in range(-len(size), len(size)):
                 res = np.argmin(arr, axis=axis, keepdims=True)
                 assert_(res.ndim == arr.ndim)
                 assert_(res.shape[axis] == 1)
+                outarray = np.empty(res.shape, dtype=res.dtype)
+                np.argmin(arr, axis=axis, out=outarray, 
+                          keepdims=True)
+                assert_equal(res, outarray)
             
             # Testing for axis=None, keepdims=True
             res = np.argmin(arr, axis=None, keepdims=True)

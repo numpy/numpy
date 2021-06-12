@@ -154,19 +154,37 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 
 NPY_NO_EXPORT PyObject*
 PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
-    PyArrayObject* ret = (PyArrayObject*)PyArray_ArgMax(op, axis, NULL);
+    /*
+    * `axis_copy` retains a copy of original axis value because, `axis`
+    * itself is changed by the call in the following line. This is done
+    * for two reasons, first, `axis_copy` helps in checking whether axis
+    * was `None` or not as received from Python interface and second, axis
+    * values are consistent between `PyArray_ArgMax` and `PyArray_ArgMaxKeepdims`.
+    */
+    int axis_copy = axis;
+    if ((PyArrayObject *)PyArray_CheckAxis(op, &axis, 0) == NULL) {
+        return NULL;
+    }
+    PyArrayObject* ret = (PyArrayObject*)PyArray_ArgMax(op, axis_copy, NULL);
     PyArray_Dims newdims;
     newdims.len = PyArray_NDIM(op);
-    newdims.ptr = npy_alloc_cache_dim(newdims.len);
+    npy_intp dims[newdims.len];
+    newdims.ptr = dims;
     npy_intp* currdim = PyArray_DIMS(op);
     for( int dim = 0; dim < newdims.len; dim++ ) {
-        if( dim == axis || axis == NPY_MAXDIMS ) {
+        /*
+        * Here `axis` is converted to 0 when `axis = NPY_MAXDIMS`
+        * but `axis_copy` retains that value and hence, all values
+        * in `newdims.ptr` can be set to 1 if axis is received as `None`
+        * from Python interface.
+        */
+        if( dim == axis || axis_copy == NPY_MAXDIMS ) {
             newdims.ptr[dim] = 1;
         } else {
             newdims.ptr[dim] = currdim[dim];
         }
     }
-
+    
     // If ret is same as out, then should we reshape or raise an error?
     ret = (PyArrayObject*)PyArray_Newshape(ret, &newdims, NPY_CORDER);
     if (out != NULL) {
@@ -183,7 +201,6 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
         ret = out;
         Py_INCREF(ret);
     }
-    npy_free_cache_dim_obj(newdims);
     return (PyObject*)ret;
 }
 
@@ -309,10 +326,18 @@ PyArray_ArgMinKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
     PyArray_ArgFunc* arg_func;
     char *ip;
     npy_intp *rptr;
-    npy_intp i, n, m;
+    npy_intp i, n, m, axis_copy;
+    npy_intp op_NDIM = PyArray_NDIM(op);
     int elsize;
     NPY_BEGIN_THREADS_DEF;
 
+    /*
+    * `axis_copy` retains a copy of original axis value because, `axis`
+    * itself is changed by the call in the following line. This is done
+    * for two reasons, because `axis_copy` helps in checking whether axis
+    * was `None` or not as received from Python interface.
+    */
+    axis_copy = axis;
     if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
         return NULL;
     }
@@ -322,8 +347,8 @@ PyArray_ArgMinKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
     * And all other dimensions are shifted left.
     */
     PyArray_Dims newaxes;
-    npy_intp dims[NPY_MAXDIMS];
-    if (axis != PyArray_NDIM(ap)-1) {
+    if (axis != PyArray_NDIM(ap) - 1) {
+        npy_intp dims[NPY_MAXDIMS];
         int i;
 
         newaxes.ptr = dims;
@@ -345,8 +370,16 @@ PyArray_ArgMinKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
         op = ap;
     }
 
+    /*
+    * We need to permute the out array so that its dimensions,
+    * other than the axis, are in line with the input array. 
+    */
     if( out && PyArray_NDIM(out) == PyArray_NDIM(ap) ) {
+        npy_intp dims[NPY_MAXDIMS];
+
+        int i;
         newaxes.len = PyArray_NDIM(out);
+        newaxes.ptr = dims;
         for (i = 0; i < axis; i++) {
             dims[i] = i;
         }
@@ -356,10 +389,11 @@ PyArray_ArgMinKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
         dims[PyArray_NDIM(out) - 1] = axis;
         out = (PyArrayObject *)PyArray_Transpose(out, &newaxes);
     }
-
+    
     /* Will get native-byte order contiguous copy. */
     ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op,
                                   PyArray_DESCR(op)->type_num, 1, 0);
+    
     Py_DECREF(op);
     if (ap == NULL) {
         return NULL;
@@ -379,28 +413,63 @@ PyArray_ArgMinKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
     }
 
     if (!out) {
-        npy_intp newdims[PyArray_NDIM(ap)];
-        for( int dim = 0; dim < PyArray_NDIM(ap) - 1; dim++ ) {
-            if( axis == NPY_MAXDIMS ) {
+        /*
+        * If out array is NULL then we create a new array
+        * such that when `axis` is not `None` then all the
+        * dimensions are same as the input array except the 
+        * `axis` which is of size 1. When `axis` is `None`,
+        * then all the dimensions are of size 1. Note that,
+        * `axis_copy` is used to check whether `axis` was `None`
+        * in the input because `axis` itself has changed due to previous
+        * code.
+        */
+        int newdims_len;
+        if( axis_copy == NPY_MAXDIMS ) {
+            newdims_len = op_NDIM;
+        } else {
+            newdims_len = PyArray_NDIM(ap);
+        }
+        npy_intp newdims[newdims_len];
+        for( int dim = 0; dim < newdims_len - 1; dim++ ) {
+            if( axis_copy == NPY_MAXDIMS ) {
                 newdims[dim] = 1;
             } else {
                 newdims[dim] = PyArray_DIMS(ap)[dim];
             }
         }
-        newdims[PyArray_NDIM(ap) - 1] = 1;
+        newdims[newdims_len - 1] = 1;
         rp = (PyArrayObject *)PyArray_NewFromDescr(
                 Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
-                PyArray_NDIM(ap), newdims, NULL, NULL,
+                newdims_len, newdims, NULL, NULL,
                 0, (PyObject *)ap);
         if (rp == NULL) {
             goto fail;
         }
-    }
-    else {
-        if ((PyArray_NDIM(out) != PyArray_NDIM(ap)) ||
-                !PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ap),
-                                      PyArray_NDIM(out) - 1) ||  
-                (PyArray_DIMS(out)[PyArray_NDIM(out) - 1] != 1)) {
+    } else {
+        int shape_check;
+        if( axis_copy == NPY_MAXDIMS ) {
+            /*
+            * When axis is `None` in the input then all dimensions
+            * of out array should be 1. Note that for comparing number
+            * of dimensions we have used `op_NDIM` because it is the actual
+            * number of dimensions in the input. `ap` looses one dimension
+            * due to previous code.
+            */
+            shape_check = PyArray_NDIM(out) == op_NDIM;
+            for( int dim = 0; shape_check && dim < PyArray_NDIM(out); dim++ ) {
+                shape_check = PyArray_DIMS(out)[dim] == 1;
+            }
+        } else {
+            /*
+            * Standard case, the out array dimensions should be same
+            * as input array except the last one which should be 1.
+            */
+            shape_check = (PyArray_NDIM(out) == PyArray_NDIM(ap)) &&
+                           PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ap),
+                                                 PyArray_NDIM(out) - 1) && 
+                           (PyArray_DIMS(out)[PyArray_NDIM(out) - 1] == 1);
+        }
+        if (!shape_check) {
             PyErr_SetString(PyExc_ValueError,
                     "output array does not match result of np.argmin.");
             goto fail;
@@ -431,6 +500,14 @@ PyArray_ArgMinKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
         Py_INCREF(rp);
     }
 
+    /*
+    * The following code takes the axis back to its original
+    * position which was placed in the last dimension earlier.
+    * This can be interpreted as reversing the previously taken
+    * transpose of output, which was taken to travel through
+    * the desired axis by just increasing the pointer by 1.
+    */
+    npy_intp dims[NPY_MAXDIMS];
     newaxes.ptr = dims;
     newaxes.len = PyArray_NDIM(rp);
     npy_intp k; 

@@ -317,7 +317,7 @@ array_argmin(PyArrayObject *self,
 {
     int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
-    npy_bool keepdims;
+    npy_bool keepdims = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argmin", args, len_args, kwnames,
