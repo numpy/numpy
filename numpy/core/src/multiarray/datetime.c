@@ -950,10 +950,6 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         return -1;
     }
 
-    ind = ((int)meta->base - (int)NPY_FR_Y)*2;
-    totry = _multiples_table[ind];
-    baseunit = _multiples_table[ind + 1];
-
     num = 3;
     if (meta->base == NPY_FR_W) {
         num = 4;
@@ -962,6 +958,7 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         num = 2;
     }
     if (meta->base >= NPY_FR_s) {
+        /* _multiplies_table only has entries up to NPY_FR_s */
         ind = ((int)NPY_FR_s - (int)NPY_FR_Y)*2;
         totry = _multiples_table[ind];
         baseunit = _multiples_table[ind + 1];
@@ -973,6 +970,11 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
         if (meta->base == NPY_FR_as) {
             num = 0;
         }
+    }
+    else {
+        ind = ((int)meta->base - (int)NPY_FR_Y)*2;
+        totry = _multiples_table[ind];
+        baseunit = _multiples_table[ind + 1];
     }
 
     for (i = 0; i < num; i++) {
@@ -3952,7 +3954,6 @@ time_to_string_resolve_descriptors(
         return -1;
     }
 
-    assert(self->casting == NPY_UNSAFE_CASTING);
     return NPY_UNSAFE_CASTING;
 }
 
@@ -4059,7 +4060,7 @@ PyArray_InitializeDatetimeCasts()
         .name = "datetime_casts",
         .nin = 1,
         .nout = 1,
-        .casting = NPY_NO_CASTING,
+        .casting = NPY_UNSAFE_CASTING,
         .flags = NPY_METH_SUPPORTS_UNALIGNED,
         .slots = slots,
         .dtypes = dtypes,

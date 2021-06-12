@@ -294,11 +294,33 @@ from numpy.core.einsumfunc import (
     einsum_path as einsum_path,
 )
 
+from numpy.core.multiarray import (
+    array as array,
+    empty_like as empty_like,
+    empty as empty,
+    zeros as zeros,
+    concatenate as concatenate,
+    inner as inner,
+    where as where,
+    lexsort as lexsort,
+    can_cast as can_cast,
+    min_scalar_type as min_scalar_type,
+    result_type as result_type,
+    dot as dot,
+    vdot as vdot,
+    bincount as bincount,
+    copyto as copyto,
+    putmask as putmask,
+    packbits as packbits,
+    unpackbits as unpackbits,
+    shares_memory as shares_memory,
+    may_share_memory as may_share_memory,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
     ones_like as ones_like,
-    empty_like as empty_like,
     full as full,
     full_like as full_like,
     count_nonzero as count_nonzero,
@@ -868,13 +890,9 @@ def busday_offset(
     busdaycal=...,
     out=...,
 ): ...
-def can_cast(from_, to, casting=...): ...
 def compare_chararrays(a, b, cmp_op, rstrip): ...
-def concatenate(__a, axis=..., out=..., dtype=..., casting=...): ...
-def copyto(dst, src, casting=..., where=...): ...
 def datetime_as_string(arr, unit=..., timezone=..., casting=...): ...
 def datetime_data(__dtype): ...
-def dot(a, b, out=...): ...
 def frombuffer(buffer, dtype=..., count=..., offset=..., *, like=...): ...
 def fromfile(
     file, dtype=..., count=..., sep=..., offset=..., *, like=...
@@ -883,24 +901,12 @@ def fromiter(iter, dtype, count=..., *, like=...): ...
 def frompyfunc(func, nin, nout, * identity): ...
 def fromstring(string, dtype=..., count=..., sep=..., *, like=...): ...
 def geterrobj(): ...
-def inner(a, b): ...
 def is_busday(
     dates, weekmask=..., holidays=..., busdaycal=..., out=...
 ): ...
-def lexsort(keys, axis=...): ...
-def may_share_memory(a, b, max_work=...): ...
-def min_scalar_type(a): ...
 def nested_iters(*args, **kwargs): ...  # TODO: Sort out parameters
 def promote_types(type1, type2): ...
-def putmask(a, mask, values): ...
-def result_type(*arrays_and_dtypes): ...
 def seterrobj(errobj): ...
-def shares_memory(a, b, max_work=...): ...
-def vdot(a, b): ...
-@overload
-def where(__condition): ...
-@overload
-def where(__condition, __x, __y): ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
@@ -1226,20 +1232,9 @@ class _ArrayOrScalarCommon:
     def __deepcopy__(self: _ArraySelf, __memo: Optional[dict] = ...) -> _ArraySelf: ...
     def __eq__(self, other): ...
     def __ne__(self, other): ...
-    def astype(
-        self: _ArraySelf,
-        dtype: DTypeLike,
-        order: _OrderKACF = ...,
-        casting: _Casting = ...,
-        subok: bool = ...,
-        copy: bool = ...,
-    ) -> _ArraySelf: ...
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def dump(self, file: str) -> None: ...
     def dumps(self) -> bytes: ...
-    def getfield(
-        self: _ArraySelf, dtype: DTypeLike, offset: int = ...
-    ) -> _ArraySelf: ...
     def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
@@ -1248,14 +1243,6 @@ class _ArrayOrScalarCommon:
     ) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
-    @overload
-    def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
-    @overload
-    def view(self: _ArraySelf, dtype: DTypeLike = ...) -> _ArraySelf: ...
-    @overload
-    def view(
-        self, dtype: DTypeLike, type: Type[_NdArraySubClass]
-    ) -> _NdArraySubClass: ...
 
     # TODO: Add proper signatures
     def __getitem__(self, key) -> Any: ...
@@ -1635,7 +1622,13 @@ _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
-_Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
+_CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
+
+_DTypeLike = Union[
+    dtype[_ScalarType],
+    Type[_ScalarType],
+    _SupportsDType[dtype[_ScalarType]],
+]
 
 _ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
 _ArrayInt_co = NDArray[Union[bool_, integer[Any]]]
@@ -1873,6 +1866,53 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def reshape(
         self, *shape: SupportsIndex, order: _OrderACF = ...
     ) -> ndarray[Any, _DType_co]: ...
+
+    @overload
+    def astype(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> NDArray[_ScalarType]: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike,
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> NDArray[Any]: ...
+
+    @overload
+    def view(self: _ArraySelf) -> _ArraySelf: ...
+    @overload
+    def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
+    @overload
+    def view(self, dtype: _DTypeLike[_ScalarType]) -> NDArray[_ScalarType]: ...
+    @overload
+    def view(self, dtype: DTypeLike) -> NDArray[Any]: ...
+    @overload
+    def view(
+        self,
+        dtype: DTypeLike,
+        type: Type[_NdArraySubClass],
+    ) -> _NdArraySubClass: ...
+
+    @overload
+    def getfield(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        offset: SupportsIndex = ...
+    ) -> NDArray[_ScalarType]: ...
+    @overload
+    def getfield(
+        self,
+        dtype: DTypeLike,
+        offset: SupportsIndex = ...
+    ) -> NDArray[Any]: ...
 
     # Dispatch to the underlying `generic` via protocols
     def __int__(
@@ -2846,6 +2886,59 @@ class generic(_ArrayOrScalarCommon):
     def byteswap(self: _ScalarType, inplace: L[False] = ...) -> _ScalarType: ...
     @property
     def flat(self: _ScalarType) -> flatiter[ndarray[Any, dtype[_ScalarType]]]: ...
+
+    @overload
+    def astype(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike,
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> Any: ...
+
+    # NOTE: `view` will perform a 0D->scalar cast,
+    # thus the array `type` is irrelevant to the output type
+    @overload
+    def view(
+        self: _ScalarType,
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def view(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def view(
+        self,
+        dtype: DTypeLike,
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> Any: ...
+
+    @overload
+    def getfield(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        offset: SupportsIndex = ...
+    ) -> _ScalarType: ...
+    @overload
+    def getfield(
+        self,
+        dtype: DTypeLike,
+        offset: SupportsIndex = ...
+    ) -> Any: ...
+
     def item(
         self,
         __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
@@ -3042,11 +3135,24 @@ class datetime64(generic):
 if sys.version_info >= (3, 8):
     _IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex, SupportsIndex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        SupportsIndex,
+        complex,  # `complex` is not a subtype of `SupportsComplex`
+    ]
 else:
     _IntValue = Union[SupportsInt, _CharLike_co]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        complex,
+    ]
 
 class integer(number[_NBit1]):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
@@ -3329,31 +3435,6 @@ class str_(character, str):
 
 unicode_ = str_
 str0 = str_
-
-def array(
-    object: object,
-    dtype: DTypeLike = ...,
-    *,
-    copy: bool = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def zeros(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def empty(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
 
 #
 # Constants

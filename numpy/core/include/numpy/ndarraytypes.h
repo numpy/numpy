@@ -1236,6 +1236,8 @@ struct PyArrayIterObject_tag {
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
                 for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
                      __npy_i++) { \
+                        _PyAIT(it)->coordinates[__npy_i] = \
+                                (__npy_ind / _PyAIT(it)->factors[__npy_i]); \
                         _PyAIT(it)->dataptr += \
                                 (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
                                 * _PyAIT(it)->strides[__npy_i]; \

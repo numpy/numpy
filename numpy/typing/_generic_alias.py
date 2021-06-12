@@ -93,7 +93,7 @@ class _GenericAlias:
         return super().__getattribute__("_origin")
 
     @property
-    def __args__(self) -> Tuple[Any, ...]:
+    def __args__(self) -> Tuple[object, ...]:
         return super().__getattribute__("_args")
 
     @property
@@ -101,16 +101,23 @@ class _GenericAlias:
         """Type variables in the ``GenericAlias``."""
         return super().__getattribute__("_parameters")
 
-    def __init__(self, origin: type, args: Any) -> None:
+    def __init__(
+        self,
+        origin: type,
+        args: object | Tuple[object, ...],
+    ) -> None:
         self._origin = origin
         self._args = args if isinstance(args, tuple) else (args,)
-        self._parameters = tuple(_parse_parameters(args))
+        self._parameters = tuple(_parse_parameters(self.__args__))
 
     @property
     def __call__(self) -> type:
         return self.__origin__
 
-    def __reduce__(self: _T) -> Tuple[Type[_T], Tuple[type, Tuple[Any, ...]]]:
+    def __reduce__(self: _T) -> Tuple[
+        Type[_T],
+        Tuple[type, Tuple[object, ...]],
+    ]:
         cls = type(self)
         return cls, (self.__origin__, self.__args__)
 
@@ -148,7 +155,7 @@ class _GenericAlias:
         origin = _to_str(self.__origin__)
         return f"{origin}[{args}]"
 
-    def __getitem__(self: _T, key: Any) -> _T:
+    def __getitem__(self: _T, key: object | Tuple[object, ...]) -> _T:
         """Return ``self[key]``."""
         key_tup = key if isinstance(key, tuple) else (key,)
 
