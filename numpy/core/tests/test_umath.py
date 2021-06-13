@@ -4,6 +4,7 @@ import fnmatch
 import itertools
 import pytest
 import sys
+import os
 from fractions import Fraction
 from functools import reduce
 
@@ -16,6 +17,20 @@ from numpy.testing import (
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, assert_warns
     )
+
+def get_glibc_version():
+    try:
+        ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
+    except Exception as inst:
+        ver = '0.0'
+
+    return ver
+
+
+glibcver = get_glibc_version()
+glibc_newerthan_2_17 = pytest.mark.xfail(
+        glibcver != '0.0' and glibcver < '2.17',
+        reason="Older glibc versions may not raise appropriate FP exceptions")
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -986,6 +1001,10 @@ class TestSpecialFloats:
             yf = np.array(y, dtype=dt)
             assert_equal(np.exp(yf), xf)
 
+    # Older version of glibc may not raise the correct FP exceptions
+    # See: https://github.com/numpy/numpy/issues/19192
+    @glibc_newerthan_2_17
+    def test_exp_exceptions(self):
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
