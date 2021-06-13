@@ -31,7 +31,7 @@ __all__ = [
     'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
-    'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
+    'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
     'interp', 'interp_complex', 'is_busday', 'lexsort',
