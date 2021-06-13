@@ -11,6 +11,8 @@ else:
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 
+__all__: List[str]
+
 @overload
 def atleast_1d(__arys: ArrayLike) -> ndarray: ...
 @overload
