@@ -806,5 +806,5 @@ def setdiff1d(ar1, ar2, assume_unique=False):
 
     """
     ar1 = set(np.asarray(ar1).ravel().tolist())
-    ar2 = set(np.asarray(ar1).ravel().tolist())
+    ar2 = set(np.asarray(ar2).ravel().tolist())
     return np.asarray(list(ar1 - ar2))
