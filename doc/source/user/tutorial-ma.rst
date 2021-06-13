@@ -366,12 +366,13 @@ after the beginning of the records:
 
 .. ipython:: python
 
-    plt.plot(t, china_total);
-    plt.plot(t[china_total.mask], cubic_fit[china_total.mask], '--', color='orange');
-    plt.plot(7, np.polyval(params, 7), 'r*');
+    plt.plot(t, china_total, label='Mainland China');
+    plt.plot(t[china_total.mask], cubic_fit[china_total.mask], '--',
+             color='orange', label='Cubic estimate');
+    plt.plot(7, np.polyval(params, 7), 'r*', label='7 days after start');
     plt.xticks([0, 7, 13], dates[[0, 7, 13]]);
     plt.yticks([0, np.polyval(params, 7), 10000, 17500]);
-    plt.legend(['Mainland China', 'Cubic estimate', '7 days after start']);
+    plt.legend();
     @savefig plot_covid_5.png
     plt.title("COVID-19 cumulative cases from Jan 21 to Feb 3 2020 - Mainland China\n"
               "Cubic estimate for 7 days after start");

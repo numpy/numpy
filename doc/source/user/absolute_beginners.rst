@@ -6,7 +6,8 @@ NumPy: the absolute basics for beginners
 .. currentmodule:: numpy
 
 Welcome to the absolute beginner's guide to NumPy! If you have comments or
-suggestions, please don’t hesitate to reach out!
+suggestions, please don’t hesitate to `reach out
+<https://numpy.org/community/>`_!
 
 
 Welcome to NumPy!
@@ -37,8 +38,7 @@ Installing NumPy
 
 To install NumPy, we strongly recommend using a scientific Python distribution.
 If you're looking for the full instructions for installing NumPy on your
-operating system, you can `find all of the details here
-<https://www.scipy.org/install.html>`_.
+operating system, see `Installing NumPy <https://numpy.org/install/>`_.
 
 
 
@@ -56,24 +56,16 @@ thing about getting this distribution is the fact that you don’t need to worry
 too much about separately installing NumPy or any of the major packages that
 you’ll be using for your data analyses, like pandas, Scikit-Learn, etc.
 
-You can find all of the installation details in the
-`Installation <https://www.scipy.org/install.html>`_ section
-at `SciPy <https://www.scipy.org>`_.
-
 How to import NumPy
 -------------------
 
-Any time you want to use a package or library in your code, you first need to
-make it accessible.
-
-In order to start using NumPy and all of the functions available in NumPy,
-you'll need to import it. This can be easily done with this import statement::
+To access NumPy and its functions import it in your Python code like this::
 
   import numpy as np
 
-(We shorten ``numpy`` to ``np`` in order to save time and also to keep code
-standardized so that anyone working with your code can easily understand and
-run it.)
+We shorten the imported name to ``np`` for better readability of code using
+NumPy. This is a widely adopted convention that you should follow so that
+anyone working with your code can easily understand it.
 
 Reading the example code
 ------------------------
@@ -93,6 +85,7 @@ you would enter. Everything that doesn't have ``>>>`` in front of it
 is **output**, or the results of running your code. This is the style
 you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
 
+For more information, see :ref:`documentation_conventions`.
 
 What’s the difference between a Python list and a NumPy array?
 --------------------------------------------------------------
@@ -775,12 +768,12 @@ If you start with this array::
 
   >>> b = np.array([[1, 1], [2, 2]])
 
-You can sum the rows with::
+You can sum over the axis of rows with::
 
   >>> b.sum(axis=0)
   array([3, 3])
 
-You can sum the columns with::
+You can sum over the axis of columns with::
 
   >>> b.sum(axis=1)
   array([2, 4])
@@ -871,10 +864,11 @@ Creating matrices
 You can pass Python lists of lists to create a 2-D array (or "matrix") to
 represent them in NumPy. ::
 
-  >>> data = np.array([[1, 2], [3, 4]])
+  >>> data = np.array([[1, 2], [3, 4], [5, 6]])
   >>> data
   array([[1, 2],
-         [3, 4]])
+         [3, 4],
+         [5, 6]])
 
 .. image:: images/np_create_matrix.png
 
@@ -883,7 +877,8 @@ Indexing and slicing operations are useful when you're manipulating matrices::
   >>> data[0, 1]
   2
   >>> data[1:3]
-  array([[3, 4]])
+  array([[3, 4],
+         [5, 6]])
   >>> data[0:2, 0]
   array([1, 3])
 
@@ -892,11 +887,11 @@ Indexing and slicing operations are useful when you're manipulating matrices::
 You can aggregate matrices the same way you aggregated vectors::
 
   >>> data.max()
-  4
+  6
   >>> data.min()
   1
   >>> data.sum()
-  10
+  21
 
 .. image:: images/np_matrix_aggregation.png
 
@@ -904,9 +899,9 @@ You can aggregate all the values in a matrix and you can aggregate them across
 columns or rows using the ``axis`` parameter::
 
   >>> data.max(axis=0)
-  array([3, 4])
+  array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4])
+  array([2, 4, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
@@ -1672,9 +1667,8 @@ For example, you can plot a 1D array like this::
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
-  >>> from mpl_toolkits.mplot3d import Axes3D
   >>> fig = plt.figure()
-  >>> ax = Axes3D(fig)
+  >>> ax = fig.add_subplot(projection='3d')
   >>> X = np.arange(-5, 5, 0.15)
   >>> Y = np.arange(-5, 5, 0.15)
   >>> X, Y = np.meshgrid(X, Y)

@@ -16,6 +16,33 @@ in several different formats.
 
 .. _Sphinx: http://www.sphinx-doc.org/
 
+To build the documentation, you must first build NumPy.
+
+There are two options for building NumPy and its documentation- building with
+Gitpod or locally from source. Your choice depends on your operating system and
+familiarity with the command line.
+
+Gitpod
+------------
+
+Gitpod is an open-source platform that automatically creates
+the correct development environment right in your browser, reducing the need to
+install local development environments and deal with incompatible dependencies.
+
+If you are a Windows user, unfamiliar with using the command line or building
+NumPy's documentation for the first time, it is often faster to build with
+Gitpod. Here are the in-depth instructions for building NumPy with `building
+NumPy with Gitpod`_.
+
+.. _building NumPy with Gitpod: https://numpy.org/devdocs/dev/development_gitpod.html
+
+Building locally
+------------------
+
+Building locally on your machine gives you more granular control. If you are a
+MacOS or Linux user familiar with using the command line, you can continue with
+building NumPy locally by following the instructions below.
+
 
 Instructions
 ------------
@@ -48,12 +75,21 @@ with::
 
 Now you are ready to generate the docs, so write::
 
+    cd doc
     make html
 
 in the ``doc/`` directory. If all goes well, this will generate a
 ``build/html`` subdirectory containing the built documentation. If you get
 a message about ``installed numpy != current repo git version``, you must
 either override the check by setting ``GITVER`` or re-install NumPy.
+
+If you have built numpy into a virtual environment and get an error
+that says ``numpy not found, cannot build documentation without...``,
+you need to override the makefile ``PYTHON`` variable at the command
+line, so instead of writing ``make  html`` write::
+
+    make PYTHON=python html
+    
 
 Note that building the documentation on Windows is currently not actively
 supported, though it should be possible. (See Sphinx_ documentation
@@ -81,7 +117,7 @@ pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details
 on how to update https://numpy.org/doc.
 
 .. _Matplotlib: https://matplotlib.org/
-.. _HOWTO RELEASE: https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
+.. _HOWTO RELEASE: https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst.txt
 
 Sphinx extensions
 -----------------
