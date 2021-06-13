@@ -335,7 +335,8 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
     if aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+        # for complex all NaNs are considered equivalent
+        if aux.dtype.kind == "c":  
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
             aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
@@ -431,7 +432,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     ar2 = np.asanyarray(ar2).ravel()
 
     if not return_indices:
-        return np.asarray( list( set( ar1.tolist() ).intersection( set(ar2.tolist()) ) ) ) 
+        return np.asarray( list( 
+                set( ar1.tolist() ).intersection( set(ar2.tolist()) ) 
+               ) ) 
 
     else: 
         if not assume_unique:
