@@ -1,0 +1,3 @@
+[submodule "doc/source/_static/scipy-mathjax"]
+	path = doc/source/_static/scipy-mathjax
+	url = https://github.com/scipy/scipy-mathjax.git
