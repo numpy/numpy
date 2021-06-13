@@ -561,8 +561,7 @@ rout_rules = [
                  '\tint #name#_return_value_len = 0;'],
         'callfortran':'#name#_return_value,#name#_return_value_len,',
         'callfortranroutine':['\t#name#_return_value_len = #rlength#;',
-                              '\tif ((#name#_return_value = (string)malloc('
-                                  '#name#_return_value_len+1) == NULL) {',
+                              '\tif ((#name#_return_value = (string)malloc(sizeof(char)*(#name#_return_value_len+1))) == NULL) {',
                               '\t\tPyErr_SetString(PyExc_MemoryError, \"out of memory\");',
                               '\t\tf2py_success = 0;',
                               '\t} else {',
@@ -964,8 +963,7 @@ if (#varname#_cb.capi==Py_None) {
         'args_capi': {isrequired: ',&#varname#_capi'},
         'keys_capi': {isoptional: ',&#varname#_capi'},
         'pyobjfrom': {isintent_inout: '''\
-\tf2py_success = try_pyarr_from_#ctype#(#varname#_capi, #varname#,
-\t                                      slen(#varname#));
+\tf2py_success = try_pyarr_from_#ctype#(#varname#_capi,#varname#);
 \tif (f2py_success) {'''},
         'closepyobjfrom': {isintent_inout: '\t} /*if (f2py_success) of #varname# pyobjfrom*/'},
         'need': {isintent_inout: 'try_pyarr_from_#ctype#'},
