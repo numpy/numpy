@@ -432,9 +432,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     ar2 = np.asanyarray(ar2).ravel()
 
     if not return_indices:
-        return np.asarray( list( 
-                set( ar1.tolist() ).intersection( set(ar2.tolist()) ) 
-               ) ) 
+        ar1_set = set(ar1.tolist())
+        ar2_set = set(ar2.tolist())
+        return np.asarray(list(ar1_set.intersection(ar2_set))) 
 
     else: 
         if not assume_unique:
