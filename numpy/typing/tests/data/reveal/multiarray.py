@@ -1,16 +1,31 @@
-from typing import Any, List
+from typing import Any, List, TypeVar
+from pathlib import Path
+
 import numpy as np
 import numpy.typing as npt
+
+_SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
+
+class SubClass(np.ndarray[Any, np.dtype[_SCT]]): ...
+
+subclass: SubClass[np.float64]
 
 AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
 AR_u1: npt.NDArray[np.uint8]
+AR_m: npt.NDArray[np.timedelta64]
+AR_M: npt.NDArray[np.datetime64]
 
 AR_LIKE_f: List[float]
 AR_LIKE_i: List[int]
 
+m: np.timedelta64
+M: np.datetime64
+
 b_f8 = np.broadcast(AR_f8)
 b_i8_f8_f8 = np.broadcast(AR_i8, AR_f8, AR_f8)
+
+def func(a: int) -> bool: ...
 
 reveal_type(next(b_f8))  # E: tuple[Any]
 reveal_type(b_f8.reset())  # E: None
@@ -75,3 +90,36 @@ reveal_type(np.shares_memory(AR_f8, AR_f8, max_work=1))  # E: bool
 
 reveal_type(np.may_share_memory(1, 2))  # E: bool
 reveal_type(np.may_share_memory(AR_f8, AR_f8, max_work=1))  # E: bool
+
+reveal_type(np.geterrobj())  # E: list[Any]
+
+reveal_type(np.seterrobj([8192, 521, None]))  # E: None
+
+reveal_type(np.promote_types(np.int32, np.int64))  # E: numpy.dtype[Any]
+reveal_type(np.promote_types("f4", float))  # E: numpy.dtype[Any]
+
+reveal_type(np.frompyfunc(func, 1, 1, identity=None))  # numpy.ufunc
+
+reveal_type(np.datetime_data("m8[D]"))  # E: Tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data(np.datetime64))  # E: Tuple[builtins.str, builtins.int]
+reveal_type(np.datetime_data(np.dtype(np.timedelta64)))  # E: Tuple[builtins.str, builtins.int]
+
+reveal_type(np.busday_count("2011-01", "2011-02"))  # E: {int_}
+reveal_type(np.busday_count(["2011-01"], "2011-02"))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+
+reveal_type(np.busday_offset(M, m))  # E: numpy.datetime64
+reveal_type(np.busday_offset(M, 5))  # E: numpy.datetime64
+reveal_type(np.busday_offset(AR_M, m))  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
+reveal_type(np.busday_offset("2011-01", "2011-02", roll="forward"))  # E: numpy.datetime64
+reveal_type(np.busday_offset(["2011-01"], "2011-02", roll="forward"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
+
+reveal_type(np.is_busday("2012"))  # E: numpy.bool_
+reveal_type(np.is_busday(["2012"]))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
+
+reveal_type(np.datetime_as_string(M))  # E: numpy.str_
+reveal_type(np.datetime_as_string(AR_M))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
+
+reveal_type(np.compare_chararrays("a", "b", "!=", rstrip=False))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
+reveal_type(np.compare_chararrays(b"a", b"a", "==", True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
+
+reveal_type(np.add_docstring(func, "test"))  # E: None

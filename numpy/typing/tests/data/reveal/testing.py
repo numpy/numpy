@@ -29,8 +29,8 @@ reveal_type(np.testing.clear_and_catch_warnings(modules=[np.testing]))  # E: _cl
 reveal_type(np.testing.clear_and_catch_warnings(True))  # E: _clear_and_catch_warnings_with_records
 reveal_type(np.testing.clear_and_catch_warnings(False))  # E: _clear_and_catch_warnings_without_records
 reveal_type(np.testing.clear_and_catch_warnings(bool_obj))  # E: clear_and_catch_warnings
-reveal_type(np.testing.clear_and_catch_warnings.class_modules)  # E: tuple[_importlib_modulespec.ModuleType]
-reveal_type(np.testing.clear_and_catch_warnings.modules)  # E: set[_importlib_modulespec.ModuleType]
+reveal_type(np.testing.clear_and_catch_warnings.class_modules)  # E: tuple[types.ModuleType]
+reveal_type(np.testing.clear_and_catch_warnings.modules)  # E: set[types.ModuleType]
 
 with np.testing.clear_and_catch_warnings(True) as c1:
     reveal_type(c1)  # E: builtins.list[warnings.WarningMessage]
