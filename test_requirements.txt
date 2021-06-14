@@ -11,5 +11,5 @@ cffi
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 # - There is no point in installing typing_extensions without mypy
-mypy==0.812; platform_python_implementation != "PyPy"
+mypy==0.902; platform_python_implementation != "PyPy"
 typing_extensions==3.10.0.0; platform_python_implementation != "PyPy"
