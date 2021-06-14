@@ -257,6 +257,7 @@ def ismodule(rout):
 def isfunction(rout):
     return 'block' in rout and 'function' == rout['block']
 
+
 def isfunction_wrap(rout):
     if isintent_c(rout):
         return 0
@@ -282,6 +283,10 @@ def hasassumedshape(rout):
                 rout['hasassumedshape'] = True
                 return True
     return False
+
+
+def requiresf90wrapper(rout):
+    return ismoduleroutine(rout) or hasassumedshape(rout)
 
 
 def isroutine(rout):

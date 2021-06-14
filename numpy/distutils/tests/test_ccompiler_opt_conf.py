@@ -19,7 +19,7 @@ arch_compilers = dict(
 )
 
 class FakeCCompilerOpt(CCompilerOpt):
-    fake_info = ""
+    fake_info = ("arch", "compiler", "extra_args")
     def __init__(self, *args, **kwargs):
         CCompilerOpt.__init__(self, None, **kwargs)
     def dist_compile(self, sources, flags, **kwargs):
@@ -169,7 +169,7 @@ class TestConfFeatures(unittest.TestCase):
     def test_features(self):
         for arch, compilers in arch_compilers.items():
             for cc in compilers:
-                FakeCCompilerOpt.fake_info = arch + cc
+                FakeCCompilerOpt.fake_info = (arch, cc, "")
                 _TestConfFeatures()
 
 if is_standalone:

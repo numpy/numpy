@@ -120,9 +120,7 @@ numpy/__config__.py
 numpy/core/include/numpy/__multiarray_api.h
 numpy/core/include/numpy/__ufunc_api.h
 numpy/core/include/numpy/_numpyconfig.h
-numpy/version.py
 site.cfg
-setup.cfg
 .tox
 numpy/core/include/numpy/__multiarray_api.c
 numpy/core/include/numpy/__ufunc_api.c
@@ -172,6 +170,7 @@ numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c
 numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
+numpy/core/src/umath/loops_utils.h
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
 doc/source/**/generated/
@@ -188,6 +187,7 @@ numpy/random/legacy/*.c
 numpy/random/_mtrand/randint_helpers.pxi
 numpy/random/bounded_integers.pyx
 numpy/random/bounded_integers.pxd
+numpy/random/lib/npyrandom.lib
 tools/swig/test/Array_wrap.cxx
 tools/swig/test/Farray_wrap.cxx
 tools/swig/test/Farray.py
@@ -205,9 +205,6 @@ tools/swig/test/Array.py
 
 # SIMD generated files #
 ###################################
-# the main config header, contains all the definitions and
-# headers of instruction-sets
-numpy/core/src/common/_cpu_dispatch.h
 # config headers of dispatchable sources
 *.dispatch.h
 # wrapped sources of dispatched targets, e.g. *.dispatch.avx2.c
@@ -218,3 +215,7 @@ numpy/core/src/_simd/_simd_data.inc
 numpy/core/src/_simd/_simd_inc.h
 # umath module
 numpy/core/src/umath/loops_unary_fp.dispatch.c
+numpy/core/src/umath/loops_arithm_fp.dispatch.c
+numpy/core/src/umath/loops_arithmetic.dispatch.c
+numpy/core/src/umath/loops_trigonometric.dispatch.c
+numpy/core/src/umath/loops_exponent_log.dispatch.c

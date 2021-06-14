@@ -26,10 +26,8 @@ from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       _commandline_dep_string
 
 # globals for parallel build management
-try:
-    import threading
-except ImportError:
-    import dummy_threading as threading
+import threading
+
 _job_semaphore = None
 _global_lock = threading.Lock()
 _processing_files = set()
@@ -386,6 +384,12 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     """
     log.info('customize %s using %s' % (self.__class__.__name__,
                                         cmd.__class__.__name__))
+
+    if hasattr(self, 'compiler') and 'clang' in self.compiler[0]:
+        # clang defaults to a non-strict floating error point model.
+        # Since NumPy and most Python libs give warnings for these, override:
+        self.compiler.append('-ffp-exception-behavior=strict')
+
     def allow(attr):
         return getattr(cmd, attr, None) is not None and attr not in ignore
 

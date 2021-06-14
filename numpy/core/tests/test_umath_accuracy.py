@@ -28,10 +28,10 @@ def convert(s, datatype="np.float32"):
     return fp.contents.value         # dereference the pointer, get the float
 
 str_to_float = np.vectorize(convert)
-files = ['umath-validation-set-exp',
-         'umath-validation-set-log',
-         'umath-validation-set-sin',
-         'umath-validation-set-cos']
+files = ['umath-validation-set-exp.csv',
+         'umath-validation-set-log.csv',
+         'umath-validation-set-sin.csv',
+         'umath-validation-set-cos.csv']
 
 class TestAccuracy:
     @platform_skip
@@ -47,7 +47,8 @@ class TestAccuracy:
                                          names=('type','input','output','ulperr'),
                                          delimiter=',',
                                          skip_header=1)
-                    npfunc = getattr(np, filename.split('-')[3])
+                    npname = path.splitext(filename)[0].split('-')[3]
+                    npfunc = getattr(np, npname)
                     for datatype in np.unique(data['type']):
                         data_subset = data[data['type'] == datatype]
                         inval  = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))

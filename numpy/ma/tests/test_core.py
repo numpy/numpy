@@ -238,6 +238,26 @@ class TestMaskedArray:
         assert_equal(data, [[0, 1, 2, 3, 4], [4, 3, 2, 1, 0]])
         assert_(data.mask is nomask)
 
+    def test_creation_with_list_of_maskedarrays_no_bool_cast(self):
+        # Tests the regression in gh-18551
+        masked_str = np.ma.masked_array(['a', 'b'], mask=[True, False])
+        normal_int = np.arange(2)
+        res = np.ma.asarray([masked_str, normal_int], dtype="U21")
+        assert_array_equal(res.mask, [[True, False], [False, False]])
+
+        # The above only failed due a long chain of oddity, try also with
+        # an object array that cannot be converted to bool always:
+        class NotBool():
+            def __bool__(self):
+                raise ValueError("not a bool!")
+        masked_obj = np.ma.masked_array([NotBool(), 'b'], mask=[True, False])
+        # Check that the NotBool actually fails like we would expect:
+        with pytest.raises(ValueError, match="not a bool!"):
+            np.asarray([masked_obj], dtype=bool)
+
+        res = np.ma.asarray([masked_obj, normal_int])
+        assert_array_equal(res.mask, [[True, False], [False, False]])
+
     def test_creation_from_ndarray_with_padding(self):
         x = np.array([('A', 0)], dtype={'names':['f0','f1'],
                                         'formats':['S4','i8'],
@@ -3037,6 +3057,13 @@ class TestMaskedArrayMethods:
         a = masked_array([np.iinfo(np.int_).min], dtype=np.int_)
         assert_(allclose(a, a))
 
+    def test_allclose_timedelta(self):
+        # Allclose currently works for timedelta64 as long as `atol` is
+        # an integer or also a timedelta64
+        a = np.array([[1, 2, 3, 4]], dtype="m8[ns]")
+        assert allclose(a, a, atol=0)
+        assert allclose(a, a, atol=np.timedelta64(1, "ns"))
+
     def test_allany(self):
         # Checks the any/all methods/functions.
         x = np.array([[0.13, 0.26, 0.90],
@@ -5148,6 +5175,16 @@ def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
 
+def test_masked_array_no_copy():
+    # check nomask array is updated in place
+    a = np.ma.array([1, 2, 3, 4])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [False, False, True, False])
+    # check masked array is updated in place
+    a = np.ma.array([1, 2, 3, 4], mask=[1, 0, 0, 0])
+    _ = np.ma.masked_where(a == 3, a, copy=False)
+    assert_array_equal(a.mask, [True, False, True, False])
+
 def test_append_masked_array():
     a = np.ma.masked_equal([1,2,3], value=2)
     b = np.ma.masked_equal([4,3,2], value=2)
@@ -5185,7 +5222,6 @@ def test_append_masked_array_along_axis():
     expected = expected.reshape((3,3))
     assert_array_equal(result.data, expected.data)
     assert_array_equal(result.mask, expected.mask)
-
 
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined

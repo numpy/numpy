@@ -7,12 +7,12 @@ np.require(a, requirements=1)  # E: No overload variant
 np.require(a, requirements="TEST")  # E: incompatible type
 
 np.zeros("test")  # E: incompatible type
-np.zeros()  # E: Too few arguments
+np.zeros()  # E: require at least one argument
 
 np.ones("test")  # E: incompatible type
-np.ones()  # E: Too few arguments
+np.ones()  # E: Missing positional argument
 
-np.array(0, float, True)  # E: Too many positional
+np.array(0, float, True)  # E: No overload variant
 
 np.linspace(None, 'bob')  # E: No overload variant
 np.linspace(0, 2, num=10.0)  # E: No overload variant

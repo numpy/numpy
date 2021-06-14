@@ -150,6 +150,11 @@ The masked type resolvers specifically will *not* remain supported, but
 has no known users (including NumPy itself, which only uses the default
 version).
 
+Further, no compatibility attempt will be made for *calling* as opposed
+to providing either the normal or the masked type resolver.  As NumPy
+will use it only as a fallback.  There are no known users of this
+(undocumented) possibility.
+
 While the above changes potentially break some workflows,
 we believe that the long-term improvements vastly outweigh this.
 Further, packages such as astropy and Numba are capable of adapting so that
@@ -235,20 +240,30 @@ to define string equality, will be added to a ufunc.
     class StringEquality(BoundArrayMethod):
         nin = 1
         nout = 1
+        # DTypes are stored on the BoundArrayMethod and not on the internal
+        # ArrayMethod, to reference cyles.
         DTypes = (String, String, Bool)
 
-        def resolve_descriptors(context, given_descrs):
+        def resolve_descriptors(self: ArrayMethod, DTypes, given_descrs):
             """The strided loop supports all input string dtype instances
             and always returns a boolean. (String is always native byte order.)
 
             Defining this function is not necessary, since NumPy can provide
             it by default.
+
+            The `self` argument here refers to the unbound array method, so
+            that DTypes are passed in explicitly.
             """
-            assert isinstance(given_descrs[0], context.DTypes[0])
-            assert isinstance(given_descrs[1], context.DTypes[1])
+            assert isinstance(given_descrs[0], DTypes[0])
+            assert isinstance(given_descrs[1], DTypes[1])
+            assert given_descrs[2] is None or isinstance(given_descrs[2], DTypes[2])
             
-            # The operation is always "safe" casting (most ufuncs are)
-            return (given_descrs[0], given_descrs[1], context.DTypes[2]()), "safe"
+            out_descr = given_descrs[2]  # preserve input (e.g. metadata)
+            if given_descrs[2] is None:
+                out_descr = DTypes[2]()
+
+            # The operation is always "no" casting (most ufuncs are)
+            return (given_descrs[0], given_descrs[1], out_descr), "no"
 
         def strided_loop(context, dimensions, data, strides, innerloop_data):
             """The 1-D strided loop, similar to those used in current ufuncs"""
@@ -322,12 +337,12 @@ steps involved in a call to a universal function in NumPy.
 
 A UFunc call is split into the following steps:
 
-1. *Handle ``__array_ufunc__`` protocol:*
+1. Handle ``__array_ufunc__`` protocol:
 
    * For array-likes such as a Dask arrays, NumPy can defer the operation.
      This step is performed first, and unaffected by this NEP (compare :ref:`NEP18`).
 
-2. *Promotion and dispatching*
+2. Promotion and dispatching
 
    * Given the DTypes of all inputs, find the correct implementation.
      E.g. an implementation for ``float64``, ``int64`` or a user-defined DType.
@@ -336,7 +351,7 @@ A UFunc call is split into the following steps:
      For example, adding a ``float32`` and a ``float64`` is implemented by
      first casting the ``float32`` to ``float64``.
 
-3. *Parametric ``dtype`` resolution:*
+3. Parametric ``dtype`` resolution:
 
    * In general, whenever an output DType is parametric the parameters have
      to be found (resolved).
@@ -347,15 +362,16 @@ A UFunc call is split into the following steps:
      which fills in the default dtype instances (ensuring for example native
      byte order).
 
-4. *Preparing the iteration:*
+4. Preparing the iteration:
 
    * This step is largely handled by ``NpyIter`` internally (the iterator).
    * Allocate all outputs and temporary buffers necessary to perform casts.
+     This *requires* the dtypes as resolved in step 3.
    * Find the best iteration order, which includes information to efficiently
      implement broadcasting. For example, adding a single value to an array
      repeats the same value.
 
-5. *Setup and fetch the C-level function:*
+5. Setup and fetch the C-level function:
 
    * If necessary, allocate temporary working space.
    * Find the C-implemented, light weight, inner-loop function.
@@ -368,33 +384,35 @@ A UFunc call is split into the following steps:
      the GIL may be released (to allow threading).
    * Clear floating point exception flags.
 
-6. *Perform the actual calculation:*
+6. Perform the actual calculation:
 
    * Run the DType specific inner-loop function.
    * The inner-loop may require access to additional data, such as dtypes or
      additional data set in the previous step.
    * The inner-loop function may be called an undefined number of times.
 
-7. *Finalize:*
+7. Finalize:
 
-   * Free any temporary working space allocated in 5.
+   * Free any temporary working space allocated in step 5.
    * Check for floating point exception flags.
    * Return the result.
 
 The ``ArrayMethod`` provides a concept to group steps 3 to 6 and partially 7.
-However, implementers of a new ufunc or ``ArrayMethod`` do not need to
-customize the behaviour in steps 4 or 6, aside from the inner-loop function.
-For the ``ArrayMethod`` implementer, the central steps to have control over
-are step 3 and step 5 to provide the custom inner-loop function.
-Further customization is a potential future extension.
+However, implementers of a new ufunc or ``ArrayMethod`` usually do not need to
+customize the behaviour in steps 4 or 6 which NumPy can and does provide.
+For the ``ArrayMethod`` implementer, the central steps to customize
+are step 3 and step 5.  These provide the custom inner-loop function and
+potentially inner-loop specific setup.
+Further customization is possible and anticipated as future extensions.
 
-Step 2. is promotion and dispatching which will also be restructured
-with new API which allows influencing the process where necessary.
+Step 2. is promotion and dispatching and will be restructured
+with new API to allow customization of the process where necessary.
 
 Step 1 is listed for completeness and is unaffected by this NEP.
 
 The following sketch provides an overview of step 2 to 6 with an emphasize
-of how dtypes are handled:
+of how dtypes are handled and which parts are customizable ("Registered")
+and which are handled by NumPy:
 
 .. figure:: _static/nep43-sketch.svg
     :figclass: align-center
@@ -410,21 +428,19 @@ We use the ``class`` syntax to describe the information required to create
 a new ``ArrayMethod`` object:
 
 .. code-block:: python
-    :dedent: 0
 
     class ArrayMethod:
         name: str  # Name, mainly useful for debugging
 
         # Casting safety information (almost always "safe", necessary to
         # unify casting and universal functions)
-        casting: Casting = "safe"
+        casting: Casting = "no"
 
         # More general flags:
         flags: int
 
-        @staticmethod
-        def resolve_descriptors(
-                Context: context, Tuple[DType]: given_descrs)-> Casting, Tuple[DType]:
+        def resolve_descriptors(self,
+                Tuple[DTypeMeta], Tuple[DType|None]: given_descrs) -> Casting, Tuple[DType]:
             """Returns the safety of the operation (casting safety) and the
             """
             # A default implementation can be provided for non-parametric
@@ -456,7 +472,6 @@ a new ``ArrayMethod`` object:
 With ``Context`` providing mostly static information about the function call:
 
 .. code-block:: python
-    :dedent: 0
 
     class Context:
         # The ArrayMethod object itself:
@@ -468,8 +483,6 @@ With ``Context`` providing mostly static information about the function call:
         int : nin = 1
         # The number of output arguments:
         int : nout = 1
-        # The DTypes this Method operates on/is defined for:
-        Tuple[DTypeMeta] : dtypes
         # The actual dtypes instances the inner-loop operates on:
         Tuple[DType] : descriptors
 
@@ -616,7 +629,8 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
 
       NPY_CASTING
       resolve_descriptors(
-              PyArrayMethod_Context *context,
+              PyArrayMethodObject *self,
+              PyArray_DTypeMeta *dtypes,
               PyArray_Descr *given_dtypes[nin+nout],
               PyArray_Descr *loop_dtypes[nin+nout]);
 
@@ -647,25 +661,25 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
   for example for implementing warnings (see Error and Warning Handling below).
   To simplify this NumPy will pass a single zero initialized ``npy_intp *``
   when ``user_data`` is not set. 
-  *NOTE that it would be possible to pass this as part of ``Context``.*
+  *Note that it would be possible to pass this as part of Context.*
 
 * The optional ``get_loop`` function will not be public initially, to avoid
   finalizing the API which requires design choices also with casting:
 
-  .. code-block::
+  .. code-block:: C
 
         innerloop *
         get_loop(
             PyArrayMethod_Context *context,
-            /* (move_references is currently used internally for casting) */
             int aligned, int move_references,
             npy_intp *strides,
             PyArray_StridedUnaryOp **out_loop,
             NpyAuxData **innerloop_data,
             NPY_ARRAYMETHOD_FLAGS *flags);
   
-  The ``NPY_ARRAYMETHOD_FLAGS`` can indicate whether the Python API is required
-  and floating point errors must be checked.
+  ``NPY_ARRAYMETHOD_FLAGS`` can indicate whether the Python API is required
+  and floating point errors must be checked. ``move_references`` is used
+  internally for NumPy casting at this time.
 
 * The inner-loop function::
 
@@ -737,8 +751,15 @@ This step is required to allocate output arrays and has to happen before
 casting can be prepared.
 
 While the returned casting-safety (``NPY_CASTING``) will almost always be
-"safe" for universal functions, including it has two big advantages:
+"no" for universal functions, including it has two big advantages:
 
+* ``-1`` indicates that an error occurred. If a Python error is set, it will
+  be raised.  If no Python error is set this will be considered an "impossible"
+  cast and a custom error will be set. (This distinction is important for the
+  ``np.can_cast()`` function, which should raise the first one and return
+  ``False`` in the second case, it is not noteworthy for typical ufuncs).
+  *This point is under consideration, we may use -1 to indicate
+  a general error, and use a different return value for an impossible cast.*
 * Returning the casting safety is central to NEP 42 for casting and
   allows the unmodified use of ``ArrayMethod`` there.
 * There may be a future desire to implement fast but unsafe implementations.
@@ -746,7 +767,7 @@ While the returned casting-safety (``NPY_CASTING``) will almost always be
   perspective. Currently, this would use ``int64 + int64 -> int64`` and then
   cast to ``int32``. An implementation that skips the cast would
   have to signal that it effectively includes the "same-kind" cast and is
-  thus not considered "safe".
+  thus not considered "no".
 
 
 ``get_loop`` method
@@ -774,7 +795,7 @@ Extending the inner-loop signature
 Extending the inner-loop signature is another central and necessary part of
 the NEP.
 
-**Passing in the ``Context``:**
+**Passing in the Context:**
 
 Passing in the ``Context`` potentially allows for the future extension of
 the signature by adding new fields to the context struct.
@@ -802,8 +823,8 @@ exists in NumPy for this purpose, it seems a natural choice.
 To simplify some use-cases (see "Error Handling" below), we will pass a
 ``npy_intp *innerloop_data = 0`` instead when ``innerloop_data`` is not provided.
 
-*Note: Since ``get_loop`` is expected to be private initially we can gain
-experience with ``innerloop_data`` before exposing it as public API.*
+*Note:* Since ``get_loop`` is expected to be private initially we can gain
+experience with ``innerloop_data`` before exposing it as public API.
 
 **Return value:**
 
@@ -934,7 +955,7 @@ This wrapped ``ArrayMethod`` will have two additional methods:
   have changed the byte-order), and further resolve the physical unit making
   the final signature::
   
-      ``Unit[Float64]("m") + Unit[Float64]("m") -> Unit[Float64]("m")``
+      Unit[Float64]("m") + Unit[Float64]("m") -> Unit[Float64]("m")
 
   the UFunc machinery will take care of casting the "km" input to "m".
 
@@ -1019,8 +1040,8 @@ In the future we expect that ``ArrayMethod``\ s can also be defined for
 **Promotion:**
 
 If a matching ``ArrayMethod`` exists, dispatching is straight forward.
-However, when it does not, require additional definitions to implement
-promotion:
+However, when it does not, additional definitions are required to implement
+this "promotion":
 
 * By default any UFunc has a promotion which uses the common DType of all
   inputs and dispatches a second time.  This is well-defined for most
@@ -1065,7 +1086,7 @@ In this case, just as a ``Timedelta64 * int64`` and ``int64 * timedelta64``
 ``ArrayMethod`` is necessary, a second promoter will have to be registered to
 handle the case where the integer is passed first.
 
-**Dispatching rules for ``ArrayMethod`` and Promoters:**
+**Dispatching rules for ArrayMethod and Promoters:**
 
 Promoter and ``ArrayMethod`` are discovered by finding the best match as
 defined by the DType class hierarchy.

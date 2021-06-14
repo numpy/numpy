@@ -193,7 +193,32 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
-deprecate_with_doc = lambda msg: _Deprecate(message=msg)
+
+def deprecate_with_doc(msg):
+    """
+    Deprecates a function and includes the deprecation in its docstring.
+
+    This function is used as a decorator. It returns an object that can be
+    used to issue a DeprecationWarning, by passing the to-be decorated
+    function as argument, this adds warning to the to-be decorated function's
+    docstring and returns the new function object.
+
+    See Also
+    --------
+    deprecate : Decorate a function such that it issues a `DeprecationWarning`
+
+    Parameters
+    ----------
+    msg : str
+        Additional explanation of the deprecation. Displayed in the
+        docstring after the warning.
+
+    Returns
+    -------
+    obj : object
+
+    """
+    return _Deprecate(message=msg)
 
 
 #--------------------------------------------
@@ -990,10 +1015,11 @@ def _median_nancheck(data, result, axis, out):
         Input data to median function
     result : Array or MaskedArray
         Result of median function
-    axis : {int, sequence of int, None}, optional
-        Axis or axes along which the median was computed.
+    axis : int
+        Axis along which the median was computed.
     out : ndarray, optional
         Output array in which to place the result.
+
     Returns
     -------
     median : scalar or ndarray
@@ -1001,8 +1027,7 @@ def _median_nancheck(data, result, axis, out):
     """
     if data.size == 0:
         return result
-    data = np.moveaxis(data, axis, -1)
-    n = np.isnan(data[..., -1])
+    n = np.isnan(data.take(-1, axis=axis))
     # masked NaN values are ok
     if np.ma.isMaskedArray(n):
         n = n.filled(False)
@@ -1017,4 +1042,30 @@ def _median_nancheck(data, result, axis, out):
         result[n] = np.nan
     return result
 
+def _opt_info():
+    """
+    Returns a string contains the supported CPU features by the current build.
+
+    The string format can be explained as follows:
+        - dispatched features that are supported by the running machine
+          end with `*`.
+        - dispatched features that are "not" supported by the running machine
+          end with `?`.
+        - remained features are representing the baseline.
+    """
+    from numpy.core._multiarray_umath import (
+        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+    )
+
+    if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
+        return ''
+
+    enabled_features = ' '.join(__cpu_baseline__)
+    for feature in __cpu_dispatch__:
+        if __cpu_features__[feature]:
+            enabled_features += f" {feature}*"
+        else:
+            enabled_features += f" {feature}?"
+
+    return enabled_features
 #-----------------------------------------------------------------------------

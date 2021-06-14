@@ -1134,6 +1134,9 @@ static void
 npyiter_dealloc(NewNpyArrayIterObject *self)
 {
     if (self->iter) {
+        /* Store error, so that WriteUnraisable cannot clear an existing one */
+        PyObject *exc, *val, *tb;
+        PyErr_Fetch(&exc, &val, &tb);
         if (npyiter_has_writeback(self->iter)) {
             if (PyErr_WarnEx(PyExc_RuntimeWarning,
                     "Temporary data has not been written back to one of the "
@@ -1152,10 +1155,13 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
                 }
             }
         }
-        NpyIter_Deallocate(self->iter);
+        if (!NpyIter_Deallocate(self->iter)) {
+            PyErr_WriteUnraisable(Py_None);
+        }
         self->iter = NULL;
         Py_XDECREF(self->nested_child);
         self->nested_child = NULL;
+        PyErr_Restore(exc, val, tb);
     }
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
@@ -1507,8 +1513,7 @@ npyiter_next(NewNpyArrayIterObject *self)
 
 static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 {
-    PyObject *ret;
-    npy_intp idim, ndim, shape[NPY_MAXDIMS];
+    npy_intp ndim, shape[NPY_MAXDIMS];
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1518,14 +1523,7 @@ static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 
     if (NpyIter_GetShape(self->iter, shape) == NPY_SUCCEED) {
         ndim = NpyIter_GetNDim(self->iter);
-        ret = PyTuple_New(ndim);
-        if (ret != NULL) {
-            for (idim = 0; idim < ndim; ++idim) {
-                PyTuple_SET_ITEM(ret, idim,
-                        PyLong_FromLong(shape[idim]));
-            }
-            return ret;
-        }
+        return PyArray_IntTupleFromIntp(ndim, shape);
     }
 
     return NULL;
@@ -1533,8 +1531,7 @@ static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 
 static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
 {
-    PyObject *ret;
-    npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
+    npy_intp ndim, multi_index[NPY_MAXDIMS];
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1545,15 +1542,7 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
     if (self->get_multi_index != NULL) {
         ndim = NpyIter_GetNDim(self->iter);
         self->get_multi_index(self->iter, multi_index);
-        ret = PyTuple_New(ndim);
-        if (ret == NULL) {
-            return NULL;
-        }
-        for (idim = 0; idim < ndim; ++idim) {
-            PyTuple_SET_ITEM(ret, idim,
-                    PyLong_FromLong(multi_index[idim]));
-        }
-        return ret;
+        return PyArray_IntTupleFromIntp(ndim, multi_index);
     }
     else {
         if (!NpyIter_HasMultiIndex(self->iter)) {
@@ -2320,7 +2309,7 @@ npyiter_close(NewNpyArrayIterObject *self)
     self->iter = NULL;
     Py_XDECREF(self->nested_child);
     self->nested_child = NULL;
-    if (ret < 0) {
+    if (ret != NPY_SUCCEED) {
         return NULL;
     }
     Py_RETURN_NONE;
@@ -2363,7 +2352,7 @@ static PyMethodDef npyiter_methods[] = {
     {"__exit__",  (PyCFunction)npyiter_exit,
          METH_VARARGS, NULL},
     {"close",  (PyCFunction)npyiter_close,
-         METH_VARARGS, NULL},
+         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 

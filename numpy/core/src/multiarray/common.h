@@ -209,7 +209,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
-static NPY_INLINE int
+static NPY_INLINE npy_uintp
 npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
@@ -267,7 +267,7 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (NPY_CPU_HAVE_UNALIGNED_ACCESS && needle == 0 && stride == 1) {
+        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {

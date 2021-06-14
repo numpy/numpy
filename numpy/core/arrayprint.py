@@ -41,6 +41,7 @@ from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
+import operator
 import warnings
 import contextlib
 
@@ -78,6 +79,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if legacy not in [None, False, '1.13']:
         warnings.warn("legacy printing option can currently only be '1.13' or "
                       "`False`", stacklevel=3)
+
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
         if not isinstance(threshold, numbers.Number):
@@ -85,6 +87,14 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         if np.isnan(threshold):
             raise ValueError("threshold must be non-NAN, try "
                              "sys.maxsize for untruncated representation")
+
+    if precision is not None:
+        # forbid the bad precision arg as suggested by issue #18254
+        try:
+            options['precision'] = operator.index(precision)
+        except TypeError as e:
+            raise TypeError('precision must be an integer') from e
+
     return options
 
 
@@ -146,7 +156,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         - 'longcomplexfloat' : composed of two 128-bit floats
         - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
         - 'object' : `np.object_` arrays
-        - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are:
 
@@ -154,7 +163,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         - 'int_kind' : sets 'int'
         - 'float_kind' : sets 'float' and 'longfloat'
         - 'complex_kind' : sets 'complexfloat' and 'longcomplexfloat'
-        - 'str_kind' : sets 'str' and 'numpystr'
+        - 'str_kind' : sets 'numpystr'
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
         floating-point types. Can take the following values
@@ -375,8 +384,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
-        'numpystr': lambda: repr_format,
-        'str': lambda: str}
+        'numpystr': lambda: repr_format}
 
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
@@ -398,8 +406,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
             for key in ['complexfloat', 'longcomplexfloat']:
                 formatdict[key] = indirect(formatter['complex_kind'])
         if 'str_kind' in fkeys:
-            for key in ['numpystr', 'str']:
-                formatdict[key] = indirect(formatter['str_kind'])
+            formatdict['numpystr'] = indirect(formatter['str_kind'])
         for key in formatdict.keys():
             if key in fkeys:
                 formatdict[key] = indirect(formatter[key])
@@ -524,7 +531,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     Parameters
     ----------
-    a : array_like
+    a : ndarray
         Input array.
     max_line_width : int, optional
         Inserts newlines if text is longer than `max_line_width`.
@@ -541,7 +548,7 @@ def array2string(a, max_line_width=None, precision=None,
     separator : str, optional
         Inserted between elements.
     prefix : str, optional
-    suffix: str, optional
+    suffix : str, optional
         The length of the prefix and suffix strings are used to respectively
         align and wrap the output. An array is typically printed as::
 
@@ -572,7 +579,6 @@ def array2string(a, max_line_width=None, precision=None,
         - 'longcomplexfloat' : composed of two 128-bit floats
         - 'void' : type `numpy.void`
         - 'numpystr' : types `numpy.string_` and `numpy.unicode_`
-        - 'str' : all other strings
 
         Other keys that can be used to set a group of types at once are:
 
@@ -580,7 +586,7 @@ def array2string(a, max_line_width=None, precision=None,
         - 'int_kind' : sets 'int'
         - 'float_kind' : sets 'float' and 'longfloat'
         - 'complex_kind' : sets 'complexfloat' and 'longcomplexfloat'
-        - 'str_kind' : sets 'str' and 'numpystr'
+        - 'str_kind' : sets 'numpystr'
     threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr.
@@ -908,6 +914,7 @@ class FloatingFormat:
             self.trim = '.'
             self.exp_size = -1
             self.unique = True
+            self.min_digits = None
         elif self.exp_format:
             trim, unique = '.', True
             if self.floatmode == 'fixed' or self._legacy == '1.13':
@@ -921,6 +928,8 @@ class FloatingFormat:
 
             self.trim = 'k'
             self.precision = max(len(s) for s in frac_part)
+            self.min_digits = self.precision
+            self.unique = unique
 
             # for back-compat with np 1.13, use 2 spaces & sign and full prec
             if self._legacy == '1.13':
@@ -930,10 +939,7 @@ class FloatingFormat:
                 self.pad_left = max(len(s) for s in int_part)
             # pad_right is only needed for nan length calculation
             self.pad_right = self.exp_size + 2 + self.precision
-
-            self.unique = False
         else:
-            # first pass printing to determine sizes
             trim, unique = '.', True
             if self.floatmode == 'fixed':
                 trim, unique = 'k', False
@@ -949,14 +955,14 @@ class FloatingFormat:
                 self.pad_left = max(len(s) for s in int_part)
             self.pad_right = max(len(s) for s in frac_part)
             self.exp_size = -1
+            self.unique = unique
 
             if self.floatmode in ['fixed', 'maxprec_equal']:
-                self.precision = self.pad_right
-                self.unique = False
+                self.precision = self.min_digits = self.pad_right
                 self.trim = 'k'
             else:
-                self.unique = True
                 self.trim = '.'
+                self.min_digits = 0
 
         if self._legacy != '1.13':
             # account for sign = ' ' by adding one to pad_left
@@ -985,6 +991,7 @@ class FloatingFormat:
         if self.exp_format:
             return dragon4_scientific(x,
                                       precision=self.precision,
+                                      min_digits=self.min_digits,
                                       unique=self.unique,
                                       trim=self.trim,
                                       sign=self.sign == '+',
@@ -993,6 +1000,7 @@ class FloatingFormat:
         else:
             return dragon4_positional(x,
                                       precision=self.precision,
+                                      min_digits=self.min_digits,
                                       unique=self.unique,
                                       fractional=True,
                                       trim=self.trim,
@@ -1003,7 +1011,8 @@ class FloatingFormat:
 
 @set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
-                            sign=False, pad_left=None, exp_digits=None):
+                            sign=False, pad_left=None, exp_digits=None,
+                            min_digits=None):
     """
     Format a floating-point scalar as a decimal string in scientific notation.
 
@@ -1021,11 +1030,12 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         If `True`, use a digit-generation strategy which gives the shortest
         representation which uniquely identifies the floating-point number from
         other values of the same type, by judicious rounding. If `precision`
-        was omitted, print all necessary digits, otherwise digit generation is
-        cut off after `precision` digits and the remaining value is rounded.
+        is given fewer digits than necessary can be printed. If `min_digits`
+        is given more can be printed, in which cases the last digit is rounded
+        with unbiased rounding.
         If `False`, digits are generated as if printing an infinite-precision
         value and stopping after `precision` digits, rounding the remaining
-        value.
+        value with unbiased rounding
     trim : one of 'k', '.', '0', '-', optional
         Controls post-processing trimming of trailing digits, as follows:
 
@@ -1042,7 +1052,13 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
     exp_digits : non-negative integer, optional
         Pad the exponent with zeros until it contains at least this many digits.
         If omitted, the exponent will be at least 2 digits.
+    min_digits : non-negative integer or None, optional
+        Minimum number of digits to print. This only has an effect for
+        `unique=True`. In that case more digits than necessary to uniquely
+        identify the value may be printed and rounded unbiased.
 
+        -- versionadded:: 1.21.0
+        
     Returns
     -------
     rep : string
@@ -1065,15 +1081,18 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
     precision = _none_or_positive_arg(precision, 'precision')
     pad_left = _none_or_positive_arg(pad_left, 'pad_left')
     exp_digits = _none_or_positive_arg(exp_digits, 'exp_digits')
+    min_digits = _none_or_positive_arg(min_digits, 'min_digits')
+    if min_digits > 0 and precision > 0 and min_digits > precision:
+        raise ValueError("min_digits must be less than or equal to precision")
     return dragon4_scientific(x, precision=precision, unique=unique,
                               trim=trim, sign=sign, pad_left=pad_left,
-                              exp_digits=exp_digits)
+                              exp_digits=exp_digits, min_digits=min_digits)
 
 
 @set_module('numpy')
 def format_float_positional(x, precision=None, unique=True,
                             fractional=True, trim='k', sign=False,
-                            pad_left=None, pad_right=None):
+                            pad_left=None, pad_right=None, min_digits=None):
     """
     Format a floating-point scalar as a decimal string in positional notation.
 
@@ -1091,16 +1110,19 @@ def format_float_positional(x, precision=None, unique=True,
         If `True`, use a digit-generation strategy which gives the shortest
         representation which uniquely identifies the floating-point number from
         other values of the same type, by judicious rounding. If `precision`
-        was omitted, print out all necessary digits, otherwise digit generation
-        is cut off after `precision` digits and the remaining value is rounded.
+        is given fewer digits than necessary can be printed, or if `min_digits`
+        is given more can be printed, in which cases the last digit is rounded
+        with unbiased rounding.
         If `False`, digits are generated as if printing an infinite-precision
         value and stopping after `precision` digits, rounding the remaining
-        value.
+        value with unbiased rounding
     fractional : boolean, optional
-        If `True`, the cutoff of `precision` digits refers to the total number
-        of digits after the decimal point, including leading zeros.
-        If `False`, `precision` refers to the total number of significant
-        digits, before or after the decimal point, ignoring leading zeros.
+        If `True`, the cutoffs of `precision` and `min_digits` refer to the
+        total number of digits after the decimal point, including leading
+        zeros.
+        If `False`, `precision` and `min_digits` refer to the total number of
+        significant digits, before or after the decimal point, ignoring leading
+        zeros.
     trim : one of 'k', '.', '0', '-', optional
         Controls post-processing trimming of trailing digits, as follows:
 
@@ -1117,6 +1139,12 @@ def format_float_positional(x, precision=None, unique=True,
     pad_right : non-negative integer, optional
         Pad the right side of the string with whitespace until at least that
         many characters are to the right of the decimal point.
+    min_digits : non-negative integer or None, optional
+        Minimum number of digits to print. Only has an effect if `unique=True`
+        in which case additional digits past those necessary to uniquely
+        identify the value may be printed, rounding the last additional digit.
+        
+        -- versionadded:: 1.21.0
 
     Returns
     -------
@@ -1141,10 +1169,16 @@ def format_float_positional(x, precision=None, unique=True,
     precision = _none_or_positive_arg(precision, 'precision')
     pad_left = _none_or_positive_arg(pad_left, 'pad_left')
     pad_right = _none_or_positive_arg(pad_right, 'pad_right')
+    min_digits = _none_or_positive_arg(min_digits, 'min_digits')
+    if not fractional and precision == 0:
+        raise ValueError("precision must be greater than 0 if "
+                         "fractional=False")
+    if min_digits > 0 and precision > 0 and min_digits > precision:
+        raise ValueError("min_digits must be less than or equal to precision")
     return dragon4_positional(x, precision=precision, unique=unique,
                               fractional=fractional, trim=trim,
                               sign=sign, pad_left=pad_left,
-                              pad_right=pad_right)
+                              pad_right=pad_right, min_digits=min_digits)
 
 
 class IntegerFormat:
@@ -1247,12 +1281,12 @@ class DatetimeFormat(_TimelikeFormat):
         self.legacy = legacy
 
         # must be called after the above are configured
-        super(DatetimeFormat, self).__init__(x)
+        super().__init__(x)
 
     def __call__(self, x):
         if self.legacy == '1.13':
             return self._format_non_nat(x)
-        return super(DatetimeFormat, self).__call__(x)
+        return super().__call__(x)
 
     def _format_non_nat(self, x):
         return "'%s'" % datetime_as_string(x,

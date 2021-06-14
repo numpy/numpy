@@ -1,7 +1,15 @@
-from typing import Any
+from typing import List, Type
 
-load_library: Any
-ndpointer: Any
-c_intp: Any
-as_ctypes: Any
-as_array: Any
+# NOTE: Numpy's mypy plugin is used for importing the correct
+# platform-specific `ctypes._SimpleCData[int]` sub-type
+from ctypes import c_int64 as _c_intp
+
+__all__: List[str]
+
+c_intp = _c_intp
+
+def load_library(libname, loader_path): ...
+def ndpointer(dtype=..., ndim=..., shape=..., flags=...): ...
+def as_ctypes(obj): ...
+def as_array(obj, shape=...): ...
+def as_ctypes_type(dtype): ...

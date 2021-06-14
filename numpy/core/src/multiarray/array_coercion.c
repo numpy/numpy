@@ -11,6 +11,7 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
+#include "common_dtype.h"
 #include "dtypemeta.h"
 
 #include "array_coercion.h"
@@ -205,7 +206,7 @@ _PyArray_MapPyTypeToDType(
  * @return DType, None if it a known non-scalar, or NULL if an unknown object.
  */
 static NPY_INLINE PyArray_DTypeMeta *
-discover_dtype_from_pytype(PyTypeObject *pytype)
+npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *DType;
 
@@ -263,7 +264,7 @@ discover_dtype_from_pyobject(
         }
     }
 
-    PyArray_DTypeMeta *DType = discover_dtype_from_pytype(Py_TYPE(obj));
+    PyArray_DTypeMeta *DType = npy_discover_dtype_from_pytype(Py_TYPE(obj));
     if (DType != NULL) {
         return DType;
     }
@@ -452,18 +453,21 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 
     int res = 0;
     int needs_api = 0;
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *transferdata;
+    NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(
-            0, 0, 0, tmp_descr, descr, 0, &stransfer, &transferdata,
+            0, 0, 0, tmp_descr, descr, 0, &cast_info,
             &needs_api) == NPY_FAIL) {
         res = -1;
         goto finish;
     }
-    if (stransfer(item, 0, data, 0, 1, tmp_descr->elsize, transferdata) < 0) {
+    char *args[2] = {data, item};
+    const npy_intp strides[2] = {0, 0};
+    const npy_intp length = 1;
+    if (cast_info.func(&cast_info.context,
+            args, &length, strides, cast_info.auxdata) < 0) {
         res = -1;
     }
-    NPY_AUXDATA_FREE(transferdata);
+    NPY_cast_info_xfree(&cast_info);
 
   finish:
     if (PyDataType_REFCHK(tmp_descr)) {
@@ -570,7 +574,7 @@ npy_new_coercion_cache(
  * @param current
  * @return next coercion cache object (or NULL)
  */
-NPY_NO_EXPORT NPY_INLINE coercion_cache_obj *
+NPY_NO_EXPORT coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current)
 {
     coercion_cache_obj *next = current->next;
@@ -585,7 +589,7 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
     return next;
 }
 
-NPY_NO_EXPORT NPY_INLINE void
+NPY_NO_EXPORT void
 npy_free_coercion_cache(coercion_cache_obj *next) {
     /* We only need to check from the last used cache pos */
     while (next != NULL) {
@@ -619,8 +623,12 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
     }
     PyArray_Descr *new_descr = PyArray_PromoteTypes(descr, *out_descr);
     if (NPY_UNLIKELY(new_descr == NULL)) {
-        if (fixed_DType != NULL) {
-            /* If a DType is fixed, promotion must not fail. */
+        if (fixed_DType != NULL || PyErr_ExceptionMatches(PyExc_FutureWarning)) {
+            /*
+             * If a DType is fixed, promotion must not fail. Do not catch
+             * FutureWarning (raised for string+numeric promotions). We could
+             * only catch TypeError here or even always raise the error.
+             */
             return -1;
         }
         PyErr_Clear();
@@ -745,6 +753,7 @@ find_descriptor_from_array(
                     NULL, DType, &flags, item_DType) < 0) {
                 Py_DECREF(iter);
                 Py_DECREF(elem);
+                Py_XDECREF(*out_descr);
                 Py_XDECREF(item_DType);
                 return -1;
             }
@@ -922,6 +931,53 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             Py_DECREF(arr);
             arr = NULL;
         }
+        else if (curr_dims > 0 && curr_dims != max_dims) {
+            /*
+             * Deprecated 2020-12-09, NumPy 1.20
+             *
+             * See https://github.com/numpy/numpy/issues/17965
+             * Shapely had objects which are not sequences but did export
+             * the array-interface (and so are arguably array-like).
+             * Previously numpy would not use array-like information during
+             * shape discovery, so that it ended up acting as if this was
+             * an (unknown) scalar but with the specified dtype.
+             * Thus we ignore "scalars" here, as the value stored in the
+             * array should be acceptable.
+             */
+            if (PyArray_NDIM(arr) > 0 && NPY_UNLIKELY(!PySequence_Check(obj))) {
+                if (PyErr_WarnFormat(PyExc_FutureWarning, 1,
+                        "The input object of type '%s' is an array-like "
+                        "implementing one of the corresponding protocols "
+                        "(`__array__`, `__array_interface__` or "
+                        "`__array_struct__`); but not a sequence (or 0-D). "
+                        "In the future, this object will be coerced as if it "
+                        "was first converted using `np.array(obj)`. "
+                        "To retain the old behaviour, you have to either "
+                        "modify the type '%s', or assign to an empty array "
+                        "created with `np.empty(correct_shape, dtype=object)`.",
+                        Py_TYPE(obj)->tp_name, Py_TYPE(obj)->tp_name) < 0) {
+                    Py_DECREF(arr);
+                    return -1;
+                }
+                /*
+                 * Strangely enough, even though we threw away the result here,
+                 * we did use it during descriptor discovery, so promote it:
+                 */
+                if (update_shape(curr_dims, &max_dims, out_shape,
+                        0, NULL, NPY_FALSE, flags) < 0) {
+                    *flags |= FOUND_RAGGED_ARRAY;
+                    Py_DECREF(arr);
+                    return max_dims;
+                }
+                if (!(*flags & DESCRIPTOR_WAS_SET) && handle_promotion(
+                        out_descr, PyArray_DESCR(arr), fixed_DType, flags) < 0) {
+                    Py_DECREF(arr);
+                    return -1;
+                }
+                Py_DECREF(arr);
+                return max_dims;
+            }
+        }
     }
     if (arr != NULL) {
         /*
@@ -979,14 +1035,28 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      * and to handle it recursively. That is, unless we have hit the
      * dimension limit.
      */
-    npy_bool is_sequence = (PySequence_Check(obj) && PySequence_Size(obj) >= 0);
+    npy_bool is_sequence = PySequence_Check(obj);
+    if (is_sequence) {
+        is_sequence = PySequence_Size(obj) >= 0;
+        if (NPY_UNLIKELY(!is_sequence)) {
+            /* NOTE: This should likely just raise all errors */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                    PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                /*
+                 * Consider these unrecoverable errors, continuing execution
+                 * might crash the interpreter.
+                 */
+                return -1;
+            }
+            PyErr_Clear();
+        }
+    }
     if (NPY_UNLIKELY(*flags & DISCOVER_TUPLES_AS_ELEMENTS) &&
             PyTuple_Check(obj)) {
         is_sequence = NPY_FALSE;
     }
     if (curr_dims == max_dims || !is_sequence) {
         /* Clear any PySequence_Size error which would corrupts further calls */
-        PyErr_Clear();
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
                 flags, NULL);
@@ -1035,6 +1105,11 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         /* If the sequence is empty, this must be the last dimension */
         *flags |= MAX_DIMS_WAS_REACHED;
         return curr_dims + 1;
+    }
+
+    /* Allow keyboard interrupts. See gh issue 18117. */
+    if (PyErr_CheckSignals() < 0) {
+        return -1;
     }
 
     /* Recursive call for each sequence item */

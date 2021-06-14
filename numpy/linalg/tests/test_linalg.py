@@ -348,10 +348,10 @@ class LinalgTestCase:
 
             try:
                 case.check(self.do)
-            except Exception:
+            except Exception as e:
                 msg = f'In test case: {case!r}\n\n'
                 msg += traceback.format_exc()
-                raise AssertionError(msg)
+                raise AssertionError(msg) from e
 
 
 class LinalgSquareTestCase(LinalgTestCase):
@@ -684,7 +684,7 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
             axes = list(range(mat.ndim))
             axes[-1], axes[-2] = axes[-2], axes[-1]
             return np.conj(np.transpose(mat, axes=axes))
-        
+
         assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
         assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
         assert_equal(np.sort(s)[..., ::-1], s)
@@ -766,6 +766,9 @@ class TestCond(CondCases):
         for A, p in itertools.product(As, p_neg):
             linalg.cond(A, p)
 
+    @pytest.mark.xfail(True, run=False,
+                       reason="Platform/LAPACK-dependent failure, "
+                              "see gh-18914")
     def test_nan(self):
         # nans should be passed through, not converted to infs
         ps = [None, 1, -1, 2, -2, 'fro']
@@ -981,7 +984,7 @@ class TestLstsq(LstsqCases):
             linalg.lstsq(A, y, rcond=None)
 
 
-@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
+@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO'])
 class TestMatrixPower:
 
     rshft_0 = np.eye(4)
@@ -1010,7 +1013,7 @@ class TestMatrixPower:
             mz = matrix_power(M, 0)
             assert_equal(mz, identity_like_generalized(M))
             assert_equal(mz.dtype, M.dtype)
-        
+
         for mat in self.rshft_all:
             tz(mat.astype(dt))
             if dt != object:

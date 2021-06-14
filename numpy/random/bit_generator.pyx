@@ -43,10 +43,7 @@ except ImportError:
     from random import SystemRandom
     randbits = SystemRandom().getrandbits
 
-try:
-    from threading import Lock
-except ImportError:
-    from dummy_threading import Lock
+from threading import Lock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -587,8 +584,8 @@ cdef class BitGenerator():
         """
         return random_raw(&self._bitgen, self.lock, size, output)
 
-    def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
-        '''Used in tests'''
+    def _benchmark(self, Py_ssize_t cnt, method='uint64'):
+        """Used in tests"""
         return benchmark(&self._bitgen, self.lock, cnt, method)
 
     @property

@@ -8,7 +8,7 @@ import numpy as np
 import numpy.core.numeric as _nx
 from numpy.core import transpose
 from numpy.core.numeric import (
-    ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
+    ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
     ndarray, around, floor, ceil, take, dot, where, intp,
     integer, isscalar, absolute
     )
@@ -593,7 +593,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
             not isinstance(condlist[0], (list, ndarray)) and x.ndim != 0):
         condlist = [condlist]
 
-    condlist = array(condlist, dtype=bool)
+    condlist = asarray(condlist, dtype=bool)
     n = len(condlist)
 
     if n == n2 - 1:  # compute the "otherwise" condition.
@@ -606,7 +606,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
             .format(n, n, n+1)
         )
 
-    y = zeros(x.shape, x.dtype)
+    y = zeros_like(x)
     for cond, func in zip(condlist, funclist):
         if not isinstance(func, collections.abc.Callable):
             y[cond] = func
@@ -671,11 +671,22 @@ def select(condlist, choicelist, default=0):
         raise ValueError("select with an empty condition list is not possible")
 
     choicelist = [np.asarray(choice) for choice in choicelist]
-    choicelist.append(np.asarray(default))
+
+    try:
+        intermediate_dtype = np.result_type(*choicelist)
+    except TypeError as e:
+        msg = f'Choicelist elements do not have a common dtype: {e}'
+        raise TypeError(msg) from None
+    default_array = np.asarray(default)
+    choicelist.append(default_array)
 
     # need to get the result type before broadcasting for correct scalar
     # behaviour
-    dtype = np.result_type(*choicelist)
+    try:
+        dtype = np.result_type(intermediate_dtype, default_array)
+    except TypeError as e:
+        msg = f'Choicelists and default value do not have a common dtype: {e}'
+        raise TypeError(msg) from None
 
     # Convert conditions to arrays and broadcast conditions and choices
     # as the shape is needed for the result. Doing it separately optimizes
@@ -846,7 +857,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     Returns
     -------
     gradient : ndarray or list of ndarray
-        A set of ndarrays (or a single ndarray if there is only one dimension)
+        A list of ndarrays (or a single ndarray if there is only one dimension)
         corresponding to the derivatives of f with respect to each dimension.
         Each derivative has the same shape as f.
 
@@ -1485,26 +1496,40 @@ def angle(z, deg=False):
     return a
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None):
+def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
     return (p,)
 
 
 @array_function_dispatch(_unwrap_dispatcher)
-def unwrap(p, discont=pi, axis=-1):
-    """
-    Unwrap by changing deltas between values to 2*pi complement.
+def unwrap(p, discont=None, axis=-1, *, period=2*pi):
+    r"""
+    Unwrap by taking the complement of large deltas with respect to the period.
 
-    Unwrap radian phase `p` by changing absolute jumps greater than
-    `discont` to their 2*pi complement along the given axis.
+    This unwraps a signal `p` by changing elements which have an absolute
+    difference from their predecessor of more than ``max(discont, period/2)``
+    to their `period`-complementary values.
+
+    For the default case where `period` is :math:`2\pi` and is `discont` is
+    :math:`\pi`, this unwraps a radian phase `p` such that adjacent differences
+    are never greater than :math:`\pi` by adding :math:`2k\pi` for some
+    integer :math:`k`.
 
     Parameters
     ----------
     p : array_like
         Input array.
     discont : float, optional
-        Maximum discontinuity between values, default is ``pi``.
+        Maximum discontinuity between values, default is ``period/2``. 
+        Values below ``period/2`` are treated as if they were ``period/2``.
+        To have an effect different from the default, `discont` should be
+        larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
+    period: float, optional
+        Size of the range over which the input wraps. By default, it is
+        ``2 pi``.
+        
+        .. versionadded:: 1.21.0
 
     Returns
     -------
@@ -1517,9 +1542,9 @@ def unwrap(p, discont=pi, axis=-1):
 
     Notes
     -----
-    If the discontinuity in `p` is smaller than ``pi``, but larger than
-    `discont`, no unwrapping is done because taking the 2*pi complement
-    would only make the discontinuity larger.
+    If the discontinuity in `p` is smaller than ``period/2``, 
+    but larger than `discont`, no unwrapping is done because taking 
+    the complement would only make the discontinuity larger.
 
     Examples
     --------
@@ -1529,19 +1554,44 @@ def unwrap(p, discont=pi, axis=-1):
     array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531]) # may vary
     >>> np.unwrap(phase)
     array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
-
+    >>> np.unwrap([0, 1, 2, -1, 0], period=4)
+    array([0, 1, 2, 3, 4])
+    >>> np.unwrap([ 1, 2, 3, 4, 5, 6, 1, 2, 3], period=6)
+    array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.unwrap([2, 3, 4, 5, 2, 3, 4, 5], period=4)
+    array([2, 3, 4, 5, 6, 7, 8, 9])
+    >>> phase_deg = np.mod(np.linspace(0 ,720, 19), 360) - 180
+    >>> np.unwrap(phase_deg, period=360)
+    array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
+            180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
+            540.])
     """
     p = asarray(p)
     nd = p.ndim
     dd = diff(p, axis=axis)
+    if discont is None:
+        discont = period/2
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
-    ddmod = mod(dd + pi, 2*pi) - pi
-    _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
+    dtype = np.result_type(dd, period)
+    if _nx.issubdtype(dtype, _nx.integer):
+        interval_high, rem = divmod(period, 2) 
+        boundary_ambiguous = rem == 0
+    else:
+        interval_high = period / 2
+        boundary_ambiguous = True
+    interval_low = -interval_high
+    ddmod = mod(dd - interval_low, period) + interval_low
+    if boundary_ambiguous:
+        # for `mask = (abs(dd) == period/2)`, the above line made
+        # `ddmod[mask] == -period/2`. correct these such that
+        # `ddmod[mask] == sign(dd[mask])*period/2`.
+        _nx.copyto(ddmod, interval_high,
+                   where=(ddmod == interval_low) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype='d')
+    up = array(p, copy=True, dtype=dtype)
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
 
@@ -2191,15 +2241,14 @@ class vectorize:
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
             # Convert args to object arrays first
-            inputs = [array(a, copy=False, subok=True, dtype=object)
-                      for a in args]
+            inputs = [asanyarray(a, dtype=object) for a in args]
 
             outputs = ufunc(*inputs)
 
             if ufunc.nout == 1:
-                res = array(outputs, copy=False, subok=True, dtype=otypes[0])
+                res = asanyarray(outputs, dtype=otypes[0])
             else:
-                res = tuple([array(x, copy=False, subok=True, dtype=t)
+                res = tuple([asanyarray(x, dtype=t)
                              for x, t in zip(outputs, otypes)])
         return res
 
@@ -3947,11 +3996,10 @@ def _quantile_is_valid(q):
     # avoid expensive reductions, relevant for arrays with < O(1000) elements
     if q.ndim == 1 and q.size < 10:
         for i in range(q.size):
-            if q[i] < 0.0 or q[i] > 1.0:
+            if not (0.0 <= q[i] <= 1.0):
                 return False
     else:
-        # faster than any()
-        if np.count_nonzero(q < 0.0) or np.count_nonzero(q > 1.0):
+        if not (np.all(0 <= q) and np.all(q <= 1)):
             return False
     return True
 
@@ -4080,11 +4128,18 @@ def _trapz_dispatcher(y, x=None, dx=None, axis=None):
 
 @array_function_dispatch(_trapz_dispatcher)
 def trapz(y, x=None, dx=1.0, axis=-1):
-    """
+    r"""
     Integrate along the given axis using the composite trapezoidal rule.
 
-    Integrate `y` (`x`) along given axis.
-
+    If `x` is provided, the integration happens in sequence along its
+    elements - they are not sorted.
+    
+    Integrate `y` (`x`) along each 1d slice on the given axis, compute
+    :math:`\int y(x) dx`.
+    When `x` is specified, this integrates along the parametric curve,
+    computing :math:`\int_t y(t) dt =
+    \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
+    
     Parameters
     ----------
     y : array_like
@@ -4100,9 +4155,12 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Returns
     -------
-    trapz : float
-        Definite integral as approximated by trapezoidal rule.
-
+    trapz : float or ndarray
+        Definite integral of 'y' = n-dimensional array as approximated along
+        a single axis by the trapezoidal rule. If 'y' is a 1-dimensional array,
+        then the result is a float. If 'n' is greater than 1, then the result
+        is an 'n-1' dimensional array.
+        
     See Also
     --------
     sum, cumsum
@@ -4131,6 +4189,20 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     8.0
     >>> np.trapz([1,2,3], dx=2)
     8.0
+    
+    Using a decreasing `x` corresponds to integrating in reverse:
+    
+    >>> np.trapz([1,2,3], x=[8,6,4])  
+    -8.0
+    
+    More generally `x` is used to integrate along a parametric curve.
+    This finds the area of a circle, noting we repeat the sample which closes
+    the curve:
+    
+    >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
+    >>> np.trapz(np.cos(theta), x=np.sin(theta))
+    3.141571941375841
+
     >>> a = np.arange(6).reshape(2, 3)
     >>> a
     array([[0, 1, 2],
@@ -4139,7 +4211,6 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     array([1.5, 2.5, 3.5])
     >>> np.trapz(a, axis=1)
     array([2.,  8.])
-
     """
     y = asanyarray(y)
     if x is None:
@@ -4245,7 +4316,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     See Also
     --------
     mgrid : Construct a multi-dimensional "meshgrid" using indexing notation.
-    ogrid : Construct an open multi-dimensional "meshgrid" using indexing 
+    ogrid : Construct an open multi-dimensional "meshgrid" using indexing
             notation.
 
     Examples
@@ -4274,7 +4345,8 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     >>> y = np.arange(-5, 5, 0.1)
     >>> xx, yy = np.meshgrid(x, y, sparse=True)
     >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
-    >>> h = plt.contourf(x,y,z)
+    >>> h = plt.contourf(x, y, z)
+    >>> plt.axis('scaled')
     >>> plt.show()
 
     """

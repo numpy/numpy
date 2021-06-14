@@ -3,6 +3,7 @@ import operator
 import pytest
 import ctypes
 import gc
+import warnings
 
 import numpy as np
 from numpy.core._rational_tests import rational
@@ -750,8 +751,6 @@ class TestStructuredDtypeSparseFields:
     sparse_dtype = np.dtype([('a', {'names':['ab'], 'formats':['f'],
                                     'offsets':[4]}, (2, 3))])
 
-    @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
-    @pytest.mark.valgrind_error(reason="reads from uninitialized buffers.")
     def test_sparse_field_assignment(self):
         arr = np.zeros(3, self.dtype)
         sparse_arr = arr.view(self.sparse_dtype)
@@ -1018,7 +1017,12 @@ class TestPickling:
 
     def check_pickling(self, dtype):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
-            pickled = pickle.loads(pickle.dumps(dtype, proto))
+            buf = pickle.dumps(dtype, proto)
+            # The dtype pickling itself pickles `np.dtype` if it is pickled
+            # as a singleton `dtype` should be stored in the buffer:
+            assert b"_DType_reconstruct" not in buf
+            assert b"dtype" in buf
+            pickled = pickle.loads(buf)
             assert_equal(pickled, dtype)
             assert_equal(pickled.descr, dtype.descr)
             if dtype.metadata is not None:
@@ -1074,6 +1078,112 @@ class TestPickling:
         dt = np.dtype(int, metadata={'datum': 1})
         self.check_pickling(dt)
 
+    @pytest.mark.parametrize("DType",
+        [type(np.dtype(t)) for t in np.typecodes['All']] +
+        [np.dtype(rational), np.dtype])
+    def test_pickle_types(self, DType):
+        # Check that DTypes (the classes/types) roundtrip when pickling
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            roundtrip_DType = pickle.loads(pickle.dumps(DType, proto))
+            assert roundtrip_DType is DType
+
+
+class TestPromotion:
+    """Test cases related to more complex DType promotions.  Further promotion
+    tests are defined in `test_numeric.py`
+    """
+    @pytest.mark.parametrize(["other", "expected"],
+            [(2**16-1, np.complex64),
+             (2**32-1, np.complex128),
+             (np.float16(2), np.complex64),
+             (np.float32(2), np.complex64),
+             (np.longdouble(2), np.complex64),
+             # Base of the double value to sidestep any rounding issues:
+             (np.longdouble(np.nextafter(1.7e308, 0.)), np.complex128),
+             # Additionally use "nextafter" so the cast can't round down:
+             (np.longdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
+             # repeat for complex scalars:
+             (np.complex64(2), np.complex64),
+             (np.clongdouble(2), np.complex64),
+             # Base of the double value to sidestep any rounding issues:
+             (np.clongdouble(np.nextafter(1.7e308, 0.) * 1j), np.complex128),
+             # Additionally use "nextafter" so the cast can't round down:
+             (np.clongdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
+             ])
+    def test_complex_other_value_based(self, other, expected):
+        # This would change if we modify the value based promotion
+        min_complex = np.dtype(np.complex64)
+
+        res = np.result_type(other, min_complex)
+        assert res == expected
+        # Check the same for a simple ufunc call that uses the same logic:
+        res = np.minimum(other, np.ones(3, dtype=min_complex)).dtype
+        assert res == expected
+
+    @pytest.mark.parametrize(["other", "expected"],
+                 [(np.bool_, np.complex128),
+                  (np.int64, np.complex128),
+                  (np.float16, np.complex64),
+                  (np.float32, np.complex64),
+                  (np.float64, np.complex128),
+                  (np.longdouble, np.clongdouble),
+                  (np.complex64, np.complex64),
+                  (np.complex128, np.complex128),
+                  (np.clongdouble, np.clongdouble),
+                  ])
+    def test_complex_scalar_value_based(self, other, expected):
+        # This would change if we modify the value based promotion
+        complex_scalar = 1j
+
+        res = np.result_type(other, complex_scalar)
+        assert res == expected
+        # Check the same for a simple ufunc call that uses the same logic:
+        res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
+        assert res == expected
+
+    def test_complex_pyscalar_promote_rational(self):
+        with pytest.raises(TypeError,
+                match=r".* do not have a common DType"):
+            np.result_type(1j, rational)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(1j, rational(1, 2))
+
+    @pytest.mark.parametrize(["other", "expected"],
+            [(1, rational), (1., np.float64)])
+    def test_float_int_pyscalar_promote_rational(self, other, expected):
+        # Note that rationals are a bit akward as they promote with float64
+        # or default ints, but not float16 or uint8/int8 (which looks
+        # inconsistent here)
+        with pytest.raises(TypeError,
+                match=r".* do not have a common DType"):
+            np.result_type(other, rational)
+
+        assert np.result_type(other, rational(1, 2)) == expected
+
+    @pytest.mark.parametrize(["dtypes", "expected"], [
+             # These promotions are not associative/commutative:
+             ([np.uint16, np.int16, np.float16], np.float32),
+             ([np.uint16, np.int8, np.float16], np.float32),
+             ([np.uint8, np.int16, np.float16], np.float32),
+             # The following promotions are not ambiguous, but cover code
+             # paths of abstract promotion (no particular logic being tested)
+             ([1, 1, np.float64], np.float64),
+             ([1, 1., np.complex128], np.complex128),
+             ([1, 1j, np.float64], np.complex128),
+             ([1., 1., np.int64], np.float64),
+             ([1., 1j, np.float64], np.complex128),
+             ([1j, 1j, np.float64], np.complex128),
+             ([1, True, np.bool_], np.int_),
+            ])
+    def test_permutations_do_not_influence_result(self, dtypes, expected):
+        # Tests that most permutations do not influence the result.  In the
+        # above some uint and int combintations promote to a larger integer
+        # type, which would then promote to a larger than necessary float.
+        for perm in permutations(dtypes):
+            assert np.result_type(*perm) == expected
+
 
 def test_rational_dtype():
     # test for bug gh-5719
@@ -1106,7 +1216,7 @@ def test_keyword_argument():
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
-            dtype = "f8"
+            dtype = np.dtype("f8")
 
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
@@ -1130,22 +1240,21 @@ class TestFromDTypeAttribute:
             # what this should be useful for. Note that if np.void is used
             # numpy will think we are deallocating a base type [1.17, 2019-02].
             dtype = np.dtype("f,f")
-            pass
 
         np.dtype(dt)
         np.dtype(dt(1))
 
     def test_void_subtype_recursion(self):
-        class dt(np.void):
+        class vdt(np.void):
             pass
 
-        dt.dtype = dt
+        vdt.dtype = vdt
 
         with pytest.raises(RecursionError):
-            np.dtype(dt)
+            np.dtype(vdt)
 
         with pytest.raises(RecursionError):
-            np.dtype(dt(1))
+            np.dtype(vdt(1))
 
 
 class TestDTypeClasses:

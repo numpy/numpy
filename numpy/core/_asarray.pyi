@@ -1,7 +1,7 @@
 import sys
 from typing import TypeVar, Union, Iterable, overload
 
-from numpy import ndarray, _OrderKACF
+from numpy import ndarray
 from numpy.typing import ArrayLike, DTypeLike
 
 if sys.version_info >= (3, 8):
@@ -10,36 +10,6 @@ else:
     from typing_extensions import Literal
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
-
-def asarray(
-    a: object,
-    dtype: DTypeLike = ...,
-    order: _OrderKACF = ...,
-    *,
-    like: ArrayLike = ...
-) -> ndarray: ...
-@overload
-def asanyarray(
-    a: _ArrayType,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    *,
-    like: ArrayLike = ...
-) -> _ArrayType: ...
-@overload
-def asanyarray(
-    a: object,
-    dtype: DTypeLike = ...,
-    order: _OrderKACF = ...,
-    *,
-    like: ArrayLike = ...
-) -> ndarray: ...
-def ascontiguousarray(
-    a: object, dtype: DTypeLike = ..., *, like: ArrayLike = ...
-) -> ndarray: ...
-def asfortranarray(
-    a: object, dtype: DTypeLike = ..., *, like: ArrayLike = ...
-) -> ndarray: ...
 
 _Requirements = Literal[
     "C", "C_CONTIGUOUS", "CONTIGUOUS",

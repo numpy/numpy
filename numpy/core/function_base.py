@@ -371,7 +371,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
             6.12323400e-17+1.00000000e+00j,  7.07106781e-01+7.07106781e-01j,
             1.00000000e+00+0.00000000e+00j])
 
-    Graphical illustration of ``endpoint`` parameter:
+    Graphical illustration of `endpoint` parameter:
 
     >>> import matplotlib.pyplot as plt
     >>> N = 10

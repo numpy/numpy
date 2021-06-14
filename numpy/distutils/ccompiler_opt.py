@@ -259,7 +259,7 @@ class _Config:
         AVX512_SKX = dict(
             interest=42, implies="AVX512CD", group="AVX512VL AVX512BW AVX512DQ",
             detect="AVX512_SKX", implies_detect=False,
-            extra_checks="AVX512BW_MASK"
+            extra_checks="AVX512BW_MASK AVX512DQ_MASK"
         ),
         AVX512_CLX = dict(
             interest=43, implies="AVX512_SKX", group="AVX512VNNI",
@@ -276,7 +276,7 @@ class _Config:
         ),
         # IBM/Power
         ## Power7/ISA 2.06
-        VSX = dict(interest=1, headers="altivec.h"),
+        VSX = dict(interest=1, headers="altivec.h", extra_checks="VSX_ASM"),
         ## Power8/ISA 2.07
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
@@ -543,16 +543,16 @@ class _Distutils:
     def __init__(self, ccompiler):
         self._ccompiler = ccompiler
 
-    def dist_compile(self, sources, flags, **kwargs):
+    def dist_compile(self, sources, flags, ccompiler=None, **kwargs):
         """Wrap CCompiler.compile()"""
         assert(isinstance(sources, list))
         assert(isinstance(flags, list))
         flags = kwargs.pop("extra_postargs", []) + flags
-        return self._ccompiler.compile(
-            sources, extra_postargs=flags, **kwargs
-        )
+        if not ccompiler:
+            ccompiler = self._ccompiler
+        return ccompiler.compile(sources, extra_postargs=flags, **kwargs)
 
-    def dist_test(self, source, flags):
+    def dist_test(self, source, flags, macros=[]):
         """Return True if 'CCompiler.compile()' able to compile
         a source file with certain flags.
         """
@@ -569,7 +569,7 @@ class _Distutils:
         test = False
         try:
             self.dist_compile(
-                [source], flags, output_dir=self.conf_tmp_path
+                [source], flags, macros=macros, output_dir=self.conf_tmp_path
             )
             test = True
         except CompileError as e:
@@ -579,45 +579,41 @@ class _Distutils:
         return test
 
     def dist_info(self):
-        """Return a string containing all environment information, required
-        by the abstract class '_CCompiler' to discovering the platform
-        environment, also used as a cache factor in order to detect
-        any changes from outside.
+        """
+        Return a tuple containing info about (platform, compiler, extra_args),
+        required by the abstract class '_CCompiler' for discovering the
+        platform environment. This is also used as a cache factor in order
+        to detect any changes happening from outside.
         """
         if hasattr(self, "_dist_info"):
             return self._dist_info
-        # play it safe
-        cc_info = ""
-        compiler = getattr(self._ccompiler, "compiler", None)
-        if compiler is not None:
-            if isinstance(compiler, str):
-                cc_info += compiler
-            elif hasattr(compiler, "__iter__"):
-                cc_info += ' '.join(compiler)
-        # in case if 'compiler' attribute doesn't provide anything
-        cc_type = getattr(self._ccompiler, "compiler_type", "")
-        if cc_type in ("intelem", "intelemw", "mingw64"):
-            cc_info += "x86_64"
+
+        cc_type = getattr(self._ccompiler, "compiler_type", '')
+        if cc_type in ("intelem", "intelemw"):
+            platform = "x86_64"
         elif cc_type in ("intel", "intelw", "intele"):
-            cc_info += "x86"
-        elif cc_type in ("msvc", "mingw32"):
-            import platform
-            if platform.architecture()[0] == "32bit":
-                cc_info += "x86"
-            else:
-                cc_info += "x86_64"
+            platform = "x86"
         else:
-            # the last hope, too bad for cross-compiling
-            import platform
-            cc_info += platform.machine()
+            from distutils.util import get_platform
+            platform = get_platform()
 
-        cc_info += cc_type
-        cflags = os.environ.get("CFLAGS", "")
-        if cflags not in cc_info:
-            cc_info += cflags
+        cc_info = getattr(self._ccompiler, "compiler", getattr(self._ccompiler, "compiler_so", ''))
+        if not cc_type or cc_type == "unix":
+            if hasattr(cc_info, "__iter__"):
+                compiler = cc_info[0]
+            else:
+                compiler = str(cc_info)
+        else:
+            compiler = cc_type
 
-        self._dist_info = cc_info
-        return cc_info
+        if hasattr(cc_info, "__iter__") and len(cc_info) > 1:
+            extra_args = ' '.join(cc_info[1:])
+        else:
+            extra_args  = os.environ.get("CFLAGS", "")
+            extra_args += os.environ.get("CPPFLAGS", "")
+
+        self._dist_info = (platform, compiler, extra_args)
+        return self._dist_info
 
     @staticmethod
     def dist_error(*args):
@@ -751,12 +747,14 @@ class _Cache:
         self.cache_me = {}
         self.cache_private = set()
         self.cache_infile = False
+        self._cache_path = None
 
         if self.conf_nocache:
             self.dist_log("cache is disabled by `Config`")
             return
 
-        chash = self.cache_hash(*factors, *self.conf_cache_factors)
+        self._cache_hash = self.cache_hash(*factors, *self.conf_cache_factors)
+        self._cache_path = cache_path
         if cache_path:
             if os.path.exists(cache_path):
                 self.dist_log("load cache from file ->", cache_path)
@@ -769,7 +767,7 @@ class _Cache:
                 elif not hasattr(cache_mod, "hash") or \
                      not hasattr(cache_mod, "data"):
                     self.dist_log("invalid cache file", stderr=True)
-                elif chash == cache_mod.hash:
+                elif self._cache_hash == cache_mod.hash:
                     self.dist_log("hit the file cache")
                     for attr, val in cache_mod.data.items():
                         setattr(self, attr, val)
@@ -777,10 +775,8 @@ class _Cache:
                 else:
                     self.dist_log("miss the file cache")
 
-            atexit.register(self._cache_write, cache_path, chash)
-
         if not self.cache_infile:
-            other_cache = _share_cache.get(chash)
+            other_cache = _share_cache.get(self._cache_hash)
             if other_cache:
                 self.dist_log("hit the memory cache")
                 for attr, val in other_cache.__dict__.items():
@@ -789,32 +785,41 @@ class _Cache:
                         continue
                     setattr(self, attr, val)
 
-        _share_cache[chash] = self
+        _share_cache[self._cache_hash] = self
+        atexit.register(self.cache_flush)
 
     def __del__(self):
-        # TODO: remove the cache form share on del
-        pass
+        for h, o in _share_cache.items():
+            if o == self:
+                _share_cache.pop(h)
+                break
 
-    def _cache_write(self, cache_path, cache_hash):
+    def cache_flush(self):
+        """
+        Force update the cache.
+        """
+        if not self._cache_path:
+            return
         # TODO: don't write if the cache doesn't change
-        self.dist_log("write cache to path ->", cache_path)
-        for attr in list(self.__dict__.keys()):
+        self.dist_log("write cache to path ->", self._cache_path)
+        cdict = self.__dict__.copy()
+        for attr in self.__dict__.keys():
             if re.match(self._cache_ignore, attr):
-                self.__dict__.pop(attr)
+                cdict.pop(attr)
 
-        d = os.path.dirname(cache_path)
+        d = os.path.dirname(self._cache_path)
         if not os.path.exists(d):
             os.makedirs(d)
 
-        repr_dict = pprint.pformat(self.__dict__, compact=True)
-        with open(cache_path, "w") as f:
+        repr_dict = pprint.pformat(cdict, compact=True)
+        with open(self._cache_path, "w") as f:
             f.write(textwrap.dedent("""\
             # AUTOGENERATED DON'T EDIT
             # Please make changes to the code generator \
             (distutils/ccompiler_opt.py)
             hash = {}
             data = \\
-            """).format(cache_hash))
+            """).format(self._cache_hash))
             f.write(repr_dict)
 
     def cache_hash(self, *factors):
@@ -845,7 +850,7 @@ class _Cache:
             return ccb
         return cache_wrap_me
 
-class _CCompiler(object):
+class _CCompiler:
     """A helper class for `CCompilerOpt` containing all utilities that
     related to the fundamental compiler's functions.
 
@@ -893,57 +898,56 @@ class _CCompiler(object):
     def __init__(self):
         if hasattr(self, "cc_is_cached"):
             return
-        to_detect = (
-            #        attr                regex
-            (
-                ("cc_on_x64",      "^(x|x86_|amd)64"),
-                ("cc_on_x86",      "^(x86|i386|i686)"),
-                ("cc_on_ppc64le",  "^(powerpc|ppc)64(el|le)"),
-                ("cc_on_ppc64",    "^(powerpc|ppc)64"),
-                ("cc_on_armhf",    "^arm"),
-                ("cc_on_aarch64",  "^aarch64"),
-                # priority is given to first of string
-                # if it fail we search in the rest, due
-                # to append platform.machine() at the end,
-                # check method 'dist_info()' for more clarification.
-                ("cc_on_x64",      ".*(x|x86_|amd)64.*"),
-                ("cc_on_x86",      ".*(x86|i386|i686).*"),
-                ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*"),
-                ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
-                ("cc_on_armhf",    ".*arm.*"),
-                ("cc_on_aarch64",  ".*aarch64.*"),
-                # undefined platform
-                ("cc_on_noarch",    ""),
-            ),
-            (
-                ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
-                ("cc_is_clang",    ".*clang.*"),
-                ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
-                ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
-                ("cc_is_msvc",     ".*msvc.*"),
-                ("cc_is_nocc",     ""),
-            ),
-               (("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*"),),
-               (("cc_has_native", ".*(-march=native|-xHost|/QxHost).*"),),
-               # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
-               (("cc_noopt", ".*DISABLE_OPT.*"),),
+        #      attr                regex
+        detect_arch = (
+            ("cc_on_x64",      ".*(x|x86_|amd)64.*"),
+            ("cc_on_x86",      ".*(win32|x86|i386|i686).*"),
+            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*"),
+            ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
+            ("cc_on_aarch64",  ".*(aarch64|arm64).*"),
+            ("cc_on_armhf",    ".*arm.*"),
+            # undefined platform
+            ("cc_on_noarch",    ""),
         )
-        for section in to_detect:
+        detect_compiler = (
+            ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
+            ("cc_is_clang",    ".*clang.*"),
+            ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
+            ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
+            ("cc_is_msvc",     ".*msvc.*"),
+            # undefined compiler will be treat it as gcc
+            ("cc_is_nocc",     ""),
+        )
+        detect_args = (
+           ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*"),
+           ("cc_has_native", ".*(-march=native|-xHost|/QxHost).*"),
+           # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
+           ("cc_noopt", ".*DISABLE_OPT.*"),
+        )
+
+        dist_info = self.dist_info()
+        platform, compiler_info, extra_args = dist_info
+        # set False to all attrs
+        for section in (detect_arch, detect_compiler, detect_args):
             for attr, rgex in section:
                 setattr(self, attr, False)
 
-        dist_info = self.dist_info()
-        for section in to_detect:
-            for attr, rgex in section:
-                if rgex and not re.match(rgex, dist_info, re.IGNORECASE):
+        for detect, searchin in ((detect_arch, platform), (detect_compiler, compiler_info)):
+            for attr, rgex in detect:
+                if rgex and not re.match(rgex, searchin, re.IGNORECASE):
                     continue
                 setattr(self, attr, True)
                 break
 
+        for attr, rgex in detect_args:
+            if rgex and not re.match(rgex, extra_args, re.IGNORECASE):
+                continue
+            setattr(self, attr, True)
+
         if self.cc_on_noarch:
             self.dist_log(
-                "unable to detect CPU arch via compiler info, "
-                "optimization is disabled \ninfo << %s >> " % dist_info,
+                "unable to detect CPU architecture which lead to disable the optimization. "
+                f"check dist_info:<<\n{dist_info}\n>>",
                 stderr=True
             )
             self.cc_noopt = True
@@ -958,8 +962,9 @@ class _CCompiler(object):
             but still has the same gcc optimization flags.
             """
             self.dist_log(
-                "unable to detect compiler name via info <<\n%s\n>> "
-                "treating it as a gcc" % dist_info,
+                "unable to detect compiler type which leads to treating it as GCC. "
+                "this is a normal behavior if you're using gcc-like compiler such as MinGW or IBM/XLC."
+                f"check dist_info:<<\n{dist_info}\n>>",
                 stderr=True
             )
             self.cc_is_gcc = True
@@ -1167,20 +1172,23 @@ class _Feature:
 
         self.feature_is_cached = True
 
-    def feature_names(self, names=None, force_flags=None):
+    def feature_names(self, names=None, force_flags=None, macros=[]):
         """
         Returns a set of CPU feature names that supported by platform and the **C** compiler.
 
         Parameters
         ----------
-        'names': sequence or None, optional
+        names: sequence or None, optional
             Specify certain CPU features to test it against the **C** compiler.
             if None(default), it will test all current supported features.
             **Note**: feature names must be in upper-case.
 
-        'force_flags': list or None, optional
-            If None(default), default compiler flags for every CPU feature will be used
-            during the test.
+        force_flags: list or None, optional
+            If None(default), default compiler flags for every CPU feature will
+            be used during the test.
+
+        macros : list of tuples, optional
+            A list of C macro definitions.
         """
         assert(
             names is None or (
@@ -1193,7 +1201,9 @@ class _Feature:
             names = self.feature_supported.keys()
         supported_names = set()
         for f in names:
-            if self.feature_is_supported(f, force_flags=force_flags):
+            if self.feature_is_supported(
+                f, force_flags=force_flags, macros=macros
+            ):
                 supported_names.add(f)
         return supported_names
 
@@ -1428,20 +1438,23 @@ class _Feature:
         return self.cc_normalize_flags(flags)
 
     @_Cache.me
-    def feature_test(self, name, force_flags=None):
+    def feature_test(self, name, force_flags=None, macros=[]):
         """
         Test a certain CPU feature against the compiler through its own
         check file.
 
         Parameters
         ----------
-        'name': str
+        name: str
             Supported CPU feature name.
 
-        'force_flags': list or None, optional
+        force_flags: list or None, optional
             If None(default), the returned flags from `feature_flags()`
             will be used.
-       """
+
+        macros : list of tuples, optional
+            A list of C macro definitions.
+        """
         if force_flags is None:
             force_flags = self.feature_flags(name)
 
@@ -1457,24 +1470,29 @@ class _Feature:
         if not os.path.exists(test_path):
             self.dist_fatal("feature test file is not exist", test_path)
 
-        test = self.dist_test(test_path, force_flags + self.cc_flags["werror"])
+        test = self.dist_test(
+            test_path, force_flags + self.cc_flags["werror"], macros=macros
+        )
         if not test:
             self.dist_log("testing failed", stderr=True)
         return test
 
     @_Cache.me
-    def feature_is_supported(self, name, force_flags=None):
+    def feature_is_supported(self, name, force_flags=None, macros=[]):
         """
         Check if a certain CPU feature is supported by the platform and compiler.
 
         Parameters
         ----------
-        'name': str
+        name: str
             CPU feature name in uppercase.
 
-        'force_flags': list or None, optional
-            If None(default), default compiler flags for every CPU feature will be used
-            during test.
+        force_flags: list or None, optional
+            If None(default), default compiler flags for every CPU feature will
+            be used during test.
+
+        macros : list of tuples, optional
+            A list of C macro definitions.
         """
         assert(name.isupper())
         assert(force_flags is None or isinstance(force_flags, list))
@@ -1482,9 +1500,9 @@ class _Feature:
         supported = name in self.feature_supported
         if supported:
             for impl in self.feature_implies(name):
-                if not self.feature_test(impl, force_flags):
+                if not self.feature_test(impl, force_flags, macros=macros):
                     return False
-            if not self.feature_test(name, force_flags):
+            if not self.feature_test(name, force_flags, macros=macros):
                 return False
         return supported
 
@@ -1774,7 +1792,7 @@ class _Parse:
         tokens = tokens[start_pos:end_pos]
         return self._parse_target_tokens(tokens)
 
-    _parse_regex_arg = re.compile(r'\s|[,]|([+-])')
+    _parse_regex_arg = re.compile(r'\s|,|([+-])')
     def _parse_arg_features(self, arg_name, req_features):
         if not isinstance(req_features, str):
             self.dist_fatal("expected a string in '%s'" % arg_name)
@@ -1807,7 +1825,9 @@ class _Parse:
                     self.dist_fatal(arg_name,
                         "native option isn't supported by the compiler"
                     )
-                features_to = self.feature_names(force_flags=native)
+                features_to = self.feature_names(
+                    force_flags=native, macros=[("DETECT_FEATURES", 1)]
+                )
             elif TOK == "MAX":
                 features_to = self.feature_supported.keys()
             elif TOK == "MIN":
@@ -2147,7 +2167,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         """
         return self.parse_dispatch_names
 
-    def try_dispatch(self, sources, src_dir=None, **kwargs):
+    def try_dispatch(self, sources, src_dir=None, ccompiler=None, **kwargs):
         """
         Compile one or more dispatch-able sources and generates object files,
         also generates abstract C config headers and macros that
@@ -2169,6 +2189,11 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         src_dir : str
             Path of parent directory for the generated headers and wrapped sources.
             If None(default) the files will generated in-place.
+
+        ccompiler: CCompiler
+            Distutils `CCompiler` instance to be used for compilation.
+            If None (default), the provided instance during the initialization
+            will be used instead.
 
         **kwargs : any
             Arguments to pass on to the `CCompiler.compile()`
@@ -2224,13 +2249,15 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         #   among them.
         objects = []
         for flags, srcs in to_compile.items():
-            objects += self.dist_compile(srcs, list(flags), **kwargs)
+            objects += self.dist_compile(
+                srcs, list(flags), ccompiler=ccompiler, **kwargs
+            )
         return objects
 
     def generate_dispatch_header(self, header_path):
         """
-        Generate the dispatch header which containing all definitions
-        and headers of instruction-sets for the enabled CPU baseline and
+        Generate the dispatch header which contains the #definitions and headers
+        for platform-specific instruction-sets for the enabled CPU baseline and
         dispatch-able features.
 
         Its highly recommended to take a look at the generated header
@@ -2243,6 +2270,14 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         dispatch_names = self.cpu_dispatch_names()
         baseline_len = len(baseline_names)
         dispatch_len = len(dispatch_names)
+
+        header_dir = os.path.dirname(header_path)
+        if not os.path.exists(header_dir):
+            self.dist_log(
+                f"dispatch header dir {header_dir} does not exist, creating it",
+                stderr=True
+            )
+            os.makedirs(header_dir)
 
         with open(header_path, 'w') as f:
             baseline_calls = ' \\\n'.join([
@@ -2304,19 +2339,25 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
     def report(self, full=False):
         report = []
+        platform_rows = []
         baseline_rows = []
         dispatch_rows = []
+        report.append(("Platform", platform_rows))
+        report.append(("", ""))
         report.append(("CPU baseline", baseline_rows))
         report.append(("", ""))
         report.append(("CPU dispatch", dispatch_rows))
 
+        ########## platform ##########
+        platform_rows.append(("Architecture", (
+            "unsupported" if self.cc_on_noarch else self.cc_march)
+        ))
+        platform_rows.append(("Compiler", (
+            "unix-like"   if self.cc_is_nocc   else self.cc_name)
+        ))
         ########## baseline ##########
         if self.cc_noopt:
-            baseline_rows.append((
-                "Requested", "optimization disabled %s" % (
-                    "(unsupported arch)" if self.cc_on_noarch else ""
-                )
-            ))
+            baseline_rows.append(("Requested", "optimization disabled"))
         else:
             baseline_rows.append(("Requested", repr(self._requested_baseline)))
 
@@ -2337,11 +2378,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
         ########## dispatch ##########
         if self.cc_noopt:
-            dispatch_rows.append((
-                "Requested", "optimization disabled %s" % (
-                    "(unsupported arch)" if self.cc_on_noarch else ""
-                )
-            ))
+            baseline_rows.append(("Requested", "optimization disabled"))
         else:
             dispatch_rows.append(("Requested", repr(self._requested_dispatch)))
 
@@ -2448,7 +2485,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         return wrap_path
 
     def _generate_config(self, output_dir, dispatch_src, targets, has_baseline=False):
-        config_path = os.path.basename(dispatch_src).replace(".c", ".h")
+        config_path = os.path.basename(dispatch_src)
+        config_path = os.path.splitext(config_path)[0] + '.h'
         config_path = os.path.join(output_dir, config_path)
         # check if targets didn't change to avoid recompiling
         cache_hash = self.cache_hash(targets, has_baseline)
@@ -2506,30 +2544,24 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             ))
         return False
 
-def new_ccompiler_opt(compiler, **kwargs):
+def new_ccompiler_opt(compiler, dispatch_hpath, **kwargs):
     """
     Create a new instance of 'CCompilerOpt' and generate the dispatch header
-    inside NumPy source dir.
+    which contains the #definitions and headers of platform-specific instruction-sets for
+    the enabled CPU baseline and dispatch-able features.
 
     Parameters
     ----------
-    'compiler' : CCompiler instance
-    '**kwargs': passed as-is to `CCompilerOpt(...)`
+    compiler : CCompiler instance
+    dispatch_hpath : str
+        path of the dispatch header
 
+    **kwargs: passed as-is to `CCompilerOpt(...)`
     Returns
     -------
     new instance of CCompilerOpt
     """
     opt = CCompilerOpt(compiler, **kwargs)
-    npy_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    header_dir = os.path.join(npy_path, *("core/src/common".split("/")))
-    header_path = os.path.join(header_dir, "_cpu_dispatch.h")
-    if not os.path.exists(header_path) or not opt.is_cached():
-        if not os.path.exists(header_dir):
-            opt.dist_log(
-                "dispatch header dir '%s' isn't exist, creating it" % header_dir,
-                stderr=True
-            )
-            os.makedirs(header_dir)
-        opt.generate_dispatch_header(header_path)
+    if not os.path.exists(dispatch_hpath) or not opt.is_cached():
+        opt.generate_dispatch_header(dispatch_hpath)
     return opt

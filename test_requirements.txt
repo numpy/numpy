@@ -1,17 +1,15 @@
-cython==0.29.21
-wheel
+cython==0.29.23
+wheel<0.36.3
 setuptools<49.2.0
-hypothesis==5.41.4
-pytest==6.0.2
-pytz==2020.4
-pytest-cov==2.10.1
+hypothesis==6.14.0
+pytest==6.2.4
+pytz==2021.1
+pytest-cov==2.12.1
 pickle5; python_version == '3.7' and platform_python_implementation != 'PyPy'
-pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
 # for numpy.random.test.test_extending
 cffi
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
-# - Mypy doesn't currently work on Python 3.9
-# - Python 3.6 doesn't work because it doesn't understand py.typed
-mypy==0.790; platform_python_implementation != "PyPy" and python_version > "3.6"
-typing_extensions
+# - There is no point in installing typing_extensions without mypy
+mypy==0.902; platform_python_implementation != "PyPy"
+typing_extensions==3.10.0.0; platform_python_implementation != "PyPy"

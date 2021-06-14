@@ -236,6 +236,12 @@ typedef enum {
         NPY_RAISE=2
 } NPY_CLIPMODE;
 
+typedef enum {
+        NPY_VALID=0,
+        NPY_SAME=1,
+        NPY_FULL=2
+} NPY_CORRELATEMODE;
+
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
 
@@ -850,6 +856,17 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_ENSUREARRAY     0x0040
 
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * Dual use of the ENSUREARRAY flag, to indicate that this was converted
+     * from a python float, int, or complex.
+     * An array using this flag must be a temporary array that can never
+     * leave the C internals of NumPy.  Even if it does, ENSUREARRAY is
+     * absolutely safe to abuse, since it already is a base class array :).
+     */
+    #define _NPY_ARRAY_WAS_PYSCALAR   0x0040
+#endif  /* NPY_INTERNAL_BUILD */
+
 /*
  * Make sure that the strides are in units of the element size Needed
  * for some operations with record-arrays.
@@ -1219,6 +1236,8 @@ struct PyArrayIterObject_tag {
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
                 for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
                      __npy_i++) { \
+                        _PyAIT(it)->coordinates[__npy_i] = \
+                                (__npy_ind / _PyAIT(it)->factors[__npy_i]); \
                         _PyAIT(it)->dataptr += \
                                 (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
                                 * _PyAIT(it)->strides[__npy_i]; \
@@ -1861,6 +1880,8 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
     typedef PyArray_DTypeMeta *(common_dtype_function)(
             PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2);
+    typedef PyArray_DTypeMeta *(common_dtype_with_value_function)(
+        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2, PyObject *value);
     typedef PyArray_Descr *(common_instance_function)(
             PyArray_Descr *dtype1, PyArray_Descr *dtyep2);
 
@@ -1919,7 +1940,13 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         is_known_scalar_type_function *is_known_scalar_type;
         default_descr_function *default_descr;
         common_dtype_function *common_dtype;
+        common_dtype_with_value_function *common_dtype_with_value;
         common_instance_function *common_instance;
+        /*
+         * The casting implementation (ArrayMethod) to convert between two
+         * instances of this DType, stored explicitly for fast access:
+         */
+        PyObject *within_dtype_castingimpl;
         /*
          * Dictionary of ArrayMethods representing most possible casts
          * (structured and object are exceptions).

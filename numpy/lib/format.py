@@ -173,6 +173,7 @@ from numpy.compat import (
 __all__ = []
 
 
+EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
@@ -378,7 +379,7 @@ def _wrap_header(header, version):
         header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
     except struct.error:
         msg = "Header length {} too big for version={}".format(hlen, version)
-        raise ValueError(msg)
+        raise ValueError(msg) from None
 
     # Pad the header with spaces and a final newline such that the magic
     # string, the header-length short and the header are aligned on a
@@ -432,7 +433,6 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    header = _filter_header(header)
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
@@ -590,23 +590,27 @@ def _read_array_header(fp, version):
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
-    header = _filter_header(header)
+    # Versions (2, 0) and (1, 0) could have been created by a Python 2
+    # implementation before header filtering was implemented.
+    if version <= (2, 0):
+        header = _filter_header(header)
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: {!r}\nException: {!r}"
-        raise ValueError(msg.format(header, e))
+        msg = "Cannot parse header: {!r}"
+        raise ValueError(msg.format(header)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
         raise ValueError(msg.format(d))
-    keys = sorted(d.keys())
-    if keys != ['descr', 'fortran_order', 'shape']:
+
+    if EXPECTED_KEYS != d.keys():
+        keys = sorted(d.keys())
         msg = "Header does not contain the correct keys: {!r}"
-        raise ValueError(msg.format(keys))
+        raise ValueError(msg.format(d.keys()))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-            not numpy.all([isinstance(x, int) for x in d['shape']])):
+            not all(isinstance(x, int) for x in d['shape'])):
         msg = "shape is not valid: {!r}"
         raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):
@@ -614,9 +618,9 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(d['fortran_order']))
     try:
         dtype = descr_to_dtype(d['descr'])
-    except TypeError:
+    except TypeError as e:
         msg = "descr is not a valid dtype descriptor: {!r}"
-        raise ValueError(msg.format(d['descr']))
+        raise ValueError(msg.format(d['descr'])) from e
 
     return d['shape'], d['fortran_order'], dtype
 

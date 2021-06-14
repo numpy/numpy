@@ -18,6 +18,7 @@
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
 
+#include "lowlevel_strided_loops.h"
 #include "npy_pycompat.h"
 
 #include "convert_datatype.h"
@@ -28,8 +29,11 @@
 #include "array_assign.h"
 
 #include "shape.h"
-#include "lowlevel_strided_loops.h"
+#include "dtype_transfer.h"
 #include "alloc.h"
+#include "dtypemeta.h"
+#include "array_method.h"
+#include "array_coercion.h"
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
@@ -71,46 +75,26 @@ _safe_print(PyObject *obj)
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
 static int
-get_decsrcref_transfer_function(int aligned,
+get_decref_transfer_function(int aligned,
                             npy_intp src_stride,
                             PyArray_Descr *src_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
+                            NPY_cast_info *cast_info,
                             int *out_needs_api);
 
-/*
- * Returns a transfer function which zeros out the dest values.
- *
- * Returns NPY_SUCCEED or NPY_FAIL.
- */
-static int
-get_setdstzero_transfer_function(int aligned,
-                            npy_intp dst_stride,
-                            PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *out_needs_api);
-
-/*
- * Returns a transfer function which sets a boolean type to ones.
- *
- * Returns NPY_SUCCEED or NPY_FAIL.
- */
-NPY_NO_EXPORT int
-get_bool_setdstone_transfer_function(npy_intp dst_stride,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *NPY_UNUSED(out_needs_api));
 
 /*************************** COPY REFERENCES *******************************/
 
 /* Moves references from src to dst */
-static int
-_strided_to_strided_move_references(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+NPY_NO_EXPORT int
+_strided_to_strided_move_references(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
 {
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
     PyObject *src_ref = NULL, *dst_ref = NULL;
     while (N > 0) {
         memcpy(&src_ref, src, sizeof(src_ref));
@@ -134,12 +118,16 @@ _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
 }
 
 /* Copies references from src to dst */
-static int
-_strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+NPY_NO_EXPORT int
+_strided_to_strided_copy_references(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
 {
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
     PyObject *src_ref = NULL, *dst_ref = NULL;
     while (N > 0) {
         memcpy(&src_ref, src, sizeof(src_ref));
@@ -161,42 +149,242 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
     return 0;
 }
 
+/************************** ANY TO OBJECT *********************************/
 
-/************************** ZERO-PADDED COPY ******************************/
-
-/* Does a zero-padded copy */
 typedef struct {
     NpyAuxData base;
-    npy_intp dst_itemsize;
-} _strided_zero_pad_data;
+    PyArray_GetItemFunc *getitem;
+    PyArrayObject_fields arr_fields;
+    NPY_cast_info decref_src;
+} _any_to_object_auxdata;
 
-/* zero-padded data copy function */
-static NpyAuxData *_strided_zero_pad_data_clone(NpyAuxData *data)
+
+static void
+_any_to_object_auxdata_free(NpyAuxData *auxdata)
 {
-    _strided_zero_pad_data *newdata =
-            (_strided_zero_pad_data *)PyArray_malloc(
-                                    sizeof(_strided_zero_pad_data));
-    if (newdata == NULL) {
+    _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
+
+    Py_DECREF(data->arr_fields.descr);
+    NPY_cast_info_xfree(&data->decref_src);
+    PyMem_Free(data);
+}
+
+
+static NpyAuxData *
+_any_to_object_auxdata_clone(NpyAuxData *auxdata)
+{
+    _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
+
+    _any_to_object_auxdata *res = PyMem_Malloc(sizeof(_any_to_object_auxdata));
+
+    res->base = data->base;
+    res->getitem = data->getitem;
+    res->arr_fields = data->arr_fields;
+    Py_INCREF(res->arr_fields.descr);
+
+    if (data->decref_src.func != NULL) {
+        if (NPY_cast_info_copy(&res->decref_src, &data->decref_src) < 0) {
+            NPY_AUXDATA_FREE((NpyAuxData *)res);
+            return NULL;
+        }
+    }
+    else {
+        res->decref_src.func = NULL;
+    }
+    return (NpyAuxData *)res;
+}
+
+
+static int
+_strided_to_strided_any_to_object(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
+{
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
+
+    PyObject *dst_ref = NULL;
+    char *orig_src = src;
+    while (N > 0) {
+        memcpy(&dst_ref, dst, sizeof(dst_ref));
+        Py_XDECREF(dst_ref);
+        dst_ref = data->getitem(src, &data->arr_fields);
+        memcpy(dst, &dst_ref, sizeof(PyObject *));
+
+        if (dst_ref == NULL) {
+            return -1;
+        }
+        src += src_stride;
+        dst += dst_stride;
+        --N;
+    }
+    if (data->decref_src.func != NULL) {
+        /* If necessary, clear the input buffer (`move_references`) */
+        if (data->decref_src.func(&data->decref_src.context,
+                &orig_src, &N, &src_stride, data->decref_src.auxdata) < 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT int
+any_to_object_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+
+    *flags = NPY_METH_REQUIRES_PYAPI;  /* No need for floating point errors */
+
+    *out_loop = _strided_to_strided_any_to_object;
+    *out_transferdata = PyMem_Malloc(sizeof(_any_to_object_auxdata));
+    if (*out_transferdata == NULL) {
+        return -1;
+    }
+    _any_to_object_auxdata *data = (_any_to_object_auxdata *)*out_transferdata;
+    data->base.free = &_any_to_object_auxdata_free;
+    data->base.clone = &_any_to_object_auxdata_clone;
+    data->arr_fields.base = NULL;
+    data->arr_fields.descr = context->descriptors[0];
+    Py_INCREF(data->arr_fields.descr);
+    data->arr_fields.flags = aligned ? NPY_ARRAY_ALIGNED : 0;
+    data->arr_fields.nd = 0;
+
+    data->getitem = context->descriptors[0]->f->getitem;
+    NPY_cast_info_init(&data->decref_src);
+
+    if (move_references && PyDataType_REFCHK(context->descriptors[0])) {
+        int needs_api;
+        if (get_decref_transfer_function(
+                aligned, strides[0], context->descriptors[0],
+                &data->decref_src,
+                &needs_api) == NPY_FAIL)  {
+            NPY_AUXDATA_FREE(*out_transferdata);
+            *out_transferdata = NULL;
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+/************************** OBJECT TO ANY *********************************/
+
+typedef struct {
+    NpyAuxData base;
+    PyArray_Descr *descr;
+    int move_references;
+} _object_to_any_auxdata;
+
+
+static void
+_object_to_any_auxdata_free(NpyAuxData *auxdata)
+{
+    _object_to_any_auxdata *data = (_object_to_any_auxdata *)auxdata;
+    Py_DECREF(data->descr);
+    PyMem_Free(data);
+}
+
+static NpyAuxData *
+_object_to_any_auxdata_clone(NpyAuxData *data)
+{
+    _object_to_any_auxdata *res = PyMem_Malloc(sizeof(*res));
+    if (res == NULL) {
         return NULL;
     }
-
-    memcpy(newdata, data, sizeof(_strided_zero_pad_data));
-
-    return (NpyAuxData *)newdata;
+    memcpy(res, data, sizeof(*res));
+    Py_INCREF(res->descr);
+    return (NpyAuxData *)res;
 }
+
+
+static int
+strided_to_strided_object_to_any(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
+{
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+    _object_to_any_auxdata *data = (_object_to_any_auxdata *)auxdata;
+
+    PyObject *src_ref;
+
+    while (N > 0) {
+        memcpy(&src_ref, src, sizeof(src_ref));
+        if (PyArray_Pack(data->descr, dst, src_ref) < 0) {
+            return -1;
+        }
+
+        if (data->move_references) {
+            Py_DECREF(src_ref);
+            memset(src, 0, sizeof(src_ref));
+        }
+
+        N--;
+        dst += dst_stride;
+        src += src_stride;
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT int
+object_to_any_get_loop(
+        PyArrayMethod_Context *context,
+        int NPY_UNUSED(aligned), int move_references,
+        npy_intp *NPY_UNUSED(strides),
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *flags = NPY_METH_REQUIRES_PYAPI;
+
+    /* NOTE: auxdata is only really necessary to flag `move_references` */
+    _object_to_any_auxdata *data = PyMem_Malloc(sizeof(*data));
+    if (data == NULL) {
+        return -1;
+    }
+    data->base.free = &_object_to_any_auxdata_free;
+    data->base.clone = &_object_to_any_auxdata_clone;
+
+    Py_INCREF(context->descriptors[1]);
+    data->descr = context->descriptors[1];
+    data->move_references = move_references;
+    *out_transferdata = (NpyAuxData *)data;
+    *out_loop = &strided_to_strided_object_to_any;
+    return 0;
+}
+
+
+/************************** ZERO-PADDED COPY ******************************/
 
 /*
  * Does a strided to strided zero-padded copy for the case where
  * dst_itemsize > src_itemsize
  */
 static int
-_strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_zero_pad_copy(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
 {
-    _strided_zero_pad_data *d = (_strided_zero_pad_data *)data;
-    npy_intp dst_itemsize = d->dst_itemsize;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp dst_itemsize = context->descriptors[1]->elsize;
+
     npy_intp zero_size = dst_itemsize-src_itemsize;
 
     while (N > 0) {
@@ -214,13 +402,15 @@ _strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
  * dst_itemsize < src_itemsize
  */
 static int
-_strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_truncate_copy(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
 {
-    _strided_zero_pad_data *d = (_strided_zero_pad_data *)data;
-    npy_intp dst_itemsize = d->dst_itemsize;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+    npy_intp dst_itemsize = context->descriptors[1]->elsize;
 
     while (N > 0) {
         memcpy(dst, src, dst_itemsize);
@@ -236,13 +426,17 @@ _strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
  * unicode swapping is needed.
  */
 static int
-_strided_to_strided_unicode_copyswap(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_unicode_copyswap(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
 {
-    _strided_zero_pad_data *d = (_strided_zero_pad_data *)data;
-    npy_intp dst_itemsize = d->dst_itemsize;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp dst_itemsize = context->descriptors[1]->elsize;
+
     npy_intp zero_size = dst_itemsize - src_itemsize;
     npy_intp copy_size = zero_size > 0 ? src_itemsize : dst_itemsize;
     char *_dst;
@@ -271,26 +465,16 @@ NPY_NO_EXPORT int
 PyArray_GetStridedZeroPadCopyFn(int aligned, int unicode_swap,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata)
 {
+    *out_transferdata = NULL;
     if ((src_itemsize == dst_itemsize) && !unicode_swap) {
         *out_stransfer = PyArray_GetStridedCopyFn(aligned, src_stride,
                                 dst_stride, src_itemsize);
-        *out_transferdata = NULL;
         return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
     }
     else {
-        _strided_zero_pad_data *d = PyArray_malloc(
-                                        sizeof(_strided_zero_pad_data));
-        if (d == NULL) {
-            PyErr_NoMemory();
-            return NPY_FAIL;
-        }
-        d->dst_itemsize = dst_itemsize;
-        d->base.free = (NpyAuxData_FreeFunc *)&PyArray_free;
-        d->base.clone = &_strided_zero_pad_data_clone;
-
         if (unicode_swap) {
             *out_stransfer = &_strided_to_strided_unicode_copyswap;
         }
@@ -300,218 +484,10 @@ PyArray_GetStridedZeroPadCopyFn(int aligned, int unicode_swap,
         else {
             *out_stransfer = &_strided_to_strided_truncate_copy;
         }
-
-        *out_transferdata = (NpyAuxData *)d;
         return NPY_SUCCEED;
     }
 }
 
-/***************** WRAP ALIGNED CONTIGUOUS TRANSFER FUNCTION **************/
-
-/* Wraps a transfer function + data in alignment code */
-typedef struct {
-    NpyAuxData base;
-    PyArray_StridedUnaryOp *wrapped,
-                *tobuffer, *frombuffer;
-    NpyAuxData *wrappeddata, *todata, *fromdata;
-    npy_intp src_itemsize, dst_itemsize;
-    char *bufferin, *bufferout;
-    npy_bool init_dest, out_needs_api;
-} _align_wrap_data;
-
-/* transfer data free function */
-static void _align_wrap_data_free(NpyAuxData *data)
-{
-    _align_wrap_data *d = (_align_wrap_data *)data;
-    NPY_AUXDATA_FREE(d->wrappeddata);
-    NPY_AUXDATA_FREE(d->todata);
-    NPY_AUXDATA_FREE(d->fromdata);
-    PyArray_free(data);
-}
-
-/* transfer data copy function */
-static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
-{
-    _align_wrap_data *d = (_align_wrap_data *)data;
-    _align_wrap_data *newdata;
-    npy_intp basedatasize, datasize;
-
-    /* Round up the structure size to 16-byte boundary */
-    basedatasize = (sizeof(_align_wrap_data)+15)&(-0x10);
-    /* Add space for two low level buffers */
-    datasize = basedatasize +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*d->src_itemsize +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*d->dst_itemsize;
-
-    /* Allocate the data, and populate it */
-    newdata = (_align_wrap_data *)PyArray_malloc(datasize);
-    if (newdata == NULL) {
-        return NULL;
-    }
-    memcpy(newdata, data, basedatasize);
-    newdata->bufferin = (char *)newdata + basedatasize;
-    newdata->bufferout = newdata->bufferin +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*newdata->src_itemsize;
-    if (newdata->wrappeddata != NULL) {
-        newdata->wrappeddata = NPY_AUXDATA_CLONE(d->wrappeddata);
-        if (newdata->wrappeddata == NULL) {
-            PyArray_free(newdata);
-            return NULL;
-        }
-    }
-    if (newdata->todata != NULL) {
-        newdata->todata = NPY_AUXDATA_CLONE(d->todata);
-        if (newdata->todata == NULL) {
-            NPY_AUXDATA_FREE(newdata->wrappeddata);
-            PyArray_free(newdata);
-            return NULL;
-        }
-    }
-    if (newdata->fromdata != NULL) {
-        newdata->fromdata = NPY_AUXDATA_CLONE(d->fromdata);
-        if (newdata->fromdata == NULL) {
-            NPY_AUXDATA_FREE(newdata->wrappeddata);
-            NPY_AUXDATA_FREE(newdata->todata);
-            PyArray_free(newdata);
-            return NULL;
-        }
-    }
-
-    newdata->init_dest = d->init_dest;
-    newdata->out_needs_api = d->out_needs_api;
-
-    return (NpyAuxData *)newdata;
-}
-
-static int
-_strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
-{
-    _align_wrap_data *d = (_align_wrap_data *)data;
-    PyArray_StridedUnaryOp *wrapped = d->wrapped,
-            *tobuffer = d->tobuffer,
-            *frombuffer = d->frombuffer;
-    npy_intp inner_src_itemsize = d->src_itemsize,
-             dst_itemsize = d->dst_itemsize;
-    NpyAuxData *wrappeddata = d->wrappeddata,
-            *todata = d->todata,
-            *fromdata = d->fromdata;
-    char *bufferin = d->bufferin, *bufferout = d->bufferout;
-    npy_bool init_dest = d->init_dest;
-
-    for(;;) {
-        if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
-            if (tobuffer(
-                    bufferin, inner_src_itemsize, src, src_stride,
-                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE, src_itemsize, todata) < 0) {
-                return -1;
-            }
-            if (init_dest) {
-                memset(bufferout, 0,
-                       dst_itemsize*NPY_LOWLEVEL_BUFFER_BLOCKSIZE);
-            }
-            if (wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
-                        NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                        inner_src_itemsize, wrappeddata) < 0) {
-                return -1;
-            }
-            if (frombuffer(dst, dst_stride, bufferout, dst_itemsize,
-                           NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                           dst_itemsize, fromdata) < 0) {
-                return -1;
-            }
-            N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
-            src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
-            dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
-        }
-        else {
-            if (tobuffer(bufferin, inner_src_itemsize, src, src_stride,
-                         N, src_itemsize, todata) < 0) {
-                return -1;
-            }
-            if (init_dest) {
-                memset(bufferout, 0, dst_itemsize*N);
-            }
-            if (wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
-                        N, inner_src_itemsize, wrappeddata) < 0) {
-                return -1;
-            }
-            if (frombuffer(dst, dst_stride, bufferout, dst_itemsize,
-                           N, dst_itemsize, fromdata) < 0) {
-                return -1;
-            }
-            return 0;
-        }
-    }
-}
-
-/*
- * Wraps an aligned contig to contig transfer function between either
- * copies or byte swaps to temporary buffers.
- *
- * src_itemsize/dst_itemsize - The sizes of the src and dst datatypes.
- * tobuffer - copy/swap function from src to an aligned contiguous buffer.
- * todata - data for tobuffer
- * frombuffer - copy/swap function from an aligned contiguous buffer to dst.
- * fromdata - data for frombuffer
- * wrapped - contig to contig transfer function being wrapped
- * wrappeddata - data for wrapped
- * init_dest - 1 means to memset the dest buffer to 0 before calling wrapped.
- * out_needs_api - if NPY_TRUE, check for (and break on) Python API errors.
- *
- * Returns NPY_SUCCEED or NPY_FAIL.
- */
-NPY_NO_EXPORT int
-wrap_aligned_contig_transfer_function(
-            npy_intp src_itemsize, npy_intp dst_itemsize,
-            PyArray_StridedUnaryOp *tobuffer, NpyAuxData *todata,
-            PyArray_StridedUnaryOp *frombuffer, NpyAuxData *fromdata,
-            PyArray_StridedUnaryOp *wrapped, NpyAuxData *wrappeddata,
-            int init_dest,
-            int out_needs_api,
-            PyArray_StridedUnaryOp **out_stransfer,
-            NpyAuxData **out_transferdata)
-{
-    _align_wrap_data *data;
-    npy_intp basedatasize, datasize;
-
-    /* Round up the structure size to 16-byte boundary */
-    basedatasize = (sizeof(_align_wrap_data)+15)&(-0x10);
-    /* Add space for two low level buffers */
-    datasize = basedatasize +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_itemsize +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_itemsize;
-
-    /* Allocate the data, and populate it */
-    data = (_align_wrap_data *)PyArray_malloc(datasize);
-    if (data == NULL) {
-        PyErr_NoMemory();
-        return NPY_FAIL;
-    }
-    data->base.free = &_align_wrap_data_free;
-    data->base.clone = &_align_wrap_data_clone;
-    data->tobuffer = tobuffer;
-    data->todata = todata;
-    data->frombuffer = frombuffer;
-    data->fromdata = fromdata;
-    data->wrapped = wrapped;
-    data->wrappeddata = wrappeddata;
-    data->src_itemsize = src_itemsize;
-    data->dst_itemsize = dst_itemsize;
-    data->bufferin = (char *)data + basedatasize;
-    data->bufferout = data->bufferin +
-                NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_itemsize;
-    data->init_dest = (npy_bool) init_dest;
-    data->out_needs_api = (npy_bool) out_needs_api;
-
-    /* Set the function and data */
-    *out_stransfer = &_strided_to_strided_contig_align_wrap;
-    *out_transferdata = (NpyAuxData *)data;
-
-    return NPY_SUCCEED;
-}
 
 /*************************** WRAP DTYPE COPY/SWAP *************************/
 /* Wraps the dtype copy swap function */
@@ -527,14 +503,14 @@ static void _wrap_copy_swap_data_free(NpyAuxData *data)
 {
     _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)data;
     Py_DECREF(d->arr);
-    PyArray_free(data);
+    PyMem_Free(data);
 }
 
 /* wrap copy swap data copy function */
 static NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
 {
     _wrap_copy_swap_data *newdata =
-        (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
+        (_wrap_copy_swap_data *)PyMem_Malloc(sizeof(_wrap_copy_swap_data));
     if (newdata == NULL) {
         return NULL;
     }
@@ -546,32 +522,35 @@ static NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
 }
 
 static int
-_strided_to_strided_wrap_copy_swap(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
+_strided_to_strided_wrap_copy_swap(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)auxdata;
 
     /* We assume that d->copyswapn should not be able to error. */
     d->copyswapn(dst, dst_stride, src, src_stride, N, d->swap, d->arr);
     return 0;
 }
 
-/* This only gets used for custom data types and for Unicode when swapping */
+/*
+ * This function is used only via `get_wrapped_legacy_cast_function`
+ * when we wrap a legacy DType (or explicitly fall back to the legacy
+ * wrapping) for an internal cast.
+ */
 static int
-wrap_copy_swap_function(int aligned,
-                npy_intp src_stride, npy_intp dst_stride,
-                PyArray_Descr *dtype,
-                int should_swap,
-                PyArray_StridedUnaryOp **out_stransfer,
-                NpyAuxData **out_transferdata)
+wrap_copy_swap_function(
+        PyArray_Descr *dtype, int should_swap,
+        PyArrayMethod_StridedLoop **out_stransfer,
+        NpyAuxData **out_transferdata)
 {
-    _wrap_copy_swap_data *data;
-    npy_intp shape = 1;
-
     /* Allocate the data for the copy swap */
-    data = (_wrap_copy_swap_data *)PyArray_malloc(sizeof(_wrap_copy_swap_data));
+    _wrap_copy_swap_data *data = PyMem_Malloc(sizeof(_wrap_copy_swap_data));
     if (data == NULL) {
         PyErr_NoMemory();
         *out_stransfer = NULL;
@@ -589,13 +568,14 @@ wrap_copy_swap_function(int aligned,
      *       The copyswap functions shouldn't need that.
      */
     Py_INCREF(dtype);
+    npy_intp shape = 1;
     data->arr = (PyArrayObject *)PyArray_NewFromDescr_int(
             &PyArray_Type, dtype,
             1, &shape, NULL, NULL,
             0, NULL, NULL,
             0, 1);
     if (data->arr == NULL) {
-        PyArray_free(data);
+        PyMem_Free(data);
         return NPY_FAIL;
     }
 
@@ -621,14 +601,14 @@ static void _strided_cast_data_free(NpyAuxData *data)
     _strided_cast_data *d = (_strided_cast_data *)data;
     Py_DECREF(d->aip);
     Py_DECREF(d->aop);
-    PyArray_free(data);
+    PyMem_Free(data);
 }
 
 /* strided cast data copy function */
 static NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
 {
     _strided_cast_data *newdata =
-            (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
+            (_strided_cast_data *)PyMem_Malloc(sizeof(_strided_cast_data));
     if (newdata == NULL) {
         return NULL;
     }
@@ -641,12 +621,16 @@ static NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
 }
 
 static int
-_aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_aligned_strided_to_strided_cast(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _strided_cast_data *d = (_strided_cast_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _strided_cast_data *d = (_strided_cast_data *)auxdata;
     PyArray_VectorUnaryFunc *castfunc = d->castfunc;
     PyArrayObject *aip = d->aip, *aop = d->aop;
     npy_bool needs_api = d->needs_api;
@@ -672,11 +656,16 @@ _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
 
 /* This one requires src be of type NPY_OBJECT */
 static int
-_aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_aligned_strided_to_strided_cast_decref_src(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
     _strided_cast_data *d = (_strided_cast_data *)data;
     PyArray_VectorUnaryFunc *castfunc = d->castfunc;
     PyArrayObject *aip = d->aip, *aop = d->aop;
@@ -706,12 +695,15 @@ _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
 }
 
 static int
-_aligned_contig_to_contig_cast(char *dst, npy_intp NPY_UNUSED(dst_stride),
-                        char *src, npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(itemsize),
-                        NpyAuxData *data)
+_aligned_contig_to_contig_cast(
+        PyArrayMethod_Context *NPY_UNUSED(context), char * const*args,
+        const npy_intp *dimensions, const npy_intp *NPY_UNUSED(strides),
+        NpyAuxData *auxdata)
 {
-    _strided_cast_data *d = (_strided_cast_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+
+    _strided_cast_data *d = (_strided_cast_data *)auxdata;
     npy_bool needs_api = d->needs_api;
 
     d->castfunc(src, dst, N, d->aip, d->aop);
@@ -725,43 +717,6 @@ _aligned_contig_to_contig_cast(char *dst, npy_intp NPY_UNUSED(dst_stride),
     return 0;
 }
 
-static int
-get_nbo_cast_numeric_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            int src_type_num, int dst_type_num,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
-{
-    /* Emit a warning if complex imaginary is being cast away */
-    if (PyTypeNum_ISCOMPLEX(src_type_num) &&
-                    !PyTypeNum_ISCOMPLEX(dst_type_num) &&
-                    !PyTypeNum_ISBOOL(dst_type_num)) {
-        static PyObject *cls = NULL;
-        int ret;
-        npy_cache_import("numpy.core", "ComplexWarning", &cls);
-        if (cls == NULL) {
-            return NPY_FAIL;
-        }
-        ret = PyErr_WarnEx(cls,
-                "Casting complex values to real discards "
-                "the imaginary part", 1);
-        if (ret < 0) {
-            return NPY_FAIL;
-        }
-    }
-
-    *out_stransfer = PyArray_GetStridedNumericCastFn(aligned,
-                                src_stride, dst_stride,
-                                src_type_num, dst_type_num);
-    *out_transferdata = NULL;
-    if (*out_stransfer == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "unexpected error in GetStridedNumericCastFn");
-        return NPY_FAIL;
-    }
-
-    return NPY_SUCCEED;
-}
 
 /*
  * Does a datetime->datetime, timedelta->timedelta,
@@ -791,15 +746,15 @@ typedef struct {
 static void _strided_datetime_cast_data_free(NpyAuxData *data)
 {
     _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
-    PyArray_free(d->tmp_buffer);
-    PyArray_free(data);
+    PyMem_Free(d->tmp_buffer);
+    PyMem_Free(data);
 }
 
 /* strided datetime cast data copy function */
 static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
 {
     _strided_datetime_cast_data *newdata =
-            (_strided_datetime_cast_data *)PyArray_malloc(
+            (_strided_datetime_cast_data *)PyMem_Malloc(
                                         sizeof(_strided_datetime_cast_data));
     if (newdata == NULL) {
         return NULL;
@@ -807,9 +762,9 @@ static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
 
     memcpy(newdata, data, sizeof(_strided_datetime_cast_data));
     if (newdata->tmp_buffer != NULL) {
-        newdata->tmp_buffer = PyArray_malloc(newdata->src_itemsize + 1);
+        newdata->tmp_buffer = PyMem_Malloc(newdata->src_itemsize + 1);
         if (newdata->tmp_buffer == NULL) {
-            PyArray_free(newdata);
+            PyMem_Free(newdata);
             return NULL;
         }
     }
@@ -818,12 +773,16 @@ static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
 }
 
 static int
-_strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_datetime_general_cast(
+        PyArrayMethod_Context *NPY_UNUSED(context), char * const*args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)auxdata;
     npy_int64 dt;
     npy_datetimestruct dts;
 
@@ -851,12 +810,16 @@ _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
 }
 
 static int
-_strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_datetime_cast(
+        PyArrayMethod_Context *NPY_UNUSED(context), char * const*args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)auxdata;
     npy_int64 num = d->num, denom = d->denom;
     npy_int64 dt;
 
@@ -883,13 +846,16 @@ _strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
 }
 
 static int
-_aligned_strided_to_strided_datetime_cast(char *dst,
-                        npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_aligned_strided_to_strided_datetime_cast(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)auxdata;
     npy_int64 num = d->num, denom = d->denom;
     npy_int64 dt;
 
@@ -916,12 +882,16 @@ _aligned_strided_to_strided_datetime_cast(char *dst,
 }
 
 static int
-_strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
+_strided_to_strided_datetime_to_string(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)auxdata;
     npy_intp dst_itemsize = d->dst_itemsize;
     npy_int64 dt;
     npy_datetimestruct dts;
@@ -951,12 +921,17 @@ _strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
 }
 
 static int
-_strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_string_to_datetime(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)auxdata;
     npy_datetimestruct dts;
     char *tmp_buffer = d->tmp_buffer;
     char *tmp;
@@ -1009,7 +984,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
 NPY_NO_EXPORT int
 get_nbo_cast_datetime_transfer_function(int aligned,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata)
 {
     PyArray_DatetimeMetaData *src_meta, *dst_meta;
@@ -1032,7 +1007,7 @@ get_nbo_cast_datetime_transfer_function(int aligned,
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_datetime_cast_data *)PyArray_malloc(
+    data = (_strided_datetime_cast_data *)PyMem_Malloc(
                                     sizeof(_strided_datetime_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
@@ -1084,7 +1059,7 @@ get_nbo_cast_datetime_transfer_function(int aligned,
 NPY_NO_EXPORT int
 get_nbo_datetime_to_string_transfer_function(
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata)
+        PyArrayMethod_StridedLoop **out_stransfer, NpyAuxData **out_transferdata)
 {
     PyArray_DatetimeMetaData *src_meta;
     _strided_datetime_cast_data *data;
@@ -1095,7 +1070,7 @@ get_nbo_datetime_to_string_transfer_function(
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_datetime_cast_data *)PyArray_malloc(
+    data = (_strided_datetime_cast_data *)PyMem_Malloc(
                                     sizeof(_strided_datetime_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
@@ -1124,72 +1099,45 @@ get_nbo_datetime_to_string_transfer_function(
     return NPY_SUCCEED;
 }
 
+
 NPY_NO_EXPORT int
 get_datetime_to_unicode_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
-    NpyAuxData *castdata = NULL, *todata = NULL, *fromdata = NULL;
-    PyArray_StridedUnaryOp *caststransfer, *tobuffer, *frombuffer;
     PyArray_Descr *str_dtype;
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
     str_dtype = PyArray_DescrNewFromType(NPY_STRING);
-    str_dtype->elsize = dst_dtype->elsize / 4;
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
+    str_dtype->elsize = dst_dtype->elsize / 4;
 
-    /* Get the copy/swap operation to dst */
-    if (PyArray_GetDTypeCopySwapFn(aligned,
-                            src_stride, src_dtype->elsize,
-                            src_dtype,
-                            &tobuffer, &todata) != NPY_SUCCEED) {
-        Py_DECREF(str_dtype);
-        return NPY_FAIL;
-    }
+    /* ensured in resolve_descriptors for simplicity */
+    assert(PyDataType_ISNOTSWAPPED(src_dtype));
 
     /* Get the NBO datetime to string aligned contig function */
     if (get_nbo_datetime_to_string_transfer_function(
             src_dtype, str_dtype,
-            &caststransfer, &castdata) != NPY_SUCCEED) {
+            out_stransfer, out_transferdata) != NPY_SUCCEED) {
         Py_DECREF(str_dtype);
-        NPY_AUXDATA_FREE(todata);
         return NPY_FAIL;
     }
 
-    /* Get the cast operation to dst */
-    if (PyArray_GetDTypeTransferFunction(aligned,
-                            str_dtype->elsize, dst_stride,
-                            str_dtype, dst_dtype,
-                            0,
-                            &frombuffer, &fromdata,
-                            out_needs_api) != NPY_SUCCEED) {
-        Py_DECREF(str_dtype);
-        NPY_AUXDATA_FREE(todata);
-        NPY_AUXDATA_FREE(castdata);
-        return NPY_FAIL;
-    }
-
-    /* Wrap it all up in a new transfer function + data */
-    if (wrap_aligned_contig_transfer_function(
-                        src_dtype->elsize, str_dtype->elsize,
-                        tobuffer, todata,
-                        frombuffer, fromdata,
-                        caststransfer, castdata,
-                        PyDataType_FLAGCHK(str_dtype, NPY_NEEDS_INIT),
-                        *out_needs_api,
-                        out_stransfer, out_transferdata) != NPY_SUCCEED) {
-        NPY_AUXDATA_FREE(castdata);
-        NPY_AUXDATA_FREE(todata);
-        NPY_AUXDATA_FREE(fromdata);
-        return NPY_FAIL;
-    }
-
+    int res = wrap_aligned_transferfunction(
+            aligned, 0,  /* no need to ensure contiguous */
+            src_stride, dst_stride,
+            src_dtype, dst_dtype,
+            src_dtype, str_dtype,
+            out_stransfer, out_transferdata, out_needs_api);
     Py_DECREF(str_dtype);
+    if (res < 0) {
+        return NPY_FAIL;
+    }
 
     return NPY_SUCCEED;
 }
@@ -1197,7 +1145,7 @@ get_datetime_to_unicode_transfer_function(int aligned,
 NPY_NO_EXPORT int
 get_nbo_string_to_datetime_transfer_function(
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata)
+        PyArrayMethod_StridedLoop **out_stransfer, NpyAuxData **out_transferdata)
 {
     PyArray_DatetimeMetaData *dst_meta;
     _strided_datetime_cast_data *data;
@@ -1208,7 +1156,7 @@ get_nbo_string_to_datetime_transfer_function(
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_datetime_cast_data *)PyArray_malloc(
+    data = (_strided_datetime_cast_data *)PyMem_Malloc(
                                     sizeof(_strided_datetime_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
@@ -1219,10 +1167,10 @@ get_nbo_string_to_datetime_transfer_function(
     data->base.free = &_strided_datetime_cast_data_free;
     data->base.clone = &_strided_datetime_cast_data_clone;
     data->src_itemsize = src_dtype->elsize;
-    data->tmp_buffer = PyArray_malloc(data->src_itemsize + 1);
+    data->tmp_buffer = PyMem_Malloc(data->src_itemsize + 1);
     if (data->tmp_buffer == NULL) {
         PyErr_NoMemory();
-        PyArray_free(data);
+        PyMem_Free(data);
         *out_stransfer = NULL;
         *out_transferdata = NULL;
         return NPY_FAIL;
@@ -1248,12 +1196,10 @@ NPY_NO_EXPORT int
 get_unicode_to_datetime_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
-    NpyAuxData *castdata = NULL, *todata = NULL, *fromdata = NULL;
-    PyArray_StridedUnaryOp *caststransfer, *tobuffer, *frombuffer;
     PyArray_Descr *str_dtype;
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
@@ -1264,55 +1210,25 @@ get_unicode_to_datetime_transfer_function(int aligned,
     assert(src_dtype->type_num == NPY_UNICODE);
     str_dtype->elsize = src_dtype->elsize / 4;
 
-    /* Get the cast operation from src */
-    if (PyArray_GetDTypeTransferFunction(aligned,
-                            src_stride, str_dtype->elsize,
-                            src_dtype, str_dtype,
-                            0,
-                            &tobuffer, &todata,
-                            out_needs_api) != NPY_SUCCEED) {
-        Py_DECREF(str_dtype);
-        return NPY_FAIL;
-    }
-
-    /* Get the string to NBO datetime aligned contig function */
+    /* Get the string to NBO datetime aligned function */
     if (get_nbo_string_to_datetime_transfer_function(
             str_dtype, dst_dtype,
-            &caststransfer, &castdata) != NPY_SUCCEED) {
+            out_stransfer, out_transferdata) != NPY_SUCCEED) {
         Py_DECREF(str_dtype);
-        NPY_AUXDATA_FREE(todata);
         return NPY_FAIL;
     }
 
-    /* Get the copy/swap operation to dst */
-    if (PyArray_GetDTypeCopySwapFn(aligned,
-                            dst_dtype->elsize, dst_stride,
-                            dst_dtype,
-                            &frombuffer, &fromdata) != NPY_SUCCEED) {
-        Py_DECREF(str_dtype);
-        NPY_AUXDATA_FREE(todata);
-        NPY_AUXDATA_FREE(castdata);
-        return NPY_FAIL;
-    }
-
-    /* Wrap it all up in a new transfer function + data */
-    if (wrap_aligned_contig_transfer_function(
-                        str_dtype->elsize, dst_dtype->elsize,
-                        tobuffer, todata,
-                        frombuffer, fromdata,
-                        caststransfer, castdata,
-                        PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
-                        *out_needs_api,
-                        out_stransfer, out_transferdata) != NPY_SUCCEED) {
-        Py_DECREF(str_dtype);
-        NPY_AUXDATA_FREE(castdata);
-        NPY_AUXDATA_FREE(todata);
-        NPY_AUXDATA_FREE(fromdata);
-        return NPY_FAIL;
-    }
-
+    int res = wrap_aligned_transferfunction(
+            aligned, 0,  /* no need to ensure contiguous */
+            src_stride, dst_stride,
+            src_dtype, dst_dtype,
+            str_dtype, dst_dtype,
+            out_stransfer, out_transferdata, out_needs_api);
     Py_DECREF(str_dtype);
 
+    if (res < 0) {
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -1322,7 +1238,7 @@ get_legacy_dtype_cast_function(
         int aligned, npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
         int move_references,
-        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata,
+        PyArrayMethod_StridedLoop **out_stransfer, NpyAuxData **out_transferdata,
         int *out_needs_api, int *out_needs_wrap)
 {
     _strided_cast_data *data;
@@ -1374,7 +1290,7 @@ get_legacy_dtype_cast_function(
     }
 
     /* Allocate the data for the casting */
-    data = (_strided_cast_data *)PyArray_malloc(sizeof(_strided_cast_data));
+    data = (_strided_cast_data *)PyMem_Malloc(sizeof(_strided_cast_data));
     if (data == NULL) {
         PyErr_NoMemory();
         *out_stransfer = NULL;
@@ -1398,7 +1314,7 @@ get_legacy_dtype_cast_function(
     else {
         tmp_dtype = PyArray_DescrNewByteorder(src_dtype, NPY_NATIVE);
         if (tmp_dtype == NULL) {
-            PyArray_free(data);
+            PyMem_Free(data);
             return NPY_FAIL;
         }
     }
@@ -1408,7 +1324,7 @@ get_legacy_dtype_cast_function(
             0, NULL, NULL,
             0, 1);
     if (data->aip == NULL) {
-        PyArray_free(data);
+        PyMem_Free(data);
         return NPY_FAIL;
     }
     /*
@@ -1425,7 +1341,7 @@ get_legacy_dtype_cast_function(
         tmp_dtype = PyArray_DescrNewByteorder(dst_dtype, NPY_NATIVE);
         if (tmp_dtype == NULL) {
             Py_DECREF(data->aip);
-            PyArray_free(data);
+            PyMem_Free(data);
             return NPY_FAIL;
         }
     }
@@ -1436,7 +1352,7 @@ get_legacy_dtype_cast_function(
             0, 1);
     if (data->aop == NULL) {
         Py_DECREF(data->aip);
-        PyArray_free(data);
+        PyMem_Free(data);
         return NPY_FAIL;
     }
 
@@ -1464,224 +1380,24 @@ get_legacy_dtype_cast_function(
 }
 
 
-static int
-get_nbo_cast_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *out_needs_api,
-                            int *out_needs_wrap)
-{
-    if (PyTypeNum_ISNUMBER(src_dtype->type_num) &&
-                    PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
-        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
-                          !PyArray_ISNBO(dst_dtype->byteorder);
-        return get_nbo_cast_numeric_transfer_function(aligned,
-                                    src_stride, dst_stride,
-                                    src_dtype->type_num, dst_dtype->type_num,
-                                    out_stransfer, out_transferdata);
-    }
-
-    if (src_dtype->type_num == NPY_DATETIME ||
-            src_dtype->type_num == NPY_TIMEDELTA ||
-            dst_dtype->type_num == NPY_DATETIME ||
-            dst_dtype->type_num == NPY_TIMEDELTA) {
-        /* A parameterized type, datetime->datetime sometimes needs casting */
-        if ((src_dtype->type_num == NPY_DATETIME &&
-                    dst_dtype->type_num == NPY_DATETIME) ||
-                (src_dtype->type_num == NPY_TIMEDELTA &&
-                    dst_dtype->type_num == NPY_TIMEDELTA)) {
-            *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
-                              !PyArray_ISNBO(dst_dtype->byteorder);
-            return get_nbo_cast_datetime_transfer_function(aligned,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
-        }
-
-        /*
-         * Datetime <-> string conversions can be handled specially.
-         * The functions may raise an error if the strings have no
-         * space, or can't be parsed properly.
-         */
-        if (src_dtype->type_num == NPY_DATETIME) {
-            switch (dst_dtype->type_num) {
-                case NPY_STRING:
-                    *out_needs_api = 1;
-                    *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder);
-                    return get_nbo_datetime_to_string_transfer_function(
-                            src_dtype, dst_dtype,
-                            out_stransfer, out_transferdata);
-
-                case NPY_UNICODE:
-                    return get_datetime_to_unicode_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata,
-                                        out_needs_api);
-            }
-        }
-        else if (dst_dtype->type_num == NPY_DATETIME) {
-            switch (src_dtype->type_num) {
-                case NPY_STRING:
-                    *out_needs_api = 1;
-                    *out_needs_wrap = !PyArray_ISNBO(dst_dtype->byteorder);
-                    return get_nbo_string_to_datetime_transfer_function(
-                            src_dtype, dst_dtype,
-                            out_stransfer, out_transferdata);
-
-                case NPY_UNICODE:
-                    return get_unicode_to_datetime_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata,
-                                        out_needs_api);
-            }
-        }
-    }
-
-    return get_legacy_dtype_cast_function(
-            aligned, src_stride, dst_stride, src_dtype, dst_dtype,
-            move_references, out_stransfer, out_transferdata,
-            out_needs_api, out_needs_wrap);
-}
-
-
-NPY_NO_EXPORT int
-wrap_aligned_contig_transfer_function_with_copyswapn(
-        int aligned, npy_intp src_stride, npy_intp dst_stride,
-        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata,
-        int *out_needs_api,
-        PyArray_StridedUnaryOp *caststransfer, NpyAuxData *castdata)
-{
-    NpyAuxData *todata = NULL, *fromdata = NULL;
-    PyArray_StridedUnaryOp *tobuffer = NULL, *frombuffer = NULL;
-    npy_intp src_itemsize = src_dtype->elsize;
-    npy_intp dst_itemsize = dst_dtype->elsize;
-
-    /* Get the copy/swap operation from src */
-    PyArray_GetDTypeCopySwapFn(
-            aligned, src_stride, src_itemsize, src_dtype, &tobuffer, &todata);
-
-    if (!PyDataType_REFCHK(dst_dtype)) {
-        /* Copying from buffer is a simple copy/swap operation */
-        PyArray_GetDTypeCopySwapFn(
-                aligned, dst_itemsize, dst_stride, dst_dtype,
-                &frombuffer, &fromdata);
-    }
-    else {
-        /*
-         * Since the buffer is initialized to NULL, need to move the
-         * references in order to DECREF the existing data.
-         */
-         /* Object types cannot be byte swapped */
-        assert(PyDataType_ISNOTSWAPPED(dst_dtype));
-        /* The loop already needs the python api if this is reached */
-        assert(*out_needs_api);
-
-        if (PyArray_GetDTypeTransferFunction(
-                aligned, dst_itemsize, dst_stride,
-                dst_dtype, dst_dtype, 1,
-                &frombuffer, &fromdata, out_needs_api) != NPY_SUCCEED) {
-            return NPY_FAIL;
-        }
-    }
-
-    if (frombuffer == NULL || tobuffer == NULL) {
-        NPY_AUXDATA_FREE(castdata);
-        NPY_AUXDATA_FREE(todata);
-        NPY_AUXDATA_FREE(fromdata);
-        return NPY_FAIL;
-    }
-
-    *out_stransfer = caststransfer;
-
-    /* Wrap it all up in a new transfer function + data */
-    if (wrap_aligned_contig_transfer_function(
-                        src_itemsize, dst_itemsize,
-                        tobuffer, todata,
-                        frombuffer, fromdata,
-                        caststransfer, castdata,
-                        PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
-                        *out_needs_api,
-                        out_stransfer, out_transferdata) != NPY_SUCCEED) {
-        NPY_AUXDATA_FREE(castdata);
-        NPY_AUXDATA_FREE(todata);
-        NPY_AUXDATA_FREE(fromdata);
-        return NPY_FAIL;
-    }
-
-    return NPY_SUCCEED;
-}
-
-
-static int
-get_cast_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *out_needs_api)
-{
-    PyArray_StridedUnaryOp *caststransfer;
-    NpyAuxData *castdata;
-    int needs_wrap = 0;
-
-    if (get_nbo_cast_transfer_function(aligned,
-                            src_stride, dst_stride,
-                            src_dtype, dst_dtype,
-                            move_references,
-                            &caststransfer,
-                            &castdata,
-                            out_needs_api,
-                            &needs_wrap) != NPY_SUCCEED) {
-        return NPY_FAIL;
-    }
-
-    /*
-     * If all native byte order and doesn't need alignment wrapping,
-     * return the function
-     */
-    if (!needs_wrap) {
-        *out_stransfer = caststransfer;
-        *out_transferdata = castdata;
-
-        return NPY_SUCCEED;
-    }
-    /* Otherwise, we have to copy and/or swap to aligned temporaries */
-    else {
-        return wrap_aligned_contig_transfer_function_with_copyswapn(
-                aligned, src_stride, dst_stride, src_dtype, dst_dtype,
-                out_stransfer, out_transferdata, out_needs_api,
-                caststransfer, castdata);
-    }
-}
-
 /**************************** COPY 1 TO N CONTIGUOUS ************************/
 
 /* Copies 1 element to N contiguous elements */
 typedef struct {
     NpyAuxData base;
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *data;
-    npy_intp N, dst_itemsize;
-    /* If this is non-NULL the source type has references needing a decref */
-    PyArray_StridedUnaryOp *stransfer_finish_src;
-    NpyAuxData *data_finish_src;
+    npy_intp N;
+    NPY_cast_info wrapped;
+    /* If finish->func is non-NULL the source needs a decref */
+    NPY_cast_info decref_src;
 } _one_to_n_data;
 
 /* transfer data free function */
 static void _one_to_n_data_free(NpyAuxData *data)
 {
     _one_to_n_data *d = (_one_to_n_data *)data;
-    NPY_AUXDATA_FREE(d->data);
-    NPY_AUXDATA_FREE(d->data_finish_src);
-    PyArray_free(data);
+    NPY_cast_info_xfree(&d->wrapped);
+    NPY_cast_info_xfree(&d->decref_src);
+    PyMem_Free(data);
 }
 
 /* transfer data copy function */
@@ -1691,44 +1407,51 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
     _one_to_n_data *newdata;
 
     /* Allocate the data, and populate it */
-    newdata = (_one_to_n_data *)PyArray_malloc(sizeof(_one_to_n_data));
+    newdata = (_one_to_n_data *)PyMem_Malloc(sizeof(_one_to_n_data));
     if (newdata == NULL) {
         return NULL;
     }
-    memcpy(newdata, data, sizeof(_one_to_n_data));
-    if (d->data != NULL) {
-        newdata->data = NPY_AUXDATA_CLONE(d->data);
-        if (newdata->data == NULL) {
-            PyArray_free(newdata);
-            return NULL;
-        }
+    newdata->base.free = &_one_to_n_data_free;
+    newdata->base.clone = &_one_to_n_data_clone;
+    newdata->N = d->N;
+    /* Initialize in case of error, or if it is unused */
+    NPY_cast_info_init(&newdata->decref_src);
+
+    if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
+        _one_to_n_data_free((NpyAuxData *)newdata);
+        return NULL;
     }
-    if (d->data_finish_src != NULL) {
-        newdata->data_finish_src = NPY_AUXDATA_CLONE(d->data_finish_src);
-        if (newdata->data_finish_src == NULL) {
-            NPY_AUXDATA_FREE(newdata->data);
-            PyArray_free(newdata);
-            return NULL;
-        }
+    if (d->decref_src.func == NULL) {
+        return (NpyAuxData *)newdata;
+    }
+
+    if (NPY_cast_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
+        _one_to_n_data_free((NpyAuxData *)newdata);
+        return NULL;
     }
 
     return (NpyAuxData *)newdata;
 }
 
 static int
-_strided_to_strided_one_to_n(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_one_to_n(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _one_to_n_data *d = (_one_to_n_data *)data;
-    PyArray_StridedUnaryOp *subtransfer = d->stransfer;
-    NpyAuxData *subdata = d->data;
-    npy_intp subN = d->N, dst_itemsize = d->dst_itemsize;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _one_to_n_data *d = (_one_to_n_data *)auxdata;
+
+    const npy_intp subN = d->N;
+    npy_intp sub_strides[2] = {0, d->wrapped.descriptors[1]->elsize};
 
     while (N > 0) {
-        if (subtransfer(
-                dst, dst_itemsize, src, 0, subN, src_itemsize, subdata) < 0) {
+        char *sub_args[2] = {src, dst};
+        if (d->wrapped.func(&d->wrapped.context,
+                sub_args, &subN, sub_strides, d->wrapped.auxdata) < 0) {
             return -1;
         }
 
@@ -1740,25 +1463,30 @@ _strided_to_strided_one_to_n(char *dst, npy_intp dst_stride,
 }
 
 static int
-_strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_one_to_n_with_finish(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _one_to_n_data *d = (_one_to_n_data *)data;
-    PyArray_StridedUnaryOp *subtransfer = d->stransfer,
-                *stransfer_finish_src = d->stransfer_finish_src;
-    NpyAuxData *subdata = d->data, *data_finish_src = d->data_finish_src;
-    npy_intp subN = d->N, dst_itemsize = d->dst_itemsize;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _one_to_n_data *d = (_one_to_n_data *)auxdata;
+
+    const npy_intp subN = d->N;
+    const npy_intp one_item = 1, zero_stride = 0;
+    npy_intp sub_strides[2] = {0, d->wrapped.descriptors[1]->elsize};
 
     while (N > 0) {
-        if (subtransfer(
-                dst, dst_itemsize, src, 0, subN, src_itemsize, subdata) < 0) {
+        char *sub_args[2] = {src, dst};
+        if (d->wrapped.func(&d->wrapped.context,
+                sub_args, &subN, sub_strides, d->wrapped.auxdata) < 0) {
             return -1;
         }
 
-        if (stransfer_finish_src(
-                NULL, 0, src, 0, 1, src_itemsize, data_finish_src) < 0) {
+        if (d->decref_src.func(&d->decref_src.context,
+                &src, &one_item, &zero_stride, d->decref_src.auxdata) < 0) {
             return -1;
         }
 
@@ -1769,51 +1497,6 @@ _strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
     return 0;
 }
 
-/*
- * Wraps a transfer function to produce one that copies one element
- * of src to N contiguous elements of dst.  If stransfer_finish_src is
- * not NULL, it should be a transfer function which just affects
- * src, for example to do a final DECREF operation for references.
- */
-static int
-wrap_transfer_function_one_to_n(
-                            PyArray_StridedUnaryOp *stransfer_inner,
-                            NpyAuxData *data_inner,
-                            PyArray_StridedUnaryOp *stransfer_finish_src,
-                            NpyAuxData *data_finish_src,
-                            npy_intp dst_itemsize,
-                            npy_intp N,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
-{
-    _one_to_n_data *data;
-
-
-    data = PyArray_malloc(sizeof(_one_to_n_data));
-    if (data == NULL) {
-        PyErr_NoMemory();
-        return NPY_FAIL;
-    }
-
-    data->base.free = &_one_to_n_data_free;
-    data->base.clone = &_one_to_n_data_clone;
-    data->stransfer = stransfer_inner;
-    data->data = data_inner;
-    data->stransfer_finish_src = stransfer_finish_src;
-    data->data_finish_src = data_finish_src;
-    data->N = N;
-    data->dst_itemsize = dst_itemsize;
-
-    if (stransfer_finish_src == NULL) {
-        *out_stransfer = &_strided_to_strided_one_to_n;
-    }
-    else {
-        *out_stransfer = &_strided_to_strided_one_to_n_with_finish;
-    }
-    *out_transferdata = (NpyAuxData *)data;
-
-    return NPY_SUCCEED;
-}
 
 static int
 get_one_to_n_transfer_function(int aligned,
@@ -1821,12 +1504,20 @@ get_one_to_n_transfer_function(int aligned,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             npy_intp N,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
-    PyArray_StridedUnaryOp *stransfer, *stransfer_finish_src = NULL;
-    NpyAuxData *data, *data_finish_src = NULL;
+    _one_to_n_data *data = PyMem_Malloc(sizeof(_one_to_n_data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return NPY_FAIL;
+    }
+
+    data->base.free = &_one_to_n_data_free;
+    data->base.clone = &_one_to_n_data_clone;
+    data->N = N;
+    NPY_cast_info_init(&data->decref_src);  /* In case of error */
 
     /*
      * move_references is set to 0, handled in the wrapping transfer fn,
@@ -1838,33 +1529,31 @@ get_one_to_n_transfer_function(int aligned,
                     0, dst_dtype->elsize,
                     src_dtype, dst_dtype,
                     0,
-                    &stransfer, &data,
+                    &data->wrapped,
                     out_needs_api) != NPY_SUCCEED) {
+        NPY_AUXDATA_FREE((NpyAuxData *)data);
         return NPY_FAIL;
     }
 
     /* If the src object will need a DECREF, set src_dtype */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
-        if (get_decsrcref_transfer_function(aligned,
+        if (get_decref_transfer_function(aligned,
                             src_stride,
                             src_dtype,
-                            &stransfer_finish_src,
-                            &data_finish_src,
+                            &data->decref_src,
                             out_needs_api) != NPY_SUCCEED) {
-            NPY_AUXDATA_FREE(data);
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
     }
 
-    if (wrap_transfer_function_one_to_n(stransfer, data,
-                            stransfer_finish_src, data_finish_src,
-                            dst_dtype->elsize,
-                            N,
-                            out_stransfer, out_transferdata) != NPY_SUCCEED) {
-        NPY_AUXDATA_FREE(data);
-        NPY_AUXDATA_FREE(data_finish_src);
-        return NPY_FAIL;
+    if (data->decref_src.func == NULL) {
+        *out_stransfer = &_strided_to_strided_one_to_n;
     }
+    else {
+        *out_stransfer = &_strided_to_strided_one_to_n_with_finish;
+    }
+    *out_transferdata = (NpyAuxData *)data;
 
     return NPY_SUCCEED;
 }
@@ -1874,17 +1563,17 @@ get_one_to_n_transfer_function(int aligned,
 /* Copies N contiguous elements to N contiguous elements */
 typedef struct {
     NpyAuxData base;
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *data;
-    npy_intp N, src_itemsize, dst_itemsize;
+    NPY_cast_info wrapped;
+    npy_intp N;
+    npy_intp strides[2];  /* avoid look up on the dtype (dst can be NULL) */
 } _n_to_n_data;
 
 /* transfer data free function */
 static void _n_to_n_data_free(NpyAuxData *data)
 {
     _n_to_n_data *d = (_n_to_n_data *)data;
-    NPY_AUXDATA_FREE(d->data);
-    PyArray_free(data);
+    NPY_cast_info_xfree(&d->wrapped);
+    PyMem_Free(data);
 }
 
 /* transfer data copy function */
@@ -1894,38 +1583,47 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
     _n_to_n_data *newdata;
 
     /* Allocate the data, and populate it */
-    newdata = (_n_to_n_data *)PyArray_malloc(sizeof(_n_to_n_data));
+    newdata = (_n_to_n_data *)PyMem_Malloc(sizeof(_n_to_n_data));
     if (newdata == NULL) {
         return NULL;
     }
-    memcpy(newdata, data, sizeof(_n_to_n_data));
-    if (newdata->data != NULL) {
-        newdata->data = NPY_AUXDATA_CLONE(d->data);
-        if (newdata->data == NULL) {
-            PyArray_free(newdata);
-            return NULL;
-        }
+    *newdata = *d;
+
+    if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
+        _n_to_n_data_free((NpyAuxData *)newdata);
     }
 
     return (NpyAuxData *)newdata;
 }
 
 static int
-_strided_to_strided_n_to_n(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
+_strided_to_strided_1_to_1(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _n_to_n_data *d = (_n_to_n_data *)data;
-    PyArray_StridedUnaryOp *subtransfer = d->stransfer;
-    NpyAuxData *subdata = d->data;
-    npy_intp subN = d->N, src_subitemsize = d->src_itemsize,
-                dst_subitemsize = d->dst_itemsize;
+    _n_to_n_data *d = (_n_to_n_data *)auxdata;
+    return d->wrapped.func(&d->wrapped.context,
+            args, dimensions, strides, d->wrapped.auxdata);
+}
+
+static int
+_strided_to_strided_n_to_n(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
+{
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _n_to_n_data *d = (_n_to_n_data *)auxdata;
+    npy_intp subN = d->N;
 
     while (N > 0) {
-        if (subtransfer(
-                dst, dst_subitemsize, src, src_subitemsize,
-                subN, src_subitemsize, subdata) < 0) {
+        char *sub_args[2] = {src, dst};
+        if (d->wrapped.func(&d->wrapped.context,
+                sub_args, &subN, d->strides, d->wrapped.auxdata) < 0) {
             return -1;
         }
         src += src_stride;
@@ -1936,106 +1634,93 @@ _strided_to_strided_n_to_n(char *dst, npy_intp dst_stride,
 }
 
 static int
-_contig_to_contig_n_to_n(char *dst, npy_intp NPY_UNUSED(dst_stride),
-                        char *src, npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
+_contig_to_contig_n_to_n(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *NPY_UNUSED(strides),
+        NpyAuxData *auxdata)
 {
-    _n_to_n_data *d = (_n_to_n_data *)data;
-    PyArray_StridedUnaryOp *subtransfer = d->stransfer;
-    NpyAuxData *subdata = d->data;
-    npy_intp subN = d->N, src_subitemsize = d->src_itemsize,
-                dst_subitemsize = d->dst_itemsize;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
 
-    if (subtransfer(
-            dst, dst_subitemsize, src, src_subitemsize,
-            subN*N, src_subitemsize, subdata) < 0) {
+    _n_to_n_data *d = (_n_to_n_data *)auxdata;
+    /* Make one large transfer including both outer and inner iteration: */
+    npy_intp subN = N * d->N;
+
+    char *sub_args[2] = {src, dst};
+    if (d->wrapped.func(&d->wrapped.context,
+            sub_args, &subN, d->strides, d->wrapped.auxdata) < 0) {
         return -1;
     }
     return 0;
 }
 
+
 /*
- * Wraps a transfer function to produce one that copies N contiguous elements
- * of src to N contiguous elements of dst.
+ * Note that this function is currently both used for structured dtype
+ * casting as well as a decref function (with `dst_dtype == NULL`)
  */
-static int
-wrap_transfer_function_n_to_n(
-                            PyArray_StridedUnaryOp *stransfer_inner,
-                            NpyAuxData *data_inner,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            npy_intp src_itemsize, npy_intp dst_itemsize,
-                            npy_intp N,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
-{
-    _n_to_n_data *data;
-
-    data = PyArray_malloc(sizeof(_n_to_n_data));
-    if (data == NULL) {
-        PyErr_NoMemory();
-        return NPY_FAIL;
-    }
-
-    data->base.free = &_n_to_n_data_free;
-    data->base.clone = &_n_to_n_data_clone;
-    data->stransfer = stransfer_inner;
-    data->data = data_inner;
-    data->N = N;
-    data->src_itemsize = src_itemsize;
-    data->dst_itemsize = dst_itemsize;
-
-    /*
-     * If the N subarray elements exactly fit in the strides,
-     * then can do a faster contiguous transfer.
-     */
-    if (src_stride == N * src_itemsize &&
-                    dst_stride == N * dst_itemsize) {
-        *out_stransfer = &_contig_to_contig_n_to_n;
-    }
-    else {
-        *out_stransfer = &_strided_to_strided_n_to_n;
-    }
-    *out_transferdata = (NpyAuxData *)data;
-
-    return NPY_SUCCEED;
-}
-
 static int
 get_n_to_n_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             npy_intp N,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *data;
+    _n_to_n_data *data = PyMem_Malloc(sizeof(_n_to_n_data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return NPY_FAIL;
+    }
+    data->base.free = &_n_to_n_data_free;
+    data->base.clone = &_n_to_n_data_clone;
+    data->N = N;
+
+    if (N != 1) {
+        /*
+         * If N == 1, we can use the original strides,
+         * otherwise fields are contiguous
+         */
+        src_stride = src_dtype->elsize;
+        dst_stride = dst_dtype != NULL ? dst_dtype->elsize : 0;
+        /* Store the wrapped strides for easier access */
+        data->strides[0] = src_stride;
+        data->strides[1] = dst_stride;
+    }
 
     /*
      * src_stride and dst_stride are set to contiguous, because
      * subarrays are always contiguous.
      */
     if (PyArray_GetDTypeTransferFunction(aligned,
-                    src_dtype->elsize, dst_dtype->elsize,
+                    src_stride, dst_stride,
                     src_dtype, dst_dtype,
                     move_references,
-                    &stransfer, &data,
+                    &data->wrapped,
                     out_needs_api) != NPY_SUCCEED) {
+        NPY_AUXDATA_FREE((NpyAuxData *)data);
         return NPY_FAIL;
     }
 
-    if (wrap_transfer_function_n_to_n(stransfer, data,
-                            src_stride, dst_stride,
-                            src_dtype->elsize, dst_dtype->elsize,
-                            N,
-                            out_stransfer,
-                            out_transferdata) != NPY_SUCCEED) {
-        NPY_AUXDATA_FREE(data);
-        return NPY_FAIL;
+    if (N == 1) {
+        /*
+         * No need for wrapping, we can just copy directly. In principle
+         * this step could be optimized away entirely, but it requires
+         * replacing the context (to have the unpacked dtypes).
+         */
+        *out_stransfer = &_strided_to_strided_1_to_1;
     }
+    else if (src_stride == N * src_stride &&
+             dst_stride == N * dst_stride) {
+        /* The subarrays can be coalesced (probably very rarely) */
+        *out_stransfer = &_contig_to_contig_n_to_n;
+    }
+    else {
+        *out_stransfer = &_strided_to_strided_n_to_n;
+    }
+    *out_transferdata = (NpyAuxData *)data;
 
     return NPY_SUCCEED;
 }
@@ -2049,16 +1734,13 @@ typedef struct {
 /* Copies element with subarray broadcasting */
 typedef struct {
     NpyAuxData base;
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *data;
-    npy_intp src_N, dst_N, src_itemsize, dst_itemsize;
-    PyArray_StridedUnaryOp *stransfer_decsrcref;
-    NpyAuxData *data_decsrcref;
-    PyArray_StridedUnaryOp *stransfer_decdstref;
-    NpyAuxData *data_decdstref;
+    NPY_cast_info wrapped;
+    NPY_cast_info decref_src;
+    NPY_cast_info decref_dst;  /* The use-case should probably be deprecated */
+    npy_intp src_N, dst_N;
     /* This gets a run-length encoded representation of the transfer */
     npy_intp run_count;
-    _subarray_broadcast_offsetrun offsetruns;
+    _subarray_broadcast_offsetrun offsetruns[];
 } _subarray_broadcast_data;
 
 
@@ -2066,49 +1748,48 @@ typedef struct {
 static void _subarray_broadcast_data_free(NpyAuxData *data)
 {
     _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
-    NPY_AUXDATA_FREE(d->data);
-    NPY_AUXDATA_FREE(d->data_decsrcref);
-    NPY_AUXDATA_FREE(d->data_decdstref);
-    PyArray_free(data);
+    NPY_cast_info_xfree(&d->wrapped);
+    NPY_cast_info_xfree(&d->decref_src);
+    NPY_cast_info_xfree(&d->decref_dst);
+    PyMem_Free(data);
 }
 
 /* transfer data copy function */
-static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
+static NpyAuxData *_subarray_broadcast_data_clone(NpyAuxData *data)
 {
     _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
-    _subarray_broadcast_data *newdata;
-    npy_intp run_count = d->run_count, structsize;
 
-    structsize = sizeof(_subarray_broadcast_data) +
-                        run_count*sizeof(_subarray_broadcast_offsetrun);
+    npy_intp offsetruns_size = d->run_count*sizeof(_subarray_broadcast_offsetrun);
+    npy_intp structsize = sizeof(_subarray_broadcast_data) + offsetruns_size;
 
     /* Allocate the data and populate it */
-    newdata = (_subarray_broadcast_data *)PyArray_malloc(structsize);
+    _subarray_broadcast_data *newdata = PyMem_Malloc(structsize);
     if (newdata == NULL) {
         return NULL;
     }
-    memcpy(newdata, data, structsize);
-    if (d->data != NULL) {
-        newdata->data = NPY_AUXDATA_CLONE(d->data);
-        if (newdata->data == NULL) {
-            PyArray_free(newdata);
+    newdata->base.free = &_subarray_broadcast_data_free;
+    newdata->base.clone = &_subarray_broadcast_data_clone;
+    newdata->src_N = d->src_N;
+    newdata->dst_N = d->dst_N;
+    newdata->run_count = d->run_count;
+    memcpy(newdata->offsetruns, d->offsetruns, offsetruns_size);
+
+    NPY_cast_info_init(&newdata->decref_src);
+    NPY_cast_info_init(&newdata->decref_dst);
+
+    if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
+        _subarray_broadcast_data_free((NpyAuxData *)newdata);
+        return NULL;
+    }
+    if (d->decref_src.func != NULL) {
+        if (NPY_cast_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
+            _subarray_broadcast_data_free((NpyAuxData *) newdata);
             return NULL;
         }
     }
-    if (d->data_decsrcref != NULL) {
-        newdata->data_decsrcref = NPY_AUXDATA_CLONE(d->data_decsrcref);
-        if (newdata->data_decsrcref == NULL) {
-            NPY_AUXDATA_FREE(newdata->data);
-            PyArray_free(newdata);
-            return NULL;
-        }
-    }
-    if (d->data_decdstref != NULL) {
-        newdata->data_decdstref = NPY_AUXDATA_CLONE(d->data_decdstref);
-        if (newdata->data_decdstref == NULL) {
-            NPY_AUXDATA_FREE(newdata->data);
-            NPY_AUXDATA_FREE(newdata->data_decsrcref);
-            PyArray_free(newdata);
+    if (d->decref_dst.func != NULL) {
+        if (NPY_cast_info_copy(&newdata->decref_dst, &d->decref_dst) < 0) {
+            _subarray_broadcast_data_free((NpyAuxData *) newdata);
             return NULL;
         }
     }
@@ -2117,31 +1798,34 @@ static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
 }
 
 static int
-_strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
+_strided_to_strided_subarray_broadcast(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
-    PyArray_StridedUnaryOp *subtransfer = d->stransfer;
-    NpyAuxData *subdata = d->data;
-    npy_intp run, run_count = d->run_count,
-            src_subitemsize = d->src_itemsize,
-            dst_subitemsize = d->dst_itemsize;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _subarray_broadcast_data *d = (_subarray_broadcast_data *)auxdata;
+    npy_intp run, run_count = d->run_count;
     npy_intp loop_index, offset, count;
-    char *dst_ptr;
-    _subarray_broadcast_offsetrun *offsetruns = &d->offsetruns;
+
+    npy_intp src_subitemsize = d->wrapped.descriptors[0]->elsize;
+    npy_intp dst_subitemsize = d->wrapped.descriptors[1]->elsize;
+
+    npy_intp sub_strides[2] = {src_subitemsize, dst_subitemsize};
 
     while (N > 0) {
         loop_index = 0;
         for (run = 0; run < run_count; ++run) {
-            offset = offsetruns[run].offset;
-            count = offsetruns[run].count;
-            dst_ptr = dst + loop_index*dst_subitemsize;
+            offset = d->offsetruns[run].offset;
+            count = d->offsetruns[run].count;
+            char *dst_ptr = dst + loop_index*dst_subitemsize;
+            char *sub_args[2] = {src + offset, dst_ptr};
             if (offset != -1) {
-                if (subtransfer(
-                        dst_ptr, dst_subitemsize, src + offset, src_subitemsize,
-                        count, src_subitemsize, subdata) < 0) {
+                if (d->wrapped.func(&d->wrapped.context,
+                        sub_args, &count, sub_strides, d->wrapped.auxdata) < 0) {
                     return -1;
                 }
             }
@@ -2160,44 +1844,42 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
 
 
 static int
-_strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
+_strided_to_strided_subarray_broadcast_withrefs(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
-    PyArray_StridedUnaryOp *subtransfer = d->stransfer;
-    NpyAuxData *subdata = d->data;
-    PyArray_StridedUnaryOp *stransfer_decsrcref = d->stransfer_decsrcref;
-    NpyAuxData *data_decsrcref = d->data_decsrcref;
-    PyArray_StridedUnaryOp *stransfer_decdstref = d->stransfer_decdstref;
-    NpyAuxData *data_decdstref = d->data_decdstref;
-    npy_intp run, run_count = d->run_count,
-            src_subitemsize = d->src_itemsize,
-            dst_subitemsize = d->dst_itemsize,
-            src_subN = d->src_N;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _subarray_broadcast_data *d = (_subarray_broadcast_data *)auxdata;
+    npy_intp run, run_count = d->run_count;
     npy_intp loop_index, offset, count;
-    char *dst_ptr;
-    _subarray_broadcast_offsetrun *offsetruns = &d->offsetruns;
+
+    npy_intp src_subitemsize = d->wrapped.descriptors[0]->elsize;
+    npy_intp dst_subitemsize = d->wrapped.descriptors[1]->elsize;
+
+    npy_intp sub_strides[2] = {src_subitemsize, dst_subitemsize};
 
     while (N > 0) {
         loop_index = 0;
         for (run = 0; run < run_count; ++run) {
-            offset = offsetruns[run].offset;
-            count = offsetruns[run].count;
-            dst_ptr = dst + loop_index*dst_subitemsize;
+            offset = d->offsetruns[run].offset;
+            count = d->offsetruns[run].count;
+            char *dst_ptr = dst + loop_index*dst_subitemsize;
+            char *sub_args[2] = {src + offset, dst_ptr};
             if (offset != -1) {
-                if (subtransfer(
-                        dst_ptr, dst_subitemsize, src + offset, src_subitemsize,
-                        count, src_subitemsize, subdata) < 0) {
+                if (d->wrapped.func(&d->wrapped.context,
+                        sub_args, &count, sub_strides, d->wrapped.auxdata) < 0) {
                     return -1;
                 }
             }
             else {
-                if (stransfer_decdstref != NULL) {
-                    if (stransfer_decdstref(
-                            NULL, 0, dst_ptr, dst_subitemsize,
-                            count, dst_subitemsize, data_decdstref) < 0) {
+                if (d->decref_dst.func != NULL) {
+                    if (d->decref_dst.func(&d->decref_dst.context,
+                            &dst_ptr, &count, &dst_subitemsize,
+                            d->decref_dst.auxdata) < 0) {
                         return -1;
                     }
                 }
@@ -2206,10 +1888,10 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
             loop_index += count;
         }
 
-        if (stransfer_decsrcref != NULL) {
-            if (stransfer_decsrcref(
-                    NULL, 0, src, src_subitemsize,
-                    src_subN, src_subitemsize, data_decsrcref) < 0) {
+        if (d->decref_src.func != NULL) {
+            if (d->decref_src.func(&d->decref_src.context,
+                    &src, &d->src_N, &src_subitemsize,
+                    d->decref_src.auxdata) < 0) {
                 return -1;
             }
         }
@@ -2229,24 +1911,30 @@ get_subarray_broadcast_transfer_function(int aligned,
                             npy_intp src_size, npy_intp dst_size,
                             PyArray_Dims src_shape, PyArray_Dims dst_shape,
                             int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
     _subarray_broadcast_data *data;
     npy_intp structsize, loop_index, run, run_size,
              src_index, dst_index, i, ndim;
-    _subarray_broadcast_offsetrun *offsetruns;
 
     structsize = sizeof(_subarray_broadcast_data) +
                         dst_size*sizeof(_subarray_broadcast_offsetrun);
 
     /* Allocate the data and populate it */
-    data = (_subarray_broadcast_data *)PyArray_malloc(structsize);
+    data = (_subarray_broadcast_data *)PyMem_Malloc(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
     }
+    data->base.free = &_subarray_broadcast_data_free;
+    data->base.clone = &_subarray_broadcast_data_clone;
+    data->src_N = src_size;
+    data->dst_N = dst_size;
+
+    NPY_cast_info_init(&data->decref_src);
+    NPY_cast_info_init(&data->decref_dst);
 
     /*
      * move_references is set to 0, handled in the wrapping transfer fn,
@@ -2257,17 +1945,11 @@ get_subarray_broadcast_transfer_function(int aligned,
                     src_dtype->elsize, dst_dtype->elsize,
                     src_dtype, dst_dtype,
                     0,
-                    &data->stransfer, &data->data,
+                    &data->wrapped,
                     out_needs_api) != NPY_SUCCEED) {
-        PyArray_free(data);
+        NPY_AUXDATA_FREE((NpyAuxData *)data);
         return NPY_FAIL;
     }
-    data->base.free = &_subarray_broadcast_data_free;
-    data->base.clone = &_subarray_broadcast_data_clone;
-    data->src_N = src_size;
-    data->dst_N = dst_size;
-    data->src_itemsize = src_dtype->elsize;
-    data->dst_itemsize = dst_dtype->elsize;
 
     /* If the src object will need a DECREF */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
@@ -2275,17 +1957,11 @@ get_subarray_broadcast_transfer_function(int aligned,
                         src_dtype->elsize, 0,
                         src_dtype, NULL,
                         1,
-                        &data->stransfer_decsrcref,
-                        &data->data_decsrcref,
+                        &data->decref_src,
                         out_needs_api) != NPY_SUCCEED) {
-            NPY_AUXDATA_FREE(data->data);
-            PyArray_free(data);
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
-    }
-    else {
-        data->stransfer_decsrcref = NULL;
-        data->data_decsrcref = NULL;
     }
 
     /* If the dst object needs a DECREF to set it to NULL */
@@ -2294,22 +1970,15 @@ get_subarray_broadcast_transfer_function(int aligned,
                         dst_dtype->elsize, 0,
                         dst_dtype, NULL,
                         1,
-                        &data->stransfer_decdstref,
-                        &data->data_decdstref,
+                        &data->decref_dst,
                         out_needs_api) != NPY_SUCCEED) {
-            NPY_AUXDATA_FREE(data->data);
-            NPY_AUXDATA_FREE(data->data_decsrcref);
-            PyArray_free(data);
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
     }
-    else {
-        data->stransfer_decdstref = NULL;
-        data->data_decdstref = NULL;
-    }
 
     /* Calculate the broadcasting and set the offsets */
-    offsetruns = &data->offsetruns;
+    _subarray_broadcast_offsetrun *offsetruns = data->offsetruns;
     ndim = (src_shape.len > dst_shape.len) ? src_shape.len : dst_shape.len;
     for (loop_index = 0; loop_index < dst_size; ++loop_index) {
         npy_intp src_factor = 1;
@@ -2395,8 +2064,8 @@ get_subarray_broadcast_transfer_function(int aligned,
         }
     }
 
-    if (data->stransfer_decsrcref == NULL &&
-                                data->stransfer_decdstref == NULL) {
+    if (data->decref_src.func == NULL &&
+            data->decref_dst.func == NULL) {
         *out_stransfer = &_strided_to_strided_subarray_broadcast;
     }
     else {
@@ -2411,12 +2080,12 @@ get_subarray_broadcast_transfer_function(int aligned,
  * Handles subarray transfer.  To call this, at least one of the dtype's
  * subarrays must be non-NULL
  */
-static int
+NPY_NO_EXPORT int
 get_subarray_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
@@ -2447,36 +2116,13 @@ get_subarray_transfer_function(int aligned,
     }
 
     /*
-     * Just a straight one-element copy.
+     * Copy the src value to all the dst values, the size one can be
+     * special cased for speed.
      */
-    if (dst_size == 1 && src_size == 1) {
-        npy_free_cache_dim_obj(src_shape);
-        npy_free_cache_dim_obj(dst_shape);
+    if ((dst_size == 1 && src_size == 1) || (
+            src_shape.len == dst_shape.len && PyArray_CompareLists(
+                    src_shape.ptr, dst_shape.ptr, src_shape.len))) {
 
-        return PyArray_GetDTypeTransferFunction(aligned,
-                src_stride, dst_stride,
-                src_dtype, dst_dtype,
-                move_references,
-                out_stransfer, out_transferdata,
-                out_needs_api);
-    }
-    /* Copy the src value to all the dst values */
-    else if (src_size == 1) {
-        npy_free_cache_dim_obj(src_shape);
-        npy_free_cache_dim_obj(dst_shape);
-
-        return get_one_to_n_transfer_function(aligned,
-                        src_stride, dst_stride,
-                        src_dtype, dst_dtype,
-                        move_references,
-                        dst_size,
-                        out_stransfer, out_transferdata,
-                        out_needs_api);
-    }
-    /* If the shapes match exactly, do an n to n copy */
-    else if (src_shape.len == dst_shape.len &&
-               PyArray_CompareLists(src_shape.ptr, dst_shape.ptr,
-                                                    src_shape.len)) {
         npy_free_cache_dim_obj(src_shape);
         npy_free_cache_dim_obj(dst_shape);
 
@@ -2487,6 +2133,19 @@ get_subarray_transfer_function(int aligned,
                         src_size,
                         out_stransfer, out_transferdata,
                         out_needs_api);
+    }
+    /* Copy the src value to all the dst values */
+    else if (src_size == 1) {
+        npy_free_cache_dim_obj(src_shape);
+        npy_free_cache_dim_obj(dst_shape);
+
+        return get_one_to_n_transfer_function(aligned,
+                src_stride, dst_stride,
+                src_dtype, dst_dtype,
+                move_references,
+                dst_size,
+                out_stransfer, out_transferdata,
+                out_needs_api);
     }
     /*
      * Copy the subarray with broadcasting, truncating, and zero-padding
@@ -2510,91 +2169,82 @@ get_subarray_transfer_function(int aligned,
 
 /**************************** COPY FIELDS *******************************/
 typedef struct {
-    npy_intp src_offset, dst_offset, src_itemsize;
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *data;
+    npy_intp src_offset, dst_offset;
+    NPY_cast_info info;
 } _single_field_transfer;
 
 typedef struct {
     NpyAuxData base;
     npy_intp field_count;
-
-    _single_field_transfer fields;
+    _single_field_transfer fields[];
 } _field_transfer_data;
+
 
 /* transfer data free function */
 static void _field_transfer_data_free(NpyAuxData *data)
 {
     _field_transfer_data *d = (_field_transfer_data *)data;
-    npy_intp i, field_count;
-    _single_field_transfer *fields;
 
-    field_count = d->field_count;
-    fields = &d->fields;
-
-    for (i = 0; i < field_count; ++i) {
-        NPY_AUXDATA_FREE(fields[i].data);
+    for (npy_intp i = 0; i < d->field_count; ++i) {
+        NPY_cast_info_xfree(&d->fields[i].info);
     }
-    PyArray_free(d);
+    PyMem_Free(d);
 }
 
 /* transfer data copy function */
 static NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
 {
     _field_transfer_data *d = (_field_transfer_data *)data;
-    _field_transfer_data *newdata;
-    npy_intp i, field_count = d->field_count, structsize;
-    _single_field_transfer *fields, *newfields;
 
-    structsize = sizeof(_field_transfer_data) +
+    npy_intp field_count = d->field_count;
+    npy_intp structsize = sizeof(_field_transfer_data) +
                     field_count * sizeof(_single_field_transfer);
 
     /* Allocate the data and populate it */
-    newdata = (_field_transfer_data *)PyArray_malloc(structsize);
+    _field_transfer_data *newdata = PyMem_Malloc(structsize);
     if (newdata == NULL) {
         return NULL;
     }
-    memcpy(newdata, d, structsize);
-    /* Copy all the fields transfer data */
-    fields = &d->fields;
-    newfields = &newdata->fields;
-    for (i = 0; i < field_count; ++i) {
-        if (fields[i].data != NULL) {
-            newfields[i].data = NPY_AUXDATA_CLONE(fields[i].data);
-            if (newfields[i].data == NULL) {
-                for (i = i-1; i >= 0; --i) {
-                    NPY_AUXDATA_FREE(newfields[i].data);
-                }
-                PyArray_free(newdata);
-                return NULL;
-            }
-        }
+    newdata->base = d->base;
+    newdata->field_count = 0;
 
+    /* Copy all the fields transfer data */
+    for (npy_intp i = 0; i < field_count; ++i) {
+        if (NPY_cast_info_copy(&newdata->fields[i].info, &d->fields[i].info) < 0) {
+            NPY_AUXDATA_FREE((NpyAuxData *)newdata);
+            return NULL;
+        }
+        newdata->fields[i].src_offset = d->fields[i].src_offset;
+        newdata->fields[i].dst_offset = d->fields[i].dst_offset;
+        newdata->field_count++;
     }
 
     return (NpyAuxData *)newdata;
 }
 
+
 static int
-_strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
+_strided_to_strided_field_transfer(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
 {
-    _field_transfer_data *d = (_field_transfer_data *)data;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    _field_transfer_data *d = (_field_transfer_data *)auxdata;
     npy_intp i, field_count = d->field_count;
-    _single_field_transfer *field;
+    const npy_intp blocksize = NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
 
     /* Do the transfer a block at a time */
     for (;;) {
-        field = &d->fields;
-        if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
-            for (i = 0; i < field_count; ++i, ++field) {
-                if (field->stransfer(
-                        dst + field->dst_offset, dst_stride,
-                        src + field->src_offset, src_stride,
-                        NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                        field->src_itemsize, field->data) < 0) {
+        if (N > blocksize) {
+            for (i = 0; i < field_count; ++i) {
+                _single_field_transfer field = d->fields[i];
+                char *fargs[2] = {src + field.src_offset, dst + field.dst_offset};
+                if (field.info.func(&field.info.context,
+                        fargs, &blocksize, strides, field.info.auxdata) < 0) {
                     return -1;
                 }
             }
@@ -2603,12 +2253,11 @@ _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
             dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
         }
         else {
-            for (i = 0; i < field_count; ++i, ++field) {
-                if (field->stransfer(
-                        dst + field->dst_offset, dst_stride,
-                        src + field->src_offset, src_stride,
-                        N,
-                        field->src_itemsize, field->data) < 0) {
+            for (i = 0; i < field_count; ++i) {
+                _single_field_transfer field = d->fields[i];
+                char *fargs[2] = {src + field.src_offset, dst + field.dst_offset};
+                if (field.info.func(&field.info.context,
+                        fargs, &N, strides, field.info.auxdata) < 0) {
                     return -1;
                 }
             }
@@ -2621,22 +2270,22 @@ _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
  * Handles fields transfer.  To call this, at least one of the dtypes
  * must have fields. Does not take care of object<->structure conversion
  */
-static int
-get_fields_transfer_function(int aligned,
+NPY_NO_EXPORT int
+get_fields_transfer_function(int NPY_UNUSED(aligned),
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
     PyObject *key, *tup, *title;
     PyArray_Descr *src_fld_dtype, *dst_fld_dtype;
-    npy_int i, field_count, structsize;
+    npy_int i;
+    size_t structsize;
+    Py_ssize_t field_count;
     int src_offset, dst_offset;
     _field_transfer_data *data;
-    _single_field_transfer *fields;
-    int failed = 0;
 
     /*
      * There are three cases to take care of: 1. src is non-structured,
@@ -2650,64 +2299,55 @@ get_fields_transfer_function(int aligned,
         /* Allocate the field-data structure and populate it */
         structsize = sizeof(_field_transfer_data) +
                         (field_count + 1) * sizeof(_single_field_transfer);
-        data = (_field_transfer_data *)PyArray_malloc(structsize);
+        data = PyMem_Malloc(structsize);
         if (data == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
         }
         data->base.free = &_field_transfer_data_free;
         data->base.clone = &_field_transfer_data_clone;
-        fields = &data->fields;
+        data->field_count = 0;
 
         for (i = 0; i < field_count; ++i) {
             key = PyTuple_GET_ITEM(dst_dtype->names, i);
             tup = PyDict_GetItem(dst_dtype->fields, key);
             if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
-                PyArray_free(data);
+                PyMem_Free(data);
                 return NPY_FAIL;
             }
             if (PyArray_GetDTypeTransferFunction(0,
                                     src_stride, dst_stride,
                                     src_dtype, dst_fld_dtype,
                                     0,
-                                    &fields[i].stransfer,
-                                    &fields[i].data,
+                                    &data->fields[i].info,
                                     out_needs_api) != NPY_SUCCEED) {
-                for (i = i-1; i >= 0; --i) {
-                    NPY_AUXDATA_FREE(fields[i].data);
-                }
-                PyArray_free(data);
+                NPY_AUXDATA_FREE((NpyAuxData *)data);
                 return NPY_FAIL;
             }
-            fields[i].src_offset = 0;
-            fields[i].dst_offset = dst_offset;
-            fields[i].src_itemsize = src_dtype->elsize;
+            data->fields[i].src_offset = 0;
+            data->fields[i].dst_offset = dst_offset;
+            data->field_count++;
         }
 
         /*
-         * If references should be decrefd in src, add
-         * another transfer function to do that.
+         * If references should be decrefd in src, add another transfer
+         * function to do that. Since a decref function only uses a single
+         * input, the second one (normally output) just does not matter here.
          */
         if (move_references && PyDataType_REFCHK(src_dtype)) {
-            if (get_decsrcref_transfer_function(0,
+            if (get_decref_transfer_function(0,
                                     src_stride,
                                     src_dtype,
-                                    &fields[field_count].stransfer,
-                                    &fields[field_count].data,
+                                    &data->fields[field_count].info,
                                     out_needs_api) != NPY_SUCCEED) {
-                for (i = 0; i < field_count; ++i) {
-                    NPY_AUXDATA_FREE(fields[i].data);
-                }
-                PyArray_free(data);
+                NPY_AUXDATA_FREE((NpyAuxData *)data);
                 return NPY_FAIL;
             }
-            fields[field_count].src_offset = 0;
-            fields[field_count].dst_offset = 0;
-            fields[field_count].src_itemsize = src_dtype->elsize;
-            field_count++;
+            data->fields[field_count].src_offset = 0;
+            data->fields[field_count].dst_offset = 0;
+            data->field_count = field_count;
         }
-        data->field_count = field_count;
 
         *out_stransfer = &_strided_to_strided_field_transfer;
         *out_transferdata = (NpyAuxData *)data;
@@ -2727,19 +2367,19 @@ get_fields_transfer_function(int aligned,
         /* Allocate the field-data structure and populate it */
         structsize = sizeof(_field_transfer_data) +
                         1 * sizeof(_single_field_transfer);
-        data = (_field_transfer_data *)PyArray_malloc(structsize);
+        data = PyMem_Malloc(structsize);
         if (data == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
         }
         data->base.free = &_field_transfer_data_free;
         data->base.clone = &_field_transfer_data_clone;
-        fields = &data->fields;
 
         key = PyTuple_GET_ITEM(src_dtype->names, 0);
         tup = PyDict_GetItem(src_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O",
                               &src_fld_dtype, &src_offset, &title)) {
+            PyMem_Free(data);
             return NPY_FAIL;
         }
 
@@ -2747,16 +2387,13 @@ get_fields_transfer_function(int aligned,
                                              src_stride, dst_stride,
                                              src_fld_dtype, dst_dtype,
                                              move_references,
-                                             &fields[0].stransfer,
-                                             &fields[0].data,
+                                             &data->fields[0].info,
                                              out_needs_api) != NPY_SUCCEED) {
-            PyArray_free(data);
+            PyMem_Free(data);
             return NPY_FAIL;
         }
-        fields[0].src_offset = src_offset;
-        fields[0].dst_offset = 0;
-        fields[0].src_itemsize = src_fld_dtype->elsize;
-
+        data->fields[0].src_offset = src_offset;
+        data->fields[0].dst_offset = 0;
         data->field_count = 1;
 
         *out_stransfer = &_strided_to_strided_field_transfer;
@@ -2777,14 +2414,14 @@ get_fields_transfer_function(int aligned,
     /* Allocate the field-data structure and populate it */
     structsize = sizeof(_field_transfer_data) +
                     field_count * sizeof(_single_field_transfer);
-    data = (_field_transfer_data *)PyArray_malloc(structsize);
+    data = PyMem_Malloc(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
     }
     data->base.free = &_field_transfer_data_free;
     data->base.clone = &_field_transfer_data_clone;
-    fields = &data->fields;
+    data->field_count = 0;
 
     /* set up the transfer function for each field */
     for (i = 0; i < field_count; ++i) {
@@ -2792,41 +2429,30 @@ get_fields_transfer_function(int aligned,
         tup = PyDict_GetItem(dst_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
-            failed = 1;
-            break;
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
+            return NPY_FAIL;
         }
         key = PyTuple_GET_ITEM(src_dtype->names, i);
         tup = PyDict_GetItem(src_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
-            failed = 1;
-            break;
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
+            return NPY_FAIL;
         }
 
         if (PyArray_GetDTypeTransferFunction(0,
                                              src_stride, dst_stride,
                                              src_fld_dtype, dst_fld_dtype,
                                              move_references,
-                                             &fields[i].stransfer,
-                                             &fields[i].data,
+                                             &data->fields[i].info,
                                              out_needs_api) != NPY_SUCCEED) {
-            failed = 1;
-            break;
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
+            return NPY_FAIL;
         }
-        fields[i].src_offset = src_offset;
-        fields[i].dst_offset = dst_offset;
-        fields[i].src_itemsize = src_fld_dtype->elsize;
+        data->fields[i].src_offset = src_offset;
+        data->fields[i].dst_offset = dst_offset;
+        data->field_count++;
     }
-
-    if (failed) {
-        for (i = i-1; i >= 0; --i) {
-            NPY_AUXDATA_FREE(fields[i].data);
-        }
-        PyArray_free(data);
-        return NPY_FAIL;
-    }
-
-    data->field_count = field_count;
 
     *out_stransfer = &_strided_to_strided_field_transfer;
     *out_transferdata = (NpyAuxData *)data;
@@ -2835,69 +2461,61 @@ get_fields_transfer_function(int aligned,
 }
 
 static int
-get_decsrcref_fields_transfer_function(int aligned,
+get_decref_fields_transfer_function(int NPY_UNUSED(aligned),
                             npy_intp src_stride,
                             PyArray_Descr *src_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
+                            PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api)
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *src_fld_dtype;
-    npy_int i, names_size, field_count, structsize;
+    npy_int i, structsize;
+    Py_ssize_t field_count;
     int src_offset;
-    _field_transfer_data *data;
-    _single_field_transfer *fields;
 
     names = src_dtype->names;
-    names_size = PyTuple_GET_SIZE(src_dtype->names);
+    field_count = PyTuple_GET_SIZE(src_dtype->names);
 
-    field_count = names_size;
+    /* Over-allocating here: less fields may be used */
     structsize = sizeof(_field_transfer_data) +
                     field_count * sizeof(_single_field_transfer);
     /* Allocate the data and populate it */
-    data = (_field_transfer_data *)PyArray_malloc(structsize);
+    _field_transfer_data *data = PyMem_Malloc(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
         return NPY_FAIL;
     }
     data->base.free = &_field_transfer_data_free;
     data->base.clone = &_field_transfer_data_clone;
-    fields = &data->fields;
+    data->field_count = 0;
 
-    field_count = 0;
-    for (i = 0; i < names_size; ++i) {
+    _single_field_transfer *field = data->fields;
+    for (i = 0; i < field_count; ++i) {
         key = PyTuple_GET_ITEM(names, i);
         tup = PyDict_GetItem(src_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
-            PyArray_free(data);
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
         if (PyDataType_REFCHK(src_fld_dtype)) {
             if (out_needs_api) {
                 *out_needs_api = 1;
             }
-            if (get_decsrcref_transfer_function(0,
+            if (get_decref_transfer_function(0,
                                     src_stride,
                                     src_fld_dtype,
-                                    &fields[field_count].stransfer,
-                                    &fields[field_count].data,
+                                    &field->info,
                                     out_needs_api) != NPY_SUCCEED) {
-                for (i = field_count-1; i >= 0; --i) {
-                    NPY_AUXDATA_FREE(fields[i].data);
-                }
-                PyArray_free(data);
+                NPY_AUXDATA_FREE((NpyAuxData *)data);
                 return NPY_FAIL;
             }
-            fields[field_count].src_offset = src_offset;
-            fields[field_count].dst_offset = 0;
-            fields[field_count].src_itemsize = src_dtype->elsize;
-            field_count++;
+            field->src_offset = src_offset;
+            data->field_count++;
+            field++;
         }
     }
-
-    data->field_count = field_count;
 
     *out_stransfer = &_strided_to_strided_field_transfer;
     *out_transferdata = (NpyAuxData *)data;
@@ -2905,120 +2523,48 @@ get_decsrcref_fields_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
-get_setdestzero_fields_transfer_function(int aligned,
-                            npy_intp dst_stride,
-                            PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *out_needs_api)
-{
-    PyObject *names, *key, *tup, *title;
-    PyArray_Descr *dst_fld_dtype;
-    npy_int i, names_size, field_count, structsize;
-    int dst_offset;
-    _field_transfer_data *data;
-    _single_field_transfer *fields;
-
-    names = dst_dtype->names;
-    names_size = PyTuple_GET_SIZE(dst_dtype->names);
-
-    field_count = names_size;
-    structsize = sizeof(_field_transfer_data) +
-                    field_count * sizeof(_single_field_transfer);
-    /* Allocate the data and populate it */
-    data = (_field_transfer_data *)PyArray_malloc(structsize);
-    if (data == NULL) {
-        PyErr_NoMemory();
-        return NPY_FAIL;
-    }
-    data->base.free = &_field_transfer_data_free;
-    data->base.clone = &_field_transfer_data_clone;
-    fields = &data->fields;
-
-    for (i = 0; i < names_size; ++i) {
-        key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(dst_dtype->fields, key);
-        if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
-                                                &dst_offset, &title)) {
-            PyArray_free(data);
-            return NPY_FAIL;
-        }
-        if (get_setdstzero_transfer_function(0,
-                                dst_stride,
-                                dst_fld_dtype,
-                                &fields[i].stransfer,
-                                &fields[i].data,
-                                out_needs_api) != NPY_SUCCEED) {
-            for (i = i-1; i >= 0; --i) {
-                NPY_AUXDATA_FREE(fields[i].data);
-            }
-            PyArray_free(data);
-            return NPY_FAIL;
-        }
-        fields[i].src_offset = 0;
-        fields[i].dst_offset = dst_offset;
-        fields[i].src_itemsize = 0;
-    }
-
-    data->field_count = field_count;
-
-    *out_stransfer = &_strided_to_strided_field_transfer;
-    *out_transferdata = (NpyAuxData *)data;
-
-    return NPY_SUCCEED;
-}
 
 /************************* MASKED TRANSFER WRAPPER *************************/
 
 typedef struct {
     NpyAuxData base;
-    /* The transfer function being wrapped */
-    PyArray_StridedUnaryOp *stransfer;
-    NpyAuxData *transferdata;
-
+    /* The transfer function being wrapped (could likely be stored directly) */
+    NPY_cast_info wrapped;
     /* The src decref function if necessary */
-    PyArray_StridedUnaryOp *decsrcref_stransfer;
-    NpyAuxData *decsrcref_transferdata;
+    NPY_cast_info decref_src;
 } _masked_wrapper_transfer_data;
 
 /* transfer data free function */
-static void _masked_wrapper_transfer_data_free(NpyAuxData *data)
+static void
+_masked_wrapper_transfer_data_free(NpyAuxData *data)
 {
     _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
-    NPY_AUXDATA_FREE(d->transferdata);
-    NPY_AUXDATA_FREE(d->decsrcref_transferdata);
-    PyArray_free(data);
+    NPY_cast_info_xfree(&d->wrapped);
+    NPY_cast_info_xfree(&d->decref_src);
+    PyMem_Free(data);
 }
 
 /* transfer data copy function */
-static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
+static NpyAuxData *
+_masked_wrapper_transfer_data_clone(NpyAuxData *data)
 {
     _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
     _masked_wrapper_transfer_data *newdata;
 
     /* Allocate the data and populate it */
-    newdata = (_masked_wrapper_transfer_data *)PyArray_malloc(
-                                    sizeof(_masked_wrapper_transfer_data));
+    newdata = PyMem_Malloc(sizeof(*newdata));
     if (newdata == NULL) {
         return NULL;
     }
-    memcpy(newdata, d, sizeof(_masked_wrapper_transfer_data));
+    newdata->base = d->base;
 
-    /* Clone all the owned auxdata as well */
-    if (newdata->transferdata != NULL) {
-        newdata->transferdata = NPY_AUXDATA_CLONE(newdata->transferdata);
-        if (newdata->transferdata == NULL) {
-            PyArray_free(newdata);
-            return NULL;
-        }
+    if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
+        PyMem_Free(newdata);
+        return NULL;
     }
-    if (newdata->decsrcref_transferdata != NULL) {
-        newdata->decsrcref_transferdata =
-                        NPY_AUXDATA_CLONE(newdata->decsrcref_transferdata);
-        if (newdata->decsrcref_transferdata == NULL) {
-            NPY_AUXDATA_FREE(newdata->transferdata);
-            PyArray_free(newdata);
+    if (d->decref_src.func != NULL) {
+        if (NPY_cast_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
+            NPY_AUXDATA_FREE((NpyAuxData *)newdata);
             return NULL;
         }
     }
@@ -3027,31 +2573,25 @@ static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
 }
 
 static int
-_strided_masked_wrapper_decsrcref_transfer_function(
-                                    char *dst, npy_intp dst_stride,
-                                    char *src, npy_intp src_stride,
-                                    npy_bool *mask, npy_intp mask_stride,
-                                    npy_intp N, npy_intp src_itemsize,
-                                    NpyAuxData *transferdata)
+_strided_masked_wrapper_decref_transfer_function(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        npy_bool *mask, npy_intp mask_stride,
+        NpyAuxData *auxdata)
 {
-    _masked_wrapper_transfer_data *d =
-                        (_masked_wrapper_transfer_data *)transferdata;
-    npy_intp subloopsize;
-    PyArray_StridedUnaryOp *unmasked_stransfer, *decsrcref_stransfer;
-    NpyAuxData *unmasked_transferdata, *decsrcref_transferdata;
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
 
-    unmasked_stransfer = d->stransfer;
-    unmasked_transferdata = d->transferdata;
-    decsrcref_stransfer = d->decsrcref_stransfer;
-    decsrcref_transferdata = d->decsrcref_transferdata;
+    _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)auxdata;
+    npy_intp subloopsize;
 
     while (N > 0) {
-        /* Skip masked values, still calling decsrcref for move_references */
+        /* Skip masked values, still calling decref for move_references */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 1);
-        if (decsrcref_stransfer(
-                NULL, 0, src, src_stride,
-                subloopsize, src_itemsize, decsrcref_transferdata) < 0) {
+        if (d->decref_src.func(&d->decref_src.context,
+                &src, &subloopsize, &src_stride, d->decref_src.auxdata) < 0) {
             return -1;
         }
         dst += subloopsize * dst_stride;
@@ -3064,9 +2604,9 @@ _strided_masked_wrapper_decsrcref_transfer_function(
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
-        if (unmasked_stransfer(
-                dst, dst_stride, src, src_stride,
-                subloopsize, src_itemsize, unmasked_transferdata) < 0) {
+        char *wrapped_args[2] = {src, dst};
+        if (d->wrapped.func(&d->wrapped.context,
+                wrapped_args, &subloopsize, strides, d->wrapped.auxdata) < 0) {
             return -1;
         }
         dst += subloopsize * dst_stride;
@@ -3078,21 +2618,17 @@ _strided_masked_wrapper_decsrcref_transfer_function(
 
 static int
 _strided_masked_wrapper_transfer_function(
-                                    char *dst, npy_intp dst_stride,
-                                    char *src, npy_intp src_stride,
-                                    npy_bool *mask, npy_intp mask_stride,
-                                    npy_intp N, npy_intp src_itemsize,
-                                    NpyAuxData *transferdata)
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        npy_bool *mask, npy_intp mask_stride,
+        NpyAuxData *auxdata)
 {
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
 
-    _masked_wrapper_transfer_data *d =
-                            (_masked_wrapper_transfer_data *)transferdata;
+    _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)auxdata;
     npy_intp subloopsize;
-    PyArray_StridedUnaryOp *unmasked_stransfer;
-    NpyAuxData *unmasked_transferdata;
-
-    unmasked_stransfer = d->stransfer;
-    unmasked_transferdata = d->transferdata;
 
     while (N > 0) {
         /* Skip masked values */
@@ -3108,9 +2644,9 @@ _strided_masked_wrapper_transfer_function(
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
-        if (unmasked_stransfer(
-                dst, dst_stride, src, src_stride,
-                subloopsize, src_itemsize, unmasked_transferdata) < 0) {
+        char *wrapped_args[2] = {src, dst};
+        if (d->wrapped.func(&d->wrapped.context,
+                wrapped_args, &subloopsize, strides, d->wrapped.auxdata) < 0) {
             return -1;
         }
         dst += subloopsize * dst_stride;
@@ -3121,249 +2657,28 @@ _strided_masked_wrapper_transfer_function(
 }
 
 
-/************************* DEST BOOL SETONE *******************************/
+/*************************** CLEAR SRC *******************************/
 
 static int
-_null_to_strided_set_bool_one(char *dst,
-                        npy_intp dst_stride,
-                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *NPY_UNUSED(data))
-{
-    /* bool type is one byte, so can just use the char */
-
-    while (N > 0) {
-        *dst = 1;
-
-        dst += dst_stride;
-        --N;
-    }
-    return 0;
-}
-
-static int
-_null_to_contig_set_bool_one(char *dst,
-                        npy_intp NPY_UNUSED(dst_stride),
-                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *NPY_UNUSED(data))
-{
-    /* bool type is one byte, so can just use the char */
-
-    memset(dst, 1, N);
-    return 0;
-}
-
-/* Only for the bool type, sets the destination to 1 */
-NPY_NO_EXPORT int
-get_bool_setdstone_transfer_function(npy_intp dst_stride,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *NPY_UNUSED(out_needs_api))
-{
-    if (dst_stride == 1) {
-        *out_stransfer = &_null_to_contig_set_bool_one;
-    }
-    else {
-        *out_stransfer = &_null_to_strided_set_bool_one;
-    }
-    *out_transferdata = NULL;
-
-    return NPY_SUCCEED;
-}
-
-/*************************** DEST SETZERO *******************************/
-
-/* Sets dest to zero */
-typedef struct {
-    NpyAuxData base;
-    npy_intp dst_itemsize;
-} _dst_memset_zero_data;
-
-/* zero-padded data copy function */
-static NpyAuxData *_dst_memset_zero_data_clone(NpyAuxData *data)
-{
-    _dst_memset_zero_data *newdata =
-            (_dst_memset_zero_data *)PyArray_malloc(
-                                    sizeof(_dst_memset_zero_data));
-    if (newdata == NULL) {
-        return NULL;
-    }
-
-    memcpy(newdata, data, sizeof(_dst_memset_zero_data));
-
-    return (NpyAuxData *)newdata;
-}
-
-static int
-_null_to_strided_memset_zero(char *dst,
-                        npy_intp dst_stride,
-                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
-{
-    _dst_memset_zero_data *d = (_dst_memset_zero_data *)data;
-    npy_intp dst_itemsize = d->dst_itemsize;
-
-    while (N > 0) {
-        memset(dst, 0, dst_itemsize);
-        dst += dst_stride;
-        --N;
-    }
-    return 0;
-}
-
-static int
-_null_to_contig_memset_zero(char *dst,
-                        npy_intp dst_stride,
-                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *data)
-{
-    _dst_memset_zero_data *d = (_dst_memset_zero_data *)data;
-    npy_intp dst_itemsize = d->dst_itemsize;
-
-    memset(dst, 0, N*dst_itemsize);
-    return 0;
-}
-
-static int
-_null_to_strided_reference_setzero(char *dst,
-                        npy_intp dst_stride,
-                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
-                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *NPY_UNUSED(data))
-{
-    PyObject *dst_ref = NULL;
-
-    while (N > 0) {
-        memcpy(&dst_ref, dst, sizeof(dst_ref));
-
-        /* Release the reference in dst and set it to NULL */
-        NPY_DT_DBG_REFTRACE("dec dest ref (to set zero)", dst_ref);
-        Py_XDECREF(dst_ref);
-        memset(dst, 0, sizeof(PyObject *));
-
-        dst += dst_stride;
-        --N;
-    }
-    return 0;
-}
-
-NPY_NO_EXPORT int
-get_setdstzero_transfer_function(int aligned,
-                            npy_intp dst_stride,
-                            PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *out_needs_api)
-{
-    _dst_memset_zero_data *data;
-
-    /* If there are no references, just set the whole thing to zero */
-    if (!PyDataType_REFCHK(dst_dtype)) {
-        data = (_dst_memset_zero_data *)
-                        PyArray_malloc(sizeof(_dst_memset_zero_data));
-        if (data == NULL) {
-            PyErr_NoMemory();
-            return NPY_FAIL;
-        }
-
-        data->base.free = (NpyAuxData_FreeFunc *)(&PyArray_free);
-        data->base.clone = &_dst_memset_zero_data_clone;
-        data->dst_itemsize = dst_dtype->elsize;
-
-        if (dst_stride == data->dst_itemsize) {
-            *out_stransfer = &_null_to_contig_memset_zero;
-        }
-        else {
-            *out_stransfer = &_null_to_strided_memset_zero;
-        }
-        *out_transferdata = (NpyAuxData *)data;
-    }
-    /* If it's exactly one reference, use the decref function */
-    else if (dst_dtype->type_num == NPY_OBJECT) {
-        if (out_needs_api) {
-            *out_needs_api = 1;
-        }
-
-        *out_stransfer = &_null_to_strided_reference_setzero;
-        *out_transferdata = NULL;
-    }
-    /* If there are subarrays, need to wrap it */
-    else if (PyDataType_HASSUBARRAY(dst_dtype)) {
-        PyArray_Dims dst_shape = {NULL, -1};
-        npy_intp dst_size = 1;
-        PyArray_StridedUnaryOp *contig_stransfer;
-        NpyAuxData *contig_data;
-
-        if (out_needs_api) {
-            *out_needs_api = 1;
-        }
-
-        if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
-                                            &dst_shape))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "invalid subarray shape");
-            return NPY_FAIL;
-        }
-        dst_size = PyArray_MultiplyList(dst_shape.ptr, dst_shape.len);
-        npy_free_cache_dim_obj(dst_shape);
-
-        /* Get a function for contiguous dst of the subarray type */
-        if (get_setdstzero_transfer_function(aligned,
-                                dst_dtype->subarray->base->elsize,
-                                dst_dtype->subarray->base,
-                                &contig_stransfer, &contig_data,
-                                out_needs_api) != NPY_SUCCEED) {
-            return NPY_FAIL;
-        }
-
-        if (wrap_transfer_function_n_to_n(contig_stransfer, contig_data,
-                            0, dst_stride,
-                            0, dst_dtype->subarray->base->elsize,
-                            dst_size,
-                            out_stransfer, out_transferdata) != NPY_SUCCEED) {
-            NPY_AUXDATA_FREE(contig_data);
-            return NPY_FAIL;
-        }
-    }
-    /* If there are fields, need to do each field */
-    else if (PyDataType_HASFIELDS(dst_dtype)) {
-        if (out_needs_api) {
-            *out_needs_api = 1;
-        }
-
-        return get_setdestzero_fields_transfer_function(aligned,
-                            dst_stride, dst_dtype,
-                            out_stransfer,
-                            out_transferdata,
-                            out_needs_api);
-    }
-
-    return NPY_SUCCEED;
-}
-
-static int
-_dec_src_ref_nop(char *NPY_UNUSED(dst),
-                        npy_intp NPY_UNUSED(dst_stride),
-                        char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
-                        npy_intp NPY_UNUSED(N),
-                        npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *NPY_UNUSED(data))
+_dec_src_ref_nop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *NPY_UNUSED(args), const npy_intp *NPY_UNUSED(dimensions),
+        const npy_intp *NPY_UNUSED(strides), NpyAuxData *NPY_UNUSED(auxdata))
 {
     /* NOP */
     return 0;
 }
 
 static int
-_strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
-                        npy_intp NPY_UNUSED(dst_stride),
-                        char *src, npy_intp src_stride,
-                        npy_intp N,
-                        npy_intp NPY_UNUSED(src_itemsize),
-                        NpyAuxData *NPY_UNUSED(data))
+_strided_to_null_dec_src_ref_reference(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *args, const npy_intp *dimensions,
+        const npy_intp *strides, NpyAuxData *NPY_UNUSED(auxdata))
 {
+    char *src = args[0];
+    npy_intp N = dimensions[0];
+    npy_intp stride = strides[0];
+
     PyObject *src_ref = NULL;
     while (N > 0) {
         /* Release the reference in src and set it to NULL */
@@ -3372,27 +2687,38 @@ _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
         Py_XDECREF(src_ref);
         memset(src, 0, sizeof(PyObject *));
 
-        src += src_stride;
+        src += stride;
         --N;
     }
     return 0;
 }
 
 
-NPY_NO_EXPORT int
-get_decsrcref_transfer_function(int aligned,
+/*
+ * Get a function to decref.  Currently, this uses a cast info slot, which
+ * means that the second (destination) descriptor is always set to NULL
+ * and generally does not have to be passed.
+ * Since we do not currently have an `ArrayMethod` representing this, the
+ * method is also set to NULL.
+ *
+ * TODO: this function should probably be moved onto the DType eventually,
+ *       which would allow for user DTypes to include dynamic allocated
+ *       memory or Python objects.
+ */
+static int
+get_decref_transfer_function(int aligned,
                             npy_intp src_stride,
                             PyArray_Descr *src_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
+                            NPY_cast_info *cast_info,
                             int *out_needs_api)
 {
+    NPY_cast_info_init(cast_info);
+
     /* If there are no references, it's a nop */
     if (!PyDataType_REFCHK(src_dtype)) {
-        *out_stransfer = &_dec_src_ref_nop;
-        *out_transferdata = NULL;
-
-        return NPY_SUCCEED;
+        cast_info->func = &_dec_src_ref_nop;
+        cast_info->auxdata = NULL;
+        goto finalize;
     }
     /* If it's a single reference, it's one decref */
     else if (src_dtype->type_num == NPY_OBJECT) {
@@ -3400,17 +2726,14 @@ get_decsrcref_transfer_function(int aligned,
             *out_needs_api = 1;
         }
 
-        *out_stransfer = &_strided_to_null_dec_src_ref_reference;
-        *out_transferdata = NULL;
-
-        return NPY_SUCCEED;
+        cast_info->func = &_strided_to_null_dec_src_ref_reference;
+        cast_info->auxdata = NULL;
+        goto finalize;
     }
     /* If there are subarrays, need to wrap it */
     else if (PyDataType_HASSUBARRAY(src_dtype)) {
         PyArray_Dims src_shape = {NULL, -1};
         npy_intp src_size;
-        PyArray_StridedUnaryOp *stransfer;
-        NpyAuxData *data;
 
         if (out_needs_api) {
             *out_needs_api = 1;
@@ -3425,354 +2748,658 @@ get_decsrcref_transfer_function(int aligned,
         src_size = PyArray_MultiplyList(src_shape.ptr, src_shape.len);
         npy_free_cache_dim_obj(src_shape);
 
-        /* Get a function for contiguous src of the subarray type */
-        if (get_decsrcref_transfer_function(aligned,
-                                src_dtype->subarray->base->elsize,
-                                src_dtype->subarray->base,
-                                &stransfer, &data,
-                                out_needs_api) != NPY_SUCCEED) {
+        if (get_n_to_n_transfer_function(aligned,
+                src_stride, 0,
+                src_dtype->subarray->base, NULL, 1, src_size,
+                &cast_info->func, &cast_info->auxdata,
+                out_needs_api) != NPY_SUCCEED) {
             return NPY_FAIL;
         }
 
-        if (wrap_transfer_function_n_to_n(stransfer, data,
-                                src_stride, 0,
-                                src_dtype->subarray->base->elsize, 0,
-                                src_size,
-                                out_stransfer, out_transferdata) != NPY_SUCCEED) {
-            NPY_AUXDATA_FREE(data);
-            return NPY_FAIL;
-        }
-
-        return NPY_SUCCEED;
+        goto finalize;
     }
     /* If there are fields, need to do each field */
-    else {
+    else if (PyDataType_HASFIELDS(src_dtype)) {
         if (out_needs_api) {
             *out_needs_api = 1;
         }
 
-        return get_decsrcref_fields_transfer_function(aligned,
+        if (get_decref_fields_transfer_function(aligned,
                             src_stride, src_dtype,
-                            out_stransfer,
-                            out_transferdata,
-                            out_needs_api);
+                            &cast_info->func, &cast_info->auxdata,
+                            out_needs_api) < 0) {
+            return NPY_FAIL;
+        }
+        goto finalize;
     }
-}
-
-/********************* DTYPE COPY SWAP FUNCTION ***********************/
-
-NPY_NO_EXPORT int
-PyArray_GetDTypeCopySwapFn(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *dtype,
-                            PyArray_StridedUnaryOp **outstransfer,
-                            NpyAuxData **outtransferdata)
-{
-    npy_intp itemsize = dtype->elsize;
-
-    /* If it's a custom data type, wrap its copy swap function */
-    if (dtype->type_num >= NPY_NTYPES) {
-        *outstransfer = NULL;
-        wrap_copy_swap_function(aligned,
-                            src_stride, dst_stride,
-                            dtype,
-                            !PyArray_ISNBO(dtype->byteorder),
-                            outstransfer, outtransferdata);
-    }
-    /* A straight copy */
-    else if (itemsize == 1 || PyArray_ISNBO(dtype->byteorder)) {
-        *outstransfer = PyArray_GetStridedCopyFn(aligned,
-                                    src_stride, dst_stride,
-                                    itemsize);
-        *outtransferdata = NULL;
-    }
-    else if (dtype->kind == 'U') {
-        return wrap_copy_swap_function(aligned,
-                                       src_stride, dst_stride, dtype, 1,
-                                       outstransfer, outtransferdata);
-    }
-    /* If it's not complex, one swap */
-    else if (dtype->kind != 'c') {
-        *outstransfer = PyArray_GetStridedCopySwapFn(aligned,
-                                    src_stride, dst_stride,
-                                    itemsize);
-        *outtransferdata = NULL;
-    }
-    /* If complex, a paired swap */
     else {
-        *outstransfer = PyArray_GetStridedCopySwapPairFn(aligned,
-                                    src_stride, dst_stride,
-                                    itemsize);
-        *outtransferdata = NULL;
+        PyErr_Format(PyExc_RuntimeError,
+                "Internal error, tried to fetch decref function for the "
+                "unsupported DType '%S'.", src_dtype);
+        return NPY_FAIL;
     }
 
-    return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
+  finalize:
+    /* Make sure all important fields are either set or cleared */
+    Py_INCREF(src_dtype);
+    cast_info->descriptors[0] = src_dtype;
+    cast_info->descriptors[1] = NULL;
+    cast_info->context.method = NULL;
+    cast_info->context.caller = NULL;
+    return NPY_SUCCEED;
 }
 
-/********************* MAIN DTYPE TRANSFER FUNCTION ***********************/
+
+/*
+ * ********************* Generalized Multistep Cast ************************
+ *
+ * New general purpose multiple step cast function when resolve descriptors
+ * implies that multiple cast steps are necessary.
+ */
+
+typedef struct {
+    NpyAuxData base;
+    /* Information for main cast */
+    NPY_cast_info main;
+    /* Information for input preparation cast */
+    NPY_cast_info from;
+    /* Information for output finalization cast */
+    NPY_cast_info to;
+    char *from_buffer;
+    char *to_buffer;
+} _multistep_castdata;
+
+
+/* zero-padded data copy function */
+static void
+_multistep_cast_auxdata_free(NpyAuxData *auxdata)
+{
+    _multistep_castdata *data = (_multistep_castdata *)auxdata;
+    NPY_cast_info_xfree(&data->main);
+    if (data->from.func != NULL) {
+        NPY_cast_info_xfree(&data->from);
+    }
+    if (data->to.func != NULL) {
+        NPY_cast_info_xfree(&data->to);
+    }
+    PyMem_Free(data);
+}
+
+
+static NpyAuxData *
+_multistep_cast_auxdata_clone(NpyAuxData *auxdata_old);
+
+
+static NpyAuxData *
+_multistep_cast_auxdata_clone_int(_multistep_castdata *castdata, int move_info)
+{
+    /* Round up the structure size to 16-byte boundary for the buffers */
+    Py_ssize_t datasize = (sizeof(_multistep_castdata) + 15) & ~0xf;
+
+    Py_ssize_t from_buffer_offset = datasize;
+    if (castdata->from.func != NULL) {
+        Py_ssize_t src_itemsize = castdata->main.context.descriptors[0]->elsize;
+        datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * src_itemsize;
+        datasize = (datasize + 15) & ~0xf;
+    }
+    Py_ssize_t to_buffer_offset = datasize;
+    if (castdata->to.func != NULL) {
+        Py_ssize_t dst_itemsize = castdata->main.context.descriptors[1]->elsize;
+        datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * dst_itemsize;
+    }
+
+    char *char_data = PyMem_Malloc(datasize);
+    if (char_data == NULL) {
+        return NULL;
+    }
+
+    _multistep_castdata *newdata = (_multistep_castdata *)char_data;
+
+    /* Fix up the basic information: */
+    newdata->base.free = &_multistep_cast_auxdata_free;
+    newdata->base.clone = &_multistep_cast_auxdata_clone;
+    /* And buffer information: */
+    newdata->from_buffer = char_data + from_buffer_offset;
+    newdata->to_buffer = char_data + to_buffer_offset;
+
+    /* Initialize funcs to NULL to signal no-cleanup in case of an error. */
+    newdata->from.func = NULL;
+    newdata->to.func = NULL;
+
+    if (move_info) {
+        NPY_cast_info_move(&newdata->main, &castdata->main);
+    }
+    else if (NPY_cast_info_copy(&newdata->main, &castdata->main) < 0) {
+        goto fail;
+    }
+
+    if (castdata->from.func != NULL) {
+        if (move_info) {
+            NPY_cast_info_move(&newdata->from, &castdata->from);
+        }
+        else if (NPY_cast_info_copy(&newdata->from, &castdata->from) < 0) {
+            goto fail;
+        }
+
+        if (PyDataType_FLAGCHK(newdata->main.descriptors[0], NPY_NEEDS_INIT)) {
+            memset(newdata->from_buffer, 0, to_buffer_offset - from_buffer_offset);
+        }
+    }
+    if (castdata->to.func != NULL) {
+        if (move_info) {
+            NPY_cast_info_move(&newdata->to, &castdata->to);
+        }
+        else if (NPY_cast_info_copy(&newdata->to, &castdata->to) < 0) {
+            goto fail;
+        }
+
+        if (PyDataType_FLAGCHK(newdata->main.descriptors[1], NPY_NEEDS_INIT)) {
+            memset(newdata->to_buffer, 0, datasize - to_buffer_offset);
+        }
+    }
+
+    return (NpyAuxData *)newdata;
+
+  fail:
+    NPY_AUXDATA_FREE((NpyAuxData *)newdata);
+    return NULL;
+}
+
+
+static NpyAuxData *
+_multistep_cast_auxdata_clone(NpyAuxData *auxdata_old)
+{
+    return _multistep_cast_auxdata_clone_int(
+            (_multistep_castdata *)auxdata_old, 0);
+}
+
+
+static int
+_strided_to_strided_multistep_cast(
+        /* The context is always stored explicitly in auxdata */
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
+{
+    npy_intp N = dimensions[0];
+    char *src = args[0], *dst = args[1];
+    _multistep_castdata *castdata = (_multistep_castdata *)auxdata;
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+
+    char *main_src, *main_dst;
+    npy_intp main_src_stride, main_dst_stride;
+
+    npy_intp block_size = NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
+    while (N > 0) {
+        if (block_size > N) {
+            block_size = N;
+        }
+
+        if (castdata->from.func != NULL) {
+            npy_intp out_stride = castdata->from.descriptors[1]->elsize;
+            if (castdata->from.func(&castdata->from.context,
+                    (char *[2]){src, castdata->from_buffer}, &block_size,
+                    (npy_intp [2]){src_stride, out_stride},
+                    castdata->from.auxdata) != 0) {
+                /* TODO: Internal buffer may require cleanup on error. */
+                return -1;
+            }
+            main_src = castdata->from_buffer;
+            main_src_stride = out_stride;
+        }
+        else {
+            main_src = src;
+            main_src_stride = src_stride;
+        }
+
+        if (castdata->to.func != NULL) {
+            main_dst = castdata->to_buffer;
+            main_dst_stride = castdata->main.descriptors[1]->elsize;
+        }
+        else {
+            main_dst = dst;
+            main_dst_stride = dst_stride;
+        }
+
+        if (castdata->main.func(&castdata->main.context,
+                (char *[2]){main_src, main_dst}, &block_size,
+                (npy_intp [2]){main_src_stride, main_dst_stride},
+                castdata->main.auxdata) != 0) {
+            /* TODO: Internal buffer may require cleanup on error. */
+            return -1;
+        }
+
+        if (castdata->to.func != NULL) {
+            if (castdata->to.func(&castdata->to.context,
+                    (char *[2]){main_dst, dst}, &block_size,
+                    (npy_intp [2]){main_dst_stride, dst_stride},
+                    castdata->to.auxdata) != 0) {
+                return -1;
+            }
+        }
+
+        N -= block_size;
+        src += block_size * src_stride;
+        dst += block_size * dst_stride;
+    }
+    return 0;
+}
+
+
+/*
+ * Initialize most of a cast-info structure, this step does not fetch the
+ * transferfunction and transferdata.
+ */
+static NPY_INLINE int
+init_cast_info(NPY_cast_info *cast_info, NPY_CASTING *casting,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int main_step)
+{
+    PyObject *meth = PyArray_GetCastingImpl(
+            NPY_DTYPE(src_dtype), NPY_DTYPE(dst_dtype));
+    if (meth == NULL) {
+        return -1;
+    }
+    if (meth == Py_None) {
+        Py_DECREF(Py_None);
+        PyErr_Format(PyExc_TypeError,
+                "Cannot cast data from %S to %S.", src_dtype, dst_dtype);
+        return -1;
+    }
+    /* Initialize the context and related data */
+    NPY_cast_info_init(cast_info);
+    cast_info->auxdata = NULL;
+
+    cast_info->context.caller = NULL;
+    cast_info->context.method = (PyArrayMethodObject *)meth;
+
+    PyArray_DTypeMeta *dtypes[2] = {NPY_DTYPE(src_dtype), NPY_DTYPE(dst_dtype)};
+    PyArray_Descr *in_descr[2] = {src_dtype, dst_dtype};
+
+    *casting = cast_info->context.method->resolve_descriptors(
+            cast_info->context.method, dtypes, in_descr, cast_info->descriptors);
+    if (NPY_UNLIKELY(*casting < 0)) {
+        if (!PyErr_Occurred()) {
+            PyErr_Format(PyExc_TypeError,
+                    "Cannot cast array data from %R to %R.", src_dtype, dst_dtype);
+            Py_DECREF(meth);
+            return -1;
+        }
+    }
+    assert(PyArray_DescrCheck(cast_info->descriptors[0]));
+    assert(PyArray_DescrCheck(cast_info->descriptors[1]));
+
+    if (!main_step && NPY_UNLIKELY(src_dtype != cast_info->descriptors[0] ||
+                                   dst_dtype != cast_info->descriptors[1])) {
+        /*
+         * We currently do not resolve recursively, but require a non
+         * main cast (within the same DType) to be done in a single step.
+         * This could be expanded at some point if the need arises.
+         */
+        PyErr_Format(PyExc_RuntimeError,
+                "Required internal cast from %R to %R was not done in a single "
+                "step (a secondary cast must currently be between instances of "
+                "the same DType class and such a cast must currently return "
+                "the input descriptors unmodified).",
+                src_dtype, dst_dtype);
+        NPY_cast_info_xfree(cast_info);
+        return -1;
+    }
+
+    return 0;
+}
+
+
+/*
+ * When there is a failure in ArrayMethod.get_loop(...) we still have
+ * to clean up references, but assume that `auxdata` and `func`
+ * have undefined values.
+ * NOTE: This should possibly be moved, but is only necessary here
+ */
+static void
+_clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
+{
+    /* As public API we could choose to clear auxdata != NULL */
+    assert(cast_info->auxdata == NULL);
+    /* Set func to be non-null so that `NPY_cats_info_xfree` does not skip */
+    cast_info->func = &_dec_src_ref_nop;
+    NPY_cast_info_xfree(cast_info);
+}
+
+
+/*
+ * Helper for PyArray_GetDTypeTransferFunction, which fetches a single
+ * transfer function from the each casting implementation (ArrayMethod).
+ * May set the transfer function to NULL when the cast can be achieved using
+ * a view.
+ * The `out_needs_api` flag must be initialized.
+ *
+ * NOTE: In theory casting errors here could be slightly misleading in case
+ *       of a multi-step casting scenario. It should be possible to improve
+ *       this in the future.
+ *
+ * Note about `move_references`: Move references means stealing of
+ * references.  It is useful to clear buffers immediately. No matter the
+ * input all copies from a buffer must use `move_references`. Move references
+ * is thus used:
+ *   * For the added initial "from" cast if it was passed in
+ *   * Always in the main step if a "from" cast is made (it casts from a buffer)
+ *   * Always for the "to" cast, as it always cast from a buffer to the output.
+ *
+ * Returns -1 on failure, 0 on success
+ */
+static int
+define_cast_for_descrs(
+        int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        NPY_cast_info *cast_info, int *out_needs_api)
+{
+    /* Storage for all cast info in case multi-step casting is necessary */
+    _multistep_castdata castdata;
+    /* Initialize funcs to NULL to simplify cleanup on error. */
+    castdata.main.func = NULL;
+    castdata.to.func = NULL;
+    castdata.from.func = NULL;
+    NPY_CASTING casting = -1;
+
+    if (init_cast_info(cast_info, &casting, src_dtype, dst_dtype, 1) < 0) {
+        return -1;
+    }
+
+    /*
+     * Both input and output must be wrapped in case they may be unaligned
+     * and the method does not support unaligned data.
+     * NOTE: It is probable that most/all legacy loops actually do support
+     *       unaligned output, we could move the wrapping there if we wanted
+     *       to. It probably isn't speed relevant though and they should be
+     *       deleted in any case.
+     */
+    int must_wrap = (!aligned &&
+        (cast_info->context.method->flags & NPY_METH_SUPPORTS_UNALIGNED) == 0);
+
+    /*
+     * Wrap the input with an additional cast if necessary.
+     */
+    if (NPY_UNLIKELY(src_dtype != cast_info->descriptors[0] || must_wrap)) {
+        NPY_CASTING from_casting = -1;
+        /* Cast function may not support the input, wrap if necessary */
+        if (init_cast_info(
+                &castdata.from, &from_casting,
+                src_dtype, cast_info->descriptors[0], 0) < 0) {
+            goto fail;
+        }
+        casting = PyArray_MinCastSafety(casting, from_casting);
+
+        /* Prepare the actual cast (if necessary): */
+        if (from_casting & _NPY_CAST_IS_VIEW && !must_wrap) {
+            /* This step is not necessary and can be skipped. */
+            castdata.from.func = &_dec_src_ref_nop;  /* avoid NULL */
+            NPY_cast_info_xfree(&castdata.from);
+        }
+        else {
+            /* Fetch the cast function and set up */
+            PyArrayMethod_Context *context = &castdata.from.context;
+            npy_intp strides[2] = {src_stride, cast_info->descriptors[0]->elsize};
+            NPY_ARRAYMETHOD_FLAGS flags;
+            if (context->method->get_strided_loop(
+                    context, aligned, move_references, strides,
+                    &castdata.from.func, &castdata.from.auxdata, &flags) < 0) {
+                _clear_cast_info_after_get_loop_failure(&castdata.from);
+                goto fail;
+            }
+            assert(castdata.from.func != NULL);
+
+            *out_needs_api |= (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+            /* The main cast now uses a buffered input: */
+            src_stride = strides[1];
+            move_references = 1;  /* main cast has to clear the buffer */
+        }
+    }
+    /*
+     * Wrap the output with an additional cast if necessary.
+     */
+    if (NPY_UNLIKELY(dst_dtype != cast_info->descriptors[1] || must_wrap)) {
+        NPY_CASTING to_casting = -1;
+        /* Cast function may not support the output, wrap if necessary */
+        if (init_cast_info(
+                &castdata.to, &to_casting,
+                cast_info->descriptors[1], dst_dtype,  0) < 0) {
+            goto fail;
+        }
+        casting = PyArray_MinCastSafety(casting, to_casting);
+
+        /* Prepare the actual cast (if necessary): */
+        if (to_casting & _NPY_CAST_IS_VIEW && !must_wrap) {
+            /* This step is not necessary and can be skipped. */
+            castdata.to.func = &_dec_src_ref_nop;  /* avoid NULL */
+            NPY_cast_info_xfree(&castdata.to);
+        }
+        else {
+            /* Fetch the cast function and set up */
+            PyArrayMethod_Context *context = &castdata.to.context;
+            npy_intp strides[2] = {cast_info->descriptors[1]->elsize, dst_stride};
+            NPY_ARRAYMETHOD_FLAGS flags;
+            if (context->method->get_strided_loop(
+                    context, aligned, 1 /* clear buffer */, strides,
+                    &castdata.to.func, &castdata.to.auxdata, &flags) < 0) {
+                _clear_cast_info_after_get_loop_failure(&castdata.to);
+                goto fail;
+            }
+            assert(castdata.to.func != NULL);
+
+            *out_needs_api |= (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+            /* The main cast now uses a buffered input: */
+            dst_stride = strides[0];
+            if (castdata.from.func != NULL) {
+                /* Both input and output are wrapped, now always aligned */
+                aligned = 1;
+            }
+        }
+    }
+
+    /* Fetch the main cast function (with updated values) */
+    PyArrayMethod_Context *context = &cast_info->context;
+    npy_intp strides[2] = {src_stride, dst_stride};
+    NPY_ARRAYMETHOD_FLAGS flags;
+    if (context->method->get_strided_loop(
+            context, aligned, move_references, strides,
+            &cast_info->func, &cast_info->auxdata, &flags) < 0) {
+        _clear_cast_info_after_get_loop_failure(cast_info);
+        goto fail;
+    }
+
+    *out_needs_api |= (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+
+    if (castdata.from.func == NULL && castdata.to.func == NULL) {
+        /* Most of the time, there will be only one step required. */
+        return 0;
+    }
+    /* The full cast passed in is only the "main" step, copy cast_info there */
+    NPY_cast_info_move(&castdata.main, cast_info);
+    Py_INCREF(src_dtype);
+    cast_info->descriptors[0] = src_dtype;
+    Py_INCREF(dst_dtype);
+    cast_info->descriptors[1] = dst_dtype;
+    cast_info->context.method = NULL;
+
+    cast_info->func = &_strided_to_strided_multistep_cast;
+    cast_info->auxdata = _multistep_cast_auxdata_clone_int(&castdata, 1);
+    if (cast_info->auxdata == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+
+    return 0;
+
+  fail:
+    NPY_cast_info_xfree(&castdata.main);
+    NPY_cast_info_xfree(&castdata.from);
+    NPY_cast_info_xfree(&castdata.to);
+    return -1;
+}
+
 
 NPY_NO_EXPORT int
 PyArray_GetDTypeTransferFunction(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
+                            NPY_cast_info *cast_info,
                             int *out_needs_api)
 {
-    npy_intp src_itemsize, dst_itemsize;
-    int src_type_num, dst_type_num;
-    int is_builtin;
-
-#if NPY_DT_DBG_TRACING
-    printf("Calculating dtype transfer from ");
-    if (PyObject_Print((PyObject *)src_dtype, stdout, 0) < 0) {
-        return NPY_FAIL;
-    }
-    printf(" to ");
-    if (PyObject_Print((PyObject *)dst_dtype, stdout, 0) < 0) {
-        return NPY_FAIL;
-    }
-    printf("\n");
-#endif
+    assert(src_dtype != NULL);
 
     /*
      * If one of the dtypes is NULL, we give back either a src decref
      * function or a dst setzero function
+     *
+     * TODO: Eventually, we may wish to support user dtype with references
+     *       (including and beyond bare `PyObject *` this may require extending
+     *       the ArrayMethod API and those paths should likely be split out
+     *       from this function.)
      */
     if (dst_dtype == NULL) {
-        if (move_references) {
-            return get_decsrcref_transfer_function(aligned,
+        assert(move_references);
+        return get_decref_transfer_function(aligned,
                                 src_dtype->elsize,
                                 src_dtype,
-                                out_stransfer, out_transferdata,
-                                out_needs_api);
-        }
-        else {
-            *out_stransfer = &_dec_src_ref_nop;
-            *out_transferdata = NULL;
-            return NPY_SUCCEED;
-        }
-    }
-    else if (src_dtype == NULL) {
-        return get_setdstzero_transfer_function(aligned,
-                                dst_dtype->elsize,
-                                dst_dtype,
-                                out_stransfer, out_transferdata,
+                                cast_info,
                                 out_needs_api);
     }
 
-    src_itemsize = src_dtype->elsize;
-    dst_itemsize = dst_dtype->elsize;
-    src_type_num = src_dtype->type_num;
-    dst_type_num = dst_dtype->type_num;
-    is_builtin = src_type_num < NPY_NTYPES && dst_type_num < NPY_NTYPES;
-
-    /* Common special case - number -> number NBO cast */
-    if (PyTypeNum_ISNUMBER(src_type_num) &&
-                    PyTypeNum_ISNUMBER(dst_type_num) &&
-                    PyArray_ISNBO(src_dtype->byteorder) &&
-                    PyArray_ISNBO(dst_dtype->byteorder)) {
-
-        if (PyArray_EquivTypenums(src_type_num, dst_type_num)) {
-            *out_stransfer = PyArray_GetStridedCopyFn(aligned,
-                                        src_stride, dst_stride,
-                                        src_itemsize);
-            *out_transferdata = NULL;
-            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
-        }
-        else {
-            return get_nbo_cast_numeric_transfer_function (aligned,
-                                        src_stride, dst_stride,
-                                        src_type_num, dst_type_num,
-                                        out_stransfer, out_transferdata);
-        }
+    if (define_cast_for_descrs(aligned,
+            src_stride, dst_stride,
+            src_dtype, dst_dtype, move_references,
+            cast_info, out_needs_api) < 0) {
+        return NPY_FAIL;
     }
 
-    /*
-     * If there are no references and the data types are equivalent and builtin,
-     * return a simple copy
-     */
-    if (PyArray_EquivTypes(src_dtype, dst_dtype) &&
-            !PyDataType_REFCHK(src_dtype) && !PyDataType_REFCHK(dst_dtype) &&
-            ( !PyDataType_HASFIELDS(dst_dtype) ||
-              is_dtype_struct_simple_unaligned_layout(dst_dtype)) &&
-            is_builtin) {
-        /*
-         * We can't pass through the aligned flag because it's not
-         * appropriate. Consider a size-8 string, it will say it's
-         * aligned because strings only need alignment 1, but the
-         * copy function wants to know if it's alignment 8.
-         *
-         * TODO: Change align from a flag to a "best power of 2 alignment"
-         *       which holds the strongest alignment value for all
-         *       the data which will be used.
-         */
-        *out_stransfer = PyArray_GetStridedCopyFn(0,
-                                        src_stride, dst_stride,
-                                        src_dtype->elsize);
-        *out_transferdata = NULL;
-        return NPY_SUCCEED;
-    }
-
-    /* First look at the possibilities of just a copy or swap */
-    if (src_itemsize == dst_itemsize && src_dtype->kind == dst_dtype->kind &&
-                !PyDataType_HASFIELDS(src_dtype) &&
-                !PyDataType_HASFIELDS(dst_dtype) &&
-                !PyDataType_HASSUBARRAY(src_dtype) &&
-                !PyDataType_HASSUBARRAY(dst_dtype) &&
-                src_type_num != NPY_DATETIME && src_type_num != NPY_TIMEDELTA) {
-        /* A custom data type requires that we use its copy/swap */
-        if (!is_builtin) {
-            /*
-             * If the sizes and kinds are identical, but they're different
-             * custom types, then get a cast function
-             */
-            if (src_type_num != dst_type_num) {
-                return get_cast_transfer_function(aligned,
-                                src_stride, dst_stride,
-                                src_dtype, dst_dtype,
-                                move_references,
-                                out_stransfer, out_transferdata,
-                                out_needs_api);
-            }
-            else {
-                return wrap_copy_swap_function(aligned,
-                                src_stride, dst_stride,
-                                src_dtype,
-                                PyArray_ISNBO(src_dtype->byteorder) !=
-                                        PyArray_ISNBO(dst_dtype->byteorder),
-                                out_stransfer, out_transferdata);
-            }
-        }
-
-        /* The special types, which have no or subelement byte-order */
-        switch (src_type_num) {
-            case NPY_UNICODE:
-                /* Wrap the copy swap function when swapping is necessary */
-                if (PyArray_ISNBO(src_dtype->byteorder) !=
-                        PyArray_ISNBO(dst_dtype->byteorder)) {
-                    return wrap_copy_swap_function(aligned,
-                                    src_stride, dst_stride,
-                                    src_dtype, 1,
-                                    out_stransfer, out_transferdata);
-                }
-            case NPY_VOID:
-            case NPY_STRING:
-                *out_stransfer = PyArray_GetStridedCopyFn(0,
-                                    src_stride, dst_stride,
-                                    src_itemsize);
-                *out_transferdata = NULL;
-                return NPY_SUCCEED;
-            case NPY_OBJECT:
-                if (out_needs_api) {
-                    *out_needs_api = 1;
-                }
-                if (move_references) {
-                    *out_stransfer = &_strided_to_strided_move_references;
-                    *out_transferdata = NULL;
-                }
-                else {
-                    *out_stransfer = &_strided_to_strided_copy_references;
-                    *out_transferdata = NULL;
-                }
-                return NPY_SUCCEED;
-        }
-
-        /* This is a straight copy */
-        if (src_itemsize == 1 || PyArray_ISNBO(src_dtype->byteorder) ==
-                                 PyArray_ISNBO(dst_dtype->byteorder)) {
-            *out_stransfer = PyArray_GetStridedCopyFn(aligned,
-                                        src_stride, dst_stride,
-                                        src_itemsize);
-            *out_transferdata = NULL;
-            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
-        }
-        /* This is a straight copy + byte swap */
-        else if (!PyTypeNum_ISCOMPLEX(src_type_num)) {
-            *out_stransfer = PyArray_GetStridedCopySwapFn(aligned,
-                                        src_stride, dst_stride,
-                                        src_itemsize);
-            *out_transferdata = NULL;
-            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
-        }
-        /* This is a straight copy + element pair byte swap */
-        else {
-            *out_stransfer = PyArray_GetStridedCopySwapPairFn(aligned,
-                                        src_stride, dst_stride,
-                                        src_itemsize);
-            *out_transferdata = NULL;
-            return (*out_stransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
-        }
-    }
-
-    /* Handle subarrays */
-    if (PyDataType_HASSUBARRAY(src_dtype) ||
-                                PyDataType_HASSUBARRAY(dst_dtype)) {
-        return get_subarray_transfer_function(aligned,
-                        src_stride, dst_stride,
-                        src_dtype, dst_dtype,
-                        move_references,
-                        out_stransfer, out_transferdata,
-                        out_needs_api);
-    }
-
-    /* Handle fields */
-    if ((PyDataType_HASFIELDS(src_dtype) || PyDataType_HASFIELDS(dst_dtype)) &&
-            src_type_num != NPY_OBJECT && dst_type_num != NPY_OBJECT) {
-        return get_fields_transfer_function(aligned,
-                        src_stride, dst_stride,
-                        src_dtype, dst_dtype,
-                        move_references,
-                        out_stransfer, out_transferdata,
-                        out_needs_api);
-    }
-
-    /* Check for different-sized strings, unicodes, or voids */
-    if (src_type_num == dst_type_num) {
-        switch (src_type_num) {
-        case NPY_UNICODE:
-            if (PyArray_ISNBO(src_dtype->byteorder) !=
-                                 PyArray_ISNBO(dst_dtype->byteorder)) {
-                return PyArray_GetStridedZeroPadCopyFn(0, 1,
-                                        src_stride, dst_stride,
-                                        src_dtype->elsize, dst_dtype->elsize,
-                                        out_stransfer, out_transferdata);
-            }
-        case NPY_STRING:
-        case NPY_VOID:
-            return PyArray_GetStridedZeroPadCopyFn(0, 0,
-                                    src_stride, dst_stride,
-                                    src_dtype->elsize, dst_dtype->elsize,
-                                    out_stransfer, out_transferdata);
-        }
-    }
-
-    /* Otherwise a cast is necessary */
-    return get_cast_transfer_function(aligned,
-                    src_stride, dst_stride,
-                    src_dtype, dst_dtype,
-                    move_references,
-                    out_stransfer, out_transferdata,
-                    out_needs_api);
+    return NPY_SUCCEED;
 }
 
 
 /*
- * Basic version of PyArray_GetDTypeTransferFunction for legacy dtype
- * support.
- * It supports only wrapping the copyswapn functions and the legacy
- * cast functions registered with `PyArray_RegisterCastFunc`.
- * This function takes the easy way out: It does not wrap
+ * Internal wrapping of casts that have to be performed in a "single"
+ * function (i.e. not by the generic multi-step-cast), but rely on it
+ * internally. There are only two occasions where this is used:
+ *
+ * 1. Void advertises that it handles unaligned casts, but has to wrap the
+ *    legacy cast which (probably) does not.
+ * 2. Datetime to unicode casts are implemented via bytes "U" vs. "S". If
+ *    we relax the chaining rules to allow "recursive" cast chaining where
+ *    `resolve_descriptors` can return a descriptor with a different type,
+ *    this would become unnecessary.
+ *  3. Time <-> Time casts, which currently must support byte swapping, but
+ *     have a non-trivial inner-loop (due to units) which does not support
+ *     it.
+ *
+ * When wrapping is performed (guaranteed for `aligned == 0` and if the
+ * wrapped dtype is not identical to the input dtype), the wrapped transfer
+ * function can assume a contiguous input.
+ * Otherwise use `must_wrap` to ensure that wrapping occurs, which guarantees
+ * a contiguous, aligned, call of the wrapped function.
  */
 NPY_NO_EXPORT int
-PyArray_GetLegacyDTypeTransferFunction(int aligned,
+wrap_aligned_transferfunction(
+        int aligned, int must_wrap,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_Descr *src_wrapped_dtype, PyArray_Descr *dst_wrapped_dtype,
+        PyArrayMethod_StridedLoop **out_stransfer,
+        NpyAuxData **out_transferdata, int *out_needs_api)
+{
+    must_wrap = must_wrap | !aligned;
+
+    _multistep_castdata castdata;
+    NPY_cast_info_init(&castdata.main);
+    NPY_cast_info_init(&castdata.from);
+    NPY_cast_info_init(&castdata.to);
+
+    /* Finalize the existing cast information: */
+    castdata.main.func = *out_stransfer;
+    *out_stransfer = NULL;
+    castdata.main.auxdata = *out_transferdata;
+    *out_transferdata = NULL;
+    castdata.main.context.method = NULL;
+    /* These are always legacy casts that only support native-byte-order: */
+    Py_INCREF(src_wrapped_dtype);
+    castdata.main.descriptors[0] = src_wrapped_dtype;
+    if (castdata.main.descriptors[0] == NULL) {
+        castdata.main.descriptors[1] = NULL;
+        goto fail;
+    }
+    Py_INCREF(dst_wrapped_dtype);
+    castdata.main.descriptors[1] = dst_wrapped_dtype;
+    if (castdata.main.descriptors[1] == NULL) {
+        goto fail;
+    }
+
+    /*
+     * Similar to the normal multi-step cast, but we always have to wrap
+     * it all up, but we can simply do this via a "recursive" call.
+     * TODO: This is slightly wasteful, since it unnecessarily checks casting,
+     *       but this whole function is about corner cases, which should rather
+     *       have an explicit implementation instead if we want performance.
+     */
+    if (must_wrap || src_wrapped_dtype != src_dtype) {
+        if (PyArray_GetDTypeTransferFunction(aligned,
+                src_stride, castdata.main.descriptors[0]->elsize,
+                src_dtype, castdata.main.descriptors[0], 0,
+                &castdata.from, out_needs_api) != NPY_SUCCEED) {
+            goto fail;
+        }
+    }
+    if (must_wrap || dst_wrapped_dtype != dst_dtype) {
+        if (PyArray_GetDTypeTransferFunction(aligned,
+                castdata.main.descriptors[1]->elsize, dst_stride,
+                castdata.main.descriptors[1], dst_dtype,
+                1,  /* clear buffer if it includes references */
+                &castdata.to, out_needs_api) != NPY_SUCCEED) {
+            goto fail;
+        }
+    }
+
+    *out_transferdata = _multistep_cast_auxdata_clone_int(&castdata, 1);
+    if (*out_transferdata == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    *out_stransfer = &_strided_to_strided_multistep_cast;
+    return 0;
+
+  fail:
+    NPY_cast_info_xfree(&castdata.main);
+    NPY_cast_info_xfree(&castdata.from);
+    NPY_cast_info_xfree(&castdata.to);
+
+    return -1;
+}
+
+
+/*
+ * This function wraps the legacy casts stored on the `dtype->f->cast`
+ * or registered with `PyArray_RegisterCastFunc`.
+ * For casts between two dtypes with the same type (within DType casts)
+ * it also wraps the `copyswapn` function.
+ *
+ * This function is called called from `ArrayMethod.get_loop()` when a
+ * specialized cast function is missing.
+ *
+ * In general, the legacy cast functions do not support unaligned access,
+ * so an ArrayMethod using this must signal that.  In a few places we do
+ * signal support for unaligned access (or byte swapping).
+ * In this case `allow_wrapped=1` will wrap it into an additional multi-step
+ * cast as necessary.
+ */
+NPY_NO_EXPORT int
+get_wrapped_legacy_cast_function(int aligned,
         npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
         int move_references,
-        PyArray_StridedUnaryOp **out_stransfer,
+        PyArrayMethod_StridedLoop **out_stransfer,
         NpyAuxData **out_transferdata,
-        int *out_needs_api)
+        int *out_needs_api, int allow_wrapped)
 {
     /* Note: We ignore `needs_wrap`; needs-wrap is handled by another cast */
     int needs_wrap = 0;
@@ -3782,15 +3409,14 @@ PyArray_GetLegacyDTypeTransferFunction(int aligned,
          * This is a cast within the same dtype. For legacy user-dtypes,
          * it is always valid to handle this using the copy swap function.
          */
-        return wrap_copy_swap_function(aligned,
-                src_stride, dst_stride,
-                src_dtype,
-                PyArray_ISNBO(src_dtype->byteorder) !=
-                PyArray_ISNBO(dst_dtype->byteorder),
+        return wrap_copy_swap_function(src_dtype,
+                PyDataType_ISNOTSWAPPED(src_dtype) !=
+                PyDataType_ISNOTSWAPPED(dst_dtype),
                 out_stransfer, out_transferdata);
     }
 
-    if (get_legacy_dtype_cast_function(aligned,
+    if (get_legacy_dtype_cast_function(
+            aligned,
             src_stride, dst_stride,
             src_dtype, dst_dtype,
             move_references,
@@ -3798,9 +3424,51 @@ PyArray_GetLegacyDTypeTransferFunction(int aligned,
             out_transferdata,
             out_needs_api,
             &needs_wrap) != NPY_SUCCEED) {
-        return NPY_FAIL;
+        return -1;
     }
-    return NPY_SUCCEED;
+    if (!needs_wrap) {
+        return 0;
+    }
+    if (NPY_UNLIKELY(!allow_wrapped)) {
+        /*
+         * Legacy casts do not support unaligned which requires wrapping.
+         * However, normally we ensure that wrapping happens before calling
+         * this function, so this path should never happen.
+         */
+        PyErr_Format(PyExc_RuntimeError,
+                "Internal NumPy error, casting %S to %S required wrapping, "
+                "probably it incorrectly flagged support for unaligned data. "
+                "(aligned passed to discovery is %d)",
+                src_dtype, dst_dtype, aligned);
+        goto fail;
+    }
+
+    /*
+     * If we are here, use the legacy code to wrap the above cast (which
+     * does not support unaligned data) into copyswapn.
+     */
+    PyArray_Descr *src_wrapped_dtype = ensure_dtype_nbo(src_dtype);
+    if (src_wrapped_dtype == NULL) {
+        goto fail;
+    }
+    PyArray_Descr *dst_wrapped_dtype = ensure_dtype_nbo(dst_dtype);
+    if (dst_wrapped_dtype == NULL) {
+        goto fail;
+    }
+    int res = wrap_aligned_transferfunction(
+            aligned, 1,  /* We assume wrapped is contiguous here */
+            src_stride, dst_stride,
+            src_dtype, dst_dtype,
+            src_wrapped_dtype, dst_wrapped_dtype,
+            out_stransfer, out_transferdata, out_needs_api);
+    Py_DECREF(src_wrapped_dtype);
+    Py_DECREF(dst_wrapped_dtype);
+    return res;
+
+  fail:
+    NPY_AUXDATA_FREE(*out_transferdata);
+    *out_transferdata = NULL;
+    return -1;
 }
 
 
@@ -3813,71 +3481,66 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
                             PyArray_Descr *dst_dtype,
                             PyArray_Descr *mask_dtype,
                             int move_references,
-                            PyArray_MaskedStridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
+                            NPY_cast_info *cast_info,
                             int *out_needs_api)
 {
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-    _masked_wrapper_transfer_data *data;
+    NPY_cast_info_init(cast_info);
 
-    /* TODO: Add struct-based mask_dtype support later */
     if (mask_dtype->type_num != NPY_BOOL &&
                             mask_dtype->type_num != NPY_UINT8) {
         PyErr_SetString(PyExc_TypeError,
-                "Only bool and uint8 masks are supported at the moment, "
-                "structs of bool/uint8 is planned for the future");
-        return NPY_FAIL;
-    }
-
-    /* TODO: Special case some important cases so they're fast */
-
-    /* Fall back to wrapping a non-masked transfer function */
-    if (PyArray_GetDTypeTransferFunction(aligned,
-                                src_stride, dst_stride,
-                                src_dtype, dst_dtype,
-                                move_references,
-                                &stransfer, &transferdata,
-                                out_needs_api) != NPY_SUCCEED) {
+                "Only bool and uint8 masks are supported.");
         return NPY_FAIL;
     }
 
     /* Create the wrapper function's auxdata */
-    data = (_masked_wrapper_transfer_data *)PyArray_malloc(
-                            sizeof(_masked_wrapper_transfer_data));
+    _masked_wrapper_transfer_data *data;
+    data = PyMem_Malloc(sizeof(_masked_wrapper_transfer_data));
     if (data == NULL) {
         PyErr_NoMemory();
-        NPY_AUXDATA_FREE(transferdata);
         return NPY_FAIL;
     }
-
-    /* Fill in the auxdata object */
-    memset(data, 0, sizeof(_masked_wrapper_transfer_data));
     data->base.free = &_masked_wrapper_transfer_data_free;
     data->base.clone = &_masked_wrapper_transfer_data_clone;
 
-    data->stransfer = stransfer;
-    data->transferdata = transferdata;
+    /* Fall back to wrapping a non-masked transfer function */
+    assert(dst_dtype != NULL);
+    if (PyArray_GetDTypeTransferFunction(aligned,
+                                src_stride, dst_stride,
+                                src_dtype, dst_dtype,
+                                move_references,
+                                &data->wrapped,
+                                out_needs_api) != NPY_SUCCEED) {
+        PyMem_Free(data);
+        return NPY_FAIL;
+    }
 
     /* If the src object will need a DECREF, get a function to handle that */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
-        if (get_decsrcref_transfer_function(aligned,
+        if (get_decref_transfer_function(aligned,
                             src_stride,
                             src_dtype,
-                            &data->decsrcref_stransfer,
-                            &data->decsrcref_transferdata,
+                            &data->decref_src,
                             out_needs_api) != NPY_SUCCEED) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
-
-        *out_stransfer = &_strided_masked_wrapper_decsrcref_transfer_function;
+        cast_info->func = (PyArrayMethod_StridedLoop *)
+                &_strided_masked_wrapper_decref_transfer_function;
     }
     else {
-        *out_stransfer = &_strided_masked_wrapper_transfer_function;
+        NPY_cast_info_init(&data->decref_src);
+        cast_info->func = (PyArrayMethod_StridedLoop *)
+                &_strided_masked_wrapper_transfer_function;
     }
-
-    *out_transferdata = (NpyAuxData *)data;
+    cast_info->auxdata = (NpyAuxData *)data;
+    /* The context is almost unused, but clear it for cleanup. */
+    Py_INCREF(src_dtype);
+    cast_info->descriptors[0] = src_dtype;
+    Py_INCREF(dst_dtype);
+    cast_info->descriptors[1] = dst_dtype;
+    cast_info->context.caller = NULL;
+    cast_info->context.method = NULL;
 
     return NPY_SUCCEED;
 }
@@ -3889,8 +3552,6 @@ PyArray_CastRawArrays(npy_intp count,
                       PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                       int move_references)
 {
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
     int aligned = 1, needs_api = 0;
 
     /* Make sure the copy is reasonable */
@@ -3914,21 +3575,23 @@ PyArray_CastRawArrays(npy_intp count,
                                    src_dtype->alignment);
 
     /* Get the function to do the casting */
+    NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(aligned,
                         src_stride, dst_stride,
                         src_dtype, dst_dtype,
                         move_references,
-                        &stransfer, &transferdata,
+                        &cast_info,
                         &needs_api) != NPY_SUCCEED) {
         return NPY_FAIL;
     }
 
     /* Cast */
-    stransfer(dst, dst_stride, src, src_stride, count,
-                src_dtype->elsize, transferdata);
+    char *args[2] = {src, dst};
+    npy_intp strides[2] = {src_stride, dst_stride};
+    cast_info.func(&cast_info.context, args, &count, strides, cast_info.auxdata);
 
     /* Cleanup */
-    NPY_AUXDATA_FREE(transferdata);
+    NPY_cast_info_xfree(&cast_info);
 
     /* If needs_api was set to 1, it may have raised a Python exception */
     return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;

@@ -9,19 +9,20 @@ than integration tests.
 import pytest
 import textwrap
 import enum
+import itertools
+import random
 
 import numpy as np
+from numpy.lib.stride_tricks import as_strided
 
-from numpy.core._multiarray_umath import (
-    _get_castingimpl as get_castingimpl)
-from numpy.core._multiarray_tests import uses_new_casts
+from numpy.testing import assert_array_equal
+from numpy.core._multiarray_umath import _get_castingimpl as get_castingimpl
 
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
 if np.dtype("l").itemsize != np.dtype("q").itemsize:
     # Remove l and L, the table was generated with 64bit linux in mind.
-    # TODO: Should have two tables or no a different solution.
     simple_dtypes = simple_dtypes.replace("l", "").replace("L", "")
 simple_dtypes = [type(np.dtype(c)) for c in simple_dtypes]
 
@@ -133,11 +134,7 @@ class TestChanges:
     def test_float_to_string(self, floating, string):
         assert np.can_cast(floating, string)
         # 100 is long enough to hold any formatted floating
-        if uses_new_casts():
-            assert np.can_cast(floating, f"{string}100")
-        else:
-            assert not np.can_cast(floating, f"{string}100")
-            assert np.can_cast(floating, f"{string}100", casting="same_kind")
+        assert np.can_cast(floating, f"{string}100")
 
     def test_to_void(self):
         # But in general, we do consider these safe:
@@ -145,20 +142,110 @@ class TestChanges:
         assert np.can_cast("S20", "V")
 
         # Do not consider it a safe cast if the void is too smaller:
-        if uses_new_casts():
-            assert not np.can_cast("d", "V1")
-            assert not np.can_cast("S20", "V1")
-            assert not np.can_cast("U1", "V1")
-            # Structured to unstructured is just like any other:
-            assert np.can_cast("d,i", "V", casting="same_kind")
-        else:
-            assert np.can_cast("d", "V1")
-            assert np.can_cast("S20", "V1")
-            assert np.can_cast("U1", "V1")
-            assert not np.can_cast("d,i", "V", casting="same_kind")
+        assert not np.can_cast("d", "V1")
+        assert not np.can_cast("S20", "V1")
+        assert not np.can_cast("U1", "V1")
+        # Structured to unstructured is just like any other:
+        assert np.can_cast("d,i", "V", casting="same_kind")
 
 
 class TestCasting:
+    size = 1500  # Best larger than NPY_LOWLEVEL_BUFFER_BLOCKSIZE * itemsize
+
+    def get_data(self, dtype1, dtype2):
+        if dtype2 is None or dtype1.itemsize >= dtype2.itemsize:
+            length = self.size // dtype1.itemsize
+        else:
+            length = self.size // dtype2.itemsize
+
+        # Assume that the base array is well enough aligned for all inputs.
+        arr1 = np.empty(length, dtype=dtype1)
+        assert arr1.flags.c_contiguous
+        assert arr1.flags.aligned
+
+        values = [random.randrange(-128, 128) for _ in range(length)]
+
+        for i, value in enumerate(values):
+            # Use item assignment to ensure this is not using casting:
+            arr1[i] = value
+
+        if dtype2 is None:
+            if dtype1.char == "?":
+                values = [bool(v) for v in values]
+            return arr1, values
+
+        if dtype2.char == "?":
+            values = [bool(v) for v in values]
+
+        arr2 = np.empty(length, dtype=dtype2)
+        assert arr2.flags.c_contiguous
+        assert arr2.flags.aligned
+
+        for i, value in enumerate(values):
+            # Use item assignment to ensure this is not using casting:
+            arr2[i] = value
+
+        return arr1, arr2, values
+
+    def get_data_variation(self, arr1, arr2, aligned=True, contig=True):
+        """
+        Returns a copy of arr1 that may be non-contiguous or unaligned, and a
+        matching array for arr2 (although not a copy).
+        """
+        if contig:
+            stride1 = arr1.dtype.itemsize
+            stride2 = arr2.dtype.itemsize
+        elif aligned:
+            stride1 = 2 * arr1.dtype.itemsize
+            stride2 = 2 * arr2.dtype.itemsize
+        else:
+            stride1 = arr1.dtype.itemsize + 1
+            stride2 = arr2.dtype.itemsize + 1
+
+        max_size1 = len(arr1) * 3 * arr1.dtype.itemsize + 1
+        max_size2 = len(arr2) * 3 * arr2.dtype.itemsize + 1
+        from_bytes = np.zeros(max_size1, dtype=np.uint8)
+        to_bytes = np.zeros(max_size2, dtype=np.uint8)
+
+        # Sanity check that the above is large enough:
+        assert stride1 * len(arr1) <= from_bytes.nbytes
+        assert stride2 * len(arr2) <= to_bytes.nbytes
+
+        if aligned:
+            new1 = as_strided(from_bytes[:-1].view(arr1.dtype),
+                              arr1.shape, (stride1,))
+            new2 = as_strided(to_bytes[:-1].view(arr2.dtype),
+                              arr2.shape, (stride2,))
+        else:
+            new1 = as_strided(from_bytes[1:].view(arr1.dtype),
+                              arr1.shape, (stride1,))
+            new2 = as_strided(to_bytes[1:].view(arr2.dtype),
+                              arr2.shape, (stride2,))
+
+        new1[...] = arr1
+
+        if not contig:
+            # Ensure we did not overwrite bytes that should not be written:
+            offset = arr1.dtype.itemsize if aligned else 0
+            buf = from_bytes[offset::stride1].tobytes()
+            assert buf.count(b"\0") == len(buf)
+
+        if contig:
+            assert new1.flags.c_contiguous
+            assert new2.flags.c_contiguous
+        else:
+            assert not new1.flags.c_contiguous
+            assert not new2.flags.c_contiguous
+
+        if aligned:
+            assert new1.flags.aligned
+            assert new2.flags.aligned
+        else:
+            assert not new1.flags.aligned or new1.dtype.alignment == 1
+            assert not new2.flags.aligned or new2.dtype.alignment == 1
+
+        return new1, new2
+
     @pytest.mark.parametrize("from_Dt", simple_dtypes)
     def test_simple_cancast(self, from_Dt):
         for to_Dt in simple_dtypes:
@@ -192,6 +279,183 @@ class TestCasting:
                         assert(from_dt is from_res)
                         assert(to_dt is to_res)
 
+
+    @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
+    @pytest.mark.parametrize("from_dt", simple_dtype_instances())
+    def test_simple_direct_casts(self, from_dt):
+        """
+        This test checks numeric direct casts for dtypes supported also by the
+        struct module (plus complex).  It tries to be test a wide range of
+        inputs, but skips over possibly undefined behaviour (e.g. int rollover).
+        Longdouble and CLongdouble are tested, but only using double precision.
+
+        If this test creates issues, it should possibly just be simplified
+        or even removed (checking whether unaligned/non-contiguous casts give
+        the same results is useful, though).
+        """
+        for to_dt in simple_dtype_instances():
+            to_dt = to_dt.values[0]
+            cast = get_castingimpl(type(from_dt), type(to_dt))
+
+            casting, (from_res, to_res) = cast._resolve_descriptors(
+                (from_dt, to_dt))
+
+            if from_res is not from_dt or to_res is not to_dt:
+                # Do not test this case, it is handled in multiple steps,
+                # each of which should is tested individually.
+                return
+
+            safe = (casting & ~Casting.cast_is_view) <= Casting.safe
+            del from_res, to_res, casting
+
+            arr1, arr2, values = self.get_data(from_dt, to_dt)
+
+            cast._simple_strided_call((arr1, arr2))
+
+            # Check via python list
+            assert arr2.tolist() == values
+
+            # Check that the same results are achieved for strided loops
+            arr1_o, arr2_o = self.get_data_variation(arr1, arr2, True, False)
+            cast._simple_strided_call((arr1_o, arr2_o))
+
+            assert_array_equal(arr2_o, arr2)
+            assert arr2_o.tobytes() == arr2.tobytes()
+
+            # Check if alignment makes a difference, but only if supported
+            # and only if the alignment can be wrong
+            if ((from_dt.alignment == 1 and to_dt.alignment == 1) or
+                    not cast._supports_unaligned):
+                return
+
+            arr1_o, arr2_o = self.get_data_variation(arr1, arr2, False, True)
+            cast._simple_strided_call((arr1_o, arr2_o))
+
+            assert_array_equal(arr2_o, arr2)
+            assert arr2_o.tobytes() == arr2.tobytes()
+
+            arr1_o, arr2_o = self.get_data_variation(arr1, arr2, False, False)
+            cast._simple_strided_call((arr1_o, arr2_o))
+
+            assert_array_equal(arr2_o, arr2)
+            assert arr2_o.tobytes() == arr2.tobytes()
+
+            del arr1_o, arr2_o, cast
+
+    @pytest.mark.parametrize("from_Dt", simple_dtypes)
+    def test_numeric_to_times(self, from_Dt):
+        # We currently only implement contiguous loops, so only need to
+        # test those.
+        from_dt = from_Dt()
+
+        time_dtypes = [np.dtype("M8"), np.dtype("M8[ms]"), np.dtype("M8[4D]"),
+                       np.dtype("m8"), np.dtype("m8[ms]"), np.dtype("m8[4D]")]
+        for time_dt in time_dtypes:
+            cast = get_castingimpl(type(from_dt), type(time_dt))
+
+            casting, (from_res, to_res) = cast._resolve_descriptors(
+                (from_dt, time_dt))
+
+            assert from_res is from_dt
+            assert to_res is time_dt
+            del from_res, to_res
+
+            assert(casting & CAST_TABLE[from_Dt][type(time_dt)])
+
+            int64_dt = np.dtype(np.int64)
+            arr1, arr2, values = self.get_data(from_dt, int64_dt)
+            arr2 = arr2.view(time_dt)
+            arr2[...] = np.datetime64("NaT")
+
+            if time_dt == np.dtype("M8"):
+                # This is a bit of a strange path, and could probably be removed
+                arr1[-1] = 0  # ensure at least one value is not NaT
+
+                # The cast currently succeeds, but the values are invalid:
+                cast._simple_strided_call((arr1, arr2))
+                with pytest.raises(ValueError):
+                    str(arr2[-1])  # e.g. conversion to string fails
+                return
+
+            cast._simple_strided_call((arr1, arr2))
+
+            assert [int(v) for v in arr2.tolist()] == values
+
+            # Check that the same results are achieved for strided loops
+            arr1_o, arr2_o = self.get_data_variation(arr1, arr2, True, False)
+            cast._simple_strided_call((arr1_o, arr2_o))
+
+            assert_array_equal(arr2_o, arr2)
+            assert arr2_o.tobytes() == arr2.tobytes()
+
+    @pytest.mark.parametrize(
+            ["from_dt", "to_dt", "expected_casting", "nom", "denom"],
+            [("M8[ns]", None,
+                  Casting.no | Casting.cast_is_view, 1, 1),
+             (str(np.dtype("M8[ns]").newbyteorder()), None, Casting.equiv, 1, 1),
+             ("M8", "M8[ms]", Casting.safe | Casting.cast_is_view, 1, 1),
+             ("M8[ms]", "M8", Casting.unsafe, 1, 1),  # should be invalid cast
+             ("M8[5ms]", "M8[5ms]", Casting.no | Casting.cast_is_view, 1, 1),
+             ("M8[ns]", "M8[ms]", Casting.same_kind, 1, 10**6),
+             ("M8[ms]", "M8[ns]", Casting.safe, 10**6, 1),
+             ("M8[ms]", "M8[7ms]", Casting.same_kind, 1, 7),
+             ("M8[4D]", "M8[1M]", Casting.same_kind, None,
+                  # give full values based on NumPy 1.19.x
+                  [-2**63, 0, -1, 1314, -1315, 564442610]),
+             ("m8[ns]", None, Casting.no | Casting.cast_is_view, 1, 1),
+             (str(np.dtype("m8[ns]").newbyteorder()), None, Casting.equiv, 1, 1),
+             ("m8", "m8[ms]", Casting.safe | Casting.cast_is_view, 1, 1),
+             ("m8[ms]", "m8", Casting.unsafe, 1, 1),  # should be invalid cast
+             ("m8[5ms]", "m8[5ms]", Casting.no | Casting.cast_is_view, 1, 1),
+             ("m8[ns]", "m8[ms]", Casting.same_kind, 1, 10**6),
+             ("m8[ms]", "m8[ns]", Casting.safe, 10**6, 1),
+             ("m8[ms]", "m8[7ms]", Casting.same_kind, 1, 7),
+             ("m8[4D]", "m8[1M]", Casting.unsafe, None,
+                  # give full values based on NumPy 1.19.x
+                  [-2**63, 0, 0, 1314, -1315, 564442610])])
+    def test_time_to_time(self, from_dt, to_dt, expected_casting, nom, denom):
+        from_dt = np.dtype(from_dt)
+        if to_dt is not None:
+            to_dt = np.dtype(to_dt)
+
+        # Test a few values for casting (results generated with NumPy 1.19)
+        values = np.array([-2**63, 1, 2**63-1, 10000, -10000, 2**32])
+        values = values.astype(np.dtype("int64").newbyteorder(from_dt.byteorder))
+        assert values.dtype.byteorder == from_dt.byteorder
+        assert np.isnat(values.view(from_dt)[0])
+
+        DType = type(from_dt)
+        cast = get_castingimpl(DType, DType)
+        casting, (from_res, to_res) = cast._resolve_descriptors((from_dt, to_dt))
+        assert from_res is from_dt
+        assert to_res is to_dt or to_dt is None
+        assert casting == expected_casting
+
+        if nom is not None:
+            expected_out = (values * nom // denom).view(to_res)
+            expected_out[0] = "NaT"
+        else:
+            expected_out = np.empty_like(values)
+            expected_out[...] = denom
+            expected_out = expected_out.view(to_dt)
+
+        orig_arr = values.view(from_dt)
+        orig_out = np.empty_like(expected_out)
+
+        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):
+            # Casting from non-generic to generic units is an error and should
+            # probably be reported as an invalid cast earlier.
+            with pytest.raises(ValueError):
+                cast._simple_strided_call((orig_arr, orig_out))
+            return
+
+        for aligned in [True, True]:
+            for contig in [True, True]:
+                arr, out = self.get_data_variation(
+                        orig_arr, orig_out, aligned, contig)
+                out[...] = 0
+                cast._simple_strided_call((arr, out))
+                assert_array_equal(out.view("int64"), expected_out.view("int64"))
 
     def string_with_modified_length(self, dtype, change_length):
         fact = 1 if dtype.char == "S" else 4
@@ -239,6 +503,67 @@ class TestCasting:
         assert safety == Casting.unsafe
         assert other_dt is res_dt  # returns the singleton for simple dtypes
 
+    @pytest.mark.parametrize("string_char", ["S", "U"])
+    @pytest.mark.parametrize("other_dt", simple_dtype_instances())
+    def test_simple_string_casts_roundtrip(self, other_dt, string_char):
+        """
+        Tests casts from and to string by checking the roundtripping property.
+
+        The test also covers some string to string casts (but not all).
+
+        If this test creates issues, it should possibly just be simplified
+        or even removed (checking whether unaligned/non-contiguous casts give
+        the same results is useful, though).
+        """
+        string_DT = type(np.dtype(string_char))
+
+        cast = get_castingimpl(type(other_dt), string_DT)
+        cast_back = get_castingimpl(string_DT, type(other_dt))
+        _, (res_other_dt, string_dt) = cast._resolve_descriptors((other_dt, None))
+
+        if res_other_dt is not other_dt:
+            # do not support non-native byteorder, skip test in that case
+            assert other_dt.byteorder != res_other_dt.byteorder
+            return
+
+        orig_arr, values = self.get_data(other_dt, None)
+        str_arr = np.zeros(len(orig_arr), dtype=string_dt)
+        string_dt_short = self.string_with_modified_length(string_dt, -1)
+        str_arr_short = np.zeros(len(orig_arr), dtype=string_dt_short)
+        string_dt_long = self.string_with_modified_length(string_dt, 1)
+        str_arr_long = np.zeros(len(orig_arr), dtype=string_dt_long)
+
+        assert not cast._supports_unaligned  # if support is added, should test
+        assert not cast_back._supports_unaligned
+
+        for contig in [True, False]:
+            other_arr, str_arr = self.get_data_variation(
+                orig_arr, str_arr, True, contig)
+            _, str_arr_short = self.get_data_variation(
+                orig_arr, str_arr_short.copy(), True, contig)
+            _, str_arr_long = self.get_data_variation(
+                orig_arr, str_arr_long, True, contig)
+
+            cast._simple_strided_call((other_arr, str_arr))
+
+            cast._simple_strided_call((other_arr, str_arr_short))
+            assert_array_equal(str_arr.astype(string_dt_short), str_arr_short)
+
+            cast._simple_strided_call((other_arr, str_arr_long))
+            assert_array_equal(str_arr, str_arr_long)
+
+            if other_dt.kind == "b":
+                # Booleans do not roundtrip
+                continue
+
+            other_arr[...] = 0
+            cast_back._simple_strided_call((str_arr, other_arr))
+            assert_array_equal(orig_arr, other_arr)
+
+            other_arr[...] = 0
+            cast_back._simple_strided_call((str_arr_long, other_arr))
+            assert_array_equal(orig_arr, other_arr)
+
     @pytest.mark.parametrize("other_dt", ["S8", "<U8", ">U8"])
     @pytest.mark.parametrize("string_char", ["S", "U"])
     def test_string_to_string_cancast(self, other_dt, string_char):
@@ -282,6 +607,28 @@ class TestCasting:
                 assert safety == expected_safety
             elif change_length > 0:
                 assert safety == Casting.safe
+
+    @pytest.mark.parametrize("order1", [">", "<"])
+    @pytest.mark.parametrize("order2", [">", "<"])
+    def test_unicode_byteswapped_cast(self, order1, order2):
+        # Very specific tests (not using the castingimpl directly)
+        # that tests unicode bytedwaps including for unaligned array data.
+        dtype1 = np.dtype(f"{order1}U30")
+        dtype2 = np.dtype(f"{order2}U30")
+        data1 = np.empty(30 * 4 + 1, dtype=np.uint8)[1:].view(dtype1)
+        data2 = np.empty(30 * 4 + 1, dtype=np.uint8)[1:].view(dtype2)
+        if dtype1.alignment != 1:
+            # alignment should always be >1, but skip the check if not
+            assert not data1.flags.aligned
+            assert not data2.flags.aligned
+
+        element = "this is a ünicode string‽"
+        data1[()] = element
+        # Test both `data1` and `data1.copy()`  (which should be aligned)
+        for data in [data1, data1.copy()]:
+            data2[...] = data1
+            assert data2[()] == element
+            assert data2.copy()[()] == element
 
     def test_void_to_string_special_case(self):
         # Cover a small special case in void to string casting that could

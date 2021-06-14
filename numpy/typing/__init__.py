@@ -19,6 +19,36 @@ the two below:
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
+Mypy plugin
+-----------
+
+A mypy_ plugin is distributed in `numpy.typing` for managing a number of
+platform-specific annotations. Its functionality can be split into three
+distinct parts:
+
+* Assigning the (platform-dependent) precisions of certain `~numpy.number` subclasses,
+  including the likes of `~numpy.int_`, `~numpy.intp` and `~numpy.longlong`.
+  See the documentation on :ref:`scalar types <arrays.scalars.built-in>` for a
+  comprehensive overview of the affected classes. Without the plugin the
+  precision of all relevant classes will be inferred as `~typing.Any`.
+* Assigning the (platform-dependent) precision of `~numpy.ctypeslib.c_intp`.
+  Without the plugin aforementioned type will default to `ctypes.c_int64`.
+* Removing all extended-precision `~numpy.number` subclasses that are unavailable
+  for the platform in question. Most notably, this includes the likes of
+  `~numpy.float128` and `~numpy.complex256`. Without the plugin *all*
+  extended-precision types will, as far as mypy is concerned, be available
+  to all platforms.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+
 Differences from the runtime NumPy API
 --------------------------------------
 
@@ -69,7 +99,7 @@ the following code is valid:
     >>> x.dtype = np.bool_
 
 This sort of mutation is not allowed by the types. Users who want to
-write statically typed code should insted use the `numpy.ndarray.view`
+write statically typed code should instead use the `numpy.ndarray.view`
 method to create a view of the array with a different dtype.
 
 DTypeLike
@@ -82,15 +112,15 @@ dictionary of fields like below:
 
     >>> x = np.dtype({"field1": (float, 1), "field2": (int, 3)})
 
-Although this is valid Numpy code, the type checker will complain about it,
+Although this is valid NumPy code, the type checker will complain about it,
 since its usage is discouraged.
 Please see : :ref:`Data type objects <arrays.dtypes>`
 
-Number Precision
+Number precision
 ~~~~~~~~~~~~~~~~
 
 The precision of `numpy.number` subclasses is treated as a covariant generic
-parameter (see :class:`~NBitBase`), simplifying the annoting of proccesses
+parameter (see :class:`~NBitBase`), simplifying the annotating of processes
 involving precision-based casting.
 
 .. code-block:: python
@@ -113,6 +143,20 @@ Timedelta64
 The `~numpy.timedelta64` class is not considered a subclass of `~numpy.signedinteger`,
 the former only inheriting from `~numpy.generic` while static type checking.
 
+0D arrays
+~~~~~~~~~
+
+During runtime numpy aggressively casts any passed 0D arrays into their
+corresponding `~numpy.generic` instance. Until the introduction of shape
+typing (see :pep:`646`) it is unfortunately not possible to make the
+necessary distinction between 0D and >0D arrays. While thus not strictly
+correct, all operations are that can potentially perform a 0D-array -> scalar
+cast are currently annotated as exclusively returning an `ndarray`.
+
+If it is known in advance that an operation _will_ perform a
+0D-array -> scalar cast, then one can consider manually remedying the
+situation with either `typing.cast` or a ``# type: ignore`` comment.
+
 API
 ---
 
@@ -120,19 +164,27 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Any
 
 if TYPE_CHECKING:
-    import sys
-    if sys.version_info >= (3, 8):
-        from typing import final
+    # typing_extensions is always available when type-checking
+    from typing_extensions import Literal as L
+    _HAS_TYPING_EXTENSIONS: L[True]
+else:
+    try:
+        import typing_extensions
+    except ImportError:
+        _HAS_TYPING_EXTENSIONS = False
     else:
-        from typing_extensions import final
+        _HAS_TYPING_EXTENSIONS = True
+
+if TYPE_CHECKING:
+    from typing_extensions import final
 else:
     def final(f): return f
 
 if not TYPE_CHECKING:
-    __all__ = ["ArrayLike", "DTypeLike", "NBitBase"]
+    __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
 else:
     # Ensure that all objects within this module are accessible while
     # static type checking. This includes private ones, as we need them
@@ -149,7 +201,7 @@ class NBitBase:
     An object representing `numpy.number` precision during static type checking.
 
     Used exclusively for the purpose static type checking, `NBitBase`
-    represents the base of a hierachieral set of subclasses.
+    represents the base of a hierarchical set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
 
@@ -162,13 +214,15 @@ class NBitBase:
 
     .. code-block:: python
 
+        >>> from __future__ import annotations
         >>> from typing import TypeVar, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
 
-        >>> T = TypeVar("T", bound=npt.NBitBase)
+        >>> T1 = TypeVar("T1", bound=npt.NBitBase)
+        >>> T2 = TypeVar("T2", bound=npt.NBitBase)
 
-        >>> def add(a: "np.floating[T]", b: "np.integer[T]") -> "np.floating[T]":
+        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[T1 | T2]:
         ...     return a + b
 
         >>> a = np.float16()
@@ -204,22 +258,132 @@ class _32Bit(_64Bit): ...  # type: ignore[misc]
 class _16Bit(_32Bit): ...  # type: ignore[misc]
 class _8Bit(_16Bit): ...  # type: ignore[misc]
 
-# Clean up the namespace
-del TYPE_CHECKING, final, List
-
-from ._scalars import (
-    _CharLike,
-    _BoolLike,
-    _IntLike,
-    _FloatLike,
-    _ComplexLike,
-    _NumberLike,
-    _ScalarLike,
-    _VoidLike,
+from ._nbit import (
+    _NBitByte,
+    _NBitShort,
+    _NBitIntC,
+    _NBitIntP,
+    _NBitInt,
+    _NBitLongLong,
+    _NBitHalf,
+    _NBitSingle,
+    _NBitDouble,
+    _NBitLongDouble,
 )
-from ._array_like import _SupportsArray, ArrayLike
+from ._char_codes import (
+    _BoolCodes,
+    _UInt8Codes,
+    _UInt16Codes,
+    _UInt32Codes,
+    _UInt64Codes,
+    _Int8Codes,
+    _Int16Codes,
+    _Int32Codes,
+    _Int64Codes,
+    _Float16Codes,
+    _Float32Codes,
+    _Float64Codes,
+    _Complex64Codes,
+    _Complex128Codes,
+    _ByteCodes,
+    _ShortCodes,
+    _IntCCodes,
+    _IntPCodes,
+    _IntCodes,
+    _LongLongCodes,
+    _UByteCodes,
+    _UShortCodes,
+    _UIntCCodes,
+    _UIntPCodes,
+    _UIntCodes,
+    _ULongLongCodes,
+    _HalfCodes,
+    _SingleCodes,
+    _DoubleCodes,
+    _LongDoubleCodes,
+    _CSingleCodes,
+    _CDoubleCodes,
+    _CLongDoubleCodes,
+    _DT64Codes,
+    _TD64Codes,
+    _StrCodes,
+    _BytesCodes,
+    _VoidCodes,
+    _ObjectCodes,
+)
+from ._scalars import (
+    _CharLike_co,
+    _BoolLike_co,
+    _UIntLike_co,
+    _IntLike_co,
+    _FloatLike_co,
+    _ComplexLike_co,
+    _TD64Like_co,
+    _NumberLike_co,
+    _ScalarLike_co,
+    _VoidLike_co,
+)
 from ._shape import _Shape, _ShapeLike
-from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
+from ._dtype_like import (
+    DTypeLike as DTypeLike,
+    _SupportsDType,
+    _VoidDTypeLike,
+    _DTypeLikeBool,
+    _DTypeLikeUInt,
+    _DTypeLikeInt,
+    _DTypeLikeFloat,
+    _DTypeLikeComplex,
+    _DTypeLikeTD64,
+    _DTypeLikeDT64,
+    _DTypeLikeObject,
+    _DTypeLikeVoid,
+    _DTypeLikeStr,
+    _DTypeLikeBytes,
+    _DTypeLikeComplex_co,
+)
+from ._array_like import (
+    ArrayLike as ArrayLike,
+    _ArrayLike,
+    _NestedSequence,
+    _RecursiveSequence,
+    _SupportsArray,
+    _ArrayLikeInt,
+    _ArrayLikeBool_co,
+    _ArrayLikeUInt_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeNumber_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeDT64_co,
+    _ArrayLikeObject_co,
+    _ArrayLikeVoid_co,
+    _ArrayLikeStr_co,
+    _ArrayLikeBytes_co,
+)
+from ._generic_alias import (
+    NDArray as NDArray,
+    _DType,
+    _GenericAlias,
+)
+
+if TYPE_CHECKING:
+    from ._ufunc import (
+        _UFunc_Nin1_Nout1,
+        _UFunc_Nin2_Nout1,
+        _UFunc_Nin1_Nout2,
+        _UFunc_Nin2_Nout2,
+        _GUFunc_Nin2_Nout1,
+    )
+else:
+    _UFunc_Nin1_Nout1 = Any
+    _UFunc_Nin2_Nout1 = Any
+    _UFunc_Nin1_Nout2 = Any
+    _UFunc_Nin2_Nout2 = Any
+    _GUFunc_Nin2_Nout1 = Any
+
+# Clean up the namespace
+del TYPE_CHECKING, final, List, Any
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings

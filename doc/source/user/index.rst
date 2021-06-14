@@ -23,6 +23,7 @@ details are found in :ref:`reference`.
    c-info
    tutorials_index
    howtos_index
+   depending_on_numpy
 
 
 .. Links to these files are placed directly in the top-level html
@@ -34,7 +35,6 @@ details are found in :ref:`reference`.
 .. toctree::
    :hidden:
 
-   explanations_index
    ../f2py/index
    ../glossary
    ../dev/underthehood

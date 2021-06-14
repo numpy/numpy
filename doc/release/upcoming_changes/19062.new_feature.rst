@@ -1,0 +1,21 @@
+Assign the platform-specific ``c_intp`` precision via a mypy plugin
+-------------------------------------------------------------------
+
+The mypy_ plugin, introduced in `numpy/numpy#17843`_, has again been expanded:
+the plugin now is now responsible for setting the platform-specific precision
+of `numpy.ctypeslib.c_intp`, the latter being used as data type for various
+`numpy.ndarray.ctypes` attributes.
+
+Without the plugin, aforementioned type will default to `ctypes.c_int64`.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+.. _`numpy/numpy#17843`: https://github.com/numpy/numpy/pull/17843

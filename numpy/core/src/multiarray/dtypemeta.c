@@ -32,6 +32,14 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
 }
 
 static PyObject *
+dtypemeta_alloc(PyTypeObject *NPY_UNUSED(type), Py_ssize_t NPY_UNUSED(items))
+{
+    PyErr_SetString(PyExc_TypeError,
+            "DTypes can only be created using the NumPy API.");
+    return NULL;
+}
+
+static PyObject *
 dtypemeta_new(PyTypeObject *NPY_UNUSED(type),
         PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
@@ -162,12 +170,12 @@ void_discover_descr_from_pyobject(
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
-        Py_ssize_t itemsize = (int)PyBytes_Size(obj);
+        Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
         }
-        descr->elsize = itemsize;
+        descr->elsize = (int)itemsize;
         return descr;
     }
     PyErr_Format(PyExc_TypeError,
@@ -375,7 +383,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES);
     if (!other->legacy || other->type_num > cls->type_num) {
-        /* Let the more generic (larger type number) DType handle this */
+        /*
+         * Let the more generic (larger type number) DType handle this
+         * (note that half is after all others, which works out here.)
+         */
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
@@ -397,10 +408,10 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    assert(cls->type_num < NPY_NTYPES);
-    if (!other->legacy || other->type_num > cls->type_num ||
-        other->type_num == NPY_OBJECT) {
-        /* Let the more generic (larger type number) DType handle this */
+    assert(cls->type_num < NPY_NTYPES && cls != other);
+    if (!other->legacy || (!PyTypeNum_ISNUMBER(other->type_num) &&
+            /* Not numeric so defer unless cls is unicode and other is string */
+            !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
@@ -523,7 +534,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     if (dot) {
         scalar_name = dot + 1;
     }
-    ssize_t name_length = strlen(scalar_name) + 14;
+    Py_ssize_t name_length = strlen(scalar_name) + 14;
 
     char *tp_name = malloc(name_length);
     if (tp_name == NULL) {
@@ -674,6 +685,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
     .tp_members = dtypemeta_members,
     .tp_base = NULL,  /* set to PyType_Type at import time */
+    .tp_alloc = dtypemeta_alloc,
     .tp_init = (initproc)dtypemeta_init,
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,

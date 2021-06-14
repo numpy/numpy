@@ -331,13 +331,13 @@ format_@name@(@type@ val, npy_bool scientific,
 {
     if (scientific) {
         return Dragon4_Scientific_@Name@(&val,
-                        DigitMode_Unique, precision,
+                        DigitMode_Unique, precision, -1,
                         sign, trim, pad_left, exp_digits);
     }
     else {
         return Dragon4_Positional_@Name@(&val,
                         DigitMode_Unique, CutoffMode_TotalLength, precision,
-                        sign, trim, pad_left, pad_right);
+                        -1, sign, trim, pad_left, pad_right);
     }
 }
 
@@ -2711,7 +2711,7 @@ static PyObject *
 
     /* TODO: include type name in error message, which is not @name@ */
     PyObject *obj = NULL;
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
         return NULL;
     }
@@ -2799,7 +2799,7 @@ static PyObject *
 object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
 {
     PyObject *obj = Py_None;
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
         return NULL;
     }
@@ -2825,7 +2825,7 @@ static PyObject *
     PyObject *obj = NULL, *meta_obj = NULL;
     Py@Name@ScalarObject *ret;
 
-    char *kwnames[] = {"", "", NULL};  /* positional-only */
+    static char *kwnames[] = {"", "", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &obj, &meta_obj)) {
         return NULL;
     }
@@ -2884,7 +2884,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
         return NULL;
     }
@@ -2995,7 +2995,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     PyObject *obj, *arr;
     PyObject *new = NULL;
 
-    char *kwnames[] = {"", NULL};  /* positional-only */
+    static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:void", kwnames, &obj)) {
         return NULL;
     }
@@ -3172,7 +3172,7 @@ static npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    return _Py_HashDouble((double) PyArrayScalar_VAL(obj, @name@));
+    return Npy_HashDouble(obj, (double)PyArrayScalar_VAL(obj, @name@));
 }
 
 /* borrowed from complex_hash */
@@ -3180,14 +3180,14 @@ static npy_hash_t
 c@lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
-    hashreal = _Py_HashDouble((double)
-            PyArrayScalar_VAL(obj, C@name@).real);
+    hashreal = Npy_HashDouble(
+            obj, (double)PyArrayScalar_VAL(obj, C@name@).real);
 
     if (hashreal == -1) {
         return -1;
     }
-    hashimag = _Py_HashDouble((double)
-            PyArrayScalar_VAL(obj, C@name@).imag);
+    hashimag = Npy_HashDouble(
+            obj, (double)PyArrayScalar_VAL(obj, C@name@).imag);
     if (hashimag == -1) {
         return -1;
     }
@@ -3202,7 +3202,8 @@ c@lname@_arrtype_hash(PyObject *obj)
 static npy_hash_t
 half_arrtype_hash(PyObject *obj)
 {
-    return _Py_HashDouble(npy_half_to_double(PyArrayScalar_VAL(obj, Half)));
+    return Npy_HashDouble(
+            obj, npy_half_to_double(PyArrayScalar_VAL(obj, Half)));
 }
 
 static npy_hash_t

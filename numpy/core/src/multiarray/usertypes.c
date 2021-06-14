@@ -235,7 +235,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
             !PyDict_CheckExact(descr->fields)) {
             PyErr_Format(PyExc_ValueError,
                     "Failed to register dtype for %S: Legacy user dtypes "
-                    "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are"
+                    "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are "
                     "unsupported.  It is possible to create such a dtype only "
                     "if it is a structured dtype with names and fields "
                     "hardcoded at registration time.\n"
@@ -538,7 +538,7 @@ PyArray_AddLegacyWrapping_CastingImpl(
     if (from == to) {
         spec.flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED;
         PyType_Slot slots[] = {
-            {NPY_METH_get_loop, NULL},
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
             {NPY_METH_resolve_descriptors, &legacy_same_dtype_resolve_descriptors},
             {0, NULL}};
         spec.slots = slots;
@@ -547,7 +547,7 @@ PyArray_AddLegacyWrapping_CastingImpl(
     else {
         spec.flags = NPY_METH_REQUIRES_PYAPI;
         PyType_Slot slots[] = {
-            {NPY_METH_get_loop, NULL},
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
             {NPY_METH_resolve_descriptors, &simple_cast_resolve_descriptors},
             {0, NULL}};
         spec.slots = slots;

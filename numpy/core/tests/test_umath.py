@@ -4,7 +4,9 @@ import fnmatch
 import itertools
 import pytest
 import sys
+import os
 from fractions import Fraction
+from functools import reduce
 
 import numpy.core.umath as ncu
 from numpy.core import _umath_tests as ncu_tests
@@ -15,6 +17,20 @@ from numpy.testing import (
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, assert_warns
     )
+
+def get_glibc_version():
+    try:
+        ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
+    except Exception as inst:
+        ver = '0.0'
+
+    return ver
+
+
+glibcver = get_glibc_version()
+glibc_newerthan_2_17 = pytest.mark.xfail(
+        glibcver != '0.0' and glibcver < '2.17',
+        reason="Older glibc versions may not raise appropriate FP exceptions")
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -99,9 +115,9 @@ class TestOut:
                 # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
 
-            assert_raises(ValueError, np.add, a, 2, o, o, subok=subok)
-            assert_raises(ValueError, np.add, a, 2, o, out=o, subok=subok)
-            assert_raises(ValueError, np.add, a, 2, None, out=o, subok=subok)
+            assert_raises(TypeError, np.add, a, 2, o, o, subok=subok)
+            assert_raises(TypeError, np.add, a, 2, o, out=o, subok=subok)
+            assert_raises(TypeError, np.add, a, 2, None, out=o, subok=subok)
             assert_raises(ValueError, np.add, a, 2, out=(o, o), subok=subok)
             assert_raises(ValueError, np.add, a, 2, out=(), subok=subok)
             assert_raises(TypeError, np.add, a, 2, [], subok=subok)
@@ -248,6 +264,148 @@ class TestDivision:
             assert_equal(x / 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
+
+    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
+        np.sctypes['int'] + np.sctypes['uint'], (
+            (
+                # dividend
+                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                # divisors
+                "np.arange(lsize, dtype=dtype),"
+                # scalar divisors
+                "range(15)"
+            ),
+            (
+                # dividend
+                "np.arange(fo.min, fo.min+lsize, dtype=dtype),"
+                # divisors
+                "np.arange(lsize//-2, lsize//2, dtype=dtype),"
+                # scalar divisors
+                "range(fo.min, fo.min + 15)"
+            ), (
+                # dividend
+                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                # divisors
+                "np.arange(lsize, dtype=dtype),"
+                # scalar divisors
+                "[1,3,9,13,neg, fo.min+1, fo.min//2, fo.max//3, fo.max//4]"
+            )
+        )
+    ))
+    def test_division_int_boundary(self, dtype, ex_val):
+        fo = np.iinfo(dtype)
+        neg = -1 if fo.min < 0 else 1
+        # Large enough to test SIMD loops and remaind elements
+        lsize = 512 + 7
+        a, b, divisors = eval(ex_val)
+        a_lst, b_lst = a.tolist(), b.tolist()
+
+        c_div = lambda n, d: (
+            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+        )
+        with np.errstate(divide='ignore'):
+            ac = a.copy()
+            ac //= b
+            div_ab = a // b
+        div_lst = [c_div(x, y) for x, y in zip(a_lst, b_lst)]
+
+        msg = "Integer arrays floor division check (//)"
+        assert all(div_ab == div_lst), msg
+        msg_eq = "Integer arrays floor division check (//=)"
+        assert all(ac == div_lst), msg_eq
+
+        for divisor in divisors:
+            ac = a.copy()
+            with np.errstate(divide='ignore'):
+                div_a = a // divisor
+                ac //= divisor
+            div_lst = [c_div(i, divisor) for i in a_lst]
+
+            assert all(div_a == div_lst), msg
+            assert all(ac == div_lst), msg_eq
+
+        with np.errstate(divide='raise'):
+            if 0 in b or (fo.min and -1 in b and fo.min in a):
+                # Verify overflow case
+                with pytest.raises(FloatingPointError):
+                    a // b
+            else:
+                a // b
+            if fo.min and fo.min in a:
+                with pytest.raises(FloatingPointError):
+                    a // -1
+            elif fo.min:
+                a // -1
+            with pytest.raises(FloatingPointError):
+                a // 0
+            with pytest.raises(FloatingPointError):
+                ac = a.copy()
+                ac //= 0
+
+            np.array([], dtype=dtype) // 0
+
+    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
+        np.sctypes['int'] + np.sctypes['uint'], (
+            "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
+            "np.array([fo.min, 1, -2, 1, 1, 2, -3], dtype=dtype)",
+            "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
+            "np.arange(fo.max-(100*7), fo.max, 7, dtype=dtype)",
+        )
+    ))
+    def test_division_int_reduce(self, dtype, ex_val):
+        fo = np.iinfo(dtype)
+        a = eval(ex_val)
+        lst = a.tolist()
+        c_div = lambda n, d: (
+            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+        )
+
+        with np.errstate(divide='ignore'):
+            div_a = np.floor_divide.reduce(a)
+        div_lst = reduce(c_div, lst)
+        msg = "Reduce floor integer division check"
+        assert div_a == div_lst, msg
+
+        with np.errstate(divide='raise'):
+            with pytest.raises(FloatingPointError):
+                np.floor_divide.reduce(np.arange(-100, 100, dtype=dtype))
+            if fo.min:
+                with pytest.raises(FloatingPointError):
+                    np.floor_divide.reduce(
+                        np.array([fo.min, 1, -1], dtype=dtype)
+                    )
+
+    @pytest.mark.parametrize(
+            "dividend,divisor,quotient",
+            [(np.timedelta64(2,'Y'), np.timedelta64(2,'M'), 12),
+             (np.timedelta64(2,'Y'), np.timedelta64(-2,'M'), -12),
+             (np.timedelta64(-2,'Y'), np.timedelta64(2,'M'), -12),
+             (np.timedelta64(-2,'Y'), np.timedelta64(-2,'M'), 12),
+             (np.timedelta64(2,'M'), np.timedelta64(-2,'Y'), -1),
+             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), 0),
+             (np.timedelta64(2,'Y'), 2, np.timedelta64(1,'Y')),
+             (np.timedelta64(2,'Y'), -2, np.timedelta64(-1,'Y')),
+             (np.timedelta64(-2,'Y'), 2, np.timedelta64(-1,'Y')),
+             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
+             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
+             (np.timedelta64(-2,'Y'), -3, np.timedelta64(0,'Y')),
+             (np.timedelta64(-2,'Y'), 0, np.timedelta64('Nat','Y')),
+            ])
+    def test_division_int_timedelta(self, dividend, divisor, quotient):
+        # If either divisor is 0 or quotient is Nat, check for division by 0
+        if divisor and (isinstance(quotient, int) or not np.isnat(quotient)):
+            msg = "Timedelta floor division check"
+            assert dividend // divisor == quotient, msg
+
+            # Test for arrays as well
+            msg = "Timedelta arrays floor division check"
+            dividend_array = np.array([dividend]*5)
+            quotient_array = np.array([quotient]*5)
+            assert all(dividend_array // divisor == quotient_array), msg
+        else:
+            with np.errstate(divide='raise', invalid='raise'):
+                with pytest.raises(FloatingPointError):
+                    dividend // divisor
 
     def test_division_complex(self):
         # check that implementation is correct
@@ -843,11 +1001,21 @@ class TestSpecialFloats:
             yf = np.array(y, dtype=dt)
             assert_equal(np.exp(yf), xf)
 
+    # Older version of glibc may not raise the correct FP exceptions
+    # See: https://github.com/numpy/numpy/issues/19192
+    @glibc_newerthan_2_17
+    def test_exp_exceptions(self):
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
             assert_raises(FloatingPointError, np.exp, np.float64(800.))
             assert_raises(FloatingPointError, np.exp, np.float64(1E19))
+
+        with np.errstate(under='raise'):
+            assert_raises(FloatingPointError, np.exp, np.float32(-1000.))
+            assert_raises(FloatingPointError, np.exp, np.float32(-1E19))
+            assert_raises(FloatingPointError, np.exp, np.float64(-1000.))
+            assert_raises(FloatingPointError, np.exp, np.float64(-1E19))
 
     def test_log_values(self):
         with np.errstate(all='ignore'):
@@ -864,6 +1032,11 @@ class TestSpecialFloats:
         with np.errstate(invalid='raise'):
             assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.log, np.float32(-1.0))
+
+        # See https://github.com/numpy/numpy/issues/18005
+        with assert_no_warnings():
+            a = np.array(1e9, dtype='float32')
+            np.log(a)
 
     def test_sincos_values(self):
         with np.errstate(all='ignore'):
@@ -1886,7 +2059,7 @@ class TestSpecialMethods:
             _wrap_args = None
             _prepare_args = None
             def __new__(cls):
-                return np.empty(()).view(cls)
+                return np.zeros(()).view(cls)
             def __array_wrap__(self, obj, context):
                 self._wrap_args = context[1]
                 return obj
@@ -2122,7 +2295,7 @@ class TestSpecialMethods:
 
     def test_array_too_many_args(self):
 
-        class A(object):
+        class A:
             def __array__(self, dtype, context):
                 return np.zeros(1)
 
@@ -2298,12 +2471,14 @@ class TestSpecialMethods:
 
         # __call__
         a = A()
-        res = np.multiply.__call__(1, a, foo='bar', answer=42)
+        with assert_raises(TypeError):
+            np.multiply.__call__(1, a, foo='bar', answer=42)
+        res = np.multiply.__call__(1, a, subok='bar', where=42)
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], '__call__')
         assert_equal(res[3], (1, a))
-        assert_equal(res[4], {'foo': 'bar', 'answer': 42})
+        assert_equal(res[4], {'subok': 'bar', 'where': 42})
 
         # __call__, wrong args
         assert_raises(TypeError, np.multiply, a)
@@ -2509,7 +2684,7 @@ class TestSpecialMethods:
         assert_raises(TypeError, np.multiply, a, b, 'one', out='two')
         assert_raises(TypeError, np.multiply, a, b, 'one', 'two')
         assert_raises(ValueError, np.multiply, a, b, out=('one', 'two'))
-        assert_raises(ValueError, np.multiply, a, out=())
+        assert_raises(TypeError, np.multiply, a, out=())
         assert_raises(TypeError, np.modf, a, 'one', out=('two', 'three'))
         assert_raises(TypeError, np.modf, a, 'one', 'two', 'three')
         assert_raises(ValueError, np.modf, a, out=('one', 'two', 'three'))
@@ -2637,8 +2812,8 @@ class TestSpecialMethods:
                 if out_no:
                     info['outputs'] = out_no
 
-                results = super(A, self).__array_ufunc__(ufunc, method,
-                                                         *args, **kwargs)
+                results = super().__array_ufunc__(ufunc, method,
+                                                  *args, **kwargs)
                 if results is NotImplemented:
                     return NotImplemented
 
@@ -3137,7 +3312,7 @@ class TestSubclass:
         assert_equal(a+a, a)
 
 
-class TestFrompyfunc(object):
+class TestFrompyfunc:
 
     def test_identity(self):
         def mul(a, b):

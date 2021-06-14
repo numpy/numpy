@@ -1,0 +1,18 @@
+
+Contributors
+============
+
+A total of 3 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Siyuan +
+
+Pull requests merged
+====================
+
+A total of 2 pull requests were merged for this release.
+
+* `#16439 <https://github.com/numpy/numpy/pull/16439>`__: ENH: enable pickle protocol 5 support for python3.5
+* `#16441 <https://github.com/numpy/numpy/pull/16441>`__: BUG: relpath fails for different drives on windows

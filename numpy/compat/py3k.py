@@ -94,6 +94,9 @@ class contextlib_nullcontext:
     cm = optional_cm if condition else nullcontext()
     with cm:
         # Perform operation, using optional_cm if condition is True
+
+    .. note::
+        Prefer using `contextlib.nullcontext` instead of this context manager.
     """
 
     def __init__(self, enter_result=None):

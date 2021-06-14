@@ -613,7 +613,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     --------
     numpy.sum : Sum across array propagating NaNs.
     isnan : Show which elements are NaN.
-    isfinite: Show which elements are not NaN or +/-inf.
+    isfinite : Show which elements are not NaN or +/-inf.
 
     Notes
     -----
@@ -962,12 +962,16 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     Private function for rank 1 arrays. Compute the median ignoring NaNs.
     See nanmedian for parameter usage
     """
-    arr1d, overwrite_input = _remove_nan_1d(arr1d,
-                                            overwrite_input=overwrite_input)
-    if arr1d.size == 0:
-        return np.nan
+    arr1d_parsed, overwrite_input = _remove_nan_1d(
+        arr1d, overwrite_input=overwrite_input,
+    )
 
-    return np.median(arr1d, overwrite_input=overwrite_input)
+    if arr1d_parsed.size == 0:
+        # Ensure that a nan-esque scalar of the appropiate type (and unit)
+        # is returned for `timedelta64` and `complexfloating`
+        return arr1d[-1]
+
+    return np.median(arr1d_parsed, overwrite_input=overwrite_input)
 
 
 def _nanmedian(a, axis=None, out=None, overwrite_input=False):
@@ -1008,10 +1012,12 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     for i in range(np.count_nonzero(m.mask.ravel())):
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
                       stacklevel=4)
+
+    fill_value = np.timedelta64("NaT") if m.dtype.kind == "m" else np.nan
     if out is not None:
-        out[...] = m.filled(np.nan)
+        out[...] = m.filled(fill_value)
         return out
-    return m.filled(np.nan)
+    return m.filled(fill_value)
 
 
 def _nanmedian_dispatcher(
