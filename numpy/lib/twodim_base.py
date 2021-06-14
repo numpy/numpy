@@ -439,7 +439,7 @@ def tril(m, k=0):
     Lower triangle of an array.
 
     Return a copy of an array with elements above the `k`-th diagonal zeroed.
-    For arrays with `ndim` exceeding 2, `tril` will apply to the final two
+    For arrays with ``ndim`` exceeding 2, `tril` will apply to the final two
     axes.
 
     Parameters
@@ -494,7 +494,7 @@ def triu(m, k=0):
     Upper triangle of an array.
 
     Return a copy of an array with the elements below the `k`-th diagonal
-    zeroed. For arrays with `ndim` exceeding 2, `triu` will apply to the final
+    zeroed. For arrays with ``ndim`` exceeding 2, `triu` will apply to the final
     two axes.
 
     Please refer to the documentation for `tril` for further details.
