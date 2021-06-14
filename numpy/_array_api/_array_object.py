@@ -22,7 +22,7 @@ from ._dtypes import _boolean_dtypes, _integer_dtypes, _floating_dtypes
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import Optional, PyCapsule, Tuple, Union, array
+    from ._types import Any, Optional, PyCapsule, Tuple, Union, array
 
 import numpy as np
 
@@ -186,7 +186,7 @@ class ndarray:
         res = self._array.__bool__()
         return res
 
-    def __dlpack__(self: array, /, *, stream: Optional[int] = None) -> PyCapsule:
+    def __dlpack__(self: array, /, *, stream: Optional[Union[int, Any]] = None) -> PyCapsule:
         """
         Performs the operation __dlpack__.
         """

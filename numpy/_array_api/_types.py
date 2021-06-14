@@ -6,10 +6,11 @@ annotations in the function signatures. The functions in the module are only
 valid for inputs that match the given type annotations.
 """
 
-__all__ = ['List', 'Literal', 'Optional', 'Tuple', 'Union', 'array', 'device',
-           'dtype', 'SupportsDLPack', 'SupportsBufferProtocol', 'PyCapsule']
+__all__ = ['Any', 'List', 'Literal', 'Optional', 'Tuple', 'Union', 'array',
+           'device', 'dtype', 'SupportsDLPack', 'SupportsBufferProtocol',
+           'PyCapsule']
 
-from typing import List, Literal, Optional, Tuple, Union, TypeVar
+from typing import Any, List, Literal, Optional, Tuple, Union, TypeVar
 
 from . import (ndarray, int8, int16, int32, int64, uint8, uint16, uint32,
                uint64, float32, float64)
