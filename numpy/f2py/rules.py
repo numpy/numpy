@@ -943,20 +943,29 @@ if (#varname#_cb.capi==Py_None) {
                  '\tPyObject *#varname#_capi = Py_None;'],
         'callfortran':'#varname#,',
         'callfortranappend':'slen(#varname#),',
-        'pyobjfrom':[{debugcapi: '\tfprintf(stderr,"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
-                     # The trailing null value for Fortran is blank.
-                     {l_and(isintent_out, l_not(isintent_c)): "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
+        'pyobjfrom':[
+            {debugcapi:
+             '\tfprintf(stderr,'
+             '"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
+            # The trailing null value for Fortran is blank.
+            {l_and(isintent_out, l_not(isintent_c)):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
         ],
         'return': {isintent_out: ',#varname#'},
-        'need': ['len..', {l_and(isintent_out, l_not(isintent_c)): 'STRINGPADN'}],
+        'need': ['len..',
+                 {l_and(isintent_out, l_not(isintent_c)): 'STRINGPADN'}],
         '_check':isstring
     }, {  # Common
-        'frompyobj': ["""\
+        'frompyobj': [
+            """\
 \tslen(#varname#) = #length#;
-\tf2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth# `#varname#\' of #pyname# to C #ctype#\");
+\tf2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,"""
+"""#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth#"""
+"""`#varname#\' of #pyname# to C #ctype#\");
 \tif (f2py_success) {""",
-                      # The trailing null value for Fortran is blank.
-                      {l_not(isintent_c): "\t\tSTRINGPADN(#varname#, slen(#varname#), '\\0', ' ');"},
+            # The trailing null value for Fortran is blank.
+            {l_not(isintent_c):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), '\\0', ' ');"},
         ],
         'cleanupfrompyobj': """\
 \t\tSTRINGFREE(#varname#);
@@ -970,7 +979,8 @@ if (#varname#_cb.capi==Py_None) {
         'args_capi': {isrequired: ',&#varname#_capi'},
         'keys_capi': {isoptional: ',&#varname#_capi'},
         'pyobjfrom': [
-            {l_and(isintent_inout, l_not(isintent_c)): "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
+            {l_and(isintent_inout, l_not(isintent_c)):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
             {isintent_inout: '''\
 \tf2py_success = try_pyarr_from_#ctype#(#varname#_capi, #varname#,
 \t                                      slen(#varname#));
