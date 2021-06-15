@@ -4667,6 +4667,81 @@ _get_normalized_typetup(PyUFuncObject *ufunc,
 }
 
 
+/**
+ * Wraps all outputs and returns the result (which may be NULL on error).
+ *
+ * Use __array_wrap__ on all outputs
+ * if present on one of the input arguments.
+ * If present for multiple inputs:
+ * use __array_wrap__ of input object with largest
+ * __array_priority__ (default = 0.0)
+ *
+ * Exception:  we should not wrap outputs for items already
+ * passed in as output-arguments.  These items should either
+ * be left unwrapped or wrapped by calling their own __array_wrap__
+ * routine.
+ *
+ * For each output argument, wrap will be either
+ * NULL --- call PyArray_Return() -- default if no output arguments given
+ * None --- array-object passed in don't call PyArray_Return
+ * method --- the __array_wrap__ method to call.
+ *
+ * @param ufunc
+ * @param full_args Original inputs and outputs
+ * @param subok Whether subclasses are allowed
+ * @param result_arrays The ufunc result(s).  REFERENCES ARE STOLEN!
+ */
+static PyObject *
+replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
+        ufunc_full_args full_args, npy_bool subok,
+        PyArrayObject *result_arrays[])
+{
+    PyObject *retobj[NPY_MAXARGS];
+    PyObject *wraparr[NPY_MAXARGS];
+    _find_array_wrap(full_args, subok, wraparr, ufunc->nin, ufunc->nout);
+
+    /* wrap outputs */
+    for (int i = 0; i < ufunc->nout; i++) {
+        _ufunc_context context;
+
+        context.ufunc = ufunc;
+        context.args = full_args;
+        context.out_i = i;
+
+        retobj[i] = _apply_array_wrap(wraparr[i], result_arrays[i], &context);
+        result_arrays[i] = NULL;  /* Was DECREF'ed and (probably) wrapped */
+        if (retobj[i] == NULL) {
+            goto fail;
+        }
+    }
+
+    if (ufunc->nout == 1) {
+        return retobj[0];
+    }
+    else {
+        PyObject *result = PyTuple_New(ufunc->nout);
+        if (result == NULL) {
+            return NULL;
+        }
+        for (int i = 0; i < ufunc->nout; i++) {
+            PyTuple_SET_ITEM(result, i, retobj[i]);
+        }
+        return result;
+    }
+
+  fail:
+    for (int i = 0; i < ufunc->nout; i++) {
+        if (result_arrays[i] != NULL) {
+            Py_DECREF(result_arrays[i]);
+        }
+        else {
+            Py_XDECREF(retobj[i]);
+        }
+    }
+    return NULL;
+}
+
+
 /*
  * Main ufunc call implementation.
  *
@@ -4682,8 +4757,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         npy_bool outer)
 {
     PyArrayObject *operands[NPY_MAXARGS] = {NULL};
-    PyObject *retobj[NPY_MAXARGS];
-    PyObject *wraparr[NPY_MAXARGS];
     PyObject *override = NULL;
     ufunc_full_args full_args = {NULL, NULL};
     PyObject *typetup = NULL;
@@ -4901,63 +4974,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     for (int i = 0; i < ufunc->nin; i++) {
         Py_XSETREF(operands[i], NULL);
     }
-
-    /*
-     * Use __array_wrap__ on all outputs
-     * if present on one of the input arguments.
-     * If present for multiple inputs:
-     * use __array_wrap__ of input object with largest
-     * __array_priority__ (default = 0.0)
-     *
-     * Exception:  we should not wrap outputs for items already
-     * passed in as output-arguments.  These items should either
-     * be left unwrapped or wrapped by calling their own __array_wrap__
-     * routine.
-     *
-     * For each output argument, wrap will be either
-     * NULL --- call PyArray_Return() -- default if no output arguments given
-     * None --- array-object passed in don't call PyArray_Return
-     * method --- the __array_wrap__ method to call.
-     */
-    _find_array_wrap(full_args, subok, wraparr, ufunc->nin, ufunc->nout);
-
-    /* wrap outputs */
-    for (int i = 0; i < ufunc->nout; i++) {
-        int j = ufunc->nin+i;
-        _ufunc_context context;
-        PyObject *wrapped;
-
-        context.ufunc = ufunc;
-        context.args = full_args;
-        context.out_i = i;
-
-        wrapped = _apply_array_wrap(wraparr[i], operands[j], &context);
-        operands[j] = NULL;  /* Prevent fail double-freeing this */
-        if (wrapped == NULL) {
-            for (int j = 0; j < i; j++) {
-                Py_DECREF(retobj[j]);
-            }
-            goto fail;
-        }
-
-        retobj[i] = wrapped;
-    }
-
     Py_XDECREF(typetup);
+
+    /* The following steals the references to the outputs: */
+    PyObject *result = replace_with_wrapped_result_and_return(ufunc,
+            full_args, subok, operands+nin);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
-    if (ufunc->nout == 1) {
-        return retobj[0];
-    }
-    else {
-        PyTupleObject *ret;
-
-        ret = (PyTupleObject *)PyTuple_New(ufunc->nout);
-        for (int i = 0; i < ufunc->nout; i++) {
-            PyTuple_SET_ITEM(ret, i, retobj[i]);
-        }
-        return (PyObject *)ret;
-    }
+    return result;
 
 fail:
     Py_XDECREF(typetup);
