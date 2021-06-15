@@ -20,6 +20,7 @@ from typing import (
 
 from numpy import (
     # Re-exports
+    CopyMode,
     busdaycalendar as busdaycalendar,
     broadcast as broadcast,
     dtype as dtype,
@@ -177,7 +178,7 @@ def array(
     object: _ArrayType,
     dtype: None = ...,
     *,
-    copy: bool = ...,
+    copy: bool | CopyMode = ...,
     order: _OrderKACF = ...,
     subok: L[True],
     ndmin: int = ...,
@@ -188,7 +189,7 @@ def array(
     object: _ArrayLike[_SCT],
     dtype: None = ...,
     *,
-    copy: bool = ...,
+    copy: bool | CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -199,7 +200,7 @@ def array(
     object: object,
     dtype: None = ...,
     *,
-    copy: bool = ...,
+    copy: bool | CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -210,7 +211,7 @@ def array(
     object: Any,
     dtype: _DTypeLike[_SCT],
     *,
-    copy: bool = ...,
+    copy: bool | CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -221,7 +222,7 @@ def array(
     object: Any,
     dtype: DTypeLike,
     *,
-    copy: bool = ...,
+    copy: bool | CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -948,3 +949,9 @@ def compare_chararrays(
 ) -> NDArray[bool_]: ...
 
 def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
+
+class CopyMode(enum.Enum):
+
+    ALWAYS: L[1]
+    IF_NEEDED: L[0]
+    NEVER: L[2]
