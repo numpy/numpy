@@ -469,7 +469,7 @@ cppmacros['MEMCOPY'] = """\
 """
 cppmacros['STRINGMALLOC'] = """\
 #define STRINGMALLOC(str,len)\\
-    if ((str = (string)malloc(sizeof(char)*(len+1))) == NULL) {\\
+    if ((str = (string)malloc(len+1)) == NULL) {\\
         PyErr_SetString(PyExc_MemoryError, \"out of memory\");\\
         goto capi_fail;\\
     } else {\\
@@ -479,20 +479,41 @@ cppmacros['STRINGMALLOC'] = """\
 cppmacros['STRINGFREE'] = """\
 #define STRINGFREE(str) do {if (!(str == NULL)) free(str);} while (0)
 """
+needs['STRINGPADN'] = ['string.h']
+cppmacros['STRINGPADN'] = """\
+/*
+STRINGPADN replaces null values with padding values from the right.
+
+`to` must have size of at least N bytes.
+
+If the `to[N-1]` has null value, then replace it and all the
+preceeding nulls with the given padding.
+
+STRINGPADN(to, N, PADDING, NULLVALUE) is an inverse operation.
+*/
+#define STRINGPADN(to, N, NULLVALUE, PADDING)                   \\
+    do {                                                        \\
+        int _m = (N);                                           \\
+        char *_to = (to);                                       \\
+        for (_m -= 1; _m >= 0 && _to[_m] == NULLVALUE; _m--) {  \\
+             _to[_m] = PADDING;                                 \\
+        }                                                       \\
+    } while (0)
+"""
 needs['STRINGCOPYN'] = ['string.h', 'FAILNULL']
 cppmacros['STRINGCOPYN'] = """\
-#define STRINGCOPYN(to,from,buf_size)                           \\
+/*
+STRINGCOPYN copies N bytes.
+
+`to` and `from` buffers must have sizes of at least N bytes.
+*/
+#define STRINGCOPYN(to,from,N)                                  \\
     do {                                                        \\
-        int _m = (buf_size);                                    \\
+        int _m = (N);                                           \\
         char *_to = (to);                                       \\
         char *_from = (from);                                   \\
         FAILNULL(_to); FAILNULL(_from);                         \\
-        (void)strncpy(_to, _from, sizeof(char)*_m);             \\
-        _to[_m-1] = '\\0';                                      \\
-        /* Padding with spaces instead of nulls */              \\
-        for (_m -= 2; _m >= 0 && _to[_m] == '\\0'; _m--) {      \\
-            _to[_m] = ' ';                                      \\
-        }                                                       \\
+        (void)strncpy(_to, _from, _m);             \\
     } while (0)
 """
 needs['STRINGCOPY'] = ['string.h', 'FAILNULL']
@@ -623,71 +644,127 @@ static int *nextforcomb(void) {
 }"""
 needs['try_pyarr_from_string'] = ['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
 cfuncs['try_pyarr_from_string'] = """\
-static int try_pyarr_from_string(PyObject *obj,const string str) {
-    PyArrayObject *arr = NULL;
-    if (PyArray_Check(obj) && (!((arr = (PyArrayObject *)obj) == NULL)))
-        { STRINGCOPYN(PyArray_DATA(arr),str,PyArray_NBYTES(arr)); }
-    return 1;
+/*
+  try_pyarr_from_string copies str[:len(obj)] to the data of an `ndarray`.
+
+  If obj is an `ndarray`, it is assumed to be contiguous.
+
+  If the specified len==-1, str must be null-terminated.
+*/
+static int try_pyarr_from_string(PyObject *obj,
+                                 const string str, const int len) {
+#ifdef DEBUGCFUNCS
+fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
+        (char*)str,len, obj);
+#endif
+    if (PyArray_Check(obj)) {
+        PyArrayObject *arr = (PyArrayObject *)obj;
+        assert(ISCONTIGUOUS(arr));
+        string buf = PyArray_DATA(arr);
+        npy_intp n = len;
+        if (n == -1) {
+            /* Assuming null-terminated str. */
+            n = strlen(str);
+        }
+        if (n > PyArray_NBYTES(arr)) {
+            n = PyArray_NBYTES(arr);
+        }
+        STRINGCOPYN(buf, str, n);
+        return 1;
+    }
 capi_fail:
     PRINTPYOBJERR(obj);
-    PyErr_SetString(#modulename#_error,\"try_pyarr_from_string failed\");
+    PyErr_SetString(#modulename#_error, \"try_pyarr_from_string failed\");
     return 0;
 }
 """
 needs['string_from_pyobj'] = ['string', 'STRINGMALLOC', 'STRINGCOPYN']
 cfuncs['string_from_pyobj'] = """\
+/*
+  Create a new string buffer `str` of at most length `len` from a
+  Python string-like object `obj`.
+
+  The string buffer has given size (len) or the size of inistr when len==-1.
+
+  The string buffer is padded with blanks: in Fortran, trailing blanks
+  are insignificant contrary to C nulls.
+ */
 static int
-string_from_pyobj(string *str,int *len,const string inistr,PyObject *obj,const char *errmess)
+string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj,
+                  const char *errmess)
 {
-    PyArrayObject *arr = NULL;
     PyObject *tmp = NULL;
+    string buf = NULL;
+    npy_intp n = -1;
 #ifdef DEBUGCFUNCS
-fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(char*)str,*len,(char *)inistr,obj);
+fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
+               (char*)str, *len, (char *)inistr, obj);
 #endif
     if (obj == Py_None) {
-        if (*len == -1)
-            *len = strlen(inistr); /* Will this cause problems? */
-        STRINGMALLOC(*str,*len);
-        STRINGCOPYN(*str,inistr,*len+1);
-        return 1;
+        n = strlen(inistr);
+        buf = inistr;
     }
-    if (PyArray_Check(obj)) {
-        if ((arr = (PyArrayObject *)obj) == NULL)
-            goto capi_fail;
+    else if (PyArray_Check(obj)) {
+        PyArrayObject *arr = (PyArrayObject *)obj;
         if (!ISCONTIGUOUS(arr)) {
-            PyErr_SetString(PyExc_ValueError,\"array object is non-contiguous.\");
+            PyErr_SetString(PyExc_ValueError,
+                            \"array object is non-contiguous.\");
             goto capi_fail;
         }
-        if (*len == -1)
-            *len = (PyArray_ITEMSIZE(arr))*PyArray_SIZE(arr);
-        STRINGMALLOC(*str,*len);
-        STRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
-        return 1;
-    }
-    if (PyBytes_Check(obj)) {
-        tmp = obj;
-        Py_INCREF(tmp);
-    }
-    else if (PyUnicode_Check(obj)) {
-        tmp = PyUnicode_AsASCIIString(obj);
+        n = PyArray_NBYTES(arr);
+        buf = PyArray_DATA(arr);
+        n = strnlen(buf, n);
     }
     else {
-        PyObject *tmp2;
-        tmp2 = PyObject_Str(obj);
-        if (tmp2) {
-            tmp = PyUnicode_AsASCIIString(tmp2);
-            Py_DECREF(tmp2);
+        if (PyBytes_Check(obj)) {
+            tmp = obj;
+            Py_INCREF(tmp);
+        }
+        else if (PyUnicode_Check(obj)) {
+            tmp = PyUnicode_AsASCIIString(obj);
         }
         else {
-            tmp = NULL;
+            PyObject *tmp2;
+            tmp2 = PyObject_Str(obj);
+            if (tmp2) {
+                tmp = PyUnicode_AsASCIIString(tmp2);
+                Py_DECREF(tmp2);
+            }
+            else {
+                tmp = NULL;
+            }
         }
+        if (tmp == NULL) goto capi_fail;
+        n = PyBytes_GET_SIZE(tmp);
+        buf = PyBytes_AS_STRING(tmp);
     }
-    if (tmp == NULL) goto capi_fail;
-    if (*len == -1)
-        *len = PyBytes_GET_SIZE(tmp);
-    STRINGMALLOC(*str,*len);
-    STRINGCOPYN(*str,PyBytes_AS_STRING(tmp),*len+1);
-    Py_DECREF(tmp);
+    if (*len == -1) {
+        /* TODO: change the type of `len` so that we can remove this */
+        if (n > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "object too large for a 32-bit int");
+            goto capi_fail;
+        }
+        *len = n;
+    }
+    else if (*len < n) {
+        /* discard the last (len-n) bytes of input buf */
+        n = *len;
+    }
+    if (n < 0 || *len < 0 || buf == NULL) {
+        goto capi_fail;
+    }
+    STRINGMALLOC(*str, *len);  // *str is allocated with size (*len + 1)
+    if (n < *len) {
+        /*
+          Pad fixed-width string with nulls. The caller will replace
+          nulls with blanks when the corresponding argument is not
+          intent(c).
+        */
+        memset(*str + n, '\\0', *len - n);
+    }
+    STRINGCOPYN(*str, buf, n);
+    Py_XDECREF(tmp);
     return 1;
 capi_fail:
     Py_XDECREF(tmp);
@@ -701,7 +778,6 @@ capi_fail:
     return 0;
 }
 """
-
 
 needs['char_from_pyobj'] = ['int_from_pyobj']
 cfuncs['char_from_pyobj'] = """\
