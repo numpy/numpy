@@ -169,7 +169,7 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
     if (obj == Py_None) {
         PyErr_SetString(PyExc_ValueError,
                         "NoneType copy mode not allowed. Please choose one of " 
-                         "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER.");
+                        "np.CopyMode.ALWAYS, np.CopyMode.IF_NEEDED, np.CopyMode.NEVER.");
         return NPY_FAIL;
     }
 
