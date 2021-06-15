@@ -970,7 +970,8 @@ if (#varname#_cb.capi==Py_None) {
         'cleanupfrompyobj': """\
 \t\tSTRINGFREE(#varname#);
 \t}  /*if (f2py_success) of #varname#*/""",
-        'need': ['#ctype#_from_pyobj', 'len..', 'STRINGFREE', {l_not(isintent_c): 'STRINGPADN'}],
+        'need': ['#ctype#_from_pyobj', 'len..', 'STRINGFREE',
+                 {l_not(isintent_c): 'STRINGPADN'}],
         '_check':isstring,
         '_depend':''
     }, {  # Not hidden
