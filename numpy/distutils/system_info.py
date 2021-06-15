@@ -1911,16 +1911,19 @@ class accelerate_info(system_info):
             # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
             link_args = []
-            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+            arm = intel = 0
+            if 'arm64' in get_platform() or 'aarch64' in get_platform():
+                arm = 1
+            elif get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
                'x86_64' in get_platform() or \
                'i386' in platform.platform():
                 intel = 1
-            else:
-                intel = 0
             if (os.path.exists('/System/Library/Frameworks'
                               '/Accelerate.framework/') and
                     'accelerate' in libraries):
-                if intel:
+                if arm:
+                    args.extend(['-maltivec'])
+                elif intel:
                     args.extend(['-msse3'])
                 else:
                     args.extend(['-faltivec'])
@@ -1930,7 +1933,9 @@ class accelerate_info(system_info):
             elif (os.path.exists('/System/Library/Frameworks'
                                  '/vecLib.framework/') and
                       'veclib' in libraries):
-                if intel:
+                if arm:
+                    args.extend(['-maltivec'])
+                elif intel:
                     args.extend(['-msse3'])
                 else:
                     args.extend(['-faltivec'])
