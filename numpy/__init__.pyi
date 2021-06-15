@@ -1,6 +1,8 @@
 import builtins
 import os
 import sys
+import mmap
+import array as _array
 import datetime as dt
 import enum
 from abc import abstractmethod
@@ -253,10 +255,6 @@ from numpy.core.fromnumeric import (
 )
 
 from numpy.core._asarray import (
-    asarray as asarray,
-    asanyarray as asanyarray,
-    ascontiguousarray as ascontiguousarray,
-    asfortranarray as asfortranarray,
     require as require,
 )
 
@@ -295,11 +293,61 @@ from numpy.core.einsumfunc import (
     einsum_path as einsum_path,
 )
 
+from numpy.core.multiarray import (
+    ALLOW_THREADS as ALLOW_THREADS,
+    BUFSIZE as BUFSIZE,
+    CLIP as CLIP,
+    MAXDIMS as MAXDIMS,
+    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
+    RAISE as RAISE,
+    WRAP as WRAP,
+    tracemalloc_domain as tracemalloc_domain,
+    array as array,
+    empty_like as empty_like,
+    empty as empty,
+    zeros as zeros,
+    concatenate as concatenate,
+    inner as inner,
+    where as where,
+    lexsort as lexsort,
+    can_cast as can_cast,
+    min_scalar_type as min_scalar_type,
+    result_type as result_type,
+    dot as dot,
+    vdot as vdot,
+    bincount as bincount,
+    copyto as copyto,
+    putmask as putmask,
+    packbits as packbits,
+    unpackbits as unpackbits,
+    shares_memory as shares_memory,
+    may_share_memory as may_share_memory,
+    asarray as asarray,
+    asanyarray as asanyarray,
+    ascontiguousarray as ascontiguousarray,
+    asfortranarray as asfortranarray,
+    arange as arange,
+    busday_count as busday_count,
+    busday_offset as busday_offset,
+    compare_chararrays as compare_chararrays,
+    datetime_as_string as datetime_as_string,
+    datetime_data as datetime_data,
+    frombuffer as frombuffer,
+    fromfile as fromfile,
+    fromiter as fromiter,
+    is_busday as is_busday,
+    promote_types as promote_types,
+    seterrobj as seterrobj,
+    geterrobj as geterrobj,
+    fromstring as fromstring,
+    frompyfunc as frompyfunc,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
     ones_like as ones_like,
-    empty_like as empty_like,
     full as full,
     full_like as full_like,
     count_nonzero as count_nonzero,
@@ -579,10 +627,6 @@ class MachAr:
     ) -> None: ...
     def __getattr__(self, key: str) -> Any: ...
 
-class busdaycalendar:
-    def __new__(cls, weekmask: Any = ..., holidays: Any = ...) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
-
 class chararray(ndarray[_ShapeType, _DType_co]):
     def __new__(
         subtype,
@@ -846,62 +890,8 @@ def round(a, decimals=..., out=...): ...
 def round_(a, decimals=..., out=...): ...
 def show_config(): ...
 
-# Placeholders for C-based functions
 # TODO: Sort out which parameters are positional-only
-@overload
-def arange(stop, dtype=..., *, like=...): ...
-@overload
-def arange(start, stop, step=..., dtype=..., *, like=...): ...
-def busday_count(
-    begindates,
-    enddates,
-    weekmask=...,
-    holidays=...,
-    busdaycal=...,
-    out=...,
-): ...
-def busday_offset(
-    dates,
-    offsets,
-    roll=...,
-    weekmask=...,
-    holidays=...,
-    busdaycal=...,
-    out=...,
-): ...
-def can_cast(from_, to, casting=...): ...
-def compare_chararrays(a, b, cmp_op, rstrip): ...
-def concatenate(__a, axis=..., out=..., dtype=..., casting=...): ...
-def copyto(dst, src, casting=..., where=...): ...
-def datetime_as_string(arr, unit=..., timezone=..., casting=...): ...
-def datetime_data(__dtype): ...
-def dot(a, b, out=...): ...
-def frombuffer(buffer, dtype=..., count=..., offset=..., *, like=...): ...
-def fromfile(
-    file, dtype=..., count=..., sep=..., offset=..., *, like=...
-): ...
-def fromiter(iter, dtype, count=..., *, like=...): ...
-def frompyfunc(func, nin, nout, * identity): ...
-def fromstring(string, dtype=..., count=..., sep=..., *, like=...): ...
-def geterrobj(): ...
-def inner(a, b): ...
-def is_busday(
-    dates, weekmask=..., holidays=..., busdaycal=..., out=...
-): ...
-def lexsort(keys, axis=...): ...
-def may_share_memory(a, b, max_work=...): ...
-def min_scalar_type(a): ...
-def nested_iters(*args, **kwargs): ...  # TODO: Sort out parameters
-def promote_types(type1, type2): ...
-def putmask(a, mask, values): ...
-def result_type(*arrays_and_dtypes): ...
-def seterrobj(errobj): ...
-def shares_memory(a, b, max_work=...): ...
-def vdot(a, b): ...
-@overload
-def where(__condition): ...
-@overload
-def where(__condition, __x, __y): ...
+def nested_iters(*args, **kwargs): ... # TODO: Sort out parameters
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
@@ -1612,12 +1602,23 @@ _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 # have proper shape support
 _ShapeType = TypeVar("_ShapeType", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
-_BufferType = Union[ndarray, bytes, bytearray, memoryview]
+
+# There is currently no exhaustive way to type the buffer protocol,
+# as it is implemented exclusivelly in the C API (python/typing#593)
+_SupportsBuffer = Union[
+    bytes,
+    bytearray,
+    memoryview,
+    _array.array[Any],
+    mmap.mmap,
+    NDArray[Any],
+    generic,
+]
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
-_Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
+_CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
 _DTypeLike = Union[
     dtype[_ScalarType],
@@ -1654,7 +1655,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         cls: Type[_ArraySelf],
         shape: _ShapeLike,
         dtype: DTypeLike = ...,
-        buffer: _BufferType = ...,
+        buffer: _SupportsBuffer = ...,
         offset: int = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
@@ -1867,7 +1868,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         dtype: _DTypeLike[_ScalarType],
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool | CopyMode = ...,
     ) -> NDArray[_ScalarType]: ...
@@ -1876,7 +1877,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         dtype: DTypeLike,
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool | CopyMode = ...,
     ) -> NDArray[Any]: ...
@@ -2887,7 +2888,7 @@ class generic(_ArrayOrScalarCommon):
         self,
         dtype: _DTypeLike[_ScalarType],
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool | CopyMode = ...,
     ) -> _ScalarType: ...
@@ -2896,7 +2897,7 @@ class generic(_ArrayOrScalarCommon):
         self,
         dtype: DTypeLike,
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool | CopyMode = ...,
     ) -> Any: ...
@@ -3130,11 +3131,24 @@ class datetime64(generic):
 if sys.version_info >= (3, 8):
     _IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex, SupportsIndex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        SupportsIndex,
+        complex,  # `complex` is not a subtype of `SupportsComplex`
+    ]
 else:
     _IntValue = Union[SupportsInt, _CharLike_co]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        complex,
+    ]
 
 class integer(number[_NBit1]):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
@@ -3418,31 +3432,6 @@ class str_(character, str):
 unicode_ = str_
 str0 = str_
 
-def array(
-    object: object,
-    dtype: DTypeLike = ...,
-    *,
-    copy: bool | CopyMode = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def zeros(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def empty(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-
 #
 # Constants
 #
@@ -3461,9 +3450,7 @@ inf: Final[float]
 infty: Final[float]
 nan: Final[float]
 pi: Final[float]
-ALLOW_THREADS: Final[int]
-BUFSIZE: Final[int]
-CLIP: Final[int]
+
 ERR_CALL: Final[int]
 ERR_DEFAULT: Final[int]
 ERR_IGNORE: Final[int]
@@ -3476,17 +3463,11 @@ FPE_DIVIDEBYZERO: Final[int]
 FPE_INVALID: Final[int]
 FPE_OVERFLOW: Final[int]
 FPE_UNDERFLOW: Final[int]
-MAXDIMS: Final[int]
-MAY_SHARE_BOUNDS: Final[int]
-MAY_SHARE_EXACT: Final[int]
-RAISE: Final[int]
 SHIFT_DIVIDEBYZERO: Final[int]
 SHIFT_INVALID: Final[int]
 SHIFT_OVERFLOW: Final[int]
 SHIFT_UNDERFLOW: Final[int]
 UFUNC_BUFSIZE_DEFAULT: Final[int]
-WRAP: Final[int]
-tracemalloc_domain: Final[int]
 
 little_endian: Final[bool]
 True_: Final[bool_]
@@ -3748,3 +3729,14 @@ class broadcast:
     def __next__(self) -> Tuple[Any, ...]: ...
     def __iter__(self: _T) -> _T: ...
     def reset(self) -> None: ...
+
+class busdaycalendar:
+    def __new__(
+        cls,
+        weekmask: ArrayLike = ...,
+        holidays: ArrayLike = ...,
+    ) -> busdaycalendar: ...
+    @property
+    def weekmask(self) -> NDArray[bool_]: ...
+    @property
+    def holidays(self) -> NDArray[datetime64]: ...
