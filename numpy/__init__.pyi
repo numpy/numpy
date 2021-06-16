@@ -84,66 +84,66 @@ else:
 
 # Ensures that the stubs are picked up
 from numpy import (
-    char,
-    ctypeslib,
-    emath,
-    fft,
-    lib,
-    linalg,
-    ma,
-    matrixlib,
-    polynomial,
-    random,
-    rec,
-    testing,
-    version,
+    char as char,
+    ctypeslib as ctypeslib,
+    emath as emath,
+    fft as fft,
+    lib as lib,
+    linalg as linalg,
+    ma as ma,
+    matrixlib as matrixlib,
+    polynomial as polynomial,
+    random as random,
+    rec as rec,
+    testing as testing,
+    version as version,
 )
 
 from numpy.core.function_base import (
-    linspace,
-    logspace,
-    geomspace,
+    linspace as linspace,
+    logspace as logspace,
+    geomspace as geomspace,
 )
 
 from numpy.core.fromnumeric import (
-    take,
-    reshape,
-    choose,
-    repeat,
-    put,
-    swapaxes,
-    transpose,
-    partition,
-    argpartition,
-    sort,
-    argsort,
-    argmax,
-    argmin,
-    searchsorted,
-    resize,
-    squeeze,
-    diagonal,
-    trace,
-    ravel,
-    nonzero,
-    shape,
-    compress,
-    clip,
-    sum,
-    all,
-    any,
-    cumsum,
-    ptp,
-    amax,
-    amin,
-    prod,
-    cumprod,
-    ndim,
-    size,
-    around,
-    mean,
-    std,
-    var,
+    take as take,
+    reshape as reshape,
+    choose as choose,
+    repeat as repeat,
+    put as put,
+    swapaxes as swapaxes,
+    transpose as transpose,
+    partition as partition,
+    argpartition as argpartition,
+    sort as sort,
+    argsort as argsort,
+    argmax as argmax,
+    argmin as argmin,
+    searchsorted as searchsorted,
+    resize as resize,
+    squeeze as squeeze,
+    diagonal as diagonal,
+    trace as trace,
+    ravel as ravel,
+    nonzero as nonzero,
+    shape as shape,
+    compress as compress,
+    clip as clip,
+    sum as sum,
+    all as all,
+    any as any,
+    cumsum as cumsum,
+    ptp as ptp,
+    amax as amax,
+    amin as amin,
+    prod as prod,
+    cumprod as cumprod,
+    ndim as ndim,
+    size as size,
+    around as around,
+    mean as mean,
+    std as std,
+    var as var,
 )
 
 from numpy.core._asarray import (
@@ -224,52 +224,9 @@ from numpy.core.shape_base import (
     vstack as vstack,
 )
 
-# Add an object to `__all__` if their stubs are defined in an external file;
-# their stubs will not be recognized otherwise.
-# NOTE: This is redundant for objects defined within this file.
-__all__ = [
-    "linspace",
-    "logspace",
-    "geomspace",
-    "take",
-    "reshape",
-    "choose",
-    "repeat",
-    "put",
-    "swapaxes",
-    "transpose",
-    "partition",
-    "argpartition",
-    "sort",
-    "argsort",
-    "argmax",
-    "argmin",
-    "searchsorted",
-    "resize",
-    "squeeze",
-    "diagonal",
-    "trace",
-    "ravel",
-    "nonzero",
-    "shape",
-    "compress",
-    "clip",
-    "sum",
-    "all",
-    "any",
-    "cumsum",
-    "ptp",
-    "amax",
-    "amin",
-    "prod",
-    "cumprod",
-    "ndim",
-    "size",
-    "around",
-    "mean",
-    "std",
-    "var",
-]
+__all__: List[str]
+__path__: List[str]
+__version__: str
 
 __path__: List[str]
 __version__: str
@@ -1060,11 +1017,11 @@ class _ArrayOrScalarCommon:
     def ravel(self, order: _OrderKACF = ...) -> ndarray: ...
     @overload
     def reshape(
-        self, __shape: Sequence[int], *, order: _OrderACF = ...
+        self, __shape: _ShapeLike, *, order: _OrderACF = ...
     ) -> ndarray: ...
     @overload
     def reshape(
-        self, *shape: int, order: _OrderACF = ...
+        self, *shape: SupportsIndex, order: _OrderACF = ...
     ) -> ndarray: ...
     def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
     # NOTE: `tostring()` is deprecated and therefore excluded
@@ -1094,14 +1051,21 @@ class _ArrayOrScalarCommon:
     def __array_wrap__(array, context=...): ...
     def __setstate__(self, __state): ...
     # a `bool_` is returned when `keepdims=True` and `self` is a 0d array
+
     @overload
     def all(
-        self, axis: None = ..., out: None = ..., keepdims: Literal[False] = ...
+        self,
+        axis: None = ...,
+        out: None = ...,
+        keepdims: Literal[False] = ...,
     ) -> bool_: ...
     @overload
     def all(
-        self, axis: Optional[_ShapeLike] = ..., out: None = ..., keepdims: bool = ...
-    ) -> Union[bool_, ndarray]: ...
+        self,
+        axis: Optional[_ShapeLike] = ...,
+        out: None = ...,
+        keepdims: bool = ...,
+    ) -> Any: ...
     @overload
     def all(
         self,
@@ -1109,14 +1073,21 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
+
     @overload
     def any(
-        self, axis: None = ..., out: None = ..., keepdims: Literal[False] = ...
+        self,
+        axis: None = ...,
+        out: None = ...,
+        keepdims: Literal[False] = ...,
     ) -> bool_: ...
     @overload
     def any(
-        self, axis: Optional[_ShapeLike] = ..., out: None = ..., keepdims: bool = ...
-    ) -> Union[bool_, ndarray]: ...
+        self,
+        axis: Optional[_ShapeLike] = ...,
+        out: None = ...,
+        keepdims: bool = ...,
+    ) -> Any: ...
     @overload
     def any(
         self,
@@ -1124,40 +1095,67 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
-    @overload
-    def argmax(self, axis: None = ..., out: None = ...) -> signedinteger: ...
-    @overload
-    def argmax(
-        self, axis: _ShapeLike = ..., out: None = ...
-    ) -> Union[signedinteger, ndarray]: ...
+
     @overload
     def argmax(
-        self, axis: Optional[_ShapeLike] = ..., out: _NdArraySubClass = ...
-    ) -> _NdArraySubClass: ...
+        self,
+        axis: None = ...,
+        out: None = ...,
+    ) -> signedinteger[Any]: ...
     @overload
-    def argmin(self, axis: None = ..., out: None = ...) -> signedinteger: ...
+    def argmax(
+        self,
+        axis: _ShapeLike = ...,
+        out: None = ...,
+    ) -> Any: ...
+    @overload
+    def argmax(
+        self,
+        axis: Optional[_ShapeLike] = ...,
+        out: _NdArraySubClass = ...,
+    ) -> _NdArraySubClass: ...
+
     @overload
     def argmin(
-        self, axis: _ShapeLike = ..., out: None = ...
-    ) -> Union[signedinteger, ndarray]: ...
+        self,
+        axis: None = ...,
+        out: None = ...,
+    ) -> signedinteger[Any]: ...
     @overload
     def argmin(
-        self, axis: Optional[_ShapeLike] = ..., out: _NdArraySubClass = ...
+        self,
+        axis: _ShapeLike = ...,
+         out: None = ...,
+    ) -> Any: ...
+    @overload
+    def argmin(
+        self,
+        axis: Optional[_ShapeLike] = ...,
+        out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
+
     def argsort(
         self,
-        axis: Optional[int] = ...,
+        axis: Optional[SupportsIndex] = ...,
         kind: Optional[_SortKind] = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> ndarray: ...
+
     @overload
     def choose(
-        self, choices: ArrayLike, out: None = ..., mode: _ModeKind = ...,
+        self,
+        choices: ArrayLike,
+        out: None = ...,
+        mode: _ModeKind = ...,
     ) -> ndarray: ...
     @overload
     def choose(
-        self, choices: ArrayLike, out: _NdArraySubClass = ..., mode: _ModeKind = ...,
+        self,
+        choices: ArrayLike,
+        out: _NdArraySubClass = ...,
+        mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
+
     @overload
     def clip(
         self,
@@ -1165,7 +1163,7 @@ class _ArrayOrScalarCommon:
         max: Optional[ArrayLike] = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def clip(
         self,
@@ -1173,7 +1171,7 @@ class _ArrayOrScalarCommon:
         max: ArrayLike = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def clip(
         self,
@@ -1190,47 +1188,56 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         **kwargs: Any,
     ) -> _NdArraySubClass: ...
+
     @overload
     def compress(
-        self, a: ArrayLike, axis: Optional[int] = ..., out: None = ...,
+        self,
+        a: ArrayLike,
+        axis: Optional[SupportsIndex] = ...,
+        out: None = ...,
     ) -> ndarray: ...
     @overload
     def compress(
-        self, a: ArrayLike, axis: Optional[int] = ..., out: _NdArraySubClass = ...,
+        self,
+        a: ArrayLike,
+        axis: Optional[SupportsIndex] = ...,
+        out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
+
     def conj(self: _ArraySelf) -> _ArraySelf: ...
+
     def conjugate(self: _ArraySelf) -> _ArraySelf: ...
+
     @overload
     def cumprod(
-        self, axis: Optional[int] = ..., dtype: DTypeLike = ..., out: None = ...,
+        self,
+        axis: Optional[SupportsIndex] = ...,
+        dtype: DTypeLike = ...,
+        out: None = ...,
     ) -> ndarray: ...
     @overload
     def cumprod(
         self,
-        axis: Optional[int] = ...,
+        axis: Optional[SupportsIndex] = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
+
     @overload
     def cumsum(
-        self, axis: Optional[int] = ..., dtype: DTypeLike = ..., out: None = ...,
+        self,
+        axis: Optional[SupportsIndex] = ...,
+        dtype: DTypeLike = ...,
+        out: None = ...,
     ) -> ndarray: ...
     @overload
     def cumsum(
         self,
-        axis: Optional[int] = ...,
+        axis: Optional[SupportsIndex] = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
-    @overload
-    def max(
-        self,
-        axis: None = ...,
-        out: None = ...,
-        keepdims: Literal[False] = ...,
-        initial: _NumberLike = ...,
-        where: _ArrayLikeBool = ...,
-    ) -> number: ...
+
     @overload
     def max(
         self,
@@ -1239,7 +1246,7 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def max(
         self,
@@ -1249,14 +1256,7 @@ class _ArrayOrScalarCommon:
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
     ) -> _NdArraySubClass: ...
-    @overload
-    def mean(
-        self,
-        axis: None = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        keepdims: Literal[False] = ...,
-    ) -> number: ...
+
     @overload
     def mean(
         self,
@@ -1264,7 +1264,7 @@ class _ArrayOrScalarCommon:
         dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def mean(
         self,
@@ -1273,15 +1273,7 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
-    @overload
-    def min(
-        self,
-        axis: None = ...,
-        out: None = ...,
-        keepdims: Literal[False] = ...,
-        initial: _NumberLike = ...,
-        where: _ArrayLikeBool = ...,
-    ) -> number: ...
+
     @overload
     def min(
         self,
@@ -1290,7 +1282,7 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def min(
         self,
@@ -1300,17 +1292,12 @@ class _ArrayOrScalarCommon:
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
     ) -> _NdArraySubClass: ...
-    def newbyteorder(self: _ArraySelf, __new_order: _ByteOrder = ...) -> _ArraySelf: ...
-    @overload
-    def prod(
-        self,
-        axis: None = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        keepdims: Literal[False] = ...,
-        initial: _NumberLike = ...,
-        where: _ArrayLikeBool = ...,
-    ) -> number: ...
+
+    def newbyteorder(
+        self: _ArraySelf,
+        __new_order: _ByteOrder = ...,
+    ) -> _ArraySelf: ...
+
     @overload
     def prod(
         self,
@@ -1320,7 +1307,7 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def prod(
         self,
@@ -1331,14 +1318,14 @@ class _ArrayOrScalarCommon:
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
     ) -> _NdArraySubClass: ...
+
     @overload
     def ptp(
-        self, axis: None = ..., out: None = ..., keepdims: Literal[False] = ...,
-    ) -> number: ...
-    @overload
-    def ptp(
-        self, axis: Optional[_ShapeLike] = ..., out: None = ..., keepdims: bool = ...,
-    ) -> Union[number, ndarray]: ...
+        self,
+        axis: Optional[_ShapeLike] = ...,
+        out: None = ...,
+        keepdims: bool = ...,
+    ) -> Any: ...
     @overload
     def ptp(
         self,
@@ -1346,24 +1333,26 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
+
     def repeat(
-        self, repeats: _ArrayLikeIntOrBool, axis: Optional[int] = ...
+        self,
+        repeats: _ArrayLikeIntOrBool,
+        axis: Optional[SupportsIndex] = ...,
     ) -> ndarray: ...
-    @overload
-    def round(self: _ArraySelf, decimals: int = ..., out: None = ...) -> _ArraySelf: ...
+
     @overload
     def round(
-        self, decimals: int = ..., out: _NdArraySubClass = ...
-    ) -> _NdArraySubClass: ...
-    @overload
-    def std(
-        self,
-        axis: None = ...,
-        dtype: DTypeLike = ...,
+        self: _ArraySelf,
+        decimals: SupportsIndex = ...,
         out: None = ...,
-        ddof: int = ...,
-        keepdims: Literal[False] = ...,
-    ) -> number: ...
+    ) -> _ArraySelf: ...
+    @overload
+    def round(
+        self,
+        decimals: SupportsIndex = ...,
+        out: _NdArraySubClass = ...,
+    ) -> _NdArraySubClass: ...
+
     @overload
     def std(
         self,
@@ -1372,7 +1361,7 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         ddof: int = ...,
         keepdims: bool = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def std(
         self,
@@ -1382,16 +1371,7 @@ class _ArrayOrScalarCommon:
         ddof: int = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
-    @overload
-    def sum(
-        self,
-        axis: None = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        keepdims: Literal[False] = ...,
-        initial: _NumberLike = ...,
-        where: _ArrayLikeBool = ...,
-    ) -> number: ...
+
     @overload
     def sum(
         self,
@@ -1401,7 +1381,7 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def sum(
         self,
@@ -1412,19 +1392,20 @@ class _ArrayOrScalarCommon:
         initial: _NumberLike = ...,
         where: _ArrayLikeBool = ...,
     ) -> _NdArraySubClass: ...
+
     @overload
     def take(
         self,
         indices: Union[_IntLike, _BoolLike],
-        axis: Optional[int] = ...,
+        axis: Optional[SupportsIndex] = ...,
         out: None = ...,
         mode: _ModeKind = ...,
-    ) -> generic: ...
+    ) -> Any: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeIntOrBool,
-        axis: Optional[int] = ...,
+        axis: Optional[SupportsIndex] = ...,
         out: None = ...,
         mode: _ModeKind = ...,
     ) -> ndarray: ...
@@ -1432,19 +1413,11 @@ class _ArrayOrScalarCommon:
     def take(
         self,
         indices: _ArrayLikeIntOrBool,
-        axis: Optional[int] = ...,
+        axis: Optional[SupportsIndex] = ...,
         out: _NdArraySubClass = ...,
         mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
-    @overload
-    def var(
-        self,
-        axis: None = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        ddof: int = ...,
-        keepdims: Literal[False] = ...,
-    ) -> number: ...
+
     @overload
     def var(
         self,
@@ -1453,7 +1426,7 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         ddof: int = ...,
         keepdims: bool = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def var(
         self,
@@ -1484,7 +1457,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def imag(self, value: ArrayLike) -> None: ...
     def __new__(
         cls: Type[_ArraySelf],
-        shape: Sequence[int],
+        shape: _ShapeLike,
         dtype: DTypeLike = ...,
         buffer: _BufferType = ...,
         offset: int = ...,
@@ -1508,40 +1481,43 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     @property
     def flat(self: _ArraySelf) -> flatiter[_ArraySelf]: ...
     @overload
-    def item(self, *args: int) -> Any: ...
+    def item(self, *args: SupportsIndex) -> Any: ...
     @overload
-    def item(self, __args: Tuple[int, ...]) -> Any: ...
+    def item(self, __args: Tuple[SupportsIndex, ...]) -> Any: ...
     @overload
     def itemset(self, __value: Any) -> None: ...
     @overload
     def itemset(self, __item: _ShapeLike, __value: Any) -> None: ...
     @overload
-    def resize(self, __new_shape: Sequence[int], *, refcheck: bool = ...) -> None: ...
+    def resize(self, __new_shape: _ShapeLike, *, refcheck: bool = ...) -> None: ...
     @overload
-    def resize(self, *new_shape: int, refcheck: bool = ...) -> None: ...
+    def resize(self, *new_shape: SupportsIndex, refcheck: bool = ...) -> None: ...
     def setflags(
         self, write: bool = ..., align: bool = ..., uic: bool = ...
     ) -> None: ...
     def squeeze(
-        self: _ArraySelf, axis: Union[int, Tuple[int, ...]] = ...
+        self: _ArraySelf, axis: Union[SupportsIndex, Tuple[SupportsIndex, ...]] = ...
     ) -> _ArraySelf: ...
-    def swapaxes(self: _ArraySelf, axis1: int, axis2: int) -> _ArraySelf: ...
+    def swapaxes(self: _ArraySelf, axis1: SupportsIndex, axis2: SupportsIndex) -> _ArraySelf: ...
     @overload
-    def transpose(self: _ArraySelf, __axes: Sequence[int]) -> _ArraySelf: ...
+    def transpose(self: _ArraySelf, __axes: _ShapeLike) -> _ArraySelf: ...
     @overload
-    def transpose(self: _ArraySelf, *axes: int) -> _ArraySelf: ...
+    def transpose(self: _ArraySelf, *axes: SupportsIndex) -> _ArraySelf: ...
     def argpartition(
         self,
         kth: _ArrayLikeIntOrBool,
-        axis: Optional[int] = ...,
+        axis: Optional[SupportsIndex] = ...,
         kind: _PartitionKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> ndarray: ...
     def diagonal(
-        self: _ArraySelf, offset: int = ..., axis1: int = ..., axis2: int = ...
+        self: _ArraySelf,
+        offset: SupportsIndex = ...,
+        axis1: SupportsIndex = ...,
+        axis2: SupportsIndex = ...,
     ) -> _ArraySelf: ...
     @overload
-    def dot(self, b: ArrayLike, out: None = ...) -> Union[number, ndarray]: ...
+    def dot(self, b: ArrayLike, out: None = ...) -> Any: ...
     @overload
     def dot(self, b: ArrayLike, out: _NdArraySubClass = ...) -> _NdArraySubClass: ...
     # `nonzero()` is deprecated for 0d arrays/generics
@@ -1549,7 +1525,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def partition(
         self,
         kth: _ArrayLikeIntOrBool,
-        axis: int = ...,
+        axis: SupportsIndex = ...,
         kind: _PartitionKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> None: ...
@@ -1565,29 +1541,29 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
         sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
     ) -> ndarray: ...
     def setfield(
-        self, val: ArrayLike, dtype: DTypeLike, offset: int = ...
+        self, val: ArrayLike, dtype: DTypeLike, offset: SupportsIndex = ...
     ) -> None: ...
     def sort(
         self,
-        axis: int = ...,
+        axis: SupportsIndex = ...,
         kind: Optional[_SortKind] = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> None: ...
     @overload
     def trace(
         self,  # >= 2D array
-        offset: int = ...,
-        axis1: int = ...,
-        axis2: int = ...,
+        offset: SupportsIndex = ...,
+        axis1: SupportsIndex = ...,
+        axis2: SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-    ) -> Union[number, ndarray]: ...
+    ) -> Any: ...
     @overload
     def trace(
         self,  # >= 2D array
-        offset: int = ...,
-        axis1: int = ...,
-        axis2: int = ...,
+        offset: SupportsIndex = ...,
+        axis1: SupportsIndex = ...,
+        axis2: SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
@@ -1758,11 +1734,21 @@ class object_(generic):
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
 
+# The `datetime64` constructors requires an object with the three attributes below,
+# and thus supports datetime duck typing
+class _DatetimeScalar(Protocol):
+    @property
+    def day(self) -> int: ...
+    @property
+    def month(self) -> int: ...
+    @property
+    def year(self) -> int: ...
+
 class datetime64(generic):
     @overload
     def __init__(
         self,
-        __value: Union[None, datetime64, _CharLike, dt.datetime] = ...,
+        __value: Union[None, datetime64, _CharLike, _DatetimeScalar] = ...,
         __format: Union[_CharLike, Tuple[_CharLike, _IntLike]] = ...,
     ) -> None: ...
     @overload

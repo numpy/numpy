@@ -20,8 +20,8 @@ C: SubClass
 reveal_type(np.count_nonzero(i8))  # E: int
 reveal_type(np.count_nonzero(A))  # E: int
 reveal_type(np.count_nonzero(B))  # E: int
-reveal_type(np.count_nonzero(A, keepdims=True))  # E: Union[numpy.signedinteger[Any], numpy.ndarray]
-reveal_type(np.count_nonzero(A, axis=0))  # E: Union[numpy.signedinteger[Any], numpy.ndarray]
+reveal_type(np.count_nonzero(A, keepdims=True))  # E: Any
+reveal_type(np.count_nonzero(A, axis=0))  # E: Any
 
 reveal_type(np.isfortran(i8))  # E: bool
 reveal_type(np.isfortran(A))  # E: bool
@@ -76,9 +76,9 @@ reveal_type(np.allclose(i8, A))  # E: bool
 reveal_type(np.allclose(B, A))  # E: bool
 reveal_type(np.allclose(A, A))  # E: bool
 
-reveal_type(np.isclose(i8, A))  # E: Union[numpy.bool_, numpy.ndarray]
-reveal_type(np.isclose(B, A))  # E: Union[numpy.bool_, numpy.ndarray]
-reveal_type(np.isclose(A, A))  # E: Union[numpy.bool_, numpy.ndarray]
+reveal_type(np.isclose(i8, A))  # E: Any
+reveal_type(np.isclose(B, A))  # E: Any
+reveal_type(np.isclose(A, A))  # E: Any
 
 reveal_type(np.array_equal(i8, A))  # E: bool
 reveal_type(np.array_equal(B, A))  # E: bool
