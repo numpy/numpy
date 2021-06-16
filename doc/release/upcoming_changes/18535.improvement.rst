@@ -1,3 +1,8 @@
-Complex exponentiation bug fixed
-=================================
-Fixed #18378. ``np.power`` now returns the correct result for 0^{non-zero} complex numbers.
+Fix power of complex zero
+-------------------------
+``np.power`` now returns the correct result for ``0^{non-zero}``
+for complex numbers.  Note that the value is only defined when
+the real part of the exponent is larger than zero.
+Previously, NaN was returned unless the imaginary part was strictly
+zero.  Now the correct zero value is returned, with the sign bit
+set.  The return value is either ``0+0j`` or ``0-0j``.
