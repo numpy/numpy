@@ -3186,7 +3186,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     int idim, ndim, otype_final;
     int needs_api, need_outer_iterator;
 
-    NpyIter *iter = NULL, *iter_inner = NULL;
+    NpyIter *iter = NULL;
 
     /* The selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
@@ -3512,9 +3512,6 @@ finish:
     if (!NpyIter_Deallocate(iter)) {
         res = -1;
     }
-    if (!NpyIter_Deallocate(iter_inner)) {
-        res = -1;
-    }
     if (res < 0) {
         Py_DECREF(out);
         return NULL;
@@ -3527,7 +3524,6 @@ fail:
     Py_XDECREF(op_dtypes[0]);
 
     NpyIter_Deallocate(iter);
-    NpyIter_Deallocate(iter_inner);
 
     return NULL;
 }
@@ -4263,8 +4259,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
          */
         int typenum = PyArray_TYPE(mp);
         if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
-            && ((strcmp(ufunc->name,"add") == 0)
-                || (strcmp(ufunc->name,"multiply") == 0))) {
+                && ((strcmp(ufunc->name, "add") == 0)
+                    || (strcmp(ufunc->name, "multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = NPY_LONG;
             }
@@ -4310,9 +4306,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
                         "reduceat does not allow multiple axes");
             goto fail;
         }
-        ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc, mp, indices, out,
-                                            axes[0], otype->type_num);
-        Py_DECREF(indices);
+        ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc,
+                mp, indices, out, axes[0], otype->type_num);
+        Py_SETREF(indices, NULL);
         break;
     }
     Py_DECREF(mp);
@@ -4354,6 +4350,7 @@ fail:
     Py_XDECREF(otype);
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
+    Py_XDECREF(indices);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
     return NULL;
