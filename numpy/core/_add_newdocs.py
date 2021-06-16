@@ -1585,8 +1585,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     For integer arguments the function is equivalent to the Python built-in
     `range` function, but returns an ndarray rather than a list.
 
-    When using a non-integer step, such as 0.1, the results will often not
-    be consistent.  It is better to use `numpy.linspace` for these cases.
+    When using a non-integer step, such as 0.1, it is often better to use 
+    `numpy.linspace`. See the warnings section below for more information.
 
     Parameters
     ----------
@@ -1618,6 +1618,25 @@ add_newdoc('numpy.core.multiarray', 'arange',
         ``ceil((stop - start)/step)``.  Because of floating point overflow,
         this rule may result in the last element of `out` being greater
         than `stop`.
+
+    Warnings
+    --------
+    The length of the output might not be numerically stable.
+
+    Another stability issue is due to the internal implementation of
+    `numpy.arange`.
+    The actual step value used to populate the array is
+    ``dtype(start + step) - dtype(start)`` and not `step`. Precision loss
+    can occur here, due to casting or due to using floating points when
+    `start` is much larger than `step`. This can lead to unexpected
+    behaviour. For example::
+
+      >>> np.arange(0, 5, 0.5, dtype=int)
+      array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+      >>> np.arange(-3, 3, 0.5, dtype=int)
+      array([-3, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
+
+    In such cases, the use of `numpy.linspace` should be preferred.
 
     See Also
     --------
