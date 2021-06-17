@@ -68,7 +68,7 @@ class MachArLike:
         tiny : float
             value for tiny, alias of smallest normal.
         """
-        return self.smallest_normal
+        return self.xmin
 
     @property
     def smallest_normal(self):
@@ -79,17 +79,18 @@ class MachArLike:
         smallest_normal : float
             value for the smallest normal.
 
-        Raises
+        Warn
         -----
-        TypeError
+        UserWarning
             If the calculated value for the smallest normal is requested for
             double-double.
         """
         # This check is necessary because the value for smallest_normal is
         # platform dependent for longdouble types.
-        if self.ftype == ntypes.longdouble:
-            raise TypeError(
-                'The value of smallest normal is undefined for long double')
+        if isnan(self.xmin):
+            warnings.warn(
+                'The value of smallest normal is undefined for double double',
+                UserWarning, stacklevel=2)
         return self.xmin
 
     @property
