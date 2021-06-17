@@ -8,7 +8,15 @@ from numpy.testing import (
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
-LD_INFO = np.finfo(np.longdouble)
+
+def initialize_ld_info():
+    """Initialize longdouble info supressing the user warning."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings('always', '', UserWarning)
+        return np.finfo(np.longdouble)
+
+
+LD_INFO = initialize_ld_info()
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
 
 
