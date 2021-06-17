@@ -1922,25 +1922,25 @@ class accelerate_info(system_info):
                               '/Accelerate.framework/') and
                     'accelerate' in libraries):
                 if arm:
-                    args.extend(['-maltivec'])
+                    pass
                 elif intel:
                     args.extend(['-msse3'])
                 else:
                     args.extend(['-faltivec'])
                 args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
+                    '-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
             elif (os.path.exists('/System/Library/Frameworks'
                                  '/vecLib.framework/') and
                       'veclib' in libraries):
                 if arm:
-                    args.extend(['-maltivec'])
+                    pass
                 elif intel:
                     args.extend(['-msse3'])
                 else:
                     args.extend(['-faltivec'])
                 args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
+                    '-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
 
             if args:
