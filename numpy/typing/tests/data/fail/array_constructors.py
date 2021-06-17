@@ -27,5 +27,5 @@ np.logspace(0, 2, base=None)  # E: Argument "base"
 np.geomspace(None, 'bob')  # E: Argument 1
 
 np.stack(generator)  # E: No overload variant
-np.hstack({1, 2})  # E: incompatible type
-np.vstack(1)  # E: incompatible type
+np.hstack({1, 2})  # E: No overload variant
+np.vstack(1)  # E: No overload variant

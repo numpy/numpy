@@ -147,25 +147,27 @@ reveal_type(np.fromfunction(func, (3, 5)))  # E: SubClass[{float64}]
 
 reveal_type(np.identity(10))  # E: numpy.ndarray[Any, Any]
 
-reveal_type(np.atleast_1d(A))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.atleast_1d(C))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.atleast_1d(A, A))  # E: list[numpy.ndarray[Any, Any]]
-reveal_type(np.atleast_1d(A, C))  # E: list[numpy.ndarray[Any, Any]]
-reveal_type(np.atleast_1d(C, C))  # E: list[numpy.ndarray[Any, Any]]
+reveal_type(np.atleast_1d(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.atleast_1d(C))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.atleast_1d(A, A))  # E: list[numpy.ndarray[Any, numpy.dtype[Any]]]
+reveal_type(np.atleast_1d(A, C))  # E: list[numpy.ndarray[Any, numpy.dtype[Any]]]
+reveal_type(np.atleast_1d(C, C))  # E: list[numpy.ndarray[Any, numpy.dtype[Any]]]
 
-reveal_type(np.atleast_2d(A))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.atleast_2d(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
-reveal_type(np.atleast_3d(A))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.atleast_3d(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
-reveal_type(np.vstack([A, A]))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.vstack([A, C]))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.vstack([C, C]))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.vstack([A, A]))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.vstack([A, C]))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.vstack([C, C]))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 
-reveal_type(np.hstack([A, A]))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.hstack([A, A]))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
-reveal_type(np.stack([A, A]))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.stack([A, A], axis=0))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.stack([A, A], out=B))  # E: SubClass
+reveal_type(np.stack([A, A]))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.stack([A, C]))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.stack([C, C]))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.stack([A, A], axis=0))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.stack([A, A], out=B))  # E: SubClass[{float64}]
 
-reveal_type(np.block([[A, A], [A, A]]))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.block(C))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.block([[A, A], [A, A]]))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.block(C))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
