@@ -10,7 +10,7 @@ from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf, NaN
-from .umath import log10, exp2, nextafter
+from .umath import log10, exp2, nextafter, isnan
 from . import umath
 
 
@@ -37,19 +37,17 @@ class MachArLike:
         self.params = _MACHAR_PARAMS[ftype]
         self.ftype = ftype
         self.title = self.params['title']
+        # Parameter types same as for discovered MachAr object.
         if not smallest_subnormal:
             self._smallest_subnormal = nextafter(
                 self.ftype(0), self.ftype(1), dtype=self.ftype)
         else:
             self._smallest_subnormal = smallest_subnormal
-        # Parameter types same as for discovered MachAr object.
         self.epsilon = self.eps = self._float_to_float(eps)
         self.epsneg = self._float_to_float(epsneg)
         self.xmax = self.huge = self._float_to_float(huge)
-        self.xmin = self.tiny = self._float_to_float(tiny)
+        self.xmin = self._float_to_float(tiny)
         self.ibeta = self.params['itype'](ibeta)
-        self.smallest_normal = self._float_to_float(tiny)
-        self._str_smallest_normal = self._float_to_str(self.smallest_normal)
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
         self.resolution = self._float_to_float(
@@ -59,6 +57,40 @@ class MachArLike:
         self._str_xmin = self._float_to_str(self.xmin)
         self._str_xmax = self._float_to_str(self.xmax)
         self._str_resolution = self._float_to_str(self.resolution)
+        self._str_smallest_normal = self._float_to_str(self.xmin)
+
+    @property
+    def tiny(self):
+        """Return the value for tiny.
+
+        Returns
+        -------
+        tiny : float
+            value for tiny, alias of smallest normal.
+        """
+        return self.smallest_normal
+
+    @property
+    def smallest_normal(self):
+        """Return the value for the smallest normal.
+
+        Returns
+        -------
+        smallest_normal : float
+            value for the smallest normal.
+
+        Raises
+        -----
+        TypeError
+            If the calculated value for the smallest normal is requested for
+            double-double.
+        """
+        # This check is necessary because the value for smallest_normal is
+        # platform dependent for longdouble types.
+        if self.ftype == ntypes.longdouble:
+            raise TypeError(
+                'The value of smallest normal is undefined for long double')
+        return self.xmin
 
     @property
     def smallest_subnormal(self):
@@ -67,7 +99,7 @@ class MachArLike:
         Returns
         -------
         smallest_subnormal : float
-            value for the smallest subnormal
+            value for the smallest subnormal.
 
         Warns
         -----
