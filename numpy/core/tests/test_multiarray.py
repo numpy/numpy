@@ -4337,7 +4337,9 @@ class TestArgmax:
     def test_np_argmax_keepdims(self):
 
         sizes = [(3,), (3, 2), (2, 3),
-                 (3, 3), (2, 3, 4), (4, 3, 2)]
+                 (3, 3), (2, 3, 4), (4, 3, 2),
+                 (1, 2, 3, 4), (2, 3, 4, 1),
+                 (3, 4, 1, 2), (4, 1, 2, 3)]
         for size in sizes:
             arr = np.random.normal(size=size)
             for axis in range(-len(size), len(size)):
@@ -4345,8 +4347,9 @@ class TestArgmax:
                 assert_(res.ndim == arr.ndim)
                 assert_(res.shape[axis] == 1)
                 outarray = np.empty(res.shape, dtype=res.dtype)
-                np.argmax(arr, axis=axis, out=outarray, 
-                          keepdims=True)
+                res1 = np.argmax(arr, axis=axis, out=outarray, 
+                                    keepdims=True)
+                assert_(res1 is outarray)
                 assert_equal(res, outarray)
 
             # Testing for axis=None, keepdims=True
@@ -4354,7 +4357,8 @@ class TestArgmax:
             assert_(res.ndim == arr.ndim)
             assert_(res.shape == (1,)*arr.ndim)
             outarray = np.empty(res.shape, dtype=res.dtype)
-            np.argmax(arr, axis=None, out=outarray, keepdims=True)
+            res1 = np.argmax(arr, axis=None, out=outarray, keepdims=True)
+            assert_(res1 is outarray)
             assert_equal(res, outarray)
 
 class TestArgmin:

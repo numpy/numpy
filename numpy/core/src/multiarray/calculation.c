@@ -17,6 +17,8 @@
 #include "calculation.h"
 #include "array_assign.h"
 
+#include "alloc.h"
+
 
 static double
 power_of_ten(int n)
@@ -153,52 +155,91 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 
 NPY_NO_EXPORT PyObject*
 PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
-    /*
-    * `axis_copy` retains a copy of original axis value because, `axis`
-    * itself is changed by the call in the following line. This is done
-    * for two reasons, first, `axis_copy` helps in checking whether axis
-    * was `None` or not as received from Python interface and second, axis
-    * values are consistent between `PyArray_ArgMax` and `PyArray_ArgMaxKeepdims`.
-    */
-    int axis_copy = axis;
-    if ((PyArrayObject *)PyArray_CheckAxis(op, &axis, 0) == NULL) {
-        return NULL;
-    }
-    PyArrayObject* ret = (PyArrayObject*)PyArray_ArgMax(op, axis_copy, NULL);
-    PyArray_Dims newdims;
-    newdims.len = PyArray_NDIM(op);
-    npy_intp dims[NPY_MAXDIMS];
-    newdims.ptr = dims;
-    npy_intp* currdim = PyArray_DIMS(op);
-    for( int dim = 0; dim < newdims.len; dim++ ) {
-        /*
-        * Here `axis` is converted to 0 when `axis = NPY_MAXDIMS`
-        * but `axis_copy` retains that value and hence, all values
-        * in `newdims.ptr` can be set to 1 if axis is received as `None`
-        * from Python interface.
-        */
-        if( dim == axis || axis_copy == NPY_MAXDIMS ) {
-            newdims.ptr[dim] = 1;
-        } else {
-            newdims.ptr[dim] = currdim[dim];
-        }
-    }
-    
-    // If ret is same as out, then should we reshape or raise an error?
-    ret = (PyArrayObject*)PyArray_Newshape(ret, &newdims, NPY_CORDER);
-    if (out != NULL) {
-        if ((PyArray_NDIM(out) != PyArray_NDIM(ret)) ||
-                !PyArray_CompareLists(PyArray_DIMS(out), PyArray_DIMS(ret),
-                                      PyArray_NDIM(out))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "output array dimensions do not match with that of result from np.argmax.");
-            Py_XDECREF(ret);
+    PyArrayObject* ret = NULL;
+    if( out == NULL ) {
+        ret = (PyArrayObject*) PyArray_ArgMax(op, axis, NULL);
+        if( ret == NULL ) {
             return NULL;
         }
-        PyArray_CopyInto(out, ret);
-        Py_DECREF(ret);
+        ((PyArrayObject_fields*)ret)->nd = PyArray_NDIM(op);
+        npy_intp* ret_DIMS = npy_alloc_cache_dim(NPY_MAXDIMS);
+        npy_intp* ret_STRIDES = npy_alloc_cache_dim(NPY_MAXDIMS);
+        if( axis == NPY_MAXDIMS ) {
+            for( int i = 0; i < PyArray_NDIM(op); i++ ) {
+                ret_DIMS[i] = 1;
+                ret_STRIDES[i] = PyArray_DESCR(ret)->elsize;
+            }
+        } else {
+            check_and_adjust_axis(&axis, PyArray_NDIM(op));
+            for( int i = 0, k = 0; i < PyArray_NDIM(op); i++ ) {
+                ret_DIMS[i] = PyArray_DIMS(op)[i];
+                if( i != axis ) {
+                    ret_STRIDES[i] = PyArray_STRIDES(ret)[k];
+                    k++;
+                }
+            }
+            ret_DIMS[axis] = 1;
+            if( axis < PyArray_NDIM(op) - 1 ) {
+                ret_STRIDES[axis] = ret_STRIDES[axis + 1]*ret_DIMS[axis + 1];
+            } else {
+                ret_STRIDES[axis] = PyArray_DESCR(ret)->elsize;
+            }
+        }
+        ((PyArrayObject_fields*)ret)->dimensions = ret_DIMS;
+        ((PyArrayObject_fields*)ret)->strides = ret_STRIDES;
+    } else {
+        if( axis == NPY_MAXDIMS ) {
+            int is_out_shape_good = PyArray_NDIM(out) == PyArray_NDIM(op);
+            for( int i = 0; is_out_shape_good && i < PyArray_NDIM(op); i++ ) {
+                is_out_shape_good = PyArray_DIMS(out)[i] == 1;
+            }
+            if( !is_out_shape_good ) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array does not match result of np.argmax.");
+                return NULL;
+            }
+            ((PyArrayObject_fields*)out)->nd = 0;
+            PyArray_ArgMax(op, axis, out);
+            ((PyArrayObject_fields*)out)->nd = PyArray_NDIM(op);
+        } else {
+            if( PyArray_CheckAxis(op, &axis, 0) == NULL ) {
+                return NULL;
+            }
+            int is_out_shape_good = PyArray_NDIM(out) == PyArray_NDIM(op);
+            for( int i = 0; is_out_shape_good && i < PyArray_NDIM(op); i++ ) {
+                if( i == axis ) {
+                    is_out_shape_good = PyArray_DIMS(out)[i] == 1;
+                } else {
+                    is_out_shape_good = PyArray_DIMS(out)[i] == PyArray_DIMS(op)[i];
+                }
+            }
+            if( !is_out_shape_good ) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array does not match result of np.argmax.");
+                return NULL;
+            }
+            for( int i = 0, k = 0; i < PyArray_NDIM(op); i++ ) {
+                if( i != axis ) {
+                    PyArray_DIMS(out)[k] = PyArray_DIMS(out)[i];
+                    PyArray_STRIDES(out)[k] = PyArray_STRIDES(out)[i];
+                    k++;
+                }
+            }
+            ((PyArrayObject_fields*)out)->nd = PyArray_NDIM(op) - 1;
+            PyArray_ArgMax(op, axis, out);
+            for( int i = PyArray_NDIM(out) - 1; i >= axis; i-- ) {
+                PyArray_DIMS(out)[i + 1] = PyArray_DIMS(out)[i];
+                PyArray_STRIDES(out)[i + 1] = PyArray_STRIDES(out)[i];
+            }
+            ((PyArrayObject_fields*)out)->nd = PyArray_NDIM(op);
+            PyArray_DIMS(out)[axis] = 1;
+            if( axis < PyArray_NDIM(op) - 1 ) {
+                PyArray_STRIDES(out)[axis] = PyArray_STRIDES(out)[axis + 1]*PyArray_DIMS(out)[axis + 1];
+            } else {
+                PyArray_STRIDES(out)[axis] = PyArray_DESCR(out)->elsize;
+            }
+        }
         ret = out;
-        Py_INCREF(ret);
     }
     return (PyObject*)ret;
 }
