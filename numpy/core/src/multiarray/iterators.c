@@ -1063,12 +1063,14 @@ static PyMemberDef iter_members[] = {
         T_OBJECT,
         offsetof(PyArrayIterObject, ao),
         READONLY, NULL},
-    {"index",
-        T_INT,
-        offsetof(PyArrayIterObject, index),
-        READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
+
+static PyObject *
+iter_index_get(PyArrayIterObject *self)
+{
+    return PyArray_PyIntFromIntp(self->index);
+}
 
 static PyObject *
 iter_coords_get(PyArrayIterObject *self)
@@ -1096,10 +1098,12 @@ iter_coords_get(PyArrayIterObject *self)
 }
 
 static PyGetSetDef iter_getsets[] = {
+    {"index",
+        (getter)iter_index_get,
+        NULL, NULL, NULL},
     {"coords",
         (getter)iter_coords_get,
-        NULL,
-        NULL, NULL},
+        NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
 
