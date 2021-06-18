@@ -4527,9 +4527,9 @@ class TestArgmin:
     def test_np_argmin_keepdims(self):
 
         sizes = [(3,), (3, 2), (2, 3),
-                    (3, 3), (2, 3, 4), (4, 3, 2),
-                    (1, 2, 3, 4), (2, 3, 4, 1),
-                    (3, 4, 1, 2), (4, 1, 2, 3)]
+                 (3, 3), (2, 3, 4), (4, 3, 2),
+                 (1, 2, 3, 4), (2, 3, 4, 1),
+                 (3, 4, 1, 2), (4, 1, 2, 3)]
         for size in sizes:
             arr = np.random.normal(size=size)
             for axis in range(-len(size), len(size)):
