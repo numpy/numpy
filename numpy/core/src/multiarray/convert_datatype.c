@@ -476,6 +476,7 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
 
     if (PyArray_MinCastSafety(castingimpl->casting, casting) == casting) {
         /* No need to check using `castingimpl.resolve_descriptors()` */
+        Py_DECREF(meth);
         return 1;
     }
 
