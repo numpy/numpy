@@ -4527,24 +4527,36 @@ class TestArgmin:
     def test_np_argmin_keepdims(self):
 
         sizes = [(3,), (3, 2), (2, 3),
-                 (3, 3), (2, 3, 4), (4, 3, 2)]
+                    (3, 3), (2, 3, 4), (4, 3, 2),
+                    (1, 2, 3, 4), (2, 3, 4, 1),
+                    (3, 4, 1, 2), (4, 1, 2, 3)]
         for size in sizes:
             arr = np.random.normal(size=size)
             for axis in range(-len(size), len(size)):
+                res_orig = np.argmin(arr, axis=axis)
+                new_shape = list(size)
+                new_shape[axis] = 1
+                res_orig = res_orig.reshape(new_shape)
                 res = np.argmin(arr, axis=axis, keepdims=True)
+                assert_equal(res, res_orig)
                 assert_(res.ndim == arr.ndim)
                 assert_(res.shape[axis] == 1)
                 outarray = np.empty(res.shape, dtype=res.dtype)
-                np.argmin(arr, axis=axis, out=outarray, 
-                          keepdims=True)
+                res1 = np.argmin(arr, axis=axis, out=outarray, 
+                                    keepdims=True)
+                assert_(res1 is outarray)
                 assert_equal(res, outarray)
-            
+
             # Testing for axis=None, keepdims=True
+            res_orig = np.argmin(arr, axis=None)
+            res_orig = res_orig.reshape((1,)*arr.ndim)
             res = np.argmin(arr, axis=None, keepdims=True)
+            assert_equal(res, res_orig)
             assert_(res.ndim == arr.ndim)
             assert_(res.shape == (1,)*arr.ndim)
             outarray = np.empty(res.shape, dtype=res.dtype)
-            np.argmin(arr, axis=None, out=outarray, keepdims=True)
+            res1 = np.argmin(arr, axis=None, out=outarray, keepdims=True)
+            assert_(res1 is outarray)
             assert_equal(res, outarray)
 
 class TestMinMax:
