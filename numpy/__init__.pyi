@@ -5,7 +5,7 @@ import mmap
 import array as _array
 import datetime as dt
 from abc import abstractmethod
-from types import TracebackType
+from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
 
 from numpy.core._internal import _ctypes
@@ -1082,7 +1082,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def fields(
         self,
-    ) -> None | Mapping[str, Tuple[dtype[Any], int] | Tuple[dtype[Any], int, Any]]: ...
+    ) -> None | MappingProxyType[str, Tuple[dtype[Any], int] | Tuple[dtype[Any], int, Any]]: ...
     @property
     def flags(self) -> int: ...
     @property
@@ -1098,7 +1098,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def kind(self) -> str: ...
     @property
-    def metadata(self) -> None | Mapping[str, Any]: ...
+    def metadata(self) -> None | MappingProxyType[str, Any]: ...
     @property
     def name(self) -> str: ...
     @property
