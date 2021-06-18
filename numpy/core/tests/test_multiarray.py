@@ -4343,7 +4343,12 @@ class TestArgmax:
         for size in sizes:
             arr = np.random.normal(size=size)
             for axis in range(-len(size), len(size)):
+                res_orig = np.argmax(arr, axis=axis)
+                new_shape = list(size)
+                new_shape[axis] = 1
+                res_orig = res_orig.reshape(new_shape)
                 res = np.argmax(arr, axis=axis, keepdims=True)
+                assert_equal(res, res_orig)
                 assert_(res.ndim == arr.ndim)
                 assert_(res.shape[axis] == 1)
                 outarray = np.empty(res.shape, dtype=res.dtype)
@@ -4353,7 +4358,10 @@ class TestArgmax:
                 assert_equal(res, outarray)
 
             # Testing for axis=None, keepdims=True
+            res_orig = np.argmax(arr, axis=None)
+            res_orig = res_orig.reshape((1,)*arr.ndim)
             res = np.argmax(arr, axis=None, keepdims=True)
+            assert_equal(res, res_orig)
             assert_(res.ndim == arr.ndim)
             assert_(res.shape == (1,)*arr.ndim)
             outarray = np.empty(res.shape, dtype=res.dtype)

@@ -156,7 +156,11 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 NPY_NO_EXPORT PyObject*
 PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
     PyArrayObject* ret = NULL;
+
     if( out == NULL ) {
+        /*
+        * Case 1: When out is not provided in the input.
+        */
         ret = (PyArrayObject*) PyArray_ArgMax(op, axis, NULL);
         if( ret == NULL ) {
             return NULL;
@@ -165,11 +169,19 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
         npy_intp* ret_DIMS = npy_alloc_cache_dim(NPY_MAXDIMS);
         npy_intp* ret_STRIDES = npy_alloc_cache_dim(NPY_MAXDIMS);
         if( axis == NPY_MAXDIMS ) {
+            /*
+            * Change dimensions and strides so that resulting
+            * array has shape, (1, 1, ..., 1)
+            */
             for( int i = 0; i < PyArray_NDIM(op); i++ ) {
                 ret_DIMS[i] = 1;
                 ret_STRIDES[i] = PyArray_DESCR(ret)->elsize;
             }
         } else {
+            /*
+            * Change dimensions and strides so that considered
+            * axis has size 1 in the resulting array.
+            */
             check_and_adjust_axis(&axis, PyArray_NDIM(op));
             for( int i = 0, k = 0; i < PyArray_NDIM(op); i++ ) {
                 ret_DIMS[i] = PyArray_DIMS(op)[i];
@@ -188,7 +200,14 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
         ((PyArrayObject_fields*)ret)->dimensions = ret_DIMS;
         ((PyArrayObject_fields*)ret)->strides = ret_STRIDES;
     } else {
+        /*
+        * Case 2: When out is provided in the input.
+        */
         if( axis == NPY_MAXDIMS ) {
+            /*
+            * `out` array should have same number of dimensions as
+            * input array and all the axes have size 1.
+            */
             int is_out_shape_good = PyArray_NDIM(out) == PyArray_NDIM(op);
             for( int i = 0; is_out_shape_good && i < PyArray_NDIM(op); i++ ) {
                 is_out_shape_good = PyArray_DIMS(out)[i] == 1;
@@ -198,10 +217,21 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
                     "output array does not match result of np.argmax.");
                 return NULL;
             }
+            /*
+            * Set the number of dimensions to 0 so that `PyArray_ArgMax`
+            * perceives `out` as a scalar.
+            */
             ((PyArrayObject_fields*)out)->nd = 0;
             PyArray_ArgMax(op, axis, out);
+            /*
+            * Set the number of dimensions to original so that `out`
+            * is perceived correctly by the user.
+            */
             ((PyArrayObject_fields*)out)->nd = PyArray_NDIM(op);
         } else {
+            /*
+            * Check and fix the axis for negative values.
+            */
             if( PyArray_CheckAxis(op, &axis, 0) == NULL ) {
                 return NULL;
             }
@@ -218,6 +248,12 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
                     "output array does not match result of np.argmax.");
                 return NULL;
             }
+            /*
+            * Converts the shape and strides such that out.shape
+            * is transformed from, (d1, d2, ..., 1, ..., dn) to
+            * (d1, d2, ..., dn). That is axis of size 1 is removed.
+            * This is done so that `PyArray_ArgMax` perceives it correctly.
+            */
             for( int i = 0, k = 0; i < PyArray_NDIM(op); i++ ) {
                 if( i != axis ) {
                     PyArray_DIMS(out)[k] = PyArray_DIMS(out)[i];
@@ -227,6 +263,10 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
             }
             ((PyArrayObject_fields*)out)->nd = PyArray_NDIM(op) - 1;
             PyArray_ArgMax(op, axis, out);
+            /*
+            * Once the results are stored in `out`, the shape and
+            * strides of `out` are restored.
+            */
             for( int i = PyArray_NDIM(out) - 1; i >= axis; i-- ) {
                 PyArray_DIMS(out)[i + 1] = PyArray_DIMS(out)[i];
                 PyArray_STRIDES(out)[i + 1] = PyArray_STRIDES(out)[i];
@@ -239,6 +279,7 @@ PyArray_ArgMaxKeepdims(PyArrayObject *op, int axis, PyArrayObject* out) {
                 PyArray_STRIDES(out)[axis] = PyArray_DESCR(out)->elsize;
             }
         }
+        // `ret` and `out` refer to the same object.
         ret = out;
     }
     return (PyObject*)ret;
