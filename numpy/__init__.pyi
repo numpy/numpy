@@ -1053,17 +1053,21 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __getitem__(self: dtype[void], key: str | int) -> dtype[Any]: ...
 
-    # NOTE: In the future 1-based multiplications will also yield `void` dtypes
-    @overload
-    def __mul__(self, value: L[0]) -> None: ...  # type: ignore[misc]
+    # NOTE: In the future 1-based multiplications will also yield `flexible` dtypes
     @overload
     def __mul__(self: _DType, value: L[1]) -> _DType: ...
     @overload
-    def __mul__(self, value: int) -> dtype[void]: ...
+    def __mul__(self: _FlexDType, value: SupportsIndex) -> _FlexDType: ...
+    @overload
+    def __mul__(self, value: SupportsIndex) -> dtype[void]: ...
 
     # NOTE: `__rmul__` seems to be broken when used in combination with
-    # literals as of mypy 0.800. Set the return-type to `Any` for now.
-    def __rmul__(self, value: int) -> Any: ...
+    # literals as of mypy 0.902. Set the return-type to `dtype[Any]` for
+    # now for non-flexible dtypes.
+    @overload
+    def __rmul__(self: _FlexDType, value: SupportsIndex) -> _FlexDType: ...
+    @overload
+    def __rmul__(self, value: SupportsIndex) -> dtype[Any]: ...
 
     def __gt__(self, other: DTypeLike) -> bool: ...
     def __ge__(self, other: DTypeLike) -> bool: ...
@@ -1592,6 +1596,7 @@ class _ArrayOrScalarCommon:
 
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
+_FlexDType = TypeVar("_FlexDType", bound=dtype[flexible])
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
