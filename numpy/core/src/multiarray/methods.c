@@ -328,12 +328,7 @@ array_argmin(PyArrayObject *self,
         return NULL;
     }
     
-    PyObject *ret;
-    if( keepdims ) {
-        ret = PyArray_ArgMinKeepdims(self, axis, out);
-    } else {
-        ret = PyArray_ArgMin(self, axis, out);
-    }
+    PyObject *ret = PyArray_ArgMinWithKeepdims(self, axis, out, keepdims);
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {

@@ -11,7 +11,7 @@ NPY_NO_EXPORT PyObject*
 PyArray_ArgMin(PyArrayObject* self, int axis, PyArrayObject *out);
 
 NPY_NO_EXPORT PyObject*
-PyArray_ArgMinKeepdims(PyArrayObject* self, int axis, PyArrayObject *out);
+PyArray_ArgMinWithKeepdims(PyArrayObject* self, int axis, PyArrayObject *out, int keepdims);
 
 NPY_NO_EXPORT PyObject*
 PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out);
