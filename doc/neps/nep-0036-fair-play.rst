@@ -3,10 +3,10 @@ NEP 36 — Fair play
 ==================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
+:Status: Accepted
 :Type: Informational
 :Created: 2019-10-24
-:Resolution: Draft
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-June/081873.html
 
 
 Abstract
