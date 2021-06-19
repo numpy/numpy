@@ -17,6 +17,16 @@ In addition there are the usual large number of bug fixes and other improvements
 The Python versions supported for this release are 3.7-3.9. Official support
 for Python 3.10 will be added when it is released.
 
+.. warning::
+   There are unresolved problems compiling NumPy 1.20.0 with gcc-11.1.
+
+   * Optimization level `-O3` results in many incorrect warnings when
+     running the tests.
+   * On some hardware NumPY will hang in an infinite loop.
+
+
+
+
 
 New functions
 =============
