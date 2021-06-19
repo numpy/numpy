@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 173 people contributed to this release.  People with a "+" by their
+A total of 175 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @8bitmp3 +
@@ -95,6 +95,7 @@ names contributed a patch for the first time.
 * Kamil Choudhury +
 * Kasia Leszek +
 * Keller Meier +
+* Kenichi Maehashi
 * Kevin Sheppard
 * Kulin Seth +
 * Kumud Lakara +
@@ -144,6 +145,7 @@ names contributed a patch for the first time.
 * Panos Mavrogiorgos +
 * Patrick T. Komiske III +
 * Pearu Peterson
+* Peter Hawkins +
 * Raghuveer Devulapalli
 * Ralf Gommers
 * Raúl Montón Pinillos +
@@ -182,7 +184,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 571 pull requests were merged for this release.
+A total of 581 pull requests were merged for this release.
 
 * `#13578 <https://github.com/numpy/numpy/pull/13578>`__: DEP: Deprecate `data_type.dtype` if attribute is not already...
 * `#15269 <https://github.com/numpy/numpy/pull/15269>`__: ENH: Implement faster keyword argument parsing capable of ``METH_FASTCALL``
@@ -754,5 +756,14 @@ A total of 571 pull requests were merged for this release.
 * `#19180 <https://github.com/numpy/numpy/pull/19180>`__: BUG: Add -std=c99 to intel icc compiler flags on linux
 * `#19193 <https://github.com/numpy/numpy/pull/19193>`__: NEP: Accept NEP 35 as final
 * `#19194 <https://github.com/numpy/numpy/pull/19194>`__: MAINT, BUG: Adapt `castingimpl.casting` to denote a minimal level
-* `#19197 <https://github.com/numpy/numpy/pull/19197>`__: DOC: Prepare for NumPy 1.20.0rc2 release.
-
+* `#19197 <https://github.com/numpy/numpy/pull/19197>`__: REL: Prepare for NumPy 1.20.0rc2 release.
+* `#19213 <https://github.com/numpy/numpy/pull/19213>`__: MAINT: Add annotations for the missing `period` parameter to...
+* `#19219 <https://github.com/numpy/numpy/pull/19219>`__: MAINT: Add `complex` as allowed type for the `np.complexfloating`...
+* `#19233 <https://github.com/numpy/numpy/pull/19233>`__: TST: Ignore exp FP exceptions test for glibc ver < 2.17
+* `#19238 <https://github.com/numpy/numpy/pull/19238>`__: MAINT: replace imgmath with mathjax for docs
+* `#19239 <https://github.com/numpy/numpy/pull/19239>`__: BUG: Fix out-of-bounds access in convert_datetime_divisor_to_multiple
+* `#19240 <https://github.com/numpy/numpy/pull/19240>`__: ENH: Support major version larger than 9 in NumpyVersion
+* `#19268 <https://github.com/numpy/numpy/pull/19268>`__: DOC: fix duplicate navbar in development documentation index
+* `#19269 <https://github.com/numpy/numpy/pull/19269>`__: BUG: Invalid dtypes comparison should not raise TypeError
+* `#19280 <https://github.com/numpy/numpy/pull/19280>`__: BUG: Add missing DECREF in new path
+* `#19283 <https://github.com/numpy/numpy/pull/19283>`__: REL: Prepare for 1.21.0 release
