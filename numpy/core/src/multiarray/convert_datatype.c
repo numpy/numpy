@@ -476,6 +476,7 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
 
     if (PyArray_MinCastSafety(castingimpl->casting, casting) == casting) {
         /* No need to check using `castingimpl.resolve_descriptors()` */
+        Py_DECREF(meth);
         return 1;
     }
 
@@ -1648,14 +1649,14 @@ PyArray_ResultType(
         Py_DECREF(all_DTypes[i]);
     }
     if (common_dtype == NULL) {
-        goto finish;
+        goto error;
     }
 
     if (common_dtype->abstract) {
         /* (ab)use default descriptor to define a default */
         PyArray_Descr *tmp_descr = common_dtype->default_descr(common_dtype);
         if (tmp_descr == NULL) {
-            goto finish;
+            goto error;
         }
         Py_INCREF(NPY_DTYPE(tmp_descr));
         Py_SETREF(common_dtype, NPY_DTYPE(tmp_descr));
@@ -1688,20 +1689,18 @@ PyArray_ResultType(
                 PyObject *tmp = PyArray_GETITEM(
                         arrs[i-ndtypes], PyArray_BYTES(arrs[i-ndtypes]));
                 if (tmp == NULL) {
-                    Py_SETREF(result, NULL);
-                    goto finish;
+                    goto error;
                 }
                 curr = common_dtype->discover_descr_from_pyobject(common_dtype, tmp);
                 Py_DECREF(tmp);
             }
             if (curr == NULL) {
-                Py_SETREF(result, NULL);
-                goto finish;
+                goto error;
             }
             Py_SETREF(result, common_dtype->common_instance(result, curr));
             Py_DECREF(curr);
             if (result == NULL) {
-                goto finish;
+                goto error;
             }
         }
     }
@@ -1722,16 +1721,21 @@ PyArray_ResultType(
              * Going from error to success should not really happen, but is
              * probably OK if it does.
              */
-            Py_SETREF(result, NULL);
-            goto finish;
+            goto error;
         }
         /* Return the old "legacy" result (could warn here if different) */
         Py_SETREF(result, legacy_result);
     }
 
-  finish:
+    Py_DECREF(common_dtype);
     PyMem_Free(info_on_heap);
     return result;
+
+  error:
+    Py_XDECREF(result);
+    Py_XDECREF(common_dtype);
+    PyMem_Free(info_on_heap);
+    return NULL;
 }
 
 
