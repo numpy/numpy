@@ -53,8 +53,9 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
     int axis_copy = axis;
     npy_intp _shape_buf[NPY_MAXDIMS];
     npy_intp *out_shape;
-    // Keep the number of dimensions in original array
-    // Helps when axis is None.
+    // Keep the number of dimensions and shape of 
+    // original array. Helps when `keepdims` is True.
+    npy_intp* original_op_shape = PyArray_DIMS(op);
     int out_ndim = PyArray_NDIM(op);
     NPY_BEGIN_THREADS_DEF;
 
@@ -109,9 +110,8 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
                 out_shape[i] = 1;
             }
         } else {
-            out_ndim = PyArray_NDIM(ap);
-            memcpy(out_shape, PyArray_DIMS(ap), out_ndim * sizeof(npy_intp));
-            out_shape[out_ndim - 1] = 1;
+            memcpy(out_shape, original_op_shape, out_ndim * sizeof(npy_intp));
+            out_shape[axis] = 1;
         }
     }
 
@@ -158,20 +158,6 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
                     "output array does not match result of np.argmax.");
             goto fail;
         }
-        /*
-        * Match the shape of the output array with that of `ap`.
-        * The reason is because the code below after this else
-        * block doesn't know whether `rp` is obtained from user
-        * input or is created manually in the associated if block.
-        */
-        if( keepdims && axis_copy != NPY_MAXDIMS ) {
-            memcpy(PyArray_DIMS(out), PyArray_DIMS(ap), out_ndim * sizeof(npy_intp));
-            PyArray_DIMS(out)[out_ndim - 1] = 1;
-            memcpy(PyArray_STRIDES(out), PyArray_STRIDES(ap), out_ndim * sizeof(npy_intp));
-            for( int i = 0; i < PyArray_NDIM(out); i++ ) {
-                PyArray_STRIDES(out)[i] /= PyArray_DIMS(ap)[out_ndim - 1];
-            }
-        }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
                               NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
@@ -196,26 +182,6 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
         Py_DECREF(rp);
         rp = out;
         Py_INCREF(rp);
-    }
-    /*
-    * If axis is None then no need to fix the dimensions
-    * and strides of the output array.
-    */
-    if( axis_copy == NPY_MAXDIMS ) {
-        return (PyObject *)rp;
-    }
-    if( keepdims ) {
-        for( int i = 0, k = 0; i < out_ndim; i++ ) {
-            if( i != axis ) {
-                PyArray_DIMS(rp)[i] = PyArray_DIMS(ap)[k];
-                k++;
-            }
-        }
-        PyArray_DIMS(rp)[axis] = 1;
-        PyArray_STRIDES(rp)[out_ndim - 1] = PyArray_DESCR(rp)->elsize;
-        for( int i = out_ndim - 2; i >= 0; i-- ) {
-            PyArray_STRIDES(rp)[i] = PyArray_STRIDES(rp)[i + 1] * PyArray_DIMS(rp)[i + 1];
-        }
     }
     return (PyObject *)rp;
 
@@ -250,8 +216,9 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
     int axis_copy = axis;
     npy_intp _shape_buf[NPY_MAXDIMS];
     npy_intp *out_shape;
-    // Keep the number of dimensions in original array
-    // Helps when axis is None.
+    // Keep the number of dimensions and shape of 
+    // original array. Helps when `keepdims` is True.
+    npy_intp* original_op_shape = PyArray_DIMS(op);
     int out_ndim = PyArray_NDIM(op);
     NPY_BEGIN_THREADS_DEF;
 
@@ -306,9 +273,12 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
                 out_shape[i] = 1;
             }
         } else {
-            out_ndim = PyArray_NDIM(ap);
-            memcpy(out_shape, PyArray_DIMS(ap), out_ndim * sizeof(npy_intp));
-            out_shape[out_ndim - 1] = 1;
+            /* 
+            * While `ap` may be transposed, we can ignore this for `out` because the
+            * transpose only reorders the size 1 `axis` (not changing memory layout).
+            */
+            memcpy(out_shape, original_op_shape, out_ndim * sizeof(npy_intp));
+            out_shape[axis] = 1;
         }
     }
 
@@ -355,20 +325,6 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
                     "output array does not match result of np.argmin.");
             goto fail;
         }
-        /*
-        * Match the shape of the output array with that of `ap`.
-        * The reason is because the code below after this else
-        * block doesn't know whether `rp` is obtained from user
-        * input or is created manually in the associated if block.
-        */
-        if( keepdims && axis_copy != NPY_MAXDIMS ) {
-            memcpy(PyArray_DIMS(out), PyArray_DIMS(ap), out_ndim * sizeof(npy_intp));
-            PyArray_DIMS(out)[out_ndim - 1] = 1;
-            memcpy(PyArray_STRIDES(out), PyArray_STRIDES(ap), out_ndim * sizeof(npy_intp));
-            for( int i = 0; i < PyArray_NDIM(out); i++ ) {
-                PyArray_STRIDES(out)[i] /= PyArray_DIMS(ap)[out_ndim - 1];
-            }
-        }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
                               NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
@@ -393,26 +349,6 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, int 
         Py_DECREF(rp);
         rp = out;
         Py_INCREF(rp);
-    }
-    /*
-    * If axis is None then no need to fix the dimensions
-    * and strides of the output array.
-    */
-    if( axis_copy == NPY_MAXDIMS ) {
-        return (PyObject *)rp;
-    }
-    if( keepdims ) {
-        for( int i = 0, k = 0; i < out_ndim; i++ ) {
-            if( i != axis ) {
-                PyArray_DIMS(rp)[i] = PyArray_DIMS(ap)[k];
-                k++;
-            }
-        }
-        PyArray_DIMS(rp)[axis] = 1;
-        PyArray_STRIDES(rp)[out_ndim - 1] = PyArray_DESCR(rp)->elsize;
-        for( int i = out_ndim - 2; i >= 0; i-- ) {
-            PyArray_STRIDES(rp)[i] = PyArray_STRIDES(rp)[i + 1] * PyArray_DIMS(rp)[i + 1];
-        }
     }
     return (PyObject *)rp;
 
