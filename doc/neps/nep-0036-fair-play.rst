@@ -105,7 +105,7 @@ Fair play rules
    We understand that minor patches are often required to make a
    library work inside of a distribution.  E.g., Debian may patch
    NumPy so that it searches for optimized BLAS libraries in the
-   correct locations.  This is in order, but we ask that no
+   correct locations.  This is acceptable, but we ask that no
    substantive changes are made.
 
 3. Do not extend or modify NumPy's API.
