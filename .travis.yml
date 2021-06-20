@@ -3,7 +3,7 @@
 language: python
 group: travis_latest
 os: linux
-dist: bionic
+dist: focal
 
 # Travis allows these packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-safelist
