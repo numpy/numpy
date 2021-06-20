@@ -2357,6 +2357,10 @@ def generate_config_py(target):
                 * ``src_dirs``: directories containing library source files
                 * ``define_macros``: preprocessor macros used by
                   ``distutils.setup``
+                * ``baseline``: minimum CPU features required
+                * ``found``: dispatched features supported in the system
+                * ``not found``: dispatched features that are not supported
+                  in the system
 
                 Examples
                 --------
@@ -2368,6 +2372,9 @@ def generate_config_py(target):
                     libraries = ['openblas', 'openblas']
                     library_dirs = ['/usr/local/lib']
                 """
+                from numpy.core._multiarray_umath import (
+                    __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+                )
                 for name,info_dict in globals().items():
                     if name[0] == "_" or type(info_dict) is not type({}): continue
                     print(name + ":")
@@ -2378,6 +2385,19 @@ def generate_config_py(target):
                         if k == "sources" and len(v) > 200:
                             v = v[:60] + " ...\n... " + v[-60:]
                         print("    %s = %s" % (k,v))
+
+                features_found, features_not_found = [], []
+                for feature in __cpu_dispatch__:
+                    if __cpu_features__[feature]:
+                        features_found.append(feature)
+                    else:
+                        features_not_found.append(feature)
+
+                print("Supported SIMD extensions in this NumPy install:")
+                print("    baseline = %s" % (','.join(__cpu_baseline__)))
+                print("    found = %s" % (','.join(features_found)))
+                print("    not found = %s" % (','.join(features_not_found)))
+
                     '''))
 
     return target

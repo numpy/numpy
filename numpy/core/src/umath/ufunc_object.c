@@ -1263,23 +1263,10 @@ iterator_loop(PyUFuncObject *ufunc,
                     void *innerloopdata,
                     npy_uint32 *op_flags)
 {
-    npy_intp i, nin = ufunc->nin, nout = ufunc->nout;
-    npy_intp nop = nin + nout;
-    NpyIter *iter;
-    char *baseptrs[NPY_MAXARGS];
+    int nin = ufunc->nin, nout = ufunc->nout;
+    int nop = nin + nout;
 
-    NpyIter_IterNextFunc *iternext;
-    char **dataptr;
-    npy_intp *stride;
-    npy_intp *count_ptr;
-    int needs_api;
-
-    PyArrayObject **op_it;
-    npy_uint32 iter_flags;
-
-    NPY_BEGIN_THREADS_DEF;
-
-    iter_flags = ufunc->iter_flags |
+    npy_uint32 iter_flags = ufunc->iter_flags |
                  NPY_ITER_EXTERNAL_LOOP |
                  NPY_ITER_REFS_OK |
                  NPY_ITER_ZEROSIZE_OK |
@@ -1288,16 +1275,17 @@ iterator_loop(PyUFuncObject *ufunc,
                  NPY_ITER_DELAY_BUFALLOC |
                  NPY_ITER_COPY_IF_OVERLAP;
 
-    /* Call the __array_prepare__ functions for already existing output arrays.
+    /*
+     * Call the __array_prepare__ functions for already existing output arrays.
      * Do this before creating the iterator, as the iterator may UPDATEIFCOPY
      * some of them.
      */
-    for (i = 0; i < nout; ++i) {
+    for (int i = 0; i < nout; i++) {
         if (op[nin+i] == NULL) {
             continue;
         }
         if (prepare_ufunc_output(ufunc, &op[nin+i],
-                            arr_prep[i], full_args, i) < 0) {
+                arr_prep[i], full_args, i) < 0) {
             return -1;
         }
     }
@@ -1307,7 +1295,7 @@ iterator_loop(PyUFuncObject *ufunc,
      * were already checked, we use the casting rule 'unsafe' which
      * is faster to calculate.
      */
-    iter = NpyIter_AdvancedNew(nop, op,
+    NpyIter *iter = NpyIter_AdvancedNew(nop, op,
                         iter_flags,
                         order, NPY_UNSAFE_CASTING,
                         op_flags, dtype,
@@ -1316,16 +1304,20 @@ iterator_loop(PyUFuncObject *ufunc,
         return -1;
     }
 
-    /* Copy any allocated outputs */
-    op_it = NpyIter_GetOperandArray(iter);
-    for (i = 0; i < nout; ++i) {
-        if (op[nin+i] == NULL) {
-            op[nin+i] = op_it[nin+i];
-            Py_INCREF(op[nin+i]);
+    NPY_UF_DBG_PRINT("Made iterator\n");
+
+    /* Call the __array_prepare__ functions for newly allocated arrays */
+    PyArrayObject **op_it = NpyIter_GetOperandArray(iter);
+    char *baseptrs[NPY_MAXARGS];
+
+    for (int i = 0; i < nout; ++i) {
+        if (op[nin + i] == NULL) {
+            op[nin + i] = op_it[nin + i];
+            Py_INCREF(op[nin + i]);
 
             /* Call the __array_prepare__ functions for the new array */
-            if (prepare_ufunc_output(ufunc, &op[nin+i],
-                                     arr_prep[i], full_args, i) < 0) {
+            if (prepare_ufunc_output(ufunc,
+                    &op[nin + i], arr_prep[i], full_args, i) < 0) {
                 NpyIter_Deallocate(iter);
                 return -1;
             }
@@ -1340,45 +1332,59 @@ iterator_loop(PyUFuncObject *ufunc,
              * with other operands --- the op[nin+i] array passed to it is newly
              * allocated and doesn't have any overlap.
              */
-            baseptrs[nin+i] = PyArray_BYTES(op[nin+i]);
+            baseptrs[nin + i] = PyArray_BYTES(op[nin + i]);
         }
         else {
-            baseptrs[nin+i] = PyArray_BYTES(op_it[nin+i]);
+            baseptrs[nin + i] = PyArray_BYTES(op_it[nin + i]);
         }
     }
-
     /* Only do the loop if the iteration size is non-zero */
-    if (NpyIter_GetIterSize(iter) != 0) {
-        /* Reset the iterator with the base pointers from possible __array_prepare__ */
-        for (i = 0; i < nin; ++i) {
-            baseptrs[i] = PyArray_BYTES(op_it[i]);
-        }
-        if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
-            NpyIter_Deallocate(iter);
+    npy_intp full_size = NpyIter_GetIterSize(iter);
+    if (full_size == 0) {
+        if (!NpyIter_Deallocate(iter)) {
             return -1;
         }
-
-        /* Get the variables needed for the loop */
-        iternext = NpyIter_GetIterNext(iter, NULL);
-        if (iternext == NULL) {
-            NpyIter_Deallocate(iter);
-            return -1;
-        }
-        dataptr = NpyIter_GetDataPtrArray(iter);
-        stride = NpyIter_GetInnerStrideArray(iter);
-        count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
-        needs_api = NpyIter_IterationNeedsAPI(iter);
-
-        NPY_BEGIN_THREADS_NDITER(iter);
-
-        /* Execute the loop */
-        do {
-            NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
-            innerloop(dataptr, count_ptr, stride, innerloopdata);
-        } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
-
-        NPY_END_THREADS;
+        return 0;
     }
+
+    /*
+     * Reset the iterator with the base pointers possibly modified by
+     * `__array_prepare__`.
+     */
+    for (int i = 0; i < nin; i++) {
+        baseptrs[i] = PyArray_BYTES(op_it[i]);
+    }
+    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
+        NpyIter_Deallocate(iter);
+        return -1;
+    }
+
+    /* Get the variables needed for the loop */
+    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) {
+        NpyIter_Deallocate(iter);
+        return -1;
+    }
+    char **dataptr = NpyIter_GetDataPtrArray(iter);
+    npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
+    npy_intp *countptr = NpyIter_GetInnerLoopSizePtr(iter);
+    int needs_api = NpyIter_IterationNeedsAPI(iter);
+
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(full_size);
+    }
+
+    NPY_UF_DBG_PRINT("Actual inner loop:\n");
+    /* Execute the loop */
+    do {
+        NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
+        innerloop(dataptr, countptr, strides, innerloopdata);
+    } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
+
+    NPY_END_THREADS;
+
     /*
      * Currently `innerloop` may leave an error set, in this case
      * NpyIter_Deallocate will always return an error as well.
@@ -3186,7 +3192,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     int idim, ndim, otype_final;
     int needs_api, need_outer_iterator;
 
-    NpyIter *iter = NULL, *iter_inner = NULL;
+    NpyIter *iter = NULL;
 
     /* The selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
@@ -3512,9 +3518,6 @@ finish:
     if (!NpyIter_Deallocate(iter)) {
         res = -1;
     }
-    if (!NpyIter_Deallocate(iter_inner)) {
-        res = -1;
-    }
     if (res < 0) {
         Py_DECREF(out);
         return NULL;
@@ -3527,7 +3530,6 @@ fail:
     Py_XDECREF(op_dtypes[0]);
 
     NpyIter_Deallocate(iter);
-    NpyIter_Deallocate(iter_inner);
 
     return NULL;
 }
@@ -4263,8 +4265,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
          */
         int typenum = PyArray_TYPE(mp);
         if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
-            && ((strcmp(ufunc->name,"add") == 0)
-                || (strcmp(ufunc->name,"multiply") == 0))) {
+                && ((strcmp(ufunc->name, "add") == 0)
+                    || (strcmp(ufunc->name, "multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = NPY_LONG;
             }
@@ -4310,9 +4312,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
                         "reduceat does not allow multiple axes");
             goto fail;
         }
-        ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc, mp, indices, out,
-                                            axes[0], otype->type_num);
-        Py_DECREF(indices);
+        ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc,
+                mp, indices, out, axes[0], otype->type_num);
+        Py_SETREF(indices, NULL);
         break;
     }
     Py_DECREF(mp);
@@ -4354,6 +4356,7 @@ fail:
     Py_XDECREF(otype);
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
+    Py_XDECREF(indices);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
     return NULL;
@@ -4667,6 +4670,81 @@ _get_normalized_typetup(PyUFuncObject *ufunc,
 }
 
 
+/**
+ * Wraps all outputs and returns the result (which may be NULL on error).
+ *
+ * Use __array_wrap__ on all outputs
+ * if present on one of the input arguments.
+ * If present for multiple inputs:
+ * use __array_wrap__ of input object with largest
+ * __array_priority__ (default = 0.0)
+ *
+ * Exception:  we should not wrap outputs for items already
+ * passed in as output-arguments.  These items should either
+ * be left unwrapped or wrapped by calling their own __array_wrap__
+ * routine.
+ *
+ * For each output argument, wrap will be either
+ * NULL --- call PyArray_Return() -- default if no output arguments given
+ * None --- array-object passed in don't call PyArray_Return
+ * method --- the __array_wrap__ method to call.
+ *
+ * @param ufunc
+ * @param full_args Original inputs and outputs
+ * @param subok Whether subclasses are allowed
+ * @param result_arrays The ufunc result(s).  REFERENCES ARE STOLEN!
+ */
+static PyObject *
+replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
+        ufunc_full_args full_args, npy_bool subok,
+        PyArrayObject *result_arrays[])
+{
+    PyObject *retobj[NPY_MAXARGS];
+    PyObject *wraparr[NPY_MAXARGS];
+    _find_array_wrap(full_args, subok, wraparr, ufunc->nin, ufunc->nout);
+
+    /* wrap outputs */
+    for (int i = 0; i < ufunc->nout; i++) {
+        _ufunc_context context;
+
+        context.ufunc = ufunc;
+        context.args = full_args;
+        context.out_i = i;
+
+        retobj[i] = _apply_array_wrap(wraparr[i], result_arrays[i], &context);
+        result_arrays[i] = NULL;  /* Was DECREF'ed and (probably) wrapped */
+        if (retobj[i] == NULL) {
+            goto fail;
+        }
+    }
+
+    if (ufunc->nout == 1) {
+        return retobj[0];
+    }
+    else {
+        PyObject *result = PyTuple_New(ufunc->nout);
+        if (result == NULL) {
+            return NULL;
+        }
+        for (int i = 0; i < ufunc->nout; i++) {
+            PyTuple_SET_ITEM(result, i, retobj[i]);
+        }
+        return result;
+    }
+
+  fail:
+    for (int i = 0; i < ufunc->nout; i++) {
+        if (result_arrays[i] != NULL) {
+            Py_DECREF(result_arrays[i]);
+        }
+        else {
+            Py_XDECREF(retobj[i]);
+        }
+    }
+    return NULL;
+}
+
+
 /*
  * Main ufunc call implementation.
  *
@@ -4682,8 +4760,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         npy_bool outer)
 {
     PyArrayObject *operands[NPY_MAXARGS] = {NULL};
-    PyObject *retobj[NPY_MAXARGS];
-    PyObject *wraparr[NPY_MAXARGS];
     PyObject *override = NULL;
     ufunc_full_args full_args = {NULL, NULL};
     PyObject *typetup = NULL;
@@ -4901,63 +4977,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     for (int i = 0; i < ufunc->nin; i++) {
         Py_XSETREF(operands[i], NULL);
     }
-
-    /*
-     * Use __array_wrap__ on all outputs
-     * if present on one of the input arguments.
-     * If present for multiple inputs:
-     * use __array_wrap__ of input object with largest
-     * __array_priority__ (default = 0.0)
-     *
-     * Exception:  we should not wrap outputs for items already
-     * passed in as output-arguments.  These items should either
-     * be left unwrapped or wrapped by calling their own __array_wrap__
-     * routine.
-     *
-     * For each output argument, wrap will be either
-     * NULL --- call PyArray_Return() -- default if no output arguments given
-     * None --- array-object passed in don't call PyArray_Return
-     * method --- the __array_wrap__ method to call.
-     */
-    _find_array_wrap(full_args, subok, wraparr, ufunc->nin, ufunc->nout);
-
-    /* wrap outputs */
-    for (int i = 0; i < ufunc->nout; i++) {
-        int j = ufunc->nin+i;
-        _ufunc_context context;
-        PyObject *wrapped;
-
-        context.ufunc = ufunc;
-        context.args = full_args;
-        context.out_i = i;
-
-        wrapped = _apply_array_wrap(wraparr[i], operands[j], &context);
-        operands[j] = NULL;  /* Prevent fail double-freeing this */
-        if (wrapped == NULL) {
-            for (int j = 0; j < i; j++) {
-                Py_DECREF(retobj[j]);
-            }
-            goto fail;
-        }
-
-        retobj[i] = wrapped;
-    }
-
     Py_XDECREF(typetup);
+
+    /* The following steals the references to the outputs: */
+    PyObject *result = replace_with_wrapped_result_and_return(ufunc,
+            full_args, subok, operands+nin);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
-    if (ufunc->nout == 1) {
-        return retobj[0];
-    }
-    else {
-        PyTupleObject *ret;
-
-        ret = (PyTupleObject *)PyTuple_New(ufunc->nout);
-        for (int i = 0; i < ufunc->nout; i++) {
-            PyTuple_SET_ITEM(ret, i, retobj[i]);
-        }
-        return (PyObject *)ret;
-    }
+    return result;
 
 fail:
     Py_XDECREF(typetup);

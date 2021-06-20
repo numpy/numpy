@@ -31,7 +31,7 @@ __all__ = [
     'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
-    'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
+    'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
     'interp', 'interp_complex', 'is_busday', 'lexsort',
@@ -249,7 +249,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
 def inner(a, b):
     """
-    inner(a, b)
+    inner(a, b, /)
 
     Inner product of two arrays.
 
@@ -341,7 +341,7 @@ def inner(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
 def where(condition, x=None, y=None):
     """
-    where(condition, [x, y])
+    where(condition, [x, y], /)
 
     Return elements chosen from `x` or `y` depending on `condition`.
 
@@ -613,7 +613,7 @@ def can_cast(from_, to, casting=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.min_scalar_type)
 def min_scalar_type(a):
     """
-    min_scalar_type(a)
+    min_scalar_type(a, /)
 
     For scalar ``a``, returns the data type with the smallest size
     and smallest scalar kind which can hold its value.  For non-scalar
@@ -825,7 +825,7 @@ def dot(a, b, out=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
     """
-    vdot(a, b)
+    vdot(a, b, /)
 
     Return the dot product of two vectors.
 
@@ -883,7 +883,7 @@ def vdot(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
 def bincount(x, weights=None, minlength=None):
     """
-    bincount(x, weights=None, minlength=0)
+    bincount(x, /, weights=None, minlength=0)
 
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -1151,7 +1151,7 @@ def putmask(a, mask, values):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
 def packbits(a, axis=None, bitorder='big'):
     """
-    packbits(a, axis=None, bitorder='big')
+    packbits(a, /, axis=None, bitorder='big')
 
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
@@ -1209,7 +1209,7 @@ def packbits(a, axis=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
 def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
-    unpackbits(a, axis=None, count=None, bitorder='big')
+    unpackbits(a, /, axis=None, count=None, bitorder='big')
 
     Unpacks elements of a uint8 array into a binary-valued output array.
 
@@ -1293,7 +1293,7 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)
 def shares_memory(a, b, max_work=None):
     """
-    shares_memory(a, b, max_work=None)
+    shares_memory(a, b, /, max_work=None)
 
     Determine if two arrays share memory.
 
@@ -1368,7 +1368,7 @@ def shares_memory(a, b, max_work=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.may_share_memory)
 def may_share_memory(a, b, max_work=None):
     """
-    may_share_memory(a, b, max_work=None)
+    may_share_memory(a, b, /, max_work=None)
 
     Determine if two arrays might share memory
 

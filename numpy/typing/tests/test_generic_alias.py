@@ -21,8 +21,8 @@ if sys.version_info >= (3, 9):
     NDArray_ref = types.GenericAlias(np.ndarray, (Any, DType_ref))
     FuncType = Callable[[Union[_GenericAlias, types.GenericAlias]], Any]
 else:
-    DType_ref = NotImplemented
-    NDArray_ref = NotImplemented
+    DType_ref = Any
+    NDArray_ref = Any
     FuncType = Callable[[_GenericAlias], Any]
 
 GETATTR_NAMES = sorted(set(dir(np.ndarray)) - _GenericAlias._ATTR_EXCEPTIONS)
@@ -41,6 +41,12 @@ class TestGenericAlias:
 
     @pytest.mark.parametrize("name,func", [
         ("__init__", lambda n: n),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, Any)),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (Any,))),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (Any, Any))),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, T1)),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (T1,))),
+        ("__init__", lambda n: _GenericAlias(np.ndarray, (T1, T2))),
         ("__origin__", lambda n: n.__origin__),
         ("__args__", lambda n: n.__args__),
         ("__parameters__", lambda n: n.__parameters__),

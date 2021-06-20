@@ -1,9 +1,11 @@
 import builtins
 import os
 import sys
+import mmap
+import array as _array
 import datetime as dt
 from abc import abstractmethod
-from types import TracebackType
+from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
 
 from numpy.core._internal import _ctypes
@@ -252,10 +254,6 @@ from numpy.core.fromnumeric import (
 )
 
 from numpy.core._asarray import (
-    asarray as asarray,
-    asanyarray as asanyarray,
-    ascontiguousarray as ascontiguousarray,
-    asfortranarray as asfortranarray,
     require as require,
 )
 
@@ -294,11 +292,61 @@ from numpy.core.einsumfunc import (
     einsum_path as einsum_path,
 )
 
+from numpy.core.multiarray import (
+    ALLOW_THREADS as ALLOW_THREADS,
+    BUFSIZE as BUFSIZE,
+    CLIP as CLIP,
+    MAXDIMS as MAXDIMS,
+    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
+    RAISE as RAISE,
+    WRAP as WRAP,
+    tracemalloc_domain as tracemalloc_domain,
+    array as array,
+    empty_like as empty_like,
+    empty as empty,
+    zeros as zeros,
+    concatenate as concatenate,
+    inner as inner,
+    where as where,
+    lexsort as lexsort,
+    can_cast as can_cast,
+    min_scalar_type as min_scalar_type,
+    result_type as result_type,
+    dot as dot,
+    vdot as vdot,
+    bincount as bincount,
+    copyto as copyto,
+    putmask as putmask,
+    packbits as packbits,
+    unpackbits as unpackbits,
+    shares_memory as shares_memory,
+    may_share_memory as may_share_memory,
+    asarray as asarray,
+    asanyarray as asanyarray,
+    ascontiguousarray as ascontiguousarray,
+    asfortranarray as asfortranarray,
+    arange as arange,
+    busday_count as busday_count,
+    busday_offset as busday_offset,
+    compare_chararrays as compare_chararrays,
+    datetime_as_string as datetime_as_string,
+    datetime_data as datetime_data,
+    frombuffer as frombuffer,
+    fromfile as fromfile,
+    fromiter as fromiter,
+    is_busday as is_busday,
+    promote_types as promote_types,
+    seterrobj as seterrobj,
+    geterrobj as geterrobj,
+    fromstring as fromstring,
+    frompyfunc as frompyfunc,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
     ones_like as ones_like,
-    empty_like as empty_like,
     full as full,
     full_like as full_like,
     count_nonzero as count_nonzero,
@@ -578,10 +626,6 @@ class MachAr:
     ) -> None: ...
     def __getattr__(self, key: str) -> Any: ...
 
-class busdaycalendar:
-    def __new__(cls, weekmask: Any = ..., holidays: Any = ...) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
-
 class chararray(ndarray[_ShapeType, _DType_co]):
     def __new__(
         subtype,
@@ -845,69 +889,15 @@ def round(a, decimals=..., out=...): ...
 def round_(a, decimals=..., out=...): ...
 def show_config(): ...
 
-# Placeholders for C-based functions
 # TODO: Sort out which parameters are positional-only
-@overload
-def arange(stop, dtype=..., *, like=...): ...
-@overload
-def arange(start, stop, step=..., dtype=..., *, like=...): ...
-def busday_count(
-    begindates,
-    enddates,
-    weekmask=...,
-    holidays=...,
-    busdaycal=...,
-    out=...,
-): ...
-def busday_offset(
-    dates,
-    offsets,
-    roll=...,
-    weekmask=...,
-    holidays=...,
-    busdaycal=...,
-    out=...,
-): ...
-def can_cast(from_, to, casting=...): ...
-def compare_chararrays(a, b, cmp_op, rstrip): ...
-def concatenate(__a, axis=..., out=..., dtype=..., casting=...): ...
-def copyto(dst, src, casting=..., where=...): ...
-def datetime_as_string(arr, unit=..., timezone=..., casting=...): ...
-def datetime_data(__dtype): ...
-def dot(a, b, out=...): ...
-def frombuffer(buffer, dtype=..., count=..., offset=..., *, like=...): ...
-def fromfile(
-    file, dtype=..., count=..., sep=..., offset=..., *, like=...
-): ...
-def fromiter(iter, dtype, count=..., *, like=...): ...
-def frompyfunc(func, nin, nout, * identity): ...
-def fromstring(string, dtype=..., count=..., sep=..., *, like=...): ...
-def geterrobj(): ...
-def inner(a, b): ...
-def is_busday(
-    dates, weekmask=..., holidays=..., busdaycal=..., out=...
-): ...
-def lexsort(keys, axis=...): ...
-def may_share_memory(a, b, max_work=...): ...
-def min_scalar_type(a): ...
-def nested_iters(*args, **kwargs): ...  # TODO: Sort out parameters
-def promote_types(type1, type2): ...
-def putmask(a, mask, values): ...
-def result_type(*arrays_and_dtypes): ...
-def seterrobj(errobj): ...
-def shares_memory(a, b, max_work=...): ...
-def vdot(a, b): ...
-@overload
-def where(__condition): ...
-@overload
-def where(__condition, __x, __y): ...
+def nested_iters(*args, **kwargs): ... # TODO: Sort out parameters
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
 class dtype(Generic[_DTypeScalar_co]):
-    names: Optional[Tuple[str, ...]]
+    names: None | Tuple[str, ...]
     # Overload for subclass of generic
     @overload
     def __new__(
@@ -930,7 +920,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __new__(cls, dtype: Type[int], align: bool = ..., copy: bool = ...) -> dtype[int_]: ...
     @overload
-    def __new__(cls, dtype: Optional[Type[float]], align: bool = ..., copy: bool = ...) -> dtype[float_]: ...
+    def __new__(cls, dtype: None | Type[float], align: bool = ..., copy: bool = ...) -> dtype[float_]: ...
     @overload
     def __new__(cls, dtype: Type[complex], align: bool = ..., copy: bool = ...) -> dtype[complex_]: ...
     @overload
@@ -1061,22 +1051,24 @@ class dtype(Generic[_DTypeScalar_co]):
     @overload
     def __getitem__(self: dtype[void], key: List[str]) -> dtype[void]: ...
     @overload
-    def __getitem__(self: dtype[void], key: Union[str, int]) -> dtype[Any]: ...
+    def __getitem__(self: dtype[void], key: str | SupportsIndex) -> dtype[Any]: ...
 
-    # NOTE: In the future 1-based multiplications will also yield `void` dtypes
-    @overload
-    def __mul__(self, value: L[0]) -> None: ...  # type: ignore[misc]
+    # NOTE: In the future 1-based multiplications will also yield `flexible` dtypes
     @overload
     def __mul__(self: _DType, value: L[1]) -> _DType: ...
     @overload
-    def __mul__(self, value: int) -> dtype[void]: ...
+    def __mul__(self: _FlexDType, value: SupportsIndex) -> _FlexDType: ...
+    @overload
+    def __mul__(self, value: SupportsIndex) -> dtype[void]: ...
 
     # NOTE: `__rmul__` seems to be broken when used in combination with
-    # literals as of mypy 0.800. Set the return-type to `Any` for now.
-    def __rmul__(self, value: int) -> Any: ...
+    # literals as of mypy 0.902. Set the return-type to `dtype[Any]` for
+    # now for non-flexible dtypes.
+    @overload
+    def __rmul__(self: _FlexDType, value: SupportsIndex) -> _FlexDType: ...
+    @overload
+    def __rmul__(self, value: SupportsIndex) -> dtype[Any]: ...
 
-    def __eq__(self, other: DTypeLike) -> bool: ...
-    def __ne__(self, other: DTypeLike) -> bool: ...
     def __gt__(self, other: DTypeLike) -> bool: ...
     def __ge__(self, other: DTypeLike) -> bool: ...
     def __lt__(self, other: DTypeLike) -> bool: ...
@@ -1084,17 +1076,17 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def alignment(self) -> int: ...
     @property
-    def base(self: _DType) -> _DType: ...
+    def base(self) -> dtype[Any]: ...
     @property
     def byteorder(self) -> str: ...
     @property
     def char(self) -> str: ...
     @property
-    def descr(self) -> List[Union[Tuple[str, str], Tuple[str, str, _Shape]]]: ...
+    def descr(self) -> List[Tuple[str, str] | Tuple[str, str, _Shape]]: ...
     @property
     def fields(
         self,
-    ) -> Optional[Mapping[str, Union[Tuple[dtype[Any], int], Tuple[dtype[Any], int, Any]]]]: ...
+    ) -> None | MappingProxyType[str, Tuple[dtype[Any], int] | Tuple[dtype[Any], int, Any]]: ...
     @property
     def flags(self) -> int: ...
     @property
@@ -1110,11 +1102,9 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def kind(self) -> str: ...
     @property
-    def metadata(self) -> Optional[Mapping[str, Any]]: ...
+    def metadata(self) -> None | MappingProxyType[str, Any]: ...
     @property
     def name(self) -> str: ...
-    @property
-    def names(self) -> Optional[Tuple[str, ...]]: ...
     @property
     def num(self) -> int: ...
     @property
@@ -1122,7 +1112,7 @@ class dtype(Generic[_DTypeScalar_co]):
     @property
     def ndim(self) -> int: ...
     @property
-    def subdtype(self: _DType) -> Optional[Tuple[_DType, _Shape]]: ...
+    def subdtype(self) -> None | Tuple[dtype[Any], _Shape]: ...
     def newbyteorder(self: _DType, __new_order: _ByteOrder = ...) -> _DType: ...
     # Leave str and type for end to avoid having to use `builtins.str`
     # everywhere. See https://github.com/python/mypy/issues/3775
@@ -1226,20 +1216,9 @@ class _ArrayOrScalarCommon:
     def __deepcopy__(self: _ArraySelf, __memo: Optional[dict] = ...) -> _ArraySelf: ...
     def __eq__(self, other): ...
     def __ne__(self, other): ...
-    def astype(
-        self: _ArraySelf,
-        dtype: DTypeLike,
-        order: _OrderKACF = ...,
-        casting: _Casting = ...,
-        subok: bool = ...,
-        copy: bool = ...,
-    ) -> _ArraySelf: ...
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def dump(self, file: str) -> None: ...
     def dumps(self) -> bytes: ...
-    def getfield(
-        self: _ArraySelf, dtype: DTypeLike, offset: int = ...
-    ) -> _ArraySelf: ...
     def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
@@ -1248,14 +1227,6 @@ class _ArrayOrScalarCommon:
     ) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
-    @overload
-    def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
-    @overload
-    def view(self: _ArraySelf, dtype: DTypeLike = ...) -> _ArraySelf: ...
-    @overload
-    def view(
-        self, dtype: DTypeLike, type: Type[_NdArraySubClass]
-    ) -> _NdArraySubClass: ...
 
     # TODO: Add proper signatures
     def __getitem__(self, key) -> Any: ...
@@ -1625,17 +1596,35 @@ class _ArrayOrScalarCommon:
 
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
+_FlexDType = TypeVar("_FlexDType", bound=dtype[flexible])
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
 _ShapeType = TypeVar("_ShapeType", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
-_BufferType = Union[ndarray, bytes, bytearray, memoryview]
+
+# There is currently no exhaustive way to type the buffer protocol,
+# as it is implemented exclusivelly in the C API (python/typing#593)
+_SupportsBuffer = Union[
+    bytes,
+    bytearray,
+    memoryview,
+    _array.array[Any],
+    mmap.mmap,
+    NDArray[Any],
+    generic,
+]
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
-_Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
+_CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
+
+_DTypeLike = Union[
+    dtype[_ScalarType],
+    Type[_ScalarType],
+    _SupportsDType[dtype[_ScalarType]],
+]
 
 _ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
 _ArrayInt_co = NDArray[Union[bool_, integer[Any]]]
@@ -1666,7 +1655,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         cls: Type[_ArraySelf],
         shape: _ShapeLike,
         dtype: DTypeLike = ...,
-        buffer: _BufferType = ...,
+        buffer: _SupportsBuffer = ...,
         offset: int = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
@@ -1873,6 +1862,53 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def reshape(
         self, *shape: SupportsIndex, order: _OrderACF = ...
     ) -> ndarray[Any, _DType_co]: ...
+
+    @overload
+    def astype(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> NDArray[_ScalarType]: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike,
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> NDArray[Any]: ...
+
+    @overload
+    def view(self: _ArraySelf) -> _ArraySelf: ...
+    @overload
+    def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
+    @overload
+    def view(self, dtype: _DTypeLike[_ScalarType]) -> NDArray[_ScalarType]: ...
+    @overload
+    def view(self, dtype: DTypeLike) -> NDArray[Any]: ...
+    @overload
+    def view(
+        self,
+        dtype: DTypeLike,
+        type: Type[_NdArraySubClass],
+    ) -> _NdArraySubClass: ...
+
+    @overload
+    def getfield(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        offset: SupportsIndex = ...
+    ) -> NDArray[_ScalarType]: ...
+    @overload
+    def getfield(
+        self,
+        dtype: DTypeLike,
+        offset: SupportsIndex = ...
+    ) -> NDArray[Any]: ...
 
     # Dispatch to the underlying `generic` via protocols
     def __int__(
@@ -2846,6 +2882,59 @@ class generic(_ArrayOrScalarCommon):
     def byteswap(self: _ScalarType, inplace: L[False] = ...) -> _ScalarType: ...
     @property
     def flat(self: _ScalarType) -> flatiter[ndarray[Any, dtype[_ScalarType]]]: ...
+
+    @overload
+    def astype(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike,
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        subok: bool = ...,
+        copy: bool = ...,
+    ) -> Any: ...
+
+    # NOTE: `view` will perform a 0D->scalar cast,
+    # thus the array `type` is irrelevant to the output type
+    @overload
+    def view(
+        self: _ScalarType,
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def view(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> _ScalarType: ...
+    @overload
+    def view(
+        self,
+        dtype: DTypeLike,
+        type: Type[ndarray[Any, Any]] = ...,
+    ) -> Any: ...
+
+    @overload
+    def getfield(
+        self,
+        dtype: _DTypeLike[_ScalarType],
+        offset: SupportsIndex = ...
+    ) -> _ScalarType: ...
+    @overload
+    def getfield(
+        self,
+        dtype: DTypeLike,
+        offset: SupportsIndex = ...
+    ) -> Any: ...
+
     def item(
         self,
         __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
@@ -3042,11 +3131,24 @@ class datetime64(generic):
 if sys.version_info >= (3, 8):
     _IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex, SupportsIndex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        SupportsIndex,
+        complex,  # `complex` is not a subtype of `SupportsComplex`
+    ]
 else:
     _IntValue = Union[SupportsInt, _CharLike_co]
     _FloatValue = Union[None, _CharLike_co, SupportsFloat]
-    _ComplexValue = Union[None, _CharLike_co, SupportsFloat, SupportsComplex]
+    _ComplexValue = Union[
+        None,
+        _CharLike_co,
+        SupportsFloat,
+        SupportsComplex,
+        complex,
+    ]
 
 class integer(number[_NBit1]):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
@@ -3330,31 +3432,6 @@ class str_(character, str):
 unicode_ = str_
 str0 = str_
 
-def array(
-    object: object,
-    dtype: DTypeLike = ...,
-    *,
-    copy: bool = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def zeros(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def empty(
-    shape: _ShapeLike,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-
 #
 # Constants
 #
@@ -3373,9 +3450,7 @@ inf: Final[float]
 infty: Final[float]
 nan: Final[float]
 pi: Final[float]
-ALLOW_THREADS: Final[int]
-BUFSIZE: Final[int]
-CLIP: Final[int]
+
 ERR_CALL: Final[int]
 ERR_DEFAULT: Final[int]
 ERR_IGNORE: Final[int]
@@ -3388,17 +3463,11 @@ FPE_DIVIDEBYZERO: Final[int]
 FPE_INVALID: Final[int]
 FPE_OVERFLOW: Final[int]
 FPE_UNDERFLOW: Final[int]
-MAXDIMS: Final[int]
-MAY_SHARE_BOUNDS: Final[int]
-MAY_SHARE_EXACT: Final[int]
-RAISE: Final[int]
 SHIFT_DIVIDEBYZERO: Final[int]
 SHIFT_INVALID: Final[int]
 SHIFT_OVERFLOW: Final[int]
 SHIFT_UNDERFLOW: Final[int]
 UFUNC_BUFSIZE_DEFAULT: Final[int]
-WRAP: Final[int]
-tracemalloc_domain: Final[int]
 
 little_endian: Final[bool]
 True_: Final[bool_]
@@ -3654,3 +3723,14 @@ class broadcast:
     def __next__(self) -> Tuple[Any, ...]: ...
     def __iter__(self: _T) -> _T: ...
     def reset(self) -> None: ...
+
+class busdaycalendar:
+    def __new__(
+        cls,
+        weekmask: ArrayLike = ...,
+        holidays: ArrayLike = ...,
+    ) -> busdaycalendar: ...
+    @property
+    def weekmask(self) -> NDArray[bool_]: ...
+    @property
+    def holidays(self) -> NDArray[datetime64]: ...

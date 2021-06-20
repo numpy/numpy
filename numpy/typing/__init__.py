@@ -23,15 +23,18 @@ Mypy plugin
 -----------
 
 A mypy_ plugin is distributed in `numpy.typing` for managing a number of
-platform-specific annotations. Its function can be split into to parts:
+platform-specific annotations. Its functionality can be split into three
+distinct parts:
 
 * Assigning the (platform-dependent) precisions of certain `~numpy.number` subclasses,
   including the likes of `~numpy.int_`, `~numpy.intp` and `~numpy.longlong`.
   See the documentation on :ref:`scalar types <arrays.scalars.built-in>` for a
-  comprehensive overview of the affected classes. without the plugin the precision
-  of all relevant classes will be inferred as `~typing.Any`.
+  comprehensive overview of the affected classes. Without the plugin the
+  precision of all relevant classes will be inferred as `~typing.Any`.
+* Assigning the (platform-dependent) precision of `~numpy.ctypeslib.c_intp`.
+  Without the plugin aforementioned type will default to `ctypes.c_int64`.
 * Removing all extended-precision `~numpy.number` subclasses that are unavailable
-  for the platform in question. Most notable this includes the likes of
+  for the platform in question. Most notably, this includes the likes of
   `~numpy.float128` and `~numpy.complex256`. Without the plugin *all*
   extended-precision types will, as far as mypy is concerned, be available
   to all platforms.
@@ -161,14 +164,22 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Any
 
 if TYPE_CHECKING:
-    import sys
-    if sys.version_info >= (3, 8):
-        from typing import final
+    # typing_extensions is always available when type-checking
+    from typing_extensions import Literal as L
+    _HAS_TYPING_EXTENSIONS: L[True]
+else:
+    try:
+        import typing_extensions
+    except ImportError:
+        _HAS_TYPING_EXTENSIONS = False
     else:
-        from typing_extensions import final
+        _HAS_TYPING_EXTENSIONS = True
+
+if TYPE_CHECKING:
+    from typing_extensions import final
 else:
     def final(f): return f
 
@@ -204,14 +215,14 @@ class NBitBase:
     .. code-block:: python
 
         >>> from __future__ import annotations
-        >>> from typing import TypeVar, Union, TYPE_CHECKING
+        >>> from typing import TypeVar, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
 
         >>> T1 = TypeVar("T1", bound=npt.NBitBase)
         >>> T2 = TypeVar("T2", bound=npt.NBitBase)
 
-        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[Union[T1, T2]]:
+        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[T1 | T2]:
         ...     return a + b
 
         >>> a = np.float16()
@@ -352,6 +363,7 @@ from ._array_like import (
 )
 from ._generic_alias import (
     NDArray as NDArray,
+    _DType,
     _GenericAlias,
 )
 
@@ -364,14 +376,14 @@ if TYPE_CHECKING:
         _GUFunc_Nin2_Nout1,
     )
 else:
-    _UFunc_Nin1_Nout1 = NotImplemented
-    _UFunc_Nin2_Nout1 = NotImplemented
-    _UFunc_Nin1_Nout2 = NotImplemented
-    _UFunc_Nin2_Nout2 = NotImplemented
-    _GUFunc_Nin2_Nout1 = NotImplemented
+    _UFunc_Nin1_Nout1 = Any
+    _UFunc_Nin2_Nout1 = Any
+    _UFunc_Nin1_Nout2 = Any
+    _UFunc_Nin2_Nout2 = Any
+    _GUFunc_Nin2_Nout1 = Any
 
 # Clean up the namespace
-del TYPE_CHECKING, final, List
+del TYPE_CHECKING, final, List, Any
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings

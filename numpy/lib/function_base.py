@@ -88,8 +88,11 @@ def rot90(m, k=1, axes=(0, 1)):
 
     Notes
     -----
-    rot90(m, k=1, axes=(1,0)) is the reverse of rot90(m, k=1, axes=(0,1))
-    rot90(m, k=1, axes=(1,0)) is equivalent to rot90(m, k=-1, axes=(0,1))
+    ``rot90(m, k=1, axes=(1,0))``  is the reverse of
+    ``rot90(m, k=1, axes=(0,1))``
+
+    ``rot90(m, k=1, axes=(1,0))`` is equivalent to
+    ``rot90(m, k=-1, axes=(0,1))``
 
     Examples
     --------

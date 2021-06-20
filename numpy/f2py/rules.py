@@ -943,19 +943,35 @@ if (#varname#_cb.capi==Py_None) {
                  '\tPyObject *#varname#_capi = Py_None;'],
         'callfortran':'#varname#,',
         'callfortranappend':'slen(#varname#),',
-        'pyobjfrom':{debugcapi: '\tfprintf(stderr,"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
+        'pyobjfrom':[
+            {debugcapi:
+             '\tfprintf(stderr,'
+             '"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
+            # The trailing null value for Fortran is blank.
+            {l_and(isintent_out, l_not(isintent_c)):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
+        ],
         'return': {isintent_out: ',#varname#'},
-        'need': ['len..'],  # 'STRINGFREE'],
+        'need': ['len..',
+                 {l_and(isintent_out, l_not(isintent_c)): 'STRINGPADN'}],
         '_check':isstring
     }, {  # Common
-        'frompyobj': """\
+        'frompyobj': [
+            """\
 \tslen(#varname#) = #length#;
-\tf2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth# `#varname#\' of #pyname# to C #ctype#\");
+\tf2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,"""
+"""#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth#"""
+"""`#varname#\' of #pyname# to C #ctype#\");
 \tif (f2py_success) {""",
+            # The trailing null value for Fortran is blank.
+            {l_not(isintent_c):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), '\\0', ' ');"},
+        ],
         'cleanupfrompyobj': """\
 \t\tSTRINGFREE(#varname#);
 \t}  /*if (f2py_success) of #varname#*/""",
-        'need': ['#ctype#_from_pyobj', 'len..', 'STRINGFREE'],
+        'need': ['#ctype#_from_pyobj', 'len..', 'STRINGFREE',
+                 {l_not(isintent_c): 'STRINGPADN'}],
         '_check':isstring,
         '_depend':''
     }, {  # Not hidden
@@ -963,12 +979,16 @@ if (#varname#_cb.capi==Py_None) {
         'keyformat': {isoptional: 'O'},
         'args_capi': {isrequired: ',&#varname#_capi'},
         'keys_capi': {isoptional: ',&#varname#_capi'},
-        'pyobjfrom': {isintent_inout: '''\
+        'pyobjfrom': [
+            {l_and(isintent_inout, l_not(isintent_c)):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
+            {isintent_inout: '''\
 \tf2py_success = try_pyarr_from_#ctype#(#varname#_capi, #varname#,
 \t                                      slen(#varname#));
-\tif (f2py_success) {'''},
+\tif (f2py_success) {'''}],
         'closepyobjfrom': {isintent_inout: '\t} /*if (f2py_success) of #varname# pyobjfrom*/'},
-        'need': {isintent_inout: 'try_pyarr_from_#ctype#'},
+        'need': {isintent_inout: 'try_pyarr_from_#ctype#',
+                 l_and(isintent_inout, l_not(isintent_c)): 'STRINGPADN'},
         '_check': l_and(isstring, isintent_nothide)
     }, {  # Hidden
         '_check': l_and(isstring, isintent_hide)

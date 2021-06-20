@@ -21,7 +21,7 @@ class TestReturnCharacter(util.F2PyTest):
             #assert_(_raises(ValueError, t, array([77,87])))
             #assert_(_raises(ValueError, t, array(77)))
         elif tname in ['ts', 'ss']:
-            assert_(t(23) == b'23        ', repr(t(23)))
+            assert_(t(23) == b'23', repr(t(23)))
             assert_(t('123456789abcdef') == b'123456789a')
         elif tname in ['t5', 's5']:
             assert_(t(23) == b'23', repr(t(23)))
