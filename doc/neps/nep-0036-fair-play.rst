@@ -6,7 +6,7 @@ NEP 36 — Fair play
 :Status: Accepted
 :Type: Informational
 :Created: 2019-10-24
-:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-June/081873.html
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-June/081890.html
 
 
 Abstract
