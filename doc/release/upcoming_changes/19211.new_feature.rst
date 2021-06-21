@@ -1,9 +1,9 @@
-`keepdims` optional argument added to `numpy.argmin`, `numpy.argmax`
+``keepdims`` optional argument added to `numpy.argmin`, `numpy.argmax`
 --------------------------------------------------------------------
 
-`keepdims` argument has been added to `numpy.argmin`, `numpy.argmax`.
+``keepdims`` argument has been added to `numpy.argmin`, `numpy.argmax`.
 By default, it is `False` and hence no behaviour change should be expected
-in existing codes using `numpy.argmin`, `numpy.argmax`. If set to `True`,
+in existing codes using `numpy.argmin`, `numpy.argmax`. If set to ``True``,
 the axes which are reduced are left in the result as dimensions with size one.
 In simple words, the resulting array will be having same dimensions
 as the input array.

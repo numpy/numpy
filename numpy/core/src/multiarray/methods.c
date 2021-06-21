@@ -290,7 +290,7 @@ array_argmax(PyArrayObject *self,
     if (npy_parse_arguments("argmax", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", &PyArray_OutputConverter, &out,
-            "|keepdims", &PyArray_BoolConverter, &keepdims,
+            "$keepdims", &PyArray_BoolConverter, &keepdims,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -314,15 +314,14 @@ array_argmin(PyArrayObject *self,
     PyArrayObject *out = NULL;
     npy_bool keepdims = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
-
     if (npy_parse_arguments("argmin", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", &PyArray_OutputConverter, &out,
-            "|keepdims", &PyArray_BoolConverter, &keepdims,
+            "$keepdims", &PyArray_BoolConverter, &keepdims,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
-    
+
     PyObject *ret = PyArray_ArgMinWithKeepdims(self, axis, out, keepdims);
 
     /* this matches the unpacking behavior of ufuncs */

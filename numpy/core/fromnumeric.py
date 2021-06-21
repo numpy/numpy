@@ -49,12 +49,14 @@ def _wrapit(obj, method, *args, **kwds):
 
 
 def _wrapfunc(obj, method, *args, **kwds):
+    passkwargs = {k: v for k, v in kwds.items()
+                    if v is not np._NoValue}
     bound = getattr(obj, method, None)
     if bound is None:
-        return _wrapit(obj, method, *args, **kwds)
+        return _wrapit(obj, method, *args, **passkwargs)
 
     try:
-        return bound(*args, **kwds)
+        return bound(*args, **passkwargs)
     except TypeError:
         # A TypeError occurs if the object does have such a method in its
         # class, but its signature is not identical to that of NumPy's. This
@@ -63,7 +65,7 @@ def _wrapfunc(obj, method, *args, **kwds):
         #
         # Call _wrapit from within the except clause to ensure a potential
         # exception has a traceback chain.
-        return _wrapit(obj, method, *args, **kwds)
+        return _wrapit(obj, method, *args, **passkwargs)
 
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
@@ -1114,12 +1116,12 @@ def argsort(a, axis=-1, kind=None, order=None):
     return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
 
 
-def _argmax_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out, keepdims)
+def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
+    return (a, out)
 
 
 @array_function_dispatch(_argmax_dispatcher)
-def argmax(a, axis=None, out=None, keepdims=False):
+def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     Returns the indices of the maximum values along an axis.
 
@@ -1134,9 +1136,9 @@ def argmax(a, axis=None, out=None, keepdims=False):
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
     keepdims : bool, optional
-            If this is set to True, the axes which are reduced are left
-            in the result as dimensions with size one. With this option,
-            the result will broadcast correctly against the array.
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the array.
 
     Returns
     -------
@@ -1204,18 +1206,16 @@ def argmax(a, axis=None, out=None, keepdims=False):
     >>> res.shape
     (2, 1, 4)
     """
-    if isinstance(a, np.matrix):
-        return _wrapfunc(a, 'argmax', axis=axis, out=out)
     return _wrapfunc(a, 'argmax', axis=axis, out=out, 
                         keepdims=keepdims)
 
 
-def _argmin_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out, keepdims)
+def _argmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
+    return (a, out)
 
 
 @array_function_dispatch(_argmin_dispatcher)
-def argmin(a, axis=None, out=None, keepdims=False):
+def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     Returns the indices of the minimum values along an axis.
 
@@ -1300,9 +1300,7 @@ def argmin(a, axis=None, out=None, keepdims=False):
     >>> res.shape
     (2, 1, 4)
     """
-    if isinstance(a, np.matrix):
-        return _wrapfunc(a, 'argmin', axis=axis, out=out)
-    return _wrapfunc(a, 'argmin', axis=axis, out=out, keepdims=keepdims)
+    return _wrapfunc(a, 'argmin', axis, out=out, keepdims=keepdims)
 
 
 def _searchsorted_dispatcher(a, v, side=None, sorter=None):
