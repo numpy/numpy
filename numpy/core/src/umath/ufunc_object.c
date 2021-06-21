@@ -1554,7 +1554,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 
         /*
          * Put the updated operand back.  If COPY_IF_OVERLAP made a temporary
-         * copy, the output will be copied by UPDATEIFCOPY even if op[i]
+         * copy, the output will be copied by WRITEBACKIFCOPY even if op[i]
          * was changed by prepare_ufunc_output.
          */
         op[i+nin] = op_tmp;
