@@ -63,7 +63,8 @@ Building the NumPy documentation and API reference requires the following:
 
    We currently use Sphinx_ for generating the API and reference
    documentation for NumPy. In addition, building the documentation requires
-   the Sphinx extension `plot_directive`, which is shipped with Matplotlib_. SciPy_
+   the Sphinx extension `plot_directive`, which is shipped with
+   :doc:`Matplotlib <matplotlib:index>`. :doc:`SciPy <scipy:index>`
    is installed since some parts of the documentation require SciPy functions.
 
 3) Submodules
@@ -81,8 +82,6 @@ Building the NumPy documentation and API reference requires the following:
    projects, they are available on PyPi_ as the numpydoc_ package.
 
 .. _Sphinx: http://www.sphinx-doc.org/
-.. _Matplotlib: https://matplotlib.org/
-.. _SciPy: https://www.scipy.org/
 .. _PyPi: https://pypi.org/
 .. _numpydoc: https://python.org/pypi/numpydoc
 
