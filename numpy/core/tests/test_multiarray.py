@@ -6734,7 +6734,7 @@ class TestMatmulOperator(MatmulCommon):
     def test_matmul_raises(self):
         assert_raises(TypeError, self.matmul, np.int8(5), np.int8(5))
         assert_raises(TypeError, self.matmul, np.void(b'abc'), np.void(b'abc'))
-        assert_raises(ValueError, self.matmul, np.arange(10), np.void(b'abc'))
+        assert_raises(TypeError, self.matmul, np.arange(10), np.void(b'abc'))
 
 def test_matmul_inplace():
     # It would be nice to support in-place matmul eventually, but for now

@@ -2102,6 +2102,10 @@ class TestSpecialMethods:
         do_test(lambda a: np.add(0, 0, out=a),       lambda a: (0, 0, a))
         do_test(lambda a: np.add(0, 0, out=(a,)),    lambda a: (0, 0, a))
 
+        # Also check the where mask handling:
+        do_test(lambda a: np.add(a, 0, where=False), lambda a: (a, 0))
+        do_test(lambda a: np.add(0, 0, a, where=False), lambda a: (0, 0, a))
+
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
 
@@ -2251,7 +2255,8 @@ class TestSpecialMethods:
         assert_equal(x, np.zeros(1))
         assert_equal(type(x), np.ndarray)
 
-    def test_prepare(self):
+    @pytest.mark.parametrize("use_where", [True, False])
+    def test_prepare(self, use_where):
 
         class with_prepare(np.ndarray):
             __array_priority__ = 10
@@ -2261,11 +2266,18 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array(1).view(type=with_prepare)
-        x = np.add(a, a)
+        if use_where:
+            # Currently raises, due to the array being replaced during prepare
+            with pytest.raises(ValueError):
+                x = np.add(a, a, where=np.array(True))
+            return
+        else:
+            x = np.add(a, a)
         assert_equal(x, np.array(2))
         assert_equal(type(x), with_prepare)
 
-    def test_prepare_out(self):
+    @pytest.mark.parametrize("use_where", [True, False])
+    def test_prepare_out(self, use_where):
 
         class with_prepare(np.ndarray):
             __array_priority__ = 10
@@ -2274,7 +2286,13 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array([1]).view(type=with_prepare)
-        x = np.add(a, a, a)
+        if use_where:
+            # Currently raises, due to the array being replaced during prepare
+            with pytest.raises(ValueError):
+                x = np.add(a, a, a, where=[True])
+            return
+        else:
+            x = np.add(a, a, a)
         # Returned array is new, because of the strange
         # __array_prepare__ above
         assert_(not np.shares_memory(x, a))
@@ -2292,6 +2310,7 @@ class TestSpecialMethods:
 
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum, a, a, where=False)
 
     def test_array_too_many_args(self):
 
