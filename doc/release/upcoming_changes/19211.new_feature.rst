@@ -1,5 +1,5 @@
 ``keepdims`` optional argument added to `numpy.argmin`, `numpy.argmax`
---------------------------------------------------------------------
+----------------------------------------------------------------------
 
 ``keepdims`` argument has been added to `numpy.argmin`, `numpy.argmax`.
 By default, it is `False` and hence no behaviour change should be expected
