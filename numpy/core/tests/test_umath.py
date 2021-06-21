@@ -516,6 +516,35 @@ class TestRemainder:
                     else:
                         assert_(b > rem >= 0, msg)
 
+    @pytest.mark.parametrize("input_dtype",
+            np.sctypes['int'])
+    def test_remainder_integer(self, input_dtype):
+        iinfo = np.iinfo(input_dtype)
+
+        # Create list with min, 25th percentile, 0, 75th percentile, max
+        lst = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
+        divisors = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
+        a = np.array(lst, dtype=input_dtype)
+
+        for divisor in divisors:
+            rem_a = np.remainder(a, divisor)
+            rem_lst = [i % divisor for i in lst]
+
+            msg = "Integer arrays remainder check"
+            assert all(rem_a == rem_lst), msg
+
+            for l in lst:
+                msg = "Integer scalar remainder check"
+                assert input_dtype(l) % divisor == l % divisor, msg
+
+        with np.errstate(divide='raise'):
+            with pytest.raises(FloatingPointError):
+                np.remainder(a, 0)
+            with pytest.raises(FloatingPointError):
+                np.remainder(a, -1)
+            with pytest.raises(FloatingPointError):
+                np.remainder(iinfo.min, -1)
+
     def test_float_remainder_exact(self):
         # test that float results are exact for small integers. This also
         # holds for the same integers scaled by powers of two.
