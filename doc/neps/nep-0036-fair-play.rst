@@ -35,7 +35,7 @@ appropriate course of action.
 
 In addition, packages on the Python Packaging Index are sometimes
 named such that users assume they are sanctioned or maintained by
-NumPy.  We wish to reduce the number of such incidences.
+NumPy.  We wish to reduce the number of such incidents.
 
 During a community call on `October 16th, 2019
 <https://github.com/numpy/archive/blob/main/status_meetings/status-2019-10-16.md>`__
