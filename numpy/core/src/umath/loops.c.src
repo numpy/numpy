@@ -849,7 +849,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        if (in2 == 0) {
+        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
             npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
         }
