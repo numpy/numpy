@@ -1300,7 +1300,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     >>> res.shape
     (2, 1, 4)
     """
-    return _wrapfunc(a, 'argmin', axis, out=out, keepdims=keepdims)
+    return _wrapfunc(a, 'argmin', axis=axis, out=out, keepdims=keepdims)
 
 
 def _searchsorted_dispatcher(a, v, side=None, sorter=None):

@@ -1323,7 +1323,7 @@ class _ArrayOrScalarCommon:
     def argmin(
         self,
         axis: _ShapeLike = ...,
-        out: None = ...,
+         out: None = ...,
     ) -> Any: ...
     @overload
     def argmin(

@@ -216,7 +216,6 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op,
     if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
         return NULL;
     }
-
     /*
      * We need to permute the array so that axis is placed at the end.
      * And all other dimensions are shifted left.
@@ -298,7 +297,7 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op,
     }
     else {
         if ((PyArray_NDIM(out) != out_ndim) ||
-             !PyArray_CompareLists(PyArray_DIMS(out), out_shape,
+                !PyArray_CompareLists(PyArray_DIMS(out), out_shape,
                                    out_ndim)) {
             PyErr_SetString(PyExc_ValueError,
                     "output array does not match result of np.argmin.");
