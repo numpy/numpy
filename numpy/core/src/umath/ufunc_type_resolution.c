@@ -390,7 +390,6 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                     operands, type_tup, out_dtypes);
         }
 
-        Py_INCREF(descr);
         out_dtypes[0] = ensure_dtype_nbo(descr);
         if (out_dtypes[0] == NULL) {
             return -1;
