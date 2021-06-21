@@ -4054,6 +4054,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         }
         Py_INCREF(dtype->singleton);
         otype = dtype->singleton;
+        Py_DECREF(dtype);
     }
     if (out_obj && !PyArray_OutputConverter(out_obj, &out)) {
         goto fail;
