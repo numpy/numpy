@@ -39,47 +39,46 @@ Prerequisites
 
 Building the NumPy documentation and API reference requires the following:
 
-1) NumPy
+NumPy
+^^^^^
 
-   Since large parts of the main documentation are obtained from NumPy via
-   ``import numpy`` and examining the docstrings, you will need to first
-   :ref:`build <building-from-source>`, and install it so that the correct version is imported.
-   NumPy has to be re-built and re-installed every time you fetch the latest version of the
-   repository, before generating the documentation. This ensures that the NumPy version and
-   the git repository version are in sync.
+Since large parts of the main documentation are obtained from NumPy via
+``import numpy`` and examining the docstrings, you will need to first
+:ref:`build <building-from-source>`, and install it so that the correct version is imported.
+NumPy has to be re-built and re-installed every time you fetch the latest version of the
+repository, before generating the documentation. This ensures that the NumPy version and
+the git repository version are in sync.
 
-   Note that you can e.g. install NumPy to a temporary location and set
-   the PYTHONPATH environment variable appropriately.
-   Alternatively, if using Python virtual environments (via e.g. ``conda``,
-   ``virtualenv`` or the ``venv`` module), installing NumPy into a
-   new virtual environment is recommended.
+Note that you can e.g. install NumPy to a temporary location and set
+the PYTHONPATH environment variable appropriately.
+Alternatively, if using Python virtual environments (via e.g. ``conda``,
+``virtualenv`` or the ``venv`` module), installing NumPy into a
+new virtual environment is recommended.
 
-2) Dependencies
+Dependencies
+^^^^^^^^^^^^
 
-   All of the necessary dependencies for building the NumPy docs can be installed
-   with::
+All of the necessary dependencies for building the NumPy docs can be installed
+with::
 
-       pip install -r doc_requirements.txt
+    pip install -r doc_requirements.txt
 
-   We currently use Sphinx_ for generating the API and reference
-   documentation for NumPy. In addition, building the documentation requires
-   the Sphinx extension `plot_directive`, which is shipped with
-   :doc:`Matplotlib <matplotlib:index>`. :doc:`SciPy <scipy:index>`
-   is installed since some parts of the documentation require SciPy functions.
+We currently use Sphinx_ for generating the API and reference
+documentation for NumPy. In addition, building the documentation requires
+the Sphinx extension `plot_directive`, which is shipped with
+:doc:`Matplotlib <matplotlib:index>`. :doc:`SciPy <scipy:index>`
+is installed since some parts of the documentation require SciPy functions.
 
-3) Submodules
+Submodules
+^^^^^^^^^^
 
-   If you obtained NumPy via git, also get the git submodules that contain
-   additional parts required for building the documentation::
+If you obtained NumPy via git, also get the git submodules that contain
+additional parts required for building the documentation::
 
-       git submodule update --init
+    git submodule update --init
 
-   NumPy's documentation uses several custom extensions to Sphinx.  These
-   are shipped in the ``sphinxext/`` directory (as git submodules), and are automatically
-   enabled when building NumPy's documentation.
-
-   If you want to make use of these extensions in third-party
-   projects, they are available on PyPi_ as the numpydoc_ package.
+If you want to make use of these extensions in third-party
+projects, they are available on PyPi_ as the numpydoc_ package.
 
 .. _Sphinx: http://www.sphinx-doc.org/
 .. _PyPi: https://pypi.org/
