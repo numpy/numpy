@@ -130,12 +130,16 @@ def argmax(
     a: ArrayLike,
     axis: None = ...,
     out: Optional[ndarray] = ...,
+    *,
+    keepdims: Literal[False] = ...,
 ) -> intp: ...
 @overload
 def argmax(
     a: ArrayLike,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
+    *,
+    keepdims: bool = ...,
 ) -> Any: ...
 
 @overload
@@ -143,12 +147,16 @@ def argmin(
     a: ArrayLike,
     axis: None = ...,
     out: Optional[ndarray] = ...,
+    *,
+    keepdims: Literal[False] = ...,
 ) -> intp: ...
 @overload
 def argmin(
     a: ArrayLike,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
+    *,
+    keepdims: bool = ...,
 ) -> Any: ...
 
 @overload
