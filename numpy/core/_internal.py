@@ -324,10 +324,10 @@ class _ctypes:
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
         the basetype is the C-integer corresponding to ``dtype('p')`` on this
-        platform. This base-type could be `ctypes.c_int`, `ctypes.c_long`, or
-        `ctypes.c_longlong` depending on the platform.
-        The c_intp type is defined accordingly in `numpy.ctypeslib`.
-        The ctypes array contains the shape of the underlying array.
+        platform (see `~numpy.ctypeslib.c_intp`). This base-type could be
+        `ctypes.c_int`, `ctypes.c_long`, or `ctypes.c_longlong` depending on
+        the platform. The ctypes array contains the shape of
+        the underlying array.
         """
         return self.shape_as(_getintp_ctype())
 
@@ -907,4 +907,3 @@ class recursive:
         self.func = func
     def __call__(self, *args, **kwargs):
         return self.func(self, *args, **kwargs)
-
