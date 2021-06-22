@@ -3159,9 +3159,6 @@ static void
 
 /**end repeat**/
 
-/* -------------------------------------------------------------------------- */
-                 /* qr (modes - reduced) */
-
 typedef struct gqr_params_struct
 {
     fortran_int M;
@@ -3174,35 +3171,6 @@ typedef struct gqr_params_struct
     void *WORK;
     fortran_int LWORK;
 } GQR_PARAMS_t;
-
-
-static inline void
-dump_gqr_params(const char *name,
-                GQR_PARAMS_t *params)
-{
-    TRACE_TXT("\n%s:\n"\
-
-              "%14s: %18p\n"\
-              "%14s: %18p\n"\
-              "%14s: %18p\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n"\
-              "%14s: %18d\n",
-
-              name,
-
-              "Q", params->Q,
-              "TAU", params->TAU,
-              "WORK", params->WORK,
-
-              "M", (int)params->M,
-              "MC", (int)params->MC,
-              "MN", (int)params->MN,
-              "LDA", (int)params->LDA,
-              "LWORK", (int)params->LWORK);
-}
 
 /**begin repeat
    #lapack_func=sorgqr,dorgqr,cungqr,zungqr#
@@ -3228,19 +3196,21 @@ call_@lapack_func@(GQR_PARAMS_t *params)
    #ftyp=fortran_real,fortran_doublereal#
  */
 static inline int
-init_@lapack_func@(GQR_PARAMS_t *params,
-                   fortran_int m,
-                   fortran_int n)
+init_@lapack_func@_common(GQR_PARAMS_t *params,
+                          fortran_int m,
+                          fortran_int n,
+                          fortran_int mc)
 {
     npy_uint8 *mem_buff = NULL;
     npy_uint8 *mem_buff2 = NULL;
     npy_uint8 *a, *q, *tau, *work;
     fortran_int min_m_n = fortran_int_min(m, n);
+    size_t safe_mc = mc;
     size_t safe_min_m_n = min_m_n;
     size_t safe_m = m;
     size_t safe_n = n;
     size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
-    size_t q_size = safe_m * safe_min_m_n * sizeof(@ftyp@);
+    size_t q_size = safe_m * safe_mc * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
 
     fortran_int work_count;
@@ -3258,7 +3228,7 @@ init_@lapack_func@(GQR_PARAMS_t *params,
 
 
     params->M = m;
-    params->MC = min_m_n;
+    params->MC = mc;
     params->MN = min_m_n;
     params->A = a;
     params->Q = q;
@@ -3301,6 +3271,53 @@ init_@lapack_func@(GQR_PARAMS_t *params,
     memset(params, 0, sizeof(*params));
 
     return 0;
+}
+
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+                 /* qr (modes - reduced) */
+
+
+static inline void
+dump_gqr_params(const char *name,
+                GQR_PARAMS_t *params)
+{
+    TRACE_TXT("\n%s:\n"\
+
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n",
+
+              name,
+
+              "Q", params->Q,
+              "TAU", params->TAU,
+              "WORK", params->WORK,
+
+              "M", (int)params->M,
+              "MC", (int)params->MC,
+              "MN", (int)params->MN,
+              "LDA", (int)params->LDA,
+              "LWORK", (int)params->LWORK);
+}
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE#
+   #lapack_func=sorgqr,dorgqr#
+   #ftyp=fortran_real,fortran_doublereal#
+ */
+static inline int
+init_@lapack_func@(GQR_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n)
+{
+    return init_@lapack_func@_common(params, m, n, fortran_int_min(m, n));
 }
 
 /**end repeat**/
@@ -3475,79 +3492,10 @@ static void
  */
 static inline int
 init_@lapack_func@_complete(GQR_PARAMS_t *params,
-                   fortran_int m,
-                   fortran_int n)
+                            fortran_int m,
+                            fortran_int n)
 {
-    npy_uint8 *mem_buff = NULL;
-    npy_uint8 *mem_buff2 = NULL;
-    npy_uint8 *a, *q, *tau, *work;
-    fortran_int min_m_n = fortran_int_min(m, n);
-    size_t safe_min_m_n = min_m_n;
-    size_t safe_m = m;
-    size_t safe_n = n;
-
-    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
-    size_t q_size = safe_m * safe_m * sizeof(@ftyp@);
-    size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
-
-    fortran_int work_count;
-    size_t work_size;
-    fortran_int lda = fortran_int_max(1, m);
-
-    mem_buff = malloc(q_size + tau_size + a_size);
-
-    if (!mem_buff)
-        goto error;
-
-    q = mem_buff;
-    tau = q + q_size;
-    a = tau + tau_size;
-
-
-    params->M = m;
-    params->MC = m;
-    params->MN = min_m_n;
-    params->A = a;
-    params->Q = q;
-    params->TAU = tau;
-    params->LDA = lda;
-
-    {
-        /* compute optimal work size */
-        @ftyp@ work_size_query;
-
-        params->WORK = &work_size_query;
-        params->LWORK = -1;
-
-        if (call_@lapack_func@(params) != 0)
-            goto error;
-
-        work_count = (fortran_int) *(@ftyp@*) params->WORK;
-
-    }
-
-    params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
-
-    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
-
-    mem_buff2 = malloc(work_size);
-    if (!mem_buff2)
-        goto error;
-
-    work = mem_buff2;
-    memset(work, 0, work_size);
-
-    params->WORK = work;
-
-    return 1;
- error:
-    TRACE_TXT("%s failed init\n", __FUNCTION__);
-    free(mem_buff);
-    free(mem_buff2);
-    memset(params, 0, sizeof(*params));
-
-    return 0;
+    return init_@lapack_func@_common(params, m, n, m);
 }
 
 /**end repeat**/
