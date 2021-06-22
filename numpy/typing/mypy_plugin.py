@@ -12,9 +12,9 @@ Its functionality can be split into three distinct parts:
   likes of `~numpy.float128` and `~numpy.complex256`. Without the plugin *all*
   extended-precision types will, as far as mypy is concerned, be available
   to all platforms.
-* Assigning the (platform-dependent) precision of `~numpy.ctypeslib.c_intp`.
-  Without the plugin aforementioned type will default to `ctypes.c_int64`.
-
+* .. versionadded:: 1.22
+    Assigning the (platform-dependent) precision of `~numpy.ctypeslib.c_intp`.
+    Without the plugin aforementioned type will default to `ctypes.c_int64`.
 
 Examples
 --------

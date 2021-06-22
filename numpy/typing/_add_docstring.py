@@ -67,6 +67,8 @@ add_newdoc('ArrayLike', 'typing.Union[...]',
     * (Nested) sequences.
     * Objects implementing the `~class.__array__` protocol.
 
+    .. versionadded:: 1.20
+
     See Also
     --------
     :term:`array_like`:
@@ -94,6 +96,8 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
     * Character codes or the names of :class:`type` objects.
     * Objects with the ``.dtype`` attribute.
 
+    .. versionadded:: 1.20
+
     See Also
     --------
     :ref:`Specifying and constructing data types <arrays.dtypes.constructing>`
@@ -118,6 +122,8 @@ add_newdoc('NDArray', repr(NDArray),
 
     Can be used during runtime for typing arrays with a given dtype
     and unspecified shape.
+
+    .. versionadded:: 1.21
 
     Examples
     --------

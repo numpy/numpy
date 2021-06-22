@@ -3,6 +3,8 @@
 Typing (:mod:`numpy.typing`)
 ============================
 
+.. versionadded:: 1.20
+
 .. warning::
 
   Some of the types in this module rely on features only present in
@@ -21,6 +23,8 @@ the two below:
 
 Mypy plugin
 -----------
+
+.. versionadded:: 1.21
 
 .. automodule:: numpy.typing.mypy_plugin
 
@@ -179,6 +183,8 @@ class NBitBase:
     represents the base of a hierarchical set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
+
+    .. versionadded:: 1.20
 
     Examples
     --------
