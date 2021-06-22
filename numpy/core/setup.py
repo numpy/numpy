@@ -701,9 +701,11 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
                              join('src', 'common', 'mem_overlap.c'),
-                             join('src', 'common', 'npy_argparse.c')],
+                             join('src', 'common', 'npy_argparse.c'),
+                             join('src', 'common', 'npy_hashtable.c')],
                     depends=[join('src', 'common', 'mem_overlap.h'),
                              join('src', 'common', 'npy_argparse.h'),
+                             join('src', 'common', 'npy_hashtable.h'),
                              join('src', 'common', 'npy_extint128.h')],
                     libraries=['npymath'])
 
