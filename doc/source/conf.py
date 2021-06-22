@@ -435,6 +435,11 @@ def linkcode_resolve(domain, info):
         if not fn:
             return None
 
+        # Ignore re-exports as their source files are not within the numpy repo
+        module = inspect.getmodule(obj)
+        if module is not None and not module.__name__.startswith("numpy"):
+            return None
+
         try:
             source, lineno = inspect.getsourcelines(obj)
         except Exception:
