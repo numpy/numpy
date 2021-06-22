@@ -1,4 +1,34 @@
-"""A module containing `numpy`-specific plugins for mypy."""
+"""A mypy_ plugin for managing a number of platform-specific annotations.
+Its functionality can be split into three distinct parts:
+
+* Assigning the (platform-dependent) precisions of certain `~numpy.number`
+  subclasses, including the likes of `~numpy.int_`, `~numpy.intp` and
+  `~numpy.longlong`. See the documentation on
+  :ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
+  of the affected classes. Without the plugin the precision of all relevant
+  classes will be inferred as `~typing.Any`.
+* Removing all extended-precision `~numpy.number` subclasses that are
+  unavailable for the platform in question. Most notably this includes the
+  likes of `~numpy.float128` and `~numpy.complex256`. Without the plugin *all*
+  extended-precision types will, as far as mypy is concerned, be available
+  to all platforms.
+* Assigning the (platform-dependent) precision of `~numpy.ctypeslib.c_intp`.
+  Without the plugin aforementioned type will default to `ctypes.c_int64`.
+
+
+Examples
+--------
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+
+"""
 
 from __future__ import annotations
 
