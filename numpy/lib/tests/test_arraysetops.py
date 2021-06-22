@@ -610,6 +610,10 @@ class TestUnique:
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
+        # test for ticket ____
+        all_nans = np.array([np.nan] * 10)
+        assert_equal(np.unique(all_nans), [np.nan])
+
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
         assert_raises(TypeError, self._run_axis_tests,
