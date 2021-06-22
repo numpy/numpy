@@ -340,7 +340,8 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         else:
             aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
         if aux_firstnan > 0:
-            mask[1:aux_firstnan] = (aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
+            mask[1:aux_firstnan] = (
+                aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
         mask[aux_firstnan] = True
         mask[aux_firstnan + 1:] = False
     else:
