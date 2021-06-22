@@ -4413,6 +4413,7 @@ class TestArgmax:
         a[1] = 30
         assert_equal(a.argmax(), 1)
 
+
 class TestArgmin:
 
     nan_arr = [
@@ -4567,6 +4568,7 @@ class TestArgmin:
         assert_equal(a.argmin(), 3)
         a[1] = 10
         assert_equal(a.argmin(), 1)
+
 
 class TestMinMax:
 
