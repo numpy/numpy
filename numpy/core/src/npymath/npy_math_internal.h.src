@@ -423,16 +423,6 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 NPY_INPLACE @type@
 npy_@kind@@c@(@type@ x, @type@ y)
 {
-    int are_inputs_inf = (npy_isinf(x) && npy_isinf(y));
-    /* force set invalid flag, doesnt raise by default on gcc < 8 */
-    if (npy_isnan(x) || npy_isnan(y)) {
-        npy_set_floatstatus_invalid();
-    }
-    if (are_inputs_inf || !y) {
-        if (!npy_isnan(x)) {
-            npy_set_floatstatus_invalid();
-        }
-    }
     return (@type@) npy_@kind@((double)x, (double) y);
 }
 #endif
@@ -518,16 +508,7 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 NPY_INPLACE @type@
 npy_@kind@@c@(@type@ x, @type@ y)
 {
-    int are_inputs_inf = (npy_isinf(x) && npy_isinf(y));
-    /* force set invalid flag, doesnt raise by default on gcc < 8 */
-    if (npy_isnan(x) || npy_isnan(y)) {
-        npy_set_floatstatus_invalid();
-    }
-    if (are_inputs_inf || !y) {
-        if (!npy_isnan(x)) {
-            npy_set_floatstatus_invalid();
-        }
-    }
+
     return @kind@@c@(x, y);
 }
 #endif
@@ -716,9 +697,6 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     @type@ div, mod, floordiv;
 
     /* force set invalid flag, doesnt raise by default on gcc < 8 */
-    if (npy_isnan(a) || npy_isnan(b)) {
-        npy_set_floatstatus_invalid();
-    }
     mod = npy_fmod@c@(a, b);
     if (NPY_UNLIKELY(!b)) {
         div = a / b;
