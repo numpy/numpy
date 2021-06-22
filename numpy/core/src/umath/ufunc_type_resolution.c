@@ -94,9 +94,6 @@ raise_no_loop_found_error(
         PyUFuncObject *ufunc, PyArray_Descr **dtypes)
 {
     static PyObject *exc_type = NULL;
-    PyObject *exc_value;
-    PyObject *dtypes_tup;
-    npy_intp i;
 
     npy_cache_import(
         "numpy.core._exceptions", "_UFuncNoLoopError",
@@ -105,22 +102,13 @@ raise_no_loop_found_error(
         return -1;
     }
 
-    /* convert dtypes to a tuple */
-    dtypes_tup = PyTuple_New(ufunc->nargs);
+    PyObject *dtypes_tup = PyArray_TupleFromItems(
+            ufunc->nargs, (PyObject **)dtypes, 1);
     if (dtypes_tup == NULL) {
         return -1;
     }
-    for (i = 0; i < ufunc->nargs; ++i) {
-        PyObject *tmp = Py_None;
-        if (dtypes[i] != NULL) {
-            tmp = (PyObject *)dtypes[i];
-        }
-        Py_INCREF(tmp);
-        PyTuple_SET_ITEM(dtypes_tup, i, tmp);
-    }
-
     /* produce an error object */
-    exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
+    PyObject *exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
     Py_DECREF(dtypes_tup);
     if (exc_value == NULL) {
         return -1;

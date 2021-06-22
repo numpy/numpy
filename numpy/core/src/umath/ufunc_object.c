@@ -4686,14 +4686,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
 
     /* Fetch input arguments. */
-    full_args.in = PyTuple_New(ufunc->nin);
+    full_args.in = PyArray_TupleFromItems(ufunc->nin, args, 0);
     if (full_args.in == NULL) {
         return NULL;
-    }
-    for (int i = 0; i < ufunc->nin; i++) {
-        PyObject *tmp = args[i];
-        Py_INCREF(tmp);
-        PyTuple_SET_ITEM(full_args.in, i, tmp);
     }
 
     /*

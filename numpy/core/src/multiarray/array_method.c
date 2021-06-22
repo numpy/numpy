@@ -36,6 +36,7 @@
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
+#include "common.h"
 
 
 /*
@@ -471,13 +472,10 @@ static PyObject *
 boundarraymethod_repr(PyBoundArrayMethodObject *self)
 {
     int nargs = self->method->nin + self->method->nout;
-    PyObject *dtypes = PyTuple_New(nargs);
+    PyObject *dtypes = PyArray_TupleFromItems(
+            nargs, (PyObject **)self->dtypes, 0);
     if (dtypes == NULL) {
         return NULL;
-    }
-    for (int i = 0; i < nargs; i++) {
-        Py_INCREF(self->dtypes[i]);
-        PyTuple_SET_ITEM(dtypes, i, (PyObject *)self->dtypes[i]);
     }
     return PyUnicode_FromFormat(
             "<np._BoundArrayMethod `%s` for dtypes %S>",
