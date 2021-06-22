@@ -610,7 +610,7 @@ class TestUnique:
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
-        # test for ticket ____
+        # test for gh-19300
         all_nans = np.array([np.nan] * 10)
         assert_equal(np.unique(all_nans), [np.nan])
 
