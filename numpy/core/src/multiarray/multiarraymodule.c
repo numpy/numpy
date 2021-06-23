@@ -4606,16 +4606,9 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
@@ -4624,27 +4617,15 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
-    npy_ma_str_array = PyUnicode_InternFromString("__array__");
-    npy_ma_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
-    npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
-    npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__");
-    npy_ma_str_ufunc = PyUnicode_InternFromString("__array_ufunc__");
-    npy_ma_str_implementation = PyUnicode_InternFromString("_implementation");
-    npy_ma_str_order = PyUnicode_InternFromString("order");
-    npy_ma_str_copy = PyUnicode_InternFromString("copy");
-    npy_ma_str_dtype = PyUnicode_InternFromString("dtype");
-    npy_ma_str_ndmin = PyUnicode_InternFromString("ndmin");
-    npy_ma_str_axis1 = PyUnicode_InternFromString("axis1");
-    npy_ma_str_axis2 = PyUnicode_InternFromString("axis2");
-    npy_ma_str_like = PyUnicode_InternFromString("like");
-    npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
+    if (!(npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__"))) return -1;
+    if (!(npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__"))) return -1;
+    if (!(npy_ma_str_implementation = PyUnicode_InternFromString("_implementation"))) return -1;
+    if (!(npy_ma_str_axis1 = PyUnicode_InternFromString("axis1"))) return -1;
+    if (!(npy_ma_str_axis2 = PyUnicode_InternFromString("axis2"))) return -1;
+    if (!(npy_ma_str_like = PyUnicode_InternFromString("like"))) return -1;
+    if (!(npy_ma_str_numpy = PyUnicode_InternFromString("numpy"))) return -1;
 
-    return npy_ma_str_array && npy_ma_str_array_prepare &&
-           npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
-           npy_ma_str_ufunc && npy_ma_str_implementation &&
-           npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
-           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2 &&
-           npy_ma_str_like && npy_ma_str_numpy;
+    return 0;
 }
 
 static struct PyModuleDef moduledef = {
@@ -4876,7 +4857,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    if (!intern_strings()) {
+    if (intern_strings() < 0) {
         goto err;
     }
 
