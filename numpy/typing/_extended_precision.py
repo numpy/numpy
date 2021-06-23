@@ -4,7 +4,7 @@ The subclasses are defined here (instead of ``__init__.pyi``) such
 that they can be imported conditionally via the numpy's mypy plugin.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from . import (
@@ -28,15 +28,15 @@ if TYPE_CHECKING:
     complex256 = np.complexfloating[_128Bit, _128Bit]
     complex512 = np.complexfloating[_256Bit, _256Bit]
 else:
-    uint128 = NotImplemented
-    uint256 = NotImplemented
-    int128 = NotImplemented
-    int256 = NotImplemented
-    float80 = NotImplemented
-    float96 = NotImplemented
-    float128 = NotImplemented
-    float256 = NotImplemented
-    complex160 = NotImplemented
-    complex192 = NotImplemented
-    complex256 = NotImplemented
-    complex512 = NotImplemented
+    uint128 = Any
+    uint256 = Any
+    int128 = Any
+    int256 = Any
+    float80 = Any
+    float96 = Any
+    float128 = Any
+    float256 = Any
+    complex160 = Any
+    complex192 = Any
+    complex256 = Any
+    complex512 = Any

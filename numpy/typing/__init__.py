@@ -161,7 +161,7 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Any
 
 if TYPE_CHECKING:
     import sys
@@ -364,14 +364,14 @@ if TYPE_CHECKING:
         _GUFunc_Nin2_Nout1,
     )
 else:
-    _UFunc_Nin1_Nout1 = NotImplemented
-    _UFunc_Nin2_Nout1 = NotImplemented
-    _UFunc_Nin1_Nout2 = NotImplemented
-    _UFunc_Nin2_Nout2 = NotImplemented
-    _GUFunc_Nin2_Nout1 = NotImplemented
+    _UFunc_Nin1_Nout1 = Any
+    _UFunc_Nin2_Nout1 = Any
+    _UFunc_Nin1_Nout2 = Any
+    _UFunc_Nin2_Nout2 = Any
+    _GUFunc_Nin2_Nout1 = Any
 
 # Clean up the namespace
-del TYPE_CHECKING, final, List
+del TYPE_CHECKING, final, List, Any
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings
