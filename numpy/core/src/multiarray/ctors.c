@@ -3983,8 +3983,8 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
 NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap)
 {
-    PyObject *wrapped = PyObject_CallMethod((PyObject *)arr_of_subclass,
-                                        "__array_wrap__", "O", towrap);
+    PyObject *wrapped = PyObject_CallMethodObjArgs((PyObject *)arr_of_subclass,
+            npy_ma_str_array_wrap, (PyObject *)towrap, NULL);
     if (wrapped == NULL) {
         return NULL;
     }
