@@ -508,7 +508,6 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 NPY_INPLACE @type@
 npy_@kind@@c@(@type@ x, @type@ y)
 {
-
     return @kind@@c@(x, y);
 }
 #endif
