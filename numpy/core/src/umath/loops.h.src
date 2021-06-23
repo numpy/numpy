@@ -420,9 +420,6 @@ C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 NPY_NO_EXPORT void
 C@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-C@TYPE@_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
 /**begin repeat1
  * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
  * #OP = CGT, CGE, CLT, CLE, CEQ, CNE#

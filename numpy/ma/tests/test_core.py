@@ -1317,7 +1317,7 @@ class TestMaskedArrayArithmetic:
                               dtype=float_dtype)
             assert_equal(zm.min(), float_dtype(-np.inf-1j))
             assert_equal(zm.max(), float_dtype(np.inf+2j))
-            
+
             cmax = np.inf - 1j * np.finfo(np.float64).max
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
@@ -2853,6 +2853,8 @@ class TestMaskedArrayInPlaceArithmetics:
 
     def test_inplace_floor_division_scalar_type(self):
         # Test of inplace division
+        # Check for TypeError in case of unsupported types
+        unsupported = {np.dtype(t).type for t in np.typecodes["Complex"]}
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
@@ -2860,15 +2862,21 @@ class TestMaskedArrayInPlaceArithmetics:
                 x = arange(10, dtype=t) * t(2)
                 xm = arange(10, dtype=t) * t(2)
                 xm[2] = masked
-                x //= t(2)
-                xm //= t(2)
-                assert_equal(x, y)
-                assert_equal(xm, y)
+                try:
+                    x //= t(2)
+                    xm //= t(2)
+                    assert_equal(x, y)
+                    assert_equal(xm, y)
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                    assert_equal(len(w), 0, "Failed on type=%s." % t)
+                except TypeError:
+                    msg = f"Supported type {t} throwing TypeError"
+                    assert t in unsupported, msg
 
     def test_inplace_floor_division_array_type(self):
         # Test of inplace division
+        # Check for TypeError in case of unsupported types
+        unsupported = {np.dtype(t).type for t in np.typecodes["Complex"]}
         for t in self.othertypes:
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings("always")
@@ -2876,16 +2884,20 @@ class TestMaskedArrayInPlaceArithmetics:
                 m = xm.mask
                 a = arange(10, dtype=t)
                 a[-1] = masked
-                x //= a
-                xm //= a
-                assert_equal(x, y // a)
-                assert_equal(xm, y // a)
-                assert_equal(
-                    xm.mask,
-                    mask_or(mask_or(m, a.mask), (a == t(0)))
-                )
+                try:
+                    x //= a
+                    xm //= a
+                    assert_equal(x, y // a)
+                    assert_equal(xm, y // a)
+                    assert_equal(
+                        xm.mask,
+                        mask_or(mask_or(m, a.mask), (a == t(0)))
+                    )
 
-                assert_equal(len(w), 0, f'Failed on type={t}.')
+                    assert_equal(len(w), 0, f'Failed on type={t}.')
+                except TypeError:
+                    msg = f"Supported type {t} throwing TypeError"
+                    assert t in unsupported, msg
 
     def test_inplace_division_scalar_type(self):
         # Test of inplace division
