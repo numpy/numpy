@@ -44,7 +44,7 @@ NumPy
 
 Since large parts of the main documentation are obtained from NumPy via
 ``import numpy`` and examining the docstrings, you will need to first
-:ref:`build <building-from-source>`, and install it so that the correct version is imported.
+:ref:`build <building-from-source>` and install it so that the correct version is imported.
 NumPy has to be re-built and re-installed every time you fetch the latest version of the
 repository, before generating the documentation. This ensures that the NumPy version and
 the git repository version are in sync.
