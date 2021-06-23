@@ -66,7 +66,8 @@ with::
 We currently use Sphinx_ for generating the API and reference
 documentation for NumPy. In addition, building the documentation requires
 the Sphinx extension `plot_directive`, which is shipped with
-:doc:`Matplotlib <matplotlib:index>`. :doc:`SciPy <scipy:index>`
+:doc:`Matplotlib <matplotlib:index>`. We also use numpydoc_ to render docstrings in
+the generated API documentation. :doc:`SciPy <scipy:index>`
 is installed since some parts of the documentation require SciPy functions.
 
 Submodules
@@ -77,12 +78,8 @@ additional parts required for building the documentation::
 
     git submodule update --init
 
-If you want to make use of these extensions in third-party
-projects, they are available on PyPi_ as the numpydoc_ package.
-
 .. _Sphinx: http://www.sphinx-doc.org/
-.. _PyPi: https://pypi.org/
-.. _numpydoc: https://python.org/pypi/numpydoc
+.. _numpydoc: https://numpydoc.readthedocs.io/en/latest/index.html
 
 Instructions
 ------------
