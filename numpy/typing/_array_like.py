@@ -77,7 +77,7 @@ _ArrayLike = Union[
 ArrayLike = Union[
     _RecursiveSequence,
     _ArrayLike[
-        "dtype[Any]",
+        dtype,
         Union[bool, int, float, complex, str, bytes]
     ],
 ]
