@@ -1747,7 +1747,8 @@ class TestQR:
         I_mat = np.identity(q1.shape[-1])
         stack_I_mat = np.broadcast_to(I_mat, 
                         q1.shape[:-2] + (q1.shape[-1],)*2)
-        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1), stack_I_mat)
+        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1), 
+                            stack_I_mat)
         assert_almost_equal(np.triu(r1[..., :, :]), r1)
 
         # mode == 'r'
@@ -1756,12 +1757,12 @@ class TestQR:
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-    @pytest.mark.parametrize("size",  [
+    @pytest.mark.parametrize("size", [
         (3, 4), (4, 3), (4, 4), 
         (3, 0), (0, 3)])
-    @pytest.mark.parametrize("outer_size",  [
+    @pytest.mark.parametrize("outer_size", [
         (2, 2), (2,), (2, 3, 4)])
-    @pytest.mark.parametrize("dt",  [
+    @pytest.mark.parametrize("dt", [
         np.single, np.double, 
         np.csingle, np.cdouble])
     def test_stacked_inputs(self, outer_size, size, dt):
