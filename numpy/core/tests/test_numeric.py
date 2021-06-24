@@ -1724,6 +1724,22 @@ class TestArrayComparisons:
         assert_(not res)
         assert_(type(res) is bool)
 
+    @pytest.mark.parametrize("dtype", ["V0", "V3", "V10"])
+    def test_compare_unstructured_voids(self, dtype):
+        zeros = np.zeros(3, dtype=dtype)
+
+        assert_array_equal(zeros, zeros)
+        assert not (zeros != zeros).any()
+
+        if dtype == "V0":
+            # Can't test != of actually different data
+            return
+
+        nonzeros = np.array([b"1", b"2", b"3"], dtype=dtype)
+
+        assert not (zeros == nonzeros).any()
+        assert (zeros != nonzeros).all()
+
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
