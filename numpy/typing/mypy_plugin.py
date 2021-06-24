@@ -13,7 +13,7 @@ Its functionality can be split into three distinct parts:
   extended-precision types will, as far as mypy is concerned, be available
   to all platforms.
 * Assigning the (platform-dependent) precision of `~numpy.ctypeslib.c_intp`.
-  Without the plugin aforementioned type will default to `ctypes.c_int64`.
+  Without the plugin the type will default to `ctypes.c_int64`.
 
   .. versionadded:: 1.22
 
