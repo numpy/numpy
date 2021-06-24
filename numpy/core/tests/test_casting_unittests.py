@@ -646,3 +646,9 @@ class TestCasting:
         with pytest.raises(TypeError,
                     match="casting from object to the parametric DType"):
             cast._resolve_descriptors((np.dtype("O"), None))
+
+    def test_void_to_structured_with_subarray(self):
+        # test case corresponding to gh-19325
+        dtype = np.dtype([("foo", "<f4", (3, 2))])
+        assert np.can_cast("V4", dtype, casting="unsafe")
+        assert not np.can_cast("V4", dtype, casting="no")
