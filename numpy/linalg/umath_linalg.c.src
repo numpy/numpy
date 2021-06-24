@@ -2983,8 +2983,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
     mem_buff2 = malloc(work_size);
@@ -2992,7 +2991,6 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
         goto error;
 
     work = mem_buff2;
-    memset(work, 0, work_size);
 
     params->WORK = work;
 
@@ -3029,7 +3027,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
 
-    fortran_int work_count_r, work_count_i, work_count;
+    fortran_int work_count;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
@@ -3060,11 +3058,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count_r = (fortran_int) ((@ftyp@*)params->WORK)->r;
-        work_count_i = (fortran_int) ((@ftyp@*)params->WORK)->i;
-
-        work_count = (fortran_int) sqrt((fortran_doublereal) work_count_r*work_count_r + 
-                                        (fortran_doublereal) work_count_i*work_count_i);
+        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
 
     }
 
@@ -3078,7 +3072,6 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
         goto error;
 
     work = mem_buff2;
-    memset(work, 0, work_size);
 
     params->WORK = work;
 
@@ -3146,7 +3139,6 @@ static void
                 delinearize_@TYPE@_matrix(args[1], params.TAU, &tau_out);
             } else {
                 error_occurred = 1;
-                nan_@TYPE@_matrix(args[0], &a_in);
                 nan_@TYPE@_matrix(args[1], &tau_out);
             }
         END_OUTER_LOOP
@@ -3251,8 +3243,7 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
 
     }
 
-    params->LWORK = fortran_int_max(fortran_int_max(1, n),
-                                    work_count > 0 ? work_count : -work_count);
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
@@ -3261,7 +3252,6 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
         goto error;
 
     work = mem_buff2;
-    memset(work, 0, work_size);
 
     params->WORK = work;
 
@@ -3300,7 +3290,7 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
     size_t q_size = safe_m * safe_mc * sizeof(@ftyp@);
     size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
 
-    fortran_int work_count_r, work_count_i, work_count;
+    fortran_int work_count;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
@@ -3332,11 +3322,7 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count_r = (fortran_int) ((@ftyp@*)params->WORK)->r;
-        work_count_i = (fortran_int) ((@ftyp@*)params->WORK)->i;
-
-        work_count = (fortran_int) sqrt((fortran_doublereal) work_count_r*work_count_r + 
-                                        (fortran_doublereal) work_count_i*work_count_i);
+        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
 
     }
 
@@ -3350,7 +3336,6 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
         goto error;
 
     work = mem_buff2;
-    memset(work, 0, work_size);
 
     params->WORK = work;
     params->LWORK = work_count;
@@ -3446,14 +3431,11 @@ static void
     GQR_PARAMS_t params;
     int error_occurred = get_fp_invalid_and_clear();
     fortran_int n, m;
-    size_t safe_min_m_n, safe_m;
 
     INIT_OUTER_LOOP_3
 
     m = (fortran_int)dimensions[0];
     n = (fortran_int)dimensions[1];
-    safe_min_m_n = fortran_int_min(m, n);
-    safe_m = m;
 
     if (init_@lapack_func@(&params, m, n)) {
         LINEARIZE_DATA_t a_in, tau_in, q_out;
@@ -3465,15 +3447,13 @@ static void
         BEGIN_OUTER_LOOP_3
             int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            memcpy(params.Q, params.A, safe_min_m_n * safe_m * sizeof(@ftyp@));
+            linearize_@TYPE@_matrix(params.Q, args[0], &a_in);
             linearize_@TYPE@_matrix(params.TAU, args[1], &tau_in);
             not_ok = call_@lapack_func@(&params);
             if (!not_ok) {
-                delinearize_@TYPE@_matrix(args[1], params.TAU, &tau_in);
                 delinearize_@TYPE@_matrix(args[2], params.Q, &q_out);
             } else {
                 error_occurred = 1;
-                nan_@TYPE@_matrix(args[1], &tau_in);
                 nan_@TYPE@_matrix(args[2], &q_out);
             }
         END_OUTER_LOOP
@@ -3520,14 +3500,11 @@ static void
     GQR_PARAMS_t params;
     int error_occurred = get_fp_invalid_and_clear();
     fortran_int n, m;
-    size_t safe_n, safe_m;
 
     INIT_OUTER_LOOP_3
 
     m = (fortran_int)dimensions[0];
     n = (fortran_int)dimensions[1];
-    safe_n = n;
-    safe_m = m;
 
 
     if (init_@lapack_func@_complete(&params, m, n)) {
@@ -3540,15 +3517,13 @@ static void
         BEGIN_OUTER_LOOP_3
             int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            memcpy(params.Q, params.A, safe_n * safe_m * sizeof(@ftyp@));
+            linearize_@TYPE@_matrix(params.Q, args[0], &a_in);
             linearize_@TYPE@_matrix(params.TAU, args[1], &tau_in);
             not_ok = call_@lapack_func@(&params);
             if (!not_ok) {
-                delinearize_@TYPE@_matrix(args[1], params.TAU, &tau_in);
                 delinearize_@TYPE@_matrix(args[2], params.Q, &q_out);
             } else {
                 error_occurred = 1;
-                nan_@TYPE@_matrix(args[1], &tau_in);
                 nan_@TYPE@_matrix(args[2], &q_out);
             }
         END_OUTER_LOOP
