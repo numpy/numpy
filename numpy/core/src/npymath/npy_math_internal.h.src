@@ -188,15 +188,10 @@ NPY_INPLACE double npy_atan2(double y, double x)
 
 #endif
 
-/**begin repeat
- * #type = npy_float, npy_double, npy_longdouble#
- * #c = f, , l#
- * #C = F, , L#
- */
-#ifndef HAVE_HYPOT@C@
-NPY_INPLACE @type@ npy_hypot@c@(@type@ x, @type@ y)
+#ifndef HAVE_HYPOT
+NPY_INPLACE double npy_hypot(double x, double y)
 {
-    @type@ yx;
+    double yx;
 
     if (npy_isinf(x) || npy_isinf(y)) {
         return NPY_INFINITY;
@@ -206,11 +201,10 @@ NPY_INPLACE @type@ npy_hypot@c@(@type@ x, @type@ y)
         return NPY_NAN;
     }
 
-    x = npy_fabs@c@(x);
-    y = npy_fabs@c@(y);
-    /* Ensure |x| >= |y|, switching if needed */
+    x = npy_fabs(x);
+    y = npy_fabs(y);
     if (x < y) {
-        @type@ temp = x;
+        double temp = x;
         x = y;
         y = temp;
     }
@@ -219,11 +213,10 @@ NPY_INPLACE @type@ npy_hypot@c@(@type@ x, @type@ y)
     }
     else {
         yx = y/x;
-        return x*npy_sqrt@c@(1.+yx*yx);
+        return x*npy_sqrt(1.+yx*yx);
     }
 }
 #endif
-/**end repeat**/
 
 #ifndef HAVE_ACOSH
 NPY_INPLACE double npy_acosh(double x)
@@ -368,7 +361,7 @@ NPY_INPLACE double npy_log2(double x)
  * asin, acos, atan,
  * asinh, acosh, atanh
  *
- * atan2, pow, fmod, modf
+ * hypot, atan2, pow, fmod, modf
  * ldexp, frexp
  *
  * We assume the above are always available in their double versions.
@@ -405,8 +398,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,pow,fmod,copysign#
- * #KIND = ATAN2,POW,FMOD,COPYSIGN#
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
