@@ -41,6 +41,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "arraytypes.h"
 #include "scalartypes.h"
 #include "arrayobject.h"
+#include "convert_datatype.h"
 #include "conversion_utils.h"
 #include "ctors.h"
 #include "dtypemeta.h"
@@ -1358,9 +1359,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyArray_CanCastTypeTo(PyArray_DESCR(self),
-                                         PyArray_DESCR(array_other),
-                                         NPY_EQUIV_CASTING);
+            _res = PyArray_CheckCastSafety(
+                    NPY_EQUIV_CASTING,
+                    PyArray_DESCR(self), PyArray_DESCR(array_other), NULL);
+            if (_res < 0) {
+                PyErr_Clear();
+                _res = 0;
+            }
             if (_res == 0) {
                 /* 2015-05-07, 1.10 */
                 Py_DECREF(array_other);
@@ -1409,9 +1414,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 return Py_NotImplemented;
             }
 
-            _res = PyArray_CanCastTypeTo(PyArray_DESCR(self),
-                                         PyArray_DESCR(array_other),
-                                         NPY_EQUIV_CASTING);
+            _res = PyArray_CheckCastSafety(
+                    NPY_EQUIV_CASTING,
+                    PyArray_DESCR(self), PyArray_DESCR(array_other), NULL);
+            if (_res < 0) {
+                PyErr_Clear();
+                _res = 0;
+            }
             if (_res == 0) {
                 /* 2015-05-07, 1.10 */
                 Py_DECREF(array_other);

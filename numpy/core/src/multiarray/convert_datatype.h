@@ -71,6 +71,10 @@ NPY_NO_EXPORT NPY_CASTING
 PyArray_GetCastSafety(
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
 
+NPY_NO_EXPORT int
+PyArray_CheckCastSafety(NPY_CASTING casting,
+        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
+
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *self,
