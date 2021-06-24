@@ -417,9 +417,6 @@ PyArray_GetCastSafety(
     if (to != NULL) {
         to_dtype = NPY_DTYPE(to);
     }
-    if (from == NULL) {
-        return -1;
-    }
     PyObject *meth = PyArray_GetCastingImpl(NPY_DTYPE(from), to_dtype);
     if (meth == NULL) {
         return -1;
@@ -3297,8 +3294,8 @@ void_to_void_resolve_descriptors(
             }
         }
 
-        PyArray_Descr *from_base = (from_sub == NULL) ? NULL : from_sub->base;
-        PyArray_Descr *to_base = (to_sub == NULL) ? NULL : to_sub->base;
+        PyArray_Descr *from_base = (from_sub == NULL) ? given_descrs[0] : from_sub->base;
+        PyArray_Descr *to_base = (to_sub == NULL) ? given_descrs[1] : to_sub->base;
         NPY_CASTING field_casting = PyArray_GetCastSafety(from_base, to_base, NULL);
         if (field_casting < 0) {
             return -1;
