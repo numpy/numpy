@@ -100,7 +100,7 @@ def _raise_linalgerror_lstsq(err, flag):
     raise LinAlgError("SVD did not converge in Linear Least Squares")
 
 def _raise_linalgerror_qr(err, flag):
-    raise LinAlgError("Illegal argument found while performing "
+    raise LinAlgError("Incorrect argument found while performing "
                       "QR factorization")
 
 def get_linalg_error_extobj(callback):
@@ -785,7 +785,7 @@ def qr(a, mode='reduced'):
     Parameters
     ----------
     a : array_like, shape (..., M, N)
-        A real or complex array with ``a.ndim >= 2``.
+        An array-like object with the dimensionality of at least 2.
     mode : {'reduced', 'complete', 'r', 'raw'}, optional
         If K = min(M, N), then
 

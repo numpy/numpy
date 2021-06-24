@@ -1729,7 +1729,10 @@ class TestQR:
         assert_(q.shape[-2:] == (m, m))
         assert_(r.shape[-2:] == (m, n))
         assert_almost_equal(matmul(q, r), a)
-        assert_almost_equal(swapaxes(q, -1, -2).conj(), np.linalg.inv(q))
+        I_mat = np.identity(q.shape[-1])
+        stack_I_mat = np.broadcast_to(I_mat, 
+                        q.shape[:-2] + (q.shape[-1],)*2)
+        assert_almost_equal(matmul(swapaxes(q, -1, -2).conj(), q), stack_I_mat)
         assert_almost_equal(np.triu(r[..., :, :]), r)
 
         # mode == 'reduced'
@@ -1741,7 +1744,10 @@ class TestQR:
         assert_(q1.shape[-2:] == (m, k))
         assert_(r1.shape[-2:] == (k, n))
         assert_almost_equal(matmul(q1, r1), a)
-        assert_almost_equal(swapaxes(q, -1, -2).conj(), np.linalg.inv(q))
+        I_mat = np.identity(q1.shape[-1])
+        stack_I_mat = np.broadcast_to(I_mat, 
+                        q1.shape[:-2] + (q1.shape[-1],)*2)
+        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1), stack_I_mat)
         assert_almost_equal(np.triu(r1[..., :, :]), r1)
 
         # mode == 'r'
@@ -1750,22 +1756,20 @@ class TestQR:
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-    def test_stacked_inputs(self):
+    @pytest.mark.parametrize("size",  [
+        (3, 4), (4, 3), (4, 4), 
+        (3, 0), (0, 3)])
+    @pytest.mark.parametrize("outer_size",  [
+        (2, 2), (2,), (2, 3, 4)])
+    @pytest.mark.parametrize("dt",  [
+        np.single, np.double, 
+        np.csingle, np.cdouble])
+    def test_stacked_inputs(self, outer_size, size, dt):
 
-        normal = np.random.normal
-        sizes = [(3, 4), (4, 3), (4, 4), (3, 0), (0, 3)]
-        dts = [np.float32, np.float64, np.complex64]
-        for size in sizes:
-            for dt in dts:
-                a1, a2, a3, a4 = [normal(size=size), normal(size=size),
-                                  normal(size=size), normal(size=size)]
-                b1, b2, b3, b4 = [normal(size=size), normal(size=size),
-                                  normal(size=size), normal(size=size)]
-                A = np.asarray([[a1, a2], [a3, a4]], dtype=dt)
-                B = np.asarray([[b1, b2], [b3, b4]], dtype=dt)
-                self.check_qr_stacked(A)
-                self.check_qr_stacked(B)
-                self.check_qr_stacked(A + 1.j*B)
+        A = np.random.normal(size=outer_size + size).astype(dt)
+        B = np.random.normal(size=outer_size + size).astype(dt)
+        self.check_qr_stacked(A)
+        self.check_qr_stacked(A + 1.j*B)
 
 
 class TestCholesky:
