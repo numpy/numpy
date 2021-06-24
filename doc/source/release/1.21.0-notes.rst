@@ -3,6 +3,29 @@
 ==========================
 NumPy 1.21.0 Release Notes
 ==========================
+The NumPy 1.21.0 release highlights are
+
+* continued SIMD work covering more functions and platforms,
+* initial work on the new dtype infrastructure and casting,
+* universal2 wheels for Python 3.8 and Python 3.9 on Mac,
+* improved documentation,
+* improved annotations,
+* new ``PCG64DXSM`` bitgenerator for random numbers.
+
+In addition there are the usual large number of bug fixes and other improvements.
+
+The Python versions supported for this release are 3.7-3.9. Official support
+for Python 3.10 will be added when it is released.
+
+.. warning::
+   There are unresolved problems compiling NumPy 1.20.0 with gcc-11.1.
+
+   * Optimization level `-O3` results in many incorrect warnings when
+     running the tests.
+   * On some hardware NumPY will hang in an infinite loop.
+
+
+
 
 
 New functions
@@ -13,14 +36,14 @@ New functions
 Add `PCG64DXSM` `BitGenerator`
 ------------------------------
 
-Uses of the `PCG64` `BitGenerator` in a massively-parallel context have been
+Uses of the ``PCG64`` ``BitGenerator`` in a massively-parallel context have been
 shown to have statistical weaknesses that were not apparent at the first
 release in numpy 1.17. Most users will never observe this weakness and are
-safe to continue to use `PCG64`. We have introduced a new `PCG64DXSM`
-`BitGenerator` that will eventually become the new default `BitGenerator`
-implementation used by `default_rng` in future releases. `PCG64DXSM` solves
+safe to continue to use ``PCG64``. We have introduced a new ``PCG64DXSM``
+``BitGenerator`` that will eventually become the new default ``BitGenerator``
+implementation used by ``default_rng`` in future releases. ``PCG64DXSM`` solves
 the statistical weakness while preserving the performance and the features of
-`PCG64`.
+``PCG64``.
 
 See :ref:`upgrading-pcg64` for more details.
 
@@ -29,13 +52,53 @@ See :ref:`upgrading-pcg64` for more details.
 (`gh-18906 <https://github.com/numpy/numpy/pull/18906>`__)
 
 
+Expired deprecations
+====================
+
+* The ``shape`` argument `~numpy.unravel_index` cannot be passed
+  as ``dims`` keyword argument anymore. (Was deprecated in NumPy 1.16.)
+
+  (`gh-17900 <https://github.com/numpy/numpy/pull/17900>`__)
+
+* The function ``PyUFunc_GenericFunction`` has been disabled.
+  It was deprecated in NumPy 1.19.  Users should call the ufunc
+  directly using the Python API.
+
+  (`gh-18697 <https://github.com/numpy/numpy/pull/18697>`__)
+
+* The function ``PyUFunc_SetUsesArraysAsData`` has been disabled.
+  It was deprecated in NumPy 1.19.
+
+  (`gh-18697 <https://github.com/numpy/numpy/pull/18697>`__)
+
+* The class ``PolyBase`` has been removed (deprecated in numpy 1.9.0). Please
+  use the abstract ``ABCPolyBase`` class instead.
+
+  (`gh-18963 <https://github.com/numpy/numpy/pull/18963>`__)
+
+* The unused ``PolyError`` and ``PolyDomainError`` exceptions are
+  removed.
+
+  (`gh-18963 <https://github.com/numpy/numpy/pull/18963>`__)
+
+
 Deprecations
 ============
 
-Inexact matches for `numpy.convolve` and `numpy.correlate` are deprecated
--------------------------------------------------------------------------
+The ``.dtype`` attribute must return a ``dtype``
+------------------------------------------------
 
-`numpy.convolve` and `numpy.correlate` now emits a warning when there are case
+A ``DeprecationWarning`` is now given if the ``.dtype`` attribute
+of an object passed into ``np.dtype`` or as a ``dtype=obj`` argument
+is not a dtype. NumPy will stop attempting to recursively coerce the
+result of ``.dtype``.
+
+(`gh-13578 <https://github.com/numpy/numpy/pull/13578>`__)
+
+Inexact matches for ``numpy.convolve`` and ``numpy.correlate`` are deprecated
+-----------------------------------------------------------------------------
+
+`~numpy.convolve` and `~numpy.correlate` now emit a warning when there are case
 insensitive and/or inexact matches found for ``mode`` argument in the functions.
 Pass full ``"same"``, ``"valid"``, ``"full"`` strings instead of
 ``"s"``, ``"v"``, ``"f"`` for the ``mode`` argument.
@@ -63,8 +126,8 @@ to raise an ``AttributeError``.
 
 (`gh-19001 <https://github.com/numpy/numpy/pull/19001>`__)
 
-Four `ndarray.ctypes` methods have been deprecated
---------------------------------------------------
+Four ``ndarray.ctypes`` methods have been deprecated
+----------------------------------------------------
 Four methods of the `ndarray.ctypes` object have been deprecated,
 as they are (undocumentated) implementation artifacts of their respective
 properties.
@@ -79,9 +142,6 @@ The methods in question are:
 (`gh-19031 <https://github.com/numpy/numpy/pull/19031>`__)
 
 
-Future Changes
-==============
-
 Expired deprecations
 ====================
 
@@ -93,6 +153,9 @@ Expired deprecations
 * The function ``PyUFunc_GenericFunction`` has been disabled.
   It was deprecated in NumPy 1.19.  Users should call the ufunc
   directly using the Python API.
+
+  (`gh-18697 <https://github.com/numpy/numpy/pull/18697>`__)
+
 * The function ``PyUFunc_SetUsesArraysAsData`` has been disabled.
   It was deprecated in NumPy 1.19.
 
@@ -115,35 +178,31 @@ Compatibility notes
 
 Error type changes in universal functions
 -----------------------------------------
-The universal functions may now raise different errors
-on invalid input in some cases.
-The main changes should be that a ``RuntimeError`` was
-replaced with a more fitting ``TypeError``.
-When multiple errors were present in the same call,
-NumPy may now raise a different one.
+The universal functions may now raise different errors on invalid input in some
+cases.  The main changes should be that a ``RuntimeError`` was replaced with a
+more fitting ``TypeError``.  When multiple errors were present in the same
+call, NumPy may now raise a different one.
 
+(`gh-15271 <https://github.com/numpy/numpy/pull/15271>`__)
 
 ``__array_ufunc__`` argument validation
 ---------------------------------------
-NumPy will now partially validate arguments before calling
-``__array_ufunc__``.  Previously, it was possible to pass
-on invalid arguments (such as a non-existing keyword
-argument) when dispatch was known to occur.
+NumPy will now partially validate arguments before calling ``__array_ufunc__``.
+Previously, it was possible to pass on invalid arguments (such as a
+non-existing keyword argument) when dispatch was known to occur.
 
+(`gh-15271 <https://github.com/numpy/numpy/pull/15271>`__)
 
 ``__array_ufunc__`` and additional positional arguments
 -------------------------------------------------------
 Previously, all positionally passed arguments were checked for
-``__array_ufunc__`` support.  In the case of ``reduce``,
-``accumulate``, and ``reduceat`` all arguments may be passed by
-position.  This means that when they were passed by
-position, they could previously have been asked to handle
-the ufunc call via ``__array_ufunc__``.
-Since this depended on the way the arguments were passed
-(by position or by keyword), NumPy will now only dispatch
-on the input and output array.
-For example, NumPy will never dispatch on the ``where`` array
-in a reduction such as ``np.add.reduce``.
+``__array_ufunc__`` support.  In the case of ``reduce``, ``accumulate``, and
+``reduceat`` all arguments may be passed by position.  This means that when
+they were passed by position, they could previously have been asked to handle
+the ufunc call via ``__array_ufunc__``.  Since this depended on the way the
+arguments were passed (by position or by keyword), NumPy will now only dispatch
+on the input and output array.  For example, NumPy will never dispatch on the
+``where`` array in a reduction such as ``np.add.reduce``.
 
 (`gh-15271 <https://github.com/numpy/numpy/pull/15271>`__)
 
@@ -186,6 +245,7 @@ Since comparisons normally only return boolean arrays, providing
 any other dtype will always raise an error in the future and
 give a ``DeprecationWarning`` now.
 
+(`gh-18718 <https://github.com/numpy/numpy/pull/18718>`__)
 
 Changes to ``dtype`` and ``signature`` arguments in ufuncs
 ----------------------------------------------------------
@@ -279,17 +339,15 @@ C API changes
 
 Use of ``ufunc->type_resolver`` and "type tuple"
 ------------------------------------------------
-NumPy now normalizes the "type tuple" argument to the
-type resolver functions before calling it.  Note that in
-the use of this type resolver is legacy behaviour and NumPy
-will not do so when possible.
-Calling ``ufunc->type_resolver`` or ``PyUFunc_DefaultTypeResolver``
-is strongly discouraged and will now enforce a normalized
-type tuple if done.
-Note that this does not affect providing a type resolver, which
-is expected to keep working in most circumstances.
-If you have an unexpected use-case for calling the type resolver,
-please inform the NumPy developers so that a solution can be found.
+NumPy now normalizes the "type tuple" argument to the type resolver functions
+before calling it.  Note that in the use of this type resolver is legacy
+behaviour and NumPy will not do so when possible.  Calling
+``ufunc->type_resolver`` or ``PyUFunc_DefaultTypeResolver`` is strongly
+discouraged and will now enforce a normalized type tuple if done.  Note that
+this does not affect providing a type resolver, which is expected to keep
+working in most circumstances.  If you have an unexpected use-case for calling
+the type resolver, please inform the NumPy developers so that a solution can be
+found.
 
 (`gh-18718 <https://github.com/numpy/numpy/pull/18718>`__)
 
@@ -297,9 +355,8 @@ please inform the NumPy developers so that a solution can be found.
 New Features
 ============
 
-Added a mypy plugin for handling platform-specific `numpy.number` precisions
-----------------------------------------------------------------------------
-
+Added a mypy plugin for handling platform-specific ``numpy.number`` precisions
+------------------------------------------------------------------------------
 A mypy_ plugin is now available for automatically assigning the (platform-dependent)
 precisions of certain `~numpy.number` subclasses, including the likes of
 `~numpy.int_`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
@@ -322,9 +379,8 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 
 (`gh-17843 <https://github.com/numpy/numpy/pull/17843>`__)
 
-Let the mypy plugin manage extended-precision `numpy.number` subclasses
------------------------------------------------------------------------
-
+Let the mypy plugin manage extended-precision ``numpy.number`` subclasses
+-------------------------------------------------------------------------
 The mypy_ plugin, introduced in `numpy/numpy#17843`_, has been expanded:
 the plugin now removes annotations for platform-specific extended-precision
 types that are not available to the platform in question.
@@ -350,9 +406,9 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 New ``min_digits`` argument for printing float values
 -----------------------------------------------------
 A new ``min_digits`` argument has been added to the dragon4 float printing
-functions `np.format_float_positional` and `np.format_float_scientific` . This
-kwd guarantees that at least the given number of digits will be printed when
-printing in unique=True mode, even if the extra digits are unnecessary to
+functions `~numpy.format_float_positional` and `~numpy.format_float_scientific`
+. This kwd guarantees that at least the given number of digits will be printed
+when printing in unique=True mode, even if the extra digits are unnecessary to
 uniquely specify the value. It is the counterpart to the precision argument
 which sets the maximum number of digits to be printed. When unique=False in
 fixed precision mode, it has no effect and the precision argument fixes the
@@ -362,7 +418,7 @@ number of digits.
 
 f2py now recognizes Fortran abstract interface blocks
 -----------------------------------------------------
-`np.f2py` can now parse abstract interface blocks.
+`~numpy.f2py` can now parse abstract interface blocks.
 
 (`gh-18695 <https://github.com/numpy/numpy/pull/18695>`__)
 
@@ -381,9 +437,9 @@ variable content to the link flags.
 
 (`gh-18737 <https://github.com/numpy/numpy/pull/18737>`__)
 
-A runtime-subcriptable alias has been added for `ndarray`
----------------------------------------------------------
-`numpy.typing.NDArray` has been added, a runtime-subscriptable alias for
+A runtime-subcriptable alias has been added for ``ndarray``
+-----------------------------------------------------------
+``numpy.typing.NDArray`` has been added, a runtime-subscriptable alias for
 ``np.ndarray[Any, np.dtype[~Scalar]]``. The new type alias can be used
 for annotating arrays with a given dtype and unspecified shape. :sup:`1`
 
@@ -416,8 +472,8 @@ Examples
 Improvements
 ============
 
-Arbitrary ``period`` option for `numpy.unwrap`
-----------------------------------------------
+Arbitrary ``period`` option for ``numpy.unwrap``
+------------------------------------------------
 The size of the interval over which phases are unwrapped is no longer restricted to ``2 * pi``.
 This is especially useful for unwrapping degrees, but can also be used for other intervals.
 
@@ -472,16 +528,15 @@ function definitions, classes or other miscellaneous objects.
 (`gh-18934 <https://github.com/numpy/numpy/pull/18934>`__)
 
 
-Performance improvements and changes
-====================================
+Performance improvements
+========================
 
 Improved performance in integer division of NumPy arrays
 --------------------------------------------------------
-Integer division of NumPy arrays now uses `libdivide <https://libdivide.com/>` 
-when the divisor is a constant. With the usage of libdivide and
-other minor optimizations, there is a large speedup.
-The ``//`` operator and ``np.floor_divide`` makes use
-of the new changes.
+Integer division of NumPy arrays now uses
+`libdivide <https://libdivide.com/>`__ when the divisor is a constant. With the
+usage of libdivide and other minor optimizations, there is a large speedup.
+The ``//`` operator and ``np.floor_divide`` makes use of the new changes.
 
 (`gh-17727 <https://github.com/numpy/numpy/pull/17727>`__)
 
@@ -490,7 +545,7 @@ Improve performance of ``np.save`` and ``np.load`` for small arrays
 ``np.save`` is now a lot faster for small arrays.
 
 ``np.load`` is also faster for small arrays,
-but only when serializing with a version >= `(3, 0)`.
+but only when serializing with a version >= ``(3, 0)``.
 
 Both are done by removing checks that are only relevant for Python 2,
 while still maintaining compatibility with arrays
@@ -504,7 +559,7 @@ Changes
 
 `numpy.piecewise` output class now matches the input class
 ----------------------------------------------------------
-When `numpy.ndarray` subclasses are used on input to `numpy.piecewise`,
+When `~numpy.ndarray` subclasses are used on input to `~numpy.piecewise`,
 they are passed on to the functions. The output will now be of the
 same subclass as well.
 
@@ -512,22 +567,13 @@ same subclass as well.
 
 Enable Accelerate Framework
 ----------------------------
-With the release of macOS 11.3, several different issues that
-numpy was encountering when using Accelerate Framework's
-implementation of BLAS and LAPACK should be resolved.  This
-change enables the Accelerate Framework as an option on macOS.
-If additional issues are found, please file a bug report
-against Accelerate using the developer feedback assistant
-tool (https://developer.apple.com/bug-reporting/). We
-intend to address issues promptly and plan to continue
-supporting and updating our BLAS and LAPACK libraries.
+With the release of macOS 11.3, several different issues that numpy was
+encountering when using Accelerate Framework's implementation of BLAS and
+LAPACK should be resolved.  This change enables the Accelerate Framework as an
+option on macOS.  If additional issues are found, please file a bug report
+against Accelerate using the developer feedback assistant tool
+(https://developer.apple.com/bug-reporting/). We intend to address issues
+promptly and plan to continue supporting and updating our BLAS and LAPACK
+libraries.
 
 (`gh-18874 <https://github.com/numpy/numpy/pull/18874>`__)
-
-
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.21.0 Release Notes
-==========================
-
