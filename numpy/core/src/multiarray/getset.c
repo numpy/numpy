@@ -419,33 +419,13 @@ array_itemsize_get(PyArrayObject *self)
 static PyObject *
 array_size_get(PyArrayObject *self)
 {
-    npy_intp size=PyArray_SIZE(self);
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyLong_FromLong((long) size);
-#else
-    if (size > NPY_MAX_LONG || size < NPY_MIN_LONG) {
-        return PyLong_FromLongLong(size);
-    }
-    else {
-        return PyLong_FromLong((long) size);
-    }
-#endif
+    return PyArray_PyIntFromIntp(PyArray_SIZE(self));
 }
 
 static PyObject *
 array_nbytes_get(PyArrayObject *self)
 {
-    npy_intp nbytes = PyArray_NBYTES(self);
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyLong_FromLong((long) nbytes);
-#else
-    if (nbytes > NPY_MAX_LONG || nbytes < NPY_MIN_LONG) {
-        return PyLong_FromLongLong(nbytes);
-    }
-    else {
-        return PyLong_FromLong((long) nbytes);
-    }
-#endif
+    return PyArray_PyIntFromIntp(PyArray_NBYTES(self));
 }
 
 
