@@ -3297,8 +3297,10 @@ void_to_void_resolve_descriptors(
                 casting = NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
             }
         }
-        NPY_CASTING field_casting = PyArray_GetCastSafety(
-                given_descrs[0]->subarray->base, given_descrs[1]->subarray->base, NULL);
+
+        PyArray_Descr *from_base = (from_sub == NULL) ? given_descrs[0] : from_sub->base;
+        PyArray_Descr *to_base = (to_sub == NULL) ? given_descrs[1] : to_sub->base;
+        NPY_CASTING field_casting = PyArray_GetCastSafety(from_base, to_base, NULL);
         if (field_casting < 0) {
             return -1;
         }

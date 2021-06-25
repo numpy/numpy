@@ -649,3 +649,11 @@ class TestCasting:
         with pytest.raises(TypeError,
                     match="casting from object to the parametric DType"):
             cast._resolve_descriptors((np.dtype("O"), None))
+
+    @pytest.mark.parametrize("casting", ["no", "unsafe"])
+    def test_void_and_structured_with_subarray(self, casting):
+        # test case corresponding to gh-19325
+        dtype = np.dtype([("foo", "<f4", (3, 2))])
+        expected = casting == "unsafe"
+        assert np.can_cast("V4", dtype, casting=casting) == expected
+        assert np.can_cast(dtype, "V4", casting=casting) == expected
