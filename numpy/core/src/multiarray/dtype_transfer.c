@@ -3457,11 +3457,11 @@ get_wrapped_legacy_cast_function(int aligned,
      * If we are here, use the legacy code to wrap the above cast (which
      * does not support unaligned data) into copyswapn.
      */
-    PyArray_Descr *src_wrapped_dtype = ensure_dtype_nbo(src_dtype);
+    PyArray_Descr *src_wrapped_dtype = NPY_DT_CALL_ensure_canonical(src_dtype);
     if (src_wrapped_dtype == NULL) {
         goto fail;
     }
-    PyArray_Descr *dst_wrapped_dtype = ensure_dtype_nbo(dst_dtype);
+    PyArray_Descr *dst_wrapped_dtype = NPY_DT_CALL_ensure_canonical(dst_dtype);
     if (dst_wrapped_dtype == NULL) {
         goto fail;
     }

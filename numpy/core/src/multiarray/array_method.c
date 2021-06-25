@@ -68,7 +68,7 @@ default_resolve_descriptors(
     for (int i = 0; i < nin + nout; i++) {
         PyArray_DTypeMeta *dtype = dtypes[i];
         if (input_descrs[i] != NULL) {
-            output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
+            output_descrs[i] = NPY_DT_CALL_ensure_canonical(input_descrs[i]);
         }
         else {
             output_descrs[i] = NPY_DT_CALL_default_descr(dtype);

@@ -36,9 +36,6 @@ NPY_NO_EXPORT npy_bool
 can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
                     PyArray_Descr *to, NPY_CASTING casting);
 
-NPY_NO_EXPORT PyArray_Descr *
-ensure_dtype_nbo(PyArray_Descr *type);
-
 NPY_NO_EXPORT int
 should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
                       npy_intp ndtypes, PyArray_Descr **dtypes);
