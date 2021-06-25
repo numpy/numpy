@@ -461,7 +461,8 @@ class TestDivision:
         with np.errstate(invalid='raise'):
             assert_no_warnings(FloatingPointError, np.floor_divide, fnan, fone)
             assert_no_warnings(FloatingPointError, np.floor_divide, fone, fnan)
-            assert_raises(FloatingPointError, np.floor_divide, fnan, fzer)
+            assert_no_warnings(FloatingPointError, np.floor_divide, fnan, fzer)
+            assert_no_warnings(FloatingPointError, np.floor_divide, fzer, fnan)
 
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_corner_cases(self, dtype):
@@ -590,6 +591,7 @@ class TestRemainder:
         with np.errstate(invalid='raise'):
             assert_raises(FloatingPointError, fn, fone, fzero)
             assert_no_warnings(FloatingPointError, fn, fnan, fzero)
+            assert_no_warnings(FloatingPointError, fn, fzero, fnan)
             assert_no_warnings(FloatingPointError, fn, fone, fnan)
             assert_no_warnings(FloatingPointError, fn, fnan, fone)
 
