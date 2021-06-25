@@ -257,6 +257,10 @@ def outer(x1: array, x2: array, /) -> array:
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in outer')
 
+    # Note: the restriction to only 1-dim arrays is different from np.outer
+    if x1.ndim != 1 or x2.ndim != 1:
+        raise ValueError('The input arrays to outer must be 1-dimensional')
+
     return ndarray._new(np.outer(x1._array, x2._array))
 
 # Note: the keyword argument name rtol is different from np.linalg.pinv
@@ -275,7 +279,7 @@ def pinv(x: array, /, *, rtol: Optional[Union[float, array]] = None) -> array:
     # default tolerance by max(M, N).
     if rtol is None:
         rtol = max(x.shape[-2:]) * np.finfo(x.dtype).eps
-    return ndarray._new(np.pinv(x._array, rcond=rtol))
+    return ndarray._new(np.linalg.pinv(x._array, rcond=rtol))
 
 def qr(x: array, /, *, mode: str = 'reduced') -> qrresult:
     """
@@ -293,7 +297,7 @@ def qr(x: array, /, *, mode: str = 'reduced') -> qrresult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.linalg.qr, which only returns a tuple.
-    return qrresult(*map(ndarray._new, np.qr(x._array, mode=mode)))
+    return qrresult(*map(ndarray._new, np.linalg.qr(x._array, mode=mode)))
 
 def slogdet(x: array, /) -> slogdetresult:
     """
@@ -308,7 +312,7 @@ def slogdet(x: array, /) -> slogdetresult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.linalg.slogdet, which only returns a tuple.
-    return slogdetresult(*map(ndarray._new, np.slogdet(x._array)))
+    return slogdetresult(*map(ndarray._new, np.linalg.slogdet(x._array)))
 
 def solve(x1: array, x2: array, /) -> array:
     """
@@ -321,7 +325,7 @@ def solve(x1: array, x2: array, /) -> array:
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in solve')
 
-    return ndarray._new(np.solve(x1._array, x2._array))
+    return ndarray._new(np.linalg.solve(x1._array, x2._array))
 
 def svd(x: array, /, *, full_matrices: bool = True) -> svdresult:
     """
@@ -336,14 +340,14 @@ def svd(x: array, /, *, full_matrices: bool = True) -> svdresult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.svd, which only returns a tuple.
-    return svdresult(*map(ndarray._new, np.svd(x._array, full_matrices=full_matrices)))
+    return svdresult(*map(ndarray._new, np.linalg.svd(x._array, full_matrices=full_matrices)))
 
 # Note: svdvals is not in NumPy (but it is in SciPy). It is equivalent to
 # np.linalg.svd(compute_uv=False).
 def svdvals(x: array, /) -> Union[array, Tuple[array, ...]]:
     return ndarray._new(np.linalg.svd(x._array, compute_uv=False))
 
-# Note: axes must be a tuple, unlike np.tensordot where it can be an array.
+# Note: axes must be a tuple, unlike np.tensordot where it can be an array or array-like.
 def tensordot(x1: array, x2: array, /, *, axes: Union[int, Tuple[Sequence[int], Sequence[int]]] = 2) -> array:
     # Note: the restriction to numeric dtypes only is different from
     # np.tensordot.
@@ -372,7 +376,7 @@ def transpose(x: array, /, *, axes: Optional[Tuple[int, ...]] = None) -> array:
 def vecdot(x1: array, x2: array, /, *, axis: Optional[int] = None) -> array:
     if axis is None:
         axis = -1
-    return tensordot(x1, x2, (axis, axis))
+    return tensordot(x1, x2, axes=((axis,), (axis,)))
 
 __all__ = ['cholesky', 'cross', 'det', 'diagonal', 'eigh', 'eigvalsh', 'inv', 'lstsq', 'matmul', 'matrix_power', 'matrix_rank', 'norm', 'outer', 'pinv', 'qr', 'slogdet', 'solve', 'svd', 'tensordot', 'svdvals', 'trace', 'transpose', 'vecdot']
 
