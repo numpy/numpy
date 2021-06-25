@@ -147,6 +147,9 @@ class TestChanges:
         assert not np.can_cast("U1", "V1")
         # Structured to unstructured is just like any other:
         assert np.can_cast("d,i", "V", casting="same_kind")
+        # Unstructured void to unstructured is actually no cast at all:
+        assert np.can_cast("V3", "V", casting="no")
+        assert np.can_cast("V0", "V", casting="no")
 
 
 class TestCasting:

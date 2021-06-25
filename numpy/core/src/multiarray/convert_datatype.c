@@ -457,7 +457,7 @@ PyArray_GetCastSafety(
  *        is ignored).
  * @return 0 for an invalid cast, 1 for a valid and -1 for an error.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_CheckCastSafety(NPY_CASTING casting,
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype)
 {
@@ -2841,6 +2841,10 @@ cast_to_void_dtype_class(
     loop_descrs[1]->elsize = given_descrs[0]->elsize;
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
+    if (loop_descrs[0]->type_num == NPY_VOID &&
+            loop_descrs[0]->subarray == NULL && loop_descrs[1]->names == NULL) {
+        return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+    }
     return NPY_SAFE_CASTING | _NPY_CAST_IS_VIEW;
 }
 
