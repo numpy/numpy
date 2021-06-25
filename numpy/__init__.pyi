@@ -3489,29 +3489,36 @@ infty: Final[float]
 nan: Final[float]
 pi: Final[float]
 
-ERR_CALL: Final[int]
-ERR_DEFAULT: Final[int]
-ERR_IGNORE: Final[int]
-ERR_LOG: Final[int]
-ERR_PRINT: Final[int]
-ERR_RAISE: Final[int]
-ERR_WARN: Final[int]
-FLOATING_POINT_SUPPORT: Final[int]
-FPE_DIVIDEBYZERO: Final[int]
-FPE_INVALID: Final[int]
-FPE_OVERFLOW: Final[int]
-FPE_UNDERFLOW: Final[int]
-SHIFT_DIVIDEBYZERO: Final[int]
-SHIFT_INVALID: Final[int]
-SHIFT_OVERFLOW: Final[int]
-SHIFT_UNDERFLOW: Final[int]
-UFUNC_BUFSIZE_DEFAULT: Final[int]
+CLIP: L[0]
+WRAP: L[1]
+RAISE: L[2]
+
+ERR_IGNORE: L[0]
+ERR_WARN: L[1]
+ERR_RAISE: L[2]
+ERR_CALL: L[3]
+ERR_PRINT: L[4]
+ERR_LOG: L[5]
+ERR_DEFAULT: L[521]
+
+SHIFT_DIVIDEBYZERO: L[0]
+SHIFT_OVERFLOW: L[3]
+SHIFT_UNDERFLOW: L[6]
+SHIFT_INVALID: L[9]
+
+FPE_DIVIDEBYZERO: L[1]
+FPE_OVERFLOW: L[2]
+FPE_UNDERFLOW: L[4]
+FPE_INVALID: L[8]
+
+FLOATING_POINT_SUPPORT: L[1]
+UFUNC_BUFSIZE_DEFAULT = BUFSIZE
 
 little_endian: Final[bool]
 True_: Final[bool_]
 False_: Final[bool_]
 
-UFUNC_PYVALS_NAME: Final[str]
+UFUNC_PYVALS_NAME: L["UFUNC_PYVALS"]
 
 newaxis: None
 
