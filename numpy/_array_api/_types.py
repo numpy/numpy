@@ -10,7 +10,7 @@ __all__ = ['Any', 'List', 'Literal', 'Optional', 'Tuple', 'Union', 'array',
            'device', 'dtype', 'SupportsDLPack', 'SupportsBufferProtocol',
            'PyCapsule']
 
-from typing import Any, List, Literal, Optional, Tuple, Union, TypeVar
+from typing import Any, List, Literal, NamedTuple, Optional, Tuple, Union, TypeVar
 
 from . import (ndarray, int8, int16, int32, int64, uint8, uint16, uint32,
                uint64, float32, float64)
@@ -22,3 +22,26 @@ dtype = Literal[int8, int16, int32, int64, uint8, uint16,
 SupportsDLPack = TypeVar('SupportsDLPack')
 SupportsBufferProtocol = TypeVar('SupportsBufferProtocol')
 PyCapsule = TypeVar('PyCapsule')
+
+class eighresult(NamedTuple):
+    u: array
+    v: array
+
+class lstsqresult(NamedTuple):
+    x: array
+    residuals: array
+    rank: array
+    s: array
+
+class qrresult(NamedTuple):
+    q: array
+    r: array
+
+class slogdetresult(NamedTuple):
+    sign: array
+    logabsdet: array
+
+class svdresult(NamedTuple):
+    u: array
+    s: array
+    v: array
