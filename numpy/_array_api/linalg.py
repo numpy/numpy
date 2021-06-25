@@ -7,10 +7,33 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ._types import Literal, Optional, Sequence, Tuple, Union, array
 
-from ._types import eighresult, lstsqresult, qrresult, slogdetresult, svdresult
+from typing import NamedTuple
 
 import numpy.linalg
 import numpy as np
+
+class eighresult(NamedTuple):
+    u: array
+    v: array
+
+class lstsqresult(NamedTuple):
+    x: array
+    residuals: array
+    rank: array
+    s: array
+
+class qrresult(NamedTuple):
+    q: array
+    r: array
+
+class slogdetresult(NamedTuple):
+    sign: array
+    logabsdet: array
+
+class svdresult(NamedTuple):
+    u: array
+    s: array
+    v: array
 
 # Note: the inclusion of the upper keyword is different from
 # np.linalg.cholesky, which does not have it.
