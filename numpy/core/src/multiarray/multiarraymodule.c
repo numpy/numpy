@@ -4617,14 +4617,34 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
-    if (!(npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__"))) return -1;
-    if (!(npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__"))) return -1;
-    if (!(npy_ma_str_implementation = PyUnicode_InternFromString("_implementation"))) return -1;
-    if (!(npy_ma_str_axis1 = PyUnicode_InternFromString("axis1"))) return -1;
-    if (!(npy_ma_str_axis2 = PyUnicode_InternFromString("axis2"))) return -1;
-    if (!(npy_ma_str_like = PyUnicode_InternFromString("like"))) return -1;
-    if (!(npy_ma_str_numpy = PyUnicode_InternFromString("numpy"))) return -1;
-
+    npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
+    if (npy_ma_str_array_wrap == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__");
+    if (npy_ma_str_array_finalize == NULL) {
+        return -1;
+    }
+    npy_ma_str_implementation = PyUnicode_InternFromString("_implementation");
+    if (npy_ma_str_implementation == NULL) {
+        return -1;
+    }
+    npy_ma_str_axis1 = PyUnicode_InternFromString("axis1");
+    if (npy_ma_str_axis1 == NULL) {
+        return -1;
+    }
+    npy_ma_str_axis2 = PyUnicode_InternFromString("axis2");
+    if (npy_ma_str_axis2 == NULL) {
+        return -1;
+    }
+    npy_ma_str_like = PyUnicode_InternFromString("like");
+    if (npy_ma_str_like == NULL) {
+        return -1;
+    }
+    npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
+    if (npy_ma_str_numpy == NULL) {
+        return -1;
+    }
     return 0;
 }
 
