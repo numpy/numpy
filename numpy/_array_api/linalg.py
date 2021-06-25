@@ -204,12 +204,12 @@ def matrix_power(x: array, n: int, /) -> array:
     See its docstring for more information.
     """
     # Note: the restriction to floating-point dtypes only is different from
-    # np.matrix_power.
+    # np.linalg.matrix_power.
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in matrix_power')
+        raise TypeError('Only floating-point dtypes are allowed for the first argument of matrix_power')
 
     # np.matrix_power already checks if n is an integer
-    return ndarray._new(np.matrix_power(x._array, n))
+    return ndarray._new(np.linalg.matrix_power(x._array, n))
 
 # Note: the keyword argument name rtol is different from np.linalg.matrix_rank
 def matrix_rank(x: array, /, *, rtol: Optional[Union[float, array]] = None) -> array:
@@ -226,9 +226,11 @@ def matrix_rank(x: array, /, *, rtol: Optional[Union[float, array]] = None) -> a
     if rtol is None:
         tol = S.max(axis=-1, keepdims=True) * max(x.shape[-2:]) * np.finfo(S.dtype).eps
     else:
+        if isinstance(rtol, ndarray):
+            rtol = rtol._array
         # Note: this is different from np.linalg.matrix_rank, which does not multiply
         # the tolerance by the largest singular value.
-        tol = S.max(axis=-1, keepdims=True)*np.asarray(tol)[..., np.newaxis]
+        tol = S.max(axis=-1, keepdims=True)*np.asarray(rtol)[..., np.newaxis]
     return ndarray._new(np.count_nonzero(S > tol, axis=-1))
 
 def norm(x: array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = None) -> array:
