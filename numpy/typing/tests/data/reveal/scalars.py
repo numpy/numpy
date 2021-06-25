@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 
 b: np.bool_
@@ -6,6 +7,7 @@ i8: np.int64
 f8: np.float64
 c8: np.complex64
 c16: np.complex128
+m: np.timedelta64
 U: np.str_
 S: np.bytes_
 
@@ -114,3 +116,31 @@ reveal_type(f8.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(c16.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{complex128}]]
 reveal_type(U.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
 reveal_type(S.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bytes_]]
+
+reveal_type(f8.as_integer_ratio())  # E: Tuple[builtins.int, builtins.int]
+reveal_type(f8.is_integer())  # E: bool
+reveal_type(f8.__trunc__())  # E: int
+reveal_type(f8.__getformat__("float"))  # E: str
+reveal_type(f8.hex())  # E: str
+reveal_type(np.float64.fromhex("0x0.0p+0"))  # E: {float64}
+
+reveal_type(f8.__getnewargs__())  # E: Tuple[builtins.float]
+reveal_type(c16.__getnewargs__())  # E: Tuple[builtins.float, builtins.float]
+
+reveal_type(i8.numerator)  # E: {int64}
+reveal_type(i8.denominator)  # E: Literal[1]
+reveal_type(u8.numerator)  # E: {uint64}
+reveal_type(u8.denominator)  # E: Literal[1]
+reveal_type(m.numerator)  # E: numpy.timedelta64
+reveal_type(m.denominator)  # E: Literal[1]
+
+reveal_type(round(i8))  # E: int
+reveal_type(round(i8, 3))  # E: {int64}
+reveal_type(round(u8))  # E: int
+reveal_type(round(u8, 3))  # E: {uint64}
+reveal_type(round(f8))  # E: int
+reveal_type(round(f8, 3))  # E: {float64}
+
+if sys.version_info >= (3, 9):
+    reveal_type(f8.__ceil__())  # E: int
+    reveal_type(f8.__floor__())  # E: int
