@@ -60,6 +60,14 @@ def cross(x1: array, x2: array, /, *, axis: int = -1) -> array:
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in cross')
+    # Note: this is different from np.cross(), which broadcasts
+    if x1.shape != x2.shape:
+        raise ValueError('x1 and x2 must have the same shape')
+    if x1.ndim == 0:
+        raise ValueError('cross() requires arrays of dimension at least 1')
+    # Note: this is different from np.cross(), which allows dimension 2
+    if x1.shape[axis] != 3:
+        raise ValueError('cross() dimension must equal 3')
     return ndarray._new(np.cross(x1._array, x2._array, axis=axis))
 
 def det(x: array, /) -> array:
