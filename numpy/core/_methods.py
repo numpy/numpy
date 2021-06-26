@@ -21,6 +21,7 @@ umr_maximum = um.maximum.reduce
 umr_minimum = um.minimum.reduce
 umr_sum = um.add.reduce
 umr_prod = um.multiply.reduce
+umr_bit_count = um.bit_count
 umr_any = um.logical_or.reduce
 umr_all = um.logical_and.reduce
 
@@ -236,3 +237,8 @@ def _dump(self, file, protocol=2):
 
 def _dumps(self, protocol=2):
     return pickle.dumps(self, protocol=protocol)
+
+def _bit_count(a, out=None, *, where=True, casting='same_kind',
+          order='K', dtype=None, subok=True):
+    return umr_bit_count(a, out, where=where, casting=casting,
+            order=order, dtype=dtype, subok=subok)

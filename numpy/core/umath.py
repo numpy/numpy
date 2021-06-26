@@ -19,7 +19,7 @@ __all__ = [
     'absolute', 'add',
     'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2', 'arctanh',
     'bitwise_and', 'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj',
-    'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide',
+    'conjugate', 'copysign', 'cos', 'cosh', 'bit_count', 'deg2rad', 'degrees', 'divide',
     'divmod', 'e', 'equal', 'euler_gamma', 'exp', 'exp2', 'expm1', 'fabs',
     'floor', 'floor_divide', 'float_power', 'fmax', 'fmin', 'fmod', 'frexp',
     'frompyfunc', 'gcd', 'greater', 'greater_equal', 'heaviside',

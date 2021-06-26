@@ -1122,6 +1122,13 @@ defdict = {
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
           ),
+'bit_count':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.bit_count'),
+          None,
+          TD(ints),
+          TD('O', f='npy_ObjectPopCount'),
+          ),
 'matmul' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.matmul'),

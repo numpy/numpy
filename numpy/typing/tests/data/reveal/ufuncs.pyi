@@ -9,6 +9,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import assert_type
 
+i8: np.int64
 f8: np.float64
 AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
@@ -74,3 +75,14 @@ assert_type(np.matmul.signature, Literal["(n?,k),(k,m?)->(n?,m?)"])
 assert_type(np.matmul.identity, None)
 assert_type(np.matmul(AR_f8, AR_f8), Any)
 assert_type(np.matmul(AR_f8, AR_f8, axes=[(0, 1), (0, 1), (0, 1)]), Any)
+
+reveal_type(np.bit_count.__name__, Literal['bit_count'])
+reveal_type(np.bit_count.ntypes, Literal[11])
+reveal_type(np.bit_count.identity, None)
+reveal_type(np.bit_count.nin, Literal[1])
+reveal_type(np.bit_count.nout, Literal[1])
+reveal_type(np.bit_count.nargs, Literal[2])
+reveal_type(np.bit_count.signature, None)
+reveal_type(np.bit_count.identity, None)
+reveal_type(np.bit_count(i8), Any)
+reveal_type(np.bit_count(AR_i8), Any)

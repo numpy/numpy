@@ -2610,7 +2610,15 @@ class TestBool:
 
 class TestBitwiseUFuncs:
 
-    bitwise_types = [np.dtype(c) for c in '?' + 'bBhHiIlLqQ' + 'O']
+    _all_ints_bits = [
+        np.dtype(c).itemsize * 8 for c in np.typecodes["AllInteger"]]
+    bitwise_types = [
+        np.dtype(c) for c in '?' + np.typecodes["AllInteger"] + 'O']
+    bitwise_bits = [
+        2,  # boolean type
+        *_all_ints_bits,  # All integers
+        max(_all_ints_bits) + 1,  # Object_ type
+    ]
 
     def test_values(self):
         for dt in self.bitwise_types:
@@ -2690,6 +2698,30 @@ class TestBitwiseUFuncs:
             msg = "dt: '%s'" % (f,)
             btype = np.array([True], dtype=object)
             assert_(type(f.reduce(btype)) is bool, msg)
+
+    @pytest.mark.parametrize("input_dtype_obj, bitsize",
+            zip(bitwise_types, bitwise_bits))
+    def test_popcount(self, input_dtype_obj, bitsize):
+        input_dtype = input_dtype_obj.type
+
+        # bit_count is only in-built in 3.10+
+        if sys.version_info < (3, 10) and input_dtype == np.object_:
+            pytest.skip()
+
+        for i in range(1, bitsize):
+            num = 2**i - 1
+            msg = f"bit_count for {num}"
+            assert i == np.bit_count(input_dtype(num)), msg
+            if np.issubdtype(
+                input_dtype, np.signedinteger) or input_dtype == np.object_:
+                assert i == np.bit_count(input_dtype(-num)), msg
+
+        a = np.array([2**i-1 for i in range(1, bitsize)], dtype=input_dtype)
+        bit_count_a = np.bit_count(a)
+        expected = np.arange(1, bitsize, dtype=input_dtype)
+
+        msg = f"array bit_count for {input_dtype}"
+        assert all(bit_count_a == expected), msg
 
 
 class TestInt:

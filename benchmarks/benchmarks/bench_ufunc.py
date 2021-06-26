@@ -7,7 +7,7 @@ import operator
 
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
-          'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_not',
+          'arctan', 'arctan2', 'arctanh', 'bit_count', 'bitwise_and', 'bitwise_not',
           'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj', 'conjugate',
           'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide', 'divmod',
           'equal', 'exp', 'exp2', 'expm1', 'fabs', 'float_power', 'floor',
