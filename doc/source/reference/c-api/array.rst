@@ -1857,7 +1857,7 @@ Item selection and manipulation
 
 .. c:function:: PyObject* PyArray_Choose( \
         PyArrayObject* self, PyObject* op, PyArrayObject* ret, \
-        NPY_CLIPMODE clipmode)
+         PyArray_Descr *dtype, NPY_CLIPMODE clipmode)
 
     Equivalent to :meth:`ndarray.choose<numpy.ndarray.choose>` (*self*, *op*, *ret*, *clipmode*).
     Create a new array by selecting elements from the sequence of
