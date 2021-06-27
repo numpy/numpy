@@ -8,7 +8,5 @@ you must unset the selector on newer NumPy version.
 Please also contact the NumPy developers, we do anticipate
 providing a new, more specific, mechanism.
 
-This change will not affect the results of operations, since
-the fallback (which is always used internally) will handle
-the operation equivalently, the customization was a planned
-feature to allow for faster masked operation.
+The customization was part of a never-implemented feature to allow
+for faster masked operations.
