@@ -4,7 +4,7 @@ The masked inner-loop selector is now never used.  A warning
 will be given in the unlikely event that it was customized.
 
 We do not expect that any code uses this.  If you do use it,
-you must unset unset the selector on newer NumPy version.
+you must unset the selector on newer NumPy version.
 Please also contact the NumPy developers, we do anticipate
 providing a new, more specific, mechanism.
 
