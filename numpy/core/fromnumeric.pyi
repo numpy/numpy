@@ -68,6 +68,7 @@ def choose(
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
     out: Optional[ndarray] = ...,
+    dtype: DTypeLike = ...,
     mode: _ModeKind = ...,
 ) -> Any: ...
 

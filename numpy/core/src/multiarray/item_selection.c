@@ -780,10 +780,9 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
-               NPY_CLIPMODE clipmode)
+               PyArray_Descr *dtype, NPY_CLIPMODE clipmode)
 {
     PyArrayObject *obj = NULL;
-    PyArray_Descr *dtype;
     int n, elsize;
     npy_intp i;
     char *ret_data;
@@ -792,11 +791,17 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     npy_intp mi;
     ap = NULL;
 
+    if (out != NULL && dtype != NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "choose() only takes `out` or `dtype` as an "
+                "argument, but both were provided.");
+        return NULL;
+    }
     /*
      * Convert all inputs to arrays of a common type
      * Also makes them C-contiguous
      */
-    mps = PyArray_ConvertToCommonType(op, &n);
+    mps = PyArray_ConvertToCommonType(op, dtype, &n);
     if (mps == NULL) {
         return NULL;
     }
@@ -827,6 +832,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                     (PyObject *)ap);
     }
     else {
+        assert(dtype == NULL);
         int flags = NPY_ARRAY_CARRAY |
                     NPY_ARRAY_WRITEBACKIFCOPY |
                     NPY_ARRAY_FORCECAST;

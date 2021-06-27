@@ -2089,10 +2089,9 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
  * The user of the function has to free the returned array.
  */
 NPY_NO_EXPORT PyArrayObject **
-PyArray_ConvertToCommonType(PyObject *op, int *retn)
+PyArray_ConvertToCommonType(PyObject *op, PyArray_Descr *dtype, int *retn)
 {
     int i, n;
-    PyArray_Descr *common_descr = NULL;
     PyArrayObject **mps = NULL;
 
     *retn = n = PySequence_Length(op);
@@ -2142,28 +2141,31 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         }
     }
 
-    common_descr = PyArray_ResultType(n, mps, 0, NULL);
-    if (common_descr == NULL) {
+    if (dtype == NULL) {
+        dtype = PyArray_ResultType(n, mps, 0, NULL);
+    }
+    
+    if (dtype == NULL) {
         goto fail;
     }
 
     /* Make sure all arrays are contiguous and have the correct dtype. */
     for (i = 0; i < n; i++) {
-        int flags = NPY_ARRAY_CARRAY;
+        int flags = NPY_ARRAY_CARRAY |
+                    NPY_ARRAY_FORCECAST |
+                    NPY_ARRAY_ALIGNED;
         PyArrayObject *tmp = mps[i];
 
-        Py_INCREF(common_descr);
-        mps[i] = (PyArrayObject *)PyArray_FromArray(tmp, common_descr, flags);
+        Py_INCREF(dtype);
+        mps[i] = (PyArrayObject *)PyArray_FromArray(tmp, dtype, flags);
         Py_DECREF(tmp);
         if (mps[i] == NULL) {
             goto fail;
         }
     }
-    Py_DECREF(common_descr);
     return mps;
 
  fail:
-    Py_XDECREF(common_descr);
     *retn = 0;
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
@@ -2171,7 +2173,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     PyDataMem_FREE(mps);
     return NULL;
 }
-
 
 /**
  * Private function to add a casting implementation by unwrapping a bound

@@ -298,14 +298,14 @@ def reshape(a, newshape, order='C'):
     return _wrapfunc(a, 'reshape', newshape, order=order)
 
 
-def _choose_dispatcher(a, choices, out=None, mode=None):
+def _choose_dispatcher(a, choices, out=None, dtype=None, mode=None):
     yield a
     yield from choices
     yield out
 
 
 @array_function_dispatch(_choose_dispatcher)
-def choose(a, choices, out=None, mode='raise'):
+def choose(a, choices, out=None, dtype=None, mode='raise'):
     """
     Construct an array from an index array and a list of arrays to choose from.
 
@@ -426,7 +426,7 @@ def choose(a, choices, out=None, mode='raise'):
             [-1, -2, -3, -4, -5]]])
 
     """
-    return _wrapfunc(a, 'choose', choices, out=out, mode=mode)
+    return _wrapfunc(a, 'choose', choices, out=out, dtype=dtype, mode=mode)
 
 
 def _repeat_dispatcher(a, repeats, axis=None):

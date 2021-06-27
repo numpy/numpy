@@ -1241,8 +1241,9 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
 static PyObject *
 array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *keywords[] = {"out", "mode", NULL};
+    static char *keywords[] = {"out", "dtype", "mode", NULL};
     PyObject *choices;
+    PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     NPY_CLIPMODE clipmode = NPY_RAISE;
     Py_ssize_t n = PyTuple_Size(args);
@@ -1256,19 +1257,22 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
         choices = args;
     }
 
-    if (!NpyArg_ParseKeywords(kwds, "|O&O&", keywords,
+    if (!NpyArg_ParseKeywords(kwds, "|O&O&O&", keywords,
                 PyArray_OutputConverter, &out,
+                PyArray_DescrConverter2, &dtype,
                 PyArray_ClipmodeConverter, &clipmode)) {
+        Py_XDECREF(dtype);
         return NULL;
     }
 
-    PyObject *ret = PyArray_Choose(self, choices, out, clipmode);
+    PyObject *ret = PyArray_Choose(self, choices, out, dtype, clipmode);
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {
         return PyArray_Return((PyArrayObject *)ret);
     }
     else {
+        Py_XDECREF(dtype);
         return ret;
     }
 }
