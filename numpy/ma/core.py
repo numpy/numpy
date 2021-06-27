@@ -5290,9 +5290,6 @@ class MaskedArray(ndarray):
 
         """
         m = self.mean(axis, dtype)
-        if m is masked:
-            return m
-
         if not axis:
             return self - m
         else:
