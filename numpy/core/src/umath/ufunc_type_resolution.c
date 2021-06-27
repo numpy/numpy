@@ -1495,29 +1495,29 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     return raise_no_loop_found_error(ufunc, dtypes);
 }
 
+
+/*
+ * Support for masked inner-strided loops. These are currently ONLY used
+ * for normal ufuncs, and only a generic loop getter exists.
+ * It may make sense to generalize this in the future or allow specialization.
+ * Until then, the inner-loop signature is flexible.
+ */
 typedef struct {
     NpyAuxData base;
-    PyUFuncGenericFunction unmasked_innerloop;
-    void *unmasked_innerloopdata;
+    PyUFuncGenericFunction unmasked_stridedloop;
+    void *innerloopdata;
     int nargs;
-} _ufunc_masker_data;
+    char *dataptrs[];
+} _masked_stridedloop_data;
 
-static NpyAuxData *
-ufunc_masker_data_clone(NpyAuxData *data)
+
+static void
+_masked_stridedloop_data_free(NpyAuxData *auxdata)
 {
-    _ufunc_masker_data *n;
-
-    /* Allocate a new one */
-    n = (_ufunc_masker_data *)PyArray_malloc(sizeof(_ufunc_masker_data));
-    if (n == NULL) {
-        return NULL;
-    }
-
-    /* Copy the data (unmasked data doesn't have object semantics) */
-    memcpy(n, data, sizeof(_ufunc_masker_data));
-
-    return (NpyAuxData *)n;
+    _masked_stridedloop_data *data = (_masked_stridedloop_data *)auxdata;
+    PyMem_Free(data);
 }
+
 
 /*
  * This function wraps a regular unmasked ufunc inner loop as a
@@ -1526,43 +1526,39 @@ ufunc_masker_data_clone(NpyAuxData *data)
  */
 static void
 unmasked_ufunc_loop_as_masked(
-             char **dataptrs, npy_intp *strides,
-             char *mask, npy_intp mask_stride,
-             npy_intp loopsize,
-             NpyAuxData *innerloopdata)
+        char **data, const npy_intp *dimensions,
+        const npy_intp *strides, void *_auxdata)
 {
-    _ufunc_masker_data *data;
-    int iargs, nargs;
-    PyUFuncGenericFunction unmasked_innerloop;
-    void *unmasked_innerloopdata;
-    npy_intp subloopsize;
+    _masked_stridedloop_data *auxdata = (_masked_stridedloop_data *)_auxdata;
+    int nargs = auxdata->nargs;
+    PyUFuncGenericFunction strided_loop = auxdata->unmasked_stridedloop;
+    void *innerloopdata = auxdata->innerloopdata;
 
-    /* Put the aux data into local variables */
-    data = (_ufunc_masker_data *)innerloopdata;
-    unmasked_innerloop = data->unmasked_innerloop;
-    unmasked_innerloopdata = data->unmasked_innerloopdata;
-    nargs = data->nargs;
+    char **dataptrs = auxdata->dataptrs;
+    memcpy(dataptrs, data, nargs * sizeof(char *));
+    char *mask = data[nargs];
+    npy_intp mask_stride = strides[nargs];
 
+    npy_intp N = dimensions[0];
     /* Process the data as runs of unmasked values */
     do {
+        ssize_t subloopsize;
+
         /* Skip masked values */
-        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 1);
-        for (iargs = 0; iargs < nargs; ++iargs) {
-            dataptrs[iargs] += subloopsize * strides[iargs];
+        mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 1);
+        for (int i = 0; i < nargs; i++) {
+            dataptrs[i] += subloopsize * strides[i];
         }
-        loopsize -= subloopsize;
-        /*
-         * Process unmasked values (assumes unmasked loop doesn't
-         * mess with the 'args' pointer values)
-         */
-        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 0);
-        unmasked_innerloop(dataptrs, &subloopsize, strides,
-                                        unmasked_innerloopdata);
-        for (iargs = 0; iargs < nargs; ++iargs) {
-            dataptrs[iargs] += subloopsize * strides[iargs];
+        N -= subloopsize;
+
+        /* Process unmasked values */
+        mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 0);
+        strided_loop(dataptrs, &subloopsize, strides, innerloopdata);
+        for (int i = 0; i < nargs; i++) {
+            dataptrs[i] += subloopsize * strides[i];
         }
-        loopsize -= subloopsize;
-    } while (loopsize > 0);
+        N -= subloopsize;
+    } while (N > 0);
 }
 
 
@@ -1574,15 +1570,13 @@ unmasked_ufunc_loop_as_masked(
 NPY_NO_EXPORT int
 PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
-                            PyArray_Descr *mask_dtype,
-                            npy_intp *NPY_UNUSED(fixed_strides),
-                            npy_intp NPY_UNUSED(fixed_mask_stride),
-                            PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
+                            PyUFuncGenericFunction *out_innerloop,
                             NpyAuxData **out_innerloopdata,
                             int *out_needs_api)
 {
     int retcode;
-    _ufunc_masker_data *data;
+    _masked_stridedloop_data *data;
+    int nargs = ufunc->nin + ufunc->nout;
 
     if (ufunc->legacy_inner_loop_selector == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -1592,27 +1586,21 @@ PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
         return -1;
     }
 
-    if (mask_dtype->type_num != NPY_BOOL) {
-        PyErr_SetString(PyExc_ValueError,
-                "only boolean masks are supported in ufunc inner loops "
-                "presently");
-        return -1;
-    }
-
-    /* Create a new NpyAuxData object for the masker data */
-    data = (_ufunc_masker_data *)PyArray_malloc(sizeof(_ufunc_masker_data));
+    /* Add working memory for the data pointers, to modify them in-place */
+    data = PyMem_Malloc(sizeof(_masked_stridedloop_data) +
+                        sizeof(char *) * nargs);
     if (data == NULL) {
         PyErr_NoMemory();
         return -1;
     }
-    memset(data, 0, sizeof(_ufunc_masker_data));
-    data->base.free = (NpyAuxData_FreeFunc *)&PyArray_free;
-    data->base.clone = &ufunc_masker_data_clone;
-    data->nargs = ufunc->nin + ufunc->nout;
+    data->base.free = _masked_stridedloop_data_free;
+    data->base.clone = NULL;  /* not currently used */
+    data->unmasked_stridedloop = NULL;
+    data->nargs = nargs;
 
     /* Get the unmasked ufunc inner loop */
     retcode = ufunc->legacy_inner_loop_selector(ufunc, dtypes,
-                    &data->unmasked_innerloop, &data->unmasked_innerloopdata,
+                    &data->unmasked_stridedloop, &data->innerloopdata,
                     out_needs_api);
     if (retcode < 0) {
         PyArray_free(data);

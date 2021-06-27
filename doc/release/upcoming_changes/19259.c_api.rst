@@ -1,0 +1,12 @@
+Masked inner-loops cannot be customized anymore
+-----------------------------------------------
+The masked inner-loop selector is now never used.  A warning
+will be given in the unlikely event that it was customized.
+
+We do not expect that any code uses this.  If you do use it,
+you must unset the selector on newer NumPy version.
+Please also contact the NumPy developers, we do anticipate
+providing a new, more specific, mechanism.
+
+The customization was part of a never-implemented feature to allow
+for faster masked operations.

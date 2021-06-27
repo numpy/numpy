@@ -2265,10 +2265,7 @@ class TestSpecialMethods:
 
         a = np.array(1).view(type=with_prepare)
         if use_where:
-            # Currently raises, due to the array being replaced during prepare
-            with pytest.raises(ValueError):
-                x = np.add(a, a, where=np.array(True))
-            return
+            x = np.add(a, a, where=np.array(True))
         else:
             x = np.add(a, a)
         assert_equal(x, np.array(2))
@@ -2285,10 +2282,7 @@ class TestSpecialMethods:
 
         a = np.array([1]).view(type=with_prepare)
         if use_where:
-            # Currently raises, due to the array being replaced during prepare
-            with pytest.raises(ValueError):
-                x = np.add(a, a, a, where=[True])
-            return
+            x = np.add(a, a, a, where=[True])
         else:
             x = np.add(a, a, a)
         # Returned array is new, because of the strange
