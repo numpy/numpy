@@ -6863,6 +6863,8 @@ class TestChoose:
         self.y = 3*np.ones((3,), dtype=int)
         self.x2 = 2*np.ones((2, 3), dtype=int)
         self.y2 = 3*np.ones((2, 3), dtype=int)
+        self.x3 = 2*np.ones((3,), dtype=np.float64)
+        self.y3 = 3*np.ones((3,), dtype=np.float64)
         self.ind = [0, 0, 1]
 
     def test_basic(self):
@@ -6876,6 +6878,13 @@ class TestChoose:
     def test_broadcast2(self):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
+
+    # test output dtypes
+    def test_dtype(self):
+        A = np.choose(self.ind, (self.x, self.y), dtype=np.float64)
+        assert_equal(A, [2., 2., 3.])
+        A = np.choose(self.ind, (self.x3, self.y3), dtype=np.int32)
+        assert_equal(A, [2, 2, 3])
 
     @pytest.mark.parametrize("ops",
         [(1000, np.array([1], dtype=np.uint8)),
