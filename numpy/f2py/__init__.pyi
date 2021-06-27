@@ -3,10 +3,6 @@ import subprocess
 from typing import Any, List, Iterable, Dict, overload
 from typing_extensions import TypedDict, Literal as L
 
-from numpy.f2py import (
-    f2py_testing as f2py_testing,
-)
-
 class _F2PyDictBase(TypedDict):
     csrc: List[str]
     h: List[str]
