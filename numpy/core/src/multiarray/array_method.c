@@ -757,10 +757,16 @@ boundarraymethod__simple_strided_call(
 
 
 /*
- * Support for masked inner-strided loops. These are currently ONLY used
- * for normal ufuncs, and only a generic loop getter exists.
- * It may make sense to generalize this in the future or allow specialization.
- * Until then, the inner-loop signature is flexible.
+ * TODO: Currently still based on the old ufunc system and not ArrayMethod!
+ *       This requires fixing the ufunc code first.
+ *
+ * Support for masked inner-strided loops.  Masked inner-strided loops are
+ * only used in the ufunc machinery.  So this special cases them.
+ * In the future it probably makes sense to create an::
+ *
+ *     Arraymethod->get_masked_strided_loop()
+ *
+ * Function which this can wrap instead.
  */
 typedef struct {
     NpyAuxData base;
@@ -780,9 +786,9 @@ _masked_stridedloop_data_free(NpyAuxData *auxdata)
 
 
 /*
- * This function wraps a regular unmasked ufunc inner loop as a
- * masked ufunc inner loop, only calling the function for
- * elements where the mask is True.
+ * This function wraps a regular unmasked strided-loop as a
+ * masked strided-loop, only calling the function for elements
+ * where the mask is True.
  */
 static void
 unmasked_ufunc_loop_as_masked(
@@ -823,6 +829,7 @@ unmasked_ufunc_loop_as_masked(
 
 
 /*
+ * TODO: This function will be the masked equivalent to `get_loop`.
  * This function wraps a legacy inner loop so it becomes masked.
  *
  * Returns 0 on success, -1 on error.

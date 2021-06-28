@@ -811,7 +811,7 @@ PyUFunc_Type and PyUFuncObject
           char *core_signature;
           PyUFunc_TypeResolutionFunc *type_resolver;
           PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
-          PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
+          void *reserved2;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
           /* new in API version 0x0000000D */
@@ -964,10 +964,6 @@ PyUFunc_Type and PyUFuncObject
    .. c:member:: void *reserved2
 
        For a possible future loop selector with a different signature.
-
-   .. c:member:: PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector
-
-       Function which returns a masked inner loop for the ufunc
 
    .. c:member:: npy_uint32 op_flags
 
