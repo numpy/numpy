@@ -310,6 +310,8 @@ def _register_known_types():
     # As the smallest_normal in double double is so hard to calculate we set
     # it to NaN.
     smallest_normal_dd = NaN
+    # Leave the same value for the smallest subnormal as double
+    smallest_subnormal_dd = ld(nextafter(0., 1.))
     float_dd_ma = MachArLike(ld,
                              machep=-105,
                              negep=-106,
@@ -324,7 +326,7 @@ def _register_known_types():
                              epsneg=exp2(ld(-106)),
                              huge=huge_dd,
                              tiny=smallest_normal_dd,
-                             smallest_subnormal=ld(np.nextafter(0., 1.))  # same as double
+                             smallest_subnormal=smallest_subnormal_dd)
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
         b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf')
