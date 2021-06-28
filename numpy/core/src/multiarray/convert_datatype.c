@@ -393,6 +393,7 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
     Py_DECREF(out_descrs[1]);
     /* NPY_NO_CASTING has to be used for (NPY_EQUIV_CASTING|_NPY_CAST_IS_VIEW) */
     assert(casting != (NPY_EQUIV_CASTING|_NPY_CAST_IS_VIEW));
+    assert(casting != NPY_NO_CASTING);  /* forgot to set the view flag */
     return casting;
 }
 
