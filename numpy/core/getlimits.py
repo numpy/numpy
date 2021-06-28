@@ -324,7 +324,7 @@ def _register_known_types():
                              epsneg=exp2(ld(-106)),
                              huge=huge_dd,
                              tiny=smallest_normal_dd,
-                             smallest_subnormal=exp2(ld(-16445)))
+                             smallest_subnormal=ld(np.nextafter(0., 1.))  # same as double
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
         b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf')
