@@ -1,7 +1,5 @@
 :orphan:
 
-.. _array-broadcasting-in-numpy:
-
 ===========================
 Array Broadcasting in Numpy
 ===========================

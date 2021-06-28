@@ -1,22 +1,15 @@
 .. _basics.broadcasting:
+.. _array-broadcasting-in-numpy:
 
 ************
 Broadcasting
 ************
 
 .. seealso::
-    :class:`numpy.broadcast`
-
-    :ref:`array-broadcasting-in-numpy`
-        An introduction to the concepts discussed here
-
-.. note::
-    See `this article
-    <https://numpy.org/devdocs/user/theory.broadcasting.html>`_
-    for illustrations of broadcasting concepts.
+    :class:`numpy.broadcast`   
 
 
-The term broadcasting describes how numpy treats arrays with different
+The term broadcasting describes how NumPy treats arrays with different
 shapes during arithmetic operations. Subject to certain constraints,
 the smaller array is "broadcast" across the larger array so that they
 have compatible shapes. Broadcasting provides a means of vectorizing
@@ -184,4 +177,75 @@ Here the ``newaxis`` index operator inserts a new axis into ``a``,
 making it a two-dimensional ``4x1`` array.  Combining the ``4x1`` array
 with ``b``, which has shape ``(3,)``, yields a ``4x3`` array.
 
+A Practical Example: Vector Quantization
+========================================
 
+Broadcasting comes up quite often in real world problems. A typical example
+occurs in the vector quantization (VQ) algorithm used in information theory,
+classification, and other related areas. The basic operation in VQ finds
+the closest point in a set of points, called ``codes`` in VQ jargon, to a given
+point, called the ``observation``. In the very simple, two-dimensional case
+shown below, the values in ``observation`` describe the weight and height of an
+athlete to be classified. The ``codes`` represent different classes of
+athletes. [#f1]_ Finding the closest point requires calculating the distance
+between observation and each of the codes. The shortest distance provides the
+best match. In this example, ``codes[0]`` is the closest class indicating that
+the athlete is likely a basketball player.
+
+  >>> from numpy import array, argmin, sqrt, sum
+  >>> observation = array([111.0, 188.0])
+  >>> codes = array([[102.0, 203.0],
+  ...                [132.0, 193.0],
+  ...                [45.0, 155.0],
+  ...                [57.0, 173.0]])
+  >>> diff = codes - observation    # the broadcast happens here
+  >>> dist = sqrt(sum(diff**2,axis=-1))
+  >>> argmin(dist)
+  0
+
+In this example, the ``observation`` array is stretched to match
+the shape of the ``codes`` array::
+
+  Observation      (1d array):      2
+  Codes            (2d array):  4 x 2
+  Diff             (2d array):  4 x 2
+
+.. figure:: theory.broadcast_5.png
+    :alt: vector quantitization example
+    :name: figure-1
+
+    *Figure 1*
+
+    *The basic operation of vector quantization calculates the distance between
+    an object to be classified, the dark square, and multiple known codes, the
+    gray circles. In this simple case, the codes represent individual classes.
+    More complex cases use multiple codes per class.*
+
+Typically, a large number of ``observations``, perhaps read from a database,
+are compared to a set of ``codes``. Consider this scenario::
+
+  Observation      (2d array):      10 x 3
+  Codes            (2d array):       5 x 3
+  Diff             (3d array):  5 x 10 x 3 
+
+The three-dimensional array, ``diff``, is a consequence of broadcasting, not a
+necessity for the calculation. Large data sets will generate a large
+intermediate array that is computationally inefficient. Instead, if each
+observation is calculated individually using a Python loop around the code
+in the two-dimensional example above, a much smaller array is used.
+
+Broadcasting is a powerful tool for writing short and usually intuitive code
+that does its computations very efficiently in C. However, there are cases
+when broadcasting uses unnecessarily large amounts of memory for a particular
+algorithm. In these cases, it is better to write the algorithm's outer loop in
+Python. This may also produce more readable code, as algorithms that use
+broadcasting tend to become more difficult to interpret as the number of
+dimensions in the broadcast increases.
+
+.. rubric:: Footnotes
+
+.. [#f1]
+    In this example, weight has more impact on the distance calculation
+    than height because of the larger values. In practice, it is important to
+    normalize the height and weight, often by their standard deviation across the
+    data set, so that both have equal influence on the distance calculation.
