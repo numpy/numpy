@@ -310,11 +310,10 @@ stages:
       vmImage: 'ubuntu-20.04'
     steps:
     - script: |
-            # Download and install miniconda
-            MINICONDA_PATH=$HOME/miniconda
-            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-            /bin/bash miniconda.sh -b -p $MINICONDA_PATH
-            export PATH="$MINICONDA_PATH/bin:$PATH"
+            # create and activate conda environment
+            conda env create -f environment.yml
+      displayName: 'Create conda environment.'
+    - script: |
             # >>> conda initialize >>>
             # !! Contents within this block are 'conda init' !!
             # see https://github.com/conda/conda/issues/7980
@@ -322,13 +321,11 @@ stages:
             eval "$__conda_setup"
             unset __conda_setup
             # <<< conda initialize <<<
-            # create and activate conda environment
-            conda env create -f environment.yml
             conda activate numpy-dev
             # Run native baseline Build / Tests
-            python3 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            python runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
             --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
-      displayName: 'Run native baseline Build / Tests in conda environment.'
+      displayName: 'Run native baseline Build / Tests in conda.'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
