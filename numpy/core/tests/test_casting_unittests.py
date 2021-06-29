@@ -17,7 +17,6 @@ from numpy.lib.stride_tricks import as_strided
 
 from numpy.testing import assert_array_equal
 from numpy.core._multiarray_umath import _get_castingimpl as get_castingimpl
-from numpy.core._multiarray_tests import uses_new_casts
 
 
 # Simple skips object, parametric and long double (unsupported by struct)
@@ -135,11 +134,7 @@ class TestChanges:
     def test_float_to_string(self, floating, string):
         assert np.can_cast(floating, string)
         # 100 is long enough to hold any formatted floating
-        if uses_new_casts():
-            assert np.can_cast(floating, f"{string}100")
-        else:
-            assert not np.can_cast(floating, f"{string}100")
-            assert np.can_cast(floating, f"{string}100", casting="same_kind")
+        assert np.can_cast(floating, f"{string}100")
 
     def test_to_void(self):
         # But in general, we do consider these safe:
@@ -147,17 +142,14 @@ class TestChanges:
         assert np.can_cast("S20", "V")
 
         # Do not consider it a safe cast if the void is too smaller:
-        if uses_new_casts():
-            assert not np.can_cast("d", "V1")
-            assert not np.can_cast("S20", "V1")
-            assert not np.can_cast("U1", "V1")
-            # Structured to unstructured is just like any other:
-            assert np.can_cast("d,i", "V", casting="same_kind")
-        else:
-            assert np.can_cast("d", "V1")
-            assert np.can_cast("S20", "V1")
-            assert np.can_cast("U1", "V1")
-            assert not np.can_cast("d,i", "V", casting="same_kind")
+        assert not np.can_cast("d", "V1")
+        assert not np.can_cast("S20", "V1")
+        assert not np.can_cast("U1", "V1")
+        # Structured to unstructured is just like any other:
+        assert np.can_cast("d,i", "V", casting="same_kind")
+        # Unstructured void to unstructured is actually no cast at all:
+        assert np.can_cast("V3", "V", casting="no")
+        assert np.can_cast("V0", "V", casting="no")
 
 
 class TestCasting:
@@ -657,3 +649,28 @@ class TestCasting:
         with pytest.raises(TypeError,
                     match="casting from object to the parametric DType"):
             cast._resolve_descriptors((np.dtype("O"), None))
+
+    @pytest.mark.parametrize("casting", ["no", "unsafe"])
+    def test_void_and_structured_with_subarray(self, casting):
+        # test case corresponding to gh-19325
+        dtype = np.dtype([("foo", "<f4", (3, 2))])
+        expected = casting == "unsafe"
+        assert np.can_cast("V4", dtype, casting=casting) == expected
+        assert np.can_cast(dtype, "V4", casting=casting) == expected
+
+    @pytest.mark.parametrize("dtype", np.typecodes["All"])
+    def test_object_casts_NULL_None_equivalence(self, dtype):
+        # None to <other> casts may succeed or fail, but a NULL'ed array must
+        # behave the same as one filled with None's.
+        arr_normal = np.array([None] * 5)
+        arr_NULLs = np.empty_like([None] * 5)
+        # If the check fails (maybe it should) the test would lose its purpose:
+        assert arr_NULLs.tobytes() == b"\x00" * arr_NULLs.nbytes
+
+        try:
+            expected = arr_normal.astype(dtype)
+        except TypeError:
+            with pytest.raises(TypeError):
+                arr_NULLs.astype(dtype)
+        else:
+            assert_array_equal(expected, arr_NULLs.astype(dtype))

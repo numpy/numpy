@@ -630,7 +630,8 @@ class ndindex:
 
     Examples
     --------
-    # dimensions as individual arguments
+    Dimensions as individual arguments
+    
     >>> for index in np.ndindex(3, 2, 1):
     ...     print(index)
     (0, 0, 0)
@@ -640,7 +641,8 @@ class ndindex:
     (2, 0, 0)
     (2, 1, 0)
 
-    # same dimensions - but in a tuple (3, 2, 1)
+    Same dimensions - but in a tuple ``(3, 2, 1)``
+    
     >>> for index in np.ndindex((3, 2, 1)):
     ...     print(index)
     (0, 0, 0)

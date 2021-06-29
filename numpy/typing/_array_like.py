@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Any, Sequence, TYPE_CHECKING, Union, TypeVar
-
+from typing import Any, Sequence, TYPE_CHECKING, Union, TypeVar, Generic
 from numpy import (
     ndarray,
     dtype,
@@ -20,24 +19,19 @@ from numpy import (
     str_,
     bytes_,
 )
+from . import _HAS_TYPING_EXTENSIONS
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
-    HAVE_PROTOCOL = True
-else:
-    try:
-        from typing_extensions import Protocol
-    except ImportError:
-        HAVE_PROTOCOL = False
-    else:
-        HAVE_PROTOCOL = True
+elif _HAS_TYPING_EXTENSIONS:
+    from typing_extensions import Protocol
 
 _T = TypeVar("_T")
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 _DType = TypeVar("_DType", bound="dtype[Any]")
 _DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 
-if TYPE_CHECKING or HAVE_PROTOCOL:
+if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     # The `_SupportsArray` protocol only cares about the default dtype
     # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
     # array.
@@ -46,7 +40,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
     class _SupportsArray(Protocol[_DType_co]):
         def __array__(self) -> ndarray[Any, _DType_co]: ...
 else:
-    _SupportsArray = Any
+    class _SupportsArray(Generic[_DType_co]): ...
 
 # TODO: Wait for support for recursive types
 _NestedSequence = Union[
@@ -76,7 +70,7 @@ _ArrayLike = Union[
 ArrayLike = Union[
     _RecursiveSequence,
     _ArrayLike[
-        "dtype[Any]",
+        dtype,
         Union[bool, int, float, complex, str, bytes]
     ],
 ]
@@ -128,10 +122,3 @@ _ArrayLikeInt = _ArrayLike[
     "dtype[integer[Any]]",
     int,
 ]
-
-if TYPE_CHECKING:
-    _ArrayND = ndarray[Any, dtype[_ScalarType]]
-    _ArrayOrScalar = Union[_ScalarType, _ArrayND[_ScalarType]]
-else:
-    _ArrayND = Any
-    _ArrayOrScalar = Any

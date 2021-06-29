@@ -16,6 +16,9 @@
 
 #include "binop_override.h"
 #include "ufunc_override.h"
+#include "abstractdtypes.h"
+#include "common_dtype.h"
+#include "convert_datatype.h"
 
 /*************************************************************************
  ****************   Implement Number Protocol ****************************

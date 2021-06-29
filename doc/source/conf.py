@@ -83,10 +83,8 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
 ]
-
-imgmath_image_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -99,7 +97,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2021, The SciPy community'
+copyright = '2008-2021, The NumPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -160,10 +158,13 @@ html_theme = 'pydata_sphinx_theme'
 
 html_logo = '_static/numpylogo.svg'
 
+html_favicon = '_static/favicon/favicon.ico'
+
 html_theme_options = {
   "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
+  "collapse_navigation": True,
 }
 
 
@@ -185,6 +186,8 @@ htmlhelp_basename = 'numpy'
 if 'sphinx.ext.pngmath' in extensions:
     pngmath_use_preview = True
     pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+
+mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
@@ -292,6 +295,8 @@ intersphinx_mapping = {
     'skimage': ('https://scikit-image.org/docs/stable', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
+    'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
 }
 
 
@@ -429,6 +434,11 @@ def linkcode_resolve(domain, info):
         except Exception:
             fn = None
         if not fn:
+            return None
+
+        # Ignore re-exports as their source files are not within the numpy repo
+        module = inspect.getmodule(obj)
+        if module is not None and not module.__name__.startswith("numpy"):
             return None
 
         try:

@@ -23,11 +23,6 @@ NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
 
-# Set to True to use the new casting implementation as much as implemented.
-# Allows running the full test suit to exercise the new machinery until
-# it is used as default and the old version is eventually deleted.
-NPY_USE_NEW_CASTINGIMPL = os.environ.get('NPY_USE_NEW_CASTINGIMPL', "0") != "0"
-
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -405,11 +400,6 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
 
-    # Accelerate is buggy, disallow it. See also numpy/linalg/setup.py
-    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
-        if 'accelerate' in opt_order:
-            opt_order.remove('accelerate')
-
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
     codegen_dir = join(local_dir, 'code_generators')
@@ -476,12 +466,6 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
             else:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 0))
-
-            # Use the new experimental casting implementation in NumPy 1.20:
-            if NPY_USE_NEW_CASTINGIMPL:
-                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 1))
-            else:
-                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 0))
 
             # Get long double representation
             rep = check_long_double_representation(config_cmd)
@@ -717,9 +701,11 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
                              join('src', 'common', 'mem_overlap.c'),
-                             join('src', 'common', 'npy_argparse.c')],
+                             join('src', 'common', 'npy_argparse.c'),
+                             join('src', 'common', 'npy_hashtable.c')],
                     depends=[join('src', 'common', 'mem_overlap.h'),
                              join('src', 'common', 'npy_argparse.h'),
+                             join('src', 'common', 'npy_hashtable.h'),
                              join('src', 'common', 'npy_extint128.h')],
                     libraries=['npymath'])
 
@@ -739,6 +725,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_ctypes.h'),
             join('src', 'common', 'npy_extint128.h'),
             join('src', 'common', 'npy_import.h'),
+            join('src', 'common', 'npy_hashtable.h'),
             join('src', 'common', 'npy_longdouble.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
@@ -753,6 +740,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'array_assign.c'),
             join('src', 'common', 'mem_overlap.c'),
             join('src', 'common', 'npy_argparse.c'),
+            join('src', 'common', 'npy_hashtable.c'),
             join('src', 'common', 'npy_longdouble.c'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.c'),
@@ -792,6 +780,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'npy_buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
+            join('src', 'multiarray', 'common_dtype.h'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
             join('src', 'multiarray', 'conversion_utils.h'),
@@ -854,6 +843,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'calculation.c'),
             join('src', 'multiarray', 'compiled_base.c'),
             join('src', 'multiarray', 'common.c'),
+            join('src', 'multiarray', 'common_dtype.c'),
             join('src', 'multiarray', 'convert.c'),
             join('src', 'multiarray', 'convert_datatype.c'),
             join('src', 'multiarray', 'conversion_utils.c'),

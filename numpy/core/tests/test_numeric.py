@@ -848,12 +848,10 @@ class TestTypes:
         assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))
         assert_equal(np.promote_types('>i8', '>i8'), np.dtype('i8'))
 
-        with pytest.warns(FutureWarning,
-                match="Promotion of numbers and bools to strings"):
-            assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U21'))
-            assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U21'))
-            assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U21'))
-            assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U21'))
+        assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U21'))
+        assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U21'))
+        assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U21'))
+        assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U21'))
 
         assert_equal(np.promote_types('<S5', '<U8'), np.dtype('U8'))
         assert_equal(np.promote_types('>S5', '>U8'), np.dtype('U8'))
@@ -901,37 +899,32 @@ class TestTypes:
 
         S = string_dtype
         
-        with pytest.warns(FutureWarning,
-                match="Promotion of numbers and bools to strings") as record:
-            # Promote numeric with unsized string:
-            assert_equal(promote_types('bool', S), np.dtype(S+'5'))
-            assert_equal(promote_types('b', S), np.dtype(S+'4'))
-            assert_equal(promote_types('u1', S), np.dtype(S+'3'))
-            assert_equal(promote_types('u2', S), np.dtype(S+'5'))
-            assert_equal(promote_types('u4', S), np.dtype(S+'10'))
-            assert_equal(promote_types('u8', S), np.dtype(S+'20'))
-            assert_equal(promote_types('i1', S), np.dtype(S+'4'))
-            assert_equal(promote_types('i2', S), np.dtype(S+'6'))
-            assert_equal(promote_types('i4', S), np.dtype(S+'11'))
-            assert_equal(promote_types('i8', S), np.dtype(S+'21'))
-            # Promote numeric with sized string:
-            assert_equal(promote_types('bool', S+'1'), np.dtype(S+'5'))
-            assert_equal(promote_types('bool', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('b', S+'1'), np.dtype(S+'4'))
-            assert_equal(promote_types('b', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u1', S+'1'), np.dtype(S+'3'))
-            assert_equal(promote_types('u1', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u2', S+'1'), np.dtype(S+'5'))
-            assert_equal(promote_types('u2', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u4', S+'1'), np.dtype(S+'10'))
-            assert_equal(promote_types('u4', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u8', S+'1'), np.dtype(S+'20'))
-            assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
-            # Promote with object:
-            assert_equal(promote_types('O', S+'30'), np.dtype('O'))
-
-        assert len(record) == 22  # each string promotion gave one warning
-
+        # Promote numeric with unsized string:
+        assert_equal(promote_types('bool', S), np.dtype(S+'5'))
+        assert_equal(promote_types('b', S), np.dtype(S+'4'))
+        assert_equal(promote_types('u1', S), np.dtype(S+'3'))
+        assert_equal(promote_types('u2', S), np.dtype(S+'5'))
+        assert_equal(promote_types('u4', S), np.dtype(S+'10'))
+        assert_equal(promote_types('u8', S), np.dtype(S+'20'))
+        assert_equal(promote_types('i1', S), np.dtype(S+'4'))
+        assert_equal(promote_types('i2', S), np.dtype(S+'6'))
+        assert_equal(promote_types('i4', S), np.dtype(S+'11'))
+        assert_equal(promote_types('i8', S), np.dtype(S+'21'))
+        # Promote numeric with sized string:
+        assert_equal(promote_types('bool', S+'1'), np.dtype(S+'5'))
+        assert_equal(promote_types('bool', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('b', S+'1'), np.dtype(S+'4'))
+        assert_equal(promote_types('b', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u1', S+'1'), np.dtype(S+'3'))
+        assert_equal(promote_types('u1', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u2', S+'1'), np.dtype(S+'5'))
+        assert_equal(promote_types('u2', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u4', S+'1'), np.dtype(S+'10'))
+        assert_equal(promote_types('u4', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u8', S+'1'), np.dtype(S+'20'))
+        assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
+        # Promote with object:
+        assert_equal(promote_types('O', S+'30'), np.dtype('O'))
 
     @pytest.mark.parametrize(["dtype1", "dtype2"],
             [[np.dtype("V6"), np.dtype("V10")],
@@ -1730,6 +1723,22 @@ class TestArrayComparisons:
         res = np.array_equiv(np.array([1, 2]), np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
         assert_(not res)
         assert_(type(res) is bool)
+
+    @pytest.mark.parametrize("dtype", ["V0", "V3", "V10"])
+    def test_compare_unstructured_voids(self, dtype):
+        zeros = np.zeros(3, dtype=dtype)
+
+        assert_array_equal(zeros, zeros)
+        assert not (zeros != zeros).any()
+
+        if dtype == "V0":
+            # Can't test != of actually different data
+            return
+
+        nonzeros = np.array([b"1", b"2", b"3"], dtype=dtype)
+
+        assert not (zeros == nonzeros).any()
+        assert (zeros != nonzeros).all()
 
 
 def assert_array_strict_equal(x, y):

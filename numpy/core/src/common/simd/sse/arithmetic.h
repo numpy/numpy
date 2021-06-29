@@ -25,7 +25,7 @@
 #define npyv_adds_s8  _mm_adds_epi8
 #define npyv_adds_u16 _mm_adds_epu16
 #define npyv_adds_s16 _mm_adds_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Subtraction
@@ -47,7 +47,7 @@
 #define npyv_subs_s8  _mm_subs_epi8
 #define npyv_subs_u16 _mm_subs_epu16
 #define npyv_subs_s16 _mm_subs_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Multiplication
@@ -83,7 +83,7 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
 #define npyv_mul_f64 _mm_mul_pd
 
 // saturated
-// TODO: after implment Packs intrins
+// TODO: after implement Packs intrins
 
 /***************************
  * Integer Division
@@ -92,14 +92,14 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
 // divide each unsigned 8-bit element by a precomputed divisor
 NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
 {
-    const __m128i bmask = _mm_set1_epi32(0xFF00FF00);
+    const __m128i bmask = _mm_set1_epi32(0x00FF00FF);
     const __m128i shf1b = _mm_set1_epi8(0xFFU >> _mm_cvtsi128_si32(divisor.val[1]));
     const __m128i shf2b = _mm_set1_epi8(0xFFU >> _mm_cvtsi128_si32(divisor.val[2]));
     // high part of unsigned multiplication
-    __m128i mulhi_odd   = _mm_mulhi_epu16(a, divisor.val[0]);
-    __m128i mulhi_even  = _mm_mulhi_epu16(_mm_slli_epi16(a, 8), divisor.val[0]);
+    __m128i mulhi_even  = _mm_mullo_epi16(_mm_and_si128(a, bmask), divisor.val[0]);
+    __m128i mulhi_odd   = _mm_mullo_epi16(_mm_srli_epi16(a, 8), divisor.val[0]);
             mulhi_even  = _mm_srli_epi16(mulhi_even, 8);
-    __m128i mulhi       = npyv_select_u8(bmask, mulhi_odd, mulhi_even);
+    __m128i mulhi       = npyv_select_u8(bmask, mulhi_even, mulhi_odd);
     // floor(a/d)       = (mulhi + ((a-mulhi) >> sh1)) >> sh2
     __m128i q           = _mm_sub_epi8(a, mulhi);
             q           = _mm_and_si128(_mm_srl_epi16(q, divisor.val[1]), shf1b);

@@ -19,7 +19,7 @@ stages:
   jobs:
 
   - job: Lint
-    condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/main'))  # skip for PR merges
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
     pool:
       vmImage: 'ubuntu-18.04'
     steps:
@@ -31,7 +31,8 @@ stages:
     - script: >-
         python -m pip install -r linter_requirements.txt
       displayName: 'Install tools'
-      failOnStderr: true
+      # pip 21.1 emits a pile of garbage messages to annoy users :)
+      #      failOnStderr: true
     - script: |
         python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
       displayName: 'Run Lint Checks'
@@ -196,7 +197,6 @@ stages:
     - script: python setup.py build -j 4 build_ext --inplace install
       displayName: 'Build NumPy without OpenBLAS and new casting'
       env:
-        NPY_USE_NEW_CASTINGIMPL: 1
         BLAS: None
         LAPACK: None
         ATLAS: None
@@ -207,7 +207,7 @@ stages:
     - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
     - script: python runtests.py -g --refguide-check
-      displayName: 'Run Refuide Check'
+      displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
@@ -305,4 +305,31 @@ stages:
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for gcc 4.8'
 
+  - job: Linux_conda
+    pool:
+      vmImage: 'ubuntu-20.04'
+    steps:
+    - script: |
+            # create and activate conda environment
+            conda env create -f environment.yml
+      displayName: 'Create conda environment.'
+    - script: |
+            # >>> conda initialize >>>
+            # !! Contents within this block are 'conda init' !!
+            # see https://github.com/conda/conda/issues/7980
+            __conda_setup="$('conda' 'shell.bash' 'hook' 2> /dev/null)"
+            eval "$__conda_setup"
+            unset __conda_setup
+            # <<< conda initialize <<<
+            conda activate numpy-dev
+            # Run native baseline Build / Tests
+            python runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run native baseline Build / Tests in conda.'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for conda installation'
 

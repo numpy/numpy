@@ -1,6 +1,7 @@
 import os
 import sys
 import copy
+import platform
 import pytest
 
 import numpy as np
@@ -118,8 +119,11 @@ _cast_dict['CFLOAT'] = _cast_dict['FLOAT'] + ['CFLOAT']
 # 16 byte long double types this means the inout intent cannot be satisfied
 # and several tests fail as the alignment flag can be randomly true or fals
 # when numpy gains an aligned allocator the tests could be enabled again
+#
+# Furthermore, on macOS ARM64, LONGDOUBLE is an alias for DOUBLE.
 if ((np.intp().dtype.itemsize != 4 or np.clongdouble().dtype.alignment <= 8) and
-        sys.platform != 'win32'):
+        sys.platform != 'win32' and
+        (platform.system(), platform.processor()) != ('Darwin', 'arm')):
     _type_names.extend(['LONGDOUBLE', 'CDOUBLE', 'CLONGDOUBLE'])
     _cast_dict['LONGDOUBLE'] = _cast_dict['LONG'] + \
         ['ULONG', 'FLOAT', 'DOUBLE', 'LONGDOUBLE']

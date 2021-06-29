@@ -322,11 +322,11 @@ strided_to_strided_object_to_any(
 
     while (N > 0) {
         memcpy(&src_ref, src, sizeof(src_ref));
-        if (PyArray_Pack(data->descr, dst, src_ref) < 0) {
+        if (PyArray_Pack(data->descr, dst, src_ref ? src_ref : Py_None) < 0) {
             return -1;
         }
 
-        if (data->move_references) {
+        if (data->move_references && src_ref != NULL) {
             Py_DECREF(src_ref);
             memset(src, 0, sizeof(src_ref));
         }
@@ -2281,7 +2281,9 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 {
     PyObject *key, *tup, *title;
     PyArray_Descr *src_fld_dtype, *dst_fld_dtype;
-    npy_int i, field_count, structsize;
+    npy_int i;
+    size_t structsize;
+    Py_ssize_t field_count;
     int src_offset, dst_offset;
     _field_transfer_data *data;
 
@@ -2468,7 +2470,8 @@ get_decref_fields_transfer_function(int NPY_UNUSED(aligned),
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *src_fld_dtype;
-    npy_int i, field_count, structsize;
+    npy_int i, structsize;
+    Py_ssize_t field_count;
     int src_offset;
 
     names = src_dtype->names;
@@ -2831,17 +2834,17 @@ static NpyAuxData *
 _multistep_cast_auxdata_clone_int(_multistep_castdata *castdata, int move_info)
 {
     /* Round up the structure size to 16-byte boundary for the buffers */
-    ssize_t datasize = (sizeof(_multistep_castdata) + 15) & ~0xf;
+    Py_ssize_t datasize = (sizeof(_multistep_castdata) + 15) & ~0xf;
 
-    ssize_t from_buffer_offset = datasize;
+    Py_ssize_t from_buffer_offset = datasize;
     if (castdata->from.func != NULL) {
-        ssize_t src_itemsize = castdata->main.context.descriptors[0]->elsize;
+        Py_ssize_t src_itemsize = castdata->main.context.descriptors[0]->elsize;
         datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * src_itemsize;
         datasize = (datasize + 15) & ~0xf;
     }
-    ssize_t to_buffer_offset = datasize;
+    Py_ssize_t to_buffer_offset = datasize;
     if (castdata->to.func != NULL) {
-        ssize_t dst_itemsize = castdata->main.context.descriptors[1]->elsize;
+        Py_ssize_t dst_itemsize = castdata->main.context.descriptors[1]->elsize;
         datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * dst_itemsize;
     }
 

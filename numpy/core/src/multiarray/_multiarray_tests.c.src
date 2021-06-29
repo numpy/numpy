@@ -1,4 +1,6 @@
 /* -*-c-*- */
+#define PY_SSIZE_T_CLEAN
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <Python.h>
 #define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
@@ -11,6 +13,7 @@
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "array_method.h"
+#include "npy_hashtable.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -87,7 +90,7 @@ static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
      * For each point in itx, copy the current neighborhood into an array which
      * is appended at the output list
      */
-    for (i = 0; i < itx->size; ++i) {
+    for (i = itx->index; i < itx->size; ++i) {
         PyArrayNeighborhoodIter_Reset(niterx);
 
         for (j = 0; j < PyArray_NDIM(itx->ao); ++j) {
@@ -130,7 +133,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
      * For each point in itx, copy the current neighborhood into an array which
      * is appended at the output list
      */
-    for (i = 0; i < itx->size; ++i) {
+    for (i = itx->index; i < itx->size; ++i) {
         PyArrayNeighborhoodIter_Reset(niterx);
 
         for (j = 0; j < PyArray_NDIM(itx->ao); ++j) {
@@ -161,10 +164,11 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     PyArrayObject *ax, *afill;
     PyArrayIterObject *itx;
     int i, typenum, mode, st;
+    Py_ssize_t idxstart = 0;
     npy_intp bounds[NPY_MAXDIMS*2];
     PyArrayNeighborhoodIterObject *niterx;
 
-    if (!PyArg_ParseTuple(args, "OOOi", &x, &b, &fill, &mode)) {
+    if (!PyArg_ParseTuple(args, "OOOi|n", &x, &b, &fill, &mode, &idxstart)) {
         return NULL;
     }
 
@@ -224,11 +228,19 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
         }
     }
 
+    if (idxstart >= itx->size) {
+        PyErr_SetString(PyExc_ValueError,
+                "start index not compatible with x input");
+        goto clean_itx;
+    }
+
     niterx = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
                     (PyArrayIterObject*)itx, bounds, mode, afill);
     if (niterx == NULL) {
         goto clean_afill;
     }
+
+    PyArray_ITER_GOTO1D((PyArrayIterObject*)itx, idxstart);
 
     switch (typenum) {
         case NPY_OBJECT:
@@ -407,7 +419,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
     niterx2 = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
                     (PyArrayIterObject*)niterx1, bounds,
                     mode2, NULL);
-    if (niterx1 == NULL) {
+    if (niterx2 == NULL) {
         goto clean_niterx1;
     }
 
@@ -1103,6 +1115,92 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     Py_XDECREF(classes);
     Py_XDECREF(result);
     return NULL;
+}
+
+
+/*
+ * Helper to test the identity cache, takes a list of values and adds
+ * all to the cache except the last key/value pair.  The last value is
+ * ignored, instead the last key is looked up.
+ * None is returned, if the key is not found.
+ * If `replace` is True, duplicate entries are ignored when adding to the
+ * hashtable.
+ */
+static PyObject *
+identityhash_tester(PyObject *NPY_UNUSED(mod),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+
+    int key_len;
+    int replace;
+    PyObject *replace_obj = Py_False;
+    PyObject *sequence;
+    PyObject *result = NULL;
+
+    if (npy_parse_arguments("identityhash_tester", args, len_args, kwnames,
+            "key_len", &PyArray_PythonPyIntFromInt, &key_len,
+            "sequence", NULL, &sequence,
+            "|replace", NULL, &replace_obj,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    replace = PyObject_IsTrue(replace_obj);
+    if (error_converting(replace)) {
+        return NULL;
+    }
+
+    if (key_len < 1 || key_len >= NPY_MAXARGS) {
+        PyErr_SetString(PyExc_ValueError, "must have 1 to max-args keys.");
+        return NULL;
+    }
+    PyArrayIdentityHash *tb = PyArrayIdentityHash_New(key_len);
+    if (tb == NULL) {
+        return NULL;
+    }
+
+    /* Replace the sequence with a guaranteed fast-sequence */
+    sequence = PySequence_Fast(sequence, "converting sequence.");
+    if (sequence == NULL) {
+        goto finish;
+    }
+
+    Py_ssize_t length = PySequence_Fast_GET_SIZE(sequence);
+    for (Py_ssize_t i = 0; i < length; i++) {
+        PyObject *key_val = PySequence_Fast_GET_ITEM(sequence, i);
+        if (!PyTuple_CheckExact(key_val) || PyTuple_GET_SIZE(key_val) != 2) {
+            PyErr_SetString(PyExc_TypeError, "bad key-value pair.");
+            goto finish;
+        }
+        PyObject *key = PyTuple_GET_ITEM(key_val, 0);
+        PyObject *value = PyTuple_GET_ITEM(key_val, 1);
+        if (!PyTuple_CheckExact(key) || PyTuple_GET_SIZE(key) != key_len) {
+            PyErr_SetString(PyExc_TypeError, "bad key tuple.");
+            goto finish;
+        }
+
+        PyObject *keys[NPY_MAXARGS];
+        for (int j = 0; j < key_len; j++) {
+            keys[j] = PyTuple_GET_ITEM(key, j);
+        }
+        if (i != length - 1) {
+            if (PyArrayIdentityHash_SetItem(tb, keys, value, replace) < 0) {
+                goto finish;
+            }
+        }
+        else {
+            result = PyArrayIdentityHash_GetItem(tb, keys);
+            if (result == NULL) {
+                result = Py_None;
+            }
+            Py_INCREF(result);
+        }
+    }
+
+  finish:
+    Py_DECREF(sequence);
+    PyArrayIdentityHash_Dealloc(tb);
+    return result;
 }
 
 
@@ -2141,17 +2239,6 @@ getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 
 
 static PyObject *
-uses_new_casts(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
-{
-#if NPY_USE_NEW_CASTINGIMPL
-    Py_RETURN_TRUE;
-#else
-    Py_RETURN_FALSE;
-#endif
-}
-
-
-static PyObject *
 run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
     char byteorder;
@@ -2347,6 +2434,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         "Return a list with info on all available casts. Some of the info"
         "may differ for an actual cast if it uses value-based casting "
         "(flexible types)."},
+    {"identityhash_tester",
+        (PyCFunction)identityhash_tester,
+        METH_KEYWORDS | METH_FASTCALL, NULL},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},
@@ -2407,9 +2497,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"getset_numericops",
         getset_numericops,
         METH_NOARGS, NULL},
-    {"uses_new_casts",
-            uses_new_casts,
-            METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */

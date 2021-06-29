@@ -35,25 +35,13 @@ __all__ = ['PytestTester']
 
 
 def _show_numpy_info():
-    from numpy.core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
     import numpy as np
 
     print("NumPy version %s" % np.__version__)
     relaxed_strides = np.ones((10, 1), order="C").flags.f_contiguous
     print("NumPy relaxed strides checking option:", relaxed_strides)
-
-    if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
-        enabled_features = "nothing enabled"
-    else:
-        enabled_features = ' '.join(__cpu_baseline__)
-        for feature in __cpu_dispatch__:
-            if __cpu_features__[feature]:
-                enabled_features += " %s*" % feature
-            else:
-                enabled_features += " %s?" % feature
-    print("NumPy CPU features:", enabled_features)
+    info = np.lib.utils._opt_info()
+    print("NumPy CPU features: ", (info if info else 'nothing enabled'))
 
 
 

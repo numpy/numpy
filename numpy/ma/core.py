@@ -40,7 +40,6 @@ from numpy.compat import (
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core._internal import recursive
-from numpy.compat import pickle
 
 
 __all__ = [
@@ -1936,6 +1935,10 @@ def masked_where(condition, a, copy=True):
     result = a.view(cls)
     # Assign to *.mask so that structured masks are handled correctly.
     result.mask = _shrink_mask(cond)
+    # There is no view of a boolean so when 'a' is a MaskedArray with nomask
+    # the update to the result's mask has no effect.
+    if not copy and hasattr(a, '_mask') and getmask(a) is nomask:
+        a._mask = result._mask.view()
     return result
 
 
@@ -5287,9 +5290,6 @@ class MaskedArray(ndarray):
 
         """
         m = self.mean(axis, dtype)
-        if m is masked:
-            return m
-
         if not axis:
             return self - m
         else:
@@ -8091,21 +8091,50 @@ class _convert2ma:
     """
     __doc__ = None
 
-    def __init__(self, funcname, params=None):
+    def __init__(self, funcname, np_ret, np_ma_ret, params=None):
         self._func = getattr(np, funcname)
-        self.__doc__ = self.getdoc()
+        self.__doc__ = self.getdoc(np_ret, np_ma_ret)
         self._extras = params or {}
 
-    def getdoc(self):
+    def getdoc(self, np_ret, np_ma_ret):
         "Return the doc of the function (from the doc of the method)."
         doc = getattr(self._func, '__doc__', None)
         sig = get_object_signature(self._func)
         if doc:
+            doc = self._replace_return_type(doc, np_ret, np_ma_ret)
             # Add the signature of the function at the beginning of the doc
             if sig:
                 sig = "%s%s\n" % (self._func.__name__, sig)
             doc = sig + doc
         return doc
+
+    def _replace_return_type(self, doc, np_ret, np_ma_ret):
+        """
+        Replace documentation of ``np`` function's return type.
+
+        Replaces it with the proper type for the ``np.ma`` function.
+
+        Parameters
+        ----------
+        doc : str
+            The documentation of the ``np`` method.
+        np_ret : str
+            The return type string of the ``np`` method that we want to
+            replace. (e.g. "out : ndarray")
+        np_ma_ret : str
+            The return type string of the ``np.ma`` method.
+            (e.g. "out : MaskedArray")
+        """
+        if np_ret not in doc:
+            raise RuntimeError(
+                f"Failed to replace `{np_ret}` with `{np_ma_ret}`. "
+                f"The documentation string for return type, {np_ret}, is not "
+                f"found in the docstring for `np.{self._func.__name__}`. "
+                f"Fix the docstring for `np.{self._func.__name__}` or "
+                "update the expected string for return type."
+            )
+
+        return doc.replace(np_ret, np_ma_ret)
 
     def __call__(self, *args, **params):
         # Find the common parameters to the call and the definition
@@ -8122,20 +8151,57 @@ class _convert2ma:
             result._hardmask = bool(_extras.get("hard_mask", False))
         return result
 
-arange = _convert2ma('arange', params=dict(fill_value=None, hardmask=False))
+
+arange = _convert2ma(
+    'arange', 
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='arange : ndarray',
+    np_ma_ret='arange : MaskedArray',
+)
 clip = np.clip
 diff = np.diff
-empty = _convert2ma('empty', params=dict(fill_value=None, hardmask=False))
-empty_like = _convert2ma('empty_like')
-frombuffer = _convert2ma('frombuffer')
-fromfunction = _convert2ma('fromfunction')
+empty = _convert2ma(
+    'empty', 
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
+empty_like = _convert2ma(
+    'empty_like',
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
+frombuffer = _convert2ma(
+    'frombuffer',
+    np_ret='out : ndarray',
+    np_ma_ret='out: MaskedArray',
+)
+fromfunction = _convert2ma(
+   'fromfunction',
+   np_ret='fromfunction : any',
+   np_ma_ret='fromfunction: MaskedArray',
+)
 identity = _convert2ma(
-    'identity', params=dict(fill_value=None, hardmask=False))
+    'identity', 
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 indices = np.indices
-ones = _convert2ma('ones', params=dict(fill_value=None, hardmask=False))
+ones = _convert2ma(
+    'ones',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 ones_like = np.ones_like
 squeeze = np.squeeze
-zeros = _convert2ma('zeros', params=dict(fill_value=None, hardmask=False))
+zeros = _convert2ma(
+    'zeros',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 zeros_like = np.zeros_like
 
 

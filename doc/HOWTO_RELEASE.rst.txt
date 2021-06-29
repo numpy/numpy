@@ -12,7 +12,6 @@ useful info can be found.
 Source tree
 -----------
 - INSTALL.rst.txt
-- release.sh
 - pavement.py
 
 
@@ -69,8 +68,8 @@ reported.
 Tool chain
 ==========
 We build all our wheels on cloud infrastructure - so this list of compilers is
-for information and debugging builds locally.  See the ``.travis.yml`` and
-``appveyor.yml`` scripts in the `numpy wheels`_ repo for the definitive source
+for information and debugging builds locally.  See the ``.travis.yml`` script
+in the `numpy wheels`_ repo for the definitive source
 of the build recipes. Packages that are available using pip are noted.
 
 
@@ -194,11 +193,10 @@ Make sure current branch builds a package correctly
 ::
 
     git clean -fxd
-    python setup.py bdist
+    python setup.py bdist_wheel
     python setup.py sdist
 
-To actually build the binaries after everything is set up correctly, the
-release.sh script can be used. For details of the build process itself, it is
+For details of the build process itself, it is
 best to read the pavement.py script.
 
 .. note:: The following steps are repeated for the beta(s), release
@@ -258,10 +256,8 @@ Check the release notes
 Use `towncrier`_ to build the release note and
 commit the changes. This will remove all the fragments from
 ``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.rst``.
-Note that currently towncrier must be installed from its master branch as the
-last release (19.2.0) is outdated.
 
-    towncrier --version "<version>"
+    towncrier build --version "<version>"
     git commit -m"Create release note"
 
 Check that the release notes are up-to-date.
@@ -275,14 +271,13 @@ following:
   - for SciPy, supported NumPy version(s)
   - outlook for the near future
 
-.. _towncrier: https://github.com/hawkowl/towncrier
+.. _towncrier: https://pypi.org/project/towncrier/
 
 
 Update the release status and create a release "tag"
 ----------------------------------------------------
-Identify the commit hash of the release, e.g. 1b2e1d63ff.
+Identify the commit hash of the release, e.g. 1b2e1d63ff::
 
-::
     git co 1b2e1d63ff # gives warning about detached head
 
 First, change/check the following variables in ``pavement.py`` depending on the
@@ -347,7 +342,7 @@ define NPY_x_y_API_VERSION in numpyconfig.h
 
 Trigger the wheel builds
 ------------------------
-See the `MacPython/numpy wheels` repository.
+See the `numpy wheels`_ repository.
 
 In that repository edit the files:
 

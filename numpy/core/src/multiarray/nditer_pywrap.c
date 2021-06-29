@@ -1513,8 +1513,7 @@ npyiter_next(NewNpyArrayIterObject *self)
 
 static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 {
-    PyObject *ret;
-    npy_intp idim, ndim, shape[NPY_MAXDIMS];
+    npy_intp ndim, shape[NPY_MAXDIMS];
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1524,14 +1523,7 @@ static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 
     if (NpyIter_GetShape(self->iter, shape) == NPY_SUCCEED) {
         ndim = NpyIter_GetNDim(self->iter);
-        ret = PyTuple_New(ndim);
-        if (ret != NULL) {
-            for (idim = 0; idim < ndim; ++idim) {
-                PyTuple_SET_ITEM(ret, idim,
-                        PyLong_FromLong(shape[idim]));
-            }
-            return ret;
-        }
+        return PyArray_IntTupleFromIntp(ndim, shape);
     }
 
     return NULL;
@@ -1539,8 +1531,7 @@ static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 
 static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
 {
-    PyObject *ret;
-    npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
+    npy_intp ndim, multi_index[NPY_MAXDIMS];
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1551,15 +1542,7 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
     if (self->get_multi_index != NULL) {
         ndim = NpyIter_GetNDim(self->iter);
         self->get_multi_index(self->iter, multi_index);
-        ret = PyTuple_New(ndim);
-        if (ret == NULL) {
-            return NULL;
-        }
-        for (idim = 0; idim < ndim; ++idim) {
-            PyTuple_SET_ITEM(ret, idim,
-                    PyLong_FromLong(multi_index[idim]));
-        }
-        return ret;
+        return PyArray_IntTupleFromIntp(ndim, multi_index);
     }
     else {
         if (!NpyIter_HasMultiIndex(self->iter)) {

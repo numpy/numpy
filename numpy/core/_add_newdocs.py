@@ -924,7 +924,7 @@ add_newdoc('numpy.core.multiarray', 'asarray',
         'F' column-major (Fortran-style) memory representation.
         'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'K' (keep) preserve input order
-        Defaults to 'C'.
+        Defaults to 'K'.
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1280,7 +1280,7 @@ add_newdoc('numpy.core.multiarray', 'set_typeDict',
 
 add_newdoc('numpy.core.multiarray', 'fromstring',
     """
-    fromstring(string, dtype=float, count=-1, sep='', *, like=None)
+    fromstring(string, dtype=float, count=-1, *, sep, like=None)
 
     A new 1-D array initialized from text data in a string.
 
@@ -1346,16 +1346,16 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
 
 add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     """
-    compare_chararrays(a, b, cmp_op, rstrip)
+    compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
     comparison operator specified by `cmp_op`.
 
     Parameters
     ----------
-    a, b : array_like
+    a1, a2 : array_like
         Arrays to be compared.
-    cmp_op : {"<", "<=", "==", ">=", ">", "!="}
+    cmp : {"<", "<=", "==", ">=", ">", "!="}
         Type of comparison.
     rstrip : Boolean
         If True, the spaces at the end of Strings are removed before the comparison.
@@ -1536,6 +1536,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
         .. versionadded:: 1.20.0
 
+    Returns
+    -------
+    out : ndarray
+
     Notes
     -----
     If the buffer has data that is not in machine byte-order, this should
@@ -1581,8 +1585,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     For integer arguments the function is equivalent to the Python built-in
     `range` function, but returns an ndarray rather than a list.
 
-    When using a non-integer step, such as 0.1, the results will often not
-    be consistent.  It is better to use `numpy.linspace` for these cases.
+    When using a non-integer step, such as 0.1, it is often better to use 
+    `numpy.linspace`. See the warnings section below for more information.
 
     Parameters
     ----------
@@ -1614,6 +1618,25 @@ add_newdoc('numpy.core.multiarray', 'arange',
         ``ceil((stop - start)/step)``.  Because of floating point overflow,
         this rule may result in the last element of `out` being greater
         than `stop`.
+
+    Warnings
+    --------
+    The length of the output might not be numerically stable.
+
+    Another stability issue is due to the internal implementation of
+    `numpy.arange`.
+    The actual step value used to populate the array is
+    ``dtype(start + step) - dtype(start)`` and not `step`. Precision loss
+    can occur here, due to casting or due to using floating points when
+    `start` is much larger than `step`. This can lead to unexpected
+    behaviour. For example::
+
+      >>> np.arange(0, 5, 0.5, dtype=int)
+      array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+      >>> np.arange(-3, 3, 0.5, dtype=int)
+      array([-3, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
+
+    In such cases, the use of `numpy.linspace` should be preferred.
 
     See Also
     --------
@@ -2176,6 +2199,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     empty : Create an array, but leave its allocated memory unchanged (i.e.,
             it contains "garbage").
     dtype : Create a data-type.
+    numpy.typing.NDArray : A :term:`generic <generic type>` version
+                           of ndarray.
 
     Notes
     -----
@@ -3936,7 +3961,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
         actual implementation will vary with datatype. The 'mergesort' option
         is retained for backwards compatibility.
 
-        .. versionchanged:: 1.15.0.
+        .. versionchanged:: 1.15.0
            The 'stable' option was added.
 
     order : str or list of str, optional
@@ -4469,7 +4494,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy.core.umath', 'frompyfunc',
     """
-    frompyfunc(func, nin, nout, *[, identity])
+    frompyfunc(func, /, nin, nout, *[, identity])
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
 
@@ -4583,7 +4608,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
 
 add_newdoc('numpy.core.umath', 'seterrobj',
     """
-    seterrobj(errobj)
+    seterrobj(errobj, /)
 
     Set the object that defines floating-point error handling.
 
@@ -5313,7 +5338,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
       r = empty(len(A),len(B))
       for i in range(len(A)):
           for j in range(len(B)):
-              r[i,j] = op(A[i], B[j]) # op = ufunc in question
+              r[i,j] = op(A[i], B[j])  # op = ufunc in question
 
     Parameters
     ----------
@@ -5323,6 +5348,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
         Second array
     kwargs : any
         Arguments to pass on to the ufunc. Typically `dtype` or `out`.
+        See `ufunc` for a comprehensive overview of all available arguments.
 
     Returns
     -------
@@ -5814,7 +5840,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
     >>> (arr + arr).dtype.metadata
     mappingproxy({'key': 'value'})
 
-    But if the arrays have different dtype metadata, the metadata may be 
+    But if the arrays have different dtype metadata, the metadata may be
     dropped:
 
     >>> dt2 = np.dtype(float, metadata={"key2": "value2"})

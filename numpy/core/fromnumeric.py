@@ -1183,11 +1183,11 @@ def argmax(a, axis=None, out=None):
 
     >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmax(x, axis=-1)
-    >>> # Same as np.max(x, axis=-1, keepdims=True)
+    >>> # Same as np.amax(x, axis=-1, keepdims=True)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[4],
            [3]])
-    >>> # Same as np.max(x, axis=-1)
+    >>> # Same as np.amax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
     array([4, 3])
 
@@ -1264,11 +1264,11 @@ def argmin(a, axis=None, out=None):
 
     >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmin(x, axis=-1)
-    >>> # Same as np.min(x, axis=-1, keepdims=True)
+    >>> # Same as np.amin(x, axis=-1, keepdims=True)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[2],
            [0]])
-    >>> # Same as np.max(x, axis=-1)
+    >>> # Same as np.amax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
     array([2, 0])
 
@@ -1318,8 +1318,9 @@ def searchsorted(a, v, side='left', sorter=None):
 
     Returns
     -------
-    indices : array of ints
-        Array of insertion points with the same shape as `v`.
+    indices : int or array of ints
+        Array of insertion points with the same shape as `v`,
+        or an integer if `v` is a scalar.
 
     See Also
     --------
@@ -2086,14 +2087,24 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     --------
     :ref:`ufuncs-output-type`
 
+    Notes
+    -----
+    When `a_min` is greater than `a_max`, `clip` returns an
+    array in which all values are equal to `a_max`,
+    as shown in the second example.
+
     Examples
     --------
     >>> a = np.arange(10)
-    >>> np.clip(a, 1, 8)
-    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.clip(a, 1, 8)
+    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
+    >>> np.clip(a, 8, 1)
+    array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
     >>> np.clip(a, 3, 6, out=a)
+    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    >>> a
     array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
     >>> a = np.arange(10)
     >>> a
@@ -2488,6 +2499,10 @@ def cumsum(a, axis=None, dtype=None, out=None):
     Arithmetic is modular when using integer types, and no error is
     raised on overflow.
 
+    ``cumsum(a)[-1]`` may not be equal to ``sum(a)`` for floating-point
+    values since ``sum`` may use a pairwise summation routine, reducing
+    the roundoff-error. See `sum` for more information.
+
     Examples
     --------
     >>> a = np.array([[1,2,3], [4,5,6]])
@@ -2505,6 +2520,14 @@ def cumsum(a, axis=None, dtype=None, out=None):
     >>> np.cumsum(a,axis=1)      # sum over columns for each of the 2 rows
     array([[ 1,  3,  6],
            [ 4,  9, 15]])
+
+    ``cumsum(b)[-1]`` may not be equal to ``sum(b)``
+
+    >>> b = np.array([1, 2e-9, 3e-9] * 1000000)
+    >>> b.cumsum()[-1]
+    1000000.0050045159
+    >>> b.sum()
+    1000000.0050000029
 
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
@@ -2717,14 +2740,14 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     You can use an initial value to compute the maximum of an empty slice, or
     to initialize it to a different value:
 
-    >>> np.max([[-50], [10]], axis=-1, initial=0)
+    >>> np.amax([[-50], [10]], axis=-1, initial=0)
     array([ 0, 10])
 
     Notice that the initial value is used as one of the elements for which the
     maximum is determined, unlike for the default argument Python's max
     function, which is only used for empty iterables.
 
-    >>> np.max([5], initial=6)
+    >>> np.amax([5], initial=6)
     6
     >>> max([5], default=6)
     5
@@ -2840,7 +2863,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.nanmin(b)
     0.0
 
-    >>> np.min([[-50], [10]], axis=-1, initial=0)
+    >>> np.amin([[-50], [10]], axis=-1, initial=0)
     array([-50,   0])
 
     Notice that the initial value is used as one of the elements for which the
@@ -2849,7 +2872,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Notice that this isn't the same as Python's ``default`` argument.
 
-    >>> np.min([6], initial=5)
+    >>> np.amin([6], initial=5)
     5
     >>> min([6], default=5)
     6

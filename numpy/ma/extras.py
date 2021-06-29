@@ -613,7 +613,7 @@ def average(a, axis=None, weights=None, returned=False):
                     "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape, subok=True)
             wgt = wgt.swapaxes(-1, axis)
 
         if m is not nomask:

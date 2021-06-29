@@ -34,7 +34,9 @@
 #include "arrayobject.h"
 #include "array_method.h"
 #include "dtypemeta.h"
+#include "common_dtype.h"
 #include "convert_datatype.h"
+#include "common.h"
 
 
 /*
@@ -209,10 +211,12 @@ validate_spec(PyArrayMethod_Spec *spec)
         case NPY_UNSAFE_CASTING:
             break;
         default:
-            PyErr_Format(PyExc_TypeError,
-                    "ArrayMethod has invalid casting `%d`. (method: %s)",
-                    spec->casting, spec->name);
-            return -1;
+            if (spec->casting != -1) {
+                PyErr_Format(PyExc_TypeError,
+                        "ArrayMethod has invalid casting `%d`. (method: %s)",
+                        spec->casting, spec->name);
+                return -1;
+            }
     }
 
     for (int i = 0; i < nargs; i++) {
@@ -300,6 +304,13 @@ fill_arraymethod_from_slots(
 
     /* Check whether the slots are valid: */
     if (meth->resolve_descriptors == &default_resolve_descriptors) {
+        if (spec->casting == -1) {
+            PyErr_Format(PyExc_TypeError,
+                    "Cannot set casting to -1 (invalid) when not providing "
+                    "the default `resolve_descriptors` function. "
+                    "(method: %s)", spec->name);
+            return -1;
+        }
         for (int i = 0; i < meth->nin + meth->nout; i++) {
             if (res->dtypes[i] == NULL) {
                 if (i < meth->nin) {
@@ -422,7 +433,7 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
 
-    ssize_t length = strlen(spec->name);
+    Py_ssize_t length = strlen(spec->name);
     res->method->name = PyMem_Malloc(length + 1);
     if (res->method->name == NULL) {
         Py_DECREF(res);
@@ -461,13 +472,10 @@ static PyObject *
 boundarraymethod_repr(PyBoundArrayMethodObject *self)
 {
     int nargs = self->method->nin + self->method->nout;
-    PyObject *dtypes = PyTuple_New(nargs);
+    PyObject *dtypes = PyArray_TupleFromItems(
+            nargs, (PyObject **)self->dtypes, 0);
     if (dtypes == NULL) {
         return NULL;
-    }
-    for (int i = 0; i < nargs; i++) {
-        Py_INCREF(self->dtypes[i]);
-        PyTuple_SET_ITEM(dtypes, i, (PyObject *)self->dtypes[i]);
     }
     return PyUnicode_FromFormat(
             "<np._BoundArrayMethod `%s` for dtypes %S>",
@@ -572,6 +580,8 @@ boundarraymethod__resolve_descripors(
     /*
      * The casting flags should be the most generic casting level (except the
      * cast-is-view flag.  If no input is parametric, it must match exactly.
+     *
+     * (Note that these checks are only debugging checks.)
      */
     int parametric = 0;
     for (int i = 0; i < nin + nout; i++) {
@@ -580,33 +590,33 @@ boundarraymethod__resolve_descripors(
             break;
         }
     }
-    if (!parametric) {
-        /*
-         * Non-parametric can only mismatch if it switches from no to equiv
-         * (e.g. due to byteorder changes).
-         */
-        if (self->method->casting != (casting & ~_NPY_CAST_IS_VIEW) &&
-                !(self->method->casting == NPY_NO_CASTING &&
-                  casting == NPY_EQUIV_CASTING)) {
+    if (self->method->casting != -1) {
+        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
+        if (self->method->casting !=
+                PyArray_MinCastSafety(cast, self->method->casting)) {
             PyErr_Format(PyExc_RuntimeError,
-                    "resolve_descriptors cast level did not match stored one "
-                    "(expected %d, got %d) for method %s",
-                    self->method->casting, (casting & ~_NPY_CAST_IS_VIEW),
-                    self->method->name);
+                    "resolve_descriptors cast level did not match stored one. "
+                    "(set level is %d, got %d for method %s)",
+                    self->method->casting, cast, self->method->name);
             Py_DECREF(result_tuple);
             return NULL;
         }
-    }
-    else {
-        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
-        if (cast != PyArray_MinCastSafety(cast, self->method->casting)) {
-            PyErr_Format(PyExc_RuntimeError,
-                    "resolve_descriptors cast level did not match stored one "
-                    "(expected %d, got %d) for method %s",
-                    self->method->casting, (casting & ~_NPY_CAST_IS_VIEW),
-                    self->method->name);
-            Py_DECREF(result_tuple);
-            return NULL;
+        if (!parametric) {
+            /*
+             * Non-parametric can only mismatch if it switches from equiv to no
+             * (e.g. due to byteorder changes).
+             */
+            if (cast != self->method->casting &&
+                    self->method->casting != NPY_EQUIV_CASTING) {
+                PyErr_Format(PyExc_RuntimeError,
+                        "resolve_descriptors cast level changed even though "
+                        "the cast is non-parametric where the only possible "
+                        "change should be from equivalent to no casting. "
+                        "(set level is %d, got %d for method %s)",
+                        self->method->casting, cast, self->method->name);
+                Py_DECREF(result_tuple);
+                return NULL;
+            }
         }
     }
 
@@ -625,7 +635,7 @@ boundarraymethod__simple_strided_call(
     PyArrayObject *arrays[NPY_MAXARGS];
     PyArray_Descr *descrs[NPY_MAXARGS];
     PyArray_Descr *out_descrs[NPY_MAXARGS];
-    ssize_t length = -1;
+    Py_ssize_t length = -1;
     int aligned = 1;
     char *args[NPY_MAXARGS];
     npy_intp strides[NPY_MAXARGS];
@@ -743,6 +753,131 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
     Py_RETURN_NONE;
+}
+
+
+/*
+ * TODO: Currently still based on the old ufunc system and not ArrayMethod!
+ *       This requires fixing the ufunc code first.
+ *
+ * Support for masked inner-strided loops.  Masked inner-strided loops are
+ * only used in the ufunc machinery.  So this special cases them.
+ * In the future it probably makes sense to create an::
+ *
+ *     Arraymethod->get_masked_strided_loop()
+ *
+ * Function which this can wrap instead.
+ */
+typedef struct {
+    NpyAuxData base;
+    PyUFuncGenericFunction unmasked_stridedloop;
+    void *innerloopdata;
+    int nargs;
+    char *dataptrs[];
+} _masked_stridedloop_data;
+
+
+static void
+_masked_stridedloop_data_free(NpyAuxData *auxdata)
+{
+    _masked_stridedloop_data *data = (_masked_stridedloop_data *)auxdata;
+    PyMem_Free(data);
+}
+
+
+/*
+ * This function wraps a regular unmasked strided-loop as a
+ * masked strided-loop, only calling the function for elements
+ * where the mask is True.
+ */
+static void
+unmasked_ufunc_loop_as_masked(
+        char **data, const npy_intp *dimensions,
+        const npy_intp *strides, void *_auxdata)
+{
+    _masked_stridedloop_data *auxdata = (_masked_stridedloop_data *)_auxdata;
+    int nargs = auxdata->nargs;
+    PyUFuncGenericFunction strided_loop = auxdata->unmasked_stridedloop;
+    void *innerloopdata = auxdata->innerloopdata;
+
+    char **dataptrs = auxdata->dataptrs;
+    memcpy(dataptrs, data, nargs * sizeof(char *));
+    char *mask = data[nargs];
+    npy_intp mask_stride = strides[nargs];
+
+    npy_intp N = dimensions[0];
+    /* Process the data as runs of unmasked values */
+    do {
+        ssize_t subloopsize;
+
+        /* Skip masked values */
+        mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 1);
+        for (int i = 0; i < nargs; i++) {
+            dataptrs[i] += subloopsize * strides[i];
+        }
+        N -= subloopsize;
+
+        /* Process unmasked values */
+        mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 0);
+        strided_loop(dataptrs, &subloopsize, strides, innerloopdata);
+        for (int i = 0; i < nargs; i++) {
+            dataptrs[i] += subloopsize * strides[i];
+        }
+        N -= subloopsize;
+    } while (N > 0);
+}
+
+
+/*
+ * TODO: This function will be the masked equivalent to `get_loop`.
+ * This function wraps a legacy inner loop so it becomes masked.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
+        PyArray_Descr **dtypes,
+        PyUFuncGenericFunction *out_innerloop,
+        NpyAuxData **out_innerloopdata,
+        int *out_needs_api)
+{
+    int retcode;
+    _masked_stridedloop_data *data;
+    int nargs = ufunc->nin + ufunc->nout;
+
+    if (ufunc->legacy_inner_loop_selector == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "the ufunc default masked inner loop selector doesn't "
+                "yet support wrapping the new inner loop selector, it "
+                "still only wraps the legacy inner loop selector");
+        return -1;
+    }
+
+    /* Add working memory for the data pointers, to modify them in-place */
+    data = PyMem_Malloc(sizeof(_masked_stridedloop_data) +
+                        sizeof(char *) * nargs);
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    data->base.free = _masked_stridedloop_data_free;
+    data->base.clone = NULL;  /* not currently used */
+    data->unmasked_stridedloop = NULL;
+    data->nargs = nargs;
+
+    /* Get the unmasked ufunc inner loop */
+    retcode = ufunc->legacy_inner_loop_selector(ufunc, dtypes,
+            &data->unmasked_stridedloop, &data->innerloopdata,
+            out_needs_api);
+    if (retcode < 0) {
+        PyArray_free(data);
+        return retcode;
+    }
+
+    /* Return the loop function + aux data */
+    *out_innerloop = &unmasked_ufunc_loop_as_masked;
+    *out_innerloopdata = (NpyAuxData *)data;
+    return 0;
 }
 
 

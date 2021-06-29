@@ -5,11 +5,11 @@ NEP 35 — Array Creation Dispatching With __array_function__
 ===========================================================
 
 :Author: Peter Andreas Entschev <pentschev@nvidia.com>
-:Status: Draft
+:Status: Final
 :Type: Standards Track
 :Created: 2019-10-15
 :Updated: 2020-11-06
-:Resolution:
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-May/081761.html
 
 Abstract
 --------
