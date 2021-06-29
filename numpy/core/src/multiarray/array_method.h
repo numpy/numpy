@@ -158,6 +158,17 @@ npy_default_get_strided_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+/*
+ * TODO: This function will not rely on the current ufunc code after the
+ *       ufunc refactor.
+ */
+#include "numpy/ufuncobject.h"
+NPY_NO_EXPORT int
+PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
+        PyArray_Descr **dtypes,
+        PyUFuncGenericFunction *out_innerloop,
+        NpyAuxData **out_innerloopdata,
+        int *out_needs_api);
 
 /*
  * TODO: This function is the internal version, and its error paths may
