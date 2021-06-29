@@ -1183,11 +1183,11 @@ def argmax(a, axis=None, out=None):
 
     >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmax(x, axis=-1)
-    >>> # Same as np.max(x, axis=-1, keepdims=True)
+    >>> # Same as np.amax(x, axis=-1, keepdims=True)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[4],
            [3]])
-    >>> # Same as np.max(x, axis=-1)
+    >>> # Same as np.amax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
     array([4, 3])
 
@@ -1264,11 +1264,11 @@ def argmin(a, axis=None, out=None):
 
     >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmin(x, axis=-1)
-    >>> # Same as np.min(x, axis=-1, keepdims=True)
+    >>> # Same as np.amin(x, axis=-1, keepdims=True)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[2],
            [0]])
-    >>> # Same as np.max(x, axis=-1)
+    >>> # Same as np.amax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
     array([2, 0])
 
@@ -2740,14 +2740,14 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     You can use an initial value to compute the maximum of an empty slice, or
     to initialize it to a different value:
 
-    >>> np.max([[-50], [10]], axis=-1, initial=0)
+    >>> np.amax([[-50], [10]], axis=-1, initial=0)
     array([ 0, 10])
 
     Notice that the initial value is used as one of the elements for which the
     maximum is determined, unlike for the default argument Python's max
     function, which is only used for empty iterables.
 
-    >>> np.max([5], initial=6)
+    >>> np.amax([5], initial=6)
     6
     >>> max([5], default=6)
     5
@@ -2863,7 +2863,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.nanmin(b)
     0.0
 
-    >>> np.min([[-50], [10]], axis=-1, initial=0)
+    >>> np.amin([[-50], [10]], axis=-1, initial=0)
     array([-50,   0])
 
     Notice that the initial value is used as one of the elements for which the
@@ -2872,7 +2872,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Notice that this isn't the same as Python's ``default`` argument.
 
-    >>> np.min([6], initial=5)
+    >>> np.amin([6], initial=5)
     5
     >>> min([6], default=5)
     6
