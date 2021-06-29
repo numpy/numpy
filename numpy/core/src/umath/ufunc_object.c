@@ -1024,13 +1024,12 @@ check_for_trivial_loop(PyUFuncObject *ufunc,
              * array input, make a copy to keep the opportunity
              * for a trivial loop.  Outputs are not copied here.
              */
-            if (i < nin && (PyArray_NDIM(op[i]) == 0 || (
-                        PyArray_NDIM(op[i]) == 1 &&
-                        PyArray_DIM(op[i], 0) <= buffersize))) {
+            if (i < nin && (PyArray_NDIM(op[i]) == 0
+                            || (PyArray_NDIM(op[i]) == 1
+                                && PyArray_DIM(op[i], 0) <= buffersize))) {
                 PyArrayObject *tmp;
                 Py_INCREF(dtypes[i]);
-                tmp = (PyArrayObject *)
-                        PyArray_CastToType(op[i], dtypes[i], 0);
+                tmp = (PyArrayObject *)PyArray_CastToType(op[i], dtypes[i], 0);
                 if (tmp == NULL) {
                     return -1;
                 }
