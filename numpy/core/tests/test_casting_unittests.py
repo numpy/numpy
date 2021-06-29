@@ -657,3 +657,20 @@ class TestCasting:
         expected = casting == "unsafe"
         assert np.can_cast("V4", dtype, casting=casting) == expected
         assert np.can_cast(dtype, "V4", casting=casting) == expected
+
+    @pytest.mark.parametrize("dtype", np.typecodes["All"])
+    def test_object_casts_NULL_None_equivalence(self, dtype):
+        # None to <other> casts may succeed or fail, but a NULL'ed array must
+        # behave the same as one filled with None's.
+        arr_normal = np.array([None] * 5)
+        arr_NULLs = np.empty_like([None] * 5)
+        # If the check fails (maybe it should) the test would lose its purpose:
+        assert arr_NULLs.tobytes() == b"\x00" * arr_NULLs.nbytes
+
+        try:
+            expected = arr_normal.astype(dtype)
+        except TypeError:
+            with pytest.raises(TypeError):
+                arr_NULLs.astype(dtype)
+        else:
+            assert_array_equal(expected, arr_NULLs.astype(dtype))
