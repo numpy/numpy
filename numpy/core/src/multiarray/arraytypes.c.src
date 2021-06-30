@@ -3117,7 +3117,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         if (swap || new->alignment > 1) {
             if (swap || !npy_is_aligned(nip1, new->alignment)) {
                 /* create buffer and copy */
-                nip1 = PyDataMem_UserNEW(new->elsize, PyArray_HANDLER(ap)->alloc);
+                nip1 = PyDataMem_UserNEW(new->elsize, PyArray_HANDLER(ap)->allocator);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -3127,11 +3127,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             }
             if (swap || !npy_is_aligned(nip2, new->alignment)) {
                 /* create buffer and copy */
-                nip2 = PyDataMem_UserNEW(new->elsize, PyArray_HANDLER(ap)->alloc);
+                nip2 = PyDataMem_UserNEW(new->elsize, PyArray_HANDLER(ap)->allocator);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
                         PyDataMem_UserFREE(nip1, new->elsize,
-                                           PyArray_HANDLER(ap)->free);
+                                           PyArray_HANDLER(ap)->allocator);
                     }
                     goto finish;
                 }
@@ -3143,10 +3143,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         res = new->f->compare(nip1, nip2, dummy);
         if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
-                PyDataMem_UserFREE(nip1, new->elsize, PyArray_HANDLER(ap)->free);
+                PyDataMem_UserFREE(nip1, new->elsize, PyArray_HANDLER(ap)->allocator);
             }
             if (nip2 != ip2 + offset) {
-                PyDataMem_UserFREE(nip2, new->elsize, PyArray_HANDLER(ap)->free);
+                PyDataMem_UserFREE(nip2, new->elsize, PyArray_HANDLER(ap)->allocator);
             }
         }
         if (res != 0) {

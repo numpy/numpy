@@ -10,16 +10,16 @@ NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj);
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW(npy_uintp sz, PyDataMem_AllocFunc *alloc);
+PyDataMem_UserNEW(npy_uintp sz, PyDataMemAllocator allocator);
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMem_ZeroedAllocFunc *zalloc);
+PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator);
 
 NPY_NO_EXPORT void
-PyDataMem_UserFREE(void * p, npy_uintp sd, PyDataMem_FreeFunc *func);
+PyDataMem_UserFREE(void * p, npy_uintp sd, PyDataMemAllocator allocator);
 
 NPY_NO_EXPORT void *
-PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMem_ReallocFunc *func);
+PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMemAllocator allocator);
 
 NPY_NO_EXPORT void *
 npy_alloc_cache_dim(npy_uintp sz);
@@ -39,8 +39,8 @@ npy_free_cache_dim_array(PyArrayObject * arr)
     npy_free_cache_dim(PyArray_DIMS(arr), PyArray_NDIM(arr));
 }
 
-extern PyDataMem_Handler *current_allocator;
-extern PyDataMem_Handler default_allocator;
+extern PyDataMem_Handler *current_handler;
+extern PyDataMem_Handler default_handler;
 
 NPY_NO_EXPORT PyObject *
 get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);

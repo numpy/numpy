@@ -326,31 +326,34 @@ PyDataMem_RENEW(void *ptr, size_t size)
 }
 
 /* Memory handler global default */
-PyDataMem_Handler default_allocator = {
+PyDataMem_Handler default_handler = {
     "default_allocator",
-    npy_alloc_cache,      /* alloc */
-    npy_alloc_cache_zero, /* zeroed_alloc */
-    npy_free_cache,       /* free */
-    PyDataMem_RENEW       /* realloc */
+    {
+        NULL,                 /* ctx */
+        npy_alloc_cache,      /* malloc */
+        npy_alloc_cache_zero, /* calloc */
+        PyDataMem_RENEW,      /* realloc */
+        npy_free_cache        /* free */
+    }
 };
 
-PyDataMem_Handler *current_allocator = &default_allocator;
+PyDataMem_Handler *current_handler = &default_handler;
 
 int uo_index=0;   /* user_override index */
 
 /* Wrappers for user-assigned PyDataMem_Handlers */
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW(size_t size, PyDataMem_AllocFunc *alloc)
+PyDataMem_UserNEW(size_t size, PyDataMemAllocator allocator)
 {
     void *result;
 
-    if (alloc == npy_alloc_cache) {
+    if (allocator.malloc == npy_alloc_cache) {
         // All the logic below is conditionally handled by npy_alloc_cache
         return npy_alloc_cache(size);
     }
     assert(size != 0);
-    result = alloc(size);
+    result = allocator.malloc(allocator.ctx, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -365,15 +368,15 @@ PyDataMem_UserNEW(size_t size, PyDataMem_AllocFunc *alloc)
 }
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMem_ZeroedAllocFunc *zalloc)
+PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator)
 {
     void *result;
-    if (zalloc == npy_alloc_cache_zero) {
+    if (allocator.calloc == npy_alloc_cache_zero) {
         // All the logic below is conditionally handled by npy_alloc_cache_zero
         return npy_alloc_cache_zero(nmemb, size);
     }
 
-    result = zalloc(nmemb, size);
+    result = allocator.calloc(allocator.ctx, nmemb, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -388,15 +391,15 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMem_ZeroedAllocFunc *z
 }
 
 NPY_NO_EXPORT void
-PyDataMem_UserFREE(void *ptr, size_t size, PyDataMem_FreeFunc *func)
+PyDataMem_UserFREE(void *ptr, size_t size, PyDataMemAllocator allocator)
 {
-    if (func == npy_free_cache) {
+    if (allocator.free == npy_free_cache) {
         // All the logic below is conditionally handled by npy_free_cache
         npy_free_cache(ptr, size);
         return;
     }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
-    func(ptr, size);
+    allocator.free(allocator.ctx, ptr, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -409,12 +412,17 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyDataMem_FreeFunc *func)
 }
 
 NPY_NO_EXPORT void *
-PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMem_ReallocFunc *func)
+PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMemAllocator allocator)
 {
+    if (allocator.realloc == PyDataMem_RENEW) {
+        // All the logic below is conditionally handled by PyDataMem_RENEW
+        return PyDataMem_RENEW(ptr, size);
+    }
+
     void *result;
 
     assert(size != 0);
-    result = func(ptr, size);
+    result = allocator.realloc(allocator.ctx, ptr, size);
     if (result != ptr) {
         PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     }
@@ -441,12 +449,12 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMem_ReallocFunc *func)
 NPY_NO_EXPORT const PyDataMem_Handler *
 PyDataMem_SetHandler(PyDataMem_Handler *handler)
 {
-    const PyDataMem_Handler *old = current_allocator;
+    const PyDataMem_Handler *old = current_handler;
     if (handler) {
-        current_allocator = handler;
+        current_handler = handler;
     }
     else {
-        current_allocator = &default_allocator;
+        current_handler = &default_handler;
     }
     return old;
 }
@@ -460,7 +468,7 @@ NPY_NO_EXPORT const char *
 PyDataMem_GetHandlerName(PyArrayObject *obj)
 {
     if (obj == NULL) {
-        return current_allocator->name;
+        return current_handler->name;
     }
     return PyArray_HANDLER(obj)->name;
 }
