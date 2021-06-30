@@ -143,8 +143,8 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
     }
     else {
         if ((PyArray_NDIM(out) != out_ndim) ||
-             !PyArray_CompareLists(PyArray_DIMS(out), out_shape,
-                                   out_ndim)) {
+                !PyArray_CompareLists(PyArray_DIMS(out), out_shape,
+                                        out_ndim)) {
             PyErr_SetString(PyExc_ValueError,
                     "output array does not match result of np.argmax.");
             goto fail;
@@ -299,7 +299,7 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op,
     else {
         if ((PyArray_NDIM(out) != out_ndim) ||
                 !PyArray_CompareLists(PyArray_DIMS(out), out_shape,
-                                   out_ndim)) {
+                                        out_ndim)) {
             PyErr_SetString(PyExc_ValueError,
                     "output array does not match result of np.argmin.");
             goto fail;
