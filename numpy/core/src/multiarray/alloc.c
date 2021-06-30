@@ -329,11 +329,11 @@ PyDataMem_RENEW(void *ptr, size_t size)
 PyDataMem_Handler default_handler = {
     "default_allocator",
     {
-        NULL,                 /* ctx */
-        npy_alloc_cache,      /* malloc */
-        npy_alloc_cache_zero, /* calloc */
-        PyDataMem_RENEW,      /* realloc */
-        npy_free_cache        /* free */
+        NULL,                                                     /* ctx */
+        (void *(*)(void *, size_t)) npy_alloc_cache,              /* malloc */
+        (void *(*)(void *, size_t, size_t)) npy_alloc_cache_zero, /* calloc */
+        (void *(*)(void *, void *, size_t)) PyDataMem_RENEW,      /* realloc */
+        (void (*)(void *, void *, size_t)) npy_free_cache         /* free */
     }
 };
 
@@ -348,7 +348,7 @@ PyDataMem_UserNEW(size_t size, PyDataMemAllocator allocator)
 {
     void *result;
 
-    if (allocator.malloc == npy_alloc_cache) {
+    if ((void *) allocator.malloc == (void *) npy_alloc_cache) {
         // All the logic below is conditionally handled by npy_alloc_cache
         return npy_alloc_cache(size);
     }
@@ -371,7 +371,7 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator)
 {
     void *result;
-    if (allocator.calloc == npy_alloc_cache_zero) {
+    if ((void *) allocator.calloc == (void *) npy_alloc_cache_zero) {
         // All the logic below is conditionally handled by npy_alloc_cache_zero
         return npy_alloc_cache_zero(nmemb, size);
     }
@@ -393,7 +393,7 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator
 NPY_NO_EXPORT void
 PyDataMem_UserFREE(void *ptr, size_t size, PyDataMemAllocator allocator)
 {
-    if (allocator.free == npy_free_cache) {
+    if ((void *) allocator.free == (void *) npy_free_cache) {
         // All the logic below is conditionally handled by npy_free_cache
         npy_free_cache(ptr, size);
         return;
@@ -414,7 +414,7 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyDataMemAllocator allocator)
 NPY_NO_EXPORT void *
 PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMemAllocator allocator)
 {
-    if (allocator.realloc == PyDataMem_RENEW) {
+    if ((void *) allocator.realloc == (void *) PyDataMem_RENEW) {
         // All the logic below is conditionally handled by PyDataMem_RENEW
         return PyDataMem_RENEW(ptr, size);
     }
