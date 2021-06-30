@@ -100,7 +100,8 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
     if (!keepdims) {
         out_ndim = PyArray_NDIM(ap) - 1;
         out_shape = PyArray_DIMS(ap);
-    } else {
+    }
+    else {
         out_shape = _shape_buf;
         if (axis_copy == NPY_MAXDIMS) {
             for (int i = 0; i < out_ndim; i++) {
@@ -109,9 +110,9 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
         } 
         else {
             /* 
-            * While `ap` may be transposed, we can ignore this for `out` because the
-            * transpose only reorders the size 1 `axis` (not changing memory layout).
-            */
+             * While `ap` may be transposed, we can ignore this for `out` because the
+             * transpose only reorders the size 1 `axis` (not changing memory layout).
+             */
             memcpy(out_shape, original_op_shape, out_ndim * sizeof(npy_intp));
             out_shape[axis] = 1;
         }
