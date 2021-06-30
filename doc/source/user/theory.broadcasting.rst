@@ -10,17 +10,6 @@ Array Broadcasting in Numpy
    `github repo
    <https://github.com/scipy/old-wiki/blob/gh-pages/pages/EricsBroadcastingDoc.html>`_
 
-Let's explore a more advanced concept in numpy called broadcasting. The
-term broadcasting describes how numpy treats arrays with different shapes
-during arithmetic operations. Subject to certain constraints, the smaller array
-is "broadcast" across the larger array so that they have compatible shapes.
-Broadcasting provides a means of vectorizing array operations so that looping
-occurs in C instead of Python. It does this without making needless copies of
-data and usually leads to efficient algorithm implementations. There are also
-cases where broadcasting is a bad idea because it leads to inefficient use of
-memory that slows computation. This article provides a gentle introduction to
-broadcasting with numerous examples ranging from simple to involved. It also
-provides hints on when and when not to use broadcasting.
 
 numpy operations are usually done element-by-element which requires two arrays
 to have exactly the same shape:
@@ -184,41 +173,6 @@ arrays to produce the desired 4x3 output array.
     In some cases, broadcasting stretches both arrays to form an output array
     larger than either of the initial arrays.*
 
-A Practical Example: Vector Quantization.
-=========================================
-
-Broadcasting comes up quite often in real world problems. A typical example
-occurs in the vector quantization (VQ) algorithm used in information theory,
-classification, and other related areas. The basic operation in VQ [#f0] finds
-the closest point in a set of points, called codes in VQ jargon, to a given
-point, called the observation. In the very simple, two-dimensional case shown
-in :ref:`figure-5`, the values in observation describe the weight and height of an
-athlete to be classified. The codes represent different classes of
-athletes. [#f1]_ Finding the closest point requires calculating the distance
-between observation and each of the codes. The shortest distance provides the
-best match. In this example, ``codes[0]`` is the closest class indicating that
-the athlete is likely a basketball player.
-
-.. figure:: theory.broadcast_5.png
-    :alt: vector quantitization example
-    :name: figure-5
-
-    *Figure 5*
-
-    *The basic operation of vector quantization calculates the distance between
-    an object to be classified, the dark square, and multiple known codes, the
-    gray circles. In this simple case, the codes represent individual classes.
-    More complex cases use multiple codes per class.*
-
-
-.. rubric:: Footnotes
-
-.. [#f0] Vector Quantization J. Makhoul, S. Roucos, and H. Gish, "Vector Quantization in Speech Coding," Proc. IEEE, vol. 73, pp. 1551-1587, Nov. 1985.
-.. [#f1]
-    In this example, weight has more impact on the distance calculation
-    than height because of the larger values. In practice, it is important to
-    normalize the height and weight, often by their standard deviation across the
-    data set, so that both have equal influence on the distance calculation.
 
 .. note::
 

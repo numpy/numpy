@@ -212,7 +212,7 @@ the shape of the ``codes`` array::
 
 .. figure:: theory.broadcast_5.png
     :alt: vector quantitization example
-    :name: figure-1
+    :name: broadcasting.figure-1
 
     *Figure 1*
 
