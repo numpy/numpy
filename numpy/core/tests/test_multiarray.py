@@ -4233,8 +4233,8 @@ class TestArgmaxArgminCommon:
             else:
                 wrong_shape[0] = 2
             wrong_outarray = np.empty(wrong_shape, dtype=res.dtype)
-            assert_raises(ValueError, method, 
-                        arr.T, axis=axis, 
+            with pytest.raises(ValueError):
+                method(arr.T, axis=axis, 
                         out=wrong_outarray, keepdims=True)
 
         # non-contiguous arrays
@@ -4260,9 +4260,9 @@ class TestArgmaxArgminCommon:
         if len(size) > 0:
             # one dimension lesser for non-zero sized 
             # array should raise an error
-            assert_raises(ValueError, method, 
-                            arr[0], axis=axis, 
-                            out=outarray, keepdims=True)
+            with pytest.raises(ValueError):
+                method(arr[0], axis=axis, 
+                        out=outarray, keepdims=True)
         
         if len(size) > 0:
             wrong_shape = list(new_shape)
@@ -4271,8 +4271,8 @@ class TestArgmaxArgminCommon:
             else:
                 wrong_shape[0] = 2
             wrong_outarray = np.empty(wrong_shape, dtype=res.dtype)
-            assert_raises(ValueError, method, 
-                        arr.T, axis=axis, 
+            with pytest.raises(ValueError):
+                method(arr.T, axis=axis, 
                         out=wrong_outarray, keepdims=True)
 
 class TestArgmax:
