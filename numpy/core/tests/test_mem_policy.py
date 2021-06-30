@@ -35,9 +35,15 @@ def get_module(tmp_path):
     prologue = '''
         #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
         #include <numpy/arrayobject.h>
+        typedef struct {
+            void *(*malloc)(size_t);
+            void *(*calloc)(size_t, size_t);
+            void *(*realloc)(void *, size_t);
+            void (*free)(void *);
+        } Allocator;
         NPY_NO_EXPORT void *
-        shift_alloc(size_t sz) {
-            char *real = (char *)malloc(sz + 64);
+        shift_alloc(Allocator *ctx, size_t sz) {
+            char *real = (char *)ctx->malloc(sz + 64);
             if (real == NULL) {
                 return NULL;
             }
@@ -45,8 +51,8 @@ def get_module(tmp_path):
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void *
-        shift_zero(size_t sz, size_t cnt) {
-            char *real = (char *)calloc(sz + 64, cnt);
+        shift_zero(Allocator *ctx, size_t sz, size_t cnt) {
+            char *real = (char *)ctx->calloc(sz + 64, cnt);
             if (real == NULL) {
                 return NULL;
             }
@@ -55,7 +61,7 @@ def get_module(tmp_path):
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void
-        shift_free(void * p, npy_uintp sz) {
+        shift_free(Allocator *ctx, void * p, npy_uintp sz) {
             if (p == NULL) {
                 return ;
             }
@@ -64,8 +70,8 @@ def get_module(tmp_path):
                 fprintf(stdout, "uh-oh, unmatched shift_free, "
                         "no appropriate prefix\\n");
                 /* Make C runtime crash by calling free on the wrong address */
-                free((char *)p + 10);
-                /* free(real); */
+                ctx->free((char *)p + 10);
+                /* ctx->free(real); */
             }
             else {
                 npy_uintp i = (npy_uintp)atoi(real +20);
@@ -73,25 +79,25 @@ def get_module(tmp_path):
                     fprintf(stderr, "uh-oh, unmatched shift_free"
                             "(ptr, %ld) but allocated %ld\\n", sz, i);
                     /* This happens in some places, only print */
-                    free(real);
+                    ctx->free(real);
                 }
                 else {
-                    free(real);
+                    ctx->free(real);
                 }
             }
         }
         NPY_NO_EXPORT void *
-        shift_realloc(void * p, npy_uintp sz) {
+        shift_realloc(Allocator *ctx, void * p, npy_uintp sz) {
             if (p != NULL) {
                 char *real = (char *)p - 64;
                 if (strncmp(real, "originally allocated", 20) != 0) {
                     fprintf(stdout, "uh-oh, unmatched shift_realloc\\n");
                     return realloc(p, sz);
                 }
-                return (void *)((char *)realloc(real, sz + 64) + 64);
+                return (void *)((char *)ctx->realloc(real, sz + 64) + 64);
             }
             else {
-                char *real = (char *)realloc(p, sz + 64);
+                char *real = (char *)ctx->realloc(p, sz + 64);
                 if (real == NULL) {
                     return NULL;
                 }
@@ -100,12 +106,21 @@ def get_module(tmp_path):
                 return (void *)(real + 64);
             }
         }
+        static Allocator new_handler_ctx = {
+            malloc,
+            calloc,
+            realloc,
+            free
+        };
         static PyDataMem_Handler new_handler = {
             "secret_data_allocator",
-            shift_alloc,      /* alloc */
-            shift_zero, /* zeroed_alloc */
-            shift_free,       /* free */
-            shift_realloc      /* realloc */
+            {
+                &new_handler_ctx,
+                shift_alloc,      /* malloc */
+                shift_zero, /* calloc */
+                shift_realloc,      /* realloc */
+                shift_free       /* free */
+            }
         };
         '''
     more_init = "import_array();"

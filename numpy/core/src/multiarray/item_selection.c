@@ -970,7 +970,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     size = it->size;
 
     if (needcopy) {
-        buffer = PyDataMem_UserNEW(N * elsize, PyArray_HANDLER(op)->alloc);
+        buffer = PyDataMem_UserNEW(N * elsize, PyArray_HANDLER(op)->allocator);
         if (buffer == NULL) {
             ret = -1;
             goto fail;
@@ -1054,7 +1054,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
-    PyDataMem_UserFREE(buffer, N * elsize, PyArray_HANDLER(op)->free);
+    PyDataMem_UserFREE(buffer, N * elsize, PyArray_HANDLER(op)->allocator);
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
@@ -1116,7 +1116,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     size = it->size;
 
     if (needcopy) {
-        valbuffer = PyDataMem_UserNEW(N * elsize, PyArray_HANDLER(op)->alloc);
+        valbuffer = PyDataMem_UserNEW(N * elsize, PyArray_HANDLER(op)->allocator);
         if (valbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1125,7 +1125,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     if (needidxbuffer) {
         idxbuffer = (npy_intp *)PyDataMem_UserNEW(N * sizeof(npy_intp),
-                                                  PyArray_HANDLER(op)->alloc);
+                                                  PyArray_HANDLER(op)->allocator);
         if (idxbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1214,8 +1214,8 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
-    PyDataMem_UserFREE(valbuffer, N * elsize, PyArray_HANDLER(op)->free);
-    PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), PyArray_HANDLER(op)->free);
+    PyDataMem_UserFREE(valbuffer, N * elsize, PyArray_HANDLER(op)->allocator);
+    PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), PyArray_HANDLER(op)->allocator);
     if (ret < 0) {
         if (!PyErr_Occurred()) {
             /* Out of memory during sorting or buffer creation */

@@ -667,17 +667,17 @@ typedef struct _arr_descr {
 /*
  * Memory handler structure for array data.
  */
-typedef void *(PyDataMem_AllocFunc)(size_t size);
-typedef void *(PyDataMem_ZeroedAllocFunc)(size_t nelems, size_t elsize);
-typedef void (PyDataMem_FreeFunc)(void *ptr, size_t size);
-typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
+typedef struct {
+    void *ctx;
+    void* (*malloc) (void *ctx, size_t size);
+    void* (*calloc) (void *ctx, size_t nelem, size_t elsize);
+    void* (*realloc) (void *ctx, void *ptr, size_t new_size);
+    void (*free) (void *ctx, void *ptr, size_t size);
+} PyDataMemAllocator;
 
 typedef struct {
     char name[128];  /* multiple of 64 to keep the struct aligned */
-    PyDataMem_AllocFunc *alloc;
-    PyDataMem_ZeroedAllocFunc *zeroed_alloc;
-    PyDataMem_FreeFunc *free;
-    PyDataMem_ReallocFunc *realloc;
+    PyDataMemAllocator allocator;
 } PyDataMem_Handler;
 
 
@@ -732,7 +732,7 @@ typedef struct tagPyArrayObject_fields {
     PyObject *weakreflist;
     void *_buffer_info;  /* private buffer info, tagged to allow warning */
     /*
-     * For alloc/malloc/realloc/free/memcpy per object
+     * For malloc/calloc/realloc/free per object
      */
     PyDataMem_Handler *mem_handler;
 } PyArrayObject_fields;
