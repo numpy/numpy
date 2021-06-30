@@ -4702,15 +4702,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    /* Load the ufunc operators into the array module's namespace */
-    if (InitOperators(d) < 0) {
-        goto err;
-    }
-
-    if (set_matmul_flags(d) < 0) {
-        goto err;
-    }
-
     PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
     if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
         goto err;
@@ -4724,6 +4715,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     initialize_casting_tables();
     initialize_numeric_types();
+
     if (initscalarmath(m) < 0) {
         goto err;
     }
@@ -4734,6 +4726,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (setup_scalartypes(d) < 0) {
         goto err;
     }
+
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
     NpyIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
@@ -4895,6 +4888,15 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (PyArray_InitializeCasts() < 0) {
+        goto err;
+    }
+
+    /* Load the ufunc operators into the array module's namespace */
+    if (InitOperators(d) < 0) {
+        goto err;
+    }
+
+    if (set_matmul_flags(d) < 0) {
         goto err;
     }
 
