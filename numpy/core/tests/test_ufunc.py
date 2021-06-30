@@ -164,8 +164,9 @@ class TestUfuncGenericLoops:
                 except AttributeError:
                     return lambda: getattr(np.core.umath, attr)(val)
 
-        num_arr = np.array([val], dtype=np.float64)
-        obj_arr = np.array([MyFloat(val)], dtype="O")
+        # Use 0-D arrays, to ensure the same element call
+        num_arr = np.array(val, dtype=np.float64)
+        obj_arr = np.array(MyFloat(val), dtype="O")
 
         with np.errstate(all="raise"):
             try:
@@ -1711,9 +1712,17 @@ class TestUfunc:
         target = np.array([0, 2, 4], dtype=_rational_tests.rational)
         assert_equal(result, target)
 
-        # no output type should raise TypeError
+        # The new resolution means that we can (usually) find custom loops
+        # as long as they match exactly:
+        result = _rational_tests.test_add(a, b)
+        assert_equal(result, target)
+
+        # But since we use the old type resolver, this may not work
+        # for dtype variations unless the output dtype is given:
+        result = _rational_tests.test_add(a, b.astype(np.uint16), out=c)
+        assert_equal(result, target)
         with assert_raises(TypeError):
-            _rational_tests.test_add(a, b)
+            _rational_tests.test_add(a, b.astype(np.uint16))
 
     def test_operand_flags(self):
         a = np.arange(16, dtype='l').reshape(4, 4)
@@ -2029,8 +2038,7 @@ class TestUfunc:
             np.true_divide, np.floor_divide, np.bitwise_and, np.bitwise_or,
             np.bitwise_xor, np.left_shift, np.right_shift, np.fmax,
             np.fmin, np.fmod, np.hypot, np.logaddexp, np.logaddexp2,
-            np.logical_and, np.logical_or, np.logical_xor, np.maximum,
-            np.minimum, np.mod,
+            np.maximum, np.minimum, np.mod,
             np.greater, np.greater_equal, np.less, np.less_equal,
             np.equal, np.not_equal]
 

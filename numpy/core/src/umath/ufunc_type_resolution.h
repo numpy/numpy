@@ -135,4 +135,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                        void **out_innerloopdata,
                                        int *out_needs_api);
 
+NPY_NO_EXPORT int
+raise_no_loop_found_error(PyUFuncObject *ufunc, PyObject **dtypes);
+
 #endif

@@ -1,4 +1,16 @@
 /*
+ * NOTE: The type resolution defined in this file is considered legacy.
+ *
+ * The new mechanism separates type resolution and promotion into two
+ * distinct steps, as per NEP 43.
+ * Further, the functions in this file rely on the operands rather than
+ * only the DTypes/descriptors.  They are still called and at this point
+ * vital (NumPy ~1.21), but should hopefully become largely irrelevant very
+ * quickly.
+ *
+ * At that point, this file should be deletable in its entirety.
+ *
+ *
  * This file implements type resolution for NumPy element-wise ufuncs.
  * This mechanism is still backwards-compatible with the pre-existing
  * legacy mechanism, so performs much slower than is necessary.
@@ -89,9 +101,9 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
 /** Helper function to raise UFuncNoLoopError
  * Always returns -1 to indicate the exception was raised, for convenience
  */
-static int
+NPY_NO_EXPORT int
 raise_no_loop_found_error(
-        PyUFuncObject *ufunc, PyArray_Descr **dtypes)
+        PyUFuncObject *ufunc, PyObject **dtypes)
 {
     static PyObject *exc_type = NULL;
 
@@ -102,8 +114,7 @@ raise_no_loop_found_error(
         return -1;
     }
 
-    PyObject *dtypes_tup = PyArray_TupleFromItems(
-            ufunc->nargs, (PyObject **)dtypes, 1);
+    PyObject *dtypes_tup = PyArray_TupleFromItems(ufunc->nargs, dtypes, 1);
     if (dtypes_tup == NULL) {
         return -1;
     }
@@ -118,6 +129,7 @@ raise_no_loop_found_error(
 
     return -1;
 }
+
 
 static int
 raise_casting_error(
@@ -333,22 +345,30 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
         }
         else {
             /* Not doing anything will lead to a loop no found error. */
             out_dtypes[0] = PyArray_DESCR(operands[0]);
             Py_INCREF(out_dtypes[0]);
+            out_dtypes[1] = PyArray_DESCR(operands[1]);
+            Py_INCREF(out_dtypes[1]);
         }
-        out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
     }
     else {
         PyArray_Descr *descr;
         /*
+         * DEPRECATED 2021-03, NumPy 1.20
+         *
          * If the type tuple was originally a single element (probably),
          * issue a deprecation warning, but otherwise accept it.  Since the
          * result dtype is always boolean, this is not actually valid unless it
          * is `object` (but if there is an object input we already deferred).
+         *
+         * TODO: Once this deprecation is gone, the special case for
+         *       `PyUFunc_SimpleBinaryComparisonTypeResolver` in dispatching.c
+         *       can be removed.
          */
         if (PyTuple_Check(type_tup) && PyTuple_GET_SIZE(type_tup) == 3 &&
                 PyTuple_GET_ITEM(type_tup, 0) == Py_None &&
@@ -527,7 +547,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
                 }
-                raise_no_loop_found_error(ufunc, out_dtypes);
+                raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
                 for (iop = 0; iop < ufunc->nin; iop++) {
                     Py_DECREF(out_dtypes[iop]);
                     out_dtypes[iop] = NULL;
@@ -1492,7 +1512,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    return raise_no_loop_found_error(ufunc, dtypes);
+    return raise_no_loop_found_error(ufunc, (PyObject **)dtypes);
 }
 
 
