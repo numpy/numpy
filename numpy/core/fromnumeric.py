@@ -49,14 +49,12 @@ def _wrapit(obj, method, *args, **kwds):
 
 
 def _wrapfunc(obj, method, *args, **kwds):
-    passkwargs = {k: v for k, v in kwds.items()
-                    if v is not np._NoValue}
     bound = getattr(obj, method, None)
     if bound is None:
-        return _wrapit(obj, method, *args, **passkwargs)
+        return _wrapit(obj, method, *args, **kwds)
 
     try:
-        return bound(*args, **passkwargs)
+        return bound(*args, **kwds)
     except TypeError:
         # A TypeError occurs if the object does have such a method in its
         # class, but its signature is not identical to that of NumPy's. This
@@ -65,7 +63,7 @@ def _wrapfunc(obj, method, *args, **kwds):
         #
         # Call _wrapit from within the except clause to ensure a potential
         # exception has a traceback chain.
-        return _wrapit(obj, method, *args, **passkwargs)
+        return _wrapit(obj, method, *args, **kwds)
 
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
@@ -1206,8 +1204,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     >>> res.shape
     (2, 1, 4)
     """
-    return _wrapfunc(a, 'argmax', axis=axis, out=out, 
-                        keepdims=keepdims)
+    kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
+    return _wrapfunc(a, 'argmax', axis=axis, out=out, **kwds)
 
 
 def _argmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
@@ -1300,7 +1298,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     >>> res.shape
     (2, 1, 4)
     """
-    return _wrapfunc(a, 'argmin', axis=axis, out=out, keepdims=keepdims)
+    kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
+    return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 
 
 def _searchsorted_dispatcher(a, v, side=None, sorter=None):
