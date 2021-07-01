@@ -5998,7 +5998,7 @@ _typecharfromnum(int num) {
 
 
 static PyObject *
-ufunc_get_doc(PyUFuncObject *ufunc)
+ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     static PyObject *_sig_formatter;
     PyObject *doc;
@@ -6030,31 +6030,31 @@ ufunc_get_doc(PyUFuncObject *ufunc)
 
 
 static PyObject *
-ufunc_get_nin(PyUFuncObject *ufunc)
+ufunc_get_nin(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(ufunc->nin);
 }
 
 static PyObject *
-ufunc_get_nout(PyUFuncObject *ufunc)
+ufunc_get_nout(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(ufunc->nout);
 }
 
 static PyObject *
-ufunc_get_nargs(PyUFuncObject *ufunc)
+ufunc_get_nargs(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(ufunc->nargs);
 }
 
 static PyObject *
-ufunc_get_ntypes(PyUFuncObject *ufunc)
+ufunc_get_ntypes(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(ufunc->ntypes);
 }
 
 static PyObject *
-ufunc_get_types(PyUFuncObject *ufunc)
+ufunc_get_types(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     /* return a list with types grouped input->output */
     PyObject *list;
@@ -6088,20 +6088,20 @@ ufunc_get_types(PyUFuncObject *ufunc)
 }
 
 static PyObject *
-ufunc_get_name(PyUFuncObject *ufunc)
+ufunc_get_name(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     return PyUnicode_FromString(ufunc->name);
 }
 
 static PyObject *
-ufunc_get_identity(PyUFuncObject *ufunc)
+ufunc_get_identity(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     npy_bool reorderable;
     return _get_identity(ufunc, &reorderable);
 }
 
 static PyObject *
-ufunc_get_signature(PyUFuncObject *ufunc)
+ufunc_get_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     if (!ufunc->core_enabled) {
         Py_RETURN_NONE;
