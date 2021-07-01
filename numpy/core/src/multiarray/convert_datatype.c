@@ -391,7 +391,16 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
   finish:
     Py_DECREF(out_descrs[0]);
     Py_DECREF(out_descrs[1]);
-    /* NPY_NO_CASTING has to be used for (NPY_EQUIV_CASTING|_NPY_CAST_IS_VIEW) */
+    /*
+     * Check for less harmful non-standard returns.  The following two returns
+     * should never happen. They would be roughly equivalent, but less precise,
+     * versions of `(NPY_NO_CASTING|_NPY_CAST_IS_VIEW)`.
+     * 1. No-casting must imply cast-is-view.
+     * 2. Equivalent-casting + cast-is-view is (currently) the definition
+     *    of a "no" cast (there may be reasons to relax this).
+     * Note that e.g. `(NPY_UNSAFE_CASTING|_NPY_CAST_IS_VIEW)` is valid.
+     */
+    assert(casting != NPY_NO_CASTING);
     assert(casting != (NPY_EQUIV_CASTING|_NPY_CAST_IS_VIEW));
     return casting;
 }
