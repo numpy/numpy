@@ -667,6 +667,7 @@ typedef struct _arr_descr {
 /*
  * Memory handler structure for array data.
  */
+/* The declaration of free differs from PyMemAllocatorEx */
 typedef struct {
     void *ctx;
     void* (*malloc) (void *ctx, size_t size);
