@@ -887,7 +887,6 @@ class vectorize:
     ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
-def show_config(): ...
 # Some of these are aliases; others are wrappers with an identical signature
 round = around
 round_ = around
@@ -897,6 +896,8 @@ product = prod
 cumproduct = cumprod
 sometrue = any
 alltrue = all
+
+def show_config() -> None: ...
 
 # TODO: Sort out which parameters are positional-only
 def nested_iters(*args, **kwargs): ... # TODO: Sort out parameters
