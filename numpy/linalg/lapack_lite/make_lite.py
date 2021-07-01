@@ -275,7 +275,7 @@ def scrubF2CSource(c_file):
 def ensure_executable(name):
     try:
         which(name)
-    except:
+    except Exception:
         raise SystemExit(name + ' not found')
 
 def create_name_header(output_dir):

@@ -904,7 +904,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                                 sys.stdout = old_stdout
                                 sys.stderr = old_stderr
                         # Catch SystemExit, too
-                        except BaseException:
+                        except SystemExit:
                             continue
 
             for n, v in _getmembers(item):
