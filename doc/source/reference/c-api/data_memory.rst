@@ -68,6 +68,7 @@ reallocate or free the data memory of the instance.
 
     .. code-block:: c
 
+        /* The declaration of free differs from PyMemAllocatorEx */ 
         typedef struct {
             void *ctx;
             void* (*malloc) (void *ctx, size_t size);
@@ -119,4 +120,3 @@ For an example of setting up and using the PyDataMem_Handler, see the test in
     operations that might cause new allocation events (such as the
     creation/destruction numpy objects, or creating/destroying Python
     objects which might cause a gc)
-
