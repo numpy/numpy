@@ -13,10 +13,6 @@ $Date: 2004/11/26 11:13:06 $
 Pearu Peterson
 
 """
-__version__ = "$Revision: 1.16 $"[10:-1]
-
-f2py_version = 'See `f2py -v`'
-
 import copy
 
 from .auxfuncs import (
@@ -108,15 +104,19 @@ def createfuncwrapper(rout, signature=0):
     else:
         args = [newname] + rout['args']
 
-    l = var2fixfortran(vars, name, newname, f90mode)
-    if l[:13] == 'character*(*)':
+    l_tmpl = var2fixfortran(vars, name, '@@@NAME@@@', f90mode)
+    if l_tmpl[:13] == 'character*(*)':
         if f90mode:
-            l = 'character(len=10)' + l[13:]
+            l_tmpl = 'character(len=10)' + l_tmpl[13:]
         else:
-            l = 'character*10' + l[13:]
+            l_tmpl = 'character*10' + l_tmpl[13:]
         charselect = vars[name]['charselector']
         if charselect.get('*', '') == '(*)':
             charselect['*'] = '10'
+
+    l1 = l_tmpl.replace('@@@NAME@@@', newname)
+    rl = None
+
     sargs = ', '.join(args)
     if f90mode:
         add('subroutine f2pywrap_%s_%s (%s)' %
@@ -127,7 +127,8 @@ def createfuncwrapper(rout, signature=0):
         add('subroutine f2pywrap%s (%s)' % (name, sargs))
         if not need_interface:
             add('external %s' % (fortranname))
-            l = l + ', ' + fortranname
+            rl = l_tmpl.replace('@@@NAME@@@', '') + ' ' + fortranname
+
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
             if line.lstrip().startswith('use ') and '__user__' not in line:
@@ -156,7 +157,9 @@ def createfuncwrapper(rout, signature=0):
             continue
         add(var2fixfortran(vars, a, f90mode=f90mode))
 
-    add(l)
+    add(l1)
+    if rl is not None:
+        add(rl)
 
     if need_interface:
         if f90mode:
@@ -293,8 +296,8 @@ def assubr(rout):
     if issubroutine_wrap(rout):
         fortranname = getfortranname(rout)
         name = rout['name']
-        outmess('\t\tCreating wrapper for Fortran subroutine "%s"("%s")...\n' % (
-            name, fortranname))
+        outmess('\t\tCreating wrapper for Fortran subroutine "%s"("%s")...\n'
+                % (name, fortranname))
         rout = copy.copy(rout)
         return rout, createsubrwrapper(rout)
     return rout, ''

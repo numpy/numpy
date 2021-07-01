@@ -84,7 +84,7 @@ Usage:
                        'optional','required', etc)
      K = D['kindselector'] = {['*','kind']} (only if D['typespec'] =
                          'complex' | 'integer' | 'logical' | 'real' )
-     C = D['charselector'] = {['*','len','kind']}
+     C = D['charselector'] = {['*','len','kind','f2py_len']}
                              (only if D['typespec']=='character')
      D['='] --- initialization expression string
      D['typename'] --- name of the type if D['typespec']=='type'
@@ -97,7 +97,7 @@ Usage:
      D['typespec>']*K['*']
      D['typespec'](kind=K['kind'])
      character*C['*']
-     character(len=C['len'],kind=C['kind'])
+     character(len=C['len'],kind=C['kind'], f2py_len=C['f2py_len'])
      (see also fortran type declaration statement formats below)
 
 Fortran 90 type declaration statement format (F77 is subset of F90)
@@ -146,6 +146,11 @@ import re
 import os
 import copy
 import platform
+import codecs
+try:
+    import chardet
+except ImportError:
+    chardet = None
 
 from . import __version__
 
@@ -301,12 +306,38 @@ _has_fix_header = re.compile(r'-\*-\s*fix\s*-\*-', re.I).search
 _free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]', re.I).match
 
 
+def openhook(filename, mode):
+    """Ensures that filename is opened with correct encoding parameter.
+
+    This function uses chardet package, when available, for
+    determining the encoding of the file to be opened. When chardet is
+    not available, the function detects only UTF encodings, otherwise,
+    ASCII encoding is used as fallback.
+    """
+    bytes = min(32, os.path.getsize(filename))
+    with open(filename, 'rb') as f:
+        raw = f.read(bytes)
+    if raw.startswith(codecs.BOM_UTF8):
+        encoding = 'UTF-8-SIG'
+    elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+        encoding = 'UTF-32'
+    elif raw.startswith((codecs.BOM_LE, codecs.BOM_BE)):
+        encoding = 'UTF-16'
+    else:
+        if chardet is not None:
+            encoding = chardet.detect(raw)['encoding']
+        else:
+            # hint: install chardet to ensure correct encoding handling
+            encoding = 'ascii'
+    return open(filename, mode, encoding=encoding)
+
+
 def is_free_format(file):
     """Check if file is in free format Fortran."""
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
     result = 0
-    with open(file, 'r') as f:
+    with openhook(file, 'r') as f:
         line = f.readline()
         n = 15  # the number of non-comment lines to scan for hints
         if _has_f_header(line):
@@ -356,9 +387,16 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     ll, l1 = '', ''
     spacedigits = [' '] + [str(_m) for _m in range(10)]
     filepositiontext = ''
-    fin = fileinput.FileInput(ffile)
+    fin = fileinput.FileInput(ffile, openhook=openhook)
     while True:
-        l = fin.readline()
+        try:
+            l = fin.readline()
+        except UnicodeDecodeError as msg:
+            raise Exception(
+                f'readfortrancode: reading {fin.filename()}#{fin.lineno()}'
+                f' failed with\n{msg}.\nIt is likely that installing chardet'
+                ' package will help f2py determine the input file encoding'
+                ' correctly.')
         if not l:
             break
         if fin.isfirstline():
@@ -1546,7 +1584,9 @@ kindselector = re.compile(
 charselector = re.compile(
     r'\s*(\((?P<lenkind>.*)\)|\*\s*(?P<charlen>.*))\s*\Z', re.I)
 lenkindpattern = re.compile(
-    r'\s*(kind\s*=\s*(?P<kind>.*?)\s*(@,@\s*len\s*=\s*(?P<len>.*)|)|(len\s*=\s*|)(?P<len2>.*?)\s*(@,@\s*(kind\s*=\s*|)(?P<kind2>.*)|))\s*\Z', re.I)
+    r'\s*(kind\s*=\s*(?P<kind>.*?)\s*(@,@\s*len\s*=\s*(?P<len>.*)|)'
+    r'|(len\s*=\s*|)(?P<len2>.*?)\s*(@,@\s*(kind\s*=\s*|)(?P<kind2>.*)'
+    r'|(f2py_len\s*=\s*(?P<f2py_len>.*))|))\s*\Z', re.I)
 lenarraypattern = re.compile(
     r'\s*(@\(@\s*(?!/)\s*(?P<array>.*?)\s*@\)@\s*\*\s*(?P<len>.*?)|(\*\s*(?P<len2>.*?)|)\s*(@\(@\s*(?!/)\s*(?P<array2>.*?)\s*@\)@|))\s*(=\s*(?P<init>.*?)|(@\(@|)/\s*(?P<init2>.*?)\s*/(@\)@|)|)\s*\Z', re.I)
 
@@ -1788,6 +1828,9 @@ def cracktypespec(typespec, selector):
                         lenkind[lk] = lenkind[lk + '2']
                     charselect[lk] = lenkind[lk]
                     del lenkind[lk + '2']
+                if lenkind['f2py_len'] is not None:
+                    # used to specify the length of assumed length strings
+                    charselect['f2py_len'] = lenkind['f2py_len']
             del charselect['lenkind']
             for k in list(charselect.keys()):
                 if not charselect[k]:
@@ -1857,6 +1900,7 @@ def setcharselector(decl, sel, force=0):
     if 'charselector' not in decl:
         decl['charselector'] = sel
         return decl
+
     for k in list(sel.keys()):
         if force or k not in decl['charselector']:
             decl['charselector'][k] = sel[k]
@@ -2465,6 +2509,7 @@ def _eval_scalar(value, params):
     if _is_kind_number(value):
         value = value.split('_')[0]
     try:
+        # TODO: use symbolic from PR #19805
         value = eval(value, {}, params)
         value = (repr if isinstance(value, str) else str)(value)
     except (NameError, SyntaxError, TypeError):
@@ -2534,7 +2579,6 @@ def analyzevars(block):
                 elif n in block['args']:
                     outmess('analyzevars: typespec of variable %s is not defined in routine %s.\n' % (
                         repr(n), block['name']))
-
         if 'charselector' in vars[n]:
             if 'len' in vars[n]['charselector']:
                 l = vars[n]['charselector']['len']
@@ -2666,26 +2710,6 @@ def analyzevars(block):
                         # definiteness of such symbols.
                         dimension_exprs[d] = solver_and_deps
                     vars[n]['dimension'].append(d)
-
-        if 'dimension' in vars[n]:
-            if isstringarray(vars[n]):
-                if 'charselector' in vars[n]:
-                    d = vars[n]['charselector']
-                    if '*' in d:
-                        d = d['*']
-                        errmess('analyzevars: character array "character*%s %s(%s)" is considered as "character %s(%s)"; "intent(c)" is forced.\n'
-                                % (d, n,
-                                   ','.join(vars[n]['dimension']),
-                                   n, ','.join(vars[n]['dimension'] + [d])))
-                        vars[n]['dimension'].append(d)
-                        del vars[n]['charselector']
-                        if 'intent' not in vars[n]:
-                            vars[n]['intent'] = []
-                        if 'c' not in vars[n]['intent']:
-                            vars[n]['intent'].append('c')
-                    else:
-                        errmess(
-                            "analyzevars: charselector=%r unhandled.\n" % (d))
 
         if 'check' not in vars[n] and 'args' in block and n in block['args']:
             # n is an argument that has no checks defined. Here we
@@ -3220,6 +3244,13 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
         if 'attrspec' in vars[a]:
             attr = [l for l in vars[a]['attrspec']
                     if l not in ['external']]
+            if as_interface and 'intent(in)' in attr and 'intent(out)' in attr:
+                # In Fortran, intent(in, out) are conflicting while
+                # intent(in, out) can be specified only via
+                # `!f2py intent(out) ..`.
+                # So, for the Fortran interface, we'll drop
+                # intent(out) to resolve the conflict.
+                attr.remove('intent(out)')
             if attr:
                 vardef = '%s, %s' % (vardef, ','.join(attr))
                 c = ','
@@ -3255,14 +3286,23 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
 ######
 
 
+# We expose post_processing_hooks as global variable so that
+# user-libraries could register their own hooks to f2py.
+post_processing_hooks = []
+
+
 def crackfortran(files):
-    global usermodules
+    global usermodules, post_processing_hooks
 
     outmess('Reading fortran codes...\n', 0)
     readfortrancode(files, crackline)
     outmess('Post-processing...\n', 0)
     usermodules = []
     postlist = postcrack(grouplist[0])
+    outmess('Applying post-processing hooks...\n', 0)
+    for hook in post_processing_hooks:
+        outmess(f'  {hook.__name__}\n', 0)
+        postlist = traverse(postlist, hook)
     outmess('Post-processing (stage 2)...\n', 0)
     postlist = postcrack2(postlist)
     return usermodules + postlist
@@ -3281,6 +3321,142 @@ def crack2fortran(block):
 ! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e
 """ % (f2py_version)
     return header + pyf + footer
+
+
+def _is_visit_pair(obj):
+    return (isinstance(obj, tuple)
+            and len(obj) == 2
+            and isinstance(obj[0], (int, str)))
+
+
+def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
+    '''Traverse f2py data structure with the following visit function:
+
+    def visit(item, parents, result, *args, **kwargs):
+        """
+
+        parents is a list of key-"f2py data structure" pairs from which
+        items are taken from.
+
+        result is a f2py data structure that is filled with the
+        return value of the visit function.
+
+        item is 2-tuple (index, value) if parents[-1][1] is a list
+        item is 2-tuple (key, value) if parents[-1][1] is a dict
+
+        The return value of visit must be None, or of the same kind as
+        item, that is, if parents[-1] is a list, the return value must
+        be 2-tuple (new_index, new_value), or if parents[-1] is a
+        dict, the return value must be 2-tuple (new_key, new_value).
+
+        If new_index or new_value is None, the return value of visit
+        is ignored, that is, it will not be added to the result.
+
+        If the return value is None, the content of obj will be
+        traversed, otherwise not.
+        """
+    '''
+
+    if _is_visit_pair(obj):
+        if obj[0] == 'parent_block':
+            # avoid infinite recursion
+            return obj
+        new_result = visit(obj, parents, result, *args, **kwargs)
+        if new_result is not None:
+            assert _is_visit_pair(new_result)
+            return new_result
+        parent = obj
+        result_key, obj = obj
+    else:
+        parent = (None, obj)
+        result_key = None
+
+    if isinstance(obj, list):
+        new_result = []
+        for index, value in enumerate(obj):
+            new_index, new_item = traverse((index, value), visit,
+                                           parents=parents + [parent],
+                                           result=result, *args, **kwargs)
+            if new_index is not None:
+                new_result.append(new_item)
+    elif isinstance(obj, dict):
+        new_result = dict()
+        for key, value in obj.items():
+            new_key, new_value = traverse((key, value), visit,
+                                          parents=parents + [parent],
+                                          result=result, *args, **kwargs)
+            if new_key is not None:
+                new_result[new_key] = new_value
+    else:
+        new_result = obj
+
+    if result_key is None:
+        return new_result
+    return result_key, new_result
+
+
+def character_backward_compatibility_hook(item, parents, result,
+                                          *args, **kwargs):
+    """Previously, Fortran character was incorrectly treated as
+    character*1. This hook fixes the usage of the corresponding
+    variables in `check`, `dimension`, `=`, and `callstatement`
+    expressions.
+
+    The usage of `char*` in `callprotoargument` expression can be left
+    unchanged because C `character` is C typedef of `char`, although,
+    new implementations should use `character*` in the corresponding
+    expressions.
+
+    See https://github.com/numpy/numpy/pull/19388 for more information.
+
+    """
+    parent_key, parent_value = parents[-1]
+    key, value = item
+
+    def fix_usage(varname, value):
+        value = re.sub(r'[*]\s*\b' + varname + r'\b', varname, value)
+        value = re.sub(r'\b' + varname + r'\b\s*[\[]\s*0\s*[\]]',
+                       varname, value)
+        return value
+
+    if parent_key in ['dimension', 'check']:
+        assert parents[-3][0] == 'vars'
+        vars_dict = parents[-3][1]
+    elif key == '=':
+        assert parents[-2][0] == 'vars'
+        vars_dict = parents[-2][1]
+    else:
+        vars_dict = None
+
+    new_value = None
+    if vars_dict is not None:
+        new_value = value
+        for varname, vd in vars_dict.items():
+            if ischaracter(vd):
+                new_value = fix_usage(varname, new_value)
+    elif key == 'callstatement':
+        vars_dict = parents[-2][1]['vars']
+        new_value = value
+        for varname, vd in vars_dict.items():
+            if ischaracter(vd):
+                # replace all occurrences of `<varname>` with
+                # `&<varname>` in argument passing
+                new_value = re.sub(
+                    r'(?<![&])\b' + varname + r'\b', '&' + varname, new_value)
+
+    if new_value is not None:
+        if new_value != value:
+            # We report the replacements here so that downstream
+            # software could update their source codes
+            # accordingly. However, such updates are recommended only
+            # when BC with numpy 1.21 or older is not required.
+            outmess(f'character_bc_hook[{parent_key}.{key}]:'
+                    f' replaced `{value}` -> `{new_value}`\n', 1)
+        return (key, new_value)
+
+
+post_processing_hooks.append(character_backward_compatibility_hook)
+
 
 if __name__ == "__main__":
     files = []
@@ -3341,17 +3517,18 @@ if __name__ == "__main__":
             funcs.append(l)
     if not strictf77 and f77modulename and not skipemptyends:
         outmess("""\
-  Warning: You have specified module name for non Fortran 77 code
-  that should not need one (expect if you are scanning F90 code
-  for non module blocks but then you should use flag -skipemptyends
-  and also be sure that the files do not contain programs without program statement).
+  Warning: You have specified module name for non Fortran 77 code that
+  should not need one (expect if you are scanning F90 code for non
+  module blocks but then you should use flag -skipemptyends and also
+  be sure that the files do not contain programs without program
+  statement).
 """, 0)
 
     postlist = crackfortran(files)
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)
-        with open(pyffilename, 'w') as f: 
+        with open(pyffilename, 'w') as f:
             f.write(pyf)
     if showblocklist:
         show(postlist)
