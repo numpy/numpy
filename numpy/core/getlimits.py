@@ -552,11 +552,11 @@ class finfo:
         """
         # This check is necessary because the value for smallest_normal is
         # platform dependent for longdouble types.
-        if isnan(self.machar.smallest_normal):
+        if isnan(self.machar.smallest_normal.flat[0]):
             warnings.warn(
                 'The value of smallest normal is undefined for double double',
                 UserWarning, stacklevel=2)
-        return self.machar.smallest_normal
+        return self.machar.smallest_normal.flat[0]
 
 
 @set_module('numpy')
