@@ -295,7 +295,7 @@ array_argmax(PyArrayObject *self,
         return NULL;
     }
 
-    PyObject *ret = PyArray_ArgMaxWithKeepdims(self, axis, out, keepdims);
+    PyObject *ret = _PyArray_ArgMaxWithKeepdims(self, axis, out, keepdims);
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {
@@ -322,7 +322,7 @@ array_argmin(PyArrayObject *self,
         return NULL;
     }
 
-    PyObject *ret = PyArray_ArgMinWithKeepdims(self, axis, out, keepdims);
+    PyObject *ret = _PyArray_ArgMinWithKeepdims(self, axis, out, keepdims);
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {

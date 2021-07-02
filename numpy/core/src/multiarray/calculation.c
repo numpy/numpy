@@ -34,11 +34,8 @@ power_of_ten(int n)
     return ret;
 }
 
-/*NUMPY_API
- * ArgMax
- */
 NPY_NO_EXPORT PyObject *
-PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
+_PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
         int axis, PyArrayObject *out, int keepdims)
 {
     PyArrayObject *ap = NULL, *rp = NULL;
@@ -188,14 +185,11 @@ PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
 NPY_NO_EXPORT PyObject *
 PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 {
-    return PyArray_ArgMaxWithKeepdims(op, axis, out, 0);
+    return _PyArray_ArgMaxWithKeepdims(op, axis, out, 0);
 }
 
-/*NUMPY_API
- * ArgMin
- */
 NPY_NO_EXPORT PyObject *
-PyArray_ArgMinWithKeepdims(PyArrayObject *op,
+_PyArray_ArgMinWithKeepdims(PyArrayObject *op,
         int axis, PyArrayObject *out, int keepdims)
 {
     PyArrayObject *ap = NULL, *rp = NULL;
@@ -343,7 +337,7 @@ PyArray_ArgMinWithKeepdims(PyArrayObject *op,
 NPY_NO_EXPORT PyObject *
 PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
 {
-    return PyArray_ArgMinWithKeepdims(op, axis, out, 0);
+    return _PyArray_ArgMinWithKeepdims(op, axis, out, 0);
 }
 
 /*NUMPY_API
