@@ -47,6 +47,7 @@ class MachArLike:
         self.epsneg = self._float_to_float(epsneg)
         self.xmax = self.huge = self._float_to_float(huge)
         self.xmin = self._float_to_float(tiny)
+        self.smallest_normal = self.tiny = self._float_to_float(tiny)
         self.ibeta = self.params['itype'](ibeta)
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
@@ -58,40 +59,6 @@ class MachArLike:
         self._str_xmax = self._float_to_str(self.xmax)
         self._str_resolution = self._float_to_str(self.resolution)
         self._str_smallest_normal = self._float_to_str(self.xmin)
-
-    @property
-    def tiny(self):
-        """Return the value for tiny.
-
-        Returns
-        -------
-        tiny : float
-            value for tiny, alias of smallest normal.
-        """
-        return self.xmin
-
-    @property
-    def smallest_normal(self):
-        """Return the value for the smallest normal.
-
-        Returns
-        -------
-        smallest_normal : float
-            value for the smallest normal.
-
-        Warn
-        -----
-        UserWarning
-            If the calculated value for the smallest normal is requested for
-            double-double.
-        """
-        # This check is necessary because the value for smallest_normal is
-        # platform dependent for longdouble types.
-        if isnan(self.xmin):
-            warnings.warn(
-                'The value of smallest normal is undefined for double double',
-                UserWarning, stacklevel=2)
-        return self.xmin
 
     @property
     def smallest_subnormal(self):
@@ -527,8 +494,7 @@ class finfo:
                      'maxexp', 'minexp', 'negep',
                      'machep']:
             setattr(self, word, getattr(machar, word))
-        for word in ['tiny', 'resolution', 'epsneg', 'smallest_normal',
-                     'smallest_subnormal']:
+        for word in ['tiny', 'resolution', 'epsneg', 'smallest_subnormal']:
             setattr(self, word, getattr(machar, word).flat[0])
         self.bits = self.dtype.itemsize * 8
         self.max = machar.huge.flat[0]
@@ -568,6 +534,29 @@ class finfo:
         d['klass'] = c
         return (("%(klass)s(resolution=%(resolution)s, min=-%(_str_max)s,"
                  " max=%(_str_max)s, dtype=%(dtype)s)") % d)
+
+    @property
+    def smallest_normal(self):
+        """Return the value for the smallest normal.
+
+        Returns
+        -------
+        smallest_normal : float
+            value for the smallest normal.
+
+        Warn
+        -----
+        UserWarning
+            If the calculated value for the smallest normal is requested for
+            double-double.
+        """
+        # This check is necessary because the value for smallest_normal is
+        # platform dependent for longdouble types.
+        if isnan(self.machar.smallest_normal):
+            warnings.warn(
+                'The value of smallest normal is undefined for double double',
+                UserWarning, stacklevel=2)
+        return self.machar.smallest_normal
 
 
 @set_module('numpy')
