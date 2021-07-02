@@ -10,6 +10,9 @@ Array Broadcasting in Numpy
    `github repo
    <https://github.com/scipy/old-wiki/blob/gh-pages/pages/EricsBroadcastingDoc.html>`_
 
+.. note::
+    Please refer to the updated :doc:`basics.broadcasting` document 
+
 
 numpy operations are usually done element-by-element which requires two arrays
 to have exactly the same shape:
