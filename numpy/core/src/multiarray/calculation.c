@@ -254,7 +254,7 @@ _PyArray_ArgMinWithKeepdims(PyArrayObject *op,
     } else {
         out_shape = _shape_buf;
         if (axis_copy == NPY_MAXDIMS) {
-            for( int i = 0; i < out_ndim; i++ ) {
+            for (int i = 0; i < out_ndim; i++) {
                 out_shape[i] = 1;
             }
         } else {
