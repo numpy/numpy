@@ -275,8 +275,8 @@ def scrubF2CSource(c_file):
 def ensure_executable(name):
     try:
         which(name)
-    except Exception:
-        raise SystemExit(name + ' not found')
+    except Exception as ex:
+        raise SystemExit(name + ' not found') from ex
 
 def create_name_header(output_dir):
     routine_re = re.compile(r'^      (subroutine|.* function)\s+(\w+)\(.*$',
