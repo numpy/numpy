@@ -44,7 +44,7 @@ Capabilities
   read most ``.npy`` files that they have been given without much
   documentation.
 
-- Allows memory-mapping of the data. See `open_memmep`.
+- Allows memory-mapping of the data. See `open_memmap`.
 
 - Can be read from a filelike stream object instead of an actual file.
 
