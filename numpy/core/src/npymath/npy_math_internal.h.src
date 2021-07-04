@@ -709,7 +709,6 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 {
     @type@ div, mod, floordiv;
 
-    /* force set invalid flag, doesnt raise by default on gcc < 8 */
     mod = npy_fmod@c@(a, b);
     if (NPY_UNLIKELY(!b)) {
         div = a / b;
