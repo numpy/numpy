@@ -1796,6 +1796,7 @@ class TestRegression:
         assert_(a.flags.f_contiguous)
         assert_(b.flags.c_contiguous)
 
+    @pytest.mark.skipif(hasattr(sys, "pyston_version_info"), reason="Pyston disables recursion checking")
     def test_object_array_self_reference(self):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
@@ -1804,6 +1805,7 @@ class TestRegression:
         assert_raises(RecursionError, float, a)
         a[()] = None
 
+    @pytest.mark.skipif(hasattr(sys, "pyston_version_info"), reason="Pyston disables recursion checking")
     def test_object_array_circular_reference(self):
         # Test the same for a circular reference.
         a = np.array(0, dtype=object)

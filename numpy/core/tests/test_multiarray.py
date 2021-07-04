@@ -8031,6 +8031,8 @@ class TestConversion:
 
         assert_raises(NotImplementedError, bool, np.array(NotConvertible()))
         assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
+        if hasattr(sys, "pyston_version_info"):
+            pytest.skip("Pyston disables recursion checking")
 
         self_containing = np.array([None])
         self_containing[0] = self_containing
