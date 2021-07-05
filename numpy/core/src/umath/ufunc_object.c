@@ -49,7 +49,6 @@
 #include "common.h"
 #include "dtypemeta.h"
 #include "numpyos.h"
-#include "convert_datatype.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -992,44 +991,33 @@ fail:
  */
 static int
 check_for_trivial_loop(PyUFuncObject *ufunc,
-        PyArrayObject **op, PyArray_Descr **dtypes,
-        npy_intp buffersize)
+                        PyArrayObject **op,
+                        PyArray_Descr **dtype,
+                        npy_intp buffersize)
 {
-    int i, nin = ufunc->nin, nop = nin + ufunc->nout;
+    npy_intp i, nin = ufunc->nin, nop = nin + ufunc->nout;
 
     for (i = 0; i < nop; ++i) {
         /*
          * If the dtype doesn't match, or the array isn't aligned,
          * indicate that the trivial loop can't be done.
          */
-        if (op[i] == NULL) {
-            continue;
-        }
-        int must_copy = !PyArray_ISALIGNED(op[i]);
-
-        if (dtypes[i] != PyArray_DESCR(op[i])) {
-            NPY_CASTING safety = PyArray_GetCastSafety(
-                    PyArray_DESCR(op[i]), dtypes[i], NULL);
-            if (safety < 0) {
-                /* A proper error during a cast check should be rare */
-                return -1;
-            }
-            if (!(safety & _NPY_CAST_IS_VIEW)) {
-                must_copy = 1;
-            }
-        }
-        if (must_copy) {
+        if (op[i] != NULL &&
+                (!PyArray_ISALIGNED(op[i]) ||
+                !PyArray_EquivTypes(dtype[i], PyArray_DESCR(op[i]))
+                                        )) {
             /*
              * If op[j] is a scalar or small one dimensional
              * array input, make a copy to keep the opportunity
-             * for a trivial loop.  Outputs are not copied here.
+             * for a trivial loop.
              */
-            if (i < nin && (PyArray_NDIM(op[i]) == 0
-                            || (PyArray_NDIM(op[i]) == 1
-                                && PyArray_DIM(op[i], 0) <= buffersize))) {
+            if (i < nin && (PyArray_NDIM(op[i]) == 0 ||
+                    (PyArray_NDIM(op[i]) == 1 &&
+                     PyArray_DIM(op[i],0) <= buffersize))) {
                 PyArrayObject *tmp;
-                Py_INCREF(dtypes[i]);
-                tmp = (PyArrayObject *)PyArray_CastToType(op[i], dtypes[i], 0);
+                Py_INCREF(dtype[i]);
+                tmp = (PyArrayObject *)
+                            PyArray_CastToType(op[i], dtype[i], 0);
                 if (tmp == NULL) {
                     return -1;
                 }
@@ -2488,6 +2476,8 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
 
+    int trivial_loop_ok = 0;
+
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Get the buffersize and errormask */
@@ -2542,16 +2532,16 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
          * Since it requires dtypes, it can only be called after
          * ufunc->type_resolver
          */
-        int trivial_ok = check_for_trivial_loop(ufunc,
+        trivial_loop_ok = check_for_trivial_loop(ufunc,
                 op, operation_descrs, buffersize);
-        if (trivial_ok < 0) {
+        if (trivial_loop_ok < 0) {
             return -1;
         }
 
         /* check_for_trivial_loop on half-floats can overflow */
         npy_clear_floatstatus_barrier((char*)&ufunc);
 
-        retval = execute_legacy_ufunc_loop(ufunc, trivial_ok,
+        retval = execute_legacy_ufunc_loop(ufunc, trivial_loop_ok,
                             op, operation_descrs, order,
                             buffersize, output_array_prepare,
                             full_args, op_flags);
