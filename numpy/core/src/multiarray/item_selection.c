@@ -1054,6 +1054,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
+    /* cleanup internal buffer */
     PyDataMem_UserFREE(buffer, N * elsize, current_handler->allocator);
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
@@ -1214,6 +1215,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
+    /* cleanup internal buffers */
     PyDataMem_UserFREE(valbuffer, N * elsize, current_handler->allocator);
     PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), current_handler->allocator);
     if (ret < 0) {

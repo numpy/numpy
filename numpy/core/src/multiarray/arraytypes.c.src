@@ -3109,14 +3109,16 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         }
         /* Set the fields needed by compare or copyswap */
         dummy_struct.descr = new;
-        dummy_struct.mem_handler = PyArray_HANDLER(ap);
 
         swap = PyArray_ISBYTESWAPPED(dummy);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
         if (swap || new->alignment > 1) {
             if (swap || !npy_is_aligned(nip1, new->alignment)) {
-                /* create buffer and copy */
+                /*
+                 * create temporary buffer and copy,
+                 * always use the current handler for internal allocations
+                 */
                 nip1 = PyDataMem_UserNEW(new->elsize, current_handler->allocator);
                 if (nip1 == NULL) {
                     goto finish;
@@ -3126,10 +3128,14 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                     new->f->copyswap(nip1, NULL, swap, dummy);
             }
             if (swap || !npy_is_aligned(nip2, new->alignment)) {
-                /* create buffer and copy */
+                /*
+                 * create temporary buffer and copy,
+                 * always use the current handler for internal allocations
+                 */
                 nip2 = PyDataMem_UserNEW(new->elsize, current_handler->allocator);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
+                        /* destroy temporary buffer */
                         PyDataMem_UserFREE(nip1, new->elsize,
                                            current_handler->allocator);
                     }
@@ -3143,9 +3149,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         res = new->f->compare(nip1, nip2, dummy);
         if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
+                /* destroy temporary buffer */
                 PyDataMem_UserFREE(nip1, new->elsize, current_handler->allocator);
             }
             if (nip2 != ip2 + offset) {
+                /* destroy temporary buffer */
                 PyDataMem_UserFREE(nip2, new->elsize, current_handler->allocator);
             }
         }
