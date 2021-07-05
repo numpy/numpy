@@ -5355,6 +5355,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     /* Get entry for this user-defined type*/
     cobj = PyDict_GetItemWithError(ufunc->userloops, key);
     if (cobj == NULL && PyErr_Occurred()) {
+        Py_DECREF(key);
         return 0;
     }
     /* If it's not there, then make one and return. */
