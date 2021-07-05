@@ -8,7 +8,9 @@ Indexing
 
 .. seealso::
 
-   :ref:`Indexing basics <basics.indexing>`
+   :ref:`basics.indexing`
+
+   :ref:`Indexing routines <routines.indexing>`
 
 .. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
@@ -18,17 +20,76 @@ Indexing
 
 :class:`ndarrays <ndarray>` can be indexed using the standard Python
 ``x[obj]`` syntax, where *x* is the array and *obj* the selection.
-There are three kinds of indexing available: field access, basic
-slicing, advanced indexing. Which one occurs depends on *obj*.
+There are four kinds of indexing available depending on *obj*:
+single element indexing, basic slicing, advanced indexing and field access.
+
+Most of the following examples show the use of indexing when
+referencing data in an array. The examples work just as well
+when assigning to an array. See :ref:`assigning-values-to-indexed-arrays` for
+specific examples and explanations on how assignments work.
+
+Note that in Python, ``x[(exp1, exp2, ..., expN)]`` is equivalent to
+``x[exp1, exp2, ..., expN]``; the latter is just syntactic sugar
+for the former.
+
+.. _single-element-indexing:
+
+Single element indexing
+-----------------------
+
+Single element indexing works
+exactly like that for other standard Python sequences. It is 0-based,
+and accepts negative indices for indexing from the end of the array. ::
+
+    >>> x = np.arange(10)
+    >>> x[2]
+    2
+    >>> x[-2]
+    8
+
+It is not necessary to
+separate each dimension's index into its own set of square brackets. ::
+
+    >>> x.shape = (2,5) # now x is 2-dimensional
+    >>> x[1,3]
+    8
+    >>> x[1,-1]
+    9
+
+Note that if one indexes a multidimensional array with fewer indices
+than dimensions, one gets a subdimensional array. For example: ::
+
+    >>> x[0]
+    array([0, 1, 2, 3, 4])
+
+That is, each index specified selects the array corresponding to the
+rest of the dimensions selected. In the above example, choosing 0
+means that the remaining dimension of length 5 is being left unspecified,
+and that what is returned is an array of that dimensionality and size.
+It must be noted that the returned array is not a copy of the original,
+but points to the same values in memory as does the original array.
+In  this case, the 1-D array at the first position (0) is returned.
+So using a single index on the returned array, results in a single
+element being returned. That is: ::
+
+    >>> x[0][2]
+    2
+
+So note that ``x[0,2] = x[0][2]`` though the second case is more
+inefficient as a new temporary array is created after the first index
+that is subsequently indexed by 2.
 
 .. note::
 
-   In Python, ``x[(exp1, exp2, ..., expN)]`` is equivalent to
-   ``x[exp1, exp2, ..., expN]``; the latter is just syntactic sugar
-   for the former.
+    NumPy uses C-order indexing. That means that the last
+    index usually represents the most rapidly changing memory location,
+    unlike Fortran or IDL, where the first index represents the most
+    rapidly changing location in memory. This difference represents a
+    great potential for confusion.
 
+.. _basic-slicing-and-indexing:
 
-Basic Slicing and Indexing
+Basic slicing and indexing
 --------------------------
 
 Basic slicing extends Python's basic concept of slicing to N
@@ -67,7 +128,7 @@ of the original array.
 .. note::
 
     NumPy slicing creates a :term:`view` instead of a copy as in the case of
-    builtin Python sequences such as string, tuple and list.
+    built-in Python sequences such as string, tuple and list.
     Care must be taken when extracting
     a small portion from a large array which becomes useless after the
     extraction, because the small portion extracted contains a reference
@@ -85,9 +146,8 @@ concepts to remember include:
   index values *i*, *i + k*, ..., *i + (m - 1) k* where
   :math:`m = q + (r\neq0)` and *q* and *r* are the quotient and remainder
   obtained by dividing *j - i* by *k*: *j - i = q k + r*, so that
-  *i + (m - 1) k < j*.
-
-  .. admonition:: Example
+  *i + (m - 1) k < j*. 
+  For example::
 
      >>> x = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
      >>> x[1:7:2]
@@ -96,8 +156,7 @@ concepts to remember include:
 - Negative *i* and *j* are interpreted as *n + i* and *n + j* where
   *n* is the number of elements in the corresponding dimension.
   Negative *k* makes stepping go towards smaller indices.
-
-  .. admonition:: Example
+  From the above example::
 
       >>> x[-2:10]
       array([8, 9])
@@ -110,16 +169,14 @@ concepts to remember include:
   and *-n-1* for *k < 0* . If *k* is not given it defaults to 1. Note that
   ``::`` is the same as ``:`` and means select all indices along this
   axis.
-
-  .. admonition:: Example
+  From the above example::
 
       >>> x[5:]
       array([5, 6, 7, 8, 9])
 
 - If the number of objects in the selection tuple is less than
   *N*, then ``:`` is assumed for any subsequent dimensions.
-
-  .. admonition:: Example
+  For example::
 
       >>> x = np.array([[[1],[2],[3]], [[4],[5],[6]]])
       >>> x.shape
@@ -128,27 +185,6 @@ concepts to remember include:
       array([[[4],
               [5],
               [6]]])
-
-- :py:data:`Ellipsis` expands to the number of ``:`` objects needed for the
-  selection tuple to index all dimensions. In most cases, this means that
-  length of the expanded selection tuple is ``x.ndim``. There may only be a
-  single ellipsis present.
-
-  .. admonition:: Example
-
-      >>> x[...,0]
-      array([[1, 2, 3],
-             [4, 5, 6]])
-
-- Each :const:`newaxis` object in the selection tuple serves to expand
-  the dimensions of the resulting selection by one unit-length
-  dimension.  The added dimension is the position of the :const:`newaxis`
-  object in the selection tuple.
-
-  .. admonition:: Example
-
-      >>> x[:,np.newaxis,:,:].shape
-      (2, 1, 3, 1)
 
 - An integer, *i*, returns the same values as ``i:i+1``
   **except** the dimensionality of the returned object is reduced by
@@ -178,30 +214,70 @@ concepts to remember include:
   ``x[obj] = value`` must be (broadcastable) to the same shape as
   ``x[obj]``.
 
+- A slicing tuple can always be constructed as *obj*
+  and used in the ``x[obj]`` notation. Slice objects can be used in
+  the construction in place of the ``[start:stop:step]``
+  notation. For example, ``x[1:10:5,::-1]`` can also be implemented
+  as ``obj = (slice(1,10,5), slice(None,None,-1)); x[obj]`` . This
+  can be useful for constructing generic code that works on arrays
+  of arbitrary dimensions. See :ref:`dealing-with-variable-indices`
+  for more information.
+
 .. index::
    pair: ndarray; view
 
-.. note::
+Structural indexing tools
+^^^^^^^^^^^^^^^^^^^^^^^^^
+There are some tools to facilitate the easy matching of array shapes with
+expressions and in assignments.
 
-    Remember that a slicing tuple can always be constructed as *obj*
-    and used in the ``x[obj]`` notation. Slice objects can be used in
-    the construction in place of the ``[start:stop:step]``
-    notation. For example, ``x[1:10:5,::-1]`` can also be implemented
-    as ``obj = (slice(1,10,5), slice(None,None,-1)); x[obj]`` . This
-    can be useful for constructing generic code that works on arrays
-    of arbitrary dimension.
+:py:data:`Ellipsis` expands to the number of ``:`` objects needed for the
+selection tuple to index all dimensions. In most cases, this means that the
+length of the expanded selection tuple is ``x.ndim``. There may only be a
+single ellipsis present.
+From the above example::
 
-.. data:: newaxis
-   :noindex:
+    >>> x[...,0]
+    array([[1, 2, 3],
+          [4, 5, 6]])
 
-   The :const:`newaxis` object can be used in all slicing operations to
-   create an axis of length one. :const:`newaxis` is an alias for
-   'None', and 'None' can be used in place of this with the same result.
+This is equivalent to::
+
+    >>> x[:,:,0]
+    array([[1, 2, 3],
+          [4, 5, 6]])
+
+Each :const:`newaxis` object in the selection tuple serves to expand
+the dimensions of the resulting selection by one unit-length
+dimension.  The added dimension is the position of the :const:`newaxis`
+object in the selection tuple. :const:`newaxis` is an alias for
+'None', and 'None' can be used in place of this with the same result.
+From the above example::
+
+    >>> x[:,np.newaxis,:,:].shape
+    (2, 1, 3, 1)
+    >>> x[:,None,:,:].shape
+    (2, 1, 3, 1)
+
+This can be handy to combine two
+arrays in a way that otherwise would require explicitly reshaping
+operations. For example::
+
+    >>> x = np.arange(5)
+    >>> x[:,np.newaxis] + x[np.newaxis,:]
+    array([[0, 1, 2, 3, 4],
+          [1, 2, 3, 4, 5],
+          [2, 3, 4, 5, 6],
+          [3, 4, 5, 6, 7],
+          [4, 5, 6, 7, 8]])
+
 
 .. _advanced-indexing:
 
-Advanced Indexing
+Advanced indexing
 -----------------
+
+.. seealso:: :ref:`basics.broadcasting`
 
 Advanced indexing is triggered when the selection object, *obj*, is a
 non-tuple sequence object, an :class:`ndarray` (of data type integer or bool),
@@ -229,29 +305,40 @@ Integer array indexing
 
 Integer array indexing allows selection of arbitrary items in the array
 based on their *N*-dimensional index. Each integer array represents a number
-of indexes into that dimension.
+of indices into that dimension.
 
-Purely integer array indexing
-"""""""""""""""""""""""""""""
+Negative values are permitted in the index arrays and work as they do with
+single indices or slices. If the index values are out of bounds then an
+``IndexError`` is thrown::
 
-When the index consists of as many integer arrays as the array being indexed
-has dimensions, the indexing is straight forward, but different from slicing.
+    >>> x = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> x[np.array([1, -1])]
+    array([[3, 4],
+          [5, 6]])
+    >>> x[np.array([3, 4])]
+    IndexError: index 3 is out of bounds for axis 0 with size 3
 
-Advanced indexes always are :ref:`broadcast<ufuncs.broadcasting>` and
+
+When the index consists of as many integer arrays as dimensions of the array
+being indexed, the indexing is straightforward, but different from slicing.
+
+Advanced indices always are :ref:`broadcast<ufuncs.broadcasting>` and
 iterated as *one*::
 
      result[i_1, ..., i_M] == x[ind_1[i_1, ..., i_M], ind_2[i_1, ..., i_M],
                                 ..., ind_N[i_1, ..., i_M]]
 
-Note that the result shape is identical to the (broadcast) indexing array
-shapes ``ind_1, ..., ind_N``.
+Note that the resulting shape is identical to the (broadcast) indexing array
+shapes ``ind_1, ..., ind_N``. If the indices cannot be broadcast to the
+same shape, an exception ``IndexError: shape mismatch: indexing arrays could
+not be broadcast together with shapes...`` is raised.
 
-.. admonition:: Example
+.. rubric:: Example
 
-    From each row, a specific element should be selected. The row index is just
-    ``[0, 1, 2]`` and the column index specifies the element to choose for the
-    corresponding row, here ``[0, 1, 0]``. Using both together the task
-    can be solved using advanced indexing:
+From each row, a specific element should be selected. The row index is just
+``[0, 1, 2]`` and the column index specifies the element to choose for the
+corresponding row, here ``[0, 1, 0]``. Using both together the task
+can be solved using advanced indexing::
 
     >>> x = np.array([[1, 2], [3, 4], [5, 6]])
     >>> x[[0, 1, 2], [0, 1, 0]]
@@ -261,13 +348,13 @@ To achieve a behaviour similar to the basic slicing above, broadcasting can be
 used. The function :func:`ix_` can help with this broadcasting. This is best
 understood with an example.
 
-.. admonition:: Example
+.. rubric:: Example
 
-    From a 4x3 array the corner elements should be selected using advanced
-    indexing. Thus all elements for which the column is one of ``[0, 2]`` and
-    the row is one of ``[0, 3]`` need to be selected. To use advanced indexing
-    one needs to select all elements *explicitly*. Using the method explained
-    previously one could write:
+From a 4x3 array the corner elements should be selected using advanced
+indexing. Thus all elements for which the column is one of ``[0, 2]`` and
+the row is one of ``[0, 3]`` need to be selected. To use advanced indexing
+one needs to select all elements *explicitly*. Using the method explained
+previously one could write::
 
     >>> x = np.array([[ 0,  1,  2],
     ...               [ 3,  4,  5],
@@ -281,9 +368,9 @@ understood with an example.
     array([[ 0,  2],
            [ 9, 11]])
 
-    However, since the indexing arrays above just repeat themselves,
-    broadcasting can be used (compare operations such as
-    ``rows[:, np.newaxis] + columns``) to simplify this:
+However, since the indexing arrays above just repeat themselves,
+broadcasting can be used (compare operations such as
+``rows[:, np.newaxis] + columns``) to simplify this::
 
     >>> rows = np.array([0, 3], dtype=np.intp)
     >>> columns = np.array([0, 2], dtype=np.intp)
@@ -294,88 +381,42 @@ understood with an example.
     array([[ 0,  2],
            [ 9, 11]])
 
-    This broadcasting can also be achieved using the function :func:`ix_`:
+This broadcasting can also be achieved using the function :func:`ix_`:
 
     >>> x[np.ix_(rows, columns)]
     array([[ 0,  2],
            [ 9, 11]])
 
-    Note that without the ``np.ix_`` call, only the diagonal elements would
-    be selected, as was used in the previous example. This difference is the
-    most important thing to remember about indexing with multiple advanced
-    indexes.
+Note that without the ``np.ix_`` call, only the diagonal elements would
+be selected, as was used in the previous example. This difference is the
+most important thing to remember about indexing with multiple advanced
+indices.
 
-.. _combining-advanced-and-basic-indexing:
+.. rubric:: Example
 
-Combining advanced and basic indexing
-"""""""""""""""""""""""""""""""""""""
+The broadcasting mechanism permits index arrays to be combined with
+scalars for other indices. The effect is that the scalar value is used
+for all the corresponding values of the index arrays::
 
-When there is at least one slice (``:``), ellipsis (``...``) or :const:`newaxis`
-in the index (or the array has more dimensions than there are advanced indexes),
-then the behaviour can be more complicated. It is like concatenating the
-indexing result for each advanced index element
+    >>> x = np.arange(35).reshape(5,7)
+    >>> x[np.array([0,2,4]), 1]
+    array([ 1, 15, 29])
 
-In the simplest case, there is only a *single* advanced index. A single
-advanced index can for example replace a slice and the result array will be
-the same, however, it is a copy and may have a different memory layout.
-A slice is preferable when it is possible.
+.. rubric:: Example
 
-.. admonition:: Example
-
-    >>> x[1:2, 1:3]
-    array([[4, 5]])
-    >>> x[1:2, [1, 2]]
-    array([[4, 5]])
-
-The easiest way to understand the situation may be to think in
-terms of the result shape. There are two parts to the indexing operation,
-the subspace defined by the basic indexing (excluding integers) and the
-subspace from the advanced indexing part. Two cases of index combination
-need to be distinguished:
-
-* The advanced indexes are separated by a slice, :py:data:`Ellipsis` or :const:`newaxis`.
-  For example ``x[arr1, :, arr2]``.
-* The advanced indexes are all next to each other.
-  For example ``x[..., arr1, arr2, :]`` but *not* ``x[arr1, :, 1]``
-  since ``1`` is an advanced index in this regard.
-
-In the first case, the dimensions resulting from the advanced indexing
-operation come first in the result array, and the subspace dimensions after
-that.
-In the second case, the dimensions from the advanced indexing operations
-are inserted into the result array at the same spot as they were in the
-initial array (the latter logic is what makes simple advanced indexing
-behave just like slicing).
-
-.. admonition:: Example
-
- Suppose ``x.shape`` is (10,20,30) and ``ind`` is a (2,3,4)-shaped
- indexing :class:`intp` array, then ``result = x[...,ind,:]`` has
- shape (10,2,3,4,30) because the (20,)-shaped subspace has been
- replaced with a (2,3,4)-shaped broadcasted indexing subspace. If
- we let *i, j, k* loop over the (2,3,4)-shaped subspace then
- ``result[...,i,j,k,:] = x[...,ind[i,j,k],:]``. This example
- produces the same result as :meth:`x.take(ind, axis=-2) <ndarray.take>`.
-
-.. admonition:: Example
-
-  Let ``x.shape`` be (10,20,30,40,50) and suppose ``ind_1``
-  and ``ind_2`` can be broadcast to the shape (2,3,4).  Then
-  ``x[:,ind_1,ind_2]`` has shape (10,2,3,4,40,50) because the
-  (20,30)-shaped subspace from X has been replaced with the
-  (2,3,4) subspace from the indices.  However,
-  ``x[:,ind_1,:,ind_2]`` has shape (2,3,4,10,30,50) because there
-  is no unambiguous place to drop in the indexing subspace, thus
-  it is tacked-on to the beginning. It is always possible to use
-  :meth:`.transpose() <ndarray.transpose>` to move the subspace
-  anywhere desired. Note that this example cannot be replicated
-  using :func:`take`.
+A real-life example of where advanced indexing may be useful is for a color
+lookup table where we want to map the values of an image into RGB triples for
+display. The lookup table could have a shape (nlookup, 3). Indexing
+such an array with an image with shape (ny, nx) with dtype=np.uint8
+(or any integer type so long as values are with the bounds of the
+lookup table) will result in an array of shape (ny, nx, 3) where a
+triple of RGB values is associated with each pixel location.
 
 
 Boolean array indexing
 ^^^^^^^^^^^^^^^^^^^^^^
 
-This advanced indexing occurs when obj is an array object of Boolean
+This advanced indexing occurs when *obj* is an array object of Boolean
 type, such as may be returned from comparison operators. A single
 boolean index array is practically identical to ``x[obj.nonzero()]`` where,
 as described above, :meth:`obj.nonzero() <ndarray.nonzero>` returns a
@@ -390,17 +431,15 @@ C-style. If *obj* has :py:data:`True` values at entries that are outside
 of the bounds of *x*, then an index error will be raised. If *obj* is
 smaller than *x* it is identical to filling it with :py:data:`False`.
 
-.. admonition:: Example
-
-    A common use case for this is filtering for desired element values.
-    For example one may wish to select all entries from an array which
-    are not NaN:
+A common use case for this is filtering for desired element values.
+For example, one may wish to select all entries from an array which
+are not NaN::
 
     >>> x = np.array([[1., 2.], [np.nan, 3.], [np.nan, np.nan]])
     >>> x[~np.isnan(x)]
     array([1., 2., 3.])
 
-    Or wish to add a constant to all negative elements:
+Or wish to add a constant to all negative elements::
 
     >>> x = np.array([1., -1., -2., 3])
     >>> x[x < 0] += 20
@@ -418,9 +457,9 @@ this is straight forward. Care must only be taken to make sure that the
 boolean index has *exactly* as many dimensions as it is supposed to work
 with.
 
-.. admonition:: Example
+.. rubric:: Example
 
-    From an array, select all rows which sum up to less or equal two:
+From an array, select all rows which sum up to less or equal two::
 
     >>> x = np.array([[0, 1], [1, 1], [2, 2]])
     >>> rowsum = x.sum(-1)
@@ -434,12 +473,12 @@ indexing array can best be understood with the
 :meth:`obj.nonzero() <ndarray.nonzero>` analogy. The function :func:`ix_`
 also supports boolean arrays and will work without any surprises.
 
-.. admonition:: Example
+.. rubric:: Example
 
-    Use boolean indexing to select all rows adding up to an even
-    number. At the same time columns 0 and 2 should be selected with an
-    advanced integer index. Using the :func:`ix_` function this can be done
-    with:
+Use boolean indexing to select all rows adding up to an even
+number. At the same time columns 0 and 2 should be selected with an
+advanced integer index. Using the :func:`ix_` function this can be done
+with::
 
     >>> x = np.array([[ 0,  1,  2],
     ...               [ 3,  4,  5],
@@ -453,15 +492,193 @@ also supports boolean arrays and will work without any surprises.
     array([[ 3,  5],
            [ 9, 11]])
 
-    Without the ``np.ix_`` call, only the diagonal elements would be
-    selected.
+Without the ``np.ix_`` call, only the diagonal elements would be
+selected.
 
-    Or without ``np.ix_`` (compare the integer array examples):
+Or without ``np.ix_`` (compare the integer array examples)::
 
     >>> rows = rows.nonzero()[0]
     >>> x[rows[:, np.newaxis], columns]
     array([[ 3,  5],
            [ 9, 11]])
+
+.. rubric:: Example
+
+If x has more dimensions than b then the result will be multi-dimensional::
+
+    >>> x = np.arange(35).reshape(5,7)
+    >>> b = x>20
+    >>> b[:,5]
+    array([False, False, False,  True,  True])
+    >>> x[b[:,5]]
+    array([[21, 22, 23, 24, 25, 26, 27],
+          [28, 29, 30, 31, 32, 33, 34]])
+
+Here the 4th and 5th rows are selected from the indexed array and
+combined to make a 2-D array.
+
+.. rubric:: Example
+
+Using a 2-D boolean array of shape (2,3)
+with four True elements to select rows from a 3-D array of shape
+(2,3,5) results in a 2-D result of shape (4,5)::
+
+    >>> x = np.arange(30).reshape(2,3,5)
+    >>> x
+    array([[[ 0,  1,  2,  3,  4],
+            [ 5,  6,  7,  8,  9],
+            [10, 11, 12, 13, 14]],
+          [[15, 16, 17, 18, 19],
+            [20, 21, 22, 23, 24],
+            [25, 26, 27, 28, 29]]])
+    >>> b = np.array([[True, True, False], [False, True, True]])
+    >>> x[b]
+    array([[ 0,  1,  2,  3,  4],
+          [ 5,  6,  7,  8,  9],
+          [20, 21, 22, 23, 24],
+          [25, 26, 27, 28, 29]])
+
+
+.. _combining-advanced-and-basic-indexing:
+
+Combining advanced and basic indexing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When there is at least one slice (``:``), ellipsis (``...``) or :const:`newaxis`
+in the index (or the array has more dimensions than there are advanced indices),
+then the behaviour can be more complicated. It is like concatenating the
+indexing result for each advanced index element.
+
+In the simplest case, there is only a *single* advanced index. A single
+advanced index can for example replace a slice and the result array will be
+the same, however, it is a copy and may have a different memory layout.
+A slice is preferable when it is possible.
+For example::
+
+    >>> x = np.array([[ 0,  1,  2],
+    ...               [ 3,  4,  5],
+    ...               [ 6,  7,  8],
+    ...               [ 9, 10, 11]])
+    >>> x[1:2, 1:3]
+    array([[4, 5]])
+    >>> x[1:2, [1, 2]]
+    array([[4, 5]])
+
+The easiest way to understand the situation may be to think in
+terms of the resulting shape. There are two parts to the indexing operation,
+the subspace defined by the basic indexing (excluding integers) and the
+subspace from the advanced indexing part. Two cases of index combination
+need to be distinguished:
+
+* The advanced indices are separated by a slice, :py:data:`Ellipsis` or
+  :const:`newaxis`. For example ``x[arr1, :, arr2]``.
+* The advanced indices are all next to each other.
+  For example ``x[..., arr1, arr2, :]`` but *not* ``x[arr1, :, 1]``
+  since ``1`` is an advanced index in this regard.
+
+In the first case, the dimensions resulting from the advanced indexing
+operation come first in the result array, and the subspace dimensions after
+that.
+In the second case, the dimensions from the advanced indexing operations
+are inserted into the result array at the same spot as they were in the
+initial array (the latter logic is what makes simple advanced indexing
+behave just like slicing). 
+
+.. rubric:: Example
+
+Suppose ``x.shape`` is (10,20,30) and ``ind`` is a (2,3,4)-shaped
+indexing :class:`intp` array, then ``result = x[...,ind,:]`` has
+shape (10,2,3,4,30) because the (20,)-shaped subspace has been
+replaced with a (2,3,4)-shaped broadcasted indexing subspace. If
+we let *i, j, k* loop over the (2,3,4)-shaped subspace then
+``result[...,i,j,k,:] = x[...,ind[i,j,k],:]``. This example
+produces the same result as :meth:`x.take(ind, axis=-2) <ndarray.take>`.
+
+.. rubric:: Example
+
+Let ``x.shape`` be (10,20,30,40,50) and suppose ``ind_1``
+and ``ind_2`` can be broadcast to the shape (2,3,4). Then
+``x[:,ind_1,ind_2]`` has shape (10,2,3,4,40,50) because the
+(20,30)-shaped subspace from X has been replaced with the
+(2,3,4) subspace from the indices.  However,
+``x[:,ind_1,:,ind_2]`` has shape (2,3,4,10,30,50) because there
+is no unambiguous place to drop in the indexing subspace, thus
+it is tacked-on to the beginning. It is always possible to use
+:meth:`.transpose() <ndarray.transpose>` to move the subspace
+anywhere desired. Note that this example cannot be replicated
+using :func:`take`.
+
+.. rubric:: Example
+
+Slicing can be combined with broadcasted boolean indices::
+
+    >>> b = y > 20
+    >>> b
+    array([[False, False, False, False, False, False, False],
+          [False, False, False, False, False, False, False],
+          [False, False, False, False, False, False, False],
+          [ True,  True,  True,  True,  True,  True,  True],
+          [ True,  True,  True,  True,  True,  True,  True]])
+    >>> y[b[:,5],1:3]
+    array([[22, 23],
+          [29, 30]])
+
+
+.. _arrays.indexing.fields:
+
+Field access
+-------------
+
+.. seealso:: :ref:`arrays.dtypes`, :ref:`arrays.scalars`,
+            :ref:`structured_arrays`
+
+If the :class:`ndarray` object is a structured array the :term:`fields <field>`
+of the array can be accessed by indexing the array with strings,
+dictionary-like.
+
+Indexing ``x['field-name']`` returns a new :term:`view` to the array,
+which is of the same shape as *x* (except when the field is a
+sub-array) but of data type ``x.dtype['field-name']`` and contains
+only the part of the data in the specified field. Also,
+:ref:`record array <arrays.classes.rec>` scalars can be "indexed" this way.
+
+Indexing into a structured array can also be done with a list of field names,
+e.g. ``x[['field-name1','field-name2']]``. As of NumPy 1.16, this returns a
+view containing only those fields. In older versions of NumPy, it returned a
+copy. See the user guide section on :ref:`structured_arrays` for more
+information on multifield indexing.
+
+If the accessed field is a sub-array, the dimensions of the sub-array
+are appended to the shape of the result.
+For example::
+
+   >>> x = np.zeros((2,2), dtype=[('a', np.int32), ('b', np.float64, (3,3))])
+   >>> x['a'].shape
+   (2, 2)
+   >>> x['a'].dtype
+   dtype('int32')
+   >>> x['b'].shape
+   (2, 2, 3, 3)
+   >>> x['b'].dtype
+   dtype('float64')
+
+.. _flat-iterator-indexing:
+
+Flat Iterator indexing
+----------------------
+
+:attr:`x.flat <ndarray.flat>` returns an iterator that will iterate
+over the entire array (in C-contiguous style with the last index
+varying the fastest). This iterator object can also be indexed using
+basic slicing or advanced indexing as long as the selection object is
+not a tuple. This should be clear from the fact that :attr:`x.flat
+<ndarray.flat>` is a 1-dimensional view. It can be used for integer
+indexing with 1-dimensional C-style-flat indices. The shape of any
+returned array is therefore the shape of the integer indexing object.
+
+.. index::
+   single: indexing
+   single: ndarray
 
 Detailed notes
 --------------
@@ -476,16 +693,16 @@ indexing (in no particular order):
 * For advanced assignments, there is in general no guarantee for the
   iteration order. This means that if an element is set more than once,
   it is not possible to predict the final result.
-* An empty (tuple) index is a full scalar index into a zero dimensional array.
-  ``x[()]`` returns a *scalar* if ``x`` is zero dimensional and a view
-  otherwise. On the other hand ``x[...]`` always returns a view.
-* If a zero dimensional array is present in the index *and* it is a full
-  integer index the result will be a *scalar* and not a zero dimensional array.
+* An empty (tuple) index is a full scalar index into a zero-dimensional array.
+  ``x[()]`` returns a *scalar* if ``x`` is zero-dimensional and a view
+  otherwise. On the other hand, ``x[...]`` always returns a view.
+* If a zero-dimensional array is present in the index *and* it is a full
+  integer index the result will be a *scalar* and not a zero-dimensional array.
   (Advanced indexing is not triggered.)
 * When an ellipsis (``...``) is present but has no size (i.e. replaces zero
   ``:``) the result will still always be an array. A view if no advanced index
   is present, otherwise a copy.
-* the ``nonzero`` equivalence for Boolean arrays does not hold for zero
+* The ``nonzero`` equivalence for Boolean arrays does not hold for zero
   dimensional boolean arrays.
 * When the result of an advanced indexing operation has no elements but an
   individual index is out of bounds, whether or not an ``IndexError`` is
@@ -503,59 +720,3 @@ indexing (in no particular order):
   be preferable to call ``ndarray.__setitem__`` with a *base class* ndarray
   view on the data. This *must* be done if the subclasses ``__getitem__`` does
   not return views.
-
-.. _arrays.indexing.fields:
-
-
-Field Access
--------------
-
-.. seealso:: :ref:`arrays.dtypes`, :ref:`arrays.scalars`
-
-If the :class:`ndarray` object is a structured array the :term:`fields <field>`
-of the array can be accessed by indexing the array with strings,
-dictionary-like.
-
-Indexing ``x['field-name']`` returns a new :term:`view` to the array,
-which is of the same shape as *x* (except when the field is a
-sub-array) but of data type ``x.dtype['field-name']`` and contains
-only the part of the data in the specified field. Also
-:ref:`record array <arrays.classes.rec>` scalars can be "indexed" this way.
-
-Indexing into a structured array can also be done with a list of field names,
-*e.g.* ``x[['field-name1','field-name2']]``. As of NumPy 1.16 this returns a
-view containing only those fields. In older versions of numpy it returned a
-copy. See the user guide section on :ref:`structured_arrays` for more
-information on multifield indexing.
-
-If the accessed field is a sub-array, the dimensions of the sub-array
-are appended to the shape of the result.
-
-.. admonition:: Example
-
-   >>> x = np.zeros((2,2), dtype=[('a', np.int32), ('b', np.float64, (3,3))])
-   >>> x['a'].shape
-   (2, 2)
-   >>> x['a'].dtype
-   dtype('int32')
-   >>> x['b'].shape
-   (2, 2, 3, 3)
-   >>> x['b'].dtype
-   dtype('float64')
-
-
-Flat Iterator indexing
-----------------------
-
-:attr:`x.flat <ndarray.flat>` returns an iterator that will iterate
-over the entire array (in C-contiguous style with the last index
-varying the fastest). This iterator object can also be indexed using
-basic slicing or advanced indexing as long as the selection object is
-not a tuple. This should be clear from the fact that :attr:`x.flat
-<ndarray.flat>` is a 1-dimensional view. It can be used for integer
-indexing with 1-dimensional C-style-flat indices. The shape of any
-returned array is therefore the shape of the integer indexing object.
-
-.. index::
-   single: indexing
-   single: ndarray
