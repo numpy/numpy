@@ -806,7 +806,7 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
-        /* Store the functions in case the global hander is modified */
+        /* Store the functions in case the global handler is modified */
         fa->mem_handler = current_handler;
         /*
          * Allocate something even for zero-space arrays
@@ -837,8 +837,8 @@ PyArray_NewFromDescr_int(
         fa->flags |= NPY_ARRAY_OWNDATA;
     }
     else {
-        /* The handlers should never be called in this case, but just in case */
-        fa->mem_handler = &default_handler;
+        /* The handlers should never be called in this case */
+        fa->mem_handler = NULL;
         /*
          * If data is passed in, this object won't own it by default.
          * Caller must arrange for this to be reset if truly desired

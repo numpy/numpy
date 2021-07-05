@@ -2098,6 +2098,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(rawdata);
                 Py_RETURN_NONE;
             }
+            /* Store the functions in case the global handler is modified */
+            fa->mem_handler = current_handler;
             fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(fa)->allocator);
             if (PyArray_DATA(self) == NULL) {
                 Py_DECREF(rawdata);
@@ -2135,6 +2137,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_DECREF(rawdata);
         }
         else {
+            /* The handlers should never be called in this case */
+            fa->mem_handler = NULL;
             fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
                 Py_DECREF(rawdata);
@@ -2148,6 +2152,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (num == 0 || elsize == 0) {
             Py_RETURN_NONE;
         }
+        /* Store the functions in case the global handler is modified */
+        fa->mem_handler = current_handler;
         fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(fa)->allocator);
         if (PyArray_DATA(self) == NULL) {
             return PyErr_NoMemory();
