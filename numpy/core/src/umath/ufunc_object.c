@@ -5218,6 +5218,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
 
     arg_typenums = PyArray_malloc(ufunc->nargs * sizeof(int));
     if (arg_typenums == NULL) {
+        Py_DECREF(key);
         PyErr_NoMemory();
         return -1;
     }
