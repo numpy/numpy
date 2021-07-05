@@ -152,7 +152,7 @@ def test_new_policy(get_module):
     a = np.arange(10)
     orig_policy = get_module.test_prefix(a)
     assert get_module.set_new_policy() == orig_policy
-    b = np.arange(10)
+    b = np.arange(10).reshape((2, 5))
     assert get_module.test_prefix(b) == 'secret_data_allocator'
 
     # test array manipulation. This is slow

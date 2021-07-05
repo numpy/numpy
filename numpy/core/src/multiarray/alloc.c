@@ -467,8 +467,10 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
 /*NUMPY_API
  * Return the const char name of the PyDataMem_Handler used by the
- * PyArrayObject. If NULL, return the name of the current global policy that
- * will be used to allocate data for the next PyArrayObject
+ * PyArrayObject or its base. If neither the PyArrayObject owns its own data
+ * nor its base is a PyArrayObject which owns its own data return an empty string.
+ * If NULL, return the name of the current global policy that
+ * will be used to allocate data for the next PyArrayObject.
  */
 NPY_NO_EXPORT const char *
 PyDataMem_GetHandlerName(PyArrayObject *obj)
@@ -476,7 +478,19 @@ PyDataMem_GetHandlerName(PyArrayObject *obj)
     if (obj == NULL) {
         return current_handler->name;
     }
-    return PyArray_HANDLER(obj)->name;
+    PyDataMem_Handler *handler;
+    handler = PyArray_HANDLER(obj);
+    if (handler != NULL) {
+        return handler->name;
+    }
+    PyObject *base = PyArray_BASE(obj);
+    if (base != NULL && PyArray_Check(base)) {
+        handler = PyArray_HANDLER((PyArrayObject *) base);
+        if (handler != NULL) {
+             return handler->name;
+        }
+    }
+    return "";
 }
 
 NPY_NO_EXPORT PyObject *
@@ -493,6 +507,9 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
     const char * name = PyDataMem_GetHandlerName((PyArrayObject *)arr);
     if (name == NULL) {
         return NULL;
+    }
+    else if (strlen(name) == 0) {
+        Py_RETURN_NONE;
     }
     return PyUnicode_FromString(name);
 }

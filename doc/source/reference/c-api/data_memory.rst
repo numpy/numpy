@@ -64,7 +64,7 @@ reallocate or free the data memory of the instance.
             PyDataMemAllocator allocator;
         } PyDataMem_Handler;
 
-    where the allocator structure is:
+    where the allocator structure is
 
     .. code-block:: c
 
@@ -88,7 +88,9 @@ reallocate or free the data memory of the instance.
 .. c:function:: const char * PyDataMem_GetHandlerName(PyArrayObject *obj)
 
    Return the const char name of the `PyDataMem_Handler` used by the
-   ``PyArrayObject``. If ``NULL``, return the name of the current global policy
+   ``PyArrayObject`` or its base. If neither the ``PyArrayObject`` owns its own
+   data nor its base is a ``PyArrayObject`` which owns its own data return an
+   empty string. If ``NULL``, return the name of the current global policy
    that will be used to allocate data for the next ``PyArrayObject``.
 
 For an example of setting up and using the PyDataMem_Handler, see the test in
