@@ -283,19 +283,13 @@ static void
 
 static void
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
-    @type@ mod;
-
-    if (!b) {
-        *out = a / b;
-    } else {
-        *out = npy_divmod@c@(a, b, &mod);
-    }
+    *out = npy_floor_divide@c@(a, b);
 }
 
 
 static void
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    npy_divmod@c@(a, b, out);
+    *out = npy_remainder@c@(a, b);
 }
 
 

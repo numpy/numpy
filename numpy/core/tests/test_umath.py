@@ -458,6 +458,8 @@ class TestDivision:
         # divide by zero error check
         with np.errstate(divide='raise', invalid='ignore'):
             assert_raises(FloatingPointError, np.floor_divide, fone, fzer)
+        with np.errstate(divide='ignore', invalid='raise'):
+            np.floor_divide(fone, fzer)
 
         # The following already contain a NaN and should not warn
         with np.errstate(all='raise'):
@@ -581,7 +583,8 @@ class TestRemainder:
         with np.errstate(divide='ignore', invalid='raise'):
             assert_raises(FloatingPointError, np.divmod, finf, fzero)
         with np.errstate(divide='raise', invalid='ignore'):
-            assert_raises(FloatingPointError, np.divmod, finf, fzero)
+            # inf / 0 does not set any flags, only the modulo creates a NaN
+            np.divmod(finf, fzero)
 
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])

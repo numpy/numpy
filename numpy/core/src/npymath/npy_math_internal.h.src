@@ -398,8 +398,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,copysign#
- * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
@@ -407,29 +407,6 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #ifndef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
-    return (@type@) npy_@kind@((double)x, (double) y);
-}
-#endif
-/**end repeat1**/
-
-/**begin repeat1
- * #kind = fmod#
- * #KIND = FMOD#
- */
-#ifdef @kind@@c@
-#undef @kind@@c@
-#endif
-#ifndef HAVE_MODF@C@
-NPY_INPLACE @type@
-npy_@kind@@c@(@type@ x, @type@ y)
-{
-    int are_inputs_inf = (npy_isinf(x) && npy_isinf(y));
-
-    if (are_inputs_inf || !y) {
-        if (!npy_isnan(x)) {
-            npy_set_floatstatus_invalid();
-        }
-    }
     return (@type@) npy_@kind@((double)x, (double) y);
 }
 #endif
@@ -496,32 +473,12 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,copysign#
- * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
 #ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
-    return @kind@@c@(x, y);
-}
-#endif
-/**end repeat1**/
-
-/**begin repeat1
- * #kind = fmod#
- * #KIND = FMOD#
- */
-#ifdef HAVE_FMOD@C@
-NPY_INPLACE @type@
-npy_@kind@@c@(@type@ x, @type@ y)
-{
-    int are_inputs_inf = (npy_isinf(x) && npy_isinf(y));
-
-    if (are_inputs_inf || !y) {
-        if (!npy_isnan(x)) {
-            npy_set_floatstatus_invalid();
-        }
-    }
     return @kind@@c@(x, y);
 }
 #endif
@@ -676,8 +633,14 @@ npy_remainder@c@(@type@ a, @type@ b)
 {
     @type@ mod;
     if (NPY_UNLIKELY(!b)) {
+        /*
+         * in2 == 0 (and not NaN): normal fmod will give the correct
+         * result (always NaN). `divmod` may set additional FPE for the
+         * division by zero creating an inf.
+         */
         mod = npy_fmod@c@(a, b);
-    } else {
+    }
+    else {
         npy_divmod@c@(a, b, &mod);
     }
     return mod;
@@ -687,13 +650,14 @@ NPY_INPLACE @type@
 npy_floor_divide@c@(@type@ a, @type@ b) {
     @type@ div, mod;
     if (NPY_UNLIKELY(!b)) {
+        /*
+         * in2 == 0 (and not NaN): normal division will give the correct
+         * result (Inf or NaN). `divmod` may set additional FPE for the modulo
+         * evaluating to NaN.
+         */
         div = a / b;
-        if (!a || npy_isnan(a)) {
-            npy_set_floatstatus_invalid();
-        } else {
-            npy_set_floatstatus_divbyzero();
-        }
-    } else {
+    }
+    else {
         div = npy_divmod@c@(a, b, &mod);
     }
     return div;
@@ -711,13 +675,9 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     mod = npy_fmod@c@(a, b);
     if (NPY_UNLIKELY(!b)) {
-        div = a / b;
-        if (a && !npy_isnan(a)) {
-            npy_set_floatstatus_divbyzero();
-        }
-        /* If b == 0, return result of fmod. For IEEE is nan */
+        /* b == 0 (not NaN): return result of fmod. For IEEE is nan */
         *modulus = mod;
-        return div;
+        return a / b;
     }
 
     /* a - mod should be very nearly an integer multiple of b */
@@ -725,7 +685,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     /* adjust fmod result to conform to Python convention of remainder */
     if (mod) {
-        if ((b < 0) != (mod < 0)) {
+        if (isless(b, 0) != isless(mod, 0)) {
             mod += b;
             div -= 1.0@c@;
         }
@@ -738,7 +698,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     /* snap quotient to nearest integral value */
     if (div) {
         floordiv = npy_floor@c@(div);
-        if (div - floordiv > 0.5@c@)
+        if (isgreater(div - floordiv, 0.5@c@))
             floordiv += 1.0@c@;
     }
     else {
