@@ -165,6 +165,7 @@ html_theme_options = {
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
   "collapse_navigation": True,
+  "external_links": [{"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}],
 }
 
 
