@@ -458,11 +458,13 @@ class TestDivision:
         # divide by zero error check
         with np.errstate(divide='raise', invalid='ignore'):
             assert_raises(FloatingPointError, np.floor_divide, fone, fzer)
-        with np.errstate(invalid='raise'):
-            assert_no_warnings(FloatingPointError, np.floor_divide, fnan, fone)
-            assert_no_warnings(FloatingPointError, np.floor_divide, fone, fnan)
-            assert_no_warnings(FloatingPointError, np.floor_divide, fnan, fzer)
-            assert_no_warnings(FloatingPointError, np.floor_divide, fzer, fnan)
+
+        # The following already contain a NaN and should not warn
+        with np.errstate(all='raise'):
+            np.floor_divide(fnan, fone)
+            np.floor_divide(fone, fnan)
+            np.floor_divide(fnan, fzer)
+            np.floor_divide(fzer, fnan)
 
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_corner_cases(self, dtype):
@@ -588,12 +590,16 @@ class TestRemainder:
         fone = np.array(1.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
         fnan = np.array(np.nan, dtype=dtype)
-        with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, fn, fone, fzero)
-            assert_no_warnings(FloatingPointError, fn, fnan, fzero)
-            assert_no_warnings(FloatingPointError, fn, fzero, fnan)
-            assert_no_warnings(FloatingPointError, fn, fone, fnan)
-            assert_no_warnings(FloatingPointError, fn, fnan, fone)
+
+        # The following already contain a NaN and should not warn.
+        with np.errstate(all='raise'):
+            with pytest.raises(FloatingPointError,
+                    match="invalid value"):
+                fn(fone, fzero)
+            fn(fnan, fzero)
+            fn(fzero, fnan)
+            fn(fone, fnan)
+            fn(fnan, fone)
 
     def test_float_remainder_overflow(self):
         a = np.finfo(np.float64).tiny
