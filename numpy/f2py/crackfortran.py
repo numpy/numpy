@@ -1541,27 +1541,25 @@ def markinnerspaces(line):
     str
 
     """  
-    l = ''
-    f = 0
-    cc = '\''
-    cb = ''
+    fragment = ''
+    inside = False
+    current_quote = '\''
+    escaped = ''
     for c in line:
-        if cb == '\\' and c in ['\\', '\'', '"']:
-            l = l + c
-            cb = c
+        if escaped == '\\' and c in ['\\', '\'', '"']:
+            fragment += c
+            escaped = c
             continue
-        if f == 0 and c in ['\'', '"']:
-            cc = c
-        if c == cc and f == 0:
-            f = 1
-        elif c == cc and f == 1:
-            f = 0
-        elif c == ' ' and f == 1:
-            l = l + '@_@'
+        if not inside and c in ['\'', '"']:
+            current_quote = c
+        if c == current_quote:
+            inside = not inside
+        elif c == ' ' and inside:
+            fragment += '@_@'
             continue
-        l = l + c
-        cb = c
-    return l
+        fragment += c
+        escaped = c  # reset to non-backslash
+    return fragment
 
 
 def updatevars(typespec, selector, attrspec, entitydecl):
