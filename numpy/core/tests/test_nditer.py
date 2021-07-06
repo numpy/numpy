@@ -197,7 +197,7 @@ def test_nditer_multi_index_set():
     
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_nditer_multi_index_set_refcount():
-    # Test if the reference count on inde variable is decreased
+    # Test if the reference count on index variable is decreased
     
     index = 0
     i = np.nditer(np.array([111, 222, 333, 444]), flags=['multi_index'])
