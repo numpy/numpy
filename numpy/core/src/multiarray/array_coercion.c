@@ -1089,6 +1089,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     }
     /* The cache takes ownership of the sequence here. */
     if (npy_new_coercion_cache(obj, seq, 1, coercion_cache_tail_ptr, curr_dims) < 0) {
+        Py_DECREF(seq);
         return -1;
     }
 
