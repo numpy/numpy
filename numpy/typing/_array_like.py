@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 from typing import Any, Sequence, TYPE_CHECKING, Union, TypeVar, Generic
-
 from numpy import (
     ndarray,
     dtype,
@@ -20,9 +19,7 @@ from numpy import (
     str_,
     bytes_,
 )
-
 from . import _HAS_TYPING_EXTENSIONS
-from ._dtype_like import DTypeLike
 
 if sys.version_info >= (3, 8):
     from typing import Protocol

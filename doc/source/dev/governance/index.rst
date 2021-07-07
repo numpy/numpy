@@ -6,4 +6,3 @@ NumPy governance
    :maxdepth: 3
 
    governance
-   people
