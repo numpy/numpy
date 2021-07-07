@@ -1601,8 +1601,8 @@ npyiter_multi_index_set(
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
             multi_index[idim] = PyLong_AsLong(v);
+            Py_DECREF(v);
             if (error_converting(multi_index[idim])) {
-                Py_XDECREF(v);
                 return -1;
             }
         }
