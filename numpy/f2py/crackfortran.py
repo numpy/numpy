@@ -1543,7 +1543,7 @@ def markinnerspaces(line):
     """  
     fragment = ''
     inside = False
-    current_quote = '\''
+    current_quote = None
     escaped = ''
     for c in line:
         if escaped == '\\' and c in ['\\', '\'', '"']:

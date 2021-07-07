@@ -157,6 +157,10 @@ class TestMarkinnerspaces():
         assert_equal(markinnerspaces("a 'b c' \\\' \\\'"), "a 'b@_@c' \\' \\'")
         assert_equal(markinnerspaces(r'a "b c" \" \"'), r'a "b@_@c" \" \"')
 
+    def test_ignore_inner_quotes(self):
+        assert_equal(markinnerspaces('a \'b c" " d\' e', "a 'b@_@c\"@_@\"@_@d' e"))
+        assert_equal(markinnerspaces('a "b c\' \' d" e', "a \"b@_@c'@)_@'@_@d\" e"))
+
     def test_multiple_relevant_spaces(self):
         assert_equal(markinnerspaces("a 'b c' 'd e'"), "a 'b@_@c' 'd@_@e'")
         assert_equal(markinnerspaces(r'a "b c" "d e"'), r'a "b@_@c" "d@_@e"')
