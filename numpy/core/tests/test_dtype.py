@@ -9,7 +9,8 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT, IS_PYSTON)
+    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
+    IS_PYSTON)
 from numpy.compat import pickle
 from itertools import permutations
 

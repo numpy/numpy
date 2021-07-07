@@ -25,8 +25,8 @@ from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
-    assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings, break_cycles,
+    assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
+    runstring, temppath, suppress_warnings, break_cycles,
     )
 from numpy.testing._private.utils import _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
