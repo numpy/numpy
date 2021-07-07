@@ -48,7 +48,8 @@ KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
-HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
+IS_PYSTON = hasattr(sys, "pyston_version_info")
+HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 
