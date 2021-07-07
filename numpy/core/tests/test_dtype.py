@@ -9,9 +9,11 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
+    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
+    IS_PYSTON)
 from numpy.compat import pickle
 from itertools import permutations
+
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -805,12 +807,14 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_list_recursion(self):
         l = list()
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -818,6 +822,7 @@ class TestMonsterType:
         with pytest.raises(RecursionError):
             np.dtype(d)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_dict_recursion(self):
         d = dict(names=['self'], formats=[None], offsets=[0])
         d['formats'][0] = d
@@ -1239,6 +1244,7 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_recursion(self):
         class dt:
             pass
@@ -1262,6 +1268,7 @@ class TestFromDTypeAttribute:
         np.dtype(dt)
         np.dtype(dt(1))
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_void_subtype_recursion(self):
         class vdt(np.void):
             pass

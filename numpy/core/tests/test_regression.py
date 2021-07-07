@@ -12,7 +12,7 @@ from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
         assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT,
+        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
@@ -21,6 +21,8 @@ try:
     RecursionError
 except NameError:
     RecursionError = RuntimeError  # python < 3.5
+
+
 
 class TestRegression:
     def test_invalid_round(self):
@@ -1796,6 +1798,7 @@ class TestRegression:
         assert_(a.flags.f_contiguous)
         assert_(b.flags.c_contiguous)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_object_array_self_reference(self):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
@@ -1804,6 +1807,7 @@ class TestRegression:
         assert_raises(RecursionError, float, a)
         a[()] = None
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_object_array_circular_reference(self):
         # Test the same for a circular reference.
         a = np.array(0, dtype=object)
