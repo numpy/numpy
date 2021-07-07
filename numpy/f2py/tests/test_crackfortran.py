@@ -3,7 +3,6 @@ from numpy.testing import assert_array_equal, assert_equal
 from numpy.f2py.crackfortran import markinnerspaces
 from . import util
 from numpy.f2py import crackfortran
-import tempfile
 import textwrap
 
 
@@ -158,8 +157,10 @@ class TestMarkinnerspaces():
         assert_equal(markinnerspaces(r'a "b c" \" \"'), r'a "b@_@c" \" \"')
 
     def test_ignore_inner_quotes(self):
-        assert_equal(markinnerspaces('a \'b c" " d\' e', "a 'b@_@c\"@_@\"@_@d' e"))
-        assert_equal(markinnerspaces('a "b c\' \' d" e', "a \"b@_@c'@)_@'@_@d\" e"))
+        assert_equal(markinnerspaces('a \'b c" " d\' e'),
+                     "a 'b@_@c\"@_@\"@_@d' e")
+        assert_equal(markinnerspaces('a "b c\' \' d" e'),
+                     "a \"b@_@c'@)_@'@_@d\" e")
 
     def test_multiple_relevant_spaces(self):
         assert_equal(markinnerspaces("a 'b c' 'd e'"), "a 'b@_@c' 'd@_@e'")
