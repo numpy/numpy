@@ -46,6 +46,7 @@ jobs:
     - python: 3.7
       os: linux
       arch: arm64
+      virt: vm
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
