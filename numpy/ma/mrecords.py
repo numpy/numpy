@@ -129,7 +129,6 @@ class MaskedRecords(MaskedArray):
                     msg = "Mask and data not compatible: data size is %i, " + \
                           "mask size is %i."
                     raise MAError(msg % (nd, nm))
-                copy = True
             if not keep_mask:
                 self.__setmask__(mask)
                 self._sharedmask = True
