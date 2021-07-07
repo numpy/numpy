@@ -13,6 +13,8 @@ from numpy.testing import (
 from numpy.compat import pickle
 from itertools import permutations
 
+IS_PYSTON = hasattr(sys, "pyston_version_info")
+
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
     assert_equal(hash(a), hash(b),
@@ -805,14 +807,14 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-    @pytest.mark.skipif(hasattr(sys, "pyston_version_info"), reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_list_recursion(self):
         l = list()
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
-    @pytest.mark.skipif(hasattr(sys, "pyston_version_info"), reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -820,7 +822,7 @@ class TestMonsterType:
         with pytest.raises(RecursionError):
             np.dtype(d)
 
-    @pytest.mark.skipif(hasattr(sys, "pyston_version_info"), reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_dict_recursion(self):
         d = dict(names=['self'], formats=[None], offsets=[0])
         d['formats'][0] = d
@@ -1242,9 +1244,8 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_recursion(self):
-        if hasattr(sys, "pyston_version_info"):
-            pytest.skip("Pyston disables recursion checking")
         class dt:
             pass
 
@@ -1267,9 +1268,8 @@ class TestFromDTypeAttribute:
         np.dtype(dt)
         np.dtype(dt(1))
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_void_subtype_recursion(self):
-        if hasattr(sys, "pyston_version_info"):
-            pytest.skip("Pyston disables recursion checking")
         class vdt(np.void):
             pass
 
