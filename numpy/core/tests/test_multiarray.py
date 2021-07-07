@@ -25,7 +25,7 @@ from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
-    assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
+    assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less, runstring,
     temppath, suppress_warnings, break_cycles,
     )
 from numpy.testing._private.utils import _no_tracing
@@ -8031,7 +8031,7 @@ class TestConversion:
 
         assert_raises(NotImplementedError, bool, np.array(NotConvertible()))
         assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
-        if hasattr(sys, "pyston_version_info"):
+        if IS_PYSTON:
             pytest.skip("Pyston disables recursion checking")
 
         self_containing = np.array([None])

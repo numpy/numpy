@@ -12,7 +12,7 @@ from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
         assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT,
+        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
@@ -22,7 +22,7 @@ try:
 except NameError:
     RecursionError = RuntimeError  # python < 3.5
 
-IS_PYSTON = hasattr(sys, "pyston_version_info")
+
 
 class TestRegression:
     def test_invalid_round(self):

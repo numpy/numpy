@@ -37,6 +37,7 @@ from numpy.testing._private.utils import (
     temppath as temppath,
     tempdir as tempdir,
     IS_PYPY as IS_PYPY,
+    IS_PYSTON as IS_PYSTON,
     HAS_REFCOUNT as HAS_REFCOUNT,
     suppress_warnings as suppress_warnings,
     assert_array_compare as assert_array_compare,
