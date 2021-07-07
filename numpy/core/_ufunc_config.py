@@ -71,14 +71,15 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Notes
     -----
-    The floating-point exceptions are defined in the IEEE 754 standard [1]_:
+    See also :ref:`routines.err`.  The floating-point exceptions follow
+    those defined in the IEEE 745 standard [1]_:
 
-    - Division by zero: infinite result obtained from finite numbers.
+    - Invalid operation: result is not an expressible number.  This typically
+      indicates that a new NaN (not a number) was produced, e.g. by ``0. / 0.``
+    - Division by zero: infinite result obtained from finite numbers,
+      e.g. by ``1. / 0.``
     - Overflow: result too large to be expressed.
-    - Underflow: result so close to zero that some precision
-      was lost.
-    - Invalid operation: result is not an expressible number, typically
-      indicates that a NaN was produced.
+    - Underflow: result so close to zero that some precision was lost.
 
     .. [1] https://en.wikipedia.org/wiki/IEEE_754
 

@@ -1595,9 +1595,8 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
  *  #C = F, , L#
  */
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
- *        logical_and, logical_or#
- * #OP = ==, !=, <, <=, >, >=, &&, ||#
+ * #kind = equal, not_equal, logical_and, logical_or#
+ * #OP = ==, !=, &&, ||#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1609,7 +1608,29 @@ NPY_NO_EXPORT void
             *((npy_bool *)op1) = in1 @OP@ in2;
         }
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = less, less_equal, greater, greater_equal#
+ * #comp = isless, islessequal, isgreater, isgreaterequal#
+ */
+ /*
+  * Note: Unlike the operators, the functions `isless`, etc. do not set
+  *       floating point exceptions.  NumPy currently does not warn for
+  *       comparisons like `NaN > 0`, using the operators would add the
+  *       warning, as it is the main/default comparison as per IEEE.
+  */
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+        BINARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            *((npy_bool *)op1) = @comp@(in1, in2);
+        }
+    }
 }
 /**end repeat1**/
 
@@ -1650,7 +1671,6 @@ NPY_NO_EXPORT void
             *((npy_bool *)op1) = @func@(in1) != 0;
         }
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat2**/
 /**end repeat1**/
@@ -1686,7 +1706,7 @@ NPY_NO_EXPORT void
 
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP =  >=, <=#
+ * #comp = isgreaterequal, islessequal#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1697,7 +1717,7 @@ NPY_NO_EXPORT void
             BINARY_REDUCE_LOOP(@type@) {
                 const @type@ in2 = *(@type@ *)ip2;
                 /* Order of operations important for MSVC 2015 */
-                io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
+                io1 = (@comp@(io1, in2) || npy_isnan(io1)) ? io1 : in2;
             }
             *((@type@ *)iop1) = io1;
         }
@@ -1708,12 +1728,11 @@ NPY_NO_EXPORT void
                 @type@ in1 = *(@type@ *)ip1;
                 const @type@ in2 = *(@type@ *)ip2;
                 /* Order of operations important for MSVC 2015 */
-                in1 = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+                in1 = (@comp@(in1, in2) || npy_isnan(in1)) ? in1 : in2;
                 *((@type@ *)op1) = in1;
             }
         }
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -1725,7 +1744,7 @@ NPY_NO_EXPORT void
             BINARY_REDUCE_LOOP(@type@) {
                 const @type@ in2 = *(@type@ *)ip2;
                 /* Order of operations important for MSVC 2015 */
-                io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
+                io1 = (@comp@(io1, in2) || npy_isnan(io1)) ? io1 : in2;
             }
             *((@type@ *)iop1) = io1;
         }
@@ -1735,17 +1754,16 @@ NPY_NO_EXPORT void
             @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
             /* Order of operations important for MSVC 2015 */
-            in1 = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+            in1 = (@comp@(in1, in2) || npy_isnan(in1)) ? in1 : in2;
             *((@type@ *)op1) = in1;
         }
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
 /**begin repeat1
  * #kind = fmax, fmin#
- * #OP =  >=, <=#
+ * #comp = isgreaterequal, islessequal#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1755,7 +1773,7 @@ NPY_NO_EXPORT void
         BINARY_REDUCE_LOOP(@type@) {
             const @type@ in2 = *(@type@ *)ip2;
             /* Order of operations important for MSVC 2015 */
-            io1 = (io1 @OP@ in2 || npy_isnan(in2)) ? io1 : in2;
+            io1 = (@comp@(io1, in2) || npy_isnan(in2)) ? io1 : in2;
         }
         *((@type@ *)iop1) = io1;
     }
@@ -1764,10 +1782,9 @@ NPY_NO_EXPORT void
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
             /* Order of operations important for MSVC 2015 */
-            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
+            *((@type@ *)op1) = (@comp@(in1, in2) || npy_isnan(in2)) ? in1 : in2;
         }
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -1844,9 +1861,9 @@ NPY_NO_EXPORT void
     /* Sign of nan is nan */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : (in1 == 0 ? 0 : in1));
+        *((@type@ *)op1) = isgreater(in1, 0) ? 1 : (
+                isless(in1, 0) ? -1 : (in1 == 0 ? 0 : in1));
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -1942,11 +1959,10 @@ LONGDOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *ste
 {
     UNARY_LOOP {
         const npy_longdouble in1 = *(npy_longdouble *)ip1;
-        const npy_longdouble tmp = in1 > 0 ? in1 : -in1;
+        const npy_longdouble tmp = isgreater(in1, 0) ? in1 : -in1;
         /* add 0 to clear -0.0 */
         *((npy_longdouble *)op1) = tmp + 0;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -2068,7 +2084,6 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_bool *)op1) = @func@(in1) != 0;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 
@@ -2313,14 +2328,18 @@ HALF_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, 
  *****************************************************************************
  */
 
-#define CGE(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
-                          || (xr == yr && xi >= yi))
-#define CLE(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
-                          || (xr == yr && xi <= yi))
-#define CGT(xr,xi,yr,yi) ((xr > yr && !npy_isnan(xi) && !npy_isnan(yi)) \
-                          || (xr == yr && xi > yi))
-#define CLT(xr,xi,yr,yi) ((xr < yr && !npy_isnan(xi) && !npy_isnan(yi)) \
-                          || (xr == yr && xi < yi))
+#define CGE(xr,xi,yr,yi) ((isgreater(xr, yr) \
+                               && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && isgreaterequal(xi, yi)))
+#define CLE(xr,xi,yr,yi) ((isless(xr, yr) \
+                               && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && islessequal(xi, yi)))
+#define CGT(xr,xi,yr,yi) ((isgreater(xr, yr) \
+                               && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && isgreater(xi, yi)))
+#define CLT(xr,xi,yr,yi) ((isless(xr, yr) \
+                               && !npy_isnan(xi) && !npy_isnan(yi)) \
+                          || (xr == yr && isless(xi, yi)))
 #define CEQ(xr,xi,yr,yi) (xr == yr && xi == yi)
 #define CNE(xr,xi,yr,yi) (xr != yr || xi != yi)
 
@@ -2488,7 +2507,6 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         *((npy_bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2610,7 +2628,6 @@ NPY_NO_EXPORT void
         ((@ftype@ *)op1)[0] = in1r;
         ((@ftype@ *)op1)[1] = in1i;
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2635,7 +2652,6 @@ NPY_NO_EXPORT void
             ((@ftype@ *)op1)[1] = in2i;
         }
     }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 

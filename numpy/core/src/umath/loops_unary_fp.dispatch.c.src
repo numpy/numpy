@@ -23,7 +23,7 @@ NPY_FINLINE float c_recip_f32(float a)
 { return 1.0f / a; }
 NPY_FINLINE float c_abs_f32(float a)
 {
-    const float tmp = a > 0 ? a : -a;
+    const float tmp = isgreater(a, 0) ? a : -a;
     /* add 0 to clear -0.0 */
     return tmp + 0;
 }
@@ -36,7 +36,7 @@ NPY_FINLINE double c_recip_f64(double a)
 { return 1.0 / a; }
 NPY_FINLINE double c_abs_f64(double a)
 {
-    const double tmp = a > 0 ? a : -a;
+    const double tmp = isgreater(a, 0) ? a : -a;
     /* add 0 to clear -0.0 */
     return tmp + 0;
 }
@@ -252,7 +252,6 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
 /**begin repeat1
  * #kind  = ceil, sqrt, absolute, square, reciprocal#
  * #intr  = ceil, sqrt, abs,      square, recip#
- * #clear = 0,    0,    1,        0,      0#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -283,7 +282,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     } else {
         simd_@TYPE@_@kind@_NCONTIG_NCONTIG(src, ssrc, dst, sdst, len);
     }
-    goto clear;
+    return;
 no_unroll:
 #endif // @VCHK@
     for (; len > 0; --len, src += src_step, dst += dst_step) {
@@ -295,12 +294,6 @@ no_unroll:
         *(npyv_lanetype_@sfx@*)dst = c_@intr@_@sfx@(src0);
     #endif
     }
-#if @VCHK@
-clear:;
-#endif
-#if @clear@
-    npy_clear_floatstatus_barrier((char*)dimensions);
-#endif
 }
 /**end repeat1**/
 /**end repeat**/
