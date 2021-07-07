@@ -235,6 +235,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
     descr = PyArray_DescrFromScalar(scalar);
     castfunc = PyArray_GetCastFunc(descr, outcode->type_num);
     if (castfunc == NULL) {
+        Py_XDECREF(descr);
         return -1;
     }
     if (PyTypeNum_ISEXTENDED(descr->type_num) ||
@@ -254,6 +255,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                     NPY_ARRAY_CARRAY, NULL);
         if (aout == NULL) {
             Py_DECREF(ain);
+            Py_DECREF(descr);
             return -1;
         }
         castfunc(PyArray_DATA(ain), PyArray_DATA(aout), 1, ain, aout);
