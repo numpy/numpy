@@ -951,7 +951,8 @@ def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
 
 class flagsobj:
     aligned: bool
-    updateifcopy: bool
+    # NOTE: deprecated
+    # updateifcopy: bool
     writeable: bool
     writebackifcopy: bool
     @property
