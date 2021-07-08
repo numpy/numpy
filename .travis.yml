@@ -44,9 +44,12 @@ jobs:
        - ATLAS=None
 
     - python: 3.7
+      # see https://docs.travis-ci.com/user/multi-cpu-architectures/
+      # for information on using arm64-graviton2.
       os: linux
       arch: arm64-graviton2
       virt: vm
+      group: edge
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
