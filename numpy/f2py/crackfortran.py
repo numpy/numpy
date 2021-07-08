@@ -1526,27 +1526,40 @@ def removespaces(expr):
 
 
 def markinnerspaces(line):
-    l = ''
-    f = 0
-    cc = '\''
-    cb = ''
+    """
+    The function replace all spaces in the input variable line which are 
+    surrounded with quotation marks, with the triplet "@_@".
+
+    For instance, for the input "a 'b c'" the function returns "a 'b@_@c'"
+
+    Parameters
+    ----------
+    line : str
+
+    Returns
+    -------
+    str
+
+    """  
+    fragment = ''
+    inside = False
+    current_quote = None
+    escaped = ''
     for c in line:
-        if cb == '\\' and c in ['\\', '\'', '"']:
-            l = l + c
-            cb = c
+        if escaped == '\\' and c in ['\\', '\'', '"']:
+            fragment += c
+            escaped = c
             continue
-        if f == 0 and c in ['\'', '"']:
-            cc = c
-        if c == cc:
-            f = f + 1
-        elif c == cc:
-            f = f - 1
-        elif c == ' ' and f == 1:
-            l = l + '@_@'
+        if not inside and c in ['\'', '"']:
+            current_quote = c
+        if c == current_quote:
+            inside = not inside
+        elif c == ' ' and inside:
+            fragment += '@_@'
             continue
-        l = l + c
-        cb = c
-    return l
+        fragment += c
+        escaped = c  # reset to non-backslash
+    return fragment
 
 
 def updatevars(typespec, selector, attrspec, entitydecl):
