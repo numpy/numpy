@@ -160,7 +160,7 @@ class TestMarkinnerspaces():
         assert_equal(markinnerspaces('a \'b c" " d\' e'),
                      "a 'b@_@c\"@_@\"@_@d' e")
         assert_equal(markinnerspaces('a "b c\' \' d" e'),
-                     "a \"b@_@c'@)_@'@_@d\" e")
+                     "a \"b@_@c'@_@'@_@d\" e")
 
     def test_multiple_relevant_spaces(self):
         assert_equal(markinnerspaces("a 'b c' 'd e'"), "a 'b@_@c' 'd@_@e'")
