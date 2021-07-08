@@ -79,9 +79,9 @@ from numpy.typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, Final, Literal as L
+    from typing import SupportsIndex, final, Final, Literal as L
 else:
-    from typing_extensions import SupportsIndex, Final, Literal as L
+    from typing_extensions import SupportsIndex, final, Final, Literal as L
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
@@ -949,7 +949,9 @@ def compare_chararrays(
 
 def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
 
+@final
 class flagsobj:
+    __hash__: None  # type: ignore[assignment]
     aligned: bool
     # NOTE: deprecated
     # updateifcopy: bool
