@@ -568,10 +568,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__iadd__(other._array)
-        if res.dtype != self.dtype:
-            raise RuntimeError
-        return self.__class__._new(res)
+        self._array.__iadd__(other._array)
+        return self
 
     @np.errstate(all='ignore')
     def __radd__(self: array, other: Union[int, float, array], /) -> array:
@@ -590,8 +588,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__iand__(other._array)
-        return self.__class__._new(res)
+        self._array.__iand__(other._array)
+        return self
 
     def __rand__(self: array, other: Union[int, bool, array], /) -> array:
         """
@@ -610,8 +608,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ifloordiv__(other._array)
-        return self.__class__._new(res)
+        self._array.__ifloordiv__(other._array)
+        return self
 
     @np.errstate(all='ignore')
     def __rfloordiv__(self: array, other: Union[int, float, array], /) -> array:
@@ -630,8 +628,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ilshift__(other._array)
-        return self.__class__._new(res)
+        self._array.__ilshift__(other._array)
+        return self
 
     def __rlshift__(self: array, other: Union[int, array], /) -> array:
         """
@@ -675,8 +673,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__imod__(other._array)
-        return self.__class__._new(res)
+        self._array.__imod__(other._array)
+        return self
 
     @np.errstate(all='ignore')
     def __rmod__(self: array, other: Union[int, float, array], /) -> array:
@@ -696,8 +694,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__imul__(other._array)
-        return self.__class__._new(res)
+        self._array.__imul__(other._array)
+        return self
 
     @np.errstate(all='ignore')
     def __rmul__(self: array, other: Union[int, float, array], /) -> array:
@@ -716,8 +714,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ior__(other._array)
-        return self.__class__._new(res)
+        self._array.__ior__(other._array)
+        return self
 
     def __ror__(self: array, other: Union[int, bool, array], /) -> array:
         """
@@ -736,8 +734,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ipow__(other._array)
-        return self.__class__._new(res)
+        self._array.__ipow__(other._array)
+        return self
 
     @np.errstate(all='ignore')
     def __rpow__(self: array, other: Union[int, float, array], /) -> array:
@@ -758,8 +756,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__irshift__(other._array)
-        return self.__class__._new(res)
+        self._array.__irshift__(other._array)
+        return self
 
     def __rrshift__(self: array, other: Union[int, array], /) -> array:
         """
@@ -781,8 +779,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__isub__(other._array)
-        return self.__class__._new(res)
+        self._array.__isub__(other._array)
+        return self
 
     @np.errstate(all='ignore')
     def __rsub__(self: array, other: Union[int, float, array], /) -> array:
@@ -802,8 +800,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__itruediv__(other._array)
-        return self.__class__._new(res)
+        self._array.__itruediv__(other._array)
+        return self
 
     @np.errstate(all='ignore')
     def __rtruediv__(self: array, other: Union[int, float, array], /) -> array:
@@ -822,8 +820,8 @@ class ndarray:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        res = self._array.__ixor__(other._array)
-        return self.__class__._new(res)
+        self._array.__ixor__(other._array)
+        return self
 
     def __rxor__(self: array, other: Union[int, bool, array], /) -> array:
         """
