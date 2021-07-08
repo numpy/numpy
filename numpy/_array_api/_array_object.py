@@ -22,13 +22,13 @@ from ._dtypes import _boolean_dtypes, _integer_dtypes, _floating_dtypes
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import Any, Optional, PyCapsule, Tuple, Union, Array
+    from ._types import Any, Optional, PyCapsule, Tuple, Union, Device, Dtype
 
 import numpy as np
 
-class ndarray:
+class Array:
     """
-    ndarray object for the array API namespace.
+    n-d array object for the array API namespace.
 
     See the docstring of :py:obj:`np.ndarray <numpy.ndarray>` for more
     information.
@@ -46,7 +46,7 @@ class ndarray:
     @classmethod
     def _new(cls, x, /):
         """
-        This is a private method for initializing the array API ndarray
+        This is a private method for initializing the array API Array
         object.
 
         Functions outside of the array_api submodule should not use this
@@ -64,9 +64,9 @@ class ndarray:
         obj._array = x
         return obj
 
-    # Prevent ndarray() from working
+    # Prevent Array() from working
     def __new__(cls, *args, **kwargs):
-        raise TypeError("The array_api ndarray object should not be instantiated directly. Use an array creation function, such as asarray(), instead.")
+        raise TypeError("The array_api Array object should not be instantiated directly. Use an array creation function, such as asarray(), instead.")
 
     # These functions are not required by the spec, but are implemented for
     # the sake of usability.
@@ -75,13 +75,13 @@ class ndarray:
         """
         Performs the operation __str__.
         """
-        return self._array.__str__().replace('array', 'ndarray')
+        return self._array.__str__().replace('array', 'Array')
 
     def __repr__(self: Array, /) -> str:
         """
         Performs the operation __repr__.
         """
-        return self._array.__repr__().replace('array', 'ndarray')
+        return self._array.__repr__().replace('array', 'Array')
 
     # Helper function to match the type promotion rules in the spec
     def _promote_scalar(self, scalar):
@@ -109,7 +109,7 @@ class ndarray:
         # behavior for integers within the bounds of the integer dtype.
         # Outside of those bounds we use the default NumPy behavior (either
         # cast or raise OverflowError).
-        return ndarray._new(np.array(scalar, self.dtype))
+        return Array._new(np.array(scalar, self.dtype))
 
     @staticmethod
     def _normalize_two_args(x1, x2):
@@ -135,9 +135,9 @@ class ndarray:
             # performant. broadcast_to(x1._array, x2.shape) is much slower. We
             # could also manually type promote x2, but that is more complicated
             # and about the same performance as this.
-            x1 = ndarray._new(x1._array[None])
+            x1 = Array._new(x1._array[None])
         elif x2.shape == () and x1.shape != ():
-            x2 = ndarray._new(x2._array[None])
+            x2 = Array._new(x2._array[None])
         return (x1, x2)
 
     # Everything below this line is required by the spec.
@@ -284,7 +284,7 @@ class ndarray:
         Additionally, it should be noted that indices that would return a
         scalar in NumPy will return a shape () array. Array scalars are not allowed
         in the specification, only shape () arrays. This is done in the
-        ``ndarray._new`` constructor, not this function.
+        ``Array._new`` constructor, not this function.
 
         """
         if isinstance(key, slice):
@@ -313,7 +313,7 @@ class ndarray:
             return key
 
         elif isinstance(key, tuple):
-            key = tuple(ndarray._validate_index(idx, None) for idx in key)
+            key = tuple(Array._validate_index(idx, None) for idx in key)
 
             for idx in key:
                 if isinstance(idx, np.ndarray) and idx.dtype in _boolean_dtypes or isinstance(idx, (bool, np.bool_)):
@@ -329,11 +329,11 @@ class ndarray:
             ellipsis_i = key.index(...) if n_ellipsis else len(key)
 
             for idx, size in list(zip(key[:ellipsis_i], shape)) + list(zip(key[:ellipsis_i:-1], shape[:ellipsis_i:-1])):
-                ndarray._validate_index(idx, (size,))
+                Array._validate_index(idx, (size,))
             return key
         elif isinstance(key, bool):
             return key
-        elif isinstance(key, ndarray):
+        elif isinstance(key, Array):
             if key.dtype in _integer_dtypes:
                 if key.shape != ():
                     raise IndexError("Integer array indices with shape != () are not allowed in the array API namespace")
@@ -346,7 +346,7 @@ class ndarray:
             return operator.index(key)
         except TypeError:
             # Note: This also omits boolean arrays that are not already in
-            # ndarray() form, like a list of booleans.
+            # Array() form, like a list of booleans.
             raise IndexError("Only integers, slices (`:`), ellipsis (`...`), and boolean arrays are valid indices in the array API namespace")
 
     def __getitem__(self: Array, key: Union[int, slice, ellipsis, Tuple[Union[int, slice, ellipsis], ...], Array], /) -> Array:

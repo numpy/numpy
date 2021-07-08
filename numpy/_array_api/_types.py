@@ -12,7 +12,7 @@ __all__ = ['Any', 'List', 'Literal', 'Optional', 'Tuple', 'Union', 'Array',
 
 from typing import Any, List, Literal, Optional, Tuple, Union, TypeVar
 
-from . import (ndarray, int8, int16, int32, int64, uint8, uint16, uint32,
+from . import (Array, int8, int16, int32, int64, uint8, uint16, uint32,
                uint64, float32, float64)
 
 Array = ndarray

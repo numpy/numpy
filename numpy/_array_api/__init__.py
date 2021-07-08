@@ -58,7 +58,7 @@ request.
   guaranteed to give a comprehensive coverage of the spec. Therefore, those
   reviewing this submodule should refer to the standard documents themselves.
 
-- There is a custom array object, numpy._array_api.ndarray, which is returned
+- There is a custom array object, numpy._array_api.Array, which is returned
   by all functions in this module. All functions in the array API namespace
   implicitly assume that they will only receive this object as input. The only
   way to create instances of this object is to use one of the array creation
@@ -69,14 +69,14 @@ request.
   limit/change certain behavior that differs in the spec. In particular:
 
   - Indexing: Only a subset of indices supported by NumPy are required by the
-    spec. The ndarray object restricts indexing to only allow those types of
+    spec. The Array object restricts indexing to only allow those types of
     indices that are required by the spec. See the docstring of the
-    numpy._array_api.ndarray._validate_indices helper function for more
+    numpy._array_api.Array._validate_indices helper function for more
     information.
 
   - Type promotion: Some type promotion rules are different in the spec. In
     particular, the spec does not have any value-based casting. Note that the
-    code to correct the type promotion rules on numpy._array_api.ndarray is
+    code to correct the type promotion rules on numpy._array_api.Array is
     not yet implemented.
 
 - All functions include type annotations, corresponding to those given in the
@@ -93,7 +93,7 @@ request.
 
 Still TODO in this module are:
 
-- Implement the spec type promotion rules on the ndarray object.
+- Implement the spec type promotion rules on the Array object.
 
 - Disable NumPy warnings in the API functions.
 

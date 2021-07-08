@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ._array_object import ndarray
+from ._array_object import Array
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import Optional, Tuple, Union, Array
+    from ._types import Optional, Tuple, Union
 
 import numpy as np
 
@@ -16,7 +16,7 @@ def concat(arrays: Tuple[Array, ...], /, *, axis: Optional[int] = 0) -> Array:
     See its docstring for more information.
     """
     arrays = tuple(a._array for a in arrays)
-    return ndarray._new(np.concatenate(arrays, axis=axis))
+    return Array._new(np.concatenate(arrays, axis=axis))
 
 def expand_dims(x: Array, /, *, axis: int) -> Array:
     """
@@ -24,7 +24,7 @@ def expand_dims(x: Array, /, *, axis: int) -> Array:
 
     See its docstring for more information.
     """
-    return ndarray._new(np.expand_dims(x._array, axis))
+    return Array._new(np.expand_dims(x._array, axis))
 
 def flip(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> Array:
     """
@@ -32,7 +32,7 @@ def flip(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> 
 
     See its docstring for more information.
     """
-    return ndarray._new(np.flip(x._array, axis=axis))
+    return Array._new(np.flip(x._array, axis=axis))
 
 def reshape(x: Array, /, shape: Tuple[int, ...]) -> Array:
     """
@@ -40,7 +40,7 @@ def reshape(x: Array, /, shape: Tuple[int, ...]) -> Array:
 
     See its docstring for more information.
     """
-    return ndarray._new(np.reshape(x._array, shape))
+    return Array._new(np.reshape(x._array, shape))
 
 def roll(x: Array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> Array:
     """
@@ -48,7 +48,7 @@ def roll(x: Array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Unio
 
     See its docstring for more information.
     """
-    return ndarray._new(np.roll(x._array, shift, axis=axis))
+    return Array._new(np.roll(x._array, shift, axis=axis))
 
 def squeeze(x: Array, /, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> Array:
     """
@@ -56,7 +56,7 @@ def squeeze(x: Array, /, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> 
 
     See its docstring for more information.
     """
-    return ndarray._new(np.squeeze(x._array, axis=axis))
+    return Array._new(np.squeeze(x._array, axis=axis))
 
 def stack(arrays: Tuple[Array, ...], /, *, axis: int = 0) -> Array:
     """
@@ -65,4 +65,4 @@ def stack(arrays: Tuple[Array, ...], /, *, axis: int = 0) -> Array:
     See its docstring for more information.
     """
     arrays = tuple(a._array for a in arrays)
-    return ndarray._new(np.stack(arrays, axis=axis))
+    return Array._new(np.stack(arrays, axis=axis))

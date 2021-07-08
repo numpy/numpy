@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ._array_object import ndarray
+from ._array_object import Array
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import List, Tuple, Union, Array, Dtype
+    from ._types import List, Tuple, Union, Dtype
     from collections.abc import Sequence
 
 import numpy as np
@@ -15,8 +15,8 @@ def broadcast_arrays(*arrays: Sequence[Array]) -> List[Array]:
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
-    return [ndarray._new(array) for array in np.broadcast_arrays(*[a._array for a in arrays])]
+    from ._array_object import Array
+    return [Array._new(array) for array in np.broadcast_arrays(*[a._array for a in arrays])]
 
 def broadcast_to(x: Array, /, shape: Tuple[int, ...]) -> Array:
     """
@@ -24,8 +24,8 @@ def broadcast_to(x: Array, /, shape: Tuple[int, ...]) -> Array:
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
-    return ndarray._new(np.broadcast_to(x._array, shape))
+    from ._array_object import Array
+    return Array._new(np.broadcast_to(x._array, shape))
 
 def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
     """
@@ -33,8 +33,8 @@ def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
-    if isinstance(from_, ndarray):
+    from ._array_object import Array
+    if isinstance(from_, Array):
         from_ = from_._array
     return np.can_cast(from_, to)
 
@@ -60,4 +60,4 @@ def result_type(*arrays_and_dtypes: Sequence[Union[Array, Dtype]]) -> Dtype:
 
     See its docstring for more information.
     """
-    return np.result_type(*(a._array if isinstance(a, ndarray) else a for a in arrays_and_dtypes))
+    return np.result_type(*(a._array if isinstance(a, Array) else a for a in arrays_and_dtypes))

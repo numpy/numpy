@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from ._array_object import ndarray
+from ._array_object import Array
 from ._dtypes import _numeric_dtypes
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from ._types import Optional, Sequence, Tuple, Union, Array
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -30,7 +28,7 @@ def matmul(x1: Array, x2: Array, /) -> Array:
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in matmul')
 
-    return ndarray._new(np.matmul(x1._array, x2._array))
+    return Array._new(np.matmul(x1._array, x2._array))
 
 # Note: axes must be a tuple, unlike np.tensordot where it can be an array or array-like.
 def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], Sequence[int]]] = 2) -> Array:
@@ -39,7 +37,7 @@ def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], 
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in tensordot')
 
-    return ndarray._new(np.tensordot(x1._array, x2._array, axes=axes))
+    return Array._new(np.tensordot(x1._array, x2._array, axes=axes))
 
 def transpose(x: Array, /, *, axes: Optional[Tuple[int, ...]] = None) -> Array:
     """
@@ -47,7 +45,7 @@ def transpose(x: Array, /, *, axes: Optional[Tuple[int, ...]] = None) -> Array:
 
     See its docstring for more information.
     """
-    return ndarray._new(np.transpose(x._array, axes=axes))
+    return Array._new(np.transpose(x._array, axes=axes))
 
 # Note: vecdot is not in NumPy
 def vecdot(x1: Array, x2: Array, /, *, axis: Optional[int] = None) -> Array:

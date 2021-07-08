@@ -19,14 +19,14 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
     """
     # _array_object imports in this file are inside the functions to avoid
     # circular imports
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
     if copy is not None:
         # Note: copy is not yet implemented in np.asarray
         raise NotImplementedError("The copy keyword argument to asarray is not yet implemented")
-    if isinstance(obj, ndarray) and (dtype is None or obj.dtype == dtype):
+    if isinstance(obj, Array) and (dtype is None or obj.dtype == dtype):
         return obj
     if dtype is None and isinstance(obj, int) and (obj > 2**64 or obj < -2**63):
         # Give a better error message in this case. NumPy would convert this
@@ -35,7 +35,7 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
     res = np.asarray(obj, dtype=dtype)
     if res.dtype not in _all_dtypes:
         raise TypeError(f"The array_api namespace does not support the dtype '{res.dtype}'")
-    return ndarray._new(res)
+    return Array._new(res)
 
 def arange(start: Union[int, float], /, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -43,11 +43,11 @@ def arange(start: Union[int, float], /, stop: Optional[Union[int, float]] = None
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.arange(start, stop=stop, step=step, dtype=dtype))
+    return Array._new(np.arange(start, stop=stop, step=step, dtype=dtype))
 
 def empty(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -55,11 +55,11 @@ def empty(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, 
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.empty(shape, dtype=dtype))
+    return Array._new(np.empty(shape, dtype=dtype))
 
 def empty_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -67,11 +67,11 @@ def empty_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[D
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.empty_like(x._array, dtype=dtype))
+    return Array._new(np.empty_like(x._array, dtype=dtype))
 
 def eye(n_rows: int, n_cols: Optional[int] = None, /, *, k: Optional[int] = 0, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -79,14 +79,14 @@ def eye(n_rows: int, n_cols: Optional[int] = None, /, *, k: Optional[int] = 0, d
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
+    return Array._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
 
 def from_dlpack(x: object, /) -> Array:
-    # Note: dlpack support is not yet implemented on ndarray
+    # Note: dlpack support is not yet implemented on Array
     raise NotImplementedError("DLPack support is not yet implemented")
 
 def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
@@ -95,18 +95,18 @@ def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], *, d
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    if isinstance(fill_value, ndarray) and fill_value.ndim == 0:
-            fill_value = fill_value._array[...]
+    if isinstance(fill_value, Array) and fill_value.ndim == 0:
+        fill_value = fill_value._array[...]
     res = np.full(shape, fill_value, dtype=dtype)
     if res.dtype not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
         # coerces to one of the acceptable dtypes.
         raise TypeError("Invalid input to full")
-    return ndarray._new(res)
+    return Array._new(res)
 
 def full_like(x: Array, /, fill_value: Union[int, float], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -114,16 +114,16 @@ def full_like(x: Array, /, fill_value: Union[int, float], *, dtype: Optional[Dty
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
     res = np.full_like(x._array, fill_value, dtype=dtype)
     if res.dtype not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
         # coerces to one of the acceptable dtypes.
         raise TypeError("Invalid input to full_like")
-    return ndarray._new(res)
+    return Array._new(res)
 
 def linspace(start: Union[int, float], stop: Union[int, float], /, num: int, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None, endpoint: bool = True) -> Array:
     """
@@ -131,11 +131,11 @@ def linspace(start: Union[int, float], stop: Union[int, float], /, num: int, *, 
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
+    return Array._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
 def meshgrid(*arrays: Sequence[Array], indexing: str = 'xy') -> List[Array, ...]:
     """
@@ -143,8 +143,8 @@ def meshgrid(*arrays: Sequence[Array], indexing: str = 'xy') -> List[Array, ...]
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
-    return [ndarray._new(array) for array in np.meshgrid(*[a._array for a in arrays], indexing=indexing)]
+    from ._array_object import Array
+    return [Array._new(array) for array in np.meshgrid(*[a._array for a in arrays], indexing=indexing)]
 
 def ones(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -152,11 +152,11 @@ def ones(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, d
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.ones(shape, dtype=dtype))
+    return Array._new(np.ones(shape, dtype=dtype))
 
 def ones_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -164,11 +164,11 @@ def ones_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[De
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.ones_like(x._array, dtype=dtype))
+    return Array._new(np.ones_like(x._array, dtype=dtype))
 
 def zeros(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -176,11 +176,11 @@ def zeros(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, 
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.zeros(shape, dtype=dtype))
+    return Array._new(np.zeros(shape, dtype=dtype))
 
 def zeros_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
@@ -188,8 +188,8 @@ def zeros_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[D
 
     See its docstring for more information.
     """
-    from ._array_object import ndarray
+    from ._array_object import Array
     if device is not None:
-        # Note: Device support is not yet implemented on ndarray
+        # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
-    return ndarray._new(np.zeros_like(x._array, dtype=dtype))
+    return Array._new(np.zeros_like(x._array, dtype=dtype))

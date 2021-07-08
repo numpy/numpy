@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from ._array_object import ndarray
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from ._types import Array
+from ._array_object import Array
 
 import numpy as np
 
@@ -19,7 +15,7 @@ def argsort(x: Array, /, *, axis: int = -1, descending: bool = False, stable: bo
     res = np.argsort(x._array, axis=axis, kind=kind)
     if descending:
         res = np.flip(res, axis=axis)
-    return ndarray._new(res)
+    return Array._new(res)
 
 def sort(x: Array, /, *, axis: int = -1, descending: bool = False, stable: bool = True) -> Array:
     """
@@ -32,4 +28,4 @@ def sort(x: Array, /, *, axis: int = -1, descending: bool = False, stable: bool 
     res = np.sort(x._array, axis=axis, kind=kind)
     if descending:
         res = np.flip(res, axis=axis)
-    return ndarray._new(res)
+    return Array._new(res)
