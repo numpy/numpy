@@ -4,11 +4,11 @@ from ._array_object import ndarray
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import Tuple, Union, array
+    from ._types import Tuple, Union, Array
 
 import numpy as np
 
-def unique(x: array, /, *, return_counts: bool = False, return_index: bool = False, return_inverse: bool = False) -> Union[array, Tuple[array, ...]]:
+def unique(x: Array, /, *, return_counts: bool = False, return_index: bool = False, return_inverse: bool = False) -> Union[Array, Tuple[Array, ...]]:
     """
     Array API compatible wrapper for :py:func:`np.unique <numpy.unique>`.
 

@@ -4,14 +4,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ._types import (List, Optional, SupportsDLPack,
-                         SupportsBufferProtocol, Tuple, Union, array, device,
-                         dtype)
+                         SupportsBufferProtocol, Tuple, Union, Array, Device,
+                         Dtype)
     from collections.abc import Sequence
 from ._dtypes import _all_dtypes
 
 import numpy as np
 
-def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, SupportsBufferProtocol], /, *, dtype: Optional[dtype] = None, device: Optional[device] = None, copy: Optional[bool] = None) -> array:
+def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, SupportsBufferProtocol], /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None, copy: Optional[bool] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.asarray <numpy.asarray>`.
 
@@ -37,7 +37,7 @@ def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, Su
         raise TypeError(f"The array_api namespace does not support the dtype '{res.dtype}'")
     return ndarray._new(res)
 
-def arange(start: Union[int, float], /, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def arange(start: Union[int, float], /, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arange <numpy.arange>`.
 
@@ -49,7 +49,7 @@ def arange(start: Union[int, float], /, stop: Optional[Union[int, float]] = None
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.arange(start, stop=stop, step=step, dtype=dtype))
 
-def empty(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def empty(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.empty <numpy.empty>`.
 
@@ -61,7 +61,7 @@ def empty(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[dtype] = None, 
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.empty(shape, dtype=dtype))
 
-def empty_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def empty_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.empty_like <numpy.empty_like>`.
 
@@ -73,7 +73,7 @@ def empty_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[d
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.empty_like(x._array, dtype=dtype))
 
-def eye(n_rows: int, n_cols: Optional[int] = None, /, *, k: Optional[int] = 0, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def eye(n_rows: int, n_cols: Optional[int] = None, /, *, k: Optional[int] = 0, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.eye <numpy.eye>`.
 
@@ -85,11 +85,11 @@ def eye(n_rows: int, n_cols: Optional[int] = None, /, *, k: Optional[int] = 0, d
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
 
-def from_dlpack(x: object, /) -> array:
+def from_dlpack(x: object, /) -> Array:
     # Note: dlpack support is not yet implemented on ndarray
     raise NotImplementedError("DLPack support is not yet implemented")
 
-def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.full <numpy.full>`.
 
@@ -108,7 +108,7 @@ def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], *, d
         raise TypeError("Invalid input to full")
     return ndarray._new(res)
 
-def full_like(x: array, /, fill_value: Union[int, float], *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def full_like(x: Array, /, fill_value: Union[int, float], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.full_like <numpy.full_like>`.
 
@@ -125,7 +125,7 @@ def full_like(x: array, /, fill_value: Union[int, float], *, dtype: Optional[dty
         raise TypeError("Invalid input to full_like")
     return ndarray._new(res)
 
-def linspace(start: Union[int, float], stop: Union[int, float], /, num: int, *, dtype: Optional[dtype] = None, device: Optional[device] = None, endpoint: bool = True) -> array:
+def linspace(start: Union[int, float], stop: Union[int, float], /, num: int, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None, endpoint: bool = True) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.linspace <numpy.linspace>`.
 
@@ -137,7 +137,7 @@ def linspace(start: Union[int, float], stop: Union[int, float], /, num: int, *, 
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
-def meshgrid(*arrays: Sequence[array], indexing: str = 'xy') -> List[array, ...]:
+def meshgrid(*arrays: Sequence[Array], indexing: str = 'xy') -> List[Array, ...]:
     """
     Array API compatible wrapper for :py:func:`np.meshgrid <numpy.meshgrid>`.
 
@@ -146,7 +146,7 @@ def meshgrid(*arrays: Sequence[array], indexing: str = 'xy') -> List[array, ...]
     from ._array_object import ndarray
     return [ndarray._new(array) for array in np.meshgrid(*[a._array for a in arrays], indexing=indexing)]
 
-def ones(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def ones(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.ones <numpy.ones>`.
 
@@ -158,7 +158,7 @@ def ones(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[dtype] = None, d
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.ones(shape, dtype=dtype))
 
-def ones_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def ones_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.ones_like <numpy.ones_like>`.
 
@@ -170,7 +170,7 @@ def ones_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[de
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.ones_like(x._array, dtype=dtype))
 
-def zeros(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def zeros(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.zeros <numpy.zeros>`.
 
@@ -182,7 +182,7 @@ def zeros(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[dtype] = None, 
         raise NotImplementedError("Device support is not yet implemented")
     return ndarray._new(np.zeros(shape, dtype=dtype))
 
-def zeros_like(x: array, /, *, dtype: Optional[dtype] = None, device: Optional[device] = None) -> array:
+def zeros_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.zeros_like <numpy.zeros_like>`.
 

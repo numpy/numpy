@@ -7,11 +7,11 @@ from ._array_object import ndarray
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import array
+    from ._types import Array
 
 import numpy as np
 
-def abs(x: array, /) -> array:
+def abs(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.abs <numpy.abs>`.
 
@@ -23,7 +23,7 @@ def abs(x: array, /) -> array:
 
 # Note: the function name is different here
 @np.errstate(all='ignore')
-def acos(x: array, /) -> array:
+def acos(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arccos <numpy.arccos>`.
 
@@ -35,7 +35,7 @@ def acos(x: array, /) -> array:
 
 # Note: the function name is different here
 @np.errstate(all='ignore')
-def acosh(x: array, /) -> array:
+def acosh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arccosh <numpy.arccosh>`.
 
@@ -46,7 +46,7 @@ def acosh(x: array, /) -> array:
     return ndarray._new(np.arccosh(x._array))
 
 @np.errstate(all='ignore')
-def add(x1: array, x2: array, /) -> array:
+def add(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.add <numpy.add>`.
 
@@ -59,7 +59,7 @@ def add(x1: array, x2: array, /) -> array:
 
 # Note: the function name is different here
 @np.errstate(all='ignore')
-def asin(x: array, /) -> array:
+def asin(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arcsin <numpy.arcsin>`.
 
@@ -71,7 +71,7 @@ def asin(x: array, /) -> array:
 
 # Note: the function name is different here
 @np.errstate(all='ignore')
-def asinh(x: array, /) -> array:
+def asinh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arcsinh <numpy.arcsinh>`.
 
@@ -82,7 +82,7 @@ def asinh(x: array, /) -> array:
     return ndarray._new(np.arcsinh(x._array))
 
 # Note: the function name is different here
-def atan(x: array, /) -> array:
+def atan(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arctan <numpy.arctan>`.
 
@@ -93,7 +93,7 @@ def atan(x: array, /) -> array:
     return ndarray._new(np.arctan(x._array))
 
 # Note: the function name is different here
-def atan2(x1: array, x2: array, /) -> array:
+def atan2(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arctan2 <numpy.arctan2>`.
 
@@ -106,7 +106,7 @@ def atan2(x1: array, x2: array, /) -> array:
 
 # Note: the function name is different here
 @np.errstate(all='ignore')
-def atanh(x: array, /) -> array:
+def atanh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.arctanh <numpy.arctanh>`.
 
@@ -116,7 +116,7 @@ def atanh(x: array, /) -> array:
         raise TypeError('Only floating-point dtypes are allowed in atanh')
     return ndarray._new(np.arctanh(x._array))
 
-def bitwise_and(x1: array, x2: array, /) -> array:
+def bitwise_and(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.bitwise_and <numpy.bitwise_and>`.
 
@@ -128,7 +128,7 @@ def bitwise_and(x1: array, x2: array, /) -> array:
     return ndarray._new(np.bitwise_and(x1._array, x2._array))
 
 # Note: the function name is different here
-def bitwise_left_shift(x1: array, x2: array, /) -> array:
+def bitwise_left_shift(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.left_shift <numpy.left_shift>`.
 
@@ -146,7 +146,7 @@ def bitwise_left_shift(x1: array, x2: array, /) -> array:
     return ndarray._new(np.left_shift(x1._array, x2._array).astype(x1.dtype))
 
 # Note: the function name is different here
-def bitwise_invert(x: array, /) -> array:
+def bitwise_invert(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.invert <numpy.invert>`.
 
@@ -156,7 +156,7 @@ def bitwise_invert(x: array, /) -> array:
         raise TypeError('Only integer or boolean dtypes are allowed in bitwise_invert')
     return ndarray._new(np.invert(x._array))
 
-def bitwise_or(x1: array, x2: array, /) -> array:
+def bitwise_or(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.bitwise_or <numpy.bitwise_or>`.
 
@@ -168,7 +168,7 @@ def bitwise_or(x1: array, x2: array, /) -> array:
     return ndarray._new(np.bitwise_or(x1._array, x2._array))
 
 # Note: the function name is different here
-def bitwise_right_shift(x1: array, x2: array, /) -> array:
+def bitwise_right_shift(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.right_shift <numpy.right_shift>`.
 
@@ -185,7 +185,7 @@ def bitwise_right_shift(x1: array, x2: array, /) -> array:
     # type promotion of the two input types.
     return ndarray._new(np.right_shift(x1._array, x2._array).astype(x1.dtype))
 
-def bitwise_xor(x1: array, x2: array, /) -> array:
+def bitwise_xor(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.bitwise_xor <numpy.bitwise_xor>`.
 
@@ -196,7 +196,7 @@ def bitwise_xor(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.bitwise_xor(x1._array, x2._array))
 
-def ceil(x: array, /) -> array:
+def ceil(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.ceil <numpy.ceil>`.
 
@@ -210,7 +210,7 @@ def ceil(x: array, /) -> array:
     return ndarray._new(np.ceil(x._array))
 
 @np.errstate(all='ignore')
-def cos(x: array, /) -> array:
+def cos(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.cos <numpy.cos>`.
 
@@ -221,7 +221,7 @@ def cos(x: array, /) -> array:
     return ndarray._new(np.cos(x._array))
 
 @np.errstate(all='ignore')
-def cosh(x: array, /) -> array:
+def cosh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.cosh <numpy.cosh>`.
 
@@ -232,7 +232,7 @@ def cosh(x: array, /) -> array:
     return ndarray._new(np.cosh(x._array))
 
 @np.errstate(all='ignore')
-def divide(x1: array, x2: array, /) -> array:
+def divide(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.divide <numpy.divide>`.
 
@@ -243,7 +243,7 @@ def divide(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.divide(x1._array, x2._array))
 
-def equal(x1: array, x2: array, /) -> array:
+def equal(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.equal <numpy.equal>`.
 
@@ -253,7 +253,7 @@ def equal(x1: array, x2: array, /) -> array:
     return ndarray._new(np.equal(x1._array, x2._array))
 
 @np.errstate(all='ignore')
-def exp(x: array, /) -> array:
+def exp(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.exp <numpy.exp>`.
 
@@ -264,7 +264,7 @@ def exp(x: array, /) -> array:
     return ndarray._new(np.exp(x._array))
 
 @np.errstate(all='ignore')
-def expm1(x: array, /) -> array:
+def expm1(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.expm1 <numpy.expm1>`.
 
@@ -274,7 +274,7 @@ def expm1(x: array, /) -> array:
         raise TypeError('Only floating-point dtypes are allowed in expm1')
     return ndarray._new(np.expm1(x._array))
 
-def floor(x: array, /) -> array:
+def floor(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.floor <numpy.floor>`.
 
@@ -288,7 +288,7 @@ def floor(x: array, /) -> array:
     return ndarray._new(np.floor(x._array))
 
 @np.errstate(all='ignore')
-def floor_divide(x1: array, x2: array, /) -> array:
+def floor_divide(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.floor_divide <numpy.floor_divide>`.
 
@@ -299,7 +299,7 @@ def floor_divide(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.floor_divide(x1._array, x2._array))
 
-def greater(x1: array, x2: array, /) -> array:
+def greater(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.greater <numpy.greater>`.
 
@@ -310,7 +310,7 @@ def greater(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.greater(x1._array, x2._array))
 
-def greater_equal(x1: array, x2: array, /) -> array:
+def greater_equal(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.greater_equal <numpy.greater_equal>`.
 
@@ -321,7 +321,7 @@ def greater_equal(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.greater_equal(x1._array, x2._array))
 
-def isfinite(x: array, /) -> array:
+def isfinite(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.isfinite <numpy.isfinite>`.
 
@@ -331,7 +331,7 @@ def isfinite(x: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in isfinite')
     return ndarray._new(np.isfinite(x._array))
 
-def isinf(x: array, /) -> array:
+def isinf(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.isinf <numpy.isinf>`.
 
@@ -341,7 +341,7 @@ def isinf(x: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in isinf')
     return ndarray._new(np.isinf(x._array))
 
-def isnan(x: array, /) -> array:
+def isnan(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.isnan <numpy.isnan>`.
 
@@ -351,7 +351,7 @@ def isnan(x: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in isnan')
     return ndarray._new(np.isnan(x._array))
 
-def less(x1: array, x2: array, /) -> array:
+def less(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.less <numpy.less>`.
 
@@ -362,7 +362,7 @@ def less(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.less(x1._array, x2._array))
 
-def less_equal(x1: array, x2: array, /) -> array:
+def less_equal(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.less_equal <numpy.less_equal>`.
 
@@ -374,7 +374,7 @@ def less_equal(x1: array, x2: array, /) -> array:
     return ndarray._new(np.less_equal(x1._array, x2._array))
 
 @np.errstate(all='ignore')
-def log(x: array, /) -> array:
+def log(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.log <numpy.log>`.
 
@@ -385,7 +385,7 @@ def log(x: array, /) -> array:
     return ndarray._new(np.log(x._array))
 
 @np.errstate(all='ignore')
-def log1p(x: array, /) -> array:
+def log1p(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.log1p <numpy.log1p>`.
 
@@ -396,7 +396,7 @@ def log1p(x: array, /) -> array:
     return ndarray._new(np.log1p(x._array))
 
 @np.errstate(all='ignore')
-def log2(x: array, /) -> array:
+def log2(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.log2 <numpy.log2>`.
 
@@ -407,7 +407,7 @@ def log2(x: array, /) -> array:
     return ndarray._new(np.log2(x._array))
 
 @np.errstate(all='ignore')
-def log10(x: array, /) -> array:
+def log10(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.log10 <numpy.log10>`.
 
@@ -417,7 +417,7 @@ def log10(x: array, /) -> array:
         raise TypeError('Only floating-point dtypes are allowed in log10')
     return ndarray._new(np.log10(x._array))
 
-def logaddexp(x1: array, x2: array) -> array:
+def logaddexp(x1: Array, x2: Array) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.logaddexp <numpy.logaddexp>`.
 
@@ -428,7 +428,7 @@ def logaddexp(x1: array, x2: array) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.logaddexp(x1._array, x2._array))
 
-def logical_and(x1: array, x2: array, /) -> array:
+def logical_and(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.logical_and <numpy.logical_and>`.
 
@@ -439,7 +439,7 @@ def logical_and(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.logical_and(x1._array, x2._array))
 
-def logical_not(x: array, /) -> array:
+def logical_not(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.logical_not <numpy.logical_not>`.
 
@@ -449,7 +449,7 @@ def logical_not(x: array, /) -> array:
         raise TypeError('Only boolean dtypes are allowed in logical_not')
     return ndarray._new(np.logical_not(x._array))
 
-def logical_or(x1: array, x2: array, /) -> array:
+def logical_or(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.logical_or <numpy.logical_or>`.
 
@@ -460,7 +460,7 @@ def logical_or(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.logical_or(x1._array, x2._array))
 
-def logical_xor(x1: array, x2: array, /) -> array:
+def logical_xor(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.logical_xor <numpy.logical_xor>`.
 
@@ -472,7 +472,7 @@ def logical_xor(x1: array, x2: array, /) -> array:
     return ndarray._new(np.logical_xor(x1._array, x2._array))
 
 @np.errstate(all='ignore')
-def multiply(x1: array, x2: array, /) -> array:
+def multiply(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.multiply <numpy.multiply>`.
 
@@ -483,7 +483,7 @@ def multiply(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.multiply(x1._array, x2._array))
 
-def negative(x: array, /) -> array:
+def negative(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.negative <numpy.negative>`.
 
@@ -493,7 +493,7 @@ def negative(x: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in negative')
     return ndarray._new(np.negative(x._array))
 
-def not_equal(x1: array, x2: array, /) -> array:
+def not_equal(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.not_equal <numpy.not_equal>`.
 
@@ -502,7 +502,7 @@ def not_equal(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.not_equal(x1._array, x2._array))
 
-def positive(x: array, /) -> array:
+def positive(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.positive <numpy.positive>`.
 
@@ -514,7 +514,7 @@ def positive(x: array, /) -> array:
 
 # Note: the function name is different here
 @np.errstate(all='ignore')
-def pow(x1: array, x2: array, /) -> array:
+def pow(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.power <numpy.power>`.
 
@@ -526,7 +526,7 @@ def pow(x1: array, x2: array, /) -> array:
     return ndarray._new(np.power(x1._array, x2._array))
 
 @np.errstate(all='ignore')
-def remainder(x1: array, x2: array, /) -> array:
+def remainder(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.remainder <numpy.remainder>`.
 
@@ -537,7 +537,7 @@ def remainder(x1: array, x2: array, /) -> array:
     x1, x2 = ndarray._normalize_two_args(x1, x2)
     return ndarray._new(np.remainder(x1._array, x2._array))
 
-def round(x: array, /) -> array:
+def round(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.round <numpy.round>`.
 
@@ -547,7 +547,7 @@ def round(x: array, /) -> array:
         raise TypeError('Only numeric dtypes are allowed in round')
     return ndarray._new(np.round(x._array))
 
-def sign(x: array, /) -> array:
+def sign(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.sign <numpy.sign>`.
 
@@ -558,7 +558,7 @@ def sign(x: array, /) -> array:
     return ndarray._new(np.sign(x._array))
 
 @np.errstate(all='ignore')
-def sin(x: array, /) -> array:
+def sin(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.sin <numpy.sin>`.
 
@@ -569,7 +569,7 @@ def sin(x: array, /) -> array:
     return ndarray._new(np.sin(x._array))
 
 @np.errstate(all='ignore')
-def sinh(x: array, /) -> array:
+def sinh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.sinh <numpy.sinh>`.
 
@@ -580,7 +580,7 @@ def sinh(x: array, /) -> array:
     return ndarray._new(np.sinh(x._array))
 
 @np.errstate(all='ignore')
-def square(x: array, /) -> array:
+def square(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.square <numpy.square>`.
 
@@ -591,7 +591,7 @@ def square(x: array, /) -> array:
     return ndarray._new(np.square(x._array))
 
 @np.errstate(all='ignore')
-def sqrt(x: array, /) -> array:
+def sqrt(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.sqrt <numpy.sqrt>`.
 
@@ -602,7 +602,7 @@ def sqrt(x: array, /) -> array:
     return ndarray._new(np.sqrt(x._array))
 
 @np.errstate(all='ignore')
-def subtract(x1: array, x2: array, /) -> array:
+def subtract(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.subtract <numpy.subtract>`.
 
@@ -614,7 +614,7 @@ def subtract(x1: array, x2: array, /) -> array:
     return ndarray._new(np.subtract(x1._array, x2._array))
 
 @np.errstate(all='ignore')
-def tan(x: array, /) -> array:
+def tan(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.tan <numpy.tan>`.
 
@@ -624,7 +624,7 @@ def tan(x: array, /) -> array:
         raise TypeError('Only floating-point dtypes are allowed in tan')
     return ndarray._new(np.tan(x._array))
 
-def tanh(x: array, /) -> array:
+def tanh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.tanh <numpy.tanh>`.
 
@@ -634,7 +634,7 @@ def tanh(x: array, /) -> array:
         raise TypeError('Only floating-point dtypes are allowed in tanh')
     return ndarray._new(np.tanh(x._array))
 
-def trunc(x: array, /) -> array:
+def trunc(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.trunc <numpy.trunc>`.
 

@@ -4,12 +4,12 @@ from ._array_object import ndarray
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import Optional, Tuple, Union, array
+    from ._types import Optional, Tuple, Union, Array
 
 import numpy as np
 
 # Note: the function name is different here
-def concat(arrays: Tuple[array, ...], /, *, axis: Optional[int] = 0) -> array:
+def concat(arrays: Tuple[Array, ...], /, *, axis: Optional[int] = 0) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.concatenate <numpy.concatenate>`.
 
@@ -18,7 +18,7 @@ def concat(arrays: Tuple[array, ...], /, *, axis: Optional[int] = 0) -> array:
     arrays = tuple(a._array for a in arrays)
     return ndarray._new(np.concatenate(arrays, axis=axis))
 
-def expand_dims(x: array, /, *, axis: int) -> array:
+def expand_dims(x: Array, /, *, axis: int) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.expand_dims <numpy.expand_dims>`.
 
@@ -26,7 +26,7 @@ def expand_dims(x: array, /, *, axis: int) -> array:
     """
     return ndarray._new(np.expand_dims(x._array, axis))
 
-def flip(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
+def flip(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.flip <numpy.flip>`.
 
@@ -34,7 +34,7 @@ def flip(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> 
     """
     return ndarray._new(np.flip(x._array, axis=axis))
 
-def reshape(x: array, /, shape: Tuple[int, ...]) -> array:
+def reshape(x: Array, /, shape: Tuple[int, ...]) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.reshape <numpy.reshape>`.
 
@@ -42,7 +42,7 @@ def reshape(x: array, /, shape: Tuple[int, ...]) -> array:
     """
     return ndarray._new(np.reshape(x._array, shape))
 
-def roll(x: array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
+def roll(x: Array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.roll <numpy.roll>`.
 
@@ -50,7 +50,7 @@ def roll(x: array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Unio
     """
     return ndarray._new(np.roll(x._array, shift, axis=axis))
 
-def squeeze(x: array, /, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> array:
+def squeeze(x: Array, /, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.squeeze <numpy.squeeze>`.
 
@@ -58,7 +58,7 @@ def squeeze(x: array, /, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> 
     """
     return ndarray._new(np.squeeze(x._array, axis=axis))
 
-def stack(arrays: Tuple[array, ...], /, *, axis: int = 0) -> array:
+def stack(arrays: Tuple[Array, ...], /, *, axis: int = 0) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.stack <numpy.stack>`.
 

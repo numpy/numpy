@@ -4,12 +4,12 @@ from ._array_object import ndarray
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import List, Tuple, Union, array, dtype
+    from ._types import List, Tuple, Union, Array, Dtype
     from collections.abc import Sequence
 
 import numpy as np
 
-def broadcast_arrays(*arrays: Sequence[array]) -> List[array]:
+def broadcast_arrays(*arrays: Sequence[Array]) -> List[Array]:
     """
     Array API compatible wrapper for :py:func:`np.broadcast_arrays <numpy.broadcast_arrays>`.
 
@@ -18,7 +18,7 @@ def broadcast_arrays(*arrays: Sequence[array]) -> List[array]:
     from ._array_object import ndarray
     return [ndarray._new(array) for array in np.broadcast_arrays(*[a._array for a in arrays])]
 
-def broadcast_to(x: array, /, shape: Tuple[int, ...]) -> array:
+def broadcast_to(x: Array, /, shape: Tuple[int, ...]) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.broadcast_to <numpy.broadcast_to>`.
 
@@ -27,7 +27,7 @@ def broadcast_to(x: array, /, shape: Tuple[int, ...]) -> array:
     from ._array_object import ndarray
     return ndarray._new(np.broadcast_to(x._array, shape))
 
-def can_cast(from_: Union[dtype, array], to: dtype, /) -> bool:
+def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
     """
     Array API compatible wrapper for :py:func:`np.can_cast <numpy.can_cast>`.
 
@@ -38,7 +38,7 @@ def can_cast(from_: Union[dtype, array], to: dtype, /) -> bool:
         from_ = from_._array
     return np.can_cast(from_, to)
 
-def finfo(type: Union[dtype, array], /) -> finfo_object:
+def finfo(type: Union[Dtype, Array], /) -> finfo_object:
     """
     Array API compatible wrapper for :py:func:`np.finfo <numpy.finfo>`.
 
@@ -46,7 +46,7 @@ def finfo(type: Union[dtype, array], /) -> finfo_object:
     """
     return np.finfo(type)
 
-def iinfo(type: Union[dtype, array], /) -> iinfo_object:
+def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
     """
     Array API compatible wrapper for :py:func:`np.iinfo <numpy.iinfo>`.
 
@@ -54,7 +54,7 @@ def iinfo(type: Union[dtype, array], /) -> iinfo_object:
     """
     return np.iinfo(type)
 
-def result_type(*arrays_and_dtypes: Sequence[Union[array, dtype]]) -> dtype:
+def result_type(*arrays_and_dtypes: Sequence[Union[Array, Dtype]]) -> Dtype:
     """
     Array API compatible wrapper for :py:func:`np.result_type <numpy.result_type>`.
 
