@@ -949,6 +949,25 @@ def compare_chararrays(
 
 def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
 
+_GetItemKeys = L[
+    "C", "CONTIGUOUS", "C_CONTIGUOUS",
+    "F", "FORTRAN", "F_CONTIGUOUS",
+    "W", "WRITEABLE",
+    "B", "BEHAVED",
+    "O", "OWNDATA",
+    "A", "ALIGNED",
+    "X", "WRITEBACKIFCOPY",
+    "CA", "CARRAY",
+    "FA", "FARRAY",
+    "FNC",
+    "FORC",
+]
+_SetItemKeys = L[
+    "A", "ALIGNED",
+    "W", "WRITABLE",
+    "X", "WRITEBACKIFCOPY",
+]
+
 @final
 class flagsobj:
     __hash__: None  # type: ignore[assignment]
@@ -979,5 +998,5 @@ class flagsobj:
     def num(self) -> int: ...
     @property
     def owndata(self) -> bool: ...
-    def __getitem__(self, key: str) -> bool: ...
-    def __setitem__(self, key: str, value: bool) -> None: ...
+    def __getitem__(self, key: _GetItemKeys) -> bool: ...
+    def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
