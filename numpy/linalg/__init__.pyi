@@ -1,6 +1,9 @@
 from typing import Any, List
 
+from numpy._pytesttester import PytestTester
+
 __all__: List[str]
+test: PytestTester
 
 class LinAlgError(Exception): ...
 

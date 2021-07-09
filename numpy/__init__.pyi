@@ -8,6 +8,7 @@ from abc import abstractmethod
 from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
 
+from numpy._pytesttester import PytestTester
 from numpy.core.multiarray import flagsobj
 from numpy.core._internal import _ctypes
 from numpy.typing import (
@@ -610,6 +611,7 @@ __all__: List[str]
 __path__: List[str]
 __version__: str
 __git_version__: str
+test: PytestTester
 
 # TODO: Move placeholders to their respective module once
 # their annotations are properly implemented

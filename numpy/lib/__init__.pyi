@@ -1,6 +1,8 @@
 import math as math
 from typing import Any, List
 
+from numpy._pytesttester import PytestTester
+
 from numpy import (
     ndenumerate as ndenumerate,
     ndindex as ndindex,
@@ -231,6 +233,7 @@ from numpy.core.multiarray import (
 )
 
 __all__: List[str]
+test: PytestTester
 
 __version__ = version
 emath = scimath
