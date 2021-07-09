@@ -1585,7 +1585,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
     For integer arguments the function is equivalent to the Python built-in
     `range` function, but returns an ndarray rather than a list.
 
-    When using a non-integer step, such as 0.1, it is often better to use 
+    When using a non-integer step, such as 0.1, it is often better to use
     `numpy.linspace`. See the warnings section below for more information.
 
     Parameters
@@ -2771,13 +2771,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_prepare__',
-    """a.__array_prepare__(obj) -> Object of same type as ndarray object obj.
+    """a.__array_prepare__(array[, context], /)
+
+    Returns a view of `array` with the same type as self.
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
-    """a.__array_wrap__(obj) -> Object of same type as ndarray object a.
+    """a.__array_wrap__(array[, context], /)
+
+    Returns a view of `array` with the same type as self.
 
     """))
 
