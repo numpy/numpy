@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 
-def argmax(x: Array, /, *, axis: int = None, keepdims: bool = False) -> Array:
+def argmax(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.argmax <numpy.argmax>`.
 
@@ -15,7 +15,7 @@ def argmax(x: Array, /, *, axis: int = None, keepdims: bool = False) -> Array:
     # Note: this currently fails as np.argmax does not implement keepdims
     return Array._new(np.asarray(np.argmax(x._array, axis=axis, keepdims=keepdims)))
 
-def argmin(x: Array, /, *, axis: int = None, keepdims: bool = False) -> Array:
+def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.argmin <numpy.argmin>`.
 
