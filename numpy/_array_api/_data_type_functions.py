@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ._array_object import Array
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ._types import List, Tuple, Union, Dtype
@@ -38,13 +39,44 @@ def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
         from_ = from_._array
     return np.can_cast(from_, to)
 
+# These are internal objects for the return types of finfo and iinfo, since
+# the NumPy versions contain extra data that isn't part of the spec.
+@dataclass
+class finfo_object:
+    bits: int
+    # Note: The types of the float data here are float, whereas in NumPy they
+    # are scalars of the corresponding float dtype.
+    eps: float
+    max: float
+    min: float
+    # Note: smallest_normal is part of the array API spec, but cannot be used
+    # until https://github.com/numpy/numpy/pull/18536 is merged.
+
+    # smallest_normal: float
+
+@dataclass
+class iinfo_object:
+    bits: int
+    max: int
+    min: int
+
 def finfo(type: Union[Dtype, Array], /) -> finfo_object:
     """
     Array API compatible wrapper for :py:func:`np.finfo <numpy.finfo>`.
 
     See its docstring for more information.
     """
-    return np.finfo(type)
+    fi = np.finfo(type)
+    # Note: The types of the float data here are float, whereas in NumPy they
+    # are scalars of the corresponding float dtype.
+    return finfo_object(
+        fi.bits,
+        float(fi.eps),
+        float(fi.max),
+        float(fi.min),
+        # TODO: Uncomment this when #18536 is merged.
+        # float(fi.smallest_normal),
+    )
 
 def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
     """
@@ -52,7 +84,8 @@ def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
 
     See its docstring for more information.
     """
-    return np.iinfo(type)
+    ii = np.iinfo(type)
+    return iinfo_object(ii.bits, ii.max, ii.min)
 
 def result_type(*arrays_and_dtypes: Sequence[Union[Array, Dtype]]) -> Dtype:
     """

@@ -10,7 +10,7 @@ from ._dtypes import _all_dtypes
 
 import numpy as np
 
-def asarray(obj: Union[float, NestedSequence[bool|int|float], SupportsDLPack, SupportsBufferProtocol], /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None, copy: Optional[bool] = None) -> Array:
+def asarray(obj: Union[Array, float, NestedSequence[bool|int|float], SupportsDLPack, SupportsBufferProtocol], /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None, copy: Optional[bool] = None) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.asarray <numpy.asarray>`.
 

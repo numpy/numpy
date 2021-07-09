@@ -396,7 +396,8 @@ class Array:
         res = self._array.__le__(other._array)
         return self.__class__._new(res)
 
-    def __len__(self, /):
+    # Note: __len__ may end up being removed from the array API spec.
+    def __len__(self, /) -> int:
         """
         Performs the operation __len__.
         """
@@ -843,7 +844,7 @@ class Array:
         return self.__class__._new(res)
 
     @property
-    def dtype(self):
+    def dtype(self) -> Dtype:
         """
         Array API compatible wrapper for :py:meth:`np.ndaray.dtype <numpy.ndarray.dtype>`.
 
@@ -852,7 +853,7 @@ class Array:
         return self._array.dtype
 
     @property
-    def device(self):
+    def device(self) -> Device:
         """
         Array API compatible wrapper for :py:meth:`np.ndaray.device <numpy.ndarray.device>`.
 
@@ -862,7 +863,7 @@ class Array:
         raise NotImplementedError("The device attribute is not yet implemented")
 
     @property
-    def ndim(self):
+    def ndim(self) -> int:
         """
         Array API compatible wrapper for :py:meth:`np.ndaray.ndim <numpy.ndarray.ndim>`.
 
@@ -871,7 +872,7 @@ class Array:
         return self._array.ndim
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int, ...]:
         """
         Array API compatible wrapper for :py:meth:`np.ndaray.shape <numpy.ndarray.shape>`.
 
@@ -880,7 +881,7 @@ class Array:
         return self._array.shape
 
     @property
-    def size(self):
+    def size(self) -> int:
         """
         Array API compatible wrapper for :py:meth:`np.ndaray.size <numpy.ndarray.size>`.
 
@@ -889,7 +890,7 @@ class Array:
         return self._array.size
 
     @property
-    def T(self):
+    def T(self) -> Array:
         """
         Array API compatible wrapper for :py:meth:`np.ndaray.T <numpy.ndarray.T>`.
 
