@@ -233,6 +233,7 @@ from numpy.core.multiarray import (
 )
 
 __all__: List[str]
+__path__: List[str]
 test: PytestTester
 
 __version__ = version

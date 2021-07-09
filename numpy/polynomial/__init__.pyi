@@ -18,6 +18,7 @@ from numpy.polynomial.legendre import Legendre as Legendre
 from numpy.polynomial.polynomial import Polynomial as Polynomial
 
 __all__: List[str]
+__path__: List[str]
 test: PytestTester
 
 def set_default_printstyle(style): ...

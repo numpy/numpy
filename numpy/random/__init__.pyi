@@ -68,4 +68,5 @@ from numpy.random.mtrand import (
 )
 
 __all__: List[str]
+__path__: List[str]
 test: PytestTester

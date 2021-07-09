@@ -7,6 +7,7 @@ from numpy import (
 )
 
 __all__: List[str]
+__path__: List[str]
 test: PytestTester
 
 def bmat(obj, ldict=..., gdict=...): ...

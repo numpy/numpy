@@ -49,6 +49,7 @@ from numpy.testing._private.utils import (
 )
 
 __all__: List[str]
+__path__: List[str]
 test: PytestTester
 
 def run_module_suite(
