@@ -79,9 +79,9 @@ from numpy.typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, Final, Literal as L
+    from typing import SupportsIndex, final, Final, Literal as L
 else:
-    from typing_extensions import SupportsIndex, Final, Literal as L
+    from typing_extensions import SupportsIndex, final, Final, Literal as L
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
@@ -949,9 +949,31 @@ def compare_chararrays(
 
 def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
 
+_GetItemKeys = L[
+    "C", "CONTIGUOUS", "C_CONTIGUOUS",
+    "F", "FORTRAN", "F_CONTIGUOUS",
+    "W", "WRITEABLE",
+    "B", "BEHAVED",
+    "O", "OWNDATA",
+    "A", "ALIGNED",
+    "X", "WRITEBACKIFCOPY",
+    "CA", "CARRAY",
+    "FA", "FARRAY",
+    "FNC",
+    "FORC",
+]
+_SetItemKeys = L[
+    "A", "ALIGNED",
+    "W", "WRITABLE",
+    "X", "WRITEBACKIFCOPY",
+]
+
+@final
 class flagsobj:
+    __hash__: None  # type: ignore[assignment]
     aligned: bool
-    updateifcopy: bool
+    # NOTE: deprecated
+    # updateifcopy: bool
     writeable: bool
     writebackifcopy: bool
     @property
@@ -976,5 +998,5 @@ class flagsobj:
     def num(self) -> int: ...
     @property
     def owndata(self) -> bool: ...
-    def __getitem__(self, key: str) -> bool: ...
-    def __setitem__(self, key: str, value: bool) -> None: ...
+    def __getitem__(self, key: _GetItemKeys) -> bool: ...
+    def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
