@@ -14,7 +14,7 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity, _set_madvise_hugepage,
+    _ARRAY_API, _monotonicity,
     )
 
 __all__ = [
