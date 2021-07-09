@@ -494,8 +494,10 @@ class Array:
         res = self._array.__pos__()
         return self.__class__._new(res)
 
+    # PEP 484 requires int to be a subtype of float, but __pow__ should not
+    # accept int.
     @np.errstate(all='ignore')
-    def __pow__(self: Array, other: Union[int, float, Array], /) -> Array:
+    def __pow__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __pow__.
         """
@@ -543,8 +545,10 @@ class Array:
         res = self._array.__sub__(other._array)
         return self.__class__._new(res)
 
+    # PEP 484 requires int to be a subtype of float, but __truediv__ should
+    # not accept int.
     @np.errstate(all='ignore')
-    def __truediv__(self: Array, other: Union[int, float, Array], /) -> Array:
+    def __truediv__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __truediv__.
         """
@@ -742,7 +746,7 @@ class Array:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __ipow__(self: Array, other: Union[int, float, Array], /) -> Array:
+    def __ipow__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __ipow__.
         """
@@ -754,7 +758,7 @@ class Array:
         return self
 
     @np.errstate(all='ignore')
-    def __rpow__(self: Array, other: Union[int, float, Array], /) -> Array:
+    def __rpow__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __rpow__.
         """
@@ -812,7 +816,7 @@ class Array:
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
-    def __itruediv__(self: Array, other: Union[int, float, Array], /) -> Array:
+    def __itruediv__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __itruediv__.
         """
@@ -824,7 +828,7 @@ class Array:
         return self
 
     @np.errstate(all='ignore')
-    def __rtruediv__(self: Array, other: Union[int, float, Array], /) -> Array:
+    def __rtruediv__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __rtruediv__.
         """
