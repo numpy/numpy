@@ -375,7 +375,6 @@ class MaskedRecords(MaskedArray):
             try:
                 if issubclass(dtype, ndarray):
                     output = ndarray.view(self, dtype)
-                    dtype = None
                 else:
                     output = ndarray.view(self, dtype)
             # OK, there's the change

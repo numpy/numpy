@@ -128,10 +128,6 @@ def _realType(t, default=double):
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
 
-def _linalgRealType(t):
-    """Cast the type t to either double or cdouble."""
-    return double
-
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
     result_type = single
@@ -2275,8 +2271,6 @@ def lstsq(a, b, rcond="warn"):
         raise LinAlgError('Incompatible dimensions')
 
     t, result_t = _commonType(a, b)
-    # FIXME: real_t is unused
-    real_t = _linalgRealType(t)
     result_real_t = _realType(result_t)
 
     # Determine default rcond value

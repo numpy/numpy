@@ -2564,10 +2564,8 @@ def get_parameters(vars, global_params={}):
                 v = ''.join(tt)
 
             elif iscomplex(vars[n]):
-                # FIXME complex numbers may also have exponents
-                if v[0] == '(' and v[-1] == ')':
-                    # FIXME, unused l looks like potential bug
-                    l = markoutercomma(v[1:-1]).split('@,@')
+                outmess(f'get_parameters[TODO]: '
+                        f'implement evaluation of complex expression {v}')
 
             try:
                 params[n] = eval(v, g_params, params)
@@ -2998,7 +2996,7 @@ def expr2name(a, block, args=[]):
 
 def analyzeargs(block):
     setmesstext(block)
-    implicitrules, attrrules = buildimplicitrules(block)
+    implicitrules, _ = buildimplicitrules(block)
     if 'args' not in block:
         block['args'] = []
     args = []
