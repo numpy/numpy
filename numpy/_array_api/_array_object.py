@@ -20,9 +20,9 @@ from enum import IntEnum
 from ._creation_functions import asarray
 from ._dtypes import _boolean_dtypes, _integer_dtypes, _floating_dtypes
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 if TYPE_CHECKING:
-    from ._typing import Any, Optional, PyCapsule, Tuple, Union, Device, Dtype
+    from ._typing import PyCapsule, Device, Dtype
 
 import numpy as np
 

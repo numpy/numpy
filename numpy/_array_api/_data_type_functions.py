@@ -3,9 +3,9 @@ from __future__ import annotations
 from ._array_object import Array
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple, Union
 if TYPE_CHECKING:
-    from ._typing import List, Tuple, Union, Dtype
+    from ._typing import Dtype
     from collections.abc import Sequence
 
 import numpy as np
