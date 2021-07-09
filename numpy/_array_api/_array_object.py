@@ -357,7 +357,7 @@ class Array:
         # docstring of _validate_index
         key = self._validate_index(key, self.shape)
         res = self._array.__getitem__(key)
-        return self.__class__._new(res)
+        return self._new(res)
 
     def __gt__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
