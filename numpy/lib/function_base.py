@@ -32,9 +32,6 @@ from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 
 import builtins
 
-# needed in this module for compatibility
-from numpy.lib.histograms import histogramdd
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
