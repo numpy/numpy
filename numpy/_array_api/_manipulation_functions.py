@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from ._array_object import Array
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from ._types import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 

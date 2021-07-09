@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 if TYPE_CHECKING:
-    from ._types import (List, Optional, SupportsDLPack,
-                         SupportsBufferProtocol, Tuple, Union, Array, Device,
-                         Dtype)
+    from ._types import (NestedSequence, SupportsDLPack,
+                         SupportsBufferProtocol, Array, Device, Dtype)
     from collections.abc import Sequence
 from ._dtypes import _all_dtypes
 
