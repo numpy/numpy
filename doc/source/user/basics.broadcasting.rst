@@ -40,10 +40,22 @@ array([ 2.,  4.,  6.])
 The result is equivalent to the previous example where ``b`` was an array.
 We can think of the scalar ``b`` being *stretched* during the arithmetic
 operation into an array with the same shape as ``a``. The new elements in
-``b`` are simply copies of the original scalar. The stretching analogy is
+``b``, as shown in :ref:`broadcasting.figure-1`, are simply copies of the
+original scalar. The stretching analogy is
 only conceptual.  NumPy is smart enough to use the original scalar value
 without actually making copies so that broadcasting operations are as
 memory and computationally efficient as possible.
+
+.. figure:: broadcasting_1.svg
+    :alt: A scalar is broadcast to match the shape of the 1-d array it
+          is being multiplied to.
+    :name: broadcasting.figure-1
+
+    *Figure 1*
+
+    *In the simplest example of broadcasting, the scalar ``b`` is
+    stretched to become an array of same shape as ``a`` so the shapes
+    are compatible for element-by-element multiplication.*
 
 The code in the second example is more efficient than that in the first
 because broadcasting moves less memory around during the multiplication
@@ -116,50 +128,49 @@ Here are examples of shapes that do not broadcast::
   A      (2d array):      2 x 1
   B      (3d array):  8 x 4 x 3 # second from last dimensions mismatched
 
-An example of broadcasting in practice::
+An example of broadcasting when a 1-d array is added to a 2-d array::
 
- >>> x = np.arange(4)
- >>> xx = x.reshape(4,1)
- >>> y = np.ones(5)
- >>> z = np.ones((3,4))
+  >>> a = array([[ 0.0,  0.0,  0.0],
+  ...            [10.0, 10.0, 10.0],
+  ...            [20.0, 20.0, 20.0],
+  ...            [30.0, 30.0, 30.0]])
+  >>> b = array([1.0, 2.0, 3.0])
+  >>> a + b
+  array([[  1.,   2.,   3.],
+          [ 11.,  12.,  13.],
+          [ 21.,  22.,  23.],
+          [ 31.,  32.,  33.]])
+  >>> b = array([1.0, 2.0, 3.0, 4.0])
+  >>> a + b 
+  ValueError: operands could not be broadcast together with shapes (4,3) (4,)
 
- >>> x.shape
- (4,)
+As shown in :ref:`broadcasting.figure-2`, ``b`` is added to each row of ``a``.
+In :ref:`broadcasting.figure-3`, an exception is raised because of the
+incompatible shapes.
 
- >>> y.shape
- (5,)
+.. figure:: broadcasting_2.svg
+    :alt: A 1-d array with shape (3) is strectched to match the 2-d array of
+          shape (4, 3) it is being added to, and the result is a 2-d array of shape
+          (4, 3).
+    :name: broadcasting.figure-2
 
- >>> x + y
- ValueError: operands could not be broadcast together with shapes (4,) (5,)
+    *Figure 2*
 
- >>> xx.shape
- (4, 1)
+    *A one dimensional array added to a two dimensional array results in
+    broadcasting if number of 1-d array elements matches the number of 2-d
+    array columns.*
 
- >>> y.shape
- (5,)
+.. figure:: broadcasting_3.svg
+    :alt: A huge cross over the 2-d array of shape (4, 3) and the 1-d array
+          of shape (4) shows that they can not be broadcast due to mismatch
+          of shapes and thus produce no result.
+    :name: broadcasting.figure-3
 
- >>> (xx + y).shape
- (4, 5)
+    *Figure 3*
 
- >>> xx + y
- array([[ 1.,  1.,  1.,  1.,  1.],
-        [ 2.,  2.,  2.,  2.,  2.],
-        [ 3.,  3.,  3.,  3.,  3.],
-        [ 4.,  4.,  4.,  4.,  4.]])
-
- >>> x.shape
- (4,)
-
- >>> z.shape
- (3, 4)
-
- >>> (x + z).shape
- (3, 4)
-
- >>> x + z
- array([[ 1.,  2.,  3.,  4.],
-        [ 1.,  2.,  3.,  4.],
-        [ 1.,  2.,  3.,  4.]])
+    *When the trailing dimensions of the arrays are unequal, broadcasting fails
+    because it is impossible to align the values in the rows of the 1st array
+    with the elements of the 2nd arrays for element-by-element addition.*
 
 Broadcasting provides a convenient way of taking the outer product (or
 any other outer operation) of two arrays. The following example shows an
@@ -172,6 +183,17 @@ outer addition operation of two 1-d arrays::
          [ 11.,  12.,  13.],
          [ 21.,  22.,  23.],
          [ 31.,  32.,  33.]])
+
+.. figure:: broadcasting_4.svg
+    :alt: A 2-d array of shape (4, 1) and a 1-d array of shape (3) are
+          stretched to match their shapes and produce a resultant array
+          of shape (4, 3).
+    :name: broadcasting.figure-4
+
+    *Figure 4*
+
+    *In some cases, broadcasting stretches both arrays to form an output array
+    larger than either of the initial arrays.*
 
 Here the ``newaxis`` index operator inserts a new axis into ``a``,
 making it a two-dimensional ``4x1`` array.  Combining the ``4x1`` array
@@ -210,11 +232,15 @@ the shape of the ``codes`` array::
   Codes            (2d array):  4 x 2
   Diff             (2d array):  4 x 2
 
-.. figure:: theory.broadcast_5.png
-    :alt: vector quantitization example
-    :name: broadcasting.figure-1
+.. figure:: broadcasting_5.svg
+    :alt: A height versus weight graph that shows data of a female
+          gymnast, marathon runner, basketball player, football
+          lineman and the athlete to be classified. Shortest distance
+          is found between the basketball player and the athlete
+          to be classified. 
+    :name: broadcasting.figure-5
 
-    *Figure 1*
+    *Figure 5*
 
     *The basic operation of vector quantization calculates the distance between
     an object to be classified, the dark square, and multiple known codes, the
