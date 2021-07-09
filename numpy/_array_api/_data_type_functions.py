@@ -5,7 +5,7 @@ from ._array_object import Array
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import List, Tuple, Union, Dtype
+    from ._typing import List, Tuple, Union, Dtype
     from collections.abc import Sequence
 
 import numpy as np

@@ -84,7 +84,7 @@ request.
     argument of an operation is a 0-d array.
 
 - All functions include type annotations, corresponding to those given in the
-  spec (see _types.py for definitions of some custom types). These do not
+  spec (see _typing.py for definitions of some custom types). These do not
   currently fully pass mypy due to some limitations in mypy.
 
 - Dtype objects are just the NumPy dtype objects, e.g., float64 =

@@ -4,7 +4,7 @@ from ._array_object import Array
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-   from ._types import Tuple
+   from ._typing import Tuple
 
 import numpy as np
 

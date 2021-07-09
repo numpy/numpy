@@ -22,7 +22,7 @@ from ._dtypes import _boolean_dtypes, _integer_dtypes, _floating_dtypes
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ._types import Any, Optional, PyCapsule, Tuple, Union, Device, Dtype
+    from ._typing import Any, Optional, PyCapsule, Tuple, Union, Device, Dtype
 
 import numpy as np
 
