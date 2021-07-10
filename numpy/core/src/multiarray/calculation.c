@@ -41,7 +41,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 {
     PyArrayObject *ap = NULL, *rp = NULL;
     PyArray_ArgFunc* arg_func = NULL;
-    char *ip;
+    char *ip, *func_name;
     npy_intp *rptr;
     npy_intp i, n, m;
     int elsize;
@@ -117,9 +117,11 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     }
 
     if (is_argmax) {
+        func_name = "argmax";
         arg_func = PyArray_DESCR(ap)->f->argmax;
     }
     else {
+        func_name = "argmin";
         arg_func = PyArray_DESCR(ap)->f->argmin;
     }
     if (arg_func == NULL) {
@@ -130,8 +132,9 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     elsize = PyArray_DESCR(ap)->elsize;
     m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "attempt to get argmax of an empty sequence");
+        PyErr_Format(PyExc_ValueError,
+                    "attempt to get %s of an empty sequence",
+                    func_name);
         goto fail;
     }
 
@@ -148,8 +151,9 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         if ((PyArray_NDIM(out) != out_ndim) ||
                 !PyArray_CompareLists(PyArray_DIMS(out), out_shape,
                                         out_ndim)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "output array does not match result of np.argmax.");
+            PyErr_Format(PyExc_ValueError,
+                    "output array does not match result of np.%s.",
+                    func_name);
             goto fail;
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
