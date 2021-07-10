@@ -940,20 +940,17 @@ def qr(a, mode='reduced'):
     # handle modes that don't return q
     if mode == 'r':
         r = triu(a[..., :mn, :])
-        if t != result_t:
-            r = r.astype(result_t, copy=False)
+        r = r.astype(result_t, copy=False)
         return wrap(r)
 
     if mode == 'raw':
         q = transpose(a)
-        if t != result_t:
-            q = q.astype(result_t, copy=False)
-            tau = tau.astype(result_t, copy=False)
+        q = q.astype(result_t, copy=False)
+        tau = tau.astype(result_t, copy=False)
         return wrap(q), tau
 
     if mode == 'economic':
-        if t != result_t :
-            a = a.astype(result_t, copy=False)
+        a = a.astype(result_t, copy=False)
         return wrap(a)
 
     # mc is the number of columns in the resulting q
@@ -962,25 +959,18 @@ def qr(a, mode='reduced'):
     # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:
         mc = m
-        if m <= n:
-            gufunc = _umath_linalg.qr_complete_m
-        else:
-            gufunc = _umath_linalg.qr_complete_n
+        gufunc = _umath_linalg.qr_complete
     else:
         mc = mn
-        if m <= n:
-            gufunc = _umath_linalg.qr_reduced_m
-        else:
-            gufunc = _umath_linalg.qr_reduced_n
+        gufunc = _umath_linalg.qr_reduced
 
     signature = 'DD->D' if isComplexType(t) else 'dd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
     q = gufunc(a, tau, signature=signature, extobj=extobj)
     r = triu(a[..., :mc, :])
 
-    if t != result_t:
-        q = q.astype(result_t, copy=False)
-        r = r.astype(result_t, copy=False)
+    q = q.astype(result_t, copy=False)
+    r = r.astype(result_t, copy=False)
 
     return wrap(q), wrap(r)
 

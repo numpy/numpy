@@ -3973,6 +3973,10 @@ static void *array_of_nulls[] = {
         CDOUBLE_ ## NAME                                \
     }
 
+/* The single precision functions are not used at all,
+ * due to input data being promoted to double precision
+ * in Python, so they are not implemented here.
+ */
 #define GUFUNC_FUNC_ARRAY_QR(NAME)                      \
     static PyUFuncGenericFunction                       \
     FUNC_ARRAY_NAME(NAME)[] = {                         \
@@ -4285,7 +4289,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(m)",
         "Compute TAU vector for the last two dimensions \n"\
         "and broadcast to the rest. For m <= n. \n",
-        4, 1, 1,
+        2, 1, 1,
         FUNC_ARRAY_NAME(qr_r_raw),
         qr_r_raw_types
     },
@@ -4294,43 +4298,25 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(n)",
         "Compute TAU vector for the last two dimensions \n"\
         "and broadcast to the rest. For m > n. \n",
-        4, 1, 1,
+        2, 1, 1,
         FUNC_ARRAY_NAME(qr_r_raw),
         qr_r_raw_types
     },
     {
-        "qr_reduced_m",
-        "(m,n),(m)->(m,m)",
+        "qr_reduced",
+        "(m,n),(k)->(m,k)",
         "Compute Q matrix for the last two dimensions \n"\
-        "and broadcast to the rest. For m <= n. \n",
-        4, 2, 1,
+        "and broadcast to the rest. \n",
+        2, 2, 1,
         FUNC_ARRAY_NAME(qr_reduced),
         qr_reduced_types
     },
     {
-        "qr_reduced_n",
-        "(m,n),(n)->(m,n)",
-        "Compute Q matrix for the last two dimensions \n"\
-        "and broadcast to the rest. For m > n. \n",
-        4, 2, 1,
-        FUNC_ARRAY_NAME(qr_reduced),
-        qr_reduced_types
-    },
-    {
-        "qr_complete_m",
-        "(m,n),(m)->(m,m)",
-        "Compute Q matrix for the last two dimensions \n"\
-        "and broadcast to the rest. For m <= n. \n",
-        4, 2, 1,
-        FUNC_ARRAY_NAME(qr_complete),
-        qr_complete_types
-    },
-    {
-        "qr_complete_n",
+        "qr_complete",
         "(m,n),(n)->(m,m)",
         "Compute Q matrix for the last two dimensions \n"\
         "and broadcast to the rest. For m > n. \n",
-        4, 2, 1,
+        2, 2, 1,
         FUNC_ARRAY_NAME(qr_complete),
         qr_complete_types
     },
