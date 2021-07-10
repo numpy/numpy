@@ -2362,6 +2362,30 @@ def generate_config_py(target):
                 * ``not found``: dispatched features that are not supported
                   in the system
 
+                NumPy BLAS/LAPACK Installation Notes
+                ------------------------------------
+                Installing a numpy wheel (e.g. ``pip install numpy``) includes
+                an embedded OpenBLAS library on every platform that has a wheel
+                available. (OpenBLAS implements the BLAS and LAPACK linear
+                algebra APIs.) In this case, ``show_config()`` reports
+                ``library_dirs = ['/usr/local/lib']`` per the build time
+                configuration even if there's no libblas in that directory at
+                run time. The embedded OpenBLAS is a static link library
+                compiled with gcc/gfortran.
+
+                Installing numpy from source (e.g.
+                ``pip install numpy --no-binary numpy)`` looks for BLAS and
+                LAPACK dynamic link libraries at build time. This search is
+                influenced by the environment variables
+                NPY_BLAS_ORDER/NPY_LAPACK_ORDER, if set, and the file
+                ``~/.numpy-site.cfg``, if present.
+                On macOS, 'accelerate' (Apple's Accelerate BLAS library) is in
+                the default search order (but not in numpy 1.20) after
+                'openblas'.
+                Loading a numpy library that's linked to Accelerate on
+                macOS < 11.3 will detect an Accelerate bug and raise a
+                RuntimeError.
+
                 Examples
                 --------
                 >>> import numpy as np
