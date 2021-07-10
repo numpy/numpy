@@ -136,10 +136,7 @@ def bitwise_left_shift(x1: Array, x2: Array, /) -> Array:
     # Note: bitwise_left_shift is only defined for x2 nonnegative.
     if np.any(x2._array < 0):
         raise ValueError('bitwise_left_shift(x1, x2) is only defined for x2 >= 0')
-    # Note: The spec requires the return dtype of bitwise_left_shift to be the
-    # same as the first argument. np.left_shift() returns a type that is the
-    # type promotion of the two input types.
-    return Array._new(np.left_shift(x1._array, x2._array).astype(x1.dtype))
+    return Array._new(np.left_shift(x1._array, x2._array))
 
 # Note: the function name is different here
 def bitwise_invert(x: Array, /) -> Array:
@@ -176,10 +173,7 @@ def bitwise_right_shift(x1: Array, x2: Array, /) -> Array:
     # Note: bitwise_right_shift is only defined for x2 nonnegative.
     if np.any(x2._array < 0):
         raise ValueError('bitwise_right_shift(x1, x2) is only defined for x2 >= 0')
-    # Note: The spec requires the return dtype of bitwise_left_shift to be the
-    # same as the first argument. np.left_shift() returns a type that is the
-    # type promotion of the two input types.
-    return Array._new(np.right_shift(x1._array, x2._array).astype(x1.dtype))
+    return Array._new(np.right_shift(x1._array, x2._array))
 
 def bitwise_xor(x1: Array, x2: Array, /) -> Array:
     """

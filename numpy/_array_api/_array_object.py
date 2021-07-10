@@ -410,11 +410,8 @@ class Array:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        # Note: The spec requires the return dtype of bitwise_left_shift, and
-        # hence also __lshift__, to be the same as the first argument.
-        # np.ndarray.__lshift__ returns a type that is the type promotion of
-        # the two input types.
-        res = self._array.__lshift__(other._array).astype(self.dtype)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__lshift__(other._array)
         return self.__class__._new(res)
 
     def __lt__(self: Array, other: Union[int, float, Array], /) -> Array:
@@ -517,11 +514,8 @@ class Array:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        # Note: The spec requires the return dtype of bitwise_right_shift, and
-        # hence also __rshift__, to be the same as the first argument.
-        # np.ndarray.__rshift__ returns a type that is the type promotion of
-        # the two input types.
-        res = self._array.__rshift__(other._array).astype(self.dtype)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rshift__(other._array)
         return self.__class__._new(res)
 
     def __setitem__(self, key, value, /):
@@ -646,11 +640,8 @@ class Array:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        # Note: The spec requires the return dtype of bitwise_left_shift, and
-        # hence also __lshift__, to be the same as the first argument.
-        # np.ndarray.__lshift__ returns a type that is the type promotion of
-        # the two input types.
-        res = self._array.__rlshift__(other._array).astype(other.dtype)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rlshift__(other._array)
         return self.__class__._new(res)
 
     def __imatmul__(self: Array, other: Array, /) -> Array:
@@ -787,11 +778,8 @@ class Array:
         """
         if isinstance(other, (int, float, bool)):
             other = self._promote_scalar(other)
-        # Note: The spec requires the return dtype of bitwise_right_shift, and
-        # hence also __rshift__, to be the same as the first argument.
-        # np.ndarray.__rshift__ returns a type that is the type promotion of
-        # the two input types.
-        res = self._array.__rrshift__(other._array).astype(other.dtype)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__rrshift__(other._array)
         return self.__class__._new(res)
 
     @np.errstate(all='ignore')
