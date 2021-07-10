@@ -4285,7 +4285,8 @@ class TestArgmaxArgminCommon:
             aarg_maxmin = arg_method(i)
             axes = list(range(a.ndim))
             axes.remove(i)
-            assert_(np.all(a_maxmin == aarg_maxmin.choose(*a.transpose(i,*axes))))
+            assert_(np.all(a_maxmin == aarg_maxmin.choose(
+                                        *a.transpose(i, *axes))))
     
     @pytest.mark.parametrize('method', ['argmax', 'argmin'])
     def test_output_shape(self, method):
@@ -4329,8 +4330,9 @@ class TestArgmaxArgminCommon:
         [('argmax', np.argmax),
          ('argmin', np.argmin)])
     def test_np_vs_ndarray(self, arr_method, np_method):
-        # make sure both ndarray.argmax/argmin and numpy.argmax/argmin support out/axis args
-        a = np.random.normal(size=(2,3))
+        # make sure both ndarray.argmax/argmin and 
+        # numpy.argmax/argmin support out/axis args
+        a = np.random.normal(size=(2, 3))
         arg_method = getattr(a, arr_method)
 
         # check positional args
@@ -4342,7 +4344,8 @@ class TestArgmaxArgminCommon:
         # check keyword args
         out1 = np.zeros(3, dtype=int)
         out2 = np.zeros(3, dtype=int)
-        assert_equal(arg_method(out=out1, axis=0), np_method(a, out=out2, axis=0))
+        assert_equal(arg_method(out=out1, axis=0), 
+                     np_method(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
     @pytest.mark.leaks_references(reason="replaces None with NULL.")
