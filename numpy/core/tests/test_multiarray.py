@@ -4275,6 +4275,91 @@ class TestArgmaxArgminCommon:
                 method(arr.T, axis=axis, 
                         out=wrong_outarray, keepdims=True)
 
+    @pytest.mark.parametrize('method', ['max', 'min'])
+    def test_all(self, method):
+        a = np.random.normal(0, 1, (4, 5, 6, 7, 8))
+        arg_method = getattr(a, 'arg' + method)
+        val_method = getattr(a, method)
+        for i in range(a.ndim):
+            a_maxmin = val_method(i)
+            aarg_maxmin = arg_method(i)
+            axes = list(range(a.ndim))
+            axes.remove(i)
+            assert_(np.all(a_maxmin == aarg_maxmin.choose(*a.transpose(i,*axes))))
+    
+    @pytest.mark.parametrize('method', ['argmax', 'argmin'])
+    def test_output_shape(self, method):
+        # see also gh-616
+        a = np.ones((10, 5))
+        arg_method = getattr(a, method)
+        # Check some simple shape mismatches
+        out = np.ones(11, dtype=np.int_)
+        assert_raises(ValueError, arg_method, -1, out)
+
+        out = np.ones((2, 5), dtype=np.int_)
+        assert_raises(ValueError, arg_method, -1, out)
+
+        # these could be relaxed possibly (used to allow even the previous)
+        out = np.ones((1, 10), dtype=np.int_)
+        assert_raises(ValueError, arg_method, -1, out)
+
+        out = np.ones(10, dtype=np.int_)
+        arg_method(-1, out=out)
+        assert_equal(out, arg_method(-1))
+
+    @pytest.mark.parametrize('ndim', [0, 1])
+    @pytest.mark.parametrize('method', ['argmax', 'argmin'])
+    def test_ret_is_out(self, ndim, method):
+        a = np.ones((4,) + (3,)*ndim)
+        arg_method = getattr(a, method)
+        out = np.empty((3,)*ndim, dtype=np.intp)
+        ret = arg_method(axis=0, out=out)
+        assert ret is out
+
+    @pytest.mark.parametrize('np_array, method, idx, val',
+        [(np.zeros, 'argmax', 5942, "as"),
+         (np.ones, 'argmin', 6001, "0")])
+    def test_unicode(self, np_array, method, idx, val):
+        d = np_array(6031, dtype='<U9')
+        arg_method = getattr(d, method)
+        d[idx] = val
+        assert_equal(arg_method(), idx)
+
+    @pytest.mark.parametrize('arr_method, np_method',
+        [('argmax', np.argmax),
+         ('argmin', np.argmin)])
+    def test_np_vs_ndarray(self, arr_method, np_method):
+        # make sure both ndarray.argmax/argmin and numpy.argmax/argmin support out/axis args
+        a = np.random.normal(size=(2,3))
+        arg_method = getattr(a, arr_method)
+
+        # check positional args
+        out1 = np.zeros(2, dtype=int)
+        out2 = np.zeros(2, dtype=int)
+        assert_equal(arg_method(1, out1), np_method(a, 1, out2))
+        assert_equal(out1, out2)
+
+        # check keyword args
+        out1 = np.zeros(3, dtype=int)
+        out2 = np.zeros(3, dtype=int)
+        assert_equal(arg_method(out=out1, axis=0), np_method(a, out=out2, axis=0))
+        assert_equal(out1, out2)
+
+    @pytest.mark.leaks_references(reason="replaces None with NULL.")
+    @pytest.mark.parametrize('method, vals',
+        [('argmax', (10, 30)),
+         ('argmin', (30, 10))])
+    def test_object_with_NULLs(self, method, vals):
+        # See gh-6032
+        a = np.empty(4, dtype='O')
+        arg_method = getattr(a, method)
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+        assert_equal(arg_method(), 0)
+        a[3] = vals[0]
+        assert_equal(arg_method(), 3)
+        a[1] = vals[1]
+        assert_equal(arg_method(), 1)
+
 class TestArgmax:
 
     nan_arr = [
@@ -4340,81 +4425,30 @@ class TestArgmax:
         ([True, False, True, False, False], 0),
     ]
 
-    def test_all(self):
-        a = np.random.normal(0, 1, (4, 5, 6, 7, 8))
-        for i in range(a.ndim):
-            amax = a.max(i)
-            aargmax = a.argmax(i)
-            axes = list(range(a.ndim))
-            axes.remove(i)
-            assert_(np.all(amax == aargmax.choose(*a.transpose(i,*axes))))
+    @pytest.mark.parametrize('data', nan_arr)
+    def test_combinations(self, data):
+        arr, pos = data
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning,
+                        "invalid value encountered in reduce")
+            val = np.max(arr)
 
-    def test_combinations(self):
-        for arr, pos in self.nan_arr:
-            with suppress_warnings() as sup:
-                sup.filter(RuntimeWarning,
-                           "invalid value encountered in reduce")
-                max_val = np.max(arr)
+        assert_equal(np.argmax(arr), pos, err_msg="%r" % arr)
+        assert_equal(arr[np.argmax(arr)], val, err_msg="%r" % arr)
+    
+    def test_maximum_signed_integers(self):
 
-            assert_equal(np.argmax(arr), pos, err_msg="%r" % arr)
-            assert_equal(arr[np.argmax(arr)], max_val, err_msg="%r" % arr)
+        a = np.array([1, 2**7 - 1, -2**7], dtype=np.int8)
+        assert_equal(np.argmax(a), 1)
 
-    def test_output_shape(self):
-        # see also gh-616
-        a = np.ones((10, 5))
-        # Check some simple shape mismatches
-        out = np.ones(11, dtype=np.int_)
-        assert_raises(ValueError, a.argmax, -1, out)
+        a = np.array([1, 2**15 - 1, -2**15], dtype=np.int16)
+        assert_equal(np.argmax(a), 1)
 
-        out = np.ones((2, 5), dtype=np.int_)
-        assert_raises(ValueError, a.argmax, -1, out)
+        a = np.array([1, 2**31 - 1, -2**31], dtype=np.int32)
+        assert_equal(np.argmax(a), 1)
 
-        # these could be relaxed possibly (used to allow even the previous)
-        out = np.ones((1, 10), dtype=np.int_)
-        assert_raises(ValueError, a.argmax, -1, out)
-
-        out = np.ones(10, dtype=np.int_)
-        a.argmax(-1, out=out)
-        assert_equal(out, a.argmax(-1))
-
-    @pytest.mark.parametrize('ndim', [0, 1])
-    def test_ret_is_out(self, ndim):
-        a = np.ones((4,) + (3,)*ndim)
-        out = np.empty((3,)*ndim, dtype=np.intp)
-        ret = a.argmax(axis=0, out=out)
-        assert ret is out
-
-    def test_argmax_unicode(self):
-        d = np.zeros(6031, dtype='<U9')
-        d[5942] = "as"
-        assert_equal(d.argmax(), 5942)
-
-    def test_np_vs_ndarray(self):
-        # make sure both ndarray.argmax and numpy.argmax support out/axis args
-        a = np.random.normal(size=(2,3))
-
-        # check positional args
-        out1 = np.zeros(2, dtype=int)
-        out2 = np.zeros(2, dtype=int)
-        assert_equal(a.argmax(1, out1), np.argmax(a, 1, out2))
-        assert_equal(out1, out2)
-
-        # check keyword args
-        out1 = np.zeros(3, dtype=int)
-        out2 = np.zeros(3, dtype=int)
-        assert_equal(a.argmax(out=out1, axis=0), np.argmax(a, out=out2, axis=0))
-        assert_equal(out1, out2)
-
-    @pytest.mark.leaks_references(reason="replaces None with NULL.")
-    def test_object_argmax_with_NULLs(self):
-        # See gh-6032
-        a = np.empty(4, dtype='O')
-        ctypes.memset(a.ctypes.data, 0, a.nbytes)
-        assert_equal(a.argmax(), 0)
-        a[3] = 10
-        assert_equal(a.argmax(), 3)
-        a[1] = 30
-        assert_equal(a.argmax(), 1)
+        a = np.array([1, 2**63 - 1, -2**63], dtype=np.int64)
+        assert_equal(np.argmax(a), 1)
 
 
 class TestArgmin:
@@ -4482,15 +4516,6 @@ class TestArgmin:
         ([False, True, False, True, True], 0),
     ]
 
-    def test_all(self):
-        a = np.random.normal(0, 1, (4, 5, 6, 7, 8))
-        for i in range(a.ndim):
-            amin = a.min(i)
-            aargmin = a.argmin(i)
-            axes = list(range(a.ndim))
-            axes.remove(i)
-            assert_(np.all(amin == aargmin.choose(*a.transpose(i,*axes))))
-
     def test_combinations(self):
         for arr, pos in self.nan_arr:
             with suppress_warnings() as sup:
@@ -4503,74 +4528,17 @@ class TestArgmin:
 
     def test_minimum_signed_integers(self):
 
-        a = np.array([1, -2**7, -2**7 + 1], dtype=np.int8)
+        a = np.array([1, -2**7, -2**7 + 1, 2**7 - 1], dtype=np.int8)
         assert_equal(np.argmin(a), 1)
 
-        a = np.array([1, -2**15, -2**15 + 1], dtype=np.int16)
+        a = np.array([1, -2**15, -2**15 + 1, 2**15 - 1], dtype=np.int16)
         assert_equal(np.argmin(a), 1)
 
-        a = np.array([1, -2**31, -2**31 + 1], dtype=np.int32)
+        a = np.array([1, -2**31, -2**31 + 1, 2**31 - 1], dtype=np.int32)
         assert_equal(np.argmin(a), 1)
 
-        a = np.array([1, -2**63, -2**63 + 1], dtype=np.int64)
+        a = np.array([1, -2**63, -2**63 + 1, 2**63 - 1], dtype=np.int64)
         assert_equal(np.argmin(a), 1)
-
-    def test_output_shape(self):
-        # see also gh-616
-        a = np.ones((10, 5))
-        # Check some simple shape mismatches
-        out = np.ones(11, dtype=np.int_)
-        assert_raises(ValueError, a.argmin, -1, out)
-
-        out = np.ones((2, 5), dtype=np.int_)
-        assert_raises(ValueError, a.argmin, -1, out)
-
-        # these could be relaxed possibly (used to allow even the previous)
-        out = np.ones((1, 10), dtype=np.int_)
-        assert_raises(ValueError, a.argmin, -1, out)
-
-        out = np.ones(10, dtype=np.int_)
-        a.argmin(-1, out=out)
-        assert_equal(out, a.argmin(-1))
-
-    @pytest.mark.parametrize('ndim', [0, 1])
-    def test_ret_is_out(self, ndim):
-        a = np.ones((4,) + (3,)*ndim)
-        out = np.empty((3,)*ndim, dtype=np.intp)
-        ret = a.argmin(axis=0, out=out)
-        assert ret is out
-
-    def test_argmin_unicode(self):
-        d = np.ones(6031, dtype='<U9')
-        d[6001] = "0"
-        assert_equal(d.argmin(), 6001)
-
-    def test_np_vs_ndarray(self):
-        # make sure both ndarray.argmin and numpy.argmin support out/axis args
-        a = np.random.normal(size=(2, 3))
-
-        # check positional args
-        out1 = np.zeros(2, dtype=int)
-        out2 = np.ones(2, dtype=int)
-        assert_equal(a.argmin(1, out1), np.argmin(a, 1, out2))
-        assert_equal(out1, out2)
-
-        # check keyword args
-        out1 = np.zeros(3, dtype=int)
-        out2 = np.ones(3, dtype=int)
-        assert_equal(a.argmin(out=out1, axis=0), np.argmin(a, out=out2, axis=0))
-        assert_equal(out1, out2)
-
-    @pytest.mark.leaks_references(reason="replaces None with NULL.")
-    def test_object_argmin_with_NULLs(self):
-        # See gh-6032
-        a = np.empty(4, dtype='O')
-        ctypes.memset(a.ctypes.data, 0, a.nbytes)
-        assert_equal(a.argmin(), 0)
-        a[3] = 30
-        assert_equal(a.argmin(), 3)
-        a[1] = 10
-        assert_equal(a.argmin(), 1)
 
 
 class TestMinMax:
