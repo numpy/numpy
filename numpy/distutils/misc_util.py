@@ -2374,7 +2374,7 @@ def generate_config_py(target):
                 compiled with gcc/gfortran.
 
                 Installing numpy from source (e.g.
-                ``pip install numpy --no-binary numpy)`` looks for BLAS and
+                ``pip install numpy --no-binary numpy``) looks for BLAS and
                 LAPACK dynamic link libraries at build time. This search is
                 influenced by the environment variables
                 NPY_BLAS_ORDER/NPY_LAPACK_ORDER, if set, and the file
