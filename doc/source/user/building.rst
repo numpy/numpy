@@ -244,15 +244,16 @@ or::
     BLAS=None LAPACK=None ATLAS=None python setup.py build
 
 
-64-bit BLAS and LAPACK
-~~~~~~~~~~~~~~~~~~~~~~
+BLAS and LAPACK
+~~~~~~~~~~~~~~~
 
-You can tell Numpy to use 64-bit BLAS/LAPACK libraries by setting the
+Since version 1.22, NumPy uses 64-bit API interfaces to BLAS/LAPACK libraries.
+You can tell Numpy to use 32-bit BLAS/LAPACK interfaces by setting the
 environment variable::
 
-    NPY_USE_BLAS_ILP64=1
+    NPY_USE_BLAS_ILP32=1
 
-when building Numpy. The following 64-bit BLAS/LAPACK libraries are
+when building Numpy. The following BLAS/LAPACK libraries are
 supported:
 
 1. OpenBLAS ILP64 with ``64_`` symbol suffix (``openblas64_``)

@@ -120,12 +120,12 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python37:
+          Python37-ILP32:
             PYTHON_VERSION: '3.7'
             USE_OPENBLAS: '1'
+            NPY_USE_BLAS_ILP32: '1'
           Python37-ILP64:
             PYTHON_VERSION: '3.7'
-            NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
@@ -272,7 +272,6 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
-            NPY_USE_BLAS_ILP64: '1'
             OPENBLAS_SUFFIX: '64_'
     steps:
     - template: azure-steps-windows.yml

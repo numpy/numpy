@@ -46,10 +46,8 @@ def get_plat():
 
 
 def get_ilp64():
-    if os.environ.get("NPY_USE_BLAS_ILP64", "0") == "0":
+    if IS_32BIT or os.environ.get("NPY_USE_BLAS_ILP32", "0") != "0":
         return None
-    if IS_32BIT:
-        raise RuntimeError("NPY_USE_BLAS_ILP64 set on 32-bit arch")
     return "64_"
 
 

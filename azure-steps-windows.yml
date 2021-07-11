@@ -39,10 +39,10 @@ steps:
     mkdir openblas
     echo "Copying $target to openblas/openblas$env:OPENBLAS_SUFFIX.a"
     cp $target openblas/openblas$env:OPENBLAS_SUFFIX.a
-    If ( Test-Path env:NPY_USE_BLAS_ILP64 ){
-        echo "##vso[task.setvariable variable=OPENBLAS64_]$pwd\openblas"
-    } else {
+    If ( Test-Path env:NPY_USE_BLAS_ILP32 ){
         echo "##vso[task.setvariable variable=OPENBLAS]$pwd\openblas"
+    } else {
+        echo "##vso[task.setvariable variable=OPENBLAS64_]$pwd\openblas"
     }
   displayName: 'Download / Install OpenBLAS'
 

@@ -40,7 +40,6 @@ jobs:
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
-       - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
     - python: 3.7

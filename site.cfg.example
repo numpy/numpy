@@ -135,7 +135,7 @@
 # with 32-bit BLAS/LAPACK.
 #
 # To build Numpy with such 64-bit BLAS/LAPACK, set environment
-# variables NPY_USE_BLAS_ILP64=1, NPY_BLAS_ILP64_ORDER=openblas64_,
+# variables NPY_BLAS_ILP64_ORDER=openblas64_,
 # NPY_LAPACK_ILP64_ORDER=openblas64_ at build time.
 #
 # See:
@@ -150,8 +150,10 @@
 # OpenBLAS (64-bit ILP64)
 # -----------------------
 # It is possible to also use OpenBLAS compiled with 64-bit integer
-# size (ILP64) but no symbol name changes. To do that, set the
-# environment variables NPY_USE_BLAS_ILP64=1,
+# size (ILP64) but no symbol name changes. This is the default in the wheels
+# provided by the project. You can force 32-bit compiled OpenBLAS by setting
+# the environment variables NPY_USE_BLAS_ILP32=1. The preference for the 64-bit
+# builds is controlled by
 # NPY_BLAS_ILP64_ORDER=openblas_ilp64,
 # NPY_LAPACK_ILP64_ORDER=openblas_ilp64 at build time.
 #

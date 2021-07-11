@@ -82,11 +82,11 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  blas64:
+  blas32:
     needs: [smoke_test, lint]
     runs-on: ubuntu-latest
     env:
-      NPY_USE_BLAS_ILP64: 1
+      NPY_USE_BLAS_ILP32: 1
     steps:
     - uses: actions/checkout@v2
       with:
@@ -142,7 +142,6 @@ jobs:
     env:
       NPY_RELAXED_STRIDES_CHECKING: 0
       CHECK_BLAS: 1
-      NPY_USE_BLAS_ILP64: 1
     steps:
     - uses: actions/checkout@v2
       with:

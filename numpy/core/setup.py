@@ -749,10 +749,10 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_cpu_features.c.src'),
             ]
 
-    if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
-        blas_info = get_info('blas_ilp64_opt', 2)
-    else:
+    if os.environ.get('NPY_USE_BLAS_ILP32', "0") != "0":
         blas_info = get_info('blas_opt', 0)
+    else:
+        blas_info = get_info('blas_ilp64_opt', 2)
 
     have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
 
