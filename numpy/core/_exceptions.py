@@ -123,7 +123,13 @@ class TooHardError(RuntimeError):
 @set_module('numpy')
 class AxisError(ValueError, IndexError):
     """ Axis supplied was invalid. """
+
+    __slots__ = ("axis", "ndim")
+
     def __init__(self, axis, ndim=None, msg_prefix=None):
+        self.axis = axis
+        self.ndim = ndim
+
         # single-argument form just delegates to base class
         if ndim is None and msg_prefix is None:
             msg = axis
