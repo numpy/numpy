@@ -1054,19 +1054,19 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 }
 
 static PyObject *
-gentype_ndim_get(PyObject *NPY_UNUSED(self))
+gentype_ndim_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(0);
 }
 
 static PyObject *
-gentype_flags_get(PyObject *NPY_UNUSED(self))
+gentype_flags_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     return PyArray_NewFlagsObject(NULL);
 }
 
 static PyObject *
-voidtype_flags_get(PyVoidScalarObject *self)
+voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *flagobj;
     flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
@@ -1079,7 +1079,7 @@ voidtype_flags_get(PyVoidScalarObject *self)
 }
 
 static PyObject *
-voidtype_dtypedescr_get(PyVoidScalarObject *self)
+voidtype_dtypedescr_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
     Py_INCREF(self->descr);
     return (PyObject *)self->descr;
@@ -1087,7 +1087,7 @@ voidtype_dtypedescr_get(PyVoidScalarObject *self)
 
 
 static PyObject *
-inttype_numerator_get(PyObject *self)
+inttype_numerator_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     Py_INCREF(self);
     return self;
@@ -1095,21 +1095,21 @@ inttype_numerator_get(PyObject *self)
 
 
 static PyObject *
-inttype_denominator_get(PyObject *self)
+inttype_denominator_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(1);
 }
 
 
 static PyObject *
-gentype_data_get(PyObject *self)
+gentype_data_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     return PyMemoryView_FromObject(self);
 }
 
 
 static PyObject *
-gentype_itemsize_get(PyObject *self)
+gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArray_Descr *typecode;
     PyObject *ret;
@@ -1123,7 +1123,7 @@ gentype_itemsize_get(PyObject *self)
 }
 
 static PyObject *
-gentype_size_get(PyObject *NPY_UNUSED(self))
+gentype_size_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(1);
 }
@@ -1132,7 +1132,7 @@ static PyObject *
 gentype_sizeof(PyObject *self)
 {
     Py_ssize_t nbytes;
-    PyObject * isz = gentype_itemsize_get(self);
+    PyObject * isz = gentype_itemsize_get(self, NULL);
     if (isz == NULL) {
         return NULL;
     }
@@ -1161,7 +1161,7 @@ gentype_struct_free(PyObject *ptr)
 }
 
 static PyObject *
-gentype_struct_get(PyObject *self)
+gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *arr;
     PyArrayInterface *inter;
@@ -1187,20 +1187,20 @@ gentype_struct_get(PyObject *self)
 }
 
 static PyObject *
-gentype_priority_get(PyObject *NPY_UNUSED(self))
+gentype_priority_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     return PyFloat_FromDouble(NPY_SCALAR_PRIORITY);
 }
 
 static PyObject *
-gentype_shape_get(PyObject *NPY_UNUSED(self))
+gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     return PyTuple_New(0);
 }
 
 
 static PyObject *
-gentype_interface_get(PyObject *self)
+gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *arr;
     PyObject *inter;
@@ -1220,20 +1220,20 @@ gentype_interface_get(PyObject *self)
 
 
 static PyObject *
-gentype_typedescr_get(PyObject *self)
+gentype_typedescr_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     return (PyObject *)PyArray_DescrFromScalar(self);
 }
 
 
 static PyObject *
-gentype_base_get(PyObject *NPY_UNUSED(self))
+gentype_base_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 {
     Py_RETURN_NONE;
 }
 
 static PyObject *
-voidtype_base_get(PyVoidScalarObject *self)
+voidtype_base_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->base == NULL) {
         Py_RETURN_NONE;
@@ -1264,7 +1264,7 @@ _realdescr_fromcomplexscalar(PyObject *self, int *typenum)
 }
 
 static PyObject *
-gentype_real_get(PyObject *self)
+gentype_real_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArray_Descr *typecode;
     PyObject *ret;
@@ -1291,7 +1291,7 @@ gentype_real_get(PyObject *self)
 }
 
 static PyObject *
-gentype_imag_get(PyObject *self)
+gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArray_Descr *typecode=NULL;
     PyObject *ret;
@@ -1331,7 +1331,7 @@ gentype_imag_get(PyObject *self)
 }
 
 static PyObject *
-gentype_flat_get(PyObject *self)
+gentype_flat_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *ret, *arr;
 
@@ -1346,7 +1346,7 @@ gentype_flat_get(PyObject *self)
 
 
 static PyObject *
-gentype_transpose_get(PyObject *self)
+gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     Py_INCREF(self);
     return self;

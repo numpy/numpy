@@ -164,6 +164,7 @@ html_theme_options = {
   "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
+  "collapse_navigation": True,
 }
 
 
@@ -295,6 +296,7 @@ intersphinx_mapping = {
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
     'pytest': ('https://docs.pytest.org/en/stable', None),
+    'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
 }
 
 
@@ -432,6 +434,11 @@ def linkcode_resolve(domain, info):
         except Exception:
             fn = None
         if not fn:
+            return None
+
+        # Ignore re-exports as their source files are not within the numpy repo
+        module = inspect.getmodule(obj)
+        if module is not None and not module.__name__.startswith("numpy"):
             return None
 
         try:

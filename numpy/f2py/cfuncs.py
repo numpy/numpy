@@ -479,6 +479,27 @@ cppmacros['STRINGMALLOC'] = """\
 cppmacros['STRINGFREE'] = """\
 #define STRINGFREE(str) do {if (!(str == NULL)) free(str);} while (0)
 """
+needs['STRINGPADN'] = ['string.h']
+cppmacros['STRINGPADN'] = """\
+/*
+STRINGPADN replaces null values with padding values from the right.
+
+`to` must have size of at least N bytes.
+
+If the `to[N-1]` has null value, then replace it and all the
+preceeding nulls with the given padding.
+
+STRINGPADN(to, N, PADDING, NULLVALUE) is an inverse operation.
+*/
+#define STRINGPADN(to, N, NULLVALUE, PADDING)                   \\
+    do {                                                        \\
+        int _m = (N);                                           \\
+        char *_to = (to);                                       \\
+        for (_m -= 1; _m >= 0 && _to[_m] == NULLVALUE; _m--) {  \\
+             _to[_m] = PADDING;                                 \\
+        }                                                       \\
+    } while (0)
+"""
 needs['STRINGCOPYN'] = ['string.h', 'FAILNULL']
 cppmacros['STRINGCOPYN'] = """\
 /*
@@ -665,7 +686,8 @@ cfuncs['string_from_pyobj'] = """\
 
   The string buffer has given size (len) or the size of inistr when len==-1.
 
-  The string buffer is null-terminated.
+  The string buffer is padded with blanks: in Fortran, trailing blanks
+  are insignificant contrary to C nulls.
  */
 static int
 string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj,
@@ -691,6 +713,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
         }
         n = PyArray_NBYTES(arr);
         buf = PyArray_DATA(arr);
+        n = strnlen(buf, n);
     }
     else {
         if (PyBytes_Check(obj)) {
@@ -726,14 +749,18 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
     }
     else if (*len < n) {
         /* discard the last (len-n) bytes of input buf */
-        n = *len;  
+        n = *len;
     }
     if (n < 0 || *len < 0 || buf == NULL) {
         goto capi_fail;
     }
     STRINGMALLOC(*str, *len);  // *str is allocated with size (*len + 1)
     if (n < *len) {
-        /* Pad fixed-width string with nulls */
+        /*
+          Pad fixed-width string with nulls. The caller will replace
+          nulls with blanks when the corresponding argument is not
+          intent(c).
+        */
         memset(*str + n, '\\0', *len - n);
     }
     STRINGCOPYN(*str, buf, n);

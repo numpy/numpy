@@ -74,8 +74,10 @@ class TestFixedString(util.F2PyTest):
           character(len=*) :: s
           integer :: j, i
           i = 0
-          do j=1, len(s)
-           i = i + ichar(s(j:j)) * 10 ** (j - 1)
+          do j=len(s), 1, -1
+           if (.not.((i.eq.0).and.(s(j:j).eq.' '))) then
+             i = i + ichar(s(j:j)) * 10 ** (j - 1)
+           endif
           end do
           return
         end function sint
@@ -95,7 +97,7 @@ class TestFixedString(util.F2PyTest):
           integer :: sint
           character(len=4), intent(inout) :: a
           integer :: i
-          if (ichar(a(1:1)).ne.0) then
+          if (a(1:1).ne.' ') then
             a(1:1) = 'E'
           endif
           i = sint(a)

@@ -305,4 +305,31 @@ stages:
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for gcc 4.8'
 
+  - job: Linux_conda
+    pool:
+      vmImage: 'ubuntu-20.04'
+    steps:
+    - script: |
+            # create and activate conda environment
+            conda env create -f environment.yml
+      displayName: 'Create conda environment.'
+    - script: |
+            # >>> conda initialize >>>
+            # !! Contents within this block are 'conda init' !!
+            # see https://github.com/conda/conda/issues/7980
+            __conda_setup="$('conda' 'shell.bash' 'hook' 2> /dev/null)"
+            eval "$__conda_setup"
+            unset __conda_setup
+            # <<< conda initialize <<<
+            conda activate numpy-dev
+            # Run native baseline Build / Tests
+            python runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run native baseline Build / Tests in conda.'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for conda installation'
 

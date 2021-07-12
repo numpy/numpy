@@ -4,6 +4,7 @@ import fnmatch
 import itertools
 import pytest
 import sys
+import os
 from fractions import Fraction
 from functools import reduce
 
@@ -16,6 +17,20 @@ from numpy.testing import (
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, assert_warns
     )
+
+def get_glibc_version():
+    try:
+        ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
+    except Exception as inst:
+        ver = '0.0'
+
+    return ver
+
+
+glibcver = get_glibc_version()
+glibc_newerthan_2_17 = pytest.mark.xfail(
+        glibcver != '0.0' and glibcver < '2.17',
+        reason="Older glibc versions may not raise appropriate FP exceptions")
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -418,16 +433,14 @@ class TestDivision:
             assert_(np.isnan(y)[0])
 
     def test_floor_division_complex(self):
-        # check that implementation is correct
-        msg = "Complex floor division implementation check"
+        # check that floor division, divmod and remainder raises type errors
         x = np.array([.9 + 1j, -.1 + 1j, .9 + .5*1j, .9 + 2.*1j], dtype=np.complex128)
-        y = np.array([0., -1., 0., 0.], dtype=np.complex128)
-        assert_equal(np.floor_divide(x**2, x), y, err_msg=msg)
-        # check overflow, underflow
-        msg = "Complex floor division overflow/underflow check"
-        x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
-        y = np.floor_divide(x**2, x)
-        assert_equal(y, [1.e+110, 0], err_msg=msg)
+        with pytest.raises(TypeError):
+            x // 7
+        with pytest.raises(TypeError):
+            np.divmod(x, 7)
+        with pytest.raises(TypeError):
+            np.remainder(x, 7)
 
     def test_floor_division_signed_zero(self):
         # Check that the sign bit is correctly set when dividing positive and
@@ -986,6 +999,10 @@ class TestSpecialFloats:
             yf = np.array(y, dtype=dt)
             assert_equal(np.exp(yf), xf)
 
+    # Older version of glibc may not raise the correct FP exceptions
+    # See: https://github.com/numpy/numpy/issues/19192
+    @glibc_newerthan_2_17
+    def test_exp_exceptions(self):
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
@@ -2083,6 +2100,10 @@ class TestSpecialMethods:
         do_test(lambda a: np.add(0, 0, out=a),       lambda a: (0, 0, a))
         do_test(lambda a: np.add(0, 0, out=(a,)),    lambda a: (0, 0, a))
 
+        # Also check the where mask handling:
+        do_test(lambda a: np.add(a, 0, where=False), lambda a: (a, 0))
+        do_test(lambda a: np.add(0, 0, a, where=False), lambda a: (0, 0, a))
+
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
 
@@ -2232,7 +2253,8 @@ class TestSpecialMethods:
         assert_equal(x, np.zeros(1))
         assert_equal(type(x), np.ndarray)
 
-    def test_prepare(self):
+    @pytest.mark.parametrize("use_where", [True, False])
+    def test_prepare(self, use_where):
 
         class with_prepare(np.ndarray):
             __array_priority__ = 10
@@ -2242,11 +2264,15 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array(1).view(type=with_prepare)
-        x = np.add(a, a)
+        if use_where:
+            x = np.add(a, a, where=np.array(True))
+        else:
+            x = np.add(a, a)
         assert_equal(x, np.array(2))
         assert_equal(type(x), with_prepare)
 
-    def test_prepare_out(self):
+    @pytest.mark.parametrize("use_where", [True, False])
+    def test_prepare_out(self, use_where):
 
         class with_prepare(np.ndarray):
             __array_priority__ = 10
@@ -2255,7 +2281,10 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array([1]).view(type=with_prepare)
-        x = np.add(a, a, a)
+        if use_where:
+            x = np.add(a, a, a, where=[True])
+        else:
+            x = np.add(a, a, a)
         # Returned array is new, because of the strange
         # __array_prepare__ above
         assert_(not np.shares_memory(x, a))
@@ -2273,6 +2302,7 @@ class TestSpecialMethods:
 
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum, a, a, where=False)
 
     def test_array_too_many_args(self):
 

@@ -22,17 +22,17 @@
  ** Defining the SIMD kernels
  *
  * Floor division of signed is based on T. Granlund and P. L. Montgomery
- * “Division by invariant integers using multiplication(see [Figure 6.1]
+ * "Division by invariant integers using multiplication(see [Figure 6.1]
  * http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.1.2556)"
  * For details on TRUNC division see simd/intdiv.h for more clarification
  ***********************************************************************************
- ** Figure 6.1: Signed division by run–time invariant divisor, rounded towards -INF
+ ** Figure 6.1: Signed division by run-time invariant divisor, rounded towards -INF
  ***********************************************************************************
  * For q = FLOOR(a/d), all sword:
- *     sword −dsign = SRL(d, N − 1);
- *     uword −nsign = (n < −dsign);
- *     uword −qsign = EOR(−nsign, −dsign);
- *     q = TRUNC((n − (−dsign ) + (−nsign))/d) − (−qsign);
+ *     sword -dsign = SRL(d, N - 1);
+ *     uword -nsign = (n < -dsign);
+ *     uword -qsign = EOR(-nsign, -dsign);
+ *     q = TRUNC((n - (-dsign ) + (-nsign))/d) - (-qsign);
  ********************************************************************************/
 
 #if NPY_SIMD

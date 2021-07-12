@@ -13,8 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.13'
-OPENBLAS_LONG = 'v0.3.13-62-gaf2b0d02'
+OPENBLAS_V = '0.3.16'
+OPENBLAS_LONG = 'v0.3.16'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
@@ -149,7 +149,10 @@ def unpack_windows_zip(fname):
         if not lib:
             return 'could not find libopenblas_%s*.a ' \
                     'in downloaded zipfile' % OPENBLAS_LONG
-        target = os.path.join(gettempdir(), 'openblas.a')
+        if get_ilp64() is None:
+            target = os.path.join(gettempdir(), 'openblas.a')
+        else:
+            target = os.path.join(gettempdir(), 'openblas64_.a')
         with open(target, 'wb') as fid:
             fid.write(zf.read(lib[0]))
     return target

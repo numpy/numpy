@@ -3,7 +3,7 @@
 language: python
 group: travis_latest
 os: linux
-dist: bionic
+dist: focal
 
 # Travis allows these packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-safelist
@@ -32,6 +32,7 @@ jobs:
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
+       - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
     - python: 3.7
@@ -45,7 +46,8 @@ jobs:
 
     - python: 3.7
       os: linux
-      arch: arm64
+      arch: arm64-graviton2
+      virt: vm
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1

@@ -147,6 +147,9 @@ class TestChanges:
         assert not np.can_cast("U1", "V1")
         # Structured to unstructured is just like any other:
         assert np.can_cast("d,i", "V", casting="same_kind")
+        # Unstructured void to unstructured is actually no cast at all:
+        assert np.can_cast("V3", "V", casting="no")
+        assert np.can_cast("V0", "V", casting="no")
 
 
 class TestCasting:
@@ -646,3 +649,28 @@ class TestCasting:
         with pytest.raises(TypeError,
                     match="casting from object to the parametric DType"):
             cast._resolve_descriptors((np.dtype("O"), None))
+
+    @pytest.mark.parametrize("casting", ["no", "unsafe"])
+    def test_void_and_structured_with_subarray(self, casting):
+        # test case corresponding to gh-19325
+        dtype = np.dtype([("foo", "<f4", (3, 2))])
+        expected = casting == "unsafe"
+        assert np.can_cast("V4", dtype, casting=casting) == expected
+        assert np.can_cast(dtype, "V4", casting=casting) == expected
+
+    @pytest.mark.parametrize("dtype", np.typecodes["All"])
+    def test_object_casts_NULL_None_equivalence(self, dtype):
+        # None to <other> casts may succeed or fail, but a NULL'ed array must
+        # behave the same as one filled with None's.
+        arr_normal = np.array([None] * 5)
+        arr_NULLs = np.empty_like([None] * 5)
+        # If the check fails (maybe it should) the test would lose its purpose:
+        assert arr_NULLs.tobytes() == b"\x00" * arr_NULLs.nbytes
+
+        try:
+            expected = arr_normal.astype(dtype)
+        except TypeError:
+            with pytest.raises(TypeError):
+                arr_NULLs.astype(dtype)
+        else:
+            assert_array_equal(expected, arr_NULLs.astype(dtype))

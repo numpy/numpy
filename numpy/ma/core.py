@@ -2839,11 +2839,6 @@ class MaskedArray(ndarray):
             _data = ndarray.view(_data, type(data))
         else:
             _data = ndarray.view(_data, cls)
-        # Backwards compatibility w/ numpy.core.ma.
-        if hasattr(data, '_mask') and not isinstance(data, ndarray):
-            _data._mask = data._mask
-            # FIXME _sharedmask is never used.
-            _sharedmask = True
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
@@ -5290,9 +5285,6 @@ class MaskedArray(ndarray):
 
         """
         m = self.mean(axis, dtype)
-        if m is masked:
-            return m
-
         if not axis:
             return self - m
         else:
@@ -5491,7 +5483,8 @@ class MaskedArray(ndarray):
         filled = self.filled(fill_value)
         return filled.argsort(axis=axis, kind=kind, order=order)
 
-    def argmin(self, axis=None, fill_value=None, out=None):
+    def argmin(self, axis=None, fill_value=None, out=None, *,
+                keepdims=np._NoValue):
         """
         Return array of indices to the minimum values along the given axis.
 
@@ -5534,9 +5527,11 @@ class MaskedArray(ndarray):
         if fill_value is None:
             fill_value = minimum_fill_value(self)
         d = self.filled(fill_value).view(ndarray)
-        return d.argmin(axis, out=out)
+        keepdims = False if keepdims is np._NoValue else bool(keepdims)
+        return d.argmin(axis, out=out, keepdims=keepdims)
 
-    def argmax(self, axis=None, fill_value=None, out=None):
+    def argmax(self, axis=None, fill_value=None, out=None, *,
+                keepdims=np._NoValue):
         """
         Returns array of indices of the maximum values along the given axis.
         Masked values are treated as if they had the value fill_value.
@@ -5571,7 +5566,8 @@ class MaskedArray(ndarray):
         if fill_value is None:
             fill_value = maximum_fill_value(self._data)
         d = self.filled(fill_value).view(ndarray)
-        return d.argmax(axis, out=out)
+        keepdims = False if keepdims is np._NoValue else bool(keepdims)
+        return d.argmax(axis, out=out, keepdims=keepdims)
 
     def sort(self, axis=-1, kind=None, order=None,
              endwith=True, fill_value=None):

@@ -1727,6 +1727,22 @@ class TestArrayComparisons:
         assert_(not res)
         assert_(type(res) is bool)
 
+    @pytest.mark.parametrize("dtype", ["V0", "V3", "V10"])
+    def test_compare_unstructured_voids(self, dtype):
+        zeros = np.zeros(3, dtype=dtype)
+
+        assert_array_equal(zeros, zeros)
+        assert not (zeros != zeros).any()
+
+        if dtype == "V0":
+            # Can't test != of actually different data
+            return
+
+        nonzeros = np.array([b"1", b"2", b"3"], dtype=dtype)
+
+        assert not (zeros == nonzeros).any()
+        assert (zeros != nonzeros).all()
+
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
@@ -2321,8 +2337,14 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
-    @given(data=st.data(), shape=hynp.array_shapes())
-    def test_clip_property(self, data, shape):
+    @given(
+        data=st.data(),
+        arr=hynp.arrays(
+            dtype=hynp.integer_dtypes() | hynp.floating_dtypes(),
+            shape=hynp.array_shapes()
+        )
+    )
+    def test_clip_property(self, data, arr):
         """A property-based test using Hypothesis.
 
         This aims for maximum generality: it could in principle generate *any*
@@ -2338,44 +2360,29 @@ class TestClip:
         That accounts for most of the function; the actual test is just three
         lines to calculate and compare actual vs expected results!
         """
-        # Our base array and bounds should not need to be of the same type as
-        # long as they are all compatible - so we allow any int or float type.
-        dtype_strategy = hynp.integer_dtypes() | hynp.floating_dtypes()
-
-        # The following line is a total hack to disable the varied-dtypes
-        # component of this test, because result != expected if dtypes can vary.
-        dtype_strategy = st.just(data.draw(dtype_strategy))
-
-        # Generate an arbitrary array of the chosen shape and dtype
-        # This is the value that we clip.
-        arr = data.draw(hynp.arrays(dtype=dtype_strategy, shape=shape))
-
         # Generate shapes for the bounds which can be broadcast with each other
         # and with the base shape.  Below, we might decide to use scalar bounds,
         # but it's clearer to generate these shapes unconditionally in advance.
         in_shapes, result_shape = data.draw(
             hynp.mutually_broadcastable_shapes(
                 num_shapes=2,
-                base_shape=shape,
+                base_shape=arr.shape,
                 # Commenting out the min_dims line allows zero-dimensional arrays,
                 # and zero-dimensional arrays containing NaN make the test fail.
                 min_dims=1
-
             )
         )
+        # This test can fail if we allow either bound to be a scalar `nan`, or
+        # if bounds are of a different (still integer or float) dtype than the
+        # array.  At some point we should investigate and fix those problems.
         amin = data.draw(
-            dtype_strategy.flatmap(hynp.from_dtype)
-            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[0])
+            hynp.from_dtype(arr.dtype, allow_nan=False)
+            | hynp.arrays(dtype=arr.dtype, shape=in_shapes[0])
         )
         amax = data.draw(
-            dtype_strategy.flatmap(hynp.from_dtype)
-            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[1])
+            hynp.from_dtype(arr.dtype, allow_nan=False)
+            | hynp.arrays(dtype=arr.dtype, shape=in_shapes[1])
         )
-        # If we allow either bound to be a scalar `nan`, the test will fail -
-        # so we just "assume" that away (if it is, this raises a special
-        # exception and Hypothesis will try again with different inputs)
-        assume(not np.isscalar(amin) or not np.isnan(amin))
-        assume(not np.isscalar(amax) or not np.isnan(amax))
 
         # Then calculate our result and expected result and check that they're
         # equal!  See gh-12519 for discussion deciding on this property.
