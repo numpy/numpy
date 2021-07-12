@@ -122,7 +122,41 @@ class TooHardError(RuntimeError):
 
 @set_module('numpy')
 class AxisError(ValueError, IndexError):
-    """ Axis supplied was invalid. """
+    """Axis supplied was invalid.
+
+    Raised whenever an ``axis`` parameter is specified that is larger than
+    the number of array dimensions.
+
+    .. versionadded:: 1.22
+
+        Added the ``axis`` and ``ndim`` attributes.
+
+    Parameters
+    ----------
+    axis : int
+        The out of bounds axis.
+    ndim : int, optional
+        The number of array dimensions.
+    msg_prefix : str, optional
+        A prefix for the exception message.
+
+    Attributes
+    ----------
+    axis : int
+        The out of bounds axis.
+    ndim : int, optional
+        The number of array dimensions.
+        Defaults to ``None`` if unspecified.
+
+    Examples
+    --------
+    >>> array_1d = np.arange(10)
+    >>> np.cumsum(array_1d, axis=1)
+    Traceback (most recent call last):
+      ...
+    numpy.AxisError: axis 1 is out of bounds for array of dimension 1
+
+    """
 
     __slots__ = ("axis", "ndim")
 
