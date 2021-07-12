@@ -2364,26 +2364,27 @@ def generate_config_py(target):
 
                 NumPy BLAS/LAPACK Installation Notes
                 ------------------------------------
-                Installing a numpy wheel (e.g. ``pip install numpy``) includes
+                Installing a numpy wheel (``pip install numpy`` or force it
+                via ``pip install numpy --only-binary numpy``) includes
                 an OpenBLAS implementation of the BLAS and LAPACK linear algebra
-                APIs. In this case, ``library_dirs`` reports the build time
-                configuration; the OpenBLAS library is actually in
-                ``site-packages/numpy.libs/`` or
-                ``site-packages/numpy/.dylibs/`` and it's compiled with
-                gcc/gfortran.
+                APIs. In this case, ``library_dirs`` reports the original build
+                time configuration as compiled with gcc/gfortran; at run time
+                the OpenBLAS library is in
+                ``site-packages/numpy.libs/`` (linux), or
+                ``site-packages/numpy/.dylibs/`` (macOS), or
+                ``site-packages/numpy/.libs/`` (windows).
 
-                Installing numpy from source (e.g.
-                ``pip install numpy --no-binary numpy``) looks for BLAS and
-                LAPACK dynamic link libraries at build time. This search is
-                influenced by the environment variables
-                NPY_BLAS_ORDER/NPY_LAPACK_ORDER, if set, and the file
-                ``~/.numpy-site.cfg``, if present.
+                Installing numpy from source
+                (``pip install numpy --no-binary numpy``) searches for BLAS and
+                LAPACK dynamic link libraries at build time as influenced by
+                environment variables NPY_BLAS_LIBS, NPY_CBLAS_LIBS, and
+                NPY_LAPACK_LIBS; or NPY_BLAS_ORDER and NPY_LAPACK_ORDER;
+                or the optional file ``~/.numpy-site.cfg``.
+                NumPy remembers those locations and expects to load the same
+                libraries at run-time.
                 On macOS, 'accelerate' (Apple's Accelerate BLAS library) is in
-                the default search order (but not in numpy 1.20) after
-                'openblas'.
-                Loading a numpy library that's linked to Accelerate on
-                macOS < 11.3 will detect an Accelerate bug and raise a
-                RuntimeError.
+                the default build-time search order -- except in numpy 1.20 --
+                after 'openblas'.
 
                 Examples
                 --------
