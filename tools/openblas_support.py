@@ -151,7 +151,7 @@ def unpack_windows_zip(fname):
                     'in downloaded zipfile' % OPENBLAS_LONG
         if get_ilp64() is None:
             target = os.path.join(gettempdir(), 'openblas.a')
-        else
+        else:
             target = os.path.join(gettempdir(), 'openblas64_.a')
         with open(target, 'wb') as fid:
             fid.write(zf.read(lib[0]))
