@@ -143,6 +143,20 @@ class AxisError(ValueError, IndexError):
 
         super().__init__(msg)
 
+    @classmethod
+    def _reconstruct(cls, axis, ndim, args):
+        """Auxiliary instance constructor used by `__reduce__`."""
+        self = super().__new__(cls)
+        self.axis = axis
+        self.ndim = ndim
+        self.args = args
+        return self
+
+    def __reduce__(self):
+        """Return state information for `pickle`."""
+        cls = type(self)
+        return cls._reconstruct, (self.axis, self.ndim, self.args)
+
 
 @_display_as_base
 class _ArrayMemoryError(MemoryError):
