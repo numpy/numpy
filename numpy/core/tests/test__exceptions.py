@@ -62,15 +62,19 @@ class TestUFuncNoLoopError:
 @pytest.mark.parametrize("args", [
     (2, 1, None),
     (2, 1, "test_prefix"),
-    (2, None, None),
-    (2, None, "test_prefix")
+    ("test message",),
 ])
 class TestAxisError:
     def test_attr(self, args):
         """Validate attribute types."""
         exc = np.AxisError(*args)
-        assert exc.axis == args[0]
-        assert exc.ndim == args[1]
+        if len(args) == 1:
+            assert exc.axis is None
+            assert exc.ndim is None
+        else:
+            axis, ndim, *_ = args
+            assert exc.axis == axis
+            assert exc.ndim == ndim
 
     def test_pickling(self, args):
         """Test that `AxisError` can be pickled."""

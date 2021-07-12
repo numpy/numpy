@@ -133,8 +133,9 @@ class AxisError(ValueError, IndexError):
 
     Parameters
     ----------
-    axis : int
-        The out of bounds axis.
+    axis : int or str
+        The out of bounds axis or a custom exception message.
+        If an axis is provided, then `ndim` should be specified as well.
     ndim : int, optional
         The number of array dimensions.
     msg_prefix : str, optional
@@ -142,11 +143,12 @@ class AxisError(ValueError, IndexError):
 
     Attributes
     ----------
-    axis : int
-        The out of bounds axis.
+    axis : int, optional
+        The out of bounds axis or ``None`` if a custom exception
+        message was provided.
     ndim : int, optional
-        The number of array dimensions.
-        Defaults to ``None`` if unspecified.
+        The number of array dimensions or ``None`` if a custom exception
+        message was provided.
 
     Examples
     --------
@@ -156,17 +158,27 @@ class AxisError(ValueError, IndexError):
       ...
     numpy.AxisError: axis 1 is out of bounds for array of dimension 1
 
+    The class constructor generally takes the axis and arrays'
+    dimensionality as arguments:
+
+    >>> np.AxisError(2, 1, prefix='error')
+    numpy.AxisError('error: axis 2 is out of bounds for array of dimension 1')
+
+    Alternativelly, a custom exception message can be passed:
+
+    >>> np.AxisError('Custom error message')
+    numpy.AxisError('Custom error message')
+
     """
 
     __slots__ = ("axis", "ndim")
 
     def __init__(self, axis, ndim=None, msg_prefix=None):
-        self.axis = axis
-        self.ndim = ndim
-
         # single-argument form just delegates to base class
         if ndim is None and msg_prefix is None:
             msg = axis
+            self.axis = None
+            self.ndim = None
 
         # do the string formatting here, to save work in the C code
         else:
@@ -174,6 +186,8 @@ class AxisError(ValueError, IndexError):
                    .format(axis, ndim))
             if msg_prefix is not None:
                 msg = "{}: {}".format(msg_prefix, msg)
+            self.axis = axis
+            self.ndim = ndim
 
         super().__init__(msg)
 
