@@ -563,6 +563,9 @@ class TestRemainder:
                     else:
                         assert_(b > rem >= 0, msg)
 
+    @pytest.mark.xfail(sys.platform.startswith("darwin"),
+            reason="MacOS seems to not give the correct 'invalid' warning for "
+                   "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_float_divmod_errors(self, dtype):
         # Check valid errors raised for divmod and remainder
@@ -586,6 +589,9 @@ class TestRemainder:
             # inf / 0 does not set any flags, only the modulo creates a NaN
             np.divmod(finf, fzero)
 
+    @pytest.mark.xfail(sys.platform.startswith("darwin"),
+           reason="MacOS seems to not give the correct 'invalid' warning for "
+                  "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
