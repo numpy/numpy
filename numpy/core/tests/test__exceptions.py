@@ -4,6 +4,7 @@ Tests of the ._exceptions module. Primarily for exercising the __str__ methods.
 
 import pickle
 
+import pytest
 import numpy as np
 
 _ArrayMemoryError = np.core._exceptions._ArrayMemoryError
@@ -56,3 +57,38 @@ class TestUFuncNoLoopError:
     def test_pickling(self):
         """ Test that _UFuncNoLoopError can be pickled """
         assert isinstance(pickle.dumps(_UFuncNoLoopError), bytes)
+
+
+@pytest.mark.parametrize("args", [
+    (2, 1, None),
+    (2, 1, "test_prefix"),
+    (2, None, None),
+    (2, None, "test_prefix")
+])
+class TestAxisError:
+    def test_attr(self, args):
+        """Validate attribute types."""
+        exc = np.AxisError(*args)
+        assert exc.axis == args[0]
+        assert exc.ndim == args[1]
+
+    def test_pickling(self, args):
+        """Test that `AxisError` can be pickled."""
+        exc = np.AxisError(*args)
+        exc2 = pickle.loads(pickle.dumps(exc))
+
+        assert type(exc) is type(exc2)
+        for name in ("axis", "ndim", "args"):
+            attr1 = getattr(exc, name)
+            attr2 = getattr(exc2, name)
+            assert attr1 == attr2, name
+
+    def test_pickling_compat(self, args):
+        """Test that `AxisError` instances pickled prior to NumPy 1.22
+        can still be unpickled.
+        """
+        # Attach a `__reduce__` method equivalent to the one used prior to 1.22
+        exc = np.AxisError(*args)
+        exc.__reduce__ = super(np.AxisError, exc).__reduce__
+
+        assert pickle.loads(pickle.dumps(exc))
