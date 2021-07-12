@@ -145,7 +145,8 @@ class AxisError(ValueError, IndexError):
     ----------
     axis : int, optional
         The out of bounds axis or ``None`` if a custom exception
-        message was provided.
+        message was provided. This should be the axis as passed by
+        the user, before any normalization to resolve negative indices.
     ndim : int, optional
         The number of array dimensions or ``None`` if a custom exception
         message was provided.
@@ -158,13 +159,20 @@ class AxisError(ValueError, IndexError):
       ...
     numpy.AxisError: axis 1 is out of bounds for array of dimension 1
 
+    Negative axes are preserved:
+
+    >>> np.cumsum(array_1d, axis=-2)
+    Traceback (most recent call last):
+      ...
+    numpy.AxisError: axis -2 is out of bounds for array of dimension 1
+
     The class constructor generally takes the axis and arrays'
     dimensionality as arguments:
 
     >>> np.AxisError(2, 1, prefix='error')
     numpy.AxisError('error: axis 2 is out of bounds for array of dimension 1')
 
-    Alternativelly, a custom exception message can be passed:
+    Alternatively, a custom exception message can be passed:
 
     >>> np.AxisError('Custom error message')
     numpy.AxisError('Custom error message')
@@ -193,7 +201,15 @@ class AxisError(ValueError, IndexError):
 
     @classmethod
     def _reconstruct(cls, axis, ndim, args):
-        """Auxiliary instance constructor used by `__reduce__`."""
+        """Auxiliary instance constructor used by `__reduce__`.
+
+        Directly assign all instance attributes without further sanitization.
+
+        This method avoids the `__init__` constructor in order to:
+        * Circumvent dealing with its axis-based overload.
+        * Avoid extracting the message prefix from ``self.args`` if applicable.
+
+        """
         self = super().__new__(cls)
         self.axis = axis
         self.ndim = ndim
