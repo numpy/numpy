@@ -2365,13 +2365,12 @@ def generate_config_py(target):
                 NumPy BLAS/LAPACK Installation Notes
                 ------------------------------------
                 Installing a numpy wheel (e.g. ``pip install numpy``) includes
-                an embedded OpenBLAS library on every platform that has a wheel
-                available. (OpenBLAS implements the BLAS and LAPACK linear
-                algebra APIs.) In this case, ``show_config()`` reports
-                ``library_dirs = ['/usr/local/lib']`` per the build time
-                configuration even if there's no libblas in that directory at
-                run time. The embedded OpenBLAS is a static link library
-                compiled with gcc/gfortran.
+                an OpenBLAS implementation of the BLAS and LAPACK linear algebra
+                APIs. In this case, ``library_dirs`` reports the build time
+                configuration; the OpenBLAS library is actually in
+                ``site-packages/numpy.libs/`` or
+                ``site-packages/numpy/.dylibs/`` and it's compiled with
+                gcc/gfortran.
 
                 Installing numpy from source (e.g.
                 ``pip install numpy --no-binary numpy``) looks for BLAS and
