@@ -127,7 +127,7 @@ class AxisError(ValueError, IndexError):
     Raised whenever an ``axis`` parameter is specified that is larger than
     the number of array dimensions.
 
-    .. versionadded:: 1.22
+    .. versionchanged:: 1.22
 
         Added the ``axis`` and ``ndim`` attributes.
 
