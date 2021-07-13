@@ -84,6 +84,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
+    'breathe'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -477,3 +478,11 @@ class NumPyLexer(CLexer):
             inherit,
         ],
     }
+
+
+# -----------------------------------------------------------------------------
+# Breathe & Doxygen
+# -----------------------------------------------------------------------------
+breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_default_project = "numpy"
+breathe_default_members = ("members", "undoc-members", "protected-members")
