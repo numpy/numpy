@@ -945,6 +945,9 @@ class dtype(Generic[_DTypeScalar_co]):
     def __new__(cls, dtype: _UShortCodes | Type[ct.c_ushort], align: bool = ..., copy: bool = ...) -> dtype[ushort]: ...
     @overload
     def __new__(cls, dtype: _UIntCCodes | Type[ct.c_uint], align: bool = ..., copy: bool = ...) -> dtype[uintc]: ...
+
+    # NOTE: We're assuming here that `uint_ptr_t == size_t`,
+    # an assumption that does not hold in rare cases (same for `ssize_t`)
     @overload
     def __new__(cls, dtype: _UIntPCodes | Type[ct.c_void_p] | Type[ct.c_size_t], align: bool = ..., copy: bool = ...) -> dtype[uintp]: ...
     @overload
