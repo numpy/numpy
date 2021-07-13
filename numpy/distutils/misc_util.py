@@ -2382,9 +2382,9 @@ def generate_config_py(target):
                 or the optional file ``~/.numpy-site.cfg``.
                 NumPy remembers those locations and expects to load the same
                 libraries at run-time.
-                On macOS, 'accelerate' (Apple's Accelerate BLAS library) is in
-                the default build-time search order -- except in numpy 1.20 --
-                after 'openblas'.
+                In NumPy 1.21+ on macOS, 'accelerate' (Apple's Accelerate BLAS
+                library) is in the default build-time search order after
+                'openblas'.
 
                 Examples
                 --------
