@@ -912,7 +912,7 @@ class dtype(Generic[_DTypeScalar_co]):
     # other special cases. Order is sometimes important because of the
     # subtype relationships
     #
-    # bool < int < float < complex
+    # bool < int < float < complex < object
     #
     # so we have to make sure the overloads for the narrowest type is
     # first.
@@ -1041,7 +1041,7 @@ class dtype(Generic[_DTypeScalar_co]):
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[Any]: ...
-    # Catchall overload
+    # Catchall overload for void-likes
     @overload
     def __new__(
         cls,
@@ -1049,6 +1049,14 @@ class dtype(Generic[_DTypeScalar_co]):
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[void]: ...
+    # Catchall overload for object-likes
+    @overload
+    def __new__(
+        cls,
+        dtype: Type[object],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[object_]: ...
 
     @overload
     def __getitem__(self: dtype[void], key: List[str]) -> dtype[void]: ...
