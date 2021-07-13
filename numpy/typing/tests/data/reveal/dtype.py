@@ -1,3 +1,4 @@
+import ctypes as ct
 import numpy as np
 
 dtype_obj: np.dtype[np.str_]
@@ -22,6 +23,15 @@ reveal_type(np.dtype(int))  # E: numpy.dtype[{int_}]
 reveal_type(np.dtype(bool))  # E: numpy.dtype[numpy.bool_]
 reveal_type(np.dtype(str))  # E: numpy.dtype[numpy.str_]
 reveal_type(np.dtype(bytes))  # E: numpy.dtype[numpy.bytes_]
+reveal_type(np.dtype(object))  # E: numpy.dtype[numpy.object_]
+
+# ctypes
+reveal_type(np.dtype(ct.c_double))  # E: numpy.dtype[{double}]
+reveal_type(np.dtype(ct.c_longlong))  # E: numpy.dtype[{longlong}]
+reveal_type(np.dtype(ct.c_uint32))  # E: numpy.dtype[{uint32}]
+reveal_type(np.dtype(ct.c_bool))  # E: numpy.dtype[numpy.bool_]
+reveal_type(np.dtype(ct.c_char))  # E: numpy.dtype[numpy.bytes_]
+reveal_type(np.dtype(ct.py_object))  # E: numpy.dtype[numpy.object_]
 
 # Special case for None
 reveal_type(np.dtype(None))  # E: numpy.dtype[{double}]
