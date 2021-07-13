@@ -76,6 +76,7 @@ doc/cdoc/build
 MANIFEST
 .cache
 pip-wheel-metadata
+.python-version
 
 # Paver generated files #
 #########################
