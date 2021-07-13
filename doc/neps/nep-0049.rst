@@ -118,13 +118,14 @@ NumPy C-API functions
 
         typedef struct {
             char name[128];  /* multiple of 64 to keep the struct aligned */
-            PyDataMemAllocator allocator; 
+            PyDataMemAllocator allocator;
         } PyDataMem_Handler;
 
     where the allocator structure is
 
     .. code-block:: c
-        /* The declaration of free differs from PyMemAllocatorEx */ 
+
+        /* The declaration of free differs from PyMemAllocatorEx */
         typedef struct {
             void *ctx;
             void* (*malloc) (void *ctx, size_t size);
@@ -284,7 +285,7 @@ Discussion
 ----------
 
 The discussion on the mailing list led to the ``PyDataMemAllocator`` struct
-with a ``context`` field like ``PyMemAllocatorEx`` but with a different
+with a ``context`` field like :c:type:`PyMemAllocatorEx` but with a different
 signature for ``free``.
 
 
