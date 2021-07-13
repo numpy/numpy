@@ -2365,7 +2365,7 @@ def generate_config_py(target):
                 NumPy BLAS/LAPACK Installation Notes
                 ------------------------------------
                 Installing a numpy wheel (``pip install numpy`` or force it
-                via ``pip install numpy --only-binary numpy``) includes
+                via ``pip install numpy --only-binary :numpy: numpy``) includes
                 an OpenBLAS implementation of the BLAS and LAPACK linear algebra
                 APIs. In this case, ``library_dirs`` reports the original build
                 time configuration as compiled with gcc/gfortran; at run time
