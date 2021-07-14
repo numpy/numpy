@@ -141,8 +141,8 @@ NumPy C-API functions
     C++17: https://en.cppreference.com/w/cpp/memory/polymorphic_allocator/deallocate
     Rust (allocator_api): https://doc.rust-lang.org/std/alloc/trait.Allocator.html#tymethod.deallocate
 
-    The user must keep track of ``size`` and make sure it is consistent with
-    the ``alloc`` parameter.
+    The consumer of the `PyDataMemAllocator` interface must keep track of ``size`` and make sure it is
+    consistent with the parameter passed to the ``(m|c|re)alloc``  functions.
 
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
