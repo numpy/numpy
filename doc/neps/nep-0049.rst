@@ -134,6 +134,16 @@ NumPy C-API functions
             void (*free) (void *ctx, void *ptr, size_t size);
         } PyDataMemAllocator;
 
+    The use of a ``size`` parameter in ``free`` differentiates this struct from
+    the :c:type:`PyMemAllocatorEx` struct in Python. This call signature is
+    used internally in NumPy currently, and also in other places for instance
+    C++11 (maybe older): https://en.cppreference.com/w/cpp/memory/allocator/deallocate
+    C++17: https://en.cppreference.com/w/cpp/memory/polymorphic_allocator/deallocate
+    Rust (allocator_api): https://doc.rust-lang.org/std/alloc/trait.Allocator.html#tymethod.deallocate
+
+    The user must keep track of ``size`` and make sure it is consistent with
+    the ``alloc`` parameter.
+
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
    Sets a new allocation policy. If the input value is ``NULL``, will reset
