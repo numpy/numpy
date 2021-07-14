@@ -393,12 +393,12 @@ int uo_index=0;   /* user_override index */
 /* Wrappers for the default or any user-assigned PyDataMem_Handler */
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW(size_t size, PyDataMemAllocator allocator)
+PyDataMem_UserNEW(size_t size, const PyDataMemAllocator *allocator)
 {
     void *result;
 
     assert(size != 0);
-    result = allocator.malloc(allocator.ctx, size);
+    result = allocator->malloc(allocator->ctx, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -413,10 +413,10 @@ PyDataMem_UserNEW(size_t size, PyDataMemAllocator allocator)
 }
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator)
+PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, const PyDataMemAllocator *allocator)
 {
     void *result;
-    result = allocator.calloc(allocator.ctx, nmemb, size);
+    result = allocator->calloc(allocator->ctx, nmemb, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -431,10 +431,10 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator
 }
 
 NPY_NO_EXPORT void
-PyDataMem_UserFREE(void *ptr, size_t size, PyDataMemAllocator allocator)
+PyDataMem_UserFREE(void *ptr, size_t size, const PyDataMemAllocator *allocator)
 {
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
-    allocator.free(allocator.ctx, ptr, size);
+    allocator->free(allocator->ctx, ptr, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -447,12 +447,12 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyDataMemAllocator allocator)
 }
 
 NPY_NO_EXPORT void *
-PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMemAllocator allocator)
+PyDataMem_UserRENEW(void *ptr, size_t size, const PyDataMemAllocator *allocator)
 {
     void *result;
 
     assert(size != 0);
-    result = allocator.realloc(allocator.ctx, ptr, size);
+    result = allocator->realloc(allocator->ctx, ptr, size);
     if (result != ptr) {
         PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     }
