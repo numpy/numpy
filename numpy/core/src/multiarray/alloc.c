@@ -325,15 +325,64 @@ PyDataMem_RENEW(void *ptr, size_t size)
     return result;
 }
 
+// The default data mem allocator malloc routine does not make use of a ctx.
+// It should be called only through PyDataMem_UserNEW
+// since itself does not handle eventhook and tracemalloc logic.
+static NPY_INLINE void *
+default_malloc(void *NPY_UNUSED(ctx), size_t size)
+{
+    return _npy_alloc_cache(size, 1, NBUCKETS, datacache, &malloc);
+}
+
+// The default data mem allocator calloc routine does not make use of a ctx.
+// It should be called only through PyDataMem_UserNEW_ZEROED
+// since itself does not handle eventhook and tracemalloc logic.
+static NPY_INLINE void *
+default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
+{
+    void * p;
+    size_t sz = nelem * elsize;
+    NPY_BEGIN_THREADS_DEF;
+    if (sz < NBUCKETS) {
+        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &malloc);
+        if (p) {
+            memset(p, 0, sz);
+        }
+        return p;
+    }
+    NPY_BEGIN_THREADS;
+    p = calloc(nelem, elsize);
+    NPY_END_THREADS;
+    return p;
+}
+
+// The default data mem allocator realloc routine does not make use of a ctx.
+// It should be called only through PyDataMem_UserRENEW
+// since itself does not handle eventhook and tracemalloc logic.
+static NPY_INLINE void *
+default_realloc(void *NPY_UNUSED(ctx), void *ptr, size_t new_size)
+{
+    return realloc(ptr, new_size);
+}
+
+// The default data mem allocator free routine does not make use of a ctx.
+// It should be called only through PyDataMem_UserFREE
+// since itself does not handle eventhook and tracemalloc logic.
+static NPY_INLINE void
+default_free(void *NPY_UNUSED(ctx), void *ptr, size_t size)
+{
+    _npy_free_cache(ptr, size, NBUCKETS, datacache, &free);
+}
+
 /* Memory handler global default */
 PyDataMem_Handler default_handler = {
     "default_allocator",
     {
-        NULL, /* ctx */
-        NULL, /* (npy_alloc_cache) malloc */
-        NULL, /* (npy_alloc_cache_zero) calloc */
-        NULL, /* (PyDataMem_RENEW) realloc */
-        NULL  /* (npy_free_cache) free */
+        NULL,            /* ctx */
+        default_malloc,  /* malloc */
+        default_calloc,  /* calloc */
+        default_realloc, /* realloc */
+        default_free     /* free */
     }
 };
 
@@ -341,23 +390,13 @@ PyDataMem_Handler *current_handler = &default_handler;
 
 int uo_index=0;   /* user_override index */
 
-/*
- * Wrappers for user-assigned PyDataMem_Handlers
- *
- * The default data mem allocator routines do not make use of a ctx
- * and are specially handled since they already integrate
- * eventhook and tracemalloc logic.
- */
+/* Wrappers for the default or any user-assigned PyDataMem_Handler */
 
 NPY_NO_EXPORT void *
 PyDataMem_UserNEW(size_t size, PyDataMemAllocator allocator)
 {
     void *result;
 
-    if (!allocator.malloc) {
-        // All the logic below is conditionally handled by npy_alloc_cache
-        return npy_alloc_cache(size);
-    }
     assert(size != 0);
     result = allocator.malloc(allocator.ctx, size);
     if (_PyDataMem_eventhook != NULL) {
@@ -377,11 +416,6 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator)
 {
     void *result;
-    if (!allocator.calloc) {
-        // All the logic below is conditionally handled by npy_alloc_cache_zero
-        return npy_alloc_cache_zero(nmemb, size);
-    }
-
     result = allocator.calloc(allocator.ctx, nmemb, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
@@ -399,11 +433,6 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator
 NPY_NO_EXPORT void
 PyDataMem_UserFREE(void *ptr, size_t size, PyDataMemAllocator allocator)
 {
-    if (!allocator.free) {
-        // All the logic below is conditionally handled by npy_free_cache
-        npy_free_cache(ptr, size);
-        return;
-    }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     allocator.free(allocator.ctx, ptr, size);
     if (_PyDataMem_eventhook != NULL) {
@@ -420,11 +449,6 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyDataMemAllocator allocator)
 NPY_NO_EXPORT void *
 PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMemAllocator allocator)
 {
-    if (!allocator.realloc) {
-        // All the logic below is conditionally handled by PyDataMem_RENEW
-        return PyDataMem_RENEW(ptr, size);
-    }
-
     void *result;
 
     assert(size != 0);
