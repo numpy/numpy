@@ -9,6 +9,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 
 """
 
+import sys
 from numpy.core.function_base import add_newdoc
 from numpy.core.overrides import array_function_like_doc
 
@@ -796,7 +797,7 @@ add_newdoc('numpy.core.multiarray', 'array',
     object : array_like
         An array, any object exposing the array interface, an object whose
         __array__ method returns an array, or any (nested) sequence.
-        If object is a scalar, a 0-dimensional array containing object is 
+        If object is a scalar, a 0-dimensional array containing object is
         returned.
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
@@ -2201,8 +2202,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     empty : Create an array, but leave its allocated memory unchanged (i.e.,
             it contains "garbage").
     dtype : Create a data-type.
-    numpy.typing.NDArray : A :term:`generic <generic type>` version
-                           of ndarray.
+    numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
+                           w.r.t. its `dtype.type <numpy.dtype.type>`.
 
     Notes
     -----
@@ -2796,6 +2797,40 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
     Equivalent to ``a.copy(order='K')``.
 
     """))
+
+
+if sys.version_info > (3, 9):
+    add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
+        """a.__class_getitem__(item, /)
+
+        Return a parametrized wrapper around the `~numpy.ndarray` type.
+
+        .. versionadded:: 1.22
+
+        Returns
+        -------
+        alias : types.GenericAlias
+            A parametrized `~numpy.ndarray` type.
+
+        Examples
+        --------
+        >>> from typing import Any
+        >>> import numpy as np
+
+        >>> np.ndarray[Any, np.dtype]
+        numpy.ndarray[typing.Any, numpy.dtype]
+
+        Note
+        ----
+        This method is only available for python 3.9 and later.
+
+        See Also
+        --------
+        :pep:`585` : Type hinting generics in standard collections.
+        numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
+                            w.r.t. its `dtype.type <numpy.dtype.type>`.
+
+        """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',

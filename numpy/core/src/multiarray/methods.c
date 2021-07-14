@@ -2756,6 +2756,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction) array_format,
         METH_VARARGS, NULL},
 
+    /* for typing; requires python >= 3.9 */
+    #ifdef Py_GENERICALIASOBJECT_H
+    {"__class_getitem__",
+        (PyCFunction)Py_GenericAlias,
+        METH_CLASS | METH_O, NULL},
+    #endif
+
     /* Original and Extended methods added 2005 */
     {"all",
         (PyCFunction)array_all,
