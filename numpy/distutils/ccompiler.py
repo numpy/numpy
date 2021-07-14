@@ -388,7 +388,8 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     if hasattr(self, 'compiler') and 'clang' in self.compiler[0]:
         # clang defaults to a non-strict floating error point model.
         # Since NumPy and most Python libs give warnings for these, override:
-        self.compiler.append('-ffp-exception-behavior=strict')
+        self.compiler.append('-ftrapping-math')
+        self.compiler_so.append('-ftrapping-math')
 
     def allow(attr):
         return getattr(cmd, attr, None) is not None and attr not in ignore
