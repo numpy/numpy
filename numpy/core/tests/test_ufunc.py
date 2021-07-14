@@ -2191,10 +2191,11 @@ def test_ufunc_noncontiguous(ufunc):
 
 
 @pytest.mark.parametrize('ufunc', [np.sign, np.equal])
+@np.errstate(invalid="ignore")
 def test_ufunc_warn_with_nan(ufunc):
-    # issue gh-15127
-    # test that calling certain ufuncs with a non-standard `nan` value does not
-    # emit a warning
+    # For a while we ensured to not give a warning even for signalling NaNs.
+    # that is not IEEE standard conform, and an unnecessary hassle.  This
+    # test checks for the correct result, but ignores the warnings.
     # `b` holds a 64 bit signaling nan: the most significant bit of the
     # significand is zero.
     b = np.array([0x7ff0000000000001], 'i8').view('f8')

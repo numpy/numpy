@@ -3619,9 +3619,11 @@ def test_memoverlap_accumulate(ftype):
     assert_equal(np.minimum.accumulate(arr), out_min)
 
 def test_signaling_nan_exceptions():
-    with assert_no_warnings():
+    # For a while, NumPy ensured the invalid warning was not set. IEEE says it
+    # should be set.  No need for strong guarantees for signalling NaNs.
+    with np.errstate(invalid="ignore"):
         a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
-        np.isnan(a)
+        assert np.isnan(a)
 
 @pytest.mark.parametrize("arr", [
     np.arange(2),
