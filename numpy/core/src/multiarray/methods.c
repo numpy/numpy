@@ -2054,7 +2054,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
          * line 820
          */
         PyDataMem_UserFREE(PyArray_DATA(self), n_tofree,
-                           PyArray_HANDLER(self)->allocator);
+                           &PyArray_HANDLER(self)->allocator);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
@@ -2100,7 +2100,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             }
             /* Store the functions in case the global handler is modified */
             fa->mem_handler = current_handler;
-            fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(fa)->allocator);
+            fa->data = PyDataMem_UserNEW(num, &PyArray_HANDLER(fa)->allocator);
             if (PyArray_DATA(self) == NULL) {
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
@@ -2154,7 +2154,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
         /* Store the functions in case the global handler is modified */
         fa->mem_handler = current_handler;
-        fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(fa)->allocator);
+        fa->data = PyDataMem_UserNEW(num, &PyArray_HANDLER(fa)->allocator);
         if (PyArray_DATA(self) == NULL) {
             return PyErr_NoMemory();
         }

@@ -824,10 +824,10 @@ PyArray_NewFromDescr_int(
          */
         if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
             data = PyDataMem_UserNEW_ZEROED(nbytes, 1,
-                                            fa->mem_handler->allocator);
+                                            &fa->mem_handler->allocator);
         }
         else {
-            data = PyDataMem_UserNEW(nbytes, fa->mem_handler->allocator);
+            data = PyDataMem_UserNEW(nbytes, &fa->mem_handler->allocator);
         }
         if (data == NULL) {
             raise_memory_error(fa->nd, fa->dimensions, descr);
@@ -3410,7 +3410,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         if (num < 0 && thisbuf == size) {
             totalbytes += bytes;
             tmp = PyDataMem_UserRENEW(PyArray_DATA(r), totalbytes,
-                                  PyArray_HANDLER(r)->allocator);
+                                  &PyArray_HANDLER(r)->allocator);
             if (tmp == NULL) {
                 err = 1;
                 break;
@@ -3433,7 +3433,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
 
         if (nsize != 0) {
             tmp = PyDataMem_UserRENEW(PyArray_DATA(r), nsize,
-                                  PyArray_HANDLER(r)->allocator);
+                                  &PyArray_HANDLER(r)->allocator);
             if (tmp == NULL) {
                 err = 1;
             }
@@ -3539,7 +3539,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         char *tmp;
 
         if((tmp = PyDataMem_UserRENEW(PyArray_DATA(ret), nsize,
-                                     PyArray_HANDLER(ret)->allocator)) == NULL) {
+                                     &PyArray_HANDLER(ret)->allocator)) == NULL) {
             Py_DECREF(dtype);
             Py_DECREF(ret);
             return PyErr_NoMemory();
@@ -3824,7 +3824,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
             if (!npy_mul_with_overflow_intp(&nbytes, elcount, elsize)) {
                 new_data = PyDataMem_UserRENEW(PyArray_DATA(ret), nbytes,
-                                  PyArray_HANDLER(ret)->allocator);
+                                  &PyArray_HANDLER(ret)->allocator);
             }
             else {
                 new_data = NULL;
@@ -3866,7 +3866,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         goto done;
     }
     new_data = PyDataMem_UserRENEW(PyArray_DATA(ret), i * elsize,
-                                   PyArray_HANDLER(ret)->allocator);
+                                   &PyArray_HANDLER(ret)->allocator);
     if (new_data == NULL) {
         PyErr_SetString(PyExc_MemoryError,
                 "cannot allocate array memory");

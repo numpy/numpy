@@ -10,16 +10,16 @@ NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj);
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW(npy_uintp sz, PyDataMemAllocator allocator);
+PyDataMem_UserNEW(npy_uintp sz, const PyDataMemAllocator *allocator);
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyDataMemAllocator allocator);
+PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, const PyDataMemAllocator *allocator);
 
 NPY_NO_EXPORT void
-PyDataMem_UserFREE(void * p, npy_uintp sd, PyDataMemAllocator allocator);
+PyDataMem_UserFREE(void * p, npy_uintp sd, const PyDataMemAllocator *allocator);
 
 NPY_NO_EXPORT void *
-PyDataMem_UserRENEW(void *ptr, size_t size, PyDataMemAllocator allocator);
+PyDataMem_UserRENEW(void *ptr, size_t size, const PyDataMemAllocator *allocator);
 
 NPY_NO_EXPORT void *
 npy_alloc_cache_dim(npy_uintp sz);
