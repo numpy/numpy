@@ -99,6 +99,10 @@ def _raise_linalgerror_svd_nonconvergence(err, flag):
 def _raise_linalgerror_lstsq(err, flag):
     raise LinAlgError("SVD did not converge in Linear Least Squares")
 
+def _raise_linalgerror_qr(err, flag):
+    raise LinAlgError("Incorrect argument found while performing "
+                      "QR factorization")
+
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)  # make a copy
     extobj[2] = callback
@@ -776,15 +780,16 @@ def qr(a, mode='reduced'):
 
     Parameters
     ----------
-    a : array_like, shape (M, N)
-        Matrix to be factored.
+    a : array_like, shape (..., M, N)
+        An array-like object with the dimensionality of at least 2.
     mode : {'reduced', 'complete', 'r', 'raw'}, optional
         If K = min(M, N), then
 
-        * 'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
-        * 'complete' : returns q, r with dimensions (M, M), (M, N)
-        * 'r'        : returns r only with dimensions (K, N)
-        * 'raw'      : returns h, tau with dimensions (N, M), (K,)
+        * 'reduced'  : returns q, r with dimensions
+                       (..., M, K), (..., K, N) (default)
+        * 'complete' : returns q, r with dimensions (..., M, M), (..., M, N)
+        * 'r'        : returns r only with dimensions (..., K, N)
+        * 'raw'      : returns h, tau with dimensions (..., N, M), (..., K,)
 
         The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
         see the notes for more information. The default is 'reduced', and to
@@ -803,9 +808,13 @@ def qr(a, mode='reduced'):
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
         a is real/complex. The determinant may be either +/- 1 in that
-        case.
+        case. In case the number of dimensions in the input array is
+        greater than 2 then a stack of the matrices with above properties
+        is returned.
     r : ndarray of float or complex, optional
-        The upper-triangular matrix.
+        The upper-triangular matrix or a stack of upper-triangular
+        matrices if the number of dimensions in the input array is greater
+        than 2.
     (h, tau) : ndarrays of np.double or np.cdouble, optional
         The array h contains the Householder reflectors that generate q
         along with r. The tau array contains scaling factors for the
@@ -852,6 +861,14 @@ def qr(a, mode='reduced'):
     True
     >>> r2 = np.linalg.qr(a, mode='r')
     >>> np.allclose(r, r2)  # mode='r' returns the same r as mode='full'
+    True
+    >>> a = np.random.normal(size=(3, 2, 2)) # Stack of 2 x 2 matrices as input
+    >>> q, r = np.linalg.qr(a)
+    >>> q.shape
+    (3, 2, 2)
+    >>> r.shape
+    (3, 2, 2)
+    >>> np.allclose(a, np.matmul(q, r))
     True
 
     Example illustrating a common use of `qr`: solving of least squares
@@ -900,83 +917,58 @@ def qr(a, mode='reduced'):
             raise ValueError(f"Unrecognized mode '{mode}'")
 
     a, wrap = _makearray(a)
-    _assert_2d(a)
-    m, n = a.shape
+    _assert_stacked_2d(a)
+    m, n = a.shape[-2:]
     t, result_t = _commonType(a)
-    a = _fastCopyAndTranspose(t, a)
+    a = a.astype(t, copy=True)
     a = _to_native_byte_order(a)
     mn = min(m, n)
-    tau = zeros((mn,), t)
 
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgeqrf
-        routine_name = 'zgeqrf'
+    if m <= n:
+        gufunc = _umath_linalg.qr_r_raw_m
     else:
-        lapack_routine = lapack_lite.dgeqrf
-        routine_name = 'dgeqrf'
+        gufunc = _umath_linalg.qr_r_raw_n
 
-    # calculate optimal size of work data 'work'
-    lwork = 1
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, max(1, m), tau, work, -1, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
-
-    # do qr decomposition
-    lwork = max(1, n, int(abs(work[0])))
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, max(1, m), tau, work, lwork, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    signature = 'D->D' if isComplexType(t) else 'd->d'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
+    tau = gufunc(a, signature=signature, extobj=extobj)
 
     # handle modes that don't return q
     if mode == 'r':
-        r = _fastCopyAndTranspose(result_t, a[:, :mn])
-        return wrap(triu(r))
+        r = triu(a[..., :mn, :])
+        r = r.astype(result_t, copy=False)
+        return wrap(r)
 
     if mode == 'raw':
-        return a, tau
+        q = transpose(a)
+        q = q.astype(result_t, copy=False)
+        tau = tau.astype(result_t, copy=False)
+        return wrap(q), tau
 
     if mode == 'economic':
-        if t != result_t :
-            a = a.astype(result_t, copy=False)
-        return wrap(a.T)
+        a = a.astype(result_t, copy=False)
+        return wrap(a)
 
-    #  generate q from a
+    # mc is the number of columns in the resulting q
+    # matrix. If the mode is complete then it is 
+    # same as number of rows, and if the mode is reduced,
+    # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:
         mc = m
-        q = empty((m, m), t)
+        gufunc = _umath_linalg.qr_complete
     else:
         mc = mn
-        q = empty((n, m), t)
-    q[:n] = a
+        gufunc = _umath_linalg.qr_reduced
 
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zungqr
-        routine_name = 'zungqr'
-    else:
-        lapack_routine = lapack_lite.dorgqr
-        routine_name = 'dorgqr'
+    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
+    q = gufunc(a, tau, signature=signature, extobj=extobj)
+    r = triu(a[..., :mc, :])
 
-    # determine optimal lwork
-    lwork = 1
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, -1, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    q = q.astype(result_t, copy=False)
+    r = r.astype(result_t, copy=False)
 
-    # compute q
-    lwork = max(1, n, int(abs(work[0])))
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, lwork, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
-
-    q = _fastCopyAndTranspose(result_t, q[:mc])
-    r = _fastCopyAndTranspose(result_t, a[:, :mc])
-
-    return wrap(q), wrap(triu(r))
-
+    return wrap(q), wrap(r)
 
 # Eigenvalues
 
@@ -2173,7 +2165,7 @@ def lstsq(a, b, rcond="warn"):
     equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
     is the "exact" solution of the equation. Else, `x` minimizes the
-    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing 
+    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing
     solutions, the one with the smallest 2-norm :math:`||x||` is returned.
 
     Parameters
