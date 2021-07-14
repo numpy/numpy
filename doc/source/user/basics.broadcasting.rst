@@ -53,8 +53,8 @@ memory and computationally efficient as possible.
 
     *Figure 1*
 
-    *In the simplest example of broadcasting, the scalar ``b`` is
-    stretched to become an array of same shape as ``a`` so the shapes
+    *In the simplest example of broadcasting, the scalar* ``b`` *is
+    stretched to become an array of same shape as* ``a`` *so the shapes
     are compatible for element-by-element multiplication.*
 
 The code in the second example is more efficient than that in the first
