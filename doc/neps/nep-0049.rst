@@ -137,9 +137,9 @@ NumPy C-API functions
     The use of a ``size`` parameter in ``free`` differentiates this struct from
     the :c:type:`PyMemAllocatorEx` struct in Python. This call signature is
     used internally in NumPy currently, and also in other places for instance
-    C++11 (maybe older): https://en.cppreference.com/w/cpp/memory/allocator/deallocate
-    C++17: https://en.cppreference.com/w/cpp/memory/polymorphic_allocator/deallocate
-    Rust (allocator_api): https://doc.rust-lang.org/std/alloc/trait.Allocator.html#tymethod.deallocate
+    `C++98 <https://en.cppreference.com/w/cpp/memory/allocator/deallocate>`,
+    `C++11 <https://en.cppreference.com/w/cpp/memory/allocator_traits/deallocate>`, and
+    `Rust (allocator_api) <https://doc.rust-lang.org/std/alloc/trait.Allocator.html#tymethod.deallocate>`.
 
     The consumer of the `PyDataMemAllocator` interface must keep track of ``size`` and make sure it is
     consistent with the parameter passed to the ``(m|c|re)alloc``  functions.
