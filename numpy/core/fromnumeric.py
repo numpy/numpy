@@ -1408,9 +1408,9 @@ def resize(a, new_shape):
 
     See Also
     --------
-    np.reshape : Reshape an array without changing the total size.
-    np.pad : Enlarge and pad an array.
-    np.repeat : Repeat elements of an array.
+    numpy.reshape : Reshape an array without changing the total size.
+    numpy.pad : Enlarge and pad an array.
+    numpy.repeat : Repeat elements of an array.
     ndarray.resize : resize an array in-place.
 
     Notes
