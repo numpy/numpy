@@ -1,3 +1,5 @@
+.. _routines.err:
+
 Floating point error handling
 *****************************
 

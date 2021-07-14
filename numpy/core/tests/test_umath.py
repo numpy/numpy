@@ -3811,7 +3811,7 @@ def test_signaling_nan_exceptions():
     # For a while, NumPy ensured the invalid warning was not set. IEEE says it
     # should be set.  No need for strong guarantees for signalling NaNs.
     with np.errstate(invalid="ignore"):
-        a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
+        a = np.ndarray(shape=(), dtype='<f4', buffer=b'\x00\xe0\xbf\xff')
         assert np.isnan(a)
 
 @pytest.mark.parametrize("arr", [

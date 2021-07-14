@@ -1204,6 +1204,7 @@ AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, co
 /**begin repeat
  * #type = npy_float, npy_double#
  * #TYPE = FLOAT, DOUBLE#
+ * #NAN = NPY_NANF, NPY_NAN#
  * #num_lanes = 16, 8#
  * #vsuffix = ps, pd#
  * #mask = __mmask16, __mmask8#
@@ -1228,6 +1229,8 @@ AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, co
 static NPY_INLINE NPY_GCC_TARGET_AVX512F void
 AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
+    @vtype1@ nan = _mm512_set1_@vsuffix@(@NAN@);
+
     const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
     const npy_intp stride_ip2 = steps[1]/(npy_intp)sizeof(@type@);
     const npy_intp stride_op = steps[2]/(npy_intp)sizeof(@type@);
@@ -1276,13 +1279,12 @@ AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *s
         }
 
         /*
-         * when only one of the argument is a nan, the maxps/maxpd instruction
-         * returns the second argument. The additional blend instruction fixes
-         * this issue to conform with NumPy behaviour.
+         * First check whether the two numbers are ordered (neither is NaN).
+         * If they are not ordered, simply set it to NaN.  (In IEEE theory,
+         * we should propagate one of the NaNs, we don't bother here.)
          */
-        @mask@ nan_mask = _mm512_cmp_@vsuffix@_mask(x1, x1, _CMP_NEQ_UQ);
-        @vtype1@ out = _mm512_@vectorf@_@vsuffix@(x1, x2);
-        out = _mm512_mask_blend_@vsuffix@(nan_mask, out, x1);
+        @mask@ not_nan_mask = _mm512_cmp_@vsuffix@_mask(x1, x2, _CMP_ORD_Q);
+        @vtype1@ out = _mm512_mask_@vectorf@_@vsuffix@(nan, not_nan_mask, x1, x2);
 
         if (stride_op == 1) {
             _mm512_mask_storeu_@vsuffix@(op, load_mask, out);
