@@ -1,0 +1,7 @@
+Distutils forces strict floating point model on clang
+-----------------------------------------------------
+NumPy now sets the ``-ftrapping-math`` option on clang to enforce correct
+floating point error handling for universal functions.
+Clang defaults to non-IEEE and C99 conform behaviour otherwise.
+This change (using the equivalent but newer ``-ffp-exception-behavior=strict``)
+was attempted in NumPy 1.21, but was effectively never used.
