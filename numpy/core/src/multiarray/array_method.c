@@ -864,6 +864,7 @@ PyArrayMethod_GetMaskedStridedLoop(
             aligned, 0, fixed_strides,
             &data->unmasked_stridedloop, &data->unmasked_auxdata, flags) < 0) {
         PyMem_Free(data);
+        return -1;
     }
     *out_transferdata = (NpyAuxData *)data;
     *out_loop = generic_masked_strided_loop;

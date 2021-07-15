@@ -90,6 +90,7 @@ generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
 }
 
 
+// TODO: Rearrange the comment and shorten (probably just to the last line).
 /*
  * This just seems to tricky to make work correctly, there are two main
  * problems: First, the resolver really would like the ufunc to be passed in

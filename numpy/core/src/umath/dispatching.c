@@ -102,7 +102,9 @@ add_ufunc_loop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
         return -1;
     }
 
-    PyList_Append(loops, info);
+    if (PyList_Append(loops, info) < 0) {
+        return -1;
+    }
     return 0;
 }
 
@@ -229,6 +231,10 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                     /* equivalent, so this entry does not matter */
                     continue;
                 }
+                /*
+                 * TODO: The `abstract` paths and all subclass checks are not
+                 *       actually used right now.  This will b
+                 */
                 if (is_not_specified) {
                     /*
                      * When DType is completely unspecified, prefer abstract
@@ -495,6 +501,7 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
     Py_XDECREF(type_tuple);
 
     for (int i = 0; i < nargs; i++) {
+        // TODO: Check that this is correct with INCREF: Stop using borrowed references! (Then this is actually correct)
         operation_DTypes[i] = NPY_DTYPE(out_descrs[i]);
         Py_INCREF(operation_DTypes[i]);
         Py_DECREF(out_descrs[i]);
@@ -551,6 +558,7 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
 }
 
 
+// TODO: Note the entry-point anymore.
 /*
  * The central entry-point for the promotion and dispatching machinery.
  * It currently works with the operands (although it would be possible to
@@ -576,6 +584,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         return info;
     }
 
+    // TODO: Add comment here what this does.
     if (info == NULL) {
         if (resolve_implementation_info(ufunc, op_dtypes, &info) < 0) {
             return NULL;
