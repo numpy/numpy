@@ -34,7 +34,7 @@ Source trees come from a variety of places:
 
 * a version-control system checkout (mostly used by developers)
 * a nightly tarball, produced by build automation
-* a snapshot tarball, produced by a web-based VCS browser, like github's
+* a snapshot tarball, produced by a web-based VCS browser, like Github's
   "tarball from tag" feature
 * a release tarball, produced by "setup.py sdist", distributed through PyPI
 
@@ -89,7 +89,7 @@ See [INSTALL.md](./INSTALL.md) for detailed installation instructions.
 
 ## Version-String Flavors
 
-Code which uses Versioneer can learn about its version string at runtime by
+Code that uses Versioneer can learn about its version string at runtime by
 importing `_version` from your main `__init__.py` file and running the
 `get_versions()` function. From the "outside" (e.g. in `setup.py`), you can
 import the top-level `versioneer.py` and run `get_versions()`.
@@ -97,27 +97,29 @@ import the top-level `versioneer.py` and run `get_versions()`.
 Both functions return a dictionary with different flavors of version
 information:
 
-* `['version']`: A condensed version string, rendered using the selected
-  style. This is the most commonly used value for the project's version
-  string. The default "pep440" style yields strings like `0.11`,
-  `0.11+2.g1076c97`, or `0.11+2.g1076c97.dirty`. See the "Styles" section
-  below for alternative styles.
+* `['version']`: A condensed version string, rendered using the selected style. 
+ This is the most commonly used value for the project's version string.
+ The default "pep440" style yields strings like `0.11`,
+  `0.11+2.g1076c97`, or `0.11+2.g1076c97.dirty`. See the "Styles"
+  section below for alternative styles.
 
 * `['full-revisionid']`: detailed revision identifier. For Git, this is the
   full SHA1 commit id, e.g. "1076c978a8d3cfc70f408fe5974aa6c092c949ac".
 
-* `['date']`: Date and time of the latest `HEAD` commit. For Git, it is the
-  commit date in ISO 8601 format. This will be None if the date is not
+* `['date']`: Date and time of the latest `HEAD` commit. For Git,
+  it is the commit date in ISO 8601 format. 
+  This will be None if the date is not
   available.
 
 * `['dirty']`: a boolean, True if the tree has uncommitted changes. Note that
   this is only accurate if run in a VCS checkout, otherwise it is likely to
   be False or None
 
-* `['error']`: if the version string could not be computed, this will be set
-  to a string describing the problem, otherwise it will be None. It may be
-  useful to throw an exception in setup.py if this is set, to avoid e.g.
-  creating tarballs with a version string of "unknown".
+* `['error']`: if the version string could not be computed, this will be 
+   set to a string describing the problem, otherwise it will be None.
+   It may be
+   useful to throw an exception in setup.py if this is set, to avoid e.g.
+   creating tarballs with a version string of "unknown".
 
 Some variants are more useful than others. Including `full-revisionid` in a
 bug report should allow developers to reconstruct the exact code being tested
@@ -168,18 +170,20 @@ most significant ones. More can be found on Github
 ### Subprojects
 
 Versioneer has limited support for source trees in which `setup.py` is not in
-the root directory (e.g. `setup.py` and `.git/` are *not* siblings). The are
+the root directory (e.g. `setup.py` and `.git/` are *not* siblings). They are
 two common reasons why `setup.py` might not be in the root:
 
-* Source trees which contain multiple subprojects, such as
+* Source trees that contain multiple subprojects, such as
   [Buildbot](https://github.com/buildbot/buildbot), which contains both
   "master" and "slave" subprojects, each with their own `setup.py`,
-  `setup.cfg`, and `tox.ini`. Projects like these produce multiple PyPI
-  distributions (and upload multiple independently-installable tarballs).
-* Source trees whose main purpose is to contain a C library, but which also
-  provide bindings to Python (and perhaps other languages) in subdirectories.
+  `setup.cfg`, and `tox.ini`. Projects like these produce multiple 
+  PyPI distributions (and upload multiple 
+  independently-installable tarballs).
+* Source trees whose main purpose is to contain a C library,
+  but which also provide bindings to Python (and perhaps other languages) 
+  in subdirectories.
 
-Versioneer will look for `.git` in parent directories, and most operations
+Versioneer will look for `.git` in parent directories and most operations
 should get the right version string. However `pip` and `setuptools` have bugs
 and implementation details which frequently cause `pip install .` from a
 subproject directory to fail to find a correct version string (so it usually
@@ -188,7 +192,7 @@ defaults to `0+unknown`).
 `pip install --editable .` should work correctly. `setup.py install` might
 work too.
 
-Pip-8.1.1 is known to have this problem, but hopefully it will get fixed in
+Pip-8.1.1 is known to have this problem, but hopefully, it will get fixed in
 some later version.
 
 [Bug #38](https://github.com/python-versioneer/python-versioneer/issues/38) is tracking
@@ -221,9 +225,9 @@ regenerated while a different version is checked out. Many setup.py commands
 cause egg_info to be rebuilt (including `sdist`, `wheel`, and installing into
 a different virtualenv), so this can be surprising.
 
-[Bug #83](https://github.com/python-versioneer/python-versioneer/issues/83) describes
-this one, but upgrading to a newer version of setuptools should probably
-resolve it.
+[Bug #83](https://github.com/python-versioneer/python-versioneer/issues/83)
+describes this one, but upgrading to a newer version of setuptools 
+should probably resolve it.
 
 
 ## Updating Versioneer
@@ -231,8 +235,9 @@ resolve it.
 To upgrade your project to a new release of Versioneer, do the following:
 
 * install the new Versioneer (`pip install -U versioneer` or equivalent)
-* edit `setup.cfg`, if necessary, to include any new configuration settings
-  indicated by the release notes. See [UPGRADING](./UPGRADING.md) for details.
+* edit `setup.cfg`, if necessary, to include any new configuration
+settings indicated by the release notes.
+See [UPGRADING](./UPGRADING.md) for details.
 * re-run `versioneer install` in your source tree, to replace
   `SRC/_version.py`
 * commit any changed files
@@ -289,8 +294,9 @@ class VersioneerConfig:
 def get_root():
     """Get the project root directory.
 
-    We require that all commands are run from the project root, i.e. the
-    directory that contains setup.py, setup.cfg, and versioneer.py .
+    We require that all commands are run from the project root, i.e. 
+    the directory that contains setup.py, setup.cfg, and 
+    versioneer.py .
     """
     root = os.path.realpath(os.path.abspath(os.getcwd()))
     setup_py = os.path.join(root, "setup.py")
@@ -411,7 +417,7 @@ def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False,
 
 LONG_VERSION_PY['git'] = r'''
 # This file helps to compute a version number in source trees obtained from
-# git-archive tarball (such as those provided by githubs download-from-tag
+# git-archive tarball (such as those provided by Github download-from-tag
 # feature). Distribution tarballs (built by setup.py sdist) and build
 # directories (produced by setup.py build) will contain a much shorter file
 # that just contains the computed version number.
@@ -516,8 +522,9 @@ def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False,
 def versions_from_parentdir(parentdir_prefix, root, verbose):
     """Try to determine the version from the parent directory name.
 
-    Source tarballs conventionally unpack into a directory that includes both
-    the project name and a version string. We will also support searching up
+    Source tarballs conventionally unpack into a directory that
+    includes both the project name and a version string.
+    We will also support searching up
     two directory levels for an appropriately named parent directory
     """
     rootdirs = []
@@ -632,7 +639,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
 
     This only gets called if the git-archive 'subst' keywords were *not*
     expanded, and _version.py hasn't already been rewritten with a short
-    version string, meaning we're inside a checked out source tree.
+    version string, meaning we're inside a checked-out source tree.
     """
     GITS = ["git"]
     if sys.platform == "win32":
@@ -731,8 +738,9 @@ def plus_or_dot(pieces):
 def render_pep440(pieces):
     """Build up version string, with post-release "local version identifier".
 
-    Our goal: TAG[+DISTANCE.gHEX[.dirty]] . Note that if you
-    get a tagged build and then dirty it, you'll get TAG+0.gHEX.dirty
+    Our goal: TAG[+DISTANCE.gHEX[.dirty]] . Note that if you 
+    get a tagged build and then dirty it, 
+    you'll get TAG+0.gHEX.dirty
 
     Exceptions:
     1: no tags. git_describe was just HEX. 0+untagged.DISTANCE.gHEX[.dirty]
@@ -772,7 +780,7 @@ def render_pep440_pre(pieces):
 def render_pep440_post(pieces):
     """TAG[.postDISTANCE[.dev0]+gHEX] .
 
-    The ".dev0" means dirty. Note that .dev0 sorts backwards
+    The ".dev0" means dirty. Note that .dev0 sorts backward
     (a dirty tree will appear "older" than the corresponding clean one),
     but you shouldn't be releasing software with -dirty anyways.
 
@@ -1030,7 +1038,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
 
     This only gets called if the git-archive 'subst' keywords were *not*
     expanded, and _version.py hasn't already been rewritten with a short
-    version string, meaning we're inside a checked out source tree.
+    version string, meaning we're inside a checked-out source tree.
     """
     GITS = ["git"]
     if sys.platform == "win32":
@@ -1236,8 +1244,9 @@ def plus_or_dot(pieces):
 def render_pep440(pieces):
     """Build up version string, with post-release "local version identifier".
 
-    Our goal: TAG[+DISTANCE.gHEX[.dirty]] . Note that if you
-    get a tagged build and then dirty it, you'll get TAG+0.gHEX.dirty
+    Our goal: TAG[+DISTANCE.gHEX[.dirty]] . Note that if you 
+    get a tagged build and then dirty it, you'll get 
+    TAG+0.gHEX.dirty
 
     Exceptions:
     1: no tags. git_describe was just HEX. 0+untagged.DISTANCE.gHEX[.dirty]
@@ -1277,7 +1286,7 @@ def render_pep440_pre(pieces):
 def render_pep440_post(pieces):
     """TAG[.postDISTANCE[.dev0]+gHEX] .
 
-    The ".dev0" means dirty. Note that .dev0 sorts backwards
+    The ".dev0" means dirty. Note that .dev0 sorts backward
     (a dirty tree will appear "older" than the corresponding clean one),
     but you shouldn't be releasing software with -dirty anyways.
 
