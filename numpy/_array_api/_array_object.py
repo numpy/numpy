@@ -130,6 +130,12 @@ class Array:
         broadcasting, so the resulting shape is the same, but this prevents NumPy
         from not promoting the dtype.
         """
+        # Another option would be to use signature=(x1.dtype, x2.dtype, None),
+        # but that only works for ufuncs, so we would have to call the ufuncs
+        # directly in the operator methods. One should also note that this
+        # sort of trick wouldn't work for functions like searchsorted, which
+        # don't do normal broadcasting, but there aren't any functions like
+        # that in the array API namespace.
         if x1.ndim == 0 and x2.ndim != 0:
             # The _array[None] workaround was chosen because it is relatively
             # performant. broadcast_to(x1._array, x2.shape) is much slower. We
