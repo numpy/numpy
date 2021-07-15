@@ -320,6 +320,8 @@ class Array:
                     if len(key) == 1:
                         return key
                     raise IndexError("Boolean array indices combined with other indices are not allowed in the array API namespace")
+                if isinstance(idx, tuple):
+                    raise IndexError("Nested tuple indices are not allowed in the array API namespace")
 
             if shape is None:
                 return key
