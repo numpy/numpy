@@ -494,7 +494,7 @@ class finfo:
                      'maxexp', 'minexp', 'negep',
                      'machep']:
             setattr(self, word, getattr(machar, word))
-        for word in ['tiny', 'resolution', 'epsneg', 'smallest_subnormal']:
+        for word in ['resolution', 'epsneg', 'smallest_subnormal']:
             setattr(self, word, getattr(machar, word).flat[0])
         self.bits = self.dtype.itemsize * 8
         self.max = machar.huge.flat[0]
@@ -542,9 +542,9 @@ class finfo:
         Returns
         -------
         smallest_normal : float
-            value for the smallest normal.
+            Value for the smallest normal.
 
-        Warn
+        Warns
         -----
         UserWarning
             If the calculated value for the smallest normal is requested for
@@ -557,6 +557,23 @@ class finfo:
                 'The value of smallest normal is undefined for double double',
                 UserWarning, stacklevel=2)
         return self.machar.smallest_normal.flat[0]
+
+    @property
+    def tiny(self):
+        """Return the value for tiny, alias of smallest_normal.
+
+        Returns
+        -------
+        tiny : float
+            Value for the smallest normal, alias of smallest_normal.
+
+        Warns
+        -----
+        UserWarning
+            If the calculated value for the smallest normal is requested for
+            double-double.
+        """
+        return self.smallest_normal
 
 
 @set_module('numpy')
