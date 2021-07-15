@@ -146,108 +146,6 @@ class Array:
             x2 = Array._new(x2._array[None])
         return (x1, x2)
 
-    # Everything below this line is required by the spec.
-
-    def __abs__(self: Array, /) -> Array:
-        """
-        Performs the operation __abs__.
-        """
-        res = self._array.__abs__()
-        return self.__class__._new(res)
-
-    @np.errstate(all='ignore')
-    def __add__(self: Array, other: Union[int, float, Array], /) -> Array:
-        """
-        Performs the operation __add__.
-        """
-        if isinstance(other, (int, float, bool)):
-            other = self._promote_scalar(other)
-        self, other = self._normalize_two_args(self, other)
-        res = self._array.__add__(other._array)
-        return self.__class__._new(res)
-
-    def __and__(self: Array, other: Union[int, bool, Array], /) -> Array:
-        """
-        Performs the operation __and__.
-        """
-        if isinstance(other, (int, float, bool)):
-            other = self._promote_scalar(other)
-        self, other = self._normalize_two_args(self, other)
-        res = self._array.__and__(other._array)
-        return self.__class__._new(res)
-
-    def __array_namespace__(self: Array, /, *, api_version: Optional[str] = None) -> object:
-        if api_version is not None:
-            raise ValueError("Unrecognized array API version")
-        from numpy import _array_api
-        return _array_api
-
-    def __bool__(self: Array, /) -> bool:
-        """
-        Performs the operation __bool__.
-        """
-        # Note: This is an error here.
-        if self._array.ndim != 0:
-            raise TypeError("bool is only allowed on arrays with 0 dimensions")
-        res = self._array.__bool__()
-        return res
-
-    def __dlpack__(self: Array, /, *, stream: Optional[Union[int, Any]] = None) -> PyCapsule:
-        """
-        Performs the operation __dlpack__.
-        """
-        res = self._array.__dlpack__(stream=None)
-        return self.__class__._new(res)
-
-    def __dlpack_device__(self: Array, /) -> Tuple[IntEnum, int]:
-        """
-        Performs the operation __dlpack_device__.
-        """
-        # Note: device support is required for this
-        res = self._array.__dlpack_device__()
-        return self.__class__._new(res)
-
-    def __eq__(self: Array, other: Union[int, float, bool, Array], /) -> Array:
-        """
-        Performs the operation __eq__.
-        """
-        if isinstance(other, (int, float, bool)):
-            other = self._promote_scalar(other)
-        self, other = self._normalize_two_args(self, other)
-        res = self._array.__eq__(other._array)
-        return self.__class__._new(res)
-
-    def __float__(self: Array, /) -> float:
-        """
-        Performs the operation __float__.
-        """
-        # Note: This is an error here.
-        if self._array.ndim != 0:
-            raise TypeError("float is only allowed on arrays with 0 dimensions")
-        res = self._array.__float__()
-        return res
-
-    @np.errstate(all='ignore')
-    def __floordiv__(self: Array, other: Union[int, float, Array], /) -> Array:
-        """
-        Performs the operation __floordiv__.
-        """
-        if isinstance(other, (int, float, bool)):
-            other = self._promote_scalar(other)
-        self, other = self._normalize_two_args(self, other)
-        res = self._array.__floordiv__(other._array)
-        return self.__class__._new(res)
-
-    def __ge__(self: Array, other: Union[int, float, Array], /) -> Array:
-        """
-        Performs the operation __ge__.
-        """
-        if isinstance(other, (int, float, bool)):
-            other = self._promote_scalar(other)
-        self, other = self._normalize_two_args(self, other)
-        res = self._array.__ge__(other._array)
-        return self.__class__._new(res)
-
     # Note: A large fraction of allowed indices are disallowed here (see the
     # docstring below)
     @staticmethod
@@ -356,6 +254,108 @@ class Array:
             # Note: This also omits boolean arrays that are not already in
             # Array() form, like a list of booleans.
             raise IndexError("Only integers, slices (`:`), ellipsis (`...`), and boolean arrays are valid indices in the array API namespace")
+
+    # Everything below this line is required by the spec.
+
+    def __abs__(self: Array, /) -> Array:
+        """
+        Performs the operation __abs__.
+        """
+        res = self._array.__abs__()
+        return self.__class__._new(res)
+
+    @np.errstate(all='ignore')
+    def __add__(self: Array, other: Union[int, float, Array], /) -> Array:
+        """
+        Performs the operation __add__.
+        """
+        if isinstance(other, (int, float, bool)):
+            other = self._promote_scalar(other)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__add__(other._array)
+        return self.__class__._new(res)
+
+    def __and__(self: Array, other: Union[int, bool, Array], /) -> Array:
+        """
+        Performs the operation __and__.
+        """
+        if isinstance(other, (int, float, bool)):
+            other = self._promote_scalar(other)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__and__(other._array)
+        return self.__class__._new(res)
+
+    def __array_namespace__(self: Array, /, *, api_version: Optional[str] = None) -> object:
+        if api_version is not None:
+            raise ValueError("Unrecognized array API version")
+        from numpy import _array_api
+        return _array_api
+
+    def __bool__(self: Array, /) -> bool:
+        """
+        Performs the operation __bool__.
+        """
+        # Note: This is an error here.
+        if self._array.ndim != 0:
+            raise TypeError("bool is only allowed on arrays with 0 dimensions")
+        res = self._array.__bool__()
+        return res
+
+    def __dlpack__(self: Array, /, *, stream: Optional[Union[int, Any]] = None) -> PyCapsule:
+        """
+        Performs the operation __dlpack__.
+        """
+        res = self._array.__dlpack__(stream=None)
+        return self.__class__._new(res)
+
+    def __dlpack_device__(self: Array, /) -> Tuple[IntEnum, int]:
+        """
+        Performs the operation __dlpack_device__.
+        """
+        # Note: device support is required for this
+        res = self._array.__dlpack_device__()
+        return self.__class__._new(res)
+
+    def __eq__(self: Array, other: Union[int, float, bool, Array], /) -> Array:
+        """
+        Performs the operation __eq__.
+        """
+        if isinstance(other, (int, float, bool)):
+            other = self._promote_scalar(other)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__eq__(other._array)
+        return self.__class__._new(res)
+
+    def __float__(self: Array, /) -> float:
+        """
+        Performs the operation __float__.
+        """
+        # Note: This is an error here.
+        if self._array.ndim != 0:
+            raise TypeError("float is only allowed on arrays with 0 dimensions")
+        res = self._array.__float__()
+        return res
+
+    @np.errstate(all='ignore')
+    def __floordiv__(self: Array, other: Union[int, float, Array], /) -> Array:
+        """
+        Performs the operation __floordiv__.
+        """
+        if isinstance(other, (int, float, bool)):
+            other = self._promote_scalar(other)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__floordiv__(other._array)
+        return self.__class__._new(res)
+
+    def __ge__(self: Array, other: Union[int, float, Array], /) -> Array:
+        """
+        Performs the operation __ge__.
+        """
+        if isinstance(other, (int, float, bool)):
+            other = self._promote_scalar(other)
+        self, other = self._normalize_two_args(self, other)
+        res = self._array.__ge__(other._array)
+        return self.__class__._new(res)
 
     def __getitem__(self: Array, key: Union[int, slice, ellipsis, Tuple[Union[int, slice, ellipsis], ...], Array], /) -> Array:
         """
