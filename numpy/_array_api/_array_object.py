@@ -55,9 +55,9 @@ class Array:
 
         """
         obj = super().__new__(cls)
-        # Note: The spec does not have array scalars, only shape () arrays.
+        # Note: The spec does not have array scalars, only 0-D arrays.
         if isinstance(x, np.generic):
-            # Convert the array scalar to a shape () array
+            # Convert the array scalar to a 0-D array
             xa = np.empty((), x.dtype)
             xa[()] = x
             x = xa
@@ -130,13 +130,13 @@ class Array:
         broadcasting, so the resulting shape is the same, but this prevents NumPy
         from not promoting the dtype.
         """
-        if x1.shape == () and x2.shape != ():
+        if x1.ndim == 0 and x2.ndim != 0:
             # The _array[None] workaround was chosen because it is relatively
             # performant. broadcast_to(x1._array, x2.shape) is much slower. We
             # could also manually type promote x2, but that is more complicated
             # and about the same performance as this.
             x1 = Array._new(x1._array[None])
-        elif x2.shape == () and x1.shape != ():
+        elif x2.ndim == 0 and x1.ndim != 0:
             x2 = Array._new(x2._array[None])
         return (x1, x2)
 
@@ -181,8 +181,8 @@ class Array:
         Performs the operation __bool__.
         """
         # Note: This is an error here.
-        if self._array.shape != ():
-            raise TypeError("bool is only allowed on arrays with shape ()")
+        if self._array.ndim != 0:
+            raise TypeError("bool is only allowed on arrays with 0 dimensions")
         res = self._array.__bool__()
         return res
 
@@ -216,8 +216,8 @@ class Array:
         Performs the operation __float__.
         """
         # Note: This is an error here.
-        if self._array.shape != ():
-            raise TypeError("float is only allowed on arrays with shape ()")
+        if self._array.ndim != 0:
+            raise TypeError("float is only allowed on arrays with 0 dimensions")
         res = self._array.__float__()
         return res
 
@@ -278,12 +278,12 @@ class Array:
         - Boolean array indices are not allowed as part of a larger tuple
           index.
 
-        - Integer array indices are not allowed (with the exception of shape
-          () arrays, which are treated the same as scalars).
+        - Integer array indices are not allowed (with the exception of 0-D
+          arrays, which are treated the same as scalars).
 
         Additionally, it should be noted that indices that would return a
-        scalar in NumPy will return a shape () array. Array scalars are not allowed
-        in the specification, only shape () arrays. This is done in the
+        scalar in NumPy will return a 0-D array. Array scalars are not allowed
+        in the specification, only 0-D arrays. This is done in the
         ``Array._new`` constructor, not this function.
 
         """
@@ -335,8 +335,8 @@ class Array:
             return key
         elif isinstance(key, Array):
             if key.dtype in _integer_dtypes:
-                if key.shape != ():
-                    raise IndexError("Integer array indices with shape != () are not allowed in the array API namespace")
+                if key.ndim != 0:
+                    raise IndexError("Non-zero dimensional integer array indices are not allowed in the array API namespace")
             return key._array
         elif key is Ellipsis:
             return key
@@ -374,8 +374,8 @@ class Array:
         Performs the operation __int__.
         """
         # Note: This is an error here.
-        if self._array.shape != ():
-            raise TypeError("int is only allowed on arrays with shape ()")
+        if self._array.ndim != 0:
+            raise TypeError("int is only allowed on arrays with 0 dimensions")
         res = self._array.__int__()
         return res
 
