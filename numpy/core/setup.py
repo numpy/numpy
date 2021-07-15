@@ -952,7 +952,6 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             ]
 
-
     svml_objs = []
     if "x86" in platform.machine():
         for svmlsrc in os.listdir("numpy/core/src/umath/svml"):
