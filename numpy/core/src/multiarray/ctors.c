@@ -2161,6 +2161,7 @@ PyArray_FromInterface(PyObject *origin)
                     Py_TYPE(origin), "__array_interface__") < 0) {
                 return NULL;
             }
+            PyErr_Clear();
         }
         return Py_NotImplemented;
     }
