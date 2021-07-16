@@ -264,7 +264,6 @@ class Array:
         res = self._array.__abs__()
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __add__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __add__.
@@ -336,7 +335,6 @@ class Array:
         res = self._array.__float__()
         return res
 
-    @np.errstate(all='ignore')
     def __floordiv__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __floordiv__.
@@ -443,7 +441,6 @@ class Array:
         res = self._array.__matmul__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __mod__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __mod__.
@@ -454,7 +451,6 @@ class Array:
         res = self._array.__mod__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __mul__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __mul__.
@@ -501,7 +497,6 @@ class Array:
 
     # PEP 484 requires int to be a subtype of float, but __pow__ should not
     # accept int.
-    @np.errstate(all='ignore')
     def __pow__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __pow__.
@@ -536,7 +531,6 @@ class Array:
         res = self._array.__setitem__(key, asarray(value)._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __sub__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __sub__.
@@ -549,7 +543,6 @@ class Array:
 
     # PEP 484 requires int to be a subtype of float, but __truediv__ should
     # not accept int.
-    @np.errstate(all='ignore')
     def __truediv__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __truediv__.
@@ -572,7 +565,6 @@ class Array:
         res = self._array.__xor__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __iadd__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __iadd__.
@@ -582,7 +574,6 @@ class Array:
         self._array.__iadd__(other._array)
         return self
 
-    @np.errstate(all='ignore')
     def __radd__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __radd__.
@@ -612,7 +603,6 @@ class Array:
         res = self._array.__rand__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __ifloordiv__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __ifloordiv__.
@@ -622,7 +612,6 @@ class Array:
         self._array.__ifloordiv__(other._array)
         return self
 
-    @np.errstate(all='ignore')
     def __rfloordiv__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __rfloordiv__.
@@ -683,7 +672,6 @@ class Array:
         res = self._array.__rmatmul__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __imod__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __imod__.
@@ -693,7 +681,6 @@ class Array:
         self._array.__imod__(other._array)
         return self
 
-    @np.errstate(all='ignore')
     def __rmod__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __rmod__.
@@ -704,7 +691,6 @@ class Array:
         res = self._array.__rmod__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __imul__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __imul__.
@@ -714,7 +700,6 @@ class Array:
         self._array.__imul__(other._array)
         return self
 
-    @np.errstate(all='ignore')
     def __rmul__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __rmul__.
@@ -744,7 +729,6 @@ class Array:
         res = self._array.__ror__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __ipow__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __ipow__.
@@ -756,7 +740,6 @@ class Array:
         self._array.__ipow__(other._array)
         return self
 
-    @np.errstate(all='ignore')
     def __rpow__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __rpow__.
@@ -790,7 +773,6 @@ class Array:
         res = self._array.__rrshift__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __isub__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __isub__.
@@ -800,7 +782,6 @@ class Array:
         self._array.__isub__(other._array)
         return self
 
-    @np.errstate(all='ignore')
     def __rsub__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __rsub__.
@@ -811,7 +792,6 @@ class Array:
         res = self._array.__rsub__(other._array)
         return self.__class__._new(res)
 
-    @np.errstate(all='ignore')
     def __itruediv__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __itruediv__.
@@ -823,7 +803,6 @@ class Array:
         self._array.__itruediv__(other._array)
         return self
 
-    @np.errstate(all='ignore')
     def __rtruediv__(self: Array, other: Union[float, Array], /) -> Array:
         """
         Performs the operation __rtruediv__.
