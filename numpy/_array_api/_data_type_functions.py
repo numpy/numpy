@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._array_object import Array
+from ._dtypes import _all_dtypes
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Tuple, Union
@@ -93,4 +94,12 @@ def result_type(*arrays_and_dtypes: Sequence[Union[Array, Dtype]]) -> Dtype:
 
     See its docstring for more information.
     """
-    return np.result_type(*(a._array if isinstance(a, Array) else a for a in arrays_and_dtypes))
+    A = []
+    for a in arrays_and_dtypes:
+        if isinstance(a, Array):
+            a = a._array
+        elif isinstance(a, np.ndarray) or a not in _all_dtypes:
+            raise TypeError("result_type() inputs must be array_api arrays or dtypes")
+        A.append(a)
+
+    return np.result_type(*A)
