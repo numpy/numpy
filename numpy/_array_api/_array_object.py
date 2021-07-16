@@ -845,13 +845,7 @@ class Array:
 
     @property
     def device(self) -> Device:
-        """
-        Array API compatible wrapper for :py:meth:`np.ndaray.device <numpy.ndarray.device>`.
-
-        See its docstring for more information.
-        """
-        # Note: device support is required for this
-        raise NotImplementedError("The device attribute is not yet implemented")
+        return 'cpu'
 
     @property
     def ndim(self) -> int:
