@@ -837,7 +837,7 @@ class Array:
     @property
     def dtype(self) -> Dtype:
         """
-        Array API compatible wrapper for :py:meth:`np.ndaray.dtype <numpy.ndarray.dtype>`.
+        Array API compatible wrapper for :py:meth:`np.ndarray.dtype <numpy.ndarray.dtype>`.
 
         See its docstring for more information.
         """
@@ -856,7 +856,7 @@ class Array:
     @property
     def ndim(self) -> int:
         """
-        Array API compatible wrapper for :py:meth:`np.ndaray.ndim <numpy.ndarray.ndim>`.
+        Array API compatible wrapper for :py:meth:`np.ndarray.ndim <numpy.ndarray.ndim>`.
 
         See its docstring for more information.
         """
@@ -865,7 +865,7 @@ class Array:
     @property
     def shape(self) -> Tuple[int, ...]:
         """
-        Array API compatible wrapper for :py:meth:`np.ndaray.shape <numpy.ndarray.shape>`.
+        Array API compatible wrapper for :py:meth:`np.ndarray.shape <numpy.ndarray.shape>`.
 
         See its docstring for more information.
         """
@@ -874,7 +874,7 @@ class Array:
     @property
     def size(self) -> int:
         """
-        Array API compatible wrapper for :py:meth:`np.ndaray.size <numpy.ndarray.size>`.
+        Array API compatible wrapper for :py:meth:`np.ndarray.size <numpy.ndarray.size>`.
 
         See its docstring for more information.
         """
@@ -883,7 +883,7 @@ class Array:
     @property
     def T(self) -> Array:
         """
-        Array API compatible wrapper for :py:meth:`np.ndaray.T <numpy.ndarray.T>`.
+        Array API compatible wrapper for :py:meth:`np.ndarray.T <numpy.ndarray.T>`.
 
         See its docstring for more information.
         """
