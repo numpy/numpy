@@ -521,7 +521,7 @@ class Array:
         res = self._array.__rshift__(other._array)
         return self.__class__._new(res)
 
-    def __setitem__(self, key, value, /):
+    def __setitem__(self, key: Union[int, slice, ellipsis, Tuple[Union[int, slice, ellipsis], ...], Array], value: Union[int, float, bool, Array], /) -> Array:
         """
         Performs the operation __setitem__.
         """
