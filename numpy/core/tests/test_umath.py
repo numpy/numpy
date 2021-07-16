@@ -3449,7 +3449,7 @@ def test_nextafter_0():
         # The value of tiny for double double is NaN, so we need to pass the
         # assert
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning)
+            sup.filter(UserWarning)
             if not np.isnan(np.finfo(t).tiny):
                 tiny = np.finfo(t).tiny
                 assert_(
