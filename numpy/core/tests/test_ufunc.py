@@ -12,7 +12,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT,
+    assert_allclose, HAS_REFCOUNT, suppress_warnings
     )
 from numpy.compat import pickle
 
@@ -584,10 +584,12 @@ class TestUfunc:
                         tgt = float(x)/float(y)
                         rtol = max(np.finfo(dtout).resolution, 1e-15)
                         # The value of tiny for double double is NaN
-                        if not np.isnan(np.finfo(dtout).tiny):
-                            atol = max(np.finfo(dtout).tiny, 3e-308)
-                        else:
-                            atol = 3e-308
+                        with suppress_warnings() as sup:
+                            sup.filter(UserWarning)
+                            if not np.isnan(np.finfo(dtout).tiny):
+                                atol = max(np.finfo(dtout).tiny, 3e-308)
+                            else:
+                                atol = 3e-308
                         # Some test values result in invalid for float16.
                         with np.errstate(invalid='ignore'):
                             res = np.true_divide(x, y, dtype=dtout)
@@ -601,10 +603,12 @@ class TestUfunc:
                     tgt = complex(x)/complex(y)
                     rtol = max(np.finfo(dtout).resolution, 1e-15)
                     # The value of tiny for double double is NaN
-                    if not np.isnan(np.finfo(dtout).tiny):
-                        atol = max(np.finfo(dtout).tiny, 3e-308)
-                    else:
-                        atol = 3e-308
+                    with suppress_warnings() as sup:
+                        sup.filter(UserWarning)
+                        if not np.isnan(np.finfo(dtout).tiny):
+                            atol = max(np.finfo(dtout).tiny, 3e-308)
+                        else:
+                            atol = 3e-308
                     res = np.true_divide(x, y, dtype=dtout)
                     if not np.isfinite(res):
                         continue
