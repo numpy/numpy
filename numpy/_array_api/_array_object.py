@@ -58,9 +58,7 @@ class Array:
         # Note: The spec does not have array scalars, only 0-D arrays.
         if isinstance(x, np.generic):
             # Convert the array scalar to a 0-D array
-            xa = np.empty((), x.dtype)
-            xa[()] = x
-            x = xa
+            x = np.asarray(x)
         if x.dtype not in _all_dtypes:
             raise TypeError(f"The array_api namespace does not support the dtype '{x.dtype}'")
         obj._array = x
