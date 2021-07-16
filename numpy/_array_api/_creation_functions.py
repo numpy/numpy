@@ -32,8 +32,6 @@ def asarray(obj: Union[Array, float, NestedSequence[bool|int|float], SupportsDLP
         # to an object array.
         raise OverflowError("Integer out of bounds for array dtypes")
     res = np.asarray(obj, dtype=dtype)
-    if res.dtype not in _all_dtypes:
-        raise TypeError(f"The array_api namespace does not support the dtype '{res.dtype}'")
     return Array._new(res)
 
 def arange(start: Union[int, float], /, stop: Optional[Union[int, float]] = None, step: Union[int, float] = 1, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:

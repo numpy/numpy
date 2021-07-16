@@ -18,7 +18,7 @@ from __future__ import annotations
 import operator
 from enum import IntEnum
 from ._creation_functions import asarray
-from ._dtypes import _boolean_dtypes, _integer_dtypes, _floating_dtypes
+from ._dtypes import _all_dtypes, _boolean_dtypes, _integer_dtypes, _floating_dtypes
 
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 if TYPE_CHECKING:
@@ -61,6 +61,8 @@ class Array:
             xa = np.empty((), x.dtype)
             xa[()] = x
             x = xa
+        if x.dtype not in _all_dtypes:
+            raise TypeError(f"The array_api namespace does not support the dtype '{x.dtype}'")
         obj._array = x
         return obj
 
