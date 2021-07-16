@@ -300,11 +300,11 @@ class Array:
         res = self._array.__bool__()
         return res
 
-    def __dlpack__(self: Array, /, *, stream: Optional[Union[int, Any]] = None) -> PyCapsule:
+    def __dlpack__(self: Array, /, *, stream: None = None) -> PyCapsule:
         """
         Performs the operation __dlpack__.
         """
-        res = self._array.__dlpack__(stream=None)
+        res = self._array.__dlpack__(stream=stream)
         return self.__class__._new(res)
 
     def __dlpack_device__(self: Array, /) -> Tuple[IntEnum, int]:
