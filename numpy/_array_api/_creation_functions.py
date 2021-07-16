@@ -97,7 +97,7 @@ def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], *, d
         # Note: Device support is not yet implemented on Array
         raise NotImplementedError("Device support is not yet implemented")
     if isinstance(fill_value, Array) and fill_value.ndim == 0:
-        fill_value = fill_value._array[...]
+        fill_value = fill_value._array
     res = np.full(shape, fill_value, dtype=dtype)
     if res.dtype not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
