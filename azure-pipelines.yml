@@ -273,7 +273,7 @@ stages:
             TEST_MODE: full
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
-            OPENBLAS_SUFFIX: '64_'
+
     steps:
     - template: azure-steps-windows.yml
 
