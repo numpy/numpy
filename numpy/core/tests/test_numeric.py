@@ -2357,34 +2357,30 @@ class TestClip:
         That accounts for most of the function; the actual test is just three
         lines to calculate and compare actual vs expected results!
         """
+        numeric_dtypes = hynp.integer_dtypes() | hynp.floating_dtypes()
         # Generate shapes for the bounds which can be broadcast with each other
         # and with the base shape.  Below, we might decide to use scalar bounds,
         # but it's clearer to generate these shapes unconditionally in advance.
         in_shapes, result_shape = data.draw(
             hynp.mutually_broadcastable_shapes(
-                num_shapes=2,
-                base_shape=arr.shape,
-                # Commenting out the min_dims line allows zero-dimensional arrays,
-                # and zero-dimensional arrays containing NaN make the test fail.
-                min_dims=1
+                num_shapes=2, base_shape=arr.shape
             )
         )
-        # This test can fail if we allow either bound to be a scalar `nan`, or
-        # if bounds are of a different (still integer or float) dtype than the 
-        # array.  At some point we should investigate and fix those problems.
-        amin = data.draw(
-            hynp.from_dtype(arr.dtype, allow_nan=False)
-            | hynp.arrays(dtype=arr.dtype, shape=in_shapes[0])
-        )
-        amax = data.draw(
-            hynp.from_dtype(arr.dtype, allow_nan=False)
-            | hynp.arrays(dtype=arr.dtype, shape=in_shapes[1])
-        )
+        # Scalar `nan` is deprecated due to the differing behaviour it shows.
+        s = numeric_dtypes.flatmap(
+            lambda x: hynp.from_dtype(x, allow_nan=False))
+        amin = data.draw(s | hynp.arrays(dtype=numeric_dtypes,
+            shape=in_shapes[0], elements={"allow_nan": False}))
+        amax = data.draw(s | hynp.arrays(dtype=numeric_dtypes,
+            shape=in_shapes[1], elements={"allow_nan": False}))
 
         # Then calculate our result and expected result and check that they're
-        # equal!  See gh-12519 for discussion deciding on this property.
+        # equal!  See gh-12519 and gh-19457 for discussion deciding on this 
+        # property and the result_type argument.
         result = np.clip(arr, amin, amax)
-        expected = np.minimum(amax, np.maximum(arr, amin))
+        t = np.result_type(arr, amin, amax)
+        expected = np.minimum(amax, np.maximum(arr, amin, dtype=t), dtype=t)
+        assert result.dtype == t
         assert_array_equal(result, expected)
 
 
