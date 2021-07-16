@@ -2113,10 +2113,11 @@ def test_unsupported_commontype():
         linalg.cholesky(arr)
 
 
-@pytest.mark.slow
-@pytest.mark.xfail(not HAS_LAPACK64, run=False,
-                   reason="Numpy not compiled with 64-bit BLAS/LAPACK")
-@requires_memory(free_bytes=16e9)
+#@pytest.mark.slow
+#@pytest.mark.xfail(not HAS_LAPACK64, run=False,
+                   #reason="Numpy not compiled with 64-bit BLAS/LAPACK")
+#@requires_memory(free_bytes=16e9)
+@pytest.mark.skip(reason="Bad memory reports lead to OOM in ci testing")
 def test_blas64_dot():
     n = 2**32
     a = np.zeros([1, n], dtype=np.float32)
