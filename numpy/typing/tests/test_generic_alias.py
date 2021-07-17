@@ -60,7 +60,6 @@ class TestGenericAlias:
         ("__call__", lambda n: n(shape=(1,), dtype=np.int64, buffer=BUFFER)),
         ("subclassing", lambda n: _get_subclass_mro(n)),
         ("pickle", lambda n: n == pickle.loads(pickle.dumps(n))),
-        ("__weakref__", lambda n: n == weakref.ref(n)()),
     ])
     def test_pass(self, name: str, func: FuncType) -> None:
         """Compare `types.GenericAlias` with its numpy-based backport.
@@ -73,6 +72,14 @@ class TestGenericAlias:
 
         if sys.version_info >= (3, 9):
             value_ref = func(NDArray_ref)
+            assert value == value_ref
+
+    def test_weakref(self) -> None:
+        """Test ``__weakref__``."""
+        value = weakref.ref(NDArray)()
+
+        if sys.version_info >= (3, 9, 1):  # xref bpo-42332
+            value_ref = weakref.ref(NDArray_ref)()
             assert value == value_ref
 
     @pytest.mark.parametrize("name", GETATTR_NAMES)
