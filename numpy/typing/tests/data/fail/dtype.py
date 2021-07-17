@@ -18,5 +18,3 @@ np.dtype(  # E: No overload variant of "dtype" matches
         "field2": (int, 3),
     }
 )
-
-np.dtype[np.float64](np.int64)  # E: Argument 1 to "dtype" has incompatible type
