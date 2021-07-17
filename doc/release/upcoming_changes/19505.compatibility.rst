@@ -1,0 +1,15 @@
+np.trunc now preserves input dtype for integer inputs
+-----------------------------------------------------
+
+Previously
+
+.. code-block:: python
+
+    >>> np.trunc(np.ones(2, dtype=np.int32)).dtype
+    dtype('float64')
+
+After PR
+
+.. code-block:: python
+    >>> np.trunc(np.ones(2, dtype=np.int32)).dtype
+    dtype('int32')
