@@ -2178,7 +2178,7 @@ def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None,
 
 
 @array_function_dispatch(_allclose_dispatcher)
-def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
+def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='same_kind'):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
 
@@ -2256,7 +2256,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     True
 
     """
-    res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan,
+                      casting=casting))
     return bool(res)
 
 
@@ -2480,9 +2481,12 @@ def array_equal(a1, a2, equal_nan=False, casting='unsafe'):
     if a1.shape != a2.shape:
         return False
 
-    if not np.can_cast(a1.dtype, a2.dtype, casting=casting):
-        raise TypeError("Cannot compare types '%s' and '%s' with casting rule"
-                        " %s" % (str(a1.dtype), str(a2.dtype), casting))
+    if not (
+        np.can_cast(a1.dtype, a2.dtype, casting=casting) or
+        np.can_cast(a2.dtype, a1.dtype, casting=casting)
+    ):
+        raise TypeError(f"Cannot compare types {a1.dtype!r} and {a2.dtype!r} "
+                        f"with casting rule {casting!r}")
 
     if not equal_nan:
         return bool(asarray(a1 == a2).all())
@@ -2500,7 +2504,7 @@ def _array_equiv_dispatcher(a1, a2, casting=None):
 
 
 @array_function_dispatch(_array_equiv_dispatcher)
-def array_equiv(a1, a2, casting='unsafe'):
+def array_equiv(a1, a2, casting='same_kind'):
     """
     Returns True if input arrays are shape consistent and all elements equal.
 
@@ -2553,9 +2557,12 @@ def array_equiv(a1, a2, casting='unsafe'):
     except Exception:
         return False
 
-    if not np.can_cast(a1.dtype, a2.dtype, casting=casting):
-        raise TypeError("Cannot compare types '%s' and '%s' with casting rule "
-                        "%s" % (str(a1.dtype), str(a2.dtype), casting))
+    if not (
+        np.can_cast(a1.dtype, a2.dtype, casting=casting) or
+        np.can_cast(a2.dtype, a1.dtype, casting=casting)
+    ):
+        raise TypeError(f"Cannot compare types {a1.dtype!r} and {a2.dtype!r} "
+                        f"with casting rule {casting!r}")
 
     return bool(asarray(a1 == a2).all())
 
