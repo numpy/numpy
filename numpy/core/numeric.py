@@ -2266,7 +2266,7 @@ def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None,
 
 
 @array_function_dispatch(_isclose_dispatcher)
-def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
+def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='same_kind'):
     """
     Returns a boolean array where two arrays are element-wise equal within a
     tolerance.
