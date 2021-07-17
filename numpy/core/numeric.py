@@ -2361,7 +2361,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     x = asanyarray(a)
     y = asanyarray(b)
 
-    if not np.can_cast(x.dtype, y.dtype, casting=casting):
+    if not (
+        np.can_cast(x.dtype, y.dtype, casting=casting) or
+        np.can_cast(y.dtype, x.dtype, casting=casting)
+    ):
         raise TypeError(f"Cannot compare types {x.dtype!r} and {y.dtype!r} "
                         f"with casting rule {casting!r}")
 
