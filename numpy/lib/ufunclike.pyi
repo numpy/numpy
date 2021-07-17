@@ -2,7 +2,7 @@ from typing import Any, overload, TypeVar, List, Union
 
 from numpy import floating, bool_, object_, ndarray
 from numpy.typing import (
-    _ArrayND,
+    NDArray,
     _FloatLike_co,
     _ArrayLikeFloat_co,
     _ArrayLikeObject_co,
@@ -21,12 +21,12 @@ def fix(  # type: ignore[misc]
 def fix(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> _ArrayND[floating[Any]]: ...
+) -> NDArray[floating[Any]]: ...
 @overload
 def fix(
     x: _ArrayLikeObject_co,
     out: None = ...,
-) -> _ArrayND[object_]: ...
+) -> NDArray[object_]: ...
 @overload
 def fix(
     x: Union[_ArrayLikeFloat_co, _ArrayLikeObject_co],
@@ -42,7 +42,7 @@ def isposinf(  # type: ignore[misc]
 def isposinf(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> _ArrayND[bool_]: ...
+) -> NDArray[bool_]: ...
 @overload
 def isposinf(
     x: _ArrayLikeFloat_co,
@@ -58,7 +58,7 @@ def isneginf(  # type: ignore[misc]
 def isneginf(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> _ArrayND[bool_]: ...
+) -> NDArray[bool_]: ...
 @overload
 def isneginf(
     x: _ArrayLikeFloat_co,

@@ -1470,7 +1470,9 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 NPY_NO_EXPORT unsigned char
 PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-#if NPY_USE_NEW_CASTINGIMPL
+    if (type1 == type2) {
+        return 1;
+    }
     /*
      * Do not use PyArray_CanCastTypeTo because it supports legacy flexible
      * dtypes as input.
@@ -1482,9 +1484,6 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     }
     /* If casting is "no casting" this dtypes are considered equivalent. */
     return PyArray_MinCastSafety(safety, NPY_NO_CASTING) == NPY_NO_CASTING;
-#else
-    return PyArray_LegacyEquivTypes(type1, type2);
-#endif
 }
 
 
@@ -3357,7 +3356,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     PyObject *from_obj = NULL;
     PyArray_Descr *d1 = NULL;
     PyArray_Descr *d2 = NULL;
-    npy_bool ret;
+    int ret;
     PyObject *retobj = NULL;
     NPY_CASTING casting = NPY_SAFE_CASTING;
     static char *kwlist[] = {"from_", "to", "casting", NULL};
@@ -3486,6 +3485,10 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
             arr[narr] = (PyArrayObject *)PyArray_FROM_O(obj);
             if (arr[narr] == NULL) {
                 goto finish;
+            }
+            if (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj) ||
+                    PyComplex_CheckExact(obj)) {
+                ((PyArrayObject_fields *)arr[narr])->flags |= _NPY_ARRAY_WAS_PYSCALAR;
             }
             ++narr;
         }
@@ -4603,16 +4606,9 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
@@ -4621,27 +4617,35 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
-    npy_ma_str_array = PyUnicode_InternFromString("__array__");
-    npy_ma_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
     npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
+    if (npy_ma_str_array_wrap == NULL) {
+        return -1;
+    }
     npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__");
-    npy_ma_str_ufunc = PyUnicode_InternFromString("__array_ufunc__");
+    if (npy_ma_str_array_finalize == NULL) {
+        return -1;
+    }
     npy_ma_str_implementation = PyUnicode_InternFromString("_implementation");
-    npy_ma_str_order = PyUnicode_InternFromString("order");
-    npy_ma_str_copy = PyUnicode_InternFromString("copy");
-    npy_ma_str_dtype = PyUnicode_InternFromString("dtype");
-    npy_ma_str_ndmin = PyUnicode_InternFromString("ndmin");
+    if (npy_ma_str_implementation == NULL) {
+        return -1;
+    }
     npy_ma_str_axis1 = PyUnicode_InternFromString("axis1");
+    if (npy_ma_str_axis1 == NULL) {
+        return -1;
+    }
     npy_ma_str_axis2 = PyUnicode_InternFromString("axis2");
+    if (npy_ma_str_axis2 == NULL) {
+        return -1;
+    }
     npy_ma_str_like = PyUnicode_InternFromString("like");
+    if (npy_ma_str_like == NULL) {
+        return -1;
+    }
     npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
-
-    return npy_ma_str_array && npy_ma_str_array_prepare &&
-           npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
-           npy_ma_str_ufunc && npy_ma_str_implementation &&
-           npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
-           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2 &&
-           npy_ma_str_like && npy_ma_str_numpy;
+    if (npy_ma_str_numpy == NULL) {
+        return -1;
+    }
+    return 0;
 }
 
 static struct PyModuleDef moduledef = {
@@ -4698,15 +4702,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    /* Load the ufunc operators into the array module's namespace */
-    if (InitOperators(d) < 0) {
-        goto err;
-    }
-
-    if (set_matmul_flags(d) < 0) {
-        goto err;
-    }
-
     PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
     if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
         goto err;
@@ -4720,6 +4715,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     initialize_casting_tables();
     initialize_numeric_types();
+
     if (initscalarmath(m) < 0) {
         goto err;
     }
@@ -4730,6 +4726,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (setup_scalartypes(d) < 0) {
         goto err;
     }
+
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
     NpyIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
@@ -4873,7 +4870,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    if (!intern_strings()) {
+    if (intern_strings() < 0) {
         goto err;
     }
 
@@ -4891,6 +4888,15 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (PyArray_InitializeCasts() < 0) {
+        goto err;
+    }
+
+    /* Load the ufunc operators into the array module's namespace */
+    if (InitOperators(d) < 0) {
+        goto err;
+    }
+
+    if (set_matmul_flags(d) < 0) {
         goto err;
     }
 

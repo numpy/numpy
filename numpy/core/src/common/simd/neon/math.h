@@ -102,6 +102,21 @@ NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
 #if NPY_SIMD_F64
     #define npyv_maxp_f64 vmaxnmq_f64
 #endif // NPY_SIMD_F64
+// Maximum, integer operations
+#define npyv_max_u8 vmaxq_u8
+#define npyv_max_s8 vmaxq_s8
+#define npyv_max_u16 vmaxq_u16
+#define npyv_max_s16 vmaxq_s16
+#define npyv_max_u32 vmaxq_u32
+#define npyv_max_s32 vmaxq_s32
+NPY_FINLINE npyv_u64 npyv_max_u64(npyv_u64 a, npyv_u64 b)
+{
+    return vbslq_u64(npyv_cmpgt_u64(a, b), a, b);
+}
+NPY_FINLINE npyv_s64 npyv_max_s64(npyv_s64 a, npyv_s64 b)
+{
+    return vbslq_s64(npyv_cmpgt_s64(a, b), a, b);
+}
 
 // Minimum, natively mapping with no guarantees to handle NaN.
 #define npyv_min_f32 vminq_f32
@@ -122,5 +137,20 @@ NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
 #if NPY_SIMD_F64
     #define npyv_minp_f64 vminnmq_f64
 #endif // NPY_SIMD_F64
+// Minimum, integer operations
+#define npyv_min_u8 vminq_u8
+#define npyv_min_s8 vminq_s8
+#define npyv_min_u16 vminq_u16
+#define npyv_min_s16 vminq_s16
+#define npyv_min_u32 vminq_u32
+#define npyv_min_s32 vminq_s32
+NPY_FINLINE npyv_u64 npyv_min_u64(npyv_u64 a, npyv_u64 b)
+{
+    return vbslq_u64(npyv_cmplt_u64(a, b), a, b);
+}
+NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
+{
+    return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
+}
 
-#endif // _NPY_SIMD_SSE_MATH_H
+#endif // _NPY_SIMD_NEON_MATH_H

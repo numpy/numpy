@@ -29,9 +29,6 @@ reveal_type(np.polynomial.laguerre)  # E: ModuleType
 reveal_type(np.polynomial.legendre)  # E: ModuleType
 reveal_type(np.polynomial.polynomial)  # E: ModuleType
 
-# TODO: Remove when annotations have been added to `np.testing.assert_equal`
-reveal_type(np.testing.assert_equal)  # E: Any
-
 reveal_type(np.__path__)  # E: list[builtins.str]
 reveal_type(np.__version__)  # E: str
 reveal_type(np.__git_version__)  # E: str

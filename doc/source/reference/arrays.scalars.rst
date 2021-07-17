@@ -352,8 +352,8 @@ are also provided.
                uint32
                uint64
 
-   Alias for the unsigned integer types (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
+   Alias for the unsigned integer types (one of `numpy.ubyte`, `numpy.ushort`,
+   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) with the specified number
    of bits.
 
    Compatible with the C99 ``uint8_t``, ``uint16_t``, ``uint32_t``, and
@@ -371,8 +371,8 @@ are also provided.
 
 .. attribute:: uintp
 
-   Alias for the unsigned integer type (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
+   Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
+   `numpy.uintc`, `numpy.uint` and `np.ulonglong`) that is the same size as a
    pointer.
 
    Compatible with the C ``uintptr_t``.

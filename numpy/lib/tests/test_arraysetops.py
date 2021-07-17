@@ -610,6 +610,17 @@ class TestUnique:
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
+        # test for gh-19300
+        all_nans = [np.nan] * 4
+        ua = [np.nan]
+        ua_idx = [0]
+        ua_inv = [0, 0, 0, 0]
+        ua_cnt = [4]
+        assert_equal(np.unique(all_nans), ua)
+        assert_equal(np.unique(all_nans, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(all_nans, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(all_nans, return_counts=True), (ua, ua_cnt))
+
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
         assert_raises(TypeError, self._run_axis_tests,

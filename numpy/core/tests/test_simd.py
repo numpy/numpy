@@ -1,6 +1,7 @@
 # NOTE: Please avoid the use of numpy.testing since NPYV intrinsics
 # may be involved in their functionality.
 import pytest, math, re
+import itertools
 from numpy.core._simd import targets
 from numpy.core._multiarray_umath import __cpu_baseline__
 
@@ -208,6 +209,19 @@ class _SIMD_INT(_Test_Utility):
         subs = self.subs(vdata_a, vdata_b)
         assert subs == data_subs
 
+    def test_math_max_min(self):
+        data_a = self._data()
+        data_b = self._data(self.nlanes)
+        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
+
+        data_max = [max(a, b) for a, b in zip(data_a, data_b)]
+        simd_max = self.max(vdata_a, vdata_b)
+        assert simd_max == data_max
+
+        data_min = [min(a, b) for a, b in zip(data_a, data_b)]
+        simd_min = self.min(vdata_a, vdata_b)
+        assert simd_min == data_min
+
 class _SIMD_FP32(_Test_Utility):
     """
     To only test single precision
@@ -215,7 +229,7 @@ class _SIMD_FP32(_Test_Utility):
     def test_conversions(self):
         """
         Round to nearest even integer, assume CPU control register is set to rounding.
-        Test intrinics:
+        Test intrinsics:
             npyv_round_s32_##SFX
         """
         features = self._cpu_features()
@@ -238,7 +252,7 @@ class _SIMD_FP64(_Test_Utility):
     def test_conversions(self):
         """
         Round to nearest even integer, assume CPU control register is set to rounding.
-        Test intrinics:
+        Test intrinsics:
             npyv_round_s32_##SFX
         """
         vdata_a = self.load(self._data())
@@ -317,6 +331,11 @@ class _SIMD_FP(_Test_Utility):
         assert square == data_square
         
     def test_max(self):
+        """
+        Test intrinsics:
+            npyv_max_##SFX
+            npyv_maxp_##SFX
+        """
         data_a = self._data()
         data_b = self._data(self.nlanes)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
@@ -329,7 +348,8 @@ class _SIMD_FP(_Test_Utility):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
         max_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
                      (pinf, pinf, pinf), (pinf, 10, pinf), (10, pinf, pinf),
-                     (ninf, ninf, ninf), (ninf, 10, 10), (10, ninf, 10))
+                     (ninf, ninf, ninf), (ninf, 10, 10), (10, ninf, 10),
+                     (10, 0, 10), (10, -10, 10))
         for case_operand1, case_operand2, desired in max_cases:
             data_max = [desired]*self.nlanes
             vdata_a = self.setall(case_operand1)
@@ -342,6 +362,11 @@ class _SIMD_FP(_Test_Utility):
             assert _max == data_max
 
     def test_min(self):
+        """
+        Test intrinsics:
+            npyv_min_##SFX
+            npyv_minp_##SFX
+        """
         data_a = self._data()
         data_b = self._data(self.nlanes)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
@@ -354,7 +379,8 @@ class _SIMD_FP(_Test_Utility):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
         min_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
                      (pinf, pinf, pinf), (pinf, 10, 10), (10, pinf, 10),
-                     (ninf, ninf, ninf), (ninf, 10, ninf), (10, ninf, ninf))
+                     (ninf, ninf, ninf), (ninf, 10, ninf), (10, ninf, ninf),
+                     (10, 0, 0), (10, -10, -10))
         for case_operand1, case_operand2, desired in min_cases:
             data_min = [desired]*self.nlanes
             vdata_a = self.setall(case_operand1)
@@ -383,7 +409,7 @@ class _SIMD_FP(_Test_Utility):
 
     def test_special_cases(self):
         """
-        Compare Not NaN. Test intrinics:
+        Compare Not NaN. Test intrinsics:
             npyv_notnan_##SFX
         """
         nnan = self.notnan(self.setall(self._nan()))
@@ -722,7 +748,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_conversion_expand(self):
         """
-        Test expand intrinics:
+        Test expand intrinsics:
             npyv_expand_u16_u8
             npyv_expand_u32_u16
         """
@@ -785,7 +811,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_intdiv(self):
         """
-        Test integer division intrinics:
+        Test integer division intrinsics:
             npyv_divisor_##sfx
             npyv_divc_##sfx
         """
@@ -795,8 +821,10 @@ class _SIMD_ALL(_Test_Utility):
         def trunc_div(a, d):
             """
             Divide towards zero works with large integers > 2^53,
-            equivalent to int(a/d)
+            and wrap around overflow similar to what C does.
             """
+            if d == -1 and a == int_min:
+                return a
             sign_a, sign_d = a < 0, d < 0
             if a == 0 or sign_a == sign_d:
                 return a // d
@@ -808,9 +836,9 @@ class _SIMD_ALL(_Test_Utility):
             0, 1, self.nlanes, int_max-self.nlanes,
             int_min, int_min//2 + 1
         )
-        divisors = (1, 2, self.nlanes, int_min, int_max, int_max//2)
+        divisors = (1, 2, 9, 13, self.nlanes, int_min, int_max, int_max//2)
 
-        for x, d in zip(rdata, divisors):
+        for x, d in itertools.product(rdata, divisors):
             data = self._data(x)
             vdata = self.load(data)
             data_divc = [trunc_div(a, d) for a in data]
@@ -823,7 +851,7 @@ class _SIMD_ALL(_Test_Utility):
 
         safe_neg = lambda x: -x-1 if -x > int_max else -x
         # test round divison for signed integers
-        for x, d in zip(rdata, divisors):
+        for x, d in itertools.product(rdata, divisors):
             d_neg = safe_neg(d)
             data = self._data(x)
             data_neg = [safe_neg(a) for a in data]
@@ -855,7 +883,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_reduce_sum(self):
         """
-        Test reduce sum intrinics:
+        Test reduce sum intrinsics:
             npyv_sum_##sfx
         """
         if self.sfx not in ("u32", "u64", "f32", "f64"):
@@ -870,7 +898,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_reduce_sumup(self):
         """
-        Test extend reduce sum intrinics:
+        Test extend reduce sum intrinsics:
             npyv_sumup_##sfx
         """
         if self.sfx not in ("u8", "u16"):
@@ -886,7 +914,7 @@ class _SIMD_ALL(_Test_Utility):
     def test_mask_conditional(self):
         """
         Conditional addition and subtraction for all supported data types.
-        Test intrinics:
+        Test intrinsics:
             npyv_ifadd_##SFX, npyv_ifsub_##SFX
         """
         vdata_a = self.load(self._data())

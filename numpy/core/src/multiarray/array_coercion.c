@@ -11,6 +11,7 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
+#include "common_dtype.h"
 #include "dtypemeta.h"
 
 #include "array_coercion.h"
@@ -205,7 +206,7 @@ _PyArray_MapPyTypeToDType(
  * @return DType, None if it a known non-scalar, or NULL if an unknown object.
  */
 static NPY_INLINE PyArray_DTypeMeta *
-discover_dtype_from_pytype(PyTypeObject *pytype)
+npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *DType;
 
@@ -263,7 +264,7 @@ discover_dtype_from_pyobject(
         }
     }
 
-    PyArray_DTypeMeta *DType = discover_dtype_from_pytype(Py_TYPE(obj));
+    PyArray_DTypeMeta *DType = npy_discover_dtype_from_pytype(Py_TYPE(obj));
     if (DType != NULL) {
         return DType;
     }
@@ -622,8 +623,12 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
     }
     PyArray_Descr *new_descr = PyArray_PromoteTypes(descr, *out_descr);
     if (NPY_UNLIKELY(new_descr == NULL)) {
-        if (fixed_DType != NULL) {
-            /* If a DType is fixed, promotion must not fail. */
+        if (fixed_DType != NULL || PyErr_ExceptionMatches(PyExc_FutureWarning)) {
+            /*
+             * If a DType is fixed, promotion must not fail. Do not catch
+             * FutureWarning (raised for string+numeric promotions). We could
+             * only catch TypeError here or even always raise the error.
+             */
             return -1;
         }
         PyErr_Clear();

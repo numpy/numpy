@@ -117,13 +117,13 @@ np.amax(a, axis=1.0)  # E: incompatible type
 np.amax(a, keepdims=1.0)  # E: incompatible type
 np.amax(a, out=1.0)  # E: incompatible type
 np.amax(a, initial=[1.0])  # E: incompatible type
-np.amax(a, where=[1.0])  # E: List item 0 has incompatible type
+np.amax(a, where=[1.0])  # E: incompatible type
 
 np.amin(a, axis=1.0)  # E: incompatible type
 np.amin(a, keepdims=1.0)  # E: incompatible type
 np.amin(a, out=1.0)  # E: incompatible type
 np.amin(a, initial=[1.0])  # E: incompatible type
-np.amin(a, where=[1.0])  # E: List item 0 has incompatible type
+np.amin(a, where=[1.0])  # E: incompatible type
 
 np.prod(a, axis=1.0)  # E: incompatible type
 np.prod(a, out=False)  # E: incompatible type

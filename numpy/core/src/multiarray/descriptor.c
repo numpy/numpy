@@ -1895,7 +1895,7 @@ static PyMemberDef arraydescr_members[] = {
 };
 
 static PyObject *
-arraydescr_subdescr_get(PyArray_Descr *self)
+arraydescr_subdescr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (!PyDataType_HASSUBARRAY(self)) {
         Py_RETURN_NONE;
@@ -1905,7 +1905,7 @@ arraydescr_subdescr_get(PyArray_Descr *self)
 }
 
 NPY_NO_EXPORT PyObject *
-arraydescr_protocol_typestr_get(PyArray_Descr *self)
+arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     char basic_ = self->kind;
     char endian = self->byteorder;
@@ -1951,7 +1951,7 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_name_get(PyArray_Descr *self)
+arraydescr_name_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     /* let python handle this */
     PyObject *_numpy_dtype;
@@ -1966,7 +1966,7 @@ arraydescr_name_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_base_get(PyArray_Descr *self)
+arraydescr_base_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (!PyDataType_HASSUBARRAY(self)) {
         Py_INCREF(self);
@@ -1977,7 +1977,7 @@ arraydescr_base_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_shape_get(PyArray_Descr *self)
+arraydescr_shape_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (!PyDataType_HASSUBARRAY(self)) {
         return PyTuple_New(0);
@@ -1988,7 +1988,7 @@ arraydescr_shape_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_ndim_get(PyArray_Descr *self)
+arraydescr_ndim_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     Py_ssize_t ndim;
 
@@ -2006,7 +2006,7 @@ arraydescr_ndim_get(PyArray_Descr *self)
 
 
 NPY_NO_EXPORT PyObject *
-arraydescr_protocol_descr_get(PyArray_Descr *self)
+arraydescr_protocol_descr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     PyObject *dobj, *res;
     PyObject *_numpy_internal;
@@ -2018,7 +2018,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
             return NULL;
         }
         PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
-        PyTuple_SET_ITEM(dobj, 1, arraydescr_protocol_typestr_get(self));
+        PyTuple_SET_ITEM(dobj, 1, arraydescr_protocol_typestr_get(self, NULL));
         res = PyList_New(1);
         if (res == NULL) {
             Py_DECREF(dobj);
@@ -2043,7 +2043,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
  * return 0 if neither (i.e. it's a copy of one)
  */
 static PyObject *
-arraydescr_isbuiltin_get(PyArray_Descr *self)
+arraydescr_isbuiltin_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     long val;
     val = 0;
@@ -2090,7 +2090,7 @@ _arraydescr_isnative(PyArray_Descr *self)
  * fields are defined
  */
 static PyObject *
-arraydescr_isnative_get(PyArray_Descr *self)
+arraydescr_isnative_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     PyObject *ret;
     int retval;
@@ -2104,7 +2104,7 @@ arraydescr_isnative_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_isalignedstruct_get(PyArray_Descr *self)
+arraydescr_isalignedstruct_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     PyObject *ret;
     ret = (self->flags&NPY_ALIGNED_STRUCT) ? Py_True : Py_False;
@@ -2113,7 +2113,7 @@ arraydescr_isalignedstruct_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_fields_get(PyArray_Descr *self)
+arraydescr_fields_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (!PyDataType_HASFIELDS(self)) {
         Py_RETURN_NONE;
@@ -2122,7 +2122,7 @@ arraydescr_fields_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_metadata_get(PyArray_Descr *self)
+arraydescr_metadata_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (self->metadata == NULL) {
         Py_RETURN_NONE;
@@ -2131,7 +2131,7 @@ arraydescr_metadata_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_hasobject_get(PyArray_Descr *self)
+arraydescr_hasobject_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (PyDataType_FLAGCHK(self, NPY_ITEM_HASOBJECT)) {
         Py_RETURN_TRUE;
@@ -2142,7 +2142,7 @@ arraydescr_hasobject_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_names_get(PyArray_Descr *self)
+arraydescr_names_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (!PyDataType_HASFIELDS(self)) {
         Py_RETURN_NONE;
@@ -2152,7 +2152,8 @@ arraydescr_names_get(PyArray_Descr *self)
 }
 
 static int
-arraydescr_names_set(PyArray_Descr *self, PyObject *val)
+arraydescr_names_set(
+        PyArray_Descr *self, PyObject *val, void *NPY_UNUSED(ignored))
 {
     int N = 0;
     int i;
@@ -2536,7 +2537,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
 
     PyTuple_SET_ITEM(state, 1, PyUnicode_FromFormat("%c", endian));
-    PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
+    PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self, NULL));
     if (PyDataType_HASFIELDS(self)) {
         Py_INCREF(self->names);
         Py_INCREF(self->fields);
@@ -3228,7 +3229,9 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 {
     PyArray_Descr *new = _convert_from_any(other, 0);
     if (new == NULL) {
-        return NULL;
+        /* Cannot convert `other` to dtype */
+        PyErr_Clear();
+        Py_RETURN_NOTIMPLEMENTED;
     }
 
     npy_bool ret;

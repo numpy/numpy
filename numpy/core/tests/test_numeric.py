@@ -848,12 +848,10 @@ class TestTypes:
         assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))
         assert_equal(np.promote_types('>i8', '>i8'), np.dtype('i8'))
 
-        with pytest.warns(FutureWarning,
-                match="Promotion of numbers and bools to strings"):
-            assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U21'))
-            assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U21'))
-            assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U21'))
-            assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U21'))
+        assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U21'))
+        assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U21'))
+        assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U21'))
+        assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U21'))
 
         assert_equal(np.promote_types('<S5', '<U8'), np.dtype('U8'))
         assert_equal(np.promote_types('>S5', '>U8'), np.dtype('U8'))
@@ -901,37 +899,32 @@ class TestTypes:
 
         S = string_dtype
         
-        with pytest.warns(FutureWarning,
-                match="Promotion of numbers and bools to strings") as record:
-            # Promote numeric with unsized string:
-            assert_equal(promote_types('bool', S), np.dtype(S+'5'))
-            assert_equal(promote_types('b', S), np.dtype(S+'4'))
-            assert_equal(promote_types('u1', S), np.dtype(S+'3'))
-            assert_equal(promote_types('u2', S), np.dtype(S+'5'))
-            assert_equal(promote_types('u4', S), np.dtype(S+'10'))
-            assert_equal(promote_types('u8', S), np.dtype(S+'20'))
-            assert_equal(promote_types('i1', S), np.dtype(S+'4'))
-            assert_equal(promote_types('i2', S), np.dtype(S+'6'))
-            assert_equal(promote_types('i4', S), np.dtype(S+'11'))
-            assert_equal(promote_types('i8', S), np.dtype(S+'21'))
-            # Promote numeric with sized string:
-            assert_equal(promote_types('bool', S+'1'), np.dtype(S+'5'))
-            assert_equal(promote_types('bool', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('b', S+'1'), np.dtype(S+'4'))
-            assert_equal(promote_types('b', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u1', S+'1'), np.dtype(S+'3'))
-            assert_equal(promote_types('u1', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u2', S+'1'), np.dtype(S+'5'))
-            assert_equal(promote_types('u2', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u4', S+'1'), np.dtype(S+'10'))
-            assert_equal(promote_types('u4', S+'30'), np.dtype(S+'30'))
-            assert_equal(promote_types('u8', S+'1'), np.dtype(S+'20'))
-            assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
-            # Promote with object:
-            assert_equal(promote_types('O', S+'30'), np.dtype('O'))
-
-        assert len(record) == 22  # each string promotion gave one warning
-
+        # Promote numeric with unsized string:
+        assert_equal(promote_types('bool', S), np.dtype(S+'5'))
+        assert_equal(promote_types('b', S), np.dtype(S+'4'))
+        assert_equal(promote_types('u1', S), np.dtype(S+'3'))
+        assert_equal(promote_types('u2', S), np.dtype(S+'5'))
+        assert_equal(promote_types('u4', S), np.dtype(S+'10'))
+        assert_equal(promote_types('u8', S), np.dtype(S+'20'))
+        assert_equal(promote_types('i1', S), np.dtype(S+'4'))
+        assert_equal(promote_types('i2', S), np.dtype(S+'6'))
+        assert_equal(promote_types('i4', S), np.dtype(S+'11'))
+        assert_equal(promote_types('i8', S), np.dtype(S+'21'))
+        # Promote numeric with sized string:
+        assert_equal(promote_types('bool', S+'1'), np.dtype(S+'5'))
+        assert_equal(promote_types('bool', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('b', S+'1'), np.dtype(S+'4'))
+        assert_equal(promote_types('b', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u1', S+'1'), np.dtype(S+'3'))
+        assert_equal(promote_types('u1', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u2', S+'1'), np.dtype(S+'5'))
+        assert_equal(promote_types('u2', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u4', S+'1'), np.dtype(S+'10'))
+        assert_equal(promote_types('u4', S+'30'), np.dtype(S+'30'))
+        assert_equal(promote_types('u8', S+'1'), np.dtype(S+'20'))
+        assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
+        # Promote with object:
+        assert_equal(promote_types('O', S+'30'), np.dtype('O'))
 
     @pytest.mark.parametrize(["dtype1", "dtype2"],
             [[np.dtype("V6"), np.dtype("V10")],
@@ -1745,6 +1738,22 @@ class TestArrayComparisons:
         with pytest.raises(TypeError) as e:
             np.array_equiv([0, 1], [False, True], casting='no')
 
+    @pytest.mark.parametrize("dtype", ["V0", "V3", "V10"])
+    def test_compare_unstructured_voids(self, dtype):
+        zeros = np.zeros(3, dtype=dtype)
+
+        assert_array_equal(zeros, zeros)
+        assert not (zeros != zeros).any()
+
+        if dtype == "V0":
+            # Can't test != of actually different data
+            return
+
+        nonzeros = np.array([b"1", b"2", b"3"], dtype=dtype)
+
+        assert not (zeros == nonzeros).any()
+        assert (zeros != nonzeros).all()
+
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
     # Check flags, 32 bit arches typically don't provide 16 byte alignment
@@ -2338,8 +2347,14 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
-    @given(data=st.data(), shape=hynp.array_shapes())
-    def test_clip_property(self, data, shape):
+    @given(
+        data=st.data(),
+        arr=hynp.arrays(
+            dtype=hynp.integer_dtypes() | hynp.floating_dtypes(),
+            shape=hynp.array_shapes()
+        )
+    )
+    def test_clip_property(self, data, arr):
         """A property-based test using Hypothesis.
 
         This aims for maximum generality: it could in principle generate *any*
@@ -2355,49 +2370,30 @@ class TestClip:
         That accounts for most of the function; the actual test is just three
         lines to calculate and compare actual vs expected results!
         """
-        # Our base array and bounds should not need to be of the same type as
-        # long as they are all compatible - so we allow any int or float type.
-        dtype_strategy = hynp.integer_dtypes() | hynp.floating_dtypes()
-
-        # The following line is a total hack to disable the varied-dtypes
-        # component of this test, because result != expected if dtypes can vary.
-        dtype_strategy = st.just(data.draw(dtype_strategy))
-
-        # Generate an arbitrary array of the chosen shape and dtype
-        # This is the value that we clip.
-        arr = data.draw(hynp.arrays(dtype=dtype_strategy, shape=shape))
-
+        numeric_dtypes = hynp.integer_dtypes() | hynp.floating_dtypes()
         # Generate shapes for the bounds which can be broadcast with each other
         # and with the base shape.  Below, we might decide to use scalar bounds,
         # but it's clearer to generate these shapes unconditionally in advance.
         in_shapes, result_shape = data.draw(
             hynp.mutually_broadcastable_shapes(
-                num_shapes=2,
-                base_shape=shape,
-                # Commenting out the min_dims line allows zero-dimensional arrays,
-                # and zero-dimensional arrays containing NaN make the test fail.
-                min_dims=1
-  
+                num_shapes=2, base_shape=arr.shape
             )
         )
-        amin = data.draw(
-            dtype_strategy.flatmap(hynp.from_dtype)
-            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[0])
-        )
-        amax = data.draw(
-            dtype_strategy.flatmap(hynp.from_dtype)
-            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[1])
-        )
-        # If we allow either bound to be a scalar `nan`, the test will fail -
-        # so we just "assume" that away (if it is, this raises a special
-        # exception and Hypothesis will try again with different inputs)
-        assume(not np.isscalar(amin) or not np.isnan(amin))
-        assume(not np.isscalar(amax) or not np.isnan(amax))
+        # Scalar `nan` is deprecated due to the differing behaviour it shows.
+        s = numeric_dtypes.flatmap(
+            lambda x: hynp.from_dtype(x, allow_nan=False))
+        amin = data.draw(s | hynp.arrays(dtype=numeric_dtypes,
+            shape=in_shapes[0], elements={"allow_nan": False}))
+        amax = data.draw(s | hynp.arrays(dtype=numeric_dtypes,
+            shape=in_shapes[1], elements={"allow_nan": False}))
 
         # Then calculate our result and expected result and check that they're
-        # equal!  See gh-12519 for discussion deciding on this property.
+        # equal!  See gh-12519 and gh-19457 for discussion deciding on this 
+        # property and the result_type argument.
         result = np.clip(arr, amin, amax)
-        expected = np.minimum(amax, np.maximum(arr, amin))
+        t = np.result_type(arr, amin, amax)
+        expected = np.minimum(amax, np.maximum(arr, amin, dtype=t), dtype=t)
+        assert result.dtype == t
         assert_array_equal(result, expected)
 
 

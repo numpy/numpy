@@ -1,7 +1,9 @@
+import sys
 import numpy as np
 
 f2: np.float16
 f8: np.float64
+c8: np.complex64
 
 # Construction
 
@@ -80,3 +82,13 @@ def func(a: np.float32) -> None: ...
 
 func(f2)  # E: incompatible type
 func(f8)  # E: incompatible type
+
+round(c8)  # E: No overload variant
+
+c8.__getnewargs__()  # E: Invalid self argument
+f2.__getnewargs__()  # E: Invalid self argument
+f2.is_integer()  # E: Invalid self argument
+f2.hex()  # E: Invalid self argument
+np.float16.fromhex("0x0.0p+0")  # E: Invalid self argument
+f2.__trunc__()  # E: Invalid self argument
+f2.__getformat__("float")  # E: Invalid self argument

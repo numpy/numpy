@@ -552,7 +552,7 @@ class _Distutils:
             ccompiler = self._ccompiler
         return ccompiler.compile(sources, extra_postargs=flags, **kwargs)
 
-    def dist_test(self, source, flags):
+    def dist_test(self, source, flags, macros=[]):
         """Return True if 'CCompiler.compile()' able to compile
         a source file with certain flags.
         """
@@ -569,7 +569,7 @@ class _Distutils:
         test = False
         try:
             self.dist_compile(
-                [source], flags, output_dir=self.conf_tmp_path
+                [source], flags, macros=macros, output_dir=self.conf_tmp_path
             )
             test = True
         except CompileError as e:
@@ -850,7 +850,7 @@ class _Cache:
             return ccb
         return cache_wrap_me
 
-class _CCompiler(object):
+class _CCompiler:
     """A helper class for `CCompilerOpt` containing all utilities that
     related to the fundamental compiler's functions.
 
@@ -1172,20 +1172,23 @@ class _Feature:
 
         self.feature_is_cached = True
 
-    def feature_names(self, names=None, force_flags=None):
+    def feature_names(self, names=None, force_flags=None, macros=[]):
         """
         Returns a set of CPU feature names that supported by platform and the **C** compiler.
 
         Parameters
         ----------
-        'names': sequence or None, optional
+        names: sequence or None, optional
             Specify certain CPU features to test it against the **C** compiler.
             if None(default), it will test all current supported features.
             **Note**: feature names must be in upper-case.
 
-        'force_flags': list or None, optional
-            If None(default), default compiler flags for every CPU feature will be used
-            during the test.
+        force_flags: list or None, optional
+            If None(default), default compiler flags for every CPU feature will
+            be used during the test.
+
+        macros : list of tuples, optional
+            A list of C macro definitions.
         """
         assert(
             names is None or (
@@ -1198,7 +1201,9 @@ class _Feature:
             names = self.feature_supported.keys()
         supported_names = set()
         for f in names:
-            if self.feature_is_supported(f, force_flags=force_flags):
+            if self.feature_is_supported(
+                f, force_flags=force_flags, macros=macros
+            ):
                 supported_names.add(f)
         return supported_names
 
@@ -1433,20 +1438,23 @@ class _Feature:
         return self.cc_normalize_flags(flags)
 
     @_Cache.me
-    def feature_test(self, name, force_flags=None):
+    def feature_test(self, name, force_flags=None, macros=[]):
         """
         Test a certain CPU feature against the compiler through its own
         check file.
 
         Parameters
         ----------
-        'name': str
+        name: str
             Supported CPU feature name.
 
-        'force_flags': list or None, optional
+        force_flags: list or None, optional
             If None(default), the returned flags from `feature_flags()`
             will be used.
-       """
+
+        macros : list of tuples, optional
+            A list of C macro definitions.
+        """
         if force_flags is None:
             force_flags = self.feature_flags(name)
 
@@ -1462,24 +1470,29 @@ class _Feature:
         if not os.path.exists(test_path):
             self.dist_fatal("feature test file is not exist", test_path)
 
-        test = self.dist_test(test_path, force_flags + self.cc_flags["werror"])
+        test = self.dist_test(
+            test_path, force_flags + self.cc_flags["werror"], macros=macros
+        )
         if not test:
             self.dist_log("testing failed", stderr=True)
         return test
 
     @_Cache.me
-    def feature_is_supported(self, name, force_flags=None):
+    def feature_is_supported(self, name, force_flags=None, macros=[]):
         """
         Check if a certain CPU feature is supported by the platform and compiler.
 
         Parameters
         ----------
-        'name': str
+        name: str
             CPU feature name in uppercase.
 
-        'force_flags': list or None, optional
-            If None(default), default compiler flags for every CPU feature will be used
-            during test.
+        force_flags: list or None, optional
+            If None(default), default compiler flags for every CPU feature will
+            be used during test.
+
+        macros : list of tuples, optional
+            A list of C macro definitions.
         """
         assert(name.isupper())
         assert(force_flags is None or isinstance(force_flags, list))
@@ -1487,9 +1500,9 @@ class _Feature:
         supported = name in self.feature_supported
         if supported:
             for impl in self.feature_implies(name):
-                if not self.feature_test(impl, force_flags):
+                if not self.feature_test(impl, force_flags, macros=macros):
                     return False
-            if not self.feature_test(name, force_flags):
+            if not self.feature_test(name, force_flags, macros=macros):
                 return False
         return supported
 
@@ -1812,7 +1825,9 @@ class _Parse:
                     self.dist_fatal(arg_name,
                         "native option isn't supported by the compiler"
                     )
-                features_to = self.feature_names(force_flags=native)
+                features_to = self.feature_names(
+                    force_flags=native, macros=[("DETECT_FEATURES", 1)]
+                )
             elif TOK == "MAX":
                 features_to = self.feature_supported.keys()
             elif TOK == "MIN":

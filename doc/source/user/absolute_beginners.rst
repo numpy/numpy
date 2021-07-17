@@ -6,7 +6,8 @@ NumPy: the absolute basics for beginners
 .. currentmodule:: numpy
 
 Welcome to the absolute beginner's guide to NumPy! If you have comments or
-suggestions, please don’t hesitate to reach out!
+suggestions, please don’t hesitate to `reach out
+<https://numpy.org/community/>`_!
 
 
 Welcome to NumPy!
@@ -37,8 +38,7 @@ Installing NumPy
 
 To install NumPy, we strongly recommend using a scientific Python distribution.
 If you're looking for the full instructions for installing NumPy on your
-operating system, you can `find all of the details here
-<https://www.scipy.org/install.html>`_.
+operating system, see `Installing NumPy <https://numpy.org/install/>`_.
 
 
 
@@ -55,10 +55,6 @@ If you don't have Python yet, you might want to consider using `Anaconda
 thing about getting this distribution is the fact that you don’t need to worry
 too much about separately installing NumPy or any of the major packages that
 you’ll be using for your data analyses, like pandas, Scikit-Learn, etc.
-
-You can find all of the installation details in the
-`Installation <https://www.scipy.org/install.html>`_ section
-at `SciPy <https://www.scipy.org>`_.
 
 How to import NumPy
 -------------------
@@ -89,6 +85,7 @@ you would enter. Everything that doesn't have ``>>>`` in front of it
 is **output**, or the results of running your code. This is the style
 you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
 
+For more information, see :ref:`documentation_conventions`.
 
 What’s the difference between a Python list and a NumPy array?
 --------------------------------------------------------------
@@ -771,12 +768,12 @@ If you start with this array::
 
   >>> b = np.array([[1, 1], [2, 2]])
 
-You can sum the rows with::
+You can sum over the axis of rows with::
 
   >>> b.sum(axis=0)
   array([3, 3])
 
-You can sum the columns with::
+You can sum over the axis of columns with::
 
   >>> b.sum(axis=1)
   array([2, 4])

@@ -68,23 +68,6 @@ def ones_like(
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
 
-@overload
-def empty_like(
-    a: _ArrayType,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: Literal[True] = ...,
-    shape: None = ...,
-) -> _ArrayType: ...
-@overload
-def empty_like(
-    a: ArrayLike,
-    dtype: DTypeLike = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
-) -> ndarray: ...
-
 def full(
     shape: _ShapeLike,
     fill_value: Any,
@@ -244,11 +227,12 @@ def isclose(
 def array_equal(
     a1: ArrayLike,
     a2: ArrayLike,
-    casting: _Casting = ...
+    equal_nan: bool = ...,
+    casting: _Casting = ...,
 ) -> bool: ...
 
 def array_equiv(
     a1: ArrayLike,
     a2: ArrayLike,
-    casting: _Casting = ...
+    casting: _Casting = ...,
 ) -> bool: ...

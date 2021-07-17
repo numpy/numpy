@@ -226,8 +226,11 @@ from numpy.lib.utils import (
     safe_eval as safe_eval,
 )
 
+from numpy.core.multiarray import (
+    tracemalloc_domain as tracemalloc_domain,
+)
+
 __all__: List[str]
 
 __version__ = version
 emath = scimath
-tracemalloc_domain: int
