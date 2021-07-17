@@ -612,6 +612,13 @@ class TestUfunc:
         assert_(res == 0.0)
         assert_(res.dtype.name == 'float64')
 
+    def test_trunc_expected_dtypes(self):
+        # Supported dtypes by trunc.
+        for tc in 'bBhHiIlLqQefdgO':
+            a = np.ones((1, 2, 3), dtype=np.dtype(tc))
+            out = np.trunc(a)
+            assert_(a.dtype == out.dtype)
+
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 4)
