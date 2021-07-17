@@ -12,7 +12,7 @@ from typing import (
     Iterable,
 )
 
-from numpy import ndarray, generic, dtype, bool_, signedinteger, _OrderKACF, _OrderCF
+from numpy import ndarray, generic, dtype, bool_, signedinteger, _OrderKACF, _OrderCF, _Casting
 from numpy.typing import ArrayLike, DTypeLike, _ShapeLike
 
 if sys.version_info >= (3, 8):
@@ -228,6 +228,7 @@ def allclose(
     rtol: float = ...,
     atol: float = ...,
     equal_nan: bool = ...,
+    casting: _Casting = ...,
 ) -> bool: ...
 
 def isclose(
@@ -236,8 +237,17 @@ def isclose(
     rtol: float = ...,
     atol: float = ...,
     equal_nan: bool = ...,
+    casting: _Casting = ...,
 ) -> Any: ...
 
-def array_equal(a1: ArrayLike, a2: ArrayLike) -> bool: ...
+def array_equal(
+    a1: ArrayLike,
+    a2: ArrayLike,
+    casting: _Casting = ...
+) -> bool: ...
 
-def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
+def array_equiv(
+    a1: ArrayLike,
+    a2: ArrayLike,
+    casting: _Casting = ...
+) -> bool: ...
