@@ -322,11 +322,11 @@ strided_to_strided_object_to_any(
 
     while (N > 0) {
         memcpy(&src_ref, src, sizeof(src_ref));
-        if (PyArray_Pack(data->descr, dst, src_ref) < 0) {
+        if (PyArray_Pack(data->descr, dst, src_ref ? src_ref : Py_None) < 0) {
             return -1;
         }
 
-        if (data->move_references) {
+        if (data->move_references && src_ref != NULL) {
             Py_DECREF(src_ref);
             memset(src, 0, sizeof(src_ref));
         }

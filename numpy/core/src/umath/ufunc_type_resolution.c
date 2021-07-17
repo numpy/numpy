@@ -94,9 +94,6 @@ raise_no_loop_found_error(
         PyUFuncObject *ufunc, PyArray_Descr **dtypes)
 {
     static PyObject *exc_type = NULL;
-    PyObject *exc_value;
-    PyObject *dtypes_tup;
-    npy_intp i;
 
     npy_cache_import(
         "numpy.core._exceptions", "_UFuncNoLoopError",
@@ -105,22 +102,13 @@ raise_no_loop_found_error(
         return -1;
     }
 
-    /* convert dtypes to a tuple */
-    dtypes_tup = PyTuple_New(ufunc->nargs);
+    PyObject *dtypes_tup = PyArray_TupleFromItems(
+            ufunc->nargs, (PyObject **)dtypes, 1);
     if (dtypes_tup == NULL) {
         return -1;
     }
-    for (i = 0; i < ufunc->nargs; ++i) {
-        PyObject *tmp = Py_None;
-        if (dtypes[i] != NULL) {
-            tmp = (PyObject *)dtypes[i];
-        }
-        Py_INCREF(tmp);
-        PyTuple_SET_ITEM(dtypes_tup, i, tmp);
-    }
-
     /* produce an error object */
-    exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
+    PyObject *exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
     Py_DECREF(dtypes_tup);
     if (exc_value == NULL) {
         return -1;
@@ -288,7 +276,7 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
     } else {
         /* Find the specified ufunc inner loop, and fill in the dtypes */
         retval = type_tuple_type_resolver(ufunc, type_tup,
-                        operands, casting, any_object, out_dtypes);
+                        operands, input_casting, casting, any_object, out_dtypes);
     }
 
     return retval;
@@ -390,7 +378,6 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                     operands, type_tup, out_dtypes);
         }
 
-        Py_INCREF(descr);
         out_dtypes[0] = ensure_dtype_nbo(descr);
         if (out_dtypes[0] == NULL) {
             return -1;
@@ -558,6 +545,11 @@ PyUFunc_SimpleUniformOperationTypeResolver(
          * This is a fast-path, since all descriptors will be identical, mainly
          * when only a single descriptor was passed (which would set the out
          * one in the tuple), there is no need to check all loops.
+         * Note that this also allows (None, None, float64) to resolve to
+         * (float64, float64, float64), even when the inputs do not match,
+         * i.e. fixing the output part of the signature can fix all of them.
+         * This is necessary to support `nextafter(1., inf, dtype=float32)`,
+         * where it is "clear" we want to cast 1. and inf to float32.
          */
         PyArray_Descr *descr = NULL;
         if (PyTuple_CheckExact(type_tup) &&
@@ -565,7 +557,12 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             for (int i = 0; i < nop; i++) {
                 PyObject *item = PyTuple_GET_ITEM(type_tup, i);
                 if (item == Py_None) {
-                    continue;
+                    if (i < ufunc->nin) {
+                        continue;
+                    }
+                    /* All outputs must be set (this could be relaxed) */
+                    descr = NULL;
+                    break;
                 }
                 if (!PyArray_DescrCheck(item)) {
                     /* Defer to default resolver (will raise an error there) */
@@ -1498,135 +1495,6 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     return raise_no_loop_found_error(ufunc, dtypes);
 }
 
-typedef struct {
-    NpyAuxData base;
-    PyUFuncGenericFunction unmasked_innerloop;
-    void *unmasked_innerloopdata;
-    int nargs;
-} _ufunc_masker_data;
-
-static NpyAuxData *
-ufunc_masker_data_clone(NpyAuxData *data)
-{
-    _ufunc_masker_data *n;
-
-    /* Allocate a new one */
-    n = (_ufunc_masker_data *)PyArray_malloc(sizeof(_ufunc_masker_data));
-    if (n == NULL) {
-        return NULL;
-    }
-
-    /* Copy the data (unmasked data doesn't have object semantics) */
-    memcpy(n, data, sizeof(_ufunc_masker_data));
-
-    return (NpyAuxData *)n;
-}
-
-/*
- * This function wraps a regular unmasked ufunc inner loop as a
- * masked ufunc inner loop, only calling the function for
- * elements where the mask is True.
- */
-static void
-unmasked_ufunc_loop_as_masked(
-             char **dataptrs, npy_intp *strides,
-             char *mask, npy_intp mask_stride,
-             npy_intp loopsize,
-             NpyAuxData *innerloopdata)
-{
-    _ufunc_masker_data *data;
-    int iargs, nargs;
-    PyUFuncGenericFunction unmasked_innerloop;
-    void *unmasked_innerloopdata;
-    npy_intp subloopsize;
-
-    /* Put the aux data into local variables */
-    data = (_ufunc_masker_data *)innerloopdata;
-    unmasked_innerloop = data->unmasked_innerloop;
-    unmasked_innerloopdata = data->unmasked_innerloopdata;
-    nargs = data->nargs;
-
-    /* Process the data as runs of unmasked values */
-    do {
-        /* Skip masked values */
-        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 1);
-        for (iargs = 0; iargs < nargs; ++iargs) {
-            dataptrs[iargs] += subloopsize * strides[iargs];
-        }
-        loopsize -= subloopsize;
-        /*
-         * Process unmasked values (assumes unmasked loop doesn't
-         * mess with the 'args' pointer values)
-         */
-        mask = npy_memchr(mask, 0, mask_stride, loopsize, &subloopsize, 0);
-        unmasked_innerloop(dataptrs, &subloopsize, strides,
-                                        unmasked_innerloopdata);
-        for (iargs = 0; iargs < nargs; ++iargs) {
-            dataptrs[iargs] += subloopsize * strides[iargs];
-        }
-        loopsize -= subloopsize;
-    } while (loopsize > 0);
-}
-
-
-/*
- * This function wraps a legacy inner loop so it becomes masked.
- *
- * Returns 0 on success, -1 on error.
- */
-NPY_NO_EXPORT int
-PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
-                            PyArray_Descr **dtypes,
-                            PyArray_Descr *mask_dtype,
-                            npy_intp *NPY_UNUSED(fixed_strides),
-                            npy_intp NPY_UNUSED(fixed_mask_stride),
-                            PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
-                            NpyAuxData **out_innerloopdata,
-                            int *out_needs_api)
-{
-    int retcode;
-    _ufunc_masker_data *data;
-
-    if (ufunc->legacy_inner_loop_selector == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "the ufunc default masked inner loop selector doesn't "
-                "yet support wrapping the new inner loop selector, it "
-                "still only wraps the legacy inner loop selector");
-        return -1;
-    }
-
-    if (mask_dtype->type_num != NPY_BOOL) {
-        PyErr_SetString(PyExc_ValueError,
-                "only boolean masks are supported in ufunc inner loops "
-                "presently");
-        return -1;
-    }
-
-    /* Create a new NpyAuxData object for the masker data */
-    data = (_ufunc_masker_data *)PyArray_malloc(sizeof(_ufunc_masker_data));
-    if (data == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-    memset(data, 0, sizeof(_ufunc_masker_data));
-    data->base.free = (NpyAuxData_FreeFunc *)&PyArray_free;
-    data->base.clone = &ufunc_masker_data_clone;
-    data->nargs = ufunc->nin + ufunc->nout;
-
-    /* Get the unmasked ufunc inner loop */
-    retcode = ufunc->legacy_inner_loop_selector(ufunc, dtypes,
-                    &data->unmasked_innerloop, &data->unmasked_innerloopdata,
-                    out_needs_api);
-    if (retcode < 0) {
-        PyArray_free(data);
-        return retcode;
-    }
-
-    /* Return the loop function + aux data */
-    *out_innerloop = &unmasked_ufunc_loop_as_masked;
-    *out_innerloopdata = (NpyAuxData *)data;
-    return 0;
-}
 
 static int
 ufunc_loop_matches(PyUFuncObject *self,
@@ -1660,6 +1528,9 @@ ufunc_loop_matches(PyUFuncObject *self,
          */
         if (types[i] == NPY_OBJECT && !any_object && self->ntypes > 1) {
             return 0;
+        }
+        if (types[i] == NPY_NOTYPE) {
+            continue;  /* Matched by being explicitly specified. */
         }
 
         /*
@@ -1710,6 +1581,9 @@ ufunc_loop_matches(PyUFuncObject *self,
      * outputs.
      */
     for (i = nin; i < nop; ++i) {
+        if (types[i] == NPY_NOTYPE) {
+            continue;  /* Matched by being explicitly specified. */
+        }
         if (op[i] != NULL) {
             PyArray_Descr *tmp = PyArray_DescrFromType(types[i]);
             if (tmp == NULL) {
@@ -1728,7 +1602,6 @@ ufunc_loop_matches(PyUFuncObject *self,
             Py_DECREF(tmp);
         }
     }
-
     return 1;
 }
 
@@ -1869,12 +1742,15 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                         int n_specified,
                         int *specified_types,
                         PyArrayObject **op,
+                        NPY_CASTING input_casting,
                         NPY_CASTING casting,
                         int any_object,
                         int use_min_scalar,
                         PyArray_Descr **out_dtype)
 {
     int i, j, nin = self->nin, nop = nin + self->nout;
+    assert(n_specified == nop);
+    int types[NPY_MAXARGS];
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1907,28 +1783,31 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                 return -1;
             }
             for (; funcdata != NULL; funcdata = funcdata->next) {
-                int *types = funcdata->arg_types;
-                int matched = 1;
+                int *orig_types = funcdata->arg_types;
 
-                if (n_specified == nop) {
-                    for (j = 0; j < nop; ++j) {
-                        if (types[j] != specified_types[j] &&
-                                    specified_types[j] != NPY_NOTYPE) {
-                            matched = 0;
-                            break;
-                        }
+                /*
+                 * Copy the types into an int array for matching
+                 * (Mostly duplicated in `type_tuple_type_resolver`)
+                 */
+                for (j = 0; j < nop; ++j) {
+                    if (specified_types[j] == NPY_NOTYPE) {
+                        types[j] = orig_types[j];
+                        continue;
                     }
-                } else {
-                    if (types[nin] != specified_types[0]) {
-                        matched = 0;
+                    if (orig_types[j] != specified_types[j]) {
+                        break;
                     }
+                    /* indicate that we do not have to check this type anymore. */
+                    types[j] = NPY_NOTYPE;
                 }
-                if (!matched) {
+
+                if (j != nop) {
+                    /* no match */
                     continue;
                 }
 
                 switch (ufunc_loop_matches(self, op,
-                            casting, casting,
+                            input_casting, casting,
                             any_object, use_min_scalar,
                             types, NULL,
                             &no_castable_output, &err_src_typecode,
@@ -1936,7 +1815,19 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                     /* It works */
                     case 1:
                         set_ufunc_loop_data_types(self, op,
-                            out_dtype, types, NULL);
+                            out_dtype, orig_types, NULL);
+                        /*
+                         * In principle, we only need to validate the
+                         * NPY_NOTYPE ones
+                         */
+                        if (PyUFunc_ValidateCasting(self,
+                                casting, op, out_dtype) < 0) {
+                            for (j = 0; j < self->nargs; j++) {
+                                Py_DECREF(out_dtype[j]);
+                                out_dtype[j] = NULL;
+                            }
+                            return -1;
+                        }
                         return 1;
                     /* Didn't match */
                     case 0:
@@ -2069,6 +1960,94 @@ linear_search_type_resolver(PyUFuncObject *self,
     return -1;
 }
 
+
+static int
+type_tuple_type_resolver_core(PyUFuncObject *self,
+        PyArrayObject **op,
+        NPY_CASTING input_casting, NPY_CASTING casting,
+        int specified_types[],
+        int any_object,
+        int no_castable_output, int use_min_scalar,
+        PyArray_Descr **out_dtype)
+{
+    int i, j;
+    int nop = self->nargs;
+    int types[NPY_MAXARGS];
+
+    /* For making a better error message on coercion error */
+    char err_dst_typecode = '-', err_src_typecode = '-';
+
+    /* If the ufunc has userloops, search for them. */
+    if (self->userloops) {
+        switch (type_tuple_userloop_type_resolver(self,
+                nop, specified_types,
+                op, input_casting, casting,
+                any_object, use_min_scalar,
+                out_dtype)) {
+            /* Error */
+            case -1:
+                return -1;
+            /* Found matching loop */
+            case 1:
+                return 0;
+        }
+    }
+
+    for (i = 0; i < self->ntypes; ++i) {
+        char *orig_types = self->types + i*self->nargs;
+
+        /*
+         * Check specified types and copy into an int array for matching
+         * (Mostly duplicated in `type_tuple_userloop_type_resolver`)
+         */
+        for (j = 0; j < nop; ++j) {
+            if (specified_types[j] == NPY_NOTYPE) {
+                types[j] = orig_types[j];
+                continue;
+            }
+            if (orig_types[j] != specified_types[j]) {
+                break;
+            }
+            /* indicate that we do not have to check this type anymore. */
+            types[j] = NPY_NOTYPE;
+        }
+        if (j < nop) {
+            /* no match */
+            continue;
+        }
+
+        switch (ufunc_loop_matches(self, op,
+                input_casting, casting,
+                any_object, use_min_scalar,
+                types, NULL,
+                &no_castable_output, &err_src_typecode,
+                &err_dst_typecode)) {
+            case -1:
+                /* Error */
+                return -1;
+            case 0:
+                /* Cannot cast inputs */
+                continue;
+            case 1:
+                /* Success, fill also the NPY_NOTYPE (cast from char to int) */
+                for (j = 0; j < nop; j++) {
+                    types[j] = orig_types[j];
+                }
+                set_ufunc_loop_data_types(self, op, out_dtype, types, NULL);
+                /* In principle, we only need to validate the NPY_NOTYPE ones */
+                if (PyUFunc_ValidateCasting(self, casting, op, out_dtype) < 0) {
+                    for (j = 0; j < self->nargs; j++) {
+                        Py_DECREF(out_dtype[j]);
+                        out_dtype[j] = NULL;
+                    }
+                    return -1;
+                }
+                return 0;
+        }
+    }
+    return -2;
+}
+
 /*
  * Does a linear search for the inner loop of the ufunc specified by type_tup.
  *
@@ -2079,17 +2058,15 @@ NPY_NO_EXPORT int
 type_tuple_type_resolver(PyUFuncObject *self,
                         PyObject *type_tup,
                         PyArrayObject **op,
+                        NPY_CASTING input_casting,
                         NPY_CASTING casting,
                         int any_object,
                         PyArray_Descr **out_dtype)
 {
-    int i, j, nin = self->nin, nop = nin + self->nout;
-    int specified_types[NPY_MAXARGS], types[NPY_MAXARGS];
+    int nin = self->nin, nop = nin + self->nout;
+    int specified_types[NPY_MAXARGS];
     const char *ufunc_name;
     int no_castable_output = 0, use_min_scalar;
-
-    /* For making a better error message on coercion error */
-    char err_dst_typecode = '-', err_src_typecode = '-';
 
     ufunc_name = ufunc_get_name_cstr(self);
 
@@ -2112,7 +2089,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
             PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
             return -1;
         }
-        for (i = 0; i < nop; ++i) {
+        for (int i = 0; i < nop; ++i) {
             PyObject *item = PyTuple_GET_ITEM(type_tup, i);
             if (item == Py_None) {
                 specified_types[i] = NPY_NOTYPE;
@@ -2131,57 +2108,51 @@ type_tuple_type_resolver(PyUFuncObject *self,
         return -1;
     }
 
-    /* If the ufunc has userloops, search for them. */
-    if (self->userloops) {
-        switch (type_tuple_userloop_type_resolver(self,
-                        nop, specified_types,
-                        op, casting,
-                        any_object, use_min_scalar,
-                        out_dtype)) {
-            /* Error */
-            case -1:
-                return -1;
-            /* Found matching loop */
-            case 1:
-                return 0;
-        }
+    int res = type_tuple_type_resolver_core(self,
+            op, input_casting, casting, specified_types, any_object,
+            no_castable_output, use_min_scalar, out_dtype);
+
+    if (res != -2) {
+        return res;
     }
 
-    for (i = 0; i < self->ntypes; ++i) {
-        char *orig_types = self->types + i*self->nargs;
-
-        /* Copy the types into an int array for matching */
-        for (j = 0; j < nop; ++j) {
-            types[j] = orig_types[j];
-        }
-
-        for (j = 0; j < nop; ++j) {
-            if (types[j] != specified_types[j] &&
-                    specified_types[j] != NPY_NOTYPE) {
+    /*
+     * When the user passes `dtype=dtype`, it gets translated to
+     * `signature=(None,)*nin + (dtype,)*nout`.  If the signature matches that
+     * exactly (could be relaxed but that is not necessary for backcompat),
+     * we also try `signature=(dtype,)*(nin+nout)`.
+     * This used to be the main meaning for `dtype=dtype`, but some calls broke
+     * the expectation, and changing it allows for `dtype=dtype` to be useful
+     * for ufuncs like `np.ldexp` in the future while also normalizing it to
+     * a `signature` early on.
+     */
+    int homogeneous_type = NPY_NOTYPE;
+    if (self->nout > 0) {
+        homogeneous_type = specified_types[nin];
+        for (int i = nin+1; i < nop; i++) {
+            if (specified_types[i] != homogeneous_type) {
+                homogeneous_type = NPY_NOTYPE;
                 break;
             }
         }
-        if (j < nop) {
-            /* no match */
-            continue;
+    }
+    if (homogeneous_type != NPY_NOTYPE) {
+        for (int i = 0; i < nin; i++) {
+            if (specified_types[i] != NPY_NOTYPE) {
+                homogeneous_type = NPY_NOTYPE;
+                break;
+            }
+            specified_types[i] = homogeneous_type;
         }
+    }
+    if (homogeneous_type != NPY_NOTYPE) {
+        /* Try again with the homogeneous specified types. */
+        res = type_tuple_type_resolver_core(self,
+                op, input_casting, casting, specified_types, any_object,
+                no_castable_output, use_min_scalar, out_dtype);
 
-        switch (ufunc_loop_matches(self, op,
-                    casting, casting,
-                    any_object, use_min_scalar,
-                    types, NULL,
-                    &no_castable_output, &err_src_typecode,
-                    &err_dst_typecode)) {
-            case -1:
-                /* Error */
-                return -1;
-            case 0:
-                /* Cannot cast inputs */
-                continue;
-            case 1:
-                /* Success */
-                set_ufunc_loop_data_types(self, op, out_dtype, types, NULL);
-                return 0;
+        if (res != -2) {
+            return res;
         }
     }
 

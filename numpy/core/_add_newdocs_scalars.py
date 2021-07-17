@@ -218,10 +218,15 @@ add_newdoc_for_scalar_type('void', [],
 
 add_newdoc_for_scalar_type('datetime64', [],
     """
-    A datetime stored as a 64-bit integer, counting from ``1970-01-01T00:00:00``.
+    If created from a 64-bit integer, it represents an offset from
+    ``1970-01-01T00:00:00``.
+    If created from string, the string can be in ISO 8601 date
+    or datetime format.
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
+    >>> np.datetime64('1980', 'Y')
+    numpy.datetime64('1980')   
     >>> np.datetime64(10, 'D')
     numpy.datetime64('1970-01-11')
     

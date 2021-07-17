@@ -33,7 +33,6 @@ from .core import (
 
 import numpy as np
 from numpy import ndarray, array as nxarray
-import numpy.core.umath as umath
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce
@@ -614,7 +613,7 @@ def average(a, axis=None, weights=None, returned=False):
                     "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape, subok=True)
             wgt = wgt.swapaxes(-1, axis)
 
         if m is not nomask:
@@ -744,7 +743,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
-        counts = count(asorted)
         idx, odd = divmod(count(asorted), 2)
         mid = asorted[idx + odd - 1:idx + 1]
         if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:

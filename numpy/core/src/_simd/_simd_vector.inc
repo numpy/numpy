@@ -33,7 +33,7 @@ static PySequenceMethods simd__vector_as_sequence = {
 };
 
 static PyObject *
-simd__vector_name(PySIMDVectorObject *self)
+simd__vector_name(PySIMDVectorObject *self, void *NPY_UNUSED(ignored))
 {
     return PyUnicode_FromString(simd_data_getinfo(self->dtype)->pyname);
 }

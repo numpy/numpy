@@ -1,9 +1,0 @@
-``Generator.rayleigh`` and ``Generator.geometric`` performance improved
------------------------------------------------------------------------
-The performance of Rayleigh and geometric random variate generation
-in ``Generator`` has improved. These are both transformation of exponential
-random variables and the slow log-based inverse cdf transformation has
-been replaced with the Ziggurat-based exponential variate generator.
-
-This change breaks the stream of variates generated  when variates from
-either of these distributions are produced.

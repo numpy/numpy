@@ -1334,7 +1334,7 @@ Although verbose, the API will mimic the one for creating a new DType:
     typedef struct{
       int flags;                  /* e.g. whether the cast requires the API */
       int nin, nout;              /* Number of Input and outputs (always 1) */
-      NPY_CASTING casting;        /* The default casting level */
+      NPY_CASTING casting;        /* The "minimal casting level" */
       PyArray_DTypeMeta *dtypes;  /* input and output DType class */
       /* NULL terminated slots defining the methods */
       PyType_Slot *slots;
@@ -1342,7 +1342,7 @@ Although verbose, the API will mimic the one for creating a new DType:
 
 The focus differs between casting and general ufuncs.  For example, for casts
 ``nin == nout == 1`` is always correct, while for ufuncs ``casting`` is
-expected to be usually `"safe"`.
+expected to be usually `"no"`.
 
 **Notes:** We may initially allow users to define only a single loop.
 Internally NumPy optimizes far more, and this should be made public
@@ -1356,6 +1356,11 @@ incrementally in one of two ways:
 
 * Or, more likely, expose the ``get_loop`` function which is passed additional
   information, such as the fixed strides (similar to our internal API).
+
+* The casting level denotes the minimal guaranteed casting level and can be
+  ``-1`` if the cast may be impossible.  For most non-parametric casts, this
+  value will be the casting level.  NumPy may skip the ``resolve_descriptors``
+  call for ``np.can_cast()`` when the result is ``True`` based on this level.
 
 The example does not yet include setup and error handling. Since these are
 similar to the UFunc machinery, they  will be defined in :ref:`NEP 43 <NEP43>` and then

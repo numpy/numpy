@@ -2131,7 +2131,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 
 #if NPY_SIMD
 /* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */
-static NPY_INLINE NPY_GCC_OPT_3 npyv_u8
+NPY_FINLINE NPY_GCC_OPT_3 npyv_u8
 count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end, npy_uint8 max_count)
 {
     const npyv_u8 vone = npyv_setall_u8(1);
@@ -2150,7 +2150,7 @@ count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end, npy_uint8 max_cou
     return vsum8;
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 npyv_u16x2
+NPY_FINLINE NPY_GCC_OPT_3 npyv_u16x2
 count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end, npy_uint16 max_count)
 {
     npyv_u16x2 vsum16;

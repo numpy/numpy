@@ -364,6 +364,19 @@ def isrealobj(x):
     --------
     iscomplexobj, isreal
 
+    Notes
+    -----
+    The function is only meant for arrays with numerical values but it
+    accepts all other objects. Since it assumes array input, the return
+    value of other objects may be True.
+
+    >>> np.isrealobj('A string')
+    True
+    >>> np.isrealobj(False)
+    True
+    >>> np.isrealobj(None)
+    True
+
     Examples
     --------
     >>> np.isrealobj(1)

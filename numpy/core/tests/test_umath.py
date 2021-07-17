@@ -4,7 +4,9 @@ import fnmatch
 import itertools
 import pytest
 import sys
+import os
 from fractions import Fraction
+from functools import reduce
 
 import numpy.core.umath as ncu
 from numpy.core import _umath_tests as ncu_tests
@@ -15,6 +17,20 @@ from numpy.testing import (
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp, assert_warns
     )
+
+def get_glibc_version():
+    try:
+        ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
+    except Exception as inst:
+        ver = '0.0'
+
+    return ver
+
+
+glibcver = get_glibc_version()
+glibc_newerthan_2_17 = pytest.mark.xfail(
+        glibcver != '0.0' and glibcver < '2.17',
+        reason="Older glibc versions may not raise appropriate FP exceptions")
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -249,43 +265,115 @@ class TestDivision:
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
-    @pytest.mark.parametrize("input_dtype",
-            np.sctypes['int'] + np.sctypes['uint'])
-    def test_division_int_boundary(self, input_dtype):
-        iinfo = np.iinfo(input_dtype)
+    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
+        np.sctypes['int'] + np.sctypes['uint'], (
+            (
+                # dividend
+                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                # divisors
+                "np.arange(lsize, dtype=dtype),"
+                # scalar divisors
+                "range(15)"
+            ),
+            (
+                # dividend
+                "np.arange(fo.min, fo.min+lsize, dtype=dtype),"
+                # divisors
+                "np.arange(lsize//-2, lsize//2, dtype=dtype),"
+                # scalar divisors
+                "range(fo.min, fo.min + 15)"
+            ), (
+                # dividend
+                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                # divisors
+                "np.arange(lsize, dtype=dtype),"
+                # scalar divisors
+                "[1,3,9,13,neg, fo.min+1, fo.min//2, fo.max//3, fo.max//4]"
+            )
+        )
+    ))
+    def test_division_int_boundary(self, dtype, ex_val):
+        fo = np.iinfo(dtype)
+        neg = -1 if fo.min < 0 else 1
+        # Large enough to test SIMD loops and remaind elements
+        lsize = 512 + 7
+        a, b, divisors = eval(ex_val)
+        a_lst, b_lst = a.tolist(), b.tolist()
 
-        # Unsigned:
-        # Create list with 0, 25th, 50th, 75th percentile and max
-        if iinfo.min == 0:
-            lst = [0, iinfo.max//4, iinfo.max//2,
-                    int(iinfo.max/1.33), iinfo.max]
-            divisors = [iinfo.max//4, iinfo.max//2,
-                    int(iinfo.max/1.33), iinfo.max]
-        # Signed:
-        # Create list with min, 25th percentile, 0, 75th percentile, max
-        else:
-            lst = [iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max]
-            divisors = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
-        a = np.array(lst, dtype=input_dtype)
+        c_div = lambda n, d: (
+            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+        )
+        with np.errstate(divide='ignore'):
+            ac = a.copy()
+            ac //= b
+            div_ab = a // b
+        div_lst = [c_div(x, y) for x, y in zip(a_lst, b_lst)]
+
+        msg = "Integer arrays floor division check (//)"
+        assert all(div_ab == div_lst), msg
+        msg_eq = "Integer arrays floor division check (//=)"
+        assert all(ac == div_lst), msg_eq
 
         for divisor in divisors:
-            div_a = a // divisor
-            b = a.copy(); b //= divisor
-            div_lst = [i // divisor for i in lst]
+            ac = a.copy()
+            with np.errstate(divide='ignore'):
+                div_a = a // divisor
+                ac //= divisor
+            div_lst = [c_div(i, divisor) for i in a_lst]
 
-            msg = "Integer arrays floor division check (//)"
             assert all(div_a == div_lst), msg
-
-            msg = "Integer arrays floor division check (//=)"
-            assert all(div_a == b), msg
+            assert all(ac == div_lst), msg_eq
 
         with np.errstate(divide='raise'):
+            if 0 in b or (fo.min and -1 in b and fo.min in a):
+                # Verify overflow case
+                with pytest.raises(FloatingPointError):
+                    a // b
+            else:
+                a // b
+            if fo.min and fo.min in a:
+                with pytest.raises(FloatingPointError):
+                    a // -1
+            elif fo.min:
+                a // -1
             with pytest.raises(FloatingPointError):
                 a // 0
             with pytest.raises(FloatingPointError):
-                a //= 0
+                ac = a.copy()
+                ac //= 0
 
-            np.array([], dtype=input_dtype) // 0
+            np.array([], dtype=dtype) // 0
+
+    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
+        np.sctypes['int'] + np.sctypes['uint'], (
+            "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
+            "np.array([fo.min, 1, -2, 1, 1, 2, -3], dtype=dtype)",
+            "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
+            "np.arange(fo.max-(100*7), fo.max, 7, dtype=dtype)",
+        )
+    ))
+    def test_division_int_reduce(self, dtype, ex_val):
+        fo = np.iinfo(dtype)
+        a = eval(ex_val)
+        lst = a.tolist()
+        c_div = lambda n, d: (
+            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+        )
+
+        with np.errstate(divide='ignore'):
+            div_a = np.floor_divide.reduce(a)
+        div_lst = reduce(c_div, lst)
+        msg = "Reduce floor integer division check"
+        assert div_a == div_lst, msg
+
+        with np.errstate(divide='raise'):
+            with pytest.raises(FloatingPointError):
+                np.floor_divide.reduce(np.arange(-100, 100, dtype=dtype))
+            if fo.min:
+                with pytest.raises(FloatingPointError):
+                    np.floor_divide.reduce(
+                        np.array([fo.min, 1, -1], dtype=dtype)
+                    )
 
     @pytest.mark.parametrize(
             "dividend,divisor,quotient",
@@ -345,16 +433,14 @@ class TestDivision:
             assert_(np.isnan(y)[0])
 
     def test_floor_division_complex(self):
-        # check that implementation is correct
-        msg = "Complex floor division implementation check"
+        # check that floor division, divmod and remainder raises type errors
         x = np.array([.9 + 1j, -.1 + 1j, .9 + .5*1j, .9 + 2.*1j], dtype=np.complex128)
-        y = np.array([0., -1., 0., 0.], dtype=np.complex128)
-        assert_equal(np.floor_divide(x**2, x), y, err_msg=msg)
-        # check overflow, underflow
-        msg = "Complex floor division overflow/underflow check"
-        x = np.array([1.e+110, 1.e-110], dtype=np.complex128)
-        y = np.floor_divide(x**2, x)
-        assert_equal(y, [1.e+110, 0], err_msg=msg)
+        with pytest.raises(TypeError):
+            x // 7
+        with pytest.raises(TypeError):
+            np.divmod(x, 7)
+        with pytest.raises(TypeError):
+            np.remainder(x, 7)
 
     def test_floor_division_signed_zero(self):
         # Check that the sign bit is correctly set when dividing positive and
@@ -372,10 +458,15 @@ class TestDivision:
         # divide by zero error check
         with np.errstate(divide='raise', invalid='ignore'):
             assert_raises(FloatingPointError, np.floor_divide, fone, fzer)
-        with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, np.floor_divide, fnan, fone)
-            assert_raises(FloatingPointError, np.floor_divide, fone, fnan)
-            assert_raises(FloatingPointError, np.floor_divide, fnan, fzer)
+        with np.errstate(divide='ignore', invalid='raise'):
+            np.floor_divide(fone, fzer)
+
+        # The following already contain a NaN and should not warn
+        with np.errstate(all='raise'):
+            np.floor_divide(fnan, fone)
+            np.floor_divide(fone, fnan)
+            np.floor_divide(fnan, fzer)
+            np.floor_divide(fzer, fnan)
 
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_corner_cases(self, dtype):
@@ -472,6 +563,9 @@ class TestRemainder:
                     else:
                         assert_(b > rem >= 0, msg)
 
+    @pytest.mark.xfail(sys.platform.startswith("darwin"),
+            reason="MacOS seems to not give the correct 'invalid' warning for "
+                   "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_float_divmod_errors(self, dtype):
         # Check valid errors raised for divmod and remainder
@@ -492,8 +586,12 @@ class TestRemainder:
         with np.errstate(divide='ignore', invalid='raise'):
             assert_raises(FloatingPointError, np.divmod, finf, fzero)
         with np.errstate(divide='raise', invalid='ignore'):
-            assert_raises(FloatingPointError, np.divmod, finf, fzero)
+            # inf / 0 does not set any flags, only the modulo creates a NaN
+            np.divmod(finf, fzero)
 
+    @pytest.mark.xfail(sys.platform.startswith("darwin"),
+           reason="MacOS seems to not give the correct 'invalid' warning for "
+                  "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
@@ -501,11 +599,16 @@ class TestRemainder:
         fone = np.array(1.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
         fnan = np.array(np.nan, dtype=dtype)
-        with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, fn, fone, fzero)
-            assert_raises(FloatingPointError, fn, fnan, fzero)
-            assert_raises(FloatingPointError, fn, fone, fnan)
-            assert_raises(FloatingPointError, fn, fnan, fone)
+
+        # The following already contain a NaN and should not warn.
+        with np.errstate(all='raise'):
+            with pytest.raises(FloatingPointError,
+                    match="invalid value"):
+                fn(fone, fzero)
+            fn(fnan, fzero)
+            fn(fzero, fnan)
+            fn(fone, fnan)
+            fn(fnan, fone)
 
     def test_float_remainder_overflow(self):
         a = np.finfo(np.float64).tiny
@@ -913,6 +1016,10 @@ class TestSpecialFloats:
             yf = np.array(y, dtype=dt)
             assert_equal(np.exp(yf), xf)
 
+    # Older version of glibc may not raise the correct FP exceptions
+    # See: https://github.com/numpy/numpy/issues/19192
+    @glibc_newerthan_2_17
+    def test_exp_exceptions(self):
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
@@ -2010,6 +2117,10 @@ class TestSpecialMethods:
         do_test(lambda a: np.add(0, 0, out=a),       lambda a: (0, 0, a))
         do_test(lambda a: np.add(0, 0, out=(a,)),    lambda a: (0, 0, a))
 
+        # Also check the where mask handling:
+        do_test(lambda a: np.add(a, 0, where=False), lambda a: (a, 0))
+        do_test(lambda a: np.add(0, 0, a, where=False), lambda a: (0, 0, a))
+
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
 
@@ -2159,7 +2270,8 @@ class TestSpecialMethods:
         assert_equal(x, np.zeros(1))
         assert_equal(type(x), np.ndarray)
 
-    def test_prepare(self):
+    @pytest.mark.parametrize("use_where", [True, False])
+    def test_prepare(self, use_where):
 
         class with_prepare(np.ndarray):
             __array_priority__ = 10
@@ -2169,11 +2281,15 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array(1).view(type=with_prepare)
-        x = np.add(a, a)
+        if use_where:
+            x = np.add(a, a, where=np.array(True))
+        else:
+            x = np.add(a, a)
         assert_equal(x, np.array(2))
         assert_equal(type(x), with_prepare)
 
-    def test_prepare_out(self):
+    @pytest.mark.parametrize("use_where", [True, False])
+    def test_prepare_out(self, use_where):
 
         class with_prepare(np.ndarray):
             __array_priority__ = 10
@@ -2182,7 +2298,10 @@ class TestSpecialMethods:
                 return np.array(arr).view(type=with_prepare)
 
         a = np.array([1]).view(type=with_prepare)
-        x = np.add(a, a, a)
+        if use_where:
+            x = np.add(a, a, a, where=[True])
+        else:
+            x = np.add(a, a, a)
         # Returned array is new, because of the strange
         # __array_prepare__ above
         assert_(not np.shares_memory(x, a))
@@ -2200,10 +2319,11 @@ class TestSpecialMethods:
 
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum, a, a, where=False)
 
     def test_array_too_many_args(self):
 
-        class A(object):
+        class A:
             def __array__(self, dtype, context):
                 return np.zeros(1)
 
@@ -3220,7 +3340,7 @@ class TestSubclass:
         assert_equal(a+a, a)
 
 
-class TestFrompyfunc(object):
+class TestFrompyfunc:
 
     def test_identity(self):
         def mul(a, b):

@@ -2647,6 +2647,12 @@ cost of a slight overhead.
     - If the position of iter is changed, any subsequent call to
       PyArrayNeighborhoodIter_Next is undefined behavior, and
       PyArrayNeighborhoodIter_Reset must be called.
+    - If the position of iter is not the beginning of the data and the
+      underlying data for iter is contiguous, the iterator will point to the
+      start of the data instead of position pointed by iter.
+      To avoid this situation, iter should be moved to the required position
+      only after the creation of iterator, and PyArrayNeighborhoodIter_Reset
+      must be called.
 
     .. code-block:: c
 
@@ -2656,7 +2662,7 @@ cost of a slight overhead.
 
        /*For a 3x3 kernel */
        bounds = {-1, 1, -1, 1};
-       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
+       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
             iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
 
        for(i = 0; i < iter->size; ++i) {

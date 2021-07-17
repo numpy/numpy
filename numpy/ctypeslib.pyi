@@ -1,11 +1,12 @@
 from typing import List, Type
-from ctypes import _SimpleCData
+
+# NOTE: Numpy's mypy plugin is used for importing the correct
+# platform-specific `ctypes._SimpleCData[int]` sub-type
+from ctypes import c_int64 as _c_intp
 
 __all__: List[str]
 
-# TODO: Update the `npt.mypy_plugin` such that it substitutes `c_intp` for
-# a specific `_SimpleCData[int]` subclass (e.g. `ctypes.c_long`)
-c_intp: Type[_SimpleCData[int]]
+c_intp = _c_intp
 
 def load_library(libname, loader_path): ...
 def ndpointer(dtype=..., ndim=..., shape=..., flags=...): ...
