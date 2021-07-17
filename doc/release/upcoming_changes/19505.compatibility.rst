@@ -11,5 +11,6 @@ Previously
 After PR
 
 .. code-block:: python
+
     >>> np.trunc(np.ones(2, dtype=np.int32)).dtype
     dtype('int32')
