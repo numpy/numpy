@@ -2362,8 +2362,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False, casting='unsafe'):
     y = asanyarray(b)
 
     if not np.can_cast(x.dtype, y.dtype, casting=casting):
-        raise TypeError("Cannot compare types '%s' and '%s' with casting rule"
-                        " %s" % (str(x.dtype), str(y.dtype), casting))
+        raise TypeError(f"Cannot compare types {x.dtype!r} and {y.dtype!r} "
+                        f"with casting rule {casting!r}")
 
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
