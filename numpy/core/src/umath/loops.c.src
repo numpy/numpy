@@ -751,6 +751,12 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 
 NPY_NO_EXPORT void
+@TYPE@_trunc(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = in);
+}
+
+NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {

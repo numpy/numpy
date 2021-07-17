@@ -141,6 +141,9 @@ NPY_NO_EXPORT void
 /**end repeat2**/
 
 NPY_NO_EXPORT void
+@S@@TYPE@_trunc(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
 @S@@TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
