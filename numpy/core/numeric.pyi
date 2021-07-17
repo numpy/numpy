@@ -12,7 +12,8 @@ from typing import (
     Iterable,
 )
 
-from numpy import ndarray, generic, dtype, bool_, signedinteger, _OrderKACF, _OrderCF, _Casting
+from numpy import ndarray, generic, dtype, bool_, signedinteger
+from numpy import _OrderKACF, _OrderCF, _Casting
 from numpy.typing import ArrayLike, DTypeLike, _ShapeLike
 
 if sys.version_info >= (3, 8):
