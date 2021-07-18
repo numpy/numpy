@@ -405,7 +405,7 @@ def setup_package():
         test_suite='pytest',
         version=versioneer.get_version(),
         cmdclass=cmdclass,
-        python_requires='>=3.7,<3.10',
+        python_requires='>=3.7,<3.11',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds
