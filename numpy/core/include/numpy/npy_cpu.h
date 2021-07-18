@@ -84,6 +84,8 @@
         # error Unknown ARM CPU, please report this to numpy maintainers with \
 	information about your platform (OS, CPU and compiler)
     #endif
+#elif defined(_M_ARM64)
+    #define NPY_CPU_ARMEL_AARCH64
 #elif defined(__sh__) && defined(__LITTLE_ENDIAN__)
     #define NPY_CPU_SH_LE
 #elif defined(__sh__) && defined(__BIG_ENDIAN__)
