@@ -1,21 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.21.1 Release Notes
-==========================
-The NumPy 1.21.1 is maintenance release that fixes bugs discovered after the
-1.21.0 release and updates OpenBLAS to v0.3.17 to deal with problems on arm64.
-
-The Python versions supported for this release are 3.7-3.9. The 1.21.x series
-is compatible with development Python 3.10. Python 3.10 will be officially
-supported after it is released.
-
-.. warning::
-   There are unresolved problems compiling NumPy 1.20.0 with gcc-11.1.
-
-   * Optimization level `-O3` results in many incorrect warnings when
-     running the tests.
-   * On some hardware NumPY will hang in an infinite loop.
 
 Contributors
 ============
