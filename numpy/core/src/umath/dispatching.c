@@ -170,16 +170,18 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             }
             if (given_dtype == NULL) {
                 /*
-                 * If the (input) was not specified, this is a reduce-like
-                 * operation.  Some ufuncs may have non-trivial promotion
-                 * (e.g. add/multiply ensure high precision).
-                 * Continuing here matches promoters: those can deal with that.
-                 * If we allow this path for ArrayMethod, the person
-                 * registering will have it works sense for the ufunc, a
-                 * counter example is `(BoolLike, Bool, Bool)` for `add`.
-                 * It should resolve to an integer result (sum the bools)
-                 * in a reduction. But the ArrayMethod cannot work with that
-                 * (NumPy will prevent it to ensure correctness).
+                 * If an input was not specified, this is a reduce-like
+                 * operation: reductions use `(operand_DType, NULL, out_DType)`
+                 * as they only have a single operand.  This allows special
+                 * reduce promotion rules useful for example for sum/product.
+                 * E.g. `np.add.reduce([True, True])` promotes to integer.
+                 *
+                 * Continuing here allows a promoter to handle reduce-like
+                 * promotions explicitly if necessary.
+                 * TODO: The `!resolver_dtype->abstract` currently ensures that
+                 *       this is a promoter.  If we allow ArrayMethods to use
+                 *       abstract DTypes, we may have to reject it here or the
+                 *       ArrayMethod has to implement the reduce promotion.
                  */
                 continue;
             }
@@ -215,7 +217,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
              * In all cases, we give up resolution, since it would be
              * necessary to compare to two "best" cases.
              */
-            int unambiguous_equivally_good = 1;
+            int unambiguously_equally_good = 1;
             for (Py_ssize_t i = 0; i < nargs; i++) {
                 int best;
 
@@ -258,21 +260,21 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                         best = -1;
                     }
                     else if (prev_is_concrete) {
-                        unambiguous_equivally_good = 0;
+                        unambiguously_equally_good = 0;
                         best = 1;
                     }
                     else {
-                        unambiguous_equivally_good = 0;
+                        unambiguously_equally_good = 0;
                         best = 0;
                     }
                 }
                     /* If either is None, the other is strictly more specific */
                 else if (prev_dtype == Py_None) {
-                    unambiguous_equivally_good = 0;
+                    unambiguously_equally_good = 0;
                     best = 1;
                 }
                 else if (new_dtype == Py_None) {
-                    unambiguous_equivally_good = 0;
+                    unambiguously_equally_good = 0;
                     best = 0;
                 }
                     /*
@@ -290,12 +292,12 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                 }
                 else if (!((PyArray_DTypeMeta *)prev_dtype)->abstract) {
                     /* old is not abstract, so better (both not possible) */
-                    unambiguous_equivally_good = 0;
+                    unambiguously_equally_good = 0;
                     best = 0;
                 }
                 else if (!((PyArray_DTypeMeta *)new_dtype)->abstract) {
                     /* new is not abstract, so better (both not possible) */
-                    unambiguous_equivally_good = 0;
+                    unambiguously_equally_good = 0;
                     best = 1;
                 }
                 /*
@@ -342,11 +344,11 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                         return -1;
                     }
                     if (new_is_subclass) {
-                        unambiguous_equivally_good = 0;
+                        unambiguously_equally_good = 0;
                         best = 1;
                     }
                     else {
-                        unambiguous_equivally_good = 0;
+                        unambiguously_equally_good = 0;
                         best = 2;
                     }
                 }
@@ -373,7 +375,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                  *       blocks later legacy resolution, but may work in the
                  *       future.)
                  */
-                if (unambiguous_equivally_good) {
+                if (unambiguously_equally_good) {
                     /* unset the best resolver to indicate this */
                     best_resolver_info = NULL;
                     continue;
