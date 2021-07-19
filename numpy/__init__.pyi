@@ -1219,10 +1219,9 @@ class _ArrayOrScalarCommon:
     @property
     def __array_interface__(self): ...
     @property
-    def __array_priority__(self): ...
+    def __array_priority__(self) -> float: ...
     @property
     def __array_struct__(self): ...
-    def __array_wrap__(array, context=...): ...
     def __setstate__(self, __state): ...
     # a `bool_` is returned when `keepdims=True` and `self` is a 0d array
 
@@ -1599,6 +1598,7 @@ _FlexDType = TypeVar("_FlexDType", bound=dtype[flexible])
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
 _ShapeType = TypeVar("_ShapeType", bound=Any)
+_ShapeType2 = TypeVar("_ShapeType2", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
 # There is currently no exhaustive way to type the buffer protocol,
@@ -1674,6 +1674,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __array__(self, __dtype: None = ...) -> ndarray[Any, _DType_co]: ...
     @overload
     def __array__(self, __dtype: _DType) -> ndarray[Any, _DType]: ...
+
+    def __array_wrap__(
+        self,
+        __array: ndarray[_ShapeType2, _DType],
+        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+    ) -> ndarray[_ShapeType2, _DType]: ...
+
+    def __array_prepare__(
+        self,
+        __array: ndarray[_ShapeType2, _DType],
+        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+    ) -> ndarray[_ShapeType2, _DType]: ...
+
     @property
     def ctypes(self) -> _ctypes[int]: ...
     @property
