@@ -89,7 +89,6 @@ def test_instances():
 
 def assert_ma_equal(discovered, ma_like):
     # Check MachAr-like objects same as calculated MachAr instances
-    expected_key_error = ['tiny', 'smallest_normal']
     for key, value in discovered.__dict__.items():
         assert_equal(value, getattr(ma_like, key))
         if hasattr(value, 'shape'):
