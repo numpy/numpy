@@ -458,10 +458,15 @@ class TestDivision:
         # divide by zero error check
         with np.errstate(divide='raise', invalid='ignore'):
             assert_raises(FloatingPointError, np.floor_divide, fone, fzer)
-        with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, np.floor_divide, fnan, fone)
-            assert_raises(FloatingPointError, np.floor_divide, fone, fnan)
-            assert_raises(FloatingPointError, np.floor_divide, fnan, fzer)
+        with np.errstate(divide='ignore', invalid='raise'):
+            np.floor_divide(fone, fzer)
+
+        # The following already contain a NaN and should not warn
+        with np.errstate(all='raise'):
+            np.floor_divide(fnan, fone)
+            np.floor_divide(fone, fnan)
+            np.floor_divide(fnan, fzer)
+            np.floor_divide(fzer, fnan)
 
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_corner_cases(self, dtype):
@@ -558,6 +563,9 @@ class TestRemainder:
                     else:
                         assert_(b > rem >= 0, msg)
 
+    @pytest.mark.xfail(sys.platform.startswith("darwin"),
+            reason="MacOS seems to not give the correct 'invalid' warning for "
+                   "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_float_divmod_errors(self, dtype):
         # Check valid errors raised for divmod and remainder
@@ -578,8 +586,12 @@ class TestRemainder:
         with np.errstate(divide='ignore', invalid='raise'):
             assert_raises(FloatingPointError, np.divmod, finf, fzero)
         with np.errstate(divide='raise', invalid='ignore'):
-            assert_raises(FloatingPointError, np.divmod, finf, fzero)
+            # inf / 0 does not set any flags, only the modulo creates a NaN
+            np.divmod(finf, fzero)
 
+    @pytest.mark.xfail(sys.platform.startswith("darwin"),
+           reason="MacOS seems to not give the correct 'invalid' warning for "
+                  "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
@@ -587,11 +599,16 @@ class TestRemainder:
         fone = np.array(1.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
         fnan = np.array(np.nan, dtype=dtype)
-        with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, fn, fone, fzero)
-            assert_raises(FloatingPointError, fn, fnan, fzero)
-            assert_raises(FloatingPointError, fn, fone, fnan)
-            assert_raises(FloatingPointError, fn, fnan, fone)
+
+        # The following already contain a NaN and should not warn.
+        with np.errstate(all='raise'):
+            with pytest.raises(FloatingPointError,
+                    match="invalid value"):
+                fn(fone, fzero)
+            fn(fnan, fzero)
+            fn(fzero, fnan)
+            fn(fone, fnan)
+            fn(fnan, fone)
 
     def test_float_remainder_overflow(self):
         a = np.finfo(np.float64).tiny
