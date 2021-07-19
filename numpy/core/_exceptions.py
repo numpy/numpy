@@ -170,13 +170,13 @@ class AxisError(ValueError, IndexError):
     The class constructor generally takes the axis and arrays'
     dimensionality as arguments:
 
-    >>> np.AxisError(2, 1, msg_prefix='error')
-    AxisError('error: axis 2 is out of bounds for array of dimension 1')
+    >>> print(np.AxisError(2, 1, msg_prefix='error'))
+    error: axis 2 is out of bounds for array of dimension 1
 
     Alternatively, a custom exception message can be passed:
 
-    >>> np.AxisError('Custom error message')
-    AxisError('Custom error message')
+    >>> print(np.AxisError('Custom error message'))
+    Custom error message
 
     """
 
