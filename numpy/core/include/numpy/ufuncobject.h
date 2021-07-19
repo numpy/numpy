@@ -211,12 +211,11 @@ typedef struct _tagPyUFuncObject {
         /* Identity for reduction, when identity == PyUFunc_IdentityValue */
         PyObject *identity_value;
 
+        /* New in NPY_API_VERSION 0x0000000F and above */
+
         /* New private fields related to dispatching */
         void *_dispatch_cache;
-        /*
-         * Currently, just a list, but that can never allow deletion (unless
-         * elements that may get deleted again are deleted occasionally).
-         */
+        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
 } PyUFuncObject;
 

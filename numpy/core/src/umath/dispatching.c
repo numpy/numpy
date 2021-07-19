@@ -20,7 +20,7 @@
  * steps:
  *
  * 1. Override any `operand_DTypes` from `signature`.
- * 2. Check if the new `operand_Dtypes` is cached (got to 4. if it is)
+ * 2. Check if the new `operand_Dtypes` is cached (if it is, got to 4.)
  * 3. Find the best matching "loop".  This is done using multiple dispatching
  *    on all `operand_DTypes` and loop `dtypes`.  A matching loop must be
  *    one whose DTypes are superclasses of the `operand_DTypes` (that are
@@ -130,7 +130,6 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyObject **out_info)
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
-    /* Use new style type resolution has to happen... */
     Py_ssize_t size = PySequence_Length(ufunc->_loops);
     PyObject *best_dtypes = NULL;
     PyObject *best_resolver_info = NULL;
@@ -233,7 +232,10 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                 }
                 /*
                  * TODO: The `abstract` paths and all subclass checks are not
-                 *       actually used right now.  This will b
+                 *       used right now.  These will be used when user DTypes
+                 *       and promoters are used.  Especially, the abstract
+                 *       paths will become important when value-based promotion
+                 *       is removed from NumPy.
                  */
                 if (is_not_specified) {
                     /*
@@ -367,7 +369,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             if (current_best == -1) {
                 /*
                  * TODO: It would be nice to have a "diagnostic mode" that
-                 *       informs if this happens! (An immediate error current
+                 *       informs if this happens! (An immediate error currently
                  *       blocks later legacy resolution, but may work in the
                  *       future.)
                  */
@@ -419,11 +421,12 @@ call_promoter_and_recurse(
 
 
 /*
- * Used for the legacy fallback promotion when `signature` or `dtype` is
- * provided.
- * We do not need to pass the type tuple when we use the legacy path
- * for type resolution rather than promotion; the old system did not
- * differentiate between these two concepts.
+ * Convert the DType `signature` into the tuple of descriptors that is used
+ * by the old ufunc type resolvers in `ufunc_type_resolution.c`.
+ *
+ * Note that we do not need to pass the type tuple when we use the legacy path
+ * for type resolution rather than promotion, since the signature is always
+ * correct in that case.
  */
 static int
 _make_new_typetup(
@@ -478,8 +481,7 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *operation_DTypes[], int *out_cacheable)
 {
     int nargs = ufunc->nargs;
-    PyArray_Descr *out_descrs[NPY_MAXARGS];
-    memset(out_descrs, 0, nargs * sizeof(*out_descrs));
+    PyArray_Descr *out_descrs[NPY_MAXARGS] = {NULL};
 
     PyObject *type_tuple = NULL;
     if (_make_new_typetup(nargs, signature, &type_tuple) < 0) {
@@ -501,7 +503,6 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
     Py_XDECREF(type_tuple);
 
     for (int i = 0; i < nargs; i++) {
-        // TODO: Check that this is correct with INCREF: Stop using borrowed references! (Then this is actually correct)
         operation_DTypes[i] = NPY_DTYPE(out_descrs[i]);
         Py_INCREF(operation_DTypes[i]);
         Py_DECREF(out_descrs[i]);
@@ -558,11 +559,13 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
 }
 
 
-// TODO: Note the entry-point anymore.
 /*
- * The central entry-point for the promotion and dispatching machinery.
- * It currently works with the operands (although it would be possible to
- * only work with DType (classes/types).
+ * The main implementation to find the correct DType signature and ArrayMethod
+ * to use for a ufunc.  This function may recurse with `do_legacy_fallback`
+ * set to False.
+ *
+ * If value-based promotion is necessary, this is handled ahead of time by
+ * `promote_and_get_ufuncimpl`.
  */
 static NPY_INLINE PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
@@ -581,10 +584,14 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
                 (PyObject **)op_dtypes);
     if (info != NULL && PyObject_TypeCheck(
             PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+        /* Found the ArrayMethod and NOT a promoter: return it */
         return info;
     }
 
-    // TODO: Add comment here what this does.
+    /*
+     * If `info == NULL`, the caching failed, repeat using the full resolution
+     * in `resolve_implementation_info`.
+     */
     if (info == NULL) {
         if (resolve_implementation_info(ufunc, op_dtypes, &info) < 0) {
             return NULL;
@@ -592,8 +599,8 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         if (info != NULL && PyObject_TypeCheck(
                 PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
             /*
-             * Cache the new one.  NOTE: If we allow a promoter to return
-             * a new ArrayMethod, we should also cache such a promoter also.
+             * Found the ArrayMethod and NOT promoter.  Before returning it
+             * add it to the cache for faster lookup in the future.
              */
             if (cache && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
                     (PyObject **)op_dtypes, info, 0) < 0) {
@@ -603,6 +610,10 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
+    /*
+     * At this point `info` is NULL if there is no matching loop, or it is
+     * a promoter that needs to be used/called:
+     */
     if (info != NULL) {
         PyObject *promoter = PyTuple_GET_ITEM(info, 1);
 
@@ -617,6 +628,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     /*
+     * Even using promotion no loop was found.
      * Using promotion failed, this should normally be an error.
      * However, we need to give the legacy implementation a chance here.
      * (it will modify `op_dtypes`).
@@ -640,8 +652,10 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
 
 /*
  * The central entry-point for the promotion and dispatching machinery.
+ *
  * It currently works with the operands (although it would be possible to
- * only work with DType (classes/types).
+ * only work with DType (classes/types).  This is because it has to ensure
+ * that legacy (value-based promotion) is used when necessary.
  */
 NPY_NO_EXPORT PyArrayMethodObject *
 promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
@@ -690,7 +704,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
 
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
 
-    /* Fill in the signature with the signature that we will be working with */
+    /* Fill `signature` with final DTypes used by the ArrayMethod/inner-loop */
     PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
     for (int i = 0; i < nargs; i++) {
         if (signature[i] == NULL) {

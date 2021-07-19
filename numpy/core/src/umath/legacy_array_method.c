@@ -90,15 +90,12 @@ generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
 }
 
 
-// TODO: Rearrange the comment and shorten (probably just to the last line).
 /*
- * This just seems to tricky to make work correctly, there are two main
- * problems: First, the resolver really would like the ufunc to be passed in
- * (which we could store). Second, the resolver is currently passed the
- * full array objects (it is also passed the casting safety instead of
- * returning it).  Overall, the discrepancy is just a bit much;
- * so if this is actually called we are out of luck.
- * Otherwise we use it to signal the legacy fallback path in the ufunc code.
+ * Signal that the old type-resolution function must be used to resolve
+ * the descriptors (mainly/only used for datetimes due to the unit).
+ *
+ * ArrayMethod's are expected to implement this, but it is too tricky
+ * to support properly.  So we simply set an error that should never be seen.
  */
 NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
