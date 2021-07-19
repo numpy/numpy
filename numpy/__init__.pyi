@@ -467,6 +467,12 @@ from numpy.lib.function_base import (
     quantile as quantile,
 )
 
+from numpy.lib.histograms import (
+    histogram_bin_edges as histogram_bin_edges,
+    histogram as histogram,
+    histogramdd as histogramdd,
+)
+
 from numpy.lib.index_tricks import (
     ravel_multi_index as ravel_multi_index,
     unravel_index as unravel_index,
@@ -605,6 +611,12 @@ from numpy.lib.utils import (
     lookfor as lookfor,
     byte_bounds as byte_bounds,
     safe_eval as safe_eval,
+)
+
+from numpy.matrixlib import (
+    asmatrix as asmatrix,
+    mat as mat,
+    bmat as bmat,
 )
 
 __all__: List[str]
@@ -876,20 +888,17 @@ class vectorize:
     ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
-# Placeholders for Python-based functions
-def asmatrix(data, dtype=...): ...
-def asscalar(a): ...
-def cumproduct(*args, **kwargs): ...
-def histogram(a, bins=..., range=..., normed=..., weights=..., density=...): ...
-def histogram_bin_edges(a, bins=..., range=..., weights=...): ...
-def histogramdd(sample, bins=..., range=..., normed=..., weights=..., density=...): ...
-def mat(data, dtype=...): ...
-def max(a, axis=..., out=..., keepdims=..., initial=..., where=...): ...
-def min(a, axis=..., out=..., keepdims=..., initial=..., where=...): ...
-def product(*args, **kwargs): ...
-def round(a, decimals=..., out=...): ...
-def round_(a, decimals=..., out=...): ...
-def show_config(): ...
+# Some of these are aliases; others are wrappers with an identical signature
+round = around
+round_ = around
+max = amax
+min = amin
+product = prod
+cumproduct = cumprod
+sometrue = any
+alltrue = all
+
+def show_config() -> None: ...
 
 # TODO: Sort out which parameters are positional-only
 def nested_iters(*args, **kwargs): ... # TODO: Sort out parameters
