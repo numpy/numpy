@@ -124,7 +124,8 @@ class TooHardError(RuntimeError):
 class AxisError(ValueError, IndexError):
     """Axis supplied was invalid.
 
-    Raised whenever an ``axis`` parameter is specified that is larger than
+    A `ValueError` and `IndexError` subclass raised whenever an
+    ``axis`` parameter is specified that is larger than
     the number of array dimensions.
 
     .. versionchanged:: 1.22
