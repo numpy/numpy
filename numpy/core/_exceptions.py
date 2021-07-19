@@ -180,47 +180,30 @@ class AxisError(ValueError, IndexError):
 
     """
 
-    __slots__ = ("axis", "ndim")
+    __slots__ = ("axis", "ndim", "_msg")
 
     def __init__(self, axis, ndim=None, msg_prefix=None):
-        # single-argument form just delegates to base class
-        if ndim is None and msg_prefix is None:
-            msg = axis
+        if ndim is msg_prefix is None:
+            # single-argument form: directly set the error message
+            self._msg = axis
             self.axis = None
             self.ndim = None
-
-        # do the string formatting here, to save work in the C code
         else:
-            msg = ("axis {} is out of bounds for array of dimension {}"
-                   .format(axis, ndim))
-            if msg_prefix is not None:
-                msg = "{}: {}".format(msg_prefix, msg)
+            self._msg = msg_prefix
             self.axis = axis
             self.ndim = ndim
 
-        super().__init__(msg)
+    def __str__(self):
+        axis = self.axis
+        ndim = self.ndim
 
-    @classmethod
-    def _reconstruct(cls, axis, ndim, args):
-        """Auxiliary instance constructor used by `__reduce__`.
-
-        Directly assign all instance attributes without further sanitization.
-
-        This method avoids the `__init__` constructor in order to:
-        * Circumvent dealing with its axis-based overload.
-        * Avoid extracting the message prefix from ``self.args`` if applicable.
-
-        """
-        self = super().__new__(cls)
-        self.axis = axis
-        self.ndim = ndim
-        self.args = args
-        return self
-
-    def __reduce__(self):
-        """Return state information for `pickle`."""
-        cls = type(self)
-        return cls._reconstruct, (self.axis, self.ndim, self.args)
+        if axis is ndim is None:
+            return self._msg
+        else:
+            msg = f"axis {axis} is out of bounds for array of dimension {ndim}"
+            if self._msg is not None:
+                msg = f"{self._msg}: {msg}"
+            return msg
 
 
 @_display_as_base

@@ -86,13 +86,3 @@ class TestAxisError:
             attr1 = getattr(exc, name)
             attr2 = getattr(exc2, name)
             assert attr1 == attr2, name
-
-    def test_pickling_compat(self, args):
-        """Test that `AxisError` instances pickled prior to NumPy 1.22
-        can still be unpickled.
-        """
-        # Attach a `__reduce__` method equivalent to the one used prior to 1.22
-        exc = np.AxisError(*args)
-        exc.__reduce__ = super(np.AxisError, exc).__reduce__
-
-        assert pickle.loads(pickle.dumps(exc))
