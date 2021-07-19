@@ -670,8 +670,10 @@ class TestAbs:
         x = test_dtype(np.finfo(test_dtype).max)
         assert_equal(absfunc(x), x.real)
 
-        x = test_dtype(np.finfo(test_dtype).tiny)
-        assert_equal(absfunc(x), x.real)
+        with suppress_warnings() as sup:
+            sup.filter(UserWarning)
+            x = test_dtype(np.finfo(test_dtype).tiny)
+            assert_equal(absfunc(x), x.real)
 
         x = test_dtype(np.finfo(test_dtype).min)
         assert_equal(absfunc(x), -x.real)
