@@ -11,6 +11,8 @@ from contextlib import ContextDecorator
 
 from numpy.core.multiarray import flagsobj
 from numpy.core._internal import _ctypes
+from numpy.core.getlimits import MachArLike
+
 from numpy.typing import (
     # Arrays
     ArrayLike,
@@ -693,10 +695,6 @@ class chararray(ndarray[_ShapeType, _DType_co]):
     def isnumeric(self): ...
     def isdecimal(self): ...
 
-class finfo:
-    def __new__(cls, dtype: Any) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
-
 class format_parser:
     def __init__(
         self,
@@ -706,10 +704,6 @@ class format_parser:
         aligned: Any = ...,
         byteorder: Any = ...,
     ) -> None: ...
-
-class iinfo:
-    def __init__(self, int_type: Any) -> None: ...
-    def __getattr__(self, key: str) -> Any: ...
 
 class matrix(ndarray[_ShapeType, _DType_co]):
     def __new__(
@@ -3783,3 +3777,58 @@ class busdaycalendar:
     def weekmask(self) -> NDArray[bool_]: ...
     @property
     def holidays(self) -> NDArray[datetime64]: ...
+
+class finfo(Generic[_FloatType]):
+    dtype: dtype[_FloatType]
+    bits: int
+    eps: _FloatType
+    epsneg: _FloatType
+    iexp: int
+    machep: int
+    max: _FloatType
+    maxexp: int
+    min: _FloatType
+    minexp: int
+    negep: int
+    nexp: int
+    nmant: int
+    precision: int
+    resolution: _FloatType
+    tiny: _FloatType
+
+    # NOTE: Not technically a property, but this is the only way we can
+    # access the precision of the underlying float
+    @property
+    def machar(self: finfo[floating[_NBit1]]) -> MachArLike[_NBit1]: ...
+    @machar.setter
+    def machar(self: finfo[floating[_NBit1]], value: MachArLike[_NBit1]) -> None: ...
+
+    @overload
+    def __new__(
+        cls, dtype: inexact[_NBit1] | _DTypeLike[inexact[_NBit1]]
+    ) -> finfo[floating[_NBit1]]: ...
+    @overload
+    def __new__(
+        cls, dtype: complex | float | Type[complex] | Type[float]
+    ) -> finfo[float_]: ...
+    @overload
+    def __new__(
+        cls, dtype: str
+    ) -> finfo[floating[Any]]: ...
+
+class iinfo(Generic[_IntType]):
+    dtype: dtype[_IntType]
+    kind: str
+    bits: int
+    key: str
+    @property
+    def min(self) -> int: ...
+    @property
+    def max(self) -> int: ...
+
+    @overload
+    def __new__(cls, dtype: _IntType | _DTypeLike[_IntType]) -> iinfo[_IntType]: ...
+    @overload
+    def __new__(cls, dtype: int | Type[int]) -> iinfo[int_]: ...
+    @overload
+    def __new__(cls, dtype: str) -> iinfo[Any]: ...
