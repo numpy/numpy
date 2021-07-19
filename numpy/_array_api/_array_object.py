@@ -158,7 +158,9 @@ class Array:
         allowed by NumPy but not required by the array API specification. We
         always raise ``IndexError`` on such indices (the spec does not require
         any specific behavior on them, but this makes the NumPy array API
-        namespace a minimal implementation of the spec).
+        namespace a minimal implementation of the spec). See
+        https://data-apis.org/array-api/latest/API_specification/indexing.html
+        for the full list of required indexing behavior
 
         This function either raises IndexError if the index ``key`` is
         invalid, or a new key to be used in place of ``key`` in indexing. It
