@@ -8,292 +8,16 @@
 Universal functions (:class:`ufunc`)
 ************************************
 
-.. note: XXX: section might need to be made more reference-guideish...
-
-.. index: ufunc, universal function, arithmetic, operation
+.. seealso:: :ref:`ufuncs-basics`
 
 A universal function (or :term:`ufunc` for short) is a function that
-operates on :class:`ndarrays <ndarray>` in an element-by-element fashion,
+operates on :class:`ndarrays <numpy.ndarray>` in an element-by-element fashion,
 supporting :ref:`array broadcasting <ufuncs.broadcasting>`, :ref:`type
 casting <ufuncs.casting>`, and several other standard features. That
-is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function that
-takes a fixed number of specific inputs and produces a fixed number of
-specific outputs.
-
-In NumPy, universal functions are instances of the
-:class:`numpy.ufunc` class. Many of the built-in functions are
-implemented in compiled C code. The basic ufuncs operate on scalars, but
-there is also a generalized kind for which the basic elements are sub-arrays
-(vectors, matrices, etc.), and broadcasting is done over other dimensions.
-One can also produce custom :class:`ufunc` instances using the
-:func:`frompyfunc` factory function.
-
-
-.. _ufuncs.broadcasting:
-
-Broadcasting
-============
-
-.. index:: broadcasting
-
-Each universal function takes array inputs and produces array outputs
-by performing the core function element-wise on the inputs (where an
-element is generally a scalar, but can be a vector or higher-order
-sub-array for generalized ufuncs). Standard
-broadcasting rules are applied so that inputs not sharing exactly the
-same shapes can still be usefully operated on. Broadcasting can be
-understood by four rules:
-
-1. All input arrays with :attr:`ndim <ndarray.ndim>` smaller than the
-   input array of largest :attr:`ndim <ndarray.ndim>`, have 1's
-   prepended to their shapes.
-
-2. The size in each dimension of the output shape is the maximum of all
-   the input sizes in that dimension.
-
-3. An input can be used in the calculation if its size in a particular
-   dimension either matches the output size in that dimension, or has
-   value exactly 1.
-
-4. If an input has a dimension size of 1 in its shape, the first data
-   entry in that dimension will be used for all calculations along
-   that dimension. In other words, the stepping machinery of the
-   :term:`ufunc` will simply not step along that dimension (the
-   :ref:`stride <memory-layout>` will be 0 for that dimension).
-
-Broadcasting is used throughout NumPy to decide how to handle
-disparately shaped arrays; for example, all arithmetic operations (``+``,
-``-``, ``*``, ...) between :class:`ndarrays <ndarray>` broadcast the
-arrays before operation.
-
-.. _arrays.broadcasting.broadcastable:
-
-.. index:: broadcastable
-
-A set of arrays is called "broadcastable" to the same shape if
-the above rules produce a valid result, *i.e.*, one of the following
-is true:
-
-1. The arrays all have exactly the same shape.
-
-2. The arrays all have the same number of dimensions and the length of
-   each dimensions is either a common length or 1.
-
-3. The arrays that have too few dimensions can have their shapes prepended
-   with a dimension of length 1 to satisfy property 2.
-
-.. admonition:: Example
-
-   If ``a.shape`` is (5,1), ``b.shape`` is (1,6), ``c.shape`` is (6,)
-   and ``d.shape`` is () so that *d* is a scalar, then *a*, *b*, *c*,
-   and *d* are all broadcastable to dimension (5,6); and
-
-   - *a* acts like a (5,6) array where ``a[:,0]`` is broadcast to the other
-     columns,
-
-   - *b* acts like a (5,6) array where ``b[0,:]`` is broadcast
-     to the other rows,
-
-   - *c* acts like a (1,6) array and therefore like a (5,6) array
-     where ``c[:]`` is broadcast to every row, and finally,
-
-   - *d* acts like a (5,6) array where the single value is repeated.
-
-
-.. _ufuncs-output-type:
-
-Output type determination
-=========================
-
-The output of the ufunc (and its methods) is not necessarily an
-:class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
-Indeed, if any input defines an :obj:`~class.__array_ufunc__` method,
-control will be passed completely to that function, i.e., the ufunc is
-:ref:`overridden <ufuncs.overrides>`.
-
-If none of the inputs overrides the ufunc, then
-all output arrays will be passed to the :obj:`~class.__array_prepare__` and
-:obj:`~class.__array_wrap__` methods of the input (besides
-:class:`ndarrays <ndarray>`, and scalars) that defines it **and** has
-the highest :obj:`~class.__array_priority__` of any other input to the
-universal function. The default :obj:`~class.__array_priority__` of the
-ndarray is 0.0, and the default :obj:`~class.__array_priority__` of a subtype
-is 0.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
-
-All ufuncs can also take output arguments. If necessary, output will
-be cast to the data-type(s) of the provided output array(s). If a class
-with an :obj:`~class.__array__` method is used for the output, results will be
-written to the object returned by :obj:`~class.__array__`. Then, if the class
-also has an :obj:`~class.__array_prepare__` method, it is called so metadata
-may be determined based on the context of the ufunc (the context
-consisting of the ufunc itself, the arguments passed to the ufunc, and
-the ufunc domain.) The array object returned by
-:obj:`~class.__array_prepare__` is passed to the ufunc for computation.
-Finally, if the class also has an :obj:`~class.__array_wrap__` method, the returned
-:class:`ndarray` result will be passed to that method just before
-passing control back to the caller.
-
-Use of internal buffers
-=======================
-
-.. index:: buffers
-
-Internally, buffers are used for misaligned data, swapped data, and
-data that has to be converted from one data type to another. The size
-of internal buffers is settable on a per-thread basis. There can
-be up to :math:`2 (n_{\mathrm{inputs}} + n_{\mathrm{outputs}})`
-buffers of the specified size created to handle the data from all the
-inputs and outputs of a ufunc. The default size of a buffer is
-10,000 elements. Whenever buffer-based calculation would be needed,
-but all input arrays are smaller than the buffer size, those
-misbehaved or incorrectly-typed arrays will be copied before the
-calculation proceeds. Adjusting the size of the buffer may therefore
-alter the speed at which ufunc calculations of various sorts are
-completed. A simple interface for setting this variable is accessible
-using the function
-
-.. autosummary::
-   :toctree: generated/
-
-   setbufsize
-
-
-Error handling
-==============
-
-.. index:: error handling
-
-Universal functions can trip special floating-point status registers
-in your hardware (such as divide-by-zero). If available on your
-platform, these registers will be regularly checked during
-calculation. Error handling is controlled on a per-thread basis,
-and can be configured using the functions
-
-.. autosummary::
-   :toctree: generated/
-
-   seterr
-   seterrcall
-
-.. _ufuncs.casting:
-
-Casting Rules
-=============
-
-.. index::
-   pair: ufunc; casting rules
-
-.. note::
-
-   In NumPy 1.6.0, a type promotion API was created to encapsulate the
-   mechanism for determining output types. See the functions
-   :func:`result_type`, :func:`promote_types`, and
-   :func:`min_scalar_type` for more details.
-
-At the core of every ufunc is a one-dimensional strided loop that
-implements the actual function for a specific type combination. When a
-ufunc is created, it is given a static list of inner loops and a
-corresponding list of type signatures over which the ufunc operates.
-The ufunc machinery uses this list to determine which inner loop to
-use for a particular case. You can inspect the :attr:`.types
-<ufunc.types>` attribute for a particular ufunc to see which type
-combinations have a defined inner loop and which output type they
-produce (:ref:`character codes <arrays.scalars.character-codes>` are used
-in said output for brevity).
-
-Casting must be done on one or more of the inputs whenever the ufunc
-does not have a core loop implementation for the input types provided.
-If an implementation for the input types cannot be found, then the
-algorithm searches for an implementation with a type signature to
-which all of the inputs can be cast "safely." The first one it finds
-in its internal list of loops is selected and performed, after all
-necessary type casting. Recall that internal copies during ufuncs (even
-for casting) are limited to the size of an internal buffer (which is user
-settable).
-
-.. note::
-
-    Universal functions in NumPy are flexible enough to have mixed type
-    signatures. Thus, for example, a universal function could be defined
-    that works with floating-point and integer values. See :func:`ldexp`
-    for an example.
-
-By the above description, the casting rules are essentially
-implemented by the question of when a data type can be cast "safely"
-to another data type. The answer to this question can be determined in
-Python with a function call: :func:`can_cast(fromtype, totype)
-<can_cast>`. The Figure below shows the results of this call for
-the 24 internally supported types on the author's 64-bit system. You
-can generate this table for your system with the code given in the Figure.
-
-.. admonition:: Figure
-
-    Code segment showing the "can cast safely" table for a 64-bit system.
-    Generally the output depends on the system; your system might result in
-    a different table.
-
-    >>> mark = {False: ' -', True: ' Y'}
-    >>> def print_table(ntypes):
-    ...     print('X ' + ' '.join(ntypes))
-    ...     for row in ntypes:
-    ...         print(row, end='')
-    ...         for col in ntypes:
-    ...             print(mark[np.can_cast(row, col)], end='')
-    ...         print()
-    ...
-    >>> print_table(np.typecodes['All'])
-    X ? b h i l q p B H I L Q P e f d g F D G S U V O M m
-    ? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-    b - Y Y Y Y Y Y - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
-    h - - Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
-    i - - - Y Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    l - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    q - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    p - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-    H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
-    I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-    Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-    P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-    e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
-    f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
-    d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
-    g - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
-    F - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
-    D - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
-    G - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
-    S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
-    U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
-    V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
-    O - - - - - - - - - - - - - - - - - - - - - - - Y - -
-    M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
-    m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
-
-You should note that, while included in the table for completeness,
-the 'S', 'U', and 'V' types cannot be operated on by ufuncs. Also,
-note that on a 32-bit system the integer types may have different
-sizes, resulting in a slightly altered table.
-
-Mixed scalar-array operations use a different set of casting rules
-that ensure that a scalar cannot "upcast" an array unless the scalar is
-of a fundamentally different kind of data (*i.e.*, under a different
-hierarchy in the data-type hierarchy) than the array.  This rule
-enables you to use scalar constants in your code (which, as Python
-types, are interpreted accordingly in ufuncs) without worrying about
-whether the precision of the scalar constant will cause upcasting on
-your large (small precision) array.
-
-
-.. _ufuncs.overrides:
-
-Overriding Ufunc behavior
-=========================
-
-Classes (including ndarray subclasses) can override how ufuncs act on
-them by defining certain special methods.  For details, see
-:ref:`arrays.classes`.
-
+is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function
+that takes a fixed number of specific inputs and produces a fixed number of
+specific outputs. For detailed information on universal functions, see
+:ref:`ufuncs-basics`.
 
 :class:`ufunc`
 ==============
@@ -314,171 +38,171 @@ advanced usage and will not typically be used.
 .. index::
    pair: ufunc; keyword arguments
 
-*out*
+.. rubric:: *out*
 
-    .. versionadded:: 1.6
+.. versionadded:: 1.6
 
-    The first output can be provided as either a positional or a keyword
-    parameter. Keyword 'out' arguments are incompatible with positional
-    ones.
+The first output can be provided as either a positional or a keyword
+parameter. Keyword 'out' arguments are incompatible with positional
+ones.
 
-    .. versionadded:: 1.10
+.. versionadded:: 1.10
 
-    The 'out' keyword argument is expected to be a tuple with one entry per
-    output (which can be None for arrays to be allocated by the ufunc).
-    For ufuncs with a single output, passing a single array (instead of a
-    tuple holding a single array) is also valid.
+The 'out' keyword argument is expected to be a tuple with one entry per
+output (which can be None for arrays to be allocated by the ufunc).
+For ufuncs with a single output, passing a single array (instead of a
+tuple holding a single array) is also valid.
 
-    Passing a single array in the 'out' keyword argument to a ufunc with
-    multiple outputs is deprecated, and will raise a warning in numpy 1.10,
-    and an error in a future release.
+Passing a single array in the 'out' keyword argument to a ufunc with
+multiple outputs is deprecated, and will raise a warning in numpy 1.10,
+and an error in a future release.
 
-    If 'out' is None (the default), a uninitialized return array is created.
-    The output array is then filled with the results of the ufunc in the places
-    that the broadcast 'where' is True. If 'where' is the scalar True (the
-    default), then this corresponds to the entire output being filled.
-    Note that outputs not explicitly filled are left with their
-    uninitialized values.
+If 'out' is None (the default), a uninitialized return array is created.
+The output array is then filled with the results of the ufunc in the places
+that the broadcast 'where' is True. If 'where' is the scalar True (the
+default), then this corresponds to the entire output being filled.
+Note that outputs not explicitly filled are left with their
+uninitialized values.
 
-    .. versionadded:: 1.13
+.. versionadded:: 1.13
 
-    Operations where ufunc input and output operands have memory overlap are
-    defined to be the same as for equivalent operations where there
-    is no memory overlap.  Operations affected make temporary copies
-    as needed to eliminate data dependency.  As detecting these cases
-    is computationally expensive, a heuristic is used, which may in rare
-    cases result in needless temporary copies.  For operations where the
-    data dependency is simple enough for the heuristic to analyze,
-    temporary copies will not be made even if the arrays overlap, if it
-    can be deduced copies are not necessary.  As an example,
-    ``np.add(a, b, out=a)`` will not involve copies.
+Operations where ufunc input and output operands have memory overlap are
+defined to be the same as for equivalent operations where there
+is no memory overlap.  Operations affected make temporary copies
+as needed to eliminate data dependency.  As detecting these cases
+is computationally expensive, a heuristic is used, which may in rare
+cases result in needless temporary copies.  For operations where the
+data dependency is simple enough for the heuristic to analyze,
+temporary copies will not be made even if the arrays overlap, if it
+can be deduced copies are not necessary.  As an example,
+``np.add(a, b, out=a)`` will not involve copies.
 
-*where*
+.. rubric:: *where*
 
-    .. versionadded:: 1.7
+.. versionadded:: 1.7
 
-    Accepts a boolean array which is broadcast together with the operands.
-    Values of True indicate to calculate the ufunc at that position, values
-    of False indicate to leave the value in the output alone. This argument
-    cannot be used for generalized ufuncs as those take non-scalar input.
+Accepts a boolean array which is broadcast together with the operands.
+Values of True indicate to calculate the ufunc at that position, values
+of False indicate to leave the value in the output alone. This argument
+cannot be used for generalized ufuncs as those take non-scalar input.
 
-    Note that if an uninitialized return array is created, values of False
-    will leave those values **uninitialized**.
+Note that if an uninitialized return array is created, values of False
+will leave those values **uninitialized**.
 
-*axes*
+.. rubric:: *axes*
 
-    .. versionadded:: 1.15
+.. versionadded:: 1.15
 
-    A list of tuples with indices of axes a generalized ufunc should operate
-    on. For instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate
-    for matrix multiplication, the base elements are two-dimensional matrices
-    and these are taken to be stored in the two last axes of each argument.
-    The corresponding axes keyword would be ``[(-2, -1), (-2, -1), (-2, -1)]``.
-    For simplicity, for generalized ufuncs that operate on 1-dimensional arrays
-    (vectors), a single integer is accepted instead of a single-element tuple,
-    and for generalized ufuncs for which all outputs are scalars, the output
-    tuples can be omitted.
+A list of tuples with indices of axes a generalized ufunc should operate
+on. For instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate
+for matrix multiplication, the base elements are two-dimensional matrices
+and these are taken to be stored in the two last axes of each argument.
+The corresponding axes keyword would be ``[(-2, -1), (-2, -1), (-2, -1)]``.
+For simplicity, for generalized ufuncs that operate on 1-dimensional arrays
+(vectors), a single integer is accepted instead of a single-element tuple,
+and for generalized ufuncs for which all outputs are scalars, the output
+tuples can be omitted.
 
-*axis*
+.. rubric:: *axis*
 
-    .. versionadded:: 1.15
+.. versionadded:: 1.15
 
-    A single axis over which a generalized ufunc should operate. This is a
-    short-cut for ufuncs that operate over a single, shared core dimension,
-    equivalent to passing in ``axes`` with entries of ``(axis,)`` for each
-    single-core-dimension argument and ``()`` for all others.  For instance,
-    for a signature ``(i),(i)->()``, it is equivalent to passing in
-    ``axes=[(axis,), (axis,), ()]``.
+A single axis over which a generalized ufunc should operate. This is a
+short-cut for ufuncs that operate over a single, shared core dimension,
+equivalent to passing in ``axes`` with entries of ``(axis,)`` for each
+single-core-dimension argument and ``()`` for all others.  For instance,
+for a signature ``(i),(i)->()``, it is equivalent to passing in
+``axes=[(axis,), (axis,), ()]``.
 
-*keepdims*
+.. rubric:: *keepdims*
 
-    .. versionadded:: 1.15
+.. versionadded:: 1.15
 
-    If this is set to `True`, axes which are reduced over will be left in the
-    result as a dimension with size one, so that the result will broadcast
-    correctly against the inputs. This option can only be used for generalized
-    ufuncs that operate on inputs that all have the same number of core
-    dimensions and with outputs that have no core dimensions, i.e., with
-    signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
-    the dimensions in the output can be controlled with ``axes`` and ``axis``.
+If this is set to `True`, axes which are reduced over will be left in the
+result as a dimension with size one, so that the result will broadcast
+correctly against the inputs. This option can only be used for generalized
+ufuncs that operate on inputs that all have the same number of core
+dimensions and with outputs that have no core dimensions, i.e., with
+signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
+the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
-*casting*
+.. rubric:: *casting*
 
-    .. versionadded:: 1.6
+.. versionadded:: 1.6
 
-    May be 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
-    See :func:`can_cast` for explanations of the parameter values.
+May be 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
+See :func:`can_cast` for explanations of the parameter values.
 
-    Provides a policy for what kind of casting is permitted. For compatibility
-    with previous versions of NumPy, this defaults to 'unsafe' for numpy < 1.7.
-    In numpy 1.7 a transition to 'same_kind' was begun where ufuncs produce a
-    DeprecationWarning for calls which are allowed under the 'unsafe'
-    rules, but not under the 'same_kind' rules. From numpy 1.10 and
-    onwards, the default is 'same_kind'.
+Provides a policy for what kind of casting is permitted. For compatibility
+with previous versions of NumPy, this defaults to 'unsafe' for numpy < 1.7.
+In numpy 1.7 a transition to 'same_kind' was begun where ufuncs produce a
+DeprecationWarning for calls which are allowed under the 'unsafe'
+rules, but not under the 'same_kind' rules. From numpy 1.10 and
+onwards, the default is 'same_kind'.
 
-*order*
+.. rubric:: *order*
 
-    .. versionadded:: 1.6
+.. versionadded:: 1.6
 
-    Specifies the calculation iteration order/memory layout of the output array.
-    Defaults to 'K'. 'C' means the output should be C-contiguous, 'F' means
-    F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous and
-    not also not C-contiguous, C-contiguous otherwise, and 'K' means to match
-    the element ordering of the inputs as closely as possible.
+Specifies the calculation iteration order/memory layout of the output array.
+Defaults to 'K'. 'C' means the output should be C-contiguous, 'F' means
+F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous and
+not also not C-contiguous, C-contiguous otherwise, and 'K' means to match
+the element ordering of the inputs as closely as possible.
 
-*dtype*
+.. rubric:: *dtype*
 
-    .. versionadded:: 1.6
+.. versionadded:: 1.6
 
-    Overrides the DType of the output arrays the same way as the *signature*.
-    This should ensure a matching precision of the calculation.  The exact
-    calculation DTypes chosen may depend on the ufunc and the inputs may be
-    cast to this DType to perform the calculation.
+Overrides the DType of the output arrays the same way as the *signature*.
+This should ensure a matching precision of the calculation.  The exact
+calculation DTypes chosen may depend on the ufunc and the inputs may be
+cast to this DType to perform the calculation.
 
-*subok*
+.. rubric:: *subok*
 
-    .. versionadded:: 1.6
+.. versionadded:: 1.6
 
-    Defaults to true. If set to false, the output will always be a strict
-    array, not a subtype.
+Defaults to true. If set to false, the output will always be a strict
+array, not a subtype.
 
-*signature*
+.. rubric:: *signature*
 
-    Either a Dtype, a tuple of DTypes, or a special signature string
-    indicating the input and output types of a ufunc.
+Either a Dtype, a tuple of DTypes, or a special signature string
+indicating the input and output types of a ufunc.
 
-    This argument allows the user to specify exact DTypes to be used for the
-    calculation.  Casting will be used as necessary. The actual DType of the
-    input arrays is not considered unless ``signature`` is ``None`` for
-    that array.
+This argument allows the user to specify exact DTypes to be used for the
+calculation.  Casting will be used as necessary. The actual DType of the
+input arrays is not considered unless ``signature`` is ``None`` for
+that array.
 
-    When all DTypes are fixed, a specific loop is chosen or an error raised
-    if no matching loop exists.
-    If some DTypes are not specified and left ``None``, the behaviour may
-    depend on the ufunc.
-    At this time, a list of available signatures is provided by the **types**
-    attribute of the ufunc.  (This list may be missing DTypes not defined
-    by NumPy.)
+When all DTypes are fixed, a specific loop is chosen or an error raised
+if no matching loop exists.
+If some DTypes are not specified and left ``None``, the behaviour may
+depend on the ufunc.
+At this time, a list of available signatures is provided by the **types**
+attribute of the ufunc.  (This list may be missing DTypes not defined
+by NumPy.)
 
-    The ``signature`` only specifies the DType class/type.  For example, it
-    can specifiy that the operation should be ``datetime64`` or ``float64``
-    operation.  It does not specify the ``datetime64`` time-unit or the
-    ``float64`` byte-order.
+The ``signature`` only specifies the DType class/type.  For example, it
+can specifiy that the operation should be ``datetime64`` or ``float64``
+operation.  It does not specify the ``datetime64`` time-unit or the
+``float64`` byte-order.
 
-    For backwards compatibility this argument can also be provided as *sig*,
-    although the long form is preferred.  Note that this should not be
-    confused with the generalized ufunc :ref:`signature <details-of-signature>`
-    that is stored in the **signature** attribute of the of the ufunc object.
+For backwards compatibility this argument can also be provided as *sig*,
+although the long form is preferred.  Note that this should not be
+confused with the generalized ufunc :ref:`signature <details-of-signature>`
+that is stored in the **signature** attribute of the of the ufunc object.
 
-*extobj*
+.. rubric:: *extobj*
 
-    a list of length 3 specifying the ufunc buffer-size, the error
-    mode integer, and the error call-back function. Normally, these
-    values are looked up in a thread-specific dictionary. Passing them
-    here circumvents that look up and uses the low-level specification
-    provided for the error mode. This may be useful, for example, as
-    an optimization for calculations requiring many ufunc calls on
-    small arrays in a loop.
+A list of length 3 specifying the ufunc buffer-size, the error
+mode integer, and the error call-back function. Normally, these
+values are looked up in a thread-specific dictionary. Passing them
+here circumvents that look up and uses the low-level specification
+provided for the error mode. This may be useful, for example, as
+an optimization for calculations requiring many ufunc calls on
+small arrays in a loop.
 
 
 
@@ -516,39 +240,6 @@ possess. None of the attributes can be set.
 
 Methods
 -------
-
-All ufuncs have four methods. However, these methods only make sense on scalar
-ufuncs that take two input arguments and return one output argument.
-Attempting to call these methods on other ufuncs will cause a
-:exc:`ValueError`. The reduce-like methods all take an *axis* keyword, a *dtype*
-keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
-The *axis* keyword specifies the axis of the array over which the reduction
-will take place (with negative values counting backwards). Generally, it is an
-integer, though for :meth:`ufunc.reduce`, it can also be a tuple of `int` to
-reduce over several axes at once, or None, to reduce over all axes.
-The *dtype* keyword allows you to manage a very common problem that arises
-when naively using :meth:`ufunc.reduce`. Sometimes you may
-have an array of a certain data type and wish to add up all of its
-elements, but the result does not fit into the data type of the
-array. This commonly happens if you have an array of single-byte
-integers. The *dtype* keyword allows you to alter the data type over which
-the reduction takes place (and therefore the type of the output). Thus,
-you can ensure that the output is a data type with precision large enough
-to handle your output. The responsibility of altering the reduce type is
-mostly up to you. There is one exception: if no *dtype* is given for a
-reduction on the "add" or "multiply" operations, then if the input type is
-an integer (or Boolean) data-type and smaller than the size of the
-:class:`int_` data type, it will be internally upcast to the :class:`int_`
-(or :class:`uint`) data-type. Finally, the *out* keyword allows you to provide
-an output array (for single-output ufuncs, which are currently the only ones
-supported; for future extension, however, a tuple with a single argument
-can be passed in). If *out* is given, the *dtype* argument is ignored.
-
-Ufuncs also have a fifth method that allows in place operations to be
-performed using fancy indexing. No buffering is used on the dimensions where
-fancy indexing is used, so the fancy index can list an item more than once and
-the operation will be performed on the result of the previous operation for
-that item.
 
 .. index::
    pair: ufunc; methods
