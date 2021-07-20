@@ -399,7 +399,7 @@ run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp con
 * # VOP = min, max#
 */
 
-NPY_FINLINE npy_float sse2_horizontal_@VOP@___m128(__m128 v)
+static NPY_INLINE npy_float sse2_horizontal_@VOP@___m128(__m128 v)
 {
     npy_float r;
     __m128 tmp = _mm_movehl_ps(v, v);                   /* c     d     ... */
@@ -409,7 +409,7 @@ NPY_FINLINE npy_float sse2_horizontal_@VOP@___m128(__m128 v)
     return r;
 }
 
-NPY_FINLINE npy_double sse2_horizontal_@VOP@___m128d(__m128d v)
+static NPY_INLINE npy_double sse2_horizontal_@VOP@___m128d(__m128d v)
 {
     npy_double r;
     __m128d tmp = _mm_unpackhi_pd(v, v);    /* b     b */
@@ -440,7 +440,7 @@ NPY_FINLINE npy_double sse2_horizontal_@VOP@___m128d(__m128d v)
  * the last vector is passed as a pointer as MSVC 2010 is unable to ignore the
  * calling convention leading to C2719 on 32 bit, see #4795
  */
-NPY_FINLINE void
+static NPY_INLINE void
 sse2_compress4_to_byte_@TYPE@(@vtype@ r1, @vtype@ r2, @vtype@ r3, @vtype@ * r4,
                               npy_bool * op)
 {
@@ -557,7 +557,7 @@ sse2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n)
 */
 
 /* sets invalid fpu flag on QNaN for consistency with packed compare */
-NPY_FINLINE int
+static NPY_INLINE int
 sse2_ordered_cmp_@kind@_@TYPE@(const @type@ a, const @type@ b)
 {
     @vtype@ one = @vpre@_set1_@vsuf@(1);
@@ -733,19 +733,19 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 /* bunch of helper functions used in ISA_exp/log_FLOAT*/
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_get_full_load_mask_ps(void)
 {
     return _mm256_set1_ps(-1.0);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256i
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256i
 fma_get_full_load_mask_pd(void)
 {
     return _mm256_castpd_si256(_mm256_set1_pd(-1.0));
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_get_partial_load_mask_ps(const npy_int num_elem, const npy_int num_lanes)
 {
     float maskint[16] = {-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,
@@ -754,7 +754,7 @@ fma_get_partial_load_mask_ps(const npy_int num_elem, const npy_int num_lanes)
     return _mm256_loadu_ps(addr);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256i
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256i
 fma_get_partial_load_mask_pd(const npy_int num_elem, const npy_int num_lanes)
 {
     npy_int maskint[16] = {-1,-1,-1,-1,-1,-1,-1,-1,1,1,1,1,1,1,1,1};
@@ -762,7 +762,7 @@ fma_get_partial_load_mask_pd(const npy_int num_elem, const npy_int num_lanes)
     return _mm256_loadu_si256((__m256i*) addr);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_masked_gather_ps(__m256 src,
                      npy_float* addr,
                      __m256i vindex,
@@ -771,7 +771,7 @@ fma_masked_gather_ps(__m256 src,
     return _mm256_mask_i32gather_ps(src, addr, vindex, mask, 4);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256d
 fma_masked_gather_pd(__m256d src,
                      npy_double* addr,
                      __m128i vindex,
@@ -780,43 +780,43 @@ fma_masked_gather_pd(__m256d src,
     return _mm256_mask_i32gather_pd(src, addr, vindex, mask, 8);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_masked_load_ps(__m256 mask, npy_float* addr)
 {
     return _mm256_maskload_ps(addr, _mm256_cvtps_epi32(mask));
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256d
 fma_masked_load_pd(__m256i mask, npy_double* addr)
 {
     return _mm256_maskload_pd(addr, mask);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_set_masked_lanes_ps(__m256 x, __m256 val, __m256 mask)
 {
     return _mm256_blendv_ps(x, val, mask);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256d
 fma_set_masked_lanes_pd(__m256d x, __m256d val, __m256d mask)
 {
     return _mm256_blendv_pd(x, val, mask);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_blend(__m256 x, __m256 y, __m256 ymask)
 {
     return _mm256_blendv_ps(x, y, ymask);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_invert_mask_ps(__m256 ymask)
 {
     return _mm256_andnot_ps(ymask, _mm256_set1_ps(-1.0));
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256i
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256i
 fma_invert_mask_pd(__m256i ymask)
 {
     return _mm256_andnot_si256(ymask, _mm256_set1_epi32(0xFFFFFFFF));
@@ -826,37 +826,37 @@ fma_invert_mask_pd(__m256i ymask)
  *  #vsub = ps, pd#
  *  #vtype = __m256, __m256d#
  */
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
 fma_abs_@vsub@(@vtype@ x)
 {
     return _mm256_andnot_@vsub@(_mm256_set1_@vsub@(-0.0), x);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
 fma_reciprocal_@vsub@(@vtype@ x)
 {
     return _mm256_div_@vsub@(_mm256_set1_@vsub@(1.0f), x);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
 fma_rint_@vsub@(@vtype@ x)
 {
     return _mm256_round_@vsub@(x, _MM_FROUND_TO_NEAREST_INT);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
 fma_floor_@vsub@(@vtype@ x)
 {
     return _mm256_round_@vsub@(x, _MM_FROUND_TO_NEG_INF);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
 fma_ceil_@vsub@(@vtype@ x)
 {
     return _mm256_round_@vsub@(x, _MM_FROUND_TO_POS_INF);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA @vtype@
 fma_trunc_@vsub@(@vtype@ x)
 {
     return _mm256_round_@vsub@(x, _MM_FROUND_TO_ZERO);
@@ -865,31 +865,31 @@ fma_trunc_@vsub@(@vtype@ x)
 #endif
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
 avx512_get_full_load_mask_ps(void)
 {
     return 0xFFFF;
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask8
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask8
 avx512_get_full_load_mask_pd(void)
 {
     return 0xFF;
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
 avx512_get_partial_load_mask_ps(const npy_int num_elem, const npy_int total_elem)
 {
     return (0x0001 << num_elem) - 0x0001;
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask8
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask8
 avx512_get_partial_load_mask_pd(const npy_int num_elem, const npy_int total_elem)
 {
     return (0x01 << num_elem) - 0x01;
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_masked_gather_ps(__m512 src,
                         npy_float* addr,
                         __m512i vindex,
@@ -898,7 +898,7 @@ avx512_masked_gather_ps(__m512 src,
     return _mm512_mask_i32gather_ps(src, kmask, vindex, addr, 4);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
 avx512_masked_gather_pd(__m512d src,
                         npy_double* addr,
                         __m256i vindex,
@@ -907,43 +907,43 @@ avx512_masked_gather_pd(__m512d src,
     return _mm512_mask_i32gather_pd(src, kmask, vindex, addr, 8);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_masked_load_ps(__mmask16 mask, npy_float* addr)
 {
     return _mm512_maskz_loadu_ps(mask, (__m512 *)addr);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
 avx512_masked_load_pd(__mmask8 mask, npy_double* addr)
 {
     return _mm512_maskz_loadu_pd(mask, (__m512d *)addr);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_set_masked_lanes_ps(__m512 x, __m512 val, __mmask16 mask)
 {
     return _mm512_mask_blend_ps(mask, x, val);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
 avx512_set_masked_lanes_pd(__m512d x, __m512d val, __mmask8 mask)
 {
     return _mm512_mask_blend_pd(mask, x, val);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_blend(__m512 x, __m512 y, __mmask16 ymask)
 {
     return _mm512_mask_mov_ps(x, ymask, y);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
 avx512_invert_mask_ps(__mmask16 ymask)
 {
     return _mm512_knot(ymask);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask8
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask8
 avx512_invert_mask_pd(__mmask8 ymask)
 {
     return _mm512_knot(ymask);
@@ -963,56 +963,56 @@ avx512_invert_mask_pd(__mmask8 ymask)
  *  #INF = NPY_INFINITYF, NPY_INFINITY#
  *  #NAN = NPY_NANF, NPY_NAN#
  */
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_abs_@vsub@(@vtype@ x)
 {
     return (@vtype@) _mm512_and_@epi_vsub@((__m512i) x,
 				    _mm512_set1_@epi_vsub@ (@and_const@));
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_reciprocal_@vsub@(@vtype@ x)
 {
     return _mm512_div_@vsub@(_mm512_set1_@vsub@(1.0f), x);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_rint_@vsub@(@vtype@ x)
 {
     return _mm512_roundscale_@vsub@(x, 0x08);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_floor_@vsub@(@vtype@ x)
 {
     return _mm512_roundscale_@vsub@(x, 0x09);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_ceil_@vsub@(@vtype@ x)
 {
     return _mm512_roundscale_@vsub@(x, 0x0A);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_trunc_@vsub@(@vtype@ x)
 {
     return _mm512_roundscale_@vsub@(x, 0x0B);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_hadd_@vsub@(const @vtype@ x)
 {
     return _mm512_add_@vsub@(x, _mm512_permute_@vsub@(x, @perm_@));
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_hsub_@vsub@(const @vtype@ x)
 {
     return _mm512_sub_@vsub@(x, _mm512_permute_@vsub@(x, @perm_@));
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_cabsolute_@vsub@(const @vtype@ x1,
                         const @vtype@ x2,
                         const __m512i re_indices,
@@ -1057,7 +1057,7 @@ avx512_cabsolute_@vsub@(const @vtype@ x1,
     return _mm512_mul_@vsub@(hypot, larger);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_conjugate_@vsub@(const @vtype@ x)
 {
     /*
@@ -1070,7 +1070,7 @@ avx512_conjugate_@vsub@(const @vtype@ x)
     return _mm512_castsi512_@vsub@(res);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_cmul_@vsub@(@vtype@ x1, @vtype@ x2)
 {
     // x1 = r1, i1
@@ -1083,7 +1083,7 @@ avx512_cmul_@vsub@(@vtype@ x1, @vtype@ x2)
     return _mm512_mask_blend_@vsub@(@cmpx_img_mask@, outreal, outimg);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_csquare_@vsub@(@vtype@ x)
 {
     return avx512_cmul_@vsub@(x, x);
@@ -1106,25 +1106,25 @@ avx512_csquare_@vsub@(@vtype@ x)
 
 #if defined @CHK@
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 @isa@_sqrt_ps(@vtype@ x)
 {
     return _mm@vsize@_sqrt_ps(x);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
 @isa@_sqrt_pd(@vtype@d x)
 {
     return _mm@vsize@_sqrt_pd(x);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 @isa@_square_ps(@vtype@ x)
 {
     return _mm@vsize@_mul_ps(x,x);
 }
 
-NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
 @isa@_square_pd(@vtype@d x)
 {
     return _mm@vsize@_mul_pd(x,x);
@@ -1615,7 +1615,7 @@ AVX512F_absolute_@TYPE@(@type@ * op,
  * you never know
  */
 #if !@and@
-NPY_FINLINE @vtype@ byte_to_true(@vtype@ v)
+static NPY_INLINE @vtype@ byte_to_true(@vtype@ v)
 {
     const @vtype@ zero = @vpre@_setzero_@vsuf@();
     const @vtype@ truemask = @vpre@_set1_epi8(1 == 1);
