@@ -680,14 +680,18 @@ class TestAbs:
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_builtin_abs(self, dtype):
-        if dtype == np.clongdouble and sys.platform == "cygwin":
-            pytest.xfail(reason="npy_cabsl calls npy_hypotl, which is npy_hypot")
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(abs, dtype)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_numpy_abs(self, dtype):
-        if dtype == np.clongdouble and sys.platform == "cygwin":
-            pytest.xfail(reason="npy_cabsl calls npy_hypotl, which is npy_hypot")
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(np.abs, dtype)
 
 class TestBitShifts:
