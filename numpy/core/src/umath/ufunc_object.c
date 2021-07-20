@@ -935,9 +935,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     PyObject *obj;
 
     /* Convert and fill in input arguments */
-    int all_scalar = 1;
-    int any_scalar = 0;
-    int all_legacy = 1;
+    npy_bool all_scalar = NPY_TRUE;
+    npy_bool any_scalar = NPY_FALSE;
+    npy_bool all_legacy = NPY_TRUE;
     for (int i = 0; i < nin; i++) {
         obj = PyTuple_GET_ITEM(full_args.in, i);
 
@@ -954,27 +954,26 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         }
         out_borrowed_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         if (!out_borrowed_op_DTypes[i]->legacy) {
-            all_legacy = 0;
+            all_legacy = NPY_FALSE;
         }
         if (PyArray_NDIM(out_op[i]) != 0) {
-            all_scalar = 0;
+            all_scalar = NPY_FALSE;
             continue;
         }
         else {
-            any_scalar = 1;
+            any_scalar = NPY_TRUE;
         }
-        if ((PyObject *)out_op[i] == obj) {
-            continue;  /* input was an array: no need to check for pyscalar */
-        }
-
-        if (PyLong_CheckExact(obj)) {
-            out_borrowed_op_DTypes[i] = &PyArray_PyIntAbstractDType;
-        }
-        else if (PyFloat_CheckExact(obj)) {
-            out_borrowed_op_DTypes[i] = &PyArray_PyFloatAbstractDType;
-        }
-        else if (PyComplex_CheckExact(obj)) {
-            out_borrowed_op_DTypes[i] = &PyArray_PyComplexAbstractDType;
+        /* Special case if it was a Python scalar, to allow "weak" promotion */
+        if ((PyObject *)out_op[i] != obj) {
+            if (PyLong_CheckExact(obj)) {
+                out_borrowed_op_DTypes[i] = &PyArray_PyIntAbstractDType;
+            }
+            else if (PyFloat_CheckExact(obj)) {
+                out_borrowed_op_DTypes[i] = &PyArray_PyFloatAbstractDType;
+            }
+            else if (PyComplex_CheckExact(obj)) {
+                out_borrowed_op_DTypes[i] = &PyArray_PyComplexAbstractDType;
+            }
         }
     }
     if (all_legacy && (!all_scalar && any_scalar)) {
@@ -2094,6 +2093,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     npy_intp inner_dimensions[NPY_MAXDIMS+1];
     /* The strides which get passed to the inner loop */
     npy_intp *inner_strides = NULL;
+    /* Auxiliary data allocated by the ufuncimpl (ArrayMethod) */
     NpyAuxData *auxdata = NULL;
 
     /* The sizes of the core dimensions (# entries is ufunc->core_num_dim_ix) */
@@ -5227,16 +5227,17 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     char *curr_types = ufunc->types;
     for (int i = 0; i < ntypes * (nin + nout); i += nin + nout) {
         /*
-         * Add all legacy wrapping loops here. This is normally necessary, but
-         * makes sense.  It could also help/be needed to avoid issues with
+         * Add all legacy wrapping loops here. This is normally not necessary,
+         * but makes sense.  It could also help/be needed to avoid issues with
          * ambiguous loops such as: `OO->?` and `OO->O` where in theory the
-         * wrong loop could be picked if only the second was added.
+         * wrong loop could be picked if only the second one is added.
          */
         PyObject *info;
         PyArray_DTypeMeta *op_dtypes[NPY_MAXARGS];
         for (int arg = 0; arg < nin + nout; arg++) {
             op_dtypes[arg] = PyArray_DTypeFromTypeNum(curr_types[arg]);
-            Py_DECREF(op_dtypes[arg]);  /* That DType can't be deleted... */
+            /* These DTypes are immortal and adding INCREFs: so borrow it */
+            Py_DECREF(op_dtypes[arg]);
         }
         curr_types += nin + nout;
 
@@ -5508,9 +5509,13 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         goto fail;
     }
     /*
-     * We add the loop to the new list of all loops and promoters.  If the
-     * equivalent loop was already added, skip this.  If a different loop is
-     * added, raise an error.
+     * We add the loop to the list of all loops and promoters.  If the
+     * equivalent loop was already added, skip this.
+     * Note that even then the ufunc is still modified: The legacy ArrayMethod
+     * already looks up the inner-loop from the ufunc (and this is replaced
+     * below!).
+     * If the existing one is not a legacy ArrayMethod, we raise currently:
+     * A new-style loop should not be replaced by an old-style one.
      */
     int add_new_loop = 1;
     for (Py_ssize_t j = 0; j < PyList_GET_SIZE(ufunc->_loops); j++) {
