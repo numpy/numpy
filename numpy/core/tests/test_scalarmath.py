@@ -678,36 +678,16 @@ class TestAbs:
         x = test_dtype(np.finfo(test_dtype).min)
         assert_equal(absfunc(x), -x.real)
 
-    @pytest.mark.parametrize(
-        "dtype",
-        [
-            pytest.param(
-                dtype,
-                marks=pytest.mark.xfail(
-                    sys.platform == "cygwin" and dtype == np.clongdouble,
-                    reason="npy_cabsl calls npy_hypotl, which is npy_hypot",
-                ),
-            )
-            for dtype in floating_types + complex_floating_types
-        ],
-    )
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_builtin_abs(self, dtype):
+        if dtype == np.clongdouble and sys.platform == "cygwin":
+            pytest.xfail(reason="npy_cabsl calls npy_hypotl, which is npy_hypot")
         self._test_abs_func(abs, dtype)
 
-    @pytest.mark.parametrize(
-        "dtype",
-        [
-            pytest.param(
-                dtype,
-                marks=pytest.mark.xfail(
-                    sys.platform == "cygwin" and dtype == np.clongdouble,
-                    reason="npy_cabsl calls npy_hypotl, which is npy_hypot",
-                ),
-            )
-            for dtype in floating_types + complex_floating_types
-        ],
-    )
+    @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_numpy_abs(self, dtype):
+        if dtype == np.clongdouble and sys.platform == "cygwin":
+            pytest.xfail(reason="npy_cabsl calls npy_hypotl, which is npy_hypot")
         self._test_abs_func(np.abs, dtype)
 
 class TestBitShifts:
