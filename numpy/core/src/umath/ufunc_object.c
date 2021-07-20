@@ -922,7 +922,7 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
 static int
 convert_ufunc_arguments(PyUFuncObject *ufunc,
         ufunc_full_args full_args, PyArrayObject *out_op[],
-        PyArray_DTypeMeta *out_borrowed_op_DTypes[], int *force_legacy_promotion,
+        PyArray_DTypeMeta *out_op_DTypes[], int *force_legacy_promotion,
         PyObject *order_obj, NPY_ORDER *out_order,
         PyObject *casting_obj, NPY_CASTING *out_casting,
         PyObject *subok_obj, npy_bool *out_subok,
@@ -952,8 +952,10 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
                 goto fail;
             }
         }
-        out_borrowed_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
-        if (!out_borrowed_op_DTypes[i]->legacy) {
+        out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
+        Py_INCREF(out_op_DTypes[i]);
+
+        if (!out_op_DTypes[i]->legacy) {
             all_legacy = NPY_FALSE;
         }
         if (PyArray_NDIM(out_op[i]) != 0) {
@@ -965,14 +967,19 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         }
         /* Special case if it was a Python scalar, to allow "weak" promotion */
         if ((PyObject *)out_op[i] != obj) {
+            PyArray_DTypeMeta *scalar_DType = NULL;
             if (PyLong_CheckExact(obj)) {
-                out_borrowed_op_DTypes[i] = &PyArray_PyIntAbstractDType;
+                scalar_DType = &PyArray_PyIntAbstractDType;
             }
             else if (PyFloat_CheckExact(obj)) {
-                out_borrowed_op_DTypes[i] = &PyArray_PyFloatAbstractDType;
+                scalar_DType = &PyArray_PyFloatAbstractDType;
             }
             else if (PyComplex_CheckExact(obj)) {
-                out_borrowed_op_DTypes[i] = &PyArray_PyComplexAbstractDType;
+                scalar_DType = &PyArray_PyComplexAbstractDType;
+            }
+            if (scalar_DType != NULL) {
+                Py_INCREF(scalar_DType);
+                Py_SETREF(out_op_DTypes[i], scalar_DType);
             }
         }
     }
@@ -985,7 +992,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     }
 
     /* Convert and fill in output arguments */
-    memset(out_borrowed_op_DTypes + nin, 0, nout * sizeof(*out_borrowed_op_DTypes));
     if (full_args.out != NULL) {
         for (int i = 0; i < nout; i++) {
             obj = PyTuple_GET_ITEM(full_args.out, i);
@@ -993,7 +999,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
                 goto fail;
             }
             if (out_op[i] != NULL) {
-                out_borrowed_op_DTypes[i + nin] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
+                out_op_DTypes[i + nin] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
+                Py_INCREF(out_op_DTypes[i + nin]);
             }
         }
     }
@@ -4633,11 +4640,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     PyArray_DTypeMeta *signature[NPY_MAXARGS];
     PyArrayObject *operands[NPY_MAXARGS];
+    PyArray_DTypeMeta *operand_DTypes[NPY_MAXARGS];
     PyArray_Descr *operation_descrs[NPY_MAXARGS];
     PyObject *output_array_prepare[NPY_MAXARGS];
     /* Initialize all arrays (we usually only need a small part) */
     memset(signature, 0, nop * sizeof(*signature));
     memset(operands, 0, nop * sizeof(*operands));
+    memset(operand_DTypes, 0, nop * sizeof(*operation_descrs));
     memset(operation_descrs, 0, nop * sizeof(*operation_descrs));
     memset(output_array_prepare, 0, nout * sizeof(*output_array_prepare));
 
@@ -4819,11 +4828,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     npy_bool subok = NPY_TRUE;
     int keepdims = -1;  /* We need to know if it was passed */
     int force_legacy_promotion = 0;
-    PyArray_DTypeMeta *borrowed_operand_DTypes[NPY_MAXARGS];
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
             full_args, operands,
-            borrowed_operand_DTypes, &force_legacy_promotion,
+            operand_DTypes, &force_legacy_promotion,
             /* extract general information: */
             order_obj, &order,
             casting_obj, &casting,
@@ -4843,7 +4851,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
-            borrowed_operand_DTypes, force_legacy_promotion);
+            operand_DTypes, force_legacy_promotion);
     if (ufuncimpl == NULL) {
         goto fail;
     }
@@ -4883,6 +4891,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     Py_XDECREF(wheremask);
     for (int i = 0; i < nop; i++) {
+        Py_XDECREF(operand_DTypes[i]);
         Py_DECREF(operation_descrs[i]);
         if (i < nin) {
             Py_DECREF(operands[i]);
@@ -4905,6 +4914,7 @@ fail:
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
+        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
         if (i < nout) {
             Py_XDECREF(output_array_prepare[i]);

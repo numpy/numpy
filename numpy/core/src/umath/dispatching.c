@@ -505,7 +505,7 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
     Py_XDECREF(type_tuple);
 
     for (int i = 0; i < nargs; i++) {
-        operation_DTypes[i] = NPY_DTYPE(out_descrs[i]);
+        Py_XSETREF(operation_DTypes[i], NPY_DTYPE(out_descrs[i]));
         Py_INCREF(operation_DTypes[i]);
         Py_DECREF(out_descrs[i]);
     }
@@ -641,23 +641,40 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         return NULL;
     }
 
-    PyArray_DTypeMeta *new_op_dtypes[NPY_MAXARGS];
+    PyArray_DTypeMeta *new_op_dtypes[NPY_MAXARGS] = {NULL};
     int cacheable = 1;  /* TODO: only the comparison deprecation needs this */
     if (legacy_promote_using_legacy_type_resolver(ufunc,
             ops, signature, new_op_dtypes, &cacheable) < 0) {
         return NULL;
     }
-    return promote_and_get_info_and_ufuncimpl(ufunc,
+    info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, new_op_dtypes, 0, cacheable);
+    for (int i = 0; i < ufunc->nargs; i++) {
+        Py_XDECREF(new_op_dtypes);
+    }
+    return info;
 }
 
 
-/*
+/**
  * The central entry-point for the promotion and dispatching machinery.
  *
- * It currently works with the operands (although it would be possible to
+ * It currently may work with the operands (although it would be possible to
  * only work with DType (classes/types).  This is because it has to ensure
  * that legacy (value-based promotion) is used when necessary.
+ *
+ * @param ufunc The ufunc object, used mainly for the fallback.
+ * @param ops The array operands (used only for the fallback).
+ * @param signature As input, the DType signature fixed explicitly by the user.
+ *        The signature is *filled* in with the operation signature we end up
+ *        using.
+ * @param op_dtypes The operand DTypes (without casting) which are specified
+ *        either by the `signature` or by an `operand`.
+ *        (outputs and the second input can be NULL for reductions).
+ *        NOTE: In some cases, the promotion machinery may currently modify
+ *        these.
+ * @param force_legacy_promotion If set, we have to use the old type resolution
+ *        to implement value-based promotion/casting.
  */
 NPY_NO_EXPORT PyArrayMethodObject *
 promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
@@ -676,7 +693,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
              * ignore the operand input, we cannot overwrite signature yet
              * since it is fixed (cannot be promoted!)
              */
-            op_dtypes[i] = signature[i];
+            Py_INCREF(signature[i]);
+            Py_XSETREF(op_dtypes[i], signature[i]);
             assert(i >= ufunc->nin || !signature[i]->abstract);
         }
     }
