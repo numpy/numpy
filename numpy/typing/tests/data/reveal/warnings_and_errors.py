@@ -7,4 +7,5 @@ reveal_type(np.VisibleDeprecationWarning())  # E: numpy.VisibleDeprecationWarnin
 reveal_type(np.ComplexWarning())  # E: numpy.ComplexWarning
 reveal_type(np.RankWarning())  # E: numpy.RankWarning
 reveal_type(np.TooHardError())  # E: numpy.TooHardError
-reveal_type(np.AxisError(1))  # E: numpy.AxisError
+reveal_type(np.AxisError("test"))  # E: numpy.AxisError
+reveal_type(np.AxisError(5, 1))  # E: numpy.AxisError
