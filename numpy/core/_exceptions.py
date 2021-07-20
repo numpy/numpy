@@ -124,13 +124,14 @@ class TooHardError(RuntimeError):
 class AxisError(ValueError, IndexError):
     """Axis supplied was invalid.
 
-    A `ValueError` and `IndexError` subclass raised whenever an
-    ``axis`` parameter is specified that is larger than
-    the number of array dimensions.
+    This is raised whenever an ``axis`` parameter is specified that is larger
+    than the number of array dimensions.
+    For compatibility with code written against older numpy versions, which
+    raised a mixture of `ValueError` and `IndexError` for this situation, this
+    exception subclasses both to ensure that ``except ValueError`` and
+    ``except IndexError`` continue to catch `AxisError`s.
 
-    .. versionchanged:: 1.22
-
-        Added the ``axis`` and ``ndim`` attributes.
+    .. versionadded:: 1.13
 
     Parameters
     ----------
@@ -148,9 +149,14 @@ class AxisError(ValueError, IndexError):
         The out of bounds axis or ``None`` if a custom exception
         message was provided. This should be the axis as passed by
         the user, before any normalization to resolve negative indices.
+
+        .. versionadded:: 1.22
     ndim : int, optional
         The number of array dimensions or ``None`` if a custom exception
         message was provided.
+
+        .. versionadded:: 1.22
+
 
     Examples
     --------
