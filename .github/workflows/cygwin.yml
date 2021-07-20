@@ -63,31 +63,5 @@ jobs:
         run: |
           dash -c "/usr/bin/python3.7 -m pip show numpy"
           dash -c "/usr/bin/python3.7 -m pip show -f numpy | grep .dll"
-          echo >list_dlls_dos.sh '#!/bin/dash
-          site_packages=$(python3.7 -m pip show numpy | \
-              grep Location | cut -d " " -f 2 -);
-          dll_list=$(for name in $(python3.7 -m pip show -f numpy | \
-              grep -F .dll); do echo ${site_packages}/${name}; done)
-          echo "Checks for existence, permissions and file type"
-          ls -l ${dll_list}
-          file ${dll_list}
-          echo "Dependency checks"
-          ldd ${dll_list} | grep -F -e " => not found" && exit 1
-          cygcheck ${dll_list} >cygcheck_dll_list 2>cygcheck_missing_deps
-          grep -F -e "cygcheck: track_down: could not find " cygcheck_missing_deps && exit 1
-          echo "Import tests"
-          mkdir -p dist/
-          cd dist/
-          for name in ${dll_list};
-          do
-              echo ${name}
-              ext_module=$(echo ${name} | \
-                  sed -E \
-                      -e "s/^\/+(home|usr).*?site-packages\/+//" \
-                      -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll$//" \
-                      -e "s/\//./g")
-              python3.7 -c "import ${ext_module}"
-          done
-          '
-          dash -c "/bin/tr -d '\r' <list_dlls_dos.sh >list_dlls_unix.sh"
+          dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
           dash "list_dlls_unix.sh"
