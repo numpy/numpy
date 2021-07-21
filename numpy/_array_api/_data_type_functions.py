@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ._array_object import Array
-from ._dtypes import _all_dtypes
+from ._dtypes import _all_dtypes, _result_type
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Tuple, Union
@@ -94,12 +94,24 @@ def result_type(*arrays_and_dtypes: Sequence[Union[Array, Dtype]]) -> Dtype:
 
     See its docstring for more information.
     """
+    # Note: we use a custom implementation that gives only the type promotions
+    # required by the spec rather than using np.result_type. NumPy implements
+    # too many extra type promotions like int64 + uint64 -> float64, and does
+    # value-based casting on scalar arrays.
     A = []
     for a in arrays_and_dtypes:
         if isinstance(a, Array):
-            a = a._array
+            a = a.dtype
         elif isinstance(a, np.ndarray) or a not in _all_dtypes:
             raise TypeError("result_type() inputs must be array_api arrays or dtypes")
         A.append(a)
 
-    return np.result_type(*A)
+    if len(A) == 0:
+        raise ValueError("at least one array or dtype is required")
+    elif len(A) == 1:
+        return A[0]
+    else:
+        t = A[0]
+        for t2 in A[1:]:
+            t = _result_type(t, t2)
+        return t
