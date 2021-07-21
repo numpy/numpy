@@ -113,7 +113,7 @@ def bitwise_and(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _integer_or_boolean_dtypes or x2.dtype not in _integer_or_boolean_dtypes:
-        raise TypeError('Only integer_or_boolean dtypes are allowed in bitwise_and')
+        raise TypeError('Only integer or boolean dtypes are allowed in bitwise_and')
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.bitwise_and(x1._array, x2._array))
 
