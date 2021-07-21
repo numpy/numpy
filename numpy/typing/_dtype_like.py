@@ -67,6 +67,8 @@ from ._char_codes import (
     _ObjectCodes,
 )
 
+_DType_co = TypeVar("_DType_co", covariant=True, bound=np.dtype)
+
 _DTypeLikeNested = Any  # TODO: wait for support for recursive types
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
@@ -82,7 +84,6 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         itemsize: int
         aligned: bool
 
-    _DType_co = TypeVar("_DType_co", covariant=True, bound=np.dtype)
 
     # A protocol for anything with the dtype attribute
     class _SupportsDType(Protocol[_DType_co]):
