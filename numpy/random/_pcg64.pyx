@@ -338,7 +338,7 @@ cdef class PCG64DXSM(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``PCG64DXSM`` makes a guarantee that a fixed seed and will always produce
+    ``PCG64DXSM`` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     References
