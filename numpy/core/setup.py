@@ -63,6 +63,14 @@ class CallOnceOnly:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
 
+def can_link_svml():
+    """SVML library is supported only on x86_64 architecture and currently
+    only on linux
+    """
+    machine = platform.machine()
+    system = platform.system()
+    return "x86_64" in machine and system == "Linux"
+
 def pythonlib_dir():
     """return path where libpython* is."""
     if sys.platform == 'win32':
@@ -454,6 +462,9 @@ def configuration(parent_package='',top_path=None):
 
             # Inline check
             inline = config_cmd.check_inline()
+
+            if can_link_svml():
+                moredefs.append(('NPY_CAN_LINK_SVML', 1))
 
             # Use relaxed stride checking
             if NPY_RELAXED_STRIDES_CHECKING:
@@ -953,7 +964,7 @@ def configuration(parent_package='',top_path=None):
             ]
 
     svml_objs = []
-    if "x86" in platform.machine():
+    if can_link_svml():
         for svmlsrc in os.listdir("numpy/core/src/umath/svml"):
             if svmlsrc.endswith(".s"):
                 svml_objs.append(join('src', 'umath', 'svml', svmlsrc))

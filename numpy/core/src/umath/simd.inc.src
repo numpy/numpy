@@ -129,7 +129,7 @@ run_binary_avx512f_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_in
  * #func = tanh, exp2, log2, log10, expm1, log1p, cbrt, tan, asin, acos, atan, sinh, cosh, asinh, acosh, atanh#
  */
 
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && defined NPY_CAN_LINK_SVML
 static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
 AVX512_SKX_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps);
 #endif
@@ -137,7 +137,7 @@ AVX512_SKX_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const
 static NPY_INLINE int
 run_unary_avx512_skx_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && defined NPY_CAN_LINK_SVML
     if (IS_UNARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
         AVX512_SKX_@func@_@TYPE@(args, dimensions, steps);
         return 1;
@@ -155,7 +155,7 @@ run_unary_avx512_skx_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_
  * #func = sin, cos#
  */
 
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && defined NPY_CAN_LINK_SVML
 static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
 AVX512_SKX_@func@_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps);
 #endif
@@ -163,7 +163,7 @@ AVX512_SKX_@func@_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const
 static NPY_INLINE int
 run_unary_avx512_skx_@func@_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && defined NPY_CAN_LINK_SVML
     if (IS_UNARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
         AVX512_SKX_@func@_DOUBLE(args, dimensions, steps);
         return 1;
@@ -1207,7 +1207,7 @@ NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
  * #default_val = 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0#
  */
 
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && defined NPY_CAN_LINK_SVML
 static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
 AVX512_SKX_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
@@ -1274,7 +1274,7 @@ AVX512_SKX_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const
  * #func = sin, cos#
  */
 
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && defined NPY_CAN_LINK_SVML
 static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
 AVX512_SKX_@func@_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
