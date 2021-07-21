@@ -1724,12 +1724,12 @@ _convert_from_str(PyObject *obj, int align)
 
         /* Check for a deprecated Numeric-style typecode */
         /* `Uint` has deliberately weird uppercasing */
-        char *dep_tps[] = {"Bytes", "Datetime64", "Str", "Uint"};
+        char *dep_tps[] = {"Bytes0", "Datetime64", "Str0", "Uint32", "Uint64"};
         int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
         for (int i = 0; i < ndep_tps; ++i) {
             char *dep_tp = dep_tps[i];
 
-            if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
+            if (strncmp(type, dep_tp, strlen(dep_tp)+1) == 0) {
                 /* Deprecated 2020-06-09, NumPy 1.20 */
                 if (DEPRECATE("Numeric-style type codes are "
                               "deprecated and will result in "
