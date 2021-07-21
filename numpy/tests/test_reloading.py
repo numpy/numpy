@@ -57,5 +57,8 @@ def test_full_reimport():
         with warns(UserWarning):
             import numpy as np
         """)
-    p = subprocess.run([sys.executable, '-c', code])
-
+    p = subprocess.run([sys.executable, '-c', code], capture_output=True)
+    if p.returncode:
+        raise AssertionError(
+            f"Non-zero return code: {p.returncode!r}\n\n{p.stderr.decode()}"
+        )
