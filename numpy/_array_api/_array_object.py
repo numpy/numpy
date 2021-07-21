@@ -81,7 +81,7 @@ class Array:
         """
         Performs the operation __repr__.
         """
-        return self._array.__repr__().replace('array', 'Array')
+        return f"Array({np.array2string(self._array, separator=', ')}, dtype={self.dtype.name})"
 
     # Helper function to match the type promotion rules in the spec
     def _promote_scalar(self, scalar):
