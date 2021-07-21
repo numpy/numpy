@@ -933,6 +933,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
+            # For testing. Eventually, should use public API and be separate:
+            join('src', 'umath', '_scaled_float_dtype.c'),
             ]
 
     umath_deps = [
