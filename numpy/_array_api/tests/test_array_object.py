@@ -233,3 +233,17 @@ def test_operators():
                     assert_raises(ValueError, lambda: x.__imatmul__(y))
                 else:
                     x.__imatmul__(y)
+
+def test_python_scalar_construtors():
+    a = asarray(False)
+    b = asarray(0)
+    c = asarray(0.)
+
+    assert bool(a) == bool(b) == bool(c) == False
+    assert int(a) == int(b) == int(c) == 0
+    assert float(a) == float(b) == float(c) == 0.
+
+    # bool/int/float should only be allowed on 0-D arrays.
+    assert_raises(TypeError, lambda: bool(asarray([False])))
+    assert_raises(TypeError, lambda: int(asarray([0])))
+    assert_raises(TypeError, lambda: float(asarray([0.])))
