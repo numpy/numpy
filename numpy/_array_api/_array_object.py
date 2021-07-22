@@ -382,8 +382,6 @@ class Array:
         other = self._check_allowed_dtypes(other, 'all', '__eq__')
         if other is NotImplemented:
             return other
-        if isinstance(other, (int, float, bool)):
-            other = self._promote_scalar(other)
         self, other = self._normalize_two_args(self, other)
         res = self._array.__eq__(other._array)
         return self.__class__._new(res)
@@ -542,8 +540,6 @@ class Array:
         other = self._check_allowed_dtypes(other, 'all', '__ne__')
         if other is NotImplemented:
             return other
-        if isinstance(other, (int, float, bool)):
-            other = self._promote_scalar(other)
         self, other = self._normalize_two_args(self, other)
         res = self._array.__ne__(other._array)
         return self.__class__._new(res)
