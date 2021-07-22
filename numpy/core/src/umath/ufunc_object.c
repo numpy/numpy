@@ -1335,12 +1335,12 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
     NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
 
-    if (flags & NPY_METH_NO_FLOATINGPOINT_ERRORS || res < 0) {
-        return res;
+    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* NOTE: We could check float errors even when `res < 0` */
+        const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
+        res = _check_ufunc_fperr(errormask, extobj, name);
     }
-    /* NOTE: We could check float errors even when `res < 0` */
-    const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-    return _check_ufunc_fperr(errormask, extobj, name);
+    return res;
 }
 
 
@@ -1574,8 +1574,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
 
-    // TODO: use the same pattern as we changed to in the trivial-loop
-    //       have to dealloc the iterator, but can do that first.
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
         const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);

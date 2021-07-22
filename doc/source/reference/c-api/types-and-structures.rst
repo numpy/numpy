@@ -958,10 +958,11 @@ PyUFunc_Type and PyUFuncObject
 
    .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector
 
-       .. deprecated::
+       .. deprecated:: 1.22
 
-            Some fallback support for this slot exists, but it should not be
-            called and will not be used in the future.
+            Some fallback support for this slot exists, but will be removed
+            eventually.  A univiersal function which relied on this will have
+            eventually have to be ported.
             See ref:`NEP 41 <NEP41>` and ref:`NEP 43 <NEP43>`
 
    .. c:member:: void *reserved2
