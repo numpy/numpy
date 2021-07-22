@@ -741,7 +741,7 @@ class Array:
         # of self.
         other_shape = other.shape
         if self.shape == () or other_shape == ():
-            raise TypeError("@= requires at least one dimension")
+            raise ValueError("@= requires at least one dimension")
         if len(other_shape) == 1 or other_shape[-1] != other_shape[-2]:
             raise ValueError("@= cannot change the shape of the input array")
         self._array[:] = self._array.__matmul__(other._array)
