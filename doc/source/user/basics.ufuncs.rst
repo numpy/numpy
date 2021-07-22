@@ -35,10 +35,11 @@ One can also produce custom :class:`numpy.ufunc` instances using the
 Ufunc methods
 =============
 
-All ufuncs have four methods. However, these methods only make sense on scalar
+All ufuncs have four methods. They can be found at
+:ref:`ufuncs.methods`. However, these methods only make sense on scalar
 ufuncs that take two input arguments and return one output argument.
 Attempting to call these methods on other ufuncs will cause a
-:exc:`ValueError`. 
+:exc:`ValueError`.
 
 The reduce-like methods all take an *axis* keyword, a *dtype*
 keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
@@ -46,7 +47,18 @@ The *axis* keyword specifies the axis of the array over which the reduction
 will take place (with negative values counting backwards). Generally, it is an
 integer, though for :meth:`numpy.ufunc.reduce`, it can also be a tuple of
 ``int`` to reduce over several axes at once, or ``None``, to reduce over all
-axes. The *dtype* keyword allows you to manage a very common problem that arises
+axes. For example::
+
+   >>> x = np.arange(9).reshape(3,3)
+   array([[0, 1, 2],
+         [3, 4, 5],
+         [6, 7, 8]])
+   >>> np.add.reduce(x, 1)
+   array([ 3, 12, 21])
+   >>> np.add.reduce(x, (0, 1))
+   36
+
+The *dtype* keyword allows you to manage a very common problem that arises
 when naively using :meth:`ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
 elements, but the result does not fit into the data type of the
@@ -59,14 +71,28 @@ mostly up to you. There is one exception: if no *dtype* is given for a
 reduction on the "add" or "multiply" operations, then if the input type is
 an integer (or Boolean) data-type and smaller than the size of the
 :class:`numpy.int_` data type, it will be internally upcast to the :class:`int_`
-(or :class:`numpy.uint`) data-type. Finally, the *out* keyword allows you to
+(or :class:`numpy.uint`) data-type. In the previous example::
+
+   >>> x.dtype 
+   dtype('int64')
+   >>> np.multiply.reduce(x, dtype=float)
+   array([ 0., 28., 80.])
+
+Finally, the *out* keyword allows you to
 provide an output array (for single-output ufuncs, which are currently the only
 ones supported; for future extension, however, a tuple with a single argument
 can be passed in). If *out* is given, the *dtype* argument is ignored.
+Considering ``x`` from the previous example::
 
-Ufuncs also have a fifth method that allows in place operations to be
-performed using fancy indexing. No :ref:`buffering <use-of-internal-buffers>`
-is used on the dimensions where fancy indexing is used, so the fancy index can
+   >>> y = np.zeros(3, dtype=int)
+   array([0, 0, 0])
+   >>> np.multiply.reduce(x, dtype=float, out=y)
+   array([ 0, 28, 80])     # dtype argument is ignored
+
+Ufuncs also have a fifth method, :func:`nimpy.ufunc.at`, that allows in place
+operations to be performed using fancy indexing. No
+:ref:`buffering <use-of-internal-buffers>` is used on the dimensions where
+fancy indexing is used, so the fancy index can
 list an item more than once and the operation will be performed on the result
 of the previous operation for that item.
 
@@ -230,49 +256,49 @@ Python with a function call: :func:`can_cast(fromtype, totype)
 the 24 internally supported types on the author's 64-bit system. You
 can generate this table for your system with the code given in the example.
 
-.. admonition:: Example
+.. rubric:: Example
 
-    Code segment showing the "can cast safely" table for a 64-bit system.
-    Generally the output depends on the system; your system might result in
-    a different table.
+Code segment showing the "can cast safely" table for a 64-bit system.
+Generally the output depends on the system; your system might result in
+a different table.
 
-    >>> mark = {False: ' -', True: ' Y'}
-    >>> def print_table(ntypes):
-    ...     print('X ' + ' '.join(ntypes))
-    ...     for row in ntypes:
-    ...         print(row, end='')
-    ...         for col in ntypes:
-    ...             print(mark[np.can_cast(row, col)], end='')
-    ...         print()
-    ...
-    >>> print_table(np.typecodes['All'])
-    X ? b h i l q p B H I L Q P e f d g F D G S U V O M m
-    ? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-    b - Y Y Y Y Y Y - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
-    h - - Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
-    i - - - Y Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    l - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    q - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    p - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-    B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-    H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
-    I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-    Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-    P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-    e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
-    f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
-    d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
-    g - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
-    F - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
-    D - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
-    G - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
-    S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
-    U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
-    V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
-    O - - - - - - - - - - - - - - - - - - - - - - - Y - -
-    M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
-    m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
+>>> mark = {False: ' -', True: ' Y'}
+>>> def print_table(ntypes):
+...     print('X ' + ' '.join(ntypes))
+...     for row in ntypes:
+...         print(row, end='')
+...         for col in ntypes:
+...             print(mark[np.can_cast(row, col)], end='')
+...         print()
+...
+>>> print_table(np.typecodes['All'])
+X ? b h i l q p B H I L Q P e f d g F D G S U V O M m
+? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+b - Y Y Y Y Y Y - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
+h - - Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
+i - - - Y Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+l - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+q - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+p - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
+I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
+L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
+f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
+d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
+g - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
+F - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
+D - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
+G - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
+S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
+U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
+V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
+O - - - - - - - - - - - - - - - - - - - - - - - Y - -
+M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
+m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
 
 You should note that, while included in the table for completeness,
 the 'S', 'U', and 'V' types cannot be operated on by ufuncs. Also,
