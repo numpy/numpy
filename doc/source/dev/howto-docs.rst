@@ -59,6 +59,10 @@ Obvious **wording** mistakes (like leaving out a "not") fall into the typo
 category, but other rewordings -- even for grammar -- require a judgment call,
 which raises the bar. Test the waters by first presenting the fix as an issue.
 
+Some functions/objects like numpy.ndarray.transpose, numpy.array etc. defined in 
+C-extension modules have their docstrings defined seperately in `_add_newdocs.py 
+<https://github.com/numpy/numpy/blob/main/numpy/core/_add_newdocs.py>`__
+
 **********************
 Contributing new pages
 **********************
