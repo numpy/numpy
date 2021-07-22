@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ._array_object import Array
-from ._dtypes import _numeric_dtypes
+from ._dtypes import _numeric_dtypes, _result_type
 
 from typing import Optional, Sequence, Tuple, Union
 
@@ -27,6 +27,8 @@ def matmul(x1: Array, x2: Array, /) -> Array:
     # np.matmul.
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in matmul')
+    # Call result type here just to raise on disallowed type combinations
+    _result_type(x1.dtype, x2.dtype)
 
     return Array._new(np.matmul(x1._array, x2._array))
 
@@ -36,6 +38,8 @@ def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], 
     # np.tensordot.
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in tensordot')
+    # Call result type here just to raise on disallowed type combinations
+    _result_type(x1.dtype, x2.dtype)
 
     return Array._new(np.tensordot(x1._array, x2._array, axes=axes))
 

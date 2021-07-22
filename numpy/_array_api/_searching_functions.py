@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._array_object import Array
+from ._dtypes import _result_type
 
 from typing import Optional, Tuple
 
@@ -38,4 +39,6 @@ def where(condition: Array, x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
+    # Call result type here just to raise on disallowed type combinations
+    _result_type(x1.dtype, x2.dtype)
     return Array._new(np.where(condition._array, x1._array, x2._array))
