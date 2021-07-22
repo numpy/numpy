@@ -379,12 +379,14 @@ def blue_text(s):
 def cyg2win32(path: str) -> str:
     """Convert a path from Cygwin-native to Windows-native.
 
-    Uses the cygpath utility (part of the Base install) to do the actual
-    conversion.  Falls back to returning the original path if this fails.
+    Uses the cygpath utility (part of the Base install) to do the
+    actual conversion.  Falls back to returning the original path if
+    this fails.
 
-    Handles the default ``/cygdrive`` mount prefix as well as the ``/proc/cygdrive``
-    portable prefix, custom cygdrive prefixes such as ``/`` or ``/mnt``, and
-    absolute paths such as ``/usr/src/`` or ``/home/username``
+    Handles the default ``/cygdrive`` mount prefix as well as the
+    ``/proc/cygdrive`` portable prefix, custom cygdrive prefixes such
+    as ``/`` or ``/mnt``, and absolute paths such as ``/usr/src/`` or
+    ``/home/username``
 
     Parameters
     ----------
