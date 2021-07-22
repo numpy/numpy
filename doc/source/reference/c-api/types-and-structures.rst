@@ -958,15 +958,11 @@ PyUFunc_Type and PyUFuncObject
 
    .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector
 
-       .. note::
+       .. deprecated::
 
             Some fallback support for this slot exists, but it should not be
-            called and not be used in the future.
+            called and will not be used in the future.
             See ref:`NEP 41 <NEP41>` and ref:`NEP 43 <NEP43>`
-
-       A function which returns an inner loop. The ``legacy`` in the name arises
-       because for NumPy 1.6 a better variant had been planned. This variant
-       has not yet come about.
 
    .. c:member:: void *reserved2
 
