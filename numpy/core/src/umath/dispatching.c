@@ -70,7 +70,37 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
 static int
 add_ufunc_loop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 {
-    assert(PyTuple_CheckExact(info) && PyTuple_GET_SIZE(info) == 2);
+    /*
+     * Validate the info object, this should likely move to to a different
+     * entry-point in the future (and is mostly unnecessary currently).
+     */
+    if (!PyTuple_CheckExact(info) || PyTuple_GET_SIZE(info) != 2) {
+        PyErr_SetString(PyExc_TypeError,
+                "Info must be a tuple: "
+                "(tuple of DTypes or None, ArrayMethod or promoter)");
+        return -1;
+    }
+    PyObject *DType_tuple = PyTuple_GetItem(info, 0);
+    if (PyTuple_GET_SIZE(DType_tuple) != ufunc->nargs) {
+        PyErr_SetString(PyExc_TypeError,
+                "DType tuple length does not match ufunc number of operands");
+        return -1;
+    }
+    for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(DType_tuple); i++) {
+        PyObject *item = PyTuple_GET_ITEM(DType_tuple, i);
+        if (item != Py_None
+                && !PyObject_TypeCheck(item, &PyArrayDTypeMeta_Type)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "DType tuple may only contain None and DType classes");
+            return -1;
+        }
+    }
+    if (!PyObject_TypeCheck(PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+        /* Must also accept promoters in the future. */
+        PyErr_SetString(PyExc_TypeError,
+                "Second argument to info must be an ArrayMethod or promoter");
+        return -1;
+    }
 
     if (ufunc->_loops == NULL) {
         ufunc->_loops = PyList_New(0);
@@ -78,8 +108,6 @@ add_ufunc_loop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
             return -1;
         }
     }
-
-    PyObject *DType_tuple = PyTuple_GetItem(info, 0);
 
     PyObject *loops = ufunc->_loops;
     Py_ssize_t length = PyList_Size(loops);
