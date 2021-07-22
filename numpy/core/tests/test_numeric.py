@@ -637,62 +637,65 @@ class TestFloatExceptions:
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
-    def test_floating_exceptions(self):
+    # Test for all real and complex float types
+    @pytest.mark.parametrize("typecode", np.typecodes["AllFloat"])
+    def test_floating_exceptions(self, typecode):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
-            # Test for all real and complex float types
-            for typecode in np.typecodes['AllFloat']:
-                ftype = np.obj2sctype(typecode)
-                if np.dtype(ftype).kind == 'f':
-                    # Get some extreme values for the type
-                    fi = np.finfo(ftype)
-                    ft_tiny = fi.machar.tiny
-                    ft_max = fi.max
-                    ft_eps = fi.eps
-                    underflow = 'underflow'
-                    divbyzero = 'divide by zero'
-                else:
-                    # 'c', complex, corresponding real dtype
-                    rtype = type(ftype(0).real)
-                    fi = np.finfo(rtype)
-                    ft_tiny = ftype(fi.machar.tiny)
-                    ft_max = ftype(fi.max)
-                    ft_eps = ftype(fi.eps)
-                    # The complex types raise different exceptions
-                    underflow = ''
-                    divbyzero = ''
-                overflow = 'overflow'
-                invalid = 'invalid'
+            ftype = np.obj2sctype(typecode)
+            if np.dtype(ftype).kind == 'f':
+                # Get some extreme values for the type
+                fi = np.finfo(ftype)
+                ft_tiny = fi.machar.tiny
+                ft_max = fi.max
+                ft_eps = fi.eps
+                underflow = 'underflow'
+                divbyzero = 'divide by zero'
+            else:
+                # 'c', complex, corresponding real dtype
+                rtype = type(ftype(0).real)
+                fi = np.finfo(rtype)
+                ft_tiny = ftype(fi.machar.tiny)
+                ft_max = ftype(fi.max)
+                ft_eps = ftype(fi.eps)
+                # The complex types raise different exceptions
+                underflow = ''
+                divbyzero = ''
+            overflow = 'overflow'
+            invalid = 'invalid'
 
-                # The value of tiny for double double is NaN, so we need to
-                # pass the assert
-                if not np.isnan(ft_tiny):
-                    self.assert_raises_fpe(underflow,
-                                        lambda a, b: a/b, ft_tiny, ft_max)
-                    self.assert_raises_fpe(underflow,
-                                        lambda a, b: a*b, ft_tiny, ft_tiny)
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a*b, ft_max, ftype(2))
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a/b, ft_max, ftype(0.5))
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a+b, ft_max, ft_max*ft_eps)
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a-b, -ft_max, ft_max*ft_eps)
-                self.assert_raises_fpe(overflow,
-                                       np.power, ftype(2), ftype(2**fi.nexp))
-                self.assert_raises_fpe(divbyzero,
-                                       lambda a, b: a/b, ftype(1), ftype(0))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a/b, ftype(np.inf), ftype(np.inf))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a/b, ftype(0), ftype(0))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a-b, ftype(np.inf), ftype(np.inf))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a+b, ftype(np.inf), ftype(-np.inf))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a*b, ftype(0), ftype(np.inf))
+            # The value of tiny for double double is NaN, so we need to
+            # pass the assert
+            if not np.isnan(ft_tiny):
+                self.assert_raises_fpe(underflow,
+                                    lambda a, b: a/b, ft_tiny, ft_max)
+                self.assert_raises_fpe(underflow,
+                                    lambda a, b: a*b, ft_tiny, ft_tiny)
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a*b, ft_max, ftype(2))
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a/b, ft_max, ftype(0.5))
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a+b, ft_max, ft_max*ft_eps)
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a-b, -ft_max, ft_max*ft_eps)
+            self.assert_raises_fpe(overflow,
+                                   np.power, ftype(2), ftype(2**fi.nexp))
+            self.assert_raises_fpe(divbyzero,
+                                   lambda a, b: a/b, ftype(1), ftype(0))
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a/b, ftype(np.inf), ftype(np.inf)
+            )
+            self.assert_raises_fpe(invalid,
+                                   lambda a, b: a/b, ftype(0), ftype(0))
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a-b, ftype(np.inf), ftype(np.inf)
+            )
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a+b, ftype(np.inf), ftype(-np.inf)
+            )
+            self.assert_raises_fpe(invalid,
+                                   lambda a, b: a*b, ftype(0), ftype(np.inf))
 
     def test_warnings(self):
         # test warning code path
