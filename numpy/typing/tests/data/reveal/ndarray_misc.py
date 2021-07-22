@@ -11,14 +11,15 @@ import ctypes as ct
 from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
-class SubClass(np.ndarray): ...
+class SubClass(NDArray[np.object_]): ...
 
 f8: np.float64
 B: SubClass
-AR_f8: np.ndarray[Any, np.dtype[np.float64]]
-AR_i8: np.ndarray[Any, np.dtype[np.int64]]
-AR_U: np.ndarray[Any, np.dtype[np.str_]]
+AR_f8: NDArray[np.float64]
+AR_i8: NDArray[np.int64]
+AR_U: NDArray[np.str_]
 
 ctypes_obj = AR_f8.ctypes
 
@@ -126,7 +127,7 @@ reveal_type(AR_f8.round(out=B))  # E: SubClass
 
 reveal_type(f8.repeat(1))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(AR_f8.repeat(1))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(B.repeat(1))  # E: numpy.ndarray[Any, Any]
+reveal_type(B.repeat(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.object_]]
 
 reveal_type(f8.std())  # E: Any
 reveal_type(AR_f8.std())  # E: Any
@@ -189,3 +190,6 @@ reveal_type(float(AR_U))  # E: float
 reveal_type(complex(AR_f8))  # E: complex
 
 reveal_type(operator.index(AR_i8))  # E: int
+
+reveal_type(AR_f8.__array_prepare__(B))  # E: numpy.ndarray[Any, numpy.dtype[numpy.object_]]
+reveal_type(AR_f8.__array_wrap__(B))  # E: numpy.ndarray[Any, numpy.dtype[numpy.object_]]

@@ -1,0 +1,7 @@
+Add ``smallest_normal`` and ``smallest_subnormal`` attributes to `finfo`
+-------------------------------------------------------------------------
+
+The attributes ``smallest_normal`` and ``smallest_subnormal`` are available as
+an extension of `finfo` class for any floating-point data type. To use these
+new attributes, write ``np.finfo(np.float64).smallest_normal`` or
+``np.finfo(np.float64).smallest_subnormal``.

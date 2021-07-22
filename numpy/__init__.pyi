@@ -11,6 +11,8 @@ from contextlib import ContextDecorator
 
 from numpy.core.multiarray import flagsobj
 from numpy.core._internal import _ctypes
+from numpy.core.getlimits import MachArLike
+
 from numpy.typing import (
     # Arrays
     ArrayLike,
@@ -467,6 +469,12 @@ from numpy.lib.function_base import (
     quantile as quantile,
 )
 
+from numpy.lib.histograms import (
+    histogram_bin_edges as histogram_bin_edges,
+    histogram as histogram,
+    histogramdd as histogramdd,
+)
+
 from numpy.lib.index_tricks import (
     ravel_multi_index as ravel_multi_index,
     unravel_index as unravel_index,
@@ -607,6 +615,12 @@ from numpy.lib.utils import (
     safe_eval as safe_eval,
 )
 
+from numpy.matrixlib import (
+    asmatrix as asmatrix,
+    mat as mat,
+    bmat as bmat,
+)
+
 __all__: List[str]
 __path__: List[str]
 __version__: str
@@ -681,10 +695,6 @@ class chararray(ndarray[_ShapeType, _DType_co]):
     def isnumeric(self): ...
     def isdecimal(self): ...
 
-class finfo:
-    def __new__(cls, dtype: Any) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
-
 class format_parser:
     def __init__(
         self,
@@ -694,10 +704,6 @@ class format_parser:
         aligned: Any = ...,
         byteorder: Any = ...,
     ) -> None: ...
-
-class iinfo:
-    def __init__(self, int_type: Any) -> None: ...
-    def __getattr__(self, key: str) -> Any: ...
 
 class matrix(ndarray[_ShapeType, _DType_co]):
     def __new__(
@@ -876,20 +882,17 @@ class vectorize:
     ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
-# Placeholders for Python-based functions
-def asmatrix(data, dtype=...): ...
-def asscalar(a): ...
-def cumproduct(*args, **kwargs): ...
-def histogram(a, bins=..., range=..., normed=..., weights=..., density=...): ...
-def histogram_bin_edges(a, bins=..., range=..., weights=...): ...
-def histogramdd(sample, bins=..., range=..., normed=..., weights=..., density=...): ...
-def mat(data, dtype=...): ...
-def max(a, axis=..., out=..., keepdims=..., initial=..., where=...): ...
-def min(a, axis=..., out=..., keepdims=..., initial=..., where=...): ...
-def product(*args, **kwargs): ...
-def round(a, decimals=..., out=...): ...
-def round_(a, decimals=..., out=...): ...
-def show_config(): ...
+# Some of these are aliases; others are wrappers with an identical signature
+round = around
+round_ = around
+max = amax
+min = amin
+product = prod
+cumproduct = cumprod
+sometrue = any
+alltrue = all
+
+def show_config() -> None: ...
 
 # TODO: Sort out which parameters are positional-only
 def nested_iters(*args, **kwargs): ... # TODO: Sort out parameters
@@ -1216,10 +1219,9 @@ class _ArrayOrScalarCommon:
     @property
     def __array_interface__(self): ...
     @property
-    def __array_priority__(self): ...
+    def __array_priority__(self) -> float: ...
     @property
     def __array_struct__(self): ...
-    def __array_wrap__(array, context=...): ...
     def __setstate__(self, __state): ...
     # a `bool_` is returned when `keepdims=True` and `self` is a 0d array
 
@@ -1596,6 +1598,7 @@ _FlexDType = TypeVar("_FlexDType", bound=dtype[flexible])
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
 _ShapeType = TypeVar("_ShapeType", bound=Any)
+_ShapeType2 = TypeVar("_ShapeType2", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
 # There is currently no exhaustive way to type the buffer protocol,
@@ -1671,6 +1674,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __array__(self, __dtype: None = ...) -> ndarray[Any, _DType_co]: ...
     @overload
     def __array__(self, __dtype: _DType) -> ndarray[Any, _DType]: ...
+
+    def __array_wrap__(
+        self,
+        __array: ndarray[_ShapeType2, _DType],
+        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+    ) -> ndarray[_ShapeType2, _DType]: ...
+
+    def __array_prepare__(
+        self,
+        __array: ndarray[_ShapeType2, _DType],
+        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+    ) -> ndarray[_ShapeType2, _DType]: ...
+
     @property
     def ctypes(self) -> _ctypes[int]: ...
     @property
@@ -3665,9 +3681,12 @@ class RankWarning(UserWarning): ...
 class TooHardError(RuntimeError): ...
 
 class AxisError(ValueError, IndexError):
-    def __init__(
-        self, axis: int, ndim: Optional[int] = ..., msg_prefix: Optional[str] = ...
-    ) -> None: ...
+    axis: None | int
+    ndim: None | int
+    @overload
+    def __init__(self, axis: str, ndim: None = ..., msg_prefix: None = ...) -> None: ...
+    @overload
+    def __init__(self, axis: int, ndim: int, msg_prefix: None | str = ...) -> None: ...
 
 _CallType = TypeVar("_CallType", bound=Union[_ErrFunc, _SupportsWrite])
 
@@ -3774,3 +3793,58 @@ class busdaycalendar:
     def weekmask(self) -> NDArray[bool_]: ...
     @property
     def holidays(self) -> NDArray[datetime64]: ...
+
+class finfo(Generic[_FloatType]):
+    dtype: dtype[_FloatType]
+    bits: int
+    eps: _FloatType
+    epsneg: _FloatType
+    iexp: int
+    machep: int
+    max: _FloatType
+    maxexp: int
+    min: _FloatType
+    minexp: int
+    negep: int
+    nexp: int
+    nmant: int
+    precision: int
+    resolution: _FloatType
+    tiny: _FloatType
+
+    # NOTE: Not technically a property, but this is the only way we can
+    # access the precision of the underlying float
+    @property
+    def machar(self: finfo[floating[_NBit1]]) -> MachArLike[_NBit1]: ...
+    @machar.setter
+    def machar(self: finfo[floating[_NBit1]], value: MachArLike[_NBit1]) -> None: ...
+
+    @overload
+    def __new__(
+        cls, dtype: inexact[_NBit1] | _DTypeLike[inexact[_NBit1]]
+    ) -> finfo[floating[_NBit1]]: ...
+    @overload
+    def __new__(
+        cls, dtype: complex | float | Type[complex] | Type[float]
+    ) -> finfo[float_]: ...
+    @overload
+    def __new__(
+        cls, dtype: str
+    ) -> finfo[floating[Any]]: ...
+
+class iinfo(Generic[_IntType]):
+    dtype: dtype[_IntType]
+    kind: str
+    bits: int
+    key: str
+    @property
+    def min(self) -> int: ...
+    @property
+    def max(self) -> int: ...
+
+    @overload
+    def __new__(cls, dtype: _IntType | _DTypeLike[_IntType]) -> iinfo[_IntType]: ...
+    @overload
+    def __new__(cls, dtype: int | Type[int]) -> iinfo[int_]: ...
+    @overload
+    def __new__(cls, dtype: str) -> iinfo[Any]: ...

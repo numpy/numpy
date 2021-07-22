@@ -646,7 +646,7 @@ class TestFloatExceptions:
                 if np.dtype(ftype).kind == 'f':
                     # Get some extreme values for the type
                     fi = np.finfo(ftype)
-                    ft_tiny = fi.tiny
+                    ft_tiny = fi.machar.tiny
                     ft_max = fi.max
                     ft_eps = fi.eps
                     underflow = 'underflow'
@@ -655,7 +655,7 @@ class TestFloatExceptions:
                     # 'c', complex, corresponding real dtype
                     rtype = type(ftype(0).real)
                     fi = np.finfo(rtype)
-                    ft_tiny = ftype(fi.tiny)
+                    ft_tiny = ftype(fi.machar.tiny)
                     ft_max = ftype(fi.max)
                     ft_eps = ftype(fi.eps)
                     # The complex types raise different exceptions
@@ -664,10 +664,13 @@ class TestFloatExceptions:
                 overflow = 'overflow'
                 invalid = 'invalid'
 
-                self.assert_raises_fpe(underflow,
-                                       lambda a, b: a/b, ft_tiny, ft_max)
-                self.assert_raises_fpe(underflow,
-                                       lambda a, b: a*b, ft_tiny, ft_tiny)
+                # The value of tiny for double double is NaN, so we need to
+                # pass the assert
+                if not np.isnan(ft_tiny):
+                    self.assert_raises_fpe(underflow,
+                                        lambda a, b: a/b, ft_tiny, ft_max)
+                    self.assert_raises_fpe(underflow,
+                                        lambda a, b: a*b, ft_tiny, ft_tiny)
                 self.assert_raises_fpe(overflow,
                                        lambda a, b: a*b, ft_max, ftype(2))
                 self.assert_raises_fpe(overflow,
@@ -898,7 +901,7 @@ class TestTypes:
             promote_types = np.promote_types
 
         S = string_dtype
-        
+
         # Promote numeric with unsized string:
         assert_equal(promote_types('bool', S), np.dtype(S+'5'))
         assert_equal(promote_types('b', S), np.dtype(S+'4'))

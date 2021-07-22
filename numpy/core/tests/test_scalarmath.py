@@ -670,18 +670,28 @@ class TestAbs:
         x = test_dtype(np.finfo(test_dtype).max)
         assert_equal(absfunc(x), x.real)
 
-        x = test_dtype(np.finfo(test_dtype).tiny)
-        assert_equal(absfunc(x), x.real)
+        with suppress_warnings() as sup:
+            sup.filter(UserWarning)
+            x = test_dtype(np.finfo(test_dtype).tiny)
+            assert_equal(absfunc(x), x.real)
 
         x = test_dtype(np.finfo(test_dtype).min)
         assert_equal(absfunc(x), -x.real)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_builtin_abs(self, dtype):
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(abs, dtype)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_numpy_abs(self, dtype):
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(np.abs, dtype)
 
 class TestBitShifts:

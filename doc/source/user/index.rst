@@ -21,7 +21,7 @@ details are found in :ref:`reference`.
    numpy-for-matlab-users
    building
    c-info
-   NumPy Tutorials <https://numpy.org/numpy-tutorials>
+   NumPy Tutorials <https://numpy.org/numpy-tutorials/features.html>
    howtos_index
    depending_on_numpy
 
