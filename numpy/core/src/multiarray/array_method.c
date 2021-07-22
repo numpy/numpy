@@ -817,9 +817,10 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 
         /* Process unmasked values */
         mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 0);
-        if (strided_loop(context,
-                dataptrs, &subloopsize, strides, strided_loop_auxdata) != 0) {
-            return -1;
+        int res = strided_loop(context,
+                dataptrs, &subloopsize, strides, strided_loop_auxdata);
+        if (res != 0) {
+            return res;
         }
         for (int i = 0; i < nargs; i++) {
             dataptrs[i] += subloopsize * strides[i];
