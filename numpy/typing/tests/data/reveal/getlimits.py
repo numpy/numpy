@@ -34,6 +34,8 @@ reveal_type(finfo_f8.nmant)  # E: int
 reveal_type(finfo_f8.precision)  # E: int
 reveal_type(finfo_f8.resolution)  # E: {float64}
 reveal_type(finfo_f8.tiny)  # E: {float64}
+reveal_type(finfo_f8.smallest_normal)  # E: {float64}
+reveal_type(finfo_f8.smallest_subnormal)  # E: {float64}
 reveal_type(finfo_f8.machar)  # E: MachArLike[numpy.typing._64Bit]
 
 reveal_type(np.iinfo(i))  # E: iinfo[{int_}]
@@ -56,6 +58,8 @@ reveal_type(machar_f4.resolution)  # E: numpy.ndarray[Any, numpy.dtype[{float32}
 reveal_type(machar_f4.tiny)  # E: numpy.ndarray[Any, numpy.dtype[{float32}]]
 reveal_type(machar_f4.xmax)  # E: numpy.ndarray[Any, numpy.dtype[{float32}]]
 reveal_type(machar_f4.xmin)  # E: numpy.ndarray[Any, numpy.dtype[{float32}]]
+reveal_type(machar_f4.smallest_subnormal)  # E: numpy.ndarray[Any, numpy.dtype[{float32}]]
+reveal_type(machar_f4.smallest_normal)  # E: numpy.ndarray[Any, numpy.dtype[{float32}]]
 reveal_type(machar_f4.iexp)  # E: int
 reveal_type(machar_f4.irnd)  # E: int
 reveal_type(machar_f4.it)  # E: int
