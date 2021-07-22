@@ -795,10 +795,9 @@ add_newdoc('numpy.core.multiarray', 'array',
     ----------
     object : array_like
         An array, any object exposing the array interface, an object whose
-        __array__ method returns an array, or any (nested) sequence. However
-        if a number is passed as a parameter then it will return the number itself.
-        It is done to support the 0 dimensional arrays. 
-        For example np.array(2) will return 2.
+        __array__ method returns an array, or any (nested) sequence.
+        If object is a scalar, a 0-dimensional array containing object is 
+        returned.
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
         be determined as the minimum type required to hold the objects in the
