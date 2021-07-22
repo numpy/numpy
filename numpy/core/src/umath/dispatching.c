@@ -205,7 +205,8 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         if (!matches) {
             continue;
         }
-
+        // TODO: Right now, there should only be a single match possible, so
+        //       this can go into the NEXT pr.
         /* The resolver matches, but we have to check if it is better */
         if (best_dtypes != NULL) {
             int current_best = -1;  /* -1 neither, 0 current best, 1 new */

@@ -958,14 +958,21 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         if (!out_op_DTypes[i]->legacy) {
             all_legacy = NPY_FALSE;
         }
-        if (PyArray_NDIM(out_op[i]) != 0) {
+        if (PyArray_NDIM(out_op[i]) == 0) {
+            any_scalar = NPY_TRUE;
+        }
+        else {
             all_scalar = NPY_FALSE;
             continue;
         }
-        else {
-            any_scalar = NPY_TRUE;
-        }
-        /* Special case if it was a Python scalar, to allow "weak" promotion */
+        // TODO: Refactor this into a helper function!
+        // We probably need to move the special object array-conversion till
+        // After the promotion :(. If this is NOT a forced-legacy promotion?!
+        // We may need to convert "twice" (but not more than we currently do)
+        /*
+         * Special case if it was a Python scalar, to allow "weak" promotion,
+         * so replace the arrays DType with the Python scalar DType.
+         */
         if ((PyObject *)out_op[i] != obj) {
             PyArray_DTypeMeta *scalar_DType = NULL;
             if (PyLong_CheckExact(obj)) {
@@ -1049,7 +1056,7 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
         PyArrayObject **op, PyArray_Descr **dtypes,
         NPY_CASTING casting, npy_intp buffersize)
 {
-    npy_intp i, nin = ufuncimpl->nin, nop = nin + ufuncimpl->nout;
+    int i, nin = ufuncimpl->nin, nop = nin + ufuncimpl->nout;
 
     for (i = 0; i < nop; ++i) {
         /*
@@ -1567,6 +1574,8 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
 
+    // TODO: use the same pattern as we changed to in the trivial-loop
+    //       have to dealloc the iterator, but can do that first.
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
         const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
@@ -4313,8 +4322,8 @@ _get_dtype(PyObject *dtype_obj) {
 
 
 /*
- * Finish conversion parsing of the signature.  NumPy always only honored
- * the type number for passed in descriptors/dtypes.
+ * Finish conversion parsing of the DType signature.  NumPy always only
+ * honored the type number for passed in descriptors/dtypes.
  * The `dtype` argument is interpreted as the first output DType (not
  * descriptor).
  * Unlike the dtype of an `out` array, it influences loop selection!
@@ -4530,7 +4539,10 @@ resolve_descriptors(int nop,
         retval = 0;
     }
     else {
-        /* Rare fall-back to the legacy resolver to pass `operands` */
+        /*
+         * Fall-back to legacy resolver using `operands`, used exclusively
+         * for datetime64/timedelta64 and custom ufuncs (in pyerfa/astropy).
+         */
         retval = ufunc->type_resolver(ufunc, casting, operands, NULL, dtypes);
     }
 
