@@ -119,12 +119,19 @@ class Array:
         else:
             return NotImplemented
 
+        # This will raise TypeError for type combinations that are not allowed
+        # to promote in the spec (even if the NumPy array operator would
+        # promote them).
         res_dtype = _result_type(self.dtype, other.dtype)
         if op.startswith('__i'):
-            # Note: NumPy will allow in-place operators in some cases where the type promoted operator does not match the left-hand side operand. For example,
+            # Note: NumPy will allow in-place operators in some cases where
+            # the type promoted operator does not match the left-hand side
+            # operand. For example,
 
             # >>> a = np.array(1, dtype=np.int8)
             # >>> a += np.array(1, dtype=np.int16)
+
+            # The spec explicitly disallows this.
             if res_dtype != self.dtype:
                 raise TypeError(f"Cannot perform {op} with dtypes {self.dtype} and {other.dtype}")
 

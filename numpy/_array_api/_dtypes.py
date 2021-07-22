@@ -23,6 +23,13 @@ _integer_dtypes = (int8, int16, int32, int64, uint8, uint16, uint32, uint64)
 _integer_or_boolean_dtypes = (bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64)
 _numeric_dtypes = (float32, float64, int8, int16, int32, int64, uint8, uint16, uint32, uint64)
 
+# Note: the spec defines a restricted type promotion table compared to NumPy.
+# In particular, cross-kind promotions like integer + float or boolean +
+# integer are not allowed, even for functions that accept both kinds.
+# Additionally, NumPy promotes signed integer + uint64 to float64, but this
+# promotion is not allowed here. To be clear, Python scalar int objects are
+# allowed to promote to floating-point dtypes, but only in array operators
+# (see Array._promote_scalar) method in _array_object.py.
 _promotion_table = {
     (int8, int8): int8,
     (int8, int16): int16,
