@@ -345,8 +345,8 @@ class Array:
         return self.__class__._new(res)
 
     def __array_namespace__(self: Array, /, *, api_version: Optional[str] = None) -> object:
-        if api_version is not None:
-            raise ValueError("Unrecognized array API version")
+        if api_version is not None and not api_version.startswith('2021.'):
+            raise ValueError(f"Unrecognized array API version: {api_version!r}")
         from numpy import _array_api
         return _array_api
 
