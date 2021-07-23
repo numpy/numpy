@@ -166,6 +166,7 @@ def test_operators():
                                 assert_raises(TypeError, lambda: getattr(x, _op)(y))
 
     unary_op_dtypes ={
+        '__abs__': 'numeric',
         '__invert__': 'integer_or_boolean',
         '__neg__': 'numeric',
         '__pos__': 'numeric',

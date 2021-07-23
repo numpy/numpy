@@ -317,6 +317,8 @@ class Array:
         """
         Performs the operation __abs__.
         """
+        if self.dtype not in _numeric_dtypes:
+            raise TypeError('Only numeric dtypes are allowed in __abs__')
         res = self._array.__abs__()
         return self.__class__._new(res)
 
