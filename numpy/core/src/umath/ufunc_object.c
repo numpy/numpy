@@ -922,7 +922,8 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
 static int
 convert_ufunc_arguments(PyUFuncObject *ufunc,
         ufunc_full_args full_args, PyArrayObject *out_op[],
-        PyArray_DTypeMeta *out_op_DTypes[], int *force_legacy_promotion,
+        PyArray_DTypeMeta *out_op_DTypes[],
+        npy_bool *force_legacy_promotion, npy_bool *allow_legacy_promotion,
         PyObject *order_obj, NPY_ORDER *out_order,
         PyObject *casting_obj, NPY_CASTING *out_casting,
         PyObject *subok_obj, npy_bool *out_subok,
@@ -937,7 +938,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     /* Convert and fill in input arguments */
     npy_bool all_scalar = NPY_TRUE;
     npy_bool any_scalar = NPY_FALSE;
-    npy_bool all_legacy = NPY_TRUE;
+    *allow_legacy_promotion = NPY_TRUE;
+    *force_legacy_promotion = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
         obj = PyTuple_GET_ITEM(full_args.in, i);
 
@@ -956,7 +958,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         Py_INCREF(out_op_DTypes[i]);
 
         if (!out_op_DTypes[i]->legacy) {
-            all_legacy = NPY_FALSE;
+            *allow_legacy_promotion = NPY_FALSE;
         }
         if (PyArray_NDIM(out_op[i]) == 0) {
             any_scalar = NPY_TRUE;
@@ -977,7 +979,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
          *       happen inside the Python operators.
          */
     }
-    if (all_legacy && (!all_scalar && any_scalar)) {
+    if (*allow_legacy_promotion && (!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
         /*
          * TODO: if this is False, we end up in a "very slow" path that should
@@ -4824,11 +4826,12 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
     npy_bool subok = NPY_TRUE;
     int keepdims = -1;  /* We need to know if it was passed */
-    int force_legacy_promotion = 0;
+    npy_bool force_legacy_promotion;
+    npy_bool allow_legacy_promotion;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
             full_args, operands,
-            operand_DTypes, &force_legacy_promotion,
+            operand_DTypes, &force_legacy_promotion, &allow_legacy_promotion,
             /* extract general information: */
             order_obj, &order,
             casting_obj, &casting,
@@ -4848,7 +4851,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
-            operand_DTypes, force_legacy_promotion);
+            operand_DTypes, force_legacy_promotion, allow_legacy_promotion);
     if (ufuncimpl == NULL) {
         goto fail;
     }

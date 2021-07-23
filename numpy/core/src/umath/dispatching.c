@@ -52,10 +52,12 @@
 
 
 /* forward declaration */
-static PyObject *
+static NPY_INLINE PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
-        PyArrayObject *const ops[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *op_dtypes[], int do_legacy_fallback, int cache);
+        PyArrayObject *const ops[],
+        PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *op_dtypes[],
+        npy_bool allow_legacy_promotion, npy_bool cache);
 
 
 /**
@@ -512,8 +514,10 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
  */
 static NPY_INLINE PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
-        PyArrayObject *const ops[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *op_dtypes[], int do_legacy_fallback, int cache)
+        PyArrayObject *const ops[],
+        PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *op_dtypes[],
+        npy_bool allow_legacy_promotion, npy_bool cache)
 {
     /*
      * Fetch the dispatching info which consists of the implementation and
@@ -576,7 +580,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
      * However, we need to give the legacy implementation a chance here.
      * (it will modify `op_dtypes`).
      */
-    if (!do_legacy_fallback || ufunc->type_resolver == NULL ||
+    if (!allow_legacy_promotion || ufunc->type_resolver == NULL ||
             (ufunc->ntypes == 0 && ufunc->userloops == NULL)) {
         /* Already tried or not a "legacy" ufunc (no loop found, return) */
         return NULL;
@@ -589,7 +593,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         return NULL;
     }
     info = promote_and_get_info_and_ufuncimpl(ufunc,
-            ops, signature, new_op_dtypes, 0, cacheable);
+            ops, signature, new_op_dtypes, NPY_FALSE, cacheable);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(new_op_dtypes);
     }
@@ -619,8 +623,11 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  */
 NPY_NO_EXPORT PyArrayMethodObject *
 promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
-        PyArrayObject *const ops[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *op_dtypes[], int force_legacy_promotion)
+        PyArrayObject *const ops[],
+        PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *op_dtypes[],
+        npy_bool force_legacy_promotion,
+        npy_bool allow_legacy_promotion)
 {
     int nargs = ufunc->nargs;
 
@@ -654,7 +661,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
-            ops, signature, op_dtypes, 1, 1);
+            ops, signature, op_dtypes, allow_legacy_promotion, NPY_TRUE);
 
     if (info == NULL) {
         if (!PyErr_Occurred()) {
