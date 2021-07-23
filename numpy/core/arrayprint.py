@@ -706,9 +706,9 @@ def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
             needs_wrap = False
 
     if needs_wrap:
-        s += line.rstrip() + "\n"
+        s = ''.join((s, line.rstrip(), "\n"))
         line = next_line_prefix
-    line += word
+    line = ''.join((line, word))
     return s, line
 
 
@@ -736,7 +736,6 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
 
     suffix_length = max_word_length - len(words[-1])
     line += suffix_length*' '
-
     return s, line
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
@@ -793,21 +792,21 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                 word = recurser(index + (i,), next_hanging_indent, next_width)
                 s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
-                line += separator
+                line = ''.join((line, separator))
 
             if show_summary:
                 s, line = _extendLine(
                     s, line, summary_insert, elem_width, hanging_indent, legacy)
                 if legacy == '1.13':
-                    line += ", "
+                    line = ''.join((line, ", "))
                 else:
-                    line += separator
+                    line = ''.join((line, separator))
 
             for i in range(trailing_items, 1, -1):
                 word = recurser(index + (-i,), next_hanging_indent, next_width)
                 s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
-                line += separator
+                line = ''.join((line, separator))
 
             if legacy == '1.13':
                 # width of the separator is not considered on 1.13
@@ -816,7 +815,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             s, line = _extendLine_pretty(
                 s, line, word, elem_width, hanging_indent, legacy)
 
-            s += line
+            s = ''.join((s, line))
 
         # other axes - insert newlines between rows
         else:
@@ -825,25 +824,25 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             for i in range(leading_items):
                 nested = recurser(index + (i,), next_hanging_indent, next_width)
-                s += hanging_indent + nested + line_sep
+                s = ''.join((s, hanging_indent, nested, line_sep))
 
             if show_summary:
                 if legacy == '1.13':
                     # trailing space, fixed nbr of newlines, and fixed separator
-                    s += hanging_indent + summary_insert + ", \n"
+                    s = ''.join((s, hanging_indent, summary_insert, ", \n"))
                 else:
-                    s += hanging_indent + summary_insert + line_sep
+                    s = ''.join((s, hanging_indent, summary_insert, line_sep))
 
             for i in range(trailing_items, 1, -1):
                 nested = recurser(index + (-i,), next_hanging_indent,
                                   next_width)
-                s += hanging_indent + nested + line_sep
+                s = ''.join((s, hanging_indent, nested, line_sep))
 
             nested = recurser(index + (-1,), next_hanging_indent, next_width)
-            s += hanging_indent + nested
+            s = ''.join((s, hanging_indent, nested))
 
         # remove the hanging indent, and wrap in []
-        s = '[' + s[len(hanging_indent):] + ']'
+        s = ''.join(('[', s[len(hanging_indent):], ']'))
         return s
 
     try:
@@ -1306,8 +1305,8 @@ class SubArrayFormat:
 
     def __call__(self, arr):
         if arr.ndim <= 1:
-            return "[" + ", ".join(self.format_function(a) for a in arr) + "]"
-        return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
+            return ''.join(("[", ", ".join(self.format_function(a) for a in arr), "]"))
+        return ''.join(("[", ", ".join(self.__call__(a) for a in arr), "]"))
 
 
 class StructuredVoidFormat:
@@ -1449,7 +1448,7 @@ def _array_repr_implementation(
     else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
 
-    arr_str = prefix + lst + suffix
+    arr_str = ''.join([prefix, lst, suffix])
 
     if skipdtype:
         return arr_str
@@ -1467,7 +1466,7 @@ def _array_repr_implementation(
     elif last_line_len + len(dtype_str) + 1 > max_line_width:
         spacer = '\n' + ' '*len(class_name + "(")
 
-    return arr_str + spacer + dtype_str
+    return ''.join((arr_str, spacer, dtype_str))
 
 
 def _array_repr_dispatcher(
