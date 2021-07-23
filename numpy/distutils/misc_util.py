@@ -408,12 +408,10 @@ def cyg2win32(path: str) -> str:
     """
     if sys.platform != "cygwin":
         return path
-    try:
-        return subprocess.check_output(
-            ["/usr/bin/cygpath", "--windows", path], universal_newlines=True
-        )
-    except subprocess.CalledProcessError:
-        return path
+    return subprocess.check_output(
+        ["/usr/bin/cygpath", "--windows", path], universal_newlines=True
+    )
+
 
 def mingw32():
     """Return true when using mingw32 environment.
