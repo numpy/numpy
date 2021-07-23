@@ -3,9 +3,10 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-__all__ = ["array2string", "array_str", "array_repr", "set_string_function",
-           "set_printoptions", "get_printoptions", "printoptions",
-           "format_float_positional", "format_float_scientific"]
+__all__ = ["array2string", "array_str", "array_repr", "array_format",
+           "set_string_function", "set_printoptions", "get_printoptions",
+           "printoptions", "format_float_positional",
+           "format_float_scientific"]
 __docformat__ = 'restructuredtext'
 
 #
@@ -1637,12 +1638,48 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
         a, max_line_width, precision, suppress_small)
 
 
+def _array_format_implementation(
+        a, format_spec):
+    print("[DEBUG] _array_format_implementation")
+    print(f"[DEBUG] it works: {a.dtype=}, {format_spec=}")
+
+    formatters_types = [
+        "int_kind",
+        "float_kind",
+        "complex_kind"
+    ]
+
+    def _format(x):
+        return format(x, format_spec)
+
+    formatter = {
+        k: _format for k in formatters_types
+    }
+
+    # TODO: raise error when a.dtype is not numeric!
+
+    return array2string(a, formatter=formatter)
+
+
+def _array_format_dispatcher(
+        a, format_spec):
+    return (a, format_spec)
+
+
+@array_function_dispatch(_array_format_dispatcher, module='numpy')
+def array_format(a, format_spec):
+    print("[DEBUG] array_format")
+
+    return _array_format_implementation(a, format_spec)
+
+
 # needed if __array_function__ is disabled
 _array2string_impl = getattr(array2string, '__wrapped__', array2string)
 _default_array_str = functools.partial(_array_str_implementation,
                                        array2string=_array2string_impl)
 _default_array_repr = functools.partial(_array_repr_implementation,
                                         array2string=_array2string_impl)
+_default_array_format = _array_format_implementation
 
 
 def set_string_function(f, repr=True):
