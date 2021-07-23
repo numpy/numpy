@@ -233,8 +233,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         if (!matches) {
             continue;
         }
-        // TODO: Right now, there should only be a single match possible, so
-        //       this can go into the NEXT pr.
+
         /* The resolver matches, but we have to check if it is better */
         if (best_dtypes != NULL) {
             int current_best = -1;  /* -1 neither, 0 current best, 1 new */
@@ -250,10 +249,6 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             for (Py_ssize_t i = 0; i < nargs; i++) {
                 int best;
 
-                /* Whether this (normally output) dtype was specified at all */
-                int is_not_specified = (
-                        op_dtypes[i] == (PyArray_DTypeMeta *)Py_None);
-
                 PyObject *prev_dtype = PyTuple_GET_ITEM(best_dtypes, i);
                 PyObject *new_dtype = PyTuple_GET_ITEM(curr_dtypes, i);
 
@@ -262,43 +257,13 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                     continue;
                 }
                 /*
-                 * TODO: The `abstract` paths and all subclass checks are not
-                 *       used right now.  These will be used when user DTypes
-                 *       and promoters are used.  Especially, the abstract
-                 *       paths will become important when value-based promotion
-                 *       is removed from NumPy.
+                 * TODO: Even if the input is not specified, if we have
+                 *       abstract DTypes and one is a subclass of the other,
+                 *       the subclass should be considered a better match
+                 *       (subclasses are always more specific).
                  */
-                if (is_not_specified) {
-                    /*
-                     * When DType is completely unspecified, prefer abstract
-                     * over concrete, assuming it will resolve.
-                     * Furthermore, we cannot decide which abstract/None
-                     * is "better", only concrete ones which are subclasses
-                     * of Abstract ones are defined as worse.
-                     */
-                    int prev_is_concrete = 0, new_is_concrete = 0;
-                    if ((prev_dtype != Py_None) &&
-                        (!((PyArray_DTypeMeta *)prev_dtype)->abstract)) {
-                        prev_is_concrete = 1;
-                    }
-                    if ((new_dtype != Py_None) &&
-                        (!((PyArray_DTypeMeta *)new_dtype)->abstract)) {
-                        new_is_concrete = 1;
-                    }
-                    if (prev_is_concrete == new_is_concrete) {
-                        best = -1;
-                    }
-                    else if (prev_is_concrete) {
-                        unambiguously_equally_good = 0;
-                        best = 1;
-                    }
-                    else {
-                        unambiguously_equally_good = 0;
-                        best = 0;
-                    }
-                }
-                    /* If either is None, the other is strictly more specific */
-                else if (prev_dtype == Py_None) {
+                /* If either is None, the other is strictly more specific */
+                if (prev_dtype == Py_None) {
                     unambiguously_equally_good = 0;
                     best = 1;
                 }
@@ -306,10 +271,10 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                     unambiguously_equally_good = 0;
                     best = 0;
                 }
-                    /*
-                     * If both are concrete and not identical, this is
-                     * ambiguous.
-                     */
+                /*
+                 * If both are concrete and not identical, this is
+                 * ambiguous.
+                 */
                 else if (!((PyArray_DTypeMeta *)prev_dtype)->abstract &&
                          !((PyArray_DTypeMeta *)new_dtype)->abstract) {
                     /*
@@ -319,68 +284,15 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                      */
                     best = -1;
                 }
-                else if (!((PyArray_DTypeMeta *)prev_dtype)->abstract) {
-                    /* old is not abstract, so better (both not possible) */
-                    unambiguously_equally_good = 0;
-                    best = 0;
-                }
-                else if (!((PyArray_DTypeMeta *)new_dtype)->abstract) {
-                    /* new is not abstract, so better (both not possible) */
-                    unambiguously_equally_good = 0;
-                    best = 1;
-                }
                 /*
-                 * Both are abstract DTypes, there is a clear order if
-                 * one of them is a subclass of the other.
-                 * If this fails, reject it completely (could be changed).
-                 * The case that it is the same dtype is already caught.
+                 * TODO: Unreachable, but we will need logic for abstract
+                 *       DTypes to decide if one is a subclass of the other
+                 *       (And their subclass relation is well defined.)
                  */
                 else {
-                    /* Note the identity check above, so this true subclass */
-                    int new_is_subclass = PyObject_IsSubclass(
-                            new_dtype, prev_dtype);
-                    if (new_is_subclass < 0) {
-                        return -1;
-                    }
-                    /*
-                     * Could optimize this away if above is True, but this
-                     * catches inconsistent definitions of subclassing.
-                     */
-                    int prev_is_subclass = PyObject_IsSubclass(
-                            prev_dtype, new_dtype);
-                    if (prev_is_subclass < 0) {
-                        return -1;
-                    }
-                    if (prev_is_subclass && new_is_subclass) {
-                        /* should not happen unless they are identical */
-                        PyErr_SetString(PyExc_RuntimeError,
-                                "inconsistent subclassing of DTypes; if "
-                                "this happens, two dtypes claim to be a "
-                                "superclass of the other one.");
-                        return -1;
-                    }
-                    if (!prev_is_subclass && !new_is_subclass) {
-                        /* Neither is more precise than the other one */
-                        PyErr_SetString(PyExc_TypeError,
-                                "inconsistent type resolution hierarchy; "
-                                "DTypes of two matching loops do not have "
-                                "a clear hierarchy defined. Diamond shape "
-                                "inheritance is unsupported for use with "
-                                "UFunc type resolution. (You may resolve "
-                                "this by inserting an additional common "
-                                "subclass). This limitation may be "
-                                "partially resolved in the future.");
-                        return -1;
-                    }
-                    if (new_is_subclass) {
-                        unambiguously_equally_good = 0;
-                        best = 1;
-                    }
-                    else {
-                        unambiguously_equally_good = 0;
-                        best = 2;
-                    }
+                    assert(0);
                 }
+
                 if ((current_best != -1) && (current_best != best)) {
                     /*
                      * We need a clear best, this could be tricky, unless

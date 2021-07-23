@@ -965,30 +965,17 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             all_scalar = NPY_FALSE;
             continue;
         }
-        // TODO: Refactor this into a helper function!
-        // We probably need to move the special object array-conversion till
-        // After the promotion :(. If this is NOT a forced-legacy promotion?!
-        // We may need to convert "twice" (but not more than we currently do)
         /*
-         * Special case if it was a Python scalar, to allow "weak" promotion,
-         * so replace the arrays DType with the Python scalar DType.
+         * TODO: we need to special case scalars here, if the input is a
+         *       Python int, float, or complex, we have to use the "weak"
+         *       DTypes: `PyArray_PyIntAbstractDType`, etc.
+         *       This is to allow e.g. `float32(1.) + 1` to return `float32`.
+         *       The correct array dtype can only be found after promotion for
+         *       such a "weak scalar".  We could avoid conversion here, but
+         *       must convert it for use in the legacy promotion.
+         *       There is still a small chance that this logic can instead
+         *       happen inside the Python operators.
          */
-        if ((PyObject *)out_op[i] != obj) {
-            PyArray_DTypeMeta *scalar_DType = NULL;
-            if (PyLong_CheckExact(obj)) {
-                scalar_DType = &PyArray_PyIntAbstractDType;
-            }
-            else if (PyFloat_CheckExact(obj)) {
-                scalar_DType = &PyArray_PyFloatAbstractDType;
-            }
-            else if (PyComplex_CheckExact(obj)) {
-                scalar_DType = &PyArray_PyComplexAbstractDType;
-            }
-            if (scalar_DType != NULL) {
-                Py_INCREF(scalar_DType);
-                Py_SETREF(out_op_DTypes[i], scalar_DType);
-            }
-        }
     }
     if (all_legacy && (!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
