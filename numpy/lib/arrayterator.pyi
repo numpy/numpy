@@ -35,7 +35,6 @@ class Arrayterator(ndarray[_Shape, _DType]):
     start: List[int]
     stop: List[int]
     step: List[int]
-
     @property  # type: ignore[misc]
     def shape(self) -> Tuple[int, ...]: ...
     @property

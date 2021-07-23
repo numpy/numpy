@@ -63,12 +63,10 @@ __all__: List[str]
 def fliplr(m: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
 @overload
 def fliplr(m: ArrayLike) -> NDArray[Any]: ...
-
 @overload
 def flipud(m: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
 @overload
 def flipud(m: ArrayLike) -> NDArray[Any]: ...
-
 @overload
 def eye(
     N: int,
@@ -99,17 +97,14 @@ def eye(
     *,
     like: None | ArrayLike = ...,
 ) -> NDArray[Any]: ...
-
 @overload
 def diag(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def diag(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def diagflat(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def diagflat(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def tri(
     N: int,
@@ -117,7 +112,7 @@ def tri(
     k: int = ...,
     dtype: None = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | ArrayLike = ...,
 ) -> NDArray[float64]: ...
 @overload
 def tri(
@@ -126,7 +121,7 @@ def tri(
     k: int = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | ArrayLike = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def tri(
@@ -135,19 +130,16 @@ def tri(
     k: int = ...,
     dtype: DTypeLike = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | ArrayLike = ...,
 ) -> NDArray[Any]: ...
-
 @overload
 def tril(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def tril(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def triu(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def triu(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def vander(  # type: ignore[misc]
     x: _ArrayLikeInt_co,
@@ -172,7 +164,6 @@ def vander(
     N: None | int = ...,
     increasing: bool = ...,
 ) -> NDArray[object_]: ...
-
 @overload
 def histogram2d(  # type: ignore[misc]
     x: _ArrayLikeFloat_co,
@@ -182,11 +173,7 @@ def histogram2d(  # type: ignore[misc]
     normed: None | bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
     density: None | bool = ...,
-) -> Tuple[
-    NDArray[float64],
-    NDArray[floating[Any]],
-    NDArray[floating[Any]],
-]: ...
+) -> Tuple[NDArray[float64], NDArray[floating[Any]], NDArray[floating[Any]],]: ...
 @overload
 def histogram2d(
     x: _ArrayLikeComplex_co,
@@ -210,11 +197,7 @@ def histogram2d(
     normed: None | bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
     density: None | bool = ...,
-) -> Tuple[
-    NDArray[float64],
-    NDArray[Any],
-    NDArray[Any],
-]: ...
+) -> Tuple[NDArray[float64], NDArray[Any], NDArray[Any],]: ...
 
 # NOTE: we're assuming/demanding here the `mask_func` returns
 # an ndarray of shape `(n, n)`; otherwise there is the possibility
@@ -231,24 +214,20 @@ def mask_indices(
     mask_func: _MaskFunc[_T],
     k: _T,
 ) -> Tuple[NDArray[intp], NDArray[intp]]: ...
-
 def tril_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
 ) -> Tuple[NDArray[int_], NDArray[int_]]: ...
-
 def tril_indices_from(
     arr: NDArray[Any],
     k: int = ...,
 ) -> Tuple[NDArray[int_], NDArray[int_]]: ...
-
 def triu_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
 ) -> Tuple[NDArray[int_], NDArray[int_]]: ...
-
 def triu_indices_from(
     arr: NDArray[Any],
     k: int = ...,

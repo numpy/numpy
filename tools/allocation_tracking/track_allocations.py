@@ -3,9 +3,10 @@ import gc
 import inspect
 from alloc_hook import NumpyAllocHook
 
+
 class AllocationTracker:
     def __init__(self, threshold=0):
-        '''track numpy allocations of size threshold bytes or more.'''
+        """track numpy allocations of size threshold bytes or more."""
 
         self.threshold = threshold
 
@@ -97,9 +98,17 @@ class AllocationTracker:
                     num_frees += 1
                 max_size = max(max_size, self.total_bytes)
             long_lived = max(self.total_bytes - before_size, 0)
-            self.allocation_trace.append((self.current_line, bytes_allocated,
-                                          bytes_freed, num_allocations,
-                                          num_frees, max_size, long_lived))
+            self.allocation_trace.append(
+                (
+                    self.current_line,
+                    bytes_allocated,
+                    bytes_freed,
+                    num_allocations,
+                    num_frees,
+                    max_size,
+                    long_lived,
+                )
+            )
             # clear pending allocations
             self.pending_allocations = []
         # move to the new line
@@ -110,7 +119,9 @@ class AllocationTracker:
             f.write('<HTML><HEAD><script src="sorttable.js"></script></HEAD><BODY>\n')
             f.write('<TABLE class="sortable" width=100%>\n')
             f.write("<TR>\n")
-            cols = "event#,lineinfo,bytes allocated,bytes freed,#allocations,#frees,max memory usage,long lived bytes".split(',')
+            cols = "event#,lineinfo,bytes allocated,bytes freed,#allocations,#frees,max memory usage,long lived bytes".split(
+                ","
+            )
             for header in cols:
                 f.write("  <TH>{0}</TH>".format(header))
             f.write("\n</TR>\n")
@@ -118,7 +129,7 @@ class AllocationTracker:
                 f.write("<TR>\n")
                 event = [idx] + list(event)
                 for col, val in zip(cols, event):
-                    if col == 'lineinfo':
+                    if col == "lineinfo":
                         # special handling
                         try:
                             filename, line, module, code, index = val
@@ -131,7 +142,7 @@ class AllocationTracker:
             f.write("</TABLE></BODY></HTML>\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tracker = AllocationTracker(1000)
     with tracker:
         for i in range(100):

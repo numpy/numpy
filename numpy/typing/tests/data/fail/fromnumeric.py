@@ -38,15 +38,9 @@ np.partition(
     A, 0, order=range(5)  # E: Argument "order" to "partition" has incompatible type
 )
 
-np.argpartition(
-    a, None  # E: incompatible type
-)
-np.argpartition(
-    a, 0, axis="bob"  # E: incompatible type
-)
-np.argpartition(
-    A, 0, kind="bob"  # E: incompatible type
-)
+np.argpartition(a, None)  # E: incompatible type
+np.argpartition(a, 0, axis="bob")  # E: incompatible type
+np.argpartition(A, 0, kind="bob")  # E: incompatible type
 np.argpartition(
     A, 0, order=range(5)  # E: Argument "order" to "argpartition" has incompatible type
 )
@@ -145,10 +139,10 @@ np.mean(a, keepdims=1.0)  # E: incompatible type
 
 np.std(a, axis=1.0)  # E: incompatible type
 np.std(a, out=False)  # E: incompatible type
-np.std(a, ddof='test')  # E: incompatible type
+np.std(a, ddof="test")  # E: incompatible type
 np.std(a, keepdims=1.0)  # E: incompatible type
 
 np.var(a, axis=1.0)  # E: incompatible type
 np.var(a, out=False)  # E: incompatible type
-np.var(a, ddof='test')  # E: incompatible type
+np.var(a, ddof="test")  # E: incompatible type
 np.var(a, keepdims=1.0)  # E: incompatible type

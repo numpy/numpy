@@ -208,5 +208,6 @@ __all__ = _pocketfft.__all__.copy()
 __all__ += helper.__all__
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

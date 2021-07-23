@@ -6,8 +6,10 @@ from numpy.testing import assert_warns
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import MaskedArrayFutureWarning
 
+
 class TestArgsort:
-    """ gh-8701 """
+    """gh-8701"""
+
     def _test_base(self, argsort, cls):
         arr_0d = np.array(1).view(cls)
         argsort(arr_0d)
@@ -17,8 +19,7 @@ class TestArgsort:
 
         # argsort has a bad default for >1d arrays
         arr_2d = np.array([[1, 2], [3, 4]]).view(cls)
-        result = assert_warns(
-            np.ma.core.MaskedArrayFutureWarning, argsort, arr_2d)
+        result = assert_warns(np.ma.core.MaskedArrayFutureWarning, argsort, arr_2d)
         assert_equal(result, argsort(arr_2d, axis=None))
 
         # should be no warnings for explicitly specifying it

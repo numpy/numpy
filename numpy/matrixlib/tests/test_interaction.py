@@ -8,9 +8,15 @@ import textwrap
 import warnings
 
 import numpy as np
-from numpy.testing import (assert_, assert_equal, assert_raises,
-                           assert_raises_regex, assert_array_equal,
-                           assert_almost_equal, assert_array_almost_equal)
+from numpy.testing import (
+    assert_,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_array_equal,
+    assert_almost_equal,
+    assert_array_almost_equal,
+)
 
 
 def test_fancy_indexing():
@@ -68,7 +74,7 @@ def test_dot_scalar_and_matrix_of_objects():
 
 def test_inner_scalar_and_matrix():
     # 2018-04-29: moved here from core.tests.test_multiarray
-    for dt in np.typecodes['AllInteger'] + np.typecodes['AllFloat'] + '?':
+    for dt in np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "?":
         sca = np.array(3, dtype=dt)[()]
         arr = np.matrix([[1, 2], [3, 4]], dtype=dt)
         desired = np.matrix([[3, 6], [9, 12]], dtype=dt)
@@ -93,20 +99,28 @@ def test_iter_allocate_output_subtype():
     # matrix vs ndarray
     a = np.matrix([[1, 2], [3, 4]])
     b = np.arange(4).reshape(2, 2).T
-    i = np.nditer([a, b, None], [],
-                  [['readonly'], ['readonly'], ['writeonly', 'allocate']])
+    i = np.nditer(
+        [a, b, None], [], [["readonly"], ["readonly"], ["writeonly", "allocate"]]
+    )
     assert_(type(i.operands[2]) is np.matrix)
     assert_(type(i.operands[2]) is not np.ndarray)
     assert_equal(i.operands[2].shape, (2, 2))
 
     # matrix always wants things to be 2D
     b = np.arange(4).reshape(1, 2, 2)
-    assert_raises(RuntimeError, np.nditer, [a, b, None], [],
-                  [['readonly'], ['readonly'], ['writeonly', 'allocate']])
+    assert_raises(
+        RuntimeError,
+        np.nditer,
+        [a, b, None],
+        [],
+        [["readonly"], ["readonly"], ["writeonly", "allocate"]],
+    )
     # but if subtypes are disabled, the result can still work
-    i = np.nditer([a, b, None], [],
-                  [['readonly'], ['readonly'],
-                   ['writeonly', 'allocate', 'no_subtype']])
+    i = np.nditer(
+        [a, b, None],
+        [],
+        [["readonly"], ["readonly"], ["writeonly", "allocate", "no_subtype"]],
+    )
     assert_(type(i.operands[2]) is np.ndarray)
     assert_(type(i.operands[2]) is not np.matrix)
     assert_equal(i.operands[2].shape, (1, 2, 2))
@@ -126,17 +140,17 @@ def like_function():
 def test_array_astype():
     # 2018-04-29: copied here from core.tests.test_api
     # subok=True passes through a matrix
-    a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
-    b = a.astype('f4', subok=True, copy=False)
+    a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype="f4")
+    b = a.astype("f4", subok=True, copy=False)
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
-    b = a.astype('i4', copy=False)
+    b = a.astype("i4", copy=False)
     assert_equal(a, b)
     assert_equal(type(b), np.matrix)
 
     # subok=False never returns a matrix
-    b = a.astype('f4', subok=False, copy=False)
+    b = a.astype("f4", subok=False, copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(type(b) is not np.matrix)
@@ -146,8 +160,7 @@ def test_stack():
     # 2018-04-29: copied here from core.tests.test_shape_base
     # check np.matrix cannot be stacked
     m = np.matrix([[1, 2], [3, 4]])
-    assert_raises_regex(ValueError, 'shape too large to be a matrix',
-                        np.stack, [m, m])
+    assert_raises_regex(ValueError, "shape too large to be a matrix", np.stack, [m, m])
 
 
 def test_object_scalar_multiply():
@@ -177,23 +190,26 @@ def test_nanfunctions_matrices():
     mat[1] = np.nan
     for f in [np.nanmin, np.nanmax]:
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
+            warnings.simplefilter("always")
             res = f(mat, axis=0)
             assert_(isinstance(res, np.matrix))
             assert_(not np.any(np.isnan(res)))
             assert_(len(w) == 0)
 
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
+            warnings.simplefilter("always")
             res = f(mat, axis=1)
             assert_(isinstance(res, np.matrix))
-            assert_(np.isnan(res[1, 0]) and not np.isnan(res[0, 0])
-                    and not np.isnan(res[2, 0]))
-            assert_(len(w) == 1, 'no warning raised')
+            assert_(
+                np.isnan(res[1, 0])
+                and not np.isnan(res[0, 0])
+                and not np.isnan(res[2, 0])
+            )
+            assert_(len(w) == 1, "no warning raised")
             assert_(issubclass(w[0].category, RuntimeWarning))
 
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
+            warnings.simplefilter("always")
             res = f(mat)
             assert_(np.isscalar(res))
             assert_(res != np.nan)
@@ -205,8 +221,15 @@ def test_nanfunctions_matrices_general():
     # shape are preserved
     # 2018-04-29: moved here from core.tests.test_nanfunctions
     mat = np.matrix(np.eye(3))
-    for f in (np.nanargmin, np.nanargmax, np.nansum, np.nanprod,
-              np.nanmean, np.nanvar, np.nanstd):
+    for f in (
+        np.nanargmin,
+        np.nanargmax,
+        np.nansum,
+        np.nanprod,
+        np.nanmean,
+        np.nanvar,
+        np.nanstd,
+    ):
         res = f(mat, axis=0)
         assert_(isinstance(res, np.matrix))
         assert_(res.shape == (1, 3))
@@ -225,7 +248,7 @@ def test_nanfunctions_matrices_general():
         assert_(res.shape == (3, 3))
         res = f(mat)
         assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (1, 3*3))
+        assert_(res.shape == (1, 3 * 3))
 
 
 def test_average_matrix():
@@ -238,7 +261,7 @@ def test_average_matrix():
 
     r = np.average(a, axis=0, weights=w)
     assert_equal(type(r), np.matrix)
-    assert_equal(r, [[2.5, 10.0/3]])
+    assert_equal(r, [[2.5, 10.0 / 3]])
 
 
 def test_trapz_matrix():
@@ -255,8 +278,8 @@ def test_trapz_matrix():
 
 def test_ediff1d_matrix():
     # 2018-04-29: moved here from core.tests.test_arraysetops.
-    assert(isinstance(np.ediff1d(np.matrix(1)), np.matrix))
-    assert(isinstance(np.ediff1d(np.matrix(1), to_begin=1), np.matrix))
+    assert isinstance(np.ediff1d(np.matrix(1)), np.matrix)
+    assert isinstance(np.ediff1d(np.matrix(1), to_begin=1), np.matrix)
 
 
 def test_apply_along_axis_matrix():
@@ -294,8 +317,8 @@ class TestConcatenatorMatrix:
         a = [1, 2]
         b = [3, 4]
 
-        ab_r = np.r_['r', a, b]
-        ab_c = np.r_['c', a, b]
+        ab_r = np.r_["r", a, b]
+        ab_c = np.r_["c", a, b]
 
         assert_equal(type(ab_r), np.matrix)
         assert_equal(type(ab_c), np.matrix)
@@ -303,10 +326,10 @@ class TestConcatenatorMatrix:
         assert_equal(np.array(ab_r), [[1, 2, 3, 4]])
         assert_equal(np.array(ab_c), [[1], [2], [3], [4]])
 
-        assert_raises(ValueError, lambda: np.r_['rc', a, b])
+        assert_raises(ValueError, lambda: np.r_["rc", a, b])
 
     def test_matrix_scalar(self):
-        r = np.r_['r', [1, 2], 3]
+        r = np.r_["r", [1, 2], 3]
         assert_equal(type(r), np.matrix)
         assert_equal(np.array(r), [[1, 2, 3]])
 
@@ -315,7 +338,7 @@ class TestConcatenatorMatrix:
         b = np.array([2])
         c = np.array([3])
         d = np.array([4])
-        actual = np.r_['a, b; c, d']
+        actual = np.r_["a, b; c, d"]
         expected = np.bmat([[a, b], [c, d]])
 
         assert_equal(actual, expected)
@@ -327,13 +350,15 @@ def test_array_equal_error_message_matrix():
     with pytest.raises(AssertionError) as exc_info:
         assert_equal(np.array([1, 2]), np.matrix([1, 2]))
     msg = str(exc_info.value)
-    msg_reference = textwrap.dedent("""\
+    msg_reference = textwrap.dedent(
+        """\
 
     Arrays are not equal
 
     (shapes (2,), (1, 2) mismatch)
      x: array([1, 2])
-     y: matrix([[1, 2]])""")
+     y: matrix([[1, 2]])"""
+    )
     assert_equal(msg, msg_reference)
 
 
@@ -341,11 +366,11 @@ def test_array_almost_equal_matrix():
     # Matrix slicing keeps things 2-D, while array does not necessarily.
     # See gh-8452.
     # 2018-04-29: moved here from testing.tests.test_utils.
-    m1 = np.matrix([[1., 2.]])
-    m2 = np.matrix([[1., np.nan]])
-    m3 = np.matrix([[1., -np.inf]])
+    m1 = np.matrix([[1.0, 2.0]])
+    m2 = np.matrix([[1.0, np.nan]])
+    m3 = np.matrix([[1.0, -np.inf]])
     m4 = np.matrix([[np.nan, np.inf]])
-    m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
+    m5 = np.matrix([[1.0, 2.0], [np.nan, np.inf]])
     for assert_func in assert_array_almost_equal, assert_almost_equal:
         for m in m1, m2, m3, m4, m5:
             assert_func(m, m)

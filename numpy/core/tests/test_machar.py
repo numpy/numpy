@@ -22,7 +22,7 @@ class TestMachAr:
     def test_underlow(self):
         # Regression test for #759:
         # instantiating MachAr for dtype = np.float96 raises spurious warning.
-        with errstate(all='raise'):
+        with errstate(all="raise"):
             try:
                 self._run_machar_highprec()
             except FloatingPointError as e:

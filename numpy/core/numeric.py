@@ -8,22 +8,59 @@ import numbers
 import numpy as np
 from . import multiarray
 from .multiarray import (
-    _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
-    BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
-    WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast, compare_chararrays,
-    concatenate, copyto, dot, dtype, empty,
-    empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
-    inner, lexsort, matmul, may_share_memory,
-    min_scalar_type, ndarray, nditer, nested_iters, promote_types,
-    putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros, normalize_axis_index)
+    _fastCopyAndTranspose as fastCopyAndTranspose,
+    ALLOW_THREADS,
+    BUFSIZE,
+    CLIP,
+    MAXDIMS,
+    MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT,
+    RAISE,
+    WRAP,
+    arange,
+    array,
+    asarray,
+    asanyarray,
+    ascontiguousarray,
+    asfortranarray,
+    broadcast,
+    can_cast,
+    compare_chararrays,
+    concatenate,
+    copyto,
+    dot,
+    dtype,
+    empty,
+    empty_like,
+    flatiter,
+    frombuffer,
+    fromfile,
+    fromiter,
+    fromstring,
+    inner,
+    lexsort,
+    matmul,
+    may_share_memory,
+    min_scalar_type,
+    ndarray,
+    nditer,
+    nested_iters,
+    promote_types,
+    putmask,
+    result_type,
+    set_numeric_ops,
+    shares_memory,
+    vdot,
+    where,
+    zeros,
+    normalize_axis_index,
+)
 
 from . import overrides
 from . import umath
 from . import shape_base
 from .overrides import set_array_function_like_doc, set_module
-from .umath import (multiply, invert, sin, PINF, NAN)
+from .umath import multiply, invert, sin, PINF, NAN
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._exceptions import TooHardError, AxisError
@@ -34,30 +71,102 @@ ufunc = type(sin)
 newaxis = None
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
 __all__ = [
-    'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
-    'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
-    'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
-    'fromstring', 'fromfile', 'frombuffer', 'where',
-    'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
-    'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
-    'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
-    'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
-    'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
-    'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
-    'identity', 'allclose', 'compare_chararrays', 'putmask',
-    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
-    'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
-    'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
-    'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
+    "newaxis",
+    "ndarray",
+    "flatiter",
+    "nditer",
+    "nested_iters",
+    "ufunc",
+    "arange",
+    "array",
+    "asarray",
+    "asanyarray",
+    "ascontiguousarray",
+    "asfortranarray",
+    "zeros",
+    "count_nonzero",
+    "empty",
+    "broadcast",
+    "dtype",
+    "fromstring",
+    "fromfile",
+    "frombuffer",
+    "where",
+    "argwhere",
+    "copyto",
+    "concatenate",
+    "fastCopyAndTranspose",
+    "lexsort",
+    "set_numeric_ops",
+    "can_cast",
+    "promote_types",
+    "min_scalar_type",
+    "result_type",
+    "isfortran",
+    "empty_like",
+    "zeros_like",
+    "ones_like",
+    "correlate",
+    "convolve",
+    "inner",
+    "dot",
+    "outer",
+    "vdot",
+    "roll",
+    "rollaxis",
+    "moveaxis",
+    "cross",
+    "tensordot",
+    "little_endian",
+    "fromiter",
+    "array_equal",
+    "array_equiv",
+    "indices",
+    "fromfunction",
+    "isclose",
+    "isscalar",
+    "binary_repr",
+    "base_repr",
+    "ones",
+    "identity",
+    "allclose",
+    "compare_chararrays",
+    "putmask",
+    "flatnonzero",
+    "Inf",
+    "inf",
+    "infty",
+    "Infinity",
+    "nan",
+    "NaN",
+    "False_",
+    "True_",
+    "bitwise_not",
+    "CLIP",
+    "RAISE",
+    "WRAP",
+    "MAXDIMS",
+    "BUFSIZE",
+    "ALLOW_THREADS",
+    "ComplexWarning",
+    "full",
+    "full_like",
+    "matmul",
+    "shares_memory",
+    "may_share_memory",
+    "MAY_SHARE_BOUNDS",
+    "MAY_SHARE_EXACT",
+    "TooHardError",
+    "AxisError",
+]
 
 
-@set_module('numpy')
+@set_module("numpy")
 class ComplexWarning(RuntimeWarning):
     """
     The warning raised when casting a complex dtype to a real dtype.
@@ -66,6 +175,7 @@ class ComplexWarning(RuntimeWarning):
     part, but this behavior may not be what the user actually wants.
 
     """
+
     pass
 
 
@@ -74,7 +184,7 @@ def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
 
 
 @array_function_dispatch(_zeros_like_dispatcher)
-def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
+def zeros_like(a, dtype=None, order="K", subok=True, shape=None):
     """
     Return an array of zeros with the same shape and type as a given array.
 
@@ -138,17 +248,17 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
     # needed instead of a 0 to get same result as zeros for for string dtypes
     z = zeros(1, dtype=res.dtype)
-    multiarray.copyto(res, z, casting='unsafe')
+    multiarray.copyto(res, z, casting="unsafe")
     return res
 
 
 def _ones_dispatcher(shape, dtype=None, order=None, *, like=None):
-    return(like,)
+    return (like,)
 
 
 @set_array_function_like_doc
-@set_module('numpy')
-def ones(shape, dtype=None, order='C', *, like=None):
+@set_module("numpy")
+def ones(shape, dtype=None, order="C", *, like=None):
     """
     Return a new array of given shape and type, filled with ones.
 
@@ -202,13 +312,11 @@ def ones(shape, dtype=None, order='C', *, like=None):
         return _ones_with_like(shape, dtype=dtype, order=order, like=like)
 
     a = empty(shape, dtype, order)
-    multiarray.copyto(a, 1, casting='unsafe')
+    multiarray.copyto(a, 1, casting="unsafe")
     return a
 
 
-_ones_with_like = array_function_dispatch(
-    _ones_dispatcher
-)(ones)
+_ones_with_like = array_function_dispatch(_ones_dispatcher)(ones)
 
 
 def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -216,7 +324,7 @@ def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
 
 
 @array_function_dispatch(_ones_like_dispatcher)
-def ones_like(a, dtype=None, order='K', subok=True, shape=None):
+def ones_like(a, dtype=None, order="K", subok=True, shape=None):
     """
     Return an array of ones with the same shape and type as a given array.
 
@@ -278,17 +386,17 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
-    multiarray.copyto(res, 1, casting='unsafe')
+    multiarray.copyto(res, 1, casting="unsafe")
     return res
 
 
 def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
-    return(like,)
+    return (like,)
 
 
 @set_array_function_like_doc
-@set_module('numpy')
-def full(shape, fill_value, dtype=None, order='C', *, like=None):
+@set_module("numpy")
+def full(shape, fill_value, dtype=None, order="C", *, like=None):
     """
     Return a new array of given shape and type, filled with `fill_value`.
 
@@ -341,21 +449,21 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
         fill_value = asarray(fill_value)
         dtype = fill_value.dtype
     a = empty(shape, dtype, order)
-    multiarray.copyto(a, fill_value, casting='unsafe')
+    multiarray.copyto(a, fill_value, casting="unsafe")
     return a
 
 
-_full_with_like = array_function_dispatch(
-    _full_dispatcher
-)(full)
+_full_with_like = array_function_dispatch(_full_dispatcher)(full)
 
 
-def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None, shape=None):
+def _full_like_dispatcher(
+    a, fill_value, dtype=None, order=None, subok=None, shape=None
+):
     return (a,)
 
 
 @array_function_dispatch(_full_like_dispatcher)
-def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
+def full_like(a, fill_value, dtype=None, order="K", subok=True, shape=None):
     """
     Return a full array with the same shape and type as a given array.
 
@@ -414,7 +522,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
-    multiarray.copyto(res, fill_value, casting='unsafe')
+    multiarray.copyto(res, fill_value, casting="unsafe")
     return res
 
 
@@ -496,7 +604,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 
 
-@set_module('numpy')
+@set_module("numpy")
 def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
@@ -614,7 +722,7 @@ def argwhere(a):
     if np.ndim(a) == 0:
         a = shape_base.atleast_1d(a)
         # then remove the added dimension
-        return argwhere(a)[:,:0]
+        return argwhere(a)[:, :0]
     return transpose(nonzero(a))
 
 
@@ -668,7 +776,7 @@ def _correlate_dispatcher(a, v, mode=None):
 
 
 @array_function_dispatch(_correlate_dispatcher)
-def correlate(a, v, mode='valid'):
+def correlate(a, v, mode="valid"):
     """
     Cross-correlation of two 1-dimensional sequences.
 
@@ -700,7 +808,7 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
-    scipy.signal.correlate : uses FFT which has superior performance on large arrays. 
+    scipy.signal.correlate : uses FFT which has superior performance on large arrays.
 
     Notes
     -----
@@ -714,7 +822,7 @@ def correlate(a, v, mode='valid'):
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
     be preferable.
-    
+
 
     Examples
     --------
@@ -746,7 +854,7 @@ def _convolve_dispatcher(a, v, mode=None):
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode='full'):
+def convolve(a, v, mode="full"):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -835,12 +943,12 @@ def convolve(a, v, mode='full'):
 
     """
     a, v = array(a, copy=False, ndmin=1), array(v, copy=False, ndmin=1)
-    if (len(v) > len(a)):
+    if len(v) > len(a):
         a, v = v, a
     if len(a) == 0:
-        raise ValueError('a cannot be empty')
+        raise ValueError("a cannot be empty")
     if len(v) == 0:
-        raise ValueError('v cannot be empty')
+        raise ValueError("v cannot be empty")
     return multiarray.correlate(a, v[::-1], mode)
 
 
@@ -1216,8 +1324,7 @@ def roll(a, shift, axis=None):
         axis = normalize_axis_tuple(axis, a.ndim, allow_duplicate=True)
         broadcasted = broadcast(shift, axis)
         if broadcasted.ndim > 1:
-            raise ValueError(
-                "'shift' and 'axis' should be scalars or 1D sequences")
+            raise ValueError("'shift' and 'axis' should be scalars or 1D sequences")
         shifts = {ax: 0 for ax in range(a.ndim)}
         for sh, ax in broadcasted:
             shifts[ax] += sh
@@ -1227,8 +1334,10 @@ def roll(a, shift, axis=None):
             offset %= a.shape[ax] or 1  # If `a` is empty, nothing matters.
             if offset:
                 # (original, result), (original, result)
-                rolls[ax] = ((slice(None, -offset), slice(offset, None)),
-                             (slice(-offset, None), slice(None, offset)))
+                rolls[ax] = (
+                    (slice(None, -offset), slice(offset, None)),
+                    (slice(-offset, None), slice(None, offset)),
+                )
 
         result = empty_like(a)
         for indices in itertools.product(*rolls):
@@ -1287,7 +1396,7 @@ def rollaxis(a, axis, start=0):
            +-------------------+----------------------+
            | ``arr.ndim + 1``  | raise ``AxisError``  |
            +-------------------+----------------------+
-           
+
         .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
 
     Returns
@@ -1320,7 +1429,7 @@ def rollaxis(a, axis, start=0):
         start += n
     msg = "'%s' arg requires %d <= %s < %d, but %d was passed in"
     if not (0 <= start < n + 1):
-        raise AxisError(msg % ('start', -n, 'start', n + 1, start))
+        raise AxisError(msg % ("start", -n, "start", n + 1, start))
     if axis < start:
         # it's been removed
         start -= 1
@@ -1385,9 +1494,9 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     axis = tuple([normalize_axis_index(ax, ndim, argname) for ax in axis])
     if not allow_duplicate and len(set(axis)) != len(axis):
         if argname:
-            raise ValueError('repeated axis in `{}` argument'.format(argname))
+            raise ValueError("repeated axis in `{}` argument".format(argname))
         else:
-            raise ValueError('repeated axis')
+            raise ValueError("repeated axis")
     return axis
 
 
@@ -1451,11 +1560,13 @@ def moveaxis(a, source, destination):
         a = asarray(a)
         transpose = a.transpose
 
-    source = normalize_axis_tuple(source, a.ndim, 'source')
-    destination = normalize_axis_tuple(destination, a.ndim, 'destination')
+    source = normalize_axis_tuple(source, a.ndim, "source")
+    destination = normalize_axis_tuple(destination, a.ndim, "destination")
     if len(source) != len(destination):
-        raise ValueError('`source` and `destination` arguments must have '
-                         'the same number of elements')
+        raise ValueError(
+            "`source` and `destination` arguments must have "
+            "the same number of elements"
+        )
 
     order = [n for n in range(a.ndim) if n not in source]
 
@@ -1594,14 +1705,13 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     a = asarray(a)
     b = asarray(b)
     # Check axisa and axisb are within bounds
-    axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
-    axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
+    axisa = normalize_axis_index(axisa, a.ndim, msg_prefix="axisa")
+    axisb = normalize_axis_index(axisb, b.ndim, msg_prefix="axisb")
 
     # Move working axis to the end of the shape
     a = moveaxis(a, axisa, -1)
     b = moveaxis(b, axisb, -1)
-    msg = ("incompatible dimensions for cross product\n"
-           "(dimension must be 2 or 3)")
+    msg = "incompatible dimensions for cross product\n" "(dimension must be 2 or 3)"
     if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
         raise ValueError(msg)
 
@@ -1610,7 +1720,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     if a.shape[-1] == 3 or b.shape[-1] == 3:
         shape += (3,)
         # Check axisc is within bounds
-        axisc = normalize_axis_index(axisc, len(shape), msg_prefix='axisc')
+        axisc = normalize_axis_index(axisc, len(shape), msg_prefix="axisc")
     dtype = promote_types(a.dtype, b.dtype)
     cp = empty(shape, dtype)
 
@@ -1673,10 +1783,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     return moveaxis(cp, -1, axisc)
 
 
-little_endian = (sys.byteorder == 'little')
+little_endian = sys.byteorder == "little"
 
 
-@set_module('numpy')
+@set_module("numpy")
 def indices(dimensions, dtype=int, sparse=False):
     """
     Return an array representing the indices of a grid.
@@ -1763,15 +1873,13 @@ def indices(dimensions, dtype=int, sparse=False):
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
-    shape = (1,)*N
+    shape = (1,) * N
     if sparse:
         res = tuple()
     else:
-        res = empty((N,)+dimensions, dtype=dtype)
+        res = empty((N,) + dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
-        idx = arange(dim, dtype=dtype).reshape(
-            shape[:i] + (dim,) + shape[i+1:]
-        )
+        idx = arange(dim, dtype=dtype).reshape(shape[:i] + (dim,) + shape[i + 1 :])
         if sparse:
             res = res + (idx,)
         else:
@@ -1784,7 +1892,7 @@ def _fromfunction_dispatcher(function, shape, *, dtype=None, like=None, **kwargs
 
 
 @set_array_function_like_doc
-@set_module('numpy')
+@set_module("numpy")
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
@@ -1840,22 +1948,24 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     """
     if like is not None:
-        return _fromfunction_with_like(function, shape, dtype=dtype, like=like, **kwargs)
+        return _fromfunction_with_like(
+            function, shape, dtype=dtype, like=like, **kwargs
+        )
 
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
 
 
-_fromfunction_with_like = array_function_dispatch(
-    _fromfunction_dispatcher
-)(fromfunction)
+_fromfunction_with_like = array_function_dispatch(_fromfunction_dispatcher)(
+    fromfunction
+)
 
 
 def _frombuffer(buf, dtype, shape, order):
     return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
 
 
-@set_module('numpy')
+@set_module("numpy")
 def isscalar(element):
     """
     Returns True if the type of `element` is a scalar type.
@@ -1931,12 +2041,14 @@ def isscalar(element):
     True
 
     """
-    return (isinstance(element, generic)
-            or type(element) in ScalarType
-            or isinstance(element, numbers.Number))
+    return (
+        isinstance(element, generic)
+        or type(element) in ScalarType
+        or isinstance(element, numbers.Number)
+    )
 
 
-@set_module('numpy')
+@set_module("numpy")
 def binary_repr(num, width=None):
     """
     Return the binary representation of the input number as a string.
@@ -2008,50 +2120,52 @@ def binary_repr(num, width=None):
     '11101'
 
     """
+
     def warn_if_insufficient(width, binwidth):
         if width is not None and width < binwidth:
             warnings.warn(
                 "Insufficient bit width provided. This behavior "
-                "will raise an error in the future.", DeprecationWarning,
-                stacklevel=3)
+                "will raise an error in the future.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
 
     # Ensure that num is a Python integer to avoid overflow or unwanted
     # casts to floating point.
     num = operator.index(num)
 
     if num == 0:
-        return '0' * (width or 1)
+        return "0" * (width or 1)
 
     elif num > 0:
         binary = bin(num)[2:]
         binwidth = len(binary)
-        outwidth = (binwidth if width is None
-                    else max(binwidth, width))
+        outwidth = binwidth if width is None else max(binwidth, width)
         warn_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
     else:
         if width is None:
-            return '-' + bin(-num)[2:]
+            return "-" + bin(-num)[2:]
 
         else:
             poswidth = len(bin(-num)[2:])
 
             # See gh-8679: remove extra digit
             # for numbers at boundaries.
-            if 2**(poswidth - 1) == -num:
+            if 2 ** (poswidth - 1) == -num:
                 poswidth -= 1
 
-            twocomp = 2**(poswidth + 1) + num
+            twocomp = 2 ** (poswidth + 1) + num
             binary = bin(twocomp)[2:]
             binwidth = len(binary)
 
             outwidth = max(binwidth, width)
             warn_if_insufficient(width, binwidth)
-            return '1' * (outwidth - binwidth) + binary
+            return "1" * (outwidth - binwidth) + binary
 
 
-@set_module('numpy')
+@set_module("numpy")
 def base_repr(number, base=2, padding=0):
     """
     Return a string representation of a number in the given base system.
@@ -2090,7 +2204,7 @@ def base_repr(number, base=2, padding=0):
     '20'
 
     """
-    digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     if base > len(digits):
         raise ValueError("Bases greater than 36 not handled in base_repr.")
     elif base < 2:
@@ -2102,10 +2216,10 @@ def base_repr(number, base=2, padding=0):
         res.append(digits[num % base])
         num //= base
     if padding:
-        res.append('0' * padding)
+        res.append("0" * padding)
     if number < 0:
-        res.append('-')
-    return ''.join(reversed(res or '0'))
+        res.append("-")
+    return "".join(reversed(res or "0"))
 
 
 # These are all essentially abbreviations
@@ -2128,7 +2242,7 @@ def _identity_dispatcher(n, dtype=None, *, like=None):
 
 
 @set_array_function_like_doc
-@set_module('numpy')
+@set_module("numpy")
 def identity(n, dtype=None, *, like=None):
     """
     Return the identity array.
@@ -2164,12 +2278,11 @@ def identity(n, dtype=None, *, like=None):
         return _identity_with_like(n, dtype=dtype, like=like)
 
     from numpy import eye
+
     return eye(n, dtype=dtype, like=like)
 
 
-_identity_with_like = array_function_dispatch(
-    _identity_dispatcher
-)(identity)
+_identity_with_like = array_function_dispatch(_identity_dispatcher)(identity)
 
 
 def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
@@ -2177,7 +2290,7 @@ def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
 
 
 @array_function_dispatch(_allclose_dispatcher)
-def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+def allclose(a, b, rtol=1.0e-5, atol=1.0e-8, equal_nan=False):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
 
@@ -2255,7 +2368,7 @@ def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
 
 
 @array_function_dispatch(_isclose_dispatcher)
-def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+def isclose(a, b, rtol=1.0e-5, atol=1.0e-8, equal_nan=False):
     """
     Returns a boolean array where two arrays are element-wise equal within a
     tolerance.
@@ -2334,9 +2447,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
     array([False,  True])
     """
+
     def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'):
-            return less_equal(abs(x-y), atol + rtol * abs(y))
+        with errstate(invalid="ignore"):
+            return less_equal(abs(x - y), atol + rtol * abs(y))
 
     x = asanyarray(a)
     y = asanyarray(b)
@@ -2349,7 +2463,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     #       timedelta works if `atol` is an integer or also a timedelta.
     #       Although, the default tolerances are unlikely to be useful
     if y.dtype.kind != "m":
-        dt = multiarray.result_type(y, 1.)
+        dt = multiarray.result_type(y, 1.0)
         y = asanyarray(y, dtype=dt)
 
     xfin = isfinite(x)
@@ -2367,7 +2481,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         # Avoid subtraction with infinite/nan values...
         cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
         # Check for equality of infinite values...
-        cond[~finite] = (x[~finite] == y[~finite])
+        cond[~finite] = x[~finite] == y[~finite]
         if equal_nan:
             # Make NaN == NaN
             both_nan = isnan(x) & isnan(y)
@@ -2513,7 +2627,7 @@ True_ = bool_(True)
 
 def extend_all(module):
     existing = set(__all__)
-    mall = getattr(module, '__all__')
+    mall = getattr(module, "__all__")
     for a in mall:
         if a not in existing:
             __all__.append(a)
@@ -2529,6 +2643,7 @@ from . import _asarray
 from ._asarray import *
 from . import _ufunc_config
 from ._ufunc_config import *
+
 extend_all(fromnumeric)
 extend_all(umath)
 extend_all(numerictypes)

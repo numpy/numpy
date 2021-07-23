@@ -25,18 +25,20 @@ from shutil import which
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
 #                     -C to check array subscripts
-F2C_ARGS = ['-A', '-Nx800']
+F2C_ARGS = ["-A", "-Nx800"]
 
 # The header to add to the top of the f2c_*.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
-HEADER_BLURB = '''\
+HEADER_BLURB = """\
 /*
  * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
  *       information on remaking this file.
  */
-'''
+"""
 
-HEADER = HEADER_BLURB + '''\
+HEADER = (
+    HEADER_BLURB
+    + """\
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -60,12 +62,15 @@ them.
 #if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
-'''
+"""
+)
+
 
 class FortranRoutine:
-    """Wrapper for a Fortran routine in a file.
-    """
-    type = 'generic'
+    """Wrapper for a Fortran routine in a file."""
+
+    type = "generic"
+
     def __init__(self, name=None, filename=None):
         self.filename = filename
         if name is None:
@@ -81,22 +86,26 @@ class FortranRoutine:
         return self._dependencies
 
     def __repr__(self):
-        return f'FortranRoutine({self.name!r}, filename={self.filename!r})'
+        return f"FortranRoutine({self.name!r}, filename={self.filename!r})"
+
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
     is not known.
     """
-    type = 'unknown'
+
+    type = "unknown"
+
     def __init__(self, name):
-        FortranRoutine.__init__(self, name=name, filename='<unknown>')
+        FortranRoutine.__init__(self, name=name, filename="<unknown>")
 
     def dependencies(self):
         return []
 
+
 class FortranLibrary:
-    """Container for a bunch of Fortran routines.
-    """
+    """Container for a bunch of Fortran routines."""
+
     def __init__(self, src_dirs):
         self._src_dirs = src_dirs
         self.names_to_routines = {}
@@ -104,7 +113,7 @@ class FortranLibrary:
     def _findRoutine(self, rname):
         rname = rname.lower()
         for s in self._src_dirs:
-            ffilename = os.path.join(s, rname + '.f')
+            ffilename = os.path.join(s, rname + ".f")
             if os.path.exists(ffilename):
                 return self._newFortranRoutine(rname, ffilename)
         return UnknownFortranRoutine(rname)
@@ -121,13 +130,11 @@ class FortranLibrary:
         self.names_to_routines[rname] = routine
 
     def addRoutine(self, rname):
-        """Add a routine to the library.
-        """
+        """Add a routine to the library."""
         self.getRoutine(rname)
 
     def getRoutine(self, rname):
-        """Get a routine from the library. Will add if it's not found.
-        """
+        """Get a routine from the library. Will add if it's not found."""
         unique = []
         rname = rname.lower()
         routine = self.names_to_routines.get(rname, unique)
@@ -137,13 +144,11 @@ class FortranLibrary:
         return routine
 
     def allRoutineNames(self):
-        """Return the names of all the routines.
-        """
+        """Return the names of all the routines."""
         return list(self.names_to_routines.keys())
 
     def allRoutines(self):
-        """Return all the routines.
-        """
+        """Return all the routines."""
         return list(self.names_to_routines.values())
 
     def resolveAllDependencies(self):
@@ -167,44 +172,47 @@ class FortranLibrary:
             last_todo = todo
         return todo
 
+
 class LapackLibrary(FortranLibrary):
     def _newFortranRoutine(self, rname, filename):
         routine = FortranLibrary._newFortranRoutine(self, rname, filename)
-        if 'blas' in filename.lower():
-            routine.type = 'blas'
-        elif 'install' in filename.lower():
-            routine.type = 'config'
-        elif rname.startswith('z'):
-            routine.type = 'z_lapack'
-        elif rname.startswith('c'):
-            routine.type = 'c_lapack'
-        elif rname.startswith('s'):
-            routine.type = 's_lapack'
-        elif rname.startswith('d'):
-            routine.type = 'd_lapack'
+        if "blas" in filename.lower():
+            routine.type = "blas"
+        elif "install" in filename.lower():
+            routine.type = "config"
+        elif rname.startswith("z"):
+            routine.type = "z_lapack"
+        elif rname.startswith("c"):
+            routine.type = "c_lapack"
+        elif rname.startswith("s"):
+            routine.type = "s_lapack"
+        elif rname.startswith("d"):
+            routine.type = "d_lapack"
         else:
-            routine.type = 'lapack'
+            routine.type = "lapack"
         return routine
 
     def allRoutinesByType(self, typename):
         routines = sorted((r.name, r) for r in self.allRoutines() if r.type == typename)
         return [a[1] for a in routines]
 
+
 def printRoutineNames(desc, routines):
     print(desc)
     for r in routines:
-        print(f'\t{r.name}')
+        print(f"\t{r.name}")
+
 
 def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
-    blas_src_dir = os.path.join(lapack_dir, 'BLAS', 'SRC')
+    blas_src_dir = os.path.join(lapack_dir, "BLAS", "SRC")
     if not os.path.exists(blas_src_dir):
-        blas_src_dir = os.path.join(lapack_dir, 'blas', 'src')
-    lapack_src_dir = os.path.join(lapack_dir, 'SRC')
+        blas_src_dir = os.path.join(lapack_dir, "blas", "src")
+    lapack_src_dir = os.path.join(lapack_dir, "SRC")
     if not os.path.exists(lapack_src_dir):
-        lapack_src_dir = os.path.join(lapack_dir, 'src')
-    install_src_dir = os.path.join(lapack_dir, 'INSTALL')
+        lapack_src_dir = os.path.join(lapack_dir, "src")
+    install_src_dir = os.path.join(lapack_dir, "INSTALL")
     if not os.path.exists(install_src_dir):
-        install_src_dir = os.path.join(lapack_dir, 'install')
+        install_src_dir = os.path.join(lapack_dir, "install")
 
     library = LapackLibrary([install_src_dir, blas_src_dir, lapack_src_dir])
 
@@ -218,15 +226,16 @@ def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
 
     return library
 
+
 def getWrappedRoutineNames(wrapped_routines_file):
     routines = []
     ignores = []
     with open(wrapped_routines_file) as fo:
         for line in fo:
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
-            if line.startswith('IGNORE:'):
+            if line.startswith("IGNORE:"):
                 line = line[7:].strip()
                 ig = line.split()
                 ignores.extend(ig)
@@ -234,64 +243,69 @@ def getWrappedRoutineNames(wrapped_routines_file):
                 routines.append(line)
     return routines, ignores
 
-types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'config'}
+
+types = {"blas", "lapack", "d_lapack", "s_lapack", "z_lapack", "c_lapack", "config"}
+
 
 def dumpRoutineNames(library, output_dir):
-    for typename in {'unknown'} | types:
+    for typename in {"unknown"} | types:
         routines = library.allRoutinesByType(typename)
-        filename = os.path.join(output_dir, typename + '_routines.lst')
-        with open(filename, 'w') as fo:
+        filename = os.path.join(output_dir, typename + "_routines.lst")
+        with open(filename, "w") as fo:
             for r in routines:
                 deps = r.dependencies()
                 fo.write(f"{r.name}: {' '.join(deps)}\n")
 
+
 def concatenateRoutines(routines, output_file):
-    with open(output_file, 'w') as output_fo:
+    with open(output_file, "w") as output_fo:
         for r in routines:
-            with open(r.filename, 'r') as fo:
+            with open(r.filename, "r") as fo:
                 source = fo.read()
             output_fo.write(source)
+
 
 class F2CError(Exception):
     pass
 
+
 def runF2C(fortran_filename, output_dir):
-    fortran_filename = fortran_filename.replace('\\', '/')
+    fortran_filename = fortran_filename.replace("\\", "/")
     try:
-        subprocess.check_call(
-            ["f2c"] + F2C_ARGS + ['-d', output_dir, fortran_filename]
-        )
+        subprocess.check_call(["f2c"] + F2C_ARGS + ["-d", output_dir, fortran_filename])
     except subprocess.CalledProcessError as e:
         raise F2CError from e
+
 
 def scrubF2CSource(c_file):
     with open(c_file) as fo:
         source = fo.read()
     source = clapack_scrub.scrubSource(source, verbose=True)
-    with open(c_file, 'w') as fo:
+    with open(c_file, "w") as fo:
         fo.write(HEADER)
         fo.write(source)
+
 
 def ensure_executable(name):
     try:
         which(name)
     except Exception as ex:
-        raise SystemExit(name + ' not found') from ex
+        raise SystemExit(name + " not found") from ex
+
 
 def create_name_header(output_dir):
-    routine_re = re.compile(r'^      (subroutine|.* function)\s+(\w+)\(.*$',
-                            re.I)
-    extern_re = re.compile(r'^extern [a-z]+ ([a-z0-9_]+)\(.*$')
+    routine_re = re.compile(r"^      (subroutine|.* function)\s+(\w+)\(.*$", re.I)
+    extern_re = re.compile(r"^extern [a-z]+ ([a-z0-9_]+)\(.*$")
 
     # BLAS/LAPACK symbols
-    symbols = set(['xerbla'])
+    symbols = set(["xerbla"])
     for fn in os.listdir(output_dir):
         fn = os.path.join(output_dir, fn)
 
-        if not fn.endswith('.f'):
+        if not fn.endswith(".f"):
             continue
 
-        with open(fn, 'r') as f:
+        with open(fn, "r") as f:
             for line in f:
                 m = routine_re.match(line)
                 if m:
@@ -299,42 +313,43 @@ def create_name_header(output_dir):
 
     # f2c symbols
     f2c_symbols = set()
-    with open('f2c.h', 'r') as f:
+    with open("f2c.h", "r") as f:
         for line in f:
             m = extern_re.match(line)
             if m:
                 f2c_symbols.add(m.group(1))
 
-    with open(os.path.join(output_dir, 'lapack_lite_names.h'), 'w') as f:
+    with open(os.path.join(output_dir, "lapack_lite_names.h"), "w") as f:
         f.write(HEADER_BLURB)
         f.write(
             "/*\n"
             " * This file renames all BLAS/LAPACK and f2c symbols to avoid\n"
             " * dynamic symbol name conflicts, in cases where e.g.\n"
             " * integer sizes do not match with 'standard' ABI.\n"
-            " */\n")
+            " */\n"
+        )
 
         # Rename BLAS/LAPACK symbols
         for name in sorted(symbols):
-            f.write(f'#define {name}_ BLAS_FUNC({name})\n')
+            f.write(f"#define {name}_ BLAS_FUNC({name})\n")
 
         # Rename also symbols that f2c exports itself
-        f.write("\n"
-                "/* Symbols exported by f2c.c */\n")
+        f.write("\n" "/* Symbols exported by f2c.c */\n")
         for name in sorted(f2c_symbols):
-            f.write(f'#define {name} numpy_lapack_lite_{name}\n')
+            f.write(f"#define {name} numpy_lapack_lite_{name}\n")
+
 
 def main():
     if len(sys.argv) != 3:
         print(__doc__)
         return
     # Make sure that patch and f2c are found on path
-    ensure_executable('f2c')
-    ensure_executable('patch')
+    ensure_executable("f2c")
+    ensure_executable("patch")
 
     wrapped_routines_file = sys.argv[1]
     lapack_src_dir = sys.argv[2]
-    output_dir = os.path.join(os.path.dirname(__file__), 'build')
+    output_dir = os.path.join(os.path.dirname(__file__), "build")
 
     try:
         shutil.rmtree(output_dir)
@@ -348,41 +363,41 @@ def main():
     dumpRoutineNames(library, output_dir)
 
     for typename in types:
-        fortran_file = os.path.join(output_dir, f'f2c_{typename}.f')
-        c_file = fortran_file[:-2] + '.c'
-        print(f'creating {c_file} ...')
+        fortran_file = os.path.join(output_dir, f"f2c_{typename}.f")
+        c_file = fortran_file[:-2] + ".c"
+        print(f"creating {c_file} ...")
         routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
 
         # apply the patchpatch
-        patch_file = os.path.basename(fortran_file) + '.patch'
+        patch_file = os.path.basename(fortran_file) + ".patch"
         if os.path.exists(patch_file):
-            subprocess.check_call(['patch', '-u', fortran_file, patch_file])
-            print(f'Patched {fortran_file}')
+            subprocess.check_call(["patch", "-u", fortran_file, patch_file])
+            print(f"Patched {fortran_file}")
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:
-            print(f'f2c failed on {fortran_file}')
+            print(f"f2c failed on {fortran_file}")
             break
         scrubF2CSource(c_file)
 
         # patch any changes needed to the C file
-        c_patch_file = c_file + '.patch'
+        c_patch_file = c_file + ".patch"
         if os.path.exists(c_patch_file):
-            subprocess.check_call(['patch', '-u', c_file, c_patch_file])
+            subprocess.check_call(["patch", "-u", c_file, c_patch_file])
 
         print()
 
     create_name_header(output_dir)
 
     for fname in os.listdir(output_dir):
-        if fname.endswith('.c') or fname == 'lapack_lite_names.h':
-            print('Copying ' + fname)
+        if fname.endswith(".c") or fname == "lapack_lite_names.h":
+            print("Copying " + fname)
             shutil.copy(
                 os.path.join(output_dir, fname),
                 os.path.abspath(os.path.dirname(__file__)),
             )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

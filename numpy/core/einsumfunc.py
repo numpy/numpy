@@ -9,9 +9,9 @@ from numpy.core.multiarray import c_einsum
 from numpy.core.numeric import asanyarray, tensordot
 from numpy.core.overrides import array_function_dispatch
 
-__all__ = ['einsum', 'einsum_path']
+__all__ = ["einsum", "einsum_path"]
 
-einsum_symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+einsum_symbols = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 einsum_symbols_set = set(einsum_symbols)
 
 
@@ -52,6 +52,7 @@ def _flop_count(idx_contraction, inner, num_terms, size_dictionary):
         op_factor += 1
 
     return overall_size * op_factor
+
 
 def _compute_size_by_dict(indices, idx_dict):
     """
@@ -136,7 +137,7 @@ def _find_contraction(positions, input_sets, output_set):
             idx_remain |= value
 
     new_result = idx_remain & idx_contract
-    idx_removed = (idx_contract - new_result)
+    idx_removed = idx_contract - new_result
     remaining.append(new_result)
 
     return (new_result, remaining, idx_removed, idx_contract)
@@ -192,7 +193,9 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
                     continue
 
                 # Build (total_cost, positions, indices_remaining)
-                total_cost =  cost + _flop_count(idx_contract, idx_removed, len(con), idx_dict)
+                total_cost = cost + _flop_count(
+                    idx_contract, idx_removed, len(con), idx_dict
+                )
                 new_pos = positions + [con]
                 iter_results.append((total_cost, new_pos, new_input_sets))
 
@@ -212,7 +215,10 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
     path = min(full_results, key=lambda x: x[0])[1]
     return path
 
-def _parse_possible_contraction(positions, input_sets, output_set, idx_dict, memory_limit, path_cost, naive_cost):
+
+def _parse_possible_contraction(
+    positions, input_sets, output_set, idx_dict, memory_limit, path_cost, naive_cost
+):
     """Compute the cost (removed size + flops) and resultant indices for
     performing the contraction specified by ``positions``.
 
@@ -309,6 +315,7 @@ def _update_other_results(results, best):
 
     return mod_results
 
+
 def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
     """
     Finds the path by contracting the best pair until the input list is
@@ -371,8 +378,15 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
             if input_sets[positions[0]].isdisjoint(input_sets[positions[1]]):
                 continue
 
-            result = _parse_possible_contraction(positions, input_sets, output_set, idx_dict, memory_limit, path_cost,
-                                                 naive_cost)
+            result = _parse_possible_contraction(
+                positions,
+                input_sets,
+                output_set,
+                idx_dict,
+                memory_limit,
+                path_cost,
+                naive_cost,
+            )
             if result is not None:
                 known_contractions.append(result)
 
@@ -381,8 +395,15 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
 
             # Then check the outer products
             for positions in itertools.combinations(range(len(input_sets)), 2):
-                result = _parse_possible_contraction(positions, input_sets, output_set, idx_dict, memory_limit,
-                                                     path_cost, naive_cost)
+                result = _parse_possible_contraction(
+                    positions,
+                    input_sets,
+                    output_set,
+                    idx_dict,
+                    memory_limit,
+                    path_cost,
+                    naive_cost,
+                )
                 if result is not None:
                     known_contractions.append(result)
 
@@ -556,7 +577,7 @@ def _parse_einsum_input(operands):
 
         # Ensure all characters are valid
         for s in subscripts:
-            if s in '.,->':
+            if s in ".,->":
                 continue
             if s not in einsum_symbols:
                 raise ValueError("Character %s is not a valid symbol." % s)
@@ -581,8 +602,10 @@ def _parse_einsum_input(operands):
                     try:
                         s = operator.index(s)
                     except TypeError as e:
-                        raise TypeError("For this input type lists must contain "
-                                        "either int or Ellipsis") from e
+                        raise TypeError(
+                            "For this input type lists must contain "
+                            "either int or Ellipsis"
+                        ) from e
                     subscripts += einsum_symbols[s]
             if num != last:
                 subscripts += ","
@@ -596,8 +619,10 @@ def _parse_einsum_input(operands):
                     try:
                         s = operator.index(s)
                     except TypeError as e:
-                        raise TypeError("For this input type lists must contain "
-                                        "either int or Ellipsis") from e
+                        raise TypeError(
+                            "For this input type lists must contain "
+                            "either int or Ellipsis"
+                        ) from e
                     subscripts += einsum_symbols[s]
     # Check for proper "->"
     if ("-" in subscripts) or (">" in subscripts):
@@ -617,7 +642,7 @@ def _parse_einsum_input(operands):
             split_subscripts = input_tmp.split(",")
             out_sub = True
         else:
-            split_subscripts = subscripts.split(',')
+            split_subscripts = subscripts.split(",")
             out_sub = False
 
         for num, sub in enumerate(split_subscripts):
@@ -630,7 +655,7 @@ def _parse_einsum_input(operands):
                     ellipse_count = 0
                 else:
                     ellipse_count = max(operands[num].ndim, 1)
-                    ellipse_count -= (len(sub) - 3)
+                    ellipse_count -= len(sub) - 3
 
                 if ellipse_count > longest:
                     longest = ellipse_count
@@ -638,10 +663,10 @@ def _parse_einsum_input(operands):
                 if ellipse_count < 0:
                     raise ValueError("Ellipses lengths do not match.")
                 elif ellipse_count == 0:
-                    split_subscripts[num] = sub.replace('...', '')
+                    split_subscripts[num] = sub.replace("...", "")
                 else:
                     rep_inds = ellipse_inds[-ellipse_count:]
-                    split_subscripts[num] = sub.replace('...', rep_inds)
+                    split_subscripts[num] = sub.replace("...", rep_inds)
 
         subscripts = ",".join(split_subscripts)
         if longest == 0:
@@ -660,8 +685,7 @@ def _parse_einsum_input(operands):
                     raise ValueError("Character %s is not a valid symbol." % s)
                 if tmp_subscripts.count(s) == 1:
                     output_subscript += s
-            normal_inds = ''.join(sorted(set(output_subscript) -
-                                         set(out_ellipse)))
+            normal_inds = "".join(sorted(set(output_subscript) - set(out_ellipse)))
 
             subscripts += "->" + out_ellipse + normal_inds
 
@@ -682,13 +706,13 @@ def _parse_einsum_input(operands):
     # Make sure output subscripts are in the input
     for char in output_subscript:
         if char not in input_subscripts:
-            raise ValueError("Output character %s did not appear in the input"
-                             % char)
+            raise ValueError("Output character %s did not appear in the input" % char)
 
     # Make sure number operands is equivalent to the number of terms
-    if len(input_subscripts.split(',')) != len(operands):
-        raise ValueError("Number of einsum subscripts must be equal to the "
-                         "number of operands.")
+    if len(input_subscripts.split(",")) != len(operands):
+        raise ValueError(
+            "Number of einsum subscripts must be equal to the " "number of operands."
+        )
 
     return (input_subscripts, output_subscript, operands)
 
@@ -703,8 +727,8 @@ def _einsum_path_dispatcher(*operands, optimize=None, einsum_call=None):
     return operands
 
 
-@array_function_dispatch(_einsum_path_dispatcher, module='numpy')
-def einsum_path(*operands, optimize='greedy', einsum_call=False):
+@array_function_dispatch(_einsum_path_dispatcher, module="numpy")
+def einsum_path(*operands, optimize="greedy", einsum_call=False):
     """
     einsum_path(subscripts, *operands, optimize='greedy')
 
@@ -797,7 +821,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     >>> print(path_info[0])
     ['einsum_path', (0, 2), (0, 3), (0, 2), (0, 1)]
-    >>> print(path_info[1]) 
+    >>> print(path_info[1])
       Complete contraction:  ea,fb,abcd,gc,hd->efgh # may vary
              Naive scaling:  8
          Optimized scaling:  5
@@ -817,7 +841,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     # Figure out what the path really is
     path_type = optimize
     if path_type is True:
-        path_type = 'greedy'
+        path_type = "greedy"
     if path_type is None:
         path_type = False
 
@@ -828,12 +852,15 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         pass
 
     # Given an explicit path
-    elif len(path_type) and (path_type[0] == 'einsum_path'):
+    elif len(path_type) and (path_type[0] == "einsum_path"):
         pass
 
     # Path tuple with memory limit
-    elif ((len(path_type) == 2) and isinstance(path_type[0], str) and
-            isinstance(path_type[1], (int, float))):
+    elif (
+        (len(path_type) == 2)
+        and isinstance(path_type[0], str)
+        and isinstance(path_type[1], (int, float))
+    ):
         memory_limit = int(path_type[1])
         path_type = path_type[0]
 
@@ -847,10 +874,10 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     input_subscripts, output_subscript, operands = _parse_einsum_input(operands)
 
     # Build a few useful list and sets
-    input_list = input_subscripts.split(',')
+    input_list = input_subscripts.split(",")
     input_sets = [set(x) for x in input_list]
     output_set = set(output_subscript)
-    indices = set(input_subscripts.replace(',', ''))
+    indices = set(input_subscripts.replace(",", ""))
 
     # Get length of each unique dimension and ensure all dimensions are correct
     dimension_dict = {}
@@ -858,9 +885,11 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     for tnum, term in enumerate(input_list):
         sh = operands[tnum].shape
         if len(sh) != len(term):
-            raise ValueError("Einstein sum subscript %s does not contain the "
-                             "correct number of indices for operand %d."
-                             % (input_subscripts[tnum], tnum))
+            raise ValueError(
+                "Einstein sum subscript %s does not contain the "
+                "correct number of indices for operand %d."
+                % (input_subscripts[tnum], tnum)
+            )
         for cnum, char in enumerate(term):
             dim = sh[cnum]
 
@@ -873,9 +902,11 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
                 if dimension_dict[char] == 1:
                     dimension_dict[char] = dim
                 elif dim not in (1, dimension_dict[char]):
-                    raise ValueError("Size of label '%s' for operand %d (%d) "
-                                     "does not match previous terms (%d)."
-                                     % (char, tnum, dimension_dict[char], dim))
+                    raise ValueError(
+                        "Size of label '%s' for operand %d (%d) "
+                        "does not match previous terms (%d)."
+                        % (char, tnum, dimension_dict[char], dim)
+                    )
             else:
                 dimension_dict[char] = dim
 
@@ -883,8 +914,10 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     broadcast_indices = [set(x) for x in broadcast_indices]
 
     # Compute size of each input array plus the output array
-    size_list = [_compute_size_by_dict(term, dimension_dict)
-                 for term in input_list + [output_subscript]]
+    size_list = [
+        _compute_size_by_dict(term, dimension_dict)
+        for term in input_list + [output_subscript]
+    ]
     max_size = max(size_list)
 
     if memory_limit is None:
@@ -905,7 +938,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         path = _greedy_path(input_sets, output_set, dimension_dict, memory_arg)
     elif path_type == "optimal":
         path = _optimal_path(input_sets, output_set, dimension_dict, memory_arg)
-    elif path_type[0] == 'einsum_path':
+    elif path_type[0] == "einsum_path":
         path = path_type[1:]
     else:
         raise KeyError("Path name %s not found", path_type)
@@ -920,7 +953,9 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         contract = _find_contraction(contract_inds, input_sets, output_set)
         out_inds, input_sets, idx_removed, idx_contract = contract
 
-        cost = _flop_count(idx_contract, idx_removed, len(contract_inds), dimension_dict)
+        cost = _flop_count(
+            idx_contract, idx_removed, len(contract_inds), dimension_dict
+        )
         cost_list.append(cost)
         scale_list.append(len(idx_contract))
         size_list.append(_compute_size_by_dict(out_inds, dimension_dict))
@@ -965,7 +1000,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     speedup = naive_cost / opt_cost
     max_i = max(size_list)
 
-    path_print  = "  Complete contraction:  %s\n" % overall_contraction
+    path_print = "  Complete contraction:  %s\n" % overall_contraction
     path_print += "         Naive scaling:  %d\n" % len(indices)
     path_print += "     Optimized scaling:  %d\n" % max(scale_list)
     path_print += "      Naive FLOP count:  %.3e\n" % naive_cost
@@ -982,7 +1017,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         path_run = (scale_list[n], einsum_str, remaining_str)
         path_print += "\n%4d    %24s %40s" % path_run
 
-    path = ['einsum_path'] + path
+    path = ["einsum_path"] + path
     return (path, path_print)
 
 
@@ -994,7 +1029,7 @@ def _einsum_dispatcher(*operands, out=None, optimize=None, **kwargs):
 
 
 # Rewrite einsum to handle different cases
-@array_function_dispatch(_einsum_dispatcher, module='numpy')
+@array_function_dispatch(_einsum_dispatcher, module="numpy")
 def einsum(*operands, out=None, optimize=False, **kwargs):
     """
     einsum(subscripts, *operands, out=None, dtype=None, order='K',
@@ -1355,29 +1390,28 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     # If no optimization, run pure einsum
     if optimize is False:
         if specified_out:
-            kwargs['out'] = out
+            kwargs["out"] = out
         return c_einsum(*operands, **kwargs)
 
     # Check the kwargs to avoid a more cryptic error later, without having to
     # repeat default values here
-    valid_einsum_kwargs = ['dtype', 'order', 'casting']
-    unknown_kwargs = [k for (k, v) in kwargs.items() if
-                      k not in valid_einsum_kwargs]
+    valid_einsum_kwargs = ["dtype", "order", "casting"]
+    unknown_kwargs = [k for (k, v) in kwargs.items() if k not in valid_einsum_kwargs]
     if len(unknown_kwargs):
-        raise TypeError("Did not understand the following kwargs: %s"
-                        % unknown_kwargs)
+        raise TypeError("Did not understand the following kwargs: %s" % unknown_kwargs)
 
     # Build the contraction list and operand
-    operands, contraction_list = einsum_path(*operands, optimize=optimize,
-                                             einsum_call=True)
+    operands, contraction_list = einsum_path(
+        *operands, optimize=optimize, einsum_call=True
+    )
 
     # Handle order kwarg for output array, c_einsum allows mixed case
-    output_order = kwargs.pop('order', 'K')
-    if output_order.upper() == 'A':
+    output_order = kwargs.pop("order", "K")
+    if output_order.upper() == "A":
         if all(arr.flags.f_contiguous for arr in operands):
-            output_order = 'F'
+            output_order = "F"
         else:
-            output_order = 'C'
+            output_order = "C"
 
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
@@ -1390,8 +1424,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
         # Call tensordot if still possible
         if blas:
             # Checks have already been handled
-            input_str, results_index = einsum_str.split('->')
-            input_left, input_right = input_str.split(',')
+            input_str, results_index = einsum_str.split("->")
+            input_left, input_right = input_str.split(",")
 
             tensor_result = input_left + input_right
             for s in idx_rm:
@@ -1404,13 +1438,17 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
                 right_pos.append(input_right.find(s))
 
             # Contract!
-            new_view = tensordot(*tmp_operands, axes=(tuple(left_pos), tuple(right_pos)))
+            new_view = tensordot(
+                *tmp_operands, axes=(tuple(left_pos), tuple(right_pos))
+            )
 
             # Build a new view if needed
             if (tensor_result != results_index) or handle_out:
                 if handle_out:
                     kwargs["out"] = out
-                new_view = c_einsum(tensor_result + '->' + results_index, new_view, **kwargs)
+                new_view = c_einsum(
+                    tensor_result + "->" + results_index, new_view, **kwargs
+                )
 
         # Call einsum
         else:

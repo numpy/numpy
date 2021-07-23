@@ -4,33 +4,51 @@ import sys
 import pytest
 
 from numpy.lib.shape_base import (
-    apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
-    put_along_axis
-    )
+    apply_along_axis,
+    apply_over_axes,
+    array_split,
+    split,
+    hsplit,
+    dsplit,
+    vsplit,
+    dstack,
+    column_stack,
+    kron,
+    tile,
+    expand_dims,
+    take_along_axis,
+    put_along_axis,
+)
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
-    )
+    assert_,
+    assert_equal,
+    assert_array_equal,
+    assert_raises,
+    assert_warns,
+)
 
 
-IS_64BIT = sys.maxsize > 2**32
+IS_64BIT = sys.maxsize > 2 ** 32
 
 
 def _add_keepdims(func):
-    """ hack in keepdims behavior into a function taking an axis """
+    """hack in keepdims behavior into a function taking an axis"""
+
     @functools.wraps(func)
     def wrapped(a, axis, **kwargs):
         res = func(a, axis=axis, **kwargs)
         if axis is None:
             axis = 0  # res is now a scalar, so we can insert this anywhere
         return np.expand_dims(res, axis=axis)
+
     return wrapped
 
 
 class TestTakeAlongAxis:
     def test_argequivalent(self):
-        """ Test it translates from arg<func> to <func> """
+        """Test it translates from arg<func> to <func>"""
         from numpy.random import rand
+
         a = rand(3, 4, 5)
 
         funcs = [
@@ -47,7 +65,7 @@ class TestTakeAlongAxis:
                 assert_equal(a_func, take_along_axis(a, ai_func, axis=axis))
 
     def test_invalid(self):
-        """ Test it errors when indices has too few dimensions """
+        """Test it errors when indices has too few dimensions"""
         a = np.ones((10, 10))
         ai = np.ones((10, 2), dtype=np.intp)
 
@@ -64,16 +82,16 @@ class TestTakeAlongAxis:
         assert_raises(np.AxisError, take_along_axis, a, ai, axis=10)
 
     def test_empty(self):
-        """ Test everything is ok with empty results, even with inserted dims """
-        a  = np.ones((3, 4, 5))
+        """Test everything is ok with empty results, even with inserted dims"""
+        a = np.ones((3, 4, 5))
         ai = np.ones((3, 0, 5), dtype=np.intp)
 
         actual = take_along_axis(a, ai, axis=1)
         assert_equal(actual.shape, ai.shape)
 
     def test_broadcast(self):
-        """ Test that non-indexing dimensions are broadcast in both directions """
-        a  = np.ones((3, 4, 1))
+        """Test that non-indexing dimensions are broadcast in both directions"""
+        a = np.ones((3, 4, 1))
         ai = np.ones((1, 2, 5), dtype=np.intp)
         actual = take_along_axis(a, ai, axis=1)
         assert_equal(actual.shape, (3, 2, 5))
@@ -97,8 +115,8 @@ class TestPutAlongAxis:
             assert_equal(i_min, i_max)
 
     def test_broadcast(self):
-        """ Test that non-indexing dimensions are broadcast in both directions """
-        a  = np.ones((3, 4, 1))
+        """Test that non-indexing dimensions are broadcast in both directions"""
+        a = np.ones((3, 4, 1))
         ai = np.arange(10, dtype=np.intp).reshape((1, 2, 5)) % 4
         put_along_axis(a, ai, 20, axis=1)
         assert_equal(take_along_axis(a, ai, axis=1), 20)
@@ -106,19 +124,18 @@ class TestPutAlongAxis:
 
 class TestApplyAlongAxis:
     def test_simple(self):
-        a = np.ones((20, 10), 'd')
-        assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+        a = np.ones((20, 10), "d")
+        assert_array_equal(apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_simple101(self):
-        a = np.ones((10, 101), 'd')
-        assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+        a = np.ones((10, 101), "d")
+        assert_array_equal(apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_3d(self):
         a = np.arange(27).reshape((3, 3, 3))
-        assert_array_equal(apply_along_axis(np.sum, 0, a),
-                           [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
+        assert_array_equal(
+            apply_along_axis(np.sum, 0, a), [[27, 30, 33], [36, 39, 42], [45, 48, 51]]
+        )
 
     def test_preserve_subclass(self):
         def double(row):
@@ -159,9 +176,10 @@ class TestApplyAlongAxis:
 
     def test_0d_array(self, cls=np.ndarray):
         def sum_to_0d(x):
-            """ Sum x, returning a 0d array of the same class """
+            """Sum x, returning a 0d array of the same class"""
             assert_equal(x.ndim, 1)
             return np.squeeze(np.sum(x, keepdims=True))
+
         a = np.ones((6, 3)).view(cls)
         res = apply_along_axis(sum_to_0d, 0, a)
         assert_(isinstance(res, cls))
@@ -175,42 +193,44 @@ class TestApplyAlongAxis:
         def f1to2(x):
             """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            return (x[::-1] * x[1:,None]).view(cls)
+            return (x[::-1] * x[1:, None]).view(cls)
 
-        a2d = np.arange(6*3).reshape((6, 3))
+        a2d = np.arange(6 * 3).reshape((6, 3))
 
         # 2d insertion along first axis
         actual = apply_along_axis(f1to2, 0, a2d)
-        expected = np.stack([
-            f1to2(a2d[:,i]) for i in range(a2d.shape[1])
-        ], axis=-1).view(cls)
+        expected = np.stack(
+            [f1to2(a2d[:, i]) for i in range(a2d.shape[1])], axis=-1
+        ).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
 
         # 2d insertion along last axis
         actual = apply_along_axis(f1to2, 1, a2d)
-        expected = np.stack([
-            f1to2(a2d[i,:]) for i in range(a2d.shape[0])
-        ], axis=0).view(cls)
+        expected = np.stack(
+            [f1to2(a2d[i, :]) for i in range(a2d.shape[0])], axis=0
+        ).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
 
         # 3d insertion along middle axis
-        a3d = np.arange(6*5*3).reshape((6, 5, 3))
+        a3d = np.arange(6 * 5 * 3).reshape((6, 5, 3))
 
         actual = apply_along_axis(f1to2, 1, a3d)
-        expected = np.stack([
-            np.stack([
-                f1to2(a3d[i,:,j]) for i in range(a3d.shape[0])
-            ], axis=0)
-            for j in range(a3d.shape[2])
-        ], axis=-1).view(cls)
+        expected = np.stack(
+            [
+                np.stack([f1to2(a3d[i, :, j]) for i in range(a3d.shape[0])], axis=0)
+                for j in range(a3d.shape[2])
+            ],
+            axis=-1,
+        ).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
 
     def test_subclass_preservation(self):
         class MinimalSubclass(np.ndarray):
             pass
+
         self.test_scalar_array(MinimalSubclass)
         self.test_0d_array(MinimalSubclass)
         self.test_axis_insertion(MinimalSubclass)
@@ -219,26 +239,28 @@ class TestApplyAlongAxis:
         def f1to2(x):
             """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            res = x[::-1] * x[1:,None]
-            return np.ma.masked_where(res%5==0, res)
-        a = np.arange(6*3).reshape((6, 3))
+            res = x[::-1] * x[1:, None]
+            return np.ma.masked_where(res % 5 == 0, res)
+
+        a = np.arange(6 * 3).reshape((6, 3))
         res = apply_along_axis(f1to2, 0, a)
         assert_(isinstance(res, np.ma.masked_array))
         assert_equal(res.ndim, 3)
-        assert_array_equal(res[:,:,0].mask, f1to2(a[:,0]).mask)
-        assert_array_equal(res[:,:,1].mask, f1to2(a[:,1]).mask)
-        assert_array_equal(res[:,:,2].mask, f1to2(a[:,2]).mask)
+        assert_array_equal(res[:, :, 0].mask, f1to2(a[:, 0]).mask)
+        assert_array_equal(res[:, :, 1].mask, f1to2(a[:, 1]).mask)
+        assert_array_equal(res[:, :, 2].mask, f1to2(a[:, 2]).mask)
 
     def test_tuple_func1d(self):
         def sample_1d(x):
             return x[1], x[0]
+
         res = np.apply_along_axis(sample_1d, 1, np.array([[1, 2], [3, 4]]))
         assert_array_equal(res, np.array([[2, 1], [4, 3]]))
 
     def test_empty(self):
         # can't apply_along_axis when there's no chance to call the function
         def never_call(x):
-            assert_(False) # should never be reached
+            assert_(False)  # should never be reached
 
         a = np.empty((0, 0))
         assert_raises(ValueError, np.apply_along_axis, never_call, 0, a)
@@ -256,10 +278,7 @@ class TestApplyAlongAxis:
 
     def test_with_iterable_object(self):
         # from issue 5248
-        d = np.array([
-            [{1, 11}, {2, 22}, {3, 33}],
-            [{4, 44}, {5, 55}, {6, 66}]
-        ])
+        d = np.array([[{1, 11}, {2, 22}, {3, 33}], [{4, 44}, {5, 55}, {6, 66}]])
         actual = np.apply_along_axis(lambda a: set.union(*a), 0, d)
         expected = np.array([{1, 11, 4, 44}, {2, 22, 5, 55}, {3, 33, 6, 66}])
 
@@ -309,7 +328,7 @@ class TestExpandDims:
 
     def test_subclasses(self):
         a = np.arange(10).reshape((2, 5))
-        a = np.ma.array(a, mask=a%3 == 0)
+        a = np.ma.array(a, mask=a % 3 == 0)
 
         expanded = np.expand_dims(a, axis=1)
         assert_(isinstance(expanded, np.ma.MaskedArray))
@@ -337,82 +356,128 @@ class TestArraySplit:
         compare_results(res, desired)
 
         res = array_split(a, 4)
-        desired = [np.arange(3), np.arange(3, 6), np.arange(6, 8),
-                   np.arange(8, 10)]
+        desired = [np.arange(3), np.arange(3, 6), np.arange(6, 8), np.arange(8, 10)]
         compare_results(res, desired)
 
         res = array_split(a, 5)
-        desired = [np.arange(2), np.arange(2, 4), np.arange(4, 6),
-                   np.arange(6, 8), np.arange(8, 10)]
+        desired = [
+            np.arange(2),
+            np.arange(2, 4),
+            np.arange(4, 6),
+            np.arange(6, 8),
+            np.arange(8, 10),
+        ]
         compare_results(res, desired)
 
         res = array_split(a, 6)
-        desired = [np.arange(2), np.arange(2, 4), np.arange(4, 6),
-                   np.arange(6, 8), np.arange(8, 9), np.arange(9, 10)]
+        desired = [
+            np.arange(2),
+            np.arange(2, 4),
+            np.arange(4, 6),
+            np.arange(6, 8),
+            np.arange(8, 9),
+            np.arange(9, 10),
+        ]
         compare_results(res, desired)
 
         res = array_split(a, 7)
-        desired = [np.arange(2), np.arange(2, 4), np.arange(4, 6),
-                   np.arange(6, 7), np.arange(7, 8), np.arange(8, 9),
-                   np.arange(9, 10)]
+        desired = [
+            np.arange(2),
+            np.arange(2, 4),
+            np.arange(4, 6),
+            np.arange(6, 7),
+            np.arange(7, 8),
+            np.arange(8, 9),
+            np.arange(9, 10),
+        ]
         compare_results(res, desired)
 
         res = array_split(a, 8)
-        desired = [np.arange(2), np.arange(2, 4), np.arange(4, 5),
-                   np.arange(5, 6), np.arange(6, 7), np.arange(7, 8),
-                   np.arange(8, 9), np.arange(9, 10)]
+        desired = [
+            np.arange(2),
+            np.arange(2, 4),
+            np.arange(4, 5),
+            np.arange(5, 6),
+            np.arange(6, 7),
+            np.arange(7, 8),
+            np.arange(8, 9),
+            np.arange(9, 10),
+        ]
         compare_results(res, desired)
 
         res = array_split(a, 9)
-        desired = [np.arange(2), np.arange(2, 3), np.arange(3, 4),
-                   np.arange(4, 5), np.arange(5, 6), np.arange(6, 7),
-                   np.arange(7, 8), np.arange(8, 9), np.arange(9, 10)]
+        desired = [
+            np.arange(2),
+            np.arange(2, 3),
+            np.arange(3, 4),
+            np.arange(4, 5),
+            np.arange(5, 6),
+            np.arange(6, 7),
+            np.arange(7, 8),
+            np.arange(8, 9),
+            np.arange(9, 10),
+        ]
         compare_results(res, desired)
 
         res = array_split(a, 10)
-        desired = [np.arange(1), np.arange(1, 2), np.arange(2, 3),
-                   np.arange(3, 4), np.arange(4, 5), np.arange(5, 6),
-                   np.arange(6, 7), np.arange(7, 8), np.arange(8, 9),
-                   np.arange(9, 10)]
+        desired = [
+            np.arange(1),
+            np.arange(1, 2),
+            np.arange(2, 3),
+            np.arange(3, 4),
+            np.arange(4, 5),
+            np.arange(5, 6),
+            np.arange(6, 7),
+            np.arange(7, 8),
+            np.arange(8, 9),
+            np.arange(9, 10),
+        ]
         compare_results(res, desired)
 
         res = array_split(a, 11)
-        desired = [np.arange(1), np.arange(1, 2), np.arange(2, 3),
-                   np.arange(3, 4), np.arange(4, 5), np.arange(5, 6),
-                   np.arange(6, 7), np.arange(7, 8), np.arange(8, 9),
-                   np.arange(9, 10), np.array([])]
+        desired = [
+            np.arange(1),
+            np.arange(1, 2),
+            np.arange(2, 3),
+            np.arange(3, 4),
+            np.arange(4, 5),
+            np.arange(5, 6),
+            np.arange(6, 7),
+            np.arange(7, 8),
+            np.arange(8, 9),
+            np.arange(9, 10),
+            np.array([]),
+        ]
         compare_results(res, desired)
 
     def test_integer_split_2D_rows(self):
         a = np.array([np.arange(10), np.arange(10)])
         res = array_split(a, 3, axis=0)
-        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.zeros((0, 10))]
+        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]), np.zeros((0, 10))]
         compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
 
         # Same thing for manual splits:
         res = array_split(a, [0, 1, 2], axis=0)
-        tgt = [np.zeros((0, 10)), np.array([np.arange(10)]),
-               np.array([np.arange(10)])]
+        tgt = [np.zeros((0, 10)), np.array([np.arange(10)]), np.array([np.arange(10)])]
         compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
 
     def test_integer_split_2D_cols(self):
         a = np.array([np.arange(10), np.arange(10)])
         res = array_split(a, 3, axis=-1)
-        desired = [np.array([np.arange(4), np.arange(4)]),
-                   np.array([np.arange(4, 7), np.arange(4, 7)]),
-                   np.array([np.arange(7, 10), np.arange(7, 10)])]
+        desired = [
+            np.array([np.arange(4), np.arange(4)]),
+            np.array([np.arange(4, 7), np.arange(4, 7)]),
+            np.array([np.arange(7, 10), np.arange(7, 10)]),
+        ]
         compare_results(res, desired)
 
     def test_integer_split_2D_default(self):
-        """ This will fail if we change default axis
-        """
+        """This will fail if we change default axis"""
         a = np.array([np.arange(10), np.arange(10)])
         res = array_split(a, 3)
-        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
-                   np.zeros((0, 10))]
+        tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]), np.zeros((0, 10))]
         compare_results(res, tgt)
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
@@ -430,24 +495,28 @@ class TestArraySplit:
         a = np.arange(10)
         indices = [1, 5, 7]
         res = array_split(a, indices, axis=-1)
-        desired = [np.arange(0, 1), np.arange(1, 5), np.arange(5, 7),
-                   np.arange(7, 10)]
+        desired = [np.arange(0, 1), np.arange(1, 5), np.arange(5, 7), np.arange(7, 10)]
         compare_results(res, desired)
 
     def test_index_split_low_bound(self):
         a = np.arange(10)
         indices = [0, 5, 7]
         res = array_split(a, indices, axis=-1)
-        desired = [np.array([]), np.arange(0, 5), np.arange(5, 7),
-                   np.arange(7, 10)]
+        desired = [np.array([]), np.arange(0, 5), np.arange(5, 7), np.arange(7, 10)]
         compare_results(res, desired)
 
     def test_index_split_high_bound(self):
         a = np.arange(10)
         indices = [0, 5, 7, 10, 12]
         res = array_split(a, indices, axis=-1)
-        desired = [np.array([]), np.arange(0, 5), np.arange(5, 7),
-                   np.arange(7, 10), np.array([]), np.array([])]
+        desired = [
+            np.array([]),
+            np.arange(0, 5),
+            np.arange(5, 7),
+            np.arange(7, 10),
+            np.array([]),
+            np.array([]),
+        ]
         compare_results(res, desired)
 
 
@@ -475,9 +544,7 @@ class TestColumnStack:
         # example from docstring
         a = np.array((1, 2, 3))
         b = np.array((2, 3, 4))
-        expected = np.array([[1, 2],
-                             [2, 3],
-                             [3, 4]])
+        expected = np.array([[1, 2], [2, 3], [3, 4]])
         actual = np.column_stack((a, b))
         assert_equal(actual, expected)
 
@@ -485,9 +552,7 @@ class TestColumnStack:
         # same as hstack 2D docstring example
         a = np.array([[1], [2], [3]])
         b = np.array([[2], [3], [4]])
-        expected = np.array([[1, 2],
-                             [2, 3],
-                             [3, 4]])
+        expected = np.array([[1, 2], [2, 3], [3, 4]])
         actual = np.column_stack((a, b))
         assert_equal(actual, expected)
 
@@ -518,7 +583,17 @@ class TestDstack:
         a = np.array([[1], [2]])
         b = np.array([[1], [2]])
         res = dstack([a, b])
-        desired = np.array([[[1, 1]], [[2, 2, ]]])
+        desired = np.array(
+            [
+                [[1, 1]],
+                [
+                    [
+                        2,
+                        2,
+                    ]
+                ],
+            ]
+        )
         assert_array_equal(res, desired)
 
     def test_2D_array2(self):
@@ -536,9 +611,8 @@ class TestDstack:
 # array_split has more comprehensive test of splitting.
 # only do simple test on hsplit, vsplit, and dsplit
 class TestHsplit:
-    """Only testing for integer splits.
+    """Only testing for integer splits."""
 
-    """
     def test_non_iterable(self):
         assert_raises(ValueError, hsplit, 1, 1)
 
@@ -557,17 +631,15 @@ class TestHsplit:
         compare_results(res, desired)
 
     def test_2D_array(self):
-        a = np.array([[1, 2, 3, 4],
-                  [1, 2, 3, 4]])
+        a = np.array([[1, 2, 3, 4], [1, 2, 3, 4]])
         res = hsplit(a, 2)
         desired = [np.array([[1, 2], [1, 2]]), np.array([[3, 4], [3, 4]])]
         compare_results(res, desired)
 
 
 class TestVsplit:
-    """Only testing for integer splits.
+    """Only testing for integer splits."""
 
-    """
     def test_non_iterable(self):
         assert_raises(ValueError, vsplit, 1, 1)
 
@@ -584,8 +656,7 @@ class TestVsplit:
             pass
 
     def test_2D_array(self):
-        a = np.array([[1, 2, 3, 4],
-                  [1, 2, 3, 4]])
+        a = np.array([[1, 2, 3, 4], [1, 2, 3, 4]])
         res = vsplit(a, 2)
         desired = [np.array([[1, 2, 3, 4]]), np.array([[1, 2, 3, 4]])]
         compare_results(res, desired)
@@ -605,8 +676,7 @@ class TestDsplit:
         assert_raises(ValueError, dsplit, a, 2)
 
     def test_2D_array(self):
-        a = np.array([[1, 2, 3, 4],
-                  [1, 2, 3, 4]])
+        a = np.array([[1, 2, 3, 4], [1, 2, 3, 4]])
         try:
             dsplit(a, 2)
             assert_(0)
@@ -614,13 +684,12 @@ class TestDsplit:
             pass
 
     def test_3D_array(self):
-        a = np.array([[[1, 2, 3, 4],
-                   [1, 2, 3, 4]],
-                  [[1, 2, 3, 4],
-                   [1, 2, 3, 4]]])
+        a = np.array([[[1, 2, 3, 4], [1, 2, 3, 4]], [[1, 2, 3, 4], [1, 2, 3, 4]]])
         res = dsplit(a, 2)
-        desired = [np.array([[[1, 2], [1, 2]], [[1, 2], [1, 2]]]),
-                   np.array([[[3, 4], [3, 4]], [[3, 4], [3, 4]]])]
+        desired = [
+            np.array([[[1, 2], [1, 2]], [[1, 2], [1, 2]]]),
+            np.array([[[3, 4], [3, 4]], [[3, 4], [3, 4]]]),
+        ]
         compare_results(res, desired)
 
 
@@ -665,8 +734,9 @@ class TestTile:
         assert_equal(tile(a, (1, 2)), [[0, 1, 2, 0, 1, 2]])
         assert_equal(tile(b, 2), [[1, 2, 1, 2], [3, 4, 3, 4]])
         assert_equal(tile(b, (2, 1)), [[1, 2], [3, 4], [1, 2], [3, 4]])
-        assert_equal(tile(b, (2, 2)), [[1, 2, 1, 2], [3, 4, 3, 4],
-                                       [1, 2, 1, 2], [3, 4, 3, 4]])
+        assert_equal(
+            tile(b, (2, 2)), [[1, 2, 1, 2], [3, 4, 3, 4], [1, 2, 1, 2], [3, 4, 3, 4]]
+        )
 
     def test_tile_one_repetition_on_array_gh4679(self):
         a = np.arange(5)

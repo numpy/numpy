@@ -5,16 +5,19 @@ import os
 import numpy as np
 import cffi
 from .parse import parse_distributions_h
+
 ffi = cffi.FFI()
 
-inc_dir = os.path.join(np.get_include(), 'numpy')
+inc_dir = os.path.join(np.get_include(), "numpy")
 
 # Basic numpy types
-ffi.cdef('''
+ffi.cdef(
+    """
     typedef intptr_t npy_intp;
     typedef unsigned char npy_bool;
 
-''')
+"""
+)
 
 parse_distributions_h(ffi, inc_dir)
 
@@ -28,7 +31,7 @@ state = bit_gen.state
 
 interface = rng.bit_generator.cffi
 n = 100
-vals_cffi = ffi.new('double[%d]' % n)
+vals_cffi = ffi.new("double[%d]" % n)
 lib.random_standard_normal_fill(interface.bit_generator, n, vals_cffi)
 
 # reset the state

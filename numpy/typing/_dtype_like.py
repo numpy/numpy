@@ -68,19 +68,25 @@ if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     # Mandatory + optional keys
     class _DTypeDict(_DTypeDictBase, total=False):
         offsets: Sequence[int]
-        titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
+        titles: Sequence[
+            Any
+        ]  # Only `str` elements are usable as indexing aliases, but all objects are legal
         itemsize: int
         aligned: bool
 
     # A protocol for anything with the dtype attribute
     class _SupportsDType(Protocol[_DType_co]):
         @property
-        def dtype(self) -> _DType_co: ...
+        def dtype(self) -> _DType_co:
+            ...
+
 
 else:
     _DTypeDict = Any
 
-    class _SupportsDType: ...
+    class _SupportsDType:
+        ...
+
     _SupportsDType = GenericAlias(_SupportsDType, _DType_co)
 
 

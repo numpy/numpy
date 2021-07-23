@@ -32,7 +32,6 @@ def fix(
     x: Union[_ArrayLikeFloat_co, _ArrayLikeObject_co],
     out: _ArrayType,
 ) -> _ArrayType: ...
-
 @overload
 def isposinf(  # type: ignore[misc]
     x: _FloatLike_co,
@@ -48,7 +47,6 @@ def isposinf(
     x: _ArrayLikeFloat_co,
     out: _ArrayType,
 ) -> _ArrayType: ...
-
 @overload
 def isneginf(  # type: ignore[misc]
     x: _FloatLike_co,

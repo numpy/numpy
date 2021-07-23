@@ -1,16 +1,28 @@
 import numpy as np
 from numpy.testing import assert_warns
-from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
-                                assert_array_equal)
-from numpy.ma.core import (masked_array, masked_values, masked, allequal,
-                           MaskType, getmask, MaskedArray, nomask,
-                           log, add, hypot, divide)
+from numpy.ma.testutils import assert_, assert_equal, assert_raises, assert_array_equal
+from numpy.ma.core import (
+    masked_array,
+    masked_values,
+    masked,
+    allequal,
+    MaskType,
+    getmask,
+    MaskedArray,
+    nomask,
+    log,
+    add,
+    hypot,
+    divide,
+)
 from numpy.ma.extras import mr_
 from numpy.compat import pickle
 
 
-class MMatrix(MaskedArray, np.matrix,):
-
+class MMatrix(
+    MaskedArray,
+    np.matrix,
+):
     def __new__(cls, data, mask=nomask):
         mat = np.matrix(data)
         _data = MaskedArray.__new__(cls, data=mat, mask=mask)
@@ -69,8 +81,7 @@ class TestMaskedMatrix:
         x1 = np.matrix(np.arange(5) * 1.0)
         x2 = masked_values(x1, 3.0)
         assert_equal(x1, x2)
-        assert_(allequal(masked_array([0, 0, 0, 1, 0], dtype=MaskType),
-                         x2.mask))
+        assert_(allequal(masked_array([0, 0, 0, 1, 0], dtype=MaskType), x2.mask))
         assert_equal(3.0, x2.fill_value)
 
     def test_pickling_subbaseclass(self):
@@ -89,7 +100,7 @@ class TestMaskedMatrix:
         assert_equal(m.count(axis=1).shape, (2, 1))
 
         # Make sure broadcasting inside mean and var work
-        assert_equal(m.mean(axis=0), [[2., 3.]])
+        assert_equal(m.mean(axis=0), [[2.0, 3.0]])
         assert_equal(m.mean(axis=1), [[1.5], [3.5]])
 
     def test_flat(self):
@@ -114,20 +125,19 @@ class TestMaskedMatrix:
         a = masked_array(np.matrix(np.eye(2)), mask=0)
         b = a.flat
         b01 = b[:2]
-        assert_equal(b01.data, np.array([[1., 0.]]))
+        assert_equal(b01.data, np.array([[1.0, 0.0]]))
         assert_equal(b01.mask, np.array([[False, False]]))
 
     def test_allany_onmatrices(self):
-        x = np.array([[0.13, 0.26, 0.90],
-                      [0.28, 0.33, 0.63],
-                      [0.31, 0.87, 0.70]])
+        x = np.array([[0.13, 0.26, 0.90], [0.28, 0.33, 0.63], [0.31, 0.87, 0.70]])
         X = np.matrix(x)
-        m = np.array([[True, False, False],
-                      [False, False, False],
-                      [True, True, False]], dtype=np.bool_)
+        m = np.array(
+            [[True, False, False], [False, False, False], [True, True, False]],
+            dtype=np.bool_,
+        )
         mX = masked_array(X, mask=m)
-        mXbig = (mX > 0.5)
-        mXsmall = (mX < 0.5)
+        mXbig = mX > 0.5
+        mXsmall = mX < 0.5
 
         assert_(not mXbig.all())
         assert_(mXbig.any())
@@ -162,7 +172,7 @@ class TestMaskedMatrix:
         # Test view w/ flexible dtype
         iterator = list(zip(np.arange(10), np.random.rand(10)))
         data = np.array(iterator)
-        a = masked_array(iterator, dtype=[('a', float), ('b', float)])
+        a = masked_array(iterator, dtype=[("a", float), ("b", float)])
         a.mask[0] = (1, 0)
         test = a.view((float, 2), np.matrix)
         assert_equal(test, data)
@@ -174,7 +184,7 @@ class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
     def setup(self):
-        x = np.arange(5, dtype='float')
+        x = np.arange(5, dtype="float")
         mx = MMatrix(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
 
@@ -186,7 +196,7 @@ class TestSubclassing:
     def test_masked_unary_operations(self):
         # Tests masked_unary_operation
         (x, mx) = self.data
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             assert_(isinstance(log(mx), MMatrix))
             assert_equal(log(x), np.log(x))
 
@@ -197,7 +207,7 @@ class TestSubclassing:
         assert_(isinstance(add(mx, mx), MMatrix))
         assert_(isinstance(add(mx, x), MMatrix))
         # Result should work
-        assert_equal(add(mx, x), mx+x)
+        assert_equal(add(mx, x), mx + x)
         assert_(isinstance(add(mx, mx)._data, np.matrix))
         with assert_warns(DeprecationWarning):
             assert_(isinstance(add.outer(mx, mx), MMatrix))
@@ -212,18 +222,19 @@ class TestSubclassing:
         assert_(isinstance(divide(mx, x), MMatrix))
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
+
 class TestConcatenator:
     # Tests for mr_, the equivalent of r_ for masked arrays.
 
     def test_matrix_builder(self):
-        assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
+        assert_raises(np.ma.MAError, lambda: mr_["1, 2; 3, 4"])
 
     def test_matrix(self):
         # Test consistency with unmasked version.  If we ever deprecate
         # matrix, this test should either still pass, or both actual and
         # expected should fail to be build.
-        actual = mr_['r', 1, 2, 3]
-        expected = np.ma.array(np.r_['r', 1, 2, 3])
+        actual = mr_["r", 1, 2, 3]
+        expected = np.ma.array(np.r_["r", 1, 2, 3])
         assert_array_equal(actual, expected)
 
         # outer type is masked array, inner type is matrix

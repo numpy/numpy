@@ -29,10 +29,12 @@ from .npy_pkg_config import *
 # If numpy is installed, add distutils.test()
 try:
     from . import __config__
+
     # Normally numpy is installed if the above import works, but an interrupted
     # in-place build could also have left a __config__.py.  In that case the
     # next import may still fail, so keep it inside the try block.
     from numpy._pytesttester import PytestTester
+
     test = PytestTester(__name__)
     del PytestTester
 except ImportError:
@@ -41,11 +43,13 @@ except ImportError:
 
 def customized_fcompiler(plat=None, compiler=None):
     from numpy.distutils.fcompiler import new_fcompiler
+
     c = new_fcompiler(plat=plat, compiler=compiler)
     c.customize()
     return c
 
+
 def customized_ccompiler(plat=None, compiler=None, verbose=1):
     c = ccompiler.new_compiler(plat=plat, compiler=compiler, verbose=verbose)
-    c.customize('')
+    c.customize("")
     return c

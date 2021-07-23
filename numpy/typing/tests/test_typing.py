@@ -62,23 +62,27 @@ def run_mypy() -> None:
 
     NUMPY_TYPING_TEST_CLEAR_CACHE=0 pytest numpy/typing/tests
     """
-    if os.path.isdir(CACHE_DIR) and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True)):
+    if os.path.isdir(CACHE_DIR) and bool(
+        os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True)
+    ):
         shutil.rmtree(CACHE_DIR)
 
     for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR, MISC_DIR):
         # Run mypy
-        stdout, stderr, exit_code = api.run([
-            "--config-file",
-            MYPY_INI,
-            "--cache-dir",
-            CACHE_DIR,
-            directory,
-        ])
+        stdout, stderr, exit_code = api.run(
+            [
+                "--config-file",
+                MYPY_INI,
+                "--cache-dir",
+                CACHE_DIR,
+                directory,
+            ]
+        )
         if stderr:
             pytest.fail(f"Unexpected mypy standard error\n\n{stderr}")
         elif exit_code not in {0, 1}:
             pytest.fail(f"Unexpected mypy exit code: {exit_code}\n\n{stdout}")
-        stdout = stdout.replace('*', '')
+        stdout = stdout.replace("*", "")
 
         # Parse the output
         iterator = itertools.groupby(stdout.split("\n"), key=_key_func)
@@ -133,12 +137,12 @@ def test_fail(path):
         )
         if match is None:
             raise ValueError(f"Unexpected error line format: {error_line}")
-        lineno = int(match.group('lineno'))
-        errors[lineno] += f'{error_line}\n'
+        lineno = int(match.group("lineno"))
+        errors[lineno] += f"{error_line}\n"
 
     for i, line in enumerate(lines):
         lineno = i + 1
-        if line.startswith('#') or (" E:" not in line and lineno not in errors):
+        if line.startswith("#") or (" E:" not in line and lineno not in errors):
             continue
 
         target_line = lines[lineno - 1]
@@ -162,7 +166,9 @@ Observed error: {!r}
 """
 
 
-def _test_fail(path: str, error: str, expected_error: Optional[str], lineno: int) -> None:
+def _test_fail(
+    path: str, error: str, expected_error: Optional[str], lineno: int
+) -> None:
     if expected_error is None:
         raise AssertionError(_FAIL_MSG1.format(lineno, error))
     elif error not in expected_error:
@@ -170,8 +176,10 @@ def _test_fail(path: str, error: str, expected_error: Optional[str], lineno: int
 
 
 def _construct_format_dict():
-    dct = {k.split(".")[-1]: v.replace("numpy", "numpy.typing") for
-           k, v in _PRECISION_DICT.items()}
+    dct = {
+        k.split(".")[-1]: v.replace("numpy", "numpy.typing")
+        for k, v in _PRECISION_DICT.items()
+    }
 
     return {
         "uint8": "numpy.unsignedinteger[numpy.typing._8Bit]",
@@ -199,7 +207,6 @@ def _construct_format_dict():
         "complex192": "numpy.complexfloating[numpy.typing._96Bit, numpy.typing._96Bit]",
         "complex256": "numpy.complexfloating[numpy.typing._128Bit, numpy.typing._128Bit]",
         "complex512": "numpy.complexfloating[numpy.typing._256Bit, numpy.typing._256Bit]",
-
         "ubyte": f"numpy.unsignedinteger[{dct['_NBitByte']}]",
         "ushort": f"numpy.unsignedinteger[{dct['_NBitShort']}]",
         "uintc": f"numpy.unsignedinteger[{dct['_NBitIntC']}]",
@@ -212,7 +219,6 @@ def _construct_format_dict():
         "intp": f"numpy.signedinteger[{dct['_NBitIntP']}]",
         "int_": f"numpy.signedinteger[{dct['_NBitInt']}]",
         "longlong": f"numpy.signedinteger[{dct['_NBitLongLong']}]",
-
         "half": f"numpy.floating[{dct['_NBitHalf']}]",
         "single": f"numpy.floating[{dct['_NBitSingle']}]",
         "double": f"numpy.floating[{dct['_NBitDouble']}]",
@@ -220,12 +226,10 @@ def _construct_format_dict():
         "csingle": f"numpy.complexfloating[{dct['_NBitSingle']}, {dct['_NBitSingle']}]",
         "cdouble": f"numpy.complexfloating[{dct['_NBitDouble']}, {dct['_NBitDouble']}]",
         "clongdouble": f"numpy.complexfloating[{dct['_NBitLongDouble']}, {dct['_NBitLongDouble']}]",
-
         # numpy.typing
-        "_NBitInt": dct['_NBitInt'],
-
+        "_NBitInt": dct["_NBitInt"],
         # numpy.ctypeslib
-        "c_intp": f"ctypes.{_C_INTP}"
+        "c_intp": f"ctypes.{_C_INTP}",
     }
 
 
@@ -276,7 +280,7 @@ def test_reveal(path):
         )
         if match is None:
             raise ValueError(f"Unexpected reveal line format: {error_line}")
-        lineno = int(match.group('lineno')) - 1
+        lineno = int(match.group("lineno")) - 1
         assert "Revealed type is" in error_line
 
         marker = lines[lineno]

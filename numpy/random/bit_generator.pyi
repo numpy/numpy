@@ -19,7 +19,13 @@ from typing import (
 )
 
 from numpy import dtype, ndarray, uint32, uint64
-from numpy.typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32Codes, _UInt64Codes
+from numpy.typing import (
+    _ArrayLikeInt_co,
+    _ShapeLike,
+    _SupportsDType,
+    _UInt32Codes,
+    _UInt64Codes,
+)
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -97,7 +103,9 @@ class SeedSequence(ISpawnableSeedSequence):
 
 class BitGenerator(abc.ABC):
     lock: Lock
-    def __init__(self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> None: ...
+    def __init__(
+        self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...
+    ) -> None: ...
     def __getstate__(self) -> Dict[str, Any]: ...
     def __setstate__(self, state: Dict[str, Any]) -> None: ...
     def __reduce__(

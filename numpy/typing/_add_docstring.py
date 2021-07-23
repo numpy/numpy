@@ -38,15 +38,15 @@ def _parse_docstrings() -> str:
         new_lines = []
         indent = ""
         for line in lines:
-            m = re.match(r'^(\s+)[-=]+\s*$', line)
+            m = re.match(r"^(\s+)[-=]+\s*$", line)
             if m and new_lines:
                 prev = textwrap.dedent(new_lines.pop())
                 if prev == "Examples":
                     indent = ""
-                    new_lines.append(f'{m.group(1)}.. rubric:: {prev}')
+                    new_lines.append(f"{m.group(1)}.. rubric:: {prev}")
                 else:
                     indent = 4 * " "
-                    new_lines.append(f'{m.group(1)}.. admonition:: {prev}')
+                    new_lines.append(f"{m.group(1)}.. admonition:: {prev}")
                 new_lines.append("")
             else:
                 new_lines.append(f"{indent}{line}")
@@ -57,7 +57,9 @@ def _parse_docstrings() -> str:
     return "\n".join(type_list_ret)
 
 
-add_newdoc('ArrayLike', 'typing.Union[...]',
+add_newdoc(
+    "ArrayLike",
+    "typing.Union[...]",
     """
     A `~typing.Union` representing objects that can be coerced into an `~numpy.ndarray`.
 
@@ -84,9 +86,12 @@ add_newdoc('ArrayLike', 'typing.Union[...]',
         >>> def as_array(a: npt.ArrayLike) -> np.ndarray:
         ...     return np.array(a)
 
-    """)
+    """,
+)
 
-add_newdoc('DTypeLike', 'typing.Union[...]',
+add_newdoc(
+    "DTypeLike",
+    "typing.Union[...]",
     """
     A `~typing.Union` representing objects that can be coerced into a `~numpy.dtype`.
 
@@ -113,9 +118,12 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
         >>> def as_dtype(d: npt.DTypeLike) -> np.dtype:
         ...     return np.dtype(d)
 
-    """)
+    """,
+)
 
-add_newdoc('NDArray', repr(NDArray),
+add_newdoc(
+    "NDArray",
+    repr(NDArray),
     """
     A :term:`generic <generic type>` version of
     `np.ndarray[Any, np.dtype[+ScalarType]] <numpy.ndarray>`.
@@ -144,6 +152,7 @@ add_newdoc('NDArray', repr(NDArray),
         >>> def func(a: npt.ArrayLike) -> npt.NDArray[Any]:
         ...     return np.array(a)
 
-    """)
+    """,
+)
 
 _docstrings = _parse_docstrings()

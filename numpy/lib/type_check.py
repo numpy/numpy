@@ -4,10 +4,21 @@
 import functools
 import warnings
 
-__all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
-           'isreal', 'nan_to_num', 'real', 'real_if_close',
-           'typename', 'asfarray', 'mintypecode', 'asscalar',
-           'common_type']
+__all__ = [
+    "iscomplexobj",
+    "isrealobj",
+    "imag",
+    "iscomplex",
+    "isreal",
+    "nan_to_num",
+    "real",
+    "real_if_close",
+    "typename",
+    "asfarray",
+    "mintypecode",
+    "asscalar",
+    "common_type",
+]
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, isnan, zeros
@@ -17,14 +28,15 @@ from .ufunclike import isneginf, isposinf
 
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
-_typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
+_typecodes_by_elsize = "GDFgdfQqLlIiHhBb?"
 
 
-@set_module('numpy')
-def mintypecode(typechars, typeset='GDFgdf', default='d'):
+@set_module("numpy")
+def mintypecode(typechars, typeset="GDFgdf", default="d"):
     """
     Return the character for the minimum-size type to which given types can
     be safely cast.
@@ -67,13 +79,12 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     'G'
 
     """
-    typecodes = ((isinstance(t, str) and t) or asarray(t).dtype.char
-                 for t in typechars)
+    typecodes = ((isinstance(t, str) and t) or asarray(t).dtype.char for t in typechars)
     intersection = set(t for t in typecodes if t in typeset)
     if not intersection:
         return default
-    if 'F' in intersection and 'd' in intersection:
-        return 'D'
+    if "F" in intersection and "d" in intersection:
+        return "D"
     return min(intersection, key=_typecodes_by_elsize.index)
 
 
@@ -241,7 +252,7 @@ def iscomplex(x):
     if issubclass(ax.dtype.type, _nx.complexfloating):
         return ax.imag != 0
     res = zeros(ax.shape, bool)
-    return res[()]   # convert to scalar if needed
+    return res[()]  # convert to scalar if needed
 
 
 @array_function_dispatch(_is_type_dispatcher)
@@ -276,22 +287,22 @@ def isreal(x):
     >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
     >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
-    
+
     The function does not work on string arrays.
 
     >>> a = np.array([2j, "a"], dtype="U")
     >>> np.isreal(a)  # Warns about non-elementwise comparison
     False
-    
+
     Returns True for all elements in input array of ``dtype=object`` even if
     any of the elements is complex.
 
     >>> a = np.array([1, "2", 3+4j], dtype=object)
     >>> np.isreal(a)
     array([ True,  True,  True])
-    
+
     isreal should not be used with object arrays
-    
+
     >>> a = np.array([1+2j, 2+1j], dtype=object)
     >>> np.isreal(a)
     array([ True,  True])
@@ -389,10 +400,13 @@ def isrealobj(x):
     """
     return not iscomplexobj(x)
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+
 
 def _getmaxmin(t):
     from numpy.core import getlimits
+
     f = getlimits.finfo(t)
     return f.max, f.min
 
@@ -405,14 +419,14 @@ def _nan_to_num_dispatcher(x, copy=None, nan=None, posinf=None, neginf=None):
 def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     """
     Replace NaN with zero and infinity with large finite numbers (default
-    behaviour) or with the numbers defined by the user using the `nan`, 
+    behaviour) or with the numbers defined by the user using the `nan`,
     `posinf` and/or `neginf` keywords.
 
     If `x` is inexact, NaN is replaced by zero or by the user defined value in
-    `nan` keyword, infinity is replaced by the largest finite floating point 
-    values representable by ``x.dtype`` or by the user defined value in 
-    `posinf` keyword and -infinity is replaced by the most negative finite 
-    floating point values representable by ``x.dtype`` or by the user defined 
+    `nan` keyword, infinity is replaced by the largest finite floating point
+    values representable by ``x.dtype`` or by the user defined value in
+    `posinf` keyword and -infinity is replaced by the most negative finite
+    floating point values representable by ``x.dtype`` or by the user defined
     value in `neginf` keyword.
 
     For complex dtypes, the above is applied to each of the real and
@@ -429,27 +443,27 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         in-place (False). The in-place operation only occurs if
         casting to an array does not require a copy.
         Default is True.
-        
+
         .. versionadded:: 1.13
     nan : int, float, optional
-        Value to be used to fill NaN values. If no value is passed 
+        Value to be used to fill NaN values. If no value is passed
         then NaN values will be replaced with 0.0.
-        
+
         .. versionadded:: 1.17
     posinf : int, float, optional
-        Value to be used to fill positive infinity values. If no value is 
+        Value to be used to fill positive infinity values. If no value is
         passed then positive infinity values will be replaced with a very
         large number.
-        
+
         .. versionadded:: 1.17
     neginf : int, float, optional
-        Value to be used to fill negative infinity values. If no value is 
+        Value to be used to fill negative infinity values. If no value is
         passed then negative infinity values will be replaced with a very
         small (or negative) number.
-        
+
         .. versionadded:: 1.17
 
-        
+
 
     Returns
     -------
@@ -483,7 +497,7 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     array([ 1.79769313e+308, -1.79769313e+308,  0.00000000e+000, # may vary
            -1.28000000e+002,  1.28000000e+002])
     >>> np.nan_to_num(x, nan=-9999, posinf=33333333, neginf=33333333)
-    array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03, 
+    array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03,
            -1.2800000e+02,  1.2800000e+02])
     >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000, # may vary
@@ -498,7 +512,7 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
 
-    isscalar = (x.ndim == 0)
+    isscalar = x.ndim == 0
 
     if not issubclass(xtype, _nx.inexact):
         return x[()] if isscalar else x
@@ -520,7 +534,9 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         _nx.copyto(d, minf, where=idx_neginf)
     return x[()] if isscalar else x
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+
 
 def _real_if_close_dispatcher(a, tol=None):
     return (a,)
@@ -529,7 +545,7 @@ def _real_if_close_dispatcher(a, tol=None):
 @array_function_dispatch(_real_if_close_dispatcher)
 def real_if_close(a, tol=100):
     """
-    If input is complex with all imaginary parts close to zero, return 
+    If input is complex with all imaginary parts close to zero, return
     real parts.
 
     "Close to zero" is defined as `tol` * (machine epsilon of the type for
@@ -576,6 +592,7 @@ def real_if_close(a, tol=100):
         return a
     if tol > 1:
         from numpy.core import getlimits
+
         f = getlimits.finfo(a.dtype.type)
         tol = f.eps * tol
     if _nx.all(_nx.absolute(a.imag) < tol):
@@ -585,8 +602,11 @@ def real_if_close(a, tol=100):
 
 def _asscalar_dispatcher(a):
     # 2018-10-10, 1.16
-    warnings.warn('np.asscalar(a) is deprecated since NumPy v1.16, use '
-                  'a.item() instead', DeprecationWarning, stacklevel=3)
+    warnings.warn(
+        "np.asscalar(a) is deprecated since NumPy v1.16, use " "a.item() instead",
+        DeprecationWarning,
+        stacklevel=3,
+    )
     return (a,)
 
 
@@ -617,33 +637,36 @@ def asscalar(a):
     """
     return a.item()
 
-#-----------------------------------------------------------------------------
 
-_namefromtype = {'S1': 'character',
-                 '?': 'bool',
-                 'b': 'signed char',
-                 'B': 'unsigned char',
-                 'h': 'short',
-                 'H': 'unsigned short',
-                 'i': 'integer',
-                 'I': 'unsigned integer',
-                 'l': 'long integer',
-                 'L': 'unsigned long integer',
-                 'q': 'long long integer',
-                 'Q': 'unsigned long long integer',
-                 'f': 'single precision',
-                 'd': 'double precision',
-                 'g': 'long precision',
-                 'F': 'complex single precision',
-                 'D': 'complex double precision',
-                 'G': 'complex long double precision',
-                 'S': 'string',
-                 'U': 'unicode',
-                 'V': 'void',
-                 'O': 'object'
-                 }
+# -----------------------------------------------------------------------------
 
-@set_module('numpy')
+_namefromtype = {
+    "S1": "character",
+    "?": "bool",
+    "b": "signed char",
+    "B": "unsigned char",
+    "h": "short",
+    "H": "unsigned short",
+    "i": "integer",
+    "I": "unsigned integer",
+    "l": "long integer",
+    "L": "unsigned long integer",
+    "q": "long long integer",
+    "Q": "unsigned long long integer",
+    "f": "single precision",
+    "d": "double precision",
+    "g": "long precision",
+    "F": "complex single precision",
+    "D": "complex double precision",
+    "G": "complex long double precision",
+    "S": "string",
+    "U": "unicode",
+    "V": "void",
+    "O": "object",
+}
+
+
+@set_module("numpy")
 def typename(char):
     """
     Return a description for the given data type code.
@@ -695,18 +718,23 @@ def typename(char):
     """
     return _namefromtype[char]
 
-#-----------------------------------------------------------------------------
 
-#determine the "minimum common type" for a group of arrays.
-array_type = [[_nx.half, _nx.single, _nx.double, _nx.longdouble],
-              [None, _nx.csingle, _nx.cdouble, _nx.clongdouble]]
-array_precision = {_nx.half: 0,
-                   _nx.single: 1,
-                   _nx.double: 2,
-                   _nx.longdouble: 3,
-                   _nx.csingle: 1,
-                   _nx.cdouble: 2,
-                   _nx.clongdouble: 3}
+# -----------------------------------------------------------------------------
+
+# determine the "minimum common type" for a group of arrays.
+array_type = [
+    [_nx.half, _nx.single, _nx.double, _nx.longdouble],
+    [None, _nx.csingle, _nx.cdouble, _nx.clongdouble],
+]
+array_precision = {
+    _nx.half: 0,
+    _nx.single: 1,
+    _nx.double: 2,
+    _nx.longdouble: 3,
+    _nx.csingle: 1,
+    _nx.cdouble: 2,
+    _nx.clongdouble: 3,
+}
 
 
 def _common_type_dispatcher(*arrays):

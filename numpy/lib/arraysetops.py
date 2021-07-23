@@ -21,13 +21,20 @@ from numpy.core import overrides
 
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
 __all__ = [
-    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
-    'in1d', 'isin'
-    ]
+    "ediff1d",
+    "intersect1d",
+    "setxor1d",
+    "union1d",
+    "setdiff1d",
+    "unique",
+    "in1d",
+    "isin",
+]
 
 
 def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
@@ -93,8 +100,10 @@ def ediff1d(ary, to_end=None, to_begin=None):
     else:
         to_begin = np.asanyarray(to_begin)
         if not np.can_cast(to_begin, dtype_req, casting="same_kind"):
-            raise TypeError("dtype of `to_begin` must be compatible "
-                            "with input `ary` under the `same_kind` rule.")
+            raise TypeError(
+                "dtype of `to_begin` must be compatible "
+                "with input `ary` under the `same_kind` rule."
+            )
 
         to_begin = to_begin.ravel()
         l_begin = len(to_begin)
@@ -104,8 +113,10 @@ def ediff1d(ary, to_end=None, to_begin=None):
     else:
         to_end = np.asanyarray(to_end)
         if not np.can_cast(to_end, dtype_req, casting="same_kind"):
-            raise TypeError("dtype of `to_end` must be compatible "
-                            "with input `ary` under the `same_kind` rule.")
+            raise TypeError(
+                "dtype of `to_end` must be compatible "
+                "with input `ary` under the `same_kind` rule."
+            )
 
         to_end = to_end.ravel()
         l_end = len(to_end)
@@ -117,27 +128,29 @@ def ediff1d(ary, to_end=None, to_begin=None):
     if l_begin > 0:
         result[:l_begin] = to_begin
     if l_end > 0:
-        result[l_begin + l_diff:] = to_end
-    np.subtract(ary[1:], ary[:-1], result[l_begin:l_begin + l_diff])
+        result[l_begin + l_diff :] = to_end
+    np.subtract(ary[1:], ary[:-1], result[l_begin : l_begin + l_diff])
     return result
 
 
 def _unpack_tuple(x):
-    """ Unpacks one-element tuples for use as return values """
+    """Unpacks one-element tuples for use as return values"""
     if len(x) == 1:
         return x[0]
     else:
         return x
 
 
-def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None):
+def _unique_dispatcher(
+    ar, return_index=None, return_inverse=None, return_counts=None, axis=None
+):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
-def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None):
+def unique(
+    ar, return_index=False, return_inverse=False, return_counts=False, axis=None
+):
     """
     Find the unique elements of an array.
 
@@ -283,7 +296,7 @@ def unique(ar, return_index=False, return_inverse=False,
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
     ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+    dtype = [("f{i}".format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
     # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
     # data type with `m` fields where each field has the data type of `ar`.
@@ -301,7 +314,7 @@ def unique(ar, return_index=False, return_inverse=False,
             consolidated = np.empty(len(ar), dtype=dtype)
     except TypeError as e:
         # There's no good way to do this for object arrays, etc...
-        msg = 'The axis argument to unique is not supported for dtype {dt}'
+        msg = "The axis argument to unique is not supported for dtype {dt}"
         raise TypeError(msg.format(dt=ar.dtype)) from e
 
     def reshape_uniq(uniq):
@@ -311,14 +324,12 @@ def unique(ar, return_index=False, return_inverse=False,
         uniq = np.moveaxis(uniq, 0, axis)
         return uniq
 
-    output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts)
+    output = _unique1d(consolidated, return_index, return_inverse, return_counts)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
-def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False):
+def _unique1d(ar, return_index=False, return_inverse=False, return_counts=False):
     """
     Find the unique elements of an array, ignoring shape.
     """
@@ -327,7 +338,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     optional_indices = return_index or return_inverse
 
     if optional_indices:
-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
+        perm = ar.argsort(kind="mergesort" if return_index else "quicksort")
         aux = ar[perm]
     else:
         ar.sort()
@@ -336,14 +347,13 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask[:1] = True
     if aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
-            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+            aux_firstnan = np.searchsorted(np.isnan(aux), True, side="left")
         else:
-            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
+            aux_firstnan = np.searchsorted(aux, aux[-1], side="left")
         if aux_firstnan > 0:
-            mask[1:aux_firstnan] = (
-                aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
+            mask[1:aux_firstnan] = aux[1:aux_firstnan] != aux[: aux_firstnan - 1]
         mask[aux_firstnan] = True
-        mask[aux_firstnan + 1:] = False
+        mask[aux_firstnan + 1 :] = False
     else:
         mask[1:] = aux[1:] != aux[:-1]
 
@@ -361,8 +371,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     return ret
 
 
-def _intersect1d_dispatcher(
-        ar1, ar2, assume_unique=None, return_indices=None):
+def _intersect1d_dispatcher(ar1, ar2, assume_unique=None, return_indices=None):
     return (ar1, ar2)
 
 
@@ -445,7 +454,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
 
     aux = np.concatenate((ar1, ar2))
     if return_indices:
-        aux_sort_indices = np.argsort(aux, kind='mergesort')
+        aux_sort_indices = np.argsort(aux, kind="mergesort")
         aux = aux[aux_sort_indices]
     else:
         aux.sort()
@@ -601,11 +610,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
-                mask &= (ar1 != a)
+                mask &= ar1 != a
         else:
             mask = np.zeros(len(ar1), dtype=bool)
             for a in ar2:
-                mask |= (ar1 == a)
+                mask |= ar1 == a
         return mask
 
     # Otherwise use sorting
@@ -617,18 +626,18 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
-    order = ar.argsort(kind='mergesort')
+    order = ar.argsort(kind="mergesort")
     sar = ar[order]
     if invert:
-        bool_ar = (sar[1:] != sar[:-1])
+        bool_ar = sar[1:] != sar[:-1]
     else:
-        bool_ar = (sar[1:] == sar[:-1])
+        bool_ar = sar[1:] == sar[:-1]
     flag = np.concatenate((bool_ar, [invert]))
     ret = np.empty(ar.shape, dtype=bool)
     ret[order] = flag
 
     if assume_unique:
-        return ret[:len(ar1)]
+        return ret[: len(ar1)]
     else:
         return ret[rev_idx]
 
@@ -732,8 +741,9 @@ def isin(element, test_elements, assume_unique=False, invert=False):
            [ True, False]])
     """
     element = np.asarray(element)
-    return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert).reshape(element.shape)
+    return in1d(
+        element, test_elements, assume_unique=assume_unique, invert=invert
+    ).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):

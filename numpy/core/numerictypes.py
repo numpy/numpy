@@ -83,24 +83,50 @@ import numbers
 import warnings
 
 from numpy.core.multiarray import (
-        typeinfo, ndarray, array, empty, dtype, datetime_data,
-        datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
-        )
+    typeinfo,
+    ndarray,
+    array,
+    empty,
+    dtype,
+    datetime_data,
+    datetime_as_string,
+    busday_offset,
+    busday_count,
+    is_busday,
+    busdaycalendar,
+)
 from numpy.core.overrides import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'sctypes',
-           'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
-           'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
-           'issubdtype', 'datetime_data', 'datetime_as_string',
-           'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
-           ]
+__all__ = [
+    "sctypeDict",
+    "sctypes",
+    "ScalarType",
+    "obj2sctype",
+    "cast",
+    "nbytes",
+    "sctype2char",
+    "maximum_sctype",
+    "issctype",
+    "typecodes",
+    "find_common_type",
+    "issubdtype",
+    "datetime_data",
+    "datetime_as_string",
+    "busday_offset",
+    "busday_count",
+    "is_busday",
+    "busdaycalendar",
+]
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np.core.numerictypes.UPPER_TABLE
 from ._string_helpers import (
-    english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
+    english_lower,
+    english_upper,
+    english_capitalize,
+    LOWER_TABLE,
+    UPPER_TABLE,
 )
 
 from ._type_aliases import (
@@ -121,17 +147,39 @@ from numpy.compat import long, unicode
 
 
 # We use this later
-generic = allTypes['generic']
+generic = allTypes["generic"]
 
-genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
-                   'int32', 'uint32', 'int64', 'uint64', 'int128',
-                   'uint128', 'float16',
-                   'float32', 'float64', 'float80', 'float96', 'float128',
-                   'float256',
-                   'complex32', 'complex64', 'complex128', 'complex160',
-                   'complex192', 'complex256', 'complex512', 'object']
+genericTypeRank = [
+    "bool",
+    "int8",
+    "uint8",
+    "int16",
+    "uint16",
+    "int32",
+    "uint32",
+    "int64",
+    "uint64",
+    "int128",
+    "uint128",
+    "float16",
+    "float32",
+    "float64",
+    "float80",
+    "float96",
+    "float128",
+    "float256",
+    "complex32",
+    "complex64",
+    "complex128",
+    "complex160",
+    "complex192",
+    "complex256",
+    "complex512",
+    "object",
+]
 
-@set_module('numpy')
+
+@set_module("numpy")
 def maximum_sctype(t):
     """
     Return the scalar type of highest precision of the same kind as the input.
@@ -181,7 +229,7 @@ def maximum_sctype(t):
         return t
 
 
-@set_module('numpy')
+@set_module("numpy")
 def issctype(rep):
     """
     Determines whether the given object represents a scalar data-type.
@@ -227,7 +275,7 @@ def issctype(rep):
         return False
 
 
-@set_module('numpy')
+@set_module("numpy")
 def obj2sctype(rep, default=None):
     """
     Return the scalar dtype or NumPy equivalent of Python type of an object.
@@ -281,7 +329,7 @@ def obj2sctype(rep, default=None):
         return res.type
 
 
-@set_module('numpy')
+@set_module("numpy")
 def issubclass_(arg1, arg2):
     """
     Determine if a class is a subclass of a second class.
@@ -323,7 +371,7 @@ def issubclass_(arg1, arg2):
         return False
 
 
-@set_module('numpy')
+@set_module("numpy")
 def issubsctype(arg1, arg2):
     """
     Determine if the first argument is a subclass of the second argument.
@@ -355,7 +403,7 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 
-@set_module('numpy')
+@set_module("numpy")
 def issubdtype(arg1, arg2):
     r"""
     Returns True if first argument is a typecode lower/equal in type hierarchy.
@@ -435,10 +483,13 @@ class _typedict(dict):
     def __getitem__(self, obj):
         return dict.__getitem__(self, obj2sctype(obj))
 
+
 nbytes = _typedict()
 _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
+
+
 def _construct_lookups():
     for name, info in _concrete_typeinfo.items():
         obj = info.type
@@ -451,10 +502,11 @@ def _construct_lookups():
             _maxvals[obj] = None
             _minvals[obj] = None
 
+
 _construct_lookups()
 
 
-@set_module('numpy')
+@set_module("numpy")
 def sctype2char(sctype):
     """
     Return the string representation of a scalar dtype.
@@ -505,6 +557,7 @@ def sctype2char(sctype):
         raise KeyError(sctype)
     return dtype(sctype).char
 
+
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
 cast = _typedict()
@@ -530,15 +583,17 @@ for key in allTypes:
 
 del key
 
-typecodes = {'Character':'c',
-             'Integer':'bhilqp',
-             'UnsignedInteger':'BHILQP',
-             'Float':'efdg',
-             'Complex':'FDG',
-             'AllInteger':'bBhHiIlLqQpP',
-             'AllFloat':'efdgFDG',
-             'Datetime': 'Mm',
-             'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
+typecodes = {
+    "Character": "c",
+    "Integer": "bhilqp",
+    "UnsignedInteger": "BHILQP",
+    "Float": "efdg",
+    "Complex": "FDG",
+    "AllInteger": "bBhHiIlLqQpP",
+    "AllFloat": "efdgFDG",
+    "Datetime": "Mm",
+    "All": "?bhilqpBHILQPefdgFDGSUVOMm",
+}
 
 # backwards compatibility --- deprecated name
 # Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
@@ -555,9 +610,9 @@ typeDict = sctypeDict
 # U -> Unicode string
 # V -> record
 # O -> Python object
-_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
+_kind_list = ["b", "u", "i", "f", "c", "S", "U", "V", "O", "M", "m"]
 
-__test_types = '?'+typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
+__test_types = "?" + typecodes["AllInteger"][:-2] + typecodes["AllFloat"] + "O"
 __len_test_types = len(__test_types)
 
 # Keep incrementing until a common type both can be coerced to
@@ -570,6 +625,7 @@ def _find_common_coerce(a, b):
     except ValueError:
         return None
     return _can_coerce_all([a, b], start=thisind)
+
 
 # Find a data-type that all data-types in a list can be coerced to
 def _can_coerce_all(dtypelist, start=0):
@@ -587,16 +643,18 @@ def _can_coerce_all(dtypelist, start=0):
         thisind += 1
     return None
 
+
 def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
     numbers.Number.register(number)
 
+
 _register_types()
 
 
-@set_module('numpy')
+@set_module("numpy")
 def find_common_type(array_types, scalar_types):
     """
     Determine common type following standard coercion rules.

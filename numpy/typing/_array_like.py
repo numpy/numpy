@@ -38,9 +38,15 @@ if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
     # Concrete implementations of the protocol are responsible for adding
     # any and all remaining overloads
     class _SupportsArray(Protocol[_DType_co]):
-        def __array__(self) -> ndarray[Any, _DType_co]: ...
+        def __array__(self) -> ndarray[Any, _DType_co]:
+            ...
+
+
 else:
-    class _SupportsArray(Generic[_DType_co]): ...
+
+    class _SupportsArray(Generic[_DType_co]):
+        ...
+
 
 # TODO: Wait for support for recursive types
 _NestedSequence = Union[
@@ -69,10 +75,7 @@ _ArrayLike = Union[
 # https://github.com/python/typing/issues/593
 ArrayLike = Union[
     _RecursiveSequence,
-    _ArrayLike[
-        dtype,
-        Union[bool, int, float, complex, str, bytes]
-    ],
+    _ArrayLike[dtype, Union[bool, int, float, complex, str, bytes]],
 ]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`

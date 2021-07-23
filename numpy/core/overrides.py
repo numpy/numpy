@@ -5,21 +5,24 @@ import os
 import textwrap
 
 from numpy.core._multiarray_umath import (
-    add_docstring, implement_array_function, _get_implementing_args)
+    add_docstring,
+    implement_array_function,
+    _get_implementing_args,
+)
 from numpy.compat._inspect import getargspec
 
 
 ARRAY_FUNCTION_ENABLED = bool(
-    int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
+    int(os.environ.get("NUMPY_EXPERIMENTAL_ARRAY_FUNCTION", 1))
+)
 
-array_function_like_doc = (
-    """like : array_like
+array_function_like_doc = """like : array_like
         Reference object to allow the creation of arrays which are not
         NumPy arrays. If an array-like passed in as ``like`` supports
         the ``__array_function__`` protocol, the result will be defined
         by it. In this case, it ensures the creation of an array object
         compatible with that passed in via this argument."""
-)
+
 
 def set_array_function_like_doc(public_api):
     if public_api.__doc__ is not None:
@@ -61,7 +64,8 @@ add_docstring(
     Raises
     ------
     TypeError : if no implementation is found.
-    """)
+    """,
+)
 
 
 # exposed for testing purposes; used internally by implement_array_function
@@ -80,10 +84,11 @@ add_docstring(
     -------
     Sequence of arguments with __array_function__ methods, in the order in
     which they should be called.
-    """)
+    """,
+)
 
 
-ArgSpec = collections.namedtuple('ArgSpec', 'args varargs keywords defaults')
+ArgSpec = collections.namedtuple("ArgSpec", "args varargs keywords defaults")
 
 
 def verify_matching_signatures(implementation, dispatcher):
@@ -91,21 +96,26 @@ def verify_matching_signatures(implementation, dispatcher):
     implementation_spec = ArgSpec(*getargspec(implementation))
     dispatcher_spec = ArgSpec(*getargspec(dispatcher))
 
-    if (implementation_spec.args != dispatcher_spec.args or
-            implementation_spec.varargs != dispatcher_spec.varargs or
-            implementation_spec.keywords != dispatcher_spec.keywords or
-            (bool(implementation_spec.defaults) !=
-             bool(dispatcher_spec.defaults)) or
-            (implementation_spec.defaults is not None and
-             len(implementation_spec.defaults) !=
-             len(dispatcher_spec.defaults))):
-        raise RuntimeError('implementation and dispatcher for %s have '
-                           'different function signatures' % implementation)
+    if (
+        implementation_spec.args != dispatcher_spec.args
+        or implementation_spec.varargs != dispatcher_spec.varargs
+        or implementation_spec.keywords != dispatcher_spec.keywords
+        or (bool(implementation_spec.defaults) != bool(dispatcher_spec.defaults))
+        or (
+            implementation_spec.defaults is not None
+            and len(implementation_spec.defaults) != len(dispatcher_spec.defaults)
+        )
+    ):
+        raise RuntimeError(
+            "implementation and dispatcher for %s have "
+            "different function signatures" % implementation
+        )
 
     if implementation_spec.defaults is not None:
         if dispatcher_spec.defaults != (None,) * len(dispatcher_spec.defaults):
-            raise RuntimeError('dispatcher functions can only use None for '
-                               'default argument values')
+            raise RuntimeError(
+                "dispatcher functions can only use None for " "default argument values"
+            )
 
 
 def set_module(module):
@@ -119,27 +129,31 @@ def set_module(module):
 
         assert example.__module__ == 'numpy'
     """
+
     def decorator(func):
         if module is not None:
             func.__module__ = module
         return func
-    return decorator
 
+    return decorator
 
 
 # Call textwrap.dedent here instead of in the function so as to avoid
 # calling dedent multiple times on the same text
-_wrapped_func_source = textwrap.dedent("""
+_wrapped_func_source = textwrap.dedent(
+    """
     @functools.wraps(implementation)
     def {name}(*args, **kwargs):
         relevant_args = dispatcher(*args, **kwargs)
         return implement_array_function(
             implementation, {name}, relevant_args, args, kwargs)
-    """)
+    """
+)
 
 
-def array_function_dispatch(dispatcher, module=None, verify=True,
-                            docs_from_dispatcher=False):
+def array_function_dispatch(
+    dispatcher, module=None, verify=True, docs_from_dispatcher=False
+):
     """Decorator for adding dispatch with the __array_function__ protocol.
 
     See NEP-18 for example usage.
@@ -172,12 +186,14 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     """
 
     if not ARRAY_FUNCTION_ENABLED:
+
         def decorator(implementation):
             if docs_from_dispatcher:
                 add_docstring(implementation, dispatcher.__doc__)
             if module is not None:
                 implementation.__module__ = module
             return implementation
+
         return decorator
 
     def decorator(implementation):
@@ -195,12 +211,13 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         source = _wrapped_func_source.format(name=implementation.__name__)
 
         source_object = compile(
-            source, filename='<__array_function__ internals>', mode='exec')
+            source, filename="<__array_function__ internals>", mode="exec"
+        )
         scope = {
-            'implementation': implementation,
-            'dispatcher': dispatcher,
-            'functools': functools,
-            'implement_array_function': implement_array_function,
+            "implementation": implementation,
+            "dispatcher": dispatcher,
+            "functools": functools,
+            "implement_array_function": implement_array_function,
         }
         exec(source_object, scope)
 
@@ -217,11 +234,13 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
 
 
 def array_function_from_dispatcher(
-        implementation, module=None, verify=True, docs_from_dispatcher=True):
+    implementation, module=None, verify=True, docs_from_dispatcher=True
+):
     """Like array_function_dispatcher, but with function arguments flipped."""
 
     def decorator(dispatcher):
         return array_function_dispatch(
-            dispatcher, module, verify=verify,
-            docs_from_dispatcher=docs_from_dispatcher)(implementation)
+            dispatcher, module, verify=verify, docs_from_dispatcher=docs_from_dispatcher
+        )(implementation)
+
     return decorator

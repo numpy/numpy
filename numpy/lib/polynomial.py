@@ -2,17 +2,27 @@
 Functions to operate on polynomials.
 
 """
-__all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
-           'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
-           'polyfit', 'RankWarning']
+__all__ = [
+    "poly",
+    "roots",
+    "polyint",
+    "polyder",
+    "polyadd",
+    "polysub",
+    "polymul",
+    "polydiv",
+    "polyval",
+    "poly1d",
+    "polyfit",
+    "RankWarning",
+]
 
 import functools
 import re
 import warnings
 import numpy.core.numeric as NX
 
-from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
-                        ones)
+from numpy.core import isscalar, abs, finfo, atleast_1d, hstack, dot, array, ones
 from numpy.core import overrides
 from numpy.core.overrides import set_module
 from numpy.lib.twodim_base import diag, vander
@@ -22,10 +32,11 @@ from numpy.linalg import eigvals, lstsq, inv
 
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
-@set_module('numpy')
+@set_module("numpy")
 class RankWarning(UserWarning):
     """
     Issued by `polyfit` when the Vandermonde matrix is rank deficient.
@@ -34,6 +45,7 @@ class RankWarning(UserWarning):
     `RankWarning` being issued, see `polyfit`.
 
     """
+
     pass
 
 
@@ -153,8 +165,7 @@ def poly(seq_of_zeros):
     dt = seq_of_zeros.dtype
     a = ones((1,), dtype=dt)
     for k in range(len(seq_of_zeros)):
-        a = NX.convolve(a, array([1, -seq_of_zeros[k]], dtype=dt),
-                        mode='full')
+        a = NX.convolve(a, array([1, -seq_of_zeros[k]], dtype=dt), mode="full")
 
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
@@ -241,7 +252,7 @@ def roots(p):
     trailing_zeros = len(p) - non_zero[-1] - 1
 
     # strip leading and trailing zeros
-    p = p[int(non_zero[0]):int(non_zero[-1])+1]
+    p = p[int(non_zero[0]) : int(non_zero[-1]) + 1]
 
     # casting: if incoming array isn't floating point, make it floating point.
     if not issubclass(p.dtype.type, (NX.floating, NX.complexfloating)):
@@ -250,8 +261,8 @@ def roots(p):
     N = len(p)
     if N > 1:
         # build companion matrix and find its eigenvalues (the roots)
-        A = diag(NX.ones((N-2,), p.dtype), -1)
-        A[0,:] = -p[1:] / p[0]
+        A = diag(NX.ones((N - 2,), p.dtype), -1)
+        A[0, :] = -p[1:] / p[0]
         roots = eigvals(A)
     else:
         roots = NX.array([])
@@ -346,10 +357,9 @@ def polyint(p, m=1, k=None):
         k = NX.zeros(m, float)
     k = atleast_1d(k)
     if len(k) == 1 and m > 1:
-        k = k[0]*NX.ones(m, float)
+        k = k[0] * NX.ones(m, float)
     if len(k) < m:
-        raise ValueError(
-              "k must be a scalar or a rank-1 array of length 1 or >m.")
+        raise ValueError("k must be a scalar or a rank-1 array of length 1 or >m.")
 
     truepoly = isinstance(p, poly1d)
     p = NX.asarray(p)
@@ -638,7 +648,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     # set rcond
     if rcond is None:
-        rcond = len(x)*finfo(x.dtype).eps
+        rcond = len(x) * finfo(x.dtype).eps
 
     # set up least squares equation for powers of x
     lhs = vander(x, order)
@@ -658,10 +668,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
             rhs *= w
 
     # scale lhs to improve condition number and solve
-    scale = NX.sqrt((lhs*lhs).sum(axis=0))
+    scale = NX.sqrt((lhs * lhs).sum(axis=0))
     lhs /= scale
     c, resids, rank, s = lstsq(lhs, rhs, rcond)
-    c = (c.T/scale).T  # broadcast scale coefficients
+    c = (c.T / scale).T  # broadcast scale coefficients
 
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
@@ -677,8 +687,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
             fac = 1
         else:
             if len(x) <= order:
-                raise ValueError("the number of data points must exceed order "
-                                 "to scale the covariance matrix")
+                raise ValueError(
+                    "the number of data points must exceed order "
+                    "to scale the covariance matrix"
+                )
             # note, this used to be: fac = resids / (len(x) - order - 2.0)
             # it was deciced that the "- 2" (originally justified by "Bayesian
             # uncertainty analysis") is not was the user expects
@@ -687,7 +699,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         if y.ndim == 1:
             return c, Vbase * fac
         else:
-            return c, Vbase[:,:, NX.newaxis] * fac
+            return c, Vbase[:, :, NX.newaxis] * fac
     else:
         return c
 
@@ -830,7 +842,7 @@ def polyadd(a1, a2):
     9 x + 6 x + 6
 
     """
-    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    truepoly = isinstance(a1, poly1d) or isinstance(a2, poly1d)
     a1 = atleast_1d(a1)
     a2 = atleast_1d(a2)
     diff = len(a2) - len(a1)
@@ -884,7 +896,7 @@ def polysub(a1, a2):
     array([-1,  0,  2])
 
     """
-    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    truepoly = isinstance(a1, poly1d) or isinstance(a2, poly1d)
     a1 = atleast_1d(a1)
     a2 = atleast_1d(a2)
     diff = len(a2) - len(a1)
@@ -956,7 +968,7 @@ def polymul(a1, a2):
     9 x + 23 x + 38 x + 17 x + 3
 
     """
-    truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    truepoly = isinstance(a1, poly1d) or isinstance(a2, poly1d)
     a1, a2 = poly1d(a1), poly1d(a2)
     val = NX.convolve(a1, a2)
     if truepoly:
@@ -1020,55 +1032,57 @@ def polydiv(u, v):
     (array([1.5 , 1.75]), array([0.25]))
 
     """
-    truepoly = (isinstance(u, poly1d) or isinstance(v, poly1d))
+    truepoly = isinstance(u, poly1d) or isinstance(v, poly1d)
     u = atleast_1d(u) + 0.0
     v = atleast_1d(v) + 0.0
     # w has the common type
     w = u[0] + v[0]
     m = len(u) - 1
     n = len(v) - 1
-    scale = 1. / v[0]
+    scale = 1.0 / v[0]
     q = NX.zeros((max(m - n + 1, 1),), w.dtype)
     r = u.astype(w.dtype)
-    for k in range(0, m-n+1):
+    for k in range(0, m - n + 1):
         d = scale * r[k]
         q[k] = d
-        r[k:k+n+1] -= d*v
+        r[k : k + n + 1] -= d * v
     while NX.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
     if truepoly:
         return poly1d(q), poly1d(r)
     return q, r
 
+
 _poly_mat = re.compile(r"\*\*([0-9]*)")
+
+
 def _raise_power(astr, wrap=70):
     n = 0
-    line1 = ''
-    line2 = ''
-    output = ' '
+    line1 = ""
+    line2 = ""
+    output = " "
     while True:
         mat = _poly_mat.search(astr, n)
         if mat is None:
             break
         span = mat.span()
         power = mat.groups()[0]
-        partstr = astr[n:span[0]]
+        partstr = astr[n : span[0]]
         n = span[1]
-        toadd2 = partstr + ' '*(len(power)-1)
-        toadd1 = ' '*(len(partstr)-1) + power
-        if ((len(line2) + len(toadd2) > wrap) or
-                (len(line1) + len(toadd1) > wrap)):
+        toadd2 = partstr + " " * (len(power) - 1)
+        toadd1 = " " * (len(partstr) - 1) + power
+        if (len(line2) + len(toadd2) > wrap) or (len(line1) + len(toadd1) > wrap):
             output += line1 + "\n" + line2 + "\n "
             line1 = toadd1
             line2 = toadd2
         else:
-            line2 += partstr + ' '*(len(power)-1)
-            line1 += ' '*(len(partstr)-1) + power
+            line2 += partstr + " " * (len(power) - 1)
+            line1 += " " * (len(partstr) - 1) + power
     output += line1 + "\n" + line2
     return output + astr[n:]
 
 
-@set_module('numpy')
+@set_module("numpy")
 class poly1d:
     """
     A one-dimensional polynomial class.
@@ -1175,11 +1189,12 @@ class poly1d:
     poly1d([ 1, -3,  2])
 
     """
+
     __hash__ = None
 
     @property
     def coeffs(self):
-        """ The polynomial coefficients """
+        """The polynomial coefficients"""
         return self._coeffs
 
     @coeffs.setter
@@ -1190,28 +1205,29 @@ class poly1d:
 
     @property
     def variable(self):
-        """ The name of the polynomial variable """
+        """The name of the polynomial variable"""
         return self._variable
 
     # calculated attributes
     @property
     def order(self):
-        """ The order or degree of the polynomial """
+        """The order or degree of the polynomial"""
         return len(self._coeffs) - 1
 
     @property
     def roots(self):
-        """ The roots of the polynomial, where self(x) == 0 """
+        """The roots of the polynomial, where self(x) == 0"""
         return roots(self._coeffs)
 
     # our internal _coeffs property need to be backed by __dict__['coeffs'] for
     # scipy to work correctly.
     @property
     def _coeffs(self):
-        return self.__dict__['coeffs']
+        return self.__dict__["coeffs"]
+
     @_coeffs.setter
     def _coeffs(self, coeffs):
-        self.__dict__['coeffs'] = coeffs
+        self.__dict__["coeffs"] = coeffs
 
     # alias attributes
     r = roots
@@ -1224,8 +1240,10 @@ class poly1d:
             self._coeffs = c_or_r._coeffs
 
             if set(c_or_r.__dict__) - set(self.__dict__):
-                msg = ("In the future extra properties will not be copied "
-                       "across when constructing one poly1d from another")
+                msg = (
+                    "In the future extra properties will not be copied "
+                    "across when constructing one poly1d from another"
+                )
                 warnings.warn(msg, FutureWarning, stacklevel=2)
                 self.__dict__.update(c_or_r.__dict__)
 
@@ -1237,12 +1255,12 @@ class poly1d:
         c_or_r = atleast_1d(c_or_r)
         if c_or_r.ndim > 1:
             raise ValueError("Polynomial must be 1d only.")
-        c_or_r = trim_zeros(c_or_r, trim='f')
+        c_or_r = trim_zeros(c_or_r, trim="f")
         if len(c_or_r) == 0:
             c_or_r = NX.array([0], dtype=c_or_r.dtype)
         self._coeffs = c_or_r
         if variable is None:
-            variable = 'x'
+            variable = "x"
         self._variable = variable
 
     def __array__(self, t=None):
@@ -1265,11 +1283,11 @@ class poly1d:
 
         # Remove leading zeros
         coeffs = self.coeffs[NX.logical_or.accumulate(self.coeffs != 0)]
-        N = len(coeffs)-1
+        N = len(coeffs) - 1
 
         def fmt_float(q):
-            s = '%.4g' % q
-            if s.endswith('.0000'):
+            s = "%.4g" % q
+            if s.endswith(".0000"):
                 s = s[:-5]
             return s
 
@@ -1277,38 +1295,43 @@ class poly1d:
             if not iscomplex(coeffs[k]):
                 coefstr = fmt_float(real(coeffs[k]))
             elif real(coeffs[k]) == 0:
-                coefstr = '%sj' % fmt_float(imag(coeffs[k]))
+                coefstr = "%sj" % fmt_float(imag(coeffs[k]))
             else:
-                coefstr = '(%s + %sj)' % (fmt_float(real(coeffs[k])),
-                                          fmt_float(imag(coeffs[k])))
+                coefstr = "(%s + %sj)" % (
+                    fmt_float(real(coeffs[k])),
+                    fmt_float(imag(coeffs[k])),
+                )
 
-            power = (N-k)
+            power = N - k
             if power == 0:
-                if coefstr != '0':
-                    newstr = '%s' % (coefstr,)
+                if coefstr != "0":
+                    newstr = "%s" % (coefstr,)
                 else:
                     if k == 0:
-                        newstr = '0'
+                        newstr = "0"
                     else:
-                        newstr = ''
+                        newstr = ""
             elif power == 1:
-                if coefstr == '0':
-                    newstr = ''
-                elif coefstr == 'b':
+                if coefstr == "0":
+                    newstr = ""
+                elif coefstr == "b":
                     newstr = var
                 else:
-                    newstr = '%s %s' % (coefstr, var)
+                    newstr = "%s %s" % (coefstr, var)
             else:
-                if coefstr == '0':
-                    newstr = ''
-                elif coefstr == 'b':
-                    newstr = '%s**%d' % (var, power,)
+                if coefstr == "0":
+                    newstr = ""
+                elif coefstr == "b":
+                    newstr = "%s**%d" % (
+                        var,
+                        power,
+                    )
                 else:
-                    newstr = '%s %s**%d' % (coefstr, var, power)
+                    newstr = "%s %s**%d" % (coefstr, var, power)
 
             if k > 0:
-                if newstr != '':
-                    if newstr.startswith('-'):
+                if newstr != "":
+                    if newstr.startswith("-"):
                         thestr = "%s - %s" % (thestr, newstr[1:])
                     else:
                         thestr = "%s + %s" % (thestr, newstr)
@@ -1365,7 +1388,7 @@ class poly1d:
 
     def __div__(self, other):
         if isscalar(other):
-            return poly1d(self.coeffs/other)
+            return poly1d(self.coeffs / other)
         else:
             other = poly1d(other)
             return polydiv(self, other)
@@ -1374,7 +1397,7 @@ class poly1d:
 
     def __rdiv__(self, other):
         if isscalar(other):
-            return poly1d(other/self.coeffs)
+            return poly1d(other / self.coeffs)
         else:
             other = poly1d(other)
             return polydiv(other, self)
@@ -1393,7 +1416,6 @@ class poly1d:
             return NotImplemented
         return not self.__eq__(other)
 
-
     def __getitem__(self, val):
         ind = self.order - val
         if val > self.order:
@@ -1407,7 +1429,7 @@ class poly1d:
         if key < 0:
             raise ValueError("Does not support negative powers.")
         if key > self.order:
-            zr = NX.zeros(key-self.order, self.coeffs.dtype)
+            zr = NX.zeros(key - self.order, self.coeffs.dtype)
             self._coeffs = NX.concatenate((zr, self.coeffs))
             ind = 0
         self._coeffs[ind] = val
@@ -1442,6 +1464,7 @@ class poly1d:
         """
         return poly1d(polyder(self.coeffs, m=m))
 
+
 # Stuff to do on module import
 
-warnings.simplefilter('always', RankWarning)
+warnings.simplefilter("always", RankWarning)

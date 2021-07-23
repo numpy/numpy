@@ -7,17 +7,17 @@ import numpy as np
 
 
 _kind_to_stem = {
-    'u': 'uint',
-    'i': 'int',
-    'c': 'complex',
-    'f': 'float',
-    'b': 'bool',
-    'V': 'void',
-    'O': 'object',
-    'M': 'datetime',
-    'm': 'timedelta',
-    'S': 'bytes',
-    'U': 'str',
+    "u": "uint",
+    "i": "int",
+    "c": "complex",
+    "f": "float",
+    "b": "bool",
+    "V": "void",
+    "O": "object",
+    "M": "datetime",
+    "m": "timedelta",
+    "S": "bytes",
+    "U": "str",
 }
 
 
@@ -26,8 +26,7 @@ def _kind_name(dtype):
         return _kind_to_stem[dtype.kind]
     except KeyError as e:
         raise RuntimeError(
-            "internal dtype error, unknown kind {!r}"
-            .format(dtype.kind)
+            "internal dtype error, unknown kind {!r}".format(dtype.kind)
         ) from None
 
 
@@ -142,35 +141,34 @@ def _scalar_str(dtype, short):
 
     elif np.issubdtype(dtype, np.number):
         # Short repr with endianness, like '<f8'
-        if short or dtype.byteorder not in ('=', '|'):
+        if short or dtype.byteorder not in ("=", "|"):
             return "'%s%c%d'" % (byteorder, dtype.kind, dtype.itemsize)
 
         # Longer repr, like 'float64'
         else:
-            return "'%s%d'" % (_kind_name(dtype), 8*dtype.itemsize)
+            return "'%s%d'" % (_kind_name(dtype), 8 * dtype.itemsize)
 
     elif dtype.isbuiltin == 2:
         return dtype.type.__name__
 
     else:
-        raise RuntimeError(
-            "Internal error: NumPy dtype unrecognized type number")
+        raise RuntimeError("Internal error: NumPy dtype unrecognized type number")
 
 
 def _byte_order_str(dtype):
-    """ Normalize byteorder to '<' or '>' """
+    """Normalize byteorder to '<' or '>'"""
     # hack to obtain the native and swapped byte order characters
-    swapped = np.dtype(int).newbyteorder('S')
-    native = swapped.newbyteorder('S')
+    swapped = np.dtype(int).newbyteorder("S")
+    native = swapped.newbyteorder("S")
 
     byteorder = dtype.byteorder
-    if byteorder == '=':
+    if byteorder == "=":
         return native.byteorder
-    if byteorder == 'S':
+    if byteorder == "S":
         # TODO: this path can never be reached
         return swapped.byteorder
-    elif byteorder == '|':
-        return ''
+    elif byteorder == "|":
+        return ""
     else:
         return byteorder
 
@@ -178,12 +176,12 @@ def _byte_order_str(dtype):
 def _datetime_metadata_str(dtype):
     # TODO: this duplicates the C metastr_to_unicode functionality
     unit, count = np.datetime_data(dtype)
-    if unit == 'generic':
-        return ''
+    if unit == "generic":
+        return ""
     elif count == 1:
-        return '[{}]'.format(unit)
+        return "[{}]".format(unit)
     else:
-        return '[{}{}]'.format(count, unit)
+        return "[{}{}]".format(count, unit)
 
 
 def _struct_dict_str(dtype, includealignedflag):
@@ -207,7 +205,8 @@ def _struct_dict_str(dtype, includealignedflag):
     # Second, the formats
     ret += "], 'formats':["
     ret += ",".join(
-        _construction_repr(fld_dtype, short=True) for fld_dtype in fld_dtypes)
+        _construction_repr(fld_dtype, short=True) for fld_dtype in fld_dtypes
+    )
 
     # Third, the offsets
     ret += "], 'offsets':["
@@ -221,7 +220,7 @@ def _struct_dict_str(dtype, includealignedflag):
     # Fifth, the itemsize
     ret += "], 'itemsize':%d" % dtype.itemsize
 
-    if (includealignedflag and dtype.isalignedstruct):
+    if includealignedflag and dtype.isalignedstruct:
         # Finally, the aligned flag
         ret += ", 'aligned':True}"
     else:
@@ -266,10 +265,7 @@ def _struct_list_str(dtype):
         # Special case subarray handling here
         if fld_dtype.subdtype is not None:
             base, shape = fld_dtype.subdtype
-            item += "{}, {}".format(
-                _construction_repr(base, short=True),
-                shape
-            )
+            item += "{}, {}".format(_construction_repr(base, short=True), shape)
         else:
             item += _construction_repr(fld_dtype, short=True)
 
@@ -298,10 +294,7 @@ def _struct_str(dtype, include_align):
 
 def _subarray_str(dtype):
     base, shape = dtype.subdtype
-    return "({}, {})".format(
-        _construction_repr(base, short=True),
-        shape
-    )
+    return "({}, {})".format(_construction_repr(base, short=True), shape)
 
 
 def _name_includes_bit_suffix(dtype):

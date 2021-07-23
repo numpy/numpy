@@ -17,21 +17,22 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
     """Compile a single source files with a Unix-style compiler."""
     # HP ad-hoc fix, see ticket 1383
     ccomp = self.compiler_so
-    if ccomp[0] == 'aCC':
+    if ccomp[0] == "aCC":
         # remove flags that will trigger ANSI-C mode for aCC
-        if '-Ae' in ccomp:
-            ccomp.remove('-Ae')
-        if '-Aa' in ccomp:
-            ccomp.remove('-Aa')
+        if "-Ae" in ccomp:
+            ccomp.remove("-Ae")
+        if "-Aa" in ccomp:
+            ccomp.remove("-Aa")
         # add flags for (almost) sane C++ handling
-        ccomp += ['-AA']
+        ccomp += ["-AA"]
         self.compiler_so = ccomp
     # ensure OPT environment variable is read
-    if 'OPT' in os.environ:
+    if "OPT" in os.environ:
         # XXX who uses this?
         from sysconfig import get_config_vars
-        opt = " ".join(os.environ['OPT'].split())
-        gcv_opt = " ".join(get_config_vars('OPT')[0].split())
+
+        opt = " ".join(os.environ["OPT"].split())
+        gcv_opt = " ".join(get_config_vars("OPT")[0].split())
         ccomp_s = " ".join(self.compiler_so)
         if opt not in ccomp_s:
             ccomp_s = ccomp_s.replace(gcv_opt, opt)
@@ -40,18 +41,20 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         if opt not in llink_s:
             self.linker_so = llink_s.split() + opt.split()
 
-    display = '%s: %s' % (os.path.basename(self.compiler_so[0]), src)
+    display = "%s: %s" % (os.path.basename(self.compiler_so[0]), src)
 
     # gcc style automatic dependencies, outputs a makefile (-MF) that lists
     # all headers needed by a c file as a side effect of compilation (-MMD)
-    if getattr(self, '_auto_depends', False):
-        deps = ['-MMD', '-MF', obj + '.d']
+    if getattr(self, "_auto_depends", False):
+        deps = ["-MMD", "-MF", obj + ".d"]
     else:
         deps = []
 
     try:
-        self.spawn(self.compiler_so + cc_args + [src, '-o', obj] + deps +
-                   extra_postargs, display = display)
+        self.spawn(
+            self.compiler_so + cc_args + [src, "-o", obj] + deps + extra_postargs,
+            display=display,
+        )
     except DistutilsExecError as e:
         msg = str(e)
         raise CompileError(msg) from None
@@ -61,16 +64,18 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         # After running the compiler, the file created will be in EBCDIC
         # but will not be tagged as such. This tags it so the file does not
         # have multiple different encodings being written to it
-        if sys.platform == 'zos':
-            subprocess.check_output(['chtag', '-tc', 'IBM1047', obj + '.d'])
-        with open(obj + '.d', 'a') as f:
+        if sys.platform == "zos":
+            subprocess.check_output(["chtag", "-tc", "IBM1047", obj + ".d"])
+        with open(obj + ".d", "a") as f:
             f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
 
-replace_method(UnixCCompiler, '_compile', UnixCCompiler__compile)
+
+replace_method(UnixCCompiler, "_compile", UnixCCompiler__compile)
 
 
-def UnixCCompiler_create_static_lib(self, objects, output_libname,
-                                    output_dir=None, debug=0, target_lang=None):
+def UnixCCompiler_create_static_lib(
+    self, objects, output_libname, output_dir=None, debug=0, target_lang=None
+):
     """
     Build a static library in a separate sub-process.
 
@@ -96,8 +101,7 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
     """
     objects, output_dir = self._fix_object_args(objects, output_dir)
 
-    output_filename = \
-                    self.library_filename(output_libname, output_dir=output_dir)
+    output_filename = self.library_filename(output_libname, output_dir=output_dir)
 
     if self._need_link(objects, output_filename):
         try:
@@ -112,11 +116,12 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
         while tmp_objects:
             objects = tmp_objects[:50]
             tmp_objects = tmp_objects[50:]
-            display = '%s: adding %d object files to %s' % (
-                           os.path.basename(self.archiver[0]),
-                           len(objects), output_filename)
-            self.spawn(self.archiver + [output_filename] + objects,
-                       display = display)
+            display = "%s: adding %d object files to %s" % (
+                os.path.basename(self.archiver[0]),
+                len(objects),
+                output_filename,
+            )
+            self.spawn(self.archiver + [output_filename] + objects, display=display)
 
         # Not many Unices required ranlib anymore -- SunOS 4.x is, I
         # think the only major Unix that does.  Maybe we need some
@@ -124,11 +129,9 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
         # needed -- or maybe Python's configure script took care of
         # it for us, hence the check for leading colon.
         if self.ranlib:
-            display = '%s:@ %s' % (os.path.basename(self.ranlib[0]),
-                                   output_filename)
+            display = "%s:@ %s" % (os.path.basename(self.ranlib[0]), output_filename)
             try:
-                self.spawn(self.ranlib + [output_filename],
-                           display = display)
+                self.spawn(self.ranlib + [output_filename], display=display)
             except DistutilsExecError as e:
                 msg = str(e)
                 raise LibError(msg) from None
@@ -136,5 +139,5 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
         log.debug("skipping %s (up-to-date)", output_filename)
     return
 
-replace_method(UnixCCompiler, 'create_static_lib',
-               UnixCCompiler_create_static_lib)
+
+replace_method(UnixCCompiler, "create_static_lib", UnixCCompiler_create_static_lib)

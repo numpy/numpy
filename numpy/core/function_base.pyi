@@ -14,6 +14,7 @@ _ArrayLikeNested = Sequence[Sequence[Any]]
 _ArrayLikeNumber = Union[
     _NumberLike_co, Sequence[_NumberLike_co], ndarray, _SupportsArray, _ArrayLikeNested
 ]
+
 @overload
 def linspace(
     start: _ArrayLikeNumber,
@@ -34,7 +35,6 @@ def linspace(
     dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> Tuple[ndarray, Any]: ...
-
 def logspace(
     start: _ArrayLikeNumber,
     stop: _ArrayLikeNumber,
@@ -44,7 +44,6 @@ def logspace(
     dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> ndarray: ...
-
 def geomspace(
     start: _ArrayLikeNumber,
     stop: _ArrayLikeNumber,

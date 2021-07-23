@@ -40,7 +40,7 @@ def _is_string_like(obj):
     Check whether obj behaves like a string.
     """
     try:
-        obj + ''
+        obj + ""
     except (TypeError, ValueError):
         return False
     return True
@@ -51,7 +51,7 @@ def _is_bytes_like(obj):
     Check whether obj behaves like a bytes object.
     """
     try:
-        obj + b''
+        obj + b""
     except (TypeError, ValueError):
         return False
     return True
@@ -167,8 +167,7 @@ class LineSplitter:
         """
         return lambda input: [_.strip() for _ in method(input)]
 
-    def __init__(self, delimiter=None, comments='#', autostrip=True,
-                 encoding=None):
+    def __init__(self, delimiter=None, comments="#", autostrip=True, encoding=None):
         delimiter = _decode_line(delimiter)
         comments = _decode_line(comments)
 
@@ -179,14 +178,13 @@ class LineSplitter:
             delimiter = delimiter or None
             _handyman = self._delimited_splitter
         # Delimiter is a list of field widths
-        elif hasattr(delimiter, '__iter__'):
+        elif hasattr(delimiter, "__iter__"):
             _handyman = self._variablewidth_splitter
             idx = np.cumsum([0] + list(delimiter))
             delimiter = [slice(i, j) for (i, j) in zip(idx[:-1], idx[1:])]
         # Delimiter is a single integer
         elif int(delimiter):
-            (_handyman, delimiter) = (
-                    self._fixedwidth_splitter, int(delimiter))
+            (_handyman, delimiter) = (self._fixedwidth_splitter, int(delimiter))
         else:
             (_handyman, delimiter) = (self._delimited_splitter, None)
         self.delimiter = delimiter
@@ -197,7 +195,7 @@ class LineSplitter:
         self.encoding = encoding
 
     def _delimited_splitter(self, line):
-        """Chop off comments, strip, and split at delimiter. """
+        """Chop off comments, strip, and split at delimiter."""
         if self.comments is not None:
             line = line.split(self.comments)[0]
         line = line.strip(" \r\n")
@@ -279,11 +277,12 @@ class NameValidator:
 
     """
 
-    defaultexcludelist = ['return', 'file', 'print']
+    defaultexcludelist = ["return", "file", "print"]
     defaultdeletechars = set(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
 
-    def __init__(self, excludelist=None, deletechars=None,
-                 case_sensitive=None, replace_space='_'):
+    def __init__(
+        self, excludelist=None, deletechars=None, case_sensitive=None, replace_space="_"
+    ):
         # Process the exclusion list ..
         if excludelist is None:
             excludelist = []
@@ -299,12 +298,12 @@ class NameValidator:
         # Process the case option .....
         if (case_sensitive is None) or (case_sensitive is True):
             self.case_converter = lambda x: x
-        elif (case_sensitive is False) or case_sensitive.startswith('u'):
+        elif (case_sensitive is False) or case_sensitive.startswith("u"):
             self.case_converter = lambda x: x.upper()
-        elif case_sensitive.startswith('l'):
+        elif case_sensitive.startswith("l"):
             self.case_converter = lambda x: x.lower()
         else:
-            msg = 'unrecognized case_sensitive value %s.' % case_sensitive
+            msg = "unrecognized case_sensitive value %s." % case_sensitive
             raise ValueError(msg)
 
         self.replace_space = replace_space
@@ -336,17 +335,19 @@ class NameValidator:
 
         """
         # Initial checks ..............
-        if (names is None):
-            if (nbfields is None):
+        if names is None:
+            if nbfields is None:
                 return None
             names = []
         if isinstance(names, str):
-            names = [names, ]
+            names = [
+                names,
+            ]
         if nbfields is not None:
             nbnames = len(names)
-            if (nbnames < nbfields):
-                names = list(names) + [''] * (nbfields - nbnames)
-            elif (nbnames > nbfields):
+            if nbnames < nbfields:
+                names = list(names) + [""] * (nbfields - nbnames)
+            elif nbnames > nbfields:
                 names = names[:nbfields]
         # Set some shortcuts ...........
         deletechars = self.deletechars
@@ -361,19 +362,19 @@ class NameValidator:
         for item in names:
             item = case_converter(item).strip()
             if replace_space:
-                item = item.replace(' ', replace_space)
-            item = ''.join([c for c in item if c not in deletechars])
-            if item == '':
+                item = item.replace(" ", replace_space)
+            item = "".join([c for c in item if c not in deletechars])
+            if item == "":
                 item = defaultfmt % nbempty
                 while item in names:
                     nbempty += 1
                     item = defaultfmt % nbempty
                 nbempty += 1
             elif item in excludelist:
-                item += '_'
+                item += "_"
             cnt = seen.get(item, 0)
             if cnt > 0:
-                validatednames.append(item + '_%d' % cnt)
+                validatednames.append(item + "_%d" % cnt)
             else:
                 validatednames.append(item)
             seen[item] = cnt + 1
@@ -411,9 +412,9 @@ def str2bool(value):
 
     """
     value = value.upper()
-    if value == 'TRUE':
+    if value == "TRUE":
         return True
-    elif value == 'FALSE':
+    elif value == "FALSE":
         return False
     else:
         raise ValueError("Invalid boolean")
@@ -424,6 +425,7 @@ class ConverterError(Exception):
     Exception raised when an error occurs in a converter for string values.
 
     """
+
     pass
 
 
@@ -432,6 +434,7 @@ class ConverterLockError(ConverterError):
     Exception raised when an attempt is made to upgrade a locked converter.
 
     """
+
     pass
 
 
@@ -445,6 +448,7 @@ class ConversionWarning(UserWarning):
     is explicitly suppressed with the "invalid_raise" keyword.
 
     """
+
     pass
 
 
@@ -496,27 +500,33 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    _mapper = [(nx.bool_, str2bool, False),
-               (nx.int_, int, -1),]
+
+    _mapper = [
+        (nx.bool_, str2bool, False),
+        (nx.int_, int, -1),
+    ]
 
     # On 32-bit systems, we need to make sure that we explicitly include
     # nx.int64 since ns.int_ is nx.int32.
     if nx.dtype(nx.int_).itemsize < nx.dtype(nx.int64).itemsize:
         _mapper.append((nx.int64, int, -1))
 
-    _mapper.extend([(nx.float64, float, nx.nan),
-                    (nx.complex128, complex, nx.nan + 0j),
-                    (nx.longdouble, nx.longdouble, nx.nan),
-                    # If a non-default dtype is passed, fall back to generic
-                    # ones (should only be used for the converter)
-                    (nx.integer, int, -1),
-                    (nx.floating, float, nx.nan),
-                    (nx.complexfloating, complex, nx.nan + 0j),
-                    # Last, try with the string types (must be last, because
-                    # `_mapper[-1]` is used as default in some cases)
-                    (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???'),
-                    ])
+    _mapper.extend(
+        [
+            (nx.float64, float, nx.nan),
+            (nx.complex128, complex, nx.nan + 0j),
+            (nx.longdouble, nx.longdouble, nx.nan),
+            # If a non-default dtype is passed, fall back to generic
+            # ones (should only be used for the converter)
+            (nx.integer, int, -1),
+            (nx.floating, float, nx.nan),
+            (nx.complexfloating, complex, nx.nan + 0j),
+            # Last, try with the string types (must be last, because
+            # `_mapper[-1]` is used as default in some cases)
+            (nx.unicode_, asunicode, "???"),
+            (nx.string_, asbytes, "???"),
+        ]
+    )
 
     @classmethod
     def _getdtype(cls, val):
@@ -565,10 +575,10 @@ class StringConverter:
         >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
         """
         # Func is a single functions
-        if hasattr(func, '__call__'):
+        if hasattr(func, "__call__"):
             cls._mapper.insert(-1, (cls._getsubdtype(default), func, default))
             return
-        elif hasattr(func, '__iter__'):
+        elif hasattr(func, "__iter__"):
             if isinstance(func[0], (tuple, list)):
                 for _ in func:
                     cls._mapper.insert(-1, _)
@@ -595,8 +605,9 @@ class StringConverter:
 
         raise LookupError
 
-    def __init__(self, dtype_or_func=None, default=None, missing_values=None,
-                 locked=False):
+    def __init__(
+        self, dtype_or_func=None, default=None, missing_values=None, locked=False
+    ):
         # Defines a lock for upgrade
         self._locked = bool(locked)
         # No input dtype: minimal initialization
@@ -604,7 +615,7 @@ class StringConverter:
             self.func = str2bool
             self._status = 0
             self.default = default or False
-            dtype = np.dtype('bool')
+            dtype = np.dtype("bool")
         else:
             # Is the input a np.dtype ?
             try:
@@ -612,9 +623,11 @@ class StringConverter:
                 dtype = np.dtype(dtype_or_func)
             except TypeError:
                 # dtype_or_func must be a function, then
-                if not hasattr(dtype_or_func, '__call__'):
-                    errmsg = ("The input argument `dtype` is neither a"
-                              " function nor a dtype (got '%s' instead)")
+                if not hasattr(dtype_or_func, "__call__"):
+                    errmsg = (
+                        "The input argument `dtype` is neither a"
+                        " function nor a dtype (got '%s' instead)"
+                    )
                     raise TypeError(errmsg % type(dtype_or_func))
                 # Set the function
                 self.func = dtype_or_func
@@ -622,7 +635,7 @@ class StringConverter:
                 # None
                 if default is None:
                     try:
-                        default = self.func('0')
+                        default = self.func("0")
                     except ValueError:
                         default = None
                 dtype = self._getdtype(default)
@@ -657,11 +670,11 @@ class StringConverter:
                     self.func = lambda x: int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
-            self.missing_values = {''}
+            self.missing_values = {""}
         else:
             if isinstance(missing_values, str):
                 missing_values = missing_values.split(",")
-            self.missing_values = set(list(missing_values) + [''])
+            self.missing_values = set(list(missing_values) + [""])
 
         self._callingfunction = self._strict_call
         self.type = self._dtypeortype(dtype)
@@ -752,7 +765,7 @@ class StringConverter:
 
     def iterupgrade(self, value):
         self._checked = True
-        if not hasattr(value, '__iter__'):
+        if not hasattr(value, "__iter__"):
             value = (value,)
         _strict_call = self._strict_call
         try:
@@ -762,8 +775,9 @@ class StringConverter:
             self._do_upgrade()
             self.iterupgrade(value)
 
-    def update(self, func, default=None, testing_value=None,
-               missing_values='', locked=False):
+    def update(
+        self, func, default=None, testing_value=None, missing_values="", locked=False
+    ):
         """
         Set StringConverter attributes directly.
 
@@ -802,7 +816,7 @@ class StringConverter:
             self.type = self._dtypeortype(self._getdtype(default))
         else:
             try:
-                tester = func(testing_value or '1')
+                tester = func(testing_value or "1")
             except (TypeError, ValueError):
                 tester = None
             self.type = self._dtypeortype(self._getdtype(tester))
@@ -864,7 +878,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         validate = NameValidator(**validationargs)
         nbfields = len(ndtype)
         if names is None:
-            names = [''] * len(ndtype)
+            names = [""] * len(ndtype)
         elif isinstance(names, str):
             names = names.split(",")
         names = validate(names, nbfields=nbfields, defaultfmt=defaultfmt)
@@ -882,16 +896,16 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
                 ndtype = np.dtype(list(zip(names, formats)))
             # Structured dtype: just validate the names as needed
             else:
-                ndtype.names = validate(names, nbfields=len(ndtype.names),
-                                        defaultfmt=defaultfmt)
+                ndtype.names = validate(
+                    names, nbfields=len(ndtype.names), defaultfmt=defaultfmt
+                )
         # No implicit names
         elif ndtype.names is not None:
             validate = NameValidator(**validationargs)
             # Default initial names : should we change the format ?
             numbered_names = tuple("f%i" % i for i in range(len(ndtype.names)))
-            if ((ndtype.names == numbered_names) and (defaultfmt != "f%i")):
-                ndtype.names = validate([''] * len(ndtype.names),
-                                        defaultfmt=defaultfmt)
+            if (ndtype.names == numbered_names) and (defaultfmt != "f%i"):
+                ndtype.names = validate([""] * len(ndtype.names), defaultfmt=defaultfmt)
             # Explicit initial names : just validate
             else:
                 ndtype.names = validate(ndtype.names, defaultfmt=defaultfmt)

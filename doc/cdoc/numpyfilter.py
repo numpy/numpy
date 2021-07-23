@@ -13,35 +13,38 @@ import textwrap
 
 from numpy.compat import pickle
 
-CACHE_FILE = 'build/rst-cache.pck'
+CACHE_FILE = "build/rst-cache.pck"
+
 
 def main():
     import argparse
 
     parser = argparse.ArgumentParser(usage=__doc__.strip())
-    parser.add_argument('input_file', help='input file')
+    parser.add_argument("input_file", help="input file")
     args = parser.parse_args()
 
-    comment_re = re.compile(r'(\n.*?)/\*(.*?)\*/', re.S)
+    comment_re = re.compile(r"(\n.*?)/\*(.*?)\*/", re.S)
 
     cache = load_cache()
 
     try:
-        with open(args.input_file, 'r') as f:
+        with open(args.input_file, "r") as f:
             text = f.read()
             text = comment_re.sub(lambda m: process_match(m, cache), text)
             sys.stdout.write(text)
     finally:
         save_cache(cache)
 
+
 def filter_comment(text):
-    if text.startswith('NUMPY_API'):
+    if text.startswith("NUMPY_API"):
         text = text[9:].strip()
-    if text.startswith('UFUNC_API'):
+    if text.startswith("UFUNC_API"):
         text = text[9:].strip()
 
     html = render_html(text)
     return html
+
 
 def process_match(m, cache=None):
     pre, rawtext = m.groups()
@@ -51,7 +54,7 @@ def process_match(m, cache=None):
     if cache is not None and rawtext in cache:
         text = cache[rawtext]
     else:
-        text = re.compile(r'^\s*\*', re.M).sub('', rawtext)
+        text = re.compile(r"^\s*\*", re.M).sub("", rawtext)
         text = textwrap.dedent(text)
         text = filter_comment(text)
 
@@ -63,9 +66,10 @@ def process_match(m, cache=None):
     else:
         return pre + "/** " + text + " */"
 
+
 def load_cache():
     if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, 'rb') as f:
+        with open(CACHE_FILE, "rb") as f:
             try:
                 cache = pickle.load(f)
             except Exception:
@@ -74,31 +78,36 @@ def load_cache():
         cache = {}
     return cache
 
+
 def save_cache(cache):
-    with open(CACHE_FILE + '.new', 'wb') as f:
+    with open(CACHE_FILE + ".new", "wb") as f:
         pickle.dump(cache, f)
-    os.rename(CACHE_FILE + '.new', CACHE_FILE)
+    os.rename(CACHE_FILE + ".new", CACHE_FILE)
+
 
 def render_html(text):
     import docutils.parsers.rst
     import docutils.writers.html4css1
     import docutils.core
 
-    docutils.parsers.rst.roles.DEFAULT_INTERPRETED_ROLE = 'title-reference'
+    docutils.parsers.rst.roles.DEFAULT_INTERPRETED_ROLE = "title-reference"
     writer = docutils.writers.html4css1.Writer()
     parts = docutils.core.publish_parts(
         text,
         writer=writer,
-        settings_overrides = dict(halt_level=5,
-                                  traceback=True,
-                                  default_reference_context='title-reference',
-                                  stylesheet_path='',
-                                  # security settings:
-                                  raw_enabled=0,
-                                  file_insertion_enabled=0,
-                                  _disable_config=1,
-                                  )
+        settings_overrides=dict(
+            halt_level=5,
+            traceback=True,
+            default_reference_context="title-reference",
+            stylesheet_path="",
+            # security settings:
+            raw_enabled=0,
+            file_insertion_enabled=0,
+            _disable_config=1,
+        ),
     )
-    return parts['html_body']
+    return parts["html_body"]
 
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+    main()

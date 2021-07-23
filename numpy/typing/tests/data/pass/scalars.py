@@ -4,7 +4,7 @@ import datetime as dt
 import pytest
 import numpy as np
 
-b =  np.bool_()
+b = np.bool_()
 u8 = np.uint64()
 i8 = np.int64()
 f8 = np.float64()
@@ -65,11 +65,11 @@ if sys.version_info >= (3, 8):
     np.complex64(D())
 
 np.bytes_(b"hello")
-np.bytes_("hello", 'utf-8')
-np.bytes_("hello", encoding='utf-8')
+np.bytes_("hello", "utf-8")
+np.bytes_("hello", encoding="utf-8")
 np.str_("hello")
-np.str_(b"hello", 'utf-8')
-np.str_(b"hello", encoding='utf-8')
+np.str_(b"hello", "utf-8")
+np.str_(b"hello", encoding="utf-8")
 
 # Array-ish semantics
 np.int8().real
@@ -86,7 +86,7 @@ np.uint64().shape
 np.datetime64()
 np.datetime64(0, "D")
 np.datetime64(0, b"D")
-np.datetime64(0, ('ms', 3))
+np.datetime64(0, ("ms", 3))
 np.datetime64("2019")
 np.datetime64(b"2019")
 np.datetime64("2019", "D")
@@ -99,7 +99,7 @@ np.datetime64(None, "D")
 np.timedelta64()
 np.timedelta64(0)
 np.timedelta64(0, "D")
-np.timedelta64(0, ('ms', 3))
+np.timedelta64(0, ("ms", 3))
 np.timedelta64(0, b"D")
 np.timedelta64("3")
 np.timedelta64(b"5")

@@ -4,25 +4,27 @@
 import numpy as np
 import numpy.polynomial.polyutils as pu
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+    assert_almost_equal,
+    assert_raises,
+    assert_equal,
+    assert_,
+)
 
 
 class TestMisc:
-
     def test_trimseq(self):
         for i in range(5):
             tgt = [1]
-            res = pu.trimseq([1] + [0]*5)
+            res = pu.trimseq([1] + [0] * 5)
             assert_equal(res, tgt)
 
     def test_as_series(self):
         # check exceptions
         assert_raises(ValueError, pu.as_series, [[]])
         assert_raises(ValueError, pu.as_series, [[[1, 2]]])
-        assert_raises(ValueError, pu.as_series, [[1], ['a']])
+        assert_raises(ValueError, pu.as_series, [[1], ["a"]])
         # check common types
-        types = ['i', 'd', 'O']
+        types = ["i", "d", "O"]
         for i in range(len(types)):
             for j in range(i):
                 ci = np.ones(1, types[i])
@@ -56,8 +58,8 @@ class TestMisc:
         # power > maxpower
         assert_raises(ValueError, pu._pow, (), [1, 2, 3], 5, 4)
 
-class TestDomain:
 
+class TestDomain:
     def test_getdomain(self):
         # test for real values
         x = [1, 10, 3, -1]
@@ -109,8 +111,8 @@ class TestDomain:
         # test for real values
         dom1 = [0, 4]
         dom2 = [1, 3]
-        tgt = [1, .5]
-        res = pu. mapparms(dom1, dom2)
+        tgt = [1, 0.5]
+        res = pu.mapparms(dom1, dom2)
         assert_almost_equal(res, tgt)
 
         # test for complex values

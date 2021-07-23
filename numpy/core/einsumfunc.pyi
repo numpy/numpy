@@ -36,9 +36,7 @@ _ArrayType = TypeVar(
     bound=ndarray[Any, dtype[Union[bool_, number[Any]]]],
 )
 
-_OptimizeKind = Union[
-    None, bool, Literal["greedy", "optimal"], Sequence[Any]
-]
+_OptimizeKind = Union[None, bool, Literal["greedy", "optimal"], Sequence[Any]]
 _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
 _CastingUnsafe = Literal["unsafe"]
 

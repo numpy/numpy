@@ -22,11 +22,10 @@ from .utils import KnownFailureException, KnownFailureTest
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish
 # them from the plethora of very similar names from nose/unittest/doctest
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Modified version of the one in the stdlib, that fixes a python bug (doctests
 # not found in extension modules, https://bugs.python.org/issue3158)
 class NumpyDocTestFinder(doctest.DocTestFinder):
-
     def _from_module(self, module, object):
         """
         Return true if the given object is defined in the given
@@ -48,7 +47,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
             return module.__name__ == object.__self__.__class__.__module__
         elif inspect.getmodule(object) is not None:
             return module is inspect.getmodule(object)
-        elif hasattr(object, '__module__'):
+        elif hasattr(object, "__module__"):
             return module.__name__ == object.__module__
         elif isinstance(object, property):
             return True  # [XX] no way not be sure.
@@ -61,27 +60,24 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         add them to `tests`.
         """
 
-        doctest.DocTestFinder._find(self, tests, obj, name, module,
-                                    source_lines, globs, seen)
+        doctest.DocTestFinder._find(
+            self, tests, obj, name, module, source_lines, globs, seen
+        )
 
         # Below we re-run pieces of the above method with manual modifications,
         # because the original code is buggy and fails to correctly identify
         # doctests in extension modules.
 
         # Local shorthands
-        from inspect import (
-            isroutine, isclass, ismodule, isfunction, ismethod
-            )
+        from inspect import isroutine, isclass, ismodule, isfunction, ismethod
 
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:
             for valname, val in obj.__dict__.items():
-                valname1 = f'{name}.{valname}'
-                if ( (isroutine(val) or isclass(val))
-                     and self._from_module(module, val)):
+                valname1 = f"{name}.{valname}"
+                if (isroutine(val) or isclass(val)) and self._from_module(module, val):
 
-                    self._find(tests, val, valname1, module, source_lines,
-                               globs, seen)
+                    self._find(tests, val, valname1, module, source_lines, globs, seen)
 
         # Look for tests in a class's contained objects.
         if isclass(obj) and self._recurse:
@@ -93,12 +89,14 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                     val = getattr(obj, valname).__func__
 
                 # Recurse to methods, properties, and nested classes.
-                if ((isfunction(val) or isclass(val) or
-                     ismethod(val) or isinstance(val, property)) and
-                      self._from_module(module, val)):
-                    valname = f'{name}.{valname}'
-                    self._find(tests, val, valname, module, source_lines,
-                               globs, seen)
+                if (
+                    isfunction(val)
+                    or isclass(val)
+                    or ismethod(val)
+                    or isinstance(val, property)
+                ) and self._from_module(module, val):
+                    valname = f"{name}.{valname}"
+                    self._find(tests, val, valname, module, source_lines, globs, seen)
 
 
 # second-chance checker; if the default comparison doesn't
@@ -106,8 +104,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
 # tell us to ignore the output
 class NumpyOutputChecker(doctest.OutputChecker):
     def check_output(self, want, got, optionflags):
-        ret = doctest.OutputChecker.check_output(self, want, got,
-                                                 optionflags)
+        ret = doctest.OutputChecker.check_output(self, want, got, optionflags)
         if not ret:
             if "#random" in want:
                 return True
@@ -124,8 +121,7 @@ class NumpyOutputChecker(doctest.OutputChecker):
                 got = got.replace("'<i%d'" % sz, "int")
                 want = want.replace("'<i%d'" % sz, "int")
 
-            ret = doctest.OutputChecker.check_output(self, want,
-                    got, optionflags)
+            ret = doctest.OutputChecker.check_output(self, want, got, optionflags)
 
         return ret
 
@@ -134,28 +130,40 @@ class NumpyOutputChecker(doctest.OutputChecker):
 # its constructor that blocks non-default arguments from being passed
 # down into doctest.DocTestCase
 class NumpyDocTestCase(npd.DocTestCase):
-    def __init__(self, test, optionflags=0, setUp=None, tearDown=None,
-                 checker=None, obj=None, result_var='_'):
+    def __init__(
+        self,
+        test,
+        optionflags=0,
+        setUp=None,
+        tearDown=None,
+        checker=None,
+        obj=None,
+        result_var="_",
+    ):
         self._result_var = result_var
         self._nose_obj = obj
-        doctest.DocTestCase.__init__(self, test,
-                                     optionflags=optionflags,
-                                     setUp=setUp, tearDown=tearDown,
-                                     checker=checker)
+        doctest.DocTestCase.__init__(
+            self,
+            test,
+            optionflags=optionflags,
+            setUp=setUp,
+            tearDown=tearDown,
+            checker=checker,
+        )
 
 
 print_state = numpy.get_printoptions()
 
+
 class NumpyDoctest(npd.Doctest):
-    name = 'numpydoctest'   # call nosetests with --with-numpydoctest
+    name = "numpydoctest"  # call nosetests with --with-numpydoctest
     score = 1000  # load late, after doctest builtin
 
     # always use whitespace and ellipsis options for doctests
     doctest_optflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
     # files that should be ignored for doctests
-    doctest_ignore = ['generate_numpy_api.py',
-                      'setup.py']
+    doctest_ignore = ["generate_numpy_api.py", "setup.py"]
 
     # Custom classes; class variables to allow subclassing
     doctest_case_class = NumpyDocTestCase
@@ -182,11 +190,12 @@ class NumpyDoctest(npd.Doctest):
             # both.  In practice the Unplugger plugin above would cover us when
             # run from a standard numpy.test() call; this is just in case
             # someone wants to run our plugin outside the numpy.test() machinery
-            config.plugins.plugins = [p for p in config.plugins.plugins
-                                      if p.name != 'doctest']
+            config.plugins.plugins = [
+                p for p in config.plugins.plugins if p.name != "doctest"
+            ]
 
     def set_test_context(self, test):
-        """ Configure `test` object to set test context
+        """Configure `test` object to set test context
 
         We set the numpy / scipy standard doctest namespace
 
@@ -214,13 +223,15 @@ class NumpyDoctest(npd.Doctest):
         #
         # Note: __file__ allows the doctest in NoseTester to run
         # without producing an error
-        test.globs = {'__builtins__':__builtins__,
-                      '__file__':'__main__',
-                      '__name__':'__main__',
-                      'np':numpy}
+        test.globs = {
+            "__builtins__": __builtins__,
+            "__file__": "__main__",
+            "__name__": "__main__",
+            "np": numpy,
+        }
         # add appropriate scipy import for SciPy tests
-        if 'scipy' in pkg_name:
-            p = pkg_name.split('.')
+        if "scipy" in pkg_name:
+            p = pkg_name.split(".")
             p2 = p[-1]
             test.globs[p2] = __import__(pkg_name, test.globs, {}, [p2])
 
@@ -248,10 +259,12 @@ class NumpyDoctest(npd.Doctest):
                 test.filename = module_file
             # Set test namespace; test altered in place
             self.set_test_context(test)
-            yield self.doctest_case_class(test,
-                                          optionflags=self.doctest_optflags,
-                                          checker=self.out_check_class(),
-                                          result_var=self.doctest_result_var)
+            yield self.doctest_case_class(
+                test,
+                optionflags=self.doctest_optflags,
+                checker=self.out_check_class(),
+                result_var=self.doctest_result_var,
+            )
 
     # Add an afterContext method to nose.plugins.doctests.Doctest in order
     # to restore print options to the original state after each doctest
@@ -267,15 +280,16 @@ class NumpyDoctest(npd.Doctest):
 
 
 class Unplugger:
-    """ Nose plugin to remove named plugin late in loading
+    """Nose plugin to remove named plugin late in loading
 
     By default it removes the "doctest" plugin.
     """
-    name = 'unplugger'
+
+    name = "unplugger"
     enabled = True  # always enabled
     score = 4000  # load late in order to be after builtins
 
-    def __init__(self, to_unplug='doctest'):
+    def __init__(self, to_unplug="doctest"):
         self.to_unplug = to_unplug
 
     def options(self, parser, env):
@@ -283,37 +297,41 @@ class Unplugger:
 
     def configure(self, options, config):
         # Pull named plugin out of plugins list
-        config.plugins.plugins = [p for p in config.plugins.plugins
-                                  if p.name != self.to_unplug]
+        config.plugins.plugins = [
+            p for p in config.plugins.plugins if p.name != self.to_unplug
+        ]
 
 
 class KnownFailurePlugin(ErrorClassPlugin):
-    '''Plugin that installs a KNOWNFAIL error class for the
+    """Plugin that installs a KNOWNFAIL error class for the
     KnownFailureClass exception.  When KnownFailure is raised,
     the exception will be logged in the knownfail attribute of the
     result, 'K' or 'KNOWNFAIL' (verbose) will be output, and the
-    exception will not be counted as an error or failure.'''
+    exception will not be counted as an error or failure."""
+
     enabled = True
-    knownfail = ErrorClass(KnownFailureException,
-                           label='KNOWNFAIL',
-                           isfailure=False)
+    knownfail = ErrorClass(KnownFailureException, label="KNOWNFAIL", isfailure=False)
 
     def options(self, parser, env=os.environ):
-        env_opt = 'NOSE_WITHOUT_KNOWNFAIL'
-        parser.add_option('--no-knownfail', action='store_true',
-                          dest='noKnownFail', default=env.get(env_opt, False),
-                          help='Disable special handling of KnownFailure '
-                               'exceptions')
+        env_opt = "NOSE_WITHOUT_KNOWNFAIL"
+        parser.add_option(
+            "--no-knownfail",
+            action="store_true",
+            dest="noKnownFail",
+            default=env.get(env_opt, False),
+            help="Disable special handling of KnownFailure " "exceptions",
+        )
 
     def configure(self, options, conf):
         if not self.can_configure:
             return
         self.conf = conf
-        disable = getattr(options, 'noKnownFail', False)
+        disable = getattr(options, "noKnownFail", False)
         if disable:
             self.enabled = False
 
-KnownFailure = KnownFailurePlugin   # backwards compat
+
+KnownFailure = KnownFailurePlugin  # backwards compat
 
 
 class FPUModeCheckPlugin(Plugin):
@@ -334,7 +352,8 @@ class FPUModeCheckPlugin(Plugin):
                 try:
                     raise AssertionError(
                         "FPU mode changed from {0:#x} to {1:#x} during the "
-                        "test".format(old_mode, new_mode))
+                        "test".format(old_mode, new_mode)
+                    )
                 except AssertionError:
                     result.addFailure(test, sys.exc_info())
 
@@ -353,9 +372,11 @@ class NumpyTestProgram(nose.core.TestProgram):
         the result
         """
         if self.testRunner is None:
-            self.testRunner = nose.core.TextTestRunner(stream=self.config.stream,
-                                                       verbosity=self.config.verbosity,
-                                                       config=self.config)
+            self.testRunner = nose.core.TextTestRunner(
+                stream=self.config.stream,
+                verbosity=self.config.verbosity,
+                config=self.config,
+            )
         plug_runner = self.config.plugins.prepareTestRunner(self.testRunner)
         if plug_runner is not None:
             self.testRunner = plug_runner

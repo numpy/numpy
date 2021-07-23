@@ -6,15 +6,16 @@ from ._sfc64 import SFC64
 from ._generator import Generator
 from ._mt19937 import MT19937
 
-BitGenerators = {'MT19937': MT19937,
-                 'PCG64': PCG64,
-                 'PCG64DXSM': PCG64DXSM,
-                 'Philox': Philox,
-                 'SFC64': SFC64,
-                 }
+BitGenerators = {
+    "MT19937": MT19937,
+    "PCG64": PCG64,
+    "PCG64DXSM": PCG64DXSM,
+    "Philox": Philox,
+    "SFC64": SFC64,
+}
 
 
-def __generator_ctor(bit_generator_name='MT19937'):
+def __generator_ctor(bit_generator_name="MT19937"):
     """
     Pickling helper function that returns a Generator object
 
@@ -31,13 +32,14 @@ def __generator_ctor(bit_generator_name='MT19937'):
     if bit_generator_name in BitGenerators:
         bit_generator = BitGenerators[bit_generator_name]
     else:
-        raise ValueError(str(bit_generator_name) + ' is not a known '
-                                                   'BitGenerator module.')
+        raise ValueError(
+            str(bit_generator_name) + " is not a known " "BitGenerator module."
+        )
 
     return Generator(bit_generator())
 
 
-def __bit_generator_ctor(bit_generator_name='MT19937'):
+def __bit_generator_ctor(bit_generator_name="MT19937"):
     """
     Pickling helper function that returns a bit generator object
 
@@ -54,13 +56,14 @@ def __bit_generator_ctor(bit_generator_name='MT19937'):
     if bit_generator_name in BitGenerators:
         bit_generator = BitGenerators[bit_generator_name]
     else:
-        raise ValueError(str(bit_generator_name) + ' is not a known '
-                                                   'BitGenerator module.')
+        raise ValueError(
+            str(bit_generator_name) + " is not a known " "BitGenerator module."
+        )
 
     return bit_generator()
 
 
-def __randomstate_ctor(bit_generator_name='MT19937'):
+def __randomstate_ctor(bit_generator_name="MT19937"):
     """
     Pickling helper function that returns a legacy RandomState-like object
 
@@ -77,7 +80,8 @@ def __randomstate_ctor(bit_generator_name='MT19937'):
     if bit_generator_name in BitGenerators:
         bit_generator = BitGenerators[bit_generator_name]
     else:
-        raise ValueError(str(bit_generator_name) + ' is not a known '
-                                                   'BitGenerator module.')
+        raise ValueError(
+            str(bit_generator_name) + " is not a known " "BitGenerator module."
+        )
 
     return RandomState(bit_generator())

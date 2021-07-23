@@ -7,7 +7,9 @@ reveal_type(np.issctype(np.float64))  # E: bool
 reveal_type(np.issctype("foo"))  # E: Literal[False]
 
 reveal_type(np.obj2sctype(np.float64))  # E: Union[None, Type[{float64}]]
-reveal_type(np.obj2sctype(np.float64, default=False))  # E: Union[builtins.bool, Type[{float64}]]
+reveal_type(
+    np.obj2sctype(np.float64, default=False)
+)  # E: Union[builtins.bool, Type[{float64}]]
 reveal_type(np.obj2sctype("S8"))  # E: Union[None, Type[Any]]
 reveal_type(np.obj2sctype("S8", default=None))  # E: Union[None, Type[Any]]
 reveal_type(np.obj2sctype("foo", default=False))  # E: Union[builtins.bool, Type[Any]]

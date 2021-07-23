@@ -10,7 +10,7 @@ def _path(*a):
 
 
 class TestSizeSumExample(util.F2PyTest):
-    sources = [_path('src', 'size', 'foo.f90')]
+    sources = [_path("src", "size", "foo.f90")]
 
     @pytest.mark.slow
     def test_all(self):

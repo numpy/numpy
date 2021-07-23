@@ -9,6 +9,7 @@ be written as '\\(' or r'\('.
 """
 import sys
 
+
 def main(root):
     """Find deprecated escape sequences.
 
@@ -42,12 +43,12 @@ def main(root):
         # default encoding is defined (e.g. LANG='C')
         with tokenize.open(str(path)) as f:
             with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter('always')
+                warnings.simplefilter("always")
                 tree = ast.parse(f.read())
             if w:
                 print("file: ", str(path))
                 for e in w:
-                    print('line: ', e.lineno, ': ', e.message)
+                    print("line: ", e.lineno, ": ", e.message)
                 print()
                 count += len(w)
     print("Errors Found", count)
@@ -60,6 +61,6 @@ if __name__ == "__main__":
         raise RuntimeError("Python version must be >= 3.6")
 
     parser = ArgumentParser(description="Find deprecated escaped characters")
-    parser.add_argument('root', help='directory or file to be checked')
+    parser.add_argument("root", help="directory or file to be checked")
     args = parser.parse_args()
     main(args.root)

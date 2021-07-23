@@ -14,4 +14,6 @@ reveal_type(a[[0, 1, 2]])  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
 reveal_type(a[...])  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
 reveal_type(a[:])  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
 reveal_type(a.__array__())  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
-reveal_type(a.__array__(np.dtype(np.float64)))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(
+    a.__array__(np.dtype(np.float64))
+)  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]

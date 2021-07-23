@@ -29,11 +29,11 @@ if sys.version_info >= (3, 8):
 
 np.array(1, dtype=float)
 np.array(1, copy=False)
-np.array(1, order='F')
+np.array(1, order="F")
 np.array(1, order=None)
 np.array(1, subok=True)
 np.array(1, ndmin=3)
-np.array(1, str, copy=True, order='C', subok=False, ndmin=2)
+np.array(1, str, copy=True, order="C", subok=False, ndmin=2)
 
 np.asarray(A)
 np.asarray(B)

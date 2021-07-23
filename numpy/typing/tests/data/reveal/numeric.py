@@ -8,8 +8,10 @@ Does not include tests which fall under ``array_constructors``.
 from typing import List
 import numpy as np
 
+
 class SubClass(np.ndarray):
     ...
+
 
 i8: np.int64
 

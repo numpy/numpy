@@ -1,8 +1,7 @@
 import os
 import genapi
 
-from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
+from genapi import TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
 
 import numpy_api
 
@@ -137,22 +136,24 @@ NumPy C-API
 ===========
 """
 
-def generate_api(output_dir, force=False):
-    basename = 'multiarray_api'
 
-    h_file = os.path.join(output_dir, '__%s.h' % basename)
-    c_file = os.path.join(output_dir, '__%s.c' % basename)
-    d_file = os.path.join(output_dir, '%s.txt' % basename)
+def generate_api(output_dir, force=False):
+    basename = "multiarray_api"
+
+    h_file = os.path.join(output_dir, "__%s.h" % basename)
+    c_file = os.path.join(output_dir, "__%s.c" % basename)
+    d_file = os.path.join(output_dir, "%s.txt" % basename)
     targets = (h_file, c_file, d_file)
 
     sources = numpy_api.multiarray_api
 
-    if (not force and not genapi.should_rebuild(targets, [numpy_api.__file__, __file__])):
+    if not force and not genapi.should_rebuild(targets, [numpy_api.__file__, __file__]):
         return targets
     else:
         do_generate_api(targets, sources)
 
     return targets
+
 
 def do_generate_api(targets, sources):
     header_file = targets[0]
@@ -174,19 +175,18 @@ def do_generate_api(targets, sources):
     multiarray_api_index = genapi.merge_api_dicts(multiarray_api)
     genapi.check_api_dict(multiarray_api_index)
 
-    numpyapi_list = genapi.get_api_functions('NUMPY_API',
-                                             multiarray_funcs)
+    numpyapi_list = genapi.get_api_functions("NUMPY_API", multiarray_funcs)
 
     # Create dict name -> *Api instance
-    api_name = 'PyArray_API'
+    api_name = "PyArray_API"
     multiarray_api_dict = {}
     for f in numpyapi_list:
         name = f.name
         index = multiarray_funcs[name][0]
         annotations = multiarray_funcs[name][1:]
-        multiarray_api_dict[f.name] = FunctionApi(f.name, index, annotations,
-                                                  f.return_type,
-                                                  f.args, api_name)
+        multiarray_api_dict[f.name] = FunctionApi(
+            f.name, index, annotations, f.return_type, f.args, api_name
+        )
 
     for name, val in global_vars.items():
         index, type = val
@@ -198,17 +198,19 @@ def do_generate_api(targets, sources):
 
     for name, val in types_api.items():
         index = val[0]
-        internal_type =  None if len(val) == 1 else val[1]
+        internal_type = None if len(val) == 1 else val[1]
         multiarray_api_dict[name] = TypeApi(
-            name, index, 'PyTypeObject', api_name, internal_type)
+            name, index, "PyTypeObject", api_name, internal_type
+        )
 
     if len(multiarray_api_dict) != len(multiarray_api_index):
         keys_dict = set(multiarray_api_dict.keys())
         keys_index = set(multiarray_api_index.keys())
         raise AssertionError(
             "Multiarray API size mismatch - "
-            "index has extra keys {}, dict has extra keys {}"
-            .format(keys_index - keys_dict, keys_dict - keys_index)
+            "index has extra keys {}, dict has extra keys {}".format(
+                keys_index - keys_dict, keys_dict - keys_index
+            )
         )
 
     extension_list = []
@@ -219,18 +221,18 @@ def do_generate_api(targets, sources):
         module_list.append(api_item.internal_define())
 
     # Write to header
-    s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
+    s = h_template % ("\n".join(module_list), "\n".join(extension_list))
     genapi.write_file(header_file, s)
 
     # Write to c-code
-    s = c_template % ',\n'.join(init_list)
+    s = c_template % ",\n".join(init_list)
     genapi.write_file(c_file, s)
 
     # write to documentation
     s = c_api_header
     for func in numpyapi_list:
         s += func.to_ReST()
-        s += '\n\n'
+        s += "\n\n"
     genapi.write_file(doc_file, s)
 
     return targets

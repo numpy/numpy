@@ -60,7 +60,6 @@ def _get_precision_dict() -> t.Dict[str, str]:
         ("_NBitIntP", np.intp),
         ("_NBitInt", np.int_),
         ("_NBitLongLong", np.longlong),
-
         ("_NBitHalf", np.half),
         ("_NBitSingle", np.single),
         ("_NBitDouble", np.double),
@@ -69,7 +68,7 @@ def _get_precision_dict() -> t.Dict[str, str]:
     ret = {}
     for name, typ in names:
         n: int = 8 * typ().dtype.itemsize
-        ret[f'numpy.typing._nbit.{name}'] = f"numpy._{n}Bit"
+        ret[f"numpy.typing._nbit.{name}"] = f"numpy._{n}Bit"
     return ret
 
 
@@ -94,12 +93,12 @@ def _get_extended_precision_list() -> t.List[str]:
 
 def _get_c_intp_name() -> str:
     # Adapted from `np.core._internal._getintp_ctype`
-    char = np.dtype('p').char
-    if char == 'i':
+    char = np.dtype("p").char
+    if char == "i":
         return "c_int"
-    elif char == 'l':
+    elif char == "l":
         return "c_long"
-    elif char == 'q':
+    elif char == "q":
         return "c_longlong"
     else:
         return "c_long"
@@ -125,14 +124,17 @@ def _hook(ctx: AnalyzeTypeContext) -> Type:
 
 
 if t.TYPE_CHECKING or MYPY_EX is None:
+
     def _index(iterable: t.Iterable[Statement], id: str) -> int:
         """Identify the first ``ImportFrom`` instance the specified `id`."""
         for i, value in enumerate(iterable):
             if getattr(value, "id", None) == id:
                 return i
         else:
-            raise ValueError("Failed to identify a `ImportFrom` instance "
-                             f"with the following id: {id!r}")
+            raise ValueError(
+                "Failed to identify a `ImportFrom` instance "
+                f"with the following id: {id!r}"
+            )
 
     def _override_imports(
         file: MypyFile,
@@ -174,12 +176,14 @@ if t.TYPE_CHECKING or MYPY_EX is None:
 
             if file.fullname == "numpy":
                 _override_imports(
-                    file, "numpy.typing._extended_precision",
+                    file,
+                    "numpy.typing._extended_precision",
                     imports=[(v, v) for v in _EXTENDED_PRECISION_LIST],
                 )
             elif file.fullname == "numpy.ctypeslib":
                 _override_imports(
-                    file, "ctypes",
+                    file,
+                    "ctypes",
                     imports=[(_C_INTP, "_c_intp")],
                 )
             return ret
@@ -188,7 +192,9 @@ if t.TYPE_CHECKING or MYPY_EX is None:
         """An entry-point for mypy."""
         return _NumpyPlugin
 
+
 else:
+
     def plugin(version: str) -> t.Type[_NumpyPlugin]:
         """An entry-point for mypy."""
         raise MYPY_EX

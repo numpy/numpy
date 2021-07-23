@@ -35,11 +35,9 @@ from numpy.typing import (
     _RecursiveSequence,
     NDArray,
     _ArrayLikeInt,
-
     # DTypes
     DTypeLike,
     _SupportsDType,
-
     # Shapes
     _ShapeLike,
 )
@@ -63,7 +61,9 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 __all__: List[str]
 
 @overload
-def ix_(*args: _NestedSequence[_SupportsDType[_DType]]) -> Tuple[ndarray[Any, _DType], ...]: ...
+def ix_(
+    *args: _NestedSequence[_SupportsDType[_DType]],
+) -> Tuple[ndarray[Any, _DType], ...]: ...
 @overload
 def ix_(*args: _NestedSequence[str]) -> Tuple[NDArray[str_], ...]: ...
 @overload
@@ -129,7 +129,6 @@ class AxisConcatenator:
     def makemat(
         data: ArrayLike, dtype: DTypeLike = ..., copy: bool = ...
     ) -> _Matrix: ...
-
     # TODO: Sort out this `__getitem__` method
     def __getitem__(self, key: Any) -> Any: ...
 

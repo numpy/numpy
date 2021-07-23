@@ -1,7 +1,7 @@
 import unittest
 from os import sys, path
 
-is_standalone = __name__ == '__main__' and __package__ is None
+is_standalone = __name__ == "__main__" and __package__ is None
 if is_standalone:
     sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
     from ccompiler_opt import CCompilerOpt
@@ -9,45 +9,49 @@ else:
     from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 arch_compilers = dict(
-    x86 = ("gcc", "clang", "icc", "iccw", "msvc"),
-    x64 = ("gcc", "clang", "icc", "iccw", "msvc"),
-    ppc64 = ("gcc", "clang"),
-    ppc64le = ("gcc", "clang"),
-    armhf = ("gcc", "clang"),
-    aarch64 = ("gcc", "clang"),
-    narch = ("gcc",)
+    x86=("gcc", "clang", "icc", "iccw", "msvc"),
+    x64=("gcc", "clang", "icc", "iccw", "msvc"),
+    ppc64=("gcc", "clang"),
+    ppc64le=("gcc", "clang"),
+    armhf=("gcc", "clang"),
+    aarch64=("gcc", "clang"),
+    narch=("gcc",),
 )
+
 
 class FakeCCompilerOpt(CCompilerOpt):
     fake_info = ("arch", "compiler", "extra_args")
+
     def __init__(self, *args, **kwargs):
         CCompilerOpt.__init__(self, None, **kwargs)
+
     def dist_compile(self, sources, flags, **kwargs):
         return sources
+
     def dist_info(self):
         return FakeCCompilerOpt.fake_info
+
     @staticmethod
     def dist_log(*args, stderr=False):
         pass
 
+
 class _TestConfFeatures(FakeCCompilerOpt):
     """A hook to check the sanity of configured features
--   before it called by the abstract class '_Feature'
+    -   before it called by the abstract class '_Feature'
     """
 
     def conf_features_partial(self):
         conf_all = self.conf_features
         for feature_name, feature in conf_all.items():
             self.test_feature(
-                "attribute conf_features",
-                conf_all, feature_name, feature
+                "attribute conf_features", conf_all, feature_name, feature
             )
 
         conf_partial = FakeCCompilerOpt.conf_features_partial(self)
         for feature_name, feature in conf_partial.items():
             self.test_feature(
-                "conf_features_partial()",
-                conf_partial, feature_name, feature
+                "conf_features_partial()", conf_partial, feature_name, feature
             )
         return conf_partial
 
@@ -70,24 +74,26 @@ class _TestConfFeatures(FakeCCompilerOpt):
 
     def test_option_types(self, error_msg, option, val):
         for tp, available in (
-            ((str, list), (
-                "implies", "headers", "flags", "group", "detect", "extra_checks"
-            )),
-            ((str,),  ("disable",)),
-            ((int,),  ("interest",)),
+            (
+                (str, list),
+                ("implies", "headers", "flags", "group", "detect", "extra_checks"),
+            ),
+            ((str,), ("disable",)),
+            ((int,), ("interest",)),
             ((bool,), ("implies_detect",)),
             ((bool, type(None)), ("autovec",)),
-        ) :
+        ):
             found_it = option in available
             if not found_it:
                 continue
             if not isinstance(val, tp):
                 error_tp = [t.__name__ for t in (*tp,)]
-                error_tp = ' or '.join(error_tp)
-                raise AssertionError(error_msg +
-                    "expected '%s' type for option '%s' not '%s'" % (
-                     error_tp, option, type(val).__name__
-                ))
+                error_tp = " or ".join(error_tp)
+                raise AssertionError(
+                    error_msg
+                    + "expected '%s' type for option '%s' not '%s'"
+                    % (error_tp, option, type(val).__name__)
+                )
             break
 
         if not found_it:
@@ -95,14 +101,22 @@ class _TestConfFeatures(FakeCCompilerOpt):
 
     def test_duplicates(self, error_msg, option, val):
         if option not in (
-            "implies", "headers", "flags", "group", "detect", "extra_checks"
-        ) : return
+            "implies",
+            "headers",
+            "flags",
+            "group",
+            "detect",
+            "extra_checks",
+        ):
+            return
 
         if isinstance(val, str):
             val = val.split()
 
         if len(val) != len(set(val)):
-            raise AssertionError(error_msg + "duplicated values in option '%s'" % option)
+            raise AssertionError(
+                error_msg + "duplicated values in option '%s'" % option
+            )
 
     def test_implies(self, error_msg, search_in, feature_name, feature_dict):
         if feature_dict.get("disabled") is not None:
@@ -120,7 +134,9 @@ class _TestConfFeatures(FakeCCompilerOpt):
             impl_dict = search_in.get(impl)
             if impl_dict is not None:
                 if "disable" in impl_dict:
-                    raise AssertionError(error_msg + "implies disabled feature '%s'" % impl)
+                    raise AssertionError(
+                        error_msg + "implies disabled feature '%s'" % impl
+                    )
                 continue
             raise AssertionError(error_msg + "implies non-exist feature '%s'" % impl)
 
@@ -137,8 +153,9 @@ class _TestConfFeatures(FakeCCompilerOpt):
             impl_dict = search_in.get(f)
             if not impl_dict or "disable" in impl_dict:
                 continue
-            raise AssertionError(error_msg +
-                "in option 'group', '%s' already exists as a feature name" % f
+            raise AssertionError(
+                error_msg
+                + "in option 'group', '%s' already exists as a feature name" % f
             )
 
     def test_extra_checks(self, error_msg, search_in, feature_name, feature_dict):
@@ -154,9 +171,12 @@ class _TestConfFeatures(FakeCCompilerOpt):
             impl_dict = search_in.get(f)
             if not impl_dict or "disable" in impl_dict:
                 continue
-            raise AssertionError(error_msg +
-                "in option 'extra_checks', extra test case '%s' already exists as a feature name" % f
+            raise AssertionError(
+                error_msg
+                + "in option 'extra_checks', extra test case '%s' already exists as a feature name"
+                % f
             )
+
 
 class TestConfFeatures(unittest.TestCase):
     def __init__(self, methodName="runTest"):
@@ -171,6 +191,7 @@ class TestConfFeatures(unittest.TestCase):
             for cc in compilers:
                 FakeCCompilerOpt.fake_info = (arch, cc, "")
                 _TestConfFeatures()
+
 
 if is_standalone:
     unittest.main()

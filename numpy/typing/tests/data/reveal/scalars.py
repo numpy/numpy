@@ -33,8 +33,8 @@ reveal_type(c8.dtype)  # E: numpy.dtype[{complex64}]
 reveal_type(c8.real)  # E: {float32}
 reveal_type(c16.imag)  # E: {float64}
 
-reveal_type(np.unicode_('foo'))  # E: numpy.str_
-reveal_type(np.str0('foo'))  # E: numpy.str_
+reveal_type(np.unicode_("foo"))  # E: numpy.str_
+reveal_type(np.str0("foo"))  # E: numpy.str_
 
 # Aliases
 reveal_type(np.unicode_())  # E: numpy.str_

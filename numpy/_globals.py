@@ -15,15 +15,13 @@ That was not the case when the singleton classes were defined in the numpy
 motivated this module.
 
 """
-__ALL__ = [
-    'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue'
-    ]
+__ALL__ = ["ModuleDeprecationWarning", "VisibleDeprecationWarning", "_NoValue"]
 
 
 # Disallow reloading this module so as to preserve the identities of the
 # classes defined here.
-if '_is_loaded' in globals():
-    raise RuntimeError('Reloading numpy._globals is not allowed')
+if "_is_loaded" in globals():
+    raise RuntimeError("Reloading numpy._globals is not allowed")
 _is_loaded = True
 
 
@@ -38,7 +36,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
     """
 
 
-ModuleDeprecationWarning.__module__ = 'numpy'
+ModuleDeprecationWarning.__module__ = "numpy"
 
 
 class VisibleDeprecationWarning(UserWarning):
@@ -51,7 +49,7 @@ class VisibleDeprecationWarning(UserWarning):
     """
 
 
-VisibleDeprecationWarning.__module__ = 'numpy'
+VisibleDeprecationWarning.__module__ = "numpy"
 
 
 class _NoValueType:
@@ -73,7 +71,9 @@ class _NoValueType:
       emitted when the keyword is used.
 
     """
+
     __instance = None
+
     def __new__(cls):
         # ensure that only one instance exists
         if not cls.__instance:

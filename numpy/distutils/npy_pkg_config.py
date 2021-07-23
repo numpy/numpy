@@ -4,29 +4,40 @@ import os
 
 from configparser import RawConfigParser
 
-__all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
-        'read_config', 'parse_flags']
+__all__ = [
+    "FormatError",
+    "PkgNotFound",
+    "LibraryInfo",
+    "VariableSet",
+    "read_config",
+    "parse_flags",
+]
 
-_VAR = re.compile(r'\$\{([a-zA-Z0-9_-]+)\}')
+_VAR = re.compile(r"\$\{([a-zA-Z0-9_-]+)\}")
+
 
 class FormatError(IOError):
     """
     Exception thrown when there is a problem parsing a configuration file.
 
     """
+
     def __init__(self, msg):
         self.msg = msg
 
     def __str__(self):
         return self.msg
+
 
 class PkgNotFound(IOError):
     """Exception raised when a package can not be located."""
+
     def __init__(self, msg):
         self.msg = msg
 
     def __str__(self):
         return self.msg
+
 
 def parse_flags(line):
     """
@@ -50,28 +61,35 @@ def parse_flags(line):
         * 'ignored'
 
     """
-    d = {'include_dirs': [], 'library_dirs': [], 'libraries': [],
-         'macros': [], 'ignored': []}
+    d = {
+        "include_dirs": [],
+        "library_dirs": [],
+        "libraries": [],
+        "macros": [],
+        "ignored": [],
+    }
 
-    flags = (' ' + line).split(' -')
+    flags = (" " + line).split(" -")
     for flag in flags:
-        flag = '-' + flag
+        flag = "-" + flag
         if len(flag) > 0:
-            if flag.startswith('-I'):
-                d['include_dirs'].append(flag[2:].strip())
-            elif flag.startswith('-L'):
-                d['library_dirs'].append(flag[2:].strip())
-            elif flag.startswith('-l'):
-                d['libraries'].append(flag[2:].strip())
-            elif flag.startswith('-D'):
-                d['macros'].append(flag[2:].strip())
+            if flag.startswith("-I"):
+                d["include_dirs"].append(flag[2:].strip())
+            elif flag.startswith("-L"):
+                d["library_dirs"].append(flag[2:].strip())
+            elif flag.startswith("-l"):
+                d["libraries"].append(flag[2:].strip())
+            elif flag.startswith("-D"):
+                d["macros"].append(flag[2:].strip())
             else:
-                d['ignored'].append(flag)
+                d["ignored"].append(flag)
 
     return d
 
+
 def _escape_backslash(val):
-    return val.replace('\\', '\\\\')
+    return val.replace("\\", "\\\\")
+
 
 class LibraryInfo:
     """
@@ -100,6 +118,7 @@ class LibraryInfo:
     attributes of the same name.
 
     """
+
     def __init__(self, name, description, version, sections, vars, requires=None):
         self.name = name
         self.description = description
@@ -128,22 +147,23 @@ class LibraryInfo:
         return list(self._sections.keys())
 
     def cflags(self, section="default"):
-        val = self.vars.interpolate(self._sections[section]['cflags'])
+        val = self.vars.interpolate(self._sections[section]["cflags"])
         return _escape_backslash(val)
 
     def libs(self, section="default"):
-        val = self.vars.interpolate(self._sections[section]['libs'])
+        val = self.vars.interpolate(self._sections[section]["libs"])
         return _escape_backslash(val)
 
     def __str__(self):
-        m = ['Name: %s' % self.name, 'Description: %s' % self.description]
+        m = ["Name: %s" % self.name, "Description: %s" % self.description]
         if self.requires:
-            m.append('Requires:')
+            m.append("Requires:")
         else:
-            m.append('Requires: %s' % ",".join(self.requires))
-        m.append('Version: %s' % self.version)
+            m.append("Requires: %s" % ",".join(self.requires))
+        m.append("Version: %s" % self.version)
 
         return "\n".join(m)
+
 
 class VariableSet:
     """
@@ -158,6 +178,7 @@ class VariableSet:
         Dict of items in the "variables" section of the configuration file.
 
     """
+
     def __init__(self, d):
         self._raw_data = dict([(k, v) for k, v in d.items()])
 
@@ -171,7 +192,7 @@ class VariableSet:
             self._init_parse_var(k, v)
 
     def _init_parse_var(self, name, value):
-        self._re[name] = re.compile(r'\$\{%s\}' % name)
+        self._re[name] = re.compile(r"\$\{%s\}" % name)
         self._re_sub[name] = value
 
     def interpolate(self, value):
@@ -181,6 +202,7 @@ class VariableSet:
             for k in self._re.keys():
                 value = self._re[k].sub(self._re_sub[k], value)
             return value
+
         while _VAR.search(value):
             nvalue = _interpolate(value)
             if nvalue == value:
@@ -213,24 +235,27 @@ class VariableSet:
         self._raw_data[name] = value
         self._init_parse_var(name, value)
 
+
 def parse_meta(config):
-    if not config.has_section('meta'):
+    if not config.has_section("meta"):
         raise FormatError("No meta section found !")
 
-    d = dict(config.items('meta'))
+    d = dict(config.items("meta"))
 
-    for k in ['name', 'description', 'version']:
+    for k in ["name", "description", "version"]:
         if not k in d:
-            raise FormatError("Option %s (section [meta]) is mandatory, "
-                "but not found" % k)
+            raise FormatError(
+                "Option %s (section [meta]) is mandatory, " "but not found" % k
+            )
 
-    if not 'requires' in d:
-        d['requires'] = []
+    if not "requires" in d:
+        d["requires"] = []
 
     return d
 
+
 def parse_variables(config):
-    if not config.has_section('variables'):
+    if not config.has_section("variables"):
         raise FormatError("No variables section found !")
 
     d = {}
@@ -240,11 +265,14 @@ def parse_variables(config):
 
     return VariableSet(d)
 
+
 def parse_sections(config):
     return meta_d, r
 
+
 def pkg_to_filename(pkg_name):
     return "%s.ini" % pkg_name
+
 
 def parse_config(filename, dirs=None):
     if dirs:
@@ -262,25 +290,26 @@ def parse_config(filename, dirs=None):
     meta = parse_meta(config)
 
     vars = {}
-    if config.has_section('variables'):
+    if config.has_section("variables"):
         for name, value in config.items("variables"):
             vars[name] = _escape_backslash(value)
 
     # Parse "normal" sections
-    secs = [s for s in config.sections() if not s in ['meta', 'variables']]
+    secs = [s for s in config.sections() if not s in ["meta", "variables"]]
     sections = {}
 
     requires = {}
     for s in secs:
         d = {}
         if config.has_option(s, "requires"):
-            requires[s] = config.get(s, 'requires')
+            requires[s] = config.get(s, "requires")
 
         for name, value in config.items(s):
             d[name] = value
         sections[s] = d
 
     return meta, vars, sections, requires
+
 
 def _read_config_imp(filenames, dirs=None):
     def _read_config(f):
@@ -297,7 +326,7 @@ def _read_config_imp(filenames, dirs=None):
             # Update sec dict
             for oname, ovalue in nsections[rname].items():
                 if ovalue:
-                    sections[rname][oname] += ' %s' % ovalue
+                    sections[rname][oname] += " %s" % ovalue
 
         return meta, vars, sections, reqs
 
@@ -306,23 +335,33 @@ def _read_config_imp(filenames, dirs=None):
     # FIXME: document this. If pkgname is defined in the variables section, and
     # there is no pkgdir variable defined, pkgdir is automatically defined to
     # the path of pkgname. This requires the package to be imported to work
-    if not 'pkgdir' in vars and "pkgname" in vars:
+    if not "pkgdir" in vars and "pkgname" in vars:
         pkgname = vars["pkgname"]
         if not pkgname in sys.modules:
-            raise ValueError("You should import %s to get information on %s" %
-                             (pkgname, meta["name"]))
+            raise ValueError(
+                "You should import %s to get information on %s"
+                % (pkgname, meta["name"])
+            )
 
         mod = sys.modules[pkgname]
         vars["pkgdir"] = _escape_backslash(os.path.dirname(mod.__file__))
 
-    return LibraryInfo(name=meta["name"], description=meta["description"],
-            version=meta["version"], sections=sections, vars=VariableSet(vars))
+    return LibraryInfo(
+        name=meta["name"],
+        description=meta["description"],
+        version=meta["version"],
+        sections=sections,
+        vars=VariableSet(vars),
+    )
+
 
 # Trivial cache to cache LibraryInfo instances creation. To be really
 # efficient, the cache should be handled in read_config, since a same file can
 # be parsed many time outside LibraryInfo creation, but I doubt this will be a
 # problem in practice
 _CACHE = {}
+
+
 def read_config(pkgname, dirs=None):
     """
     Return library info for a package from its configuration file.
@@ -369,30 +408,43 @@ def read_config(pkgname, dirs=None):
         _CACHE[pkgname] = v
         return v
 
+
 # TODO:
 #   - implements version comparison (modversion + atleast)
 
 # pkg-config simple emulator - useful for debugging, and maybe later to query
 # the system
-if __name__ == '__main__':
+if __name__ == "__main__":
     from optparse import OptionParser
     import glob
 
     parser = OptionParser()
-    parser.add_option("--cflags", dest="cflags", action="store_true",
-                      help="output all preprocessor and compiler flags")
-    parser.add_option("--libs", dest="libs", action="store_true",
-                      help="output all linker flags")
-    parser.add_option("--use-section", dest="section",
-                      help="use this section instead of default for options")
-    parser.add_option("--version", dest="version", action="store_true",
-                      help="output version")
-    parser.add_option("--atleast-version", dest="min_version",
-                      help="Minimal version")
-    parser.add_option("--list-all", dest="list_all", action="store_true",
-                      help="Minimal version")
-    parser.add_option("--define-variable", dest="define_variable",
-                      help="Replace variable with the given value")
+    parser.add_option(
+        "--cflags",
+        dest="cflags",
+        action="store_true",
+        help="output all preprocessor and compiler flags",
+    )
+    parser.add_option(
+        "--libs", dest="libs", action="store_true", help="output all linker flags"
+    )
+    parser.add_option(
+        "--use-section",
+        dest="section",
+        help="use this section instead of default for options",
+    )
+    parser.add_option(
+        "--version", dest="version", action="store_true", help="output version"
+    )
+    parser.add_option("--atleast-version", dest="min_version", help="Minimal version")
+    parser.add_option(
+        "--list-all", dest="list_all", action="store_true", help="Minimal version"
+    )
+    parser.add_option(
+        "--define-variable",
+        dest="define_variable",
+        help="Replace variable with the given value",
+    )
 
     (options, args) = parser.parse_args(sys.argv)
 
@@ -406,11 +458,11 @@ if __name__ == '__main__':
             print("%s\t%s - %s" % (info.name, info.name, info.description))
 
     pkg_name = args[1]
-    d = os.environ.get('NPY_PKG_CONFIG_PATH')
+    d = os.environ.get("NPY_PKG_CONFIG_PATH")
     if d:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])
+        info = read_config(pkg_name, ["numpy/core/lib/npy-pkg-config", ".", d])
     else:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.'])
+        info = read_config(pkg_name, ["numpy/core/lib/npy-pkg-config", "."])
 
     if options.section:
         section = options.section
@@ -418,10 +470,12 @@ if __name__ == '__main__':
         section = "default"
 
     if options.define_variable:
-        m = re.search(r'([\S]+)=([\S]+)', options.define_variable)
+        m = re.search(r"([\S]+)=([\S]+)", options.define_variable)
         if not m:
-            raise ValueError("--define-variable option should be of "
-                             "the form --define-variable=foo=bar")
+            raise ValueError(
+                "--define-variable option should be of "
+                "the form --define-variable=foo=bar"
+            )
         else:
             name = m.group(1)
             value = m.group(2)

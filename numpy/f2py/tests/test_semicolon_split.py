@@ -4,10 +4,12 @@ import pytest
 from . import util
 from numpy.testing import assert_equal
 
+
 @pytest.mark.skipif(
-    platform.system() == 'Darwin',
+    platform.system() == "Darwin",
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
-           "but not when run in isolation")
+    "but not when run in isolation",
+)
 class TestMultiline(util.F2PyTest):
     suffix = ".pyf"
     module_name = "multiline"
@@ -26,16 +28,19 @@ void foo(int* x) {{
         end subroutine foo
     end interface
 end python module {module}
-    """.format(module=module_name)
+    """.format(
+        module=module_name
+    )
 
     def test_multiline(self):
         assert_equal(self.module.foo(), 42)
 
 
 @pytest.mark.skipif(
-    platform.system() == 'Darwin',
+    platform.system() == "Darwin",
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
-           "but not when run in isolation")
+    "but not when run in isolation",
+)
 class TestCallstatement(util.F2PyTest):
     suffix = ".pyf"
     module_name = "callstatement"
@@ -57,7 +62,9 @@ void foo(int* x) {{
         end subroutine foo
     end interface
 end python module {module}
-    """.format(module=module_name)
+    """.format(
+        module=module_name
+    )
 
     def test_callstatement(self):
         assert_equal(self.module.foo(), 42)

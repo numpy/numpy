@@ -15,12 +15,36 @@ Pearu Peterson
 """
 from . import __version__
 from .auxfuncs import (
-    applyrules, debugcapi, dictappend, errmess, getargs, hasnote, isarray,
-    iscomplex, iscomplexarray, iscomplexfunction, isfunction, isintent_c,
-    isintent_hide, isintent_in, isintent_inout, isintent_nothide,
-    isintent_out, isoptional, isrequired, isscalar, isstring,
-    isstringfunction, issubroutine, l_and, l_not, l_or, outmess, replace,
-    stripcomma, throw_error
+    applyrules,
+    debugcapi,
+    dictappend,
+    errmess,
+    getargs,
+    hasnote,
+    isarray,
+    iscomplex,
+    iscomplexarray,
+    iscomplexfunction,
+    isfunction,
+    isintent_c,
+    isintent_hide,
+    isintent_in,
+    isintent_inout,
+    isintent_nothide,
+    isintent_out,
+    isoptional,
+    isrequired,
+    isscalar,
+    isstring,
+    isstringfunction,
+    issubroutine,
+    l_and,
+    l_not,
+    l_or,
+    outmess,
+    replace,
+    stripcomma,
+    throw_error,
 )
 from . import cfuncs
 
@@ -30,8 +54,8 @@ f2py_version = __version__.version
 ################## Rules for callback function ##############
 
 cb_routine_rules = {
-    'cbtypedefs': 'typedef #rctype#(*#name#_typedef)(#optargs_td##args_td##strarglens_td##noargs#);',
-    'body': """
+    "cbtypedefs": "typedef #rctype#(*#name#_typedef)(#optargs_td##args_td##strarglens_td##noargs#);",
+    "body": """
 #begintitle#
 typedef struct {
     PyObject *capi;
@@ -186,98 +210,132 @@ capi_return_pt:
 }
 #endtitle#
 """,
-    'need': ['setjmp.h', 'CFUNCSMESS', 'F2PY_THREAD_LOCAL_DECL'],
-    'maxnofargs': '#maxnofargs#',
-    'nofoptargs': '#nofoptargs#',
-    'docstr': """\
+    "need": ["setjmp.h", "CFUNCSMESS", "F2PY_THREAD_LOCAL_DECL"],
+    "maxnofargs": "#maxnofargs#",
+    "nofoptargs": "#nofoptargs#",
+    "docstr": """\
 \tdef #argname#(#docsignature#): return #docreturn#\\n\\
 #docstrsigns#""",
-    'latexdocstr': """
+    "latexdocstr": """
 {{}\\verb@def #argname#(#latexdocsignature#): return #docreturn#@{}}
 #routnote#
 
 #latexdocstrsigns#""",
-    'docstrshort': 'def #argname#(#docsignature#): return #docreturn#'
+    "docstrshort": "def #argname#(#docsignature#): return #docreturn#",
 }
 cb_rout_rules = [
     {  # Init
-        'separatorsfor': {'decl': '\n',
-                          'args': ',', 'optargs': '', 'pyobjfrom': '\n', 'freemem': '\n',
-                          'args_td': ',', 'optargs_td': '',
-                          'args_nm': ',', 'optargs_nm': '',
-                          'frompyobj': '\n', 'setdims': '\n',
-                          'docstrsigns': '\\n"\n"',
-                          'latexdocstrsigns': '\n',
-                          'latexdocstrreq': '\n', 'latexdocstropt': '\n',
-                          'latexdocstrout': '\n', 'latexdocstrcbs': '\n',
-                          },
-        'decl': '/*decl*/', 'pyobjfrom': '/*pyobjfrom*/', 'frompyobj': '/*frompyobj*/',
-        'args': [], 'optargs': '', 'return': '', 'strarglens': '', 'freemem': '/*freemem*/',
-        'args_td': [], 'optargs_td': '', 'strarglens_td': '',
-        'args_nm': [], 'optargs_nm': '', 'strarglens_nm': '',
-        'noargs': '',
-        'setdims': '/*setdims*/',
-        'docstrsigns': '', 'latexdocstrsigns': '',
-        'docstrreq': '\tRequired arguments:',
-        'docstropt': '\tOptional arguments:',
-        'docstrout': '\tReturn objects:',
-        'docstrcbs': '\tCall-back functions:',
-        'docreturn': '', 'docsign': '', 'docsignopt': '',
-        'latexdocstrreq': '\\noindent Required arguments:',
-        'latexdocstropt': '\\noindent Optional arguments:',
-        'latexdocstrout': '\\noindent Return objects:',
-        'latexdocstrcbs': '\\noindent Call-back functions:',
-        'routnote': {hasnote: '--- #note#', l_not(hasnote): ''},
-    }, {  # Function
-        'decl': '    #ctype# return_value;',
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
-                      '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n");',
-                      {debugcapi:
-                       '    fprintf(stderr,"#showvalueformat#.\\n",return_value);'}
-                      ],
-        'need': ['#ctype#_from_pyobj', {debugcapi: 'CFUNCSMESS'}, 'GETSCALARFROMPYTUPLE'],
-        'return': '    return return_value;',
-        '_check': l_and(isfunction, l_not(isstringfunction), l_not(iscomplexfunction))
+        "separatorsfor": {
+            "decl": "\n",
+            "args": ",",
+            "optargs": "",
+            "pyobjfrom": "\n",
+            "freemem": "\n",
+            "args_td": ",",
+            "optargs_td": "",
+            "args_nm": ",",
+            "optargs_nm": "",
+            "frompyobj": "\n",
+            "setdims": "\n",
+            "docstrsigns": '\\n"\n"',
+            "latexdocstrsigns": "\n",
+            "latexdocstrreq": "\n",
+            "latexdocstropt": "\n",
+            "latexdocstrout": "\n",
+            "latexdocstrcbs": "\n",
+        },
+        "decl": "/*decl*/",
+        "pyobjfrom": "/*pyobjfrom*/",
+        "frompyobj": "/*frompyobj*/",
+        "args": [],
+        "optargs": "",
+        "return": "",
+        "strarglens": "",
+        "freemem": "/*freemem*/",
+        "args_td": [],
+        "optargs_td": "",
+        "strarglens_td": "",
+        "args_nm": [],
+        "optargs_nm": "",
+        "strarglens_nm": "",
+        "noargs": "",
+        "setdims": "/*setdims*/",
+        "docstrsigns": "",
+        "latexdocstrsigns": "",
+        "docstrreq": "\tRequired arguments:",
+        "docstropt": "\tOptional arguments:",
+        "docstrout": "\tReturn objects:",
+        "docstrcbs": "\tCall-back functions:",
+        "docreturn": "",
+        "docsign": "",
+        "docsignopt": "",
+        "latexdocstrreq": "\\noindent Required arguments:",
+        "latexdocstropt": "\\noindent Optional arguments:",
+        "latexdocstrout": "\\noindent Return objects:",
+        "latexdocstrcbs": "\\noindent Call-back functions:",
+        "routnote": {hasnote: "--- #note#", l_not(hasnote): ""},
+    },
+    {  # Function
+        "decl": "    #ctype# return_value;",
+        "frompyobj": [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
+            '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n");',
+            {debugcapi: '    fprintf(stderr,"#showvalueformat#.\\n",return_value);'},
+        ],
+        "need": [
+            "#ctype#_from_pyobj",
+            {debugcapi: "CFUNCSMESS"},
+            "GETSCALARFROMPYTUPLE",
+        ],
+        "return": "    return return_value;",
+        "_check": l_and(isfunction, l_not(isstringfunction), l_not(iscomplexfunction)),
     },
     {  # String function
-        'pyobjfrom': {debugcapi: '    fprintf(stderr,"debug-capi:cb:#name#:%d:\\n",return_value_len);'},
-        'args': '#ctype# return_value,int return_value_len',
-        'args_nm': 'return_value,&return_value_len',
-        'args_td': '#ctype# ,int',
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},
-                      """    if (capi_j>capi_i)
+        "pyobjfrom": {
+            debugcapi: '    fprintf(stderr,"debug-capi:cb:#name#:%d:\\n",return_value_len);'
+        },
+        "args": "#ctype# return_value,int return_value_len",
+        "args_nm": "return_value,&return_value_len",
+        "args_td": "#ctype# ,int",
+        "frompyobj": [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},
+            """    if (capi_j>capi_i)
         GETSTRFROMPYTUPLE(capi_return,capi_i++,return_value,return_value_len);""",
-                      {debugcapi:
-                       '    fprintf(stderr,"#showvalueformat#\\".\\n",return_value);'}
-                      ],
-        'need': ['#ctype#_from_pyobj', {debugcapi: 'CFUNCSMESS'},
-                 'string.h', 'GETSTRFROMPYTUPLE'],
-        'return': 'return;',
-        '_check': isstringfunction
+            {debugcapi: '    fprintf(stderr,"#showvalueformat#\\".\\n",return_value);'},
+        ],
+        "need": [
+            "#ctype#_from_pyobj",
+            {debugcapi: "CFUNCSMESS"},
+            "string.h",
+            "GETSTRFROMPYTUPLE",
+        ],
+        "return": "return;",
+        "_check": isstringfunction,
     },
     {  # Complex function
-        'optargs': """
+        "optargs": """
 #ifndef F2PY_CB_RETURNCOMPLEX
 #ctype# *return_value
 #endif
 """,
-        'optargs_nm': """
+        "optargs_nm": """
 #ifndef F2PY_CB_RETURNCOMPLEX
 return_value
 #endif
 """,
-        'optargs_td': """
+        "optargs_td": """
 #ifndef F2PY_CB_RETURNCOMPLEX
 #ctype# *
 #endif
 """,
-        'decl': """
+        "decl": """
 #ifdef F2PY_CB_RETURNCOMPLEX
     #ctype# return_value;
 #endif
 """,
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
-                      """\
+        "frompyobj": [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
+            """\
     if (capi_j>capi_i)
 #ifdef F2PY_CB_RETURNCOMPLEX
         GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,\"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n\");
@@ -285,175 +343,249 @@ return_value
         GETSCALARFROMPYTUPLE(capi_return,capi_i++,return_value,#ctype#,\"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n\");
 #endif
 """,
-                      {debugcapi: """
+            {
+                debugcapi: """
 #ifdef F2PY_CB_RETURNCOMPLEX
     fprintf(stderr,\"#showvalueformat#.\\n\",(return_value).r,(return_value).i);
 #else
     fprintf(stderr,\"#showvalueformat#.\\n\",(*return_value).r,(*return_value).i);
 #endif
 
-"""}
-                      ],
-        'return': """
+"""
+            },
+        ],
+        "return": """
 #ifdef F2PY_CB_RETURNCOMPLEX
     return return_value;
 #else
     return;
 #endif
 """,
-        'need': ['#ctype#_from_pyobj', {debugcapi: 'CFUNCSMESS'},
-                 'string.h', 'GETSCALARFROMPYTUPLE', '#ctype#'],
-        '_check': iscomplexfunction
+        "need": [
+            "#ctype#_from_pyobj",
+            {debugcapi: "CFUNCSMESS"},
+            "string.h",
+            "GETSCALARFROMPYTUPLE",
+            "#ctype#",
+        ],
+        "_check": iscomplexfunction,
     },
-    {'docstrout': '\t\t#pydocsignout#',
-     'latexdocstrout': ['\\item[]{{}\\verb@#pydocsignout#@{}}',
-                        {hasnote: '--- #note#'}],
-     'docreturn': '#rname#,',
-     '_check': isfunction},
-    {'_check': issubroutine, 'return': 'return;'}
+    {
+        "docstrout": "\t\t#pydocsignout#",
+        "latexdocstrout": [
+            "\\item[]{{}\\verb@#pydocsignout#@{}}",
+            {hasnote: "--- #note#"},
+        ],
+        "docreturn": "#rname#,",
+        "_check": isfunction,
+    },
+    {"_check": issubroutine, "return": "return;"},
 ]
 
 cb_arg_rules = [
     {  # Doc
-        'docstropt': {l_and(isoptional, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrreq': {l_and(isrequired, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrout': {isintent_out: '\t\t#pydocsignout#'},
-        'latexdocstropt': {l_and(isoptional, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
-                                                                 {hasnote: '--- #note#'}]},
-        'latexdocstrreq': {l_and(isrequired, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
-                                                                 {hasnote: '--- #note#'}]},
-        'latexdocstrout': {isintent_out: ['\\item[]{{}\\verb@#pydocsignout#@{}}',
-                                          {l_and(hasnote, isintent_hide): '--- #note#',
-                                           l_and(hasnote, isintent_nothide): '--- See above.'}]},
-        'docsign': {l_and(isrequired, isintent_nothide): '#varname#,'},
-        'docsignopt': {l_and(isoptional, isintent_nothide): '#varname#,'},
-        'depend': ''
+        "docstropt": {l_and(isoptional, isintent_nothide): "\t\t#pydocsign#"},
+        "docstrreq": {l_and(isrequired, isintent_nothide): "\t\t#pydocsign#"},
+        "docstrout": {isintent_out: "\t\t#pydocsignout#"},
+        "latexdocstropt": {
+            l_and(isoptional, isintent_nothide): [
+                "\\item[]{{}\\verb@#pydocsign#@{}}",
+                {hasnote: "--- #note#"},
+            ]
+        },
+        "latexdocstrreq": {
+            l_and(isrequired, isintent_nothide): [
+                "\\item[]{{}\\verb@#pydocsign#@{}}",
+                {hasnote: "--- #note#"},
+            ]
+        },
+        "latexdocstrout": {
+            isintent_out: [
+                "\\item[]{{}\\verb@#pydocsignout#@{}}",
+                {
+                    l_and(hasnote, isintent_hide): "--- #note#",
+                    l_and(hasnote, isintent_nothide): "--- See above.",
+                },
+            ]
+        },
+        "docsign": {l_and(isrequired, isintent_nothide): "#varname#,"},
+        "docsignopt": {l_and(isoptional, isintent_nothide): "#varname#,"},
+        "depend": "",
     },
     {
-        'args': {
-            l_and(isscalar, isintent_c): '#ctype# #varname_i#',
-            l_and(isscalar, l_not(isintent_c)): '#ctype# *#varname_i#_cb_capi',
-            isarray: '#ctype# *#varname_i#',
-            isstring: '#ctype# #varname_i#'
+        "args": {
+            l_and(isscalar, isintent_c): "#ctype# #varname_i#",
+            l_and(isscalar, l_not(isintent_c)): "#ctype# *#varname_i#_cb_capi",
+            isarray: "#ctype# *#varname_i#",
+            isstring: "#ctype# #varname_i#",
         },
-        'args_nm': {
-            l_and(isscalar, isintent_c): '#varname_i#',
-            l_and(isscalar, l_not(isintent_c)): '#varname_i#_cb_capi',
-            isarray: '#varname_i#',
-            isstring: '#varname_i#'
+        "args_nm": {
+            l_and(isscalar, isintent_c): "#varname_i#",
+            l_and(isscalar, l_not(isintent_c)): "#varname_i#_cb_capi",
+            isarray: "#varname_i#",
+            isstring: "#varname_i#",
         },
-        'args_td': {
-            l_and(isscalar, isintent_c): '#ctype#',
-            l_and(isscalar, l_not(isintent_c)): '#ctype# *',
-            isarray: '#ctype# *',
-            isstring: '#ctype#'
+        "args_td": {
+            l_and(isscalar, isintent_c): "#ctype#",
+            l_and(isscalar, l_not(isintent_c)): "#ctype# *",
+            isarray: "#ctype# *",
+            isstring: "#ctype#",
         },
-        'need': {l_or(isscalar, isarray, isstring): '#ctype#'},
+        "need": {l_or(isscalar, isarray, isstring): "#ctype#"},
         # untested with multiple args
-        'strarglens': {isstring: ',int #varname_i#_cb_len'},
-        'strarglens_td': {isstring: ',int'},  # untested with multiple args
+        "strarglens": {isstring: ",int #varname_i#_cb_len"},
+        "strarglens_td": {isstring: ",int"},  # untested with multiple args
         # untested with multiple args
-        'strarglens_nm': {isstring: ',#varname_i#_cb_len'},
+        "strarglens_nm": {isstring: ",#varname_i#_cb_len"},
     },
     {  # Scalars
-        'decl': {l_not(isintent_c): '    #ctype# #varname_i#=(*#varname_i#_cb_capi);'},
-        'error': {l_and(isintent_c, isintent_out,
-                        throw_error('intent(c,out) is forbidden for callback scalar arguments')):
-                  ''},
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting #varname#->");'},
-                      {isintent_out:
-                       '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,#varname_i#_cb_capi,#ctype#,"#ctype#_from_pyobj failed in converting argument #varname# of call-back function #name# to C #ctype#\\n");'},
-                      {l_and(debugcapi, l_and(l_not(iscomplex), isintent_c)):
-                          '    fprintf(stderr,"#showvalueformat#.\\n",#varname_i#);'},
-                      {l_and(debugcapi, l_and(l_not(iscomplex), l_not( isintent_c))):
-                          '    fprintf(stderr,"#showvalueformat#.\\n",*#varname_i#_cb_capi);'},
-                      {l_and(debugcapi, l_and(iscomplex, isintent_c)):
-                          '    fprintf(stderr,"#showvalueformat#.\\n",(#varname_i#).r,(#varname_i#).i);'},
-                      {l_and(debugcapi, l_and(iscomplex, l_not( isintent_c))):
-                          '    fprintf(stderr,"#showvalueformat#.\\n",(*#varname_i#_cb_capi).r,(*#varname_i#_cb_capi).i);'},
-                      ],
-        'need': [{isintent_out: ['#ctype#_from_pyobj', 'GETSCALARFROMPYTUPLE']},
-                 {debugcapi: 'CFUNCSMESS'}],
-        '_check': isscalar
-    }, {
-        'pyobjfrom': [{isintent_in: """\
+        "decl": {l_not(isintent_c): "    #ctype# #varname_i#=(*#varname_i#_cb_capi);"},
+        "error": {
+            l_and(
+                isintent_c,
+                isintent_out,
+                throw_error("intent(c,out) is forbidden for callback scalar arguments"),
+            ): ""
+        },
+        "frompyobj": [
+            {debugcapi: '    CFUNCSMESS("cb:Getting #varname#->");'},
+            {
+                isintent_out: '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,#varname_i#_cb_capi,#ctype#,"#ctype#_from_pyobj failed in converting argument #varname# of call-back function #name# to C #ctype#\\n");'
+            },
+            {
+                l_and(
+                    debugcapi, l_and(l_not(iscomplex), isintent_c)
+                ): '    fprintf(stderr,"#showvalueformat#.\\n",#varname_i#);'
+            },
+            {
+                l_and(
+                    debugcapi, l_and(l_not(iscomplex), l_not(isintent_c))
+                ): '    fprintf(stderr,"#showvalueformat#.\\n",*#varname_i#_cb_capi);'
+            },
+            {
+                l_and(
+                    debugcapi, l_and(iscomplex, isintent_c)
+                ): '    fprintf(stderr,"#showvalueformat#.\\n",(#varname_i#).r,(#varname_i#).i);'
+            },
+            {
+                l_and(
+                    debugcapi, l_and(iscomplex, l_not(isintent_c))
+                ): '    fprintf(stderr,"#showvalueformat#.\\n",(*#varname_i#_cb_capi).r,(*#varname_i#_cb_capi).i);'
+            },
+        ],
+        "need": [
+            {isintent_out: ["#ctype#_from_pyobj", "GETSCALARFROMPYTUPLE"]},
+            {debugcapi: "CFUNCSMESS"},
+        ],
+        "_check": isscalar,
+    },
+    {
+        "pyobjfrom": [
+            {
+                isintent_in: """\
     if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1(#varname_i#)))
-            goto capi_fail;"""},
-                      {isintent_inout: """\
+            goto capi_fail;"""
+            },
+            {
+                isintent_inout: """\
     if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyarr_from_p_#ctype#1(#varname_i#_cb_capi)))
-            goto capi_fail;"""}],
-        'need': [{isintent_in: 'pyobj_from_#ctype#1'},
-                 {isintent_inout: 'pyarr_from_p_#ctype#1'},
-                 {iscomplex: '#ctype#'}],
-        '_check': l_and(isscalar, isintent_nothide),
-        '_optional': ''
-    }, {  # String
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting #varname#->\\"");'},
-                      """    if (capi_j>capi_i)
+            goto capi_fail;"""
+            },
+        ],
+        "need": [
+            {isintent_in: "pyobj_from_#ctype#1"},
+            {isintent_inout: "pyarr_from_p_#ctype#1"},
+            {iscomplex: "#ctype#"},
+        ],
+        "_check": l_and(isscalar, isintent_nothide),
+        "_optional": "",
+    },
+    {  # String
+        "frompyobj": [
+            {debugcapi: '    CFUNCSMESS("cb:Getting #varname#->\\"");'},
+            """    if (capi_j>capi_i)
         GETSTRFROMPYTUPLE(capi_return,capi_i++,#varname_i#,#varname_i#_cb_len);""",
-                      {debugcapi:
-                       '    fprintf(stderr,"#showvalueformat#\\":%d:.\\n",#varname_i#,#varname_i#_cb_len);'},
-                      ],
-        'need': ['#ctype#', 'GETSTRFROMPYTUPLE',
-                 {debugcapi: 'CFUNCSMESS'}, 'string.h'],
-        '_check': l_and(isstring, isintent_out)
-    }, {
-        'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'},
-                      {isintent_in: """\
+            {
+                debugcapi: '    fprintf(stderr,"#showvalueformat#\\":%d:.\\n",#varname_i#,#varname_i#_cb_len);'
+            },
+        ],
+        "need": ["#ctype#", "GETSTRFROMPYTUPLE", {debugcapi: "CFUNCSMESS"}, "string.h"],
+        "_check": l_and(isstring, isintent_out),
+    },
+    {
+        "pyobjfrom": [
+            {
+                debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'
+            },
+            {
+                isintent_in: """\
     if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1size(#varname_i#,#varname_i#_cb_len)))
-            goto capi_fail;"""},
-                      {isintent_inout: """\
+            goto capi_fail;"""
+            },
+            {
+                isintent_inout: """\
     if (cb->nofargs>capi_i) {
         int #varname_i#_cb_dims[] = {#varname_i#_cb_len};
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyarr_from_p_#ctype#1(#varname_i#,#varname_i#_cb_dims)))
             goto capi_fail;
-    }"""}],
-        'need': [{isintent_in: 'pyobj_from_#ctype#1size'},
-                 {isintent_inout: 'pyarr_from_p_#ctype#1'}],
-        '_check': l_and(isstring, isintent_nothide),
-        '_optional': ''
+    }"""
+            },
+        ],
+        "need": [
+            {isintent_in: "pyobj_from_#ctype#1size"},
+            {isintent_inout: "pyarr_from_p_#ctype#1"},
+        ],
+        "_check": l_and(isstring, isintent_nothide),
+        "_optional": "",
     },
     # Array ...
     {
-        'decl': '    npy_intp #varname_i#_Dims[#rank#] = {#rank*[-1]#};',
-        'setdims': '    #cbsetdims#;',
-        '_check': isarray,
-        '_depend': ''
+        "decl": "    npy_intp #varname_i#_Dims[#rank#] = {#rank*[-1]#};",
+        "setdims": "    #cbsetdims#;",
+        "_check": isarray,
+        "_depend": "",
     },
     {
-        'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#\\n");'},
-                      {isintent_c: """\
+        "pyobjfrom": [
+            {debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#\\n");'},
+            {
+                isintent_c: """\
     if (cb->nofargs>capi_i) {
         int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
         /*XXX: Hmm, what will destroy this array??? */
         PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_CARRAY,NULL);
 """,
-                       l_not(isintent_c): """\
+                l_not(
+                    isintent_c
+                ): """\
     if (cb->nofargs>capi_i) {
         int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
         /*XXX: Hmm, what will destroy this array??? */
         PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_FARRAY,NULL);
 """,
-                       },
-                      """
+            },
+            """
         if (tmp_arr==NULL)
             goto capi_fail;
         if (CAPI_ARGLIST_SETITEM(capi_i++,(PyObject *)tmp_arr))
             goto capi_fail;
-}"""],
-        '_check': l_and(isarray, isintent_nothide, l_or(isintent_in, isintent_inout)),
-        '_optional': '',
-    }, {
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting #varname#->");'},
-                      """    if (capi_j>capi_i) {
+}""",
+        ],
+        "_check": l_and(isarray, isintent_nothide, l_or(isintent_in, isintent_inout)),
+        "_optional": "",
+    },
+    {
+        "frompyobj": [
+            {debugcapi: '    CFUNCSMESS("cb:Getting #varname#->");'},
+            """    if (capi_j>capi_i) {
         PyArrayObject *rv_cb_arr = NULL;
         if ((capi_tmp = PyTuple_GetItem(capi_return,capi_i++))==NULL) goto capi_fail;
         rv_cb_arr =  array_from_pyobj(#atype#,#varname_i#_Dims,#rank#,F2PY_INTENT_IN""",
-                      {isintent_c: '|F2PY_INTENT_C'},
-                      """,capi_tmp);
+            {isintent_c: "|F2PY_INTENT_C"},
+            """,capi_tmp);
         if (rv_cb_arr == NULL) {
             fprintf(stderr,\"rv_cb_arr is NULL\\n\");
             goto capi_fail;
@@ -463,14 +595,12 @@ cb_arg_rules = [
             Py_DECREF(rv_cb_arr);
         }
     }""",
-                      {debugcapi: '    fprintf(stderr,"<-.\\n");'},
-                      ],
-        'need': ['MEMCOPY', {iscomplexarray: '#ctype#'}],
-        '_check': l_and(isarray, isintent_out)
-    }, {
-        'docreturn': '#varname#,',
-        '_check': isintent_out
-    }
+            {debugcapi: '    fprintf(stderr,"<-.\\n");'},
+        ],
+        "need": ["MEMCOPY", {iscomplexarray: "#ctype#"}],
+        "_check": l_and(isarray, isintent_out),
+    },
+    {"docreturn": "#varname#,", "_check": isintent_out},
 ]
 
 ################## Build call-back module #############
@@ -478,29 +608,28 @@ cb_map = {}
 
 
 def buildcallbacks(m):
-    cb_map[m['name']] = []
-    for bi in m['body']:
-        if bi['block'] == 'interface':
-            for b in bi['body']:
+    cb_map[m["name"]] = []
+    for bi in m["body"]:
+        if bi["block"] == "interface":
+            for b in bi["body"]:
                 if b:
-                    buildcallback(b, m['name'])
+                    buildcallback(b, m["name"])
                 else:
-                    errmess('warning: empty body for %s\n' % (m['name']))
+                    errmess("warning: empty body for %s\n" % (m["name"]))
 
 
 def buildcallback(rout, um):
     from . import capi_maps
 
-    outmess('\tConstructing call-back function "cb_%s_in_%s"\n' %
-            (rout['name'], um))
+    outmess('\tConstructing call-back function "cb_%s_in_%s"\n' % (rout["name"], um))
     args, depargs = getargs(rout)
     capi_maps.depargs = depargs
-    var = rout['vars']
+    var = rout["vars"]
     vrd = capi_maps.cb_routsign2map(rout, um)
     rd = dictappend({}, vrd)
-    cb_map[um].append([rout['name'], rd['name']])
+    cb_map[um].append([rout["name"], rd["name"]])
     for r in cb_rout_rules:
-        if ('_check' in r and r['_check'](rout)) or ('_check' not in r):
+        if ("_check" in r and r["_check"](rout)) or ("_check" not in r):
             ar = applyrules(r, vrd, rout)
             rd = dictappend(rd, ar)
     savevrd = {}
@@ -508,109 +637,125 @@ def buildcallback(rout, um):
         vrd = capi_maps.cb_sign2map(a, var[a], index=i)
         savevrd[a] = vrd
         for r in cb_arg_rules:
-            if '_depend' in r:
+            if "_depend" in r:
                 continue
-            if '_optional' in r and isoptional(var[a]):
+            if "_optional" in r and isoptional(var[a]):
                 continue
-            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
+            if ("_check" in r and r["_check"](var[a])) or ("_check" not in r):
                 ar = applyrules(r, vrd, var[a])
                 rd = dictappend(rd, ar)
-                if '_break' in r:
+                if "_break" in r:
                     break
     for a in args:
         vrd = savevrd[a]
         for r in cb_arg_rules:
-            if '_depend' in r:
+            if "_depend" in r:
                 continue
-            if ('_optional' not in r) or ('_optional' in r and isrequired(var[a])):
+            if ("_optional" not in r) or ("_optional" in r and isrequired(var[a])):
                 continue
-            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
+            if ("_check" in r and r["_check"](var[a])) or ("_check" not in r):
                 ar = applyrules(r, vrd, var[a])
                 rd = dictappend(rd, ar)
-                if '_break' in r:
+                if "_break" in r:
                     break
     for a in depargs:
         vrd = savevrd[a]
         for r in cb_arg_rules:
-            if '_depend' not in r:
+            if "_depend" not in r:
                 continue
-            if '_optional' in r:
+            if "_optional" in r:
                 continue
-            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
+            if ("_check" in r and r["_check"](var[a])) or ("_check" not in r):
                 ar = applyrules(r, vrd, var[a])
                 rd = dictappend(rd, ar)
-                if '_break' in r:
+                if "_break" in r:
                     break
-    if 'args' in rd and 'optargs' in rd:
-        if isinstance(rd['optargs'], list):
-            rd['optargs'] = rd['optargs'] + ["""
+    if "args" in rd and "optargs" in rd:
+        if isinstance(rd["optargs"], list):
+            rd["optargs"] = rd["optargs"] + [
+                """
 #ifndef F2PY_CB_RETURNCOMPLEX
 ,
 #endif
-"""]
-            rd['optargs_nm'] = rd['optargs_nm'] + ["""
+"""
+            ]
+            rd["optargs_nm"] = rd["optargs_nm"] + [
+                """
 #ifndef F2PY_CB_RETURNCOMPLEX
 ,
 #endif
-"""]
-            rd['optargs_td'] = rd['optargs_td'] + ["""
+"""
+            ]
+            rd["optargs_td"] = rd["optargs_td"] + [
+                """
 #ifndef F2PY_CB_RETURNCOMPLEX
 ,
 #endif
-"""]
-    if isinstance(rd['docreturn'], list):
-        rd['docreturn'] = stripcomma(
-            replace('#docreturn#', {'docreturn': rd['docreturn']}))
-    optargs = stripcomma(replace('#docsignopt#',
-                                 {'docsignopt': rd['docsignopt']}
-                                 ))
-    if optargs == '':
-        rd['docsignature'] = stripcomma(
-            replace('#docsign#', {'docsign': rd['docsign']}))
+"""
+            ]
+    if isinstance(rd["docreturn"], list):
+        rd["docreturn"] = stripcomma(
+            replace("#docreturn#", {"docreturn": rd["docreturn"]})
+        )
+    optargs = stripcomma(replace("#docsignopt#", {"docsignopt": rd["docsignopt"]}))
+    if optargs == "":
+        rd["docsignature"] = stripcomma(
+            replace("#docsign#", {"docsign": rd["docsign"]})
+        )
     else:
-        rd['docsignature'] = replace('#docsign#[#docsignopt#]',
-                                     {'docsign': rd['docsign'],
-                                      'docsignopt': optargs,
-                                      })
-    rd['latexdocsignature'] = rd['docsignature'].replace('_', '\\_')
-    rd['latexdocsignature'] = rd['latexdocsignature'].replace(',', ', ')
-    rd['docstrsigns'] = []
-    rd['latexdocstrsigns'] = []
-    for k in ['docstrreq', 'docstropt', 'docstrout', 'docstrcbs']:
+        rd["docsignature"] = replace(
+            "#docsign#[#docsignopt#]",
+            {
+                "docsign": rd["docsign"],
+                "docsignopt": optargs,
+            },
+        )
+    rd["latexdocsignature"] = rd["docsignature"].replace("_", "\\_")
+    rd["latexdocsignature"] = rd["latexdocsignature"].replace(",", ", ")
+    rd["docstrsigns"] = []
+    rd["latexdocstrsigns"] = []
+    for k in ["docstrreq", "docstropt", "docstrout", "docstrcbs"]:
         if k in rd and isinstance(rd[k], list):
-            rd['docstrsigns'] = rd['docstrsigns'] + rd[k]
-        k = 'latex' + k
+            rd["docstrsigns"] = rd["docstrsigns"] + rd[k]
+        k = "latex" + k
         if k in rd and isinstance(rd[k], list):
-            rd['latexdocstrsigns'] = rd['latexdocstrsigns'] + rd[k][0:1] +\
-                ['\\begin{description}'] + rd[k][1:] +\
-                ['\\end{description}']
-    if 'args' not in rd:
-        rd['args'] = ''
-        rd['args_td'] = ''
-        rd['args_nm'] = ''
-    if not (rd.get('args') or rd.get('optargs') or rd.get('strarglens')):
-        rd['noargs'] = 'void'
+            rd["latexdocstrsigns"] = (
+                rd["latexdocstrsigns"]
+                + rd[k][0:1]
+                + ["\\begin{description}"]
+                + rd[k][1:]
+                + ["\\end{description}"]
+            )
+    if "args" not in rd:
+        rd["args"] = ""
+        rd["args_td"] = ""
+        rd["args_nm"] = ""
+    if not (rd.get("args") or rd.get("optargs") or rd.get("strarglens")):
+        rd["noargs"] = "void"
 
     ar = applyrules(cb_routine_rules, rd)
-    cfuncs.callbacks[rd['name']] = ar['body']
-    if isinstance(ar['need'], str):
-        ar['need'] = [ar['need']]
+    cfuncs.callbacks[rd["name"]] = ar["body"]
+    if isinstance(ar["need"], str):
+        ar["need"] = [ar["need"]]
 
-    if 'need' in rd:
+    if "need" in rd:
         for t in cfuncs.typedefs.keys():
-            if t in rd['need']:
-                ar['need'].append(t)
+            if t in rd["need"]:
+                ar["need"].append(t)
 
-    cfuncs.typedefs_generated[rd['name'] + '_typedef'] = ar['cbtypedefs']
-    ar['need'].append(rd['name'] + '_typedef')
-    cfuncs.needs[rd['name']] = ar['need']
+    cfuncs.typedefs_generated[rd["name"] + "_typedef"] = ar["cbtypedefs"]
+    ar["need"].append(rd["name"] + "_typedef")
+    cfuncs.needs[rd["name"]] = ar["need"]
 
-    capi_maps.lcb2_map[rd['name']] = {'maxnofargs': ar['maxnofargs'],
-                                      'nofoptargs': ar['nofoptargs'],
-                                      'docstr': ar['docstr'],
-                                      'latexdocstr': ar['latexdocstr'],
-                                      'argname': rd['argname']
-                                      }
-    outmess('\t  %s\n' % (ar['docstrshort']))
+    capi_maps.lcb2_map[rd["name"]] = {
+        "maxnofargs": ar["maxnofargs"],
+        "nofoptargs": ar["nofoptargs"],
+        "docstr": ar["docstr"],
+        "latexdocstr": ar["latexdocstr"],
+        "argname": rd["argname"],
+    }
+    outmess("\t  %s\n" % (ar["docstrshort"]))
     return
+
+
 ################## Build call-back function #############

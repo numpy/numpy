@@ -6,7 +6,7 @@ import numpy as np
 class MA(Benchmark):
     def setup(self):
         self.l100 = range(100)
-        self.t100 = ([True] * 100)
+        self.t100 = [True] * 100
 
     def time_masked_array(self):
         np.ma.masked_array()
@@ -19,21 +19,20 @@ class MA(Benchmark):
 
 
 class Indexing(Benchmark):
-    param_names = ['masked', 'ndim', 'size']
-    params = [[True, False],
-              [1, 2],
-              [10, 100, 1000]]
+    param_names = ["masked", "ndim", "size"]
+    params = [[True, False], [1, 2], [10, 100, 1000]]
+
     def setup(self, masked, ndim, size):
-        x = np.arange(size**ndim).reshape(ndim * (size,))
+        x = np.arange(size ** ndim).reshape(ndim * (size,))
 
         if masked:
-            self.m = np.ma.array(x, mask=x%2 == 0)
+            self.m = np.ma.array(x, mask=x % 2 == 0)
         else:
             self.m = np.ma.array(x)
 
-        self.idx_scalar = (size//2,) * ndim
-        self.idx_0d = (size//2,) * ndim + (Ellipsis,)
-        self.idx_1d = (size//2,) * (ndim - 1)
+        self.idx_scalar = (size // 2,) * ndim
+        self.idx_0d = (size // 2,) * ndim + (Ellipsis,)
+        self.idx_1d = (size // 2,) * (ndim - 1)
 
     def time_scalar(self, masked, ndim, size):
         self.m[self.idx_scalar]
@@ -46,10 +45,8 @@ class Indexing(Benchmark):
 
 
 class UFunc(Benchmark):
-    param_names = ['a_masked', 'b_masked', 'size']
-    params = [[True, False],
-              [True, False],
-              [10, 100, 1000]]
+    param_names = ["a_masked", "b_masked", "size"]
+    params = [[True, False], [True, False], [10, 100, 1000]]
 
     def setup(self, a_masked, b_masked, size):
         x = np.arange(size).astype(np.uint8)
@@ -57,8 +54,8 @@ class UFunc(Benchmark):
         self.a_scalar = np.ma.masked if a_masked else 5
         self.b_scalar = np.ma.masked if b_masked else 3
 
-        self.a_1d = np.ma.array(x, mask=x%2 == 0 if a_masked else np.ma.nomask)
-        self.b_1d = np.ma.array(x, mask=x%3 == 0 if b_masked else np.ma.nomask)
+        self.a_1d = np.ma.array(x, mask=x % 2 == 0 if a_masked else np.ma.nomask)
+        self.b_1d = np.ma.array(x, mask=x % 3 == 0 if b_masked else np.ma.nomask)
 
         self.a_2d = self.a_1d.reshape(1, -1)
         self.b_2d = self.a_1d.reshape(-1, 1)
@@ -78,12 +75,10 @@ class UFunc(Benchmark):
 
 
 class Concatenate(Benchmark):
-    param_names = ['mode', 'n']
+    param_names = ["mode", "n"]
     params = [
-        ['ndarray', 'unmasked',
-         'ndarray+masked', 'unmasked+masked',
-         'masked'],
-        [2, 100, 2000]
+        ["ndarray", "unmasked", "ndarray+masked", "unmasked+masked", "masked"],
+        [2, 100, 2000],
     ]
 
     def setup(self, mode, n):
@@ -93,13 +88,13 @@ class Concatenate(Benchmark):
         unmasked = np.ma.zeros((n, n), int)
         masked = np.ma.array(normal, mask=True)
 
-        mode_parts = mode.split('+')
+        mode_parts = mode.split("+")
         base = mode_parts[0]
-        promote = 'masked' in mode_parts[1:]
+        promote = "masked" in mode_parts[1:]
 
-        if base == 'ndarray':
+        if base == "ndarray":
             args = 10 * (normal,)
-        elif base == 'unmasked':
+        elif base == "unmasked":
             args = 10 * (unmasked,)
         else:
             args = 10 * (masked,)

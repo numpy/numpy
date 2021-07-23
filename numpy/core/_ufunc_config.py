@@ -9,27 +9,43 @@ import contextlib
 from .overrides import set_module
 from .umath import (
     UFUNC_BUFSIZE_DEFAULT,
-    ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG, ERR_DEFAULT,
-    SHIFT_DIVIDEBYZERO, SHIFT_OVERFLOW, SHIFT_UNDERFLOW, SHIFT_INVALID,
+    ERR_IGNORE,
+    ERR_WARN,
+    ERR_RAISE,
+    ERR_CALL,
+    ERR_PRINT,
+    ERR_LOG,
+    ERR_DEFAULT,
+    SHIFT_DIVIDEBYZERO,
+    SHIFT_OVERFLOW,
+    SHIFT_UNDERFLOW,
+    SHIFT_INVALID,
 )
 from . import umath
 
 __all__ = [
-    "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
+    "seterr",
+    "geterr",
+    "setbufsize",
+    "getbufsize",
+    "seterrcall",
+    "geterrcall",
     "errstate",
 ]
 
-_errdict = {"ignore": ERR_IGNORE,
-            "warn": ERR_WARN,
-            "raise": ERR_RAISE,
-            "call": ERR_CALL,
-            "print": ERR_PRINT,
-            "log": ERR_LOG}
+_errdict = {
+    "ignore": ERR_IGNORE,
+    "warn": ERR_WARN,
+    "raise": ERR_RAISE,
+    "call": ERR_CALL,
+    "print": ERR_PRINT,
+    "log": ERR_LOG,
+}
 
 _errdict_rev = {value: key for key, value in _errdict.items()}
 
 
-@set_module('numpy')
+@set_module("numpy")
 def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     """
     Set how floating-point errors are handled.
@@ -110,25 +126,27 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     old = geterr()
 
     if divide is None:
-        divide = all or old['divide']
+        divide = all or old["divide"]
     if over is None:
-        over = all or old['over']
+        over = all or old["over"]
     if under is None:
-        under = all or old['under']
+        under = all or old["under"]
     if invalid is None:
-        invalid = all or old['invalid']
+        invalid = all or old["invalid"]
 
-    maskvalue = ((_errdict[divide] << SHIFT_DIVIDEBYZERO) +
-                 (_errdict[over] << SHIFT_OVERFLOW) +
-                 (_errdict[under] << SHIFT_UNDERFLOW) +
-                 (_errdict[invalid] << SHIFT_INVALID))
+    maskvalue = (
+        (_errdict[divide] << SHIFT_DIVIDEBYZERO)
+        + (_errdict[over] << SHIFT_OVERFLOW)
+        + (_errdict[under] << SHIFT_UNDERFLOW)
+        + (_errdict[invalid] << SHIFT_INVALID)
+    )
 
     pyvals[1] = maskvalue
     umath.seterrobj(pyvals)
     return old
 
 
-@set_module('numpy')
+@set_module("numpy")
 def geterr():
     """
     Get the current way of handling floating-point errors.
@@ -168,17 +186,17 @@ def geterr():
     mask = 7
     res = {}
     val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
-    res['divide'] = _errdict_rev[val]
+    res["divide"] = _errdict_rev[val]
     val = (maskvalue >> SHIFT_OVERFLOW) & mask
-    res['over'] = _errdict_rev[val]
+    res["over"] = _errdict_rev[val]
     val = (maskvalue >> SHIFT_UNDERFLOW) & mask
-    res['under'] = _errdict_rev[val]
+    res["under"] = _errdict_rev[val]
     val = (maskvalue >> SHIFT_INVALID) & mask
-    res['invalid'] = _errdict_rev[val]
+    res["invalid"] = _errdict_rev[val]
     return res
 
 
-@set_module('numpy')
+@set_module("numpy")
 def setbufsize(size):
     """
     Set the size of the buffer used in ufuncs.
@@ -203,7 +221,7 @@ def setbufsize(size):
     return old
 
 
-@set_module('numpy')
+@set_module("numpy")
 def getbufsize():
     """
     Return the size of the buffer used in ufuncs.
@@ -217,7 +235,7 @@ def getbufsize():
     return umath.geterrobj()[0]
 
 
-@set_module('numpy')
+@set_module("numpy")
 def seterrcall(func):
     """
     Set the floating-point error callback function or log object.
@@ -300,8 +318,9 @@ def seterrcall(func):
 
     """
     if func is not None and not isinstance(func, collections.abc.Callable):
-        if (not hasattr(func, 'write') or
-                not isinstance(func.write, collections.abc.Callable)):
+        if not hasattr(func, "write") or not isinstance(
+            func.write, collections.abc.Callable
+        ):
             raise ValueError("Only callable can be used as callback")
     pyvals = umath.geterrobj()
     old = geterrcall()
@@ -310,7 +329,7 @@ def seterrcall(func):
     return old
 
 
-@set_module('numpy')
+@set_module("numpy")
 def geterrcall():
     """
     Return the current callback function used on floating-point errors.
@@ -363,7 +382,7 @@ class _unspecified:
 _Unspecified = _unspecified()
 
 
-@set_module('numpy')
+@set_module("numpy")
 class errstate(contextlib.ContextDecorator):
     """
     errstate(**kwargs)

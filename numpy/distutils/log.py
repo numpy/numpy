@@ -4,13 +4,19 @@ from distutils.log import *  # noqa: F403
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
 
-from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
-        green_text, is_sequence, is_string)
+from numpy.distutils.misc_util import (
+    red_text,
+    default_text,
+    cyan_text,
+    green_text,
+    is_sequence,
+    is_string,
+)
 
 
-def _fix_args(args,flag=1):
+def _fix_args(args, flag=1):
     if is_string(args):
-        return args.replace('%', '%%')
+        return args.replace("%", "%%")
     if flag and is_sequence(args):
         return tuple([_fix_args(a, flag=0) for a in args])
     return args
@@ -22,9 +28,9 @@ class Log(old_Log):
             if args:
                 msg = msg % _fix_args(args)
             if 0:
-                if msg.startswith('copying ') and msg.find(' -> ') != -1:
+                if msg.startswith("copying ") and msg.find(" -> ") != -1:
                     return
-                if msg.startswith('byte-compiling '):
+                if msg.startswith("byte-compiling "):
                     return
             print(_global_color_map[level](msg))
             sys.stdout.flush()
@@ -47,6 +53,7 @@ _global_log.__class__ = Log
 
 good = _global_log.good
 
+
 def set_threshold(level, force=False):
     prev_level = _global_log.threshold
     if prev_level > DEBUG or force:
@@ -54,15 +61,21 @@ def set_threshold(level, force=False):
         # likely a good reason why we're running at this level.
         _global_log.threshold = level
         if level <= DEBUG:
-            info('set_threshold: setting threshold to DEBUG level,'
-                    ' it can be changed only with force argument')
+            info(
+                "set_threshold: setting threshold to DEBUG level,"
+                " it can be changed only with force argument"
+            )
     else:
-        info('set_threshold: not changing threshold from DEBUG level'
-                ' %s to %s' % (prev_level, level))
+        info(
+            "set_threshold: not changing threshold from DEBUG level"
+            " %s to %s" % (prev_level, level)
+        )
     return prev_level
 
+
 def get_threshold():
-	return _global_log.threshold
+    return _global_log.threshold
+
 
 def set_verbosity(v, force=False):
     prev_level = _global_log.threshold
@@ -74,15 +87,15 @@ def set_verbosity(v, force=False):
         set_threshold(INFO, force)
     elif v >= 2:
         set_threshold(DEBUG, force)
-    return {FATAL:-2,ERROR:-1,WARN:0,INFO:1,DEBUG:2}.get(prev_level, 1)
+    return {FATAL: -2, ERROR: -1, WARN: 0, INFO: 1, DEBUG: 2}.get(prev_level, 1)
 
 
 _global_color_map = {
-    DEBUG:cyan_text,
-    INFO:default_text,
-    WARN:red_text,
-    ERROR:red_text,
-    FATAL:red_text
+    DEBUG: cyan_text,
+    INFO: default_text,
+    WARN: red_text,
+    ERROR: red_text,
+    FATAL: red_text,
 }
 
 # don't use INFO,.. flags in set_verbosity, these flags are for set_threshold.

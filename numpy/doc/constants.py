@@ -18,10 +18,15 @@ import textwrap
 
 # Maintain same format as in numpy.add_newdocs
 constants = []
+
+
 def add_newdoc(module, name, doc):
     constants.append((name, doc))
 
-add_newdoc('numpy', 'pi',
+
+add_newdoc(
+    "numpy",
+    "pi",
     """
     ``pi = 3.1415926535897932384626433...``
 
@@ -29,9 +34,12 @@ add_newdoc('numpy', 'pi',
     ----------
     https://en.wikipedia.org/wiki/Pi
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'e',
+add_newdoc(
+    "numpy",
+    "e",
     """
     Euler's constant, base of natural logarithms, Napier's constant.
 
@@ -46,9 +54,12 @@ add_newdoc('numpy', 'e',
     ----------
     https://en.wikipedia.org/wiki/E_%28mathematical_constant%29
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'euler_gamma',
+add_newdoc(
+    "numpy",
+    "euler_gamma",
     """
     ``γ = 0.5772156649015328606065120900824024310421...``
 
@@ -56,9 +67,12 @@ add_newdoc('numpy', 'euler_gamma',
     ----------
     https://en.wikipedia.org/wiki/Euler-Mascheroni_constant
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'inf',
+add_newdoc(
+    "numpy",
+    "inf",
     """
     IEEE 754 floating point representation of (positive) infinity.
 
@@ -96,9 +110,12 @@ add_newdoc('numpy', 'inf',
     >>> np.array([1]) / 0.
     array([ Inf])
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'nan',
+add_newdoc(
+    "numpy",
+    "nan",
     """
     IEEE 754 floating point representation of Not a Number (NaN).
 
@@ -129,9 +146,12 @@ add_newdoc('numpy', 'nan',
     >>> np.log([-1, 1, 2])
     array([        NaN,  0.        ,  0.69314718])
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'newaxis',
+add_newdoc(
+    "numpy",
+    "newaxis",
     """
     A convenient alias for None, useful for indexing arrays.
 
@@ -174,9 +194,12 @@ add_newdoc('numpy', 'newaxis',
     >>> x[:, newaxis].shape
     (3, 1)
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'NZERO',
+add_newdoc(
+    "numpy",
+    "NZERO",
     """
     IEEE 754 floating point representation of negative zero.
 
@@ -219,9 +242,12 @@ add_newdoc('numpy', 'NZERO',
     >>> np.isinf([np.NZERO])
     array([False])
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'PZERO',
+add_newdoc(
+    "numpy",
+    "PZERO",
     """
     IEEE 754 floating point representation of positive zero.
 
@@ -264,9 +290,12 @@ add_newdoc('numpy', 'PZERO',
     >>> np.isinf([np.PZERO])
     array([False])
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'NAN',
+add_newdoc(
+    "numpy",
+    "NAN",
     """
     IEEE 754 floating point representation of Not a Number (NaN).
 
@@ -277,9 +306,12 @@ add_newdoc('numpy', 'NAN',
     --------
     nan
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'NaN',
+add_newdoc(
+    "numpy",
+    "NaN",
     """
     IEEE 754 floating point representation of Not a Number (NaN).
 
@@ -290,9 +322,12 @@ add_newdoc('numpy', 'NaN',
     --------
     nan
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'NINF',
+add_newdoc(
+    "numpy",
+    "NINF",
     """
     IEEE 754 floating point representation of negative infinity.
 
@@ -328,9 +363,12 @@ add_newdoc('numpy', 'NINF',
     >>> np.log(0)
     -inf
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'PINF',
+add_newdoc(
+    "numpy",
+    "PINF",
     """
     IEEE 754 floating point representation of (positive) infinity.
 
@@ -341,9 +379,12 @@ add_newdoc('numpy', 'PINF',
     --------
     inf
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'infty',
+add_newdoc(
+    "numpy",
+    "infty",
     """
     IEEE 754 floating point representation of (positive) infinity.
 
@@ -354,9 +395,12 @@ add_newdoc('numpy', 'infty',
     --------
     inf
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'Inf',
+add_newdoc(
+    "numpy",
+    "Inf",
     """
     IEEE 754 floating point representation of (positive) infinity.
 
@@ -367,9 +411,12 @@ add_newdoc('numpy', 'Inf',
     --------
     inf
 
-    """)
+    """,
+)
 
-add_newdoc('numpy', 'Infinity',
+add_newdoc(
+    "numpy",
+    "Infinity",
     """
     IEEE 754 floating point representation of (positive) infinity.
 
@@ -380,7 +427,8 @@ add_newdoc('numpy', 'Infinity',
     --------
     inf
 
-    """)
+    """,
+)
 
 
 if __doc__:
@@ -393,11 +441,11 @@ if __doc__:
         lines = s.split("\n")
         new_lines = []
         for line in lines:
-            m = re.match(r'^(\s+)[-=]+\s*$', line)
+            m = re.match(r"^(\s+)[-=]+\s*$", line)
             if m and new_lines:
                 prev = textwrap.dedent(new_lines.pop())
-                new_lines.append('%s.. rubric:: %s' % (m.group(1), prev))
-                new_lines.append('')
+                new_lines.append("%s.. rubric:: %s" % (m.group(1), prev))
+                new_lines.append("")
             else:
                 new_lines.append(line)
         s = "\n".join(new_lines)

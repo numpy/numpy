@@ -45,40 +45,38 @@ if sys.version_info[:2] < (3, 6):
 
 this_repo = Repo(os.path.join(os.path.dirname(__file__), ".."))
 
-author_msg =\
-"""
+author_msg = """
 A total of %d people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 """
 
-pull_request_msg =\
-"""
+pull_request_msg = """
 A total of %d pull requests were merged for this release.
 """
 
 
 def get_authors(revision_range):
-    lst_release, cur_release = [r.strip() for r in revision_range.split('..')]
-    authors_pat = r'^.*\t(.*)$'
+    lst_release, cur_release = [r.strip() for r in revision_range.split("..")]
+    authors_pat = r"^.*\t(.*)$"
 
     # authors and co-authors in current and previous releases.
-    grp1 = '--group=author'
-    grp2 = '--group=trailer:co-authored-by'
-    cur = this_repo.git.shortlog('-s', grp1, grp2, revision_range)
-    pre = this_repo.git.shortlog('-s', grp1, grp2, lst_release)
+    grp1 = "--group=author"
+    grp2 = "--group=trailer:co-authored-by"
+    cur = this_repo.git.shortlog("-s", grp1, grp2, revision_range)
+    pre = this_repo.git.shortlog("-s", grp1, grp2, lst_release)
     authors_cur = set(re.findall(authors_pat, cur, re.M))
     authors_pre = set(re.findall(authors_pat, pre, re.M))
 
     # Ignore the bot Homu.
-    authors_cur.discard('Homu')
-    authors_pre.discard('Homu')
+    authors_cur.discard("Homu")
+    authors_pre.discard("Homu")
 
     # Ignore the bot dependabot-preview
-    authors_cur.discard('dependabot-preview')
-    authors_pre.discard('dependabot-preview')
+    authors_cur.discard("dependabot-preview")
+    authors_pre.discard("dependabot-preview")
 
     # Append '+' to new authors.
-    authors_new = [s + ' +' for s in authors_cur - authors_pre]
+    authors_new = [s + " +" for s in authors_cur - authors_pre]
     authors_old = [s for s in authors_cur & authors_pre]
     authors = authors_new + authors_old
     authors.sort()
@@ -89,19 +87,19 @@ def get_pull_requests(repo, revision_range):
     prnums = []
 
     # From regular merges
-    merges = this_repo.git.log(
-        '--oneline', '--merges', revision_range)
+    merges = this_repo.git.log("--oneline", "--merges", revision_range)
     issues = re.findall(r"Merge pull request \#(\d*)", merges)
     prnums.extend(int(s) for s in issues)
 
     # From Homu merges (Auto merges)
-    issues = re. findall(r"Auto merge of \#(\d*)", merges)
+    issues = re.findall(r"Auto merge of \#(\d*)", merges)
     prnums.extend(int(s) for s in issues)
 
     # From fast forward squash-merges
     commits = this_repo.git.log(
-        '--oneline', '--no-merges', '--first-parent', revision_range)
-    issues = re.findall(r'^.*\((\#|gh-|gh-\#)(\d+)\)$', commits, re.M)
+        "--oneline", "--no-merges", "--first-parent", revision_range
+    )
+    issues = re.findall(r"^.*\((\#|gh-|gh-\#)(\d+)\)$", commits, re.M)
     prnums.extend(int(s[1]) for s in issues)
 
     # get PR data from github repo
@@ -111,21 +109,21 @@ def get_pull_requests(repo, revision_range):
 
 
 def main(token, revision_range):
-    lst_release, cur_release = [r.strip() for r in revision_range.split('..')]
+    lst_release, cur_release = [r.strip() for r in revision_range.split("..")]
 
     github = Github(token)
-    github_repo = github.get_repo('numpy/numpy')
+    github_repo = github.get_repo("numpy/numpy")
 
     # document authors
     authors = get_authors(revision_range)
     heading = "Contributors"
     print()
     print(heading)
-    print("="*len(heading))
+    print("=" * len(heading))
     print(author_msg % len(authors))
 
     for s in authors:
-        print('* ' + s)
+        print("* " + s)
 
     # document pull requests
     pull_requests = get_pull_requests(github_repo, revision_range)
@@ -134,7 +132,7 @@ def main(token, revision_range):
 
     print()
     print(heading)
-    print("="*len(heading))
+    print("=" * len(heading))
     print(pull_request_msg % len(pull_requests))
 
     for pull in pull_requests:
@@ -152,7 +150,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description="Generate author/pr lists for release")
-    parser.add_argument('token', help='github access token')
-    parser.add_argument('revision_range', help='<revision>..<revision>')
+    parser.add_argument("token", help="github access token")
+    parser.add_argument("revision_range", help="<revision>..<revision>")
     args = parser.parse_args()
     main(args.token, args.revision_range)

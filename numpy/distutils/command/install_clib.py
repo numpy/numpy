@@ -3,6 +3,7 @@ from distutils.core import Command
 from distutils.ccompiler import new_compiler
 from numpy.distutils.misc_util import get_cmd
 
+
 class install_clib(Command):
     description = "Command to install installable C libraries"
 
@@ -13,9 +14,9 @@ class install_clib(Command):
         self.outfiles = []
 
     def finalize_options(self):
-        self.set_undefined_options('install', ('install_lib', 'install_dir'))
+        self.set_undefined_options("install", ("install_lib", "install_dir"))
 
-    def run (self):
+    def run(self):
         build_clib_cmd = get_cmd("build_clib")
         if not build_clib_cmd.build_clib:
             # can happen if the user specified `--skip-build`

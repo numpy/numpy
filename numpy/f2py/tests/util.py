@@ -78,8 +78,10 @@ def _memoize(func):
         if isinstance(ret, Exception):
             raise ret
         return ret
+
     wrapper.__name__ = func.__name__
     return wrapper
+
 
 #
 # Building modules
@@ -93,8 +95,10 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
     """
 
-    code = ("import sys; sys.path = %s; import numpy.f2py as f2py2e; "
-            "f2py2e.main()" % repr(sys.path))
+    code = (
+        "import sys; sys.path = %s; import numpy.f2py as f2py2e; "
+        "f2py2e.main()" % repr(sys.path)
+    )
 
     d = get_module_dir()
 
@@ -109,29 +113,27 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         dst_sources.append(dst)
 
         base, ext = os.path.splitext(dst)
-        if ext in ('.f90', '.f', '.c', '.pyf'):
+        if ext in (".f90", ".f", ".c", ".pyf"):
             f2py_sources.append(dst)
 
     # Prepare options
     if module_name is None:
         module_name = get_temp_module_name()
-    f2py_opts = ['-c', '-m', module_name] + options + f2py_sources
+    f2py_opts = ["-c", "-m", module_name] + options + f2py_sources
     if skip:
-        f2py_opts += ['skip:'] + skip
+        f2py_opts += ["skip:"] + skip
     if only:
-        f2py_opts += ['only:'] + only
+        f2py_opts += ["only:"] + only
 
     # Build
     cwd = os.getcwd()
     try:
         os.chdir(d)
-        cmd = [sys.executable, '-c', code] + f2py_opts
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+        cmd = [sys.executable, "-c", code] + f2py_opts
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Running f2py failed: %s\n%s"
-                               % (cmd[4:], asstr(out)))
+            raise RuntimeError("Running f2py failed: %s\n%s" % (cmd[4:], asstr(out)))
     finally:
         os.chdir(cwd)
 
@@ -144,19 +146,22 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
 
 @_memoize
-def build_code(source_code, options=[], skip=[], only=[], suffix=None,
-               module_name=None):
+def build_code(
+    source_code, options=[], skip=[], only=[], suffix=None, module_name=None
+):
     """
     Compile and import Fortran code using f2py.
 
     """
     if suffix is None:
-        suffix = '.f'
+        suffix = ".f"
     with temppath(suffix=suffix) as path:
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(source_code)
-        return build_module([path], options=options, skip=skip, only=only,
-                            module_name=module_name)
+        return build_module(
+            [path], options=options, skip=skip, only=only, module_name=module_name
+        )
+
 
 #
 # Check if compilers are available at all...
@@ -174,7 +179,8 @@ def _get_compiler_status():
 
     # XXX: this is really ugly. But I don't know how to invoke Distutils
     #      in a safer way...
-    code = textwrap.dedent("""\
+    code = textwrap.dedent(
+        """\
         import os
         import sys
         sys.path = %(syspath)s
@@ -194,28 +200,32 @@ def _get_compiler_status():
                                           config.have_f77c(),
                                           config.have_f90c()))
         sys.exit(99)
-        """)
+        """
+    )
     code = code % dict(syspath=repr(sys.path))
 
     tmpdir = tempfile.mkdtemp()
     try:
-        script = os.path.join(tmpdir, 'setup.py')
+        script = os.path.join(tmpdir, "setup.py")
 
-        with open(script, 'w') as f:
+        with open(script, "w") as f:
             f.write(code)
 
-        cmd = [sys.executable, 'setup.py', 'config']
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             cwd=tmpdir)
+        cmd = [sys.executable, "setup.py", "config"]
+        p = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tmpdir
+        )
         out, err = p.communicate()
     finally:
         shutil.rmtree(tmpdir)
 
-    m = re.search(br'COMPILERS:(\d+),(\d+),(\d+)', out)
+    m = re.search(br"COMPILERS:(\d+),(\d+),(\d+)", out)
     if m:
-        _compiler_status = (bool(int(m.group(1))), bool(int(m.group(2))),
-                            bool(int(m.group(3))))
+        _compiler_status = (
+            bool(int(m.group(1))),
+            bool(int(m.group(2))),
+            bool(int(m.group(3))),
+        )
     # Finished
     return _compiler_status
 
@@ -230,6 +240,7 @@ def has_f77_compiler():
 
 def has_f90_compiler():
     return _get_compiler_status()[2]
+
 
 #
 # Building with distutils
@@ -259,7 +270,9 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     # Build script
     config_code = textwrap.dedent(config_code).replace("\n", "\n    ")
 
-    code = textwrap.dedent("""\
+    code = (
+        textwrap.dedent(
+            """\
         import os
         import sys
         sys.path = %(syspath)s
@@ -273,24 +286,27 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
         if __name__ == "__main__":
             from numpy.distutils.core import setup
             setup(configuration=configuration)
-        """) % dict(config_code=config_code, syspath=repr(sys.path))
+        """
+        )
+        % dict(config_code=config_code, syspath=repr(sys.path))
+    )
 
-    script = os.path.join(d, get_temp_module_name() + '.py')
+    script = os.path.join(d, get_temp_module_name() + ".py")
     dst_sources.append(script)
-    with open(script, 'wb') as f:
+    with open(script, "wb") as f:
         f.write(asbytes(code))
 
     # Build
     cwd = os.getcwd()
     try:
         os.chdir(d)
-        cmd = [sys.executable, script, 'build_ext', '-i']
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+        cmd = [sys.executable, script, "build_ext", "-i"]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Running distutils build failed: %s\n%s"
-                               % (cmd[4:], asstr(out)))
+            raise RuntimeError(
+                "Running distutils build failed: %s\n%s" % (cmd[4:], asstr(out))
+            )
     finally:
         os.chdir(cwd)
 
@@ -301,6 +317,7 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     # Import
     __import__(module_name)
     return sys.modules[module_name]
+
 
 #
 # Unittest convenience
@@ -313,13 +330,13 @@ class F2PyTest:
     options = []
     skip = []
     only = []
-    suffix = '.f'
+    suffix = ".f"
     module = None
     module_name = None
 
     def setup(self):
-        if sys.platform == 'win32':
-            pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')
+        if sys.platform == "win32":
+            pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
 
         if self.module is not None:
             return
@@ -337,9 +354,9 @@ class F2PyTest:
         needs_f77 = False
         needs_f90 = False
         for fn in codes:
-            if fn.endswith('.f'):
+            if fn.endswith(".f"):
                 needs_f77 = True
-            elif fn.endswith('.f90'):
+            elif fn.endswith(".f90"):
                 needs_f90 = True
         if needs_f77 and not has_f77_compiler():
             pytest.skip("No Fortran 77 compiler available")
@@ -348,12 +365,20 @@ class F2PyTest:
 
         # Build the module
         if self.code is not None:
-            self.module = build_code(self.code, options=self.options,
-                                     skip=self.skip, only=self.only,
-                                     suffix=self.suffix,
-                                     module_name=self.module_name)
+            self.module = build_code(
+                self.code,
+                options=self.options,
+                skip=self.skip,
+                only=self.only,
+                suffix=self.suffix,
+                module_name=self.module_name,
+            )
 
         if self.sources is not None:
-            self.module = build_module(self.sources, options=self.options,
-                                       skip=self.skip, only=self.only,
-                                       module_name=self.module_name)
+            self.module = build_module(
+                self.sources,
+                options=self.options,
+                skip=self.skip,
+                only=self.only,
+                module_name=self.module_name,
+            )

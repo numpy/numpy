@@ -27,9 +27,9 @@ def test_valid_numpy_version():
     version_pattern = r"^[0-9]+\.[0-9]+\.[0-9]+(a[0-9]|b[0-9]|rc[0-9]|)"
     dev_suffix = r"(\.dev0|)(\+[0-9]*\.g[0-9a-f]+|)"
     if np.version.release:
-        res = re.match(version_pattern + '$', np.__version__)
+        res = re.match(version_pattern + "$", np.__version__)
     else:
-        res = re.match(version_pattern + dev_suffix + '$', np.__version__)
+        res = re.match(version_pattern + dev_suffix + "$", np.__version__)
 
     assert_(res is not None, np.__version__)
 
@@ -37,8 +37,12 @@ def test_valid_numpy_version():
 def test_short_version():
     # Check numpy.short_version actually exists
     if np.version.release:
-        assert_(np.__version__ == np.version.short_version,
-                "short_version mismatch in release version")
+        assert_(
+            np.__version__ == np.version.short_version,
+            "short_version mismatch in release version",
+        )
     else:
-        assert_(np.__version__.split("+")[0] == np.version.short_version,
-                "short_version mismatch in development version")
+        assert_(
+            np.__version__.split("+")[0] == np.version.short_version,
+            "short_version mismatch in development version",
+        )

@@ -2,16 +2,19 @@ from . import common
 import sys
 import os
 
+
 def show_cpu_features():
     from numpy.lib.utils import _opt_info
+
     info = _opt_info()
-    info = "NumPy CPU features: " + (info if info else 'nothing enabled')
+    info = "NumPy CPU features: " + (info if info else "nothing enabled")
     # ASV wrapping stdout & stderr, so we assume having a tty here
-    if 'SHELL' in os.environ and sys.platform != 'win32':
+    if "SHELL" in os.environ and sys.platform != "win32":
         # to avoid the red color that imposed by ASV
         print(f"\033[33m{info}\033[0m")
     else:
         print(info)
+
 
 def dirty_lock(lock_name, lock_on_count=1):
     # this lock occurred before each round to avoid duplicate printing
@@ -23,14 +26,14 @@ def dirty_lock(lock_name, lock_on_count=1):
         # a separate process so the lock should be based on the parent
         # process id only
         return False
-    lock_path = os.path.abspath(os.path.join(
-        os.path.dirname(__file__), "..", "env", lock_name)
+    lock_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "env", lock_name)
     )
     # ASV load the 'benchmark_dir' to discovering the available benchmarks
     # the issue here is ASV doesn't capture any strings from stdout or stderr
     # during this stage so we escape it and lock on the second increment
     try:
-        with open(lock_path, 'a+') as f:
+        with open(lock_path, "a+") as f:
             f.seek(0)
             count, _ppid = (f.read().split() + [0, 0])[:2]
             count, _ppid = int(count), int(_ppid)

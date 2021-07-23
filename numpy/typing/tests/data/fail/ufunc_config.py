@@ -2,17 +2,29 @@
 
 import numpy as np
 
-def func1(a: str, b: int, c: float) -> None: ...
-def func2(a: str, *, b: int) -> None: ...
+
+def func1(a: str, b: int, c: float) -> None:
+    ...
+
+
+def func2(a: str, *, b: int) -> None:
+    ...
+
 
 class Write1:
-    def write1(self, a: str) -> None: ...
+    def write1(self, a: str) -> None:
+        ...
+
 
 class Write2:
-    def write(self, a: str, b: str) -> None: ...
+    def write(self, a: str, b: str) -> None:
+        ...
+
 
 class Write3:
-    def write(self, *, a: str) -> None: ...
+    def write(self, *, a: str) -> None:
+        ...
+
 
 np.seterrcall(func1)  # E: Argument 1 to "seterrcall" has incompatible type
 np.seterrcall(func2)  # E: Argument 1 to "seterrcall" has incompatible type

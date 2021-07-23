@@ -74,7 +74,9 @@ class Generator:
     def __str__(self) -> str: ...
     def __getstate__(self) -> Dict[str, Any]: ...
     def __setstate__(self, state: Dict[str, Any]) -> None: ...
-    def __reduce__(self) -> Tuple[Callable[[str], Generator], Tuple[str], Dict[str, Any]]: ...
+    def __reduce__(
+        self,
+    ) -> Tuple[Callable[[str], Generator], Tuple[str], Dict[str, Any]]: ...
     @property
     def bit_generator(self) -> BitGenerator: ...
     def bytes(self, length: int) -> bytes: ...
@@ -195,7 +197,10 @@ class Generator:
     def beta(self, a: float, b: float, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def beta(
-        self, a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        a: _ArrayLikeFloat_co,
+        b: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def exponential(self, scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
@@ -249,7 +254,9 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-        dtype: Union[dtype[int8], Type[int8], _Int8Codes, _SupportsDType[dtype[int8]]] = ...,
+        dtype: Union[
+            dtype[int8], Type[int8], _Int8Codes, _SupportsDType[dtype[int8]]
+        ] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int8]]: ...
     @overload
@@ -258,7 +265,9 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-        dtype: Union[dtype[int16], Type[int16], _Int16Codes, _SupportsDType[dtype[int16]]] = ...,
+        dtype: Union[
+            dtype[int16], Type[int16], _Int16Codes, _SupportsDType[dtype[int16]]
+        ] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int16]]: ...
     @overload
@@ -267,7 +276,9 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-        dtype: Union[dtype[int32], Type[int32], _Int32Codes, _SupportsDType[dtype[int32]]] = ...,
+        dtype: Union[
+            dtype[int32], Type[int32], _Int32Codes, _SupportsDType[dtype[int32]]
+        ] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[Union[int32]]]: ...
     @overload
@@ -287,7 +298,9 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-        dtype: Union[dtype[uint8], Type[uint8], _UInt8Codes, _SupportsDType[dtype[uint8]]] = ...,
+        dtype: Union[
+            dtype[uint8], Type[uint8], _UInt8Codes, _SupportsDType[dtype[uint8]]
+        ] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint8]]: ...
     @overload
@@ -340,7 +353,9 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: Optional[_ArrayLikeInt_co] = ...,
         size: Optional[_ShapeLike] = ...,
-        dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
+        dtype: Union[
+            dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]
+        ] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint]]: ...
     # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> Union[_T, ndarray[Any,Any]]
@@ -452,7 +467,10 @@ class Generator:
     def f(self, dfnum: float, dfden: float, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def f(
-        self, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        dfnum: _ArrayLikeFloat_co,
+        dfden: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def noncentral_f(self, dfnum: float, dfden: float, nonc: float, size: None = ...) -> float: ...  # type: ignore[misc]
@@ -474,7 +492,10 @@ class Generator:
     def noncentral_chisquare(self, df: float, nonc: float, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def noncentral_chisquare(
-        self, df: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        df: _ArrayLikeFloat_co,
+        nonc: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def standard_t(self, df: float, size: None = ...) -> float: ...  # type: ignore[misc]
@@ -490,7 +511,10 @@ class Generator:
     def vonmises(self, mu: float, kappa: float, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def vonmises(
-        self, mu: _ArrayLikeFloat_co, kappa: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        mu: _ArrayLikeFloat_co,
+        kappa: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def pareto(self, a: float, size: None = ...) -> float: ...  # type: ignore[misc]
@@ -513,7 +537,9 @@ class Generator:
     @overload
     def standard_cauchy(self, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
-    def standard_cauchy(self, size: _ShapeLike = ...) -> ndarray[Any, dtype[float64]]: ...
+    def standard_cauchy(
+        self, size: _ShapeLike = ...
+    ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def laplace(self, loc: float = ..., scale: float = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
@@ -560,7 +586,10 @@ class Generator:
     def wald(self, mean: float, scale: float, size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
     def wald(
-        self, mean: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        mean: _ArrayLikeFloat_co,
+        scale: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     @overload
     def triangular(self, left: float, mode: float, right: float, size: None = ...) -> float: ...  # type: ignore[misc]
@@ -576,13 +605,19 @@ class Generator:
     def binomial(self, n: int, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def binomial(
-        self, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        n: _ArrayLikeInt_co,
+        p: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
     def negative_binomial(self, n: float, p: float, size: None = ...) -> int: ...  # type: ignore[misc]
     @overload
     def negative_binomial(
-        self, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        n: _ArrayLikeFloat_co,
+        p: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
     def poisson(self, lam: float = ..., size: None = ...) -> int: ...  # type: ignore[misc]
@@ -629,7 +664,10 @@ class Generator:
         method: Literal["svd", "eigh", "cholesky"] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
     def multinomial(
-        self, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
+        self,
+        n: _ArrayLikeInt_co,
+        pvals: _ArrayLikeFloat_co,
+        size: Optional[_ShapeLike] = ...,
     ) -> ndarray[Any, dtype[int64]]: ...
     def multivariate_hypergeometric(
         self,
@@ -642,7 +680,11 @@ class Generator:
         self, alpha: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
     ) -> ndarray[Any, dtype[float64]]: ...
     def permuted(
-        self, x: ArrayLike, *, axis: Optional[int] = ..., out: Optional[ndarray[Any, Any]] = ...
+        self,
+        x: ArrayLike,
+        *,
+        axis: Optional[int] = ...,
+        out: Optional[ndarray[Any, Any]] = ...,
     ) -> ndarray[Any, Any]: ...
     def shuffle(self, x: ArrayLike, axis: int = ...) -> None: ...
 

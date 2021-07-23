@@ -8,21 +8,22 @@ from .numeric import result_type, NaN, asanyarray, ndim
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 
-__all__ = ['logspace', 'linspace', 'geomspace']
+__all__ = ["logspace", "linspace", "geomspace"]
 
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
-def _linspace_dispatcher(start, stop, num=None, endpoint=None, retstep=None,
-                         dtype=None, axis=None):
+def _linspace_dispatcher(
+    start, stop, num=None, endpoint=None, retstep=None, dtype=None, axis=None
+):
     return (start, stop)
 
 
 @array_function_dispatch(_linspace_dispatcher)
-def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
-             axis=0):
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -125,7 +126,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     # Convert float/complex array scalars to float, gh-3504
     # and make sure one can use variables that have an __array_interface__, gh-6634
     start = asanyarray(start) * 1.0
-    stop  = asanyarray(stop)  * 1.0
+    stop = asanyarray(stop) * 1.0
 
     dt = result_type(start, stop, float(num))
     if dtype is None:
@@ -175,14 +176,14 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         return y.astype(dtype, copy=False)
 
 
-def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,
-                         dtype=None, axis=None):
+def _logspace_dispatcher(
+    start, stop, num=None, endpoint=None, base=None, dtype=None, axis=None
+):
     return (start, stop)
 
 
 @array_function_dispatch(_logspace_dispatcher)
-def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
-             axis=0):
+def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
     """
     Return numbers spaced evenly on a log scale.
 
@@ -278,8 +279,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     return _nx.power(base, y).astype(dtype, copy=False)
 
 
-def _geomspace_dispatcher(start, stop, num=None, endpoint=None, dtype=None,
-                          axis=None):
+def _geomspace_dispatcher(start, stop, num=None, endpoint=None, dtype=None, axis=None):
     return (start, stop)
 
 
@@ -389,7 +389,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     start = asanyarray(start)
     stop = asanyarray(stop)
     if _nx.any(start == 0) or _nx.any(stop == 0):
-        raise ValueError('Geometric sequence cannot include zero')
+        raise ValueError("Geometric sequence cannot include zero")
 
     dt = result_type(start, stop, float(num), _nx.zeros((), dtype))
     if dtype is None:
@@ -408,7 +408,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     # Avoid negligible real or imaginary parts in output by rotating to
     # positive real, calculating, then undoing rotation
     if _nx.issubdtype(dt, _nx.complexfloating):
-        all_imag = (start.real == 0.) & (stop.real == 0.)
+        all_imag = (start.real == 0.0) & (stop.real == 0.0)
         if _nx.any(all_imag):
             start[all_imag] = start[all_imag].imag
             stop[all_imag] = stop[all_imag].imag
@@ -422,8 +422,9 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     log_start = _nx.log10(start)
     log_stop = _nx.log10(stop)
-    result = logspace(log_start, log_stop, num=num,
-                      endpoint=endpoint, base=10.0, dtype=dtype)
+    result = logspace(
+        log_start, log_stop, num=num, endpoint=endpoint, base=10.0, dtype=dtype
+    )
 
     # Make sure the endpoints match the start and stop arguments. This is
     # necessary because np.exp(np.log(x)) is not necessarily equal to x.
@@ -462,10 +463,10 @@ def _add_docstring(obj, doc, warn_on_python):
     if warn_on_python and not _needs_add_docstring(obj):
         warnings.warn(
             "add_newdoc was used on a pure-python object {}. "
-            "Prefer to attach it directly to the source."
-            .format(obj),
+            "Prefer to attach it directly to the source.".format(obj),
             UserWarning,
-            stacklevel=3)
+            stacklevel=3,
+        )
     try:
         add_docstring(obj, doc)
     except Exception:

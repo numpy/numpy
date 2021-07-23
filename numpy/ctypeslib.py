@@ -49,13 +49,17 @@ Then, we're ready to call ``foo_func``:
 >>> _lib.foo_func(out, len(out))                #doctest: +SKIP
 
 """
-__all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
-           'as_ctypes_type']
+__all__ = [
+    "load_library",
+    "ndpointer",
+    "c_intp",
+    "as_ctypes",
+    "as_array",
+    "as_ctypes_type",
+]
 
 import os
-from numpy import (
-    integer, ndarray, dtype as _dtype, asarray, frombuffer
-)
+from numpy import integer, ndarray, dtype as _dtype, asarray, frombuffer
 from numpy.core.multiarray import _flagdict, flagsobj
 
 try:
@@ -64,6 +68,7 @@ except ImportError:
     ctypes = None
 
 if ctypes is None:
+
     def _dummy(*args, **kwds):
         """
         Dummy object that raises an ImportError if ctypes is not available.
@@ -75,13 +80,16 @@ if ctypes is None:
 
         """
         raise ImportError("ctypes is not available.")
+
     load_library = _dummy
     as_ctypes = _dummy
     as_array = _dummy
     from numpy import intp as c_intp
+
     _ndptr_base = object
 else:
     import numpy.core._internal as nic
+
     c_intp = nic._getintp_ctype()
     del nic
     _ndptr_base = ctypes.c_void_p
@@ -115,10 +123,13 @@ else:
             If there is no library with the expected extension, or the
             library is defective and cannot be loaded.
         """
-        if ctypes.__version__ < '1.0.1':
+        if ctypes.__version__ < "1.0.1":
             import warnings
-            warnings.warn("All features of ctypes interface may not work "
-                          "with ctypes < 1.0.1", stacklevel=2)
+
+            warnings.warn(
+                "All features of ctypes interface may not work " "with ctypes < 1.0.1",
+                stacklevel=2,
+            )
 
         ext = os.path.splitext(libname)[1]
         if not ext:
@@ -126,6 +137,7 @@ else:
             # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
             from numpy.distutils.misc_util import get_shared_lib_extension
+
             so_ext = get_shared_lib_extension()
             libname_ext = [libname + so_ext]
             # mac, windows and linux >= py3.2 shared library and loadable
@@ -160,13 +172,23 @@ def _num_fromflags(flaglist):
         num += _flagdict[val]
     return num
 
-_flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
-              'OWNDATA', 'UPDATEIFCOPY', 'WRITEBACKIFCOPY']
+
+_flagnames = [
+    "C_CONTIGUOUS",
+    "F_CONTIGUOUS",
+    "ALIGNED",
+    "WRITEABLE",
+    "OWNDATA",
+    "UPDATEIFCOPY",
+    "WRITEBACKIFCOPY",
+]
+
+
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
         value = _flagdict[key]
-        if (num & value):
+        if num & value:
             res.append(key)
     return res
 
@@ -176,19 +198,14 @@ class _ndptr(_ndptr_base):
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
             raise TypeError("argument must be an ndarray")
-        if cls._dtype_ is not None \
-               and obj.dtype != cls._dtype_:
+        if cls._dtype_ is not None and obj.dtype != cls._dtype_:
             raise TypeError("array must have data type %s" % cls._dtype_)
-        if cls._ndim_ is not None \
-               and obj.ndim != cls._ndim_:
+        if cls._ndim_ is not None and obj.ndim != cls._ndim_:
             raise TypeError("array must have %d dimension(s)" % cls._ndim_)
-        if cls._shape_ is not None \
-               and obj.shape != cls._shape_:
+        if cls._shape_ is not None and obj.shape != cls._shape_:
             raise TypeError("array must have shape %s" % str(cls._shape_))
-        if cls._flags_ is not None \
-               and ((obj.flags.num & cls._flags_) != cls._flags_):
-            raise TypeError("array must have flags %s" %
-                    _flags_fromnum(cls._flags_))
+        if cls._flags_ is not None and ((obj.flags.num & cls._flags_) != cls._flags_):
+            raise TypeError("array must have flags %s" % _flags_fromnum(cls._flags_))
         return obj.ctypes
 
 
@@ -199,6 +216,7 @@ class _concrete_ndptr(_ndptr):
     Notably, this means the pointer has enough information to reconstruct
     the array, which is not generally true.
     """
+
     def _check_retval_(self):
         """
         This method is called when this class is used as the .restype
@@ -223,6 +241,8 @@ class _concrete_ndptr(_ndptr):
 # Factory for an array-checking class with from_param defined for
 #  use with ctypes argtypes mechanism
 _pointer_type_cache = {}
+
+
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     """
     Array-checking restype/argtypes.
@@ -284,7 +304,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     num = None
     if flags is not None:
         if isinstance(flags, str):
-            flags = flags.split(',')
+            flags = flags.split(",")
         elif isinstance(flags, (int, integer)):
             num = flags
             flags = _flags_fromnum(num)
@@ -315,7 +335,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     # produce a name for the new type
     if dtype is None:
-        name = 'any'
+        name = "any"
     elif dtype.names is not None:
         name = str(id(dtype))
     else:
@@ -323,33 +343,33 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     if ndim is not None:
         name += "_%dd" % ndim
     if shape is not None:
-        name += "_"+"x".join(str(x) for x in shape)
+        name += "_" + "x".join(str(x) for x in shape)
     if flags is not None:
-        name += "_"+"_".join(flags)
+        name += "_" + "_".join(flags)
 
     if dtype is not None and shape is not None:
         base = _concrete_ndptr
     else:
         base = _ndptr
 
-    klass = type("ndpointer_%s"%name, (base,),
-                 {"_dtype_": dtype,
-                  "_shape_" : shape,
-                  "_ndim_" : ndim,
-                  "_flags_" : num})
+    klass = type(
+        "ndpointer_%s" % name,
+        (base,),
+        {"_dtype_": dtype, "_shape_": shape, "_ndim_": ndim, "_flags_": num},
+    )
     _pointer_type_cache[cache_key] = klass
     return klass
 
 
 if ctypes is not None:
+
     def _ctype_ndarray(element_type, shape):
-        """ Create an ndarray of the given element type and shape """
+        """Create an ndarray of the given element type and shape"""
         for dim in shape[::-1]:
             element_type = dim * element_type
             # prevent the type name include np.ctypeslib
             element_type.__module__ = None
         return element_type
-
 
     def _get_scalar_type_map():
         """
@@ -357,21 +377,28 @@ if ctypes is not None:
         """
         ct = ctypes
         simple_types = [
-            ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong,
-            ct.c_ubyte, ct.c_ushort, ct.c_uint, ct.c_ulong, ct.c_ulonglong,
-            ct.c_float, ct.c_double,
+            ct.c_byte,
+            ct.c_short,
+            ct.c_int,
+            ct.c_long,
+            ct.c_longlong,
+            ct.c_ubyte,
+            ct.c_ushort,
+            ct.c_uint,
+            ct.c_ulong,
+            ct.c_ulonglong,
+            ct.c_float,
+            ct.c_double,
             ct.c_bool,
         ]
         return {_dtype(ctype): ctype for ctype in simple_types}
 
-
     _scalar_type_map = _get_scalar_type_map()
-
 
     def _ctype_from_dtype_scalar(dtype):
         # swapping twice ensure that `=` is promoted to <, >, or |
-        dtype_with_endian = dtype.newbyteorder('S').newbyteorder('S')
-        dtype_native = dtype.newbyteorder('=')
+        dtype_with_endian = dtype.newbyteorder("S").newbyteorder("S")
+        dtype_native = dtype.newbyteorder("=")
         try:
             ctype = _scalar_type_map[dtype_native]
         except KeyError as e:
@@ -379,19 +406,17 @@ if ctypes is not None:
                 "Converting {!r} to a ctypes type".format(dtype)
             ) from None
 
-        if dtype_with_endian.byteorder == '>':
+        if dtype_with_endian.byteorder == ">":
             ctype = ctype.__ctype_be__
-        elif dtype_with_endian.byteorder == '<':
+        elif dtype_with_endian.byteorder == "<":
             ctype = ctype.__ctype_le__
 
         return ctype
-
 
     def _ctype_from_dtype_subarray(dtype):
         element_dtype, shape = dtype.subdtype
         ctype = _ctype_from_dtype(element_dtype)
         return _ctype_ndarray(ctype, shape)
-
 
     def _ctype_from_dtype_structured(dtype):
         # extract offsets of each field
@@ -403,7 +428,9 @@ if ctypes is not None:
         # ctypes doesn't care about field order
         field_data = sorted(field_data, key=lambda f: f[0])
 
-        if len(field_data) > 1 and all(offset == 0 for offset, name, ctype in field_data):
+        if len(field_data) > 1 and all(
+            offset == 0 for offset, name, ctype in field_data
+        ):
             # union, if multiple fields all at address 0
             size = 0
             _fields_ = []
@@ -413,14 +440,18 @@ if ctypes is not None:
 
             # pad to the right size
             if dtype.itemsize != size:
-                _fields_.append(('', ctypes.c_char * dtype.itemsize))
+                _fields_.append(("", ctypes.c_char * dtype.itemsize))
 
             # we inserted manual padding, so always `_pack_`
-            return type('union', (ctypes.Union,), dict(
-                _fields_=_fields_,
-                _pack_=1,
-                __module__=None,
-            ))
+            return type(
+                "union",
+                (ctypes.Union,),
+                dict(
+                    _fields_=_fields_,
+                    _pack_=1,
+                    __module__=None,
+                ),
+            )
         else:
             last_offset = 0
             _fields_ = []
@@ -429,23 +460,25 @@ if ctypes is not None:
                 if padding < 0:
                     raise NotImplementedError("Overlapping fields")
                 if padding > 0:
-                    _fields_.append(('', ctypes.c_char * padding))
+                    _fields_.append(("", ctypes.c_char * padding))
 
                 _fields_.append((name, ctype))
                 last_offset = offset + ctypes.sizeof(ctype)
 
-
             padding = dtype.itemsize - last_offset
             if padding > 0:
-                _fields_.append(('', ctypes.c_char * padding))
+                _fields_.append(("", ctypes.c_char * padding))
 
             # we inserted manual padding, so always `_pack_`
-            return type('struct', (ctypes.Structure,), dict(
-                _fields_=_fields_,
-                _pack_=1,
-                __module__=None,
-            ))
-
+            return type(
+                "struct",
+                (ctypes.Structure,),
+                dict(
+                    _fields_=_fields_,
+                    _pack_=1,
+                    __module__=None,
+                ),
+            )
 
     def _ctype_from_dtype(dtype):
         if dtype.fields is not None:
@@ -454,7 +487,6 @@ if ctypes is not None:
             return _ctype_from_dtype_subarray(dtype)
         else:
             return _ctype_from_dtype_scalar(dtype)
-
 
     def as_ctypes_type(dtype):
         r"""
@@ -496,7 +528,6 @@ if ctypes is not None:
         """
         return _ctype_from_dtype(_dtype(dtype))
 
-
     def as_array(obj, shape=None):
         """
         Create a numpy array from a ctypes array or POINTER.
@@ -510,13 +541,12 @@ if ctypes is not None:
             # convert pointers to an array of the desired shape
             if shape is None:
                 raise TypeError(
-                    'as_array() requires a shape argument when called on a '
-                    'pointer')
+                    "as_array() requires a shape argument when called on a " "pointer"
+                )
             p_arr_type = ctypes.POINTER(_ctype_ndarray(obj._type_, shape))
             obj = ctypes.cast(obj, p_arr_type).contents
 
         return asarray(obj)
-
 
     def as_ctypes(obj):
         """Create and return a ctypes object from a numpy array.  Actually

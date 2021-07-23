@@ -15,7 +15,7 @@ supports_array: _SupportsArray
 a.base = Any  # E: Property "base" defined in "flatiter" is read-only
 a.coords = Any  # E: Property "coords" defined in "flatiter" is read-only
 a.index = Any  # E: Property "index" defined in "flatiter" is read-only
-a.copy(order='C')  # E: Unexpected keyword argument
+a.copy(order="C")  # E: Unexpected keyword argument
 
 # NOTE: Contrary to `ndarray.__getitem__` its counterpart in `flatiter`
 # does not accept objects with the `__array__` or `__index__` protocols;

@@ -3,11 +3,16 @@ import collections.abc
 import numpy as np
 from numpy import matrix, asmatrix, bmat
 from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises
-    )
+    assert_,
+    assert_equal,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_raises,
+)
 from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
+
 
 class TestCtor:
     def test_basic(self):
@@ -17,10 +22,7 @@ class TestCtor:
 
         B = bmat("A,A;A,A")
         C = bmat([[A, A], [A, A]])
-        D = np.array([[1, 2, 1, 2],
-                      [3, 4, 3, 4],
-                      [1, 2, 1, 2],
-                      [3, 4, 3, 4]])
+        D = np.array([[1, 2, 1, 2], [3, 4, 3, 4], [1, 2, 1, 2], [3, 4, 3, 4]])
         assert_(np.all(B.A == D))
         assert_(np.all(C.A == D))
 
@@ -39,20 +41,13 @@ class TestCtor:
     def test_bmat_nondefault_str(self):
         A = np.array([[1, 2], [3, 4]])
         B = np.array([[5, 6], [7, 8]])
-        Aresult = np.array([[1, 2, 1, 2],
-                            [3, 4, 3, 4],
-                            [1, 2, 1, 2],
-                            [3, 4, 3, 4]])
-        mixresult = np.array([[1, 2, 5, 6],
-                              [3, 4, 7, 8],
-                              [5, 6, 1, 2],
-                              [7, 8, 3, 4]])
+        Aresult = np.array([[1, 2, 1, 2], [3, 4, 3, 4], [1, 2, 1, 2], [3, 4, 3, 4]])
+        mixresult = np.array([[1, 2, 5, 6], [3, 4, 7, 8], [5, 6, 1, 2], [7, 8, 3, 4]])
         assert_(np.all(bmat("A,A;A,A") == Aresult))
-        assert_(np.all(bmat("A,A;A,A", ldict={'A':B}) == Aresult))
-        assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A':B})
-        assert_(
-            np.all(bmat("A,A;A,A", ldict={'A':A}, gdict={'A':B}) == Aresult))
-        b2 = bmat("A,B;C,D", ldict={'A':A,'B':B}, gdict={'C':B,'D':A})
+        assert_(np.all(bmat("A,A;A,A", ldict={"A": B}) == Aresult))
+        assert_raises(TypeError, bmat, "A,A;A,A", gdict={"A": B})
+        assert_(np.all(bmat("A,A;A,A", ldict={"A": A}, gdict={"A": B}) == Aresult))
+        b2 = bmat("A,B;C,D", ldict={"A": A, "B": B}, gdict={"C": B, "D": A})
         assert_(np.all(b2 == mixresult))
 
 
@@ -61,10 +56,7 @@ class TestProperties:
         """Test whether matrix.sum(axis=1) preserves orientation.
         Fails in NumPy <= 0.9.6.2127.
         """
-        M = matrix([[1, 2, 0, 0],
-                   [3, 4, 0, 0],
-                   [1, 2, 1, 2],
-                   [3, 4, 3, 4]])
+        M = matrix([[1, 2, 0, 0], [3, 4, 0, 0], [1, 2, 1, 2], [3, 4, 3, 4]])
         sum0 = matrix([8, 12, 4, 6])
         sum1 = matrix([3, 7, 6, 14]).T
         sumall = 30
@@ -124,15 +116,14 @@ class TestProperties:
     def test_basic(self):
         import numpy.linalg as linalg
 
-        A = np.array([[1., 2.],
-                      [3., 4.]])
+        A = np.array([[1.0, 2.0], [3.0, 4.0]])
         mA = matrix(A)
         assert_(np.allclose(linalg.inv(A), mA.I))
         assert_(np.all(np.array(np.transpose(A) == mA.T)))
         assert_(np.all(np.array(np.transpose(A) == mA.H)))
         assert_(np.all(A == mA.A))
 
-        B = A + 2j*A
+        B = A + 2j * A
         mB = matrix(B)
         assert_(np.allclose(linalg.inv(B), mB.I))
         assert_(np.all(np.array(np.transpose(B) == mB.T)))
@@ -140,18 +131,22 @@ class TestProperties:
 
     def test_pinv(self):
         x = matrix(np.arange(6).reshape(2, 3))
-        xpinv = matrix([[-0.77777778,  0.27777778],
-                        [-0.11111111,  0.11111111],
-                        [ 0.55555556, -0.05555556]])
+        xpinv = matrix(
+            [
+                [-0.77777778, 0.27777778],
+                [-0.11111111, 0.11111111],
+                [0.55555556, -0.05555556],
+            ]
+        )
         assert_almost_equal(x.I, xpinv)
 
     def test_comparisons(self):
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
         mB = matrix(A) + 0.1
-        assert_(np.all(mB == A+0.1))
-        assert_(np.all(mB == matrix(A+0.1)))
-        assert_(not np.any(mB == matrix(A-0.1)))
+        assert_(np.all(mB == A + 0.1))
+        assert_(np.all(mB == matrix(A + 0.1)))
+        assert_(not np.any(mB == matrix(A - 0.1)))
         assert_(np.all(mA < mB))
         assert_(np.all(mA <= mB))
         assert_(np.all(mA <= mA))
@@ -185,9 +180,10 @@ class TestProperties:
         assert_(repr(A) == "matrix([[1, 0],\n        [0, 1]])")
 
     def test_make_bool_matrix_from_str(self):
-        A = matrix('True; True; False')
+        A = matrix("True; True; False")
         B = matrix([[True], [True], [False]])
         assert_array_equal(A, B)
+
 
 class TestCasting:
     def test_basic(self):
@@ -199,7 +195,7 @@ class TestCasting:
         mB = mB + O
         assert_(mB.dtype.type == np.float64)
         assert_(np.all(mA != mB))
-        assert_(np.all(mB == mA+0.1))
+        assert_(np.all(mB == mA + 0.1))
 
         mC = mA.copy()
         O = np.ones((10, 10), np.complex128)
@@ -212,7 +208,7 @@ class TestAlgebra:
     def test_basic(self):
         import numpy.linalg as linalg
 
-        A = np.array([[1., 2.], [3., 4.]])
+        A = np.array([[1.0, 2.0], [3.0, 4.0]])
         mA = matrix(A)
 
         B = np.identity(2)
@@ -228,11 +224,11 @@ class TestAlgebra:
 
         assert_(np.allclose((mA * mA).A, np.dot(A, A)))
         assert_(np.allclose((mA + mA).A, (A + A)))
-        assert_(np.allclose((3*mA).A, (3*A)))
+        assert_(np.allclose((3 * mA).A, (3 * A)))
 
         mA2 = matrix(A)
         mA2 *= 3
-        assert_(np.allclose(mA2.A, 3*A))
+        assert_(np.allclose(mA2.A, 3 * A))
 
     def test_pow(self):
         """Test raising a matrix to an integer power works as expected."""
@@ -243,7 +239,7 @@ class TestAlgebra:
         mi **= -1
         m4 = m2.copy()
         m4 **= 2
-        assert_array_almost_equal(m2, m**2)
+        assert_array_almost_equal(m2, m ** 2)
         assert_array_almost_equal(m4, np.dot(m2, m2))
         assert_array_almost_equal(np.dot(mi, m), np.eye(2))
 
@@ -254,47 +250,77 @@ class TestAlgebra:
             assert_array_almost_equal(m ** 2, m ** two)
 
     def test_notimplemented(self):
-        '''Check that 'not implemented' operations produce a failure.'''
-        A = matrix([[1., 2.],
-                    [3., 4.]])
+        """Check that 'not implemented' operations produce a failure."""
+        A = matrix([[1.0, 2.0], [3.0, 4.0]])
 
         # __rpow__
         with assert_raises(TypeError):
-            1.0**A
+            1.0 ** A
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
         with assert_raises(TypeError):
-            A*object()
+            A * object()
 
 
 class TestMatrixReturn:
     def test_instance_methods(self):
-        a = matrix([1.0], dtype='f8')
+        a = matrix([1.0], dtype="f8")
         methodargs = {
-            'astype': ('intc',),
-            'clip': (0.0, 1.0),
-            'compress': ([1],),
-            'repeat': (1,),
-            'reshape': (1,),
-            'swapaxes': (0, 0),
-            'dot': np.array([1.0]),
-            }
+            "astype": ("intc",),
+            "clip": (0.0, 1.0),
+            "compress": ([1],),
+            "repeat": (1,),
+            "reshape": (1,),
+            "swapaxes": (0, 0),
+            "dot": np.array([1.0]),
+        }
         excluded_methods = [
-            'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
-            'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
-            'searchsorted', 'setflags', 'setfield', 'sort',
-            'partition', 'argpartition',
-            'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
-            'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset',
-            ]
+            "argmin",
+            "choose",
+            "dump",
+            "dumps",
+            "fill",
+            "getfield",
+            "getA",
+            "getA1",
+            "item",
+            "nonzero",
+            "put",
+            "putmask",
+            "resize",
+            "searchsorted",
+            "setflags",
+            "setfield",
+            "sort",
+            "partition",
+            "argpartition",
+            "take",
+            "tofile",
+            "tolist",
+            "tostring",
+            "tobytes",
+            "all",
+            "any",
+            "sum",
+            "argmax",
+            "argmin",
+            "min",
+            "max",
+            "mean",
+            "var",
+            "ptp",
+            "prod",
+            "std",
+            "ctypes",
+            "itemset",
+        ]
         for attrib in dir(a):
-            if attrib.startswith('_') or attrib in excluded_methods:
+            if attrib.startswith("_") or attrib in excluded_methods:
                 continue
             f = getattr(a, attrib)
             if isinstance(f, collections.abc.Callable):
                 # reset contents of a
-                a.astype('f8')
+                a.astype("f8")
                 a.fill(1.0)
                 if attrib in methodargs:
                     args = methodargs[attrib]
@@ -339,13 +365,13 @@ class TestNewScalarIndexing:
         a = self.a
         x = a[1, [0, 1, 0]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[3,  4,  3]]))
+        assert_equal(x, matrix([[3, 4, 3]]))
         x = a[[1, 0]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[3,  4], [1, 2]]))
+        assert_equal(x, matrix([[3, 4], [1, 2]]))
         x = a[[[1], [0]], [[1, 0], [0, 1]]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[4,  3], [1,  2]]))
+        assert_equal(x, matrix([[4, 3], [1, 2]]))
 
     def test_matrix_element(self):
         x = matrix([[1, 2, 3], [4, 5, 6]])
@@ -365,8 +391,8 @@ class TestNewScalarIndexing:
 
     def test_row_column_indexing(self):
         x = asmatrix(np.eye(2))
-        assert_array_equal(x[0,:], [[1, 0]])
-        assert_array_equal(x[1,:], [[0, 1]])
+        assert_array_equal(x[0, :], [[1, 0]])
+        assert_array_equal(x[1, :], [[0, 1]])
         assert_array_equal(x[:, 0], [[1], [0]])
         assert_array_equal(x[:, 1], [[0], [1]])
 
@@ -375,14 +401,14 @@ class TestNewScalarIndexing:
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, np.array([True, False])], x[:, 0])
-        assert_array_equal(x[np.array([True, False, False]),:], x[0,:])
+        assert_array_equal(x[np.array([True, False, False]), :], x[0, :])
 
     def test_list_indexing(self):
         A = np.arange(6)
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, [1, 0]], x[:, ::-1])
-        assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
+        assert_array_equal(x[[2, 1, 0], :], x[::-1, :])
 
 
 class TestPower:
@@ -420,21 +446,21 @@ class TestShape:
     def test_numpy_ravel_order(self):
         x = np.array([[1, 2, 3], [4, 5, 6]])
         assert_equal(np.ravel(x), [1, 2, 3, 4, 5, 6])
-        assert_equal(np.ravel(x, order='F'), [1, 4, 2, 5, 3, 6])
+        assert_equal(np.ravel(x, order="F"), [1, 4, 2, 5, 3, 6])
         assert_equal(np.ravel(x.T), [1, 4, 2, 5, 3, 6])
-        assert_equal(np.ravel(x.T, order='A'), [1, 2, 3, 4, 5, 6])
+        assert_equal(np.ravel(x.T, order="A"), [1, 2, 3, 4, 5, 6])
         x = matrix([[1, 2, 3], [4, 5, 6]])
         assert_equal(np.ravel(x), [1, 2, 3, 4, 5, 6])
-        assert_equal(np.ravel(x, order='F'), [1, 4, 2, 5, 3, 6])
+        assert_equal(np.ravel(x, order="F"), [1, 4, 2, 5, 3, 6])
         assert_equal(np.ravel(x.T), [1, 4, 2, 5, 3, 6])
-        assert_equal(np.ravel(x.T, order='A'), [1, 2, 3, 4, 5, 6])
+        assert_equal(np.ravel(x.T, order="A"), [1, 2, 3, 4, 5, 6])
 
     def test_matrix_ravel_order(self):
         x = matrix([[1, 2, 3], [4, 5, 6]])
         assert_equal(x.ravel(), [[1, 2, 3, 4, 5, 6]])
-        assert_equal(x.ravel(order='F'), [[1, 4, 2, 5, 3, 6]])
+        assert_equal(x.ravel(order="F"), [[1, 4, 2, 5, 3, 6]])
         assert_equal(x.T.ravel(), [[1, 4, 2, 5, 3, 6]])
-        assert_equal(x.T.ravel(order='A'), [[1, 2, 3, 4, 5, 6]])
+        assert_equal(x.T.ravel(order="A"), [[1, 2, 3, 4, 5, 6]])
 
     def test_array_memory_sharing(self):
         assert_(np.may_share_memory(self.a, self.a.ravel()))

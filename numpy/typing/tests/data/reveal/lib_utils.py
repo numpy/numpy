@@ -7,7 +7,10 @@ AR: np.ndarray[Any, np.dtype[np.float64]]
 AR_DICT: Dict[str, np.ndarray[Any, np.dtype[np.float64]]]
 FILE: StringIO
 
-def func(a: int) -> bool: ...
+
+def func(a: int) -> bool:
+    ...
+
 
 reveal_type(np.deprecate(func))  # E: def (a: builtins.int) -> builtins.bool
 reveal_type(np.deprecate())  # E: _Deprecate

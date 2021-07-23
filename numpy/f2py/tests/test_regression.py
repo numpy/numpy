@@ -13,7 +13,7 @@ def _path(*a):
 
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
-    sources = [_path('src', 'regression', 'inout.f90')]
+    sources = [_path("src", "regression", "inout.f90")]
 
     @pytest.mark.slow
     def test_inout(self):
@@ -30,18 +30,22 @@ class TestIntentInOut(util.F2PyTest):
 class TestNumpyVersionAttribute(util.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.
-    sources = [_path('src', 'regression', 'inout.f90')]
+    sources = [_path("src", "regression", "inout.f90")]
 
     @pytest.mark.slow
     def test_numpy_version_attribute(self):
 
         # Check that self.module has an attribute named "__f2py_numpy_version__"
-        assert_(hasattr(self.module, "__f2py_numpy_version__"),
-                msg="Fortran module does not have __f2py_numpy_version__")
+        assert_(
+            hasattr(self.module, "__f2py_numpy_version__"),
+            msg="Fortran module does not have __f2py_numpy_version__",
+        )
 
         # Check that the attribute __f2py_numpy_version__ is a string
-        assert_(isinstance(self.module.__f2py_numpy_version__, str),
-                msg="__f2py_numpy_version__ is not a string")
+        assert_(
+            isinstance(self.module.__f2py_numpy_version__, str),
+            msg="__f2py_numpy_version__ is not a string",
+        )
 
         # Check that __f2py_numpy_version__ has the value numpy.__version__
         assert_string_equal(np.__version__, self.module.__f2py_numpy_version__)
@@ -50,6 +54,5 @@ class TestNumpyVersionAttribute(util.F2PyTest):
 def test_include_path():
     incdir = np.f2py.get_include()
     fnames_in_dir = os.listdir(incdir)
-    for fname in ('fortranobject.c', 'fortranobject.h'):
+    for fname in ("fortranobject.c", "fortranobject.h"):
         assert fname in fnames_in_dir
-

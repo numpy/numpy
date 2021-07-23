@@ -13,11 +13,12 @@ def _path(*a):
 
 class TestParameters(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
-    sources = [_path('src', 'parameter', 'constant_real.f90'),
-               _path('src', 'parameter', 'constant_integer.f90'),
-               _path('src', 'parameter', 'constant_both.f90'),
-               _path('src', 'parameter', 'constant_compound.f90'),
-               _path('src', 'parameter', 'constant_non_compound.f90'),
+    sources = [
+        _path("src", "parameter", "constant_real.f90"),
+        _path("src", "parameter", "constant_integer.f90"),
+        _path("src", "parameter", "constant_both.f90"),
+        _path("src", "parameter", "constant_compound.f90"),
+        _path("src", "parameter", "constant_non_compound.f90"),
     ]
 
     @pytest.mark.slow
@@ -29,7 +30,7 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.float32)
         self.module.foo_single(x)
-        assert_equal(x, [0 + 1 + 2*3, 1, 2])
+        assert_equal(x, [0 + 1 + 2 * 3, 1, 2])
 
     @pytest.mark.slow
     def test_constant_real_double(self):
@@ -40,7 +41,7 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.float64)
         self.module.foo_double(x)
-        assert_equal(x, [0 + 1 + 2*3, 1, 2])
+        assert_equal(x, [0 + 1 + 2 * 3, 1, 2])
 
     @pytest.mark.slow
     def test_constant_compound_int(self):
@@ -51,14 +52,14 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.int32)
         self.module.foo_compound_int(x)
-        assert_equal(x, [0 + 1 + 2*6, 1, 2])
+        assert_equal(x, [0 + 1 + 2 * 6, 1, 2])
 
     @pytest.mark.slow
     def test_constant_non_compound_int(self):
         # check values
         x = np.arange(4, dtype=np.int32)
         self.module.foo_non_compound_int(x)
-        assert_equal(x, [0 + 1 + 2 + 3*4, 1, 2, 3])
+        assert_equal(x, [0 + 1 + 2 + 3 * 4, 1, 2, 3])
 
     @pytest.mark.slow
     def test_constant_integer_int(self):
@@ -69,7 +70,7 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.int32)
         self.module.foo_int(x)
-        assert_equal(x, [0 + 1 + 2*3, 1, 2])
+        assert_equal(x, [0 + 1 + 2 * 3, 1, 2])
 
     @pytest.mark.slow
     def test_constant_integer_long(self):
@@ -80,7 +81,7 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.int64)
         self.module.foo_long(x)
-        assert_equal(x, [0 + 1 + 2*3, 1, 2])
+        assert_equal(x, [0 + 1 + 2 * 3, 1, 2])
 
     @pytest.mark.slow
     def test_constant_both(self):
@@ -91,7 +92,7 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.float64)
         self.module.foo(x)
-        assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
+        assert_equal(x, [0 + 1 * 3 * 3 + 2 * 3 * 3, 1 * 3, 2 * 3])
 
     @pytest.mark.slow
     def test_constant_no(self):
@@ -102,7 +103,7 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.float64)
         self.module.foo_no(x)
-        assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
+        assert_equal(x, [0 + 1 * 3 * 3 + 2 * 3 * 3, 1 * 3, 2 * 3])
 
     @pytest.mark.slow
     def test_constant_sum(self):
@@ -113,4 +114,4 @@ class TestParameters(util.F2PyTest):
         # check values with contiguous array
         x = np.arange(3, dtype=np.float64)
         self.module.foo_sum(x)
-        assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
+        assert_equal(x, [0 + 1 * 3 * 3 + 2 * 3 * 3, 1 * 3, 2 * 3])

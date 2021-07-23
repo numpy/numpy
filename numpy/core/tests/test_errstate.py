@@ -8,29 +8,30 @@ from numpy.testing import assert_, assert_raises
 # known to be buggy. This is an attempt to identify these hosts. It may not
 # catch all possible cases, but it catches the known cases of gh-413 and
 # gh-15562.
-hosttype = sysconfig.get_config_var('HOST_GNU_TYPE')
-arm_softfloat = False if hosttype is None else hosttype.endswith('gnueabi')
+hosttype = sysconfig.get_config_var("HOST_GNU_TYPE")
+arm_softfloat = False if hosttype is None else hosttype.endswith("gnueabi")
+
 
 class TestErrstate:
-    @pytest.mark.skipif(arm_softfloat,
-                        reason='platform/cpu issue with FPU (gh-413,-15562)')
+    @pytest.mark.skipif(
+        arm_softfloat, reason="platform/cpu issue with FPU (gh-413,-15562)"
+    )
     def test_invalid(self):
-        with np.errstate(all='raise', under='ignore'):
+        with np.errstate(all="raise", under="ignore"):
             a = -np.arange(3)
             # This should work
-            with np.errstate(invalid='ignore'):
+            with np.errstate(invalid="ignore"):
                 np.sqrt(a)
             # While this should fail!
             with assert_raises(FloatingPointError):
                 np.sqrt(a)
 
-    @pytest.mark.skipif(arm_softfloat,
-                        reason='platform/cpu issue with FPU (gh-15562)')
+    @pytest.mark.skipif(arm_softfloat, reason="platform/cpu issue with FPU (gh-15562)")
     def test_divide(self):
-        with np.errstate(all='raise', under='ignore'):
+        with np.errstate(all="raise", under="ignore"):
             a = -np.arange(3)
             # This should work
-            with np.errstate(divide='ignore'):
+            with np.errstate(divide="ignore"):
                 a // 0
             # While this should fail!
             with assert_raises(FloatingPointError):
@@ -45,15 +46,15 @@ class TestErrstate:
 
         olderrcall = np.geterrcall()
         with np.errstate(call=foo):
-            assert_(np.geterrcall() is foo, 'call is not foo')
+            assert_(np.geterrcall() is foo, "call is not foo")
             with np.errstate(call=None):
-                assert_(np.geterrcall() is None, 'call is not None')
-        assert_(np.geterrcall() is olderrcall, 'call is not olderrcall')
+                assert_(np.geterrcall() is None, "call is not None")
+        assert_(np.geterrcall() is olderrcall, "call is not olderrcall")
 
     def test_errstate_decorator(self):
-        @np.errstate(all='ignore')
+        @np.errstate(all="ignore")
         def foo():
             a = -np.arange(3)
             a // 0
-            
+
         foo()

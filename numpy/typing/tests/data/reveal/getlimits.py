@@ -16,7 +16,7 @@ machar_f4: np.core.getlimits.MachArLike[_32Bit]
 reveal_type(np.finfo(f))  # E: numpy.finfo[{double}]
 reveal_type(np.finfo(f8))  # E: numpy.finfo[{float64}]
 reveal_type(np.finfo(c8))  # E: numpy.finfo[{float32}]
-reveal_type(np.finfo('f2'))  # E: numpy.finfo[numpy.floating[Any]]
+reveal_type(np.finfo("f2"))  # E: numpy.finfo[numpy.floating[Any]]
 
 reveal_type(finfo_f8.dtype)  # E: numpy.dtype[{float64}]
 reveal_type(finfo_f8.bits)  # E: int
@@ -39,7 +39,7 @@ reveal_type(finfo_f8.machar)  # E: MachArLike[numpy.typing._64Bit]
 reveal_type(np.iinfo(i))  # E: iinfo[{int_}]
 reveal_type(np.iinfo(i8))  # E: iinfo[{int64}]
 reveal_type(np.iinfo(u4))  # E: iinfo[{uint32}]
-reveal_type(np.iinfo('i2'))  # E: iinfo[Any]
+reveal_type(np.iinfo("i2"))  # E: iinfo[Any]
 
 reveal_type(iinfo_i8.dtype)  # E: numpy.dtype[{int64}]
 reveal_type(iinfo_i8.kind)  # E: str

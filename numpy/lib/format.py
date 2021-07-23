@@ -165,26 +165,24 @@ import numpy
 import io
 import warnings
 from numpy.lib.utils import safe_eval
-from numpy.compat import (
-    isfileobj, os_fspath, pickle
-    )
+from numpy.compat import isfileobj, os_fspath, pickle
 
 
 __all__ = []
 
 
-EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
-MAGIC_PREFIX = b'\x93NUMPY'
+EXPECTED_KEYS = {"descr", "fortran_order", "shape"}
+MAGIC_PREFIX = b"\x93NUMPY"
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
-ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
-BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
+ARRAY_ALIGN = 64  # plausible values are powers of 2 between 16 and 4096
+BUFFER_SIZE = 2 ** 18  # size of buffer for reading npz files in bytes
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
 _header_size_info = {
-    (1, 0): ('<H', 'latin1'),
-    (2, 0): ('<I', 'latin1'),
-    (3, 0): ('<I', 'utf8'),
+    (1, 0): ("<H", "latin1"),
+    (2, 0): ("<I", "latin1"),
+    (3, 0): ("<I", "utf8"),
 }
 
 
@@ -193,8 +191,9 @@ def _check_version(version):
         msg = "we only support format version (1,0), (2,0), and (3,0), not %s"
         raise ValueError(msg % (version,))
 
+
 def magic(major, minor):
-    """ Return the magic string for the given file format version.
+    """Return the magic string for the given file format version.
 
     Parameters
     ----------
@@ -215,8 +214,9 @@ def magic(major, minor):
         raise ValueError("minor version must be 0 <= minor < 256")
     return MAGIC_PREFIX + bytes([major, minor])
 
+
 def read_magic(fp):
-    """ Read the magic string to get the version of the file format.
+    """Read the magic string to get the version of the file format.
 
     Parameters
     ----------
@@ -234,6 +234,7 @@ def read_magic(fp):
     major, minor = magic_str[-2:]
     return major, minor
 
+
 def _has_metadata(dt):
     if dt.metadata is not None:
         return True
@@ -243,6 +244,7 @@ def _has_metadata(dt):
         return _has_metadata(dt.base)
     else:
         return False
+
 
 def dtype_to_descr(dtype):
     """
@@ -268,9 +270,12 @@ def dtype_to_descr(dtype):
 
     """
     if _has_metadata(dtype):
-        warnings.warn("metadata on a dtype may be saved or ignored, but will "
-                      "raise if saved when read. Use another form of storage.",
-                      UserWarning, stacklevel=2)
+        warnings.warn(
+            "metadata on a dtype may be saved or ignored, but will "
+            "raise if saved when read. Use another form of storage.",
+            UserWarning,
+            stacklevel=2,
+        )
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get
@@ -279,6 +284,7 @@ def dtype_to_descr(dtype):
         return dtype.descr
     else:
         return dtype.str
+
 
 def descr_to_dtype(descr):
     """
@@ -324,7 +330,7 @@ def descr_to_dtype(descr):
 
         # Ignore padding bytes, which will be void bytes with '' as name
         # Once support for blank names is removed, only "if name == ''" needed)
-        is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
+        is_pad = name == "" and dt.type is numpy.void and dt.names is None
         if not is_pad:
             title, name = name if isinstance(name, tuple) else (None, name)
             titles.append(title)
@@ -333,11 +339,19 @@ def descr_to_dtype(descr):
             offsets.append(offset)
         offset += dt.itemsize
 
-    return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
-                        'offsets': offsets, 'itemsize': offset})
+    return numpy.dtype(
+        {
+            "names": names,
+            "formats": formats,
+            "titles": titles,
+            "offsets": offsets,
+            "itemsize": offset,
+        }
+    )
+
 
 def header_data_from_array_1_0(array):
-    """ Get the dictionary of header metadata from a numpy.ndarray.
+    """Get the dictionary of header metadata from a numpy.ndarray.
 
     Parameters
     ----------
@@ -349,18 +363,18 @@ def header_data_from_array_1_0(array):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
-    d = {'shape': array.shape}
+    d = {"shape": array.shape}
     if array.flags.c_contiguous:
-        d['fortran_order'] = False
+        d["fortran_order"] = False
     elif array.flags.f_contiguous:
-        d['fortran_order'] = True
+        d["fortran_order"] = True
     else:
         # Totally non-contiguous data. We will have to make it C-contiguous
         # before writing. Note that we need to test for C_CONTIGUOUS first
         # because a 1-D array is both C_CONTIGUOUS and F_CONTIGUOUS.
-        d['fortran_order'] = False
+        d["fortran_order"] = False
 
-    d['descr'] = dtype_to_descr(array.dtype)
+    d["descr"] = dtype_to_descr(array.dtype)
     return d
 
 
@@ -369,6 +383,7 @@ def _wrap_header(header, version):
     Takes a stringified header, and attaches the prefix and padding to it
     """
     import struct
+
     assert version is not None
     fmt, encoding = _header_size_info[version]
     if not isinstance(header, bytes):  # always true on python 3
@@ -386,7 +401,7 @@ def _wrap_header(header, version):
     # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
     # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
     # offset must be page-aligned (i.e. the beginning of the file).
-    return header_prefix + header + b' '*padlen + b'\n'
+    return header_prefix + header + b" " * padlen + b"\n"
 
 
 def _wrap_header_guess_version(header):
@@ -403,18 +418,24 @@ def _wrap_header_guess_version(header):
     except UnicodeEncodeError:
         pass
     else:
-        warnings.warn("Stored array in format 2.0. It can only be"
-                      "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+        warnings.warn(
+            "Stored array in format 2.0. It can only be" "read by NumPy >= 1.9",
+            UserWarning,
+            stacklevel=2,
+        )
         return ret
 
     header = _wrap_header(header, (3, 0))
-    warnings.warn("Stored array in format 3.0. It can only be "
-                  "read by NumPy >= 1.17", UserWarning, stacklevel=2)
+    warnings.warn(
+        "Stored array in format 3.0. It can only be " "read by NumPy >= 1.17",
+        UserWarning,
+        stacklevel=2,
+    )
     return header
 
 
 def _write_array_header(fp, d, version=None):
-    """ Write the header for an array and returns the version used
+    """Write the header for an array and returns the version used
 
     Parameters
     ----------
@@ -439,8 +460,9 @@ def _write_array_header(fp, d, version=None):
         header = _wrap_header(header, version)
     fp.write(header)
 
+
 def write_array_header_1_0(fp, d):
-    """ Write the header for an array using the 1.0 format.
+    """Write the header for an array using the 1.0 format.
 
     Parameters
     ----------
@@ -453,7 +475,7 @@ def write_array_header_1_0(fp, d):
 
 
 def write_array_header_2_0(fp, d):
-    """ Write the header for an array using the 2.0 format.
+    """Write the header for an array using the 2.0 format.
         The 2.0 format allows storing very large structured arrays.
 
     .. versionadded:: 1.9.0
@@ -466,6 +488,7 @@ def write_array_header_2_0(fp, d):
         representation to the header of the file.
     """
     _write_array_header(fp, d, (2, 0))
+
 
 def read_array_header_1_0(fp):
     """
@@ -497,6 +520,7 @@ def read_array_header_1_0(fp):
 
     """
     return _read_array_header(fp, version=(1, 0))
+
 
 def read_array_header_2_0(fp):
     """
@@ -557,13 +581,15 @@ def _filter_header(s):
     for token in tokenize.generate_tokens(StringIO(s).readline):
         token_type = token[0]
         token_string = token[1]
-        if (last_token_was_number and
-                token_type == tokenize.NAME and
-                token_string == "L"):
+        if (
+            last_token_was_number
+            and token_type == tokenize.NAME
+            and token_string == "L"
+        ):
             continue
         else:
             tokens.append(token)
-        last_token_was_number = (token_type == tokenize.NUMBER)
+        last_token_was_number = token_type == tokenize.NUMBER
     return tokenize.untokenize(tokens)
 
 
@@ -574,6 +600,7 @@ def _read_array_header(fp, version):
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
+
     hinfo = _header_size_info.get(version)
     if hinfo is None:
         raise ValueError("Invalid version {!r}".format(version))
@@ -609,20 +636,22 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
-    if (not isinstance(d['shape'], tuple) or
-            not all(isinstance(x, int) for x in d['shape'])):
+    if not isinstance(d["shape"], tuple) or not all(
+        isinstance(x, int) for x in d["shape"]
+    ):
         msg = "shape is not valid: {!r}"
-        raise ValueError(msg.format(d['shape']))
-    if not isinstance(d['fortran_order'], bool):
+        raise ValueError(msg.format(d["shape"]))
+    if not isinstance(d["fortran_order"], bool):
         msg = "fortran_order is not a valid bool: {!r}"
-        raise ValueError(msg.format(d['fortran_order']))
+        raise ValueError(msg.format(d["fortran_order"]))
     try:
-        dtype = descr_to_dtype(d['descr'])
+        dtype = descr_to_dtype(d["descr"])
     except TypeError as e:
         msg = "descr is not a valid dtype descriptor: {!r}"
-        raise ValueError(msg.format(d['descr'])) from e
+        raise ValueError(msg.format(d["descr"])) from e
 
-    return d['shape'], d['fortran_order'], dtype
+    return d["shape"], d["fortran_order"], dtype
+
 
 def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
     """
@@ -673,8 +702,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         # We contain Python objects so we cannot write out the data
         # directly.  Instead, we will pickle it out
         if not allow_pickle:
-            raise ValueError("Object arrays cannot be saved when "
-                             "allow_pickle=False")
+            raise ValueError("Object arrays cannot be saved when " "allow_pickle=False")
         if pickle_kwargs is None:
             pickle_kwargs = {}
         pickle.dump(array, fp, protocol=3, **pickle_kwargs)
@@ -683,17 +711,23 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
             array.T.tofile(fp)
         else:
             for chunk in numpy.nditer(
-                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='F'):
-                fp.write(chunk.tobytes('C'))
+                array,
+                flags=["external_loop", "buffered", "zerosize_ok"],
+                buffersize=buffersize,
+                order="F",
+            ):
+                fp.write(chunk.tobytes("C"))
     else:
         if isfileobj(fp):
             array.tofile(fp)
         else:
             for chunk in numpy.nditer(
-                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='C'):
-                fp.write(chunk.tobytes('C'))
+                array,
+                flags=["external_loop", "buffered", "zerosize_ok"],
+                buffersize=buffersize,
+                order="C",
+            ):
+                fp.write(chunk.tobytes("C"))
 
 
 def read_array(fp, allow_pickle=False, pickle_kwargs=None):
@@ -740,17 +774,20 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
     if dtype.hasobject:
         # The array contained Python objects. We need to unpickle the data.
         if not allow_pickle:
-            raise ValueError("Object arrays cannot be loaded when "
-                             "allow_pickle=False")
+            raise ValueError(
+                "Object arrays cannot be loaded when " "allow_pickle=False"
+            )
         if pickle_kwargs is None:
             pickle_kwargs = {}
         try:
             array = pickle.load(fp, **pickle_kwargs)
         except UnicodeError as err:
             # Friendlier error message
-            raise UnicodeError("Unpickling a python object failed: %r\n"
-                               "You may need to pass the encoding= option "
-                               "to numpy.load" % (err,)) from err
+            raise UnicodeError(
+                "Unpickling a python object failed: %r\n"
+                "You may need to pass the encoding= option "
+                "to numpy.load" % (err,)
+            ) from err
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.
@@ -777,8 +814,9 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
                     read_count = min(max_read_count, count - i)
                     read_size = int(read_count * dtype.itemsize)
                     data = _read_bytes(fp, read_size, "array data")
-                    array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
-                                                             count=read_count)
+                    array[i : i + read_count] = numpy.frombuffer(
+                        data, dtype=dtype, count=read_count
+                    )
 
         if fortran_order:
             array.shape = shape[::-1]
@@ -789,8 +827,9 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
     return array
 
 
-def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=None):
+def open_memmap(
+    filename, mode="r+", dtype=None, shape=None, fortran_order=False, version=None
+):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -840,10 +879,12 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     """
     if isfileobj(filename):
-        raise ValueError("Filename must be a string or a path-like object."
-                         "  Memmap cannot use existing file handles.")
+        raise ValueError(
+            "Filename must be a string or a path-like object."
+            "  Memmap cannot use existing file handles."
+        )
 
-    if 'w' in mode:
+    if "w" in mode:
         # We are creating the file, not reading it.
         # Check if we ought to create the file.
         _check_version(version)
@@ -859,12 +900,12 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        with open(os_fspath(filename), mode+'b') as fp:
+        with open(os_fspath(filename), mode + "b") as fp:
             _write_array_header(fp, d, version)
             offset = fp.tell()
     else:
         # Read the header of the file first.
-        with open(os_fspath(filename), 'rb') as fp:
+        with open(os_fspath(filename), "rb") as fp:
             version = read_magic(fp)
             _check_version(version)
 
@@ -875,17 +916,18 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             offset = fp.tell()
 
     if fortran_order:
-        order = 'F'
+        order = "F"
     else:
-        order = 'C'
+        order = "C"
 
     # We need to change a write-only mode to a read-write mode since we've
     # already written data to the file.
-    if mode == 'w+':
-        mode = 'r+'
+    if mode == "w+":
+        mode = "r+"
 
-    marray = numpy.memmap(filename, dtype=dtype, shape=shape, order=order,
-        mode=mode, offset=offset)
+    marray = numpy.memmap(
+        filename, dtype=dtype, shape=shape, order=order, mode=mode, offset=offset
+    )
 
     return marray
 

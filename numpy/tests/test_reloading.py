@@ -29,12 +29,13 @@ def test_numpy_reloading():
     assert_(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
     assert_(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
 
+
 def test_novalue():
     import numpy as np
+
     for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-        assert_equal(repr(np._NoValue), '<no value>')
-        assert_(pickle.loads(pickle.dumps(np._NoValue,
-                                          protocol=proto)) is np._NoValue)
+        assert_equal(repr(np._NoValue), "<no value>")
+        assert_(pickle.loads(pickle.dumps(np._NoValue, protocol=proto)) is np._NoValue)
 
 
 def test_full_reimport():
@@ -45,7 +46,8 @@ def test_full_reimport():
     # Test within a new process, to ensure that we do not mess with the
     # global state during the test run (could lead to cryptic test failures).
     # This is generally unsafe, especially, since we also reload the C-modules.
-    code = textwrap.dedent(r"""
+    code = textwrap.dedent(
+        r"""
         import sys
         from pytest import warns
         import numpy as np
@@ -56,8 +58,9 @@ def test_full_reimport():
 
         with warns(UserWarning):
             import numpy as np
-        """)
-    p = subprocess.run([sys.executable, '-c', code], capture_output=True)
+        """
+    )
+    p = subprocess.run([sys.executable, "-c", code], capture_output=True)
     if p.returncode:
         raise AssertionError(
             f"Non-zero return code: {p.returncode!r}\n\n{p.stderr.decode()}"

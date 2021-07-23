@@ -6,7 +6,6 @@ from . import util
 
 
 class TestReturnLogical(util.F2PyTest):
-
     def check_function(self, t):
         assert_(t(True) == 1, repr(t(True)))
         assert_(t(False) == 0, repr(t(False)))
@@ -18,9 +17,9 @@ class TestReturnLogical(util.F2PyTest):
         assert_(t(234) == 1)
         assert_(t(234.6) == 1)
         assert_(t(234.6 + 3j) == 1)
-        assert_(t('234') == 1)
-        assert_(t('aaa') == 1)
-        assert_(t('') == 0)
+        assert_(t("234") == 1)
+        assert_(t("aaa") == 1)
+        assert_(t("") == 0)
         assert_(t([]) == 0)
         assert_(t(()) == 0)
         assert_(t({}) == 0)
@@ -32,14 +31,14 @@ class TestReturnLogical(util.F2PyTest):
         assert_(t(array(234)) == 1)
         assert_(t(array([234])) == 1)
         assert_(t(array([[234]])) == 1)
-        assert_(t(array([234], 'b')) == 1)
-        assert_(t(array([234], 'h')) == 1)
-        assert_(t(array([234], 'i')) == 1)
-        assert_(t(array([234], 'l')) == 1)
-        assert_(t(array([234], 'f')) == 1)
-        assert_(t(array([234], 'd')) == 1)
-        assert_(t(array([234 + 3j], 'F')) == 1)
-        assert_(t(array([234], 'D')) == 1)
+        assert_(t(array([234], "b")) == 1)
+        assert_(t(array([234], "h")) == 1)
+        assert_(t(array([234], "i")) == 1)
+        assert_(t(array([234], "l")) == 1)
+        assert_(t(array([234], "f")) == 1)
+        assert_(t(array([234], "d")) == 1)
+        assert_(t(array([234 + 3j], "F")) == 1)
+        assert_(t(array([234], "D")) == 1)
         assert_(t(array(0)) == 0)
         assert_(t(array([0])) == 0)
         assert_(t(array([[0]])) == 0)
@@ -109,7 +108,7 @@ c       end
     """
 
     @pytest.mark.slow
-    @pytest.mark.parametrize('name', 't0,t1,t2,t4,s0,s1,s2,s4'.split(','))
+    @pytest.mark.parametrize("name", "t0,t1,t2,t4,s0,s1,s2,s4".split(","))
     def test_all(self, name):
         self.check_function(getattr(self.module, name))
 
@@ -179,7 +178,6 @@ end module f90_return_logical
     """
 
     @pytest.mark.slow
-    @pytest.mark.parametrize('name',
-                             't0,t1,t2,t4,t8,s0,s1,s2,s4,s8'.split(','))
+    @pytest.mark.parametrize("name", "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","))
     def test_all(self, name):
         self.check_function(getattr(self.module.f90_return_logical, name))

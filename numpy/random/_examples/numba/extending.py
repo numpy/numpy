@@ -8,6 +8,7 @@ bit_gen = PCG64()
 next_d = bit_gen.cffi.next_double
 state_addr = bit_gen.cffi.state_address
 
+
 def normals(n, state):
     out = np.empty(n)
     for i in range((n + 1) // 2):
@@ -24,18 +25,23 @@ def normals(n, state):
             out[2 * i + 1] = f * x2
     return out
 
+
 # Compile using Numba
 normalsj = nb.jit(normals, nopython=True)
 # Must use state address not state with numba
 n = 10000
 
+
 def numbacall():
     return normalsj(n, state_addr)
 
+
 rg = np.random.Generator(PCG64())
+
 
 def numpycall():
     return rg.normal(size=n)
+
 
 # Check that the functions work
 r1 = numbacall()
@@ -44,14 +50,15 @@ assert r1.shape == (n,)
 assert r1.shape == r2.shape
 
 t1 = timeit(numbacall, number=1000)
-print(f'{t1:.2f} secs for {n} PCG64 (Numba/PCG64) gaussian randoms')
+print(f"{t1:.2f} secs for {n} PCG64 (Numba/PCG64) gaussian randoms")
 t2 = timeit(numpycall, number=1000)
-print(f'{t2:.2f} secs for {n} PCG64 (NumPy/PCG64) gaussian randoms')
+print(f"{t2:.2f} secs for {n} PCG64 (NumPy/PCG64) gaussian randoms")
 
 # example 2
 
 next_u32 = bit_gen.ctypes.next_uint32
 ctypes_state = bit_gen.ctypes.state
+
 
 @nb.jit(nopython=True)
 def bounded_uint(lb, ub, state):
@@ -80,5 +87,3 @@ def bounded_uints(lb, ub, n, state):
 
 
 bounded_uints(323, 2394691, 10000000, ctypes_state.value)
-
-

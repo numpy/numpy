@@ -29,13 +29,13 @@ iter(np.ndindex(1, 2, 3))
 next(np.ndindex(1, 2, 3))
 
 np.unravel_index([22, 41, 37], (7, 6))
-np.unravel_index([31, 41, 13], (7, 6), order='F')
+np.unravel_index([31, 41, 13], (7, 6), order="F")
 np.unravel_index(1621, (6, 7, 8, 9))
 
 np.ravel_multi_index(AR_LIKE_i, (7, 6))
-np.ravel_multi_index(AR_LIKE_i, (7, 6), order='F')
-np.ravel_multi_index(AR_LIKE_i, (4, 6), mode='clip')
-np.ravel_multi_index(AR_LIKE_i, (4, 4), mode=('clip', 'wrap'))
+np.ravel_multi_index(AR_LIKE_i, (7, 6), order="F")
+np.ravel_multi_index(AR_LIKE_i, (4, 6), mode="clip")
+np.ravel_multi_index(AR_LIKE_i, (4, 4), mode=("clip", "wrap"))
 np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9))
 
 np.mgrid[1:1:2]

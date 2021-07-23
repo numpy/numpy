@@ -27,8 +27,22 @@ n = n-dimensional transform
 behavior.)
 
 """
-__all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
-           'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
+__all__ = [
+    "fft",
+    "ifft",
+    "rfft",
+    "irfft",
+    "hfft",
+    "ihfft",
+    "rfftn",
+    "irfftn",
+    "rfft2",
+    "irfft2",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+]
 
 import functools
 
@@ -39,7 +53,8 @@ from numpy.core import overrides
 
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy.fft')
+    overrides.array_function_dispatch, module="numpy.fft"
+)
 
 
 # `inv_norm` is a float by which the result of the transform needs to be
@@ -51,11 +66,11 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
     if n is None:
         n = a.shape[axis]
 
-    fct = 1/inv_norm
+    fct = 1 / inv_norm
 
     if a.shape[axis] != n:
         s = list(a.shape)
-        index = [slice(None)]*len(s)
+        index = [slice(None)] * len(s)
         if s[axis] > n:
             index[axis] = slice(0, n)
             a = a[tuple(index)]
@@ -66,7 +81,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
             z[tuple(index)] = a
             a = z
 
-    if axis == a.ndim-1:
+    if axis == a.ndim - 1:
         r = pfi.execute(a, is_real, is_forward, fct)
     else:
         a = swapaxes(a, axis, -1)
@@ -85,8 +100,9 @@ def _get_forward_norm(n, norm):
         return sqrt(n)
     elif norm == "forward":
         return n
-    raise ValueError(f'Invalid norm value {norm}; should be "backward",'
-                     '"ortho" or "forward".')
+    raise ValueError(
+        f'Invalid norm value {norm}; should be "backward",' '"ortho" or "forward".'
+    )
 
 
 def _get_backward_norm(n, norm):
@@ -99,20 +115,26 @@ def _get_backward_norm(n, norm):
         return sqrt(n)
     elif norm == "forward":
         return 1
-    raise ValueError(f'Invalid norm value {norm}; should be "backward", '
-                     '"ortho" or "forward".')
+    raise ValueError(
+        f'Invalid norm value {norm}; should be "backward", ' '"ortho" or "forward".'
+    )
 
 
-_SWAP_DIRECTION_MAP = {"backward": "forward", None: "forward",
-                       "ortho": "ortho", "forward": "backward"}
+_SWAP_DIRECTION_MAP = {
+    "backward": "forward",
+    None: "forward",
+    "ortho": "ortho",
+    "forward": "backward",
+}
 
 
 def _swap_direction(norm):
     try:
         return _SWAP_DIRECTION_MAP[norm]
     except KeyError:
-        raise ValueError(f'Invalid norm value {norm}; should be "backward", '
-                         '"ortho" or "forward".') from None
+        raise ValueError(
+            f'Invalid norm value {norm}; should be "backward", ' '"ortho" or "forward".'
+        ) from None
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -1200,7 +1222,7 @@ def rfftn(a, s=None, axes=None, norm=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1], norm)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes) - 1):
         a = fft(a, s[ii], axes[ii], norm)
     return a
 
@@ -1361,7 +1383,7 @@ def irfftn(a, s=None, axes=None, norm=None):
     """
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes) - 1):
         a = ifft(a, s[ii], axes[ii], norm)
     a = irfft(a, s[-1], axes[-1], norm)
     return a

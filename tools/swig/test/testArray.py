@@ -5,7 +5,8 @@ import unittest
 
 # Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
+
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError
 else:
@@ -15,8 +16,8 @@ import Array
 
 ######################################################################
 
-class Array1TestCase(unittest.TestCase):
 
+class Array1TestCase(unittest.TestCase):
     def setUp(self):
         self.length = 5
         self.array1 = Array.Array1(self.length)
@@ -39,7 +40,8 @@ class Array1TestCase(unittest.TestCase):
 
     def testConstructor3(self):
         "Test Array1 copy constructor"
-        for i in range(self.array1.length()): self.array1[i] = i
+        for i in range(self.array1.length()):
+            self.array1[i] = i
         arrayCopy = Array.Array1(self.array1)
         self.assertTrue(arrayCopy == self.array1)
 
@@ -63,7 +65,7 @@ class Array1TestCase(unittest.TestCase):
 
     def testResize1(self):
         "Test Array1 resize method, array"
-        a = np.zeros((2*self.length,), dtype='l')
+        a = np.zeros((2 * self.length,), dtype="l")
         self.array1.resize(a)
         self.assertTrue(len(self.array1) == a.size)
 
@@ -75,9 +77,9 @@ class Array1TestCase(unittest.TestCase):
         "Test Array1 __setitem__, __getitem__ methods"
         n = self.length
         for i in range(n):
-            self.array1[i] = i*i
+            self.array1[i] = i * i
         for i in range(n):
-            self.assertTrue(self.array1[i] == i*i)
+            self.assertTrue(self.array1[i] == i * i)
 
     def testSetBad1(self):
         "Test Array1 __setitem__ method, negative index"
@@ -85,7 +87,7 @@ class Array1TestCase(unittest.TestCase):
 
     def testSetBad2(self):
         "Test Array1 __setitem__ method, out-of-range index"
-        self.assertRaises(IndexError, self.array1.__setitem__, self.length+1, 0)
+        self.assertRaises(IndexError, self.array1.__setitem__, self.length + 1, 0)
 
     def testGetBad1(self):
         "Test Array1 __getitem__ method, negative index"
@@ -93,30 +95,34 @@ class Array1TestCase(unittest.TestCase):
 
     def testGetBad2(self):
         "Test Array1 __getitem__ method, out-of-range index"
-        self.assertRaises(IndexError, self.array1.__getitem__, self.length+1)
+        self.assertRaises(IndexError, self.array1.__getitem__, self.length + 1)
 
     def testAsString(self):
         "Test Array1 asString method"
-        for i in range(self.array1.length()): self.array1[i] = i+1
+        for i in range(self.array1.length()):
+            self.array1[i] = i + 1
         self.assertTrue(self.array1.asString() == "[ 1, 2, 3, 4, 5 ]")
 
     def testStr(self):
         "Test Array1 __str__ method"
-        for i in range(self.array1.length()): self.array1[i] = i-2
+        for i in range(self.array1.length()):
+            self.array1[i] = i - 2
         self.assertTrue(str(self.array1) == "[ -2, -1, 0, 1, 2 ]")
 
     def testView(self):
         "Test Array1 view method"
-        for i in range(self.array1.length()): self.array1[i] = i+1
+        for i in range(self.array1.length()):
+            self.array1[i] = i + 1
         a = self.array1.view()
         self.assertTrue(isinstance(a, np.ndarray))
         self.assertTrue(len(a) == self.length)
         self.assertTrue((a == [1, 2, 3, 4, 5]).all())
 
+
 ######################################################################
 
-class Array2TestCase(unittest.TestCase):
 
+class Array2TestCase(unittest.TestCase):
     def setUp(self):
         self.nrows = 5
         self.ncols = 4
@@ -164,7 +170,7 @@ class Array2TestCase(unittest.TestCase):
 
     def testLen(self):
         "Test Array2 __len__ method"
-        self.assertTrue(len(self.array2) == self.nrows*self.ncols)
+        self.assertTrue(len(self.array2) == self.nrows * self.ncols)
 
     def testResize0(self):
         "Test Array2 resize method, size"
@@ -175,7 +181,7 @@ class Array2TestCase(unittest.TestCase):
 
     def testResize1(self):
         "Test Array2 resize method, array"
-        a = np.zeros((2*self.nrows, 2*self.ncols), dtype='l')
+        a = np.zeros((2 * self.nrows, 2 * self.ncols), dtype="l")
         self.array2.resize(a)
         self.assertTrue(len(self.array2) == a.size)
 
@@ -191,10 +197,10 @@ class Array2TestCase(unittest.TestCase):
         "Test Array2 __setitem__, __getitem__ methods"
         m = self.nrows
         n = self.ncols
-        array1 = [ ]
+        array1 = []
         a = np.arange(n, dtype="l")
         for i in range(m):
-            array1.append(Array.Array1(i*a))
+            array1.append(Array.Array1(i * a))
         for i in range(m):
             self.array2[i] = array1[i]
         for i in range(m):
@@ -206,10 +212,10 @@ class Array2TestCase(unittest.TestCase):
         n = self.ncols
         for i in range(m):
             for j in range(n):
-                self.array2[i][j] = i*j
+                self.array2[i][j] = i * j
         for i in range(m):
             for j in range(n):
-                self.assertTrue(self.array2[i][j] == i*j)
+                self.assertTrue(self.array2[i][j] == i * j)
 
     def testSetBad1(self):
         "Test Array2 __setitem__ method, negative index"
@@ -219,7 +225,7 @@ class Array2TestCase(unittest.TestCase):
     def testSetBad2(self):
         "Test Array2 __setitem__ method, out-of-range index"
         a = Array.Array1(self.ncols)
-        self.assertRaises(IndexError, self.array2.__setitem__, self.nrows+1, a)
+        self.assertRaises(IndexError, self.array2.__setitem__, self.nrows + 1, a)
 
     def testGetBad1(self):
         "Test Array2 __getitem__ method, negative index"
@@ -227,7 +233,7 @@ class Array2TestCase(unittest.TestCase):
 
     def testGetBad2(self):
         "Test Array2 __getitem__ method, out-of-range index"
-        self.assertRaises(IndexError, self.array2.__getitem__, self.nrows+1)
+        self.assertRaises(IndexError, self.array2.__getitem__, self.nrows + 1)
 
     def testAsString(self):
         "Test Array2 asString method"
@@ -240,7 +246,7 @@ class Array2TestCase(unittest.TestCase):
 """
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array2[i][j] = i+j
+                self.array2[i][j] = i + j
         self.assertTrue(self.array2.asString() == result)
 
     def testStr(self):
@@ -254,7 +260,7 @@ class Array2TestCase(unittest.TestCase):
 """
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array2[i][j] = i-j
+                self.array2[i][j] = i - j
         self.assertTrue(str(self.array2) == result)
 
     def testView(self):
@@ -263,10 +269,11 @@ class Array2TestCase(unittest.TestCase):
         self.assertTrue(isinstance(a, np.ndarray))
         self.assertTrue(len(a) == self.nrows)
 
+
 ######################################################################
 
-class ArrayZTestCase(unittest.TestCase):
 
+class ArrayZTestCase(unittest.TestCase):
     def setUp(self):
         self.length = 5
         self.array3 = Array.ArrayZ(self.length)
@@ -289,7 +296,8 @@ class ArrayZTestCase(unittest.TestCase):
 
     def testConstructor3(self):
         "Test ArrayZ copy constructor"
-        for i in range(self.array3.length()): self.array3[i] = complex(i,-i)
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i, -i)
         arrayCopy = Array.ArrayZ(self.array3)
         self.assertTrue(arrayCopy == self.array3)
 
@@ -313,7 +321,7 @@ class ArrayZTestCase(unittest.TestCase):
 
     def testResize1(self):
         "Test ArrayZ resize method, array"
-        a = np.zeros((2*self.length,), dtype=np.complex128)
+        a = np.zeros((2 * self.length,), dtype=np.complex128)
         self.array3.resize(a)
         self.assertTrue(len(self.array3) == a.size)
 
@@ -325,9 +333,9 @@ class ArrayZTestCase(unittest.TestCase):
         "Test ArrayZ __setitem__, __getitem__ methods"
         n = self.length
         for i in range(n):
-            self.array3[i] = i*i
+            self.array3[i] = i * i
         for i in range(n):
-            self.assertTrue(self.array3[i] == i*i)
+            self.assertTrue(self.array3[i] == i * i)
 
     def testSetBad1(self):
         "Test ArrayZ __setitem__ method, negative index"
@@ -335,7 +343,7 @@ class ArrayZTestCase(unittest.TestCase):
 
     def testSetBad2(self):
         "Test ArrayZ __setitem__ method, out-of-range index"
-        self.assertRaises(IndexError, self.array3.__setitem__, self.length+1, 0)
+        self.assertRaises(IndexError, self.array3.__setitem__, self.length + 1, 0)
 
     def testGetBad1(self):
         "Test ArrayZ __getitem__ method, negative index"
@@ -343,25 +351,31 @@ class ArrayZTestCase(unittest.TestCase):
 
     def testGetBad2(self):
         "Test ArrayZ __getitem__ method, out-of-range index"
-        self.assertRaises(IndexError, self.array3.__getitem__, self.length+1)
+        self.assertRaises(IndexError, self.array3.__getitem__, self.length + 1)
 
     def testAsString(self):
         "Test ArrayZ asString method"
-        for i in range(self.array3.length()): self.array3[i] = complex(i+1,-i-1)
-        self.assertTrue(self.array3.asString() == "[ (1,-1), (2,-2), (3,-3), (4,-4), (5,-5) ]")
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i + 1, -i - 1)
+        self.assertTrue(
+            self.array3.asString() == "[ (1,-1), (2,-2), (3,-3), (4,-4), (5,-5) ]"
+        )
 
     def testStr(self):
         "Test ArrayZ __str__ method"
-        for i in range(self.array3.length()): self.array3[i] = complex(i-2,(i-2)*2)
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i - 2, (i - 2) * 2)
         self.assertTrue(str(self.array3) == "[ (-2,-4), (-1,-2), (0,0), (1,2), (2,4) ]")
 
     def testView(self):
         "Test ArrayZ view method"
-        for i in range(self.array3.length()): self.array3[i] = complex(i+1,i+2)
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i + 1, i + 2)
         a = self.array3.view()
         self.assertTrue(isinstance(a, np.ndarray))
         self.assertTrue(len(a) == self.length)
-        self.assertTrue((a == [1+2j, 2+3j, 3+4j, 4+5j, 5+6j]).all())
+        self.assertTrue((a == [1 + 2j, 2 + 3j, 3 + 4j, 4 + 5j, 5 + 6j]).all())
+
 
 ######################################################################
 

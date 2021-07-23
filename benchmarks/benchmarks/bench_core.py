@@ -121,14 +121,16 @@ class Temporaries(Benchmark):
 
 
 class CorrConv(Benchmark):
-    params = [[50, 1000, int(1e5)],
-              [10, 100, 1000, int(1e4)],
-              ['valid', 'same', 'full']]
-    param_names = ['size1', 'size2', 'mode']
+    params = [
+        [50, 1000, int(1e5)],
+        [10, 100, 1000, int(1e4)],
+        ["valid", "same", "full"],
+    ]
+    param_names = ["size1", "size2", "mode"]
 
     def setup(self, size1, size2, mode):
         self.x1 = np.linspace(0, 1, num=size1)
-        self.x2 = np.cos(np.linspace(0, 2*np.pi, num=size2))
+        self.x2 = np.cos(np.linspace(0, 2 * np.pi, num=size2))
 
     def time_correlate(self, size1, size2, mode):
         np.correlate(self.x1, self.x2, mode=mode)
@@ -138,11 +140,11 @@ class CorrConv(Benchmark):
 
 
 class CountNonzero(Benchmark):
-    param_names = ['numaxes', 'size', 'dtype']
+    param_names = ["numaxes", "size", "dtype"]
     params = [
         [1, 2, 3],
         [100, 10000, 1000000],
-        [bool, np.int8, np.int16, np.int32, np.int64, str, object]
+        [bool, np.int8, np.int16, np.int32, np.int64, str, object],
     ]
 
     def setup(self, numaxes, size, dtype):
@@ -157,13 +159,13 @@ class CountNonzero(Benchmark):
 
     def time_count_nonzero_multi_axis(self, numaxes, size, dtype):
         if self.x.ndim >= 2:
-            np.count_nonzero(self.x, axis=(
-                self.x.ndim - 1, self.x.ndim - 2))
+            np.count_nonzero(self.x, axis=(self.x.ndim - 1, self.x.ndim - 2))
 
 
 class PackBits(Benchmark):
-    param_names = ['dtype']
+    param_names = ["dtype"]
     params = [[bool, np.uintp]]
+
     def setup(self, dtype):
         self.d = np.ones(10000, dtype=dtype)
         self.d2 = np.ones((200, 1000), dtype=dtype)
@@ -206,8 +208,10 @@ class Indices(Benchmark):
     def time_indices(self):
         np.indices((1000, 500))
 
+
 class VarComplex(Benchmark):
-    params = [10**n for n in range(1, 9)]
+    params = [10 ** n for n in range(1, 9)]
+
     def setup(self, n):
         self.arr = np.random.randn(n) + 1j * np.random.randn(n)
 

@@ -50,7 +50,6 @@ class _Deprecate:
     def __call__(self, func: _FuncType) -> _FuncType: ...
 
 def get_include() -> str: ...
-
 @overload
 def deprecate(
     *,
@@ -65,7 +64,6 @@ def deprecate(
     new_name: Optional[str] = ...,
     message: Optional[str] = ...,
 ) -> _FuncType: ...
-
 def deprecate_with_doc(msg: Optional[str]) -> _Deprecate: ...
 
 # NOTE: In practice `byte_bounds` can (potentially) take any object
@@ -73,27 +71,22 @@ def deprecate_with_doc(msg: Optional[str]) -> _Deprecate: ...
 # that certain keys, marked as optional in the spec, must be present for
 #  `byte_bounds`. This concerns `"strides"` and `"data"`.
 def byte_bounds(a: Union[generic, ndarray[Any, Any]]) -> Tuple[int, int]: ...
-
 def who(vardict: Optional[Mapping[str, ndarray[Any, Any]]] = ...) -> None: ...
-
 def info(
     object: object = ...,
     maxwidth: int = ...,
     output: Optional[_SupportsWrite[str]] = ...,
     toplevel: str = ...,
 ) -> None: ...
-
 def source(
     object: object,
     output: Optional[_SupportsWrite[str]] = ...,
 ) -> None: ...
-
 def lookfor(
     what: str,
     module: Union[None, str, Sequence[str]] = ...,
     import_modules: bool = ...,
     regenerate: bool = ...,
-    output: Optional[_SupportsWrite[str]] =...,
+    output: Optional[_SupportsWrite[str]] = ...,
 ) -> None: ...
-
 def safe_eval(source: Union[str, AST]) -> Any: ...

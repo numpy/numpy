@@ -10,16 +10,36 @@ allow downstream libraries to continue to use these shims for forward
 compatibility with numpy while they transition their code to newer versions of
 Python.
 """
-__all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
-           'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
-           'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
-           'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path',
-           'pickle', 'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
+__all__ = [
+    "bytes",
+    "asbytes",
+    "isfileobj",
+    "getexception",
+    "strchar",
+    "unicode",
+    "asunicode",
+    "asbytes_nested",
+    "asunicode_nested",
+    "asstr",
+    "open_latin1",
+    "long",
+    "basestring",
+    "sixu",
+    "integer_types",
+    "is_pathlib_path",
+    "npy_load_module",
+    "Path",
+    "pickle",
+    "contextlib_nullcontext",
+    "os_fspath",
+    "os_PathLike",
+]
 
 import sys
 import os
 from pathlib import Path
 import io
+
 try:
     import pickle5 as pickle
 except ImportError:
@@ -31,46 +51,57 @@ basestring = str
 unicode = str
 bytes = bytes
 
+
 def asunicode(s):
     if isinstance(s, bytes):
-        return s.decode('latin1')
+        return s.decode("latin1")
     return str(s)
+
 
 def asbytes(s):
     if isinstance(s, bytes):
         return s
-    return str(s).encode('latin1')
+    return str(s).encode("latin1")
+
 
 def asstr(s):
     if isinstance(s, bytes):
-        return s.decode('latin1')
+        return s.decode("latin1")
     return str(s)
+
 
 def isfileobj(f):
     return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
 
-def open_latin1(filename, mode='r'):
-    return open(filename, mode=mode, encoding='iso-8859-1')
+
+def open_latin1(filename, mode="r"):
+    return open(filename, mode=mode, encoding="iso-8859-1")
+
 
 def sixu(s):
     return s
 
-strchar = 'U'
+
+strchar = "U"
+
 
 def getexception():
     return sys.exc_info()[1]
 
+
 def asbytes_nested(x):
-    if hasattr(x, '__iter__') and not isinstance(x, (bytes, unicode)):
+    if hasattr(x, "__iter__") and not isinstance(x, (bytes, unicode)):
         return [asbytes_nested(y) for y in x]
     else:
         return asbytes(x)
 
+
 def asunicode_nested(x):
-    if hasattr(x, '__iter__') and not isinstance(x, (bytes, unicode)):
+    if hasattr(x, "__iter__") and not isinstance(x, (bytes, unicode)):
         return [asunicode_nested(y) for y in x]
     else:
         return asunicode(x)
+
 
 def is_pathlib_path(obj):
     """
@@ -79,6 +110,7 @@ def is_pathlib_path(obj):
     Prefer using ``isinstance(obj, os.PathLike)`` instead of this function.
     """
     return isinstance(obj, Path)
+
 
 # from Python 3.7
 class contextlib_nullcontext:
@@ -128,6 +160,7 @@ def npy_load_module(name, fn, info=None):
     # Explicitly lazy import this to avoid paying the cost
     # of importing importlib at startup
     from importlib.machinery import SourceFileLoader
+
     return SourceFileLoader(name, fn).load_module()
 
 

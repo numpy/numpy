@@ -13,7 +13,8 @@ import numbers
 import numpy as np
 from . import polyutils as pu
 
-__all__ = ['ABCPolyBase']
+__all__ = ["ABCPolyBase"]
+
 
 class ABCPolyBase(abc.ABC):
     """An abstract base class for immutable series classes.
@@ -69,35 +70,39 @@ class ABCPolyBase(abc.ABC):
     maxpower = 100
 
     # Unicode character mappings for improved __str__
-    _superscript_mapping = str.maketrans({
-        "0": "⁰",
-        "1": "¹",
-        "2": "²",
-        "3": "³",
-        "4": "⁴",
-        "5": "⁵",
-        "6": "⁶",
-        "7": "⁷",
-        "8": "⁸",
-        "9": "⁹"
-    })
-    _subscript_mapping = str.maketrans({
-        "0": "₀",
-        "1": "₁",
-        "2": "₂",
-        "3": "₃",
-        "4": "₄",
-        "5": "₅",
-        "6": "₆",
-        "7": "₇",
-        "8": "₈",
-        "9": "₉"
-    })
+    _superscript_mapping = str.maketrans(
+        {
+            "0": "⁰",
+            "1": "¹",
+            "2": "²",
+            "3": "³",
+            "4": "⁴",
+            "5": "⁵",
+            "6": "⁶",
+            "7": "⁷",
+            "8": "⁸",
+            "9": "⁹",
+        }
+    )
+    _subscript_mapping = str.maketrans(
+        {
+            "0": "₀",
+            "1": "₁",
+            "2": "₂",
+            "3": "₃",
+            "4": "₄",
+            "5": "₅",
+            "6": "₆",
+            "7": "₇",
+            "8": "₈",
+            "9": "₉",
+        }
+    )
     # Some fonts don't support full unicode character ranges necessary for
     # the full set of superscripts and subscripts, including common/default
     # fonts in Windows shells/terminals. Therefore, default to ascii-only
     # printing on windows.
-    _use_unicode = not os.name == 'nt'
+    _use_unicode = not os.name == "nt"
 
     @property
     @abc.abstractmethod
@@ -311,15 +316,15 @@ class ABCPolyBase(abc.ABC):
         return f"{name}({coef}, domain={domain}, window={window})"
 
     def __format__(self, fmt_str):
-        if fmt_str == '':
+        if fmt_str == "":
             return self.__str__()
-        if fmt_str not in ('ascii', 'unicode'):
+        if fmt_str not in ("ascii", "unicode"):
             raise ValueError(
                 f"Unsupported format string '{fmt_str}' passed to "
                 f"{self.__class__}.__format__. Valid options are "
                 f"'ascii' and 'unicode'"
             )
-        if fmt_str == 'ascii':
+        if fmt_str == "ascii":
             return self._generate_string(self._str_term_ascii)
         return self._generate_string(self._str_term_unicode)
 
@@ -334,7 +339,7 @@ class ABCPolyBase(abc.ABC):
         ``term_method`` to generate each polynomial term.
         """
         # Get configuration for line breaks
-        linewidth = np.get_printoptions().get('linewidth', 75)
+        linewidth = np.get_printoptions().get("linewidth", 75)
         if linewidth < 1:
             linewidth = 1
         out = f"{self.coef[0]}"
@@ -355,7 +360,7 @@ class ABCPolyBase(abc.ABC):
             # Polynomial term
             next_term += term_method(power, "x")
             # Length of the current line with next term added
-            line_len = len(out.split('\n')[-1]) + len(next_term)
+            line_len = len(out.split("\n")[-1]) + len(next_term)
             # If not the last term in the polynomial, it will be two
             # characters longer due to the +/- with the next term
             if i < len(self.coef[1:]) - 1:
@@ -377,8 +382,7 @@ class ABCPolyBase(abc.ABC):
                 "Subclasses must define either a basis_name, or override "
                 "_str_term_unicode(cls, i, arg_str)"
             )
-        return (f"·{cls.basis_name}{i.translate(cls._subscript_mapping)}"
-                f"({arg_str})")
+        return f"·{cls.basis_name}{i.translate(cls._subscript_mapping)}" f"({arg_str})"
 
     @classmethod
     def _str_term_ascii(cls, i, arg_str):
@@ -398,7 +402,8 @@ class ABCPolyBase(abc.ABC):
         if cls.basis_name is None:
             raise NotImplementedError(
                 "Subclasses must define either a basis name, or override "
-                "_repr_latex_term(i, arg_str, needs_parens)")
+                "_repr_latex_term(i, arg_str, needs_parens)"
+            )
         # since we always add parens, we don't care if the expression needs them
         return f"{{{cls.basis_name}}}_{{{i}}}({arg_str})"
 
@@ -406,13 +411,13 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(x)
+        return r"\text{{{}}}".format(x)
 
     def _repr_latex_(self):
         # get the scaled argument string to the basis functions
         off, scale = self.mapparms()
         if off == 0 and scale == 1:
-            term = 'x'
+            term = "x"
             needs_parens = False
         elif scale == 1:
             term = f"{self._repr_latex_scalar(off)} + x"
@@ -443,7 +448,7 @@ class ABCPolyBase(abc.ABC):
 
             # produce the string for the term
             term_str = self._repr_latex_term(i, term, needs_parens)
-            if term_str == '1':
+            if term_str == "1":
                 part = coef_str
             else:
                 part = rf"{coef_str}\,{term_str}"
@@ -454,22 +459,20 @@ class ABCPolyBase(abc.ABC):
             parts.append(part)
 
         if parts:
-            body = ''.join(parts)
+            body = "".join(parts)
         else:
             # in case somehow there are no coefficients at all
-            body = '0'
+            body = "0"
 
         return rf"$x \mapsto {body}$"
-
-
 
     # Pickle and copy
 
     def __getstate__(self):
         ret = self.__dict__.copy()
-        ret['coef'] = self.coef.copy()
-        ret['domain'] = self.domain.copy()
-        ret['window'] = self.window.copy()
+        ret["coef"] = self.coef.copy()
+        ret["domain"] = self.domain.copy()
+        ret["window"] = self.window.copy()
         return ret
 
     def __setstate__(self, dict):
@@ -479,7 +482,7 @@ class ABCPolyBase(abc.ABC):
 
     def __call__(self, arg):
         off, scl = pu.mapparms(self.domain, self.window)
-        arg = off + scl*arg
+        arg = off + scl * arg
         return self._val(arg, self.coef)
 
     def __iter__(self):
@@ -614,11 +617,13 @@ class ABCPolyBase(abc.ABC):
         return quo, rem
 
     def __eq__(self, other):
-        res = (isinstance(other, self.__class__) and
-               np.all(self.domain == other.domain) and
-               np.all(self.window == other.window) and
-               (self.coef.shape == other.coef.shape) and
-               np.all(self.coef == other.coef))
+        res = (
+            isinstance(other, self.__class__)
+            and np.all(self.domain == other.domain)
+            and np.all(self.window == other.window)
+            and (self.coef.shape == other.coef.shape)
+            and np.all(self.coef == other.coef)
+        )
         return res
 
     def __ne__(self, other):
@@ -824,8 +829,8 @@ class ABCPolyBase(abc.ABC):
         if lbnd is None:
             lbnd = 0
         else:
-            lbnd = off + scl*lbnd
-        coef = self._int(self.coef, m, k, lbnd, 1./scl)
+            lbnd = off + scl * lbnd
+        coef = self._int(self.coef, m, k, lbnd, 1.0 / scl)
         return self.__class__(coef, self.domain, self.window)
 
     def deriv(self, m=1):
@@ -898,8 +903,7 @@ class ABCPolyBase(abc.ABC):
         return x, y
 
     @classmethod
-    def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,
-        window=None):
+    def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None, window=None):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
@@ -1022,8 +1026,8 @@ class ABCPolyBase(abc.ABC):
 
         deg = len(roots)
         off, scl = pu.mapparms(domain, window)
-        rnew = off + scl*roots
-        coef = cls._fromroots(rnew) / scl**deg
+        rnew = off + scl * roots
+        coef = cls._fromroots(rnew) / scl ** deg
         return cls(coef, domain=domain, window=window)
 
     @classmethod
@@ -1096,7 +1100,7 @@ class ABCPolyBase(abc.ABC):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window)
+        return cls([0] * ideg + [1], domain, window)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):

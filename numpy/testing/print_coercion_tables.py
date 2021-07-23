@@ -16,15 +16,16 @@ class GenericObject:
     def __radd__(self, other):
         return self
 
-    dtype = np.dtype('O')
+    dtype = np.dtype("O")
+
 
 def print_cancast_table(ntypes):
-    print('X', end=' ')
+    print("X", end=" ")
     for char in ntypes:
-        print(char, end=' ')
+        print(char, end=" ")
     print()
     for row in ntypes:
-        print(row, end=' ')
+        print(row, end=" ")
         for col in ntypes:
             if np.can_cast(row, col, "equiv"):
                 cast = "#"
@@ -36,23 +37,26 @@ def print_cancast_table(ntypes):
                 cast = "."
             else:
                 cast = " "
-            print(cast, end=' ')
+            print(cast, end=" ")
         print()
 
-def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, use_promote_types=False):
-    print('+', end=' ')
+
+def print_coercion_table(
+    ntypes, inputfirstvalue, inputsecondvalue, firstarray, use_promote_types=False
+):
+    print("+", end=" ")
     for char in ntypes:
-        print(char, end=' ')
+        print(char, end=" ")
     print()
     for row in ntypes:
-        if row == 'O':
+        if row == "O":
             rowtype = GenericObject
         else:
             rowtype = np.obj2sctype(row)
 
-        print(row, end=' ')
+        print(row, end=" ")
         for col in ntypes:
-            if col == 'O':
+            if col == "O":
                 coltype = GenericObject
             else:
                 coltype = np.obj2sctype(col)
@@ -71,12 +75,12 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
                     else:
                         char = np.dtype(type(value)).char
             except ValueError:
-                char = '!'
+                char = "!"
             except OverflowError:
-                char = '@'
+                char = "@"
             except TypeError:
-                char = '#'
-            print(char, end=' ')
+                char = "#"
+            print(char, end=" ")
         print()
 
 
@@ -87,17 +91,21 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     from numpy.core._multiarray_tests import get_all_cast_information
 
     cast_table = {
-        0 : "#",  # No cast (classify as equivalent here)
-        1 : "#",  # equivalent casting
-        2 : "=",  # safe casting
-        3 : "~",  # same-kind casting
-        4 : ".",  # unsafe casting
+        0: "#",  # No cast (classify as equivalent here)
+        1: "#",  # equivalent casting
+        2: "=",  # safe casting
+        3: "~",  # same-kind casting
+        4: ".",  # unsafe casting
     }
     flags_table = {
-        0 : "▗", 7: "█",
-        1: "▚", 2: "▐", 4: "▄",
-                3: "▜", 5: "▙",
-                        6: "▟",
+        0: "▗",
+        7: "█",
+        1: "▚",
+        2: "▐",
+        4: "▄",
+        3: "▜",
+        5: "▙",
+        6: "▟",
     }
 
     cast_info = namedtuple("cast_info", ["can_cast", "legacy", "flags"])
@@ -130,6 +138,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     # The np.dtype(x.type) is a bit strange, because dtype classes do
     # not expose much yet.
     types = np.typecodes["All"]
+
     def sorter(x):
         # This is a bit weird hack, to get a table as close as possible to
         # the one printing all typecodes (but expecting user-dtypes).
@@ -143,15 +152,15 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     dtypes = sorted(dtypes, key=sorter)
 
     def print_table(field="can_cast"):
-        print('X', end=' ')
+        print("X", end=" ")
         for dt in dtypes:
-            print(np.dtype(dt.type).char, end=' ')
+            print(np.dtype(dt.type).char, end=" ")
         print()
         for from_dt in dtypes:
-            print(np.dtype(from_dt.type).char, end=' ')
+            print(np.dtype(from_dt.type).char, end=" ")
             row = table.get(from_dt, {})
             for to_dt in dtypes:
-                print(getattr(row.get(to_dt, no_cast_info), field), end=' ')
+                print(getattr(row.get(to_dt, no_cast_info), field), end=" ")
             print()
 
     if can_cast:
@@ -169,31 +178,33 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
 
     if flags:
         print()
-        print(f"{flags_table[0]}: no flags, {flags_table[1]}: PyAPI, "
-              f"{flags_table[2]}: supports unaligned, {flags_table[4]}: no-float-errors")
+        print(
+            f"{flags_table[0]}: no flags, {flags_table[1]}: PyAPI, "
+            f"{flags_table[2]}: supports unaligned, {flags_table[4]}: no-float-errors"
+        )
         print()
         print_table("flags")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("can cast")
-    print_cancast_table(np.typecodes['All'])
+    print_cancast_table(np.typecodes["All"])
     print()
     print("In these tables, ValueError is '!', OverflowError is '@', TypeError is '#'")
     print()
     print("scalar + scalar")
-    print_coercion_table(np.typecodes['All'], 0, 0, False)
+    print_coercion_table(np.typecodes["All"], 0, 0, False)
     print()
     print("scalar + neg scalar")
-    print_coercion_table(np.typecodes['All'], 0, -1, False)
+    print_coercion_table(np.typecodes["All"], 0, -1, False)
     print()
     print("array + scalar")
-    print_coercion_table(np.typecodes['All'], 0, 0, True)
+    print_coercion_table(np.typecodes["All"], 0, 0, True)
     print()
     print("array + neg scalar")
-    print_coercion_table(np.typecodes['All'], 0, -1, True)
+    print_coercion_table(np.typecodes["All"], 0, -1, True)
     print()
     print("promote_types")
-    print_coercion_table(np.typecodes['All'], 0, 0, False, True)
+    print_coercion_table(np.typecodes["All"], 0, 0, False, True)
     print("New casting type promotion:")
     print_new_cast_table(can_cast=True, legacy=True, flags=True)

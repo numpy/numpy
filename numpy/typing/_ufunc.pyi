@@ -73,7 +73,6 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
     def reduceat(self) -> None: ...
     @property
     def outer(self) -> None: ...
-
     @overload
     def __call__(
         self,
@@ -102,7 +101,6 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
         signature: str | _2Tuple[None | str] = ...,
         extobj: List[Any] = ...,
     ) -> NDArray[Any]: ...
-
     def at(
         self,
         __a: NDArray[Any],
@@ -124,7 +122,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
     def nargs(self) -> Literal[3]: ...
     @property
     def signature(self) -> None: ...
-
     @overload
     def __call__(
         self,
@@ -155,14 +152,12 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
         signature: str | _3Tuple[None | str] = ...,
         extobj: List[Any] = ...,
     ) -> NDArray[Any]: ...
-
     def at(
         self,
         __a: NDArray[Any],
         __indices: _ArrayLikeInt_co,
         __b: ArrayLike,
     ) -> None: ...
-
     def reduce(
         self,
         array: ArrayLike,
@@ -173,7 +168,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
         initial: Any = ...,
         where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
-
     def accumulate(
         self,
         array: ArrayLike,
@@ -181,7 +175,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
         dtype: DTypeLike = ...,
         out: None | NDArray[Any] = ...,
     ) -> NDArray[Any]: ...
-
     def reduceat(
         self,
         array: ArrayLike,
@@ -190,7 +183,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
         dtype: DTypeLike = ...,
         out: None | NDArray[Any] = ...,
     ) -> NDArray[Any]: ...
-
     # Expand `**kwargs` into explicit keyword-only arguments
     @overload
     def outer(
@@ -248,7 +240,6 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):
     def reduceat(self) -> None: ...
     @property
     def outer(self) -> None: ...
-
     @overload
     def __call__(
         self,
@@ -306,7 +297,6 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):
     def reduceat(self) -> None: ...
     @property
     def outer(self) -> None: ...
-
     @overload
     def __call__(
         self,
@@ -354,7 +344,6 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
     def nout(self) -> Literal[1]: ...
     @property
     def nargs(self) -> Literal[3]: ...
-
     # NOTE: In practice the only gufunc in the main name is `matmul`,
     # so we can use its signature here
     @property
@@ -369,7 +358,6 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
     def outer(self) -> None: ...
     @property
     def at(self) -> None: ...
-
     # Scalar for 1D array-likes; ndarray otherwise
     @overload
     def __call__(

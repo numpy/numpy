@@ -9,10 +9,11 @@ import warnings
 import numpy as np
 from numpy.core import overrides
 
-__all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
+__all__ = ["histogram", "histogramdd", "histogram_bin_edges"]
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 # range is a keyword argument to many functions, so save the builtin so they can
 # use it.
@@ -116,7 +117,7 @@ def _hist_bin_scott(x, range):
     h : An estimate of the optimal bin width for the given data.
     """
     del range  # unused
-    return (24.0 * np.pi**0.5 / x.size)**(1.0 / 3.0) * np.std(x)
+    return (24.0 * np.pi ** 0.5 / x.size) ** (1.0 / 3.0) * np.std(x)
 
 
 def _hist_bin_stone(x, range):
@@ -156,8 +157,11 @@ def _hist_bin_stone(x, range):
     nbins_upper_bound = max(100, int(np.sqrt(n)))
     nbins = min(_range(1, nbins_upper_bound + 1), key=jhat)
     if nbins == nbins_upper_bound:
-        warnings.warn("The number of bins estimated may be suboptimal.",
-                      RuntimeWarning, stacklevel=3)
+        warnings.warn(
+            "The number of bins estimated may be suboptimal.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
     return ptp_x / nbins
 
 
@@ -191,8 +195,9 @@ def _hist_bin_doane(x, range):
             np.true_divide(temp, sigma, temp)
             np.power(temp, 3, temp)
             g1 = np.mean(temp)
-            return _ptp(x) / (1.0 + np.log2(x.size) +
-                                    np.log2(1.0 + np.absolute(g1) / sg1))
+            return _ptp(x) / (
+                1.0 + np.log2(x.size) + np.log2(1.0 + np.absolute(g1) / sg1)
+            )
     return 0.0
 
 
@@ -269,33 +274,39 @@ def _hist_bin_auto(x, range):
         # limited variance, so we return a len dependent bw estimator
         return sturges_bw
 
+
 # Private dict initialized at module load time
-_hist_bin_selectors = {'stone': _hist_bin_stone,
-                       'auto': _hist_bin_auto,
-                       'doane': _hist_bin_doane,
-                       'fd': _hist_bin_fd,
-                       'rice': _hist_bin_rice,
-                       'scott': _hist_bin_scott,
-                       'sqrt': _hist_bin_sqrt,
-                       'sturges': _hist_bin_sturges}
+_hist_bin_selectors = {
+    "stone": _hist_bin_stone,
+    "auto": _hist_bin_auto,
+    "doane": _hist_bin_doane,
+    "fd": _hist_bin_fd,
+    "rice": _hist_bin_rice,
+    "scott": _hist_bin_scott,
+    "sqrt": _hist_bin_sqrt,
+    "sturges": _hist_bin_sturges,
+}
 
 
 def _ravel_and_check_weights(a, weights):
-    """ Check a and weights have matching shapes, and ravel both """
+    """Check a and weights have matching shapes, and ravel both"""
     a = np.asarray(a)
 
     # Ensure that the array is a "subtractable" dtype
     if a.dtype == np.bool_:
-        warnings.warn("Converting input from {} to {} for compatibility."
-                      .format(a.dtype, np.uint8),
-                      RuntimeWarning, stacklevel=3)
+        warnings.warn(
+            "Converting input from {} to {} for compatibility.".format(
+                a.dtype, np.uint8
+            ),
+            RuntimeWarning,
+            stacklevel=3,
+        )
         a = a.astype(np.uint8)
 
     if weights is not None:
         weights = np.asarray(weights)
         if weights.shape != a.shape:
-            raise ValueError(
-                'weights should have the same shape as a.')
+            raise ValueError("weights should have the same shape as a.")
         weights = weights.ravel()
     a = a.ravel()
     return a, weights
@@ -309,11 +320,11 @@ def _get_outer_edges(a, range):
     if range is not None:
         first_edge, last_edge = range
         if first_edge > last_edge:
-            raise ValueError(
-                'max must be larger than min in range parameter.')
+            raise ValueError("max must be larger than min in range parameter.")
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                "supplied range of [{}, {}] is not finite".format(first_edge, last_edge))
+                "supplied range of [{}, {}] is not finite".format(first_edge, last_edge)
+            )
     elif a.size == 0:
         # handle empty arrays. Can't determine range, so use 0-1.
         first_edge, last_edge = 0, 1
@@ -321,7 +332,10 @@ def _get_outer_edges(a, range):
         first_edge, last_edge = a.min(), a.max()
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                "autodetected range of [{}, {}] is not finite".format(first_edge, last_edge))
+                "autodetected range of [{}, {}] is not finite".format(
+                    first_edge, last_edge
+                )
+            )
 
     # expand empty range to avoid divide by zero
     if first_edge == last_edge:
@@ -344,7 +358,7 @@ def _unsigned_subtract(a, b):
         np.short: np.ushort,
         np.intc: np.uintc,
         np.int_: np.uint,
-        np.longlong: np.ulonglong
+        np.longlong: np.ulonglong,
     }
     dt = np.result_type(a, b)
     try:
@@ -354,7 +368,7 @@ def _unsigned_subtract(a, b):
     else:
         # we know the inputs are integers, and we are deliberately casting
         # signed to unsigned
-        return np.subtract(a, b, casting='unsafe', dtype=dt)
+        return np.subtract(a, b, casting="unsafe", dtype=dt)
 
 
 def _get_bin_edges(a, bins, range, weights):
@@ -388,17 +402,20 @@ def _get_bin_edges(a, bins, range, weights):
         # this will replace it with the number of bins calculated
         if bin_name not in _hist_bin_selectors:
             raise ValueError(
-                "{!r} is not a valid estimator for `bins`".format(bin_name))
+                "{!r} is not a valid estimator for `bins`".format(bin_name)
+            )
         if weights is not None:
-            raise TypeError("Automated estimation of the number of "
-                            "bins is not supported for weighted data")
+            raise TypeError(
+                "Automated estimation of the number of "
+                "bins is not supported for weighted data"
+            )
 
         first_edge, last_edge = _get_outer_edges(a, range)
 
         # truncate the range if needed
         if range is not None:
-            keep = (a >= first_edge)
-            keep &= (a <= last_edge)
+            keep = a >= first_edge
+            keep &= a <= last_edge
             if not np.logical_and.reduce(keep):
                 a = a[keep]
 
@@ -408,7 +425,9 @@ def _get_bin_edges(a, bins, range, weights):
             # Do not call selectors on empty arrays
             width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
             if width:
-                n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
+                n_equal_bins = int(
+                    np.ceil(_unsigned_subtract(last_edge, first_edge) / width)
+                )
             else:
                 # Width can be zero for some estimators, e.g. FD when
                 # the IQR of the data is zero.
@@ -418,21 +437,19 @@ def _get_bin_edges(a, bins, range, weights):
         try:
             n_equal_bins = operator.index(bins)
         except TypeError as e:
-            raise TypeError(
-                '`bins` must be an integer, a string, or an array') from e
+            raise TypeError("`bins` must be an integer, a string, or an array") from e
         if n_equal_bins < 1:
-            raise ValueError('`bins` must be positive, when an integer')
+            raise ValueError("`bins` must be positive, when an integer")
 
         first_edge, last_edge = _get_outer_edges(a, range)
 
     elif np.ndim(bins) == 1:
         bin_edges = np.asarray(bins)
         if np.any(bin_edges[:-1] > bin_edges[1:]):
-            raise ValueError(
-                '`bins` must increase monotonically, when an array')
+            raise ValueError("`bins` must increase monotonically, when an array")
 
     else:
-        raise ValueError('`bins` must be 1d, when an array')
+        raise ValueError("`bins` must be 1d, when an array")
 
     if n_equal_bins is not None:
         # gh-10322 means that type resolution rules are dependent on array
@@ -444,8 +461,8 @@ def _get_bin_edges(a, bins, range, weights):
 
         # bin edges must be computed
         bin_edges = np.linspace(
-            first_edge, last_edge, n_equal_bins + 1,
-            endpoint=True, dtype=bin_type)
+            first_edge, last_edge, n_equal_bins + 1, endpoint=True, dtype=bin_type
+        )
         return bin_edges, (first_edge, last_edge, n_equal_bins)
     else:
         return bin_edges, None
@@ -457,10 +474,9 @@ def _search_sorted_inclusive(a, v):
 
     In the context of a histogram, this makes the last bin edge inclusive
     """
-    return np.concatenate((
-        a.searchsorted(v[:-1], 'left'),
-        a.searchsorted(v[-1:], 'right')
-    ))
+    return np.concatenate(
+        (a.searchsorted(v[:-1], "left"), a.searchsorted(v[-1:], "right"))
+    )
 
 
 def _histogram_bin_edges_dispatcher(a, bins=None, range=None, weights=None):
@@ -562,7 +578,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     below, :math:`h` is the binwidth and :math:`n_h` is the number of
     bins. All estimators that compute bin counts are recast to bin width
     using the `ptp` of the data. The final bin count is obtained from
-    ``np.round(np.ceil(range / h))``. The final bin width is often less 
+    ``np.round(np.ceil(range / h))``. The final bin width is often less
     than what is returned by the estimators below.
 
     'auto' (maximum of the 'sturges' and 'fd' estimators)
@@ -671,13 +687,13 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
 
 def _histogram_dispatcher(
-        a, bins=None, range=None, normed=None, weights=None, density=None):
+    a, bins=None, range=None, normed=None, weights=None, density=None
+):
     return (a, bins, weights)
 
 
 @array_function_dispatch(_histogram_dispatcher)
-def histogram(a, bins=10, range=None, normed=None, weights=None,
-              density=None):
+def histogram(a, bins=10, range=None, normed=None, weights=None, density=None):
     r"""
     Compute the histogram of a dataset.
 
@@ -805,9 +821,9 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
     # The fast path uses bincount, but that only works for certain types
     # of weight
     simple_weights = (
-        weights is None or
-        np.can_cast(weights.dtype, np.double) or
-        np.can_cast(weights.dtype, complex)
+        weights is None
+        or np.can_cast(weights.dtype, np.double)
+        or np.can_cast(weights.dtype, complex)
     )
 
     if uniform_bins is not None and simple_weights:
@@ -827,15 +843,15 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         # is 2x as fast) and it results in a memory footprint 3x lower in the
         # limit of large arrays.
         for i in _range(0, len(a), BLOCK):
-            tmp_a = a[i:i+BLOCK]
+            tmp_a = a[i : i + BLOCK]
             if weights is None:
                 tmp_w = None
             else:
-                tmp_w = weights[i:i + BLOCK]
+                tmp_w = weights[i : i + BLOCK]
 
             # Only include values in the right range
-            keep = (tmp_a >= first_edge)
-            keep &= (tmp_a <= last_edge)
+            keep = tmp_a >= first_edge
+            keep &= tmp_a <= last_edge
             if not np.logical_and.reduce(keep):
                 tmp_a = tmp_a[keep]
                 if tmp_w is not None:
@@ -857,31 +873,35 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
             decrement = tmp_a < bin_edges[indices]
             indices[decrement] -= 1
             # The last bin includes the right edge. The other bins do not.
-            increment = ((tmp_a >= bin_edges[indices + 1])
-                         & (indices != n_equal_bins - 1))
+            increment = (tmp_a >= bin_edges[indices + 1]) & (
+                indices != n_equal_bins - 1
+            )
             indices[increment] += 1
 
             # We now compute the histogram using bincount
-            if ntype.kind == 'c':
-                n.real += np.bincount(indices, weights=tmp_w.real,
-                                      minlength=n_equal_bins)
-                n.imag += np.bincount(indices, weights=tmp_w.imag,
-                                      minlength=n_equal_bins)
+            if ntype.kind == "c":
+                n.real += np.bincount(
+                    indices, weights=tmp_w.real, minlength=n_equal_bins
+                )
+                n.imag += np.bincount(
+                    indices, weights=tmp_w.imag, minlength=n_equal_bins
+                )
             else:
-                n += np.bincount(indices, weights=tmp_w,
-                                 minlength=n_equal_bins).astype(ntype)
+                n += np.bincount(indices, weights=tmp_w, minlength=n_equal_bins).astype(
+                    ntype
+                )
     else:
         # Compute via cumulative histogram
         cum_n = np.zeros(bin_edges.shape, ntype)
         if weights is None:
             for i in _range(0, len(a), BLOCK):
-                sa = np.sort(a[i:i+BLOCK])
+                sa = np.sort(a[i : i + BLOCK])
                 cum_n += _search_sorted_inclusive(sa, bin_edges)
         else:
             zero = np.zeros(1, dtype=ntype)
             for i in _range(0, len(a), BLOCK):
-                tmp_a = a[i:i+BLOCK]
-                tmp_w = weights[i:i+BLOCK]
+                tmp_a = a[i : i + BLOCK]
+                tmp_w = weights[i : i + BLOCK]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
@@ -896,42 +916,49 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         if normed is not None:
             # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
             warnings.warn(
-                    "The normed argument is ignored when density is provided. "
-                    "In future passing both will result in an error.",
-                    DeprecationWarning, stacklevel=3)
+                "The normed argument is ignored when density is provided. "
+                "In future passing both will result in an error.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
         normed = None
 
     if density:
         db = np.array(np.diff(bin_edges), float)
-        return n/db/n.sum(), bin_edges
+        return n / db / n.sum(), bin_edges
     elif normed:
         # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
         warnings.warn(
-                "Passing `normed=True` on non-uniform bins has always been "
-                "broken, and computes neither the probability density "
-                "function nor the probability mass function. "
-                "The result is only correct if the bins are uniform, when "
-                "density=True will produce the same result anyway. "
-                "The argument will be removed in a future version of "
-                "numpy.",
-                np.VisibleDeprecationWarning, stacklevel=3)
+            "Passing `normed=True` on non-uniform bins has always been "
+            "broken, and computes neither the probability density "
+            "function nor the probability mass function. "
+            "The result is only correct if the bins are uniform, when "
+            "density=True will produce the same result anyway. "
+            "The argument will be removed in a future version of "
+            "numpy.",
+            np.VisibleDeprecationWarning,
+            stacklevel=3,
+        )
 
         # this normalization is incorrect, but
         db = np.array(np.diff(bin_edges), float)
-        return n/(n*db).sum(), bin_edges
+        return n / (n * db).sum(), bin_edges
     else:
         if normed is not None:
             # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
             warnings.warn(
-                    "Passing normed=False is deprecated, and has no effect. "
-                    "Consider passing the density argument instead.",
-                    DeprecationWarning, stacklevel=3)
+                "Passing normed=False is deprecated, and has no effect. "
+                "Consider passing the density argument instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
         return n, bin_edges
 
 
-def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
-                            weights=None, density=None):
-    if hasattr(sample, 'shape'):  # same condition as used in histogramdd
+def _histogramdd_dispatcher(
+    sample, bins=None, range=None, normed=None, weights=None, density=None
+):
+    if hasattr(sample, "shape"):  # same condition as used in histogramdd
         yield sample
     else:
         yield from sample
@@ -941,8 +968,7 @@ def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
 
 
 @array_function_dispatch(_histogramdd_dispatcher)
-def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
-                density=None):
+def histogramdd(sample, bins=10, range=None, normed=None, weights=None, density=None):
     """
     Compute the multidimensional histogram of some data.
 
@@ -1020,8 +1046,8 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         N, D = sample.shape
 
     nbin = np.empty(D, int)
-    edges = D*[None]
-    dedges = D*[None]
+    edges = D * [None]
+    dedges = D * [None]
     if weights is not None:
         weights = np.asarray(weights)
 
@@ -1029,43 +1055,46 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         M = len(bins)
         if M != D:
             raise ValueError(
-                'The dimension of bins must be equal to the dimension of the '
-                ' sample x.')
+                "The dimension of bins must be equal to the dimension of the "
+                " sample x."
+            )
     except TypeError:
         # bins is an integer
-        bins = D*[bins]
+        bins = D * [bins]
 
     # normalize the range argument
     if range is None:
         range = (None,) * D
     elif len(range) != D:
-        raise ValueError('range argument must have one entry per dimension')
+        raise ValueError("range argument must have one entry per dimension")
 
     # Create edge arrays
     for i in _range(D):
         if np.ndim(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
-                    '`bins[{}]` must be positive, when an integer'.format(i))
-            smin, smax = _get_outer_edges(sample[:,i], range[i])
+                    "`bins[{}]` must be positive, when an integer".format(i)
+                )
+            smin, smax = _get_outer_edges(sample[:, i], range[i])
             try:
                 n = operator.index(bins[i])
-            
+
             except TypeError as e:
                 raise TypeError(
-                	"`bins[{}]` must be an integer, when a scalar".format(i)
+                    "`bins[{}]` must be an integer, when a scalar".format(i)
                 ) from e
-                
-            edges[i] = np.linspace(smin, smax, n + 1)    
+
+            edges[i] = np.linspace(smin, smax, n + 1)
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
                 raise ValueError(
-                    '`bins[{}]` must be monotonically increasing, when an array'
-                    .format(i))
+                    "`bins[{}]` must be monotonically increasing, when an array".format(
+                        i
+                    )
+                )
         else:
-            raise ValueError(
-                '`bins[{}]` must be a scalar or 1d array'.format(i))
+            raise ValueError("`bins[{}]` must be a scalar or 1d array".format(i))
 
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
@@ -1073,7 +1102,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
     # Compute the bin number each sample falls into.
     Ncount = tuple(
         # avoid np.digitize to work around gh-11022
-        np.searchsorted(edges[i], sample[:, i], side='right')
+        np.searchsorted(edges[i], sample[:, i], side="right")
         for i in _range(D)
     )
 
@@ -1082,7 +1111,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
     # counted in the last bin, and not as an outlier.
     for i in _range(D):
         # Find which points are on the rightmost edge.
-        on_edge = (sample[:, i] == edges[i][-1])
+        on_edge = sample[:, i] == edges[i][-1]
         # Shift these points one bin to the left.
         Ncount[i][on_edge] -= 1
 
@@ -1098,10 +1127,10 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
     hist = hist.reshape(nbin)
 
     # This preserves the (bad) behavior observed in gh-7845, for now.
-    hist = hist.astype(float, casting='safe')
+    hist = hist.astype(float, casting="safe")
 
     # Remove outliers (indices 0 and -1 for each dimension).
-    core = D*(slice(1, -1),)
+    core = D * (slice(1, -1),)
     hist = hist[core]
 
     # handle the aliasing normed argument
@@ -1124,6 +1153,5 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         hist /= s
 
     if (hist.shape != nbin - 2).any():
-        raise RuntimeError(
-            "Internal Shape Error")
+        raise RuntimeError("Internal Shape Error")
     return hist, edges

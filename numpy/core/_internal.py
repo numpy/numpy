@@ -11,17 +11,19 @@ import platform
 import warnings
 
 from .multiarray import dtype, array, ndarray
+
 try:
     import ctypes
 except ImportError:
     ctypes = None
 
-IS_PYPY = platform.python_implementation() == 'PyPy'
+IS_PYPY = platform.python_implementation() == "PyPy"
 
-if sys.byteorder == 'little':
-    _nbo = '<'
+if sys.byteorder == "little":
+    _nbo = "<"
 else:
-    _nbo = '>'
+    _nbo = ">"
+
 
 def _makenames_list(adict, align):
     allfields = []
@@ -50,6 +52,7 @@ def _makenames_list(adict, align):
 
     return names, formats, offsets, titles
 
+
 # Called in PyArray_DescrConverter function when
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
@@ -73,10 +76,10 @@ def _usefields(adict, align):
             else:
                 titles.append(None)
 
-    return dtype({"names": names,
-                  "formats": formats,
-                  "offsets": offsets,
-                  "titles": titles}, align)
+    return dtype(
+        {"names": names, "formats": formats, "offsets": offsets, "titles": titles},
+        align,
+    )
 
 
 # construct an array_protocol descriptor list
@@ -84,6 +87,7 @@ def _usefields(adict, align):
 # This calls itself recursively but should eventually hit
 #  a descriptor that has no fields and then return
 #  a simple typestring
+
 
 def _array_descr(descriptor):
     fields = descriptor.fields
@@ -108,19 +112,19 @@ def _array_descr(descriptor):
     for field in ordered_fields:
         if field[1] > offset:
             num = field[1] - offset
-            result.append(('', f'|V{num}'))
+            result.append(("", f"|V{num}"))
             offset += num
         elif field[1] < offset:
             raise ValueError(
                 "dtype.descr is not defined for types with overlapping or "
-                "out-of-order fields")
+                "out-of-order fields"
+            )
         if len(field) > 3:
             name = (field[2], field[3])
         else:
             name = field[2]
         if field[0].subdtype:
-            tup = (name, _array_descr(field[0].subdtype[0]),
-                   field[0].subdtype[1])
+            tup = (name, _array_descr(field[0].subdtype[0]), field[0].subdtype[1])
         else:
             tup = (name, _array_descr(field[0]))
         offset += field[0].itemsize
@@ -128,9 +132,10 @@ def _array_descr(descriptor):
 
     if descriptor.itemsize > offset:
         num = descriptor.itemsize - offset
-        result.append(('', f'|V{num}'))
+        result.append(("", f"|V{num}"))
 
     return result
+
 
 # Build a new array from the information in a pickle.
 # Note that the name numpy.core._internal._reconstruct is embedded in
@@ -143,16 +148,19 @@ def _reconstruct(subtype, shape, dtype):
 
 # format_re was originally from numarray by J. Todd Miller
 
-format_re = re.compile(r'(?P<order1>[<>|=]?)'
-                       r'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
-                       r'(?P<order2>[<>|=]?)'
-                       r'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
-sep_re = re.compile(r'\s*,\s*')
-space_re = re.compile(r'\s+$')
+format_re = re.compile(
+    r"(?P<order1>[<>|=]?)"
+    r"(?P<repeats> *[(]?[ ,0-9]*[)]? *)"
+    r"(?P<order2>[<>|=]?)"
+    r"(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)"
+)
+sep_re = re.compile(r"\s*,\s*")
+space_re = re.compile(r"\s+$")
 
 # astr is a string (perhaps comma separated)
 
-_convorder = {'=': _nbo}
+_convorder = {"=": _nbo}
+
 
 def _commastring(astr):
     startindex = 0
@@ -164,7 +172,7 @@ def _commastring(astr):
         except (TypeError, AttributeError):
             raise ValueError(
                 f'format number {len(result)+1} of "{astr}" is not recognized'
-                ) from None
+            ) from None
         startindex = mo.end()
         # Separator or ending padding
         if startindex < len(astr):
@@ -174,27 +182,28 @@ def _commastring(astr):
                 mo = sep_re.match(astr, pos=startindex)
                 if not mo:
                     raise ValueError(
-                        'format number %d of "%s" is not recognized' %
-                        (len(result)+1, astr))
+                        'format number %d of "%s" is not recognized'
+                        % (len(result) + 1, astr)
+                    )
                 startindex = mo.end()
 
-        if order2 == '':
+        if order2 == "":
             order = order1
-        elif order1 == '':
+        elif order1 == "":
             order = order2
         else:
             order1 = _convorder.get(order1, order1)
             order2 = _convorder.get(order2, order2)
-            if (order1 != order2):
+            if order1 != order2:
                 raise ValueError(
-                    'inconsistent byte-order specification %s and %s' %
-                    (order1, order2))
+                    "inconsistent byte-order specification %s and %s" % (order1, order2)
+                )
             order = order1
 
-        if order in ('|', '=', _nbo):
-            order = ''
+        if order in ("|", "=", _nbo):
+            order = ""
         dtype = order + dtype
-        if (repeats == ''):
+        if repeats == "":
             newitem = dtype
         else:
             newitem = (dtype, ast.literal_eval(repeats))
@@ -202,17 +211,23 @@ def _commastring(astr):
 
     return result
 
+
 class dummy_ctype:
     def __init__(self, cls):
         self._cls = cls
+
     def __mul__(self, other):
         return self
+
     def __call__(self, *other):
         return self._cls(other)
+
     def __eq__(self, other):
         return self._cls == other._cls
+
     def __ne__(self, other):
         return self._cls != other._cls
+
 
 def _getintp_ctype():
     val = _getintp_ctype.cache
@@ -220,22 +235,26 @@ def _getintp_ctype():
         return val
     if ctypes is None:
         import numpy as np
+
         val = dummy_ctype(np.intp)
     else:
-        char = dtype('p').char
-        if char == 'i':
+        char = dtype("p").char
+        if char == "i":
             val = ctypes.c_int
-        elif char == 'l':
+        elif char == "l":
             val = ctypes.c_long
-        elif char == 'q':
+        elif char == "q":
             val = ctypes.c_longlong
         else:
             val = ctypes.c_long
     _getintp_ctype.cache = val
     return val
+
+
 _getintp_ctype.cache = None
 
 # Used for .ctypes attribute of ndarray
+
 
 class _missing_ctypes:
     def cast(self, num, obj):
@@ -290,7 +309,7 @@ class _ctypes:
         """
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.shape)
+        return (obj * self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
         """
@@ -299,7 +318,7 @@ class _ctypes:
         """
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.strides)
+        return (obj * self._arr.ndim)(*self._arr.strides)
 
     @property
     def data(self):
@@ -358,8 +377,11 @@ class _ctypes:
 
         .. deprecated:: 1.21
         """
-        warnings.warn('"get_data" is deprecated. Use "data" instead',
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            '"get_data" is deprecated. Use "data" instead',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.data
 
     def get_shape(self):
@@ -367,8 +389,11 @@ class _ctypes:
 
         .. deprecated:: 1.21
         """
-        warnings.warn('"get_shape" is deprecated. Use "shape" instead',
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            '"get_shape" is deprecated. Use "shape" instead',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.shape
 
     def get_strides(self):
@@ -376,8 +401,11 @@ class _ctypes:
 
         .. deprecated:: 1.21
         """
-        warnings.warn('"get_strides" is deprecated. Use "strides" instead',
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            '"get_strides" is deprecated. Use "strides" instead',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.strides
 
     def get_as_parameter(self):
@@ -387,7 +415,8 @@ class _ctypes:
         """
         warnings.warn(
             '"get_as_parameter" is deprecated. Use "_as_parameter_" instead',
-            DeprecationWarning, stacklevel=2,
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self._as_parameter_
 
@@ -415,6 +444,7 @@ def _newnames(datatype, order):
         return tuple(list(order) + nameslist)
     raise ValueError(f"unsupported order value: {order}")
 
+
 def _copy_fields(ary):
     """Return copy of structured array with padding between fields removed.
 
@@ -429,12 +459,15 @@ def _copy_fields(ary):
        Copy of ary with padding bytes removed
     """
     dt = ary.dtype
-    copy_dtype = {'names': dt.names,
-                  'formats': [dt.fields[name][0] for name in dt.names]}
+    copy_dtype = {
+        "names": dt.names,
+        "formats": [dt.fields[name][0] for name in dt.names],
+    }
     return array(ary, dtype=copy_dtype, copy=True)
 
+
 def _getfield_is_safe(oldtype, newtype, offset):
-    """ Checks safety of getfield for object arrays.
+    """Checks safety of getfield for object arrays.
 
     As in _view_is_safe, we need to check that memory containing objects is not
     reinterpreted as a non-object datatype and vice versa.
@@ -459,14 +492,17 @@ def _getfield_is_safe(oldtype, newtype, offset):
             return
         if oldtype.names is not None:
             for name in oldtype.names:
-                if (oldtype.fields[name][1] == offset and
-                        oldtype.fields[name][0] == newtype):
+                if (
+                    oldtype.fields[name][1] == offset
+                    and oldtype.fields[name][0] == newtype
+                ):
                     return
         raise TypeError("Cannot get/set field of an object array")
     return
 
+
 def _view_is_safe(oldtype, newtype):
-    """ Checks safety of a view involving object arrays, for example when
+    """Checks safety of a view involving object arrays, for example when
     doing::
 
         np.zeros(10, dtype=oldtype).view(newtype)
@@ -494,72 +530,74 @@ def _view_is_safe(oldtype, newtype):
         raise TypeError("Cannot change data-type for object array.")
     return
 
+
 # Given a string containing a PEP 3118 format specifier,
 # construct a NumPy dtype
 
 _pep3118_native_map = {
-    '?': '?',
-    'c': 'S1',
-    'b': 'b',
-    'B': 'B',
-    'h': 'h',
-    'H': 'H',
-    'i': 'i',
-    'I': 'I',
-    'l': 'l',
-    'L': 'L',
-    'q': 'q',
-    'Q': 'Q',
-    'e': 'e',
-    'f': 'f',
-    'd': 'd',
-    'g': 'g',
-    'Zf': 'F',
-    'Zd': 'D',
-    'Zg': 'G',
-    's': 'S',
-    'w': 'U',
-    'O': 'O',
-    'x': 'V',  # padding
+    "?": "?",
+    "c": "S1",
+    "b": "b",
+    "B": "B",
+    "h": "h",
+    "H": "H",
+    "i": "i",
+    "I": "I",
+    "l": "l",
+    "L": "L",
+    "q": "q",
+    "Q": "Q",
+    "e": "e",
+    "f": "f",
+    "d": "d",
+    "g": "g",
+    "Zf": "F",
+    "Zd": "D",
+    "Zg": "G",
+    "s": "S",
+    "w": "U",
+    "O": "O",
+    "x": "V",  # padding
 }
-_pep3118_native_typechars = ''.join(_pep3118_native_map.keys())
+_pep3118_native_typechars = "".join(_pep3118_native_map.keys())
 
 _pep3118_standard_map = {
-    '?': '?',
-    'c': 'S1',
-    'b': 'b',
-    'B': 'B',
-    'h': 'i2',
-    'H': 'u2',
-    'i': 'i4',
-    'I': 'u4',
-    'l': 'i4',
-    'L': 'u4',
-    'q': 'i8',
-    'Q': 'u8',
-    'e': 'f2',
-    'f': 'f',
-    'd': 'd',
-    'Zf': 'F',
-    'Zd': 'D',
-    's': 'S',
-    'w': 'U',
-    'O': 'O',
-    'x': 'V',  # padding
+    "?": "?",
+    "c": "S1",
+    "b": "b",
+    "B": "B",
+    "h": "i2",
+    "H": "u2",
+    "i": "i4",
+    "I": "u4",
+    "l": "i4",
+    "L": "u4",
+    "q": "i8",
+    "Q": "u8",
+    "e": "f2",
+    "f": "f",
+    "d": "d",
+    "Zf": "F",
+    "Zd": "D",
+    "s": "S",
+    "w": "U",
+    "O": "O",
+    "x": "V",  # padding
 }
-_pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
+_pep3118_standard_typechars = "".join(_pep3118_standard_map.keys())
 
 _pep3118_unsupported_map = {
-    'u': 'UCS-2 strings',
-    '&': 'pointers',
-    't': 'bitfields',
-    'X': 'function pointers',
+    "u": "UCS-2 strings",
+    "&": "pointers",
+    "t": "bitfields",
+    "X": "function pointers",
 }
+
 
 class _Stream:
     def __init__(self, s):
         self.s = s
-        self.byteorder = '@'
+        self.byteorder = "@"
 
     def advance(self, n):
         res = self.s[:n]
@@ -567,7 +605,7 @@ class _Stream:
         return res
 
     def consume(self, c):
-        if self.s[:len(c)] == c:
+        if self.s[: len(c)] == c:
             self.advance(len(c))
             return True
         return False
@@ -597,13 +635,9 @@ def _dtype_from_pep3118(spec):
     dtype, align = __dtype_from_pep3118(stream, is_subdtype=False)
     return dtype
 
+
 def __dtype_from_pep3118(stream, is_subdtype):
-    field_spec = dict(
-        names=[],
-        formats=[],
-        offsets=[],
-        itemsize=0
-    )
+    field_spec = dict(names=[], formats=[], offsets=[], itemsize=0)
     offset = 0
     common_alignment = 1
     is_padding = False
@@ -613,24 +647,24 @@ def __dtype_from_pep3118(stream, is_subdtype):
         value = None
 
         # End of structure, bail out to upper level
-        if stream.consume('}'):
+        if stream.consume("}"):
             break
 
         # Sub-arrays (1)
         shape = None
-        if stream.consume('('):
-            shape = stream.consume_until(')')
-            shape = tuple(map(int, shape.split(',')))
+        if stream.consume("("):
+            shape = stream.consume_until(")")
+            shape = tuple(map(int, shape.split(",")))
 
         # Byte order
-        if stream.next in ('@', '=', '<', '>', '^', '!'):
+        if stream.next in ("@", "=", "<", ">", "^", "!"):
             byteorder = stream.advance(1)
-            if byteorder == '!':
-                byteorder = '>'
+            if byteorder == "!":
+                byteorder = ">"
             stream.byteorder = byteorder
 
         # Byte order characters also control native vs. standard type sizes
-        if stream.byteorder in ('@', '^'):
+        if stream.byteorder in ("@", "^"):
             type_map = _pep3118_native_map
             type_map_chars = _pep3118_native_typechars
         else:
@@ -647,29 +681,29 @@ def __dtype_from_pep3118(stream, is_subdtype):
         # Data types
         is_padding = False
 
-        if stream.consume('T{'):
-            value, align = __dtype_from_pep3118(
-                stream, is_subdtype=True)
+        if stream.consume("T{"):
+            value, align = __dtype_from_pep3118(stream, is_subdtype=True)
         elif stream.next in type_map_chars:
-            if stream.next == 'Z':
+            if stream.next == "Z":
                 typechar = stream.advance(2)
             else:
                 typechar = stream.advance(1)
 
-            is_padding = (typechar == 'x')
+            is_padding = typechar == "x"
             dtypechar = type_map[typechar]
-            if dtypechar in 'USV':
-                dtypechar += '%d' % itemsize
+            if dtypechar in "USV":
+                dtypechar += "%d" % itemsize
                 itemsize = 1
-            numpy_byteorder = {'@': '=', '^': '='}.get(
-                stream.byteorder, stream.byteorder)
+            numpy_byteorder = {"@": "=", "^": "="}.get(
+                stream.byteorder, stream.byteorder
+            )
             value = dtype(numpy_byteorder + dtypechar)
             align = value.alignment
         elif stream.next in _pep3118_unsupported_map:
             desc = _pep3118_unsupported_map[stream.next]
             raise NotImplementedError(
-                "Unrepresentable PEP 3118 data type {!r} ({})"
-                .format(stream.next, desc))
+                "Unrepresentable PEP 3118 data type {!r} ({})".format(stream.next, desc)
+            )
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
 
@@ -680,7 +714,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
         # that the start of the array is *already* aligned.
         #
         extra_offset = 0
-        if stream.byteorder == '@':
+        if stream.byteorder == "@":
             start_padding = (-offset) % align
             intra_padding = (-value.itemsize) % align
 
@@ -707,33 +741,35 @@ def __dtype_from_pep3118(stream, is_subdtype):
             value = dtype((value, shape))
 
         # Field name
-        if stream.consume(':'):
-            name = stream.consume_until(':')
+        if stream.consume(":"):
+            name = stream.consume_until(":")
         else:
             name = None
 
         if not (is_padding and name is None):
-            if name is not None and name in field_spec['names']:
+            if name is not None and name in field_spec["names"]:
                 raise RuntimeError(f"Duplicate field name '{name}' in PEP3118 format")
-            field_spec['names'].append(name)
-            field_spec['formats'].append(value)
-            field_spec['offsets'].append(offset)
+            field_spec["names"].append(name)
+            field_spec["formats"].append(value)
+            field_spec["offsets"].append(offset)
 
         offset += value.itemsize
         offset += extra_offset
 
-        field_spec['itemsize'] = offset
+        field_spec["itemsize"] = offset
 
     # extra final padding for aligned types
-    if stream.byteorder == '@':
-        field_spec['itemsize'] += (-offset) % common_alignment
+    if stream.byteorder == "@":
+        field_spec["itemsize"] += (-offset) % common_alignment
 
     # Check if this was a simple 1-item type, and unwrap it
-    if (field_spec['names'] == [None]
-            and field_spec['offsets'][0] == 0
-            and field_spec['itemsize'] == field_spec['formats'][0].itemsize
-            and not is_subdtype):
-        ret = field_spec['formats'][0]
+    if (
+        field_spec["names"] == [None]
+        and field_spec["offsets"][0] == 0
+        and field_spec["itemsize"] == field_spec["formats"][0].itemsize
+        and not is_subdtype
+    ):
+        ret = field_spec["formats"][0]
     else:
         _fix_names(field_spec)
         ret = dtype(field_spec)
@@ -741,29 +777,28 @@ def __dtype_from_pep3118(stream, is_subdtype):
     # Finished
     return ret, common_alignment
 
+
 def _fix_names(field_spec):
-    """ Replace names which are None with the next unused f%d name """
-    names = field_spec['names']
+    """Replace names which are None with the next unused f%d name"""
+    names = field_spec["names"]
     for i, name in enumerate(names):
         if name is not None:
             continue
 
         j = 0
         while True:
-            name = f'f{j}'
+            name = f"f{j}"
             if name not in names:
                 break
             j = j + 1
         names[i] = name
 
+
 def _add_trailing_padding(value, padding):
     """Inject the specified number of padding bytes at the end of a dtype"""
     if value.fields is None:
         field_spec = dict(
-            names=['f0'],
-            formats=[value],
-            offsets=[0],
-            itemsize=value.itemsize
+            names=["f0"], formats=[value], offsets=[0], itemsize=value.itemsize
         )
     else:
         fields = value.fields
@@ -772,11 +807,12 @@ def _add_trailing_padding(value, padding):
             names=names,
             formats=[fields[name][0] for name in names],
             offsets=[fields[name][1] for name in names],
-            itemsize=value.itemsize
+            itemsize=value.itemsize,
         )
 
-    field_spec['itemsize'] += padding
+    field_spec["itemsize"] += padding
     return dtype(field_spec)
+
 
 def _prod(a):
     p = 1
@@ -784,32 +820,41 @@ def _prod(a):
         p *= x
     return p
 
+
 def _gcd(a, b):
     """Calculate the greatest common divisor of a and b"""
     while b:
         a, b = b, a % b
     return a
 
+
 def _lcm(a, b):
     return a // _gcd(a, b) * b
 
+
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
-    """ Format the error message for when __array_ufunc__ gives up. """
-    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
-                            ['{}={!r}'.format(k, v)
-                             for k, v in kwargs.items()])
-    args = inputs + kwargs.get('out', ())
-    types_string = ', '.join(repr(type(arg).__name__) for arg in args)
-    return ('operand type(s) all returned NotImplemented from '
-            '__array_ufunc__({!r}, {!r}, {}): {}'
-            .format(ufunc, method, args_string, types_string))
+    """Format the error message for when __array_ufunc__ gives up."""
+    args_string = ", ".join(
+        ["{!r}".format(arg) for arg in inputs]
+        + ["{}={!r}".format(k, v) for k, v in kwargs.items()]
+    )
+    args = inputs + kwargs.get("out", ())
+    types_string = ", ".join(repr(type(arg).__name__) for arg in args)
+    return (
+        "operand type(s) all returned NotImplemented from "
+        "__array_ufunc__({!r}, {!r}, {}): {}".format(
+            ufunc, method, args_string, types_string
+        )
+    )
 
 
 def array_function_errmsg_formatter(public_api, types):
-    """ Format the error message for when __array_ufunc__ gives up. """
-    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
-    return ("no implementation found for '{}' on types that implement "
-            '__array_function__: {}'.format(func_name, list(types)))
+    """Format the error message for when __array_ufunc__ gives up."""
+    func_name = "{}.{}".format(public_api.__module__, public_api.__name__)
+    return (
+        "no implementation found for '{}' on types that implement "
+        "__array_function__: {}".format(func_name, list(types))
+    )
 
 
 def _ufunc_doc_signature_formatter(ufunc):
@@ -821,29 +866,23 @@ def _ufunc_doc_signature_formatter(ufunc):
 
     # input arguments are simple
     if ufunc.nin == 1:
-        in_args = 'x'
+        in_args = "x"
     else:
-        in_args = ', '.join(f'x{i+1}' for i in range(ufunc.nin))
+        in_args = ", ".join(f"x{i+1}" for i in range(ufunc.nin))
 
     # output arguments are both keyword or positional
     if ufunc.nout == 0:
-        out_args = ', /, out=()'
+        out_args = ", /, out=()"
     elif ufunc.nout == 1:
-        out_args = ', /, out=None'
+        out_args = ", /, out=None"
     else:
-        out_args = '[, {positional}], / [, out={default}]'.format(
-            positional=', '.join(
-                'out{}'.format(i+1) for i in range(ufunc.nout)),
-            default=repr((None,)*ufunc.nout)
+        out_args = "[, {positional}], / [, out={default}]".format(
+            positional=", ".join("out{}".format(i + 1) for i in range(ufunc.nout)),
+            default=repr((None,) * ufunc.nout),
         )
 
     # keyword only args depend on whether this is a gufunc
-    kwargs = (
-        ", casting='same_kind'"
-        ", order='K'"
-        ", dtype=None"
-        ", subok=True"
-    )
+    kwargs = ", casting='same_kind'" ", order='K'" ", dtype=None" ", subok=True"
 
     # NOTE: gufuncs may or may not support the `axis` parameter
     if ufunc.signature is None:
@@ -852,11 +891,8 @@ def _ufunc_doc_signature_formatter(ufunc):
         kwargs += "[, signature, extobj, axes, axis]"
 
     # join all the parts together
-    return '{name}({in_args}{out_args}, *{kwargs})'.format(
-        name=ufunc.__name__,
-        in_args=in_args,
-        out_args=out_args,
-        kwargs=kwargs
+    return "{name}({in_args}{out_args}, *{kwargs})".format(
+        name=ufunc.__name__, in_args=in_args, out_args=out_args, kwargs=kwargs
     )
 
 
@@ -873,13 +909,13 @@ def npy_ctypes_check(cls):
             # # (..., _ctypes._CData, object)
             ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
-        return '_ctypes' in ctype_base.__module__
+        return "_ctypes" in ctype_base.__module__
     except Exception:
         return False
 
 
 class recursive:
-    '''
+    """
     A decorator class for recursive nested functions.
     Naive recursive nested functions hold a reference to themselves:
 
@@ -902,8 +938,10 @@ class recursive:
             return str(arg0)
         stringify(*args)
 
-    '''
+    """
+
     def __init__(self, func):
         self.func = func
+
     def __call__(self, *args, **kwargs):
         return self.func(self, *args, **kwargs)

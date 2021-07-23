@@ -5,9 +5,7 @@ import numpy as np
 from numpy.core._multiarray_tests import solve_diophantine, internal_overlap
 from numpy.core import _umath_tests
 from numpy.lib.stride_tricks import as_strided
-from numpy.testing import (
-    assert_, assert_raises, assert_equal, assert_array_equal
-    )
+from numpy.testing import assert_, assert_raises, assert_equal, assert_array_equal
 
 
 ndims = 2
@@ -62,8 +60,7 @@ def _check_assignment(srcidx, dstidx):
     cpy[dstidx] = arr[srcidx]
     arr[dstidx] = arr[srcidx]
 
-    assert_(np.all(arr == cpy),
-            'assigning arr[%s] = arr[%s]' % (dstidx, srcidx))
+    assert_(np.all(arr == cpy), "assigning arr[%s] = arr[%s]" % (dstidx, srcidx))
 
 
 def test_overlapping_assignments():
@@ -89,23 +86,25 @@ def test_diophantine_fuzz():
         feasible_count = 0
         infeasible_count = 0
 
-        min_count = 500//(ndim + 1)
+        min_count = 500 // (ndim + 1)
 
         while min(feasible_count, infeasible_count) < min_count:
             # Ensure big and small integer problems
-            A_max = 1 + rng.randint(0, 11, dtype=np.intp)**6
-            U_max = rng.randint(0, 11, dtype=np.intp)**6
+            A_max = 1 + rng.randint(0, 11, dtype=np.intp) ** 6
+            U_max = rng.randint(0, 11, dtype=np.intp) ** 6
 
             A_max = min(max_int, A_max)
-            U_max = min(max_int-1, U_max)
+            U_max = min(max_int - 1, U_max)
 
-            A = tuple(int(rng.randint(1, A_max+1, dtype=np.intp))
-                      for j in range(ndim))
-            U = tuple(int(rng.randint(0, U_max+2, dtype=np.intp))
-                      for j in range(ndim))
+            A = tuple(
+                int(rng.randint(1, A_max + 1, dtype=np.intp)) for j in range(ndim)
+            )
+            U = tuple(
+                int(rng.randint(0, U_max + 2, dtype=np.intp)) for j in range(ndim)
+            )
 
-            b_ub = min(max_int-2, sum(a*ub for a, ub in zip(A, U)))
-            b = rng.randint(-1, b_ub+2, dtype=np.intp)
+            b_ub = min(max_int - 2, sum(a * ub for a, ub in zip(A, U)))
+            b = rng.randint(-1, b_ub + 2, dtype=np.intp)
 
             if ndim == 0 and feasible_count < min_count:
                 b = 0
@@ -120,7 +119,7 @@ def test_diophantine_fuzz():
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
                 # take too long)
-                ranges = tuple(range(0, a*ub+1, a) for a, ub in zip(A, U))
+                ranges = tuple(range(0, a * ub + 1, a) for a, ub in zip(A, U))
 
                 size = 1
                 for r in ranges:
@@ -134,7 +133,7 @@ def test_diophantine_fuzz():
                 assert_(X_simplified is not None, (A, U, b, X_simplified))
 
                 # Check validity
-                assert_(sum(a*x for a, x in zip(A, X)) == b)
+                assert_(sum(a * x for a, x in zip(A, X)) == b)
                 assert_(all(0 <= x <= ub for x, ub in zip(X, U)))
                 feasible_count += 1
 
@@ -147,9 +146,9 @@ def test_diophantine_overflow():
     if max_int64 <= max_intp:
         # Check that the algorithm works internally in 128-bit;
         # solving this problem requires large intermediate numbers
-        A = (max_int64//2, max_int64//2 - 10)
-        U = (max_int64//2, max_int64//2 - 10)
-        b = 2*(max_int64//2) - 10
+        A = (max_int64 // 2, max_int64 // 2 - 10)
+        U = (max_int64 // 2, max_int64 // 2 - 10)
+        b = 2 * (max_int64 // 2) - 10
 
         assert_equal(solve_diophantine(A, U, b), (1, 1))
 
@@ -157,8 +156,9 @@ def test_diophantine_overflow():
 def check_may_share_memory_exact(a, b):
     got = np.may_share_memory(a, b, max_work=MAY_SHARE_EXACT)
 
-    assert_equal(np.may_share_memory(a, b),
-                 np.may_share_memory(a, b, max_work=MAY_SHARE_BOUNDS))
+    assert_equal(
+        np.may_share_memory(a, b), np.may_share_memory(a, b, max_work=MAY_SHARE_BOUNDS)
+    )
 
     a.fill(0)
     b.fill(0)
@@ -167,15 +167,20 @@ def check_may_share_memory_exact(a, b):
 
     err_msg = ""
     if got != exact:
-        err_msg = "    " + "\n    ".join([
-            "base_a - base_b = %r" % (a.__array_interface__['data'][0] - b.__array_interface__['data'][0],),
-            "shape_a = %r" % (a.shape,),
-            "shape_b = %r" % (b.shape,),
-            "strides_a = %r" % (a.strides,),
-            "strides_b = %r" % (b.strides,),
-            "size_a = %r" % (a.size,),
-            "size_b = %r" % (b.size,)
-        ])
+        err_msg = "    " + "\n    ".join(
+            [
+                "base_a - base_b = %r"
+                % (
+                    a.__array_interface__["data"][0] - b.__array_interface__["data"][0],
+                ),
+                "shape_a = %r" % (a.shape,),
+                "shape_b = %r" % (b.shape,),
+                "strides_a = %r" % (a.strides,),
+                "strides_b = %r" % (b.strides,),
+                "size_a = %r" % (a.size,),
+                "size_b = %r" % (b.size,),
+            ]
+        )
 
     assert_equal(got, exact, err_msg=err_msg)
 
@@ -186,24 +191,24 @@ def test_may_share_memory_manual():
     # Base arrays
     xs0 = [
         np.zeros([13, 21, 23, 22], dtype=np.int8),
-        np.zeros([13, 21, 23*2, 22], dtype=np.int8)[:,:,::2,:]
+        np.zeros([13, 21, 23 * 2, 22], dtype=np.int8)[:, :, ::2, :],
     ]
 
     # Generate all negative stride combinations
     xs = []
     for x in xs0:
-        for ss in itertools.product(*(([slice(None), slice(None, None, -1)],)*4)):
+        for ss in itertools.product(*(([slice(None), slice(None, None, -1)],) * 4)):
             xp = x[ss]
             xs.append(xp)
 
     for x in xs:
         # The default is a simple extent check
-        assert_(np.may_share_memory(x[:,0,:], x[:,1,:]))
-        assert_(np.may_share_memory(x[:,0,:], x[:,1,:], max_work=None))
+        assert_(np.may_share_memory(x[:, 0, :], x[:, 1, :]))
+        assert_(np.may_share_memory(x[:, 0, :], x[:, 1, :], max_work=None))
 
         # Exact checks
-        check_may_share_memory_exact(x[:,0,:], x[:,1,:])
-        check_may_share_memory_exact(x[:,::7], x[:,3::3])
+        check_may_share_memory_exact(x[:, 0, :], x[:, 1, :])
+        check_may_share_memory_exact(x[:, ::7], x[:, 3::3])
 
         try:
             xp = x.ravel()
@@ -214,16 +219,12 @@ def test_may_share_memory_manual():
             continue
 
         # 0-size arrays cannot overlap
-        check_may_share_memory_exact(x.ravel()[6:6],
-                                     xp.reshape(13, 21, 23, 11)[:,::7])
+        check_may_share_memory_exact(x.ravel()[6:6], xp.reshape(13, 21, 23, 11)[:, ::7])
 
         # Test itemsize is dealt with
-        check_may_share_memory_exact(x[:,::7],
-                                     xp.reshape(13, 21, 23, 11))
-        check_may_share_memory_exact(x[:,::7],
-                                     xp.reshape(13, 21, 23, 11)[:,3::3])
-        check_may_share_memory_exact(x.ravel()[6:7],
-                                     xp.reshape(13, 21, 23, 11)[:,::7])
+        check_may_share_memory_exact(x[:, ::7], xp.reshape(13, 21, 23, 11))
+        check_may_share_memory_exact(x[:, ::7], xp.reshape(13, 21, 23, 11)[:, 3::3])
+        check_may_share_memory_exact(x.ravel()[6:7], xp.reshape(13, 21, 23, 11)[:, ::7])
 
     # Check unit size
     x = np.zeros([1], dtype=np.int8)
@@ -238,18 +239,18 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
         raise ValueError()
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1, dtype=np.intp)
-        stop = rng.randint(start, n+1, dtype=np.intp)
+        start = rng.randint(0, n + 1, dtype=np.intp)
+        stop = rng.randint(start, n + 1, dtype=np.intp)
         if rng.randint(0, 2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
         return slice(start, stop, step)
 
     def random_slice_fixed_size(n, step, size):
-        start = rng.randint(0, n+1 - size*step)
-        stop = start + (size-1)*step + 1
+        start = rng.randint(0, n + 1 - size * step)
+        stop = start + (size - 1) * step + 1
         if rng.randint(0, 2) == 0:
-            stop, start = start-1, stop-1
+            stop, start = start - 1, stop - 1
             if stop < 0:
                 stop = None
             step *= -1
@@ -259,7 +260,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     yield x, x
     for j in range(1, 7, 3):
         yield x[j:], x[:-j]
-        yield x[...,j:], x[...,:-j]
+        yield x[..., j:], x[..., :-j]
 
     # An array with zero stride internal overlap
     strides = list(x.strides)
@@ -278,9 +279,12 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
 
     # Then discontiguous views
     while True:
-        steps = tuple(rng.randint(1, 11, dtype=np.intp)
-                      if rng.randint(0, 5, dtype=np.intp) == 0 else 1
-                      for j in range(x.ndim))
+        steps = tuple(
+            rng.randint(1, 11, dtype=np.intp)
+            if rng.randint(0, 5, dtype=np.intp) == 0
+            else 1
+            for j in range(x.ndim)
+        )
         s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
 
         t1 = np.arange(x.ndim)
@@ -298,17 +302,23 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
             if a.size == 0:
                 continue
 
-            steps2 = tuple(rng.randint(1, max(2, p//(1+pa)))
-                           if rng.randint(0, 5) == 0 else 1
-                           for p, s, pa in zip(x.shape, s1, a.shape))
-            s2 = tuple(random_slice_fixed_size(p, s, pa)
-                       for p, s, pa in zip(x.shape, steps2, a.shape))
+            steps2 = tuple(
+                rng.randint(1, max(2, p // (1 + pa))) if rng.randint(0, 5) == 0 else 1
+                for p, s, pa in zip(x.shape, s1, a.shape)
+            )
+            s2 = tuple(
+                random_slice_fixed_size(p, s, pa)
+                for p, s, pa in zip(x.shape, steps2, a.shape)
+            )
         elif same_steps:
             steps2 = steps
         else:
-            steps2 = tuple(rng.randint(1, 11, dtype=np.intp)
-                           if rng.randint(0, 5, dtype=np.intp) == 0 else 1
-                           for j in range(x.ndim))
+            steps2 = tuple(
+                rng.randint(1, 11, dtype=np.intp)
+                if rng.randint(0, 5, dtype=np.intp) == 0
+                else 1
+                for j in range(x.ndim)
+            )
 
         if not equal_size:
             s2 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps2))
@@ -322,7 +332,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
 def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
     # Check that overlap problems with common strides are solved with
     # little work.
-    x = np.zeros([17,34,71,97], dtype=np.int16)
+    x = np.zeros([17, 34, 71, 97], dtype=np.int16)
 
     feasible = 0
     infeasible = 0
@@ -356,9 +366,9 @@ def test_may_share_memory_easy_fuzz():
     # Check that overlap problems with common strides are always
     # solved with little work.
 
-    check_may_share_memory_easy_fuzz(get_max_work=lambda a, b: 1,
-                                     same_steps=True,
-                                     min_count=2000)
+    check_may_share_memory_easy_fuzz(
+        get_max_work=lambda a, b: 1, same_steps=True, min_count=2000
+    )
 
 
 @pytest.mark.slow
@@ -370,9 +380,11 @@ def test_may_share_memory_harder_fuzz():
     # also exist but not be detected here, as the set of problems
     # comes from RNG.
 
-    check_may_share_memory_easy_fuzz(get_max_work=lambda a, b: max(a.size, b.size)//2,
-                                     same_steps=False,
-                                     min_count=2000)
+    check_may_share_memory_easy_fuzz(
+        get_max_work=lambda a, b: max(a.size, b.size) // 2,
+        same_steps=False,
+        min_count=2000,
+    )
 
 
 def test_shares_memory_api():
@@ -381,8 +393,8 @@ def test_shares_memory_api():
     assert_equal(np.shares_memory(x, x), True)
     assert_equal(np.shares_memory(x, x.copy()), False)
 
-    a = x[:,::2,::3]
-    b = x[:,::3,::2]
+    a = x[:, ::2, ::3]
+    b = x[:, ::3, ::2]
     assert_equal(np.shares_memory(a, b), True)
     assert_equal(np.shares_memory(a, b, max_work=None), True)
     assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=1)
@@ -390,8 +402,8 @@ def test_shares_memory_api():
 
 def test_may_share_memory_bad_max_work():
     x = np.zeros([1])
-    assert_raises(OverflowError, np.may_share_memory, x, x, max_work=10**100)
-    assert_raises(OverflowError, np.shares_memory, x, x, max_work=10**100)
+    assert_raises(OverflowError, np.may_share_memory, x, x, max_work=10 ** 100)
+    assert_raises(OverflowError, np.shares_memory, x, x, max_work=10 ** 100)
 
 
 def test_internal_overlap_diophantine():
@@ -399,12 +411,15 @@ def test_internal_overlap_diophantine():
         X = solve_diophantine(A, U, 0, require_ub_nontrivial=1)
 
         if exists is None:
-            exists = (X is not None)
+            exists = X is not None
 
         if X is not None:
-            assert_(sum(a*x for a, x in zip(A, X)) == sum(a*u//2 for a, u in zip(A, U)))
+            assert_(
+                sum(a * x for a, x in zip(A, X))
+                == sum(a * u // 2 for a, u in zip(A, U))
+            )
             assert_(all(0 <= x <= u for x, u in zip(X, U)))
-            assert_(any(x != u//2 for x, u in zip(X, U)))
+            assert_(any(x != u // 2 for x, u in zip(X, U)))
 
         if exists:
             assert_(X is not None, repr(X))
@@ -412,20 +427,20 @@ def test_internal_overlap_diophantine():
             assert_(X is None, repr(X))
 
     # Smoke tests
-    check((3, 2), (2*2, 3*2), exists=True)
-    check((3*2, 2), (15*2, (3-1)*2), exists=False)
+    check((3, 2), (2 * 2, 3 * 2), exists=True)
+    check((3 * 2, 2), (15 * 2, (3 - 1) * 2), exists=False)
 
 
 def test_internal_overlap_slices():
     # Slicing an array never generates internal overlap
 
-    x = np.zeros([17,34,71,97], dtype=np.int16)
+    x = np.zeros([17, 34, 71, 97], dtype=np.int16)
 
     rng = np.random.RandomState(1234)
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1, dtype=np.intp)
-        stop = rng.randint(start, n+1, dtype=np.intp)
+        start = rng.randint(0, n + 1, dtype=np.intp)
+        stop = rng.randint(start, n + 1, dtype=np.intp)
         if rng.randint(0, 2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
@@ -435,9 +450,12 @@ def test_internal_overlap_slices():
     min_count = 5000
 
     while cases < min_count:
-        steps = tuple(rng.randint(1, 11, dtype=np.intp)
-                      if rng.randint(0, 5, dtype=np.intp) == 0 else 1
-                      for j in range(x.ndim))
+        steps = tuple(
+            rng.randint(1, 11, dtype=np.intp)
+            if rng.randint(0, 5, dtype=np.intp) == 0
+            else 1
+            for j in range(x.ndim)
+        )
         t1 = np.arange(x.ndim)
         rng.shuffle(t1)
         s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
@@ -454,7 +472,7 @@ def check_internal_overlap(a, manual_expected=None):
     m = set()
     ranges = tuple(range(n) for n in a.shape)
     for v in itertools.product(*ranges):
-        offset = sum(s*w for s, w in zip(a.strides, v))
+        offset = sum(s * w for s, w in zip(a.strides, v))
         if offset in m:
             expected = True
             break
@@ -480,8 +498,8 @@ def test_internal_overlap_manual():
 
     # Check low-dimensional special cases
 
-    check_internal_overlap(x, False) # 1-dim
-    check_internal_overlap(x.reshape([]), False) # 0-dim
+    check_internal_overlap(x, False)  # 1-dim
+    check_internal_overlap(x.reshape([]), False)  # 0-dim
 
     a = as_strided(x, strides=(3, 4), shape=(4, 4))
     check_internal_overlap(a, False)
@@ -522,10 +540,8 @@ def test_internal_overlap_fuzz():
     while min(overlap, no_overlap) < min_count:
         ndim = rng.randint(1, 4, dtype=np.intp)
 
-        strides = tuple(rng.randint(-1000, 1000, dtype=np.intp)
-                        for j in range(ndim))
-        shape = tuple(rng.randint(1, 30, dtype=np.intp)
-                      for j in range(ndim))
+        strides = tuple(rng.randint(-1000, 1000, dtype=np.intp) for j in range(ndim))
+        shape = tuple(rng.randint(1, 30, dtype=np.intp) for j in range(ndim))
 
         a = as_strided(x, strides=strides, shape=shape)
         result = check_internal_overlap(a)
@@ -567,9 +583,10 @@ def test_non_ndarray_inputs():
 def view_element_first_byte(x):
     """Construct an array viewing the first byte of each element of `x`"""
     from numpy.lib.stride_tricks import DummyArray
+
     interface = dict(x.__array_interface__)
-    interface['typestr'] = '|b1'
-    interface['descr'] = [('', '|b1')]
+    interface["typestr"] = "|b1"
+    interface["descr"] = [("", "|b1")]
     return np.asarray(DummyArray(interface, x))
 
 
@@ -579,9 +596,9 @@ def assert_copy_equivalent(operation, args, out, **kwargs):
     equivalent to out[...] = operation(*args, out=out.copy())
     """
 
-    kwargs['out'] = out
+    kwargs["out"] = out
     kwargs2 = dict(kwargs)
-    kwargs2['out'] = out.copy()
+    kwargs2["out"] = out.copy()
 
     out_orig = out.copy()
     out[...] = operation(*args, **kwargs2)
@@ -599,18 +616,19 @@ class TestUFunc:
     Test ufunc call memory overlap handling
     """
 
-    def check_unary_fuzz(self, operation, get_out_axis_size, dtype=np.int16,
-                             count=5000):
+    def check_unary_fuzz(
+        self, operation, get_out_axis_size, dtype=np.int16, count=5000
+    ):
         shapes = [7, 13, 8, 21, 29, 32]
 
         rng = np.random.RandomState(1234)
 
         for ndim in range(1, 6):
-            x = rng.randint(0, 2**16, size=shapes[:ndim]).astype(dtype)
+            x = rng.randint(0, 2 ** 16, size=shapes[:ndim]).astype(dtype)
 
             it = iter_random_view_pairs(x, same_steps=False, equal_size=True)
 
-            min_count = count // (ndim + 1)**2
+            min_count = count // (ndim + 1) ** 2
 
             overlapping = 0
             while overlapping < min_count:
@@ -631,19 +649,19 @@ class TestUFunc:
 
                         # Determine size for reduction axis (None if scalar)
                         outsize, scalarize = get_out_axis_size(a, b, axis)
-                        if outsize == 'skip':
+                        if outsize == "skip":
                             continue
 
                         # Slice b to get an output array of the correct size
                         sl = [slice(None)] * ndim
                         if axis is None:
                             if outsize is None:
-                                sl = [slice(0, 1)] + [0]*(ndim - 1)
+                                sl = [slice(0, 1)] + [0] * (ndim - 1)
                             else:
-                                sl = [slice(0, outsize)] + [0]*(ndim - 1)
+                                sl = [slice(0, outsize)] + [0] * (ndim - 1)
                         else:
                             if outsize is None:
-                                k = b.shape[axis]//2
+                                k = b.shape[axis] // 2
                                 if ndim == 1:
                                     sl[axis] = slice(k, k + 1)
                                 else:
@@ -677,19 +695,21 @@ class TestUFunc:
                 if a.ndim == 1:
                     return a.size, False
                 else:
-                    return 'skip', False  # accumulate doesn't support this
+                    return "skip", False  # accumulate doesn't support this
             else:
                 return a.shape[axis], False
 
-        self.check_unary_fuzz(np.add.accumulate, get_out_axis_size,
-                              dtype=np.int16, count=500)
+        self.check_unary_fuzz(
+            np.add.accumulate, get_out_axis_size, dtype=np.int16, count=500
+        )
 
     def test_binary_ufunc_reduce_fuzz(self):
         def get_out_axis_size(a, b, axis):
             return None, (axis is None or a.ndim == 1)
 
-        self.check_unary_fuzz(np.add.reduce, get_out_axis_size,
-                              dtype=np.int16, count=500)
+        self.check_unary_fuzz(
+            np.add.reduce, get_out_axis_size, dtype=np.int16, count=500
+        )
 
     def test_binary_ufunc_reduceat_fuzz(self):
         def get_out_axis_size(a, b, axis):
@@ -697,22 +717,21 @@ class TestUFunc:
                 if a.ndim == 1:
                     return a.size, False
                 else:
-                    return 'skip', False  # reduceat doesn't support this
+                    return "skip", False  # reduceat doesn't support this
             else:
                 return a.shape[axis], False
 
         def do_reduceat(a, out, axis):
             if axis is None:
                 size = len(a)
-                step = size//len(out)
+                step = size // len(out)
             else:
                 size = a.shape[axis]
                 step = a.shape[axis] // out.shape[axis]
             idx = np.arange(0, size, step)
             return np.add.reduceat(a, idx, out=out, axis=axis)
 
-        self.check_unary_fuzz(do_reduceat, get_out_axis_size,
-                              dtype=np.int16, count=500)
+        self.check_unary_fuzz(do_reduceat, get_out_axis_size, dtype=np.int16, count=500)
 
     def test_binary_ufunc_reduceat_manual(self):
         def check(ufunc, a, ind, out):
@@ -740,7 +759,7 @@ class TestUFunc:
 
             it = iter_random_view_pairs(x, same_steps=False, equal_size=True)
 
-            min_count = 500 // (ndim + 1)**2
+            min_count = 500 // (ndim + 1) ** 2
 
             overlapping = 0
             while overlapping < min_count:
@@ -751,25 +770,25 @@ class TestUFunc:
 
                 # Ensure the shapes are so that euclidean_pdist is happy
                 if b.shape[-1] > b.shape[-2]:
-                    b = b[...,0,:]
+                    b = b[..., 0, :]
                 else:
-                    b = b[...,:,0]
+                    b = b[..., :, 0]
 
                 n = a.shape[-2]
                 p = n * (n - 1) // 2
                 if p <= b.shape[-1] and p > 0:
-                    b = b[...,:p]
+                    b = b[..., :p]
                 else:
-                    n = max(2, int(np.sqrt(b.shape[-1]))//2)
+                    n = max(2, int(np.sqrt(b.shape[-1])) // 2)
                     p = n * (n - 1) // 2
-                    a = a[...,:n,:]
-                    b = b[...,:p]
+                    a = a[..., :n, :]
+                    b = b[..., :p]
 
                 # Call
                 if np.shares_memory(a, b):
                     overlapping += 1
 
-                with np.errstate(over='ignore', invalid='ignore'):
+                with np.errstate(over="ignore", invalid="ignore"):
                     assert_copy_equivalent(gufunc, [a], out=b)
 
     def test_ufunc_at_manual(self):
@@ -827,8 +846,16 @@ class TestUFunc:
             assert_array_equal(c1, c2)
             assert_array_equal(c1, c3)
 
-        dtypes = [np.int8, np.int16, np.int32, np.int64, np.float32,
-                  np.float64, np.complex64, np.complex128]
+        dtypes = [
+            np.int8,
+            np.int16,
+            np.int32,
+            np.int64,
+            np.float32,
+            np.float64,
+            np.complex64,
+            np.complex128,
+        ]
         dtypes = [np.dtype(x) for x in dtypes]
 
         for dtype in dtypes:
@@ -841,21 +868,21 @@ class TestUFunc:
             k = 10
             indices = [
                 np.index_exp[:n],
-                np.index_exp[k:k+n],
-                np.index_exp[n-1::-1],
-                np.index_exp[k+n-1:k-1:-1],
-                np.index_exp[:2*n:2],
-                np.index_exp[k:k+2*n:2],
-                np.index_exp[2*n-1::-2],
-                np.index_exp[k+2*n-1:k-1:-2],
+                np.index_exp[k : k + n],
+                np.index_exp[n - 1 :: -1],
+                np.index_exp[k + n - 1 : k - 1 : -1],
+                np.index_exp[: 2 * n : 2],
+                np.index_exp[k : k + 2 * n : 2],
+                np.index_exp[2 * n - 1 :: -2],
+                np.index_exp[k + 2 * n - 1 : k - 1 : -2],
             ]
 
             for xi, yi in itertools.product(indices, indices):
-                v = np.arange(1, 1 + n*2 + k, dtype=dtype)
+                v = np.arange(1, 1 + n * 2 + k, dtype=dtype)
                 x = v[xi]
                 y = v[yi]
 
-                with np.errstate(all='ignore'):
+                with np.errstate(all="ignore"):
                     check(x, y)
 
                     # Scalar cases
@@ -889,8 +916,16 @@ class TestUFunc:
             c2 = ufunc(a, b, out=c)
             assert_array_equal(c1, c2)
 
-        for dtype in [np.int8, np.int16, np.int32, np.int64,
-                      np.float32, np.float64, np.complex64, np.complex128]:
+        for dtype in [
+            np.int8,
+            np.int16,
+            np.int32,
+            np.int64,
+            np.float32,
+            np.float64,
+            np.complex64,
+            np.complex128,
+        ]:
             # Check different data dependency orders
 
             n = 1000
@@ -898,15 +933,17 @@ class TestUFunc:
 
             indices = []
             for p in [1, 2]:
-                indices.extend([
-                    np.index_exp[:p*n:p],
-                    np.index_exp[k:k+p*n:p],
-                    np.index_exp[p*n-1::-p],
-                    np.index_exp[k+p*n-1:k-1:-p],
-                ])
+                indices.extend(
+                    [
+                        np.index_exp[: p * n : p],
+                        np.index_exp[k : k + p * n : p],
+                        np.index_exp[p * n - 1 :: -p],
+                        np.index_exp[k + p * n - 1 : k - 1 : -p],
+                    ]
+                )
 
             for x, y, z in itertools.product(indices, indices, indices):
-                v = np.arange(6*n).astype(dtype)
+                v = np.arange(6 * n).astype(dtype)
                 x = v[x]
                 y = v[y]
                 z = v[z]

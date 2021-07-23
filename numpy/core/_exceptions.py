@@ -7,6 +7,7 @@ users who silence the exceptions.
 """
 from numpy.core.overrides import set_module
 
+
 def _unpack_tuple(tup):
     if len(tup) == 1:
         return tup[0]
@@ -30,30 +31,31 @@ def _display_as_base(cls):
 
 
 class UFuncTypeError(TypeError):
-    """ Base class for all ufunc exceptions """
+    """Base class for all ufunc exceptions"""
+
     def __init__(self, ufunc):
         self.ufunc = ufunc
 
 
 @_display_as_base
 class _UFuncBinaryResolutionError(UFuncTypeError):
-    """ Thrown when a binary resolution fails """
+    """Thrown when a binary resolution fails"""
+
     def __init__(self, ufunc, dtypes):
         super().__init__(ufunc)
         self.dtypes = tuple(dtypes)
         assert len(self.dtypes) == 2
 
     def __str__(self):
-        return (
-            "ufunc {!r} cannot use operands with types {!r} and {!r}"
-        ).format(
+        return ("ufunc {!r} cannot use operands with types {!r} and {!r}").format(
             self.ufunc.__name__, *self.dtypes
         )
 
 
 @_display_as_base
 class _UFuncNoLoopError(UFuncTypeError):
-    """ Thrown when a ufunc loop cannot be found """
+    """Thrown when a ufunc loop cannot be found"""
+
     def __init__(self, ufunc, dtypes):
         super().__init__(ufunc)
         self.dtypes = tuple(dtypes)
@@ -64,8 +66,8 @@ class _UFuncNoLoopError(UFuncTypeError):
             "{!r} -> {!r}"
         ).format(
             self.ufunc.__name__,
-            _unpack_tuple(self.dtypes[:self.ufunc.nin]),
-            _unpack_tuple(self.dtypes[self.ufunc.nin:])
+            _unpack_tuple(self.dtypes[: self.ufunc.nin]),
+            _unpack_tuple(self.dtypes[self.ufunc.nin :]),
         )
 
 
@@ -80,7 +82,8 @@ class _UFuncCastingError(UFuncTypeError):
 
 @_display_as_base
 class _UFuncInputCastingError(_UFuncCastingError):
-    """ Thrown when a ufunc input cannot be casted """
+    """Thrown when a ufunc input cannot be casted"""
+
     def __init__(self, ufunc, casting, from_, to, i):
         super().__init__(ufunc, casting, from_, to)
         self.in_i = i
@@ -89,16 +92,14 @@ class _UFuncInputCastingError(_UFuncCastingError):
         # only show the number if more than one input exists
         i_str = "{} ".format(self.in_i) if self.ufunc.nin != 1 else ""
         return (
-            "Cannot cast ufunc {!r} input {}from {!r} to {!r} with casting "
-            "rule {!r}"
-        ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
-        )
+            "Cannot cast ufunc {!r} input {}from {!r} to {!r} with casting " "rule {!r}"
+        ).format(self.ufunc.__name__, i_str, self.from_, self.to, self.casting)
 
 
 @_display_as_base
 class _UFuncOutputCastingError(_UFuncCastingError):
-    """ Thrown when a ufunc output cannot be casted """
+    """Thrown when a ufunc output cannot be casted"""
+
     def __init__(self, ufunc, casting, from_, to, i):
         super().__init__(ufunc, casting, from_, to)
         self.out_i = i
@@ -109,18 +110,16 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         return (
             "Cannot cast ufunc {!r} output {}from {!r} to {!r} with casting "
             "rule {!r}"
-        ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
-        )
+        ).format(self.ufunc.__name__, i_str, self.from_, self.to, self.casting)
 
 
 # Exception used in shares_memory()
-@set_module('numpy')
+@set_module("numpy")
 class TooHardError(RuntimeError):
     pass
 
 
-@set_module('numpy')
+@set_module("numpy")
 class AxisError(ValueError, IndexError):
     """Axis supplied was invalid.
 
@@ -214,7 +213,8 @@ class AxisError(ValueError, IndexError):
 
 @_display_as_base
 class _ArrayMemoryError(MemoryError):
-    """ Thrown when an array cannot be allocated"""
+    """Thrown when an array cannot be allocated"""
+
     def __init__(self, shape, dtype):
         self.shape = shape
         self.dtype = dtype
@@ -228,12 +228,12 @@ class _ArrayMemoryError(MemoryError):
 
     @staticmethod
     def _size_to_string(num_bytes):
-        """ Convert a number of bytes into a binary size string """
+        """Convert a number of bytes into a binary size string"""
 
         # https://en.wikipedia.org/wiki/Binary_prefix
         LOG2_STEP = 10
         STEP = 1024
-        units = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
+        units = ["bytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"]
 
         unit_i = max(num_bytes.bit_length() - 1, 1) // LOG2_STEP
         unit_val = 1 << (unit_i * LOG2_STEP)
@@ -255,17 +255,18 @@ class _ArrayMemoryError(MemoryError):
         # format with a sensible number of digits
         if unit_i == 0:
             # no decimal point on bytes
-            return '{:.0f} {}'.format(n_units, unit_name)
+            return "{:.0f} {}".format(n_units, unit_name)
         elif round(n_units) < 1000:
             # 3 significant figures, if none are dropped to the left of the .
-            return '{:#.3g} {}'.format(n_units, unit_name)
+            return "{:#.3g} {}".format(n_units, unit_name)
         else:
             # just give all the digits otherwise
-            return '{:#.0f} {}'.format(n_units, unit_name)
+            return "{:#.0f} {}".format(n_units, unit_name)
 
     def __str__(self):
         size_str = self._size_to_string(self._total_size)
         return (
-            "Unable to allocate {} for an array with shape {} and data type {}"
-            .format(size_str, self.shape, self.dtype)
+            "Unable to allocate {} for an array with shape {} and data type {}".format(
+                size_str, self.shape, self.dtype
+            )
         )

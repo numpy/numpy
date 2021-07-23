@@ -16,14 +16,17 @@ class TestResolveDescriptors:
     # Casting implementations are the main/only current user:
     method = get_castingimpl(type(np.dtype("d")), type(np.dtype("f")))
 
-    @pytest.mark.parametrize("args", [
-        (True,),  # Not a tuple.
-        ((None,)),  # Too few elements
-        ((None, None, None),),  # Too many
-        ((None, None),),  # Input dtype is None, which is invalid.
-        ((np.dtype("d"), True),),  # Output dtype is not a dtype
-        ((np.dtype("f"), None),),  # Input dtype does not match method
-    ])
+    @pytest.mark.parametrize(
+        "args",
+        [
+            (True,),  # Not a tuple.
+            ((None,)),  # Too few elements
+            ((None, None, None),),  # Too many
+            ((None, None),),  # Input dtype is None, which is invalid.
+            ((np.dtype("d"), True),),  # Output dtype is not a dtype
+            ((np.dtype("f"), None),),  # Input dtype does not match method
+        ],
+    )
     def test_invalid_arguments(self, args):
         with pytest.raises(TypeError):
             self.method._resolve_descriptors(*args)
@@ -36,22 +39,37 @@ class TestSimpleStridedCall:
     # Casting implementations are the main/only current user:
     method = get_castingimpl(type(np.dtype("d")), type(np.dtype("f")))
 
-    @pytest.mark.parametrize(["args", "error"], [
-        ((True,), TypeError),  # Not a tuple
-        (((None,),), TypeError),  # Too few elements
-        ((None, None), TypeError),  # Inputs are not arrays.
-        (((None, None, None),), TypeError),  # Too many
-        (((np.arange(3), np.arange(3)),), TypeError),  # Incorrect dtypes
-        (((np.ones(3, dtype=">d"), np.ones(3, dtype="<f")),),
-         TypeError),  # Does not support byte-swapping
-        (((np.ones((2, 2), dtype="d"), np.ones((2, 2), dtype="f")),),
-         ValueError),  # not 1-D
-        (((np.ones(3, dtype="d"), np.ones(4, dtype="f")),),
-          ValueError),  # different length
-        (((np.frombuffer(b"\0x00"*3*2, dtype="d"),
-           np.frombuffer(b"\0x00"*3, dtype="f")),),
-         ValueError),  # output not writeable
-    ])
+    @pytest.mark.parametrize(
+        ["args", "error"],
+        [
+            ((True,), TypeError),  # Not a tuple
+            (((None,),), TypeError),  # Too few elements
+            ((None, None), TypeError),  # Inputs are not arrays.
+            (((None, None, None),), TypeError),  # Too many
+            (((np.arange(3), np.arange(3)),), TypeError),  # Incorrect dtypes
+            (
+                ((np.ones(3, dtype=">d"), np.ones(3, dtype="<f")),),
+                TypeError,
+            ),  # Does not support byte-swapping
+            (
+                ((np.ones((2, 2), dtype="d"), np.ones((2, 2), dtype="f")),),
+                ValueError,
+            ),  # not 1-D
+            (
+                ((np.ones(3, dtype="d"), np.ones(4, dtype="f")),),
+                ValueError,
+            ),  # different length
+            (
+                (
+                    (
+                        np.frombuffer(b"\0x00" * 3 * 2, dtype="d"),
+                        np.frombuffer(b"\0x00" * 3, dtype="f"),
+                    ),
+                ),
+                ValueError,
+            ),  # output not writeable
+        ],
+    )
     def test_invalid_arguments(self, args, error):
         # This is private API, which may be modified freely
         with pytest.raises(error):

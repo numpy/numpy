@@ -26,7 +26,8 @@ Cf2py intent(out) OUT1, OUT2, OUT3, OUT4, OUT5, OUT6
       END
     """
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason="Fails with MinGW64 Gfortran (Issue #9673)"
+    )
     def test_quoted_character(self):
-        assert_equal(self.module.foo(), (b"'", b'"', b';', b'!', b'(', b')'))
+        assert_equal(self.module.foo(), (b"'", b'"', b";", b"!", b"(", b")"))

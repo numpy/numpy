@@ -14,7 +14,7 @@ x8: ArrayLike = np.array([1, 2, 3])
 x9: ArrayLike = [1, 2, 3]
 x10: ArrayLike = (1, 2, 3)
 x11: ArrayLike = "foo"
-x12: ArrayLike = memoryview(b'foo')
+x12: ArrayLike = memoryview(b"foo")
 
 
 class A:

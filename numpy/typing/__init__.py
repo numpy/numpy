@@ -148,6 +148,7 @@ from typing import TYPE_CHECKING, List, Any
 if TYPE_CHECKING:
     # typing_extensions is always available when type-checking
     from typing_extensions import Literal as L
+
     _HAS_TYPING_EXTENSIONS: L[True]
 else:
     try:
@@ -160,7 +161,10 @@ else:
 if TYPE_CHECKING:
     from typing_extensions import final
 else:
-    def final(f): return f
+
+    def final(f):
+        return f
+
 
 if not TYPE_CHECKING:
     __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
@@ -221,8 +225,15 @@ class NBitBase:
 
     def __init_subclass__(cls) -> None:
         allowed_names = {
-            "NBitBase", "_256Bit", "_128Bit", "_96Bit", "_80Bit",
-            "_64Bit", "_32Bit", "_16Bit", "_8Bit",
+            "NBitBase",
+            "_256Bit",
+            "_128Bit",
+            "_96Bit",
+            "_80Bit",
+            "_64Bit",
+            "_32Bit",
+            "_16Bit",
+            "_8Bit",
         }
         if cls.__name__ not in allowed_names:
             raise TypeError('cannot inherit from final class "NBitBase"')
@@ -230,14 +241,37 @@ class NBitBase:
 
 
 # Silence errors about subclassing a `@final`-decorated class
-class _256Bit(NBitBase): ...  # type: ignore[misc]
-class _128Bit(_256Bit): ...  # type: ignore[misc]
-class _96Bit(_128Bit): ...  # type: ignore[misc]
-class _80Bit(_96Bit): ...  # type: ignore[misc]
-class _64Bit(_80Bit): ...  # type: ignore[misc]
-class _32Bit(_64Bit): ...  # type: ignore[misc]
-class _16Bit(_32Bit): ...  # type: ignore[misc]
-class _8Bit(_16Bit): ...  # type: ignore[misc]
+class _256Bit(NBitBase):
+    ...  # type: ignore[misc]
+
+
+class _128Bit(_256Bit):
+    ...  # type: ignore[misc]
+
+
+class _96Bit(_128Bit):
+    ...  # type: ignore[misc]
+
+
+class _80Bit(_96Bit):
+    ...  # type: ignore[misc]
+
+
+class _64Bit(_80Bit):
+    ...  # type: ignore[misc]
+
+
+class _32Bit(_64Bit):
+    ...  # type: ignore[misc]
+
+
+class _16Bit(_32Bit):
+    ...  # type: ignore[misc]
+
+
+class _8Bit(_16Bit):
+    ...  # type: ignore[misc]
+
 
 from ._nbit import (
     _NBitByte,
@@ -368,10 +402,12 @@ del TYPE_CHECKING, final, List, Any
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings
+
     __doc__ += _docstrings
-    __doc__ += '\n.. autoclass:: numpy.typing.NBitBase\n'
+    __doc__ += "\n.. autoclass:: numpy.typing.NBitBase\n"
     del _docstrings
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

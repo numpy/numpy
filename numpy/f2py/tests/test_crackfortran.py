@@ -35,14 +35,16 @@ class TestNoSpace(util.F2PyTest):
         assert_array_equal(k, w + 1)
         self.module.subc([w, k])
         assert_array_equal(k, w + 1)
-        assert self.module.t0(23) == b'2'
+        assert self.module.t0(23) == b"2"
 
 
-class TestPublicPrivate():
+class TestPublicPrivate:
     def test_defaultPrivate(self, tmp_path):
         f_path = tmp_path / "mod.f90"
-        with f_path.open('w') as ff:
-            ff.write(textwrap.dedent("""\
+        with f_path.open("w") as ff:
+            ff.write(
+                textwrap.dedent(
+                    """\
             module foo
               private
               integer :: a
@@ -54,21 +56,25 @@ class TestPublicPrivate():
                 a = v
               end subroutine setA
             end module foo
-            """))
+            """
+                )
+            )
         mod = crackfortran.crackfortran([str(f_path)])
         assert len(mod) == 1
         mod = mod[0]
-        assert 'private' in mod['vars']['a']['attrspec']
-        assert 'public' not in mod['vars']['a']['attrspec']
-        assert 'private' in mod['vars']['b']['attrspec']
-        assert 'public' not in mod['vars']['b']['attrspec']
-        assert 'private' not in mod['vars']['seta']['attrspec']
-        assert 'public' in mod['vars']['seta']['attrspec']
+        assert "private" in mod["vars"]["a"]["attrspec"]
+        assert "public" not in mod["vars"]["a"]["attrspec"]
+        assert "private" in mod["vars"]["b"]["attrspec"]
+        assert "public" not in mod["vars"]["b"]["attrspec"]
+        assert "private" not in mod["vars"]["seta"]["attrspec"]
+        assert "public" in mod["vars"]["seta"]["attrspec"]
 
     def test_defaultPublic(self, tmp_path):
         f_path = tmp_path / "mod.f90"
-        with f_path.open('w') as ff:
-            ff.write(textwrap.dedent("""\
+        with f_path.open("w") as ff:
+            ff.write(
+                textwrap.dedent(
+                    """\
             module foo
               public
               integer, private :: a
@@ -79,14 +85,16 @@ class TestPublicPrivate():
                 a = v
               end subroutine setA
             end module foo
-            """))
+            """
+                )
+            )
         mod = crackfortran.crackfortran([str(f_path)])
         assert len(mod) == 1
         mod = mod[0]
-        assert 'private' in mod['vars']['a']['attrspec']
-        assert 'public' not in mod['vars']['a']['attrspec']
-        assert 'private' not in mod['vars']['seta']['attrspec']
-        assert 'public' in mod['vars']['seta']['attrspec']
+        assert "private" in mod["vars"]["a"]["attrspec"]
+        assert "public" not in mod["vars"]["a"]["attrspec"]
+        assert "private" not in mod["vars"]["seta"]["attrspec"]
+        assert "public" in mod["vars"]["seta"]["attrspec"]
 
 
 class TestExternal(util.F2PyTest):
@@ -109,21 +117,24 @@ class TestExternal(util.F2PyTest):
     def test_external_as_statement(self):
         def incr(x):
             return x + 123
+
         r = self.module.external_as_statement(incr)
         assert r == 123
 
     def test_external_as_attribute(self):
         def incr(x):
             return x + 123
+
         r = self.module.external_as_attribute(incr)
         assert r == 123
 
 
 class TestCrackFortran(util.F2PyTest):
 
-    suffix = '.f90'
+    suffix = ".f90"
 
-    code = textwrap.dedent("""
+    code = textwrap.dedent(
+        """
       subroutine gh2848( &
         ! first 2 parameters
         par1, par2,&
@@ -137,14 +148,15 @@ class TestCrackFortran(util.F2PyTest):
         par4 = par2
 
       end subroutine gh2848
-    """)
+    """
+    )
 
     def test_gh2848(self):
         r = self.module.gh2848(1, 2)
         assert r == (1, 2)
 
 
-class TestMarkinnerspaces():
+class TestMarkinnerspaces:
     # issue #14118: markinnerspaces does not handle multiple quotations
 
     def test_do_not_touch_normal_spaces(self):
@@ -153,14 +165,12 @@ class TestMarkinnerspaces():
             assert_equal(markinnerspaces(i), i)
 
     def test_one_relevant_space(self):
-        assert_equal(markinnerspaces("a 'b c' \\\' \\\'"), "a 'b@_@c' \\' \\'")
+        assert_equal(markinnerspaces("a 'b c' \\' \\'"), "a 'b@_@c' \\' \\'")
         assert_equal(markinnerspaces(r'a "b c" \" \"'), r'a "b@_@c" \" \"')
 
     def test_ignore_inner_quotes(self):
-        assert_equal(markinnerspaces('a \'b c" " d\' e'),
-                     "a 'b@_@c\"@_@\"@_@d' e")
-        assert_equal(markinnerspaces('a "b c\' \' d" e'),
-                     "a \"b@_@c'@_@'@_@d\" e")
+        assert_equal(markinnerspaces("a 'b c\" \" d' e"), "a 'b@_@c\"@_@\"@_@d' e")
+        assert_equal(markinnerspaces("a \"b c' ' d\" e"), "a \"b@_@c'@_@'@_@d\" e")
 
     def test_multiple_relevant_spaces(self):
         assert_equal(markinnerspaces("a 'b c' 'd e'"), "a 'b@_@c' 'd@_@e'")

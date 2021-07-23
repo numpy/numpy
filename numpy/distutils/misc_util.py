@@ -20,6 +20,8 @@ _tdata = tlocal()
 
 # store all created temporary directories so they can be deleted on exit
 _tmpdirs = []
+
+
 def clean_up_temporary_directory():
     if _tmpdirs is not None:
         for d in _tmpdirs:
@@ -28,22 +30,55 @@ def clean_up_temporary_directory():
             except OSError:
                 pass
 
+
 atexit.register(clean_up_temporary_directory)
 
 from numpy.compat import npy_load_module
 
-__all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
-           'dict_append', 'appendpath', 'generate_config_py',
-           'get_cmd', 'allpath', 'get_mathlibs',
-           'terminal_has_colors', 'red_text', 'green_text', 'yellow_text',
-           'blue_text', 'cyan_text', 'cyg2win32', 'mingw32', 'all_strings',
-           'has_f_sources', 'has_cxx_sources', 'filter_sources',
-           'get_dependencies', 'is_local_src_dir', 'get_ext_source_files',
-           'get_script_files', 'get_lib_source_files', 'get_data_files',
-           'dot_join', 'get_frame', 'minrelpath', 'njoin',
-           'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
-           'get_num_build_jobs']
+__all__ = [
+    "Configuration",
+    "get_numpy_include_dirs",
+    "default_config_dict",
+    "dict_append",
+    "appendpath",
+    "generate_config_py",
+    "get_cmd",
+    "allpath",
+    "get_mathlibs",
+    "terminal_has_colors",
+    "red_text",
+    "green_text",
+    "yellow_text",
+    "blue_text",
+    "cyan_text",
+    "cyg2win32",
+    "mingw32",
+    "all_strings",
+    "has_f_sources",
+    "has_cxx_sources",
+    "filter_sources",
+    "get_dependencies",
+    "is_local_src_dir",
+    "get_ext_source_files",
+    "get_script_files",
+    "get_lib_source_files",
+    "get_data_files",
+    "dot_join",
+    "get_frame",
+    "minrelpath",
+    "njoin",
+    "is_sequence",
+    "is_string",
+    "as_list",
+    "gpaths",
+    "get_language",
+    "quote_args",
+    "get_build_architecture",
+    "get_info",
+    "get_pkg_info",
+    "get_num_build_jobs",
+]
+
 
 class InstallableLib:
     """
@@ -67,6 +102,7 @@ class InstallableLib:
     The three parameters are stored as attributes with the same names.
 
     """
+
     def __init__(self, name, build_info, target_dir):
         self.name = name
         self.build_info = build_info
@@ -89,6 +125,7 @@ def get_num_build_jobs():
 
     """
     from numpy.distutils.core import get_distribution
+
     try:
         cpu_count = len(os.sched_getaffinity(0))
     except AttributeError:
@@ -101,13 +138,16 @@ def get_num_build_jobs():
         return envjobs
 
     # any of these three may have the job set, take the largest
-    cmdattr = (getattr(dist.get_command_obj('build'), 'parallel', None),
-               getattr(dist.get_command_obj('build_ext'), 'parallel', None),
-               getattr(dist.get_command_obj('build_clib'), 'parallel', None))
+    cmdattr = (
+        getattr(dist.get_command_obj("build"), "parallel", None),
+        getattr(dist.get_command_obj("build_ext"), "parallel", None),
+        getattr(dist.get_command_obj("build_clib"), "parallel", None),
+    )
     if all(x is None for x in cmdattr):
         return envjobs
     else:
         return max(x for x in cmdattr if x is not None)
+
 
 def quote_args(args):
     # don't used _nt_quote_args as it does not check if
@@ -115,14 +155,16 @@ def quote_args(args):
     args = list(args)
     for i in range(len(args)):
         a = args[i]
-        if ' ' in a and a[0] not in '"\'':
+        if " " in a and a[0] not in "\"'":
             args[i] = '"%s"' % (a)
     return args
 
+
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
-    splitted = name.split('/')
+    splitted = name.split("/")
     return os.path.join(*splitted)
+
 
 def rel_path(path, parent_path):
     """Return path relative to parent_path."""
@@ -132,11 +174,12 @@ def rel_path(path, parent_path):
     if len(apath) < len(pd):
         return path
     if apath == pd:
-        return ''
-    if pd == apath[:len(pd)]:
+        return ""
+    if pd == apath[: len(pd)]:
         assert apath[len(pd)] in [os.sep], repr((path, apath[len(pd)]))
-        path = apath[len(pd)+1:]
+        path = apath[len(pd) + 1 :]
     return path
+
 
 def get_path_from_frame(frame, parent_path=None):
     """Return path of the module given a frame object from the call stack.
@@ -147,26 +190,27 @@ def get_path_from_frame(frame, parent_path=None):
 
     # First, try to find if the file name is in the frame.
     try:
-        caller_file = eval('__file__', frame.f_globals, frame.f_locals)
+        caller_file = eval("__file__", frame.f_globals, frame.f_locals)
         d = os.path.dirname(os.path.abspath(caller_file))
     except NameError:
         # __file__ is not defined, so let's try __name__. We try this second
         # because setuptools spoofs __name__ to be '__main__' even though
         # sys.modules['__main__'] might be something else, like easy_install(1).
-        caller_name = eval('__name__', frame.f_globals, frame.f_locals)
+        caller_name = eval("__name__", frame.f_globals, frame.f_locals)
         __import__(caller_name)
         mod = sys.modules[caller_name]
-        if hasattr(mod, '__file__'):
+        if hasattr(mod, "__file__"):
             d = os.path.dirname(os.path.abspath(mod.__file__))
         else:
             # we're probably running setup.py as execfile("setup.py")
             # (likely we're building an egg)
-            d = os.path.abspath('.')
+            d = os.path.abspath(".")
 
     if parent_path is not None:
         d = rel_path(d, parent_path)
 
-    return d or '.'
+    return d or "."
+
 
 def njoin(*path):
     """Join two or more pathname components +
@@ -187,74 +231,77 @@ def njoin(*path):
     path = paths
     if not path:
         # njoin()
-        joined = ''
+        joined = ""
     else:
         # njoin('a', 'b')
         joined = os.path.join(*path)
-    if os.path.sep != '/':
-        joined = joined.replace('/', os.path.sep)
+    if os.path.sep != "/":
+        joined = joined.replace("/", os.path.sep)
     return minrelpath(joined)
 
+
 def get_mathlibs(path=None):
-    """Return the MATHLIB line from numpyconfig.h
-    """
+    """Return the MATHLIB line from numpyconfig.h"""
     if path is not None:
-        config_file = os.path.join(path, '_numpyconfig.h')
+        config_file = os.path.join(path, "_numpyconfig.h")
     else:
         # Look for the file in each of the numpy include directories.
         dirs = get_numpy_include_dirs()
         for path in dirs:
-            fn = os.path.join(path, '_numpyconfig.h')
+            fn = os.path.join(path, "_numpyconfig.h")
             if os.path.exists(fn):
                 config_file = fn
                 break
         else:
-            raise DistutilsError('_numpyconfig.h not found in numpy include '
-                'dirs %r' % (dirs,))
+            raise DistutilsError(
+                "_numpyconfig.h not found in numpy include " "dirs %r" % (dirs,)
+            )
 
     with open(config_file) as fid:
         mathlibs = []
-        s = '#define MATHLIB'
+        s = "#define MATHLIB"
         for line in fid:
             if line.startswith(s):
-                value = line[len(s):].strip()
+                value = line[len(s) :].strip()
                 if value:
-                    mathlibs.extend(value.split(','))
+                    mathlibs.extend(value.split(","))
     return mathlibs
 
+
 def minrelpath(path):
-    """Resolve `..` and '.' from path.
-    """
+    """Resolve `..` and '.' from path."""
     if not is_string(path):
         return path
-    if '.' not in path:
+    if "." not in path:
         return path
     l = path.split(os.sep)
     while l:
         try:
-            i = l.index('.', 1)
+            i = l.index(".", 1)
         except ValueError:
             break
         del l[i]
     j = 1
     while l:
         try:
-            i = l.index('..', j)
+            i = l.index("..", j)
         except ValueError:
             break
-        if l[i-1]=='..':
+        if l[i - 1] == "..":
             j += 1
         else:
-            del l[i], l[i-1]
+            del l[i], l[i - 1]
             j = 1
     if not l:
-        return ''
+        return ""
     return os.sep.join(l)
+
 
 def sorted_glob(fileglob):
     """sorts output of python glob for https://bugs.python.org/issue30461
     to allow extensions to have reproducible build results"""
     return sorted(glob.glob(fileglob))
+
 
 def _fix_paths(paths, local_path, include_non_existing):
     assert is_sequence(paths), repr(type(paths))
@@ -262,7 +309,7 @@ def _fix_paths(paths, local_path, include_non_existing):
     assert not is_string(paths), repr(paths)
     for n in paths:
         if is_string(n):
-            if '*' in n or '?' in n:
+            if "*" in n or "?" in n:
                 p = sorted_glob(n)
                 p2 = sorted_glob(njoin(local_path, n))
                 if p2:
@@ -272,8 +319,7 @@ def _fix_paths(paths, local_path, include_non_existing):
                 else:
                     if include_non_existing:
                         new_paths.append(n)
-                    print('could not resolve pattern in %r: %r' %
-                            (local_path, n))
+                    print("could not resolve pattern in %r: %r" % (local_path, n))
             else:
                 n2 = njoin(local_path, n)
                 if os.path.exists(n2):
@@ -284,8 +330,7 @@ def _fix_paths(paths, local_path, include_non_existing):
                     elif include_non_existing:
                         new_paths.append(n)
                     if not os.path.exists(n):
-                        print('non-existing path in %r: %r' %
-                                (local_path, n))
+                        print("non-existing path in %r: %r" % (local_path, n))
 
         elif is_sequence(n):
             new_paths.extend(_fix_paths(n, local_path, include_non_existing))
@@ -293,28 +338,29 @@ def _fix_paths(paths, local_path, include_non_existing):
             new_paths.append(n)
     return [minrelpath(p) for p in new_paths]
 
-def gpaths(paths, local_path='', include_non_existing=True):
-    """Apply glob to paths and prepend local_path if needed.
-    """
+
+def gpaths(paths, local_path="", include_non_existing=True):
+    """Apply glob to paths and prepend local_path if needed."""
     if is_string(paths):
         paths = (paths,)
     return _fix_paths(paths, local_path, include_non_existing)
 
-def make_temp_file(suffix='', prefix='', text=True):
-    if not hasattr(_tdata, 'tempdir'):
+
+def make_temp_file(suffix="", prefix="", text=True):
+    if not hasattr(_tdata, "tempdir"):
         _tdata.tempdir = tempfile.mkdtemp()
         _tmpdirs.append(_tdata.tempdir)
-    fid, name = tempfile.mkstemp(suffix=suffix,
-                                 prefix=prefix,
-                                 dir=_tdata.tempdir,
-                                 text=text)
-    fo = os.fdopen(fid, 'w')
+    fid, name = tempfile.mkstemp(
+        suffix=suffix, prefix=prefix, dir=_tdata.tempdir, text=text
+    )
+    fo = os.fdopen(fid, "w")
     return fo, name
+
 
 # Hooks for colored terminal output.
 # See also https://web.archive.org/web/20100314204946/http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
-    if sys.platform=='cygwin' and 'USE_COLOR' not in os.environ:
+    if sys.platform == "cygwin" and "USE_COLOR" not in os.environ:
         # Avoid importing curses that causes illegal operation
         # with a message:
         #  PYTHON2 caused an invalid page fault in
@@ -324,29 +370,41 @@ def terminal_has_colors():
         #          curses.version is 2.2
         #          CYGWIN_98-4.10, release 1.5.7(0.109/3/2))
         return 0
-    if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+    if hasattr(sys.stdout, "isatty") and sys.stdout.isatty():
         try:
             import curses
+
             curses.setupterm()
-            if (curses.tigetnum("colors") >= 0
+            if (
+                curses.tigetnum("colors") >= 0
                 and curses.tigetnum("pairs") >= 0
-                and ((curses.tigetstr("setf") is not None
-                      and curses.tigetstr("setb") is not None)
-                     or (curses.tigetstr("setaf") is not None
-                         and curses.tigetstr("setab") is not None)
-                     or curses.tigetstr("scp") is not None)):
+                and (
+                    (
+                        curses.tigetstr("setf") is not None
+                        and curses.tigetstr("setb") is not None
+                    )
+                    or (
+                        curses.tigetstr("setaf") is not None
+                        and curses.tigetstr("setab") is not None
+                    )
+                    or curses.tigetstr("scp") is not None
+                )
+            ):
                 return 1
         except Exception:
             pass
     return 0
 
+
 if terminal_has_colors():
-    _colour_codes = dict(black=0, red=1, green=2, yellow=3,
-                         blue=4, magenta=5, cyan=6, white=7, default=9)
+    _colour_codes = dict(
+        black=0, red=1, green=2, yellow=3, blue=4, magenta=5, cyan=6, white=7, default=9
+    )
+
     def colour_text(s, fg=None, bg=None, bold=False):
         seq = []
         if bold:
-            seq.append('1')
+            seq.append("1")
         if fg:
             fgcode = 30 + _colour_codes.get(fg.lower(), 0)
             seq.append(str(fgcode))
@@ -354,27 +412,43 @@ if terminal_has_colors():
             bgcode = 40 + _colour_codes.get(fg.lower(), 7)
             seq.append(str(bgcode))
         if seq:
-            return '\x1b[%sm%s\x1b[0m' % (';'.join(seq), s)
+            return "\x1b[%sm%s\x1b[0m" % (";".join(seq), s)
         else:
             return s
+
+
 else:
+
     def colour_text(s, fg=None, bg=None):
         return s
 
+
 def default_text(s):
-    return colour_text(s, 'default')
+    return colour_text(s, "default")
+
+
 def red_text(s):
-    return colour_text(s, 'red')
+    return colour_text(s, "red")
+
+
 def green_text(s):
-    return colour_text(s, 'green')
+    return colour_text(s, "green")
+
+
 def yellow_text(s):
-    return colour_text(s, 'yellow')
+    return colour_text(s, "yellow")
+
+
 def cyan_text(s):
-    return colour_text(s, 'cyan')
+    return colour_text(s, "cyan")
+
+
 def blue_text(s):
-    return colour_text(s, 'blue')
+    return colour_text(s, "blue")
+
 
 #########################
+
 
 def cyg2win32(path: str) -> str:
     """Convert a path from Cygwin-native to Windows-native.
@@ -414,27 +488,28 @@ def cyg2win32(path: str) -> str:
 
 
 def mingw32():
-    """Return true when using mingw32 environment.
-    """
-    if sys.platform=='win32':
-        if os.environ.get('OSTYPE', '')=='msys':
+    """Return true when using mingw32 environment."""
+    if sys.platform == "win32":
+        if os.environ.get("OSTYPE", "") == "msys":
             return True
-        if os.environ.get('MSYSTEM', '')=='MINGW32':
+        if os.environ.get("MSYSTEM", "") == "MINGW32":
             return True
     return False
 
+
 def msvc_runtime_version():
     "Return version of MSVC runtime library, as defined by __MSC_VER__ macro"
-    msc_pos = sys.version.find('MSC v.')
+    msc_pos = sys.version.find("MSC v.")
     if msc_pos != -1:
-        msc_ver = int(sys.version[msc_pos+6:msc_pos+10])
+        msc_ver = int(sys.version[msc_pos + 6 : msc_pos + 10])
     else:
         msc_ver = None
     return msc_ver
 
+
 def msvc_runtime_library():
     "Return name of MSVC runtime library if Python was built with MSVC >= 7"
-    ver = msvc_runtime_major ()
+    ver = msvc_runtime_major()
     if ver:
         if ver < 140:
             return "msvcr%i" % ver
@@ -443,24 +518,29 @@ def msvc_runtime_library():
     else:
         return None
 
+
 def msvc_runtime_major():
     "Return major version of MSVC runtime coded like get_build_msvc_version"
-    major = {1300:  70,  # MSVC 7.0
-             1310:  71,  # MSVC 7.1
-             1400:  80,  # MSVC 8
-             1500:  90,  # MSVC 9  (aka 2008)
-             1600: 100,  # MSVC 10 (aka 2010)
-             1900: 140,  # MSVC 14 (aka 2015)
+    major = {
+        1300: 70,  # MSVC 7.0
+        1310: 71,  # MSVC 7.1
+        1400: 80,  # MSVC 8
+        1500: 90,  # MSVC 9  (aka 2008)
+        1600: 100,  # MSVC 10 (aka 2010)
+        1900: 140,  # MSVC 14 (aka 2015)
     }.get(msvc_runtime_version(), None)
     return major
 
+
 #########################
 
-#XXX need support for .C that is also C++
-cxx_ext_match = re.compile(r'.*\.(cpp|cxx|cc)\Z', re.I).match
-fortran_ext_match = re.compile(r'.*\.(f90|f95|f77|for|ftn|f)\Z', re.I).match
-f90_ext_match = re.compile(r'.*\.(f90|f95)\Z', re.I).match
-f90_module_name_match = re.compile(r'\s*module\s*(?P<name>[\w_]+)', re.I).match
+# XXX need support for .C that is also C++
+cxx_ext_match = re.compile(r".*\.(cpp|cxx|cc)\Z", re.I).match
+fortran_ext_match = re.compile(r".*\.(f90|f95|f77|for|ftn|f)\Z", re.I).match
+f90_ext_match = re.compile(r".*\.(f90|f95)\Z", re.I).match
+f90_module_name_match = re.compile(r"\s*module\s*(?P<name>[\w_]+)", re.I).match
+
+
 def _get_f90_modules(source):
     """Return a list of Fortran f90 module names that
     given source file defines.
@@ -468,24 +548,27 @@ def _get_f90_modules(source):
     if not f90_ext_match(source):
         return []
     modules = []
-    with open(source, 'r') as f:
+    with open(source, "r") as f:
         for line in f:
             m = f90_module_name_match(line)
             if m:
-                name = m.group('name')
+                name = m.group("name")
                 modules.append(name)
                 # break  # XXX can we assume that there is one module per file?
     return modules
 
+
 def is_string(s):
     return isinstance(s, str)
 
+
 def all_strings(lst):
-    """Return True if all items in lst are string objects. """
+    """Return True if all items in lst are string objects."""
     for item in lst:
         if not is_string(item):
             return False
     return True
+
 
 def is_sequence(seq):
     if is_string(seq):
@@ -496,8 +579,10 @@ def is_sequence(seq):
         return False
     return True
 
+
 def is_glob_pattern(s):
-    return is_string(s) and ('*' in s or '?' in s)
+    return is_string(s) and ("*" in s or "?" in s)
+
 
 def as_list(seq):
     if is_sequence(seq):
@@ -505,32 +590,36 @@ def as_list(seq):
     else:
         return [seq]
 
+
 def get_language(sources):
     # not used in numpy/scipy packages, use build_ext.detect_language instead
-    """Determine language value (c,f77,f90) from sources """
+    """Determine language value (c,f77,f90) from sources"""
     language = None
     for source in sources:
         if isinstance(source, str):
             if f90_ext_match(source):
-                language = 'f90'
+                language = "f90"
                 break
             elif fortran_ext_match(source):
-                language = 'f77'
+                language = "f77"
     return language
 
+
 def has_f_sources(sources):
-    """Return True if sources contains Fortran files """
+    """Return True if sources contains Fortran files"""
     for source in sources:
         if fortran_ext_match(source):
             return True
     return False
 
+
 def has_cxx_sources(sources):
-    """Return True if sources contains C++ files """
+    """Return True if sources contains C++ files"""
     for source in sources:
         if cxx_ext_match(source):
             return True
     return False
+
 
 def filter_sources(sources):
     """Return four lists of filenames containing
@@ -559,68 +648,72 @@ def _get_headers(directory_list):
     # get *.h files from list of directories
     headers = []
     for d in directory_list:
-        head = sorted_glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
+        head = sorted_glob(os.path.join(d, "*.h"))  # XXX: *.hpp files??
         headers.extend(head)
     return headers
+
 
 def _get_directories(list_of_sources):
     # get unique directories from list of sources.
     direcs = []
     for f in list_of_sources:
         d = os.path.split(f)
-        if d[0] != '' and not d[0] in direcs:
+        if d[0] != "" and not d[0] in direcs:
             direcs.append(d[0])
     return direcs
+
 
 def _commandline_dep_string(cc_args, extra_postargs, pp_opts):
     """
     Return commandline representation used to determine if a file needs
     to be recompiled
     """
-    cmdline = 'commandline: '
-    cmdline += ' '.join(cc_args)
-    cmdline += ' '.join(extra_postargs)
-    cmdline += ' '.join(pp_opts) + '\n'
+    cmdline = "commandline: "
+    cmdline += " ".join(cc_args)
+    cmdline += " ".join(extra_postargs)
+    cmdline += " ".join(pp_opts) + "\n"
     return cmdline
 
 
 def get_dependencies(sources):
-    #XXX scan sources for include statements
+    # XXX scan sources for include statements
     return _get_headers(_get_directories(sources))
 
+
 def is_local_src_dir(directory):
-    """Return true if directory is local directory.
-    """
+    """Return true if directory is local directory."""
     if not is_string(directory):
         return False
     abs_dir = os.path.abspath(directory)
     c = os.path.commonprefix([os.getcwd(), abs_dir])
-    new_dir = abs_dir[len(c):].split(os.sep)
+    new_dir = abs_dir[len(c) :].split(os.sep)
     if new_dir and not new_dir[0]:
         new_dir = new_dir[1:]
-    if new_dir and new_dir[0]=='build':
+    if new_dir and new_dir[0] == "build":
         return False
     new_dir = os.sep.join(new_dir)
     return os.path.isdir(new_dir)
 
+
 def general_source_files(top_path):
-    pruned_directories = {'CVS':1, '.svn':1, 'build':1}
-    prune_file_pat = re.compile(r'(?:[~#]|\.py[co]|\.o)$')
+    pruned_directories = {"CVS": 1, ".svn": 1, "build": 1}
+    prune_file_pat = re.compile(r"(?:[~#]|\.py[co]|\.o)$")
     for dirpath, dirnames, filenames in os.walk(top_path, topdown=True):
-        pruned = [ d for d in dirnames if d not in pruned_directories ]
+        pruned = [d for d in dirnames if d not in pruned_directories]
         dirnames[:] = pruned
         for f in filenames:
             if not prune_file_pat.search(f):
                 yield os.path.join(dirpath, f)
 
+
 def general_source_directories_files(top_path):
     """Return a directory name relative to top_path and
     files contained.
     """
-    pruned_directories = ['CVS', '.svn', 'build']
-    prune_file_pat = re.compile(r'(?:[~#]|\.py[co]|\.o)$')
+    pruned_directories = ["CVS", ".svn", "build"]
+    prune_file_pat = re.compile(r"(?:[~#]|\.py[co]|\.o)$")
     for dirpath, dirnames, filenames in os.walk(top_path, topdown=True):
-        pruned = [ d for d in dirnames if d not in pruned_directories ]
+        pruned = [d for d in dirnames if d not in pruned_directories]
         dirnames[:] = pruned
         for d in dirnames:
             dpath = os.path.join(dirpath, d)
@@ -633,8 +726,11 @@ def general_source_directories_files(top_path):
             yield rpath, files
     dpath = top_path
     rpath = rel_path(dpath, top_path)
-    filenames = [os.path.join(dpath, f) for f in os.listdir(dpath) \
-                 if not prune_file_pat.search(f)]
+    filenames = [
+        os.path.join(dpath, f)
+        for f in os.listdir(dpath)
+        if not prune_file_pat.search(f)
+    ]
     files = [f for f in filenames if os.path.isfile(f)]
     yield rpath, files
 
@@ -652,23 +748,26 @@ def get_ext_source_files(ext):
             filenames.append(d)
     return filenames
 
+
 def get_script_files(scripts):
     scripts = [_m for _m in scripts if is_string(_m)]
     return scripts
 
+
 def get_lib_source_files(lib):
     filenames = []
-    sources = lib[1].get('sources', [])
+    sources = lib[1].get("sources", [])
     sources = [_m for _m in sources if is_string(_m)]
     filenames.extend(sources)
     filenames.extend(get_dependencies(sources))
-    depends = lib[1].get('depends', [])
+    depends = lib[1].get("depends", [])
     for d in depends:
         if is_local_src_dir(d):
             filenames.extend(list(general_source_files(d)))
         elif os.path.isfile(d):
             filenames.append(d)
     return filenames
+
 
 def get_shared_lib_extension(is_python_ext=False):
     """Return the correct file extension for shared libraries.
@@ -693,29 +792,29 @@ def get_shared_lib_extension(is_python_ext=False):
     """
     confvars = distutils.sysconfig.get_config_vars()
     # SO is deprecated in 3.3.1, use EXT_SUFFIX instead
-    so_ext = confvars.get('EXT_SUFFIX', None)
+    so_ext = confvars.get("EXT_SUFFIX", None)
     if so_ext is None:
-        so_ext = confvars.get('SO', '')
+        so_ext = confvars.get("SO", "")
 
     if not is_python_ext:
         # hardcode known values, config vars (including SHLIB_SUFFIX) are
         # unreliable (see #3182)
         # darwin, windows and debug linux are wrong in 3.3.1 and older
-        if (sys.platform.startswith('linux') or
-            sys.platform.startswith('gnukfreebsd')):
-            so_ext = '.so'
-        elif sys.platform.startswith('darwin'):
-            so_ext = '.dylib'
-        elif sys.platform.startswith('win'):
-            so_ext = '.dll'
+        if sys.platform.startswith("linux") or sys.platform.startswith("gnukfreebsd"):
+            so_ext = ".so"
+        elif sys.platform.startswith("darwin"):
+            so_ext = ".dylib"
+        elif sys.platform.startswith("win"):
+            so_ext = ".dll"
         else:
             # fall back to config vars for unknown platforms
             # fix long extension for Python >=3.2, see PEP 3149.
-            if 'SOABI' in confvars:
+            if "SOABI" in confvars:
                 # Does nothing unless SOABI config var exists
-                so_ext = so_ext.replace('.' + confvars.get('SOABI'), '', 1)
+                so_ext = so_ext.replace("." + confvars.get("SOABI"), "", 1)
 
     return so_ext
+
 
 def get_data_files(data):
     if is_string(data):
@@ -723,7 +822,7 @@ def get_data_files(data):
     sources = data[1]
     filenames = []
     for s in sources:
-        if hasattr(s, '__call__'):
+        if hasattr(s, "__call__"):
             continue
         if is_local_src_dir(s):
             filenames.extend(list(general_source_files(s)))
@@ -731,46 +830,59 @@ def get_data_files(data):
             if os.path.isfile(s):
                 filenames.append(s)
             else:
-                print('Not existing data file:', s)
+                print("Not existing data file:", s)
         else:
             raise TypeError(repr(s))
     return filenames
 
+
 def dot_join(*args):
-    return '.'.join([a for a in args if a])
+    return ".".join([a for a in args if a])
+
 
 def get_frame(level=0):
-    """Return frame object from call stack with given level.
-    """
+    """Return frame object from call stack with given level."""
     try:
-        return sys._getframe(level+1)
+        return sys._getframe(level + 1)
     except AttributeError:
         frame = sys.exc_info()[2].tb_frame
-        for _ in range(level+1):
+        for _ in range(level + 1):
             frame = frame.f_back
         return frame
 
 
 ######################
 
+
 class Configuration:
 
-    _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
-                  'libraries', 'headers', 'scripts', 'py_modules',
-                  'installed_libraries', 'define_macros']
-    _dict_keys = ['package_dir', 'installed_pkg_config']
-    _extra_keys = ['name', 'version']
+    _list_keys = [
+        "packages",
+        "ext_modules",
+        "data_files",
+        "include_dirs",
+        "libraries",
+        "headers",
+        "scripts",
+        "py_modules",
+        "installed_libraries",
+        "define_macros",
+    ]
+    _dict_keys = ["package_dir", "installed_pkg_config"]
+    _extra_keys = ["name", "version"]
 
     numpy_include_dirs = []
 
-    def __init__(self,
-                 package_name=None,
-                 parent_name=None,
-                 top_path=None,
-                 package_path=None,
-                 caller_level=1,
-                 setup_name='setup.py',
-                 **attrs):
+    def __init__(
+        self,
+        package_name=None,
+        parent_name=None,
+        top_path=None,
+        package_path=None,
+        caller_level=1,
+        setup_name="setup.py",
+        **attrs
+    ):
         """Construct configuration instance of a package.
 
         package_name -- name of the package
@@ -795,17 +907,17 @@ class Configuration:
         #               defines a configuration() function.
         if top_path is None:
             top_path = self.local_path
-            self.local_path = ''
+            self.local_path = ""
         if package_path is None:
             package_path = self.local_path
         elif os.path.isdir(njoin(self.local_path, package_path)):
             package_path = njoin(self.local_path, package_path)
-        if not os.path.isdir(package_path or '.'):
+        if not os.path.isdir(package_path or "."):
             raise ValueError("%r is not a directory" % (package_path,))
         self.top_path = top_path
         self.package_path = package_path
         # this is the relative path in the installed package
-        self.path_in_package = os.path.join(*self.name.split('.'))
+        self.path_in_package = os.path.join(*self.name.split("."))
 
         self.list_keys = self._list_keys[:]
         self.dict_keys = self._dict_keys[:]
@@ -832,16 +944,16 @@ class Configuration:
             else:
                 self.extra_keys.append(n)
 
-        if os.path.exists(njoin(package_path, '__init__.py')):
+        if os.path.exists(njoin(package_path, "__init__.py")):
             self.packages.append(self.name)
             self.package_dir[self.name] = package_path
 
         self.options = dict(
-            ignore_setup_xxx_py = False,
-            assume_default_configuration = False,
-            delegate_options_to_subpackages = False,
-            quiet = False,
-            )
+            ignore_setup_xxx_py=False,
+            assume_default_configuration=False,
+            delegate_options_to_subpackages=False,
+            quiet=False,
+        )
 
         caller_instance = None
         for i in range(1, 3):
@@ -850,12 +962,12 @@ class Configuration:
             except ValueError:
                 break
             try:
-                caller_instance = eval('self', f.f_globals, f.f_locals)
+                caller_instance = eval("self", f.f_globals, f.f_locals)
                 break
             except NameError:
                 pass
         if isinstance(caller_instance, self.__class__):
-            if caller_instance.options['delegate_options_to_subpackages']:
+            if caller_instance.options["delegate_options_to_subpackages"]:
                 self.set_options(**caller_instance.options)
 
         self.setup_name = setup_name
@@ -880,11 +992,11 @@ class Configuration:
         return d
 
     def info(self, message):
-        if not self.options['quiet']:
+        if not self.options["quiet"]:
             print(message)
 
     def warn(self, message):
-        sys.stderr.write('Warning: %s\n' % (message,))
+        sys.stderr.write("Warning: %s\n" % (message,))
 
     def set_options(self, **options):
         """
@@ -901,70 +1013,73 @@ class Configuration:
             if key in self.options:
                 self.options[key] = value
             else:
-                raise ValueError('Unknown option: '+key)
+                raise ValueError("Unknown option: " + key)
 
     def get_distribution(self):
         """Return the distutils distribution object for self."""
         from numpy.distutils.core import get_distribution
+
         return get_distribution()
 
-    def _wildcard_get_subpackage(self, subpackage_name,
-                                 parent_name,
-                                 caller_level = 1):
-        l = subpackage_name.split('.')
-        subpackage_path = njoin([self.local_path]+l)
+    def _wildcard_get_subpackage(self, subpackage_name, parent_name, caller_level=1):
+        l = subpackage_name.split(".")
+        subpackage_path = njoin([self.local_path] + l)
         dirs = [_m for _m in sorted_glob(subpackage_path) if os.path.isdir(_m)]
         config_list = []
         for d in dirs:
-            if not os.path.isfile(njoin(d, '__init__.py')):
+            if not os.path.isfile(njoin(d, "__init__.py")):
                 continue
-            if 'build' in d.split(os.sep):
+            if "build" in d.split(os.sep):
                 continue
-            n = '.'.join(d.split(os.sep)[-len(l):])
-            c = self.get_subpackage(n,
-                                    parent_name = parent_name,
-                                    caller_level = caller_level+1)
+            n = ".".join(d.split(os.sep)[-len(l) :])
+            c = self.get_subpackage(
+                n, parent_name=parent_name, caller_level=caller_level + 1
+            )
             config_list.extend(c)
         return config_list
 
-    def _get_configuration_from_setup_py(self, setup_py,
-                                         subpackage_name,
-                                         subpackage_path,
-                                         parent_name,
-                                         caller_level = 1):
+    def _get_configuration_from_setup_py(
+        self, setup_py, subpackage_name, subpackage_path, parent_name, caller_level=1
+    ):
         # In case setup_py imports local modules:
         sys.path.insert(0, os.path.dirname(setup_py))
         try:
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = npy_load_module('_'.join(n.split('.')),
-                                           setup_py,
-                                           ('.py', 'U', 1))
-            if not hasattr(setup_module, 'configuration'):
-                if not self.options['assume_default_configuration']:
-                    self.warn('Assuming default configuration '\
-                              '(%s does not define configuration())'\
-                              % (setup_module))
-                config = Configuration(subpackage_name, parent_name,
-                                       self.top_path, subpackage_path,
-                                       caller_level = caller_level + 1)
+            setup_module = npy_load_module(
+                "_".join(n.split(".")), setup_py, (".py", "U", 1)
+            )
+            if not hasattr(setup_module, "configuration"):
+                if not self.options["assume_default_configuration"]:
+                    self.warn(
+                        "Assuming default configuration "
+                        "(%s does not define configuration())" % (setup_module)
+                    )
+                config = Configuration(
+                    subpackage_name,
+                    parent_name,
+                    self.top_path,
+                    subpackage_path,
+                    caller_level=caller_level + 1,
+                )
             else:
-                pn = dot_join(*([parent_name] + subpackage_name.split('.')[:-1]))
+                pn = dot_join(*([parent_name] + subpackage_name.split(".")[:-1]))
                 args = (pn,)
                 if setup_module.configuration.__code__.co_argcount > 1:
                     args = args + (self.top_path,)
                 config = setup_module.configuration(*args)
-            if config.name!=dot_join(parent_name, subpackage_name):
-                self.warn('Subpackage %r configuration returned as %r' % \
-                          (dot_join(parent_name, subpackage_name), config.name))
+            if config.name != dot_join(parent_name, subpackage_name):
+                self.warn(
+                    "Subpackage %r configuration returned as %r"
+                    % (dot_join(parent_name, subpackage_name), config.name)
+                )
         finally:
             del sys.path[0]
         return config
 
-    def get_subpackage(self,subpackage_name,
-                       subpackage_path=None,
-                       parent_name=None,
-                       caller_level = 1):
+    def get_subpackage(
+        self, subpackage_name, subpackage_path=None, parent_name=None, caller_level=1
+    ):
         """Return list of subpackage configurations.
 
         Parameters
@@ -982,49 +1097,56 @@ class Configuration:
         if subpackage_name is None:
             if subpackage_path is None:
                 raise ValueError(
-                    "either subpackage_name or subpackage_path must be specified")
+                    "either subpackage_name or subpackage_path must be specified"
+                )
             subpackage_name = os.path.basename(subpackage_path)
 
         # handle wildcards
-        l = subpackage_name.split('.')
-        if subpackage_path is None and '*' in subpackage_name:
-            return self._wildcard_get_subpackage(subpackage_name,
-                                                 parent_name,
-                                                 caller_level = caller_level+1)
-        assert '*' not in subpackage_name, repr((subpackage_name, subpackage_path, parent_name))
+        l = subpackage_name.split(".")
+        if subpackage_path is None and "*" in subpackage_name:
+            return self._wildcard_get_subpackage(
+                subpackage_name, parent_name, caller_level=caller_level + 1
+            )
+        assert "*" not in subpackage_name, repr(
+            (subpackage_name, subpackage_path, parent_name)
+        )
         if subpackage_path is None:
             subpackage_path = njoin([self.local_path] + l)
         else:
             subpackage_path = njoin([subpackage_path] + l[:-1])
             subpackage_path = self.paths([subpackage_path])[0]
         setup_py = njoin(subpackage_path, self.setup_name)
-        if not self.options['ignore_setup_xxx_py']:
+        if not self.options["ignore_setup_xxx_py"]:
             if not os.path.isfile(setup_py):
-                setup_py = njoin(subpackage_path,
-                                 'setup_%s.py' % (subpackage_name))
+                setup_py = njoin(subpackage_path, "setup_%s.py" % (subpackage_name))
         if not os.path.isfile(setup_py):
-            if not self.options['assume_default_configuration']:
-                self.warn('Assuming default configuration '\
-                          '(%s/{setup_%s,setup}.py was not found)' \
-                          % (os.path.dirname(setup_py), subpackage_name))
-            config = Configuration(subpackage_name, parent_name,
-                                   self.top_path, subpackage_path,
-                                   caller_level = caller_level+1)
+            if not self.options["assume_default_configuration"]:
+                self.warn(
+                    "Assuming default configuration "
+                    "(%s/{setup_%s,setup}.py was not found)"
+                    % (os.path.dirname(setup_py), subpackage_name)
+                )
+            config = Configuration(
+                subpackage_name,
+                parent_name,
+                self.top_path,
+                subpackage_path,
+                caller_level=caller_level + 1,
+            )
         else:
             config = self._get_configuration_from_setup_py(
                 setup_py,
                 subpackage_name,
                 subpackage_path,
                 parent_name,
-                caller_level = caller_level + 1)
+                caller_level=caller_level + 1,
+            )
         if config:
             return [config]
         else:
             return []
 
-    def add_subpackage(self,subpackage_name,
-                       subpackage_path=None,
-                       standalone = False):
+    def add_subpackage(self, subpackage_name, subpackage_path=None, standalone=False):
         """Add a sub-package to the current Configuration instance.
 
         This is useful in a setup.py script for adding sub-packages to a
@@ -1045,25 +1167,26 @@ class Configuration:
             parent_name = None
         else:
             parent_name = self.name
-        config_list = self.get_subpackage(subpackage_name, subpackage_path,
-                                          parent_name = parent_name,
-                                          caller_level = 2)
+        config_list = self.get_subpackage(
+            subpackage_name, subpackage_path, parent_name=parent_name, caller_level=2
+        )
         if not config_list:
-            self.warn('No configuration returned, assuming unavailable.')
+            self.warn("No configuration returned, assuming unavailable.")
         for config in config_list:
             d = config
             if isinstance(config, Configuration):
                 d = config.todict()
             assert isinstance(d, dict), repr(type(d))
 
-            self.info('Appending %s configuration to %s' \
-                      % (d.get('name'), self.name))
+            self.info("Appending %s configuration to %s" % (d.get("name"), self.name))
             self.dict_append(**d)
 
         dist = self.get_distribution()
         if dist is not None:
-            self.warn('distutils distribution has been initialized,'\
-                      ' it may be too late to add a subpackage '+ subpackage_name)
+            self.warn(
+                "distutils distribution has been initialized,"
+                " it may be too late to add a subpackage " + subpackage_name
+            )
 
     def add_data_dir(self, data_path):
         """Recursively add files under data_path to data_files list.
@@ -1140,14 +1263,15 @@ class Configuration:
                 pattern_list = allpath(d).split(os.sep)
                 pattern_list.reverse()
                 # /a/*//b/ -> /a/*/b
-                rl = list(range(len(pattern_list)-1)); rl.reverse()
+                rl = list(range(len(pattern_list) - 1))
+                rl.reverse()
                 for i in rl:
                     if not pattern_list[i]:
                         del pattern_list[i]
                 #
                 for path in paths:
                     if not os.path.isdir(path):
-                        print('Not a directory, skipping', path)
+                        print("Not a directory, skipping", path)
                         continue
                     rpath = rel_path(path, self.local_path)
                     path_list = rpath.split(os.sep)
@@ -1156,17 +1280,22 @@ class Configuration:
                     i = 0
                     for s in pattern_list:
                         if is_glob_pattern(s):
-                            if i>=len(path_list):
-                                raise ValueError('cannot fill pattern %r with %r' \
-                                      % (d, path))
+                            if i >= len(path_list):
+                                raise ValueError(
+                                    "cannot fill pattern %r with %r" % (d, path)
+                                )
                             target_list.append(path_list[i])
                         else:
-                            assert s==path_list[i], repr((s, path_list[i], data_path, d, path, rpath))
+                            assert s == path_list[i], repr(
+                                (s, path_list[i], data_path, d, path, rpath)
+                            )
                             target_list.append(s)
                         i += 1
                     if path_list[i:]:
-                        self.warn('mismatch of pattern_list=%s and path_list=%s'\
-                                  % (pattern_list, path_list))
+                        self.warn(
+                            "mismatch of pattern_list=%s and path_list=%s"
+                            % (pattern_list, path_list)
+                        )
                     target_list.reverse()
                     self.add_data_dir((os.sep.join(target_list), path))
             else:
@@ -1195,7 +1324,7 @@ class Configuration:
                 data_dict[p].add(f)
         self.data_files[:] = [(p, list(files)) for p, files in data_dict.items()]
 
-    def add_data_files(self,*files):
+    def add_data_files(self, *files):
         """Add data files to configuration data_files.
 
         Parameters
@@ -1283,11 +1412,11 @@ class Configuration:
         \\Python2.4 \\Lib \\site-packages \\mypackage \\mysubpackage').
         """
 
-        if len(files)>1:
+        if len(files) > 1:
             for f in files:
                 self.add_data_files(f)
             return
-        assert len(files)==1
+        assert len(files) == 1
         if is_sequence(files[0]):
             d, files = files[0]
         else:
@@ -1295,7 +1424,7 @@ class Configuration:
         if is_string(files):
             filepat = files
         elif is_sequence(files):
-            if len(files)==1:
+            if len(files) == 1:
                 filepat = files[0]
             else:
                 for f in files:
@@ -1305,10 +1434,10 @@ class Configuration:
             raise TypeError(repr(type(files)))
 
         if d is None:
-            if hasattr(filepat, '__call__'):
-                d = ''
+            if hasattr(filepat, "__call__"):
+                d = ""
             elif os.path.isabs(filepat):
-                d = ''
+                d = ""
             else:
                 d = os.path.dirname(filepat)
             self.add_data_files((d, files))
@@ -1322,7 +1451,7 @@ class Configuration:
                 for path in paths:
                     path_list = path.split(os.sep)
                     path_list.reverse()
-                    path_list.pop() # filename
+                    path_list.pop()  # filename
                     target_list = []
                     i = 0
                     for s in pattern_list:
@@ -1357,14 +1486,13 @@ class Configuration:
         """
         dist = self.get_distribution()
         if dist is not None:
-            if not hasattr(dist, 'define_macros'):
+            if not hasattr(dist, "define_macros"):
                 dist.define_macros = []
             dist.define_macros.extend(macros)
         else:
             self.define_macros.extend(macros)
 
-
-    def add_include_dirs(self,*paths):
+    def add_include_dirs(self, *paths):
         """Add paths to configuration include directories.
 
         Add the given sequence of paths to the beginning of the include_dirs
@@ -1380,7 +1508,7 @@ class Configuration:
         else:
             self.include_dirs.extend(include_dirs)
 
-    def add_headers(self,*files):
+    def add_headers(self, *files):
         """Add installable headers to configuration.
 
         Add the given sequence of files to the beginning of the headers list.
@@ -1414,7 +1542,7 @@ class Configuration:
         else:
             self.headers.extend(headers)
 
-    def paths(self,*paths,**kws):
+    def paths(self, *paths, **kws):
         """Apply glob to paths and prepend local_path if needed.
 
         Applies glob.glob(...) to each path in the sequence (if needed) and
@@ -1424,20 +1552,26 @@ class Configuration:
         path-names be relative to the source directory.
 
         """
-        include_non_existing = kws.get('include_non_existing', True)
-        return gpaths(paths,
-                      local_path = self.local_path,
-                      include_non_existing=include_non_existing)
+        include_non_existing = kws.get("include_non_existing", True)
+        return gpaths(
+            paths, local_path=self.local_path, include_non_existing=include_non_existing
+        )
 
     def _fix_paths_dict(self, kw):
         for k in kw.keys():
             v = kw[k]
-            if k in ['sources', 'depends', 'include_dirs', 'library_dirs',
-                     'module_dirs', 'extra_objects']:
+            if k in [
+                "sources",
+                "depends",
+                "include_dirs",
+                "library_dirs",
+                "module_dirs",
+                "extra_objects",
+            ]:
                 new_v = self.paths(v)
                 kw[k] = new_v
 
-    def add_extension(self,name,sources,**kw):
+    def add_extension(self, name, sources, **kw):
         """Add extension to configuration.
 
         Create and add an Extension instance to the ext_modules list. This
@@ -1486,61 +1620,64 @@ class Configuration:
         paths.
         """
         ext_args = copy.copy(kw)
-        ext_args['name'] = dot_join(self.name, name)
-        ext_args['sources'] = sources
+        ext_args["name"] = dot_join(self.name, name)
+        ext_args["sources"] = sources
 
-        if 'extra_info' in ext_args:
-            extra_info = ext_args['extra_info']
-            del ext_args['extra_info']
+        if "extra_info" in ext_args:
+            extra_info = ext_args["extra_info"]
+            del ext_args["extra_info"]
             if isinstance(extra_info, dict):
                 extra_info = [extra_info]
             for info in extra_info:
                 assert isinstance(info, dict), repr(info)
-                dict_append(ext_args,**info)
+                dict_append(ext_args, **info)
 
         self._fix_paths_dict(ext_args)
 
         # Resolve out-of-tree dependencies
-        libraries = ext_args.get('libraries', [])
+        libraries = ext_args.get("libraries", [])
         libnames = []
-        ext_args['libraries'] = []
+        ext_args["libraries"] = []
         for libname in libraries:
             if isinstance(libname, tuple):
                 self._fix_paths_dict(libname[1])
 
             # Handle library names of the form libname@relative/path/to/library
-            if '@' in libname:
-                lname, lpath = libname.split('@', 1)
+            if "@" in libname:
+                lname, lpath = libname.split("@", 1)
                 lpath = os.path.abspath(njoin(self.local_path, lpath))
                 if os.path.isdir(lpath):
-                    c = self.get_subpackage(None, lpath,
-                                            caller_level = 2)
+                    c = self.get_subpackage(None, lpath, caller_level=2)
                     if isinstance(c, Configuration):
                         c = c.todict()
-                    for l in [l[0] for l in c.get('libraries', [])]:
-                        llname = l.split('__OF__', 1)[0]
+                    for l in [l[0] for l in c.get("libraries", [])]:
+                        llname = l.split("__OF__", 1)[0]
                         if llname == lname:
-                            c.pop('name', None)
-                            dict_append(ext_args,**c)
+                            c.pop("name", None)
+                            dict_append(ext_args, **c)
                             break
                     continue
             libnames.append(libname)
 
-        ext_args['libraries'] = libnames + ext_args['libraries']
-        ext_args['define_macros'] = \
-            self.define_macros + ext_args.get('define_macros', [])
+        ext_args["libraries"] = libnames + ext_args["libraries"]
+        ext_args["define_macros"] = self.define_macros + ext_args.get(
+            "define_macros", []
+        )
 
         from numpy.distutils.core import Extension
+
         ext = Extension(**ext_args)
         self.ext_modules.append(ext)
 
         dist = self.get_distribution()
         if dist is not None:
-            self.warn('distutils distribution has been initialized,'\
-                      ' it may be too late to add an extension '+name)
+            self.warn(
+                "distutils distribution has been initialized,"
+                " it may be too late to add an extension " + name
+            )
         return ext
 
-    def add_library(self,name,sources,**build_info):
+    def add_library(self, name, sources, **build_info):
         """
         Add library to configuration.
 
@@ -1573,19 +1710,21 @@ class Configuration:
 
         dist = self.get_distribution()
         if dist is not None:
-            self.warn('distutils distribution has been initialized,'\
-                      ' it may be too late to add a library '+ name)
+            self.warn(
+                "distutils distribution has been initialized,"
+                " it may be too late to add a library " + name
+            )
 
     def _add_library(self, name, sources, install_dir, build_info):
         """Common implementation for add_library and add_installed_library. Do
         not use directly"""
         build_info = copy.copy(build_info)
-        build_info['sources'] = sources
+        build_info["sources"] = sources
 
         # Sometimes, depends is not set up to an empty list by default, and if
         # depends is not given to add_library, distutils barfs (#1134)
-        if not 'depends' in build_info:
-            build_info['depends'] = []
+        if not "depends" in build_info:
+            build_info["depends"] = []
 
         self._fix_paths_dict(build_info)
 
@@ -1743,14 +1882,13 @@ class Configuration:
         template = os.path.join(self.package_path, template)
 
         if self.name in self.installed_pkg_config:
-            self.installed_pkg_config[self.name].append((template, install_dir,
-                subst_dict))
+            self.installed_pkg_config[self.name].append(
+                (template, install_dir, subst_dict)
+            )
         else:
-            self.installed_pkg_config[self.name] = [(template, install_dir,
-                subst_dict)]
+            self.installed_pkg_config[self.name] = [(template, install_dir, subst_dict)]
 
-
-    def add_scripts(self,*files):
+    def add_scripts(self, *files):
         """Add scripts to configuration.
 
         Add the sequence of files to the beginning of the scripts list.
@@ -1766,7 +1904,7 @@ class Configuration:
         else:
             self.scripts.extend(scripts)
 
-    def dict_append(self,**dict):
+    def dict_append(self, **dict):
         for key in self.list_keys:
             a = getattr(self, key)
             a.extend(dict.get(key, []))
@@ -1777,14 +1915,19 @@ class Configuration:
         for key in dict.keys():
             if key not in known_keys:
                 a = getattr(self, key, None)
-                if a and a==dict[key]: continue
-                self.warn('Inheriting attribute %r=%r from %r' \
-                          % (key, dict[key], dict.get('name', '?')))
+                if a and a == dict[key]:
+                    continue
+                self.warn(
+                    "Inheriting attribute %r=%r from %r"
+                    % (key, dict[key], dict.get("name", "?"))
+                )
                 setattr(self, key, dict[key])
                 self.extra_keys.append(key)
             elif key in self.extra_keys:
-                self.info('Ignoring attempt to set %r (from %r to %r)' \
-                          % (key, getattr(self, key), dict[key]))
+                self.info(
+                    "Ignoring attempt to set %r (from %r to %r)"
+                    % (key, getattr(self, key), dict[key])
+                )
             elif key in known_keys:
                 # key is already processed above
                 pass
@@ -1793,29 +1936,30 @@ class Configuration:
 
     def __str__(self):
         from pprint import pformat
+
         known_keys = self.list_keys + self.dict_keys + self.extra_keys
-        s = '<'+5*'-' + '\n'
-        s += 'Configuration of '+self.name+':\n'
+        s = "<" + 5 * "-" + "\n"
+        s += "Configuration of " + self.name + ":\n"
         known_keys.sort()
         for k in known_keys:
             a = getattr(self, k, None)
             if a:
-                s += '%s = %s\n' % (k, pformat(a))
-        s += 5*'-' + '>'
+                s += "%s = %s\n" % (k, pformat(a))
+        s += 5 * "-" + ">"
         return s
 
     def get_config_cmd(self):
         """
         Returns the numpy.distutils config command instance.
         """
-        cmd = get_cmd('config')
+        cmd = get_cmd("config")
         cmd.ensure_finalized()
         cmd.dump_source = 0
         cmd.noisy = 0
-        old_path = os.environ.get('PATH')
+        old_path = os.environ.get("PATH")
         if old_path:
-            path = os.pathsep.join(['.', old_path])
-            os.environ['PATH'] = path
+            path = os.pathsep.join([".", old_path])
+            os.environ["PATH"] = path
         return cmd
 
     def get_build_temp_dir(self):
@@ -1823,7 +1967,7 @@ class Configuration:
         Return a path to a temporary directory where temporary files should be
         placed.
         """
-        cmd = get_cmd('build')
+        cmd = get_cmd("build")
         cmd.ensure_finalized()
         return cmd.build_temp
 
@@ -1838,12 +1982,12 @@ class Configuration:
         True if a Fortran 77 compiler is available (because a simple Fortran 77
         code was able to be compiled successfully).
         """
-        simple_fortran_subroutine = '''
+        simple_fortran_subroutine = """
         subroutine simple
         end
-        '''
+        """
         config_cmd = self.get_config_cmd()
-        flag = config_cmd.try_compile(simple_fortran_subroutine, lang='f77')
+        flag = config_cmd.try_compile(simple_fortran_subroutine, lang="f77")
         return flag
 
     def have_f90c(self):
@@ -1857,72 +2001,69 @@ class Configuration:
         True if a Fortran 90 compiler is available (because a simple Fortran
         90 code was able to be compiled successfully)
         """
-        simple_fortran_subroutine = '''
+        simple_fortran_subroutine = """
         subroutine simple
         end
-        '''
+        """
         config_cmd = self.get_config_cmd()
-        flag = config_cmd.try_compile(simple_fortran_subroutine, lang='f90')
+        flag = config_cmd.try_compile(simple_fortran_subroutine, lang="f90")
         return flag
 
     def append_to(self, extlib):
-        """Append libraries, include_dirs to extension or library item.
-        """
+        """Append libraries, include_dirs to extension or library item."""
         if is_sequence(extlib):
             lib_name, build_info = extlib
-            dict_append(build_info,
-                        libraries=self.libraries,
-                        include_dirs=self.include_dirs)
+            dict_append(
+                build_info, libraries=self.libraries, include_dirs=self.include_dirs
+            )
         else:
             from numpy.distutils.core import Extension
+
             assert isinstance(extlib, Extension), repr(extlib)
             extlib.libraries.extend(self.libraries)
             extlib.include_dirs.extend(self.include_dirs)
 
     def _get_svn_revision(self, path):
-        """Return path's SVN revision number.
-        """
+        """Return path's SVN revision number."""
         try:
-            output = subprocess.check_output(['svnversion'], cwd=path)
+            output = subprocess.check_output(["svnversion"], cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
-            m = re.match(rb'(?P<revision>\d+)', output)
+            m = re.match(rb"(?P<revision>\d+)", output)
             if m:
-                return int(m.group('revision'))
+                return int(m.group("revision"))
 
-        if sys.platform=='win32' and os.environ.get('SVN_ASP_DOT_NET_HACK', None):
-            entries = njoin(path, '_svn', 'entries')
+        if sys.platform == "win32" and os.environ.get("SVN_ASP_DOT_NET_HACK", None):
+            entries = njoin(path, "_svn", "entries")
         else:
-            entries = njoin(path, '.svn', 'entries')
+            entries = njoin(path, ".svn", "entries")
         if os.path.isfile(entries):
             with open(entries) as f:
                 fstr = f.read()
-            if fstr[:5] == '<?xml':  # pre 1.4
+            if fstr[:5] == "<?xml":  # pre 1.4
                 m = re.search(r'revision="(?P<revision>\d+)"', fstr)
                 if m:
-                    return int(m.group('revision'))
+                    return int(m.group("revision"))
             else:  # non-xml entries file --- check to be sure that
-                m = re.search(r'dir[\n\r]+(?P<revision>\d+)', fstr)
+                m = re.search(r"dir[\n\r]+(?P<revision>\d+)", fstr)
                 if m:
-                    return int(m.group('revision'))
+                    return int(m.group("revision"))
         return None
 
     def _get_hg_revision(self, path):
-        """Return path's Mercurial revision number.
-        """
+        """Return path's Mercurial revision number."""
         try:
-            output = subprocess.check_output(
-                ['hg', 'identify', '--num'], cwd=path)
+            output = subprocess.check_output(["hg", "identify", "--num"], cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
-            m = re.match(rb'(?P<revision>\d+)', output)
+            m = re.match(rb"(?P<revision>\d+)", output)
             if m:
-                return int(m.group('revision'))
+                return int(m.group("revision"))
 
-        branch_fn = njoin(path, '.hg', 'branch')
-        branch_cache_fn = njoin(path, '.hg', 'branch.cache')
+        branch_fn = njoin(path, ".hg", "branch")
+        branch_cache_fn = njoin(path, ".hg", "branch.cache")
 
         if os.path.isfile(branch_fn):
             branch0 = None
@@ -1930,10 +2071,10 @@ class Configuration:
                 revision0 = f.read().strip()
 
             branch_map = {}
-            with open(branch_cache_fn, 'r') as f:
+            with open(branch_cache_fn, "r") as f:
                 for line in f:
-                    branch1, revision1  = line.split()[:2]
-                    if revision1==revision0:
+                    branch1, revision1 = line.split()[:2]
+                    if revision1 == revision0:
                         branch0 = branch1
                     try:
                         revision1 = int(revision1)
@@ -1944,7 +2085,6 @@ class Configuration:
             return branch_map.get(branch0)
 
         return None
-
 
     def get_version(self, version_file=None, version_variable=None):
         """Try to get version string of a package.
@@ -1959,34 +2099,37 @@ class Configuration:
         __svn_version__.py for string variables version, __version__, and
         <packagename>_version, until a version number is found.
         """
-        version = getattr(self, 'version', None)
+        version = getattr(self, "version", None)
         if version is not None:
             return version
 
         # Get version from version file.
         if version_file is None:
-            files = ['__version__.py',
-                     self.name.split('.')[-1]+'_version.py',
-                     'version.py',
-                     '__svn_version__.py',
-                     '__hg_version__.py']
+            files = [
+                "__version__.py",
+                self.name.split(".")[-1] + "_version.py",
+                "version.py",
+                "__svn_version__.py",
+                "__hg_version__.py",
+            ]
         else:
             files = [version_file]
         if version_variable is None:
-            version_vars = ['version',
-                            '__version__',
-                            self.name.split('.')[-1]+'_version']
+            version_vars = [
+                "version",
+                "__version__",
+                self.name.split(".")[-1] + "_version",
+            ]
         else:
             version_vars = [version_variable]
         for f in files:
             fn = njoin(self.local_path, f)
             if os.path.isfile(fn):
-                info = ('.py', 'U', 1)
+                info = (".py", "U", 1)
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = npy_load_module('_'.join(n.split('.')),
-                                                     fn, info)
+                    version_module = npy_load_module("_".join(n.split(".")), fn, info)
                 except ImportError as e:
                     self.warn(str(e))
                     version_module = None
@@ -2000,7 +2143,7 @@ class Configuration:
 
                 # Try if versioneer module
                 try:
-                    version = version_module.get_versions()['version']
+                    version = version_module.get_versions()["version"]
                 except AttributeError:
                     pass
 
@@ -2038,30 +2181,37 @@ class Configuration:
         intended for working with source directories that are in an SVN
         repository.
         """
-        target = njoin(self.local_path, '__svn_version__.py')
+        target = njoin(self.local_path, "__svn_version__.py")
         revision = self._get_svn_revision(self.local_path)
         if os.path.isfile(target) or revision is None:
             return
         else:
+
             def generate_svn_version_py():
                 if not os.path.isfile(target):
                     version = str(revision)
-                    self.info('Creating %s (version=%r)' % (target, version))
-                    with open(target, 'w') as f:
-                        f.write('version = %r\n' % (version))
+                    self.info("Creating %s (version=%r)" % (target, version))
+                    with open(target, "w") as f:
+                        f.write("version = %r\n" % (version))
 
-                def rm_file(f=target,p=self.info):
+                def rm_file(f=target, p=self.info):
                     if delete:
-                        try: os.remove(f); p('removed '+f)
-                        except OSError: pass
-                        try: os.remove(f+'c'); p('removed '+f+'c')
-                        except OSError: pass
+                        try:
+                            os.remove(f)
+                            p("removed " + f)
+                        except OSError:
+                            pass
+                        try:
+                            os.remove(f + "c")
+                            p("removed " + f + "c")
+                        except OSError:
+                            pass
 
                 atexit.register(rm_file)
 
                 return target
 
-            self.add_data_files(('', generate_svn_version_py()))
+            self.add_data_files(("", generate_svn_version_py()))
 
     def make_hg_version_py(self, delete=True):
         """Appends a data function to the data_files list that will generate
@@ -2078,32 +2228,39 @@ class Configuration:
         This is intended for working with source directories that are
         in an Mercurial repository.
         """
-        target = njoin(self.local_path, '__hg_version__.py')
+        target = njoin(self.local_path, "__hg_version__.py")
         revision = self._get_hg_revision(self.local_path)
         if os.path.isfile(target) or revision is None:
             return
         else:
+
             def generate_hg_version_py():
                 if not os.path.isfile(target):
                     version = str(revision)
-                    self.info('Creating %s (version=%r)' % (target, version))
-                    with open(target, 'w') as f:
-                        f.write('version = %r\n' % (version))
+                    self.info("Creating %s (version=%r)" % (target, version))
+                    with open(target, "w") as f:
+                        f.write("version = %r\n" % (version))
 
-                def rm_file(f=target,p=self.info):
+                def rm_file(f=target, p=self.info):
                     if delete:
-                        try: os.remove(f); p('removed '+f)
-                        except OSError: pass
-                        try: os.remove(f+'c'); p('removed '+f+'c')
-                        except OSError: pass
+                        try:
+                            os.remove(f)
+                            p("removed " + f)
+                        except OSError:
+                            pass
+                        try:
+                            os.remove(f + "c")
+                            p("removed " + f + "c")
+                        except OSError:
+                            pass
 
                 atexit.register(rm_file)
 
                 return target
 
-            self.add_data_files(('', generate_hg_version_py()))
+            self.add_data_files(("", generate_hg_version_py()))
 
-    def make_config_py(self,name='__config__'):
+    def make_config_py(self, name="__config__"):
         """Generate package __config__.py file containing system_info
         information used during building the package.
 
@@ -2113,39 +2270,44 @@ class Configuration:
         """
         self.py_modules.append((self.name, name, generate_config_py))
 
-    def get_info(self,*names):
+    def get_info(self, *names):
         """Get resources information.
 
         Return information (from system_info.get_info) for all of the names in
         the argument list in a single dictionary.
         """
         from .system_info import get_info, dict_append
+
         info_dict = {}
         for a in names:
-            dict_append(info_dict,**get_info(a))
+            dict_append(info_dict, **get_info(a))
         return info_dict
 
 
 def get_cmd(cmdname, _cache={}):
     if cmdname not in _cache:
         import distutils.core
+
         dist = distutils.core._setup_distribution
         if dist is None:
             from distutils.errors import DistutilsInternalError
-            raise DistutilsInternalError(
-                  'setup distribution instance not initialized')
+
+            raise DistutilsInternalError("setup distribution instance not initialized")
         cmd = dist.get_command_obj(cmdname)
         _cache[cmdname] = cmd
     return _cache[cmdname]
+
 
 def get_numpy_include_dirs():
     # numpy_include_dirs are set by numpy/core/setup.py, otherwise []
     include_dirs = Configuration.numpy_include_dirs[:]
     if not include_dirs:
         import numpy
-        include_dirs = [ numpy.get_include() ]
+
+        include_dirs = [numpy.get_include()]
     # else running numpy/core/setup.py
     return include_dirs
+
 
 def get_npy_pkg_dir():
     """Return the path where to find the npy-pkg-config directory.
@@ -2159,13 +2321,13 @@ def get_npy_pkg_dir():
     environment, and using them when cross-compiling.
 
     """
-    d = os.environ.get('NPY_PKG_CONFIG_PATH')
+    d = os.environ.get("NPY_PKG_CONFIG_PATH")
     if d is not None:
         return d
-    spec = importlib.util.find_spec('numpy')
-    d = os.path.join(os.path.dirname(spec.origin),
-            'core', 'lib', 'npy-pkg-config')
+    spec = importlib.util.find_spec("numpy")
+    d = os.path.join(os.path.dirname(spec.origin), "core", "lib", "npy-pkg-config")
     return d
+
 
 def get_pkg_info(pkgname, dirs=None):
     """
@@ -2204,6 +2366,7 @@ def get_pkg_info(pkgname, dirs=None):
     else:
         dirs = [get_npy_pkg_dir()]
     return read_config(pkgname, dirs)
+
 
 def get_info(pkgname, dirs=None):
     """
@@ -2251,6 +2414,7 @@ def get_info(pkgname, dirs=None):
 
     """
     from numpy.distutils.npy_pkg_config import parse_flags
+
     pkg_info = get_pkg_info(pkgname, dirs)
 
     # Translate LibraryInfo instance into a build_info dict
@@ -2259,11 +2423,12 @@ def get_info(pkgname, dirs=None):
         info[k].extend(v)
 
     # add_extension extra_info argument is ANAL
-    info['define_macros'] = info['macros']
-    del info['macros']
-    del info['ignored']
+    info["define_macros"] = info["macros"]
+    del info["macros"]
+    del info["ignored"]
 
     return info
+
 
 def is_bootstrapping():
     import builtins
@@ -2277,16 +2442,26 @@ def is_bootstrapping():
 
 #########################
 
-def default_config_dict(name = None, parent_name = None, local_path=None):
+
+def default_config_dict(name=None, parent_name=None, local_path=None):
     """Return a configuration dictionary for usage in
     configuration() function defined in file setup_<name>.py.
     """
     import warnings
-    warnings.warn('Use Configuration(%r,%r,top_path=%r) instead of '\
-                  'deprecated default_config_dict(%r,%r,%r)'
-                  % (name, parent_name, local_path,
-                     name, parent_name, local_path,
-                     ), stacklevel=2)
+
+    warnings.warn(
+        "Use Configuration(%r,%r,top_path=%r) instead of "
+        "deprecated default_config_dict(%r,%r,%r)"
+        % (
+            name,
+            parent_name,
+            local_path,
+            name,
+            parent_name,
+            local_path,
+        ),
+        stacklevel=2,
+    )
     c = Configuration(name, parent_name, local_path)
     return c.todict()
 
@@ -2302,26 +2477,30 @@ def dict_append(d, **kws):
         else:
             d[k] = v
 
+
 def appendpath(prefix, path):
-    if os.path.sep != '/':
-        prefix = prefix.replace('/', os.path.sep)
-        path = path.replace('/', os.path.sep)
-    drive = ''
+    if os.path.sep != "/":
+        prefix = prefix.replace("/", os.path.sep)
+        path = path.replace("/", os.path.sep)
+    drive = ""
     if os.path.isabs(path):
         drive = os.path.splitdrive(prefix)[0]
         absprefix = os.path.splitdrive(os.path.abspath(prefix))[1]
         pathdrive, path = os.path.splitdrive(path)
         d = os.path.commonprefix([absprefix, path])
-        if os.path.join(absprefix[:len(d)], absprefix[len(d):]) != absprefix \
-           or os.path.join(path[:len(d)], path[len(d):]) != path:
+        if (
+            os.path.join(absprefix[: len(d)], absprefix[len(d) :]) != absprefix
+            or os.path.join(path[: len(d)], path[len(d) :]) != path
+        ):
             # Handle invalid paths
             d = os.path.dirname(d)
-        subpath = path[len(d):]
+        subpath = path[len(d) :]
         if os.path.isabs(subpath):
             subpath = subpath[1:]
     else:
         subpath = path
     return os.path.normpath(njoin(drive + prefix, subpath))
+
 
 def generate_config_py(target):
     """Generate config.py file containing system_info information
@@ -2332,14 +2511,21 @@ def generate_config_py(target):
     """
     from numpy.distutils.system_info import system_info
     from distutils.dir_util import mkpath
+
     mkpath(os.path.dirname(target))
-    with open(target, 'w') as f:
-        f.write('# This file is generated by numpy\'s %s\n' % (os.path.basename(sys.argv[0])))
-        f.write('# It contains system_info results at the time of building this package.\n')
+    with open(target, "w") as f:
+        f.write(
+            "# This file is generated by numpy's %s\n" % (os.path.basename(sys.argv[0]))
+        )
+        f.write(
+            "# It contains system_info results at the time of building this package.\n"
+        )
         f.write('__all__ = ["get_info","show"]\n\n')
 
         # For gfortran+msvc combination, extra shared libraries may exist
-        f.write(textwrap.dedent("""
+        f.write(
+            textwrap.dedent(
+                """
             import os
             import sys
 
@@ -2352,11 +2538,15 @@ def generate_config_py(target):
                     os.environ.setdefault('PATH', '')
                     os.environ['PATH'] += os.pathsep + extra_dll_dir
 
-            """))
+            """
+            )
+        )
 
         for k, i in system_info.saved_results.items():
-            f.write('%s=%r\n' % (k, i))
-        f.write(textwrap.dedent(r'''
+            f.write("%s=%r\n" % (k, i))
+        f.write(
+            textwrap.dedent(
+                r'''
             def get_info(name):
                 g = globals()
                 return g.get(name, g.get(name + "_info", {}))
@@ -2454,20 +2644,24 @@ def generate_config_py(target):
                 print("    found = %s" % (','.join(features_found)))
                 print("    not found = %s" % (','.join(features_not_found)))
 
-                    '''))
+                    '''
+            )
+        )
 
     return target
+
 
 def msvc_version(compiler):
     """Return version major and minor of compiler instance if it is
     MSVC, raise an exception otherwise."""
     if not compiler.compiler_type == "msvc":
-        raise ValueError("Compiler instance is not msvc (%s)"\
-                         % compiler.compiler_type)
+        raise ValueError("Compiler instance is not msvc (%s)" % compiler.compiler_type)
     return compiler._MSVCCompiler__version
+
 
 def get_build_architecture():
     # Importing distutils.msvccompiler triggers a warning on non-Windows
     # systems, so delay the import to here.
     from distutils.msvccompiler import get_build_architecture
+
     return get_build_architecture()

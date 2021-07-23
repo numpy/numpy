@@ -13,15 +13,16 @@ import os
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 env_added = []
-for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
+for envkey in ["OPENBLAS_MAIN_FREE", "GOTOBLAS_MAIN_FREE"]:
     if envkey not in os.environ:
-        os.environ[envkey] = '1'
+        os.environ[envkey] = "1"
         env_added.append(envkey)
 
 try:
     from . import multiarray
 except ImportError as exc:
     import sys
+
     msg = """
 
 IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
@@ -43,8 +44,13 @@ and make sure that they are the versions you expect.
 Please carefully study the documentation linked above for further help.
 
 Original error was: %s
-""" % (sys.version_info[0], sys.version_info[1], sys.executable,
-        __version__, exc)
+""" % (
+        sys.version_info[0],
+        sys.version_info[1],
+        sys.executable,
+        __version__,
+        exc,
+    )
     raise ImportError(msg)
 finally:
     for envkey in env_added:
@@ -57,17 +63,22 @@ from . import umath
 
 # Check that multiarray,umath are pure python modules wrapping
 # _multiarray_umath and not either of the old c-extension modules
-if not (hasattr(multiarray, '_multiarray_umath') and
-        hasattr(umath, '_multiarray_umath')):
+if not (
+    hasattr(multiarray, "_multiarray_umath") and hasattr(umath, "_multiarray_umath")
+):
     import sys
-    path = sys.modules['numpy'].__path__
-    msg = ("Something is wrong with the numpy installation. "
+
+    path = sys.modules["numpy"].__path__
+    msg = (
+        "Something is wrong with the numpy installation. "
         "While importing we detected an older version of "
         "numpy in {}. One method of fixing this is to repeatedly uninstall "
-        "numpy until none is found, then reinstall this version.")
+        "numpy until none is found, then reinstall this version."
+    )
     raise ImportError(msg.format(path))
 
 from . import numerictypes as nt
+
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
 from .numeric import *
@@ -88,6 +99,7 @@ from . import shape_base
 from .shape_base import *
 from . import einsumfunc
 from .einsumfunc import *
+
 del nt
 
 from .fromnumeric import amax as max, amin as min, round_ as round
@@ -97,17 +109,18 @@ from .numeric import absolute as abs
 # appearing in an import-time traceback
 from . import _add_newdocs
 from . import _add_newdocs_scalars
+
 # add these for module-freeze analysis (like PyInstaller)
 from . import _dtype_ctypes
 from . import _internal
 from . import _dtype
 from . import _methods
 
-__all__ = ['char', 'rec', 'memmap']
+__all__ = ["char", "rec", "memmap"]
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
-__all__ += ['record', 'recarray', 'format_parser']
-__all__ += ['chararray']
+__all__ += ["record", "recarray", "format_parser"]
+__all__ += ["chararray"]
 __all__ += function_base.__all__
 __all__ += machar.__all__
 __all__ += getlimits.__all__
@@ -162,5 +175,6 @@ del _ufunc_reduce
 del _DType_reduce
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

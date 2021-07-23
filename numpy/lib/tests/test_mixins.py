@@ -8,6 +8,7 @@ from numpy.testing import assert_, assert_equal, assert_raises
 # NOTE: This class should be kept as an exact copy of the example from the
 # docstring for NDArrayOperatorsMixin.
 
+
 class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
     def __init__(self, value):
         self.value = np.asarray(value)
@@ -17,7 +18,7 @@ class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
     _HANDLED_TYPES = (np.ndarray, numbers.Number)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        out = kwargs.get('out', ())
+        out = kwargs.get("out", ())
         for x in inputs + out:
             # Only support operations with instances of _HANDLED_TYPES.
             # Use ArrayLike instead of type(self) for isinstance to
@@ -27,18 +28,17 @@ class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
                 return NotImplemented
 
         # Defer to the implementation of the ufunc on unwrapped values.
-        inputs = tuple(x.value if isinstance(x, ArrayLike) else x
-                       for x in inputs)
+        inputs = tuple(x.value if isinstance(x, ArrayLike) else x for x in inputs)
         if out:
-            kwargs['out'] = tuple(
-                x.value if isinstance(x, ArrayLike) else x
-                for x in out)
+            kwargs["out"] = tuple(
+                x.value if isinstance(x, ArrayLike) else x for x in out
+            )
         result = getattr(ufunc, method)(*inputs, **kwargs)
 
         if type(result) is tuple:
             # multiple return values
             return tuple(type(self)(x) for x in result)
-        elif method == 'at':
+        elif method == "at":
             # no return value
             return None
         else:
@@ -46,7 +46,7 @@ class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
             return type(self)(result)
 
     def __repr__(self):
-        return '%s(%r)' % (type(self).__name__, self.value)
+        return "%s(%r)" % (type(self).__name__, self.value)
 
 
 def wrap_array_like(result):
@@ -64,8 +64,11 @@ def _assert_equal_type_and_value(result, expected, err_msg=None):
             _assert_equal_type_and_value(result_item, expected_item, err_msg)
     else:
         assert_equal(result.value, expected.value, err_msg=err_msg)
-        assert_equal(getattr(result.value, 'dtype', None),
-                     getattr(expected.value, 'dtype', None), err_msg=err_msg)
+        assert_equal(
+            getattr(result.value, "dtype", None),
+            getattr(expected.value, "dtype", None),
+            err_msg=err_msg,
+        )
 
 
 _ALL_BINARY_OPERATORS = [
@@ -92,9 +95,7 @@ _ALL_BINARY_OPERATORS = [
 
 
 class TestNDArrayOperatorsMixin:
-
     def test_array_like_add(self):
-
         def check(result):
             _assert_equal_type_and_value(result, ArrayLike(0))
 
@@ -120,9 +121,9 @@ class TestNDArrayOperatorsMixin:
         _assert_equal_type_and_value(array, ArrayLike(np.array([1])))
 
     def test_opt_out(self):
-
         class OptOut:
             """Object that opts out of __array_ufunc__."""
+
             __array_ufunc__ = None
 
             def __add__(self, other):
@@ -148,7 +149,6 @@ class TestNDArrayOperatorsMixin:
             opt_out - array_like
 
     def test_subclass(self):
-
         class SubArrayLike(ArrayLike):
             """Should take precedence over ArrayLike."""
 
@@ -170,10 +170,7 @@ class TestNDArrayOperatorsMixin:
     def test_unary_methods(self):
         array = np.array([-1, 0, 1, 2])
         array_like = ArrayLike(array)
-        for op in [operator.neg,
-                   operator.pos,
-                   abs,
-                   operator.invert]:
+        for op in [operator.neg, operator.pos, abs, operator.invert]:
             _assert_equal_type_and_value(op(array_like), ArrayLike(op(array)))
 
     def test_forward_binary_methods(self):
@@ -182,14 +179,14 @@ class TestNDArrayOperatorsMixin:
         for op in _ALL_BINARY_OPERATORS:
             expected = wrap_array_like(op(array, 1))
             actual = op(array_like, 1)
-            err_msg = 'failed for operator {}'.format(op)
+            err_msg = "failed for operator {}".format(op)
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
     def test_reflected_binary_methods(self):
         for op in _ALL_BINARY_OPERATORS:
             expected = wrap_array_like(op(2, 1))
             actual = op(2, ArrayLike(1))
-            err_msg = 'failed for operator {}'.format(op)
+            err_msg = "failed for operator {}".format(op)
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
     def test_matmul(self):
@@ -197,10 +194,8 @@ class TestNDArrayOperatorsMixin:
         array_like = ArrayLike(array)
         expected = ArrayLike(np.float64(5))
         _assert_equal_type_and_value(expected, np.matmul(array_like, array))
-        _assert_equal_type_and_value(
-            expected, operator.matmul(array_like, array))
-        _assert_equal_type_and_value(
-            expected, operator.matmul(array, array_like))
+        _assert_equal_type_and_value(expected, operator.matmul(array_like, array))
+        _assert_equal_type_and_value(expected, operator.matmul(array, array_like))
 
     def test_ufunc_at(self):
         array = ArrayLike(np.array([1, 2, 3, 4]))
@@ -210,7 +205,5 @@ class TestNDArrayOperatorsMixin:
     def test_ufunc_two_outputs(self):
         mantissa, exponent = np.frexp(2 ** -3)
         expected = (ArrayLike(mantissa), ArrayLike(exponent))
-        _assert_equal_type_and_value(
-            np.frexp(ArrayLike(2 ** -3)), expected)
-        _assert_equal_type_and_value(
-            np.frexp(ArrayLike(np.array(2 ** -3))), expected)
+        _assert_equal_type_and_value(np.frexp(ArrayLike(2 ** -3)), expected)
+        _assert_equal_type_and_value(np.frexp(ArrayLike(np.array(2 ** -3))), expected)

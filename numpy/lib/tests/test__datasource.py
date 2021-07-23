@@ -12,12 +12,13 @@ from urllib.error import URLError
 
 
 def urlopen_stub(url, data=None):
-    '''Stub to replace urlopen for testing.'''
+    """Stub to replace urlopen for testing."""
     if url == valid_httpurl():
-        tmpfile = NamedTemporaryFile(prefix='urltmp_')
+        tmpfile = NamedTemporaryFile(prefix="urltmp_")
         return tmpfile
     else:
-        raise URLError('Name or service not known')
+        raise URLError("Name or service not known")
+
 
 # setup and teardown
 old_urlopen = None
@@ -33,41 +34,46 @@ def setup_module():
 def teardown_module():
     urllib_request.urlopen = old_urlopen
 
+
 # A valid website for more robust testing
-http_path = 'http://www.google.com/'
-http_file = 'index.html'
+http_path = "http://www.google.com/"
+http_file = "index.html"
 
-http_fakepath = 'http://fake.abc.web/site/'
-http_fakefile = 'fake.txt'
+http_fakepath = "http://fake.abc.web/site/"
+http_fakefile = "fake.txt"
 
-malicious_files = ['/etc/shadow', '../../shadow',
-                   '..\\system.dat', 'c:\\windows\\system.dat']
+malicious_files = [
+    "/etc/shadow",
+    "../../shadow",
+    "..\\system.dat",
+    "c:\\windows\\system.dat",
+]
 
-magic_line = b'three is the magic number'
+magic_line = b"three is the magic number"
 
 
 # Utility functions used by many tests
 def valid_textfile(filedir):
     # Generate and return a valid temporary file.
-    fd, path = mkstemp(suffix='.txt', prefix='dstmp_', dir=filedir, text=True)
+    fd, path = mkstemp(suffix=".txt", prefix="dstmp_", dir=filedir, text=True)
     os.close(fd)
     return path
 
 
 def invalid_textfile(filedir):
     # Generate and return an invalid filename.
-    fd, path = mkstemp(suffix='.txt', prefix='dstmp_', dir=filedir)
+    fd, path = mkstemp(suffix=".txt", prefix="dstmp_", dir=filedir)
     os.close(fd)
     os.remove(path)
     return path
 
 
 def valid_httpurl():
-    return http_path+http_file
+    return http_path + http_file
 
 
 def invalid_httpurl():
-    return http_fakepath+http_fakefile
+    return http_fakepath + http_fakefile
 
 
 def valid_baseurl():
@@ -129,8 +135,8 @@ class TestDataSourceOpen:
             # We don't have the gzip capabilities to test.
             pytest.skip()
         # Test datasource's internal file_opener for Gzip files.
-        filepath = os.path.join(self.tmpdir, 'foobar.txt.gz')
-        fp = gzip.open(filepath, 'w')
+        filepath = os.path.join(self.tmpdir, "foobar.txt.gz")
+        fp = gzip.open(filepath, "w")
         fp.write(magic_line)
         fp.close()
         fp = self.ds.open(filepath)
@@ -145,8 +151,8 @@ class TestDataSourceOpen:
             # We don't have the bz2 capabilities to test.
             pytest.skip()
         # Test datasource's internal file_opener for BZip2 files.
-        filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
-        fp = bz2.BZ2File(filepath, 'w')
+        filepath = os.path.join(self.tmpdir, "foobar.txt.bz2")
+        fp = bz2.BZ2File(filepath, "w")
         fp.write(magic_line)
         fp.close()
         fp = self.ds.open(filepath)
@@ -196,8 +202,7 @@ class TestDataSourceAbspath:
 
     def test_ValidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(valid_httpurl())
-        local_path = os.path.join(self.tmpdir, netloc,
-                                  upath.strip(os.sep).strip('/'))
+        local_path = os.path.join(self.tmpdir, netloc, upath.strip(os.sep).strip("/"))
         assert_equal(local_path, self.ds.abspath(valid_httpurl()))
 
     def test_ValidFile(self):
@@ -210,8 +215,7 @@ class TestDataSourceAbspath:
 
     def test_InvalidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(invalid_httpurl())
-        invalidhttp = os.path.join(self.tmpdir, netloc,
-                                   upath.strip(os.sep).strip('/'))
+        invalidhttp = os.path.join(self.tmpdir, netloc, upath.strip(os.sep).strip("/"))
         assert_(invalidhttp != self.ds.abspath(valid_httpurl()))
 
     def test_InvalidFile(self):
@@ -234,13 +238,13 @@ class TestDataSourceAbspath:
         assert_(tmp_path(tmpfile).startswith(self.tmpdir))
         assert_(tmp_path(tmpfilename).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(http_path + fn).startswith(self.tmpdir))
             assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
         try:
-            os.sep = '\\'
+            os.sep = "\\"
             self.test_ValidHTTP()
             self.test_ValidFile()
             self.test_InvalidHTTP()
@@ -261,8 +265,9 @@ class TestRepositoryAbspath:
 
     def test_ValidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(valid_httpurl())
-        local_path = os.path.join(self.repos._destpath, netloc,
-                                  upath.strip(os.sep).strip('/'))
+        local_path = os.path.join(
+            self.repos._destpath, netloc, upath.strip(os.sep).strip("/")
+        )
         filepath = self.repos.abspath(valid_httpfile())
         assert_equal(local_path, filepath)
 
@@ -270,13 +275,13 @@ class TestRepositoryAbspath:
         tmp_path = lambda x: os.path.abspath(self.repos.abspath(x))
         assert_(tmp_path(valid_httpfile()).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(http_path + fn).startswith(self.tmpdir))
             assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
         try:
-            os.sep = '\\'
+            os.sep = "\\"
             self.test_ValidHTTP()
             self.test_sandboxing()
         finally:
@@ -333,6 +338,7 @@ class TestOpenFunc:
         fp = datasource.open(local_file)
         assert_(fp)
         fp.close()
+
 
 def test_del_attr_handling():
     # DataSource __del__ can be called

@@ -117,48 +117,51 @@ void *PyUFunc_API[] = {
 };
 """
 
-def generate_api(output_dir, force=False):
-    basename = 'ufunc_api'
 
-    h_file = os.path.join(output_dir, '__%s.h' % basename)
-    c_file = os.path.join(output_dir, '__%s.c' % basename)
-    d_file = os.path.join(output_dir, '%s.txt' % basename)
+def generate_api(output_dir, force=False):
+    basename = "ufunc_api"
+
+    h_file = os.path.join(output_dir, "__%s.h" % basename)
+    c_file = os.path.join(output_dir, "__%s.c" % basename)
+    d_file = os.path.join(output_dir, "%s.txt" % basename)
     targets = (h_file, c_file, d_file)
 
-    sources = ['ufunc_api_order.txt']
+    sources = ["ufunc_api_order.txt"]
 
-    if (not force and not genapi.should_rebuild(targets, sources + [__file__])):
+    if not force and not genapi.should_rebuild(targets, sources + [__file__]):
         return targets
     else:
         do_generate_api(targets, sources)
 
     return targets
 
+
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
     doc_file = targets[2]
 
-    ufunc_api_index = genapi.merge_api_dicts((
-            numpy_api.ufunc_funcs_api,
-            numpy_api.ufunc_types_api))
+    ufunc_api_index = genapi.merge_api_dicts(
+        (numpy_api.ufunc_funcs_api, numpy_api.ufunc_types_api)
+    )
     genapi.check_api_dict(ufunc_api_index)
 
-    ufunc_api_list = genapi.get_api_functions('UFUNC_API', numpy_api.ufunc_funcs_api)
+    ufunc_api_list = genapi.get_api_functions("UFUNC_API", numpy_api.ufunc_funcs_api)
 
     # Create dict name -> *Api instance
     ufunc_api_dict = {}
-    api_name = 'PyUFunc_API'
+    api_name = "PyUFunc_API"
     for f in ufunc_api_list:
         name = f.name
         index = ufunc_api_index[name][0]
         annotations = ufunc_api_index[name][1:]
-        ufunc_api_dict[name] = FunctionApi(f.name, index, annotations,
-                                           f.return_type, f.args, api_name)
+        ufunc_api_dict[name] = FunctionApi(
+            f.name, index, annotations, f.return_type, f.args, api_name
+        )
 
     for name, val in numpy_api.ufunc_types_api.items():
         index = val[0]
-        ufunc_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
+        ufunc_api_dict[name] = TypeApi(name, index, "PyTypeObject", api_name)
 
     # set up object API
     module_list = []
@@ -172,22 +175,22 @@ def do_generate_api(targets, sources):
         module_list.append(api_item.internal_define())
 
     # Write to header
-    s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
+    s = h_template % ("\n".join(module_list), "\n".join(extension_list))
     genapi.write_file(header_file, s)
 
     # Write to c-code
-    s = c_template % ',\n'.join(init_list)
+    s = c_template % ",\n".join(init_list)
     genapi.write_file(c_file, s)
 
     # Write to documentation
-    s = '''
+    s = """
 =================
 NumPy Ufunc C-API
 =================
-'''
+"""
     for func in ufunc_api_list:
         s += func.to_ReST()
-        s += '\n\n'
+        s += "\n\n"
     genapi.write_file(doc_file, s)
 
     return targets

@@ -41,7 +41,6 @@ def zeros_like(
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
-
 def ones(
     shape: _ShapeLike,
     dtype: DTypeLike = ...,
@@ -49,7 +48,6 @@ def ones(
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
-
 @overload
 def ones_like(
     a: _ArrayType,
@@ -66,7 +64,6 @@ def ones_like(
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
-
 def full(
     shape: _ShapeLike,
     fill_value: Any,
@@ -75,7 +72,6 @@ def full(
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
-
 @overload
 def full_like(
     a: _ArrayType,
@@ -94,7 +90,6 @@ def full_like(
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
-
 @overload
 def count_nonzero(
     a: ArrayLike,
@@ -109,25 +104,19 @@ def count_nonzero(
     *,
     keepdims: bool = ...,
 ) -> Any: ...  # TODO: np.intp or ndarray[np.intp]
-
 def isfortran(a: Union[ndarray, generic]) -> bool: ...
-
 def argwhere(a: ArrayLike) -> ndarray: ...
-
 def flatnonzero(a: ArrayLike) -> ndarray: ...
-
 def correlate(
     a: ArrayLike,
     v: ArrayLike,
     mode: _CorrelateMode = ...,
 ) -> ndarray: ...
-
 def convolve(
     a: ArrayLike,
     v: ArrayLike,
     mode: _CorrelateMode = ...,
 ) -> ndarray: ...
-
 @overload
 def outer(
     a: ArrayLike,
@@ -140,27 +129,22 @@ def outer(
     b: ArrayLike,
     out: _ArrayType = ...,
 ) -> _ArrayType: ...
-
 def tensordot(
     a: ArrayLike,
     b: ArrayLike,
     axes: Union[int, Tuple[_ShapeLike, _ShapeLike]] = ...,
 ) -> ndarray: ...
-
 def roll(
     a: ArrayLike,
     shift: _ShapeLike,
     axis: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
-
 def rollaxis(a: ndarray, axis: int, start: int = ...) -> ndarray: ...
-
 def moveaxis(
     a: ndarray,
     source: _ShapeLike,
     destination: _ShapeLike,
 ) -> ndarray: ...
-
 def cross(
     a: ArrayLike,
     b: ArrayLike,
@@ -169,7 +153,6 @@ def cross(
     axisc: int = ...,
     axis: Optional[int] = ...,
 ) -> ndarray: ...
-
 @overload
 def indices(
     dimensions: Sequence[int],
@@ -182,7 +165,6 @@ def indices(
     dtype: DTypeLike = ...,
     sparse: Literal[True] = ...,
 ) -> Tuple[ndarray, ...]: ...
-
 def fromfunction(
     function: Callable[..., _T],
     shape: Sequence[int],
@@ -191,20 +173,15 @@ def fromfunction(
     like: ArrayLike = ...,
     **kwargs: Any,
 ) -> _T: ...
-
 def isscalar(element: Any) -> bool: ...
-
 def binary_repr(num: int, width: Optional[int] = ...) -> str: ...
-
 def base_repr(number: int, base: int = ..., padding: int = ...) -> str: ...
-
 def identity(
     n: int,
     dtype: DTypeLike = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
-
 def allclose(
     a: ArrayLike,
     b: ArrayLike,
@@ -212,7 +189,6 @@ def allclose(
     atol: float = ...,
     equal_nan: bool = ...,
 ) -> bool: ...
-
 def isclose(
     a: ArrayLike,
     b: ArrayLike,
@@ -220,7 +196,5 @@ def isclose(
     atol: float = ...,
     equal_nan: bool = ...,
 ) -> Any: ...
-
 def array_equal(a1: ArrayLike, a2: ArrayLike, equal_nan: bool = ...) -> bool: ...
-
 def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...

@@ -83,12 +83,38 @@ from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
 __all__ = [
-    'lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline', 'lagadd',
-    'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow', 'lagval', 'lagder',
-    'lagint', 'lag2poly', 'poly2lag', 'lagfromroots', 'lagvander',
-    'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d', 'lagval3d',
-    'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d', 'lagcompanion',
-    'laggauss', 'lagweight']
+    "lagzero",
+    "lagone",
+    "lagx",
+    "lagdomain",
+    "lagline",
+    "lagadd",
+    "lagsub",
+    "lagmulx",
+    "lagmul",
+    "lagdiv",
+    "lagpow",
+    "lagval",
+    "lagder",
+    "lagint",
+    "lag2poly",
+    "poly2lag",
+    "lagfromroots",
+    "lagvander",
+    "lagfit",
+    "lagtrim",
+    "lagroots",
+    "Laguerre",
+    "lagval2d",
+    "lagval3d",
+    "laggrid2d",
+    "laggrid3d",
+    "lagvander2d",
+    "lagvander3d",
+    "lagcompanion",
+    "laggauss",
+    "lagweight",
+]
 
 lagtrim = pu.trimcoef
 
@@ -188,9 +214,10 @@ def lag2poly(c):
         # i is the current degree of c1
         for i in range(n - 1, 1, -1):
             tmp = c0
-            c0 = polysub(c[i - 2], (c1*(i - 1))/i)
-            c1 = polyadd(tmp, polysub((2*i - 1)*c1, polymulx(c1))/i)
+            c0 = polysub(c[i - 2], (c1 * (i - 1)) / i)
+            c1 = polyadd(tmp, polysub((2 * i - 1) * c1, polymulx(c1)) / i)
         return polyadd(c0, polysub(c1, polymulx(c1)))
+
 
 #
 # These are constant arrays are of integer type so as to be compatible
@@ -433,9 +460,9 @@ def lagmulx(c):
     prd[0] = c[0]
     prd[1] = -c[0]
     for i in range(1, len(c)):
-        prd[i + 1] = -c[i]*(i + 1)
-        prd[i] += c[i]*(2*i + 1)
-        prd[i - 1] -= c[i]*i
+        prd[i + 1] = -c[i] * (i + 1)
+        prd[i] += c[i] * (2 * i + 1)
+        prd[i - 1] -= c[i] * i
     return prd
 
 
@@ -488,20 +515,20 @@ def lagmul(c1, c2):
         xs = c2
 
     if len(c) == 1:
-        c0 = c[0]*xs
+        c0 = c[0] * xs
         c1 = 0
     elif len(c) == 2:
-        c0 = c[0]*xs
-        c1 = c[1]*xs
+        c0 = c[0] * xs
+        c1 = c[1] * xs
     else:
         nd = len(c)
-        c0 = c[-2]*xs
-        c1 = c[-1]*xs
+        c0 = c[-2] * xs
+        c1 = c[-1] * xs
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = lagsub(c[-i]*xs, (c1*(nd - 1))/nd)
-            c1 = lagadd(tmp, lagsub((2*nd - 1)*c1, lagmulx(c1))/nd)
+            c0 = lagsub(c[-i] * xs, (c1 * (nd - 1)) / nd)
+            c1 = lagadd(tmp, lagsub((2 * nd - 1) * c1, lagmulx(c1)) / nd)
     return lagadd(c0, lagsub(c1, lagmulx(c1)))
 
 
@@ -644,7 +671,7 @@ def lagder(c, m=1, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=True)
-    if c.dtype.char in '?bBhHiIlLqQpP':
+    if c.dtype.char in "?bBhHiIlLqQpP":
         c = c.astype(np.double)
 
     cnt = pu._deprecate_as_int(m, "the order of derivation")
@@ -659,7 +686,7 @@ def lagder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
@@ -759,7 +786,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=True)
-    if c.dtype.char in '?bBhHiIlLqQpP':
+    if c.dtype.char in "?bBhHiIlLqQpP":
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
@@ -779,7 +806,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         return c
 
     c = np.moveaxis(c, iaxis, 0)
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -868,12 +895,12 @@ def lagval(x, c, tensor=True):
 
     """
     c = np.array(c, ndmin=1, copy=False)
-    if c.dtype.char in '?bBhHiIlLqQpP':
+    if c.dtype.char in "?bBhHiIlLqQpP":
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
     if len(c) == 1:
         c0 = c[0]
@@ -888,9 +915,9 @@ def lagval(x, c, tensor=True):
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = c[-i] - (c1*(nd - 1))/nd
-            c1 = tmp + (c1*((2*nd - 1) - x))/nd
-    return c0 + c1*(1 - x)
+            c0 = c[-i] - (c1 * (nd - 1)) / nd
+            c1 = tmp + (c1 * ((2 * nd - 1) - x)) / nd
+    return c0 + c1 * (1 - x)
 
 
 def lagval2d(x, y, c):
@@ -1154,11 +1181,11 @@ def lagvander(x, deg):
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
         v[1] = 1 - x
         for i in range(2, ideg + 1):
-            v[i] = (v[i-1]*(2*i - 1 - x) - v[i-2]*(i - 1))/i
+            v[i] = (v[i - 1] * (2 * i - 1 - x) - v[i - 2] * (i - 1)) / i
     return np.moveaxis(v, 0, -1)
 
 
@@ -1429,19 +1456,19 @@ def lagcompanion(c):
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
-        raise ValueError('Series must have maximum degree of at least 1.')
+        raise ValueError("Series must have maximum degree of at least 1.")
     if len(c) == 2:
-        return np.array([[1 + c[0]/c[1]]])
+        return np.array([[1 + c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    top = mat.reshape(-1)[1::n+1]
-    mid = mat.reshape(-1)[0::n+1]
-    bot = mat.reshape(-1)[n::n+1]
+    top = mat.reshape(-1)[1 :: n + 1]
+    mid = mat.reshape(-1)[0 :: n + 1]
+    bot = mat.reshape(-1)[n :: n + 1]
     top[...] = -np.arange(1, n)
-    mid[...] = 2.*np.arange(n) + 1.
+    mid[...] = 2.0 * np.arange(n) + 1.0
     bot[...] = top
-    mat[:, -1] += (c[:-1]/c[-1])*n
+    mat[:, -1] += (c[:-1] / c[-1]) * n
     return mat
 
 
@@ -1500,10 +1527,10 @@ def lagroots(c):
     if len(c) <= 1:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([1 + c[0]/c[1]])
+        return np.array([1 + c[0] / c[1]])
 
     # rotated companion matrix reduces error
-    m = lagcompanion(c)[::-1,::-1]
+    m = lagcompanion(c)[::-1, ::-1]
     r = la.eigvals(m)
     r.sort()
     return r
@@ -1551,21 +1578,21 @@ def laggauss(deg):
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
-    c = np.array([0]*deg + [1])
+    c = np.array([0] * deg + [1])
     m = lagcompanion(c)
     x = la.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = lagval(x, c)
     df = lagval(x, lagder(c))
-    x -= dy/df
+    x -= dy / df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
     fm = lagval(x, c[1:])
     fm /= np.abs(fm).max()
     df /= np.abs(df).max()
-    w = 1/(fm * df)
+    w = 1 / (fm * df)
 
     # scale w to get the right value, 1 in this case
     w /= w.sum()
@@ -1599,9 +1626,11 @@ def lagweight(x):
     w = np.exp(-x)
     return w
 
+
 #
 # Laguerre series class
 #
+
 
 class Laguerre(ABCPolyBase):
     """A Laguerre series class.
@@ -1625,6 +1654,7 @@ class Laguerre(ABCPolyBase):
         .. versionadded:: 1.6.0
 
     """
+
     # Virtual Functions
     _add = staticmethod(lagadd)
     _sub = staticmethod(lagsub)
@@ -1642,4 +1672,4 @@ class Laguerre(ABCPolyBase):
     # Virtual properties
     domain = np.array(lagdomain)
     window = np.array(lagdomain)
-    basis_name = 'L'
+    basis_name = "L"

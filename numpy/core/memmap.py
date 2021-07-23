@@ -5,21 +5,21 @@ from .numeric import uint8, ndarray, dtype
 from numpy.compat import os_fspath, is_pathlib_path
 from numpy.core.overrides import set_module
 
-__all__ = ['memmap']
+__all__ = ["memmap"]
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+", "w+"]
 
 mode_equivalents = {
-    "readonly":"r",
-    "copyonwrite":"c",
-    "readwrite":"r+",
-    "write":"w+"
-    }
+    "readonly": "r",
+    "copyonwrite": "c",
+    "readwrite": "r+",
+    "write": "w+",
+}
 
 
-@set_module('numpy')
+@set_module("numpy")
 class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
 
@@ -205,27 +205,30 @@ class memmap(ndarray):
 
     __array_priority__ = -100.0
 
-    def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
-                shape=None, order='C'):
+    def __new__(
+        subtype, filename, dtype=uint8, mode="r+", offset=0, shape=None, order="C"
+    ):
         # Import here to minimize 'import numpy' overhead
         import mmap
         import os.path
+
         try:
             mode = mode_equivalents[mode]
         except KeyError as e:
             if mode not in valid_filemodes:
                 raise ValueError(
-                    "mode must be one of {!r} (got {!r})"
-                    .format(valid_filemodes + list(mode_equivalents.keys()), mode)
+                    "mode must be one of {!r} (got {!r})".format(
+                        valid_filemodes + list(mode_equivalents.keys()), mode
+                    )
                 ) from None
 
-        if mode == 'w+' and shape is None:
+        if mode == "w+" and shape is None:
             raise ValueError("shape must be given")
 
-        if hasattr(filename, 'read'):
+        if hasattr(filename, "read"):
             f_ctx = nullcontext(filename)
         else:
-            f_ctx = open(os_fspath(filename), ('r' if mode == 'c' else mode)+'b')
+            f_ctx = open(os_fspath(filename), ("r" if mode == "c" else mode) + "b")
 
         with f_ctx as fid:
             fid.seek(0, 2)
@@ -236,27 +239,31 @@ class memmap(ndarray):
             if shape is None:
                 bytes = flen - offset
                 if bytes % _dbytes:
-                    raise ValueError("Size of available data is not a "
-                            "multiple of the data-type size.")
+                    raise ValueError(
+                        "Size of available data is not a "
+                        "multiple of the data-type size."
+                    )
                 size = bytes // _dbytes
                 shape = (size,)
             else:
                 if not isinstance(shape, tuple):
                     shape = (shape,)
-                size = np.intp(1)  # avoid default choice of np.int_, which might overflow
+                size = np.intp(
+                    1
+                )  # avoid default choice of np.int_, which might overflow
                 for k in shape:
                     size *= k
 
-            bytes = int(offset + size*_dbytes)
+            bytes = int(offset + size * _dbytes)
 
-            if mode in ('w+', 'r+') and flen < bytes:
+            if mode in ("w+", "r+") and flen < bytes:
                 fid.seek(bytes - 1, 0)
-                fid.write(b'\0')
+                fid.write(b"\0")
                 fid.flush()
 
-            if mode == 'c':
+            if mode == "c":
                 acc = mmap.ACCESS_COPY
-            elif mode == 'r':
+            elif mode == "r":
                 acc = mmap.ACCESS_READ
             else:
                 acc = mmap.ACCESS_WRITE
@@ -266,8 +273,9 @@ class memmap(ndarray):
             array_offset = offset - start
             mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
-            self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
-                                   offset=array_offset, order=order)
+            self = ndarray.__new__(
+                subtype, shape, dtype=descr, buffer=mm, offset=array_offset, order=order
+            )
             self._mmap = mm
             self.offset = offset
             self.mode = mode
@@ -286,7 +294,7 @@ class memmap(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if hasattr(obj, '_mmap') and np.may_share_memory(self, obj):
+        if hasattr(obj, "_mmap") and np.may_share_memory(self, obj):
             self._mmap = obj._mmap
             self.filename = obj.filename
             self.offset = obj.offset
@@ -312,7 +320,7 @@ class memmap(ndarray):
         memmap
 
         """
-        if self.base is not None and hasattr(self.base, 'flush'):
+        if self.base is not None and hasattr(self.base, "flush"):
             self.base.flush()
 
     def __array_wrap__(self, arr, context=None):

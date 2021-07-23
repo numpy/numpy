@@ -11,12 +11,13 @@ def _path(*a):
 
 
 class TestAssumedShapeSumExample(util.F2PyTest):
-    sources = [_path('src', 'assumed_shape', 'foo_free.f90'),
-               _path('src', 'assumed_shape', 'foo_use.f90'),
-               _path('src', 'assumed_shape', 'precision.f90'),
-               _path('src', 'assumed_shape', 'foo_mod.f90'),
-               _path('src', 'assumed_shape', '.f2py_f2cmap'),
-               ]
+    sources = [
+        _path("src", "assumed_shape", "foo_free.f90"),
+        _path("src", "assumed_shape", "foo_use.f90"),
+        _path("src", "assumed_shape", "precision.f90"),
+        _path("src", "assumed_shape", "foo_mod.f90"),
+        _path("src", "assumed_shape", ".f2py_f2cmap"),
+    ]
 
     @pytest.mark.slow
     def test_all(self):
@@ -40,7 +41,7 @@ class TestF2cmapOption(TestAssumedShapeSumExample):
         f2cmap_src = self.sources.pop(-1)
 
         self.f2cmap_file = tempfile.NamedTemporaryFile(delete=False)
-        with open(f2cmap_src, 'rb') as f:
+        with open(f2cmap_src, "rb") as f:
             self.f2cmap_file.write(f.read())
         self.f2cmap_file.close()
 

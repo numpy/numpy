@@ -4,7 +4,8 @@ import sys
 import textwrap
 import subprocess
 
-CODE = textwrap.dedent(r"""
+CODE = textwrap.dedent(
+    r"""
     import sys
     import importlib
 
@@ -14,7 +15,8 @@ CODE = textwrap.dedent(r"""
     # Importing `typing_extensions` will now raise an `ImportError`
     sys.modules["typing_extensions"] = None
     assert importlib.import_module("numpy.typing")
-""")
+"""
+)
 
 
 def test_no_typing_extensions() -> None:
@@ -27,9 +29,8 @@ def test_no_typing_extensions() -> None:
     impossible as it is an indirect hard dependency of pytest.
 
     """
-    p = subprocess.run([sys.executable, '-c', CODE], capture_output=True)
+    p = subprocess.run([sys.executable, "-c", CODE], capture_output=True)
     if p.returncode:
         raise AssertionError(
             f"Non-zero return code: {p.returncode!r}\n\n{p.stderr.decode()}"
         )
-

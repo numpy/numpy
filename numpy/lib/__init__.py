@@ -40,7 +40,7 @@ from .arraypad import *
 from ._version import *
 from numpy.core._multiarray_umath import tracemalloc_domain
 
-__all__ = ['emath', 'math', 'tracemalloc_domain', 'Arrayterator']
+__all__ = ["emath", "math", "tracemalloc_domain", "Arrayterator"]
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__
@@ -57,5 +57,6 @@ __all__ += nanfunctions.__all__
 __all__ += histograms.__all__
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

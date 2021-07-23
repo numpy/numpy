@@ -18,14 +18,14 @@ from numpy.typing import (
     ArrayLike,
     NDArray,
     _ShapeLike,
-     _NestedSequence,
-     _SupportsDType,
-     _ArrayLikeBool_co,
-     _ArrayLikeUInt_co,
-     _ArrayLikeInt_co,
-     _ArrayLikeFloat_co,
-     _ArrayLikeComplex_co,
-     _ArrayLikeObject_co,
+    _NestedSequence,
+    _SupportsDType,
+    _ArrayLikeBool_co,
+    _ArrayLikeUInt_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeObject_co,
 )
 
 from numpy.core.shape_base import vstack
@@ -67,14 +67,12 @@ def take_along_axis(
     indices: NDArray[integer[Any]],
     axis: None | int,
 ) -> NDArray[_SCT]: ...
-
 def put_along_axis(
     arr: NDArray[_SCT],
     indices: NDArray[integer[Any]],
     values: ArrayLike,
     axis: None | int,
 ) -> None: ...
-
 @overload
 def apply_along_axis(
     func1d: Callable[..., _ArrayLike[_SCT]],
@@ -91,13 +89,11 @@ def apply_along_axis(
     *args: Any,
     **kwargs: Any,
 ) -> NDArray[Any]: ...
-
 def apply_over_axes(
     func: Callable[[NDArray[Any], int], NDArray[_SCT]],
     a: ArrayLike,
     axes: int | Sequence[int],
 ) -> NDArray[_SCT]: ...
-
 @overload
 def expand_dims(
     a: _ArrayLike[_SCT],
@@ -108,17 +104,14 @@ def expand_dims(
     a: ArrayLike,
     axis: _ShapeLike,
 ) -> NDArray[Any]: ...
-
 @overload
 def column_stack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...
 @overload
 def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
-
 @overload
 def dstack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...
 @overload
 def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
-
 @overload
 def array_split(
     ary: _ArrayLike[_SCT],
@@ -131,7 +124,6 @@ def array_split(
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
 ) -> List[NDArray[Any]]: ...
-
 @overload
 def split(
     ary: _ArrayLike[_SCT],
@@ -144,7 +136,6 @@ def split(
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
 ) -> List[NDArray[Any]]: ...
-
 @overload
 def hsplit(
     ary: _ArrayLike[_SCT],
@@ -155,7 +146,6 @@ def hsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
 ) -> List[NDArray[Any]]: ...
-
 @overload
 def vsplit(
     ary: _ArrayLike[_SCT],
@@ -166,7 +156,6 @@ def vsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
 ) -> List[NDArray[Any]]: ...
-
 @overload
 def dsplit(
     ary: _ArrayLike[_SCT],
@@ -177,17 +166,14 @@ def dsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
 ) -> List[NDArray[Any]]: ...
-
 @overload
 def get_array_prepare(*args: _SupportsArrayPrepare) -> _ArrayPrepare: ...
 @overload
 def get_array_prepare(*args: object) -> None | _ArrayPrepare: ...
-
 @overload
 def get_array_wrap(*args: _SupportsArrayWrap) -> _ArrayWrap: ...
 @overload
 def get_array_wrap(*args: object) -> None | _ArrayWrap: ...
-
 @overload
 def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[bool_]: ...  # type: ignore[misc]
 @overload
@@ -197,12 +183,13 @@ def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[signedinteger[Any]
 @overload
 def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...  # type: ignore[misc]
 @overload
-def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
+def kron(
+    a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co
+) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
 def kron(a: _ArrayLikeObject_co, b: Any) -> NDArray[object_]: ...
 @overload
 def kron(a: Any, b: _ArrayLikeObject_co) -> NDArray[object_]: ...
-
 @overload
 def tile(
     A: _ArrayLike[_SCT],

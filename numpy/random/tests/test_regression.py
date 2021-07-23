@@ -1,17 +1,18 @@
 import sys
 from numpy.testing import (
-    assert_, assert_array_equal, assert_raises,
-    )
+    assert_,
+    assert_array_equal,
+    assert_raises,
+)
 from numpy import random
 import numpy as np
 
 
 class TestRegression:
-
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
         # Regression test for ticket #986.
-        for mu in np.linspace(-7., 7., 5):
+        for mu in np.linspace(-7.0, 7.0, 5):
             r = random.mtrand.vonmises(mu, 1, 50)
             assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
@@ -22,12 +23,12 @@ class TestRegression:
 
         # Test for ticket #5623
         args = [
-            (2**20 - 2, 2**20 - 2, 2**20 - 2),  # Check for 32-bit systems
+            (2 ** 20 - 2, 2 ** 20 - 2, 2 ** 20 - 2),  # Check for 32-bit systems
         ]
-        is_64bits = sys.maxsize > 2**32
-        if is_64bits and sys.platform != 'win32':
+        is_64bits = sys.maxsize > 2 ** 32
+        if is_64bits and sys.platform != "win32":
             # Check for 64-bit systems
-            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2))
+            args.append((2 ** 40 - 2, 2 ** 40 - 2, 2 ** 40 - 2))
         for arg in args:
             assert_(np.random.hypergeometric(*arg) > 0)
 
@@ -40,19 +41,21 @@ class TestRegression:
         # numbers with this large sample
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / float(N)
-        msg = f'Frequency was {freq:f}, should be > 0.45'
+        msg = f"Frequency was {freq:f}, should be > 0.45"
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / float(N)
-        msg = f'Frequency was {freq:f}, should be < 0.23'
+        msg = f"Frequency was {freq:f}, should be < 0.23"
         assert_(freq < 0.23, msg)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
-        for t in [[1, 2, 3, None],
-                  [(1, 1), (2, 2), (3, 3), None],
-                  [1, (2, 2), (3, 3), None],
-                  [(1, 1), 2, 3, None]]:
+        for t in [
+            [1, 2, 3, None],
+            [(1, 1), (2, 2), (3, 3), None],
+            [1, (2, 2), (3, 3), None],
+            [(1, 1), 2, 3, None],
+        ]:
             np.random.seed(12345)
             shuffled = list(t)
             random.shuffle(shuffled)
@@ -67,7 +70,7 @@ class TestRegression:
             np.random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.0), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
@@ -82,7 +85,7 @@ class TestRegression:
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
         np.random.seed(1234567890)
         x = np.random.beta(0.0001, 0.0001, size=100)
-        assert_(not np.any(np.isnan(x)), 'Nans in np.random.beta')
+        assert_(not np.any(np.isnan(x)), "Nans in np.random.beta")
 
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
@@ -95,7 +98,7 @@ class TestRegression:
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = np.random.choice(a, p=probs)
             assert_(c in a)
-            assert_raises(ValueError, np.random.choice, a, p=probs*0.9)
+            assert_raises(ValueError, np.random.choice, a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
@@ -103,13 +106,14 @@ class TestRegression:
         # Tests gh-7710
         np.random.seed(1234)
 
-        a = np.array(['a', 'a' * 1000])
+        a = np.array(["a", "a" * 1000])
 
         for _ in range(100):
             np.random.shuffle(a)
 
         # Force Garbage Collection - should not segfault.
         import gc
+
         gc.collect()
 
     def test_shuffle_of_array_of_objects(self):
@@ -124,6 +128,7 @@ class TestRegression:
 
         # Force Garbage Collection - should not segfault.
         import gc
+
         gc.collect()
 
     def test_permutation_subclass(self):

@@ -14,7 +14,10 @@ M: np.datetime64
 
 AR_LIKE_f: List[float]
 
-def func(a: int) -> None: ...
+
+def func(a: int) -> None:
+    ...
+
 
 np.where(AR_b, 1)  # E: No overload variant
 

@@ -44,7 +44,9 @@ reveal_type(np.frexp.nout)  # E: Literal[2]
 reveal_type(np.frexp.nargs)  # E: Literal[3]
 reveal_type(np.frexp.signature)  # E: None
 reveal_type(np.frexp(f8))  # E: Tuple[Any, Any]
-reveal_type(np.frexp(AR_f8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[Any]], numpy.ndarray[Any, numpy.dtype[Any]]]
+reveal_type(
+    np.frexp(AR_f8)
+)  # E: Tuple[numpy.ndarray[Any, numpy.dtype[Any]], numpy.ndarray[Any, numpy.dtype[Any]]]
 
 reveal_type(np.divmod.__name__)  # E: Literal['divmod']
 reveal_type(np.divmod.ntypes)  # E: Literal[15]
@@ -54,7 +56,9 @@ reveal_type(np.divmod.nout)  # E: Literal[2]
 reveal_type(np.divmod.nargs)  # E: Literal[4]
 reveal_type(np.divmod.signature)  # E: None
 reveal_type(np.divmod(f8, f8))  # E: Tuple[Any, Any]
-reveal_type(np.divmod(AR_f8, f8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[Any]], numpy.ndarray[Any, numpy.dtype[Any]]]
+reveal_type(
+    np.divmod(AR_f8, f8)
+)  # E: Tuple[numpy.ndarray[Any, numpy.dtype[Any]], numpy.ndarray[Any, numpy.dtype[Any]]]
 
 reveal_type(np.matmul.__name__)  # E: Literal['matmul']
 reveal_type(np.matmul.ntypes)  # E: Literal[19]

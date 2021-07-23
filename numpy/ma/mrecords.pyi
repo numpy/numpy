@@ -62,7 +62,6 @@ def fromarrays(
     byteorder=...,
     fill_value=...,
 ): ...
-
 def fromrecords(
     reclist,
     dtype=...,
@@ -75,7 +74,6 @@ def fromrecords(
     fill_value=...,
     mask=...,
 ): ...
-
 def fromtextfile(
     fname,
     delimitor=...,
@@ -84,5 +82,4 @@ def fromtextfile(
     varnames=...,
     vartypes=...,
 ): ...
-
 def addfield(mrecord, newfield, newfieldname=...): ...

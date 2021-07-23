@@ -9,10 +9,10 @@ class Records(Benchmark):
         self.fields_number = 10000
         self.arrays = [self.l50 for _ in range(self.fields_number)]
         self.formats = [self.l50.dtype.str for _ in range(self.fields_number)]
-        self.formats_str = ','.join(self.formats)
+        self.formats_str = ",".join(self.formats)
         self.dtype_ = np.dtype(
             [
-                ('field_{}'.format(i), self.l50.dtype.str)
+                ("field_{}".format(i), self.l50.dtype.str)
                 for i in range(self.fields_number)
             ]
         )

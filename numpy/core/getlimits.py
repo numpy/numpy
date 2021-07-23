@@ -1,7 +1,7 @@
 """Machine limits for Float32 and Float64 and (long double) if available...
 
 """
-__all__ = ['finfo', 'iinfo']
+__all__ = ["finfo", "iinfo"]
 
 import warnings
 
@@ -31,16 +31,28 @@ def _fr1(a):
 
 
 class MachArLike:
-    """ Object to simulate MachAr instance """
-    def __init__(self, ftype, *, eps, epsneg, huge, tiny,
-                 ibeta, smallest_subnormal=None, **kwargs):
+    """Object to simulate MachAr instance"""
+
+    def __init__(
+        self,
+        ftype,
+        *,
+        eps,
+        epsneg,
+        huge,
+        tiny,
+        ibeta,
+        smallest_subnormal=None,
+        **kwargs
+    ):
         self.params = _MACHAR_PARAMS[ftype]
         self.ftype = ftype
-        self.title = self.params['title']
+        self.title = self.params["title"]
         # Parameter types same as for discovered MachAr object.
         if not smallest_subnormal:
             self._smallest_subnormal = nextafter(
-                self.ftype(0), self.ftype(1), dtype=self.ftype)
+                self.ftype(0), self.ftype(1), dtype=self.ftype
+            )
         else:
             self._smallest_subnormal = smallest_subnormal
         self.epsilon = self.eps = self._float_to_float(eps)
@@ -48,11 +60,12 @@ class MachArLike:
         self.xmax = self.huge = self._float_to_float(huge)
         self.xmin = self._float_to_float(tiny)
         self.smallest_normal = self.tiny = self._float_to_float(tiny)
-        self.ibeta = self.params['itype'](ibeta)
+        self.ibeta = self.params["itype"](ibeta)
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
         self.resolution = self._float_to_float(
-            self._float_conv(10) ** (-self.precision))
+            self._float_conv(10) ** (-self.precision)
+        )
         self._str_eps = self._float_to_str(self.eps)
         self._str_epsneg = self._float_to_str(self.epsneg)
         self._str_xmin = self._float_to_str(self.xmin)
@@ -79,8 +92,11 @@ class MachArLike:
         value = self._smallest_subnormal
         if self.ftype(0) == value:
             warnings.warn(
-                'The value of the smallest subnormal for {} type '
-                'is zero.'.format(self.ftype), UserWarning, stacklevel=2)
+                "The value of the smallest subnormal for {} type "
+                "is zero.".format(self.ftype),
+                UserWarning,
+                stacklevel=2,
+            )
 
         return self._float_to_float(value)
 
@@ -117,42 +133,43 @@ class MachArLike:
         value : float
             value to be converted.
         """
-        return self.params['fmt'] % array(_fr0(value)[0], self.ftype)
+        return self.params["fmt"] % array(_fr0(value)[0], self.ftype)
 
 
 _convert_to_float = {
     ntypes.csingle: ntypes.single,
     ntypes.complex_: ntypes.float_,
-    ntypes.clongfloat: ntypes.longfloat
-    }
+    ntypes.clongfloat: ntypes.longfloat,
+}
 
 # Parameters for creating MachAr / MachAr-like objects
-_title_fmt = 'numpy {} precision floating point number'
+_title_fmt = "numpy {} precision floating point number"
 _MACHAR_PARAMS = {
     ntypes.double: dict(
-        itype = ntypes.int64,
-        fmt = '%24.16e',
-        title = _title_fmt.format('double')),
+        itype=ntypes.int64, fmt="%24.16e", title=_title_fmt.format("double")
+    ),
     ntypes.single: dict(
-        itype = ntypes.int32,
-        fmt = '%15.7e',
-        title = _title_fmt.format('single')),
+        itype=ntypes.int32, fmt="%15.7e", title=_title_fmt.format("single")
+    ),
     ntypes.longdouble: dict(
-        itype = ntypes.longlong,
-        fmt = '%s',
-        title = _title_fmt.format('long double')),
+        itype=ntypes.longlong, fmt="%s", title=_title_fmt.format("long double")
+    ),
     ntypes.half: dict(
-        itype = ntypes.int16,
-        fmt = '%12.5e',
-        title = _title_fmt.format('half'))}
+        itype=ntypes.int16, fmt="%12.5e", title=_title_fmt.format("half")
+    ),
+}
 
 # Key to identify the floating point type.  Key is result of
 # ftype('-0.1').newbyteorder('<').tobytes()
 # See:
 # https://perl5.git.perl.org/perl.git/blob/3118d7d684b56cbeb702af874f4326683c45f045:/Configure
 _KNOWN_TYPES = {}
+
+
 def _register_type(machar, bytepat):
     _KNOWN_TYPES[bytepat] = machar
+
+
 _float_ma = {}
 
 
@@ -160,61 +177,67 @@ def _register_known_types():
     # Known parameters for float16
     # See docstring of MachAr class for description of parameters.
     f16 = ntypes.float16
-    float16_ma = MachArLike(f16,
-                            machep=-10,
-                            negep=-11,
-                            minexp=-14,
-                            maxexp=16,
-                            it=10,
-                            iexp=5,
-                            ibeta=2,
-                            irnd=5,
-                            ngrd=0,
-                            eps=exp2(f16(-10)),
-                            epsneg=exp2(f16(-11)),
-                            huge=f16(65504),
-                            tiny=f16(2 ** -14))
-    _register_type(float16_ma, b'f\xae')
+    float16_ma = MachArLike(
+        f16,
+        machep=-10,
+        negep=-11,
+        minexp=-14,
+        maxexp=16,
+        it=10,
+        iexp=5,
+        ibeta=2,
+        irnd=5,
+        ngrd=0,
+        eps=exp2(f16(-10)),
+        epsneg=exp2(f16(-11)),
+        huge=f16(65504),
+        tiny=f16(2 ** -14),
+    )
+    _register_type(float16_ma, b"f\xae")
     _float_ma[16] = float16_ma
 
     # Known parameters for float32
     f32 = ntypes.float32
-    float32_ma = MachArLike(f32,
-                            machep=-23,
-                            negep=-24,
-                            minexp=-126,
-                            maxexp=128,
-                            it=23,
-                            iexp=8,
-                            ibeta=2,
-                            irnd=5,
-                            ngrd=0,
-                            eps=exp2(f32(-23)),
-                            epsneg=exp2(f32(-24)),
-                            huge=f32((1 - 2 ** -24) * 2**128),
-                            tiny=exp2(f32(-126)))
-    _register_type(float32_ma, b'\xcd\xcc\xcc\xbd')
+    float32_ma = MachArLike(
+        f32,
+        machep=-23,
+        negep=-24,
+        minexp=-126,
+        maxexp=128,
+        it=23,
+        iexp=8,
+        ibeta=2,
+        irnd=5,
+        ngrd=0,
+        eps=exp2(f32(-23)),
+        epsneg=exp2(f32(-24)),
+        huge=f32((1 - 2 ** -24) * 2 ** 128),
+        tiny=exp2(f32(-126)),
+    )
+    _register_type(float32_ma, b"\xcd\xcc\xcc\xbd")
     _float_ma[32] = float32_ma
 
     # Known parameters for float64
     f64 = ntypes.float64
     epsneg_f64 = 2.0 ** -53.0
     tiny_f64 = 2.0 ** -1022.0
-    float64_ma = MachArLike(f64,
-                            machep=-52,
-                            negep=-53,
-                            minexp=-1022,
-                            maxexp=1024,
-                            it=52,
-                            iexp=11,
-                            ibeta=2,
-                            irnd=5,
-                            ngrd=0,
-                            eps=2.0 ** -52.0,
-                            epsneg=epsneg_f64,
-                            huge=(1.0 - epsneg_f64) / tiny_f64 * f64(4),
-                            tiny=tiny_f64)
-    _register_type(float64_ma, b'\x9a\x99\x99\x99\x99\x99\xb9\xbf')
+    float64_ma = MachArLike(
+        f64,
+        machep=-52,
+        negep=-53,
+        minexp=-1022,
+        maxexp=1024,
+        it=52,
+        iexp=11,
+        ibeta=2,
+        irnd=5,
+        ngrd=0,
+        eps=2.0 ** -52.0,
+        epsneg=epsneg_f64,
+        huge=(1.0 - epsneg_f64) / tiny_f64 * f64(4),
+        tiny=tiny_f64,
+    )
+    _register_type(float64_ma, b"\x9a\x99\x99\x99\x99\x99\xb9\xbf")
     _float_ma[64] = float64_ma
 
     # Known parameters for IEEE 754 128-bit binary float
@@ -222,51 +245,57 @@ def _register_known_types():
     epsneg_f128 = exp2(ld(-113))
     tiny_f128 = exp2(ld(-16382))
     # Ignore runtime error when this is not f128
-    with numeric.errstate(all='ignore'):
+    with numeric.errstate(all="ignore"):
         huge_f128 = (ld(1) - epsneg_f128) / tiny_f128 * ld(4)
-    float128_ma = MachArLike(ld,
-                             machep=-112,
-                             negep=-113,
-                             minexp=-16382,
-                             maxexp=16384,
-                             it=112,
-                             iexp=15,
-                             ibeta=2,
-                             irnd=5,
-                             ngrd=0,
-                             eps=exp2(ld(-112)),
-                             epsneg=epsneg_f128,
-                             huge=huge_f128,
-                             tiny=tiny_f128)
+    float128_ma = MachArLike(
+        ld,
+        machep=-112,
+        negep=-113,
+        minexp=-16382,
+        maxexp=16384,
+        it=112,
+        iexp=15,
+        ibeta=2,
+        irnd=5,
+        ngrd=0,
+        eps=exp2(ld(-112)),
+        epsneg=epsneg_f128,
+        huge=huge_f128,
+        tiny=tiny_f128,
+    )
     # IEEE 754 128-bit binary float
-    _register_type(float128_ma,
-        b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
-    _register_type(float128_ma,
-        b'\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf')
+    _register_type(
+        float128_ma, b"\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf"
+    )
+    _register_type(
+        float128_ma, b"\x9a\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\x99\xfb\xbf"
+    )
     _float_ma[128] = float128_ma
 
     # Known parameters for float80 (Intel 80-bit extended precision)
     epsneg_f80 = exp2(ld(-64))
     tiny_f80 = exp2(ld(-16382))
     # Ignore runtime error when this is not f80
-    with numeric.errstate(all='ignore'):
+    with numeric.errstate(all="ignore"):
         huge_f80 = (ld(1) - epsneg_f80) / tiny_f80 * ld(4)
-    float80_ma = MachArLike(ld,
-                            machep=-63,
-                            negep=-64,
-                            minexp=-16382,
-                            maxexp=16384,
-                            it=63,
-                            iexp=15,
-                            ibeta=2,
-                            irnd=5,
-                            ngrd=0,
-                            eps=exp2(ld(-63)),
-                            epsneg=epsneg_f80,
-                            huge=huge_f80,
-                            tiny=tiny_f80)
+    float80_ma = MachArLike(
+        ld,
+        machep=-63,
+        negep=-64,
+        minexp=-16382,
+        maxexp=16384,
+        it=63,
+        iexp=15,
+        ibeta=2,
+        irnd=5,
+        ngrd=0,
+        eps=exp2(ld(-63)),
+        epsneg=epsneg_f80,
+        huge=huge_f80,
+        tiny=tiny_f80,
+    )
     # float80, first 10 bytes containing actual storage
-    _register_type(float80_ma, b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
+    _register_type(float80_ma, b"\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf")
     _float_ma[80] = float80_ma
 
     # Guessed / known parameters for double double; see:
@@ -278,33 +307,37 @@ def _register_known_types():
     # it to NaN.
     smallest_normal_dd = NaN
     # Leave the same value for the smallest subnormal as double
-    smallest_subnormal_dd = ld(nextafter(0., 1.))
-    float_dd_ma = MachArLike(ld,
-                             machep=-105,
-                             negep=-106,
-                             minexp=-1022,
-                             maxexp=1024,
-                             it=105,
-                             iexp=11,
-                             ibeta=2,
-                             irnd=5,
-                             ngrd=0,
-                             eps=exp2(ld(-105)),
-                             epsneg=exp2(ld(-106)),
-                             huge=huge_dd,
-                             tiny=smallest_normal_dd,
-                             smallest_subnormal=smallest_subnormal_dd)
+    smallest_subnormal_dd = ld(nextafter(0.0, 1.0))
+    float_dd_ma = MachArLike(
+        ld,
+        machep=-105,
+        negep=-106,
+        minexp=-1022,
+        maxexp=1024,
+        it=105,
+        iexp=11,
+        ibeta=2,
+        irnd=5,
+        ngrd=0,
+        eps=exp2(ld(-105)),
+        epsneg=exp2(ld(-106)),
+        huge=huge_dd,
+        tiny=smallest_normal_dd,
+        smallest_subnormal=smallest_subnormal_dd,
+    )
     # double double; low, high order (e.g. PPC 64)
-    _register_type(float_dd_ma,
-        b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf')
+    _register_type(
+        float_dd_ma, b"\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf"
+    )
     # double double; high, low order (e.g. PPC 64 le)
-    _register_type(float_dd_ma,
-        b'\x9a\x99\x99\x99\x99\x99\xb9\xbf\x9a\x99\x99\x99\x99\x99Y<')
-    _float_ma['dd'] = float_dd_ma
+    _register_type(
+        float_dd_ma, b"\x9a\x99\x99\x99\x99\x99\xb9\xbf\x9a\x99\x99\x99\x99\x99Y<"
+    )
+    _float_ma["dd"] = float_dd_ma
 
 
 def _get_machar(ftype):
-    """ Get MachAr instance or MachAr-like instance
+    """Get MachAr instance or MachAr-like instance
 
     Get parameters for floating point type, by first trying signatures of
     various known floating point types, then, if none match, attempting to
@@ -330,7 +363,7 @@ def _get_machar(ftype):
     if params is None:
         raise ValueError(repr(ftype))
     # Detect known / suspected types
-    key = ftype('-0.1').newbyteorder('<').tobytes()
+    key = ftype("-0.1").newbyteorder("<").tobytes()
     ma_like = None
     if ftype == ntypes.longdouble:
         # Could be 80 bit == 10 byte extended precision, where last bytes can
@@ -344,24 +377,27 @@ def _get_machar(ftype):
         return ma_like
     # Fall back to parameter discovery
     warnings.warn(
-        'Signature {} for {} does not match any known type: '
-        'falling back to type probe function'.format(key, ftype),
-        UserWarning, stacklevel=2)
+        "Signature {} for {} does not match any known type: "
+        "falling back to type probe function".format(key, ftype),
+        UserWarning,
+        stacklevel=2,
+    )
     return _discovered_machar(ftype)
 
 
 def _discovered_machar(ftype):
-    """ Create MachAr instance with found information on float types
-    """
+    """Create MachAr instance with found information on float types"""
     params = _MACHAR_PARAMS[ftype]
-    return MachAr(lambda v: array([v], ftype),
-                  lambda v:_fr0(v.astype(params['itype']))[0],
-                  lambda v:array(_fr0(v)[0], ftype),
-                  lambda v: params['fmt'] % array(_fr0(v)[0], ftype),
-                  params['title'])
+    return MachAr(
+        lambda v: array([v], ftype),
+        lambda v: _fr0(v.astype(params["itype"]))[0],
+        lambda v: array(_fr0(v)[0], ftype),
+        lambda v: params["fmt"] % array(_fr0(v)[0], ftype),
+        params["title"],
+    )
 
 
-@set_module('numpy')
+@set_module("numpy")
 class finfo:
     """
     finfo(dtype)
@@ -490,11 +526,9 @@ class finfo:
         self.dtype = numeric.dtype(dtype)
         machar = _get_machar(dtype)
 
-        for word in ['precision', 'iexp',
-                     'maxexp', 'minexp', 'negep',
-                     'machep']:
+        for word in ["precision", "iexp", "maxexp", "minexp", "negep", "machep"]:
             setattr(self, word, getattr(machar, word))
-        for word in ['resolution', 'epsneg', 'smallest_subnormal']:
+        for word in ["resolution", "epsneg", "smallest_subnormal"]:
             setattr(self, word, getattr(machar, word).flat[0])
         self.bits = self.dtype.itemsize * 8
         self.max = machar.huge.flat[0]
@@ -514,26 +548,28 @@ class finfo:
 
     def __str__(self):
         fmt = (
-            'Machine parameters for %(dtype)s\n'
-            '---------------------------------------------------------------\n'
-            'precision = %(precision)3s   resolution = %(_str_resolution)s\n'
-            'machep = %(machep)6s   eps =        %(_str_eps)s\n'
-            'negep =  %(negep)6s   epsneg =     %(_str_epsneg)s\n'
-            'minexp = %(minexp)6s   tiny =       %(_str_tiny)s\n'
-            'maxexp = %(maxexp)6s   max =        %(_str_max)s\n'
-            'nexp =   %(nexp)6s   min =        -max\n'
-            'smallest_normal = %(_str_smallest_normal)s   '
-            'smallest_subnormal = %(_str_smallest_subnormal)s\n'
-            '---------------------------------------------------------------\n'
-            )
+            "Machine parameters for %(dtype)s\n"
+            "---------------------------------------------------------------\n"
+            "precision = %(precision)3s   resolution = %(_str_resolution)s\n"
+            "machep = %(machep)6s   eps =        %(_str_eps)s\n"
+            "negep =  %(negep)6s   epsneg =     %(_str_epsneg)s\n"
+            "minexp = %(minexp)6s   tiny =       %(_str_tiny)s\n"
+            "maxexp = %(maxexp)6s   max =        %(_str_max)s\n"
+            "nexp =   %(nexp)6s   min =        -max\n"
+            "smallest_normal = %(_str_smallest_normal)s   "
+            "smallest_subnormal = %(_str_smallest_subnormal)s\n"
+            "---------------------------------------------------------------\n"
+        )
         return fmt % self.__dict__
 
     def __repr__(self):
         c = self.__class__.__name__
         d = self.__dict__.copy()
-        d['klass'] = c
-        return (("%(klass)s(resolution=%(resolution)s, min=-%(_str_max)s,"
-                 " max=%(_str_max)s, dtype=%(dtype)s)") % d)
+        d["klass"] = c
+        return (
+            "%(klass)s(resolution=%(resolution)s, min=-%(_str_max)s,"
+            " max=%(_str_max)s, dtype=%(dtype)s)"
+        ) % d
 
     @property
     def smallest_normal(self):
@@ -554,8 +590,10 @@ class finfo:
         # platform dependent for longdouble types.
         if isnan(self.machar.smallest_normal.flat[0]):
             warnings.warn(
-                'The value of smallest normal is undefined for double double',
-                UserWarning, stacklevel=2)
+                "The value of smallest normal is undefined for double double",
+                UserWarning,
+                stacklevel=2,
+            )
         return self.machar.smallest_normal.flat[0]
 
     @property
@@ -576,7 +614,7 @@ class finfo:
         return self.smallest_normal
 
 
-@set_module('numpy')
+@set_module("numpy")
 class iinfo:
     """
     iinfo(type)
@@ -637,19 +675,19 @@ class iinfo:
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)
-        if self.kind not in 'iu':
+        if self.kind not in "iu":
             raise ValueError("Invalid integer data type %r." % (self.kind,))
 
     @property
     def min(self):
         """Minimum value of given dtype."""
-        if self.kind == 'u':
+        if self.kind == "u":
             return 0
         else:
             try:
                 val = iinfo._min_vals[self.key]
             except KeyError:
-                val = int(-(1 << (self.bits-1)))
+                val = int(-(1 << (self.bits - 1)))
                 iinfo._min_vals[self.key] = val
             return val
 
@@ -659,24 +697,28 @@ class iinfo:
         try:
             val = iinfo._max_vals[self.key]
         except KeyError:
-            if self.kind == 'u':
+            if self.kind == "u":
                 val = int((1 << self.bits) - 1)
             else:
-                val = int((1 << (self.bits-1)) - 1)
+                val = int((1 << (self.bits - 1)) - 1)
             iinfo._max_vals[self.key] = val
         return val
 
     def __str__(self):
         """String representation."""
         fmt = (
-            'Machine parameters for %(dtype)s\n'
-            '---------------------------------------------------------------\n'
-            'min = %(min)s\n'
-            'max = %(max)s\n'
-            '---------------------------------------------------------------\n'
-            )
-        return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
+            "Machine parameters for %(dtype)s\n"
+            "---------------------------------------------------------------\n"
+            "min = %(min)s\n"
+            "max = %(max)s\n"
+            "---------------------------------------------------------------\n"
+        )
+        return fmt % {"dtype": self.dtype, "min": self.min, "max": self.max}
 
     def __repr__(self):
-        return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
-                                    self.min, self.max, self.dtype)
+        return "%s(min=%s, max=%s, dtype=%s)" % (
+            self.__class__.__name__,
+            self.min,
+            self.max,
+            self.dtype,
+        )

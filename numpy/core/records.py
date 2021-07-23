@@ -45,27 +45,35 @@ from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
 __all__ = [
-    'record', 'recarray', 'format_parser',
-    'fromarrays', 'fromrecords', 'fromstring', 'fromfile', 'array',
+    "record",
+    "recarray",
+    "format_parser",
+    "fromarrays",
+    "fromrecords",
+    "fromstring",
+    "fromfile",
+    "array",
 ]
 
 
 ndarray = sb.ndarray
 
-_byteorderconv = {'b':'>',
-                  'l':'<',
-                  'n':'=',
-                  'B':'>',
-                  'L':'<',
-                  'N':'=',
-                  'S':'s',
-                  's':'s',
-                  '>':'>',
-                  '<':'<',
-                  '=':'=',
-                  '|':'|',
-                  'I':'|',
-                  'i':'|'}
+_byteorderconv = {
+    "b": ">",
+    "l": "<",
+    "n": "=",
+    "B": ">",
+    "L": "<",
+    "N": "=",
+    "S": "s",
+    "s": "s",
+    ">": ">",
+    "<": "<",
+    "=": "=",
+    "|": "|",
+    "I": "|",
+    "i": "|",
+}
 
 # formats regular expression
 # allows multidimension spec with a tuple syntax in front
@@ -77,14 +85,10 @@ numfmt = nt.sctypeDict
 
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
-    return [
-        item
-        for item, counts in Counter(list).items()
-        if counts > 1
-    ]
+    return [item for item, counts in Counter(list).items() if counts > 1]
 
 
-@set_module('numpy')
+@set_module("numpy")
 class format_parser:
     """
     Class to convert formats, names, titles description to a dtype.
@@ -150,20 +154,20 @@ class format_parser:
         self._createdtype(byteorder)
 
     def _parseFormats(self, formats, aligned=False):
-        """ Parse the field formats """
+        """Parse the field formats"""
 
         if formats is None:
             raise ValueError("Need formats argument")
         if isinstance(formats, list):
             dtype = sb.dtype(
-                [('f{}'.format(i), format_) for i, format_ in enumerate(formats)],
+                [("f{}".format(i), format_) for i, format_ in enumerate(formats)],
                 aligned,
             )
         else:
             dtype = sb.dtype(formats, aligned)
         fields = dtype.fields
         if fields is None:
-            dtype = sb.dtype([('f1', dtype)], aligned)
+            dtype = sb.dtype([("f1", dtype)], aligned)
             fields = dtype.fields
         keys = dtype.names
         self._f_formats = [fields[key][0] for key in keys]
@@ -172,17 +176,17 @@ class format_parser:
 
     def _setfieldnames(self, names, titles):
         """convert input field names into a list and assign to the _names
-        attribute """
+        attribute"""
 
         if names:
             if type(names) in [list, tuple]:
                 pass
             elif isinstance(names, str):
-                names = names.split(',')
+                names = names.split(",")
             else:
                 raise NameError("illegal input names %s" % repr(names))
 
-            self._names = [n.strip() for n in names[:self._nfields]]
+            self._names = [n.strip() for n in names[: self._nfields]]
         else:
             self._names = []
 
@@ -190,15 +194,14 @@ class format_parser:
         #  "f0, f1, f2,..."
         # if not enough names are specified, they will be assigned as "f[n],
         # f[n+1],..." etc. where n is the number of specified names..."
-        self._names += ['f%d' % i for i in range(len(self._names),
-                                                 self._nfields)]
+        self._names += ["f%d" % i for i in range(len(self._names), self._nfields)]
         # check for redundant names
         _dup = find_duplicate(self._names)
         if _dup:
             raise ValueError("Duplicate field names: %s" % _dup)
 
         if titles:
-            self._titles = [n.strip() for n in titles[:self._nfields]]
+            self._titles = [n.strip() for n in titles[: self._nfields]]
         else:
             self._titles = []
             titles = []
@@ -207,12 +210,14 @@ class format_parser:
             self._titles += [None] * (self._nfields - len(titles))
 
     def _createdtype(self, byteorder):
-        dtype = sb.dtype({
-            'names': self._names,
-            'formats': self._f_formats,
-            'offsets': self._offsets,
-            'titles': self._titles,
-        })
+        dtype = sb.dtype(
+            {
+                "names": self._names,
+                "formats": self._f_formats,
+                "offsets": self._offsets,
+                "titles": self._titles,
+            }
+        )
         if byteorder is not None:
             byteorder = _byteorderconv[byteorder[0]]
             dtype = dtype.newbyteorder(byteorder)
@@ -221,32 +226,31 @@ class format_parser:
 
 
 class record(nt.void):
-    """A data-type scalar that allows field access as attribute lookup.
-    """
+    """A data-type scalar that allows field access as attribute lookup."""
 
     # manually set name and module so that this class's type shows up
     # as numpy.record when printed
-    __name__ = 'record'
-    __module__ = 'numpy'
+    __name__ = "record"
+    __module__ = "numpy"
 
     def __repr__(self):
-        if get_printoptions()['legacy'] == '1.13':
+        if get_printoptions()["legacy"] == "1.13":
             return self.__str__()
         return super().__repr__()
 
     def __str__(self):
-        if get_printoptions()['legacy'] == '1.13':
+        if get_printoptions()["legacy"] == "1.13":
             return str(self.item())
         return super().__str__()
 
     def __getattribute__(self, attr):
-        if attr in ('setfield', 'getfield', 'dtype'):
+        if attr in ("setfield", "getfield", "dtype"):
             return nt.void.__getattribute__(self, attr)
         try:
             return nt.void.__getattribute__(self, attr)
         except AttributeError:
             pass
-        fielddict = nt.void.__getattribute__(self, 'dtype').fields
+        fielddict = nt.void.__getattribute__(self, "dtype").fields
         res = fielddict.get(attr, None)
         if res:
             obj = self.getfield(*res[:2])
@@ -255,19 +259,18 @@ class record(nt.void):
             try:
                 dt = obj.dtype
             except AttributeError:
-                #happens if field is Object type
+                # happens if field is Object type
                 return obj
             if dt.names is not None:
                 return obj.view((self.__class__, obj.dtype))
             return obj
         else:
-            raise AttributeError("'record' object has no "
-                    "attribute '%s'" % attr)
+            raise AttributeError("'record' object has no " "attribute '%s'" % attr)
 
     def __setattr__(self, attr, val):
-        if attr in ('setfield', 'getfield', 'dtype'):
+        if attr in ("setfield", "getfield", "dtype"):
             raise AttributeError("Cannot set '%s' attribute" % attr)
-        fielddict = nt.void.__getattribute__(self, 'dtype').fields
+        fielddict = nt.void.__getattribute__(self, "dtype").fields
         res = fielddict.get(attr, None)
         if res:
             return self.setfield(val, *res[:2])
@@ -275,8 +278,7 @@ class record(nt.void):
             if getattr(self, attr, None):
                 return nt.void.__setattr__(self, attr, val)
             else:
-                raise AttributeError("'record' object has no "
-                        "attribute '%s'" % attr)
+                raise AttributeError("'record' object has no " "attribute '%s'" % attr)
 
     def __getitem__(self, indx):
         obj = nt.void.__getitem__(self, indx)
@@ -293,9 +295,10 @@ class record(nt.void):
         # pretty-print all fields
         names = self.dtype.names
         maxlen = max(len(name) for name in names)
-        fmt = '%% %ds: %%s' % maxlen
+        fmt = "%% %ds: %%s" % maxlen
         rows = [fmt % (name, getattr(self, name)) for name in names]
         return "\n".join(rows)
+
 
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use
@@ -304,6 +307,7 @@ class record(nt.void):
 
 # If byteorder is given it forces a particular byteorder on all
 #  the fields (and any subfields)
+
 
 class recarray(ndarray):
     """Construct an ndarray that allows field access using attributes.
@@ -412,12 +416,23 @@ class recarray(ndarray):
 
     # manually set name and module so that this class's type shows
     # up as "numpy.recarray" when printed
-    __name__ = 'recarray'
-    __module__ = 'numpy'
+    __name__ = "recarray"
+    __module__ = "numpy"
 
-    def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
-                formats=None, names=None, titles=None,
-                byteorder=None, aligned=False, order='C'):
+    def __new__(
+        subtype,
+        shape,
+        dtype=None,
+        buf=None,
+        offset=0,
+        strides=None,
+        formats=None,
+        names=None,
+        titles=None,
+        byteorder=None,
+        aligned=False,
+        order="C",
+    ):
 
         if dtype is not None:
             descr = sb.dtype(dtype)
@@ -427,9 +442,15 @@ class recarray(ndarray):
         if buf is None:
             self = ndarray.__new__(subtype, shape, (record, descr), order=order)
         else:
-            self = ndarray.__new__(subtype, shape, (record, descr),
-                                      buffer=buf, offset=offset,
-                                      strides=strides, order=order)
+            self = ndarray.__new__(
+                subtype,
+                shape,
+                (record, descr),
+                buffer=buf,
+                offset=offset,
+                strides=strides,
+                order=order,
+            )
         return self
 
     def __array_finalize__(self, obj):
@@ -448,7 +469,7 @@ class recarray(ndarray):
             pass
 
         # look for a field with this name
-        fielddict = ndarray.__getattribute__(self, 'dtype').fields
+        fielddict = ndarray.__getattribute__(self, "dtype").fields
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError) as e:
@@ -476,18 +497,18 @@ class recarray(ndarray):
 
         # Automatically convert (void) structured types to records
         # (but not non-void structures, subarrays, or non-structured voids)
-        if attr == 'dtype' and issubclass(val.type, nt.void) and val.names is not None:
+        if attr == "dtype" and issubclass(val.type, nt.void) and val.names is not None:
             val = sb.dtype((record, val))
 
         newattr = attr not in self.__dict__
         try:
             ret = object.__setattr__(self, attr, val)
         except Exception:
-            fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
+            fielddict = ndarray.__getattribute__(self, "dtype").fields or {}
             if attr not in fielddict:
                 raise
         else:
-            fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
+            fielddict = ndarray.__getattribute__(self, "dtype").fields or {}
             if attr not in fielddict:
                 return ret
             if newattr:
@@ -500,9 +521,7 @@ class recarray(ndarray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError) as e:
-            raise AttributeError(
-                "record array has no attribute %s" % attr
-            ) from e
+            raise AttributeError("record array has no attribute %s" % attr) from e
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
@@ -534,33 +553,32 @@ class recarray(ndarray):
             if repr_dtype.type is record:
                 repr_dtype = sb.dtype((nt.void, repr_dtype))
             prefix = "rec.array("
-            fmt = 'rec.array(%s,%sdtype=%s)'
+            fmt = "rec.array(%s,%sdtype=%s)"
         else:
             # otherwise represent it using np.array plus a view
             # This should only happen if the user is playing
             # strange games with dtypes.
             prefix = "array("
-            fmt = 'array(%s,%sdtype=%s).view(numpy.recarray)'
+            fmt = "array(%s,%sdtype=%s).view(numpy.recarray)"
 
         # get data/shape string. logic taken from numeric.array_repr
         if self.size > 0 or self.shape == (0,):
-            lst = sb.array2string(
-                self, separator=', ', prefix=prefix, suffix=',')
+            lst = sb.array2string(self, separator=", ", prefix=prefix, suffix=",")
         else:
             # show zero-length shape unless it is (0,)
             lst = "[], shape=%s" % (repr(self.shape),)
 
-        lf = '\n'+' '*len(prefix)
-        if get_printoptions()['legacy'] == '1.13':
-            lf = ' ' + lf  # trailing space
+        lf = "\n" + " " * len(prefix)
+        if get_printoptions()["legacy"] == "1.13":
+            lf = " " + lf  # trailing space
         return fmt % (lst, lf, repr_dtype)
 
     def field(self, attr, val=None):
         if isinstance(attr, int):
-            names = ndarray.__getattribute__(self, 'dtype').names
+            names = ndarray.__getattribute__(self, "dtype").names
             attr = names[attr]
 
-        fielddict = ndarray.__getattribute__(self, 'dtype').fields
+        fielddict = ndarray.__getattribute__(self, "dtype").fields
 
         res = fielddict[attr][:2]
 
@@ -579,14 +597,24 @@ def _deprecate_shape_0_as_None(shape):
             "Passing `shape=0` to have the shape be inferred is deprecated, "
             "and in future will be equivalent to `shape=(0,)`. To infer "
             "the shape and suppress this warning, pass `shape=None` instead.",
-            FutureWarning, stacklevel=3)
+            FutureWarning,
+            stacklevel=3,
+        )
         return None
     else:
         return shape
 
 
-def fromarrays(arrayList, dtype=None, shape=None, formats=None,
-               names=None, titles=None, aligned=False, byteorder=None):
+def fromarrays(
+    arrayList,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+):
     """Create a record array from a (flat) list of arrays
 
     Parameters
@@ -656,8 +684,9 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     # Determine shape from data-type.
     if len(descr) != len(arrayList):
-        raise ValueError("mismatch between the number of fields "
-                "and the number of arrays")
+        raise ValueError(
+            "mismatch between the number of fields " "and the number of arrays"
+        )
 
     d0 = descr[0].shape
     nn = len(d0)
@@ -666,7 +695,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     for k, obj in enumerate(arrayList):
         nn = descr[k].ndim
-        testshape = obj.shape[:obj.ndim - nn]
+        testshape = obj.shape[: obj.ndim - nn]
         if testshape != shape:
             raise ValueError("array-shape mismatch in array %d" % k)
 
@@ -678,8 +707,17 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     return _array
 
-def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
-                titles=None, aligned=False, byteorder=None):
+
+def fromrecords(
+    recList,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+):
     """Create a recarray from a list of records in text form.
 
     Parameters
@@ -724,8 +762,15 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList, dtype=object)
         arrlist = [sb.array(obj[..., i].tolist()) for i in range(obj.shape[-1])]
-        return fromarrays(arrlist, formats=formats, shape=shape, names=names,
-                          titles=titles, aligned=aligned, byteorder=byteorder)
+        return fromarrays(
+            arrlist,
+            formats=formats,
+            shape=shape,
+            names=names,
+            titles=titles,
+            aligned=aligned,
+            byteorder=byteorder,
+        )
 
     if dtype is not None:
         descr = sb.dtype((record, dtype))
@@ -751,7 +796,9 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         warnings.warn(
             "fromrecords expected a list of tuples, may have received a list "
             "of lists instead. In the future that will raise an error",
-            FutureWarning, stacklevel=2)
+            FutureWarning,
+            stacklevel=2,
+        )
         return _array
     else:
         if shape is not None and retval.shape != shape:
@@ -762,8 +809,17 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     return res
 
 
-def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
-               names=None, titles=None, aligned=False, byteorder=None):
+def fromstring(
+    datastring,
+    dtype=None,
+    shape=None,
+    offset=0,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+):
     r"""Create a record array from binary data
 
     Note that despite the name of this function it does not accept `str`
@@ -836,6 +892,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     _array = recarray(shape, descr, buf=datastring, offset=offset)
     return _array
 
+
 def get_remaining_size(fd):
     pos = fd.tell()
     try:
@@ -844,8 +901,18 @@ def get_remaining_size(fd):
     finally:
         fd.seek(pos, 0)
 
-def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
-             names=None, titles=None, aligned=False, byteorder=None):
+
+def fromfile(
+    fd,
+    dtype=None,
+    shape=None,
+    offset=0,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+):
     """Create an array from binary file data
 
     Parameters
@@ -900,14 +967,14 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     elif isinstance(shape, int):
         shape = (shape,)
 
-    if hasattr(fd, 'readinto'):
+    if hasattr(fd, "readinto"):
         # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface.
         # Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
         ctx = nullcontext(fd)
     else:
         # open file
-        ctx = open(os_fspath(fd), 'rb')
+        ctx = open(os_fspath(fd), "rb")
 
     with ctx as fd:
         if offset > 0:
@@ -933,7 +1000,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
         if nbytes > size:
             raise ValueError(
-                    "Not enough bytes left in file for specified shape and type")
+                "Not enough bytes left in file for specified shape and type"
+            )
 
         # create the array
         _array = recarray(shape, descr)
@@ -943,8 +1011,20 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     return _array
 
-def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
-          names=None, titles=None, aligned=False, byteorder=None, copy=True):
+
+def array(
+    obj,
+    dtype=None,
+    shape=None,
+    offset=0,
+    strides=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+    copy=True,
+):
     """
     Construct a record array from a wide-variety of objects.
 
@@ -1027,24 +1107,29 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     array('def', dtype='<U3')
     """
 
-    if ((isinstance(obj, (type(None), str)) or hasattr(obj, 'readinto')) and
-           formats is None and dtype is None):
-        raise ValueError("Must define formats (or dtype) if object is "
-                         "None, string, or an open file")
+    if (
+        (isinstance(obj, (type(None), str)) or hasattr(obj, "readinto"))
+        and formats is None
+        and dtype is None
+    ):
+        raise ValueError(
+            "Must define formats (or dtype) if object is "
+            "None, string, or an open file"
+        )
 
     kwds = {}
     if dtype is not None:
         dtype = sb.dtype(dtype)
     elif formats is not None:
-        dtype = format_parser(formats, names, titles,
-                              aligned, byteorder).dtype
+        dtype = format_parser(formats, names, titles, aligned, byteorder).dtype
     else:
-        kwds = {'formats': formats,
-                'names': names,
-                'titles': titles,
-                'aligned': aligned,
-                'byteorder': byteorder
-                }
+        kwds = {
+            "formats": formats,
+            "names": names,
+            "titles": titles,
+            "aligned": aligned,
+            "byteorder": byteorder,
+        }
 
     if obj is None:
         if shape is None:
@@ -1069,7 +1154,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             new = new.copy()
         return new
 
-    elif hasattr(obj, 'readinto'):
+    elif hasattr(obj, "readinto"):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, ndarray):

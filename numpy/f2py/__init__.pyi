@@ -15,7 +15,6 @@ __all__: List[str]
 __path__: List[str]
 
 def run_main(comline_list: Iterable[str]) -> Dict[str, _F2PyDict]: ...
-
 @overload
 def compile(  # type: ignore[misc]
     source: str | bytes,
@@ -36,5 +35,4 @@ def compile(
     extension: L[".f", ".f90"] = ...,
     full_output: L[True] = ...,
 ) -> subprocess.CompletedProcess[bytes]: ...
-
 def get_include() -> str: ...

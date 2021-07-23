@@ -16,7 +16,7 @@ class AddReduce(Benchmark):
 
 class AddReduceSeparate(Benchmark):
     params = [[0, 1], TYPES1]
-    param_names = ['axis', 'type']
+    param_names = ["axis", "type"]
 
     def setup(self, axis, typename):
         self.a = get_squares()[typename]
@@ -47,7 +47,7 @@ class AnyAll(Benchmark):
 
 class MinMax(Benchmark):
     params = [np.float32, np.float64, np.intp]
-    param_names = ['dtype']
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.ones(20000, dtype=dtype)
@@ -58,15 +58,17 @@ class MinMax(Benchmark):
     def time_max(self, dtype):
         np.max(self.d)
 
+
 class ArgMax(Benchmark):
     params = [np.float32, bool]
-    param_names = ['dtype']
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.zeros(200000, dtype=dtype)
 
     def time_argmax(self, dtype):
         np.argmax(self.d)
+
 
 class SmallReduction(Benchmark):
     def setup(self):

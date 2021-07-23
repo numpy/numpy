@@ -1,19 +1,20 @@
 import numpy as np
 from numpy.testing import (
-        assert_raises, assert_raises_regex,
-        )
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestIndexErrors:
-    '''Tests to exercise indexerrors not covered by other tests.'''
+    """Tests to exercise indexerrors not covered by other tests."""
 
     def test_arraytypes_fasttake(self):
-        'take from a 0-length dimension'
+        "take from a 0-length dimension"
         x = np.empty((2, 3, 0, 4))
         assert_raises(IndexError, x.take, [0], axis=2)
         assert_raises(IndexError, x.take, [1], axis=2)
-        assert_raises(IndexError, x.take, [0], axis=2, mode='wrap')
-        assert_raises(IndexError, x.take, [0], axis=2, mode='clip')
+        assert_raises(IndexError, x.take, [0], axis=2, mode="wrap")
+        assert_raises(IndexError, x.take, [0], axis=2, mode="clip")
 
     def test_take_from_object(self):
         # Check exception taking from object array
@@ -25,8 +26,8 @@ class TestIndexErrors:
         assert_raises(IndexError, d.take, [1], axis=1)
         assert_raises(IndexError, d.take, [0], axis=1)
         assert_raises(IndexError, d.take, [0])
-        assert_raises(IndexError, d.take, [0], mode='wrap')
-        assert_raises(IndexError, d.take, [0], mode='clip')
+        assert_raises(IndexError, d.take, [0], mode="wrap")
+        assert_raises(IndexError, d.take, [0], mode="clip")
 
     def test_multiindex_exceptions(self):
         a = np.empty(5, dtype=object)
@@ -51,6 +52,7 @@ class TestIndexErrors:
 
     def test_iterators_exceptions(self):
         "cases in iterators.c"
+
         def assign(obj, ind, val):
             obj[ind] = val
 
@@ -58,7 +60,7 @@ class TestIndexErrors:
         assert_raises(IndexError, lambda: a[0, 5, None, 2])
         assert_raises(IndexError, lambda: a[0, 5, 0, 2])
         assert_raises(IndexError, lambda: assign(a, (0, 5, None, 2), 1))
-        assert_raises(IndexError, lambda: assign(a, (0, 5, 0, 2),  1))
+        assert_raises(IndexError, lambda: assign(a, (0, 5, 0, 2), 1))
 
         a = np.zeros([1, 0, 3])
         assert_raises(IndexError, lambda: a[0, 0, None, 2])
@@ -117,10 +119,10 @@ class TestIndexErrors:
         a = np.zeros((3, 5))
         index = (1, 2, 3, 4, 5)
         assert_raises_regex(
-                IndexError,
-                "too many indices for array: "
-                "array is 2-dimensional, but 5 were indexed",
-                lambda: a[index])
+            IndexError,
+            "too many indices for array: " "array is 2-dimensional, but 5 were indexed",
+            lambda: a[index],
+        )
 
     def test_methods(self):
         "cases from methods.c"

@@ -13,13 +13,11 @@ macros = [("NPY_NO_DEPRECATED_API", 0)]
 
 checks = Extension(
     "checks",
-    sources=[os.path.join('.', "checks.pyx")],
+    sources=[os.path.join(".", "checks.pyx")],
     include_dirs=[np.get_include()],
     define_macros=macros,
 )
 
 extensions = [checks]
 
-setup(
-    ext_modules=cythonize(extensions)
-)
+setup(ext_modules=cythonize(extensions))

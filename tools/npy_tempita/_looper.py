@@ -20,7 +20,7 @@ looper you can get a better sense of the context.  Use like::
 import sys
 from .compat3 import basestring_
 
-__all__ = ['looper']
+__all__ = ["looper"]
 
 
 class looper:
@@ -41,12 +41,10 @@ class looper:
         return looper_iter(self.seq)
 
     def __repr__(self):
-        return '<%s for %r>' % (
-            self.__class__.__name__, self.seq)
+        return "<%s for %r>" % (self.__class__.__name__, self.seq)
 
 
 class looper_iter:
-
     def __init__(self, seq):
         self.seq = list(seq)
         self.pos = 0
@@ -63,14 +61,12 @@ class looper_iter:
 
 
 class loop_pos:
-
     def __init__(self, seq, pos):
         self.seq = seq
         self.pos = pos
 
     def __repr__(self):
-        return '<loop pos=%r at %r>' % (
-            self.seq[self.pos], self.pos)
+        return "<loop pos=%r at %r>" % (self.seq[self.pos], self.pos)
 
     @property
     def index(self):
@@ -142,14 +138,14 @@ class loop_pos:
     def _compare_group(self, item, other, getter):
         if getter is None:
             return item != other
-        elif (isinstance(getter, basestring_) and getter.startswith('.')):
+        elif isinstance(getter, basestring_) and getter.startswith("."):
             getter = getter[1:]
-            if getter.endswith('()'):
+            if getter.endswith("()"):
                 getter = getter[:-2]
                 return getattr(item, getter)() != getattr(other, getter)()
             else:
                 return getattr(item, getter) != getattr(other, getter)
-        elif hasattr(getter, '__call__'):
+        elif hasattr(getter, "__call__"):
             return getter(item) != getter(other)
         else:
             return item[getter] != other[getter]

@@ -33,26 +33,29 @@ import paver
 from paver.easy import Bunch, options, task, sh
 
 
-#-----------------------------------
+# -----------------------------------
 # Things to be changed for a release
-#-----------------------------------
+# -----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/source/release/1.22.0-notes.rst'
+RELEASE_NOTES = "doc/source/release/1.22.0-notes.rst"
 
 
-#-------------------------------------------------------
+# -------------------------------------------------------
 # Hardcoded build/install dirs, virtualenv options, etc.
-#-------------------------------------------------------
+# -------------------------------------------------------
 
 # Where to put the release installers
-options(installers=Bunch(releasedir="release",
-                         installersdir=os.path.join("release", "installers")),)
+options(
+    installers=Bunch(
+        releasedir="release", installersdir=os.path.join("release", "installers")
+    ),
+)
 
 
-#------------------------
+# ------------------------
 # Get the release version
-#------------------------
+# ------------------------
 
 sys.path.insert(0, os.path.dirname(__file__))
 try:
@@ -61,10 +64,10 @@ finally:
     sys.path.pop(0)
 
 
-#--------------------------
+# --------------------------
 # Source distribution stuff
-#--------------------------
-def tarball_name(ftype='gztar'):
+# --------------------------
+def tarball_name(ftype="gztar"):
     """Generate source distribution name
 
     Parameters
@@ -73,11 +76,11 @@ def tarball_name(ftype='gztar'):
         Type of archive, default is 'gztar'.
 
     """
-    root = f'numpy-{FULLVERSION}'
-    if ftype == 'gztar':
-        return root + '.tar.gz'
-    elif ftype == 'zip':
-        return root + '.zip'
+    root = f"numpy-{FULLVERSION}"
+    if ftype == "gztar":
+        return root + ".tar.gz"
+    elif ftype == "zip":
+        return root + ".zip"
     raise ValueError(f"Unknown type {type}")
 
 
@@ -93,30 +96,31 @@ def sdist(options):
     """
     # First clean the repo and update submodules (for up-to-date doc html theme
     # and Sphinx extensions)
-    sh('git clean -xdf')
-    sh('git submodule init')
-    sh('git submodule update')
+    sh("git clean -xdf")
+    sh("git submodule init")
+    sh("git submodule update")
 
     # To be sure to bypass paver when building sdist... paver + numpy.distutils
     # do not play well together.
     # Cython is run over all Cython files in setup.py, so generated C files
     # will be included.
-    sh('python3 setup.py sdist --formats=gztar,zip')
+    sh("python3 setup.py sdist --formats=gztar,zip")
 
     # Copy the superpack into installers dir
     idirs = options.installers.installersdir
     if not os.path.exists(idirs):
         os.makedirs(idirs)
 
-    for ftype in ['gztar', 'zip']:
-        source = os.path.join('dist', tarball_name(ftype))
+    for ftype in ["gztar", "zip"]:
+        source = os.path.join("dist", tarball_name(ftype))
         target = os.path.join(idirs, tarball_name(ftype))
         shutil.copy(source, target)
 
 
-#-------------
+# -------------
 # README stuff
-#-------------
+# -------------
+
 
 def _compute_hash(idirs, hashfunc):
     """Hash files using given hashfunc.
@@ -132,10 +136,9 @@ def _compute_hash(idirs, hashfunc):
     released = paver.path.path(idirs).listdir()
     checksums = []
     for fpath in sorted(released):
-        with open(fpath, 'rb') as fin:
+        with open(fpath, "rb") as fin:
             fhash = hashfunc(fin.read())
-            checksums.append(
-                '%s  %s' % (fhash.hexdigest(), os.path.basename(fpath)))
+            checksums.append("%s  %s" % (fhash.hexdigest(), os.path.basename(fpath)))
     return checksums
 
 
@@ -165,7 +168,7 @@ def compute_sha256(idirs):
     return _compute_hash(idirs, hashlib.sha256)
 
 
-def write_release_task(options, filename='README'):
+def write_release_task(options, filename="README"):
     """Append hashes of release files to release notes.
 
     This appends file hashes to the release notes ane creates
@@ -191,16 +194,17 @@ def write_release_task(options, filename='README'):
     """
     idirs = options.installers.installersdir
     notes = paver.path.path(RELEASE_NOTES)
-    rst_readme = paver.path.path(filename + '.rst')
-    md_readme = paver.path.path(filename + '.md')
+    rst_readme = paver.path.path(filename + ".rst")
+    md_readme = paver.path.path(filename + ".md")
 
     # append hashes
-    with open(rst_readme, 'w') as freadme:
+    with open(rst_readme, "w") as freadme:
         with open(notes) as fnotes:
             freadme.write(fnotes.read())
 
-        freadme.writelines(textwrap.dedent(
-            """
+        freadme.writelines(
+            textwrap.dedent(
+                """
             Checksums
             =========
 
@@ -208,29 +212,34 @@ def write_release_task(options, filename='README'):
             ---
             ::
 
-            """))
-        freadme.writelines([f'    {c}\n' for c in compute_md5(idirs)])
-
-        freadme.writelines(textwrap.dedent(
             """
+            )
+        )
+        freadme.writelines([f"    {c}\n" for c in compute_md5(idirs)])
+
+        freadme.writelines(
+            textwrap.dedent(
+                """
             SHA256
             ------
             ::
 
-            """))
-        freadme.writelines([f'    {c}\n' for c in compute_sha256(idirs)])
+            """
+            )
+        )
+        freadme.writelines([f"    {c}\n" for c in compute_sha256(idirs)])
 
     # generate md file using pandoc before signing
     sh(f"pandoc -s -o {md_readme} {rst_readme}")
 
     # Sign files
-    if hasattr(options, 'gpg_key'):
-        cmd = f'gpg --clearsign --armor --default_key {options.gpg_key}'
+    if hasattr(options, "gpg_key"):
+        cmd = f"gpg --clearsign --armor --default_key {options.gpg_key}"
     else:
-        cmd = 'gpg --clearsign --armor'
+        cmd = "gpg --clearsign --armor"
 
-    sh(cmd + f' --output {rst_readme}.gpg {rst_readme}')
-    sh(cmd + f' --output {md_readme}.gpg {md_readme}')
+    sh(cmd + f" --output {rst_readme}.gpg {rst_readme}")
+    sh(cmd + f" --output {md_readme}.gpg {md_readme}")
 
 
 @task
@@ -248,4 +257,4 @@ def write_release(options):
 
     """
     rdir = options.installers.releasedir
-    write_release_task(options, os.path.join(rdir, 'README'))
+    write_release_task(options, os.path.join(rdir, "README"))

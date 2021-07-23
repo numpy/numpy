@@ -16,18 +16,25 @@ AR_c16: npt.NDArray[np.complex128]
 
 AR_LIKE_f: List[float]
 
+
 class RealObj:
     real: slice
 
+
 class ImagObj:
     imag: slice
+
 
 reveal_type(np.mintypecode(["f8"], typeset="qfQF"))
 
 reveal_type(np.asfarray(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.asfarray(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.asfarray(AR_f8, dtype="c16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(np.asfarray(AR_f8, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(
+    np.asfarray(AR_f8, dtype="c16")
+)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+reveal_type(
+    np.asfarray(AR_f8, dtype="i8")
+)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
 
 reveal_type(np.real(RealObj()))  # E: slice
 reveal_type(np.real(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
@@ -52,12 +59,20 @@ reveal_type(np.isrealobj(f8))  # E: bool
 
 reveal_type(np.nan_to_num(f8))  # E: {float64}
 reveal_type(np.nan_to_num(f, copy=True))  # E: Any
-reveal_type(np.nan_to_num(AR_f8, nan=1.5))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.nan_to_num(AR_LIKE_f, posinf=9999))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(
+    np.nan_to_num(AR_f8, nan=1.5)
+)  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(
+    np.nan_to_num(AR_LIKE_f, posinf=9999)
+)  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 
 reveal_type(np.real_if_close(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.real_if_close(AR_c16))  # E: Union[numpy.ndarray[Any, numpy.dtype[{float64}]], numpy.ndarray[Any, numpy.dtype[{complex128}]]]
-reveal_type(np.real_if_close(AR_c8))  # E: Union[numpy.ndarray[Any, numpy.dtype[{float32}]], numpy.ndarray[Any, numpy.dtype[{complex64}]]]
+reveal_type(
+    np.real_if_close(AR_c16)
+)  # E: Union[numpy.ndarray[Any, numpy.dtype[{float64}]], numpy.ndarray[Any, numpy.dtype[{complex128}]]]
+reveal_type(
+    np.real_if_close(AR_c8)
+)  # E: Union[numpy.ndarray[Any, numpy.dtype[{float32}]], numpy.ndarray[Any, numpy.dtype[{complex64}]]]
 reveal_type(np.real_if_close(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 
 reveal_type(np.typename("h"))  # E: Literal['short']

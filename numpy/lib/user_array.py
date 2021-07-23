@@ -6,10 +6,33 @@ complete.
 
 """
 from numpy.core import (
-    array, asarray, absolute, add, subtract, multiply, divide,
-    remainder, power, left_shift, right_shift, bitwise_and, bitwise_or,
-    bitwise_xor, invert, less, less_equal, not_equal, equal, greater,
-    greater_equal, shape, reshape, arange, sin, sqrt, transpose
+    array,
+    asarray,
+    absolute,
+    add,
+    subtract,
+    multiply,
+    divide,
+    remainder,
+    power,
+    left_shift,
+    right_shift,
+    bitwise_and,
+    bitwise_or,
+    bitwise_xor,
+    invert,
+    less,
+    less_equal,
+    not_equal,
+    equal,
+    greater,
+    greater_equal,
+    shape,
+    reshape,
+    arange,
+    sin,
+    sqrt,
+    transpose,
 )
 
 
@@ -27,12 +50,13 @@ class container:
     astype
 
     """
+
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy=copy)
 
     def __repr__(self):
         if self.ndim > 0:
-            return self.__class__.__name__ + repr(self.array)[len("array"):]
+            return self.__class__.__name__ + repr(self.array)[len("array") :]
         else:
             return self.__class__.__name__ + "(" + repr(self.array) + ")"
 
@@ -106,12 +130,16 @@ class container:
         return self
 
     def __divmod__(self, other):
-        return (self._rc(divide(self.array, other)),
-                self._rc(remainder(self.array, other)))
+        return (
+            self._rc(divide(self.array, other)),
+            self._rc(remainder(self.array, other)),
+        )
 
     def __rdivmod__(self, other):
-        return (self._rc(divide(other, self.array)),
-                self._rc(remainder(other, self.array)))
+        return (
+            self._rc(divide(other, self.array)),
+            self._rc(remainder(other, self.array)),
+        )
 
     def __pow__(self, other):
         return self._rc(power(self.array, asarray(other)))
@@ -183,8 +211,7 @@ class container:
         if self.ndim == 0:
             return func(self[0])
         else:
-            raise TypeError(
-                "only rank-0 arrays can be converted to Python scalars.")
+            raise TypeError("only rank-0 arrays can be converted to Python scalars.")
 
     def __complex__(self):
         return self._scalarfunc(complex)
@@ -220,23 +247,23 @@ class container:
         return self._rc(greater_equal(self.array, other))
 
     def copy(self):
-        ""
+        """"""
         return self._rc(self.array.copy())
 
     def tostring(self):
-        ""
+        """"""
         return self.array.tostring()
 
     def tobytes(self):
-        ""
+        """"""
         return self.array.tobytes()
 
     def byteswap(self):
-        ""
+        """"""
         return self._rc(self.array.byteswap())
 
     def astype(self, typecode):
-        ""
+        """"""
         return self._rc(self.array.astype(typecode))
 
     def _rc(self, a):
@@ -249,7 +276,7 @@ class container:
         return self.__class__(args[0])
 
     def __setattr__(self, attr, value):
-        if attr == 'array':
+        if attr == "array":
             object.__setattr__(self, attr, value)
             return
         try:
@@ -259,14 +286,15 @@ class container:
 
     # Only called after other approaches fail.
     def __getattr__(self, attr):
-        if (attr == 'array'):
+        if attr == "array":
             return object.__getattribute__(self, attr)
         return self.array.__getattribute__(attr)
+
 
 #############################################################
 # Test of class container
 #############################################################
-if __name__ == '__main__':
+if __name__ == "__main__":
     temp = reshape(arange(10000), (100, 100))
 
     ua = container(temp)
@@ -279,7 +307,7 @@ if __name__ == '__main__':
     # this did not change ua[0,0], which is not normal behavior
     ua_small[0, 0] = 10
     print(ua_small[0, 0], ua[0, 0])
-    print(sin(ua_small) / 3. * 6. + sqrt(ua_small ** 2))
+    print(sin(ua_small) / 3.0 * 6.0 + sqrt(ua_small ** 2))
     print(less(ua_small, 103), type(less(ua_small, 103)))
     print(type(ua_small * reshape(arange(15), shape(ua_small))))
     print(reshape(ua_small, (5, 3)))

@@ -7,23 +7,34 @@ import subprocess
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import (
-    compiler_class, gen_lib_options, get_default_compiler, new_compiler,
-    CCompiler
+    compiler_class,
+    gen_lib_options,
+    get_default_compiler,
+    new_compiler,
+    CCompiler,
 )
 from distutils.errors import (
-    DistutilsExecError, DistutilsModuleError, DistutilsPlatformError,
-    CompileError, UnknownFileError
+    DistutilsExecError,
+    DistutilsModuleError,
+    DistutilsPlatformError,
+    CompileError,
+    UnknownFileError,
 )
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import (
-    filepath_from_subprocess_output, forward_bytes_to_stdout
+    filepath_from_subprocess_output,
+    forward_bytes_to_stdout,
 )
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      get_num_build_jobs, \
-                                      _commandline_dep_string
+from numpy.distutils.misc_util import (
+    cyg2win32,
+    is_sequence,
+    mingw32,
+    get_num_build_jobs,
+    _commandline_dep_string,
+)
 
 # globals for parallel build management
 import threading
@@ -47,7 +58,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     bool
     """
     # defined in unixcompiler.py
-    dep_file = obj + '.d'
+    dep_file = obj + ".d"
     if not os.path.exists(dep_file):
         return True
 
@@ -59,14 +70,17 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
     with open(dep_file, "r") as f:
         lines = f.readlines()
 
-    cmdline =_commandline_dep_string(cc_args, extra_postargs, pp_opts)
+    cmdline = _commandline_dep_string(cc_args, extra_postargs, pp_opts)
     last_cmdline = lines[-1]
     if last_cmdline != cmdline:
         return True
 
-    contents = ''.join(lines[:-1])
-    deps = [x for x in shlex.split(contents, posix=True)
-            if x != "\n" and not x.endswith(":")]
+    contents = "".join(lines[:-1])
+    deps = [
+        x
+        for x in shlex.split(contents, posix=True)
+        if x != "\n" and not x.endswith(":")
+    ]
 
     try:
         t_obj = os.stat(obj).st_mtime
@@ -94,6 +108,7 @@ def replace_method(klass, method_name, func):
 ## it i private to CCompiler class and may return unexpected
 ## results if used elsewhere. So, you have been warned..
 
+
 def CCompiler_find_executables(self):
     """
     Does nothing here, but is called by the get_version method and can be
@@ -104,7 +119,7 @@ def CCompiler_find_executables(self):
     pass
 
 
-replace_method(CCompiler, 'find_executables', CCompiler_find_executables)
+replace_method(CCompiler, "find_executables", CCompiler_find_executables)
 
 
 # Using customized CCompiler.spawn.
@@ -133,7 +148,7 @@ def CCompiler_spawn(self, cmd, display=None):
     if display is None:
         display = cmd
         if is_sequence(display):
-            display = ' '.join(list(display))
+            display = " ".join(list(display))
     log.info(display)
     try:
         if self.verbose:
@@ -148,7 +163,7 @@ def CCompiler_spawn(self, cmd, display=None):
         # output, but exec_command() historically would use an
         # empty string for EnvironmentError (base class for
         # OSError)
-        o = b''
+        o = b""
         # status previously used by exec_command() for parent
         # of OSError
         s = 127
@@ -159,21 +174,24 @@ def CCompiler_spawn(self, cmd, display=None):
         return None
 
     if is_sequence(cmd):
-        cmd = ' '.join(list(cmd))
+        cmd = " ".join(list(cmd))
 
     if self.verbose:
         forward_bytes_to_stdout(o)
 
-    if re.search(b'Too many open files', o):
-        msg = '\nTry rerunning setup command until build succeeds.'
+    if re.search(b"Too many open files", o):
+        msg = "\nTry rerunning setup command until build succeeds."
     else:
-        msg = ''
-    raise DistutilsExecError('Command "%s" failed with exit status %d%s' %
-                            (cmd, s, msg))
+        msg = ""
+    raise DistutilsExecError(
+        'Command "%s" failed with exit status %d%s' % (cmd, s, msg)
+    )
 
-replace_method(CCompiler, 'spawn', CCompiler_spawn)
 
-def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir=''):
+replace_method(CCompiler, "spawn", CCompiler_spawn)
+
+
+def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir=""):
     """
     Return the name of the object files for the given source files.
 
@@ -197,32 +215,44 @@ def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir='
 
     """
     if output_dir is None:
-        output_dir = ''
+        output_dir = ""
     obj_names = []
     for src_name in source_filenames:
         base, ext = os.path.splitext(os.path.normpath(src_name))
-        base = os.path.splitdrive(base)[1] # Chop off the drive
-        base = base[os.path.isabs(base):]  # If abs, chop off leading /
-        if base.startswith('..'):
+        base = os.path.splitdrive(base)[1]  # Chop off the drive
+        base = base[os.path.isabs(base) :]  # If abs, chop off leading /
+        if base.startswith(".."):
             # Resolve starting relative path components, middle ones
             # (if any) have been handled by os.path.normpath above.
-            i = base.rfind('..')+2
+            i = base.rfind("..") + 2
             d = base[:i]
             d = os.path.basename(os.path.abspath(d))
             base = d + base[i:]
         if ext not in self.src_extensions:
-            raise UnknownFileError("unknown file type '%s' (from '%s')" % (ext, src_name))
+            raise UnknownFileError(
+                "unknown file type '%s' (from '%s')" % (ext, src_name)
+            )
         if strip_dir:
             base = os.path.basename(base)
         obj_name = os.path.join(output_dir, base + self.obj_extension)
         obj_names.append(obj_name)
     return obj_names
 
-replace_method(CCompiler, 'object_filenames', CCompiler_object_filenames)
 
-def CCompiler_compile(self, sources, output_dir=None, macros=None,
-                      include_dirs=None, debug=0, extra_preargs=None,
-                      extra_postargs=None, depends=None):
+replace_method(CCompiler, "object_filenames", CCompiler_object_filenames)
+
+
+def CCompiler_compile(
+    self,
+    sources,
+    output_dir=None,
+    macros=None,
+    include_dirs=None,
+    debug=0,
+    extra_preargs=None,
+    extra_postargs=None,
+    depends=None,
+):
     """
     Compile one or more source files.
 
@@ -273,27 +303,27 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
-                                           has_f90_header)
+    from numpy.distutils.fcompiler import FCompiler, is_f_file, has_f90_header
+
     if isinstance(self, FCompiler):
         display = []
-        for fc in ['f77', 'f90', 'fix']:
-            fcomp = getattr(self, 'compiler_'+fc)
+        for fc in ["f77", "f90", "fix"]:
+            fcomp = getattr(self, "compiler_" + fc)
             if fcomp is None:
                 continue
-            display.append("Fortran %s compiler: %s" % (fc, ' '.join(fcomp)))
-        display = '\n'.join(display)
+            display.append("Fortran %s compiler: %s" % (fc, " ".join(fcomp)))
+        display = "\n".join(display)
     else:
         ccomp = self.compiler_so
-        display = "C compiler: %s\n" % (' '.join(ccomp),)
+        display = "C compiler: %s\n" % (" ".join(ccomp),)
     log.info(display)
-    macros, objects, extra_postargs, pp_opts, build = \
-            self._setup_compile(output_dir, macros, include_dirs, sources,
-                                depends, extra_postargs)
+    macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
+        output_dir, macros, include_dirs, sources, depends, extra_postargs
+    )
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
-    display = "compile options: '%s'" % (' '.join(cc_args))
+    display = "compile options: '%s'" % (" ".join(cc_args))
     if extra_postargs:
-        display += "\nextra options: '%s'" % (' '.join(extra_postargs))
+        display += "\nextra options: '%s'" % (" ".join(extra_postargs))
     log.info(display)
 
     def single_compile(args):
@@ -322,14 +352,13 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
             with _global_lock:
                 _processing_files.remove(obj)
 
-
     if isinstance(self, FCompiler):
         objects_to_build = list(build.keys())
         f77_objects, other_objects = [], []
         for obj in objects:
             if obj in objects_to_build:
                 src, ext = build[obj]
-                if self.compiler_type=='absoft':
+                if self.compiler_type == "absoft":
                     obj = cyg2win32(obj)
                     src = cyg2win32(src)
                 if is_f_file(src) and not has_f90_header(src):
@@ -350,6 +379,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     if len(build) > 1 and jobs > 1:
         # build parallel
         import multiprocessing.pool
+
         pool = multiprocessing.pool.ThreadPool(jobs)
         pool.map(single_compile, build_items)
         pool.close()
@@ -361,7 +391,9 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     # Return *all* object filenames, not just the ones we just built.
     return objects
 
-replace_method(CCompiler, 'compile', CCompiler_compile)
+
+replace_method(CCompiler, "compile", CCompiler_compile)
+
 
 def CCompiler_customize_cmd(self, cmd, ignore=()):
     """
@@ -382,44 +414,56 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     None
 
     """
-    log.info('customize %s using %s' % (self.__class__.__name__,
-                                        cmd.__class__.__name__))
+    log.info(
+        "customize %s using %s" % (self.__class__.__name__, cmd.__class__.__name__)
+    )
 
-    if hasattr(self, 'compiler') and 'clang' in self.compiler[0]:
+    if hasattr(self, "compiler") and "clang" in self.compiler[0]:
         # clang defaults to a non-strict floating error point model.
         # Since NumPy and most Python libs give warnings for these, override:
-        self.compiler.append('-ftrapping-math')
-        self.compiler_so.append('-ftrapping-math')
+        self.compiler.append("-ftrapping-math")
+        self.compiler_so.append("-ftrapping-math")
 
     def allow(attr):
         return getattr(cmd, attr, None) is not None and attr not in ignore
 
-    if allow('include_dirs'):
+    if allow("include_dirs"):
         self.set_include_dirs(cmd.include_dirs)
-    if allow('define'):
+    if allow("define"):
         for (name, value) in cmd.define:
             self.define_macro(name, value)
-    if allow('undef'):
+    if allow("undef"):
         for macro in cmd.undef:
             self.undefine_macro(macro)
-    if allow('libraries'):
+    if allow("libraries"):
         self.set_libraries(self.libraries + cmd.libraries)
-    if allow('library_dirs'):
+    if allow("library_dirs"):
         self.set_library_dirs(self.library_dirs + cmd.library_dirs)
-    if allow('rpath'):
+    if allow("rpath"):
         self.set_runtime_library_dirs(cmd.rpath)
-    if allow('link_objects'):
+    if allow("link_objects"):
         self.set_link_objects(cmd.link_objects)
 
-replace_method(CCompiler, 'customize_cmd', CCompiler_customize_cmd)
+
+replace_method(CCompiler, "customize_cmd", CCompiler_customize_cmd)
+
 
 def _compiler_to_string(compiler):
     props = []
     mx = 0
     keys = list(compiler.executables.keys())
-    for key in ['version', 'libraries', 'library_dirs',
-                'object_switch', 'compile_switch',
-                'include_dirs', 'define', 'undef', 'rpath', 'link_objects']:
+    for key in [
+        "version",
+        "libraries",
+        "library_dirs",
+        "object_switch",
+        "compile_switch",
+        "include_dirs",
+        "define",
+        "undef",
+        "rpath",
+        "link_objects",
+    ]:
         if key not in keys:
             keys.append(key)
     for key in keys:
@@ -427,9 +471,10 @@ def _compiler_to_string(compiler):
             v = getattr(compiler, key)
             mx = max(mx, len(key))
             props.append((key, repr(v)))
-    fmt = '%-' + repr(mx+1) + 's = %s'
+    fmt = "%-" + repr(mx + 1) + "s = %s"
     lines = [fmt % prop for prop in props]
-    return '\n'.join(lines)
+    return "\n".join(lines)
+
 
 def CCompiler_show_customization(self):
     """
@@ -452,13 +497,15 @@ def CCompiler_show_customization(self):
         self.get_version()
     except Exception:
         pass
-    if log._global_log.threshold<2:
-        print('*'*80)
+    if log._global_log.threshold < 2:
+        print("*" * 80)
         print(self.__class__)
         print(_compiler_to_string(self))
-        print('*'*80)
+        print("*" * 80)
 
-replace_method(CCompiler, 'show_customization', CCompiler_show_customization)
+
+replace_method(CCompiler, "show_customization", CCompiler_show_customization)
+
 
 def CCompiler_customize(self, dist, need_cxx=0):
     """
@@ -491,48 +538,50 @@ def CCompiler_customize(self, dist, need_cxx=0):
 
     """
     # See FCompiler.customize for suggested usage.
-    log.info('customize %s' % (self.__class__.__name__))
+    log.info("customize %s" % (self.__class__.__name__))
     customize_compiler(self)
     if need_cxx:
         # In general, distutils uses -Wstrict-prototypes, but this option is
         # not valid for C++ code, only for C.  Remove it if it's there to
         # avoid a spurious warning on every compilation.
         try:
-            self.compiler_so.remove('-Wstrict-prototypes')
+            self.compiler_so.remove("-Wstrict-prototypes")
         except (AttributeError, ValueError):
             pass
 
-        if hasattr(self, 'compiler') and 'cc' in self.compiler[0]:
+        if hasattr(self, "compiler") and "cc" in self.compiler[0]:
             if not self.compiler_cxx:
-                if self.compiler[0].startswith('gcc'):
-                    a, b = 'gcc', 'g++'
+                if self.compiler[0].startswith("gcc"):
+                    a, b = "gcc", "g++"
                 else:
-                    a, b = 'cc', 'c++'
-                self.compiler_cxx = [self.compiler[0].replace(a, b)]\
-                                    + self.compiler[1:]
+                    a, b = "cc", "c++"
+                self.compiler_cxx = [self.compiler[0].replace(a, b)] + self.compiler[1:]
         else:
-            if hasattr(self, 'compiler'):
+            if hasattr(self, "compiler"):
                 log.warn("#### %s #######" % (self.compiler,))
-            if not hasattr(self, 'compiler_cxx'):
-                log.warn('Missing compiler_cxx fix for ' + self.__class__.__name__)
-
+            if not hasattr(self, "compiler_cxx"):
+                log.warn("Missing compiler_cxx fix for " + self.__class__.__name__)
 
     # check if compiler supports gcc style automatic dependencies
     # run on every extension so skip for known good compilers
-    if hasattr(self, 'compiler') and ('gcc' in self.compiler[0] or
-                                      'g++' in self.compiler[0] or
-                                      'clang' in self.compiler[0]):
+    if hasattr(self, "compiler") and (
+        "gcc" in self.compiler[0]
+        or "g++" in self.compiler[0]
+        or "clang" in self.compiler[0]
+    ):
         self._auto_depends = True
-    elif os.name == 'posix':
+    elif os.name == "posix":
         import tempfile
         import shutil
+
         tmpdir = tempfile.mkdtemp()
         try:
             fn = os.path.join(tmpdir, "file.c")
             with open(fn, "w") as f:
                 f.write("int a;\n")
-            self.compile([fn], output_dir=tmpdir,
-                         extra_preargs=['-MMD', '-MF', fn + '.d'])
+            self.compile(
+                [fn], output_dir=tmpdir, extra_preargs=["-MMD", "-MF", fn + ".d"]
+            )
             self._auto_depends = True
         except CompileError:
             self._auto_depends = False
@@ -541,9 +590,11 @@ def CCompiler_customize(self, dist, need_cxx=0):
 
     return
 
-replace_method(CCompiler, 'customize', CCompiler_customize)
 
-def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
+replace_method(CCompiler, "customize", CCompiler_customize)
+
+
+def simple_version_match(pat=r"[-.\d]+", ignore="", start=""):
     """
     Simple matching of version numbers, for use in CCompiler and FCompiler.
 
@@ -569,10 +620,11 @@ def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
         a version string.
 
     """
+
     def matcher(self, version_string):
         # version string may appear in the second line, so getting rid
         # of new lines:
-        version_string = version_string.replace('\n', ' ')
+        version_string = version_string.replace("\n", " ")
         pos = 0
         if start:
             m = re.match(start, version_string)
@@ -588,7 +640,9 @@ def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
                 continue
             break
         return m.group(0)
+
     return matcher
+
 
 def CCompiler_get_version(self, force=False, ok_status=[0]):
     """
@@ -610,7 +664,7 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
         Version string, in the format of `distutils.version.LooseVersion`.
 
     """
-    if not force and hasattr(self, 'version'):
+    if not force and hasattr(self, "version"):
         return self.version
     self.find_executables()
     try:
@@ -626,11 +680,12 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
             pat = self.version_pattern
         except AttributeError:
             return None
+
         def matcher(version_string):
             m = re.match(pat, version_string)
             if not m:
                 return None
-            version = m.group('version')
+            version = m.group("version")
             return version
 
     try:
@@ -642,7 +697,7 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
         # match the historical returns for a parent
         # exception class caught by exec_command()
         status = 127
-        output = b''
+        output = b""
     else:
         # output isn't actually a filepath but we do this
         # for now to match previous distutils behavior
@@ -657,7 +712,9 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
     self.version = version
     return version
 
-replace_method(CCompiler, 'get_version', CCompiler_get_version)
+
+replace_method(CCompiler, "get_version", CCompiler_get_version)
+
 
 def CCompiler_cxx_compiler(self):
     """
@@ -673,58 +730,79 @@ def CCompiler_cxx_compiler(self):
         The C++ compiler, as a `CCompiler` instance.
 
     """
-    if self.compiler_type in ('msvc', 'intelw', 'intelemw'):
+    if self.compiler_type in ("msvc", "intelw", "intelemw"):
         return self
 
     cxx = copy(self)
     cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
-    if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
+    if sys.platform.startswith("aix") and "ld_so_aix" in cxx.linker_so[0]:
         # AIX needs the ld_so_aix script included with Python
-        cxx.linker_so = [cxx.linker_so[0], cxx.compiler_cxx[0]] \
-                        + cxx.linker_so[2:]
+        cxx.linker_so = [cxx.linker_so[0], cxx.compiler_cxx[0]] + cxx.linker_so[2:]
     else:
         cxx.linker_so = [cxx.compiler_cxx[0]] + cxx.linker_so[1:]
     return cxx
 
-replace_method(CCompiler, 'cxx_compiler', CCompiler_cxx_compiler)
 
-compiler_class['intel'] = ('intelccompiler', 'IntelCCompiler',
-                           "Intel C Compiler for 32-bit applications")
-compiler_class['intele'] = ('intelccompiler', 'IntelItaniumCCompiler',
-                            "Intel C Itanium Compiler for Itanium-based applications")
-compiler_class['intelem'] = ('intelccompiler', 'IntelEM64TCCompiler',
-                             "Intel C Compiler for 64-bit applications")
-compiler_class['intelw'] = ('intelccompiler', 'IntelCCompilerW',
-                            "Intel C Compiler for 32-bit applications on Windows")
-compiler_class['intelemw'] = ('intelccompiler', 'IntelEM64TCCompilerW',
-                              "Intel C Compiler for 64-bit applications on Windows")
-compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
-                            "PathScale Compiler for SiCortex-based applications")
-ccompiler._default_compilers += (('linux.*', 'intel'),
-                                 ('linux.*', 'intele'),
-                                 ('linux.*', 'intelem'),
-                                 ('linux.*', 'pathcc'),
-                                 ('nt', 'intelw'),
-                                 ('nt', 'intelemw'))
+replace_method(CCompiler, "cxx_compiler", CCompiler_cxx_compiler)
 
-if sys.platform == 'win32':
-    compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
-                                 "Mingw32 port of GNU C Compiler for Win32"\
-                                 "(for MSC built Python)")
+compiler_class["intel"] = (
+    "intelccompiler",
+    "IntelCCompiler",
+    "Intel C Compiler for 32-bit applications",
+)
+compiler_class["intele"] = (
+    "intelccompiler",
+    "IntelItaniumCCompiler",
+    "Intel C Itanium Compiler for Itanium-based applications",
+)
+compiler_class["intelem"] = (
+    "intelccompiler",
+    "IntelEM64TCCompiler",
+    "Intel C Compiler for 64-bit applications",
+)
+compiler_class["intelw"] = (
+    "intelccompiler",
+    "IntelCCompilerW",
+    "Intel C Compiler for 32-bit applications on Windows",
+)
+compiler_class["intelemw"] = (
+    "intelccompiler",
+    "IntelEM64TCCompilerW",
+    "Intel C Compiler for 64-bit applications on Windows",
+)
+compiler_class["pathcc"] = (
+    "pathccompiler",
+    "PathScaleCCompiler",
+    "PathScale Compiler for SiCortex-based applications",
+)
+ccompiler._default_compilers += (
+    ("linux.*", "intel"),
+    ("linux.*", "intele"),
+    ("linux.*", "intelem"),
+    ("linux.*", "pathcc"),
+    ("nt", "intelw"),
+    ("nt", "intelemw"),
+)
+
+if sys.platform == "win32":
+    compiler_class["mingw32"] = (
+        "mingw32ccompiler",
+        "Mingw32CCompiler",
+        "Mingw32 port of GNU C Compiler for Win32" "(for MSC built Python)",
+    )
     if mingw32():
         # On windows platforms, we want to default to mingw32 (gcc)
         # because msvc can't build blitz stuff.
-        log.info('Setting mingw32 as default compiler for nt.')
-        ccompiler._default_compilers = (('nt', 'mingw32'),) \
-                                       + ccompiler._default_compilers
+        log.info("Setting mingw32 as default compiler for nt.")
+        ccompiler._default_compilers = (
+            ("nt", "mingw32"),
+        ) + ccompiler._default_compilers
 
 
 _distutils_new_compiler = new_compiler
-def new_compiler (plat=None,
-                  compiler=None,
-                  verbose=None,
-                  dry_run=0,
-                  force=0):
+
+
+def new_compiler(plat=None, compiler=None, verbose=None, dry_run=0, force=0):
     # Try first C compilers from numpy.distutils.
     if verbose is None:
         verbose = log.get_threshold() <= log.INFO
@@ -741,32 +819,37 @@ def new_compiler (plat=None,
         raise DistutilsPlatformError(msg)
     module_name = "numpy.distutils." + module_name
     try:
-        __import__ (module_name)
+        __import__(module_name)
     except ImportError as e:
         msg = str(e)
-        log.info('%s in numpy.distutils; trying from distutils',
-                 str(msg))
+        log.info("%s in numpy.distutils; trying from distutils", str(msg))
         module_name = module_name[6:]
         try:
             __import__(module_name)
         except ImportError as e:
             msg = str(e)
-            raise DistutilsModuleError("can't compile C/C++ code: unable to load module '%s'" % \
-                  module_name)
+            raise DistutilsModuleError(
+                "can't compile C/C++ code: unable to load module '%s'" % module_name
+            )
     try:
         module = sys.modules[module_name]
         klass = vars(module)[class_name]
     except KeyError:
-        raise DistutilsModuleError(("can't compile C/C++ code: unable to find class '%s' " +
-               "in module '%s'") % (class_name, module_name))
+        raise DistutilsModuleError(
+            ("can't compile C/C++ code: unable to find class '%s' " + "in module '%s'")
+            % (class_name, module_name)
+        )
     compiler = klass(None, dry_run, force)
     compiler.verbose = verbose
-    log.debug('new_compiler returns %s' % (klass))
+    log.debug("new_compiler returns %s" % (klass))
     return compiler
+
 
 ccompiler.new_compiler = new_compiler
 
 _distutils_gen_lib_options = gen_lib_options
+
+
 def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
     # the version of this function provided by CPython allows the following
     # to return lists, which are unpacked automatically:
@@ -775,8 +858,9 @@ def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
     # - compiler.library_dir_option
     # - compiler.library_option
     # - compiler.find_library_file
-    r = _distutils_gen_lib_options(compiler, library_dirs,
-                                   runtime_library_dirs, libraries)
+    r = _distutils_gen_lib_options(
+        compiler, library_dirs, runtime_library_dirs, libraries
+    )
     lib_opts = []
     for i in r:
         if is_sequence(i):
@@ -784,13 +868,14 @@ def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
         else:
             lib_opts.append(i)
     return lib_opts
+
+
 ccompiler.gen_lib_options = gen_lib_options
 
 # Also fix up the various compiler modules, which do
 # from distutils.ccompiler import gen_lib_options
 # Don't bother with mwerks, as we don't support Classic Mac.
-for _cc in ['msvc9', 'msvc', '_msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
-    _m = sys.modules.get('distutils.' + _cc + 'compiler')
+for _cc in ["msvc9", "msvc", "_msvc", "bcpp", "cygwinc", "emxc", "unixc"]:
+    _m = sys.modules.get("distutils." + _cc + "compiler")
     if _m is not None:
-        setattr(_m, 'gen_lib_options', gen_lib_options)
-
+        setattr(_m, "gen_lib_options", gen_lib_options)

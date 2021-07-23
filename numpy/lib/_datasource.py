@@ -106,18 +106,21 @@ class _FileOpeners:
 
         try:
             import bz2
+
             self._file_openers[".bz2"] = bz2.open
         except ImportError:
             pass
 
         try:
             import gzip
+
             self._file_openers[".gz"] = gzip.open
         except ImportError:
             pass
 
         try:
             import lzma
+
             self._file_openers[".xz"] = lzma.open
             self._file_openers[".lzma"] = lzma.open
         except (ImportError, AttributeError):
@@ -150,9 +153,11 @@ class _FileOpeners:
         self._load()
         return self._file_openers[key]
 
+
 _file_openers = _FileOpeners()
 
-def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
+
+def open(path, mode="r", destpath=os.curdir, encoding=None, newline=None):
     """
     Open `path` with `mode` and return the file object.
 
@@ -193,7 +198,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-@set_module('numpy')
+@set_module("numpy")
 class DataSource:
     """
     DataSource(destpath='.')
@@ -250,20 +255,19 @@ class DataSource:
             self._istmpdest = False
         else:
             import tempfile  # deferring import to improve startup time
+
             self._destpath = tempfile.mkdtemp()
             self._istmpdest = True
 
     def __del__(self):
         # Remove temp directories
-        if hasattr(self, '_istmpdest') and self._istmpdest:
+        if hasattr(self, "_istmpdest") and self._istmpdest:
             import shutil
 
             shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
-        """Test if the filename is a zip file by looking at the file extension.
-
-        """
+        """Test if the filename is a zip file by looking at the file extension."""
         fname, ext = os.path.splitext(filename)
         return ext in _file_openers.keys()
 
@@ -296,7 +300,7 @@ class DataSource:
         if not self._iszip(filename):
             for zipext in _file_openers.keys():
                 if zipext:
-                    names.append(filename+zipext)
+                    names.append(filename + zipext)
         return names
 
     def _isurl(self, path):
@@ -335,7 +339,7 @@ class DataSource:
         # TODO: Doesn't handle compressed files!
         if self._isurl(path):
             with urlopen(path) as openedurl:
-                with _open(upath, 'wb') as f:
+                with _open(upath, "wb") as f:
                     shutil.copyfileobj(openedurl, f)
         else:
             shutil.copyfile(path, upath)
@@ -423,8 +427,8 @@ class DataSource:
         while path != last:
             last = path
             # Note: os.path.join treats '/' as os.sep on Windows
-            path = path.lstrip(os.sep).lstrip('/')
-            path = path.lstrip(os.pardir).lstrip('..')
+            path = path.lstrip(os.sep).lstrip("/")
+            path = path.lstrip(os.pardir).lstrip("..")
             drive, path = os.path.splitdrive(path)  # for Windows
         return path
 
@@ -478,13 +482,13 @@ class DataSource:
             try:
                 netfile = urlopen(path)
                 netfile.close()
-                del(netfile)
+                del netfile
                 return True
             except URLError:
                 return False
         return False
 
-    def open(self, path, mode='r', encoding=None, newline=None):
+    def open(self, path, mode="r", encoding=None, newline=None):
         """
         Open and return file-like object.
 
@@ -525,15 +529,16 @@ class DataSource:
         found = self._findfile(path)
         if found:
             _fname, ext = self._splitzipext(found)
-            if ext == 'bz2':
+            if ext == "bz2":
                 mode.replace("+", "")
-            return _file_openers[ext](found, mode=mode,
-                                      encoding=encoding, newline=newline)
+            return _file_openers[ext](
+                found, mode=mode, encoding=encoding, newline=newline
+            )
         else:
             raise IOError("%s not found." % path)
 
 
-class Repository (DataSource):
+class Repository(DataSource):
     """
     Repository(baseurl, destpath='.')
 
@@ -587,7 +592,7 @@ class Repository (DataSource):
         if len(splitpath) == 1:
             result = os.path.join(self._baseurl, path)
         else:
-            result = path    # path contains baseurl already
+            result = path  # path contains baseurl already
         return result
 
     def _findfile(self, path):
@@ -651,7 +656,7 @@ class Repository (DataSource):
         """
         return DataSource.exists(self, self._fullpath(path))
 
-    def open(self, path, mode='r', encoding=None, newline=None):
+    def open(self, path, mode="r", encoding=None, newline=None):
         """
         Open and return file-like object prepending Repository base URL.
 
@@ -680,8 +685,9 @@ class Repository (DataSource):
             File object.
 
         """
-        return DataSource.open(self, self._fullpath(path), mode,
-                               encoding=encoding, newline=newline)
+        return DataSource.open(
+            self, self._fullpath(path), mode, encoding=encoding, newline=newline
+        )
 
     def listdir(self):
         """
@@ -698,7 +704,6 @@ class Repository (DataSource):
 
         """
         if self._isurl(self._baseurl):
-            raise NotImplementedError(
-                  "Directory listing of URLs, not supported yet.")
+            raise NotImplementedError("Directory listing of URLs, not supported yet.")
         else:
             return os.listdir(self._baseurl)

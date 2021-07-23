@@ -7,7 +7,7 @@ no overhead.
 """
 import types
 
-__all__ = ['getargspec', 'formatargspec']
+__all__ = ["getargspec", "formatargspec"]
 
 # ----------------------------------------------------------- type-checking
 def ismethod(object):
@@ -23,6 +23,7 @@ def ismethod(object):
     """
     return isinstance(object, types.MethodType)
 
+
 def isfunction(object):
     """Return true if the object is a user-defined function.
 
@@ -37,6 +38,7 @@ def isfunction(object):
 
     """
     return isinstance(object, types.FunctionType)
+
 
 def iscode(object):
     """Return true if the object is a code object.
@@ -54,13 +56,15 @@ def iscode(object):
         co_nlocals      number of local variables
         co_stacksize    virtual machine stack space required
         co_varnames     tuple of names of arguments and local variables
-        
+
     """
     return isinstance(object, types.CodeType)
+
 
 # ------------------------------------------------ argument list extraction
 # These constants are from Python's compile.h.
 CO_OPTIMIZED, CO_NEWLOCALS, CO_VARARGS, CO_VARKEYWORDS = 1, 2, 4, 8
+
 
 def getargs(co):
     """Get information about the arguments accepted by a code object.
@@ -72,7 +76,7 @@ def getargs(co):
     """
 
     if not iscode(co):
-        raise TypeError('arg is not a code object')
+        raise TypeError("arg is not a code object")
 
     nargs = co.co_argcount
     names = co.co_varnames
@@ -82,7 +86,7 @@ def getargs(co):
     # Which we do not need to support, so remove to avoid importing
     # the dis module.
     for i in range(nargs):
-        if args[i][:1] in ['', '.']:
+        if args[i][:1] in ["", "."]:
             raise TypeError("tuple function arguments are not supported")
     varargs = None
     if co.co_flags & CO_VARARGS:
@@ -92,6 +96,7 @@ def getargs(co):
     if co.co_flags & CO_VARKEYWORDS:
         varkw = co.co_varnames[nargs]
     return args, varargs, varkw
+
 
 def getargspec(func):
     """Get the names and default values of a function's arguments.
@@ -106,9 +111,10 @@ def getargspec(func):
     if ismethod(func):
         func = func.__func__
     if not isfunction(func):
-        raise TypeError('arg is not a Python function')
+        raise TypeError("arg is not a Python function")
     args, varargs, varkw = getargs(func.__code__)
     return args, varargs, varkw, func.__defaults__
+
 
 def getargvalues(frame):
     """Get information about arguments passed into a particular frame.
@@ -117,32 +123,38 @@ def getargvalues(frame):
     'args' is a list of the argument names (it may contain nested lists).
     'varargs' and 'varkw' are the names of the * and ** arguments or None.
     'locals' is the locals dictionary of the given frame.
-    
+
     """
     args, varargs, varkw = getargs(frame.f_code)
     return args, varargs, varkw, frame.f_locals
 
+
 def joinseq(seq):
     if len(seq) == 1:
-        return '(' + seq[0] + ',)'
+        return "(" + seq[0] + ",)"
     else:
-        return '(' + ', '.join(seq) + ')'
+        return "(" + ", ".join(seq) + ")"
+
 
 def strseq(object, convert, join=joinseq):
-    """Recursively walk a sequence, stringifying each element.
-
-    """
+    """Recursively walk a sequence, stringifying each element."""
     if type(object) in [list, tuple]:
         return join([strseq(_o, convert, join) for _o in object])
     else:
         return convert(object)
 
-def formatargspec(args, varargs=None, varkw=None, defaults=None,
-                  formatarg=str,
-                  formatvarargs=lambda name: '*' + name,
-                  formatvarkw=lambda name: '**' + name,
-                  formatvalue=lambda value: '=' + repr(value),
-                  join=joinseq):
+
+def formatargspec(
+    args,
+    varargs=None,
+    varkw=None,
+    defaults=None,
+    formatarg=str,
+    formatvarargs=lambda name: "*" + name,
+    formatvarkw=lambda name: "**" + name,
+    formatvalue=lambda value: "=" + repr(value),
+    join=joinseq,
+):
     """Format an argument spec from the 4 values returned by getargspec.
 
     The first four arguments are (args, varargs, varkw, defaults).  The
@@ -163,14 +175,20 @@ def formatargspec(args, varargs=None, varkw=None, defaults=None,
         specs.append(formatvarargs(varargs))
     if varkw is not None:
         specs.append(formatvarkw(varkw))
-    return '(' + ', '.join(specs) + ')'
+    return "(" + ", ".join(specs) + ")"
 
-def formatargvalues(args, varargs, varkw, locals,
-                    formatarg=str,
-                    formatvarargs=lambda name: '*' + name,
-                    formatvarkw=lambda name: '**' + name,
-                    formatvalue=lambda value: '=' + repr(value),
-                    join=joinseq):
+
+def formatargvalues(
+    args,
+    varargs,
+    varkw,
+    locals,
+    formatarg=str,
+    formatvarargs=lambda name: "*" + name,
+    formatvarkw=lambda name: "**" + name,
+    formatvalue=lambda value: "=" + repr(value),
+    join=joinseq,
+):
     """Format an argument spec from the 4 values returned by getargvalues.
 
     The first four arguments are (args, varargs, varkw, locals).  The
@@ -179,13 +197,14 @@ def formatargvalues(args, varargs, varkw, locals,
     argument is an optional function to format the sequence of arguments.
 
     """
-    def convert(name, locals=locals,
-                formatarg=formatarg, formatvalue=formatvalue):
+
+    def convert(name, locals=locals, formatarg=formatarg, formatvalue=formatvalue):
         return formatarg(name) + formatvalue(locals[name])
+
     specs = [strseq(arg, convert, join) for arg in args]
 
     if varargs:
         specs.append(formatvarargs(varargs) + formatvalue(locals[varargs]))
     if varkw:
         specs.append(formatvarkw(varkw) + formatvalue(locals[varkw]))
-    return '(' + ', '.join(specs) + ')'
+    return "(" + ", ".join(specs) + ")"

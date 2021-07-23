@@ -3,19 +3,20 @@ import sys
 import pytest
 
 from numpy.testing import (
-    assert_, assert_array_equal, assert_raises,
-    )
+    assert_,
+    assert_array_equal,
+    assert_raises,
+)
 import numpy as np
 
 from numpy import random
 
 
 class TestRegression:
-
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
         # Regression test for ticket #986.
-        for mu in np.linspace(-7., 7., 5):
+        for mu in np.linspace(-7.0, 7.0, 5):
             r = random.vonmises(mu, 1, 50)
             assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
@@ -26,12 +27,12 @@ class TestRegression:
 
         # Test for ticket #5623
         args = [
-            (2**20 - 2, 2**20 - 2, 2**20 - 2),  # Check for 32-bit systems
+            (2 ** 20 - 2, 2 ** 20 - 2, 2 ** 20 - 2),  # Check for 32-bit systems
         ]
-        is_64bits = sys.maxsize > 2**32
-        if is_64bits and sys.platform != 'win32':
+        is_64bits = sys.maxsize > 2 ** 32
+        if is_64bits and sys.platform != "win32":
             # Check for 64-bit systems
-            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2))
+            args.append((2 ** 40 - 2, 2 ** 40 - 2, 2 ** 40 - 2))
         for arg in args:
             assert_(random.hypergeometric(*arg) > 0)
 
@@ -44,19 +45,21 @@ class TestRegression:
         # numbers with this large sample
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / float(N)
-        msg = f'Frequency was {freq:f}, should be > 0.45'
+        msg = f"Frequency was {freq:f}, should be > 0.45"
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / float(N)
-        msg = f'Frequency was {freq:f}, should be < 0.23'
+        msg = f"Frequency was {freq:f}, should be < 0.23"
         assert_(freq < 0.23, msg)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
-        for t in [[1, 2, 3, None],
-                  [(1, 1), (2, 2), (3, 3), None],
-                  [1, (2, 2), (3, 3), None],
-                  [(1, 1), 2, 3, None]]:
+        for t in [
+            [1, 2, 3, None],
+            [(1, 1), (2, 2), (3, 3), None],
+            [1, (2, 2), (3, 3), None],
+            [(1, 1), 2, 3, None],
+        ]:
             random.seed(12345)
             shuffled = list(t)
             random.shuffle(shuffled)
@@ -71,7 +74,7 @@ class TestRegression:
             random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.0), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
@@ -86,7 +89,7 @@ class TestRegression:
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
         random.seed(1234567890)
         x = random.beta(0.0001, 0.0001, size=100)
-        assert_(not np.any(np.isnan(x)), 'Nans in random.beta')
+        assert_(not np.any(np.isnan(x)), "Nans in random.beta")
 
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
@@ -99,7 +102,7 @@ class TestRegression:
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = random.choice(a, p=probs)
             assert_(c in a)
-            assert_raises(ValueError, random.choice, a, p=probs*0.9)
+            assert_raises(ValueError, random.choice, a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
@@ -107,13 +110,14 @@ class TestRegression:
         # Tests gh-7710
         random.seed(1234)
 
-        a = np.array(['a', 'a' * 1000])
+        a = np.array(["a", "a" * 1000])
 
         for _ in range(100):
             random.shuffle(a)
 
         # Force Garbage Collection - should not segfault.
         import gc
+
         gc.collect()
 
     def test_shuffle_of_array_of_objects(self):
@@ -128,6 +132,7 @@ class TestRegression:
 
         # Force Garbage Collection - should not segfault.
         import gc
+
         gc.collect()
 
     def test_permutation_subclass(self):
@@ -154,8 +159,8 @@ class TestRegression:
 
     def test_warns_byteorder(self):
         # GH 13159
-        other_byteord_dt = '<i4' if sys.byteorder == 'big' else '>i4'
-        with pytest.deprecated_call(match='non-native byteorder is not'):
+        other_byteord_dt = "<i4" if sys.byteorder == "big" else ">i4"
+        with pytest.deprecated_call(match="non-native byteorder is not"):
             random.randint(0, 200, size=10, dtype=other_byteord_dt)
 
     def test_named_argument_initialization(self):
@@ -166,38 +171,50 @@ class TestRegression:
 
     def test_choice_retun_dtype(self):
         # GH 9867
-        c = np.random.choice(10, p=[.1]*10, size=2)
+        c = np.random.choice(10, p=[0.1] * 10, size=2)
         assert c.dtype == np.dtype(int)
-        c = np.random.choice(10, p=[.1]*10, replace=False, size=2)
+        c = np.random.choice(10, p=[0.1] * 10, replace=False, size=2)
         assert c.dtype == np.dtype(int)
         c = np.random.choice(10, size=2)
         assert c.dtype == np.dtype(int)
         c = np.random.choice(10, replace=False, size=2)
         assert c.dtype == np.dtype(int)
 
-    @pytest.mark.skipif(np.iinfo('l').max < 2**32,
-                        reason='Cannot test with 32-bit C long')
+    @pytest.mark.skipif(
+        np.iinfo("l").max < 2 ** 32, reason="Cannot test with 32-bit C long"
+    )
     def test_randint_117(self):
         # GH 14189
         random.seed(0)
-        expected = np.array([2357136044, 2546248239, 3071714933, 3626093760,
-                             2588848963, 3684848379, 2340255427, 3638918503,
-                             1819583497, 2678185683], dtype='int64')
-        actual = random.randint(2**32, size=10)
+        expected = np.array(
+            [
+                2357136044,
+                2546248239,
+                3071714933,
+                3626093760,
+                2588848963,
+                3684848379,
+                2340255427,
+                3638918503,
+                1819583497,
+                2678185683,
+            ],
+            dtype="int64",
+        )
+        actual = random.randint(2 ** 32, size=10)
         assert_array_equal(actual, expected)
 
     def test_p_zero_stream(self):
         # Regression test for gh-14522.  Ensure that future versions
         # generate the same variates as version 1.16.
         np.random.seed(12345)
-        assert_array_equal(random.binomial(1, [0, 0.25, 0.5, 0.75, 1]),
-                           [0, 0, 0, 1, 1])
+        assert_array_equal(random.binomial(1, [0, 0.25, 0.5, 0.75, 1]), [0, 0, 0, 1, 1])
 
     def test_n_zero_stream(self):
         # Regression test for gh-14522.  Ensure that future versions
         # generate the same variates as version 1.16.
         np.random.seed(8675309)
-        expected = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                             [3, 4, 2, 3, 3, 1, 5, 3, 1, 3]])
-        assert_array_equal(random.binomial([[0], [10]], 0.25, size=(2, 10)),
-                           expected)
+        expected = np.array(
+            [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [3, 4, 2, 3, 3, 1, 5, 3, 1, 3]]
+        )
+        assert_array_equal(random.binomial([[0], [10]], 0.25, size=(2, 10)), expected)

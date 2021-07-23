@@ -3,21 +3,99 @@ from .common import Benchmark, get_squares_
 import numpy as np
 
 
-ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
-          'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_not',
-          'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj', 'conjugate',
-          'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide', 'divmod',
-          'equal', 'exp', 'exp2', 'expm1', 'fabs', 'float_power', 'floor',
-          'floor_divide', 'fmax', 'fmin', 'fmod', 'frexp', 'gcd', 'greater',
-          'greater_equal', 'heaviside', 'hypot', 'invert', 'isfinite',
-          'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
-          'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
-          'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf', 'multiply',
-          'negative', 'nextafter', 'not_equal', 'positive', 'power',
-          'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
-          'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
-          'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+ufuncs = [
+    "abs",
+    "absolute",
+    "add",
+    "arccos",
+    "arccosh",
+    "arcsin",
+    "arcsinh",
+    "arctan",
+    "arctan2",
+    "arctanh",
+    "bitwise_and",
+    "bitwise_not",
+    "bitwise_or",
+    "bitwise_xor",
+    "cbrt",
+    "ceil",
+    "conj",
+    "conjugate",
+    "copysign",
+    "cos",
+    "cosh",
+    "deg2rad",
+    "degrees",
+    "divide",
+    "divmod",
+    "equal",
+    "exp",
+    "exp2",
+    "expm1",
+    "fabs",
+    "float_power",
+    "floor",
+    "floor_divide",
+    "fmax",
+    "fmin",
+    "fmod",
+    "frexp",
+    "gcd",
+    "greater",
+    "greater_equal",
+    "heaviside",
+    "hypot",
+    "invert",
+    "isfinite",
+    "isinf",
+    "isnan",
+    "isnat",
+    "lcm",
+    "ldexp",
+    "left_shift",
+    "less",
+    "less_equal",
+    "log",
+    "log10",
+    "log1p",
+    "log2",
+    "logaddexp",
+    "logaddexp2",
+    "logical_and",
+    "logical_not",
+    "logical_or",
+    "logical_xor",
+    "matmul",
+    "maximum",
+    "minimum",
+    "mod",
+    "modf",
+    "multiply",
+    "negative",
+    "nextafter",
+    "not_equal",
+    "positive",
+    "power",
+    "rad2deg",
+    "radians",
+    "reciprocal",
+    "remainder",
+    "right_shift",
+    "rint",
+    "sign",
+    "signbit",
+    "sin",
+    "sinh",
+    "spacing",
+    "sqrt",
+    "square",
+    "subtract",
+    "tan",
+    "tanh",
+    "true_divide",
+    "trunc",
+]
 
 
 for name in dir(np):
@@ -36,11 +114,11 @@ class Broadcast(Benchmark):
 
 class UFunc(Benchmark):
     params = [ufuncs]
-    param_names = ['ufunc']
+    param_names = ["ufunc"]
     timeout = 10
 
     def setup(self, ufuncname):
-        np.seterr(all='ignore')
+        np.seterr(all="ignore")
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
@@ -82,8 +160,8 @@ class CustomInplace(Benchmark):
         self.f = np.zeros(150000, dtype=np.float32)
         self.d = np.zeros(75000, dtype=np.float64)
         # fault memory
-        self.f *= 1.
-        self.d *= 1.
+        self.f *= 1.0
+        self.d *= 1.0
 
     def time_char_or(self):
         np.bitwise_or(self.c, 0, out=self.c)
@@ -100,23 +178,23 @@ class CustomInplace(Benchmark):
         0 | self.i | 0
 
     def time_float_add(self):
-        np.add(self.f, 1., out=self.f)
-        np.add(1., self.f, out=self.f)
+        np.add(self.f, 1.0, out=self.f)
+        np.add(1.0, self.f, out=self.f)
 
     def time_float_add_temp(self):
-        1. + self.f + 1.
+        1.0 + self.f + 1.0
 
     def time_double_add(self):
-        np.add(self.d, 1., out=self.d)
-        np.add(1., self.d, out=self.d)
+        np.add(self.d, 1.0, out=self.d)
+        np.add(1.0, self.d, out=self.d)
 
     def time_double_add_temp(self):
-        1. + self.d + 1.
+        1.0 + self.d + 1.0
 
 
 class CustomScalar(Benchmark):
     params = [np.float32, np.float64]
-    param_names = ['dtype']
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.ones(20000, dtype=dtype)
@@ -135,17 +213,17 @@ class CustomScalar(Benchmark):
 
 
 class CustomScalarFloorDivideInt(Benchmark):
-    params = (np.sctypes['int'] + np.sctypes['uint'], [8, -8, 43, -43])
-    param_names = ['dtype', 'divisors']
+    params = (np.sctypes["int"] + np.sctypes["uint"], [8, -8, 43, -43])
+    param_names = ["dtype", "divisors"]
 
     def setup(self, dtype, divisor):
-        if dtype in np.sctypes['uint'] and divisor < 0:
+        if dtype in np.sctypes["uint"] and divisor < 0:
             raise NotImplementedError(
-                    "Skipping test for negative divisor with unsigned type")
+                "Skipping test for negative divisor with unsigned type"
+            )
 
         iinfo = np.iinfo(dtype)
-        self.x = np.random.randint(
-                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+        self.x = np.random.randint(iinfo.min, iinfo.max, size=10000, dtype=dtype)
 
     def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
@@ -168,15 +246,19 @@ class Scalar(Benchmark):
 
 
 class ArgPack:
-    __slots__ = ['args', 'kwargs']
+    __slots__ = ["args", "kwargs"]
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
     def __repr__(self):
-        return '({})'.format(', '.join(
-            [repr(a) for a in self.args] +
-            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
-        ))
+        return "({})".format(
+            ", ".join(
+                [repr(a) for a in self.args]
+                + ["{}={}".format(k, repr(v)) for k, v in self.kwargs.items()]
+            )
+        )
 
 
 class ArgParsing(Benchmark):
@@ -185,20 +267,22 @@ class ArgParsing(Benchmark):
     # calculation.  In particular, subok=True and where=True are
     # defaults, and the dtype is the correct one (the latter will
     # still have some effect on the search for the correct inner loop).
-    x = np.array(1.)
-    y = np.array(2.)
-    out = np.array(3.)
-    param_names = ['arg_kwarg']
-    params = [[
-        ArgPack(x, y),
-        ArgPack(x, y, out),
-        ArgPack(x, y, out=out),
-        ArgPack(x, y, out=(out,)),
-        ArgPack(x, y, out=out, subok=True, where=True),
-        ArgPack(x, y, subok=True),
-        ArgPack(x, y, subok=True, where=True),
-        ArgPack(x, y, out, subok=True, where=True)
-    ]]
+    x = np.array(1.0)
+    y = np.array(2.0)
+    out = np.array(3.0)
+    param_names = ["arg_kwarg"]
+    params = [
+        [
+            ArgPack(x, y),
+            ArgPack(x, y, out),
+            ArgPack(x, y, out=out),
+            ArgPack(x, y, out=(out,)),
+            ArgPack(x, y, out=out, subok=True, where=True),
+            ArgPack(x, y, subok=True),
+            ArgPack(x, y, subok=True, where=True),
+            ArgPack(x, y, out, subok=True, where=True),
+        ]
+    ]
 
     def time_add_arg_parsing(self, arg_pack):
         np.add(*arg_pack.args, **arg_pack.kwargs)
@@ -208,19 +292,23 @@ class ArgParsingReduce(Benchmark):
     # In order to benchmark the speed of argument parsing, all but the
     # out arguments are chosen such that they have minimal effect on the
     # calculation.
-    a = np.arange(2.)
-    out = np.array(0.)
-    param_names = ['arg_kwarg']
-    params = [[
-        ArgPack(a,),
-        ArgPack(a, 0),
-        ArgPack(a, axis=0),
-        ArgPack(a, 0, None),
-        ArgPack(a, axis=0, dtype=None),
-        ArgPack(a, 0, None, out),
-        ArgPack(a, axis=0, dtype=None, out=out),
-        ArgPack(a, out=out)
-    ]]
+    a = np.arange(2.0)
+    out = np.array(0.0)
+    param_names = ["arg_kwarg"]
+    params = [
+        [
+            ArgPack(
+                a,
+            ),
+            ArgPack(a, 0),
+            ArgPack(a, axis=0),
+            ArgPack(a, 0, None),
+            ArgPack(a, axis=0, dtype=None),
+            ArgPack(a, 0, None, out),
+            ArgPack(a, axis=0, dtype=None, out=out),
+            ArgPack(a, out=out),
+        ]
+    ]
 
     def time_add_reduce_arg_parsing(self, arg_pack):
         np.add.reduce(*arg_pack.args, **arg_pack.kwargs)

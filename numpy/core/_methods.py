@@ -24,32 +24,38 @@ umr_all = um.logical_and.reduce
 
 # Complex types to -> (2,)float view for fast-path computation in _var()
 _complex_to_float = {
-    nt.dtype(nt.csingle) : nt.dtype(nt.single),
-    nt.dtype(nt.cdouble) : nt.dtype(nt.double),
+    nt.dtype(nt.csingle): nt.dtype(nt.single),
+    nt.dtype(nt.cdouble): nt.dtype(nt.double),
 }
 # Special case for windows: ensure double takes precedence
 if nt.dtype(nt.longdouble) != nt.dtype(nt.double):
-    _complex_to_float.update({
-        nt.dtype(nt.clongdouble) : nt.dtype(nt.longdouble),
-    })
+    _complex_to_float.update(
+        {
+            nt.dtype(nt.clongdouble): nt.dtype(nt.longdouble),
+        }
+    )
 
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very
 # small reductions
-def _amax(a, axis=None, out=None, keepdims=False,
-          initial=_NoValue, where=True):
+def _amax(a, axis=None, out=None, keepdims=False, initial=_NoValue, where=True):
     return umr_maximum(a, axis, None, out, keepdims, initial, where)
 
-def _amin(a, axis=None, out=None, keepdims=False,
-          initial=_NoValue, where=True):
+
+def _amin(a, axis=None, out=None, keepdims=False, initial=_NoValue, where=True):
     return umr_minimum(a, axis, None, out, keepdims, initial, where)
 
-def _sum(a, axis=None, dtype=None, out=None, keepdims=False,
-         initial=_NoValue, where=True):
+
+def _sum(
+    a, axis=None, dtype=None, out=None, keepdims=False, initial=_NoValue, where=True
+):
     return umr_sum(a, axis, dtype, out, keepdims, initial, where)
 
-def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
-          initial=_NoValue, where=True):
+
+def _prod(
+    a, axis=None, dtype=None, out=None, keepdims=False, initial=_NoValue, where=True
+):
     return umr_prod(a, axis, dtype, out, keepdims, initial, where)
+
 
 def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
@@ -57,11 +63,13 @@ def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
         return umr_any(a, axis, dtype, out, keepdims)
     return umr_any(a, axis, dtype, out, keepdims, where=where)
 
+
 def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
         return umr_all(a, axis, dtype, out, keepdims)
     return umr_all(a, axis, dtype, out, keepdims, where=where)
+
 
 def _count_reduce_items(arr, axis, keepdims=False, where=True):
     # fast-path for the default case
@@ -80,17 +88,20 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
 
         # guarded to protect circular imports
         from numpy.lib.stride_tricks import broadcast_to
+
         # count True values in (potentially broadcasted) boolean mask
-        items = umr_sum(broadcast_to(where, arr.shape), axis, nt.intp, None,
-                        keepdims)
+        items = umr_sum(broadcast_to(where, arr.shape), axis, nt.intp, None, keepdims)
     return items
+
 
 # Numpy 1.17.0, 2019-02-24
 # Various clip behavior deprecations, marked with _clip_dep as a prefix.
 
+
 def _clip_dep_is_scalar_nan(a):
     # guarded to protect circular imports
     from numpy.core.fromnumeric import ndim
+
     if ndim(a) != 0:
         return False
     try:
@@ -98,10 +109,12 @@ def _clip_dep_is_scalar_nan(a):
     except TypeError:
         return False
 
+
 def _clip_dep_is_byte_swapped(a):
     if isinstance(a, mu.ndarray):
         return not a.dtype.isnative
     return False
+
 
 def _clip_dep_invoke_with_casting(ufunc, *args, out=None, casting=None, **kwargs):
     # normal path
@@ -115,12 +128,13 @@ def _clip_dep_invoke_with_casting(ufunc, *args, out=None, casting=None, **kwargs
         # Numpy 1.17.0, 2019-02-24
         warnings.warn(
             "Converting the output of clip from {!r} to {!r} is deprecated. "
-            "Pass `casting=\"unsafe\"` explicitly to silence this warning, or "
+            'Pass `casting="unsafe"` explicitly to silence this warning, or '
             "correct the type of the variables.".format(e.from_, e.to),
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         return ufunc(*args, out=out, casting="unsafe", **kwargs)
+
 
 def _clip(a, min=None, max=None, out=None, *, casting=None, **kwargs):
     if min is None and max is None:
@@ -132,10 +146,10 @@ def _clip(a, min=None, max=None, out=None, *, casting=None, **kwargs):
     if not _clip_dep_is_byte_swapped(a) and not _clip_dep_is_byte_swapped(out):
         using_deprecated_nan = False
         if _clip_dep_is_scalar_nan(min):
-            min = -float('inf')
+            min = -float("inf")
             using_deprecated_nan = True
         if _clip_dep_is_scalar_nan(max):
-            max = float('inf')
+            max = float("inf")
             using_deprecated_nan = True
         if using_deprecated_nan:
             warnings.warn(
@@ -146,18 +160,22 @@ def _clip(a, min=None, max=None, out=None, *, casting=None, **kwargs):
                 "To skip a bound, pass either None or an np.inf of an "
                 "appropriate sign.",
                 DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
 
     if min is None:
         return _clip_dep_invoke_with_casting(
-            um.minimum, a, max, out=out, casting=casting, **kwargs)
+            um.minimum, a, max, out=out, casting=casting, **kwargs
+        )
     elif max is None:
         return _clip_dep_invoke_with_casting(
-            um.maximum, a, min, out=out, casting=casting, **kwargs)
+            um.maximum, a, min, out=out, casting=casting, **kwargs
+        )
     else:
         return _clip_dep_invoke_with_casting(
-            um.clip, a, min, max, out=out, casting=casting, **kwargs)
+            um.clip, a, min, max, out=out, casting=casting, **kwargs
+        )
+
 
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     arr = asanyarray(a)
@@ -171,18 +189,17 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None:
         if issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
-            dtype = mu.dtype('f8')
+            dtype = mu.dtype("f8")
         elif issubclass(arr.dtype.type, nt.float16):
-            dtype = mu.dtype('f4')
+            dtype = mu.dtype("f4")
             is_float16_result = True
 
     ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
     if isinstance(ret, mu.ndarray):
-        ret = um.true_divide(
-                ret, rcount, out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(ret, rcount, out=ret, casting="unsafe", subok=False)
         if is_float16_result and out is None:
             ret = arr.dtype.type(ret)
-    elif hasattr(ret, 'dtype'):
+    elif hasattr(ret, "dtype"):
         if is_float16_result:
             ret = arr.dtype.type(ret / rcount)
         else:
@@ -192,19 +209,18 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     return ret
 
-def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
-         where=True):
+
+def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True):
     arr = asanyarray(a)
 
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
     # Make this warning show up on top.
     if ddof >= rcount if where is True else umr_any(ddof >= rcount, axis=None):
-        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning,
-                      stacklevel=2)
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning, stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
-        dtype = mu.dtype('f8')
+        dtype = mu.dtype("f8")
 
     # Compute the mean.
     # Note that if dtype is not of inexact type then arraymean will
@@ -219,8 +235,9 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
         # matching rcount to arrmean when where is specified as array
         div = rcount.reshape(arrmean.shape)
     if isinstance(arrmean, mu.ndarray):
-        arrmean = um.true_divide(arrmean, div, out=arrmean, casting='unsafe',
-                                 subok=False)
+        arrmean = um.true_divide(
+            arrmean, div, out=arrmean, casting="unsafe", subok=False
+        )
     else:
         arrmean = arrmean.dtype.type(arrmean / rcount)
 
@@ -248,43 +265,46 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
 
     # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
-        ret = um.true_divide(
-                ret, rcount, out=ret, casting='unsafe', subok=False)
-    elif hasattr(ret, 'dtype'):
+        ret = um.true_divide(ret, rcount, out=ret, casting="unsafe", subok=False)
+    elif hasattr(ret, "dtype"):
         ret = ret.dtype.type(ret / rcount)
     else:
         ret = ret / rcount
 
     return ret
 
-def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
-         where=True):
-    ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-               keepdims=keepdims, where=where)
+
+def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True):
+    ret = _var(
+        a, axis=axis, dtype=dtype, out=out, ddof=ddof, keepdims=keepdims, where=where
+    )
 
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)
-    elif hasattr(ret, 'dtype'):
+    elif hasattr(ret, "dtype"):
         ret = ret.dtype.type(um.sqrt(ret))
     else:
         ret = um.sqrt(ret)
 
     return ret
 
+
 def _ptp(a, axis=None, out=None, keepdims=False):
     return um.subtract(
         umr_maximum(a, axis, None, out, keepdims),
         umr_minimum(a, axis, None, None, keepdims),
-        out
+        out,
     )
 
+
 def _dump(self, file, protocol=2):
-    if hasattr(file, 'write'):
+    if hasattr(file, "write"):
         ctx = nullcontext(file)
     else:
         ctx = open(os_fspath(file), "wb")
     with ctx as f:
         pickle.dump(self, f, protocol=protocol)
+
 
 def _dumps(self, protocol=2):
     return pickle.dumps(self, protocol=protocol)

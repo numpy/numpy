@@ -33,6 +33,7 @@ np.complex64(1, 2)  # E: Too many arguments
 
 np.datetime64(0)  # E: non-matching overload
 
+
 class A:
     def __float__(self):
         return 1.0
@@ -60,15 +61,15 @@ np.float64(value=0.0)  # E: Unexpected keyword argument
 np.int64(value=0)  # E: Unexpected keyword argument
 np.uint64(value=0)  # E: Unexpected keyword argument
 np.complex128(value=0.0j)  # E: Unexpected keyword argument
-np.str_(value='bob')  # E: No overload variant
-np.bytes_(value=b'test')  # E: No overload variant
-np.void(value=b'test')  # E: Unexpected keyword argument
+np.str_(value="bob")  # E: No overload variant
+np.bytes_(value=b"test")  # E: No overload variant
+np.void(value=b"test")  # E: Unexpected keyword argument
 np.bool_(value=True)  # E: Unexpected keyword argument
 np.datetime64(value="2019")  # E: No overload variant
 np.timedelta64(value=0)  # E: Unexpected keyword argument
 
-np.bytes_(b"hello", encoding='utf-8')  # E: No overload variant
-np.str_("hello", encoding='utf-8')  # E: No overload variant
+np.bytes_(b"hello", encoding="utf-8")  # E: No overload variant
+np.str_("hello", encoding="utf-8")  # E: No overload variant
 
 complex(np.bytes_("1"))  # E: No overload variant
 
@@ -78,7 +79,10 @@ f8.squeeze(axis=1)  # E: incompatible type
 f8.squeeze(axis=(0, 1))  # E: incompatible type
 f8.transpose(1)  # E: incompatible type
 
-def func(a: np.float32) -> None: ...
+
+def func(a: np.float32) -> None:
+    ...
+
 
 func(f2)  # E: incompatible type
 func(f8)  # E: incompatible type

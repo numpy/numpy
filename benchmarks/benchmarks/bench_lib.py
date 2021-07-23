@@ -36,8 +36,7 @@ class Pad(Benchmark):
     param_names = ["shape", "pad_width", "mode"]
     params = [
         # Shape of the input arrays
-        [(2 ** 22,), (1024, 1024), (256, 128, 1),
-         (4, 4, 4, 4), (1, 1, 1, 1, 1)],
+        [(2 ** 22,), (1024, 1024), (256, 128, 1), (4, 4, 4, 4), (1, 1, 1, 1, 1)],
         # Tested pad widths
         [1, 8, (0, 32)],
         # Tested modes: mean, median, minimum & maximum use the same code path
@@ -59,18 +58,18 @@ class Nan(Benchmark):
 
     param_names = ["array_size", "percent_nans"]
     params = [
-            # sizes of the 1D arrays
-            [200, int(2e5)],
-            # percent of np.nan in arrays
-            [0, 0.1, 2., 50., 90.],
-            ]
+        # sizes of the 1D arrays
+        [200, int(2e5)],
+        # percent of np.nan in arrays
+        [0, 0.1, 2.0, 50.0, 90.0],
+    ]
 
     def setup(self, array_size, percent_nans):
         np.random.seed(123)
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
         base_array = np.random.uniform(size=array_size)
-        base_array[base_array < percent_nans / 100.] = np.nan
+        base_array[base_array < percent_nans / 100.0] = np.nan
         self.arr = base_array
 
     def time_nanmin(self, array_size, percent_nans):
@@ -124,7 +123,7 @@ class Unique(Benchmark):
         # sizes of the 1D arrays
         [200, int(2e5)],
         # percent of np.nan in arrays
-        [0, 0.1, 2., 50., 90.],
+        [0, 0.1, 2.0, 50.0, 90.0],
     ]
 
     def setup(self, array_size, percent_nans):
@@ -132,7 +131,7 @@ class Unique(Benchmark):
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
         base_array = np.random.uniform(size=array_size)
-        base_array[base_array < percent_nans / 100.] = np.nan
+        base_array[base_array < percent_nans / 100.0] = np.nan
         self.arr = base_array
 
     def time_unique(self, array_size, percent_nans):

@@ -7,7 +7,9 @@ except ImportError:
     def array_function_dispatch(*args, **kwargs):
         def wrap(*args, **kwargs):
             return None
+
         return wrap
+
 
 import numpy as np
 
@@ -39,7 +41,6 @@ class DuckArray:
 
 
 class ArrayFunction(Benchmark):
-
     def setup(self):
         self.numpy_array = np.array(1)
         self.numpy_arrays = [np.array(1), np.array(2)]

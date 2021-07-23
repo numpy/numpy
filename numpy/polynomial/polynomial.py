@@ -73,11 +73,34 @@ See Also
 
 """
 __all__ = [
-    'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
-    'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
-    'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
+    "polyzero",
+    "polyone",
+    "polyx",
+    "polydomain",
+    "polyline",
+    "polyadd",
+    "polysub",
+    "polymulx",
+    "polymul",
+    "polydiv",
+    "polypow",
+    "polyval",
+    "polyvalfromroots",
+    "polyder",
+    "polyint",
+    "polyfromroots",
+    "polyvander",
+    "polyfit",
+    "polytrim",
+    "polyroots",
+    "Polynomial",
+    "polyval2d",
+    "polyval3d",
+    "polygrid2d",
+    "polygrid3d",
+    "polyvander2d",
+    "polyvander3d",
+]
 
 import numpy as np
 import numpy.linalg as la
@@ -320,7 +343,7 @@ def polymulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
+    prd[0] = c[0] * 0
     prd[1:] = c
     return prd
 
@@ -405,20 +428,20 @@ def polydiv(c1, c2):
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
-        return c1[:1]*0, c1
+        return c1[:1] * 0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        return c1 / c2[-1], c1[:1] * 0
     else:
         dlen = lc1 - lc2
         scl = c2[-1]
-        c2 = c2[:-1]/scl
+        c2 = c2[:-1] / scl
         i = dlen
         j = lc1 - 1
         while i >= 0:
-            c1[i:j] -= c2*c1[j]
+            c1[i:j] -= c2 * c1[j]
             i -= 1
             j -= 1
-        return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
+        return c1[j + 1 :] / scl, pu.trimseq(c1[: j + 1])
 
 
 def polypow(c, pow, maxpower=None):
@@ -513,7 +536,7 @@ def polyder(c, m=1, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=True)
-    if c.dtype.char in '?bBhHiIlLqQpP':
+    if c.dtype.char in "?bBhHiIlLqQpP":
         # astype fails with NA
         c = c + 0.0
     cdt = c.dtype
@@ -529,14 +552,14 @@ def polyder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=cdt)
             for j in range(n, 0, -1):
-                der[j - 1] = j*c[j]
+                der[j - 1] = j * c[j]
             c = der
     c = np.moveaxis(c, 0, iaxis)
     return c
@@ -621,7 +644,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=True)
-    if c.dtype.char in '?bBhHiIlLqQpP':
+    if c.dtype.char in "?bBhHiIlLqQpP":
         # astype doesn't preserve mask attribute.
         c = c + 0.0
     cdt = c.dtype
@@ -642,7 +665,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     if cnt == 0:
         return c
 
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     c = np.moveaxis(c, iaxis, 0)
     for i in range(cnt):
         n = len(c)
@@ -651,10 +674,10 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=cdt)
-            tmp[0] = c[0]*0
+            tmp[0] = c[0] * 0
             tmp[1] = c[0]
             for j in range(1, n):
-                tmp[j + 1] = c[j]/(j + 1)
+                tmp[j + 1] = c[j] / (j + 1)
             tmp[0] += k[i] - polyval(lbnd, tmp)
             c = tmp
     c = np.moveaxis(c, 0, iaxis)
@@ -743,17 +766,17 @@ def polyval(x, c, tensor=True):
 
     """
     c = np.array(c, ndmin=1, copy=False)
-    if c.dtype.char in '?bBhHiIlLqQpP':
+    if c.dtype.char in "?bBhHiIlLqQpP":
         # astype fails with NA
         c = c + 0.0
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
-    c0 = c[-1] + x*0
+    c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
-        c0 = c[-i] + c0*x
+        c0 = c[-i] + c0 * x
     return c0
 
 
@@ -833,13 +856,13 @@ def polyvalfromroots(x, r, tensor=True):
     array([-0.,  0.])
     """
     r = np.array(r, ndmin=1, copy=False)
-    if r.dtype.char in '?bBhHiIlLqQpP':
+    if r.dtype.char in "?bBhHiIlLqQpP":
         r = r.astype(np.double)
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray):
         if tensor:
-            r = r.reshape(r.shape + (1,)*x.ndim)
+            r = r.reshape(r.shape + (1,) * x.ndim)
         elif x.ndim >= r.ndim:
             raise ValueError("x.ndim must be < r.ndim when tensor == False")
     return np.prod(x - r, axis=0)
@@ -1101,11 +1124,11 @@ def polyvander(x, deg):
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
         v[1] = x
         for i in range(2, ideg + 1):
-            v[i] = v[i-1]*x
+            v[i] = v[i - 1] * x
     return np.moveaxis(v, 0, -1)
 
 
@@ -1390,15 +1413,15 @@ def polycompanion(c):
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
-        raise ValueError('Series must have maximum degree of at least 1.')
+        raise ValueError("Series must have maximum degree of at least 1.")
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    bot = mat.reshape(-1)[n::n+1]
+    bot = mat.reshape(-1)[n :: n + 1]
     bot[...] = 1
-    mat[:, -1] -= c[:-1]/c[-1]
+    mat[:, -1] -= c[:-1] / c[-1]
     return mat
 
 
@@ -1456,10 +1479,10 @@ def polyroots(c):
     if len(c) < 2:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+        return np.array([-c[0] / c[1]])
 
     # rotated companion matrix reduces error
-    m = polycompanion(c)[::-1,::-1]
+    m = polycompanion(c)[::-1, ::-1]
     r = la.eigvals(m)
     r.sort()
     return r
@@ -1468,6 +1491,7 @@ def polyroots(c):
 #
 # polynomial class
 #
+
 
 class Polynomial(ABCPolyBase):
     """A power series class.
@@ -1491,6 +1515,7 @@ class Polynomial(ABCPolyBase):
         .. versionadded:: 1.6.0
 
     """
+
     # Virtual Functions
     _add = staticmethod(polyadd)
     _sub = staticmethod(polysub)
@@ -1523,7 +1548,7 @@ class Polynomial(ABCPolyBase):
         if needs_parens:
             arg_str = rf"\left({arg_str}\right)"
         if i == 0:
-            return '1'
+            return "1"
         elif i == 1:
             return arg_str
         else:

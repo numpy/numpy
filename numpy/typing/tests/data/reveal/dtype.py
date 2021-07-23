@@ -48,7 +48,9 @@ reveal_type(np.dtype(("U", 10)))  # E: numpy.dtype[numpy.void]
 
 # Methods and attributes
 reveal_type(dtype_U.base)  # E: numpy.dtype[Any]
-reveal_type(dtype_U.subdtype)  # E: Union[None, Tuple[numpy.dtype[Any], builtins.tuple[builtins.int]]]
+reveal_type(
+    dtype_U.subdtype
+)  # E: Union[None, Tuple[numpy.dtype[Any], builtins.tuple[builtins.int]]]
 reveal_type(dtype_U.newbyteorder())  # E: numpy.dtype[numpy.str_]
 reveal_type(dtype_U.type)  # E: Type[numpy.str_]
 reveal_type(dtype_U.name)  # E: str

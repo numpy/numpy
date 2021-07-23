@@ -33,16 +33,18 @@ from cffi import FFI
 from numpy.random import PCG64
 
 ffi = FFI()
-if os.path.exists('./distributions.dll'):
-    lib = ffi.dlopen('./distributions.dll')
-elif os.path.exists('./libdistributions.so'):
-    lib = ffi.dlopen('./libdistributions.so')
+if os.path.exists("./distributions.dll"):
+    lib = ffi.dlopen("./distributions.dll")
+elif os.path.exists("./libdistributions.so"):
+    lib = ffi.dlopen("./libdistributions.so")
 else:
-    raise RuntimeError('Required DLL/so file was not found.')
+    raise RuntimeError("Required DLL/so file was not found.")
 
-ffi.cdef("""
+ffi.cdef(
+    """
 double random_standard_normal(void *bitgen_state);
-""")
+"""
+)
 x = PCG64()
 xffi = x.cffi
 bit_generator = xffi.bit_generator
@@ -61,7 +63,7 @@ normalsj = nb.jit(normals, nopython=True)
 
 # Numba requires a memory address for void *
 # Can also get address from x.ctypes.bit_generator.value
-bit_generator_address = int(ffi.cast('uintptr_t', bit_generator))
+bit_generator_address = int(ffi.cast("uintptr_t", bit_generator))
 
 norm = normalsj(1000, bit_generator_address)
 print(norm[:12])

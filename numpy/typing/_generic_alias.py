@@ -27,12 +27,12 @@ _T = TypeVar("_T", bound="_GenericAlias")
 def _to_str(obj: object) -> str:
     """Helper function for `_GenericAlias.__repr__`."""
     if obj is Ellipsis:
-        return '...'
+        return "..."
     elif isinstance(obj, type) and not isinstance(obj, _GENERIC_ALIAS_TYPE):
-        if obj.__module__ == 'builtins':
+        if obj.__module__ == "builtins":
             return obj.__qualname__
         else:
-            return f'{obj.__module__}.{obj.__qualname__}'
+            return f"{obj.__module__}.{obj.__qualname__}"
     else:
         return repr(obj)
 
@@ -114,10 +114,9 @@ class _GenericAlias:
     def __call__(self) -> type:
         return self.__origin__
 
-    def __reduce__(self: _T) -> Tuple[
-        Type[_T],
-        Tuple[type, Tuple[object, ...]],
-    ]:
+    def __reduce__(
+        self: _T,
+    ) -> Tuple[Type[_T], Tuple[type, Tuple[object, ...]],]:
         cls = type(self)
         return cls, (self.__origin__, self.__args__)
 
@@ -141,13 +140,11 @@ class _GenericAlias:
 
     def __instancecheck__(self, obj: object) -> NoReturn:
         """Check if an `obj` is an instance."""
-        raise TypeError("isinstance() argument 2 cannot be a "
-                        "parameterized generic")
+        raise TypeError("isinstance() argument 2 cannot be a " "parameterized generic")
 
     def __subclasscheck__(self, cls: type) -> NoReturn:
         """Check if a `cls` is a subclass."""
-        raise TypeError("issubclass() argument 2 cannot be a "
-                        "parameterized generic")
+        raise TypeError("issubclass() argument 2 cannot be a " "parameterized generic")
 
     def __repr__(self) -> str:
         """Return ``repr(self)``."""
@@ -173,19 +170,18 @@ class _GenericAlias:
         """Return ``self == value``."""
         if not isinstance(value, _GENERIC_ALIAS_TYPE):
             return NotImplemented
-        return (
-            self.__origin__ == value.__origin__ and
-            self.__args__ == value.__args__
-        )
+        return self.__origin__ == value.__origin__ and self.__args__ == value.__args__
 
-    _ATTR_EXCEPTIONS: ClassVar[FrozenSet[str]] = frozenset({
-        "__origin__",
-        "__args__",
-        "__parameters__",
-        "__mro_entries__",
-        "__reduce__",
-        "__reduce_ex__",
-    })
+    _ATTR_EXCEPTIONS: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "__origin__",
+            "__args__",
+            "__parameters__",
+            "__mro_entries__",
+            "__reduce__",
+            "__reduce_ex__",
+        }
+    )
 
     def __getattribute__(self, name: str) -> Any:
         """Return ``getattr(self, name)``."""

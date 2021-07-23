@@ -22,9 +22,12 @@ def check_dir(module, module_name=None):
     results = {}
     for name in dir(module):
         item = getattr(module, name)
-        if (hasattr(item, '__module__') and hasattr(item, '__name__')
-                and item.__module__ != module_name):
-            results[name] = item.__module__ + '.' + item.__name__
+        if (
+            hasattr(item, "__module__")
+            and hasattr(item, "__name__")
+            and item.__module__ != module_name
+        ):
+            results[name] = item.__module__ + "." + item.__name__
     return results
 
 
@@ -32,39 +35,39 @@ def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
-        'Tester': 'numpy.testing._private.nosetester.NoseTester',
-        '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
-        'add_newdoc': 'numpy.core.function_base.add_newdoc',
-        'add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
-        'byte_bounds': 'numpy.lib.utils.byte_bounds',
-        'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
-        'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
-        'disp': 'numpy.lib.function_base.disp',
-        'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
-        'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
-        'get_include': 'numpy.lib.utils.get_include',
-        'mafromtxt': 'numpy.lib.npyio.mafromtxt',
-        'ndfromtxt': 'numpy.lib.npyio.ndfromtxt',
-        'recfromcsv': 'numpy.lib.npyio.recfromcsv',
-        'recfromtxt': 'numpy.lib.npyio.recfromtxt',
-        'safe_eval': 'numpy.lib.utils.safe_eval',
-        'set_string_function': 'numpy.core.arrayprint.set_string_function',
-        'show_config': 'numpy.__config__.show',
-        'who': 'numpy.lib.utils.who',
+        "Tester": "numpy.testing._private.nosetester.NoseTester",
+        "_add_newdoc_ufunc": "numpy.core._multiarray_umath._add_newdoc_ufunc",
+        "add_docstring": "numpy.core._multiarray_umath.add_docstring",
+        "add_newdoc": "numpy.core.function_base.add_newdoc",
+        "add_newdoc_ufunc": "numpy.core._multiarray_umath._add_newdoc_ufunc",
+        "byte_bounds": "numpy.lib.utils.byte_bounds",
+        "compare_chararrays": "numpy.core._multiarray_umath.compare_chararrays",
+        "deprecate": "numpy.lib.utils.deprecate",
+        "deprecate_with_doc": "numpy.lib.utils.deprecate_with_doc",
+        "disp": "numpy.lib.function_base.disp",
+        "fastCopyAndTranspose": "numpy.core._multiarray_umath._fastCopyAndTranspose",
+        "get_array_wrap": "numpy.lib.shape_base.get_array_wrap",
+        "get_include": "numpy.lib.utils.get_include",
+        "mafromtxt": "numpy.lib.npyio.mafromtxt",
+        "ndfromtxt": "numpy.lib.npyio.ndfromtxt",
+        "recfromcsv": "numpy.lib.npyio.recfromcsv",
+        "recfromtxt": "numpy.lib.npyio.recfromtxt",
+        "safe_eval": "numpy.lib.utils.safe_eval",
+        "set_string_function": "numpy.core.arrayprint.set_string_function",
+        "show_config": "numpy.__config__.show",
+        "who": "numpy.lib.utils.who",
     }
     if sys.version_info < (3, 7):
         # These built-in types are re-exported by numpy.
         builtins = {
-            'bool': 'builtins.bool',
-            'complex': 'builtins.complex',
-            'float': 'builtins.float',
-            'int': 'builtins.int',
-            'long': 'builtins.int',
-            'object': 'builtins.object',
-            'str': 'builtins.str',
-            'unicode': 'builtins.str',
+            "bool": "builtins.bool",
+            "complex": "builtins.complex",
+            "float": "builtins.float",
+            "int": "builtins.int",
+            "long": "builtins.int",
+            "object": "builtins.object",
+            "str": "builtins.str",
+            "unicode": "builtins.str",
         }
         allowlist = dict(undocumented, **builtins)
     else:
@@ -76,7 +79,7 @@ def test_numpy_namespace():
     assert bad_results == allowlist
 
 
-@pytest.mark.parametrize('name', ['testing', 'Tester'])
+@pytest.mark.parametrize("name", ["testing", "Tester"])
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
 
@@ -90,7 +93,7 @@ def test_import_lazy_import(name):
     We also test for the presence of the lazily imported modules in dir
 
     """
-    exe = (sys.executable, '-c', "import numpy; numpy." + name)
+    exe = (sys.executable, "-c", "import numpy; numpy." + name)
     result = subprocess.check_output(exe)
     assert not result
 
@@ -114,14 +117,14 @@ def test_numpy_fft():
     assert bad_results == {}
 
 
-@pytest.mark.skipif(ctypes is None,
-                    reason="ctypes not available in this python")
+@pytest.mark.skipif(ctypes is None, reason="ctypes not available in this python")
 def test_NPY_NO_EXPORT():
     cdll = ctypes.CDLL(np.core._multiarray_tests.__file__)
     # Make sure an arbitrary NPY_NO_EXPORT function is actually hidden
-    f = getattr(cdll, 'test_not_exported', None)
-    assert f is None, ("'test_not_exported' is mistakenly exported, "
-                      "NPY_NO_EXPORT does not work")
+    f = getattr(cdll, "test_not_exported", None)
+    assert f is None, (
+        "'test_not_exported' is mistakenly exported, " "NPY_NO_EXPORT does not work"
+    )
 
 
 # Historically NumPy has not used leading underscores for private submodules
@@ -136,43 +139,46 @@ def test_NPY_NO_EXPORT():
 # of underscores) but should not be used.  For many of those modules the
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
-PUBLIC_MODULES = ['numpy.' + s for s in [
-    "ctypeslib",
-    "distutils",
-    "distutils.cpuinfo",
-    "distutils.exec_command",
-    "distutils.misc_util",
-    "distutils.log",
-    "distutils.system_info",
-    "doc",
-    "doc.constants",
-    "doc.ufuncs",
-    "f2py",
-    "fft",
-    "lib",
-    "lib.format",  # was this meant to be public?
-    "lib.mixins",
-    "lib.recfunctions",
-    "lib.scimath",
-    "lib.stride_tricks",
-    "linalg",
-    "ma",
-    "ma.extras",
-    "ma.mrecords",
-    "matlib",
-    "polynomial",
-    "polynomial.chebyshev",
-    "polynomial.hermite",
-    "polynomial.hermite_e",
-    "polynomial.laguerre",
-    "polynomial.legendre",
-    "polynomial.polynomial",
-    "random",
-    "testing",
-    "typing",
-    "typing.mypy_plugin",
-    "version",
-]]
+PUBLIC_MODULES = [
+    "numpy." + s
+    for s in [
+        "ctypeslib",
+        "distutils",
+        "distutils.cpuinfo",
+        "distutils.exec_command",
+        "distutils.misc_util",
+        "distutils.log",
+        "distutils.system_info",
+        "doc",
+        "doc.constants",
+        "doc.ufuncs",
+        "f2py",
+        "fft",
+        "lib",
+        "lib.format",  # was this meant to be public?
+        "lib.mixins",
+        "lib.recfunctions",
+        "lib.scimath",
+        "lib.stride_tricks",
+        "linalg",
+        "ma",
+        "ma.extras",
+        "ma.mrecords",
+        "matlib",
+        "polynomial",
+        "polynomial.chebyshev",
+        "polynomial.hermite",
+        "polynomial.hermite_e",
+        "polynomial.laguerre",
+        "polynomial.legendre",
+        "polynomial.polynomial",
+        "random",
+        "testing",
+        "typing",
+        "typing.mypy_plugin",
+        "version",
+    ]
+]
 
 
 PUBLIC_ALIASED_MODULES = [
@@ -182,128 +188,131 @@ PUBLIC_ALIASED_MODULES = [
 ]
 
 
-PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
-    "compat",
-    "compat.py3k",
-    "conftest",
-    "core",
-    "core.arrayprint",
-    "core.defchararray",
-    "core.einsumfunc",
-    "core.fromnumeric",
-    "core.function_base",
-    "core.getlimits",
-    "core.machar",
-    "core.memmap",
-    "core.multiarray",
-    "core.numeric",
-    "core.numerictypes",
-    "core.overrides",
-    "core.records",
-    "core.shape_base",
-    "core.umath",
-    "core.umath_tests",
-    "distutils.ccompiler",
-    'distutils.ccompiler_opt',
-    "distutils.command",
-    "distutils.command.autodist",
-    "distutils.command.bdist_rpm",
-    "distutils.command.build",
-    "distutils.command.build_clib",
-    "distutils.command.build_ext",
-    "distutils.command.build_py",
-    "distutils.command.build_scripts",
-    "distutils.command.build_src",
-    "distutils.command.config",
-    "distutils.command.config_compiler",
-    "distutils.command.develop",
-    "distutils.command.egg_info",
-    "distutils.command.install",
-    "distutils.command.install_clib",
-    "distutils.command.install_data",
-    "distutils.command.install_headers",
-    "distutils.command.sdist",
-    "distutils.conv_template",
-    "distutils.core",
-    "distutils.extension",
-    "distutils.fcompiler",
-    "distutils.fcompiler.absoft",
-    "distutils.fcompiler.compaq",
-    "distutils.fcompiler.environment",
-    "distutils.fcompiler.g95",
-    "distutils.fcompiler.gnu",
-    "distutils.fcompiler.hpux",
-    "distutils.fcompiler.ibm",
-    "distutils.fcompiler.intel",
-    "distutils.fcompiler.lahey",
-    "distutils.fcompiler.mips",
-    "distutils.fcompiler.nag",
-    "distutils.fcompiler.none",
-    "distutils.fcompiler.pathf95",
-    "distutils.fcompiler.pg",
-    "distutils.fcompiler.nv",
-    "distutils.fcompiler.sun",
-    "distutils.fcompiler.vast",
-    "distutils.fcompiler.fujitsu",
-    "distutils.from_template",
-    "distutils.intelccompiler",
-    "distutils.lib2def",
-    "distutils.line_endings",
-    "distutils.mingw32ccompiler",
-    "distutils.msvccompiler",
-    "distutils.npy_pkg_config",
-    "distutils.numpy_distribution",
-    "distutils.pathccompiler",
-    "distutils.unixccompiler",
-    "dual",
-    "f2py.auxfuncs",
-    "f2py.capi_maps",
-    "f2py.cb_rules",
-    "f2py.cfuncs",
-    "f2py.common_rules",
-    "f2py.crackfortran",
-    "f2py.diagnose",
-    "f2py.f2py2e",
-    "f2py.f2py_testing",
-    "f2py.f90mod_rules",
-    "f2py.func2subr",
-    "f2py.rules",
-    "f2py.use_rules",
-    "fft.helper",
-    "lib.arraypad",
-    "lib.arraysetops",
-    "lib.arrayterator",
-    "lib.function_base",
-    "lib.histograms",
-    "lib.index_tricks",
-    "lib.nanfunctions",
-    "lib.npyio",
-    "lib.polynomial",
-    "lib.shape_base",
-    "lib.twodim_base",
-    "lib.type_check",
-    "lib.ufunclike",
-    "lib.user_array",  # note: not in np.lib, but probably should just be deleted
-    "lib.utils",
-    "linalg.lapack_lite",
-    "linalg.linalg",
-    "ma.bench",
-    "ma.core",
-    "ma.testutils",
-    "ma.timer_comparison",
-    "matrixlib",
-    "matrixlib.defmatrix",
-    "polynomial.polyutils",
-    "random.mtrand",
-    "random.bit_generator",
-    "testing.print_coercion_tables",
-    "testing.utils",
-]]
+PRIVATE_BUT_PRESENT_MODULES = [
+    "numpy." + s
+    for s in [
+        "compat",
+        "compat.py3k",
+        "conftest",
+        "core",
+        "core.arrayprint",
+        "core.defchararray",
+        "core.einsumfunc",
+        "core.fromnumeric",
+        "core.function_base",
+        "core.getlimits",
+        "core.machar",
+        "core.memmap",
+        "core.multiarray",
+        "core.numeric",
+        "core.numerictypes",
+        "core.overrides",
+        "core.records",
+        "core.shape_base",
+        "core.umath",
+        "core.umath_tests",
+        "distutils.ccompiler",
+        "distutils.ccompiler_opt",
+        "distutils.command",
+        "distutils.command.autodist",
+        "distutils.command.bdist_rpm",
+        "distutils.command.build",
+        "distutils.command.build_clib",
+        "distutils.command.build_ext",
+        "distutils.command.build_py",
+        "distutils.command.build_scripts",
+        "distutils.command.build_src",
+        "distutils.command.config",
+        "distutils.command.config_compiler",
+        "distutils.command.develop",
+        "distutils.command.egg_info",
+        "distutils.command.install",
+        "distutils.command.install_clib",
+        "distutils.command.install_data",
+        "distutils.command.install_headers",
+        "distutils.command.sdist",
+        "distutils.conv_template",
+        "distutils.core",
+        "distutils.extension",
+        "distutils.fcompiler",
+        "distutils.fcompiler.absoft",
+        "distutils.fcompiler.compaq",
+        "distutils.fcompiler.environment",
+        "distutils.fcompiler.g95",
+        "distutils.fcompiler.gnu",
+        "distutils.fcompiler.hpux",
+        "distutils.fcompiler.ibm",
+        "distutils.fcompiler.intel",
+        "distutils.fcompiler.lahey",
+        "distutils.fcompiler.mips",
+        "distutils.fcompiler.nag",
+        "distutils.fcompiler.none",
+        "distutils.fcompiler.pathf95",
+        "distutils.fcompiler.pg",
+        "distutils.fcompiler.nv",
+        "distutils.fcompiler.sun",
+        "distutils.fcompiler.vast",
+        "distutils.fcompiler.fujitsu",
+        "distutils.from_template",
+        "distutils.intelccompiler",
+        "distutils.lib2def",
+        "distutils.line_endings",
+        "distutils.mingw32ccompiler",
+        "distutils.msvccompiler",
+        "distutils.npy_pkg_config",
+        "distutils.numpy_distribution",
+        "distutils.pathccompiler",
+        "distutils.unixccompiler",
+        "dual",
+        "f2py.auxfuncs",
+        "f2py.capi_maps",
+        "f2py.cb_rules",
+        "f2py.cfuncs",
+        "f2py.common_rules",
+        "f2py.crackfortran",
+        "f2py.diagnose",
+        "f2py.f2py2e",
+        "f2py.f2py_testing",
+        "f2py.f90mod_rules",
+        "f2py.func2subr",
+        "f2py.rules",
+        "f2py.use_rules",
+        "fft.helper",
+        "lib.arraypad",
+        "lib.arraysetops",
+        "lib.arrayterator",
+        "lib.function_base",
+        "lib.histograms",
+        "lib.index_tricks",
+        "lib.nanfunctions",
+        "lib.npyio",
+        "lib.polynomial",
+        "lib.shape_base",
+        "lib.twodim_base",
+        "lib.type_check",
+        "lib.ufunclike",
+        "lib.user_array",  # note: not in np.lib, but probably should just be deleted
+        "lib.utils",
+        "linalg.lapack_lite",
+        "linalg.linalg",
+        "ma.bench",
+        "ma.core",
+        "ma.testutils",
+        "ma.timer_comparison",
+        "matrixlib",
+        "matrixlib.defmatrix",
+        "polynomial.polyutils",
+        "random.mtrand",
+        "random.bit_generator",
+        "testing.print_coercion_tables",
+        "testing.utils",
+    ]
+]
 
 
 def is_unexpected(name):
     """Check if this needs to be considered."""
-    if '._' in name or '.tests' in name or '.setup' in name:
+    if "._" in name or ".tests" in name or ".setup" in name:
         return False
 
     if name in PUBLIC_MODULES:
@@ -341,9 +350,9 @@ def test_all_modules_are_expected():
     """
 
     modnames = []
-    for _, modname, ispkg in pkgutil.walk_packages(path=np.__path__,
-                                                   prefix=np.__name__ + '.',
-                                                   onerror=None):
+    for _, modname, ispkg in pkgutil.walk_packages(
+        path=np.__path__, prefix=np.__name__ + ".", onerror=None
+    ):
         if is_unexpected(modname) and modname not in SKIP_LIST:
             # We have a name that is new.  If that's on purpose, add it to
             # PUBLIC_MODULES.  We don't expect to have to add anything to
@@ -351,27 +360,27 @@ def test_all_modules_are_expected():
             modnames.append(modname)
 
     if modnames:
-        raise AssertionError(f'Found unexpected modules: {modnames}')
+        raise AssertionError(f"Found unexpected modules: {modnames}")
 
 
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.math',
-    'numpy.distutils.log.sys',
-    'numpy.doc.constants.re',
-    'numpy.doc.constants.textwrap',
-    'numpy.lib.emath',
-    'numpy.lib.math',
-    'numpy.matlib.char',
-    'numpy.matlib.rec',
-    'numpy.matlib.emath',
-    'numpy.matlib.math',
-    'numpy.matlib.linalg',
-    'numpy.matlib.fft',
-    'numpy.matlib.random',
-    'numpy.matlib.ctypeslib',
-    'numpy.matlib.ma',
+    "numpy.math",
+    "numpy.distutils.log.sys",
+    "numpy.doc.constants.re",
+    "numpy.doc.constants.textwrap",
+    "numpy.lib.emath",
+    "numpy.lib.math",
+    "numpy.matlib.char",
+    "numpy.matlib.rec",
+    "numpy.matlib.emath",
+    "numpy.matlib.math",
+    "numpy.matlib.linalg",
+    "numpy.matlib.fft",
+    "numpy.matlib.random",
+    "numpy.matlib.ctypeslib",
+    "numpy.matlib.ma",
 ]
 
 
@@ -403,14 +412,14 @@ def test_all_modules_are_expected_2():
     def find_unexpected_members(mod_name):
         members = []
         module = importlib.import_module(mod_name)
-        if hasattr(module, '__all__'):
+        if hasattr(module, "__all__"):
             objnames = module.__all__
         else:
             objnames = dir(module)
 
         for objname in objnames:
-            if not objname.startswith('_'):
-                fullobjname = mod_name + '.' + objname
+            if not objname.startswith("_"):
+                fullobjname = mod_name + "." + objname
                 if isinstance(getattr(module, objname), types.ModuleType):
                     if is_unexpected(fullobjname):
                         if fullobjname not in SKIP_LIST_2:
@@ -423,8 +432,10 @@ def test_all_modules_are_expected_2():
         unexpected_members.extend(find_unexpected_members(modname))
 
     if unexpected_members:
-        raise AssertionError("Found unexpected object(s) that look like "
-                             "modules: {}".format(unexpected_members))
+        raise AssertionError(
+            "Found unexpected object(s) that look like "
+            "modules: {}".format(unexpected_members)
+        )
 
 
 def test_api_importable():
@@ -435,6 +446,7 @@ def test_api_importable():
     simply need to be removed from the list (deprecation may or may not be
     needed - apply common sense).
     """
+
     def check_importable(module_name):
         try:
             importlib.import_module(module_name)
@@ -449,8 +461,10 @@ def test_api_importable():
             module_names.append(module_name)
 
     if module_names:
-        raise AssertionError("Modules in the public API that cannot be "
-                             "imported: {}".format(module_names))
+        raise AssertionError(
+            "Modules in the public API that cannot be "
+            "imported: {}".format(module_names)
+        )
 
     for module_name in PUBLIC_ALIASED_MODULES:
         try:
@@ -459,17 +473,20 @@ def test_api_importable():
             module_names.append(module_name)
 
     if module_names:
-        raise AssertionError("Modules in the public API that were not "
-                             "found: {}".format(module_names))
+        raise AssertionError(
+            "Modules in the public API that were not " "found: {}".format(module_names)
+        )
 
     with warnings.catch_warnings(record=True) as w:
-        warnings.filterwarnings('always', category=DeprecationWarning)
-        warnings.filterwarnings('always', category=ImportWarning)
+        warnings.filterwarnings("always", category=DeprecationWarning)
+        warnings.filterwarnings("always", category=ImportWarning)
         for module_name in PRIVATE_BUT_PRESENT_MODULES:
             if not check_importable(module_name):
                 module_names.append(module_name)
 
     if module_names:
-        raise AssertionError("Modules that are not really public but looked "
-                             "public and can not be imported: "
-                             "{}".format(module_names))
+        raise AssertionError(
+            "Modules that are not really public but looked "
+            "public and can not be imported: "
+            "{}".format(module_names)
+        )
