@@ -694,21 +694,23 @@ def array2string(a, max_line_width=None, precision=None,
     # treat as a null array if any of shape elements == 0
     if a.size == 0:
         return "[]"
-
-    return _array2string(a, options, separator, prefix)
+    return ''.join(_array2string(a, options, separator, prefix))
 
 
 def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
-    needs_wrap = len(line) + len(word) > line_width
+    len_line = sum(len(el) for el in line)
+    needs_wrap = len_line + len(word) > line_width
     if legacy != '1.13':
         # don't wrap lines if it won't help
-        if len(line) <= len(next_line_prefix):
+        if len_line <= len(next_line_prefix):
             needs_wrap = False
 
     if needs_wrap:
-        s = ''.join((s, line.rstrip(), "\n"))
-        line = next_line_prefix
-    line = ''.join((line, word))
+        s.append((''.join(line)).rstrip())
+        s.append("\n")
+        line.clear()
+        line.append(next_line_prefix)
+    line.append(word)
     return s, line
 
 
@@ -720,22 +722,29 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
     if len(words) == 1 or legacy == '1.13':
         return _extendLine(s, line, word, line_width, next_line_prefix, legacy)
 
+    len_line = sum(len(el) for el in line)
     max_word_length = max(len(word) for word in words)
-    if (len(line) + max_word_length > line_width and
-            len(line) > len(next_line_prefix)):
-        s += line.rstrip() + '\n'
-        line = next_line_prefix + words[0]
+    if (len_line + max_word_length > line_width and
+            len_line > len(next_line_prefix)):
+        s.append((''.join(line)).rstrip())
+        s.append('\n')
+        line.clear()
+        line.append(next_line_prefix)
+        line.append(words[0])
         indent = next_line_prefix
     else:
-        indent = len(line)*' '
-        line += words[0]
+        indent = len_line*' '
+        line.append(words[0])
 
     for word in words[1::]:
-        s += line.rstrip() + '\n'
-        line = indent + word
+        s.append((''.join(line)).rstrip())
+        s.append('\n')
+        line.clear()
+        line.append(indent)
+        line.append(word)
 
     suffix_length = max_word_length - len(words[-1])
-    line += suffix_length*' '
+    line.append(suffix_length*' ')
     return s, line
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
@@ -777,7 +786,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             trailing_items = a_len
 
         # stringify the array with the hanging indent on the first line too
-        s = ''
+        s = []
 
         # last axis (rows) - wrap elements if they would not fit on one line
         if axes_left == 1:
@@ -787,26 +796,26 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             else:
                 elem_width = curr_width - max(len(separator.rstrip()), len(']'))
 
-            line = hanging_indent
+            line = [hanging_indent]
             for i in range(leading_items):
                 word = recurser(index + (i,), next_hanging_indent, next_width)
                 s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
-                line = ''.join((line, separator))
+                line.append(separator)
 
             if show_summary:
                 s, line = _extendLine(
                     s, line, summary_insert, elem_width, hanging_indent, legacy)
                 if legacy == '1.13':
-                    line = ''.join((line, ", "))
+                    line.append(", ")
                 else:
-                    line = ''.join((line, separator))
+                    line.append(separator)
 
             for i in range(trailing_items, 1, -1):
                 word = recurser(index + (-i,), next_hanging_indent, next_width)
                 s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
-                line = ''.join((line, separator))
+                line.append(separator)
 
             if legacy == '1.13':
                 # width of the separator is not considered on 1.13
@@ -815,35 +824,47 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             s, line = _extendLine_pretty(
                 s, line, word, elem_width, hanging_indent, legacy)
 
-            s = ''.join((s, line))
+            s.append(''.join(line))
 
         # other axes - insert newlines between rows
         else:
-            s = ''
+            s = []
             line_sep = separator.rstrip() + '\n'*(axes_left - 1)
 
             for i in range(leading_items):
-                nested = recurser(index + (i,), next_hanging_indent, next_width)
-                s = ''.join((s, hanging_indent, nested, line_sep))
+                nested = recurser(index + (i,), next_hanging_indent,
+                                  next_width)
+                s.append(hanging_indent)
+                s.append(''.join(nested))
+                s.append(line_sep)
 
             if show_summary:
                 if legacy == '1.13':
                     # trailing space, fixed nbr of newlines, and fixed separator
-                    s = ''.join((s, hanging_indent, summary_insert, ", \n"))
+                    s.append(''.join([hanging_indent, summary_insert, ", \n"]))
                 else:
-                    s = ''.join((s, hanging_indent, summary_insert, line_sep))
+                    s.append(''.join([hanging_indent, summary_insert, line_sep]))
 
             for i in range(trailing_items, 1, -1):
                 nested = recurser(index + (-i,), next_hanging_indent,
                                   next_width)
-                s = ''.join((s, hanging_indent, nested, line_sep))
+                s.append(hanging_indent)
+                s.append(''.join(nested))
+                s.append(line_sep)
 
             nested = recurser(index + (-1,), next_hanging_indent, next_width)
-            s = ''.join((s, hanging_indent, nested))
+            s.append(hanging_indent)
+            s.append(''.join(nested))
 
         # remove the hanging indent, and wrap in []
-        s = ''.join(('[', s[len(hanging_indent):], ']'))
-        return s
+        start = len(hanging_indent)
+        idx = 0
+        while len(s[idx]) < start:
+            start -= len(s[idx])
+            idx += 1
+        s[idx] = ''.join(('[', s[idx][start:]))
+        s.append(']')
+        return s[idx:]
 
     try:
         # invoke the recursive part with an initial index and prefix
@@ -1305,7 +1326,9 @@ class SubArrayFormat:
 
     def __call__(self, arr):
         if arr.ndim <= 1:
-            return ''.join(("[", ", ".join(self.format_function(a) for a in arr), "]"))
+            return ''.join(("[",
+                            ", ".join(self.format_function(a) for a in arr),
+                            "]"))
         return ''.join(("[", ", ".join(self.__call__(a) for a in arr), "]"))
 
 
@@ -1447,8 +1470,7 @@ def _array_repr_implementation(
                            ', ', prefix, suffix=suffix)
     else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
-
-    arr_str = ''.join([prefix, lst, suffix])
+    arr_str = ''.join((prefix, lst, suffix))
 
     if skipdtype:
         return arr_str
