@@ -608,8 +608,7 @@ class Array:
         # Note: Only indices required by the spec are allowed. See the
         # docstring of _validate_index
         key = self._validate_index(key, self.shape)
-        res = self._array.__setitem__(key, asarray(value)._array)
-        return self.__class__._new(res)
+        self._array.__setitem__(key, asarray(value)._array)
 
     def __sub__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
