@@ -843,7 +843,8 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                     # trailing space, fixed nbr of newlines, and fixed separator
                     s.append(''.join([hanging_indent, summary_insert, ", \n"]))
                 else:
-                    s.append(''.join([hanging_indent, summary_insert, line_sep]))
+                    s.append(''.join([hanging_indent, summary_insert,
+                                      line_sep]))
 
             for i in range(trailing_items, 1, -1):
                 nested = recurser(index + (-i,), next_hanging_indent,
