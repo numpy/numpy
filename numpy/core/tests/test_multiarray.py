@@ -9056,7 +9056,35 @@ class TestFormat:
     def test_1d_format(self):
         # until gh-5543, ensure that the behaviour matches what it used to be
         a = np.array([np.pi])
-        assert_raises(TypeError, '{:30}'.format, a)
+        assert_equal(format(a, ".4f"), '[3.1416]')
+
+    def test_float(self):
+        a = np.array([1.23456789, 9.87654321, 12.131415])
+        assert_equal(format(a, ".2f"), '[1.23 9.88 12.13]')
+
+        a = np.array([-1.0, 0.0, 1.0])
+        assert_equal(format(a, " .2f"), '[-1.00  0.00  1.00]')
+        assert_equal(format(a, "+.2f"), '[-1.00 +0.00 +1.00]')
+
+    def test_nan_inf(self):
+        a = np.array([np.nan, np.inf])
+        assert_equal(format(a, "+.2f"), '[+nan +inf]')
+
+    def test_0d_str(self):
+        a = np.array(1.234)
+
+        assert_equal(format(a, ".2f"), '1.23')
+
+    def test_float_ndim(self):
+        a = np.linspace(0, 1, num=24).reshape(2, 3, 4)
+
+        assert_equal(format(a, ".2f"), """[[[0.00 0.04 0.09 0.13]
+  [0.17 0.22 0.26 0.30]
+  [0.35 0.39 0.43 0.48]]
+
+ [[0.52 0.57 0.61 0.65]
+  [0.70 0.74 0.78 0.83]
+  [0.87 0.91 0.96 1.00]]]""")
 
 from numpy.testing import IS_PYPY
 
