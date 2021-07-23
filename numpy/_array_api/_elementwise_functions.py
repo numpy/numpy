@@ -653,4 +653,7 @@ def trunc(x: Array, /) -> Array:
     """
     if x.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in trunc')
+    if x.dtype in _integer_dtypes:
+        # Note: The return dtype of trunc is the same as the input
+        return x
     return Array._new(np.trunc(x._array))
