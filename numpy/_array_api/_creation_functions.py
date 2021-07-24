@@ -33,10 +33,12 @@ def asarray(obj: Union[Array, bool, int, float, NestedSequence[bool|int|float], 
     _check_valid_dtype(dtype)
     if device not in ['cpu', None]:
         raise ValueError(f"Unsupported device {device!r}")
-    if copy is not None:
-        # Note: copy is not yet implemented in np.asarray
-        raise NotImplementedError("The copy keyword argument to asarray is not yet implemented")
+    if copy is False:
+        # Note: copy=False is not yet implemented in np.asarray
+        raise NotImplementedError("copy=False is not yet implemented")
     if isinstance(obj, Array) and (dtype is None or obj.dtype == dtype):
+        if copy is True:
+            return Array._new(np.array(obj._array, copy=True, dtype=dtype))
         return obj
     if dtype is None and isinstance(obj, int) and (obj > 2**64 or obj < -2**63):
         # Give a better error message in this case. NumPy would convert this
