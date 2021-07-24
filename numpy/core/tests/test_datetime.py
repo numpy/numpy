@@ -5,7 +5,7 @@ import datetime
 import pytest
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
-    assert_raises_regex, assert_array_equal,
+    assert_raises_regex, assert_array_equal, assert_array_less,
     )
 from numpy.compat import pickle
 
@@ -512,7 +512,7 @@ class TestDateTime:
 
         # 'now' special value
         assert_equal(np.datetime64('now').dtype,
-                     np.dtype('M8[s]'))
+                     np.dtype('M8[ns]'))
 
     def test_datetime_nat_casting(self):
         a = np.array('NaT', dtype='M8[D]')
@@ -2445,6 +2445,15 @@ class TestDateTime:
         # week reprs are not distinguishable.
         limit_via_str = np.datetime64(str(limit), time_unit)
         assert limit_via_str == limit
+
+    def test_now_resolution_ns(self):
+        # test for gh-13372
+        stamp = np.datetime64(datetime.datetime.utcnow())
+        newer_stamp = np.datetime64("now", "ns")
+        # before supporting ns resolution, the
+        # second-truncated newer_stamp would
+        # fail this test
+        assert_array_less(stamp, newer_stamp)
 
 
 class TestDateTimeData:

@@ -11,6 +11,7 @@
 #include <Python.h>
 
 #include <time.h>
+#include <pytime.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -323,21 +324,20 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
     if (len == 3 && tolower(str[0]) == 'n' &&
                     tolower(str[1]) == 'o' &&
                     tolower(str[2]) == 'w') {
-        NPY_TIME_T rawtime = 0;
         PyArray_DatetimeMetaData meta;
 
-        time(&rawtime);
+        int64_t rawtime = _PyTime_GetSystemClock();
 
         /* Set up a dummy metadata for the conversion */
-        meta.base = NPY_FR_s;
+        meta.base = NPY_FR_ns;
         meta.num = 1;
 
-        bestunit = NPY_FR_s;
+        bestunit = NPY_FR_ns;
 
         /*
          * Indicate that this was a special value, and
-         * use 's' because the time() function has resolution
-         * seconds.
+         * use 'ns' because the _PyTime_GetSystemClock()
+         * function has a resolution of nanoseconds.
          */
         if (out_bestunit != NULL) {
             *out_bestunit = bestunit;
