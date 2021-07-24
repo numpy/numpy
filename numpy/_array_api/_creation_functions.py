@@ -31,9 +31,8 @@ def asarray(obj: Union[Array, bool, int, float, NestedSequence[bool|int|float], 
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     if copy is not None:
         # Note: copy is not yet implemented in np.asarray
         raise NotImplementedError("The copy keyword argument to asarray is not yet implemented")
@@ -55,9 +54,8 @@ def arange(start: Union[int, float], /, stop: Optional[Union[int, float]] = None
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.arange(start, stop=stop, step=step, dtype=dtype))
 
 def empty(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
@@ -69,9 +67,8 @@ def empty(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, 
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.empty(shape, dtype=dtype))
 
 def empty_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
@@ -83,9 +80,8 @@ def empty_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[D
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.empty_like(x._array, dtype=dtype))
 
 def eye(n_rows: int, n_cols: Optional[int] = None, /, *, k: Optional[int] = 0, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
@@ -97,9 +93,8 @@ def eye(n_rows: int, n_cols: Optional[int] = None, /, *, k: Optional[int] = 0, d
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
 
 def from_dlpack(x: object, /) -> Array:
@@ -115,9 +110,8 @@ def full(shape: Union[int, Tuple[int, ...]], fill_value: Union[int, float], *, d
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     if isinstance(fill_value, Array) and fill_value.ndim == 0:
         fill_value = fill_value._array
     res = np.full(shape, fill_value, dtype=dtype)
@@ -136,9 +130,8 @@ def full_like(x: Array, /, fill_value: Union[int, float], *, dtype: Optional[Dty
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     res = np.full_like(x._array, fill_value, dtype=dtype)
     if res.dtype not in _all_dtypes:
         # This will happen if the fill value is not something that NumPy
@@ -155,9 +148,8 @@ def linspace(start: Union[int, float], stop: Union[int, float], /, num: int, *, 
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
 def meshgrid(*arrays: Sequence[Array], indexing: str = 'xy') -> List[Array, ...]:
@@ -178,9 +170,8 @@ def ones(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, d
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.ones(shape, dtype=dtype))
 
 def ones_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
@@ -192,9 +183,8 @@ def ones_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[De
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.ones_like(x._array, dtype=dtype))
 
 def zeros(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
@@ -206,9 +196,8 @@ def zeros(shape: Union[int, Tuple[int, ...]], *, dtype: Optional[Dtype] = None, 
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.zeros(shape, dtype=dtype))
 
 def zeros_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[Device] = None) -> Array:
@@ -220,7 +209,6 @@ def zeros_like(x: Array, /, *, dtype: Optional[Dtype] = None, device: Optional[D
     from ._array_object import Array
 
     _check_valid_dtype(dtype)
-    if device is not None:
-        # Note: Device support is not yet implemented on Array
-        raise NotImplementedError("Device support is not yet implemented")
+    if device not in ['cpu', None]:
+        raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.zeros_like(x._array, dtype=dtype))
