@@ -581,9 +581,9 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
-    When saving dictionaries, the dictionary keys become filenames
-    inside the ZIP archive. Therefore, keys should be valid filenames.
-    E.g., avoid keys that begin with ``/`` or contain ``.``.
+    Keys passed in `kwds` are used as filenames inside the ZIP archive.
+    Therefore, keys should be valid filenames; e.g., avoid keys that begin with
+    ``/`` or contain ``.``.
 
     When naming variables with keyword arguments, it is not possible to name a
     variable ``file``, as this would cause the ``file`` argument to be defined
