@@ -64,6 +64,7 @@
 #elif defined(__alpha__)
     #define NPY_CPU_ALPHA
 #elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM64)
+    /* _M_ARM64 is defined in MSVC for ARM64 compilation on Windows */
     #if defined(__ARMEB__) || defined(__AARCH64EB__)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEB_AARCH32
