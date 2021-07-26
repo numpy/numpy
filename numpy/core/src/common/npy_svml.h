@@ -1,4 +1,4 @@
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
 extern __m512 __svml_exp2f16(__m512 x);
 extern __m512 __svml_log2f16(__m512 x);
 extern __m512 __svml_log10f16(__m512 x);
