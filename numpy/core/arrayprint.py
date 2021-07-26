@@ -1707,7 +1707,7 @@ def _array_format_implementation(
 
     # TODO: define behaviour when trying to format non-numeric dtypes
 
-    options = _parse_format_spec(format_spec, a.dtype)
+    options = _parse_format_spec(format_spec)
     print(f"[DEBUG] {options=}")
 
     return array2string(a, **options)
