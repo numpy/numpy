@@ -1698,25 +1698,19 @@ def _parse_format_spec(fs):
 
 def _array_format_implementation(
         a, format_spec):
-    print("[DEBUG] _array_format_implementation")
-    print(f"[DEBUG] it works: {a.dtype=}, {format_spec=}")
+    print(f"[DEBUG] _array_format_implementation: {a.dtype=}, {format_spec=}")
 
-    formatters_types = [
-        "int_kind",
-        "float_kind",
-        "complex_kind"
-    ]
+    if isinstance(a.dtype, np.object_):
+        # this will raise TypeError if format_spec is not an empty string
+        # this follow what list() or tuple() does in Python
+        return object.__format__(a, format_spec)
 
-    def _format(x):
-        return format(x, format_spec)
+    # TODO: define behaviour when trying to format non-numeric dtypes
 
-    formatter = {
-        k: _format for k in formatters_types
-    }
+    options = _parse_format_spec(format_spec, a.dtype)
+    print(f"[DEBUG] {options=}")
 
-    # TODO: raise error when a.dtype is not numeric!
-
-    return array2string(a, formatter=formatter)
+    return array2string(a, **options)
 
 
 def _array_format_dispatcher(
