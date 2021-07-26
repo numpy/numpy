@@ -1700,7 +1700,7 @@ def _array_format_implementation(
         a, format_spec):
     print(f"[DEBUG] _array_format_implementation: {a.dtype=}, {format_spec=}")
 
-    if isinstance(a.dtype, np.object_):
+    if issubclass(a.dtype.type, np.object_):
         # this will raise TypeError if format_spec is not an empty string
         # this follow what list() or tuple() does in Python
         return object.__format__(a, format_spec)

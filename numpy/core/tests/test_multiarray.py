@@ -9063,7 +9063,13 @@ class TestFormat:
         # as suggested in gh-5543, if dtype is object treat it as such
         a = np.array({}, dtype=np.object_)
         assert_equal(format(a, ""), str(a))
-        assert_raises(TypeError, lambda: format(a, "+.2f"))
+        with assert_raises(TypeError):
+            format(a, "+.2f")
+
+        a = np.array([{}, {}], dtype=np.object_)
+        assert_equal(format(a, ""), str(a))
+        with assert_raises(TypeError):
+            format(a, "+.2f")
 
 from numpy.testing import IS_PYPY
 
