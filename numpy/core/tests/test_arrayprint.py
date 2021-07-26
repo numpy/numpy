@@ -495,6 +495,54 @@ class TestArray2String:
         gc.enable()
         assert_(r1 == r2)
 
+class TestFormatSpec:
+    def test_nil_spec(self):
+        from numpy.core.arrayprint import _parse_format_spec
+
+        assert_equal(_parse_format_spec(""), {})
+
+    def test_unkown_spec(self):
+        from numpy.core.arrayprint import _parse_format_spec
+
+        # j is an unknown format specifier
+        with assert_raises(ValueError):
+            _parse_format_spec("j")  # Unknown format code 'j'
+        with assert_raises(ValueError):
+            _parse_format_spec("jj")  # Invalid format specifier
+
+    def test_sign(self):
+        from numpy.core.arrayprint import _parse_format_spec
+
+        assert_equal(_parse_format_spec("+"), {"sign": "+"})
+        assert_equal(_parse_format_spec("-"), {"sign": "-"})
+        assert_equal(_parse_format_spec(" "), {"sign": " "})
+
+    def test_precision(self):
+        from numpy.core.arrayprint import _parse_format_spec
+
+        assert_equal(_parse_format_spec(".42"), {"precision": 42})
+        with assert_raises(ValueError):
+            _parse_format_spec(".")
+
+    def test_type(self):
+        from numpy.core.arrayprint import _parse_format_spec
+
+        assert_equal(_parse_format_spec("f"), {"suppress_small": True})
+        assert_equal(_parse_format_spec("e"), {"suppress_small": False})
+
+    def test_numeric(self):
+        from numpy.core.arrayprint import _parse_format_spec
+
+        assert_equal(_parse_format_spec("+.2f"), {
+            "sign": "+", "precision": 2, "suppress_small": True
+        })
+        assert_equal(_parse_format_spec(".3e"), {
+            "precision": 3, "suppress_small": False
+        })
+        assert_equal(_parse_format_spec("-.4"), {
+            "sign": "-", "precision": 4
+        })
+
 class TestPrintOptions:
     """Test getting and setting global print options."""
 
