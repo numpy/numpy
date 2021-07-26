@@ -172,6 +172,7 @@ else:
     # Declare to mypy that `__all__` is a list of strings without assigning
     # an explicit value
     __all__: List[str]
+    __path__: List[str]
 
 
 @final  # Dissallow the creation of arbitrary `NBitBase` subclasses

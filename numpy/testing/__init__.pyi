@@ -1,5 +1,7 @@
 from typing import List
 
+from numpy._pytesttester import PytestTester
+
 from unittest import (
     TestCase as TestCase,
 )
@@ -47,6 +49,8 @@ from numpy.testing._private.utils import (
 )
 
 __all__: List[str]
+__path__: List[str]
+test: PytestTester
 
 def run_module_suite(
     file_to_run: None | str = ...,
