@@ -1698,7 +1698,7 @@ def _parse_format_spec(fs):
 
 def _array_format_implementation(
         a, format_spec):
-    print(f"[DEBUG] _array_format_implementation: {a.dtype=}, {format_spec=}")
+    print(f"[DEBUG] _array_format_implementation: a.dtype={a.dtype}, format_spec={format_spec}")
 
     if issubclass(a.dtype.type, np.object_):
         # this will raise TypeError if format_spec is not an empty string
@@ -1708,7 +1708,7 @@ def _array_format_implementation(
     # TODO: define behaviour when trying to format non-numeric dtypes
 
     options = _parse_format_spec(format_spec)
-    print(f"[DEBUG] {options=}")
+    print(f"[DEBUG] options={options}")
 
     return array2string(a, **options)
 
