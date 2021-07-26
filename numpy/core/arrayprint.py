@@ -1638,6 +1638,64 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
         a, max_line_width, precision, suppress_small)
 
 
+def _parse_format_spec(fs):
+    """
+    Parse the format spec and returns a dictionary with options for using it with `array2string`
+    This is inspired in the [Format Specification Mini-Language](https://docs.python.org/3/library/string.html#formatspec)
+
+    Parameters
+    ----------
+    fs: str
+        a string with the format specification, e.g., "+.2f"
+
+    Semantic for format spec
+    ------------------------
+
+    format_spec ::=  [sign][.precision][type]
+    sign        ::=  "+" | "-" | " "
+    precision   ::=  [0-9]+
+    type        ::=  "f" | "e"
+    """
+
+    options = {}
+    fslen = len(fs)
+    pos = 0
+
+    # Parse the sign options
+    if fslen - pos >= 1 and fs[pos] in ["+", "-", " "]:
+        options["sign"] = fs[pos]
+
+        pos += 1
+
+    # Parse the field precision
+    if fslen - pos >= 1 and fs[pos] == ".":
+        pos += 1
+
+        posi = pos
+        while pos < fslen and str.isdigit(fs[pos]):
+            pos += 1
+
+        if posi == pos:  # Format specifier missing precision
+            raise ValueError("Format specifier missing precision")
+
+        options["precision"] = int(fs[posi:pos])
+
+    # Finally, parse the field type
+
+    if fslen - pos > 1:  # more than 1 char remain, invalid format specifier
+        raise ValueError("Invalid format specifier")
+
+    if fslen - pos == 1:
+        if fs[pos] == "f":  # force fixed-point notation
+            options["suppress_small"] = True
+        elif fs[pos] == "e":  # use scientific notation when necessary
+            options["suppress_small"] = False
+        else:
+            raise ValueError(f"Unknown format code '{fs[pos]}'")
+
+    return options
+
+
 def _array_format_implementation(
         a, format_spec):
     print("[DEBUG] _array_format_implementation")
