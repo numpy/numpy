@@ -1278,6 +1278,14 @@ New data types
     registered (checked only by the address of the pointer), then
     return the previously-assigned type-number.
 
+.. c:function:: int PyArray_TypeNumFromName( \
+        char const *str)
+
+   Given a string return the type-number for the data-type with that string as
+   the type-object name.
+   Returns NPY_NOTYPE without setting an error if no type can be found.
+   Only works for user-defined data-types.
+
 .. c:function:: int PyArray_RegisterCastFunc( \
         PyArray_Descr* descr, int totype, PyArray_VectorUnaryFunc* castfunc)
 
@@ -2554,6 +2562,10 @@ Broadcasting (multi-iterators)
     Evaluates TRUE as long as the multi-iterator has not looped
     through all of the elements (of the broadcasted result), otherwise
     it evaluates FALSE.
+
+.. c:function:: int PyArray_MultiIter_SIZE(PyObject* multi)
+
+    Returne the size of the multi-iterator object.
 
 .. c:function:: int PyArray_Broadcast(PyArrayMultiIterObject* mit)
 

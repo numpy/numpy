@@ -1308,6 +1308,8 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
+#define PyArray_MultiIter_SIZE(multi)                \
+        _PyMIT(multi)->size
 
 /*
  * Store the information needed for fancy-indexing over an array. The
