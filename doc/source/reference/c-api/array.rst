@@ -151,6 +151,16 @@ and its sub-types).
 
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
 
+.. c:function:: int PyArray_FinalizeFunc(PyArrayObject* arr, PyObject* obj)
+
+    The function pointed to by the CObject
+    :obj:`~numpy.class.__array_finalize__`.
+    The first argument is the newly created sub-type. The second argument
+    (if not NULL) is the "parent" array (if the array was created using
+    slicing or some other operation where a clearly-distinguishable parent
+    is present). This routine can do anything it wants to. It should
+    return a -1 on error and 0 otherwise.
+
 
 Data access
 ^^^^^^^^^^^
@@ -1250,8 +1260,8 @@ Converting data types
     function returns :c:data:`NPY_FALSE`.
 
 
-New data types
-^^^^^^^^^^^^^^
+User-defined data types
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. c:function:: void PyArray_InitArrFuncs(PyArray_ArrFuncs* f)
 
@@ -1295,6 +1305,13 @@ New data types
     *descr* can be cast safely to a data-type whose type_number is
     *totype*.
 
+.. c:function:: int PyArray_TypeNumFromName( \
+        char const *str)
+
+   Given a string return the type-number for the data-type with that string as
+   the type-object name.
+   Returns ``NPY_NOTYPE`` without setting an error if no type can be found.
+   Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
