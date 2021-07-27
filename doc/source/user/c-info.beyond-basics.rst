@@ -472,8 +472,8 @@ The __array_finalize\__ method
    members are filled in. Finally, the :obj:`~numpy.class.__array_finalize__`
    attribute is looked-up in the object dictionary. If it is present
    and not None, then it can be either a CObject containing a pointer
-   to a ``PyArray_FinalizeFunc`` or it can be a method taking a
-   single argument (which could be None).
+   to a :c:func:`PyArray_FinalizeFunc` or it can be a method taking a
+   single argument (which could be None)
 
    If the :obj:`~numpy.class.__array_finalize__` attribute is a CObject, then the pointer
    must be a pointer to a function with the signature:

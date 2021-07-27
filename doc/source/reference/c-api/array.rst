@@ -151,6 +151,16 @@ and its sub-types).
 
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
 
+.. c:function:: int PyArray_FinalizeFunc(PyArrayObject* arr, PyObject* obj)
+
+    The function pointed to by the CObject
+    :obj:`~numpy.class.__array_finalize__`.
+    The first argument is the newly created sub-type. The second argument
+    (if not NULL) is the "parent" array (if the array was created using
+    slicing or some other operation where a clearly-distinguishable parent
+    is present). This routine can do anything it wants to. It should
+    return a -1 on error and 0 otherwise.
+
 
 Data access
 ^^^^^^^^^^^
@@ -2561,10 +2571,6 @@ Broadcasting (multi-iterators)
     Evaluates TRUE as long as the multi-iterator has not looped
     through all of the elements (of the broadcasted result), otherwise
     it evaluates FALSE.
-
-.. c:function:: int PyArray_MultiIter_SIZE(PyObject* multi)
-
-    Returns the size of the multi-iterator object.
 
 .. c:function:: int PyArray_Broadcast(PyArrayMultiIterObject* mit)
 
