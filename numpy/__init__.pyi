@@ -3828,7 +3828,11 @@ class finfo(Generic[_FloatType]):
     nmant: int
     precision: int
     resolution: _FloatType
-    tiny: _FloatType
+    smallest_subnormal: _FloatType
+    @property
+    def smallest_normal(self) -> _FloatType: ...
+    @property
+    def tiny(self) -> _FloatType: ...
 
     # NOTE: Not technically a property, but this is the only way we can
     # access the precision of the underlying float
