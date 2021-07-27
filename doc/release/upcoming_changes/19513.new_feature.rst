@@ -1,4 +1,4 @@
 Preliminary support for `windows/arm64` target
 ----------------------------------------------
-
-`numpy` added support for windows/arm64 target. Please note `OpenBLAS` support is not yet available for windows/arm64 target.
+``numpy`` added support for windows/arm64 target. Please note
+``OpenBLAS`` support is not yet available for windows/arm64 target.
