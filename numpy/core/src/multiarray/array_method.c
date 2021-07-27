@@ -833,10 +833,12 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 
 
 /*
- * Identical to the `get_loop` functions and wraps it.  This adds support
- * to a boolean mask being passed in as a last, additional, operand.
- * The wrapped loop will only be called for unmasked elements.
- * (Does not support `move_references` or inner dimensions!)
+ * Fetches a strided-loop function that supports a boolean mask as additional
+ * (last) operand to the strided-loop.  It is otherwise largely identical to
+ * the `get_loop` method which it wraps.
+ * This is the core implementation for the ufunc `where=...` keyword argument.
+ *
+ * NOTE: This function does not support `move_references` or inner dimensions.
  */
 NPY_NO_EXPORT int
 PyArrayMethod_GetMaskedStridedLoop(

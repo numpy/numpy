@@ -7,6 +7,9 @@
 #include "array_method.h"
 
 
+NPY_NO_EXPORT int
+PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
+
 NPY_NO_EXPORT PyArrayMethodObject *
 promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
