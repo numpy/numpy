@@ -5560,6 +5560,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             goto fail;
         }
     }
+    /* Clearing sets it to NULL for the error paths */
+    Py_CLEAR(signature_tuple);
 
     funcdata->func = function;
     funcdata->arg_types = newtypes;
@@ -5630,7 +5632,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
     }
     Py_DECREF(key);
-    Py_DECREF(signature_tuple);
     return 0;
 
  fail:
