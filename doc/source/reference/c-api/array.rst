@@ -1250,8 +1250,8 @@ Converting data types
     function returns :c:data:`NPY_FALSE`.
 
 
-New data types
-^^^^^^^^^^^^^^
+User-defined data types
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. c:function:: void PyArray_InitArrFuncs(PyArray_ArrFuncs* f)
 
@@ -1278,14 +1278,6 @@ New data types
     registered (checked only by the address of the pointer), then
     return the previously-assigned type-number.
 
-.. c:function:: int PyArray_TypeNumFromName( \
-        char const *str)
-
-   Given a string return the type-number for the data-type with that string as
-   the type-object name.
-   Returns NPY_NOTYPE without setting an error if no type can be found.
-   Only works for user-defined data-types.
-
 .. c:function:: int PyArray_RegisterCastFunc( \
         PyArray_Descr* descr, int totype, PyArray_VectorUnaryFunc* castfunc)
 
@@ -1303,6 +1295,13 @@ New data types
     *descr* can be cast safely to a data-type whose type_number is
     *totype*.
 
+.. c:function:: int PyArray_TypeNumFromName( \
+        char const *str)
+
+   Given a string return the type-number for the data-type with that string as
+   the type-object name.
+   Returns NPY_NOTYPE without setting an error if no type can be found.
+   Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2565,7 +2564,7 @@ Broadcasting (multi-iterators)
 
 .. c:function:: int PyArray_MultiIter_SIZE(PyObject* multi)
 
-    Returne the size of the multi-iterator object.
+    Returns the size of the multi-iterator object.
 
 .. c:function:: int PyArray_Broadcast(PyArrayMultiIterObject* mit)
 
