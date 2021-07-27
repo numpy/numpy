@@ -1310,7 +1310,7 @@ User-defined data types
 
    Given a string return the type-number for the data-type with that string as
    the type-object name.
-   Returns NPY_NOTYPE without setting an error if no type can be found.
+   Returns ``NPY_NOTYPE`` without setting an error if no type can be found.
    Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
