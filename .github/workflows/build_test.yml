@@ -36,7 +36,7 @@ jobs:
         python -m pip install -r linter_requirements.txt
     - name: Run linter on PR diff
       run:
-        python tools/linter.py --branch origin/${{ github.base_ref }}
+        python tools/linter.py --lint --branch origin/${{ github.base_ref }}
 
   smoke_test:
     if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
