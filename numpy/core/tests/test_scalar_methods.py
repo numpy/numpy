@@ -1,8 +1,11 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
+import sys
 import fractions
 import platform
+import types
+from typing import Any, Type
 
 import pytest
 import numpy as np
@@ -128,3 +131,31 @@ class TestIsInteger:
             if value == 0:
                 continue
             assert not value.is_integer()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
+class TestClassGetItem:
+    @pytest.mark.parametrize("cls", [
+        np.number,
+        np.integer,
+        np.inexact,
+        np.unsignedinteger,
+        np.signedinteger,
+        np.floating,
+        np.complexfloating,
+    ])
+    def test_abc(self, cls: Type[np.number]) -> None:
+        alias = cls[Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is cls
+
+    @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])
+    def test_abc_non_numeric(self, cls: Type[np.generic]) -> None:
+        with pytest.raises(TypeError):
+            cls[Any]
+
+    @pytest.mark.parametrize("code", np.typecodes["All"])
+    def test_concrete(self, code: str) -> None:
+        cls = np.dtype(code).type
+        with pytest.raises(TypeError):
+            cls[Any]

@@ -6500,6 +6500,37 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 add_newdoc('numpy.core.numerictypes', 'generic',
            refer_to_array_attribute('view'))
 
+if sys.version_info >= (3, 9):
+    add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
+        """
+        __class_getitem__(item, /)
+
+        Return a parametrized wrapper around the `~numpy.number` type.
+
+        .. versionadded:: 1.22
+
+        Returns
+        -------
+        alias : types.GenericAlias
+            A parametrized `~numpy.number` type.
+
+        Examples
+        --------
+        >>> from typing import Any
+        >>> import numpy as np
+
+        >>> np.signedinteger[Any]
+        numpy.signedinteger[typing.Any]
+
+        Note
+        ----
+        This method is only available for python 3.9 and later.
+
+        See Also
+        --------
+        :pep:`585` : Type hinting generics in standard collections.
+
+        """))
 
 ##############################################################################
 #
