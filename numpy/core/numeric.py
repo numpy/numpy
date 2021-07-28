@@ -1466,11 +1466,6 @@ def moveaxis(a, source, destination):
     return result
 
 
-# fix hack in scipy which imports this function
-def _move_axis_to_0(a, axis):
-    return moveaxis(a, axis, 0)
-
-
 def _cross_dispatcher(a, b, axisa=None, axisb=None, axisc=None, axis=None):
     return (a, b)
 
