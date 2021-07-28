@@ -146,9 +146,9 @@ cdef class Generator:
     ``Generator`` exposes a number of methods for generating random
     numbers drawn from a variety of probability distributions. In addition to
     the distribution-specific arguments, each method takes a keyword argument
-    `size` that defaults to ``None``. If `size` is ``None``, then a single
-    value is generated and returned. If `size` is an integer, then a 1-D
-    array filled with generated values is returned. If `size` is a tuple,
+    ``size`` that defaults to ``None``. If ``size`` is ``None``, then a single
+    value is generated and returned. If ``size`` is an integer, then a 1-D
+    array filled with generated values is returned. If ``size`` is a tuple,
     then an array with that shape is filled and returned.
 
     The function :func:`numpy.random.default_rng` will instantiate
@@ -261,7 +261,7 @@ cdef class Generator:
         Returns
         -------
         out : float or ndarray of floats
-            Array of random floats of shape `size` (unless ``size=None``, in which
+            Array of random floats of shape ``size`` (unless ``size=None``, in which
             case a single float is returned).
 
         Examples
@@ -477,8 +477,8 @@ cdef class Generator:
         Returns
         -------
         out : int or ndarray of ints
-            `size`-shaped array of random integers from the appropriate
-            distribution, or a single such random int if `size` not provided.
+            ``size``-shaped array of random integers from the appropriate
+            distribution, or a single such random int if ``size`` not provided.
 
         Notes
         -----
@@ -609,7 +609,7 @@ cdef class Generator:
         size : {int, tuple[int]}, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn from the 1-d `a`. If `a` has more
-            than one dimension, the `size` shape will be inserted into the
+            than one dimension, the ``size`` shape will be inserted into the
             `axis` dimension, so the output ``ndim`` will be ``a.ndim - 1 +
             len(size)``. Default is None, in which case a single value is
             returned.
@@ -1498,7 +1498,7 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            When `df` <= 0 or when an inappropriate `size` (e.g. ``size=-1``)
+            When `df` <= 0 or when an inappropriate ``size`` (e.g. ``size=-1``)
             is given.
 
         Notes
@@ -3859,7 +3859,7 @@ cdef class Generator:
             holding the shape of the array of variates.  If the given size is,
             e.g., ``(k, m)``, then ``k * m`` variates are drawn, where one
             variate is a vector of length ``len(colors)``, and the return value
-            has shape ``(k, m, len(colors))``.  If `size` is an integer, the
+            has shape ``(k, m, len(colors))``.  If ``size`` is an integer, the
             output has shape ``(size, len(colors))``.  Default is None, in
             which case a single variate is returned as an array with shape
             ``(len(colors),)``.
@@ -4041,7 +4041,7 @@ cdef class Generator:
 
         Draw samples from the Dirichlet distribution.
 
-        Draw `size` samples of dimension k from a Dirichlet distribution. A
+        Draw ``size`` samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. The Dirichlet distribution
         is a conjugate prior of a multinomial distribution in Bayesian

@@ -128,9 +128,9 @@ cdef class RandomState:
     `RandomState` and `Generator` expose a number of methods for generating
     random numbers drawn from a variety of probability distributions. In
     addition to the distribution-specific arguments, each method takes a
-    keyword argument `size` that defaults to ``None``. If `size` is ``None``,
-    then a single value is generated and returned. If `size` is an integer,
-    then a 1-D array filled with generated values is returned. If `size` is a
+    keyword argument ``size`` that defaults to ``None``. If ``size`` is ``None``,
+    then a single value is generated and returned. If ``size`` is an integer,
+    then a 1-D array filled with generated values is returned. If ``size`` is a
     tuple, then an array with that shape is filled and returned.
 
     **Compatibility Guarantee**
@@ -397,7 +397,7 @@ cdef class RandomState:
         Returns
         -------
         out : float or ndarray of floats
-            Array of random floats of shape `size` (unless ``size=None``, in which
+            Array of random floats of shape ``size`` (unless ``size=None``, in which
             case a single float is returned).
 
         See Also
@@ -680,8 +680,8 @@ cdef class RandomState:
         Returns
         -------
         out : int or ndarray of ints
-            `size`-shaped array of random integers from the appropriate
-            distribution, or a single such random int if `size` not provided.
+            ``size``-shaped array of random integers from the appropriate
+            distribution, or a single such random int if ``size`` not provided.
 
         See Also
         --------
@@ -1275,8 +1275,8 @@ cdef class RandomState:
         Returns
         -------
         out : int or ndarray of ints
-            `size`-shaped array of random integers from the appropriate
-            distribution, or a single such random int if `size` not provided.
+            ``size``-shaped array of random integers from the appropriate
+            distribution, or a single such random int if ``size`` not provided.
 
         See Also
         --------
@@ -1884,7 +1884,7 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            When `df` <= 0 or when an inappropriate `size` (e.g. ``size=-1``)
+            When `df` <= 0 or when an inappropriate ``size`` (e.g. ``size=-1``)
             is given.
 
         See Also
@@ -4277,7 +4277,7 @@ cdef class RandomState:
 
         Draw samples from the Dirichlet distribution.
 
-        Draw `size` samples of dimension k from a Dirichlet distribution. A
+        Draw ``size`` samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. The Dirichlet distribution
         is a conjugate prior of a multinomial distribution in Bayesian

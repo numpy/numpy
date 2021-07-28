@@ -701,18 +701,18 @@ class ABCPolyBase(abc.ABC):
         return self.__class__(coef, self.domain, self.window)
 
     def truncate(self, size):
-        """Truncate series to length `size`.
+        """Truncate series to length ``size``.
 
-        Reduce the series to length `size` by discarding the high
-        degree terms. The value of `size` must be a positive integer. This
+        Reduce the series to length ``size`` by discarding the high
+        degree terms. The value of ``size`` must be a positive integer. This
         can be useful in least squares where the coefficients of the
         high degree terms may be very small.
 
         Parameters
         ----------
         size : positive int
-            The series is reduced to length `size` by discarding the high
-            degree terms. The value of `size` must be a positive integer.
+            The series is reduced to length ``size`` by discarding the high
+            degree terms. The value of ``size`` must be a positive integer.
 
         Returns
         -------
