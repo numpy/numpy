@@ -18,25 +18,6 @@ stages:
 - stage: InitialTests
   jobs:
 
-  - job: Lint
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-    pool:
-      vmImage: 'ubuntu-18.04'
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.8'
-        addToPath: true
-        architecture: 'x64'
-    - script: >-
-        python -m pip install -r linter_requirements.txt
-      displayName: 'Install tools'
-      # pip 21.1 emits a pile of garbage messages to annoy users :)
-      #      failOnStderr: true
-    - script: |
-        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
-      displayName: 'Run Lint Checks'
-      failOnStderr: true
   # Native build is based on gcc flag `-march=native`
   - job: Linux_baseline_native
     pool:
@@ -66,6 +47,25 @@ stages:
 - stage: ComprehensiveTests
   jobs:
 
+  - job: Lint
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+        addToPath: true
+        architecture: 'x64'
+    - script: >-
+        python -m pip install -r linter_requirements.txt
+      displayName: 'Install tools'
+      # pip 21.1 emits a pile of garbage messages to annoy users :)
+      #      failOnStderr: true
+    - script: |
+        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
+      displayName: 'Run Lint Checks'
+      failOnStderr: true
 
   - job: WindowsFast
     pool:
@@ -73,7 +73,7 @@ stages:
     strategy:
       matrix:
           Python37-32bit-fast:
-            PYTHON_VERSION: '3.7'
+            PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x86'
             TEST_MODE: fast
             BITS: 32
@@ -120,11 +120,11 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python37:
-            PYTHON_VERSION: '3.7'
+          Python38:
+            PYTHON_VERSION: '3.8'
             USE_OPENBLAS: '1'
-          Python37-ILP64:
-            PYTHON_VERSION: '3.7'
+          Python38-ILP64:
+            PYTHON_VERSION: '3.8'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
@@ -232,7 +232,7 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.7 64-bit full Mac OS'
+        testRunTitle: 'Publish test results for Python 3.8 64-bit full Mac OS'
 
 
   - job: Windows

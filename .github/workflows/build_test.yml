@@ -16,7 +16,7 @@ defaults:
 
 env:
   DOWNLOAD_OPENBLAS: 1
-  PYTHON_VERSION: 3.7
+  PYTHON_VERSION: 3.8
 
 jobs:
   lint:
@@ -52,11 +52,11 @@ jobs:
     - uses: ./.github/actions
 
   basic:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, 3.10.0-beta.4]
+        python-version: [3.7, 3.9, 3.10.0-beta.4]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -68,7 +68,7 @@ jobs:
     - uses: ./.github/actions
 
   debug:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-20.04
     env:
       USE_DEBUG: 1
@@ -83,7 +83,7 @@ jobs:
     - uses: ./.github/actions
 
   blas64:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       NPY_USE_BLAS_ILP64: 1
@@ -98,7 +98,7 @@ jobs:
     - uses: ./.github/actions
 
   full:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-18.04
     env:
       USE_WHEEL: 1
@@ -116,7 +116,7 @@ jobs:
     - uses: ./.github/actions
 
   benchmark:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       PYTHONOPTIMIZE: 2
@@ -137,7 +137,7 @@ jobs:
     - uses: ./.github/actions
 
   no_relaxed_strides:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       NPY_RELAXED_STRIDES_CHECKING: 0
@@ -154,7 +154,7 @@ jobs:
     - uses: ./.github/actions
 
   use_wheel:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       USE_WHEEL: 1
@@ -170,7 +170,7 @@ jobs:
     - uses: ./.github/actions
 
   no_array_func:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: 0
@@ -185,7 +185,7 @@ jobs:
     - uses: ./.github/actions
 
   no_openblas:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       BLAS: None
@@ -203,7 +203,7 @@ jobs:
     - uses: ./.github/actions
 
   pypy37:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -216,7 +216,7 @@ jobs:
     - uses: ./.github/actions
 
   sdist:
-    needs: [smoke_test, lint]
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
       USE_SDIST: 1

@@ -26,7 +26,7 @@ cache:
 
 jobs:
   include:
-    - python: 3.7
+    - python: 3.8
       os: linux
       arch: ppc64le
       env:
@@ -35,7 +35,7 @@ jobs:
        - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
-    - python: 3.7
+    - python: 3.8
       os: linux
       arch: s390x
       env:
@@ -44,7 +44,7 @@ jobs:
        - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
-    - python: 3.7
+    - python: 3.8
       os: linux
       arch: arm64
       virt: vm
