@@ -818,6 +818,7 @@ PyUFunc_Type and PyUFuncObject
           npy_intp *core_dim_sizes;
           npy_uint32 *core_dim_flags;
           PyObject *identity_value;
+          /* Further private slots (size depends on the NumPy version) */
       } PyUFuncObject;
 
    .. c:macro: PyObject_HEAD
@@ -957,9 +958,12 @@ PyUFunc_Type and PyUFuncObject
 
    .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector
 
-       A function which returns an inner loop. The ``legacy`` in the name arises
-       because for NumPy 1.6 a better variant had been planned. This variant
-       has not yet come about.
+       .. deprecated:: 1.22
+
+            Some fallback support for this slot exists, but will be removed
+            eventually.  A univiersal function which relied on this will have
+            eventually have to be ported.
+            See ref:`NEP 41 <NEP41>` and ref:`NEP 43 <NEP43>`
 
    .. c:member:: void *reserved2
 

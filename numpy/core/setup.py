@@ -928,6 +928,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h.src'),
             join('src', 'umath', 'clip.c.src'),
+            join('src', 'umath', 'dispatching.c'),
+            join('src', 'umath', 'legacy_array_method.c'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'scalarmath.c.src'),
