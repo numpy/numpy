@@ -20,10 +20,10 @@ jobs:
           platform: x64
           install-dir: 'C:\tools\cygwin'
           packages: >
-            python37-devel python37-zipp python37-importlib-metadata
-            python37-cython python37-pip python37-wheel python37-cffi
-            python37-pytz python37-setuptools python37-pytest
-            python37-hypothesis liblapack-devel libopenblas
+            python38-devel python38-zipp python38-importlib-metadata
+            python38-cython python38-pip python38-wheel python38-cffi
+            python38-pytz python38-setuptools python38-pytest
+            python38-hypothesis liblapack-devel libopenblas
             gcc-fortran git dash
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
@@ -40,28 +40,28 @@ jobs:
       - name: Verify python version
         # Make sure it's the Cygwin one, not a Windows one
         run: |
-          dash -c "which python3.7; /usr/bin/python3.7 --version -V"
+          dash -c "which python3.8; /usr/bin/python3.8 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.7 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
-          dash -c "/usr/bin/python3.7 -m pip install -r test_requirements.txt"
-          dash -c "/usr/bin/python3.7 setup.py bdist_wheel"
+          dash -c "/usr/bin/python3.8 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
+          dash -c "/usr/bin/python3.8 -m pip install -r test_requirements.txt"
+          dash -c "/usr/bin/python3.8 setup.py bdist_wheel"
       - name: Install new NumPy
         run: |
-          bash -c "/usr/bin/python3.7 -m pip install dist/numpy-*cp37*.whl"
+          bash -c "/usr/bin/python3.8 -m pip install dist/numpy-*cp38*.whl"
       - name: Run NumPy test suite
         run: >-
-          dash -c "/usr/bin/python3.7 runtests.py -n -vv"
+          dash -c "/usr/bin/python3.8 runtests.py -n -vv"
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@v2
         if: failure()
         with:
           name: numpy-cygwin-wheel
-          path: dist/numpy-*cp37*.whl
+          path: dist/numpy-*cp38*.whl
       - name: On failure check the extension modules
         if: failure()
         run: |
-          dash -c "/usr/bin/python3.7 -m pip show numpy"
-          dash -c "/usr/bin/python3.7 -m pip show -f numpy | grep .dll"
+          dash -c "/usr/bin/python3.8 -m pip show numpy"
+          dash -c "/usr/bin/python3.8 -m pip show -f numpy | grep .dll"
           dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
           dash "list_dlls_unix.sh"
