@@ -64,6 +64,7 @@ def iterable_func(x):
 iterable_func(array)
 [element for element in array]
 iter(array)
+reversed(array)
 zip(array, array)
 array[1]
 array[:]
