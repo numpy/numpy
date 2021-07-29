@@ -124,7 +124,7 @@ from numpy.compat import long, unicode
 generic = allTypes['generic']
 
 genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
-                   'int32', 'uint32', 'int64', 'uint64', 'int128',
+                   'int32', 'int64', 'int128',
                    'uint128', 'float16',
                    'float32', 'float64', 'float80', 'float96', 'float128',
                    'float256',

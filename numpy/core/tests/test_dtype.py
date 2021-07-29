@@ -109,9 +109,9 @@ class TestBuiltin:
             operation(np.dtype(np.int32), 7)
 
     @pytest.mark.parametrize("dtype",
-             ['Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
-              'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
-              'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0',
+             ['Bool', 'Bytes0', 'Complex32', 'Complex64', 'Datetime64', 'Float16', 'Float32', 'Float64',
+              'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Str0', 'Timedelta64',
+              'UInt8', 'UInt16', 'Uint32', 'UInt32', 'Uint64', 'UInt64', 'Void0',
               "Float128", "Complex128"])
     def test_numeric_style_types_are_invalid(self, dtype):
         with assert_raises(TypeError):
