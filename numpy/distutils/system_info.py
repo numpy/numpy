@@ -2426,6 +2426,10 @@ class flame_info(system_info):
         if info is None:
             return
 
+        # Add the extra flag args to info
+        extra_info = self.calc_extra_info()
+        dict_append(info, **extra_info)
+
         if self.check_embedded_lapack(info):
             # check if the user has supplied all information required
             self.set_info(**info)
