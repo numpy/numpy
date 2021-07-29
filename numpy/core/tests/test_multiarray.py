@@ -9071,6 +9071,15 @@ class TestFormat:
         with assert_raises(TypeError):
             format(a, "+.2f")
 
+    def test_non_numeric(self):
+        a = np.array([], dtype=np.bool_)
+        with assert_raises(TypeError):
+            format(a, "+.2f")
+
+        a = np.array([], dtype=np.object_)
+        with assert_raises(TypeError):
+            format(a, "+.2f")
+
 from numpy.testing import IS_PYPY
 
 class TestCTypes:

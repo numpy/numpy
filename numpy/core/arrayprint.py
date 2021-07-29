@@ -1683,7 +1683,7 @@ def _parse_format_spec(fs):
     # Finally, parse the field type
 
     if fslen - pos > 1:  # more than 1 char remain, invalid format specifier
-        raise ValueError("Invalid format specifier")
+        raise ValueError(f"Invalid format specifier '{fs[pos]}'")
 
     if fslen - pos == 1:
         if fs[pos] == "f":  # force fixed-point notation
@@ -1696,19 +1696,17 @@ def _parse_format_spec(fs):
     return options
 
 
-def _array_format_implementation(
-        a, format_spec):
-    print(f"[DEBUG] _array_format_implementation: a.dtype={a.dtype}, format_spec={format_spec}")
-
+def _array_format_implementation(a, format_spec):
     if issubclass(a.dtype.type, np.object_):
         # this will raise TypeError if format_spec is not an empty string
         # this follow what list() or tuple() does in Python
         return object.__format__(a, format_spec)
 
-    # TODO: define behaviour when trying to format non-numeric dtypes
+    # default behaviour when trying to format non-numeric dtypes
+    if not issubclass(a.dtype.type, np.number):
+        raise TypeError(f"Format spec. not implemented for dtype={a.dtype}")
 
     options = _parse_format_spec(format_spec)
-    print(f"[DEBUG] options={options}")
 
     return array2string(a, **options)
 
