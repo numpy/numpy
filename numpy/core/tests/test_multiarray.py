@@ -9076,7 +9076,7 @@ class TestFormat:
         with assert_raises(TypeError):
             format(a, "+.2f")
 
-        a = np.array([], dtype=np.object_)
+        a = np.array([], dtype=np.flexible)
         with assert_raises(TypeError):
             format(a, "+.2f")
 
