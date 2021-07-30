@@ -1723,21 +1723,6 @@ _convert_from_str(PyObject *obj, int align)
         }
 
 
-        /* `Uint` has deliberately weird uppercasing */
-        char *dep_tps[] = {};
-        int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
-        for (int i = 0; i < ndep_tps; ++i) {
-            char *dep_tp = dep_tps[i];
-
-            if (strncmp(type, dep_tp, strlen(dep_tp)+1) == 0) {
-                /* Deprecated 2020-06-09, NumPy 1.20 */
-                if (DEPRECATE("Numeric-style type codes are "
-                              "deprecated and will result in "
-                              "an error in the future.") < 0) {
-                    goto fail;
-                }
-            }
-        }
         /*
          * Probably only ever dispatches to `_convert_from_type`, but who
          * knows what users are injecting into `np.typeDict`.
