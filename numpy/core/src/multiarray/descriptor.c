@@ -1722,7 +1722,7 @@ _convert_from_str(PyObject *obj, int align)
             goto fail;
         }
 
-        /* Check for a deprecated Numeric-style typecode */
+
         /* `Uint` has deliberately weird uppercasing */
         char *dep_tps[] = {};
         int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
