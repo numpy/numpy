@@ -56,14 +56,14 @@ sfloat_default_descr(PyArray_DTypeMeta *NPY_UNUSED(cls))
 static PyArray_Descr *
 sfloat_discover_from_pyobject(PyArray_DTypeMeta *cls, PyObject *NPY_UNUSED(obj))
 {
-    return cls->default_descr(cls);
+    return sfloat_default_descr(cls);
 }
 
 
 static PyArray_DTypeMeta *
 sfloat_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    if (other->legacy && other->type_num == NPY_DOUBLE) {
+    if (NPY_DT_is_legacy(other) && other->type_num == NPY_DOUBLE) {
         Py_INCREF(cls);
         return cls;
     }
@@ -122,9 +122,17 @@ sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
 }
 
 
-static PyArray_ArrFuncs arrfuncs = {
-    .getitem = (PyArray_GetItemFunc *)&sfloat_getitem,
-    .setitem = (PyArray_SetItemFunc *)&sfloat_setitem,
+/* Special DType methods and the descr->f slot storage */
+NPY_DType_Slots sfloat_slots = {
+    .default_descr = &sfloat_default_descr,
+    .discover_descr_from_pyobject = &sfloat_discover_from_pyobject,
+    .is_known_scalar_type = &sfloat_is_known_scalar_type,
+    .common_dtype = &sfloat_common_dtype,
+    .common_instance = &sfloat_common_instance,
+    .f = {
+        .getitem = (PyArray_GetItemFunc *)&sfloat_getitem,
+        .setitem = (PyArray_SetItemFunc *)&sfloat_setitem,
+    }
 };
 
 
@@ -133,7 +141,7 @@ static PyArray_SFloatDescr SFloatSingleton = {{
         .alignment = _ALIGN(double),
         .flags = NPY_USE_GETITEM|NPY_USE_SETITEM,
         .type_num = -1,
-        .f = &arrfuncs,
+        .f = &sfloat_slots.f,
         .byteorder = '|',  /* do not bother with byte-swapping... */
     },
     .scaling = 1,
@@ -231,17 +239,9 @@ static PyArray_DTypeMeta PyArray_SFloatDType = {{{
         .tp_basicsize = sizeof(PyArray_SFloatDescr),
     }},
     .type_num = -1,
-    .abstract = 0,
-    .legacy = 0,
-    .parametric = 1,
-    .f = &arrfuncs,
     .scalar_type = NULL,
-    /* Special methods: */
-    .default_descr = &sfloat_default_descr,
-    .discover_descr_from_pyobject = &sfloat_discover_from_pyobject,
-    .is_known_scalar_type = &sfloat_is_known_scalar_type,
-    .common_dtype = &sfloat_common_dtype,
-    .common_instance = &sfloat_common_instance,
+    .flags = NPY_DT_PARAMETRIC,
+    .dt_slots = &sfloat_slots,
 };
 
 
@@ -385,11 +385,11 @@ float_to_from_sfloat_resolve_descriptors(
         PyArray_Descr *NPY_UNUSED(given_descrs[2]),
         PyArray_Descr *loop_descrs[2])
 {
-    loop_descrs[0] = dtypes[0]->default_descr(dtypes[0]);
+    loop_descrs[0] = NPY_DT_call_default_descr(dtypes[0]);
     if (loop_descrs[0] == NULL) {
         return -1;
     }
-    loop_descrs[1] = dtypes[1]->default_descr(dtypes[1]);
+    loop_descrs[1] = NPY_DT_call_default_descr(dtypes[1]);
     if (loop_descrs[1] == NULL) {
         return -1;
     }
@@ -476,8 +476,8 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     if (PyType_Ready((PyTypeObject *)&PyArray_SFloatDType) < 0) {
         return NULL;
     }
-    PyArray_SFloatDType.castingimpls = PyDict_New();
-    if (PyArray_SFloatDType.castingimpls == NULL) {
+    NPY_DT_SLOTS(&PyArray_SFloatDType)->castingimpls = PyDict_New();
+    if (NPY_DT_SLOTS(&PyArray_SFloatDType)->castingimpls == NULL) {
         return NULL;
     }
 

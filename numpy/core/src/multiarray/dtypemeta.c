@@ -27,7 +27,8 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
 
     Py_XDECREF(self->scalar_type);
     Py_XDECREF(self->singleton);
-    Py_XDECREF(self->castingimpls);
+    Py_XDECREF(NPY_DT_SLOTS(self)->castingimpls);
+    PyMem_Free(self->dt_slots);
     PyType_Type.tp_dealloc((PyObject *) self);
 }
 
@@ -89,7 +90,7 @@ dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
      * defined types). It should be revised at that time.
      */
     assert(0);
-    assert(!type->legacy && (PyTypeObject *)type != &PyArrayDescr_Type);
+    assert(!NPY_DT_is_legacy(type) && (PyTypeObject *)type != &PyArrayDescr_Type);
     Py_VISIT(type->singleton);
     Py_VISIT(type->scalar_type);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
@@ -101,7 +102,7 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
         PyObject *args, PyObject *kwargs)
 {
     /* TODO: This should allow endianess and possibly metadata */
-    if (self->parametric) {
+    if (NPY_DT_is_parametric(self)) {
         /* reject parametric ones since we would need to get unit, etc. info */
         PyErr_Format(PyExc_TypeError,
                 "Preliminary-API: Flexible/Parametric legacy DType '%S' can "
@@ -126,7 +127,7 @@ nonparametric_discover_descr_from_pyobject(
         PyArray_DTypeMeta *cls, PyObject *obj)
 {
     /* If the object is of the correct scalar type return our singleton */
-    assert(!cls->parametric);
+    assert(!NPY_DT_is_parametric(cls));
     Py_INCREF(cls->singleton);
     return cls->singleton;
 }
@@ -382,7 +383,7 @@ static PyArray_DTypeMeta *
 default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES);
-    if (!other->legacy || other->type_num > cls->type_num) {
+    if (!NPY_DT_is_legacy(other) || other->type_num > cls->type_num) {
         /*
          * Let the more generic (larger type number) DType handle this
          * (note that half is after all others, which works out here.)
@@ -409,7 +410,7 @@ static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES && cls != other);
-    if (!other->legacy || (!PyTypeNum_ISNUMBER(other->type_num) &&
+    if (!NPY_DT_is_legacy(other) || (!PyTypeNum_ISNUMBER(other->type_num) &&
             /* Not numeric so defer unless cls is unicode and other is string */
             !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
         Py_INCREF(Py_NotImplemented);
@@ -536,7 +537,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     Py_ssize_t name_length = strlen(scalar_name) + 14;
 
-    char *tp_name = malloc(name_length);
+    char *tp_name = PyMem_Malloc(name_length);
     if (tp_name == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -544,11 +545,20 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 
     snprintf(tp_name, name_length, "numpy.dtype[%s]", scalar_name);
 
-    PyArray_DTypeMeta *dtype_class = malloc(sizeof(PyArray_DTypeMeta));
-    if (dtype_class == NULL) {
-        PyDataMem_FREE(tp_name);
+    NPY_DType_Slots *dt_slots = PyMem_Malloc(sizeof(NPY_DType_Slots));
+    if (dt_slots == NULL) {
+        PyMem_Free(tp_name);
         return -1;
     }
+    memset(dt_slots, '\0', sizeof(NPY_DType_Slots));
+
+    PyArray_DTypeMeta *dtype_class = PyMem_Malloc(sizeof(PyArray_DTypeMeta));
+    if (dtype_class == NULL) {
+        PyMem_Free(tp_name);
+        PyMem_Free(dt_slots);
+        return -1;
+    }
+
     /*
      * Initialize the struct fields identically to static code by copying
      * a prototype instances for everything except our own fields which
@@ -567,21 +577,21 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
             .tp_base = &PyArrayDescr_Type,
             .tp_new = (newfunc)legacy_dtype_default_new,
         },},
-        .legacy = 1,
-        .abstract = 0, /* this is a concrete DType */
+        .flags = NPY_DT_LEGACY,
         /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
     /* Fix name of the Type*/
     ((PyTypeObject *)dtype_class)->tp_name = tp_name;
+    dtype_class->dt_slots = dt_slots;
 
     /* Let python finish the initialization (probably unnecessary) */
     if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
         Py_DECREF(dtype_class);
         return -1;
     }
-    dtype_class->castingimpls = PyDict_New();
-    if (dtype_class->castingimpls == NULL) {
+    dt_slots->castingimpls = PyDict_New();
+    if (dt_slots->castingimpls == NULL) {
         Py_DECREF(dtype_class);
         return -1;
     }
@@ -594,56 +604,54 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     Py_INCREF(descr->typeobj);
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
-    dtype_class->type = descr->type;
-    dtype_class->f = descr->f;
-    dtype_class->kind = descr->kind;
+    dt_slots->f = *(descr->f);
 
     /* Set default functions (correct for most dtypes, override below) */
-    dtype_class->default_descr = nonparametric_default_descr;
-    dtype_class->discover_descr_from_pyobject = (
+    dt_slots->default_descr = nonparametric_default_descr;
+    dt_slots->discover_descr_from_pyobject = (
             nonparametric_discover_descr_from_pyobject);
-    dtype_class->is_known_scalar_type = python_builtins_are_known_scalar_types;
-    dtype_class->common_dtype = default_builtin_common_dtype;
-    dtype_class->common_instance = NULL;
+    dt_slots->is_known_scalar_type = python_builtins_are_known_scalar_types;
+    dt_slots->common_dtype = default_builtin_common_dtype;
+    dt_slots->common_instance = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
-        dtype_class->is_known_scalar_type = signed_integers_is_known_scalar_types;
+        dt_slots->is_known_scalar_type = signed_integers_is_known_scalar_types;
     }
 
     if (PyTypeNum_ISUSERDEF(descr->type_num)) {
-        dtype_class->common_dtype = legacy_userdtype_common_dtype_function;
+        dt_slots->common_dtype = legacy_userdtype_common_dtype_function;
     }
     else if (descr->type_num == NPY_OBJECT) {
-        dtype_class->common_dtype = object_common_dtype;
+        dt_slots->common_dtype = object_common_dtype;
     }
     else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
-        dtype_class->parametric = NPY_TRUE;
-        dtype_class->default_descr = datetime_and_timedelta_default_descr;
-        dtype_class->discover_descr_from_pyobject = (
+        dtype_class->flags |= NPY_DT_PARAMETRIC;
+        dt_slots->default_descr = datetime_and_timedelta_default_descr;
+        dt_slots->discover_descr_from_pyobject = (
                 discover_datetime_and_timedelta_from_pyobject);
-        dtype_class->common_dtype = datetime_common_dtype;
-        dtype_class->common_instance = datetime_type_promotion;
+        dt_slots->common_dtype = datetime_common_dtype;
+        dt_slots->common_instance = datetime_type_promotion;
         if (descr->type_num == NPY_DATETIME) {
-            dtype_class->is_known_scalar_type = datetime_known_scalar_types;
+            dt_slots->is_known_scalar_type = datetime_known_scalar_types;
         }
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
-        dtype_class->parametric = NPY_TRUE;
+        dtype_class->flags |= NPY_DT_PARAMETRIC;
         if (descr->type_num == NPY_VOID) {
-            dtype_class->default_descr = void_default_descr;
-            dtype_class->discover_descr_from_pyobject = (
+            dt_slots->default_descr = void_default_descr;
+            dt_slots->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
-            dtype_class->common_instance = void_common_instance;
+            dt_slots->common_instance = void_common_instance;
         }
         else {
-            dtype_class->default_descr = string_and_unicode_default_descr;
-            dtype_class->is_known_scalar_type = string_known_scalar_types;
-            dtype_class->discover_descr_from_pyobject = (
+            dt_slots->default_descr = string_and_unicode_default_descr;
+            dt_slots->is_known_scalar_type = string_known_scalar_types;
+            dt_slots->discover_descr_from_pyobject = (
                     string_discover_descr_from_pyobject);
-            dtype_class->common_dtype = string_unicode_common_dtype;
-            dtype_class->common_instance = string_unicode_common_instance;
+            dt_slots->common_dtype = string_unicode_common_dtype;
+            dt_slots->common_instance = string_unicode_common_instance;
         }
     }
 
@@ -660,17 +668,28 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 }
 
 
+static PyObject *
+dtypemeta_get_abstract(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_abstract(self));
+}
+
+static PyObject *
+dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
+    return PyBool_FromLong(NPY_DT_is_parametric(self));
+}
+
 /*
- * Simple exposed information, defined for each DType (class). This is
- * preliminary (the flags should also return bools).
+ * Simple exposed information, defined for each DType (class).
  */
+static PyGetSetDef dtypemeta_getset[] = {
+        {"_abstract", (getter)dtypemeta_get_abstract, NULL, NULL, NULL},
+        {"_parametric", (getter)dtypemeta_get_parametric, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL, NULL}
+};
+
 static PyMemberDef dtypemeta_members[] = {
-    {"_abstract",
-        T_BYTE, offsetof(PyArray_DTypeMeta, abstract), READONLY, NULL},
     {"type",
         T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY, NULL},
-    {"_parametric",
-        T_BYTE, offsetof(PyArray_DTypeMeta, parametric), READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -683,6 +702,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     /* Types are garbage collected (see dtypemeta_is_gc documentation) */
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
     .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
+    .tp_getset = dtypemeta_getset,
     .tp_members = dtypemeta_members,
     .tp_base = NULL,  /* set to PyType_Type at import time */
     .tp_alloc = dtypemeta_alloc,

@@ -150,7 +150,7 @@ initialize_and_map_pytypes_to_dtypes()
 static PyArray_DTypeMeta *
 int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
 {
-    if (other->legacy && other->type_num < NPY_NTYPES) {
+    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
         if (other->type_num == NPY_BOOL) {
             /* Use the default integer for bools: */
             return PyArray_DTypeFromTypeNum(NPY_LONG);
@@ -162,7 +162,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
             return other;
         }
     }
-    else if (other->legacy) {
+    else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
         return PyArray_DTypeFromTypeNum(NPY_UINT8);
     }
@@ -174,7 +174,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    if (other->legacy && other->type_num < NPY_NTYPES) {
+    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
         if (other->type_num == NPY_BOOL || PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
             return PyArray_DTypeFromTypeNum(NPY_DOUBLE);
@@ -189,7 +189,7 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         Py_INCREF(cls);
         return cls;
     }
-    else if (other->legacy) {
+    else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
         return PyArray_DTypeFromTypeNum(NPY_HALF);
     }
@@ -201,7 +201,7 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    if (other->legacy && other->type_num < NPY_NTYPES) {
+    if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES) {
         if (other->type_num == NPY_BOOL ||
                 PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
@@ -227,7 +227,7 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
             return other;
         }
     }
-    else if (other->legacy) {
+    else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
         return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
     }
@@ -246,17 +246,27 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
  *       `Floating`, `Complex`, and `Integer` (both signed and unsigned).
  *       They will have to be renamed and exposed in that capacity.
  */
+NPY_DType_Slots pyintabstractdtype_slots = {
+    .default_descr = int_default_descriptor,
+    .discover_descr_from_pyobject = discover_descriptor_from_pyint,
+    .common_dtype = int_common_dtype,
+};
+
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_basicsize = sizeof(PyArray_Descr),
         .tp_flags = Py_TPFLAGS_DEFAULT,
         .tp_name = "numpy._IntegerAbstractDType",
     },},
-    .abstract = 1,
-    .default_descr = int_default_descriptor,
-    .discover_descr_from_pyobject = discover_descriptor_from_pyint,
-    .common_dtype = int_common_dtype,
-    .kind = 'i',
+    .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &pyintabstractdtype_slots,
+};
+
+
+NPY_DType_Slots pyfloatabstractdtype_slots = {
+    .default_descr = float_default_descriptor,
+    .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
+    .common_dtype = float_common_dtype,
 };
 
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
@@ -265,11 +275,15 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
        .tp_flags = Py_TPFLAGS_DEFAULT,
         .tp_name = "numpy._FloatAbstractDType",
     },},
-    .abstract = 1,
-    .default_descr = float_default_descriptor,
-    .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
-    .common_dtype = float_common_dtype,
-    .kind = 'f',
+    .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &pyfloatabstractdtype_slots,
+};
+
+
+NPY_DType_Slots pycomplexabstractdtype_slots = {
+    .default_descr = complex_default_descriptor,
+    .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
+    .common_dtype = complex_common_dtype,
 };
 
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
@@ -278,9 +292,6 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
          .tp_flags = Py_TPFLAGS_DEFAULT,
         .tp_name = "numpy._ComplexAbstractDType",
     },},
-    .abstract = 1,
-    .default_descr = complex_default_descriptor,
-    .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
-    .common_dtype = complex_common_dtype,
-    .kind = 'c',
+    .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &pycomplexabstractdtype_slots,
 };

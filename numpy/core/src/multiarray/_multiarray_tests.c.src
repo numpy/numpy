@@ -14,6 +14,7 @@
 #include "npy_extint128.h"
 #include "array_method.h"
 #include "npy_hashtable.h"
+#include "dtypemeta.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -1066,7 +1067,7 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     for (Py_ssize_t  i = 0; i < nclass; i++) {
         PyArray_DTypeMeta *from_dtype = (
                 (PyArray_DTypeMeta *)PySequence_Fast_GET_ITEM(classes, i));
-        if (from_dtype->abstract) {
+        if (NPY_DT_is_abstract(from_dtype)) {
             /*
              * TODO: In principle probably needs to recursively check this,
              *       also we may allow casts to abstract dtypes at some point.
@@ -1077,7 +1078,8 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         PyObject *to_dtype, *cast_obj;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(from_dtype->castingimpls, &pos, &to_dtype, &cast_obj)) {
+        while (PyDict_Next(NPY_DT_SLOTS(from_dtype)->castingimpls,
+                           &pos, &to_dtype, &cast_obj)) {
             if (cast_obj == Py_None) {
                 continue;
             }

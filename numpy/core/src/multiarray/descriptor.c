@@ -20,6 +20,7 @@
 #include "alloc.h"
 #include "assert.h"
 #include "npy_buffer.h"
+#include "dtypemeta.h"
 
 /*
  * offset:    A starting offset.
@@ -3544,9 +3545,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
         .tp_new = arraydescr_new,
     },},
     .type_num = -1,
-    .kind = '\0',
-    .abstract = 1,
-    .parametric = 0,
-    .singleton = 0,
+    .flags = NPY_DT_ABSTRACT,
+    .singleton = NULL,
     .scalar_type = NULL,
 };

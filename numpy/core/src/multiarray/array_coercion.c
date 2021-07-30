@@ -154,7 +154,7 @@ _PyArray_MapPyTypeToDType(
          * We expect that user dtypes (for now) will subclass some numpy
          * scalar class to allow automatic discovery.
          */
-        if (DType->legacy) {
+        if (NPY_DT_is_legacy(DType)) {
             /*
              * For legacy user dtypes, discovery relied on subclassing, but
              * arbitrary type objects are supported, so do nothing.
@@ -257,8 +257,7 @@ discover_dtype_from_pyobject(
          * asked to attempt to do so later, if no other matching DType exists.)
          */
         if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
-                (fixed_DType->is_known_scalar_type != NULL &&
-                 fixed_DType->is_known_scalar_type(fixed_DType, Py_TYPE(obj)))) {
+                NPY_DT_call_is_known_scalar_type(fixed_DType, Py_TYPE(obj))) {
             Py_INCREF(fixed_DType);
             return fixed_DType;
         }
@@ -346,10 +345,10 @@ find_scalar_descriptor(
          * chance.  This allows for example string, to call `str(obj)` to
          * figure out the length for arbitrary objects.
          */
-        descr = fixed_DType->discover_descr_from_pyobject(fixed_DType, obj);
+        descr = NPY_DT_call_discover_descr_from_pyobject(fixed_DType, obj);
     }
     else {
-        descr = DType->discover_descr_from_pyobject(DType, obj);
+        descr = NPY_DT_call_discover_descr_from_pyobject(DType, obj);
     }
     if (descr == NULL) {
         return NULL;
@@ -425,7 +424,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         return descr->f->setitem(value, item, &arr_fields);
     }
     PyArray_Descr *tmp_descr;
-    tmp_descr = DType->discover_descr_from_pyobject(DType, value);
+    tmp_descr = NPY_DT_call_discover_descr_from_pyobject(DType, value);
     Py_DECREF(DType);
     if (tmp_descr == NULL) {
         return -1;
@@ -713,7 +712,7 @@ find_descriptor_from_array(
         return 0;
     }
 
-    if (NPY_UNLIKELY(DType->parametric && PyArray_ISOBJECT(arr))) {
+    if (NPY_UNLIKELY(NPY_DT_is_parametric(DType) && PyArray_ISOBJECT(arr))) {
         /*
          * We have one special case, if (and only if) the input array is of
          * object DType and the dtype is not fixed already but parametric.
@@ -833,7 +832,7 @@ PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
         }
         if (new_dtype == NULL) {
             /* This is an object array but contained no elements, use default */
-            new_dtype = new_DType->default_descr(new_DType);
+            new_dtype = NPY_DT_call_default_descr(new_DType);
         }
     }
     Py_DECREF(new_DType);
@@ -1376,7 +1375,7 @@ PyArray_DiscoverDTypeAndShape(
          * the correct default.
          */
         if (fixed_DType != NULL) {
-            *out_descr = fixed_DType->default_descr(fixed_DType);
+            *out_descr = NPY_DT_call_default_descr(fixed_DType);
             if (*out_descr == NULL) {
                 goto fail;
             }

@@ -957,7 +957,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
 
-        if (!out_op_DTypes[i]->legacy) {
+        if (!NPY_DT_is_legacy(out_op_DTypes[i])) {
             *allow_legacy_promotion = NPY_FALSE;
         }
         if (PyArray_NDIM(out_op[i]) == 0) {
@@ -4274,7 +4274,7 @@ _get_dtype(PyObject *dtype_obj) {
             return NULL;
         }
         PyArray_DTypeMeta *out = NPY_DTYPE(descr);
-        if (NPY_UNLIKELY(!out->legacy)) {
+        if (NPY_UNLIKELY(!NPY_DT_is_legacy(out))) {
             /* TODO: this path was unreachable when added. */
             PyErr_SetString(PyExc_TypeError,
                     "Cannot pass a new user DType instance to the `dtype` or "
@@ -4392,7 +4392,7 @@ _get_fixed_signature(PyUFuncObject *ufunc,
                 if (signature[i] == NULL) {
                     return -1;
                 }
-                else if (i < nin && signature[i]->abstract) {
+                else if (i < nin && NPY_DT_is_abstract(signature[i])) {
                     /*
                      * We reject abstract input signatures for now.  These
                      * can probably be defined by finding the common DType with
