@@ -310,321 +310,6 @@ Construction and Destruction
     Returns NULL if there is an error, otherwise returns the allocated
     iterator.
 
-    Flags that may be passed in ``flags``, applying to the whole
-    iterator, are:
-
-        .. c:macro:: NPY_ITER_C_INDEX
-
-            Causes the iterator to track a raveled flat index matching C
-            order. This option cannot be used with :c:data:`NPY_ITER_F_INDEX`.
-
-        .. c:macro:: NPY_ITER_F_INDEX
-
-            Causes the iterator to track a raveled flat index matching Fortran
-            order. This option cannot be used with :c:data:`NPY_ITER_C_INDEX`.
-
-        .. c:macro:: NPY_ITER_MULTI_INDEX
-
-            Causes the iterator to track a multi-index.
-            This prevents the iterator from coalescing axes to
-            produce bigger inner loops. If the loop is also not buffered
-            and no index is being tracked (`NpyIter_RemoveAxis` can be called),
-            then the iterator size can be ``-1`` to indicate that the iterator
-            is too large. This can happen due to complex broadcasting and
-            will result in errors being created when the setting the iterator
-            range, removing the multi index, or getting the next function.
-            However, it is possible to remove axes again and use the iterator
-            normally if the size is small enough after removal.
-
-        .. c:macro:: NPY_ITER_EXTERNAL_LOOP
-
-            Causes the iterator to skip iteration of the innermost
-            loop, requiring the user of the iterator to handle it.
-
-            This flag is incompatible with :c:data:`NPY_ITER_C_INDEX`,
-            :c:data:`NPY_ITER_F_INDEX`, and :c:data:`NPY_ITER_MULTI_INDEX`.
-
-        .. c:macro:: NPY_ITER_DONT_NEGATE_STRIDES
-
-            This only affects the iterator when :c:type:`NPY_KEEPORDER` is
-            specified for the order parameter.  By default with
-            :c:type:`NPY_KEEPORDER`, the iterator reverses axes which have
-            negative strides, so that memory is traversed in a forward
-            direction.  This disables this step.  Use this flag if you
-            want to use the underlying memory-ordering of the axes,
-            but don't want an axis reversed. This is the behavior of
-            ``numpy.ravel(a, order='K')``, for instance.
-
-        .. c:macro:: NPY_ITER_COMMON_DTYPE
-
-            Causes the iterator to convert all the operands to a common
-            data type, calculated based on the ufunc type promotion rules.
-            Copying or buffering must be enabled.
-
-            If the common data type is known ahead of time, don't use this
-            flag.  Instead, set the requested dtype for all the operands.
-
-        .. c:macro:: NPY_ITER_REFS_OK
-
-            Indicates that arrays with reference types (object
-            arrays or structured arrays containing an object type)
-            may be accepted and used in the iterator.  If this flag
-            is enabled, the caller must be sure to check whether
-            :c:expr:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
-            it may not release the GIL during iteration.
-
-        .. c:macro:: NPY_ITER_ZEROSIZE_OK
-
-            Indicates that arrays with a size of zero should be permitted.
-            Since the typical iteration loop does not naturally work with
-            zero-sized arrays, you must check that the IterSize is larger
-            than zero before entering the iteration loop.
-            Currently only the operands are checked, not a forced shape.
-
-        .. c:macro:: NPY_ITER_REDUCE_OK
-
-            Permits writeable operands with a dimension with zero
-            stride and size greater than one.  Note that such operands
-            must be read/write.
-
-            When buffering is enabled, this also switches to a special
-            buffering mode which reduces the loop length as necessary to
-            not trample on values being reduced.
-
-            Note that if you want to do a reduction on an automatically
-            allocated output, you must use :c:func:`NpyIter_GetOperandArray`
-            to get its reference, then set every value to the reduction
-            unit before doing the iteration loop.  In the case of a
-            buffered reduction, this means you must also specify the
-            flag :c:data:`NPY_ITER_DELAY_BUFALLOC`, then reset the iterator
-            after initializing the allocated operand to prepare the
-            buffers.
-
-        .. c:macro:: NPY_ITER_RANGED
-
-            Enables support for iteration of sub-ranges of the full
-            ``iterindex`` range ``[0, NpyIter_IterSize(iter))``.  Use
-            the function :c:func:`NpyIter_ResetToIterIndexRange` to specify
-            a range for iteration.
-
-            This flag can only be used with :c:data:`NPY_ITER_EXTERNAL_LOOP`
-            when :c:data:`NPY_ITER_BUFFERED` is enabled.  This is because
-            without buffering, the inner loop is always the size of the
-            innermost iteration dimension, and allowing it to get cut up
-            would require special handling, effectively making it more
-            like the buffered version.
-
-        .. c:macro:: NPY_ITER_BUFFERED
-
-            Causes the iterator to store buffering data, and use buffering
-            to satisfy data type, alignment, and byte-order requirements.
-            To buffer an operand, do not specify the :c:data:`NPY_ITER_COPY`
-            or :c:data:`NPY_ITER_UPDATEIFCOPY` flags, because they will
-            override buffering.  Buffering is especially useful for Python
-            code using the iterator, allowing for larger chunks
-            of data at once to amortize the Python interpreter overhead.
-
-            If used with :c:data:`NPY_ITER_EXTERNAL_LOOP`, the inner loop
-            for the caller may get larger chunks than would be possible
-            without buffering, because of how the strides are laid out.
-
-            Note that if an operand is given the flag :c:data:`NPY_ITER_COPY`
-            or :c:data:`NPY_ITER_UPDATEIFCOPY`, a copy will be made in preference
-            to buffering.  Buffering will still occur when the array was
-            broadcast so elements need to be duplicated to get a constant
-            stride.
-
-            In normal buffering, the size of each inner loop is equal
-            to the buffer size, or possibly larger if
-            :c:data:`NPY_ITER_GROWINNER` is specified.  If
-            :c:data:`NPY_ITER_REDUCE_OK` is enabled and a reduction occurs,
-            the inner loops may become smaller depending
-            on the structure of the reduction.
-
-        .. c:macro:: NPY_ITER_GROWINNER
-
-            When buffering is enabled, this allows the size of the inner
-            loop to grow when buffering isn't necessary.  This option
-            is best used if you're doing a straight pass through all the
-            data, rather than anything with small cache-friendly arrays
-            of temporary values for each inner loop.
-
-        .. c:macro:: NPY_ITER_DELAY_BUFALLOC
-
-            When buffering is enabled, this delays allocation of the
-            buffers until :c:func:`NpyIter_Reset` or another reset function is
-            called.  This flag exists to avoid wasteful copying of
-            buffer data when making multiple copies of a buffered
-            iterator for multi-threaded iteration.
-
-            Another use of this flag is for setting up reduction operations.
-            After the iterator is created, and a reduction output
-            is allocated automatically by the iterator (be sure to use
-            READWRITE access), its value may be initialized to the reduction
-            unit.  Use :c:func:`NpyIter_GetOperandArray` to get the object.
-            Then, call :c:func:`NpyIter_Reset` to allocate and fill the buffers
-            with their initial values.
-
-        .. c:macro:: NPY_ITER_COPY_IF_OVERLAP
-
-            If any write operand has overlap with any read operand, eliminate all
-            overlap by making temporary copies (enabling UPDATEIFCOPY for write
-            operands, if necessary). A pair of operands has overlap if there is
-            a memory address that contains data common to both arrays.
-
-            Because exact overlap detection has exponential runtime
-            in the number of dimensions, the decision is made based
-            on heuristics, which has false positives (needless copies in unusual
-            cases) but has no false negatives.
-
-            If any read/write overlap exists, this flag ensures the result of the
-            operation is the same as if all operands were copied.
-            In cases where copies would need to be made, **the result of the
-            computation may be undefined without this flag!**
-
-    Flags that may be passed in ``op_flags[i]``, where ``0 <= i < nop``:
-
-        .. c:macro:: NPY_ITER_READWRITE
-        .. c:macro:: NPY_ITER_READONLY
-        .. c:macro:: NPY_ITER_WRITEONLY
-
-            Indicate how the user of the iterator will read or write
-            to ``op[i]``.  Exactly one of these flags must be specified
-            per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
-            for a user-provided operand may trigger `WRITEBACKIFCOPY``
-            semantics. The data will be written back to the original array
-            when ``NpyIter_Deallocate`` is called.
-
-        .. c:macro:: NPY_ITER_COPY
-
-            Allow a copy of ``op[i]`` to be made if it does not
-            meet the data type or alignment requirements as specified
-            by the constructor flags and parameters.
-
-        .. c:macro:: NPY_ITER_UPDATEIFCOPY
-
-            Triggers :c:data:`NPY_ITER_COPY`, and when an array operand
-            is flagged for writing and is copied, causes the data
-            in a copy to be copied back to ``op[i]`` when
-            ``NpyIter_Deallocate`` is called.
-
-            If the operand is flagged as write-only and a copy is needed,
-            an uninitialized temporary array will be created and then copied
-            to back to ``op[i]`` on calling ``NpyIter_Deallocate``, instead of
-            doing the unnecessary copy operation.
-
-        .. c:macro:: NPY_ITER_NBO
-        .. c:macro:: NPY_ITER_ALIGNED
-        .. c:macro:: NPY_ITER_CONTIG
-
-            Causes the iterator to provide data for ``op[i]``
-            that is in native byte order, aligned according to
-            the dtype requirements, contiguous, or any combination.
-
-            By default, the iterator produces pointers into the
-            arrays provided, which may be aligned or unaligned, and
-            with any byte order.  If copying or buffering is not
-            enabled and the operand data doesn't satisfy the constraints,
-            an error will be raised.
-
-            The contiguous constraint applies only to the inner loop,
-            successive inner loops may have arbitrary pointer changes.
-
-            If the requested data type is in non-native byte order,
-            the NBO flag overrides it and the requested data type is
-            converted to be in native byte order.
-
-        .. c:macro:: NPY_ITER_ALLOCATE
-
-            This is for output arrays, and requires that the flag
-            :c:data:`NPY_ITER_WRITEONLY` or :c:data:`NPY_ITER_READWRITE`
-            be set.  If ``op[i]`` is NULL, creates a new array with
-            the final broadcast dimensions, and a layout matching
-            the iteration order of the iterator.
-
-            When ``op[i]`` is NULL, the requested data type
-            ``op_dtypes[i]`` may be NULL as well, in which case it is
-            automatically generated from the dtypes of the arrays which
-            are flagged as readable.  The rules for generating the dtype
-            are the same is for UFuncs.  Of special note is handling
-            of byte order in the selected dtype.  If there is exactly
-            one input, the input's dtype is used as is.  Otherwise,
-            if more than one input dtypes are combined together, the
-            output will be in native byte order.
-
-            After being allocated with this flag, the caller may retrieve
-            the new array by calling :c:func:`NpyIter_GetOperandArray` and
-            getting the i-th object in the returned C array.  The caller
-            must call Py_INCREF on it to claim a reference to the array.
-
-        .. c:macro:: NPY_ITER_NO_SUBTYPE
-
-            For use with :c:data:`NPY_ITER_ALLOCATE`, this flag disables
-            allocating an array subtype for the output, forcing
-            it to be a straight ndarray.
-
-            TODO: Maybe it would be better to introduce a function
-            ``NpyIter_GetWrappedOutput`` and remove this flag?
-
-        .. c:macro:: NPY_ITER_NO_BROADCAST
-
-            Ensures that the input or output matches the iteration
-            dimensions exactly.
-
-        .. c:macro:: NPY_ITER_ARRAYMASK
-
-            .. versionadded:: 1.7
-
-            Indicates that this operand is the mask to use for
-            selecting elements when writing to operands which have
-            the :c:data:`NPY_ITER_WRITEMASKED` flag applied to them.
-            Only one operand may have :c:data:`NPY_ITER_ARRAYMASK` flag
-            applied to it.
-
-            The data type of an operand with this flag should be either
-            :c:data:`NPY_BOOL`, :c:data:`NPY_MASK`, or a struct dtype
-            whose fields are all valid mask dtypes. In the latter case,
-            it must match up with a struct operand being WRITEMASKED,
-            as it is specifying a mask for each field of that array.
-
-            This flag only affects writing from the buffer back to
-            the array. This means that if the operand is also
-            :c:data:`NPY_ITER_READWRITE` or :c:data:`NPY_ITER_WRITEONLY`,
-            code doing iteration can write to this operand to
-            control which elements will be untouched and which ones will be
-            modified. This is useful when the mask should be a combination
-            of input masks.
-
-        .. c:macro:: NPY_ITER_WRITEMASKED
-
-            .. versionadded:: 1.7
-
-            This array is the mask for all `writemasked <numpy.nditer>`
-            operands. Code uses the ``writemasked`` flag which indicates 
-            that only elements where the chosen ARRAYMASK operand is True
-            will be written to. In general, the iterator does not enforce
-            this, it is up to the code doing the iteration to follow that
-            promise.
-
-            When ``writemasked`` flag is used, and this operand is buffered,
-            this changes how data is copied from the buffer into the array.
-            A masked copying routine is used, which only copies the
-            elements in the buffer for which ``writemasked``
-            returns true from the corresponding element in the ARRAYMASK
-            operand.
-
-        .. c:macro:: NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
-
-            In memory overlap checks, assume that operands with
-            ``NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE`` enabled are accessed only
-            in the iterator order.
-
-            This enables the iterator to reason about data dependency,
-            possibly avoiding unnecessary copies.
-
-            This flag has effect only if ``NPY_ITER_COPY_IF_OVERLAP`` is enabled
-            on the iterator.
-
 .. c:function:: NpyIter* NpyIter_AdvancedNew( \
         npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, \
         NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, \
@@ -1082,6 +767,320 @@ Construction and Destruction
     and it is not confirmed that EXTERNAL_LOOP mode is enabled. These
     checks are the responsibility of the caller, and should be done
     outside of any inner loops.
+
+Flags that may be passed in ``flags``, applying to the whole iterator, are:
+
+.. c:macro:: NPY_ITER_C_INDEX
+
+    Causes the iterator to track a raveled flat index matching C
+    order. This option cannot be used with :c:data:`NPY_ITER_F_INDEX`.
+
+.. c:macro:: NPY_ITER_F_INDEX
+
+    Causes the iterator to track a raveled flat index matching Fortran
+    order. This option cannot be used with :c:data:`NPY_ITER_C_INDEX`.
+
+.. c:macro:: NPY_ITER_MULTI_INDEX
+
+    Causes the iterator to track a multi-index.
+    This prevents the iterator from coalescing axes to
+    produce bigger inner loops. If the loop is also not buffered
+    and no index is being tracked (`NpyIter_RemoveAxis` can be called),
+    then the iterator size can be ``-1`` to indicate that the iterator
+    is too large. This can happen due to complex broadcasting and
+    will result in errors being created when the setting the iterator
+    range, removing the multi index, or getting the next function.
+    However, it is possible to remove axes again and use the iterator
+    normally if the size is small enough after removal.
+
+.. c:macro:: NPY_ITER_EXTERNAL_LOOP
+
+    Causes the iterator to skip iteration of the innermost
+    loop, requiring the user of the iterator to handle it.
+
+    This flag is incompatible with :c:data:`NPY_ITER_C_INDEX`,
+    :c:data:`NPY_ITER_F_INDEX`, and :c:data:`NPY_ITER_MULTI_INDEX`.
+
+.. c:macro:: NPY_ITER_DONT_NEGATE_STRIDES
+
+    This only affects the iterator when :c:type:`NPY_KEEPORDER` is
+    specified for the order parameter.  By default with
+    :c:type:`NPY_KEEPORDER`, the iterator reverses axes which have
+    negative strides, so that memory is traversed in a forward
+    direction.  This disables this step.  Use this flag if you
+    want to use the underlying memory-ordering of the axes,
+    but don't want an axis reversed. This is the behavior of
+    ``numpy.ravel(a, order='K')``, for instance.
+
+.. c:macro:: NPY_ITER_COMMON_DTYPE
+
+    Causes the iterator to convert all the operands to a common
+    data type, calculated based on the ufunc type promotion rules.
+    Copying or buffering must be enabled.
+
+    If the common data type is known ahead of time, don't use this
+    flag.  Instead, set the requested dtype for all the operands.
+
+.. c:macro:: NPY_ITER_REFS_OK
+
+    Indicates that arrays with reference types (object
+    arrays or structured arrays containing an object type)
+    may be accepted and used in the iterator.  If this flag
+    is enabled, the caller must be sure to check whether
+    :c:expr:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
+    it may not release the GIL during iteration.
+
+.. c:macro:: NPY_ITER_ZEROSIZE_OK
+
+    Indicates that arrays with a size of zero should be permitted.
+    Since the typical iteration loop does not naturally work with
+    zero-sized arrays, you must check that the IterSize is larger
+    than zero before entering the iteration loop.
+    Currently only the operands are checked, not a forced shape.
+
+.. c:macro:: NPY_ITER_REDUCE_OK
+
+    Permits writeable operands with a dimension with zero
+    stride and size greater than one.  Note that such operands
+    must be read/write.
+
+    When buffering is enabled, this also switches to a special
+    buffering mode which reduces the loop length as necessary to
+    not trample on values being reduced.
+
+    Note that if you want to do a reduction on an automatically
+    allocated output, you must use :c:func:`NpyIter_GetOperandArray`
+    to get its reference, then set every value to the reduction
+    unit before doing the iteration loop.  In the case of a
+    buffered reduction, this means you must also specify the
+    flag :c:data:`NPY_ITER_DELAY_BUFALLOC`, then reset the iterator
+    after initializing the allocated operand to prepare the
+    buffers.
+
+.. c:macro:: NPY_ITER_RANGED
+
+    Enables support for iteration of sub-ranges of the full
+    ``iterindex`` range ``[0, NpyIter_IterSize(iter))``.  Use
+    the function :c:func:`NpyIter_ResetToIterIndexRange` to specify
+    a range for iteration.
+
+    This flag can only be used with :c:data:`NPY_ITER_EXTERNAL_LOOP`
+    when :c:data:`NPY_ITER_BUFFERED` is enabled.  This is because
+    without buffering, the inner loop is always the size of the
+    innermost iteration dimension, and allowing it to get cut up
+    would require special handling, effectively making it more
+    like the buffered version.
+
+.. c:macro:: NPY_ITER_BUFFERED
+
+    Causes the iterator to store buffering data, and use buffering
+    to satisfy data type, alignment, and byte-order requirements.
+    To buffer an operand, do not specify the :c:data:`NPY_ITER_COPY`
+    or :c:data:`NPY_ITER_UPDATEIFCOPY` flags, because they will
+    override buffering.  Buffering is especially useful for Python
+    code using the iterator, allowing for larger chunks
+    of data at once to amortize the Python interpreter overhead.
+
+    If used with :c:data:`NPY_ITER_EXTERNAL_LOOP`, the inner loop
+    for the caller may get larger chunks than would be possible
+    without buffering, because of how the strides are laid out.
+
+    Note that if an operand is given the flag :c:data:`NPY_ITER_COPY`
+    or :c:data:`NPY_ITER_UPDATEIFCOPY`, a copy will be made in preference
+    to buffering.  Buffering will still occur when the array was
+    broadcast so elements need to be duplicated to get a constant
+    stride.
+
+    In normal buffering, the size of each inner loop is equal
+    to the buffer size, or possibly larger if
+    :c:data:`NPY_ITER_GROWINNER` is specified.  If
+    :c:data:`NPY_ITER_REDUCE_OK` is enabled and a reduction occurs,
+    the inner loops may become smaller depending
+    on the structure of the reduction.
+
+.. c:macro:: NPY_ITER_GROWINNER
+
+    When buffering is enabled, this allows the size of the inner
+    loop to grow when buffering isn't necessary.  This option
+    is best used if you're doing a straight pass through all the
+    data, rather than anything with small cache-friendly arrays
+    of temporary values for each inner loop.
+
+.. c:macro:: NPY_ITER_DELAY_BUFALLOC
+
+    When buffering is enabled, this delays allocation of the
+    buffers until :c:func:`NpyIter_Reset` or another reset function is
+    called.  This flag exists to avoid wasteful copying of
+    buffer data when making multiple copies of a buffered
+    iterator for multi-threaded iteration.
+
+    Another use of this flag is for setting up reduction operations.
+    After the iterator is created, and a reduction output
+    is allocated automatically by the iterator (be sure to use
+    READWRITE access), its value may be initialized to the reduction
+    unit.  Use :c:func:`NpyIter_GetOperandArray` to get the object.
+    Then, call :c:func:`NpyIter_Reset` to allocate and fill the buffers
+    with their initial values.
+
+.. c:macro:: NPY_ITER_COPY_IF_OVERLAP
+
+    If any write operand has overlap with any read operand, eliminate all
+    overlap by making temporary copies (enabling UPDATEIFCOPY for write
+    operands, if necessary). A pair of operands has overlap if there is
+    a memory address that contains data common to both arrays.
+
+    Because exact overlap detection has exponential runtime
+    in the number of dimensions, the decision is made based
+    on heuristics, which has false positives (needless copies in unusual
+    cases) but has no false negatives.
+
+    If any read/write overlap exists, this flag ensures the result of the
+    operation is the same as if all operands were copied.
+    In cases where copies would need to be made, **the result of the
+    computation may be undefined without this flag!**
+
+Flags that may be passed in ``op_flags[i]``, where ``0 <= i < nop``:
+
+.. c:macro:: NPY_ITER_READWRITE
+.. c:macro:: NPY_ITER_READONLY
+.. c:macro:: NPY_ITER_WRITEONLY
+
+    Indicate how the user of the iterator will read or write
+    to ``op[i]``.  Exactly one of these flags must be specified
+    per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
+    for a user-provided operand may trigger `WRITEBACKIFCOPY``
+    semantics. The data will be written back to the original array
+    when ``NpyIter_Deallocate`` is called.
+
+.. c:macro:: NPY_ITER_COPY
+
+    Allow a copy of ``op[i]`` to be made if it does not
+    meet the data type or alignment requirements as specified
+    by the constructor flags and parameters.
+
+.. c:macro:: NPY_ITER_UPDATEIFCOPY
+
+    Triggers :c:data:`NPY_ITER_COPY`, and when an array operand
+    is flagged for writing and is copied, causes the data
+    in a copy to be copied back to ``op[i]`` when
+    ``NpyIter_Deallocate`` is called.
+
+    If the operand is flagged as write-only and a copy is needed,
+    an uninitialized temporary array will be created and then copied
+    to back to ``op[i]`` on calling ``NpyIter_Deallocate``, instead of
+    doing the unnecessary copy operation.
+
+.. c:macro:: NPY_ITER_NBO
+.. c:macro:: NPY_ITER_ALIGNED
+.. c:macro:: NPY_ITER_CONTIG
+
+    Causes the iterator to provide data for ``op[i]``
+    that is in native byte order, aligned according to
+    the dtype requirements, contiguous, or any combination.
+
+    By default, the iterator produces pointers into the
+    arrays provided, which may be aligned or unaligned, and
+    with any byte order.  If copying or buffering is not
+    enabled and the operand data doesn't satisfy the constraints,
+    an error will be raised.
+
+    The contiguous constraint applies only to the inner loop,
+    successive inner loops may have arbitrary pointer changes.
+
+    If the requested data type is in non-native byte order,
+    the NBO flag overrides it and the requested data type is
+    converted to be in native byte order.
+
+.. c:macro:: NPY_ITER_ALLOCATE
+
+    This is for output arrays, and requires that the flag
+    :c:data:`NPY_ITER_WRITEONLY` or :c:data:`NPY_ITER_READWRITE`
+    be set.  If ``op[i]`` is NULL, creates a new array with
+    the final broadcast dimensions, and a layout matching
+    the iteration order of the iterator.
+
+    When ``op[i]`` is NULL, the requested data type
+    ``op_dtypes[i]`` may be NULL as well, in which case it is
+    automatically generated from the dtypes of the arrays which
+    are flagged as readable.  The rules for generating the dtype
+    are the same is for UFuncs.  Of special note is handling
+    of byte order in the selected dtype.  If there is exactly
+    one input, the input's dtype is used as is.  Otherwise,
+    if more than one input dtypes are combined together, the
+    output will be in native byte order.
+
+    After being allocated with this flag, the caller may retrieve
+    the new array by calling :c:func:`NpyIter_GetOperandArray` and
+    getting the i-th object in the returned C array.  The caller
+    must call Py_INCREF on it to claim a reference to the array.
+
+.. c:macro:: NPY_ITER_NO_SUBTYPE
+
+    For use with :c:data:`NPY_ITER_ALLOCATE`, this flag disables
+    allocating an array subtype for the output, forcing
+    it to be a straight ndarray.
+
+    TODO: Maybe it would be better to introduce a function
+    ``NpyIter_GetWrappedOutput`` and remove this flag?
+
+.. c:macro:: NPY_ITER_NO_BROADCAST
+
+    Ensures that the input or output matches the iteration
+    dimensions exactly.
+
+.. c:macro:: NPY_ITER_ARRAYMASK
+
+    .. versionadded:: 1.7
+
+    Indicates that this operand is the mask to use for
+    selecting elements when writing to operands which have
+    the :c:data:`NPY_ITER_WRITEMASKED` flag applied to them.
+    Only one operand may have :c:data:`NPY_ITER_ARRAYMASK` flag
+    applied to it.
+
+    The data type of an operand with this flag should be either
+    :c:data:`NPY_BOOL`, :c:data:`NPY_MASK`, or a struct dtype
+    whose fields are all valid mask dtypes. In the latter case,
+    it must match up with a struct operand being WRITEMASKED,
+    as it is specifying a mask for each field of that array.
+
+    This flag only affects writing from the buffer back to
+    the array. This means that if the operand is also
+    :c:data:`NPY_ITER_READWRITE` or :c:data:`NPY_ITER_WRITEONLY`,
+    code doing iteration can write to this operand to
+    control which elements will be untouched and which ones will be
+    modified. This is useful when the mask should be a combination
+    of input masks.
+
+.. c:macro:: NPY_ITER_WRITEMASKED
+
+    .. versionadded:: 1.7
+
+    This array is the mask for all `writemasked <numpy.nditer>`
+    operands. Code uses the ``writemasked`` flag which indicates 
+    that only elements where the chosen ARRAYMASK operand is True
+    will be written to. In general, the iterator does not enforce
+    this, it is up to the code doing the iteration to follow that
+    promise.
+
+    When ``writemasked`` flag is used, and this operand is buffered,
+    this changes how data is copied from the buffer into the array.
+    A masked copying routine is used, which only copies the
+    elements in the buffer for which ``writemasked``
+    returns true from the corresponding element in the ARRAYMASK
+    operand.
+
+.. c:macro:: NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+
+    In memory overlap checks, assume that operands with
+    ``NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE`` enabled are accessed only
+    in the iterator order.
+
+    This enables the iterator to reason about data dependency,
+    possibly avoiding unnecessary copies.
+
+    This flag has effect only if ``NPY_ITER_COPY_IF_OVERLAP`` is enabled
+    on the iterator.
 
 Functions For Iteration
 -----------------------

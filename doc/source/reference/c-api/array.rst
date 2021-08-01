@@ -1540,6 +1540,19 @@ specify desired properties of the new array.
 
     Make sure the resulting object is an actual ndarray, and not a sub-class.
 
+These constant are used in :c:func:`PyArray_DescrNewByteorder` to describe the
+byteorder of the new datatype.
+
+.. c:macro:: NPY_IGNORE
+
+.. c:macro:: NPY_SWAP
+
+.. c:macro:: NPY_NATIVE
+
+.. c:macro:: NPY_LITTLE
+
+.. c:macro:: NPY_BIG
+
 
 Flag checking
 ^^^^^^^^^^^^^
@@ -2836,15 +2849,6 @@ Data-type descriptors
     *newendian*. All referenced data-type objects (in subdescr and
     fields members of the data-type object) are also changed
     (recursively).
-
-    The value of *newendian* is one of these macros:
-
-    .. c:macro:: NPY_IGNORE
-                 NPY_SWAP
-                 NPY_NATIVE
-                 NPY_LITTLE
-                 NPY_BIG
-
     If a byteorder of :c:data:`NPY_IGNORE` is encountered it
     is left alone. If newendian is :c:data:`NPY_SWAP`, then all byte-orders
     are swapped. Other valid newendian values are :c:data:`NPY_NATIVE`,
