@@ -1316,7 +1316,7 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                 args, &count, strides, mask, mask_stride, cast_info->auxdata);
     }
     int res = stransfer(&cast_info->context,
-            args, &count, strides, mask, mask_stride, cast_info->auxdata);
+            args, &N, strides, mask, mask_stride, cast_info->auxdata);
     if (res < 0) {
         return -1;
     }
