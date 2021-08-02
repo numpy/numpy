@@ -24,7 +24,7 @@ class DiffLinter:
         self.repo = Repo('.')
         self.head = self.repo.head.commit
 
-    def get_branch_diff(self, uncommitted = False):
+    def get_branch_diff(self, uncommitted = False, files="*"):
         """
             Determine the first common ancestor commit.
             Find diff between branch and FCA commit.
@@ -40,11 +40,11 @@ class DiffLinter:
         exclude = [f':(exclude){i}' for i in EXCLUDE]
         if uncommitted:
             diff = self.repo.git.diff(
-                self.head, '--unified=0', '***.py', *exclude
+                self.head, '--unified=0', files, *exclude
             )
         else:
             diff = self.repo.git.diff(
-                commit, self.head, '--unified=0', '***.py', *exclude
+                commit, self.head, '--unified=0', files, *exclude
             )
         return diff
 
@@ -79,7 +79,7 @@ class DiffLinter:
         return res.returncode, res.stdout
 
     def run_lint(self, uncommitted):
-        diff = self.get_branch_diff(uncommitted)
+        diff = self.get_branch_diff(uncommitted, "***.py")
         retcode, errors = self.run_pycodestyle(diff)
 
         errors and print(errors)
