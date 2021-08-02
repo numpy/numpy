@@ -1,0 +1,3 @@
+The deprecation of numeric style type-codes ``np.Bytes0``, 
+``np.Datetime64``, ``np.Str0``, ``np.Uint32`` and ``np.Uint64``  
+is expired. These have been removed from the public API. 
