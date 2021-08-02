@@ -135,7 +135,7 @@ simple_legacy_resolve_descriptors(
             output_descrs[i] = output_descrs[0];
         }
         else {
-            output_descrs[i] = NPY_DT_call_default_descr(dtypes[i]);
+            output_descrs[i] = NPY_DT_CALL_default_descr(dtypes[i]);
         }
         if (output_descrs[i] == NULL) {
             goto fail;

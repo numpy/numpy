@@ -49,14 +49,14 @@ typedef struct {
  *
  * (Macros may include NULL checks where appropriate)
  */
-#define NPY_DT_call_discover_descr_from_pyobject(dtype, obj)  \
+#define NPY_DT_CALL_discover_descr_from_pyobject(dtype, obj)  \
     NPY_DT_SLOTS(dtype)->discover_descr_from_pyobject(dtype, obj)
-#define NPY_DT_call_is_known_scalar_type(dtype, obj)  \
+#define NPY_DT_CALL_is_known_scalar_type(dtype, obj)  \
     (NPY_DT_SLOTS(dtype)->is_known_scalar_type != NULL  \
         && NPY_DT_SLOTS(dtype)->is_known_scalar_type(dtype, obj))
-#define NPY_DT_call_default_descr(dtype)  \
+#define NPY_DT_CALL_default_descr(dtype)  \
     NPY_DT_SLOTS(dtype)->default_descr(dtype)
-#define NPY_DT_call_common_dtype(dtype, other)  \
+#define NPY_DT_CALL_common_dtype(dtype, other)  \
     NPY_DT_SLOTS(dtype)->common_dtype(dtype, other)
 
 

@@ -3996,7 +3996,7 @@ string_to_datetime_cast_resolve_descriptors(
 {
     if (given_descrs[1] == NULL) {
         /* NOTE: This doesn't actually work, and will error during the cast */
-        loop_descrs[1] = NPY_DT_call_default_descr(dtypes[1]);
+        loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
         }

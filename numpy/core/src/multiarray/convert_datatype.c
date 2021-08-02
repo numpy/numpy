@@ -953,7 +953,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
          * Don't actually do anything, the default is always the result
          * of any cast.
          */
-        return NPY_DT_call_default_descr(given_DType);
+        return NPY_DT_CALL_default_descr(given_DType);
     }
     if (PyObject_TypeCheck((PyObject *)descr, (PyTypeObject *)given_DType)) {
         Py_INCREF(descr);
@@ -1078,7 +1078,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 
     if (!NPY_DT_is_parametric(common_dtype)) {
         /* Note that this path loses all metadata */
-        res = NPY_DT_call_default_descr(common_dtype);
+        res = NPY_DT_CALL_default_descr(common_dtype);
         Py_DECREF(common_dtype);
         return res;
     }
@@ -1665,7 +1665,7 @@ PyArray_ResultType(
 
     if (NPY_DT_is_abstract(common_dtype)) {
         /* (ab)use default descriptor to define a default */
-        PyArray_Descr *tmp_descr = NPY_DT_call_default_descr(common_dtype);
+        PyArray_Descr *tmp_descr = NPY_DT_CALL_default_descr(common_dtype);
         if (tmp_descr == NULL) {
             goto error;
         }
@@ -1680,7 +1680,7 @@ PyArray_ResultType(
      */
     if (!NPY_DT_is_parametric(common_dtype)) {
         /* Note that this "fast" path loses all metadata */
-        result = NPY_DT_call_default_descr(common_dtype);
+        result = NPY_DT_CALL_default_descr(common_dtype);
     }
     else {
         result = PyArray_CastDescrToDType(all_descriptors[0], common_dtype);
@@ -1702,7 +1702,7 @@ PyArray_ResultType(
                 if (tmp == NULL) {
                     goto error;
                 }
-                curr = NPY_DT_call_discover_descr_from_pyobject(common_dtype, tmp);
+                curr = NPY_DT_CALL_discover_descr_from_pyobject(common_dtype, tmp);
                 Py_DECREF(tmp);
             }
             if (curr == NULL) {
@@ -1889,7 +1889,7 @@ PyArray_CastToDTypeAndPromoteDescriptors(
     if (!NPY_DT_is_parametric(DType)) {
         /* Note that this "fast" path loses all metadata */
         Py_DECREF(result);
-        return NPY_DT_call_default_descr(DType);
+        return NPY_DT_CALL_default_descr(DType);
     }
 
     for (npy_intp i = 1; i < ndescr; i++) {
@@ -2348,7 +2348,7 @@ simple_cast_resolve_descriptors(
         }
     }
     else {
-        loop_descrs[1] = NPY_DT_call_default_descr(dtypes[1]);
+        loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
     }
 
     if (self->casting != NPY_NO_CASTING) {
@@ -3071,7 +3071,7 @@ structured_to_nonstructured_resolve_descriptors(
 
     /* Void dtypes always do the full cast. */
     if (given_descrs[1] == NULL) {
-        loop_descrs[1] = NPY_DT_call_default_descr(dtypes[1]);
+        loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
         /*
          * Special case strings here, it should be useless (and only actually
          * work for empty arrays).  Possibly this should simply raise for
@@ -3438,7 +3438,7 @@ object_to_any_resolve_descriptors(
                     "should be discovered automatically, however.", dtypes[1]);
             return -1;
         }
-        loop_descrs[1] = NPY_DT_call_default_descr(dtypes[1]);
+        loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
         }
@@ -3494,7 +3494,7 @@ any_to_object_resolve_descriptors(
         PyArray_Descr *loop_descrs[2])
 {
     if (given_descrs[1] == NULL) {
-        loop_descrs[1] = NPY_DT_call_default_descr(dtypes[1]);
+        loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
         }

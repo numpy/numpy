@@ -72,7 +72,7 @@ default_resolve_descriptors(
             output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
         }
         else {
-            output_descrs[i] = NPY_DT_call_default_descr(dtype);
+            output_descrs[i] = NPY_DT_CALL_default_descr(dtype);
         }
         if (NPY_UNLIKELY(output_descrs[i] == NULL)) {
             goto fail;
@@ -106,7 +106,7 @@ default_resolve_descriptors(
             output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
         }
         else {
-            output_descrs[i] = NPY_DT_call_default_descr(common_dtype);
+            output_descrs[i] = NPY_DT_CALL_default_descr(common_dtype);
         }
         if (NPY_UNLIKELY(output_descrs[i] == NULL)) {
             goto fail;

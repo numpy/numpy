@@ -385,11 +385,11 @@ float_to_from_sfloat_resolve_descriptors(
         PyArray_Descr *NPY_UNUSED(given_descrs[2]),
         PyArray_Descr *loop_descrs[2])
 {
-    loop_descrs[0] = NPY_DT_call_default_descr(dtypes[0]);
+    loop_descrs[0] = NPY_DT_CALL_default_descr(dtypes[0]);
     if (loop_descrs[0] == NULL) {
         return -1;
     }
-    loop_descrs[1] = NPY_DT_call_default_descr(dtypes[1]);
+    loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
     if (loop_descrs[1] == NULL) {
         return -1;
     }
