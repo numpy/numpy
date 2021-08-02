@@ -1722,7 +1722,6 @@ _convert_from_str(PyObject *obj, int align)
             goto fail;
         }
 
-
         /*
          * Probably only ever dispatches to `_convert_from_type`, but who
          * knows what users are injecting into `np.typeDict`.
