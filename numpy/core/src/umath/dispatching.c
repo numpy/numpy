@@ -69,8 +69,8 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  * @param ignore_duplicate If 1 and a loop with the same `dtype_tuple` is
  *        found, the function does nothing.
  */
-static int
-add_ufunc_loop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
+NPY_NO_EXPORT int
+PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 {
     /*
      * Validate the info object, this should likely move to to a different
@@ -495,7 +495,7 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
     if (info == NULL) {
         return NULL;
     }
-    if (add_ufunc_loop(ufunc, info, ignore_duplicate) < 0) {
+    if (PyUFunc_AddLoop(ufunc, info, ignore_duplicate) < 0) {
         Py_DECREF(info);
         return NULL;
     }

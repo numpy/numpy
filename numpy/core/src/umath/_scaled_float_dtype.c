@@ -23,6 +23,7 @@
 #include "numpy/npy_math.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
+#include "dispatching.h"
 
 
 typedef struct {
@@ -457,6 +458,225 @@ init_casts(void)
 
 
 /*
+ * We also wish to test very simple ufunc functionality.  So create two
+ * ufunc loops:
+ * 1. Multiplication, which can multiply the factors and work with that.
+ * 2. Addition, which needs to use the common instance, and runs into
+ *    cast safety subtleties since we will implement it without an additional
+ *    cast.
+ *
+ * NOTE: When first writing this, promotion did not exist for new-style loops,
+ *       if it exists, we could use promotion to implement double * sfloat.
+ */
+static int
+multiply_sfloats(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+    for (npy_intp i = 0; i < N; i++) {
+        *(double *)out = *(double *)in1 * *(double *)in2;
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+    return 0;
+}
+
+
+static NPY_CASTING
+multiply_sfloats_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3])
+{
+    /*
+     * Multiply the scaling for the result.  If the result was passed in we
+     * simply ignore it and let the casting machinery fix it up here.
+     */
+    double factor = ((PyArray_SFloatDescr *)given_descrs[1])->scaling;
+    loop_descrs[2] = sfloat_scaled_copy(
+            (PyArray_SFloatDescr *)given_descrs[0], factor);
+    if (loop_descrs[2] == 0) {
+        return -1;
+    }
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(given_descrs[1]);
+    loop_descrs[1] = given_descrs[1];
+    return NPY_NO_CASTING;
+}
+
+
+/*
+ * Unlike the multiplication implementation above, this loops deals with
+ * scaling (casting) internally.  This allows to test some different paths.
+ */
+static int
+add_sfloats(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    double fin1 = ((PyArray_SFloatDescr *)context->descriptors[0])->scaling;
+    double fin2 = ((PyArray_SFloatDescr *)context->descriptors[1])->scaling;
+    double fout = ((PyArray_SFloatDescr *)context->descriptors[2])->scaling;
+
+    double fact1 = fin1 / fout;
+    double fact2 = fin2 / fout;
+    if (check_factor(fact1) < 0) {
+        return -1;
+    }
+    if (check_factor(fact2) < 0) {
+        return -1;
+    }
+
+    npy_intp N = dimensions[0];
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+    for (npy_intp i = 0; i < N; i++) {
+        *(double *)out = (*(double *)in1 * fact1) + (*(double *)in2 * fact2);
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+    return 0;
+}
+
+
+static NPY_CASTING
+add_sfloats_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3])
+{
+    /*
+     * Here we accept an output descriptor (the inner loop can deal with it),
+     * if none is given, we use the "common instance":
+     */
+    if (given_descrs[2] == NULL) {
+        loop_descrs[2] = sfloat_common_instance(
+                given_descrs[0], given_descrs[1]);
+        if (loop_descrs[2] == 0) {
+            return -1;
+        }
+    }
+    else {
+        Py_INCREF(given_descrs[2]);
+        loop_descrs[2] = given_descrs[2];
+    }
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(given_descrs[1]);
+    loop_descrs[1] = given_descrs[1];
+
+    /* If the factors mismatch, we do implicit casting inside the ufunc! */
+    double fin1 = ((PyArray_SFloatDescr *)loop_descrs[0])->scaling;
+    double fin2 = ((PyArray_SFloatDescr *)loop_descrs[1])->scaling;
+    double fout = ((PyArray_SFloatDescr *)loop_descrs[2])->scaling;
+
+    if (fin1 == fout && fin2 == fout) {
+        return NPY_NO_CASTING;
+    }
+    if (npy_fabs(fin1) == npy_fabs(fout) && npy_fabs(fin2) == npy_fabs(fout)) {
+        return NPY_EQUIV_CASTING;
+    }
+    return NPY_SAME_KIND_CASTING;
+}
+
+
+static int
+add_loop(const char *ufunc_name, PyBoundArrayMethodObject *bmeth)
+{
+    PyObject *mod = PyImport_ImportModule("numpy");
+    if (mod == NULL) {
+        return -1;
+    }
+    PyObject *ufunc = PyObject_GetAttrString(mod, ufunc_name);
+    Py_DECREF(mod);
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        Py_DECREF(ufunc);
+        PyErr_Format(PyExc_TypeError,
+                "numpy.%s was not a ufunc!", ufunc_name);
+        return -1;
+    }
+    PyObject *dtype_tup = PyArray_TupleFromItems(
+            3, (PyObject **)bmeth->dtypes, 0);
+    if (dtype_tup == NULL) {
+        Py_DECREF(ufunc);
+        return -1;
+    }
+    PyObject *info = PyTuple_Pack(2, dtype_tup, bmeth->method);
+    Py_DECREF(dtype_tup);
+    if (info == NULL) {
+        Py_DECREF(ufunc);
+        return -1;
+    }
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    Py_DECREF(ufunc);
+    Py_DECREF(info);
+    return res;
+}
+
+
+/*
+ * Add new ufunc loops (this is somewhat clumsy as of writing it, but should
+ * get less so with the introduction of public API).
+ */
+static int
+init_ufuncs(void) {
+    PyArray_DTypeMeta *dtypes[3] = {
+            &PyArray_SFloatDType, &PyArray_SFloatDType, &PyArray_SFloatDType};
+    PyType_Slot slots[3] = {{0, NULL}};
+    PyArrayMethod_Spec spec = {
+        .nin = 2,
+        .nout =1,
+        .dtypes = dtypes,
+        .slots = slots,
+    };
+    spec.name = "sfloat_multiply";
+    spec.casting = NPY_NO_CASTING;
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &multiply_sfloats_resolve_descriptors;
+    slots[1].slot = NPY_METH_strided_loop;
+    slots[1].pfunc = &multiply_sfloats;
+    PyBoundArrayMethodObject *bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    int res = add_loop("multiply", bmeth);
+    Py_DECREF(bmeth);
+    if (res < 0) {
+        return -1;
+    }
+
+    spec.name = "sfloat_add";
+    spec.casting = NPY_SAME_KIND_CASTING;
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &add_sfloats_resolve_descriptors;
+    slots[1].slot = NPY_METH_strided_loop;
+    slots[1].pfunc = &add_sfloats;
+    bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    res = add_loop("add", bmeth);
+    Py_DECREF(bmeth);
+    if (res < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+
+/*
  * Python entry point, exported via `umathmodule.h` and `multiarraymodule.c`.
  * TODO: Should be moved when the necessary API is not internal anymore.
  */
@@ -488,6 +708,10 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     }
 
     if (init_casts() < 0) {
+        return NULL;
+    }
+
+    if (init_ufuncs() < 0) {
         return NULL;
     }
 

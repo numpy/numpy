@@ -90,3 +90,46 @@ class TestSFloat:
         # Test an undefined promotion:
         with pytest.raises(TypeError):
             np.result_type(SF(1.), np.int64)
+
+    def test_basic_multiply(self):
+        a = self._get_array(2.)
+        b = self._get_array(4.)
+
+        res = a * b
+        # multiplies dtype scaling and content separately:
+        assert res.dtype.get_scaling() == 8.
+        expected_view = a.view(np.float64) * b.view(np.float64)
+        assert_array_equal(res.view(np.float64), expected_view)
+
+    def test_basic_addition(self):
+        a = self._get_array(2.)
+        b = self._get_array(4.)
+
+        res = a + b
+        # addition uses the type promotion rules for the result:
+        assert res.dtype == np.result_type(a.dtype, b.dtype)
+        expected_view = (a.astype(res.dtype).view(np.float64) +
+                         b.astype(res.dtype).view(np.float64))
+        assert_array_equal(res.view(np.float64), expected_view)
+
+    def test_addition_cast_safety(self):
+        """The addition method is special for the scaled float, because it
+        includes the "cast" between different factors, thus cast-safety
+        is influenced by the implementation.
+        """
+        a = self._get_array(2.)
+        b = self._get_array(-2.)
+        c = self._get_array(3.)
+
+        # sign change is "equiv":
+        np.add(a, b, casting="equiv")
+        with pytest.raises(TypeError):
+            np.add(a, b, casting="no")
+
+        # Different factor is "same_kind" (default) so check that "safe" fails
+        with pytest.raises(TypeError):
+            np.add(a, c, casting="safe")
+
+        # Check that casting the output fails also (done by the ufunc here)
+        with pytest.raises(TypeError):
+            np.add(a, a, out=c, casting="safe")
