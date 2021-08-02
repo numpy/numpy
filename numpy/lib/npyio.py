@@ -783,10 +783,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Parameters
     ----------
-    fname : file, str, or pathlib.Path
-        File, filename, or generator to read.  If the filename extension is
-        ``.gz`` or ``.bz2``, the file is first decompressed. Note that
-        generators should return byte strings.
+    fname : file, str, pathlib.Path, list of str, generator
+        File, filename, list, or generator to read.  If the filename
+        extension is ``.gz`` or ``.bz2``, the file is first decompressed. Note
+        that generators must return bytes or strings. The strings
+        in a list or produced by a generator are treated as lines.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
         structured data-type, the resulting array will be 1-dimensional, and
@@ -1075,8 +1076,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
     except TypeError as e:
-        raise ValueError(
-            'fname must be a string, file handle, or generator'
+        raise TypeError(
+            f"fname must be a string, filehandle, list of strings, "
+            f"or generator. Got {type(fname)} instead."
         ) from e
 
     # input may be a python2 io stream
@@ -1581,8 +1583,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     ----------
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
-        extension is `.gz` or `.bz2`, the file is first decompressed. Note
-        that generators must return byte strings. The strings
+        extension is ``.gz`` or ``.bz2``, the file is first decompressed. Note
+        that generators must return bytes or strings. The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
@@ -1801,8 +1803,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
-            "fname must be a string, filehandle, list of strings, "
-            "or generator. Got %s instead." % type(fname)) from e
+            f"fname must be a string, filehandle, list of strings, "
+            f"or generator. Got {type(fname)} instead."
+        ) from e
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
