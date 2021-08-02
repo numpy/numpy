@@ -63,6 +63,21 @@ class DiffLinter:
         )
         return res.returncode, res.stdout
 
+    def run_codespell_on_diff(self, diff):
+        """
+            Runs codespell on the diff. Some details on args:
+                -d: disable colors
+                -q 3: disable warnings about wrong encoding and binary files
+                -s: print summary of fixes
+        """
+        res = subprocess.run(
+            ["codespell", "-d", "-q", "3", "-s", "-"],
+            input=diff,
+            stdout=subprocess.PIPE,
+            encoding='utf-8',
+        )
+        return res.returncode, res.stdout
+
     def run_lint(self, uncommitted):
         diff = self.get_branch_diff(uncommitted)
         retcode, errors = self.run_pycodestyle(diff)
@@ -71,16 +86,33 @@ class DiffLinter:
 
         sys.exit(retcode)
 
+    def run_codespell(self, uncommitted):
+        diff = self.get_branch_diff(uncommitted)
+        retcode, errors = self.run_codespell_on_diff(diff)
+
+        errors and print(errors)
+
+        sys.exit(retcode)
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument("--lint", action='store_true',
+    action_group = parser.add_mutually_exclusive_group(required=True)
+
+    action_group.add_argument("--lint", action='store_true',
                         help="Run Lint")
+    action_group.add_argument("--codespell", action='store_true',
+                        help="Run Codespell")
+
     parser.add_argument("--branch", type=str, default='main',
                         help="The branch to diff against")
     parser.add_argument("--uncommitted", action='store_true',
                         help="Check only uncommitted changes")
     args = parser.parse_args()
 
+    code_checker = DiffLinter(args.branch)
+
     if args.lint:
-        DiffLinter(args.branch).run_lint(args.uncommitted)
+        code_checker.run_lint(args.uncommitted)
+    elif args.codespell:
+        code_checker.run_codespell(args.uncommitted)
