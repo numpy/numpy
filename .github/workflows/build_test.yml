@@ -38,6 +38,25 @@ jobs:
       run:
         python tools/linter.py --lint --branch origin/${{ github.base_ref }}
 
+  codespell:
+    if: "github.repository == 'numpy/numpy' && github.ref != 'refs/heads/main' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install linter requirements
+      run:
+        python -m pip install -r linter_requirements.txt
+    - name: Run codespell on PR diff
+      run:
+        python tools/linter.py --codespell --branch origin/${{ github.base_ref }}
+
   smoke_test:
     if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     runs-on: ubuntu-latest

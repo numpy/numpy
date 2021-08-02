@@ -67,6 +67,26 @@ stages:
       displayName: 'Run Lint Checks'
       failOnStderr: true
 
+  - job: Codespell
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+        addToPath: true
+        architecture: 'x64'
+    - script: >-
+        python -m pip install -r linter_requirements.txt
+      displayName: 'Install tools'
+      # pip 21.1 emits a pile of garbage messages to annoy users :)
+      #      failOnStderr: true
+    - script: |
+        python tools/linter.py --codespell origin/$(System.PullRequest.TargetBranch)
+      displayName: 'Run Codespell Checks'
+      failOnStderr: true
+
   - job: WindowsFast
     pool:
       vmImage: 'VS2017-Win2016'
