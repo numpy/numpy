@@ -18,8 +18,6 @@ else:
 import warnings
 import distutils.core
 import distutils.dist
-
-from numpy.distutils.extension import Extension
 from numpy.distutils.numpy_distribution import NumpyDistribution
 from numpy.distutils.command import config, config_compiler, \
      build, build_py, build_ext, build_clib, build_src, build_scripts, \
