@@ -1076,7 +1076,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
     except TypeError as e:
-        raise TypeError(
+        raise ValueError(
             f"fname must be a string, filehandle, list of strings,\n"
             f"or generator. Got {type(fname)} instead."
         ) from e
