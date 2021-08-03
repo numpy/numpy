@@ -979,9 +979,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Nested functions used by loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def split_line(line):
-        """Chop off comments, strip, and split at delimiter. """
-        line = _decode_line(line, encoding=encoding)
+    def split_line(line: str):
+        """Chop off comments, strip, and split at delimiter."""
         for comment in comments:  # Much faster than using a single regex.
             line = line.split(comment, 1)[0]
         line = line.strip('\r\n')
@@ -1002,8 +1001,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         X = []
         line_iter = itertools.chain([first_line], fh)
         line_iter = itertools.islice(line_iter, max_rows)
-        for i, line in enumerate(line_iter):
-            vals = split_line(line)
+        for i, vals in enumerate(map(split_line, map(decode, line_iter))):
             if len(vals) == 0:
                 continue
             if usecols:
@@ -1108,7 +1106,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         # Read until we find a line with some values, and use it to determine
         # the need for decoding and estimate the number of columns.
         for first_line in fh:
-            ncols = len(usecols or split_line(first_line))
+            ncols = len(usecols
+                        or split_line(_decode_line(first_line, encoding)))
             if ncols:
                 break
         else:  # End of lines reached
@@ -1116,6 +1115,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             ncols = len(usecols or [])
             warnings.warn('loadtxt: Empty input file: "%s"' % fname,
                           stacklevel=2)
+
+        # Decide once and for all whether decoding is needed.
+        if isinstance(first_line, bytes):
+            decode = methodcaller(
+                "decode", encoding if encoding is not None else "latin1")
+        else:
+            def decode(line): return line
 
         # Now that we know ncols, create the default converters list, and
         # set packing, if necessary.
