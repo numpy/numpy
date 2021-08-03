@@ -39,7 +39,6 @@ from numpy.compat import (
     )
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
-from numpy.core._internal import recursive
 
 
 __all__ = [
@@ -1685,6 +1684,16 @@ def make_mask_none(newshape, dtype=None):
     return result
 
 
+def _recursive_mask_or(m1, m2, newmask):
+    names = m1.dtype.names
+    for name in names:
+        current1 = m1[name]
+        if current1.dtype.names is not None:
+            _recursive_mask_or(current1, m2[name], newmask[name])
+        else:
+            umath.logical_or(current1, m2[name], newmask[name])
+
+
 def mask_or(m1, m2, copy=False, shrink=True):
     """
     Combine two masks with the ``logical_or`` operator.
@@ -1721,17 +1730,6 @@ def mask_or(m1, m2, copy=False, shrink=True):
     array([ True,  True,  True, False])
 
     """
-
-    @recursive
-    def _recursive_mask_or(self, m1, m2, newmask):
-        names = m1.dtype.names
-        for name in names:
-            current1 = m1[name]
-            if current1.dtype.names is not None:
-                self(current1, m2[name], newmask[name])
-            else:
-                umath.logical_or(current1, m2[name], newmask[name])
-        return
 
     if (m1 is nomask) or (m1 is False):
         dtype = getattr(m2, 'dtype', MaskType)
