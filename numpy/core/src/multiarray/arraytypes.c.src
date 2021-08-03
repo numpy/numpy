@@ -2923,8 +2923,6 @@ C@TYPE@_compare(@type@ *pa, @type@ *pb)
  * #type = npy_datetime, npy_timedelta#
  */
 
-#define LT(a,b) ((a) < (b) || ((b) != (b) && (a) ==(a)))
-
 static int
 @TYPE@_compare(@type@ *pa, @type@ *pb)
 {
@@ -2933,24 +2931,21 @@ static int
     int ret;
 
     if (a == NPY_DATETIME_NAT) {
-        ret = 1;
+        if (b == NPY_DATETIME_NAT) {
+            ret = 0;
+        }
+        else {
+            ret = 1;
+        }
     }
     else if (b == NPY_DATETIME_NAT) {
         ret = -1;
     }
-    else if (LT(a,b)) {
-        ret = -1;
-    }
-    else if (LT(b,a)) {
-        ret = 1;
-    }
     else {
-        ret = 0;
+        ret = a < b ? -1 : a == b ? 0 : 1;
     }
     return ret;
 }
-
-#undef LT
 
 /**end repeat**/
 
