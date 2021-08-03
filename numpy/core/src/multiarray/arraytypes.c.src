@@ -2932,7 +2932,6 @@ static int
     const @type@ b = *pb;
     int ret;
 
-    printf("Calling @TYPE@_compare\n");
     if (a == NPY_DATETIME_NAT) {
         ret = 1;
     }
