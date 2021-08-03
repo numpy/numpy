@@ -1077,7 +1077,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fencoding = getattr(fname, 'encoding', 'latin1')
     except TypeError as e:
         raise TypeError(
-            f"fname must be a string, filehandle, list of strings, "
+            f"fname must be a string, filehandle, list of strings,\n"
             f"or generator. Got {type(fname)} instead."
         ) from e
 
@@ -1803,7 +1803,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
-            f"fname must be a string, filehandle, list of strings, "
+            f"fname must be a string, filehandle, list of strings,\n"
             f"or generator. Got {type(fname)} instead."
         ) from e
 
