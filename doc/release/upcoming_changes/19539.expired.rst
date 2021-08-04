@@ -1,3 +1,2 @@
-The deprecation of numeric style type-codes ``np.Bytes0``, 
-``np.Datetime64``, ``np.Str0``, ``np.Uint32`` and ``np.Uint64``  
-is expired. These have been removed from the public API. 
+* Using the strings ``"Bytes0"``, ``"Datetime64"``, ``"Str0"``, ``"Uint32"``,
+  and ``"Uint64"`` as a dtype will now raise a ``TypeError``.
