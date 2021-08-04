@@ -55,7 +55,7 @@ request.
   guaranteed to give a comprehensive coverage of the spec. Therefore, those
   reviewing this submodule should refer to the standard documents themselves.
 
-- There is a custom array object, numpy._array_api.Array, which is returned
+- There is a custom array object, numpy.array_api.Array, which is returned
   by all functions in this module. All functions in the array API namespace
   implicitly assume that they will only receive this object as input. The only
   way to create instances of this object is to use one of the array creation
@@ -72,7 +72,7 @@ request.
   - Indexing: Only a subset of indices supported by NumPy are required by the
     spec. The Array object restricts indexing to only allow those types of
     indices that are required by the spec. See the docstring of the
-    numpy._array_api.Array._validate_indices helper function for more
+    numpy.array_api.Array._validate_indices helper function for more
     information.
 
   - Type promotion: Some type promotion rules are different in the spec. In
@@ -94,7 +94,7 @@ request.
   objects to represent dtypes.
 
 - The wrapper functions in this module do not do any type checking for things
-  that would be impossible without leaving the _array_api namespace. For
+  that would be impossible without leaving the array_api namespace. For
   example, since the array API dtype objects are just the NumPy dtype objects,
   one could pass in a non-spec NumPy dtype into a function.
 

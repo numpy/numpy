@@ -347,8 +347,8 @@ class Array:
     def __array_namespace__(self: Array, /, *, api_version: Optional[str] = None) -> object:
         if api_version is not None and not api_version.startswith('2021.'):
             raise ValueError(f"Unrecognized array API version: {api_version!r}")
-        from numpy import _array_api
-        return _array_api
+        from numpy import array_api
+        return array_api
 
     def __bool__(self: Array, /) -> bool:
         """
