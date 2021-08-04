@@ -89,10 +89,10 @@ Considering ``x`` from the previous example::
    >>> np.multiply.reduce(x, dtype=float, out=y)
    array([ 0, 28, 80])     # dtype argument is ignored
 
-Ufuncs also have a fifth method, :func:`nimpy.ufunc.at`, that allows in place
-operations to be performed using fancy indexing. No
+Ufuncs also have a fifth method, :func:`numpy.ufunc.at`, that allows in place
+operations to be performed using advanced indexing. No
 :ref:`buffering <use-of-internal-buffers>` is used on the dimensions where
-fancy indexing is used, so the fancy index can
+advanced indexing is used, so the advanced index can
 list an item more than once and the operation will be performed on the result
 of the previous operation for that item.
 
@@ -103,7 +103,7 @@ Output type determination
 =========================
 
 The output of the ufunc (and its methods) is not necessarily an
-:class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
+:class:`ndarray <numpy.ndarray>`, if all input arguments are not :class:`ndarrays <numpy.ndarray>`.
 Indeed, if any input defines an
 :obj:`__array_ufunc__ <numpy.class.__array_ufunc__>` method,
 control will be passed completely to that function, i.e., the ufunc is
@@ -113,24 +113,24 @@ If none of the inputs overrides the ufunc, then
 all output arrays will be passed to the
 :obj:`__array_prepare__ <numpy.class.__array_prepare__>` and
 :obj:`__array_wrap__ <numpy.class.__array_wrap__>` methods of the input (besides
-:class:`ndarrays <ndarray>`, and scalars) that defines it **and** has
-the highest :obj:`__array_priority__ <numpy.class.__array_priority__>`
+:class:`ndarrays <.ndarray>`, and scalars) that defines it **and** has
+the highest :obj:`~.class.__array_priority__`
 of any other input to the universal function. The default
-:obj:`~class.__array_priority__` of the
-ndarray is 0.0, and the default :obj:`~class.__array_priority__` of a subtype
-is 0.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
+:obj:`~.class.__array_priority__` of the
+ndarray is 0.0, and the default :obj:`~.class.__array_priority__` of a subtype
+is 0.0. Matrices have :obj:`~.class.__array_priority__` equal to 10.0.
 
 All ufuncs can also take output arguments. If necessary, output will
 be cast to the data-type(s) of the provided output array(s). If a class
-with an :obj:`__array__ <numpy.class.__array__>` method is used for the output,
-results will be written to the object returned by :obj:`~class.__array__`.
-Then, if the class also has an :obj:`~class.__array_prepare__` method, it is
+with an :obj:`~.class.__array__` method is used for the output,
+results will be written to the object returned by :obj:`~.class.__array__`.
+Then, if the class also has an :obj:`~.class.__array_prepare__` method, it is
 called so metadata may be determined based on the context of the ufunc (the
 context consisting of the ufunc itself, the arguments passed to the ufunc, and
 the ufunc domain.) The array object returned by
-:obj:`~class.__array_prepare__` is passed to the ufunc for computation.
-Finally, if the class also has an :obj:`~class.__array_wrap__` method, the
-returned :class:`ndarray` result will be passed to that method just before
+:obj:`~.class.__array_prepare__` is passed to the ufunc for computation.
+Finally, if the class also has an :obj:`~.class.__array_wrap__` method, the
+returned :class:`.ndarray` result will be passed to that method just before
 passing control back to the caller.
 
 .. _ufuncs.broadcasting:
@@ -150,8 +150,8 @@ broadcasting rules are applied so that inputs not sharing exactly the
 same shapes can still be usefully operated on. Broadcasting can be
 understood by four rules:
 
-1. All input arrays with :attr:`ndim <ndarray.ndim>` smaller than the
-   input array of largest :attr:`ndim <ndarray.ndim>`, have 1's
+1. All input arrays with :attr:`ndim <.ndarray.ndim>` smaller than the
+   input array of largest :attr:`ndim <.ndarray.ndim>`, have 1's
    prepended to their shapes.
 
 2. The size in each dimension of the output shape is the maximum of all
@@ -169,7 +169,7 @@ understood by four rules:
 
 :ref:`basics.broadcasting` is used throughout NumPy to decide how to handle
 disparately shaped arrays; for example, all arithmetic operations (``+``,
-``-``, ``*``, ...) between :class:`ndarrays <ndarray>` broadcast the
+``-``, ``*``, ...) between :class:`ndarrays <.ndarray>` broadcast the
 arrays before operation.
 
 .. _arrays.broadcasting.broadcastable:
