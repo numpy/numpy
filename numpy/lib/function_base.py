@@ -4309,12 +4309,12 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     'xy' indexing and (M, N, P) for 'ij' indexing.  The difference is
     illustrated by the following code snippet::
 
-        xv, yv = np.meshgrid(x, y, sparse=False, indexing='ij')
+        xv, yv = np.meshgrid(x, y, indexing='ij')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[i,j], yv[i,j]
 
-        xv, yv = np.meshgrid(x, y, sparse=False, indexing='xy')
+        xv, yv = np.meshgrid(x, y, indexing='xy')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
