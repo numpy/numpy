@@ -86,8 +86,8 @@ class _typedict(Dict[Type[generic], _T]):
 if sys.version_info >= (3, 10):
     _TypeTuple = Union[
         Type[Any],
-        types.Union,
-        Tuple[Union[Type[Any], types.Union, Tuple[Any, ...]], ...],
+        types.UnionType,
+        Tuple[Union[Type[Any], types.UnionType, Tuple[Any, ...]], ...],
     ]
 else:
     _TypeTuple = Union[
