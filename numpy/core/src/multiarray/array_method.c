@@ -72,7 +72,7 @@ default_resolve_descriptors(
             output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
         }
         else {
-            output_descrs[i] = dtype->default_descr(dtype);
+            output_descrs[i] = NPY_DT_CALL_default_descr(dtype);
         }
         if (NPY_UNLIKELY(output_descrs[i] == NULL)) {
             goto fail;
@@ -106,7 +106,7 @@ default_resolve_descriptors(
             output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
         }
         else {
-            output_descrs[i] = common_dtype->default_descr(common_dtype);
+            output_descrs[i] = NPY_DT_CALL_default_descr(common_dtype);
         }
         if (NPY_UNLIKELY(output_descrs[i] == NULL)) {
             goto fail;
@@ -232,7 +232,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                     "(method: %s)", spec->dtypes[i], spec->name);
             return -1;
         }
-        if (spec->dtypes[i]->abstract && i < spec->nin) {
+        if (NPY_DT_is_abstract(spec->dtypes[i]) && i < spec->nin) {
             PyErr_Format(PyExc_TypeError,
                     "abstract DType %S are currently not allowed for inputs."
                     "(method: %s defined at %s)", spec->dtypes[i], spec->name);
@@ -328,7 +328,7 @@ fill_arraymethod_from_slots(
                     return -1;
                 }
             }
-            if (i >= meth->nin && res->dtypes[i]->parametric) {
+            if (i >= meth->nin && NPY_DT_is_parametric(res->dtypes[i])) {
                 PyErr_Format(PyExc_TypeError,
                         "must provide a `resolve_descriptors` function if any "
                         "output DType is parametric. (method: %s)",
@@ -585,7 +585,7 @@ boundarraymethod__resolve_descripors(
      */
     int parametric = 0;
     for (int i = 0; i < nin + nout; i++) {
-        if (self->dtypes[i]->parametric) {
+        if (NPY_DT_is_parametric(self->dtypes[i])) {
             parametric = 1;
             break;
         }

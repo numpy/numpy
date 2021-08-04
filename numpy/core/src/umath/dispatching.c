@@ -194,7 +194,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             if (given_dtype == resolver_dtype) {
                 continue;
             }
-            if (!resolver_dtype->abstract) {
+            if (!NPY_DT_is_abstract(resolver_dtype)) {
                 matches = NPY_FALSE;
                 break;
             }
@@ -208,10 +208,11 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                  *
                  * Continuing here allows a promoter to handle reduce-like
                  * promotions explicitly if necessary.
-                 * TODO: The `!resolver_dtype->abstract` currently ensures that
-                 *       this is a promoter.  If we allow ArrayMethods to use
-                 *       abstract DTypes, we may have to reject it here or the
-                 *       ArrayMethod has to implement the reduce promotion.
+                 * TODO: The `!NPY_DT_is_abstract(resolver_dtype)` currently
+                 *       ensures that this is a promoter.  If we allow
+                 *       `ArrayMethods` to use abstract DTypes, we may have to
+                 *       reject it here or the `ArrayMethod` has to implement
+                 *       the reduce promotion.
                  */
                 continue;
             }
@@ -277,8 +278,8 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                  * If both are concrete and not identical, this is
                  * ambiguous.
                  */
-                else if (!((PyArray_DTypeMeta *)prev_dtype)->abstract &&
-                         !((PyArray_DTypeMeta *)new_dtype)->abstract) {
+                else if (!NPY_DT_is_abstract((PyArray_DTypeMeta *)prev_dtype) &&
+                         !NPY_DT_is_abstract((PyArray_DTypeMeta *)new_dtype)) {
                     /*
                      * Ambiguous unless the are identical (checked above),
                      * but since they are concrete it does not matter which
@@ -389,7 +390,8 @@ _make_new_typetup(
             none_count++;
         }
         else {
-            if (!signature[i]->legacy || signature[i]->abstract) {
+            if (!NPY_DT_is_legacy(signature[i])
+                    || NPY_DT_is_abstract(signature[i])) {
                 /*
                  * The legacy type resolution can't deal with these.
                  * This path will return `None` or so in the future to
@@ -643,7 +645,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
              */
             Py_INCREF(signature[i]);
             Py_XSETREF(op_dtypes[i], signature[i]);
-            assert(i >= ufunc->nin || !signature[i]->abstract);
+            assert(i >= ufunc->nin || !NPY_DT_is_abstract(signature[i]));
         }
     }
 
