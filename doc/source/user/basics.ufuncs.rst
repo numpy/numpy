@@ -2,9 +2,9 @@
 
 .. _ufuncs-basics:
 
-*******************************************
-Universal functions (:class:`ufunc`) basics
-*******************************************
+********************************************
+Universal functions (:class:`.ufunc`) basics
+********************************************
 
 .. seealso:: :ref:`ufuncs`
 
@@ -50,6 +50,7 @@ integer, though for :meth:`numpy.ufunc.reduce`, it can also be a tuple of
 axes. For example::
 
    >>> x = np.arange(9).reshape(3,3)
+   >>> x
    array([[0, 1, 2],
          [3, 4, 5],
          [6, 7, 8]])
@@ -59,7 +60,7 @@ axes. For example::
    36
 
 The *dtype* keyword allows you to manage a very common problem that arises
-when naively using :meth:`ufunc.reduce`. Sometimes you may
+when naively using :meth:`.ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
 elements, but the result does not fit into the data type of the
 array. This commonly happens if you have an array of single-byte
@@ -70,7 +71,7 @@ to handle your output. The responsibility of altering the reduce type is
 mostly up to you. There is one exception: if no *dtype* is given for a
 reduction on the "add" or "multiply" operations, then if the input type is
 an integer (or Boolean) data-type and smaller than the size of the
-:class:`numpy.int_` data type, it will be internally upcast to the :class:`int_`
+:class:`numpy.int_` data type, it will be internally upcast to the :class:`.int_`
 (or :class:`numpy.uint`) data-type. In the previous example::
 
    >>> x.dtype 
@@ -85,6 +86,7 @@ can be passed in). If *out* is given, the *dtype* argument is ignored.
 Considering ``x`` from the previous example::
 
    >>> y = np.zeros(3, dtype=int)
+   >>> y
    array([0, 0, 0])
    >>> np.multiply.reduce(x, dtype=float, out=y)
    array([ 0, 28, 80])     # dtype argument is ignored
@@ -103,16 +105,16 @@ Output type determination
 =========================
 
 The output of the ufunc (and its methods) is not necessarily an
-:class:`ndarray <numpy.ndarray>`, if all input arguments are not :class:`ndarrays <numpy.ndarray>`.
-Indeed, if any input defines an
-:obj:`__array_ufunc__ <numpy.class.__array_ufunc__>` method,
+:class:`ndarray <numpy.ndarray>`, if all input arguments are not
+:class:`ndarrays <numpy.ndarray>`. Indeed, if any input defines an
+:obj:`~.class.__array_ufunc__` method,
 control will be passed completely to that function, i.e., the ufunc is
 :ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
 all output arrays will be passed to the
-:obj:`__array_prepare__ <numpy.class.__array_prepare__>` and
-:obj:`__array_wrap__ <numpy.class.__array_wrap__>` methods of the input (besides
+:obj:`~.class.__array_prepare__` and
+:obj:`~.class.__array_wrap__` methods of the input (besides
 :class:`ndarrays <.ndarray>`, and scalars) that defines it **and** has
 the highest :obj:`~.class.__array_priority__`
 of any other input to the universal function. The default
@@ -226,7 +228,7 @@ ufunc is created, it is given a static list of inner loops and a
 corresponding list of type signatures over which the ufunc operates.
 The ufunc machinery uses this list to determine which inner loop to
 use for a particular case. You can inspect the :attr:`.types
-<ufunc.types>` attribute for a particular ufunc to see which type
+<.ufunc.types>` attribute for a particular ufunc to see which type
 combinations have a defined inner loop and which output type they
 produce (:ref:`character codes <arrays.scalars.character-codes>` are used
 in said output for brevity).
