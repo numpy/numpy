@@ -2838,12 +2838,14 @@ Data-type descriptors
     (recursively).
 
     The value of *newendian* is one of these macros:
+..
+    dedent the enumeration of flags to avoid missing references sphinx warnings 
 
-    .. c:macro:: NPY_IGNORE
-                 NPY_SWAP
-                 NPY_NATIVE
-                 NPY_LITTLE
-                 NPY_BIG
+.. c:macro:: NPY_IGNORE
+             NPY_SWAP
+             NPY_NATIVE
+             NPY_LITTLE
+             NPY_BIG
 
     If a byteorder of :c:data:`NPY_IGNORE` is encountered it
     is left alone. If newendian is :c:data:`NPY_SWAP`, then all byte-orders
