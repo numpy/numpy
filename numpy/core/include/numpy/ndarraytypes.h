@@ -1907,14 +1907,14 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         /* The type object of the scalar instances (may be NULL?) */
         PyTypeObject *scalar_type;
         /*
-         * Flags about the DType mainly to signel legacy, parametric, or
+         * DType flags to signal legacy, parametric, or
          * abstract.  But plenty of space for additional information/flags.
          */
         npy_uint64 flags;
 
         /*
-         * Private storage for all slots and reserved fields to allow a stable
-         * size. A stable ABI size makes creating a static DType less painful
+         * Use indirection in order to allow a fixed size for this struct.
+         * A stable ABI size makes creating a static DType less painful
          * while also ensuring flexibility for all opaque API (with one
          * indirection due the pointer lookup).
          */
