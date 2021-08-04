@@ -114,6 +114,19 @@ Currently, the following classes are available, along with their section names:
     x11_info:x11
     xft_info:xft
 
+Note that blas_opt_info and lapack_opt_info honor the NPY_BLAS_ORDER
+and NPY_LAPACK_ORDER environment variables to determine the order in which
+specific BLAS and LAPACK libraries are searched for.
+
+This search (or autodetection) can be bypassed by defining the environment
+variables NPY_BLAS_LIBS and NPY_LAPACK_LIBS, which should then contain the
+exact linker flags to use (language will be set to F77). Building against
+Netlib BLAS/LAPACK or stub files, in order to be able to switch BLAS and LAPACK
+implementations at runtime. If using this to build NumPy itself, it is
+recommended to also define NPY_CBLAS_LIBS (assuming your BLAS library has a
+CBLAS interface) to enable CBLAS usage for matrix multiplication (unoptimized
+otherwise).
+
 Example:
 ----------
 [DEFAULT]
@@ -314,7 +327,7 @@ else:
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
     default_runtime_dirs = []
     default_include_dirs = ['/usr/local/include',
-                            '/opt/include', '/usr/include',
+                            '/opt/include',
                             # path of umfpack under macports
                             '/opt/local/include/ufsparse',
                             '/opt/local/include', '/sw/include',
@@ -323,8 +336,7 @@ else:
 
     default_x11_lib_dirs = libpaths(['/usr/X11R6/lib', '/usr/X11/lib',
                                      '/usr/lib'], platform_bits)
-    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include',
-                                '/usr/include']
+    default_x11_include_dirs = ['/usr/X11R6/include', '/usr/X11/include']
 
     if os.path.exists('/usr/lib/X11'):
         globbed_x11_dir = glob('/usr/lib/*/libX11.so')
@@ -361,22 +373,6 @@ default_include_dirs = [_m for _m in default_include_dirs if os.path.isdir(_m)]
 default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 
 so_ext = get_shared_lib_extension()
-
-
-def is_symlink_to_accelerate(filename):
-    accelpath = '/System/Library/Frameworks/Accelerate.framework'
-    return (sys.platform == 'darwin' and os.path.islink(filename) and
-            os.path.realpath(filename).startswith(accelpath))
-
-
-_accel_msg = (
-    'Found {filename}, but that file is a symbolic link to the '
-    'MacOS Accelerate framework, which is not supported by NumPy. '
-    'You must configure the build to use a different optimized library, '
-    'or disable the use of optimized BLAS and LAPACK by setting the '
-    'environment variables NPY_BLAS_ORDER="" and NPY_LAPACK_ORDER="" '
-    'before building NumPy.'
-)
 
 
 def get_standard_file(fname):
@@ -527,6 +523,7 @@ def get_info(name, notfound_action=0):
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
+          'accelerate': accelerate_info,      # use blas_opt instead
           'openblas64_': openblas64__info,
           'openblas64__lapack': openblas64__lapack_info,
           'openblas_ilp64': openblas_ilp64_info,
@@ -1017,9 +1014,6 @@ class system_info:
             for prefix in lib_prefixes:
                 p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
-                    # p[0] is the full path to the binary library file.
-                    if is_symlink_to_accelerate(p[0]):
-                        raise RuntimeError(_accel_msg.format(filename=p[0]))
                     break
             if p:
                 assert len(p) == 1
@@ -1348,8 +1342,6 @@ class atlas_info(system_info):
         lapack = None
         atlas_1 = None
         for d in lib_dirs:
-            # FIXME: lapack_atlas is unused
-            lapack_atlas = self.check_libs2(d, ['lapack_atlas'], [])
             atlas = self.check_libs2(d, atlas_libs, [])
             if atlas is not None:
                 lib_dirs2 = [d] + self.combine_paths(d, ['atlas*', 'ATLAS*'])
@@ -1549,6 +1541,9 @@ class lapack_info(system_info):
 
 
 class lapack_src_info(system_info):
+    # LAPACK_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'lapack_src'
     dir_env_var = 'LAPACK_SRC'
     notfounderror = LapackSrcNotFoundError
@@ -1751,8 +1746,10 @@ def get_atlas_version(**config):
 
 class lapack_opt_info(system_info):
     notfounderror = LapackNotFoundError
+
     # List of all known LAPACK libraries, in the default order
-    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'lapack']
+    lapack_order = ['mkl', 'openblas', 'flame',
+                    'accelerate', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
 
     def _calc_info_mkl(self):
@@ -1845,6 +1842,16 @@ class lapack_opt_info(system_info):
             return True
         return False
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_LAPACK_LIBS'].split()
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
@@ -1854,6 +1861,12 @@ class lapack_opt_info(system_info):
             raise ValueError("lapack_opt_info user defined "
                              "LAPACK order has unacceptable "
                              "values: {}".format(unknown_order))
+
+        if 'NPY_LAPACK_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for lapack in lapack_order:
             if self._calc_info(lapack):
@@ -1911,7 +1924,9 @@ class lapack64__opt_info(lapack_ilp64_opt_info):
 class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
     # List of all known BLAS libraries, in the default order
-    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'blas']
+
+    blas_order = ['mkl', 'blis', 'openblas',
+                  'accelerate', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
 
     def _calc_info_mkl(self):
@@ -1977,6 +1992,20 @@ class blas_opt_info(system_info):
         self.set_info(**info)
         return True
 
+    def _calc_info_from_envvar(self):
+        info = {}
+        info['language'] = 'f77'
+        info['libraries'] = []
+        info['include_dirs'] = []
+        info['define_macros'] = []
+        info['extra_link_args'] = os.environ['NPY_BLAS_LIBS'].split()
+        if 'NPY_CBLAS_LIBS' in os.environ:
+            info['define_macros'].append(('HAVE_CBLAS', None))
+            info['extra_link_args'].extend(
+                                        os.environ['NPY_CBLAS_LIBS'].split())
+        self.set_info(**info)
+        return True
+
     def _calc_info(self, name):
         return getattr(self, '_calc_info_{}'.format(name))()
 
@@ -1984,6 +2013,12 @@ class blas_opt_info(system_info):
         blas_order, unknown_order = _parse_env_order(self.blas_order, self.order_env_var_name)
         if len(unknown_order) > 0:
             raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(unknown_order))
+
+        if 'NPY_BLAS_LIBS' in os.environ:
+            # Bypass autodetection, set language to F77 and use env var linker
+            # flags directly
+            self._calc_info_from_envvar()
+            return
 
         for blas in blas_order:
             if self._calc_info(blas):
@@ -2443,8 +2478,6 @@ class accelerate_info(system_info):
                     'accelerate' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
@@ -2453,8 +2486,6 @@ class accelerate_info(system_info):
                       'veclib' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
                 link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
@@ -2468,6 +2499,9 @@ class accelerate_info(system_info):
         return
 
 class blas_src_info(system_info):
+    # BLAS_SRC is deprecated, please do not use this!
+    # Build or install a BLAS library via your package manager or from
+    # source separately.
     section = 'blas_src'
     dir_env_var = 'BLAS_SRC'
     notfounderror = BlasSrcNotFoundError
@@ -3071,8 +3105,9 @@ def show_all(argv=None):
             del show_only[show_only.index(name)]
         conf = c()
         conf.verbosity = 2
-        # FIXME: r not used
-        r = conf.get_info()
+        # we don't need the result, but we want
+        # the side effect of printing diagnostics
+        conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))
 

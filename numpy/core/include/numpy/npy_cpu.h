@@ -63,7 +63,8 @@
     #define NPY_CPU_HPPA
 #elif defined(__alpha__)
     #define NPY_CPU_ALPHA
-#elif defined(__arm__) || defined(__aarch64__)
+#elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM64)
+    /* _M_ARM64 is defined in MSVC for ARM64 compilation on Windows */
     #if defined(__ARMEB__) || defined(__AARCH64EB__)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEB_AARCH32
@@ -72,10 +73,10 @@
         #else
             #define NPY_CPU_ARMEB
         #endif
-    #elif defined(__ARMEL__) || defined(__AARCH64EL__)
+    #elif defined(__ARMEL__) || defined(__AARCH64EL__) || defined(_M_ARM64)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEL_AARCH32
-        #elif defined(__ARM_64BIT_STATE)
+        #elif defined(__ARM_64BIT_STATE) || defined(_M_ARM64)
             #define NPY_CPU_ARMEL_AARCH64
         #else
             #define NPY_CPU_ARMEL
@@ -110,10 +111,16 @@
     information about your platform (OS, CPU and compiler)
 #endif
 
-#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
-#define NPY_CPU_HAVE_UNALIGNED_ACCESS 1
-#else
-#define NPY_CPU_HAVE_UNALIGNED_ACCESS 0
+/* 
+ * Except for the following architectures, memory access is limited to the natural
+ * alignment of data types otherwise it may lead to bus error or performance regression.
+ * For more details about unaligned access, see https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt.
+*/
+#if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64) || defined(__aarch64__) || defined(__powerpc64__)
+    #define NPY_ALIGNMENT_REQUIRED 0
+#endif
+#ifndef NPY_ALIGNMENT_REQUIRED
+    #define NPY_ALIGNMENT_REQUIRED 1
 #endif
 
 #endif

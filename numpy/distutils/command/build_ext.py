@@ -146,20 +146,31 @@ class build_ext (old_build_ext):
         self.compiler.show_customization()
 
         if not self.disable_optimization:
-            opt_cache_path = os.path.abspath(os.path.join(self.build_temp, 'ccompiler_opt_cache_ext.py'))
-            self.compiler_opt = new_ccompiler_opt(compiler=self.compiler,
-                                                  cpu_baseline=self.cpu_baseline,
-                                                  cpu_dispatch=self.cpu_dispatch,
-                                                  cache_path=opt_cache_path)
-            if not self.compiler_opt.is_cached():
-                log.info("Detected changes on compiler optimizations, force rebuilding")
-                self.force = True
+            dispatch_hpath = os.path.join("numpy", "distutils", "include", "npy_cpu_dispatch_config.h")
+            dispatch_hpath = os.path.join(self.get_finalized_command("build_src").build_src, dispatch_hpath)
+            opt_cache_path = os.path.abspath(
+                os.path.join(self.build_temp, 'ccompiler_opt_cache_ext.py')
+            )
+            if hasattr(self, "compiler_opt"):
+                # By default `CCompilerOpt` update the cache at the exit of
+                # the process, which may lead to duplicate building
+                # (see build_extension()/force_rebuild) if run() called
+                # multiple times within the same os process/thread without
+                # giving the chance the previous instances of `CCompilerOpt`
+                # to update the cache.
+                self.compiler_opt.cache_flush()
+
+            self.compiler_opt = new_ccompiler_opt(
+                compiler=self.compiler, dispatch_hpath=dispatch_hpath,
+                cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
+                cache_path=opt_cache_path
+            )
+            def report(copt):
+                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
+                log.info(copt.report(full=True))
 
             import atexit
-            def report():
-                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
-                log.info(self.compiler_opt.report(full=True))
-            atexit.register(report)
+            atexit.register(report, self.compiler_opt)
 
         # Setup directory for storing generated extra DLL files on Windows
         self.extra_dll_dir = os.path.join(self.build_temp, '.libs')
@@ -354,7 +365,11 @@ class build_ext (old_build_ext):
                                         self.get_ext_filename(fullname))
         depends = sources + ext.depends
 
-        if not (self.force or newer_group(depends, ext_filename, 'newer')):
+        force_rebuild = self.force
+        if not self.disable_optimization and not self.compiler_opt.is_cached():
+            log.debug("Detected changes on compiler optimizations")
+            force_rebuild = True
+        if not (force_rebuild or newer_group(depends, ext_filename, 'newer')):
             log.debug("skipping '%s' extension (up-to-date)", ext.name)
             return
         else:
@@ -413,19 +428,44 @@ class build_ext (old_build_ext):
         # filtering C dispatch-table sources when optimization is not disabled,
         # otherwise treated as normal sources.
         copt_c_sources = []
+        copt_cxx_sources = []
         copt_baseline_flags = []
         copt_macros = []
         if not self.disable_optimization:
-            copt_build_src = None if self.inplace else self.get_finalized_command("build_src").build_src
-            copt_c_sources = [
-                c_sources.pop(c_sources.index(src))
-                for src in c_sources[:] if src.endswith(".dispatch.c")
-            ]
+            bsrc_dir = self.get_finalized_command("build_src").build_src
+            dispatch_hpath = os.path.join("numpy", "distutils", "include")
+            dispatch_hpath = os.path.join(bsrc_dir, dispatch_hpath)
+            include_dirs.append(dispatch_hpath)
+
+            copt_build_src = None if self.inplace else bsrc_dir
+            for _srcs, _dst, _ext in (
+                ((c_sources,), copt_c_sources, ('.dispatch.c',)),
+                ((c_sources, cxx_sources), copt_cxx_sources,
+                    ('.dispatch.cpp', '.dispatch.cxx'))
+            ):
+                for _src in _srcs:
+                    _dst += [
+                        _src.pop(_src.index(s))
+                        for s in _src[:] if s.endswith(_ext)
+                    ]
             copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
         else:
             copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
 
         c_objects = []
+        if copt_cxx_sources:
+            log.info("compiling C++ dispatch-able sources")
+            c_objects += self.compiler_opt.try_dispatch(
+                copt_cxx_sources,
+                output_dir=output_dir,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_args,
+                ccompiler=cxx_compiler,
+                **kws
+            )
         if copt_c_sources:
             log.info("compiling C dispatch-able sources")
             c_objects += self.compiler_opt.try_dispatch(copt_c_sources,
@@ -559,8 +599,11 @@ class build_ext (old_build_ext):
         objects = list(objects)
         unlinkable_fobjects = list(unlinkable_fobjects)
 
-        # Expand possible fake static libraries to objects
-        for lib in libraries:
+        # Expand possible fake static libraries to objects;
+        # make sure to iterate over a copy of the list as
+        # "fake" libraries will be removed as they are
+        # enountered
+        for lib in libraries[:]:
             for libdir in library_dirs:
                 fake_lib = os.path.join(libdir, lib + '.fobjects')
                 if os.path.isfile(fake_lib):

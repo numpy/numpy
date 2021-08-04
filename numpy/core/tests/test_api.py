@@ -149,7 +149,7 @@ def test_array_impossible_casts(array):
     rt = rational(1, 2)
     if array:
         rt = np.array(rt)
-    with assert_raises(ValueError):
+    with assert_raises(TypeError):
         np.array(rt, dtype="M8")
 
 
@@ -281,6 +281,19 @@ def test_array_astype():
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
 
+@pytest.mark.parametrize("dt", ["S", "U"])
+def test_array_astype_to_string_discovery_empty(dt):
+    # See also gh-19085
+    arr = np.array([""], dtype=object)
+    # Note, the itemsize is the `0 -> 1` logic, which should change.
+    # The important part the test is rather that it does not error.
+    assert arr.astype(dt).dtype.itemsize == np.dtype(f"{dt}1").itemsize
+
+    # check the same thing for `np.can_cast` (since it accepts arrays)
+    assert np.can_cast(arr, dt, casting="unsafe")
+    assert not np.can_cast(arr, dt, casting="same_kind")
+    # as well as for the object as a descriptor:
+    assert np.can_cast("O", dt, casting="unsafe")
 
 @pytest.mark.parametrize("dt", ["d", "f", "S13", "U32"])
 def test_array_astype_to_void(dt):

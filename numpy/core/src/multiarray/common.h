@@ -209,7 +209,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
-static NPY_INLINE int
+static NPY_INLINE npy_uintp
 npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
@@ -267,7 +267,7 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (NPY_CPU_HAVE_UNALIGNED_ACCESS && needle == 0 && stride == 1) {
+        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {
@@ -290,6 +290,34 @@ npy_memchr(char * haystack, char needle,
 
     return p;
 }
+
+
+/*
+ * Simple helper to create a tuple from an array of items. The `make_null_none`
+ * flag means that NULL entries are replaced with None, which is occasionally
+ * useful.
+ */
+static NPY_INLINE PyObject *
+PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
+{
+    PyObject *tuple = PyTuple_New(n);
+    if (tuple == NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < n; i ++) {
+        PyObject *tmp;
+        if (!make_null_none || items[i] != NULL) {
+            tmp = items[i];
+        }
+        else {
+            tmp = Py_None;
+        }
+        Py_INCREF(tmp);
+        PyTuple_SET_ITEM(tuple, i, tmp);
+    }
+    return tuple;
+}
+
 
 #include "ucsnarrow.h"
 

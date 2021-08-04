@@ -156,7 +156,7 @@ def polyfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    where the `r_n` are the roots specified in `roots`.  If a zero has
+    where the ``r_n`` are the roots specified in `roots`.  If a zero has
     multiplicity n, then it must appear in `roots` n times. For instance,
     if 2 is a root of multiplicity three and 3 is a root of multiplicity 2,
     then `roots` looks something like [2, 2, 2, 3, 3]. The roots can appear
@@ -192,11 +192,11 @@ def polyfromroots(roots):
     Notes
     -----
     The coefficients are determined by multiplying together linear factors
-    of the form `(x - r_i)`, i.e.
+    of the form ``(x - r_i)``, i.e.
 
     .. math:: p(x) = (x - r_0) (x - r_1) ... (x - r_n)
 
-    where ``n == len(roots) - 1``; note that this implies that `1` is always
+    where ``n == len(roots) - 1``; note that this implies that ``1`` is always
     returned for :math:`a_n`.
 
     Examples
@@ -1252,10 +1252,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         diagnostic information from the singular value decomposition (used
         to solve the fit's matrix equation) is also returned.
     w : array_like, shape (`M`,), optional
-        Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-        weights are chosen so that the errors of the products ``w[i]*y[i]``
-        all have the same variance.  The default value is None.
+        Weights. If not None, the weight ``w[i]`` applies to the unsquared
+        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        same variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
         .. versionadded:: 1.5.0
 

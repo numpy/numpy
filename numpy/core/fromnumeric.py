@@ -10,8 +10,7 @@ from . import multiarray as mu
 from . import overrides
 from . import umath as um
 from . import numerictypes as nt
-from ._asarray import asarray, array, asanyarray
-from .multiarray import concatenate
+from .multiarray import asarray, array, asanyarray, concatenate
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -308,7 +307,7 @@ def _choose_dispatcher(a, choices, out=None, mode=None):
 @array_function_dispatch(_choose_dispatcher)
 def choose(a, choices, out=None, mode='raise'):
     """
-    Construct an array from an index array and a set of arrays to choose from.
+    Construct an array from an index array and a list of arrays to choose from.
 
     First of all, if confused or uncertain, definitely look at the Examples -
     in its full generality, this function is less simple than it might
@@ -319,34 +318,34 @@ def choose(a, choices, out=None, mode='raise'):
 
     But this omits some subtleties.  Here is a fully general summary:
 
-    Given an "index" array (`a`) of integers and a sequence of `n` arrays
+    Given an "index" array (`a`) of integers and a sequence of ``n`` arrays
     (`choices`), `a` and each choice array are first broadcast, as necessary,
     to arrays of a common shape; calling these *Ba* and *Bchoices[i], i =
     0,...,n-1* we have that, necessarily, ``Ba.shape == Bchoices[i].shape``
-    for each `i`.  Then, a new array with shape ``Ba.shape`` is created as
+    for each ``i``.  Then, a new array with shape ``Ba.shape`` is created as
     follows:
 
-    * if ``mode=raise`` (the default), then, first of all, each element of
-      `a` (and thus `Ba`) must be in the range `[0, n-1]`; now, suppose that
-      `i` (in that range) is the value at the `(j0, j1, ..., jm)` position
-      in `Ba` - then the value at the same position in the new array is the
-      value in `Bchoices[i]` at that same position;
+    * if ``mode='raise'`` (the default), then, first of all, each element of
+      ``a`` (and thus ``Ba``) must be in the range ``[0, n-1]``; now, suppose
+      that ``i`` (in that range) is the value at the ``(j0, j1, ..., jm)``
+      position in ``Ba`` - then the value at the same position in the new array
+      is the value in ``Bchoices[i]`` at that same position;
 
-    * if ``mode=wrap``, values in `a` (and thus `Ba`) may be any (signed)
+    * if ``mode='wrap'``, values in `a` (and thus `Ba`) may be any (signed)
       integer; modular arithmetic is used to map integers outside the range
       `[0, n-1]` back into that range; and then the new array is constructed
       as above;
 
-    * if ``mode=clip``, values in `a` (and thus `Ba`) may be any (signed)
-      integer; negative integers are mapped to 0; values greater than `n-1`
-      are mapped to `n-1`; and then the new array is constructed as above.
+    * if ``mode='clip'``, values in `a` (and thus ``Ba``) may be any (signed)
+      integer; negative integers are mapped to 0; values greater than ``n-1``
+      are mapped to ``n-1``; and then the new array is constructed as above.
 
     Parameters
     ----------
     a : int array
-        This array must contain integers in `[0, n-1]`, where `n` is the number
-        of choices, unless ``mode=wrap`` or ``mode=clip``, in which cases any
-        integers are permissible.
+        This array must contain integers in ``[0, n-1]``, where ``n`` is the
+        number of choices, unless ``mode=wrap`` or ``mode=clip``, in which
+        cases any integers are permissible.
     choices : sequence of arrays
         Choice arrays. `a` and all of the choices must be broadcastable to the
         same shape.  If `choices` is itself an array (not recommended), then
@@ -355,12 +354,12 @@ def choose(a, choices, out=None, mode='raise'):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype. Note that `out` is always
-        buffered if `mode='raise'`; use other modes for better performance.
+        buffered if ``mode='raise'``; use other modes for better performance.
     mode : {'raise' (default), 'wrap', 'clip'}, optional
-        Specifies how indices outside `[0, n-1]` will be treated:
+        Specifies how indices outside ``[0, n-1]`` will be treated:
 
           * 'raise' : an exception is raised
-          * 'wrap' : value becomes value mod `n`
+          * 'wrap' : value becomes value mod ``n``
           * 'clip' : values < 0 are mapped to 0, values > n-1 are mapped to n-1
 
     Returns
@@ -606,6 +605,8 @@ def transpose(a, axes=None):
 
     For an array a with two axes, transpose(a) gives the matrix transpose.
 
+    Refer to `numpy.ndarray.transpose` for full documentation.
+
     Parameters
     ----------
     a : array_like
@@ -625,6 +626,7 @@ def transpose(a, axes=None):
 
     See Also
     --------
+    ndarray.transpose : Equivalent method
     moveaxis
     argsort
 
@@ -1112,12 +1114,12 @@ def argsort(a, axis=-1, kind=None, order=None):
     return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
 
 
-def _argmax_dispatcher(a, axis=None, out=None):
+def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
     return (a, out)
 
 
 @array_function_dispatch(_argmax_dispatcher)
-def argmax(a, axis=None, out=None):
+def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     Returns the indices of the maximum values along an axis.
 
@@ -1131,12 +1133,18 @@ def argmax(a, axis=None, out=None):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the array.
 
     Returns
     -------
     index_array : ndarray of ints
         Array of indices into the array. It has the same shape as `a.shape`
-        with the dimension along `axis` removed.
+        with the dimension along `axis` removed. If `keepdims` is set to True,
+        then the size of `axis` will be 1 with the resulting array having same
+        shape as `a.shape`.
 
     See Also
     --------
@@ -1181,24 +1189,31 @@ def argmax(a, axis=None, out=None):
 
     >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmax(x, axis=-1)
-    >>> # Same as np.max(x, axis=-1, keepdims=True)
+    >>> # Same as np.amax(x, axis=-1, keepdims=True)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[4],
            [3]])
-    >>> # Same as np.max(x, axis=-1)
+    >>> # Same as np.amax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
     array([4, 3])
 
+    Setting `keepdims` to `True`,
+
+    >>> x = np.arange(24).reshape((2, 3, 4))
+    >>> res = np.argmax(x, axis=1, keepdims=True)
+    >>> res.shape
+    (2, 1, 4)
     """
-    return _wrapfunc(a, 'argmax', axis=axis, out=out)
+    kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
+    return _wrapfunc(a, 'argmax', axis=axis, out=out, **kwds)
 
 
-def _argmin_dispatcher(a, axis=None, out=None):
+def _argmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
     return (a, out)
 
 
 @array_function_dispatch(_argmin_dispatcher)
-def argmin(a, axis=None, out=None):
+def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     Returns the indices of the minimum values along an axis.
 
@@ -1212,12 +1227,18 @@ def argmin(a, axis=None, out=None):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the array.
 
     Returns
     -------
     index_array : ndarray of ints
         Array of indices into the array. It has the same shape as `a.shape`
-        with the dimension along `axis` removed.
+        with the dimension along `axis` removed. If `keepdims` is set to True,
+        then the size of `axis` will be 1 with the resulting array having same
+        shape as `a.shape`.
 
     See Also
     --------
@@ -1262,16 +1283,23 @@ def argmin(a, axis=None, out=None):
 
     >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmin(x, axis=-1)
-    >>> # Same as np.min(x, axis=-1, keepdims=True)
+    >>> # Same as np.amin(x, axis=-1, keepdims=True)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[2],
            [0]])
-    >>> # Same as np.max(x, axis=-1)
+    >>> # Same as np.amax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)
     array([2, 0])
 
+    Setting `keepdims` to `True`,
+
+    >>> x = np.arange(24).reshape((2, 3, 4))
+    >>> res = np.argmin(x, axis=1, keepdims=True)
+    >>> res.shape
+    (2, 1, 4)
     """
-    return _wrapfunc(a, 'argmin', axis=axis, out=out)
+    kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
+    return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 
 
 def _searchsorted_dispatcher(a, v, side=None, sorter=None):
@@ -1316,8 +1344,9 @@ def searchsorted(a, v, side='left', sorter=None):
 
     Returns
     -------
-    indices : array of ints
-        Array of insertion points with the same shape as `v`.
+    indices : int or array of ints
+        Array of insertion points with the same shape as `v`,
+        or an integer if `v` is a scalar.
 
     See Also
     --------
@@ -1379,9 +1408,9 @@ def resize(a, new_shape):
 
     See Also
     --------
-    np.reshape : Reshape an array without changing the total size.
-    np.pad : Enlarge and pad an array.
-    np.repeat: Repeat elements of an array.
+    numpy.reshape : Reshape an array without changing the total size.
+    numpy.pad : Enlarge and pad an array.
+    numpy.repeat : Repeat elements of an array.
     ndarray.resize : resize an array in-place.
 
     Notes
@@ -2007,7 +2036,7 @@ def compress(condition, a, axis=None, out=None):
     --------
     take, choose, diag, diagonal, select
     ndarray.compress : Equivalent method in ndarray
-    extract: Equivalent method when working on 1-D arrays
+    extract : Equivalent method when working on 1-D arrays
     :ref:`ufuncs-output-type`
 
     Examples
@@ -2084,14 +2113,24 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     --------
     :ref:`ufuncs-output-type`
 
+    Notes
+    -----
+    When `a_min` is greater than `a_max`, `clip` returns an
+    array in which all values are equal to `a_max`,
+    as shown in the second example.
+
     Examples
     --------
     >>> a = np.arange(10)
-    >>> np.clip(a, 1, 8)
-    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.clip(a, 1, 8)
+    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
+    >>> np.clip(a, 8, 1)
+    array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
     >>> np.clip(a, 3, 6, out=a)
+    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    >>> a
     array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
     >>> a = np.arange(10)
     >>> a
@@ -2475,19 +2514,20 @@ def cumsum(a, axis=None, dtype=None, out=None):
         result has the same size as `a`, and the same shape as `a` if
         `axis` is not None or `a` is a 1-d array.
 
-
     See Also
     --------
     sum : Sum array elements.
-
     trapz : Integration of array values using the composite trapezoidal rule.
-
-    diff :  Calculate the n-th discrete difference along given axis.
+    diff : Calculate the n-th discrete difference along given axis.
 
     Notes
     -----
     Arithmetic is modular when using integer types, and no error is
     raised on overflow.
+
+    ``cumsum(a)[-1]`` may not be equal to ``sum(a)`` for floating-point
+    values since ``sum`` may use a pairwise summation routine, reducing
+    the roundoff-error. See `sum` for more information.
 
     Examples
     --------
@@ -2506,6 +2546,14 @@ def cumsum(a, axis=None, dtype=None, out=None):
     >>> np.cumsum(a,axis=1)      # sum over columns for each of the 2 rows
     array([[ 1,  3,  6],
            [ 4,  9, 15]])
+
+    ``cumsum(b)[-1]`` may not be equal to ``sum(b)``
+
+    >>> b = np.array([1, 2e-9, 3e-9] * 1000000)
+    >>> b.cumsum()[-1]
+    1000000.0050045159
+    >>> b.sum()
+    1000000.0050000029
 
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
@@ -2718,14 +2766,14 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     You can use an initial value to compute the maximum of an empty slice, or
     to initialize it to a different value:
 
-    >>> np.max([[-50], [10]], axis=-1, initial=0)
+    >>> np.amax([[-50], [10]], axis=-1, initial=0)
     array([ 0, 10])
 
     Notice that the initial value is used as one of the elements for which the
     maximum is determined, unlike for the default argument Python's max
     function, which is only used for empty iterables.
 
-    >>> np.max([5], initial=6)
+    >>> np.amax([5], initial=6)
     6
     >>> max([5], default=6)
     5
@@ -2841,7 +2889,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.nanmin(b)
     0.0
 
-    >>> np.min([[-50], [10]], axis=-1, initial=0)
+    >>> np.amin([[-50], [10]], axis=-1, initial=0)
     array([-50,   0])
 
     Notice that the initial value is used as one of the elements for which the
@@ -2850,7 +2898,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Notice that this isn't the same as Python's ``default`` argument.
 
-    >>> np.min([6], initial=5)
+    >>> np.amin([6], initial=5)
     5
     >>> min([6], default=5)
     6

@@ -110,7 +110,7 @@ def getDependencies(filename):
         for lineno, line in fortranSourceLines(fo):
             m = external_pat.match(line)
             if m:
-                names = line = line[m.end():].strip().split(',')
+                names = line[m.end():].strip().split(',')
                 names = [n.strip().lower() for n in names]
                 names = [n for n in names if n]
                 routines.extend(names)

@@ -8,10 +8,10 @@ NEP 42 — New and extensible DTypes
 :Author: Sebastian Berg
 :Author: Ben Nathanson
 :Author: Marten van Kerkwijk
-:Status: Draft
+:Status: Accepted
 :Type: Standard
 :Created: 2019-07-17
-
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2020-October/081038.html
 
 .. note::
 
@@ -203,7 +203,7 @@ Other elements of the casting implementation is the ``CastingImpl``:
         # Object describing and performing the cast
         casting : casting
 
-        def resolve_descriptors(self, Tuple[DType] : input) -> (casting, Tuple[DType]):
+        def resolve_descriptors(self, Tuple[DTypeMeta], Tuple[DType|None] : input) -> (casting, Tuple[DType]):
             raise NotImplementedError
 
         # initially private:
@@ -213,6 +213,8 @@ Other elements of the casting implementation is the ``CastingImpl``:
 which describes the casting from one DType to another. In
 :ref:`NEP 43 <NEP43>` this ``CastingImpl`` object is used unchanged to
 support universal functions.
+Note that the name ``CastingImpl`` here will be generically called
+``ArrayMethod`` to accomodate both casting and universal functions.
 
 
 ******************************************************************************
@@ -525,7 +527,8 @@ This means the implementation will work like this::
             # Find what dtype1 is cast to when cast to the common DType
             # by using the CastingImpl as described below:
             castingimpl = get_castingimpl(type(dtype1), common)
-            safety, (_, dtype1) = castingimpl.resolve_descriptors((dtype1, None))
+            safety, (_, dtype1) = castingimpl.resolve_descriptors(
+                    (common, common), (dtype1, None))
             assert safety == "safe"  # promotion should normally be a safe cast
 
         if type(dtype2) is not common:
@@ -652,7 +655,7 @@ and implements the following methods and attributes:
 
 * To report safeness,
 
-  ``resolve_descriptors(self, Tuple[DType] : input) -> casting, Tuple[DType]``.
+  ``resolve_descriptors(self, Tuple[DTypeMeta], Tuple[DType|None] : input) -> casting, Tuple[DType]``.
 
   The ``casting`` output reports safeness (safe, unsafe, or same-kind), and
   the tuple is used for more multistep casting, as in the example below.
@@ -691,7 +694,7 @@ The full process is:
 
 1. Call
 
-   ``CastingImpl[Int24, String].resolve_descriptors((int24, "S20"))``.
+   ``CastingImpl[Int24, String].resolve_descriptors((Int24, String), (int24, "S20"))``.
 
    This provides the information that ``CastingImpl[Int24, String]`` only
    implements the cast of ``int24`` to ``"S8"``.
@@ -716,7 +719,7 @@ The full process is:
 
    to call
 
-   ``CastingImpl[Int24, String].resolve_descriptors((int24, None))``.
+   ``CastingImpl[Int24, String].resolve_descriptors((Int24, String), (int24, None))``.
 
    In this case the result of ``(int24, "S8")`` defines the correct cast:
 
@@ -763,8 +766,8 @@ even if the user provides only an ``int16 -> int24`` cast. This proposal does
 not provide that, but future work might find such casts dynamically, or at least
 allow ``resolve_descriptors`` to return arbitrary ``dtypes``.
 
-If ``CastingImpl[Int8, Int24].resolve_descriptors((int8, int24))`` returns
-``(int16, int24)``, the actual casting process could be extended to include
+If ``CastingImpl[Int8, Int24].resolve_descriptors((Int8, Int24), (int8, int24))``
+returns ``(int16, int24)``, the actual casting process could be extended to include
 the ``int8 -> int16`` cast. This adds a step.
 
 
@@ -774,7 +777,7 @@ The implementation for casting integers to datetime would generally
 say that this cast is unsafe (because it is always an unsafe cast).
 Its ``resolve_descriptors`` function may look like::
 
-     def resolve_descriptors(self, given_dtypes):
+     def resolve_descriptors(self, DTypes, given_dtypes):
         from_dtype, to_dtype = given_dtypes
         from_dtype = from_dtype.ensure_canonical()  # ensure not byte-swapped
         if to_dtype is None:
@@ -835,9 +838,10 @@ Its ``resolve_descriptors`` function may look like::
 
 **Notes:**
 
-The proposed ``CastingImpl`` is designed to be identical to the
-``PyArrayMethod`` proposed in NEP43 as part of restructuring ufuncs to handle
-new DTypes.
+``CastingImpl`` is used as a name in this NEP to clarify that it implements
+all functionality related to a cast. It is meant to be identical to the
+``ArrayMethod`` proposed in NEP 43 as part of restructuring ufuncs to handle
+new DTypes. All type definitions are expected to be named ``ArrayMethod``.
 
 The way dispatching works for ``CastingImpl`` is planned to be limited
 initially and fully opaque. In the future, it may or may not be moved into a
@@ -1297,8 +1301,9 @@ The external API for ``CastingImpl`` will be limited initially to defining:
   instance if the second string is shorter. If neither type is parametric the
   ``resolve_descriptors`` must use it.
 
-* ``resolve_descriptors(dtypes_in[2], dtypes_out[2], casting_out) -> int {0,
-  -1}`` The out
+* ``resolve_descriptors(PyArrayMethodObject *self, PyArray_DTypeMeta *DTypes[2],
+  PyArray_Descr *dtypes_in[2], PyArray_Descr *dtypes_out[2], NPY_CASTING *casting_out)
+  -> int {0, -1}`` The out
   dtypes must be set correctly to dtypes which the strided loop
   (transfer function) can handle.  Initially the result must have instances
   of the same DType class as the ``CastingImpl`` is defined for. The
@@ -1307,9 +1312,12 @@ The external API for ``CastingImpl`` will be limited initially to defining:
   A new, additional flag,
   ``_NPY_CAST_IS_VIEW``, can be set to indicate that no cast is necessary and a
   view is sufficient to perform the cast. The cast should return
-  ``-1`` when a custom error is set and ``NPY_NO_CASTING`` to indicate
-  that a generic casting error should be set (this is in most cases
-  preferable).
+  ``-1`` when an error occurred. If a cast is not possible (but no error
+  occurred), a ``-1`` result should be returned *without* an error set.
+  *This point is under consideration, we may use ``-1`` to indicate
+  a general error, and use a different return value for an impossible cast.*
+  This means that it is *not* possible to inform the user about why a cast is
+  impossible.
 
 * ``strided_loop(char **args, npy_intp *dimensions, npy_intp *strides,
   ...) -> int {0, -1}`` (signature will be fully defined in :ref:`NEP 43 <NEP43>`)
@@ -1326,7 +1334,7 @@ Although verbose, the API will mimic the one for creating a new DType:
     typedef struct{
       int flags;                  /* e.g. whether the cast requires the API */
       int nin, nout;              /* Number of Input and outputs (always 1) */
-      NPY_CASTING casting;        /* The default casting level */
+      NPY_CASTING casting;        /* The "minimal casting level" */
       PyArray_DTypeMeta *dtypes;  /* input and output DType class */
       /* NULL terminated slots defining the methods */
       PyType_Slot *slots;
@@ -1334,7 +1342,7 @@ Although verbose, the API will mimic the one for creating a new DType:
 
 The focus differs between casting and general ufuncs.  For example, for casts
 ``nin == nout == 1`` is always correct, while for ufuncs ``casting`` is
-expected to be usually `"safe"`.
+expected to be usually `"no"`.
 
 **Notes:** We may initially allow users to define only a single loop.
 Internally NumPy optimizes far more, and this should be made public
@@ -1348,6 +1356,11 @@ incrementally in one of two ways:
 
 * Or, more likely, expose the ``get_loop`` function which is passed additional
   information, such as the fixed strides (similar to our internal API).
+
+* The casting level denotes the minimal guaranteed casting level and can be
+  ``-1`` if the cast may be impossible.  For most non-parametric casts, this
+  value will be the casting level.  NumPy may skip the ``resolve_descriptors``
+  call for ``np.can_cast()`` when the result is ``True`` based on this level.
 
 The example does not yet include setup and error handling. Since these are
 similar to the UFunc machinery, they  will be defined in :ref:`NEP 43 <NEP43>` and then

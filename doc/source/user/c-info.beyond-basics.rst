@@ -172,8 +172,8 @@ iterators so that all that needs to be done to advance to the next element in
 each array is for PyArray_ITER_NEXT to be called for each of the inputs. This
 incrementing is automatically performed by
 :c:func:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
-multiterator ``obj`` as either a :c:type:`PyArrayMultiObject *` or a
-:c:type:`PyObject *<PyObject>`). The data from input number ``i`` is available using
+multiterator ``obj`` as either a :c:expr:`PyArrayMultiIterObject *` or a
+:c:expr:`PyObject *`). The data from input number ``i`` is available using
 :c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
 size as :c:func:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
 feature follows.
@@ -330,7 +330,7 @@ function :c:func:`PyArray_RegisterCanCast` (from_descr, totype_number,
 scalarkind) should be used to specify that the data-type object
 from_descr can be cast to the data-type with type number
 totype_number. If you are not trying to alter scalar coercion rules,
-then use :c:data:`NPY_NOSCALAR` for the scalarkind argument.
+then use :c:enumerator:`NPY_NOSCALAR` for the scalarkind argument.
 
 If you want to allow your new data-type to also be able to share in
 the scalar coercion rules, then you need to specify the scalarkind
@@ -340,7 +340,7 @@ available to that function). Then, you can register data-types that
 can be cast to separately for each scalar kind that may be returned
 from your user-defined data-type. If you don't register scalar
 coercion handling, then all of your user-defined data-types will be
-seen as :c:data:`NPY_NOSCALAR`.
+seen as :c:enumerator:`NPY_NOSCALAR`.
 
 
 Registering a ufunc loop
@@ -400,7 +400,7 @@ describe the desired behavior of the type. Typically, a new
 C-structure is also created to contain the instance-specific
 information needed for each object of the type as well. For example,
 :c:data:`&PyArray_Type<PyArray_Type>` is a pointer to the type-object table for the ndarray
-while a :c:type:`PyArrayObject *` variable is a pointer to a particular instance
+while a :c:expr:`PyArrayObject *` variable is a pointer to a particular instance
 of an ndarray (one of the members of the ndarray structure is, in
 turn, a pointer to the type- object table :c:data:`&PyArray_Type<PyArray_Type>`). Finally
 :c:func:`PyType_Ready` (<pointer_to_type_object>) must be called for
@@ -473,7 +473,7 @@ The __array_finalize\__ method
    attribute is looked-up in the object dictionary. If it is present
    and not None, then it can be either a CObject containing a pointer
    to a :c:func:`PyArray_FinalizeFunc` or it can be a method taking a
-   single argument (which could be None).
+   single argument (which could be None)
 
    If the :obj:`~numpy.class.__array_finalize__` attribute is a CObject, then the pointer
    must be a pointer to a function with the signature:

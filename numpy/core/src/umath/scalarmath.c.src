@@ -283,19 +283,13 @@ static void
 
 static void
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
-    @type@ mod;
-
-    if (!b) {
-        *out = a / b;
-    } else {
-        *out = npy_divmod@c@(a, b, &mod);
-    }
+    *out = npy_floor_divide@c@(a, b);
 }
 
 
 static void
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    npy_divmod@c@(a, b, out);
+    *out = npy_remainder@c@(a, b);
 }
 
 
@@ -737,6 +731,9 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
 {
     int ret;
     ret = _@name@_convert_to_ctype(a, arg1);
+    if (ret == -2) {
+        ret = -3;
+    }
     if (ret < 0) {
         return ret;
     }
@@ -1029,7 +1026,7 @@ static PyObject *
 
 /**begin repeat
  *
- * #name = cfloat, cdouble, clongdouble#
+ * #name = cfloat, cdouble#
  *
  */
 
@@ -1042,6 +1039,60 @@ static PyObject *
 #define @name@_@oper@ NULL
 
 /**end repeat1**/
+
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #oper = divmod, remainder#
+ *
+ */
+
+/* 
+Complex numbers do not support remainder operations. Unfortunately, 
+the type inference for long doubles is complicated, and if a remainder 
+operation is not defined - if the relevant field is left NULL - then 
+operations between long doubles and objects lead to an infinite recursion 
+instead of a TypeError. This should ensure that once everything gets
+converted to complex long doubles you correctly get a reasonably
+informative TypeError. This fixes the last part of bug gh-18548.
+*/
+
+static PyObject *
+clongdouble_@oper@(PyObject *a, PyObject *b)
+{
+    npy_clongdouble arg1, arg2;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, clongdouble_@oper@);
+
+    switch(_clongdouble_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+        case 0:
+            break;
+        case -1:
+            /* one of them can't be cast safely must be mixed-types*/
+            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        case -2:
+            /* use default handling */
+            if (PyErr_Occurred()) {
+                return NULL;
+            }
+            return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+        case -3:
+            /*
+             * special case for longdouble and clongdouble
+             * because they have a recursive getitem in their dtype
+             */
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+    }
+
+    /*
+     * here we do the actual calculation with arg1 and arg2
+     * as a function call.
+     */
+    PyErr_SetString(PyExc_TypeError, "complex long doubles do not support remainder");
+    return NULL;
+}
 
 /**end repeat**/
 

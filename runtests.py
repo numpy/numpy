@@ -8,7 +8,10 @@ Examples::
 
     $ python runtests.py
     $ python runtests.py -s {SAMPLE_SUBMODULE}
+    $ # Run a standalone test function:
     $ python runtests.py -t {SAMPLE_TEST}
+    $ # Run a test defined as a method of a TestXXX class:
+    $ python runtests.py -t {SAMPLE_TEST2}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
@@ -28,6 +31,12 @@ Generate C code coverage listing under build/lcov/:
     $ python runtests.py --gcov [...other args...]
     $ python runtests.py --lcov-html
 
+Run lint checks.
+Provide target branch name or `uncommitted` to check before committing:
+
+    $ python runtests.py --lint main
+    $ python runtests.py --lint uncommitted
+
 """
 #
 # This is a generic test runner script for projects using NumPy's test
@@ -37,6 +46,7 @@ Generate C code coverage listing under build/lcov/:
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
+SAMPLE_TEST2 = "numpy/core/tests/test_memmap.py::TestMemmap::test_open_with_filename"
 SAMPLE_SUBMODULE = "linalg"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
@@ -68,36 +78,44 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
-                        help="more verbosity")
+                        help="Add one verbosity level to pytest. Default is 0")
     parser.add_argument("--debug-info", action="store_true",
-                        help=("add --verbose-cfg to build_src to show compiler "
-                              "configuration output while creating "
+                        help=("Add --verbose-cfg to build_src to show "
+                              "compiler configuration output while creating "
                               "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
-                        help="do not build the project (use system installed version)")
-    parser.add_argument("--build-only", "-b", action="store_true", default=False,
-                        help="just build, do not run any tests")
+                        help="Do not build the project (use system installed "
+                             "version)")
+    parser.add_argument("--build-only", "-b", action="store_true",
+                        default=False, help="Just build, do not run any tests")
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
     parser.add_argument("--refguide-check", action="store_true", default=False,
-                        help="Run refguide (doctest) check (do not run regular tests.)")
+                        help="Run refguide (doctest) check (do not run "
+                             "regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
-                        help=("report coverage of project code. HTML output goes "
-                              "under build/coverage"))
+                        help=("Report coverage of project code. HTML output "
+                              "goes under build/coverage"))
+    parser.add_argument("--lint", default=None,
+                        help="'<Target Branch>' or 'uncommitted', passed to "
+                             "tools/linter.py [--branch BRANCH] "
+                             "[--uncommitted]")
     parser.add_argument("--durations", action="store", default=-1, type=int,
-                        help=("Time N slowest tests, time all if 0, time none if < 0"))
+                        help=("Time N slowest tests, time all if 0, time none "
+                              "if < 0"))
     parser.add_argument("--gcov", action="store_true", default=False,
-                        help=("enable C code coverage via gcov (requires GCC). "
-                              "gcov output goes to build/**/*.gc*"))
+                        help=("Enable C code coverage via gcov (requires "
+                              "GCC). gcov output goes to build/**/*.gc*"))
     parser.add_argument("--lcov-html", action="store_true", default=False,
-                        help=("produce HTML for C code coverage information "
+                        help=("Produce HTML for C code coverage information "
                               "from a previous run with --gcov. "
                               "HTML output goes to build/lcov/"))
     parser.add_argument("--mode", "-m", default="fast",
                         help="'fast', 'full', or something that could be "
                              "passed to nosetests -A [default: fast]")
     parser.add_argument("--submodule", "-s", default=None,
-                        help="Submodule whose tests to run (cluster, constants, ...)")
+                        help="Submodule whose tests to run (cluster, "
+                             "constants, ...)")
     parser.add_argument("--pythonpath", "-p", default=None,
                         help="Paths to prepend to PYTHONPATH")
     parser.add_argument("--tests", "-t", action='append',
@@ -115,13 +133,16 @@ def main(argv):
     parser.add_argument("--parallel", "-j", type=int, default=0,
                         help="Number of parallel jobs during build")
     parser.add_argument("--warn-error", action="store_true",
-                        help="Set -Werror to convert all compiler warnings to errors")
+                        help="Set -Werror to convert all compiler warnings to "
+                             "errors")
     parser.add_argument("--cpu-baseline", default=None,
-                        help="Specify a list of enabled baseline CPU optimizations"),
+                        help="Specify a list of enabled baseline CPU "
+                             "optimizations"),
     parser.add_argument("--cpu-dispatch", default=None,
                         help="Specify a list of dispatched CPU optimizations"),
     parser.add_argument("--disable-optimization", action="store_true",
-                        help="Disable CPU optimized code(dispatch,simd,fast...)"),
+                        help="Disable CPU optimized code (dispatch, simd, "
+                             "fast, ...)"),
     parser.add_argument("--simd-test", default=None,
                         help="Specify a list of CPU optimizations to be "
                              "tested against NumPy SIMD interface"),
@@ -136,7 +157,8 @@ def main(argv):
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
-                        help="Arguments to pass to pytest, asv, mypy, Python or shell")
+                        help="Arguments to pass to pytest, asv, mypy, Python "
+                             "or shell")
     args = parser.parse_args(argv)
 
     if args.durations < 0:
@@ -161,6 +183,9 @@ def main(argv):
     if args.debug and args.bench:
         print("*** Benchmarks should not be run against debug "
               "version; remove -g flag ***")
+
+    if args.lint:
+        check_lint(args.lint)
 
     if not args.no_build:
         # we need the noarch path in case the package is pure python.
@@ -432,8 +457,6 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
-    if args.debug_info:
-        cmd += ["build_src", "--verbose-cfg"]
     if args.warn_error:
         cmd += ["--warn-error"]
     if args.cpu_baseline:
@@ -444,6 +467,8 @@ def build_project(args):
         cmd += ["--disable-optimization"]
     if args.simd_test is not None:
         cmd += ["--simd-test", args.simd_test]
+    if args.debug_info:
+        cmd += ["build_src", "--verbose-cfg"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',
@@ -524,6 +549,7 @@ def asv_compare_config(bench_path, args, h_commits):
 
     is_cached = asv_substitute_config(conf_path, nconf_path,
         numpy_build_options = ' '.join([f'\\"{v}\\"' for v in build]),
+        numpy_global_options= ' '.join([f'--global-option=\\"{v}\\"' for v in ["build"] + build])
     )
     if not is_cached:
         asv_clear_cache(bench_path, h_commits)
@@ -538,7 +564,7 @@ def asv_clear_cache(bench_path, h_commits, env_dir="env"):
     for asv_build_cache in glob.glob(asv_build_pattern, recursive=True):
         for c in h_commits:
             try: shutil.rmtree(os.path.join(asv_build_cache, c))
-            except OSError: pass 
+            except OSError: pass
 
 def asv_substitute_config(in_config, out_config, **custom_vars):
     """
@@ -635,6 +661,24 @@ def lcov_generate():
         print("genhtml failed!")
     else:
         print("HTML output generated under build/lcov/")
+
+def check_lint(lint_args):
+    """
+    Adds ROOT_DIR to path and performs lint checks.
+    This functions exits the program with status code of lint check.
+    """
+    sys.path.append(ROOT_DIR)
+    try:
+        from tools.linter import DiffLinter
+    except ModuleNotFoundError as e:
+        print(f"Error: {e.msg}. "
+              "Install using linter_requirements.txt.")
+        sys.exit(1)
+
+    uncommitted = lint_args == "uncommitted"
+    branch = "main" if uncommitted else lint_args
+
+    DiffLinter(branch).run_lint(uncommitted)
 
 
 if __name__ == "__main__":

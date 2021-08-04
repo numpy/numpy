@@ -17,7 +17,7 @@ The debate about how NumPy should handle missing data, a subject with
 many preexisting approaches, requirements, and conventions, has been long and
 contentious. There has been more than one proposal for how to implement
 support into NumPy, and there is a testable implementation which is
-merged into NumPy's current master. The vast number of emails and differing
+merged into NumPy's current main. The vast number of emails and differing
 points of view has made it difficult for interested parties to understand
 the issues and be comfortable with the direction NumPy is going.
 
@@ -565,7 +565,7 @@ Recommendations for Moving Forward
   we're going to have to figure out how to experiment with such
   changes out-of-core if NumPy is to continue to evolve without
   forking -- might as well do it now. The existing code can live in
-  master, disabled, or it can live in a branch -- it'll still be there
+  the main branch, be disabled, or live its own branch -- it'll still be there
   once we know what we're doing.
 
 **Mark** thinks we should:
@@ -576,8 +576,8 @@ Recommendations for Moving Forward
 A more detailed rationale for this recommendation is:
 
 * A solid preliminary NA-mask implementation is currently in NumPy
-  master. This implementation has been extensively tested
-  against scipy and other third-party packages, and has been in master
+  main. This implementation has been extensively tested
+  against scipy and other third-party packages, and has been in main
   in a stable state for a significant amount of time.
 * This implementation integrates deeply with the core, providing an
   interface which is usable in the same way R's NA support is. It

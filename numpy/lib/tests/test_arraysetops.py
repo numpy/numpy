@@ -358,6 +358,39 @@ class TestSetOps:
         result = np.in1d(ar1, ar2)
         assert_array_equal(result, expected)
 
+    def test_in1d_with_arrays_containing_tuples(self):
+        ar1 = np.array([(1,), 2], dtype=object)
+        ar2 = np.array([(1,), 2], dtype=object)
+        expected = np.array([True, True])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+        result = np.in1d(ar1, ar2, invert=True)
+        assert_array_equal(result, np.invert(expected))
+
+        # An integer is added at the end of the array to make sure
+        # that the array builder will create the array with tuples
+        # and after it's created the integer is removed.
+        # There's a bug in the array constructor that doesn't handle
+        # tuples properly and adding the integer fixes that.
+        ar1 = np.array([(1,), (2, 1), 1], dtype=object)
+        ar1 = ar1[:-1]
+        ar2 = np.array([(1,), (2, 1), 1], dtype=object)
+        ar2 = ar2[:-1]
+        expected = np.array([True, True])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+        result = np.in1d(ar1, ar2, invert=True)
+        assert_array_equal(result, np.invert(expected))
+
+        ar1 = np.array([(1,), (2, 3), 1], dtype=object)
+        ar1 = ar1[:-1]
+        ar2 = np.array([(1,), 2], dtype=object)
+        expected = np.array([True, False])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+        result = np.in1d(ar1, ar2, invert=True)
+        assert_array_equal(result, np.invert(expected))
+
     def test_union1d(self):
         a = np.array([5, 4, 7, 1, 2])
         b = np.array([2, 4, 3, 3, 2, 1, 5])
@@ -530,6 +563,63 @@ class TestUnique:
         assert_equal(a2_inv.dtype, np.intp)
         assert_equal(a3_idx.dtype, np.intp)
         assert_equal(a3_inv.dtype, np.intp)
+
+        # test for ticket 2111 - float
+        a = [2.0, np.nan, 1.0, np.nan]
+        ua = [1.0, 2.0, np.nan]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - complex
+        a = [2.0-1j, np.nan, 1.0+1j, complex(0.0, np.nan), complex(1.0, np.nan)]
+        ua = [1.0+1j, 2.0-1j, complex(0.0, np.nan)]
+        ua_idx = [2, 0, 3]
+        ua_inv = [1, 2, 0, 2, 2]
+        ua_cnt = [1, 1, 3]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - datetime64
+        nat = np.datetime64('nat')
+        a = [np.datetime64('2020-12-26'), nat, np.datetime64('2020-12-24'), nat]
+        ua = [np.datetime64('2020-12-24'), np.datetime64('2020-12-26'), nat]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - timedelta
+        nat = np.timedelta64('nat')
+        a = [np.timedelta64(1, 'D'), nat, np.timedelta64(1, 'h'), nat]
+        ua = [np.timedelta64(1, 'h'), np.timedelta64(1, 'D'), nat]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for gh-19300
+        all_nans = [np.nan] * 4
+        ua = [np.nan]
+        ua_idx = [0]
+        ua_inv = [0, 0, 0, 0]
+        ua_cnt = [4]
+        assert_equal(np.unique(all_nans), ua)
+        assert_equal(np.unique(all_nans, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(all_nans, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(all_nans, return_counts=True), (ua, ua_cnt))
 
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)

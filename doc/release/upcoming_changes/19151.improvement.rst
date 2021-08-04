@@ -1,0 +1,6 @@
+`numpy.linalg.qr` accepts stacked matrices as inputs
+----------------------------------------------------
+
+`numpy.linalg.qr` is able to produce results for stacked matrices as inputs.
+Moreover, the implementation of QR decomposition has been shifted to C
+from Python.

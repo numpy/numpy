@@ -6,7 +6,6 @@
 
 #include <Python.h>
 #include <numpy/ndarraytypes.h>
-#include <lowlevel_strided_loops.h>
 
 
 typedef enum {
@@ -18,6 +17,7 @@ typedef enum {
      * setup/check. No function should set error flags and ignore them
      * since it would interfere with chaining operations (e.g. casting).
      */
+    /* TODO: Change this into a positive flag */
     NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 2,
     /* Whether the method supports unaligned access (not runtime) */
     NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
@@ -50,6 +50,11 @@ typedef struct {
 } PyArrayMethod_Context;
 
 
+typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata);
+
+
 typedef NPY_CASTING (resolve_descriptors_function)(
         struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta **dtypes,
@@ -61,7 +66,7 @@ typedef int (get_loop_function)(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
         npy_intp *strides,
-        PyArray_StridedUnaryOp **out_loop,
+        PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
@@ -104,10 +109,10 @@ typedef struct PyArrayMethodObject_tag {
     resolve_descriptors_function *resolve_descriptors;
     get_loop_function *get_strided_loop;
     /* Typical loop functions (contiguous ones are used in current casts) */
-    PyArray_StridedUnaryOp *strided_loop;
-    PyArray_StridedUnaryOp *contiguous_loop;
-    PyArray_StridedUnaryOp *unaligned_strided_loop;
-    PyArray_StridedUnaryOp *unaligned_contiguous_loop;
+    PyArrayMethod_StridedLoop *strided_loop;
+    PyArrayMethod_StridedLoop *contiguous_loop;
+    PyArrayMethod_StridedLoop *unaligned_strided_loop;
+    PyArrayMethod_StridedLoop *unaligned_contiguous_loop;
 } PyArrayMethodObject;
 
 
@@ -144,6 +149,31 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 #define NPY_METH_unaligned_contiguous_loop 6
 
 
+/*
+ * Used internally (initially) for real to complex loops only
+ */
+NPY_NO_EXPORT int
+npy_default_get_strided_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
+
+
+NPY_NO_EXPORT int
+PyArrayMethod_GetMaskedStridedLoop(
+        PyArrayMethod_Context *context,
+        int aligned,
+        npy_intp *fixed_strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
+
+
+/*
+ * TODO: This function is the internal version, and its error paths may
+ *       need better tests when a public version is exposed.
+ */
 NPY_NO_EXPORT PyBoundArrayMethodObject *
 PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private);
 

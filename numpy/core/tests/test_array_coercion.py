@@ -38,8 +38,18 @@ def arraylikes():
 
     yield subclass
 
+    class _SequenceLike():
+        # We are giving a warning that array-like's were also expected to be
+        # sequence-like in `np.array([array_like])`, this can be removed
+        # when the deprecation exired (started NumPy 1.20)
+        def __len__(self):
+            raise TypeError
+
+        def __getitem__(self):
+            raise TypeError
+
     # Array-interface
-    class ArrayDunder:
+    class ArrayDunder(_SequenceLike):
         def __init__(self, a):
             self.a = a
 
@@ -52,7 +62,7 @@ def arraylikes():
     yield param(memoryview, id="memoryview")
 
     # Array-interface
-    class ArrayInterface:
+    class ArrayInterface(_SequenceLike):
         def __init__(self, a):
             self.a = a  # need to hold on to keep interface valid
             self.__array_interface__ = a.__array_interface__
@@ -60,7 +70,7 @@ def arraylikes():
     yield param(ArrayInterface, id="__array_interface__")
 
     # Array-Struct
-    class ArrayStruct:
+    class ArrayStruct(_SequenceLike):
         def __init__(self, a):
             self.a = a  # need to hold on to keep struct valid
             self.__array_struct__ = a.__array_struct__
@@ -224,6 +234,7 @@ class TestScalarDiscovery:
 
     # Additionally to string this test also runs into a corner case
     # with datetime promotion (the difference is the promotion order).
+    @pytest.mark.filterwarnings("ignore:Promotion of numbers:FutureWarning")
     def test_scalar_promotion(self):
         for sc1, sc2 in product(scalar_instances(), scalar_instances()):
             sc1, sc2 = sc1.values[0], sc2.values[0]
@@ -330,6 +341,20 @@ class TestScalarDiscovery:
             ass = np.zeros((), dtype=dtype)
             ass[()] = scalar
             assert_array_equal(ass, cast)
+
+    @pytest.mark.parametrize("pyscalar", [10, 10.32, 10.14j, 10**100])
+    def test_pyscalar_subclasses(self, pyscalar):
+        """NumPy arrays are read/write which means that anything but invariant
+        behaviour is on thin ice.  However, we currently are happy to discover
+        subclasses of Python float, int, complex the same as the base classes.
+        This should potentially be deprecated.
+        """
+        class MyScalar(type(pyscalar)):
+            pass
+
+        res = np.array(MyScalar(pyscalar))
+        expected = np.array(pyscalar)
+        assert_array_equal(res, expected)
 
     @pytest.mark.parametrize("dtype_char", np.typecodes["All"])
     def test_default_dtype_instance(self, dtype_char):
@@ -689,3 +714,35 @@ class TestArrayLikes:
                 np.array(arr)
             with pytest.raises(MemoryError):
                 np.array([arr])
+
+    @pytest.mark.parametrize("attribute",
+        ["__array_interface__", "__array__", "__array_struct__"])
+    @pytest.mark.parametrize("error", [RecursionError, MemoryError])
+    def test_bad_array_like_attributes(self, attribute, error):
+        # RecursionError and MemoryError are considered fatal. All errors
+        # (except AttributeError) should probably be raised in the future,
+        # but shapely made use of it, so it will require a deprecation.
+
+        class BadInterface:
+            def __getattr__(self, attr):
+                if attr == attribute:
+                    raise error
+                super().__getattr__(attr)
+
+        with pytest.raises(error):
+            np.array(BadInterface())
+
+    @pytest.mark.parametrize("error", [RecursionError, MemoryError])
+    def test_bad_array_like_bad_length(self, error):
+        # RecursionError and MemoryError are considered "critical" in
+        # sequences. We could expand this more generally though. (NumPy 1.20)
+        class BadSequence:
+            def __len__(self):
+                raise error
+            def __getitem__(self):
+                # must have getitem to be a Sequence
+                return 1
+
+        with pytest.raises(error):
+            np.array(BadSequence())
+

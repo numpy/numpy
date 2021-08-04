@@ -1,8 +1,8 @@
+from contextlib import nullcontext
+
 import numpy as np
 from .numeric import uint8, ndarray, dtype
-from numpy.compat import (
-    os_fspath, contextlib_nullcontext, is_pathlib_path
-)
+from numpy.compat import os_fspath, is_pathlib_path
 from numpy.core.overrides import set_module
 
 __all__ = ['memmap']
@@ -38,7 +38,7 @@ class memmap(ndarray):
     which returns a view into an mmap buffer.
 
     Flush the memmap instance to write the changes to the file. Currently there
-    is no API to close the underlying ``mmap``. It is tricky to ensure the 
+    is no API to close the underlying ``mmap``. It is tricky to ensure the
     resource is actually closed, since it may be shared between different
     memmap instances.
 
@@ -112,7 +112,7 @@ class memmap(ndarray):
     The memmap object can be used anywhere an ndarray is accepted.
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
-    
+
     Memory-mapped files cannot be larger than 2GB on 32-bit systems.
 
     When a memmap causes a file to be created or extended beyond its
@@ -223,7 +223,7 @@ class memmap(ndarray):
             raise ValueError("shape must be given")
 
         if hasattr(filename, 'read'):
-            f_ctx = contextlib_nullcontext(filename)
+            f_ctx = nullcontext(filename)
         else:
             f_ctx = open(os_fspath(filename), ('r' if mode == 'c' else mode)+'b')
 
@@ -316,7 +316,7 @@ class memmap(ndarray):
             self.base.flush()
 
     def __array_wrap__(self, arr, context=None):
-        arr = super(memmap, self).__array_wrap__(arr, context)
+        arr = super().__array_wrap__(arr, context)
 
         # Return a memmap if a memmap was given as the output of the
         # ufunc. Leave the arr class unchanged if self is not a memmap
@@ -331,7 +331,7 @@ class memmap(ndarray):
         return arr.view(np.ndarray)
 
     def __getitem__(self, index):
-        res = super(memmap, self).__getitem__(index)
+        res = super().__getitem__(index)
         if type(res) is memmap and res._mmap is None:
             return res.view(type=ndarray)
         return res

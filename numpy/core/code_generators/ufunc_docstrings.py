@@ -185,7 +185,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     Notes
     -----
     `arccos` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `cos(z) = x`. The convention is to return
+    many numbers `z` such that ``cos(z) = x``. The convention is to return
     the angle `z` whose real part lies in `[0, pi]`.
 
     For real-valued input data types, `arccos` always returns real output.
@@ -193,7 +193,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arccos` is a complex analytic function that
-    has branch cuts `[-inf, -1]` and `[1, inf]` and is continuous from
+    has branch cuts ``[-inf, -1]`` and `[1, inf]` and is continuous from
     above on the former and from below on the latter.
 
     The inverse `cos` is also known as `acos` or cos^-1.
@@ -245,7 +245,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     -----
     `arccosh` is a multivalued function: for each `x` there are infinitely
     many numbers `z` such that `cosh(z) = x`. The convention is to return the
-    `z` whose imaginary part lies in `[-pi, pi]` and the real part in
+    `z` whose imaginary part lies in ``[-pi, pi]`` and the real part in
     ``[0, inf]``.
 
     For real-valued input data types, `arccosh` always returns real output.
@@ -406,7 +406,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arctan` is a complex analytic function that
-    has [`1j, infj`] and [`-1j, -infj`] as branch cuts, and is continuous
+    has [``1j, infj``] and [``-1j, -infj``] as branch cuts, and is continuous
     from the left on the former and from the right on the latter.
 
     The inverse tangent is also known as `atan` or tan^{-1}.
@@ -544,7 +544,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     Notes
     -----
     `arctanh` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `tanh(z) = x`. The convention is to return
+    many numbers `z` such that ``tanh(z) = x``. The convention is to return
     the `z` whose imaginary part lies in `[-pi/2, pi/2]`.
 
     For real-valued input data types, `arctanh` always returns real output.
@@ -765,7 +765,7 @@ add_newdoc('numpy.core.umath', 'ceil',
     Return the ceiling of the input, element-wise.
 
     The ceil of the scalar `x` is the smallest integer `i`, such that
-    `i >= x`.  It is often denoted as :math:`\\lceil x \\rceil`.
+    ``i >= x``.  It is often denoted as :math:`\\lceil x \\rceil`.
 
     Parameters
     ----------
@@ -781,7 +781,7 @@ add_newdoc('numpy.core.umath', 'ceil',
 
     See Also
     --------
-    floor, trunc, rint
+    floor, trunc, rint, fix
 
     Examples
     --------
@@ -813,7 +813,7 @@ add_newdoc('numpy.core.umath', 'trunc',
 
     See Also
     --------
-    ceil, floor, rint
+    ceil, floor, rint, fix
 
     Notes
     -----
@@ -1374,13 +1374,14 @@ add_newdoc('numpy.core.umath', 'floor',
 
     See Also
     --------
-    ceil, trunc, rint
+    ceil, trunc, rint, fix
 
     Notes
     -----
-    Some spreadsheet programs calculate the "floor-towards-zero", in other
-    words ``floor(-2.5) == -2``.  NumPy instead uses the definition of
-    `floor` where `floor(-2.5) == -3`.
+    Some spreadsheet programs calculate the "floor-towards-zero", where
+    ``floor(-2.5) == -2``.  NumPy instead uses the definition of
+    `floor` where `floor(-2.5) == -3`. The "floor-towards-zero"
+    function is called ``fix`` in NumPy.
 
     Examples
     --------
@@ -2808,8 +2809,8 @@ add_newdoc('numpy.core.umath', 'matmul',
       (9, 5, 7, 3)
       >>> # n is 7, k is 4, m is 3
 
-    The matmul function implements the semantics of the `@` operator introduced
-    in Python 3.5 following PEP465.
+    The matmul function implements the semantics of the ``@`` operator introduced
+    in Python 3.5 following :pep:`465`.
 
     Examples
     --------
@@ -3486,7 +3487,13 @@ add_newdoc('numpy.core.umath', 'rint',
 
     See Also
     --------
-    ceil, floor, trunc
+    fix, ceil, floor, trunc
+
+    Notes
+    -----
+    For values exactly halfway between rounded decimal values, NumPy
+    rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
+    -0.5 and 0.5 round to 0.0, etc.
 
     Examples
     --------
@@ -4074,7 +4081,7 @@ add_newdoc('numpy.core.umath', 'frexp',
     Decompose the elements of x into mantissa and twos exponent.
 
     Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.
-    The mantissa is lies in the open interval(-1, 1), while the twos
+    The mantissa lies in the open interval(-1, 1), while the twos
     exponent is a signed integer.
 
     Parameters

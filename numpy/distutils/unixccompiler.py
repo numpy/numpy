@@ -54,7 +54,7 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
                    extra_postargs, display = display)
     except DistutilsExecError as e:
         msg = str(e)
-        raise CompileError(msg)
+        raise CompileError(msg) from None
 
     # add commandline flags to dependency file
     if deps:
@@ -131,7 +131,7 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
                            display = display)
             except DistutilsExecError as e:
                 msg = str(e)
-                raise LibError(msg)
+                raise LibError(msg) from None
     else:
         log.debug("skipping %s (up-to-date)", output_filename)
     return

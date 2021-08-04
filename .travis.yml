@@ -3,7 +3,7 @@
 language: python
 group: travis_latest
 os: linux
-dist: bionic
+dist: focal
 
 # Travis allows these packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-safelist
@@ -16,21 +16,26 @@ addons:
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
 
+# Disable clone depth
+git:
+  depth: false
+
 cache:
   directories:
     - $HOME/.cache/pip
 
 jobs:
   include:
-    - python: 3.7
+    - python: 3.8
       os: linux
       arch: ppc64le
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
+       - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
-    - python: 3.7
+    - python: 3.8
       os: linux
       arch: s390x
       env:
@@ -39,9 +44,10 @@ jobs:
        - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
-    - python: 3.7
+    - python: 3.8
       os: linux
       arch: arm64
+      virt: vm
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1

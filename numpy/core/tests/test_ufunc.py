@@ -12,7 +12,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT,
+    assert_allclose, HAS_REFCOUNT, suppress_warnings
     )
 from numpy.compat import pickle
 
@@ -34,13 +34,13 @@ class TestUfuncKwargs:
         assert_raises(TypeError, np.add, 1, 2, wherex=[True])
 
     def test_sig_signature(self):
-        assert_raises(ValueError, np.add, 1, 2, sig='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, sig='ii->i',
                       signature='ii->i')
 
     def test_sig_dtype(self):
-        assert_raises(RuntimeError, np.add, 1, 2, sig='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, sig='ii->i',
                       dtype=int)
-        assert_raises(RuntimeError, np.add, 1, 2, signature='ii->i',
+        assert_raises(TypeError, np.add, 1, 2, signature='ii->i',
                       dtype=int)
 
     def test_extobj_refcount(self):
@@ -164,8 +164,9 @@ class TestUfuncGenericLoops:
                 except AttributeError:
                     return lambda: getattr(np.core.umath, attr)(val)
 
-        num_arr = np.array([val], dtype=np.float64)
-        obj_arr = np.array([MyFloat(val)], dtype="O")
+        # Use 0-D arrays, to ensure the same element call
+        num_arr = np.array(val, dtype=np.float64)
+        obj_arr = np.array(MyFloat(val), dtype="O")
 
         with np.errstate(all="raise"):
             try:
@@ -175,7 +176,7 @@ class TestUfuncGenericLoops:
                     ufunc(obj_arr)
             else:
                 res_obj = ufunc(obj_arr)
-                assert_array_equal(res_num.astype("O"), res_obj)
+                assert_array_almost_equal(res_num.astype("O"), res_obj)
 
 
 def _pickleable_module_global():
@@ -410,9 +411,12 @@ class TestUfunc:
     def test_forced_sig(self):
         a = 0.5*np.arange(3, dtype='f8')
         assert_equal(np.add(a, 0.5), [0.5, 1, 1.5])
-        assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig='i', casting='unsafe'), [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig='ii->i', casting='unsafe'), [0, 0, 1])
-        assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'), [0, 0, 1])
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.add(a, 0.5, sig=('i4',), casting='unsafe'),
+                         [0, 0, 1])
         assert_equal(np.add(a, 0.5, sig=('i4', 'i4', 'i4'),
                                             casting='unsafe'), [0, 0, 1])
 
@@ -420,17 +424,120 @@ class TestUfunc:
         np.add(a, 0.5, out=b)
         assert_equal(b, [0.5, 1, 1.5])
         b[:] = 0
-        np.add(a, 0.5, sig='i', out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig='i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig='ii->i', out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
-        np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
+        with pytest.warns(DeprecationWarning):
+            np.add(a, 0.5, sig=('i4',), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
         b[:] = 0
         np.add(a, 0.5, sig=('i4', 'i4', 'i4'), out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
+
+    def test_signature_all_None(self):
+        # signature all None, is an acceptable alternative (since 1.21)
+        # to not providing a signature.
+        res1 = np.add([3], [4], sig=(None, None, None))
+        res2 = np.add([3], [4])
+        assert_array_equal(res1, res2)
+        res1 = np.maximum([3], [4], sig=(None, None, None))
+        res2 = np.maximum([3], [4])
+        assert_array_equal(res1, res2)
+
+        with pytest.raises(TypeError):
+            # special case, that would be deprecated anyway, so errors:
+            np.add(3, 4, signature=(None,))
+
+    def test_signature_dtype_type(self):
+        # Since that will be the normal behaviour (past NumPy 1.21)
+        # we do support the types already:
+        float_dtype = type(np.dtype(np.float64))
+        np.add(3, 4, signature=(float_dtype, float_dtype, None))
+
+    @pytest.mark.parametrize("casting", ["unsafe", "same_kind", "safe"])
+    def test_partial_signature_mismatch(self, casting):
+        # If the second argument matches already, no need to specify it:
+        res = np.ldexp(np.float32(1.), np.int_(2), dtype="d")
+        assert res.dtype == "d"
+        res = np.ldexp(np.float32(1.), np.int_(2), signature=(None, None, "d"))
+        assert res.dtype == "d"
+
+        # ldexp only has a loop for long input as second argument, overriding
+        # the output cannot help with that (no matter the casting)
+        with pytest.raises(TypeError):
+            np.ldexp(1., np.uint64(3), dtype="d")
+        with pytest.raises(TypeError):
+            np.ldexp(1., np.uint64(3), signature=(None, None, "d"))
+
+    def test_use_output_signature_for_all_arguments(self):
+        # Test that providing only `dtype=` or `signature=(None, None, dtype)`
+        # is sufficient if falling back to a homogeneous signature works.
+        # In this case, the `intp, intp -> intp` loop is chosen.
+        res = np.power(1.5, 2.8, dtype=np.intp, casting="unsafe")
+        assert res == 1  # the cast happens first.
+        res = np.power(1.5, 2.8, signature=(None, None, np.intp),
+                       casting="unsafe")
+        assert res == 1
+        with pytest.raises(TypeError):
+            # the unsafe casting would normally cause errors though:
+            np.power(1.5, 2.8, dtype=np.intp)
+
+    def test_signature_errors(self):
+        with pytest.raises(TypeError,
+                    match="the signature object to ufunc must be a string or"):
+            np.add(3, 4, signature=123.)  # neither a string nor a tuple
+
+        with pytest.raises(ValueError):
+            # bad symbols that do not translate to dtypes
+            np.add(3, 4, signature="%^->#")
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature=b"ii-i")  # incomplete and byte string
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature="ii>i")  # incomplete string
+
+        with pytest.raises(ValueError):
+            np.add(3, 4, signature=(None, "f8"))  # bad length
+
+        with pytest.raises(UnicodeDecodeError):
+            np.add(3, 4, signature=b"\xff\xff->i")
+
+    def test_forced_dtype_times(self):
+        # Signatures only set the type numbers (not the actual loop dtypes)
+        # so using `M` in a signature/dtype should generally work:
+        a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='>M8[D]')
+        np.maximum(a, a, dtype="M")
+        np.maximum.reduce(a, dtype="M")
+
+        arr = np.arange(10, dtype="m8[s]")
+        np.add(arr, arr, dtype="m")
+        np.maximum(arr, arr, dtype="m")
+
+    def test_forced_dtype_warning(self):
+        # does not warn (test relies on bad pickling behaviour, simply remove
+        # it if the `assert int64 is not int64_2` should start failing.
+        int64 = np.dtype("int64")
+        int64_2 = pickle.loads(pickle.dumps(int64))
+        assert int64 is not int64_2
+        np.add(3, 4, dtype=int64_2)
+
+        arr = np.arange(10, dtype="m8[s]")
+        msg = "The `dtype` and `signature` arguments to ufuncs only select the"
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, dtype=int64.newbyteorder())
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.raises(TypeError, match=msg):
+            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
 
     def test_true_divide(self):
         a = np.array(10)
@@ -477,7 +584,13 @@ class TestUfunc:
                     else:
                         tgt = float(x)/float(y)
                         rtol = max(np.finfo(dtout).resolution, 1e-15)
-                        atol = max(np.finfo(dtout).tiny, 3e-308)
+                        # The value of tiny for double double is NaN
+                        with suppress_warnings() as sup:
+                            sup.filter(UserWarning)
+                            if not np.isnan(np.finfo(dtout).tiny):
+                                atol = max(np.finfo(dtout).tiny, 3e-308)
+                            else:
+                                atol = 3e-308
                         # Some test values result in invalid for float16.
                         with np.errstate(invalid='ignore'):
                             res = np.true_divide(x, y, dtype=dtout)
@@ -490,7 +603,13 @@ class TestUfunc:
                     dtout = np.dtype(tcout)
                     tgt = complex(x)/complex(y)
                     rtol = max(np.finfo(dtout).resolution, 1e-15)
-                    atol = max(np.finfo(dtout).tiny, 3e-308)
+                    # The value of tiny for double double is NaN
+                    with suppress_warnings() as sup:
+                        sup.filter(UserWarning)
+                        if not np.isnan(np.finfo(dtout).tiny):
+                            atol = max(np.finfo(dtout).tiny, 3e-308)
+                        else:
+                            atol = 3e-308
                     res = np.true_divide(x, y, dtype=dtout)
                     if not np.isfinite(res):
                         continue
@@ -1593,9 +1712,17 @@ class TestUfunc:
         target = np.array([0, 2, 4], dtype=_rational_tests.rational)
         assert_equal(result, target)
 
-        # no output type should raise TypeError
+        # The new resolution means that we can (usually) find custom loops
+        # as long as they match exactly:
+        result = _rational_tests.test_add(a, b)
+        assert_equal(result, target)
+
+        # But since we use the old type resolver, this may not work
+        # for dtype variations unless the output dtype is given:
+        result = _rational_tests.test_add(a, b.astype(np.uint16), out=c)
+        assert_equal(result, target)
         with assert_raises(TypeError):
-            _rational_tests.test_add(a, b)
+            _rational_tests.test_add(a, b.astype(np.uint16))
 
     def test_operand_flags(self):
         a = np.arange(16, dtype='l').reshape(4, 4)
@@ -1911,8 +2038,7 @@ class TestUfunc:
             np.true_divide, np.floor_divide, np.bitwise_and, np.bitwise_or,
             np.bitwise_xor, np.left_shift, np.right_shift, np.fmax,
             np.fmin, np.fmod, np.hypot, np.logaddexp, np.logaddexp2,
-            np.logical_and, np.logical_or, np.logical_xor, np.maximum,
-            np.minimum, np.mod,
+            np.maximum, np.minimum, np.mod,
             np.greater, np.greater_equal, np.less, np.less_equal,
             np.equal, np.not_equal]
 

@@ -278,7 +278,7 @@ References and Footnotes
 
 .. [1] This historical record is available by the normal git commands
    for retrieving older revisions, and can also be browsed on
-   `GitHub <https://github.com/numpy/numpy/tree/master/doc/neps>`_.
+   `GitHub <https://github.com/numpy/numpy/tree/main/doc/neps>`_.
 
 .. [2] The URL for viewing NEPs on the web is
    https://www.numpy.org/neps/.

@@ -29,5 +29,6 @@ void NPY_CPU_DISPATCH_CURFX(_umath_tests_dispatch_attach)(PyObject *list)
     PyObject *item = PyUnicode_FromString(NPY_TOSTRING(NPY_CPU_DISPATCH_CURFX(func)));
     if (item) {
         PyList_Append(list, item);
+        Py_DECREF(item);
     }
 }

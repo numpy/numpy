@@ -3,6 +3,8 @@ import warnings
 import functools
 import operator
 
+import pytest
+
 import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
@@ -547,6 +549,45 @@ class TestIndexing:
         assert_array_equal(arr[0], np.array("asdfg", dtype="c"))
         assert arr[0, 1] == b"s"  # make sure not all were set to "a" for both
 
+    @pytest.mark.parametrize("index",
+            [True, False, np.array([0])])
+    @pytest.mark.parametrize("num", [32, 40])
+    @pytest.mark.parametrize("original_ndim", [1, 32])
+    def test_too_many_advanced_indices(self, index, num, original_ndim):
+        # These are limitations based on the number of arguments we can process.
+        # For `num=32` (and all boolean cases), the result is actually define;
+        # but the use of NpyIter (NPY_MAXARGS) limits it for technical reasons.
+        arr = np.ones((1,) * original_ndim)
+        with pytest.raises(IndexError):
+            arr[(index,) * num]
+        with pytest.raises(IndexError):
+            arr[(index,) * num] = 1.
+
+    def test_structured_advanced_indexing(self):
+        # Test that copyswap(n) used by integer array indexing is threadsafe
+        # for structured datatypes, see gh-15387. This test can behave randomly.
+        from concurrent.futures import ThreadPoolExecutor
+
+        # Create a deeply nested dtype to make a failure more likely:
+        dt = np.dtype([("", "f8")])
+        dt = np.dtype([("", dt)] * 2)
+        dt = np.dtype([("", dt)] * 2)
+        # The array should be large enough to likely run into threading issues
+        arr = np.random.uniform(size=(6000, 8)).view(dt)[:, 0]
+
+        rng = np.random.default_rng()
+        def func(arr):
+            indx = rng.integers(0, len(arr), size=6000, dtype=np.intp)
+            arr[indx]
+
+        tpe = ThreadPoolExecutor(max_workers=8)
+        futures = [tpe.submit(func, arr) for _ in range(10)]
+        for f in futures:
+            f.result()
+
+        assert arr.dtype is dt
+
+
 class TestFieldIndexing:
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it
@@ -591,6 +632,22 @@ class TestBroadcastedAssignments:
         assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 2)))
         assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 0)))
         assert_raises(ValueError, assign, a, s_[[0], :], np.zeros((2, 1)))
+
+    @pytest.mark.parametrize("index", [
+            (..., [1, 2], slice(None)),
+            ([0, 1], ..., 0),
+            (..., [1, 2], [1, 2])])
+    def test_broadcast_error_reports_correct_shape(self, index):
+        values = np.zeros((100, 100))  # will never broadcast below  
+
+        arr = np.zeros((3, 4, 5, 6, 7))
+        # We currently report without any spaces (could be changed)
+        shape_str = str(arr[index].shape).replace(" ", "")
+        
+        with pytest.raises(ValueError) as e:
+            arr[index] = values
+
+        assert str(e.value).endswith(shape_str)
 
     def test_index_is_larger(self):
         # Simple case of fancy index broadcasting of the index.

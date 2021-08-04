@@ -3,7 +3,7 @@ trigger:
   batch: False
   branches:
     include:
-      - master
+      - main
       - maintenance/*
 
 
@@ -18,6 +18,54 @@ stages:
 - stage: InitialTests
   jobs:
 
+  # Native build is based on gcc flag `-march=native`
+  - job: Linux_baseline_native
+    pool:
+      vmImage: 'ubuntu-20.04'
+    steps:
+    - script: |
+            if ! `gcc 2>/dev/null`; then
+                sudo apt install gcc
+            fi
+            sudo apt install python3
+            sudo apt install python3-dev
+            # python3 has no setuptools, so install one to get us going
+            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
+            python3 -m pip install --user -r test_requirements.txt
+      displayName: 'install python/requirements'
+    - script: |
+            python3 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run native baseline Build / Tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for baseline/native'
+
+- stage: ComprehensiveTests
+  jobs:
+
+  - job: Lint
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+        addToPath: true
+        architecture: 'x64'
+    - script: >-
+        python -m pip install -r linter_requirements.txt
+      displayName: 'Install tools'
+      # pip 21.1 emits a pile of garbage messages to annoy users :)
+      #      failOnStderr: true
+    - script: |
+        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
+      displayName: 'Run Lint Checks'
+      failOnStderr: true
 
   - job: WindowsFast
     pool:
@@ -25,26 +73,20 @@ stages:
     strategy:
       matrix:
           Python37-32bit-fast:
-            PYTHON_VERSION: '3.7'
+            PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x86'
             TEST_MODE: fast
             BITS: 32
     steps:
     - template: azure-steps-windows.yml
 
-
-- stage: ComprehensiveTests
-  jobs:
-
-
   - job: Linux_Python_38_32bit_full_with_asserts
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
     - script: |
-            docker pull quay.io/pypa/manylinux2010_i686
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
-            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686 \
+            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
             /bin/bash -xc "cd numpy && \
             /opt/python/cp38-cp38/bin/python -mvenv venv &&\
             source venv/bin/activate && \
@@ -78,11 +120,11 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python37:
-            PYTHON_VERSION: '3.7'
+          Python38:
+            PYTHON_VERSION: '3.8'
             USE_OPENBLAS: '1'
-          Python37-ILP64:
-            PYTHON_VERSION: '3.7'
+          Python38-ILP64:
+            PYTHON_VERSION: '3.8'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
@@ -155,7 +197,6 @@ stages:
     - script: python setup.py build -j 4 build_ext --inplace install
       displayName: 'Build NumPy without OpenBLAS and new casting'
       env:
-        NPY_USE_NEW_CASTINGIMPL: 1
         BLAS: None
         LAPACK: None
         ATLAS: None
@@ -166,7 +207,7 @@ stages:
     - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
     - script: python runtests.py -g --refguide-check
-      displayName: 'Run Refuide Check'
+      displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
@@ -191,7 +232,7 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.7 64-bit full Mac OS'
+        testRunTitle: 'Publish test results for Python 3.8 64-bit full Mac OS'
 
 
   - job: Windows
@@ -206,6 +247,11 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
+          #PyPy37-64bit-full:
+          #  PYTHON_VERSION: 'PyPy3.7'
+          #  PYTHON_ARCH: 'x64'
+          #  TEST_MODE: fast
+          #  BITS: 64
           Python38-32bit-fast:
             PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x86'
@@ -227,7 +273,7 @@ stages:
             TEST_MODE: full
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
-            OPENBLAS_SUFFIX: '64_'
+
     steps:
     - template: azure-steps-windows.yml
 
@@ -238,6 +284,7 @@ stages:
       vmImage: 'ubuntu-18.04'
     steps:
     - script: |
+            sudo apt update
             sudo apt install python3.7
             sudo apt install python3.7-dev
             if ! `gcc-4.8 2>/dev/null`; then
@@ -257,4 +304,32 @@ stages:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for gcc 4.8'
+
+  - job: Linux_conda
+    pool:
+      vmImage: 'ubuntu-20.04'
+    steps:
+    - script: |
+            # create and activate conda environment
+            conda env create -f environment.yml
+      displayName: 'Create conda environment.'
+    - script: |
+            # >>> conda initialize >>>
+            # !! Contents within this block are 'conda init' !!
+            # see https://github.com/conda/conda/issues/7980
+            __conda_setup="$('conda' 'shell.bash' 'hook' 2> /dev/null)"
+            eval "$__conda_setup"
+            unset __conda_setup
+            # <<< conda initialize <<<
+            conda activate numpy-dev
+            # Run native baseline Build / Tests
+            python runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run native baseline Build / Tests in conda.'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for conda installation'
 

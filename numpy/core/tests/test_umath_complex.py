@@ -541,7 +541,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
         else:
             assert_almost_equal(f(z1), z2)
 
-class TestSpecialComplexAVX(object):
+class TestSpecialComplexAVX:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     def test_array(self, stride, astype):
@@ -568,7 +568,7 @@ class TestSpecialComplexAVX(object):
         with np.errstate(invalid='ignore'):
             assert_equal(np.square(arr[::stride]), sq_true[::stride])
 
-class TestComplexAbsoluteAVX(object):
+class TestComplexAbsoluteAVX:
     @pytest.mark.parametrize("arraysize", [1,2,3,4,5,6,7,8,9,10,11,13,15,17,18,19])
     @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
@@ -579,7 +579,7 @@ class TestComplexAbsoluteAVX(object):
         assert_equal(np.abs(arr[::stride]), abs_true[::stride])
 
 # Testcase taken as is from https://github.com/numpy/numpy/issues/16660
-class TestComplexAbsoluteMixedDTypes(object):
+class TestComplexAbsoluteMixedDTypes:
     @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     @pytest.mark.parametrize("func", ['abs', 'square', 'conjugate'])

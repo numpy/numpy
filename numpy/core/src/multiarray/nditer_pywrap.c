@@ -1134,6 +1134,9 @@ static void
 npyiter_dealloc(NewNpyArrayIterObject *self)
 {
     if (self->iter) {
+        /* Store error, so that WriteUnraisable cannot clear an existing one */
+        PyObject *exc, *val, *tb;
+        PyErr_Fetch(&exc, &val, &tb);
         if (npyiter_has_writeback(self->iter)) {
             if (PyErr_WarnEx(PyExc_RuntimeWarning,
                     "Temporary data has not been written back to one of the "
@@ -1152,10 +1155,13 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
                 }
             }
         }
-        NpyIter_Deallocate(self->iter);
+        if (!NpyIter_Deallocate(self->iter)) {
+            PyErr_WriteUnraisable(Py_None);
+        }
         self->iter = NULL;
         Py_XDECREF(self->nested_child);
         self->nested_child = NULL;
+        PyErr_Restore(exc, val, tb);
     }
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
@@ -1378,7 +1384,8 @@ npyiter_debug_print(NewNpyArrayIterObject *self)
 NPY_NO_EXPORT PyObject *
 npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i);
 
-static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_value_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *ret;
 
@@ -1414,7 +1421,8 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     return ret;
 }
 
-static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_operands_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *ret;
 
@@ -1443,7 +1451,8 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
     return ret;
 }
 
-static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_itviews_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *ret;
 
@@ -1502,13 +1511,13 @@ npyiter_next(NewNpyArrayIterObject *self)
     }
     self->started = 1;
 
-    return npyiter_value_get(self);
+    return npyiter_value_get(self, NULL);
 };
 
-static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_shape_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
-    PyObject *ret;
-    npy_intp idim, ndim, shape[NPY_MAXDIMS];
+    npy_intp ndim, shape[NPY_MAXDIMS];
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1518,23 +1527,16 @@ static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 
     if (NpyIter_GetShape(self->iter, shape) == NPY_SUCCEED) {
         ndim = NpyIter_GetNDim(self->iter);
-        ret = PyTuple_New(ndim);
-        if (ret != NULL) {
-            for (idim = 0; idim < ndim; ++idim) {
-                PyTuple_SET_ITEM(ret, idim,
-                        PyLong_FromLong(shape[idim]));
-            }
-            return ret;
-        }
+        return PyArray_IntTupleFromIntp(ndim, shape);
     }
 
     return NULL;
 }
 
-static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_multi_index_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
-    PyObject *ret;
-    npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
+    npy_intp ndim, multi_index[NPY_MAXDIMS];
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1545,15 +1547,7 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
     if (self->get_multi_index != NULL) {
         ndim = NpyIter_GetNDim(self->iter);
         self->get_multi_index(self->iter, multi_index);
-        ret = PyTuple_New(ndim);
-        if (ret == NULL) {
-            return NULL;
-        }
-        for (idim = 0; idim < ndim; ++idim) {
-            PyTuple_SET_ITEM(ret, idim,
-                    PyLong_FromLong(multi_index[idim]));
-        }
-        return ret;
+        return PyArray_IntTupleFromIntp(ndim, multi_index);
     }
     else {
         if (!NpyIter_HasMultiIndex(self->iter)) {
@@ -1576,7 +1570,8 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
 }
 
 static int
-npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
+npyiter_multi_index_set(
+        NewNpyArrayIterObject *self, PyObject *value, void *NPY_UNUSED(ignored))
 {
     npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
 
@@ -1606,8 +1601,8 @@ npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
             multi_index[idim] = PyLong_AsLong(v);
+            Py_DECREF(v);
             if (error_converting(multi_index[idim])) {
-                Py_XDECREF(v);
                 return -1;
             }
         }
@@ -1631,7 +1626,8 @@ npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
     }
 }
 
-static PyObject *npyiter_index_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_index_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1650,7 +1646,9 @@ static PyObject *npyiter_index_get(NewNpyArrayIterObject *self)
     }
 }
 
-static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
+static int
+npyiter_index_set(
+        NewNpyArrayIterObject *self, PyObject *value, void *NPY_UNUSED(ignored))
 {
     if (value == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -1689,7 +1687,8 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
     }
 }
 
-static PyObject *npyiter_iterindex_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_iterindex_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1700,7 +1699,9 @@ static PyObject *npyiter_iterindex_get(NewNpyArrayIterObject *self)
     return PyLong_FromLong(NpyIter_GetIterIndex(self->iter));
 }
 
-static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
+static int
+npyiter_iterindex_set(
+        NewNpyArrayIterObject *self, PyObject *value, void *NPY_UNUSED(ignored))
 {
     npy_intp iterindex;
 
@@ -1733,7 +1734,8 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
     return 0;
 }
 
-static PyObject *npyiter_iterrange_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_iterrange_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     npy_intp istart = 0, iend = 0;
     PyObject *ret;
@@ -1757,7 +1759,9 @@ static PyObject *npyiter_iterrange_get(NewNpyArrayIterObject *self)
     return ret;
 }
 
-static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
+static int
+npyiter_iterrange_set(
+        NewNpyArrayIterObject *self, PyObject *value, void *NPY_UNUSED(ignored))
 {
     npy_intp istart = 0, iend = 0;
 
@@ -1799,7 +1803,9 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
     return 0;
 }
 
-static PyObject *npyiter_has_delayed_bufalloc_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_has_delayed_bufalloc_get(
+        NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1815,7 +1821,9 @@ static PyObject *npyiter_has_delayed_bufalloc_get(NewNpyArrayIterObject *self)
     }
 }
 
-static PyObject *npyiter_iterationneedsapi_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_iterationneedsapi_get(
+        NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1831,7 +1839,9 @@ static PyObject *npyiter_iterationneedsapi_get(NewNpyArrayIterObject *self)
     }
 }
 
-static PyObject *npyiter_has_multi_index_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_has_multi_index_get(
+        NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1847,7 +1857,8 @@ static PyObject *npyiter_has_multi_index_get(NewNpyArrayIterObject *self)
     }
 }
 
-static PyObject *npyiter_has_index_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_has_index_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1863,7 +1874,8 @@ static PyObject *npyiter_has_index_get(NewNpyArrayIterObject *self)
     }
 }
 
-static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_dtypes_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *ret;
 
@@ -1892,7 +1904,8 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
     return ret;
 }
 
-static PyObject *npyiter_ndim_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_ndim_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1903,7 +1916,8 @@ static PyObject *npyiter_ndim_get(NewNpyArrayIterObject *self)
     return PyLong_FromLong(NpyIter_GetNDim(self->iter));
 }
 
-static PyObject *npyiter_nop_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_nop_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1914,7 +1928,8 @@ static PyObject *npyiter_nop_get(NewNpyArrayIterObject *self)
     return PyLong_FromLong(NpyIter_GetNOp(self->iter));
 }
 
-static PyObject *npyiter_itersize_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_itersize_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1925,7 +1940,8 @@ static PyObject *npyiter_itersize_get(NewNpyArrayIterObject *self)
     return PyLong_FromLong(NpyIter_GetIterSize(self->iter));
 }
 
-static PyObject *npyiter_finished_get(NewNpyArrayIterObject *self)
+static PyObject *
+npyiter_finished_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     if (self->iter == NULL || !self->finished) {
         Py_RETURN_FALSE;
@@ -2320,7 +2336,7 @@ npyiter_close(NewNpyArrayIterObject *self)
     self->iter = NULL;
     Py_XDECREF(self->nested_child);
     self->nested_child = NULL;
-    if (ret < 0) {
+    if (ret != NPY_SUCCEED) {
         return NULL;
     }
     Py_RETURN_NONE;
@@ -2363,7 +2379,7 @@ static PyMethodDef npyiter_methods[] = {
     {"__exit__",  (PyCFunction)npyiter_exit,
          METH_VARARGS, NULL},
     {"close",  (PyCFunction)npyiter_close,
-         METH_VARARGS, NULL},
+         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 

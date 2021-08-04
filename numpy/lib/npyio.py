@@ -1,4 +1,3 @@
-import sys
 import os
 import re
 import functools
@@ -15,7 +14,6 @@ from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
 from numpy.core.overrides import set_array_function_like_doc, set_module
-from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -24,7 +22,7 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, os_fspath, os_PathLike,
-    pickle, contextlib_nullcontext
+    pickle
     )
 
 
@@ -517,7 +515,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     # [1 2] [1 3]
     """
     if hasattr(file, 'write'):
-        file_ctx = contextlib_nullcontext(file)
+        file_ctx = contextlib.nullcontext(file)
     else:
         file = os_fspath(file)
         if not file.endswith('.npy'):
@@ -539,10 +537,11 @@ def _savez_dispatcher(file, *args, **kwds):
 def savez(file, *args, **kwds):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
-    If arguments are passed in with no keywords, the corresponding variable
-    names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword
-    arguments are given, the corresponding variable names, in the ``.npz``
-    file will match the keyword names.
+    Provide arrays as keyword arguments to store them under the
+    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+
+    If arrays are specified as positional arguments, i.e., ``savez(fn,
+    x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
@@ -552,13 +551,12 @@ def savez(file, *args, **kwds):
         ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
-        Arrays to save to the file. Since it is not possible for Python to
-        know the names of the arrays outside `savez`, the arrays will be saved
-        with names "arr_0", "arr_1", and so on. These arguments can be any
-        expression.
+        Arrays to save to the file. Please use keyword arguments (see
+        `kwds` below) to assign names to arrays.  Arrays specified as
+        args will be named "arr_0", "arr_1", and so on.
     kwds : Keyword arguments, optional
-        Arrays to save to the file. Arrays will be saved in the file with the
-        keyword names.
+        Arrays to save to the file. Each array will be saved to the
+        output file with its corresponding keyword name.
 
     Returns
     -------
@@ -582,9 +580,13 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
-    When saving dictionaries, the dictionary keys become filenames
-    inside the ZIP archive. Therefore, keys should be valid filenames.
-    E.g., avoid keys that begin with ``/`` or contain ``.``.
+    Keys passed in `kwds` are used as filenames inside the ZIP archive.
+    Therefore, keys should be valid filenames; e.g., avoid keys that begin with
+    ``/`` or contain ``.``.
+
+    When naming variables with keyword arguments, it is not possible to name a
+    variable ``file``, as this would cause the ``file`` argument to be defined
+    twice in the call to ``savez``.
 
     Examples
     --------
@@ -613,6 +615,7 @@ def savez(file, *args, **kwds):
     ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
     """
     _savez(file, args, kwds, False)
 
@@ -627,9 +630,11 @@ def savez_compressed(file, *args, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
-    If keyword arguments are given, then filenames are taken from the keywords.
-    If arguments are passed in with no keywords, then stored filenames are
-    arr_0, arr_1, etc.
+    Provide arrays as keyword arguments to store them under the
+    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+
+    If arrays are specified as positional arguments, i.e., ``savez(fn,
+    x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
@@ -639,13 +644,12 @@ def savez_compressed(file, *args, **kwds):
         ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
-        Arrays to save to the file. Since it is not possible for Python to
-        know the names of the arrays outside `savez`, the arrays will be saved
-        with names "arr_0", "arr_1", and so on. These arguments can be any
-        expression.
+        Arrays to save to the file. Please use keyword arguments (see
+        `kwds` below) to assign names to arrays.  Arrays specified as
+        args will be named "arr_0", "arr_1", and so on.
     kwds : Keyword arguments, optional
-        Arrays to save to the file. Arrays will be saved in the file with the
-        keyword names.
+        Arrays to save to the file. Each array will be saved to the
+        output file with its corresponding keyword name.
 
     Returns
     -------
@@ -756,6 +760,64 @@ def _getconv(dtype):
         return asstr
 
 
+# _loadtxt_flatten_dtype_internal and _loadtxt_pack_items are loadtxt helpers
+# lifted to the toplevel because recursive inner functions cause either
+# GC-dependent reference loops (because they are closures over loadtxt's
+# internal variables) or large overheads if using a manual trampoline to hide
+# the recursive calls.
+
+
+# not to be confused with the flatten_dtype we import...
+def _loadtxt_flatten_dtype_internal(dt):
+    """Unpack a structured data-type, and produce a packer function."""
+    if dt.names is None:
+        # If the dtype is flattened, return.
+        # If the dtype has a shape, the dtype occurs
+        # in the list more than once.
+        shape = dt.shape
+        if len(shape) == 0:
+            return ([dt.base], None)
+        else:
+            packing = [(shape[-1], list)]
+            if len(shape) > 1:
+                for dim in dt.shape[-2::-1]:
+                    packing = [(dim*packing[0][0], packing*dim)]
+            return ([dt.base] * int(np.prod(dt.shape)),
+                    functools.partial(_loadtxt_pack_items, packing))
+    else:
+        types = []
+        packing = []
+        for field in dt.names:
+            tp, bytes = dt.fields[field]
+            flat_dt, flat_packer = _loadtxt_flatten_dtype_internal(tp)
+            types.extend(flat_dt)
+            flat_packing = flat_packer.args[0] if flat_packer else None
+            # Avoid extra nesting for subarrays
+            if tp.ndim > 0:
+                packing.extend(flat_packing)
+            else:
+                packing.append((len(flat_dt), flat_packing))
+        return (types, functools.partial(_loadtxt_pack_items, packing))
+
+
+def _loadtxt_pack_items(packing, items):
+    """Pack items into nested lists based on re-packing info."""
+    if packing is None:
+        return items[0]
+    elif packing is tuple:
+        return tuple(items)
+    elif packing is list:
+        return list(items)
+    else:
+        start = 0
+        ret = []
+        for length, subpacking in packing:
+            ret.append(
+                _loadtxt_pack_items(subpacking, items[start:start+length]))
+            start += length
+        return tuple(ret)
+
+
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
 _loadtxt_chunksize = 50000
 
@@ -778,10 +840,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Parameters
     ----------
-    fname : file, str, or pathlib.Path
-        File, filename, or generator to read.  If the filename extension is
-        ``.gz`` or ``.bz2``, the file is first decompressed. Note that
-        generators should return byte strings.
+    fname : file, str, pathlib.Path, list of str, generator
+        File, filename, list, or generator to read.  If the filename
+        extension is ``.gz`` or ``.bz2``, the file is first decompressed. Note
+        that generators must return bytes or strings. The strings
+        in a list or produced by a generator are treated as lines.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
         structured data-type, the resulting array will be 1-dimensional, and
@@ -910,60 +973,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Nested functions used by loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    # not to be confused with the flatten_dtype we import...
-    @recursive
-    def flatten_dtype_internal(self, dt):
-        """Unpack a structured data-type, and produce re-packing info."""
-        if dt.names is None:
-            # If the dtype is flattened, return.
-            # If the dtype has a shape, the dtype occurs
-            # in the list more than once.
-            shape = dt.shape
-            if len(shape) == 0:
-                return ([dt.base], None)
-            else:
-                packing = [(shape[-1], list)]
-                if len(shape) > 1:
-                    for dim in dt.shape[-2::-1]:
-                        packing = [(dim*packing[0][0], packing*dim)]
-                return ([dt.base] * int(np.prod(dt.shape)), packing)
-        else:
-            types = []
-            packing = []
-            for field in dt.names:
-                tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = self(tp)
-                types.extend(flat_dt)
-                # Avoid extra nesting for subarrays
-                if tp.ndim > 0:
-                    packing.extend(flat_packing)
-                else:
-                    packing.append((len(flat_dt), flat_packing))
-            return (types, packing)
-
-    @recursive
-    def pack_items(self, items, packing):
-        """Pack items into nested lists based on re-packing info."""
-        if packing is None:
-            return items[0]
-        elif packing is tuple:
-            return tuple(items)
-        elif packing is list:
-            return list(items)
-        else:
-            start = 0
-            ret = []
-            for length, subpacking in packing:
-                ret.append(self(items[start:start+length], subpacking))
-                start += length
-            return tuple(ret)
-
     def split_line(line):
         """Chop off comments, strip, and split at delimiter. """
         line = _decode_line(line, encoding=encoding)
-
-        if comments is not None:
-            line = regex_comments.split(line, maxsplit=1)[0]
+        for comment in comments:  # Much faster than using a single regex.
+            line = line.split(comment, 1)[0]
         line = line.strip('\r\n')
         return line.split(delimiter) if line else []
 
@@ -997,7 +1011,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             items = [conv(val) for (conv, val) in zip(converters, vals)]
 
             # Then pack it according to the dtype's nesting
-            items = pack_items(items, packing)
+            items = packer(items)
             X.append(items)
             if len(X) > chunk_size:
                 yield X
@@ -1018,9 +1032,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if isinstance(comments, (str, bytes)):
             comments = [comments]
         comments = [_decode_line(x) for x in comments]
-        # Compile regex for comments beforehand
-        comments = (re.escape(comment) for comment in comments)
-        regex_comments = re.compile('|'.join(comments))
+    else:
+        comments = []
 
     if delimiter is not None:
         delimiter = _decode_line(delimiter)
@@ -1055,7 +1068,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     dtype = np.dtype(dtype)
     defconv = _getconv(dtype)
 
-    dtype_types, packing = flatten_dtype_internal(dtype)
+    dtype_types, packer = _loadtxt_flatten_dtype_internal(dtype)
 
     fown = False
     try:
@@ -1071,7 +1084,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fencoding = getattr(fname, 'encoding', 'latin1')
     except TypeError as e:
         raise ValueError(
-            'fname must be a string, file handle, or generator'
+            f"fname must be a string, filehandle, list of strings,\n"
+            f"or generator. Got {type(fname)} instead."
         ) from e
 
     # input may be a python2 io stream
@@ -1110,10 +1124,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # the dtype matches a column
             converters = [_getconv(dt) for dt in dtype_types]
         else:
-            # All fields have the same dtype
+            # All fields have the same dtype; use specialized packers which are
+            # much faster than those using _loadtxt_pack_items.
             converters = [defconv for i in range(N)]
-            if N > 1:
-                packing = [(N, tuple)]
+            if N == 1:
+                packer = itemgetter(0)
+            else:
+                def packer(row): return row
 
         # By preference, use the converters specified by the user
         for i, conv in (user_converters or {}).items():
@@ -1576,8 +1593,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     ----------
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
-        extension is `.gz` or `.bz2`, the file is first decompressed. Note
-        that generators must return byte strings. The strings
+        extension is ``.gz`` or ``.bz2``, the file is first decompressed. Note
+        that generators must return bytes or strings. The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
@@ -1585,7 +1602,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column, individually.
     comments : str, optional
         The character used to indicate the start of a comment.
-        All the characters occurring on a line after a comment are discarded
+        All the characters occurring on a line after a comment are discarded.
     delimiter : str, int, or sequence, optional
         The string used to separate values.  By default, any consecutive
         whitespaces act as delimiter.  An integer or sequence of integers
@@ -1612,15 +1629,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines.  This line can optionally be proceeded
+        the first `skip_header` lines. This line can optionally be preceeded
         by a comment delimiter. If `names` is a sequence or a single-string of
         comma-separated names, the names will be used to define the field names
         in a structured dtype. If `names` is None, the names of the dtype
         fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
-        ['return','file','print']. Excluded names are appended an underscore:
-        for example, `file` would become `file_`.
+        ['return','file','print']. Excluded names are appended with an
+        underscore: for example, `file` would become `file_`.
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
         names.
@@ -1629,7 +1646,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     autostrip : bool, optional
         Whether to automatically strip white spaces from the variables.
     replace_space : char, optional
-        Character(s) used in replacement of white spaces in the variables
+        Character(s) used in replacement of white spaces in the variable
         names. By default, use a '_'.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
         If True, field names are case sensitive.
@@ -1792,12 +1809,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid_ctx = contextlib.closing(fid)
         else:
             fid = fname
-            fid_ctx = contextlib_nullcontext(fid)
+            fid_ctx = contextlib.nullcontext(fid)
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
-            "fname must be a string, filehandle, list of strings, "
-            "or generator. Got %s instead." % type(fname)) from e
+            f"fname must be a string, filehandle, list of strings,\n"
+            f"or generator. Got {type(fname)} instead."
+        ) from e
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,

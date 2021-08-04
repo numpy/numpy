@@ -9,11 +9,6 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('tests')
 
-    # Accelerate is buggy, disallow it. See also numpy/core/setup.py
-    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
-        if 'accelerate' in opt_order:
-            opt_order.remove('accelerate')
-
     # Configure lapack_lite
 
     src_dir = 'lapack_lite'

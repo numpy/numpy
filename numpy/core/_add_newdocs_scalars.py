@@ -6,6 +6,7 @@ platform-dependent information.
 from numpy.core import dtype
 from numpy.core import numerictypes as _numerictypes
 from numpy.core.function_base import add_newdoc
+import platform
 
 ##############################################################################
 #
@@ -49,6 +50,8 @@ possible_aliases = numeric_type_aliases([
     ])
 
 
+
+
 def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     # note: `:field: value` is rST syntax which renders as field lists.
     o = getattr(_numerictypes, obj)
@@ -56,7 +59,7 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     character_code = dtype(o).char
     canonical_name_doc = "" if obj == o.__name__ else ":Canonical name: `numpy.{}`\n    ".format(obj)
     alias_doc = ''.join(":Alias: `numpy.{}`\n    ".format(alias) for alias in fixed_aliases)
-    alias_doc += ''.join(":Alias on this platform: `numpy.{}`: {}.\n    ".format(alias, doc)
+    alias_doc += ''.join(":Alias on this platform ({} {}): `numpy.{}`: {}.\n    ".format(platform.system(), platform.machine(), alias, doc)
                          for (alias_type, alias, doc) in possible_aliases if alias_type is o)
     docstring = """
     {doc}
@@ -215,10 +218,15 @@ add_newdoc_for_scalar_type('void', [],
 
 add_newdoc_for_scalar_type('datetime64', [],
     """
-    A datetime stored as a 64-bit integer, counting from ``1970-01-01T00:00:00``.
+    If created from a 64-bit integer, it represents an offset from
+    ``1970-01-01T00:00:00``.
+    If created from string, the string can be in ISO 8601 date
+    or datetime format.
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
+    >>> np.datetime64('1980', 'Y')
+    numpy.datetime64('1980')   
     >>> np.datetime64(10, 'D')
     numpy.datetime64('1970-01-11')
     

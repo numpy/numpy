@@ -6,8 +6,9 @@ coverage:
   status:
     project:
       default:
-        # Require 1% coverage, i.e., always succeed
-        target: 1
-    patch: true
+        informational: true
+    patch:
+      default:
+        informational: true
     changes: false
 comment: off

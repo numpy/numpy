@@ -10,7 +10,8 @@ from . import multiarray
 from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
-    WRAP, arange, array, broadcast, can_cast, compare_chararrays,
+    WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
+    asfortranarray, broadcast, can_cast, compare_chararrays,
     concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
     inner, lexsort, matmul, may_share_memory,
@@ -26,7 +27,6 @@ from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._exceptions import TooHardError, AxisError
-from ._asarray import asarray, asanyarray
 from ._ufunc_config import errstate
 
 bitwise_not = invert
@@ -39,7 +39,8 @@ array_function_dispatch = functools.partial(
 
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
-    'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
+    'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
+    'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
     'fromstring', 'fromfile', 'frombuffer', 'where',
     'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
     'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
@@ -299,7 +300,7 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
         Fill value.
     dtype : data-type, optional
         The desired data-type for the array  The default, None, means
-         `np.array(fill_value).dtype`.
+         ``np.array(fill_value).dtype``.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
@@ -662,17 +663,6 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
-_mode_from_name_dict = {'v': 0,
-                        's': 1,
-                        'f': 2}
-
-
-def _mode_from_name(mode):
-    if isinstance(mode, str):
-        return _mode_from_name_dict[mode.lower()[0]]
-    return mode
-
-
 def _correlate_dispatcher(a, v, mode=None):
     return (a, v)
 
@@ -710,6 +700,7 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
+    scipy.signal.correlate : uses FFT which has superior performance on large arrays. 
 
     Notes
     -----
@@ -719,6 +710,11 @@ def correlate(a, v, mode='valid'):
         c'_{av}[k] = sum_n a[n] conj(v[n+k])
 
     which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
+
+    `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
+    not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
+    be preferable.
+    
 
     Examples
     --------
@@ -742,7 +738,6 @@ def correlate(a, v, mode='valid'):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    mode = _mode_from_name(mode)
     return multiarray.correlate2(a, v, mode)
 
 
@@ -846,7 +841,6 @@ def convolve(a, v, mode='full'):
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
-    mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
 
@@ -1427,12 +1421,11 @@ def moveaxis(a, source, destination):
 
     See Also
     --------
-    transpose: Permute the dimensions of an array.
-    swapaxes: Interchange two axes of an array.
+    transpose : Permute the dimensions of an array.
+    swapaxes : Interchange two axes of an array.
 
     Examples
     --------
-
     >>> x = np.zeros((3, 4, 5))
     >>> np.moveaxis(x, 0, -1).shape
     (4, 5, 3)
@@ -1471,11 +1464,6 @@ def moveaxis(a, source, destination):
 
     result = transpose(order)
     return result
-
-
-# fix hack in scipy which imports this function
-def _move_axis_to_0(a, axis):
-    return moveaxis(a, axis, 0)
 
 
 def _cross_dispatcher(a, b, axisa=None, axisb=None, axisc=None, axis=None):
@@ -2351,8 +2339,13 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
     # (e.g., for numpy.ma).
-    dt = multiarray.result_type(y, 1.)
-    y = array(y, dtype=dt, copy=False, subok=True)
+    # NOTE: We explicitly allow timedelta, which used to work. This could
+    #       possibly be deprecated. See also gh-18286.
+    #       timedelta works if `atol` is an integer or also a timedelta.
+    #       Although, the default tolerances are unlikely to be useful
+    if y.dtype.kind != "m":
+        dt = multiarray.result_type(y, 1.)
+        y = asanyarray(y, dtype=dt)
 
     xfin = isfinite(x)
     yfin = isfinite(y)

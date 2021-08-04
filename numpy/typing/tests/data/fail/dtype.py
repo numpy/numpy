@@ -1,10 +1,16 @@
 import numpy as np
 
-class Test:
-    not_dtype = float
+
+class Test1:
+    not_dtype = np.dtype(float)
 
 
-np.dtype(Test())  # E: No overload variant of "dtype" matches
+class Test2:
+    dtype = float
+
+
+np.dtype(Test1())  # E: No overload variant of "dtype" matches
+np.dtype(Test2())  # E: incompatible type
 
 np.dtype(  # E: No overload variant of "dtype" matches
     {
@@ -12,5 +18,3 @@ np.dtype(  # E: No overload variant of "dtype" matches
         "field2": (int, 3),
     }
 )
-
-np.dtype[np.float64](np.int64)  # E: Argument 1 to "dtype" has incompatible type

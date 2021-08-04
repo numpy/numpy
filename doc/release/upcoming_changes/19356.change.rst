@@ -1,0 +1,7 @@
+`numpy.vectorize` functions now produce the same output class as the base function
+----------------------------------------------------------------------------------
+When a function that respects `numpy.ndarray` subclasses is vectorized using
+`numpy.vectorize`, the vectorized function will now be subclass-safe
+also for cases that a signature is given (i.e., when creating a ``gufunc``):
+the output class will be the same as that returned by the first call to
+the underlying function.

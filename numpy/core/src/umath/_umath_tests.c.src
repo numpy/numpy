@@ -532,7 +532,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
     if (f->core_dim_ixs != NULL) {
         core_dim_ixs = PyTuple_New(core_num_ixs);
-        if (core_num_dims == NULL) {
+        if (core_dim_ixs == NULL) {
             goto fail;
         }
         for (i = 0; i < core_num_ixs; i++) {
@@ -614,12 +614,14 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
     if (item == NULL || PyDict_SetItemString(dict, "@str@", item) < 0) {
         goto err;
     }
+    Py_DECREF(item);
     /**end repeat**/
     item = PyList_New(0);
     if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {
         goto err;
     }
     NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
+    Py_SETREF(item, NULL);
     if (PyErr_Occurred()) {
         goto err;
     }

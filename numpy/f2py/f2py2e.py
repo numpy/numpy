@@ -511,14 +511,14 @@ def run_compile():
         remove_build_dir = 1
         build_dir = tempfile.mkdtemp()
 
-    _reg1 = re.compile(r'[-][-]link[-]')
+    _reg1 = re.compile(r'--link-')
     sysinfo_flags = [_m for _m in sys.argv[1:] if _reg1.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in sysinfo_flags]
     if sysinfo_flags:
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include')
+        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -536,11 +536,11 @@ def run_compile():
 
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
     _reg3 = re.compile(
-        r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)')
+        r'--((f(90)?compiler(-exec|)|compiler)=|help-compiler)')
     flib_flags = [_m for _m in sys.argv[1:] if _reg3.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in flib_flags]
     _reg4 = re.compile(
-        r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))')
+        r'--((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help-fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
@@ -569,7 +569,7 @@ def run_compile():
             del flib_flags[i]
         assert len(flib_flags) <= 2, repr(flib_flags)
 
-    _reg5 = re.compile(r'[-][-](verbose)')
+    _reg5 = re.compile(r'--(verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in setup_flags]
 

@@ -5,12 +5,13 @@ import functools
 
 from numpy.core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
-    nonzero
+    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
+    diagonal, nonzero, indices
     )
 from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
+from numpy.lib.stride_tricks import broadcast_to
 
 
 __all__ = [
@@ -46,10 +47,11 @@ def _flip_dispatcher(m):
 @array_function_dispatch(_flip_dispatcher)
 def fliplr(m):
     """
-    Flip array in the left/right direction.
+    Reverse the order of elements along axis 1 (left/right).
 
-    Flip the entries in each row in the left/right direction.
-    Columns are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each row in the left/right
+    direction. Columns are preserved, but appear in a different order than
+    before.
 
     Parameters
     ----------
@@ -65,11 +67,13 @@ def fliplr(m):
     See Also
     --------
     flipud : Flip array in the up/down direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to m[:,::-1]. Requires the array to be at least 2-D.
+    Equivalent to ``m[:,::-1]`` or ``np.flip(m, axis=1)``.
+    Requires the array to be at least 2-D.
 
     Examples
     --------
@@ -97,10 +101,10 @@ def fliplr(m):
 @array_function_dispatch(_flip_dispatcher)
 def flipud(m):
     """
-    Flip array in the up/down direction.
+    Reverse the order of elements along axis 0 (up/down).
 
-    Flip the entries in each column in the up/down direction.
-    Rows are preserved, but appear in a different order than before.
+    For a 2-D array, this flips the entries in each column in the up/down
+    direction. Rows are preserved, but appear in a different order than before.
 
     Parameters
     ----------
@@ -116,12 +120,13 @@ def flipud(m):
     See Also
     --------
     fliplr : Flip array in the left/right direction.
+    flip : Flip array in one or more dimesions.
     rot90 : Rotate array counterclockwise.
 
     Notes
     -----
-    Equivalent to ``m[::-1,...]``.
-    Does not require the array to be two-dimensional.
+    Equivalent to ``m[::-1, ...]`` or ``np.flip(m, axis=0)``.
+    Requires the array to be at least 1-D.
 
     Examples
     --------
@@ -347,10 +352,10 @@ def diagflat(v, k=0):
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0, n-k)
+        i = arange(0, n-k, dtype=intp)
         fi = i+k+i*n
     else:
-        i = arange(0, n+k)
+        i = arange(0, n+k, dtype=intp)
         fi = i+(i-k)*n
     res.flat[fi] = v
     if not wrap:
@@ -434,10 +439,12 @@ def tril(m, k=0):
     Lower triangle of an array.
 
     Return a copy of an array with elements above the `k`-th diagonal zeroed.
+    For arrays with ``ndim`` exceeding 2, `tril` will apply to the final two
+    axes.
 
     Parameters
     ----------
-    m : array_like, shape (M, N)
+    m : array_like, shape (..., M, N)
         Input array.
     k : int, optional
         Diagonal above which to zero elements.  `k = 0` (the default) is the
@@ -445,7 +452,7 @@ def tril(m, k=0):
 
     Returns
     -------
-    tril : ndarray, shape (M, N)
+    tril : ndarray, shape (..., M, N)
         Lower triangle of `m`, of same shape and data-type as `m`.
 
     See Also
@@ -460,6 +467,20 @@ def tril(m, k=0):
            [ 7,  8,  0],
            [10, 11, 12]])
 
+    >>> np.tril(np.arange(3*4*5).reshape(3, 4, 5))
+    array([[[ 0,  0,  0,  0,  0],
+            [ 5,  6,  0,  0,  0],
+            [10, 11, 12,  0,  0],
+            [15, 16, 17, 18,  0]],
+           [[20,  0,  0,  0,  0],
+            [25, 26,  0,  0,  0],
+            [30, 31, 32,  0,  0],
+            [35, 36, 37, 38,  0]],
+           [[40,  0,  0,  0,  0],
+            [45, 46,  0,  0,  0],
+            [50, 51, 52,  0,  0],
+            [55, 56, 57, 58,  0]]])
+
     """
     m = asanyarray(m)
     mask = tri(*m.shape[-2:], k=k, dtype=bool)
@@ -473,7 +494,8 @@ def triu(m, k=0):
     Upper triangle of an array.
 
     Return a copy of an array with the elements below the `k`-th diagonal
-    zeroed.
+    zeroed. For arrays with ``ndim`` exceeding 2, `triu` will apply to the final
+    two axes.
 
     Please refer to the documentation for `tril` for further details.
 
@@ -488,6 +510,20 @@ def triu(m, k=0):
            [ 4,  5,  6],
            [ 0,  8,  9],
            [ 0,  0, 12]])
+
+    >>> np.triu(np.arange(3*4*5).reshape(3, 4, 5))
+    array([[[ 0,  1,  2,  3,  4],
+            [ 0,  6,  7,  8,  9],
+            [ 0,  0, 12, 13, 14],
+            [ 0,  0,  0, 18, 19]],
+           [[20, 21, 22, 23, 24],
+            [ 0, 26, 27, 28, 29],
+            [ 0,  0, 32, 33, 34],
+            [ 0,  0,  0, 38, 39]],
+           [[40, 41, 42, 43, 44],
+            [ 0, 46, 47, 48, 49],
+            [ 0,  0, 52, 53, 54],
+            [ 0,  0,  0, 58, 59]]])
 
     """
     m = asanyarray(m)
@@ -700,7 +736,9 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> x = np.random.normal(2, 1, 100)
     >>> y = np.random.normal(1, 1, 100)
     >>> H, xedges, yedges = np.histogram2d(x, y, bins=(xedges, yedges))
-    >>> H = H.T  # Let each row list bins with common y range.
+    >>> # Histogram does not follow Cartesian convention (see Notes),
+    >>> # therefore transpose H for visualization purposes.
+    >>> H = H.T
 
     :func:`imshow <matplotlib.pyplot.imshow>` can only display square bins:
 
@@ -730,6 +768,40 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> ax.images.append(im)
     >>> plt.show()
 
+    It is also possible to construct a 2-D histogram without specifying bin
+    edges:
+
+    >>> # Generate non-symmetric test data
+    >>> n = 10000
+    >>> x = np.linspace(1, 100, n)
+    >>> y = 2*np.log(x) + np.random.rand(n) - 0.5
+    >>> # Compute 2d histogram. Note the order of x/y and xedges/yedges
+    >>> H, yedges, xedges = np.histogram2d(y, x, bins=20)
+
+    Now we can plot the histogram using
+    :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`, and a
+    :func:`hexbin <matplotlib.pyplot.hexbin>` for comparison.
+
+    >>> # Plot histogram using pcolormesh
+    >>> fig, (ax1, ax2) = plt.subplots(ncols=2, sharey=True)
+    >>> ax1.pcolormesh(xedges, yedges, H, cmap='rainbow')
+    >>> ax1.plot(x, 2*np.log(x), 'k-')
+    >>> ax1.set_xlim(x.min(), x.max())
+    >>> ax1.set_ylim(y.min(), y.max())
+    >>> ax1.set_xlabel('x')
+    >>> ax1.set_ylabel('y')
+    >>> ax1.set_title('histogram2d')
+    >>> ax1.grid()
+
+    >>> # Create hexbin plot for comparison
+    >>> ax2.hexbin(x, y, gridsize=20, cmap='rainbow')
+    >>> ax2.plot(x, 2*np.log(x), 'k-')
+    >>> ax2.set_title('hexbin')
+    >>> ax2.set_xlim(x.min(), x.max())
+    >>> ax2.set_xlabel('x')
+    >>> ax2.grid()
+
+    >>> plt.show()
     """
     from numpy import histogramdd
 
@@ -894,7 +966,10 @@ def tril_indices(n, k=0, m=None):
            [-10, -10, -10, -10]])
 
     """
-    return nonzero(tri(n, m, k=k, dtype=bool))
+    tri_ = tri(n, m, k=k, dtype=bool)
+
+    return tuple(broadcast_to(inds, tri_.shape)[tri_]
+                 for inds in indices(tri_.shape, sparse=True))
 
 
 def _trilu_indices_form_dispatcher(arr, k=None):
@@ -1010,7 +1085,10 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
-    return nonzero(~tri(n, m, k=k-1, dtype=bool))
+    tri_ = ~tri(n, m, k=k - 1, dtype=bool)
+
+    return tuple(broadcast_to(inds, tri_.shape)[tri_]
+                 for inds in indices(tri_.shape, sparse=True))
 
 
 @array_function_dispatch(_trilu_indices_form_dispatcher)

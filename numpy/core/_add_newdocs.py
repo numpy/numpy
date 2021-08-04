@@ -377,7 +377,7 @@ add_newdoc('numpy.core', 'nditer',
     ...    while not it.finished:
     ...        it[0] = lamdaexpr(*it[1:])
     ...        it.iternext()
-    ...        return it.operands[0]
+    ...    return it.operands[0]
 
     >>> a = np.arange(5)
     >>> b = np.ones(5)
@@ -796,6 +796,8 @@ add_newdoc('numpy.core.multiarray', 'array',
     object : array_like
         An array, any object exposing the array interface, an object whose
         __array__ method returns an array, or any (nested) sequence.
+        If object is a scalar, a 0-dimensional array containing object is 
+        returned.
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
         be determined as the minimum type required to hold the objects in the
@@ -821,7 +823,7 @@ add_newdoc('numpy.core.multiarray', 'array',
         ===== ========= ===================================================
 
         When ``copy=False`` and a copy is made for other reasons, the result is
-        the same as if ``copy=True``, with some exceptions for `A`, see the
+        the same as if ``copy=True``, with some exceptions for 'A', see the
         Notes section. The default order is 'K'.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
@@ -898,6 +900,242 @@ add_newdoc('numpy.core.multiarray', 'array',
     >>> np.array(np.mat('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'asarray',
+    """
+    asarray(a, dtype=None, order=None, *, like=None)
+
+    Convert the input to an array.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes lists, lists of tuples, tuples, tuples of tuples, tuples
+        of lists and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'K'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
+        Array interpretation of `a`.  No copy is performed if the input
+        is already an ndarray with matching dtype and order.  If `a` is a
+        subclass of ndarray, a base class ndarray is returned.
+
+    See Also
+    --------
+    asanyarray : Similar function which passes through subclasses.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
+    Examples
+    --------
+    Convert a list into an array:
+
+    >>> a = [1, 2]
+    >>> np.asarray(a)
+    array([1, 2])
+
+    Existing arrays are not copied:
+
+    >>> a = np.array([1, 2])
+    >>> np.asarray(a) is a
+    True
+
+    If `dtype` is set, array is copied only if dtype does not match:
+
+    >>> a = np.array([1, 2], dtype=np.float32)
+    >>> np.asarray(a, dtype=np.float32) is a
+    True
+    >>> np.asarray(a, dtype=np.float64) is a
+    False
+
+    Contrary to `asanyarray`, ndarray subclasses are not passed through:
+
+    >>> issubclass(np.recarray, np.ndarray)
+    True
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> np.asarray(a) is a
+    False
+    >>> np.asanyarray(a) is a
+    True
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'asanyarray',
+    """
+    asanyarray(a, dtype=None, order=None, *, like=None)
+
+    Convert the input to an ndarray, but pass ndarray subclasses through.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes scalars, lists, lists of tuples, tuples, tuples of tuples,
+        tuples of lists, and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'C'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray or an ndarray subclass
+        Array interpretation of `a`.  If `a` is an ndarray or a subclass
+        of ndarray, it is returned as-is and no copy is performed.
+
+    See Also
+    --------
+    asarray : Similar function which always returns ndarrays.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and
+                        Infs.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
+    Examples
+    --------
+    Convert a list into an array:
+
+    >>> a = [1, 2]
+    >>> np.asanyarray(a)
+    array([1, 2])
+
+    Instances of `ndarray` subclasses are passed through as-is:
+
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
+    >>> np.asanyarray(a) is a
+    True
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
+    """
+    ascontiguousarray(a, dtype=None, *, like=None)
+
+    Return a contiguous array (ndim >= 1) in memory (C order).
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    dtype : str or dtype object, optional
+        Data-type of returned array.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
+        Contiguous array of same shape and content as `a`, with type `dtype`
+        if specified.
+
+    See Also
+    --------
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    require : Return an ndarray that satisfies requirements.
+    ndarray.flags : Information about the memory layout of the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> np.ascontiguousarray(x, dtype=np.float32)
+    array([[0., 1., 2.],
+           [3., 4., 5.]], dtype=float32)
+    >>> x.flags['C_CONTIGUOUS']
+    True
+
+    Note: This function returns an array with at least one-dimension (1-d)
+    so it will not preserve 0-d arrays.
+
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
+
+add_newdoc('numpy.core.multiarray', 'asfortranarray',
+    """
+    asfortranarray(a, dtype=None, *, like=None)
+
+    Return an array (ndim >= 1) laid out in Fortran order in memory.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    dtype : str or dtype object, optional
+        By default, the data-type is inferred from the input data.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
+        The input `a` in Fortran, or column-major, order.
+
+    See Also
+    --------
+    ascontiguousarray : Convert input to a contiguous (C order) array.
+    asanyarray : Convert input to an ndarray with either row or
+        column-major memory order.
+    require : Return an ndarray that satisfies requirements.
+    ndarray.flags : Information about the memory layout of the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> y = np.asfortranarray(x)
+    >>> x.flags['F_CONTIGUOUS']
+    False
+    >>> y.flags['F_CONTIGUOUS']
+    True
+
+    Note: This function returns an array with at least one-dimension (1-d)
+    so it will not preserve 0-d arrays.
 
     """.replace(
         "${ARRAY_FUNCTION_LIKE}",
@@ -1044,7 +1282,7 @@ add_newdoc('numpy.core.multiarray', 'set_typeDict',
 
 add_newdoc('numpy.core.multiarray', 'fromstring',
     """
-    fromstring(string, dtype=float, count=-1, sep='', *, like=None)
+    fromstring(string, dtype=float, count=-1, *, sep, like=None)
 
     A new 1-D array initialized from text data in a string.
 
@@ -1110,16 +1348,16 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
 
 add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     """
-    compare_chararrays(a, b, cmp_op, rstrip)
+    compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
     comparison operator specified by `cmp_op`.
 
     Parameters
     ----------
-    a, b : array_like
+    a1, a2 : array_like
         Arrays to be compared.
-    cmp_op : {"<", "<=", "==", ">=", ">", "!="}
+    cmp : {"<", "<=", "==", ">=", ">", "!="}
         Type of comparison.
     rstrip : Boolean
         If True, the spaces at the end of Strings are removed before the comparison.
@@ -1147,13 +1385,13 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
-    fromiter(iterable, dtype, count=-1, *, like=None)
+    fromiter(iter, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
 
     Parameters
     ----------
-    iterable : iterable object
+    iter : iterable object
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.
@@ -1300,6 +1538,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
         .. versionadded:: 1.20.0
 
+    Returns
+    -------
+    out : ndarray
+
     Notes
     -----
     If the buffer has data that is not in machine byte-order, this should
@@ -1345,8 +1587,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     For integer arguments the function is equivalent to the Python built-in
     `range` function, but returns an ndarray rather than a list.
 
-    When using a non-integer step, such as 0.1, the results will often not
-    be consistent.  It is better to use `numpy.linspace` for these cases.
+    When using a non-integer step, such as 0.1, it is often better to use
+    `numpy.linspace`. See the warnings section below for more information.
 
     Parameters
     ----------
@@ -1378,6 +1620,25 @@ add_newdoc('numpy.core.multiarray', 'arange',
         ``ceil((stop - start)/step)``.  Because of floating point overflow,
         this rule may result in the last element of `out` being greater
         than `stop`.
+
+    Warnings
+    --------
+    The length of the output might not be numerically stable.
+
+    Another stability issue is due to the internal implementation of
+    `numpy.arange`.
+    The actual step value used to populate the array is
+    ``dtype(start + step) - dtype(start)`` and not `step`. Precision loss
+    can occur here, due to casting or due to using floating points when
+    `start` is much larger than `step`. This can lead to unexpected
+    behaviour. For example::
+
+      >>> np.arange(0, 5, 0.5, dtype=int)
+      array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+      >>> np.arange(-3, 3, 0.5, dtype=int)
+      array([-3, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
+
+    In such cases, the use of `numpy.linspace` should be preferred.
 
     See Also
     --------
@@ -1940,6 +2201,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     empty : Create an array, but leave its allocated memory unchanged (i.e.,
             it contains "garbage").
     dtype : Create a data-type.
+    numpy.typing.NDArray : A :term:`generic <generic type>` version
+                           of ndarray.
 
     Notes
     -----
@@ -2510,13 +2773,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_prepare__',
-    """a.__array_prepare__(obj) -> Object of same type as ndarray object obj.
+    """a.__array_prepare__(array[, context], /)
+
+    Returns a view of `array` with the same type as self.
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
-    """a.__array_wrap__(obj) -> Object of same type as ndarray object a.
+    """a.__array_wrap__(array[, context], /)
+
+    Returns a view of `array` with the same type as self.
 
     """))
 
@@ -2570,7 +2837,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     """
-    a.all(axis=None, out=None, keepdims=False)
+    a.all(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if all elements evaluate to True.
 
@@ -2585,7 +2852,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """
-    a.any(axis=None, out=None, keepdims=False)
+    a.any(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -2877,13 +3144,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible. (Note that this function and :func:`numpy.copy` are very
-        similar, but have different default values for their order=
-        arguments.)
+        similar but have different default values for their order=
+        arguments, and this function always passes sub-classes through.)
 
     See also
     --------
-    numpy.copy
+    numpy.copy : Similar function with different default behavior
     numpy.copyto
+
+    Notes
+    -----
+    This function is the preferred method for creating an array copy.  The
+    function :func:`numpy.copy` is similar, but it defaults to using order 'K',
+    and will not pass sub-classes through by default.
 
     Examples
     --------
@@ -2954,33 +3227,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('dot',
-    """
-    a.dot(b, out=None)
-
-    Dot product of two arrays.
-
-    Refer to `numpy.dot` for full documentation.
-
-    See Also
-    --------
-    numpy.dot : equivalent function
-
-    Examples
-    --------
-    >>> a = np.eye(2)
-    >>> b = np.ones((2, 2)) * 2
-    >>> a.dot(b)
-    array([[2.,  2.],
-           [2.,  2.]])
-
-    This array method can be conveniently chained:
-
-    >>> a.dot(b).dot(b)
-    array([[8.,  8.],
-           [8.,  8.]])
-
-    """))
+add_newdoc('numpy.core.multiarray', 'ndarray', ('dot'))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
@@ -3242,7 +3489,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
     """
-    a.mean(axis=None, dtype=None, out=None, keepdims=False)
+    a.mean(axis=None, dtype=None, out=None, keepdims=False, *, where=True)
 
     Returns the average of the array elements along given axis.
 
@@ -3694,7 +3941,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
         actual implementation will vary with datatype. The 'mergesort' option
         is retained for backwards compatibility.
 
-        .. versionchanged:: 1.15.0.
+        .. versionchanged:: 1.15.0
            The 'stable' option was added.
 
     order : str or list of str, optional
@@ -3813,7 +4060,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4076,6 +4323,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
     See Also
     --------
+    transpose : Equivalent function
     ndarray.T : Array property returning the array transposed.
     ndarray.reshape : Give a new shape to an array without changing its data.
 
@@ -4100,7 +4348,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the variance of the array elements, along given axis.
 
@@ -4226,7 +4474,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy.core.umath', 'frompyfunc',
     """
-    frompyfunc(func, nin, nout, *[, identity])
+    frompyfunc(func, /, nin, nout, *[, identity])
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
 
@@ -4340,7 +4588,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
 
 add_newdoc('numpy.core.umath', 'seterrobj',
     """
-    seterrobj(errobj)
+    seterrobj(errobj, /)
 
     Set the object that defines floating-point error handling.
 
@@ -5070,7 +5318,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
       r = empty(len(A),len(B))
       for i in range(len(A)):
           for j in range(len(B)):
-              r[i,j] = op(A[i], B[j]) # op = ufunc in question
+              r[i,j] = op(A[i], B[j])  # op = ufunc in question
 
     Parameters
     ----------
@@ -5080,6 +5328,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
         Second array
     kwargs : any
         Arguments to pass on to the ufunc. Typically `dtype` or `out`.
+        See `ufunc` for a comprehensive overview of all available arguments.
 
     Returns
     -------
@@ -5571,7 +5820,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
     >>> (arr + arr).dtype.metadata
     mappingproxy({'key': 'value'})
 
-    But if the arrays have different dtype metadata, the metadata may be 
+    But if the arrays have different dtype metadata, the metadata may be
     dropped:
 
     >>> dt2 = np.dtype(float, metadata={"key2": "value2"})

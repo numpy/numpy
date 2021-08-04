@@ -21,8 +21,9 @@ details are found in :ref:`reference`.
    numpy-for-matlab-users
    building
    c-info
-   tutorials_index
+   NumPy Tutorials <https://numpy.org/numpy-tutorials/features.html>
    howtos_index
+   depending_on_numpy
 
 
 .. Links to these files are placed directly in the top-level html
@@ -34,7 +35,6 @@ details are found in :ref:`reference`.
 .. toctree::
    :hidden:
 
-   explanations_index
    ../f2py/index
    ../glossary
    ../dev/underthehood

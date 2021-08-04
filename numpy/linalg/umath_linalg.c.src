@@ -163,6 +163,24 @@ FNAME(zgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               fortran_int *info);
 
 extern fortran_int
+FNAME(dgeqrf)(fortran_int *m, fortran_int *n, double a[], fortran_int *lda,
+              double tau[], double work[],
+              fortran_int *lwork, fortran_int *info);
+extern fortran_int
+FNAME(zgeqrf)(fortran_int *m, fortran_int *n, f2c_doublecomplex a[], fortran_int *lda,
+              f2c_doublecomplex tau[], f2c_doublecomplex work[],
+              fortran_int *lwork, fortran_int *info);
+
+extern fortran_int
+FNAME(dorgqr)(fortran_int *m, fortran_int *n, fortran_int *k, double a[], fortran_int *lda,
+              double tau[], double work[],
+              fortran_int *lwork, fortran_int *info);
+extern fortran_int
+FNAME(zungqr)(fortran_int *m, fortran_int *n, fortran_int *k, f2c_doublecomplex a[],
+              fortran_int *lda, f2c_doublecomplex tau[],
+              f2c_doublecomplex work[], fortran_int *lwork, fortran_int *info);
+
+extern fortran_int
 FNAME(sgesv)(fortran_int *n, fortran_int *nrhs,
              float a[], fortran_int *lda,
              fortran_int ipiv[],
@@ -2834,6 +2852,670 @@ static void
 
 /**end repeat**/
 
+/* -------------------------------------------------------------------------- */
+                 /* qr (modes - r, raw) */
+
+typedef struct geqfr_params_struct
+{
+    fortran_int M;
+    fortran_int N;
+    void *A;
+    fortran_int LDA;
+    void* TAU;
+    void *WORK;
+    fortran_int LWORK;
+} GEQRF_PARAMS_t;
+
+
+static inline void
+dump_geqrf_params(const char *name,
+                  GEQRF_PARAMS_t *params)
+{
+    TRACE_TXT("\n%s:\n"\
+
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n",
+
+              name,
+
+              "A", params->A,
+              "TAU", params->TAU,
+              "WORK", params->WORK,
+
+              "M", (int)params->M,
+              "N", (int)params->N,
+              "LDA", (int)params->LDA,
+              "LWORK", (int)params->LWORK);
+}
+
+/**begin repeat
+   #lapack_func=dgeqrf,zgeqrf#
+ */
+
+static inline fortran_int
+call_@lapack_func@(GEQRF_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->M, &params->N,
+                          params->A, &params->LDA,
+                          params->TAU,
+                          params->WORK, &params->LWORK,
+                          &rv);
+    return rv;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=DOUBLE#
+   #lapack_func=dgeqrf#
+   #ftyp=fortran_doublereal#
+ */
+static inline int
+init_@lapack_func@(GEQRF_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *tau, *work;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
+
+    fortran_int work_count;
+    size_t work_size;
+    fortran_int lda = fortran_int_max(1, m);
+
+    mem_buff = malloc(a_size + tau_size);
+
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    tau = a + a_size;
+    memset(tau, 0, tau_size);
+
+
+    params->M = m;
+    params->N = n;
+    params->A = a;
+    params->TAU = tau;
+    params->LDA = lda;
+
+    {
+        /* compute optimal work size */
+
+        @ftyp@ work_size_query;
+
+        params->WORK = &work_size_query;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int) *(@ftyp@*) params->WORK;
+
+    }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
+    mem_buff2 = malloc(work_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+
+    params->WORK = work;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=CDOUBLE#
+   #lapack_func=zgeqrf#
+   #ftyp=fortran_doublecomplex#
+ */
+static inline int
+init_@lapack_func@(GEQRF_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *tau, *work;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
+
+    fortran_int work_count;
+    size_t work_size;
+    fortran_int lda = fortran_int_max(1, m);
+
+    mem_buff = malloc(a_size + tau_size);
+
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    tau = a + a_size;
+    memset(tau, 0, tau_size);
+
+
+    params->M = m;
+    params->N = n;
+    params->A = a;
+    params->TAU = tau;
+    params->LDA = lda;
+
+    {
+        /* compute optimal work size */
+
+        @ftyp@ work_size_query;
+
+        params->WORK = &work_size_query;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
+
+    }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
+                                    work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
+
+    mem_buff2 = malloc(work_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+
+    params->WORK = work;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #lapack_func=dgeqrf,zgeqrf#
+ */
+static inline void
+release_@lapack_func@(GEQRF_PARAMS_t* params)
+{
+    /* A and WORK contain allocated blocks */
+    free(params->A);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=DOUBLE,CDOUBLE#
+   #REALTYPE=DOUBLE,DOUBLE#
+   #lapack_func=dgeqrf,zgeqrf#
+   #typ     = npy_double,npy_cdouble#
+   #basetyp = npy_double,npy_double#
+   #ftyp = fortran_doublereal,fortran_doublecomplex#
+   #cmplx = 0, 1#
+ */
+static void
+@TYPE@_qr_r_raw(char **args, npy_intp const *dimensions, npy_intp const *steps,
+          void *NPY_UNUSED(func))
+{
+    GEQRF_PARAMS_t params;
+    int error_occurred = get_fp_invalid_and_clear();
+    fortran_int n, m;
+
+    INIT_OUTER_LOOP_2
+
+    m = (fortran_int)dimensions[0];
+    n = (fortran_int)dimensions[1];
+
+    if (init_@lapack_func@(&params, m, n)) {
+        LINEARIZE_DATA_t a_in, tau_out;
+
+        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
+        init_linearize_data(&tau_out, 1, fortran_int_min(m, n), 1, steps[2]);
+
+        BEGIN_OUTER_LOOP_2
+            int not_ok;
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                delinearize_@TYPE@_matrix(args[0], params.A, &a_in);
+                delinearize_@TYPE@_matrix(args[1], params.TAU, &tau_out);
+            } else {
+                error_occurred = 1;
+                nan_@TYPE@_matrix(args[1], &tau_out);
+            }
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+
+    set_fp_invalid_or_clear(error_occurred);
+}
+
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+                 /* qr common code (modes - reduced and complete) */ 
+
+typedef struct gqr_params_struct
+{
+    fortran_int M;
+    fortran_int MC;
+    fortran_int MN;
+    void* A;
+    void *Q;
+    fortran_int LDA;
+    void* TAU;
+    void *WORK;
+    fortran_int LWORK;
+} GQR_PARAMS_t;
+
+/**begin repeat
+   #lapack_func=dorgqr,zungqr#
+ */
+
+static inline fortran_int
+call_@lapack_func@(GQR_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->M, &params->MC, &params->MN,
+                          params->Q, &params->LDA,
+                          params->TAU,
+                          params->WORK, &params->LWORK,
+                          &rv);
+    return rv;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #lapack_func=dorgqr#
+   #ftyp=fortran_doublereal#
+ */
+static inline int
+init_@lapack_func@_common(GQR_PARAMS_t *params,
+                          fortran_int m,
+                          fortran_int n,
+                          fortran_int mc)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *q, *tau, *work;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    size_t safe_mc = mc;
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t q_size = safe_m * safe_mc * sizeof(@ftyp@);
+    size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
+
+    fortran_int work_count;
+    size_t work_size;
+    fortran_int lda = fortran_int_max(1, m);
+
+    mem_buff = malloc(q_size + tau_size + a_size);
+
+    if (!mem_buff)
+        goto error;
+
+    q = mem_buff;
+    tau = q + q_size;
+    a = tau + tau_size;
+
+
+    params->M = m;
+    params->MC = mc;
+    params->MN = min_m_n;
+    params->A = a;
+    params->Q = q;
+    params->TAU = tau;
+    params->LDA = lda;
+
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+
+        params->WORK = &work_size_query;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int) *(@ftyp@*) params->WORK;
+
+    }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n), work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
+
+    mem_buff2 = malloc(work_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+
+    params->WORK = work;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #lapack_func=zungqr#
+   #ftyp=fortran_doublecomplex#
+ */
+static inline int
+init_@lapack_func@_common(GQR_PARAMS_t *params,
+                          fortran_int m,
+                          fortran_int n,
+                          fortran_int mc)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *q, *tau, *work;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    size_t safe_mc = mc;
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t q_size = safe_m * safe_mc * sizeof(@ftyp@);
+    size_t tau_size = safe_min_m_n * sizeof(@ftyp@);
+
+    fortran_int work_count;
+    size_t work_size;
+    fortran_int lda = fortran_int_max(1, m);
+
+    mem_buff = malloc(q_size + tau_size + a_size);
+
+    if (!mem_buff)
+        goto error;
+
+    q = mem_buff;
+    tau = q + q_size;
+    a = tau + tau_size;
+
+
+    params->M = m;
+    params->MC = mc;
+    params->MN = min_m_n;
+    params->A = a;
+    params->Q = q;
+    params->TAU = tau;
+    params->LDA = lda;
+
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+
+        params->WORK = &work_size_query;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int) ((@ftyp@*)params->WORK)->r;
+
+    }
+
+    params->LWORK = fortran_int_max(fortran_int_max(1, n),
+                                    work_count);
+
+    work_size = (size_t) params->LWORK * sizeof(@ftyp@);
+
+    mem_buff2 = malloc(work_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+
+    params->WORK = work;
+    params->LWORK = work_count;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+                 /* qr (modes - reduced) */
+
+
+static inline void
+dump_gqr_params(const char *name,
+                GQR_PARAMS_t *params)
+{
+    TRACE_TXT("\n%s:\n"\
+
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n",
+
+              name,
+
+              "Q", params->Q,
+              "TAU", params->TAU,
+              "WORK", params->WORK,
+
+              "M", (int)params->M,
+              "MC", (int)params->MC,
+              "MN", (int)params->MN,
+              "LDA", (int)params->LDA,
+              "LWORK", (int)params->LWORK);
+}
+
+/**begin repeat
+   #lapack_func=dorgqr,zungqr#
+   #ftyp=fortran_doublereal,fortran_doublecomplex#
+ */
+static inline int
+init_@lapack_func@(GQR_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n)
+{
+    return init_@lapack_func@_common(
+        params, m, n, 
+        fortran_int_min(m, n));
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #lapack_func=dorgqr,zungqr#
+ */
+static inline void
+release_@lapack_func@(GQR_PARAMS_t* params)
+{
+    /* A and WORK contain allocated blocks */
+    free(params->Q);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=DOUBLE,CDOUBLE#
+   #REALTYPE=DOUBLE,DOUBLE#
+   #lapack_func=dorgqr,zungqr#
+   #typ     = npy_double, npy_cdouble#
+   #basetyp = npy_double, npy_double#
+   #ftyp = fortran_doublereal,fortran_doublecomplex#
+   #cmplx = 0, 1#
+ */
+static void
+@TYPE@_qr_reduced(char **args, npy_intp const *dimensions, npy_intp const *steps,
+                  void *NPY_UNUSED(func))
+{
+    GQR_PARAMS_t params;
+    int error_occurred = get_fp_invalid_and_clear();
+    fortran_int n, m;
+
+    INIT_OUTER_LOOP_3
+
+    m = (fortran_int)dimensions[0];
+    n = (fortran_int)dimensions[1];
+
+    if (init_@lapack_func@(&params, m, n)) {
+        LINEARIZE_DATA_t a_in, tau_in, q_out;
+
+        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
+        init_linearize_data(&tau_in, 1, fortran_int_min(m, n), 1, steps[2]);
+        init_linearize_data(&q_out, fortran_int_min(m, n), m, steps[4], steps[3]);
+
+        BEGIN_OUTER_LOOP_3
+            int not_ok;
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.Q, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.TAU, args[1], &tau_in);
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                delinearize_@TYPE@_matrix(args[2], params.Q, &q_out);
+            } else {
+                error_occurred = 1;
+                nan_@TYPE@_matrix(args[2], &q_out);
+            }
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+
+    set_fp_invalid_or_clear(error_occurred);
+}
+
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+                 /* qr (modes - complete) */
+
+/**begin repeat
+   #lapack_func=dorgqr,zungqr#
+   #ftyp=fortran_doublereal,fortran_doublecomplex#
+ */
+static inline int
+init_@lapack_func@_complete(GQR_PARAMS_t *params,
+                            fortran_int m,
+                            fortran_int n)
+{
+    return init_@lapack_func@_common(params, m, n, m);
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=DOUBLE,CDOUBLE#
+   #REALTYPE=DOUBLE,DOUBLE#
+   #lapack_func=dorgqr,zungqr#
+   #typ     = npy_double,npy_cdouble#
+   #basetyp = npy_double,npy_double#
+   #ftyp = fortran_doublereal,fortran_doublecomplex#
+   #cmplx = 0, 1#
+ */
+static void
+@TYPE@_qr_complete(char **args, npy_intp const *dimensions, npy_intp const *steps,
+                  void *NPY_UNUSED(func))
+{
+    GQR_PARAMS_t params;
+    int error_occurred = get_fp_invalid_and_clear();
+    fortran_int n, m;
+
+    INIT_OUTER_LOOP_3
+
+    m = (fortran_int)dimensions[0];
+    n = (fortran_int)dimensions[1];
+
+
+    if (init_@lapack_func@_complete(&params, m, n)) {
+        LINEARIZE_DATA_t a_in, tau_in, q_out;
+
+        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
+        init_linearize_data(&tau_in, 1, fortran_int_min(m, n), 1, steps[2]);
+        init_linearize_data(&q_out, m, m, steps[4], steps[3]);
+
+        BEGIN_OUTER_LOOP_3
+            int not_ok;
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.Q, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.TAU, args[1], &tau_in);
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                delinearize_@TYPE@_matrix(args[2], params.Q, &q_out);
+            } else {
+                error_occurred = 1;
+                nan_@TYPE@_matrix(args[2], &q_out);
+            }
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+
+    set_fp_invalid_or_clear(error_occurred);
+}
+
+/**end repeat**/
 
 /* -------------------------------------------------------------------------- */
                  /* least squares */
@@ -3291,6 +3973,17 @@ static void *array_of_nulls[] = {
         CDOUBLE_ ## NAME                                \
     }
 
+/* The single precision functions are not used at all,
+ * due to input data being promoted to double precision
+ * in Python, so they are not implemented here.
+ */
+#define GUFUNC_FUNC_ARRAY_QR(NAME)                      \
+    static PyUFuncGenericFunction                       \
+    FUNC_ARRAY_NAME(NAME)[] = {                         \
+        DOUBLE_ ## NAME,                                \
+        CDOUBLE_ ## NAME                                \
+    }
+
 
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(slogdet);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(det);
@@ -3305,6 +3998,9 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_N);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
+GUFUNC_FUNC_ARRAY_QR(qr_r_raw);
+GUFUNC_FUNC_ARRAY_QR(qr_reduced);
+GUFUNC_FUNC_ARRAY_QR(qr_complete);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(lstsq);
 GUFUNC_FUNC_ARRAY_EIG(eig);
 GUFUNC_FUNC_ARRAY_EIG(eigvals);
@@ -3369,6 +4065,24 @@ static char svd_1_3_types[] = {
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE
+};
+
+/* A, tau */
+static char qr_r_raw_types[] = {
+    NPY_DOUBLE,  NPY_DOUBLE,
+    NPY_CDOUBLE, NPY_CDOUBLE,
+};
+
+/* A, tau, q */
+static char qr_reduced_types[] = {
+    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
+};
+
+/* A, tau, q */
+static char qr_complete_types[] = {
+    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
 };
 
 /*  A,           b,           rcond,      x,           resid,      rank,    s,        */
@@ -3569,6 +4283,42 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         3, 1, 1,
         FUNC_ARRAY_NAME(eigvals),
         eigvals_types
+    },
+    {
+        "qr_r_raw_m",
+        "(m,n)->(m)",
+        "Compute TAU vector for the last two dimensions \n"\
+        "and broadcast to the rest. For m <= n. \n",
+        2, 1, 1,
+        FUNC_ARRAY_NAME(qr_r_raw),
+        qr_r_raw_types
+    },
+    {
+        "qr_r_raw_n",
+        "(m,n)->(n)",
+        "Compute TAU vector for the last two dimensions \n"\
+        "and broadcast to the rest. For m > n. \n",
+        2, 1, 1,
+        FUNC_ARRAY_NAME(qr_r_raw),
+        qr_r_raw_types
+    },
+    {
+        "qr_reduced",
+        "(m,n),(k)->(m,k)",
+        "Compute Q matrix for the last two dimensions \n"\
+        "and broadcast to the rest. \n",
+        2, 2, 1,
+        FUNC_ARRAY_NAME(qr_reduced),
+        qr_reduced_types
+    },
+    {
+        "qr_complete",
+        "(m,n),(n)->(m,m)",
+        "Compute Q matrix for the last two dimensions \n"\
+        "and broadcast to the rest. For m > n. \n",
+        2, 2, 1,
+        FUNC_ARRAY_NAME(qr_complete),
+        qr_complete_types
     },
     {
         "lstsq_m",

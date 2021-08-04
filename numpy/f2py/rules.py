@@ -73,7 +73,7 @@ from .auxfuncs import (
     issubroutine, issubroutine_wrap, isthreadsafe, isunsigned,
     isunsigned_char, isunsigned_chararray, isunsigned_long_long,
     isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
-    l_and, l_not, l_or, outmess, replace, stripcomma,
+    l_and, l_not, l_or, outmess, replace, stripcomma, requiresf90wrapper
 )
 
 from . import capi_maps
@@ -561,7 +561,8 @@ rout_rules = [
                  '\tint #name#_return_value_len = 0;'],
         'callfortran':'#name#_return_value,#name#_return_value_len,',
         'callfortranroutine':['\t#name#_return_value_len = #rlength#;',
-                              '\tif ((#name#_return_value = (string)malloc(sizeof(char)*(#name#_return_value_len+1))) == NULL) {',
+                              '\tif ((#name#_return_value = (string)malloc('
+                                  '#name#_return_value_len+1) == NULL) {',
                               '\t\tPyErr_SetString(PyExc_MemoryError, \"out of memory\");',
                               '\t\tf2py_success = 0;',
                               '\t} else {',
@@ -809,7 +810,7 @@ if (#varname#_cb.capi==Py_None) {
 """,
             {debugcapi: ["""\
         fprintf(stderr,\"debug-capi:Assuming %d arguments; at most #maxnofargs#(-#nofoptargs#) is expected.\\n\",#varname#_cb.nofargs);
-        CFUNCSMESSPY(\"for #varname#=\",#cbname#_capi);""",
+        CFUNCSMESSPY(\"for #varname#=\",#varname#_cb.capi);""",
                          {l_not(isintent_callback): """        fprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
             """\
         CFUNCSMESS(\"Saving callback variables for `#varname#`.\\n\");
@@ -942,19 +943,35 @@ if (#varname#_cb.capi==Py_None) {
                  '\tPyObject *#varname#_capi = Py_None;'],
         'callfortran':'#varname#,',
         'callfortranappend':'slen(#varname#),',
-        'pyobjfrom':{debugcapi: '\tfprintf(stderr,"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
+        'pyobjfrom':[
+            {debugcapi:
+             '\tfprintf(stderr,'
+             '"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
+            # The trailing null value for Fortran is blank.
+            {l_and(isintent_out, l_not(isintent_c)):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
+        ],
         'return': {isintent_out: ',#varname#'},
-        'need': ['len..'],  # 'STRINGFREE'],
+        'need': ['len..',
+                 {l_and(isintent_out, l_not(isintent_c)): 'STRINGPADN'}],
         '_check':isstring
     }, {  # Common
-        'frompyobj': """\
+        'frompyobj': [
+            """\
 \tslen(#varname#) = #length#;
-\tf2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth# `#varname#\' of #pyname# to C #ctype#\");
+\tf2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,"""
+"""#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth#"""
+"""`#varname#\' of #pyname# to C #ctype#\");
 \tif (f2py_success) {""",
+            # The trailing null value for Fortran is blank.
+            {l_not(isintent_c):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), '\\0', ' ');"},
+        ],
         'cleanupfrompyobj': """\
 \t\tSTRINGFREE(#varname#);
 \t}  /*if (f2py_success) of #varname#*/""",
-        'need': ['#ctype#_from_pyobj', 'len..', 'STRINGFREE'],
+        'need': ['#ctype#_from_pyobj', 'len..', 'STRINGFREE',
+                 {l_not(isintent_c): 'STRINGPADN'}],
         '_check':isstring,
         '_depend':''
     }, {  # Not hidden
@@ -962,11 +979,16 @@ if (#varname#_cb.capi==Py_None) {
         'keyformat': {isoptional: 'O'},
         'args_capi': {isrequired: ',&#varname#_capi'},
         'keys_capi': {isoptional: ',&#varname#_capi'},
-        'pyobjfrom': {isintent_inout: '''\
-\tf2py_success = try_pyarr_from_#ctype#(#varname#_capi,#varname#);
-\tif (f2py_success) {'''},
+        'pyobjfrom': [
+            {l_and(isintent_inout, l_not(isintent_c)):
+             "\t\tSTRINGPADN(#varname#, slen(#varname#), ' ', '\\0');"},
+            {isintent_inout: '''\
+\tf2py_success = try_pyarr_from_#ctype#(#varname#_capi, #varname#,
+\t                                      slen(#varname#));
+\tif (f2py_success) {'''}],
         'closepyobjfrom': {isintent_inout: '\t} /*if (f2py_success) of #varname# pyobjfrom*/'},
-        'need': {isintent_inout: 'try_pyarr_from_#ctype#'},
+        'need': {isintent_inout: 'try_pyarr_from_#ctype#',
+                 l_and(isintent_inout, l_not(isintent_c)): 'STRINGPADN'},
         '_check': l_and(isstring, isintent_nothide)
     }, {  # Hidden
         '_check': l_and(isstring, isintent_hide)
@@ -1163,7 +1185,7 @@ def buildmodule(m, um):
     for n in m['interfaced']:
         nb = None
         for bi in m['body']:
-            if not bi['block'] == 'interface':
+            if bi['block'] not in ['interface', 'abstract interface']:
                 errmess('buildmodule: Expected interface block. Skipping.\n')
                 continue
             for b in bi['body']:
@@ -1184,9 +1206,12 @@ def buildmodule(m, um):
                 nb1['args'] = a
                 nb_list.append(nb1)
         for nb in nb_list:
+            # requiresf90wrapper must be called before buildapi as it
+            # rewrites assumed shape arrays as automatic arrays.
+            isf90 = requiresf90wrapper(nb)
             api, wrap = buildapi(nb)
             if wrap:
-                if ismoduleroutine(nb):
+                if isf90:
                     funcwrappers2.append(wrap)
                 else:
                     funcwrappers.append(wrap)
@@ -1288,7 +1313,10 @@ def buildmodule(m, um):
                 'C     It contains Fortran 77 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
-                if l and l[0] == ' ':
+                if 0 <= l.find('!') < 66:
+                    # don't split comment lines
+                    lines.append(l + '\n')
+                elif l and l[0] == ' ':
                     while len(l) >= 66:
                         lines.append(l[:66] + '\n     &')
                         l = l[66:]
@@ -1310,7 +1338,10 @@ def buildmodule(m, um):
                 '!     It contains Fortran 90 wrappers to fortran functions.\n')
             lines = []
             for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
-                if len(l) > 72 and l[0] == ' ':
+                if 0 <= l.find('!') < 72:
+                    # don't split comment lines
+                    lines.append(l + '\n')
+                elif len(l) > 72 and l[0] == ' ':
                     lines.append(l[:72] + '&\n     &')
                     l = l[72:]
                     while len(l) > 66:

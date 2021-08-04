@@ -261,8 +261,8 @@ def runF2C(fortran_filename, output_dir):
         subprocess.check_call(
             ["f2c"] + F2C_ARGS + ['-d', output_dir, fortran_filename]
         )
-    except subprocess.CalledProcessError:
-        raise F2CError
+    except subprocess.CalledProcessError as e:
+        raise F2CError from e
 
 def scrubF2CSource(c_file):
     with open(c_file) as fo:
@@ -275,8 +275,8 @@ def scrubF2CSource(c_file):
 def ensure_executable(name):
     try:
         which(name)
-    except:
-        raise SystemExit(name + ' not found')
+    except Exception as ex:
+        raise SystemExit(name + ' not found') from ex
 
 def create_name_header(output_dir):
     routine_re = re.compile(r'^      (subroutine|.* function)\s+(\w+)\(.*$',

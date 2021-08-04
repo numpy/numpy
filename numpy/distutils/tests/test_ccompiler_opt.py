@@ -73,7 +73,7 @@ class FakeCCompilerOpt(CCompilerOpt):
     def dist_log(*args, stderr=False):
         pass
 
-class _Test_CCompilerOpt(object):
+class _Test_CCompilerOpt:
     arch = None # x86_64
     cc   = None # gcc
 
@@ -82,7 +82,7 @@ class _Test_CCompilerOpt(object):
         self._opt = None
 
     def nopt(self, *args, **kwargs):
-        FakeCCompilerOpt.fake_info = self.arch + '_' + self.cc
+        FakeCCompilerOpt.fake_info = (self.arch, self.cc, "")
         return FakeCCompilerOpt(*args, **kwargs)
 
     def opt(self):
@@ -112,7 +112,7 @@ class _Test_CCompilerOpt(object):
             gflags = {}
             fake_objects = opt.try_dispatch([file])
             for source, flags in fake_objects:
-                gtar = source.split('.')[1:-1]
+                gtar = path.basename(source).split('.')[1:-1]
                 glen = len(gtar)
                 if glen == 0:
                     gtar = "baseline"

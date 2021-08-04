@@ -1100,6 +1100,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         char **dataptr;
         npy_intp *stride;
         npy_intp *countptr;
+        int needs_api;
         NPY_BEGIN_THREADS_DEF;
 
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -1110,12 +1111,13 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         dataptr = NpyIter_GetDataPtrArray(iter);
         stride = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
+        needs_api = NpyIter_IterationNeedsAPI(iter);
 
         NPY_BEGIN_THREADS_NDITER(iter);
         NPY_EINSUM_DBG_PRINT("Einsum loop\n");
         do {
             sop(nop, dataptr, stride, *countptr);
-        } while(iternext(iter));
+        } while (!(needs_api && PyErr_Occurred()) && iternext(iter));
         NPY_END_THREADS;
 
         /* If the API was needed, it may have thrown an error */
