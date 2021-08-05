@@ -26,18 +26,9 @@ from numpy.compat import (
     )
 
 
-@set_module('numpy')
-def loads(*args, **kwargs):
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.loads is deprecated, use pickle.loads instead",
-        DeprecationWarning, stacklevel=2)
-    return pickle.loads(*args, **kwargs)
-
-
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-    'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+    'recfromtxt', 'recfromcsv', 'load', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
     ]
 
