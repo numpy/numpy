@@ -984,6 +984,28 @@ class TestLoadTxt(LoadTxtBase):
             res = np.loadtxt(c, dtype=dt)
             assert_equal(res, tgt, err_msg="%s" % dt)
 
+    def test_default_float_converter_no_default_hex_conversion(self):
+        """
+        Ensure that fromhex is only used for values with the correct prefix and
+        is not called by default. Regression test related to gh-19598.
+        """
+        c = TextIO("a b c")
+        with pytest.raises(
+            ValueError, match="could not convert string to float"
+        ):
+            np.loadtxt(c)
+
+    def test_default_float_converter_exception(self):
+        """
+        Ensure that the exception message raised during failed floating point
+        conversion is correct. Regression test related to gh-19598.
+        """
+        c = TextIO("qrs tuv")  # Invalid values for default float converter
+        with pytest.raises(
+            ValueError, match="could not convert string to float"
+        ):
+            np.loadtxt(c)
+
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
         c = TextIO()

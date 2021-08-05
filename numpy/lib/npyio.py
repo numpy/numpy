@@ -732,10 +732,15 @@ def _getconv(dtype):
     """ Find the correct dtype converter. Adapted from matplotlib """
 
     def floatconv(x):
-        x.lower()
-        if '0x' in x:
-            return float.fromhex(x)
-        return float(x)
+        try:
+            return float(x)  # The fastest path.
+        except ValueError:
+            if '0x' in x:  # Don't accidentally convert "a" ("0xa") to 10.
+                try:
+                    return float.fromhex(x)
+                except ValueError:
+                    pass
+            raise  # Raise the original exception, which makes more sense.
 
     typ = dtype.type
     if issubclass(typ, np.bool_):
