@@ -2503,17 +2503,6 @@ class TestPathUsage:
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
 
-    def test_ndfromtxt(self):
-        # Test outputting a standard ndarray
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1 2\n3 4')
-
-            control = np.array([[1, 2], [3, 4]], dtype=int)
-            test = np.genfromtxt(path, dtype=int)
-            assert_array_equal(test, control)
-
     def test_mafromtxt(self):
         # From `test_fancy_dtype_alt` above
         with temppath(suffix='.txt') as path:

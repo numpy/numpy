@@ -27,7 +27,7 @@ from numpy.compat import (
 
 
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
+    'savetxt', 'loadtxt', 'genfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
     ]
@@ -2299,34 +2299,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 _genfromtxt_with_like = array_function_dispatch(
     _genfromtxt_dispatcher
 )(genfromtxt)
-
-
-def ndfromtxt(fname, **kwargs):
-    """
-    Load ASCII data stored in a file and return it as a single array.
-
-    .. deprecated:: 1.17
-        ndfromtxt` is a deprecated alias of `genfromtxt` which
-        overwrites the ``usemask`` argument with `False` even when
-        explicitly called as ``ndfromtxt(..., usemask=True)``.
-        Use `genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function.
-
-    """
-    kwargs['usemask'] = False
-    # Numpy 1.17
-    warnings.warn(
-        "np.ndfromtxt is a deprecated alias of np.genfromtxt, "
-        "prefer the latter.",
-        DeprecationWarning, stacklevel=2)
-    return genfromtxt(fname, **kwargs)
 
 
 def mafromtxt(fname, **kwargs):
