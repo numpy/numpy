@@ -1007,7 +1007,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 continue
             if usecols:
                 vals = [vals[j] for j in usecols]
-            if len(vals) != N:
+            if len(vals) != ncols:
                 line_num = i + skiprows + 1
                 raise ValueError("Wrong number of columns at line %d"
                                  % line_num)
@@ -1107,22 +1107,19 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         for i in range(skiprows):
             next(fh)
 
-        # Read until we find a line with some values, and use
-        # it to estimate the number of columns, N.
-        first_vals = None
-        try:
-            while not first_vals:
-                first_line = next(fh)
-                first_vals = split_line(first_line)
-        except StopIteration:
-            # End of lines reached
+        # Read until we find a line with some values, and use it to determine
+        # the need for decoding and estimate the number of columns.
+        for first_line in fh:
+            ncols = len(usecols or split_line(first_line))
+            if ncols:
+                break
+        else:  # End of lines reached
             first_line = ''
-            first_vals = []
+            ncols = len(usecols or [])
             warnings.warn('loadtxt: Empty input file: "%s"' % fname,
                           stacklevel=2)
-        N = len(usecols or first_vals)
 
-        # Now that we know N, create the default converters list, and
+        # Now that we know ncols, create the default converters list, and
         # set packing, if necessary.
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
@@ -1131,8 +1128,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             # All fields have the same dtype; use specialized packers which are
             # much faster than those using _loadtxt_pack_items.
-            converters = [defconv for i in range(N)]
-            if N == 1:
+            converters = [defconv for i in range(ncols)]
+            if ncols == 1:
                 packer = itemgetter(0)
             else:
                 def packer(row): return row
