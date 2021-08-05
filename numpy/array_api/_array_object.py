@@ -19,13 +19,16 @@ import operator
 from enum import IntEnum
 from ._creation_functions import asarray
 from ._dtypes import (_all_dtypes, _boolean_dtypes, _integer_dtypes,
-                      _integer_or_boolean_dtypes, _floating_dtypes, _numeric_dtypes)
+                      _integer_or_boolean_dtypes, _floating_dtypes,
+                      _numeric_dtypes, _result_type, _dtype_categories)
 
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 if TYPE_CHECKING:
     from ._typing import PyCapsule, Device, Dtype
 
 import numpy as np
+
+from numpy import array_api
 
 class Array:
     """
@@ -98,7 +101,6 @@ class Array:
             if other is NotImplemented:
                 return other
         """
-        from ._dtypes import _result_type, _dtype_categories
 
         if self.dtype not in _dtype_categories[dtype_category]:
             raise TypeError(f'Only {dtype_category} dtypes are allowed in {op}')
@@ -338,7 +340,6 @@ class Array:
     def __array_namespace__(self: Array, /, *, api_version: Optional[str] = None) -> object:
         if api_version is not None and not api_version.startswith('2021.'):
             raise ValueError(f"Unrecognized array API version: {api_version!r}")
-        from numpy import array_api
         return array_api
 
     def __bool__(self: Array, /) -> bool:
