@@ -115,6 +115,12 @@ Still TODO in this module are:
 
 """
 
+import sys
+# numpy.array_api is 3.8+ because it makes extensive use of positional-only
+# arguments.
+if sys.version_info < (3, 8):
+    raise ImportError("The numpy.array_api submodule requires Python 3.8 or greater.")
+
 import warnings
 warnings.warn("The numpy.array_api submodule is still experimental. See NEP 47.",
               stacklevel=2)
