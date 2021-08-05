@@ -14,10 +14,11 @@ def concat(arrays: Union[Tuple[Array, ...], List[Array]], /, *, axis: Optional[i
 
     See its docstring for more information.
     """
+    # Note: Casting rules here are different from the np.concatenate default
+    # (no for scalars with axis=None, no cross-kind casting)
+    dtype = result_type(*arrays)
     arrays = tuple(a._array for a in arrays)
-    # Call result type here just to raise on disallowed type combinations
-    result_type(*arrays)
-    return Array._new(np.concatenate(arrays, axis=axis))
+    return Array._new(np.concatenate(arrays, axis=axis, dtype=dtype))
 
 def expand_dims(x: Array, /, *, axis: int) -> Array:
     """
@@ -65,7 +66,7 @@ def stack(arrays: Union[Tuple[Array, ...], List[Array]], /, *, axis: int = 0) ->
 
     See its docstring for more information.
     """
-    arrays = tuple(a._array for a in arrays)
     # Call result type here just to raise on disallowed type combinations
     result_type(*arrays)
+    arrays = tuple(a._array for a in arrays)
     return Array._new(np.stack(arrays, axis=axis))
