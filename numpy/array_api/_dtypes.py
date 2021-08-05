@@ -23,6 +23,16 @@ _integer_dtypes = (int8, int16, int32, int64, uint8, uint16, uint32, uint64)
 _integer_or_boolean_dtypes = (bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64)
 _numeric_dtypes = (float32, float64, int8, int16, int32, int64, uint8, uint16, uint32, uint64)
 
+_dtype_categories = {
+    'all': _all_dtypes,
+    'numeric': _numeric_dtypes,
+    'integer': _integer_dtypes,
+    'integer or boolean': _integer_or_boolean_dtypes,
+    'boolean': _boolean_dtypes,
+    'floating-point': _floating_dtypes,
+}
+
+
 # Note: the spec defines a restricted type promotion table compared to NumPy.
 # In particular, cross-kind promotions like integer + float or boolean +
 # integer are not allowed, even for functions that accept both kinds.

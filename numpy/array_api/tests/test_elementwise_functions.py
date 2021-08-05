@@ -4,9 +4,8 @@ from numpy.testing import assert_raises
 
 from .. import asarray, _elementwise_functions
 from .._elementwise_functions import bitwise_left_shift, bitwise_right_shift
-from .._dtypes import (_all_dtypes, _boolean_dtypes, _floating_dtypes,
-                       _integer_dtypes, _integer_or_boolean_dtypes,
-                       _numeric_dtypes)
+from .._dtypes import (_dtype_categories, _boolean_dtypes, _floating_dtypes,
+                       _integer_dtypes)
 
 def nargs(func):
     return len(getfullargspec(func).args)
@@ -75,15 +74,6 @@ def test_function_types():
         'trunc': 'numeric',
     }
 
-    _dtypes = {
-        'all': _all_dtypes,
-        'numeric': _numeric_dtypes,
-        'integer': _integer_dtypes,
-        'integer_or_boolean': _integer_or_boolean_dtypes,
-        'boolean': _boolean_dtypes,
-        'floating': _floating_dtypes,
-    }
-
     def _array_vals():
         for d in _integer_dtypes:
             yield asarray(1, dtype=d)
@@ -94,7 +84,7 @@ def test_function_types():
 
     for x in _array_vals():
         for func_name, types in elementwise_function_input_types.items():
-            dtypes = _dtypes[types]
+            dtypes = _dtype_categories[types]
             func = getattr(_elementwise_functions, func_name)
             if nargs(func) == 2:
                 for y in _array_vals():
