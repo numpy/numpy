@@ -13,7 +13,6 @@ def argmax(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
 
     See its docstring for more information.
     """
-    # Note: this currently fails as np.argmax does not implement keepdims
     return Array._new(np.asarray(np.argmax(x._array, axis=axis, keepdims=keepdims)))
 
 def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -> Array:
@@ -22,7 +21,6 @@ def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
 
     See its docstring for more information.
     """
-    # Note: this currently fails as np.argmin does not implement keepdims
     return Array._new(np.asarray(np.argmin(x._array, axis=axis, keepdims=keepdims)))
 
 def nonzero(x: Array, /) -> Tuple[Array, ...]:
