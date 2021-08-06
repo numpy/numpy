@@ -144,12 +144,18 @@ class PytestTester:
             # so fetch module for suppression here.
             from numpy.distutils import cpuinfo
 
-            # Ignore the warning from importing the array_api submodule. This
-            # warning is done on import, so it would break pytest collection,
-            # but importing it early here prevents the warning from being
-            # issued when it imported again.
-            warnings.simplefilter("ignore")
-            import numpy.array_api
+            if sys.version_info >= (3, 8):
+                # Ignore the warning from importing the array_api submodule. This
+                # warning is done on import, so it would break pytest collection,
+                # but importing it early here prevents the warning from being
+                # issued when it imported again.
+                warnings.simplefilter("ignore")
+                import numpy.array_api
+            else:
+                # The array_api submodule is Python 3.8+ only due to the use
+                # of positional-only argument syntax. We have to ignore it
+                # completely or the tests will fail at the collection stage.
+                pytest_args += ['--ignore-glob=numpy/array_api/*']
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.
