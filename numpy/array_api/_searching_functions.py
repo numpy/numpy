@@ -29,7 +29,7 @@ def nonzero(x: Array, /) -> Tuple[Array, ...]:
 
     See its docstring for more information.
     """
-    return Array._new(np.nonzero(x._array))
+    return tuple(Array._new(i) for i in np.nonzero(x._array))
 
 def where(condition: Array, x1: Array, x2: Array, /) -> Array:
     """
