@@ -1142,13 +1142,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     continue
             if byte_converters:
                 # converters may use decode to workaround numpy's old
-                # behaviour, so encode the string again before passing to
-                # the user converter
-                def tobytes_first(x, conv):
-                    if type(x) is bytes:
-                        return conv(x)
+                # behaviour, so encode the string again (converters are only
+                # called with strings) before passing to the user converter.
+                def tobytes_first(conv, x):
                     return conv(x.encode("latin1"))
-                converters[i] = functools.partial(tobytes_first, conv=conv)
+                converters[i] = functools.partial(tobytes_first, conv)
             else:
                 converters[i] = conv
 
