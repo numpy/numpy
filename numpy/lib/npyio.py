@@ -26,18 +26,9 @@ from numpy.compat import (
     )
 
 
-@set_module('numpy')
-def loads(*args, **kwargs):
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.loads is deprecated, use pickle.loads instead",
-        DeprecationWarning, stacklevel=2)
-    return pickle.loads(*args, **kwargs)
-
-
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-    'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+    'savetxt', 'loadtxt', 'genfromtxt',
+    'recfromtxt', 'recfromcsv', 'load', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
     ]
 
@@ -2311,62 +2302,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 _genfromtxt_with_like = array_function_dispatch(
     _genfromtxt_dispatcher
 )(genfromtxt)
-
-
-def ndfromtxt(fname, **kwargs):
-    """
-    Load ASCII data stored in a file and return it as a single array.
-
-    .. deprecated:: 1.17
-        ndfromtxt` is a deprecated alias of `genfromtxt` which
-        overwrites the ``usemask`` argument with `False` even when
-        explicitly called as ``ndfromtxt(..., usemask=True)``.
-        Use `genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function.
-
-    """
-    kwargs['usemask'] = False
-    # Numpy 1.17
-    warnings.warn(
-        "np.ndfromtxt is a deprecated alias of np.genfromtxt, "
-        "prefer the latter.",
-        DeprecationWarning, stacklevel=2)
-    return genfromtxt(fname, **kwargs)
-
-
-def mafromtxt(fname, **kwargs):
-    """
-    Load ASCII data stored in a text file and return a masked array.
-
-    .. deprecated:: 1.17
-        np.mafromtxt is a deprecated alias of `genfromtxt` which
-        overwrites the ``usemask`` argument with `True` even when
-        explicitly called as ``mafromtxt(..., usemask=False)``.
-        Use `genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function to load ASCII data.
-
-    """
-    kwargs['usemask'] = True
-    # Numpy 1.17
-    warnings.warn(
-        "np.mafromtxt is a deprecated alias of np.genfromtxt, "
-        "prefer the latter.",
-        DeprecationWarning, stacklevel=2)
-    return genfromtxt(fname, **kwargs)
 
 
 def recfromtxt(fname, **kwargs):

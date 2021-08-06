@@ -1,0 +1,8 @@
+Expired deprecations for ``loads``, ``ndfromtxt``, and ``mafromtxt`` in npyio
+-----------------------------------------------------------------------------
+
+``numpy.loads`` was deprecated in v1.15, with the recommendation that users
+use `pickle.loads` instead.
+``ndfromtxt`` and ``mafromtxt`` were both deprecated in v1.17 - users should
+use `numpy.genfromtxt` instead with the appropriate value for the
+``usemask`` parameter.
