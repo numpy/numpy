@@ -2226,6 +2226,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `equal` but not `array_equal`.
 
     `allclose` is not defined for non-numeric data types.
+    `bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------
@@ -2306,8 +2307,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `atol` should be carefully selected for the use case at hand. A zero value
     for `atol` will result in `False` if either `a` or `b` is zero.
 
-    `isclose` is not defined for non-numeric data types, however 
-     it accepts boolean tensors.
+    `isclose` is not defined for non-numeric data types.
+    `bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------
