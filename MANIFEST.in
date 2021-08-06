@@ -12,6 +12,9 @@ exclude LICENSES_bundled.txt
 exclude .*
 exclude azure-*.yml
 
+# Include coveragerc for runtests.py
+include .coveragerc
+
 # Sub-directories. Included are: numpy/, doc/, benchmarks/, tools/
 include numpy/_version.py
 recursive-include numpy/random *.pyx *.pxd *.pyx.in *.pxd.in
