@@ -1,6 +1,10 @@
 from typing import Any, List
 
+from numpy._pytesttester import PytestTester
+
 __all__: List[str]
+__path__: List[str]
+test: PytestTester
 
 def fft(a, n=..., axis=..., norm=...): ...
 def ifft(a, n=..., axis=..., norm=...): ...

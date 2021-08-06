@@ -4444,6 +4444,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
+    {"_get_sfloat_dtype",
+        get_sfloat_dtype, METH_NOARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
     {"_reload_guard", (PyCFunction)_reload_guard,
@@ -4620,16 +4622,9 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
@@ -4638,27 +4633,35 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
-    npy_ma_str_array = PyUnicode_InternFromString("__array__");
-    npy_ma_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
     npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
+    if (npy_ma_str_array_wrap == NULL) {
+        return -1;
+    }
     npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__");
-    npy_ma_str_ufunc = PyUnicode_InternFromString("__array_ufunc__");
+    if (npy_ma_str_array_finalize == NULL) {
+        return -1;
+    }
     npy_ma_str_implementation = PyUnicode_InternFromString("_implementation");
-    npy_ma_str_order = PyUnicode_InternFromString("order");
-    npy_ma_str_copy = PyUnicode_InternFromString("copy");
-    npy_ma_str_dtype = PyUnicode_InternFromString("dtype");
-    npy_ma_str_ndmin = PyUnicode_InternFromString("ndmin");
+    if (npy_ma_str_implementation == NULL) {
+        return -1;
+    }
     npy_ma_str_axis1 = PyUnicode_InternFromString("axis1");
+    if (npy_ma_str_axis1 == NULL) {
+        return -1;
+    }
     npy_ma_str_axis2 = PyUnicode_InternFromString("axis2");
+    if (npy_ma_str_axis2 == NULL) {
+        return -1;
+    }
     npy_ma_str_like = PyUnicode_InternFromString("like");
+    if (npy_ma_str_like == NULL) {
+        return -1;
+    }
     npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
-
-    return npy_ma_str_array && npy_ma_str_array_prepare &&
-           npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
-           npy_ma_str_ufunc && npy_ma_str_implementation &&
-           npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
-           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2 &&
-           npy_ma_str_like && npy_ma_str_numpy;
+    if (npy_ma_str_numpy == NULL) {
+        return -1;
+    }
+    return 0;
 }
 
 static struct PyModuleDef moduledef = {
@@ -4715,15 +4718,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    /* Load the ufunc operators into the array module's namespace */
-    if (InitOperators(d) < 0) {
-        goto err;
-    }
-
-    if (set_matmul_flags(d) < 0) {
-        goto err;
-    }
-
     PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
     if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
         goto err;
@@ -4737,6 +4731,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     initialize_casting_tables();
     initialize_numeric_types();
+
     if (initscalarmath(m) < 0) {
         goto err;
     }
@@ -4747,6 +4742,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (setup_scalartypes(d) < 0) {
         goto err;
     }
+
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
     NpyIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
@@ -4890,7 +4886,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    if (!intern_strings()) {
+    if (intern_strings() < 0) {
         goto err;
     }
 
@@ -4908,6 +4904,15 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (PyArray_InitializeCasts() < 0) {
+        goto err;
+    }
+
+    /* Load the ufunc operators into the array module's namespace */
+    if (InitOperators(d) < 0) {
+        goto err;
+    }
+
+    if (set_matmul_flags(d) < 0) {
         goto err;
     }
 

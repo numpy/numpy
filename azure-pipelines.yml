@@ -18,25 +18,6 @@ stages:
 - stage: InitialTests
   jobs:
 
-  - job: Lint
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-    pool:
-      vmImage: 'ubuntu-18.04'
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.8'
-        addToPath: true
-        architecture: 'x64'
-    - script: >-
-        python -m pip install -r linter_requirements.txt
-      displayName: 'Install tools'
-      # pip 21.1 emits a pile of garbage messages to annoy users :)
-      #      failOnStderr: true
-    - script: |
-        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
-      displayName: 'Run Lint Checks'
-      failOnStderr: true
   # Native build is based on gcc flag `-march=native`
   - job: Linux_baseline_native
     pool:
@@ -66,6 +47,25 @@ stages:
 - stage: ComprehensiveTests
   jobs:
 
+  - job: Lint
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+        addToPath: true
+        architecture: 'x64'
+    - script: >-
+        python -m pip install -r linter_requirements.txt
+      displayName: 'Install tools'
+      # pip 21.1 emits a pile of garbage messages to annoy users :)
+      #      failOnStderr: true
+    - script: |
+        python tools/linter.py --branch origin/$(System.PullRequest.TargetBranch)
+      displayName: 'Run Lint Checks'
+      failOnStderr: true
 
   - job: WindowsFast
     pool:
@@ -73,7 +73,7 @@ stages:
     strategy:
       matrix:
           Python37-32bit-fast:
-            PYTHON_VERSION: '3.7'
+            PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x86'
             TEST_MODE: fast
             BITS: 32
@@ -86,7 +86,7 @@ stages:
     steps:
     - script: |
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
-            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686:2021-02-28-1f32361 \
+            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
             /bin/bash -xc "cd numpy && \
             /opt/python/cp38-cp38/bin/python -mvenv venv &&\
             source venv/bin/activate && \
@@ -120,11 +120,11 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python37:
-            PYTHON_VERSION: '3.7'
+          Python38:
+            PYTHON_VERSION: '3.8'
             USE_OPENBLAS: '1'
-          Python37-ILP64:
-            PYTHON_VERSION: '3.7'
+          Python38-ILP64:
+            PYTHON_VERSION: '3.8'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
@@ -232,7 +232,7 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.7 64-bit full Mac OS'
+        testRunTitle: 'Publish test results for Python 3.8 64-bit full Mac OS'
 
 
   - job: Windows
@@ -273,7 +273,7 @@ stages:
             TEST_MODE: full
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
-            OPENBLAS_SUFFIX: '64_'
+
     steps:
     - template: azure-steps-windows.yml
 
@@ -305,4 +305,31 @@ stages:
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for gcc 4.8'
 
+  - job: Linux_conda
+    pool:
+      vmImage: 'ubuntu-20.04'
+    steps:
+    - script: |
+            # create and activate conda environment
+            conda env create -f environment.yml
+      displayName: 'Create conda environment.'
+    - script: |
+            # >>> conda initialize >>>
+            # !! Contents within this block are 'conda init' !!
+            # see https://github.com/conda/conda/issues/7980
+            __conda_setup="$('conda' 'shell.bash' 'hook' 2> /dev/null)"
+            eval "$__conda_setup"
+            unset __conda_setup
+            # <<< conda initialize <<<
+            conda activate numpy-dev
+            # Run native baseline Build / Tests
+            python runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run native baseline Build / Tests in conda.'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for conda installation'
 

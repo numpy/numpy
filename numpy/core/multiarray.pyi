@@ -80,9 +80,9 @@ from numpy.typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, Final, Literal as L
+    from typing import SupportsIndex, final, Final, Literal as L
 else:
-    from typing_extensions import SupportsIndex, Final, Literal as L
+    from typing_extensions import SupportsIndex, final, Final, Literal as L
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
@@ -949,6 +949,58 @@ def compare_chararrays(
 ) -> NDArray[bool_]: ...
 
 def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
+
+_GetItemKeys = L[
+    "C", "CONTIGUOUS", "C_CONTIGUOUS",
+    "F", "FORTRAN", "F_CONTIGUOUS",
+    "W", "WRITEABLE",
+    "B", "BEHAVED",
+    "O", "OWNDATA",
+    "A", "ALIGNED",
+    "X", "WRITEBACKIFCOPY",
+    "CA", "CARRAY",
+    "FA", "FARRAY",
+    "FNC",
+    "FORC",
+]
+_SetItemKeys = L[
+    "A", "ALIGNED",
+    "W", "WRITABLE",
+    "X", "WRITEBACKIFCOPY",
+]
+
+@final
+class flagsobj:
+    __hash__: None  # type: ignore[assignment]
+    aligned: bool
+    # NOTE: deprecated
+    # updateifcopy: bool
+    writeable: bool
+    writebackifcopy: bool
+    @property
+    def behaved(self) -> bool: ...
+    @property
+    def c_contiguous(self) -> bool: ...
+    @property
+    def carray(self) -> bool: ...
+    @property
+    def contiguous(self) -> bool: ...
+    @property
+    def f_contiguous(self) -> bool: ...
+    @property
+    def farray(self) -> bool: ...
+    @property
+    def fnc(self) -> bool: ...
+    @property
+    def forc(self) -> bool: ...
+    @property
+    def fortran(self) -> bool: ...
+    @property
+    def num(self) -> int: ...
+    @property
+    def owndata(self) -> bool: ...
+    def __getitem__(self, key: _GetItemKeys) -> bool: ...
+    def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
 
 class CopyMode(enum.Enum):
 

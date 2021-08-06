@@ -39,7 +39,6 @@ from numpy.compat import (
     )
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
-from numpy.core._internal import recursive
 
 
 __all__ = [
@@ -1685,6 +1684,16 @@ def make_mask_none(newshape, dtype=None):
     return result
 
 
+def _recursive_mask_or(m1, m2, newmask):
+    names = m1.dtype.names
+    for name in names:
+        current1 = m1[name]
+        if current1.dtype.names is not None:
+            _recursive_mask_or(current1, m2[name], newmask[name])
+        else:
+            umath.logical_or(current1, m2[name], newmask[name])
+
+
 def mask_or(m1, m2, copy=False, shrink=True):
     """
     Combine two masks with the ``logical_or`` operator.
@@ -1721,17 +1730,6 @@ def mask_or(m1, m2, copy=False, shrink=True):
     array([ True,  True,  True, False])
 
     """
-
-    @recursive
-    def _recursive_mask_or(self, m1, m2, newmask):
-        names = m1.dtype.names
-        for name in names:
-            current1 = m1[name]
-            if current1.dtype.names is not None:
-                self(current1, m2[name], newmask[name])
-            else:
-                umath.logical_or(current1, m2[name], newmask[name])
-        return
 
     if (m1 is nomask) or (m1 is False):
         dtype = getattr(m2, 'dtype', MaskType)
@@ -2839,11 +2837,6 @@ class MaskedArray(ndarray):
             _data = ndarray.view(_data, type(data))
         else:
             _data = ndarray.view(_data, cls)
-        # Backwards compatibility w/ numpy.core.ma.
-        if hasattr(data, '_mask') and not isinstance(data, ndarray):
-            _data._mask = data._mask
-            # FIXME _sharedmask is never used.
-            _sharedmask = True
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
@@ -5290,9 +5283,6 @@ class MaskedArray(ndarray):
 
         """
         m = self.mean(axis, dtype)
-        if m is masked:
-            return m
-
         if not axis:
             return self - m
         else:
@@ -5491,7 +5481,8 @@ class MaskedArray(ndarray):
         filled = self.filled(fill_value)
         return filled.argsort(axis=axis, kind=kind, order=order)
 
-    def argmin(self, axis=None, fill_value=None, out=None):
+    def argmin(self, axis=None, fill_value=None, out=None, *,
+                keepdims=np._NoValue):
         """
         Return array of indices to the minimum values along the given axis.
 
@@ -5534,9 +5525,11 @@ class MaskedArray(ndarray):
         if fill_value is None:
             fill_value = minimum_fill_value(self)
         d = self.filled(fill_value).view(ndarray)
-        return d.argmin(axis, out=out)
+        keepdims = False if keepdims is np._NoValue else bool(keepdims)
+        return d.argmin(axis, out=out, keepdims=keepdims)
 
-    def argmax(self, axis=None, fill_value=None, out=None):
+    def argmax(self, axis=None, fill_value=None, out=None, *,
+                keepdims=np._NoValue):
         """
         Returns array of indices of the maximum values along the given axis.
         Masked values are treated as if they had the value fill_value.
@@ -5571,7 +5564,8 @@ class MaskedArray(ndarray):
         if fill_value is None:
             fill_value = maximum_fill_value(self._data)
         d = self.filled(fill_value).view(ndarray)
-        return d.argmax(axis, out=out)
+        keepdims = False if keepdims is np._NoValue else bool(keepdims)
+        return d.argmax(axis, out=out, keepdims=keepdims)
 
     def sort(self, axis=-1, kind=None, order=None,
              endwith=True, fill_value=None):

@@ -2,41 +2,31 @@ from .common import Benchmark
 
 import numpy as np
 
-unary_ufuncs = ['sin',
-              'cos',
-              'exp',
-              'log',
-              'sqrt',
-              'absolute',
-              'reciprocal',
-              'square',
-              'rint',
-              'floor',
-              'ceil' ,
-              'trunc',
-              'frexp',
-              'isnan',
-              'isfinite',
-              'isinf',
-              'signbit']
+UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
+        isinstance(obj, np.ufunc)]
+UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
+UNARY_OBJECT_UFUNCS.remove(getattr(np, 'invert'))
+
 stride = [1, 2, 4]
 stride_out = [1, 2, 4]
 dtype  = ['f', 'd']
 
 class Unary(Benchmark):
-    params = [unary_ufuncs, stride, stride_out, dtype]
+    params = [UNARY_OBJECT_UFUNCS, stride, stride_out, dtype]
     param_names = ['ufunc', 'stride_in', 'stride_out', 'dtype']
     timeout = 10
 
     def setup(self, ufuncname, stride, stride_out, dtype):
         np.seterr(all='ignore')
         try:
-            self.f = getattr(np, ufuncname)
+            self.f = ufuncname
         except AttributeError:
             raise NotImplementedError(f"No ufunc {ufuncname} found") from None
-        N = 10000
-        self.arr = np.ones(stride*N, dtype)
+        N = 100000
         self.arr_out = np.empty(stride_out*N, dtype)
+        self.arr = np.random.rand(stride*N).astype(dtype)
+        if (ufuncname.__name__ == 'arccosh'):
+            self.arr = 1.0 + self.arr
 
     def time_ufunc(self, ufuncname, stride, stride_out, dtype):
         self.f(self.arr[::stride], self.arr_out[::stride_out])

@@ -637,59 +637,65 @@ class TestFloatExceptions:
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
-    def test_floating_exceptions(self):
+    # Test for all real and complex float types
+    @pytest.mark.parametrize("typecode", np.typecodes["AllFloat"])
+    def test_floating_exceptions(self, typecode):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
-            # Test for all real and complex float types
-            for typecode in np.typecodes['AllFloat']:
-                ftype = np.obj2sctype(typecode)
-                if np.dtype(ftype).kind == 'f':
-                    # Get some extreme values for the type
-                    fi = np.finfo(ftype)
-                    ft_tiny = fi.tiny
-                    ft_max = fi.max
-                    ft_eps = fi.eps
-                    underflow = 'underflow'
-                    divbyzero = 'divide by zero'
-                else:
-                    # 'c', complex, corresponding real dtype
-                    rtype = type(ftype(0).real)
-                    fi = np.finfo(rtype)
-                    ft_tiny = ftype(fi.tiny)
-                    ft_max = ftype(fi.max)
-                    ft_eps = ftype(fi.eps)
-                    # The complex types raise different exceptions
-                    underflow = ''
-                    divbyzero = ''
-                overflow = 'overflow'
-                invalid = 'invalid'
+            ftype = np.obj2sctype(typecode)
+            if np.dtype(ftype).kind == 'f':
+                # Get some extreme values for the type
+                fi = np.finfo(ftype)
+                ft_tiny = fi.machar.tiny
+                ft_max = fi.max
+                ft_eps = fi.eps
+                underflow = 'underflow'
+                divbyzero = 'divide by zero'
+            else:
+                # 'c', complex, corresponding real dtype
+                rtype = type(ftype(0).real)
+                fi = np.finfo(rtype)
+                ft_tiny = ftype(fi.machar.tiny)
+                ft_max = ftype(fi.max)
+                ft_eps = ftype(fi.eps)
+                # The complex types raise different exceptions
+                underflow = ''
+                divbyzero = ''
+            overflow = 'overflow'
+            invalid = 'invalid'
 
+            # The value of tiny for double double is NaN, so we need to
+            # pass the assert
+            if not np.isnan(ft_tiny):
                 self.assert_raises_fpe(underflow,
-                                       lambda a, b: a/b, ft_tiny, ft_max)
+                                    lambda a, b: a/b, ft_tiny, ft_max)
                 self.assert_raises_fpe(underflow,
-                                       lambda a, b: a*b, ft_tiny, ft_tiny)
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a*b, ft_max, ftype(2))
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a/b, ft_max, ftype(0.5))
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a+b, ft_max, ft_max*ft_eps)
-                self.assert_raises_fpe(overflow,
-                                       lambda a, b: a-b, -ft_max, ft_max*ft_eps)
-                self.assert_raises_fpe(overflow,
-                                       np.power, ftype(2), ftype(2**fi.nexp))
-                self.assert_raises_fpe(divbyzero,
-                                       lambda a, b: a/b, ftype(1), ftype(0))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a/b, ftype(np.inf), ftype(np.inf))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a/b, ftype(0), ftype(0))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a-b, ftype(np.inf), ftype(np.inf))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a+b, ftype(np.inf), ftype(-np.inf))
-                self.assert_raises_fpe(invalid,
-                                       lambda a, b: a*b, ftype(0), ftype(np.inf))
+                                    lambda a, b: a*b, ft_tiny, ft_tiny)
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a*b, ft_max, ftype(2))
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a/b, ft_max, ftype(0.5))
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a+b, ft_max, ft_max*ft_eps)
+            self.assert_raises_fpe(overflow,
+                                   lambda a, b: a-b, -ft_max, ft_max*ft_eps)
+            self.assert_raises_fpe(overflow,
+                                   np.power, ftype(2), ftype(2**fi.nexp))
+            self.assert_raises_fpe(divbyzero,
+                                   lambda a, b: a/b, ftype(1), ftype(0))
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a/b, ftype(np.inf), ftype(np.inf)
+            )
+            self.assert_raises_fpe(invalid,
+                                   lambda a, b: a/b, ftype(0), ftype(0))
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a-b, ftype(np.inf), ftype(np.inf)
+            )
+            self.assert_raises_fpe(
+                invalid, lambda a, b: a+b, ftype(np.inf), ftype(-np.inf)
+            )
+            self.assert_raises_fpe(invalid,
+                                   lambda a, b: a*b, ftype(0), ftype(np.inf))
 
     def test_warnings(self):
         # test warning code path
@@ -898,7 +904,7 @@ class TestTypes:
             promote_types = np.promote_types
 
         S = string_dtype
-        
+
         # Promote numeric with unsized string:
         assert_equal(promote_types('bool', S), np.dtype(S+'5'))
         assert_equal(promote_types('b', S), np.dtype(S+'4'))
@@ -1724,6 +1730,22 @@ class TestArrayComparisons:
         assert_(not res)
         assert_(type(res) is bool)
 
+    @pytest.mark.parametrize("dtype", ["V0", "V3", "V10"])
+    def test_compare_unstructured_voids(self, dtype):
+        zeros = np.zeros(3, dtype=dtype)
+
+        assert_array_equal(zeros, zeros)
+        assert not (zeros != zeros).any()
+
+        if dtype == "V0":
+            # Can't test != of actually different data
+            return
+
+        nonzeros = np.array([b"1", b"2", b"3"], dtype=dtype)
+
+        assert not (zeros == nonzeros).any()
+        assert (zeros != nonzeros).all()
+
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
@@ -2318,8 +2340,14 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
-    @given(data=st.data(), shape=hynp.array_shapes())
-    def test_clip_property(self, data, shape):
+    @given(
+        data=st.data(),
+        arr=hynp.arrays(
+            dtype=hynp.integer_dtypes() | hynp.floating_dtypes(),
+            shape=hynp.array_shapes()
+        )
+    )
+    def test_clip_property(self, data, arr):
         """A property-based test using Hypothesis.
 
         This aims for maximum generality: it could in principle generate *any*
@@ -2335,49 +2363,30 @@ class TestClip:
         That accounts for most of the function; the actual test is just three
         lines to calculate and compare actual vs expected results!
         """
-        # Our base array and bounds should not need to be of the same type as
-        # long as they are all compatible - so we allow any int or float type.
-        dtype_strategy = hynp.integer_dtypes() | hynp.floating_dtypes()
-
-        # The following line is a total hack to disable the varied-dtypes
-        # component of this test, because result != expected if dtypes can vary.
-        dtype_strategy = st.just(data.draw(dtype_strategy))
-
-        # Generate an arbitrary array of the chosen shape and dtype
-        # This is the value that we clip.
-        arr = data.draw(hynp.arrays(dtype=dtype_strategy, shape=shape))
-
+        numeric_dtypes = hynp.integer_dtypes() | hynp.floating_dtypes()
         # Generate shapes for the bounds which can be broadcast with each other
         # and with the base shape.  Below, we might decide to use scalar bounds,
         # but it's clearer to generate these shapes unconditionally in advance.
         in_shapes, result_shape = data.draw(
             hynp.mutually_broadcastable_shapes(
-                num_shapes=2,
-                base_shape=shape,
-                # Commenting out the min_dims line allows zero-dimensional arrays,
-                # and zero-dimensional arrays containing NaN make the test fail.
-                min_dims=1
-  
+                num_shapes=2, base_shape=arr.shape
             )
         )
-        amin = data.draw(
-            dtype_strategy.flatmap(hynp.from_dtype)
-            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[0])
-        )
-        amax = data.draw(
-            dtype_strategy.flatmap(hynp.from_dtype)
-            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[1])
-        )
-        # If we allow either bound to be a scalar `nan`, the test will fail -
-        # so we just "assume" that away (if it is, this raises a special
-        # exception and Hypothesis will try again with different inputs)
-        assume(not np.isscalar(amin) or not np.isnan(amin))
-        assume(not np.isscalar(amax) or not np.isnan(amax))
+        # Scalar `nan` is deprecated due to the differing behaviour it shows.
+        s = numeric_dtypes.flatmap(
+            lambda x: hynp.from_dtype(x, allow_nan=False))
+        amin = data.draw(s | hynp.arrays(dtype=numeric_dtypes,
+            shape=in_shapes[0], elements={"allow_nan": False}))
+        amax = data.draw(s | hynp.arrays(dtype=numeric_dtypes,
+            shape=in_shapes[1], elements={"allow_nan": False}))
 
         # Then calculate our result and expected result and check that they're
-        # equal!  See gh-12519 for discussion deciding on this property.
+        # equal!  See gh-12519 and gh-19457 for discussion deciding on this 
+        # property and the result_type argument.
         result = np.clip(arr, amin, amax)
-        expected = np.minimum(amax, np.maximum(arr, amin))
+        t = np.result_type(arr, amin, amax)
+        expected = np.minimum(amax, np.maximum(arr, amin, dtype=t), dtype=t)
+        assert result.dtype == t
         assert_array_equal(result, expected)
 
 

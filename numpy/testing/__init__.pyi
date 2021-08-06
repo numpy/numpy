@@ -1,5 +1,7 @@
 from typing import List
 
+from numpy._pytesttester import PytestTester
+
 from unittest import (
     TestCase as TestCase,
 )
@@ -37,6 +39,7 @@ from numpy.testing._private.utils import (
     temppath as temppath,
     tempdir as tempdir,
     IS_PYPY as IS_PYPY,
+    IS_PYSTON as IS_PYSTON,
     HAS_REFCOUNT as HAS_REFCOUNT,
     suppress_warnings as suppress_warnings,
     assert_array_compare as assert_array_compare,
@@ -46,6 +49,8 @@ from numpy.testing._private.utils import (
 )
 
 __all__: List[str]
+__path__: List[str]
+test: PytestTester
 
 def run_module_suite(
     file_to_run: None | str = ...,

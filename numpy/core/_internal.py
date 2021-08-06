@@ -324,10 +324,10 @@ class _ctypes:
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
         the basetype is the C-integer corresponding to ``dtype('p')`` on this
-        platform. This base-type could be `ctypes.c_int`, `ctypes.c_long`, or
-        `ctypes.c_longlong` depending on the platform.
-        The c_intp type is defined accordingly in `numpy.ctypeslib`.
-        The ctypes array contains the shape of the underlying array.
+        platform (see `~numpy.ctypeslib.c_intp`). This base-type could be
+        `ctypes.c_int`, `ctypes.c_long`, or `ctypes.c_longlong` depending on
+        the platform. The ctypes array contains the shape of
+        the underlying array.
         """
         return self.shape_as(_getintp_ctype())
 
@@ -876,35 +876,3 @@ def npy_ctypes_check(cls):
         return '_ctypes' in ctype_base.__module__
     except Exception:
         return False
-
-
-class recursive:
-    '''
-    A decorator class for recursive nested functions.
-    Naive recursive nested functions hold a reference to themselves:
-
-    def outer(*args):
-        def stringify_leaky(arg0, *arg1):
-            if len(arg1) > 0:
-                return stringify_leaky(*arg1)  # <- HERE
-            return str(arg0)
-        stringify_leaky(*args)
-
-    This design pattern creates a reference cycle that is difficult for a
-    garbage collector to resolve. The decorator class prevents the
-    cycle by passing the nested function in as an argument `self`:
-
-    def outer(*args):
-        @recursive
-        def stringify(self, arg0, *arg1):
-            if len(arg1) > 0:
-                return self(*arg1)
-            return str(arg0)
-        stringify(*args)
-
-    '''
-    def __init__(self, func):
-        self.func = func
-    def __call__(self, *args, **kwargs):
-        return self.func(self, *args, **kwargs)
-

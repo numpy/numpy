@@ -796,6 +796,8 @@ add_newdoc('numpy.core.multiarray', 'array',
     object : array_like
         An array, any object exposing the array interface, an object whose
         __array__ method returns an array, or any (nested) sequence.
+        If object is a scalar, a 0-dimensional array containing object is 
+        returned.
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
         be determined as the minimum type required to hold the objects in the
@@ -1585,8 +1587,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     For integer arguments the function is equivalent to the Python built-in
     `range` function, but returns an ndarray rather than a list.
 
-    When using a non-integer step, such as 0.1, the results will often not
-    be consistent.  It is better to use `numpy.linspace` for these cases.
+    When using a non-integer step, such as 0.1, it is often better to use
+    `numpy.linspace`. See the warnings section below for more information.
 
     Parameters
     ----------
@@ -1618,6 +1620,25 @@ add_newdoc('numpy.core.multiarray', 'arange',
         ``ceil((stop - start)/step)``.  Because of floating point overflow,
         this rule may result in the last element of `out` being greater
         than `stop`.
+
+    Warnings
+    --------
+    The length of the output might not be numerically stable.
+
+    Another stability issue is due to the internal implementation of
+    `numpy.arange`.
+    The actual step value used to populate the array is
+    ``dtype(start + step) - dtype(start)`` and not `step`. Precision loss
+    can occur here, due to casting or due to using floating points when
+    `start` is much larger than `step`. This can lead to unexpected
+    behaviour. For example::
+
+      >>> np.arange(0, 5, 0.5, dtype=int)
+      array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+      >>> np.arange(-3, 3, 0.5, dtype=int)
+      array([-3, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
+
+    In such cases, the use of `numpy.linspace` should be preferred.
 
     See Also
     --------
@@ -2752,13 +2773,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_prepare__',
-    """a.__array_prepare__(obj) -> Object of same type as ndarray object obj.
+    """a.__array_prepare__(array[, context], /)
+
+    Returns a view of `array` with the same type as self.
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
-    """a.__array_wrap__(obj) -> Object of same type as ndarray object a.
+    """a.__array_wrap__(array[, context], /)
+
+    Returns a view of `array` with the same type as self.
 
     """))
 
@@ -3202,33 +3227,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('dot',
-    """
-    a.dot(b, out=None)
-
-    Dot product of two arrays.
-
-    Refer to `numpy.dot` for full documentation.
-
-    See Also
-    --------
-    numpy.dot : equivalent function
-
-    Examples
-    --------
-    >>> a = np.eye(2)
-    >>> b = np.ones((2, 2)) * 2
-    >>> a.dot(b)
-    array([[2.,  2.],
-           [2.,  2.]])
-
-    This array method can be conveniently chained:
-
-    >>> a.dot(b).dot(b)
-    array([[8.,  8.],
-           [8.,  8.]])
-
-    """))
+add_newdoc('numpy.core.multiarray', 'ndarray', ('dot'))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',

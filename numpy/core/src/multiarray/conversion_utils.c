@@ -1267,11 +1267,7 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
         goto fail;
     }
     for (i = 0; i < len; i++) {
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-        PyObject *o = PyLong_FromLong((long) vals[i]);
-#else
-        PyObject *o = PyLong_FromLongLong((npy_longlong) vals[i]);
-#endif
+        PyObject *o = PyArray_PyIntFromIntp(vals[i]);
         if (!o) {
             Py_DECREF(intTuple);
             intTuple = NULL;

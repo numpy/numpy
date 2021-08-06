@@ -45,19 +45,19 @@
 
 #ifdef SIMD_AVX2_FMA3
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_get_full_load_mask_ps(void)
 {
     return _mm256_set1_ps(-1.0);
 }
 
-static NPY_INLINE __m256i
+NPY_FINLINE __m256i
 fma_get_full_load_mask_pd(void)
 {
     return _mm256_castpd_si256(_mm256_set1_pd(-1.0));
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_get_partial_load_mask_ps(const npy_int num_elem, const npy_int num_lanes)
 {
     float maskint[16] = {-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,
@@ -66,7 +66,7 @@ fma_get_partial_load_mask_ps(const npy_int num_elem, const npy_int num_lanes)
     return _mm256_loadu_ps(addr);
 }
 
-static NPY_INLINE __m256i
+NPY_FINLINE __m256i
 fma_get_partial_load_mask_pd(const npy_int num_elem, const npy_int num_lanes)
 {
     npy_int maskint[16] = {-1,-1,-1,-1,-1,-1,-1,-1,1,1,1,1,1,1,1,1};
@@ -74,7 +74,7 @@ fma_get_partial_load_mask_pd(const npy_int num_elem, const npy_int num_lanes)
     return _mm256_loadu_si256((__m256i*) addr);
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_masked_gather_ps(__m256 src,
                      npy_float* addr,
                      __m256i vindex,
@@ -83,7 +83,7 @@ fma_masked_gather_ps(__m256 src,
     return _mm256_mask_i32gather_ps(src, addr, vindex, mask, 4);
 }
 
-static NPY_INLINE __m256d
+NPY_FINLINE __m256d
 fma_masked_gather_pd(__m256d src,
                      npy_double* addr,
                      __m128i vindex,
@@ -92,49 +92,49 @@ fma_masked_gather_pd(__m256d src,
     return _mm256_mask_i32gather_pd(src, addr, vindex, mask, 8);
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_masked_load_ps(__m256 mask, npy_float* addr)
 {
     return _mm256_maskload_ps(addr, _mm256_cvtps_epi32(mask));
 }
 
-static NPY_INLINE __m256d
+NPY_FINLINE __m256d
 fma_masked_load_pd(__m256i mask, npy_double* addr)
 {
     return _mm256_maskload_pd(addr, mask);
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_set_masked_lanes_ps(__m256 x, __m256 val, __m256 mask)
 {
     return _mm256_blendv_ps(x, val, mask);
 }
 
-static NPY_INLINE __m256d
+NPY_FINLINE __m256d
 fma_set_masked_lanes_pd(__m256d x, __m256d val, __m256d mask)
 {
     return _mm256_blendv_pd(x, val, mask);
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_blend(__m256 x, __m256 y, __m256 ymask)
 {
     return _mm256_blendv_ps(x, y, ymask);
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_invert_mask_ps(__m256 ymask)
 {
     return _mm256_andnot_ps(ymask, _mm256_set1_ps(-1.0));
 }
 
-static NPY_INLINE __m256i
+NPY_FINLINE __m256i
 fma_invert_mask_pd(__m256i ymask)
 {
     return _mm256_andnot_si256(ymask, _mm256_set1_epi32(0xFFFFFFFF));
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_get_exponent(__m256 x)
 {
     /*
@@ -149,8 +149,8 @@ fma_get_exponent(__m256 x)
     __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
 
     /*
-     * It is necessary for temp1 to be volatile, a bug in clang optimizes it out which leads
-     * to an overflow warning in some cases. See https://github.com/numpy/numpy/issues/18005
+     * The volatile is probably unnecessary now since we compile clang with
+     * `-ftrapping-math`: https://github.com/numpy/numpy/issues/18005
      */
     volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
     __m256 temp = _mm256_mul_ps(temp1, two_power_100);
@@ -165,7 +165,7 @@ fma_get_exponent(__m256 x)
     return _mm256_blendv_ps(exp, denorm_exp, denormal_mask);
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_get_mantissa(__m256 x)
 {
     /*
@@ -180,8 +180,8 @@ fma_get_mantissa(__m256 x)
     __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
 
     /*
-     * It is necessary for temp1 to be volatile, a bug in clang optimizes it out which leads
-     * to an overflow warning in some cases. See https://github.com/numpy/numpy/issues/18005
+     * The volatile is probably unnecessary now since we compile clang with
+     * `-ftrapping-math`: https://github.com/numpy/numpy/issues/18005
      */
     volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
     __m256 temp = _mm256_mul_ps(temp1, two_power_100);
@@ -195,7 +195,7 @@ fma_get_mantissa(__m256 x)
                         _mm256_castps_si256(x), mantissa_bits), exp_126_bits));
 }
 
-static NPY_INLINE __m256
+NPY_FINLINE __m256
 fma_scalef_ps(__m256 poly, __m256 quadrant)
 {
     /*
@@ -238,31 +238,31 @@ fma_scalef_ps(__m256 poly, __m256 quadrant)
 
 #ifdef SIMD_AVX512F
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
 avx512_get_full_load_mask_ps(void)
 {
     return 0xFFFF;
 }
 
-static NPY_INLINE __mmask8
+NPY_FINLINE __mmask8
 avx512_get_full_load_mask_pd(void)
 {
     return 0xFF;
 }
 
-static NPY_INLINE __mmask16
+NPY_FINLINE __mmask16
 avx512_get_partial_load_mask_ps(const npy_int num_elem, const npy_int total_elem)
 {
     return (0x0001 << num_elem) - 0x0001;
 }
 
-static NPY_INLINE __mmask8
+NPY_FINLINE __mmask8
 avx512_get_partial_load_mask_pd(const npy_int num_elem, const npy_int total_elem)
 {
     return (0x01 << num_elem) - 0x01;
 }
 
-static NPY_INLINE __m512
+NPY_FINLINE __m512
 avx512_masked_gather_ps(__m512 src,
                         npy_float* addr,
                         __m512i vindex,
@@ -271,7 +271,7 @@ avx512_masked_gather_ps(__m512 src,
     return _mm512_mask_i32gather_ps(src, kmask, vindex, addr, 4);
 }
 
-static NPY_INLINE __m512d
+NPY_FINLINE __m512d
 avx512_masked_gather_pd(__m512d src,
                         npy_double* addr,
                         __m256i vindex,
@@ -280,67 +280,67 @@ avx512_masked_gather_pd(__m512d src,
     return _mm512_mask_i32gather_pd(src, kmask, vindex, addr, 8);
 }
 
-static NPY_INLINE __m512
+NPY_FINLINE __m512
 avx512_masked_load_ps(__mmask16 mask, npy_float* addr)
 {
     return _mm512_maskz_loadu_ps(mask, (__m512 *)addr);
 }
 
-static NPY_INLINE __m512d
+NPY_FINLINE __m512d
 avx512_masked_load_pd(__mmask8 mask, npy_double* addr)
 {
     return _mm512_maskz_loadu_pd(mask, (__m512d *)addr);
 }
 
-static NPY_INLINE __m512
+NPY_FINLINE __m512
 avx512_set_masked_lanes_ps(__m512 x, __m512 val, __mmask16 mask)
 {
     return _mm512_mask_blend_ps(mask, x, val);
 }
 
-static NPY_INLINE __m512d
+NPY_FINLINE __m512d
 avx512_set_masked_lanes_pd(__m512d x, __m512d val, __mmask8 mask)
 {
     return _mm512_mask_blend_pd(mask, x, val);
 }
 
-static NPY_INLINE __m512
+NPY_FINLINE __m512
 avx512_blend(__m512 x, __m512 y, __mmask16 ymask)
 {
     return _mm512_mask_mov_ps(x, ymask, y);
 }
 
-static NPY_INLINE __mmask16
+NPY_FINLINE __mmask16
 avx512_invert_mask_ps(__mmask16 ymask)
 {
     return _mm512_knot(ymask);
 }
 
-static NPY_INLINE __mmask8
+NPY_FINLINE __mmask8
 avx512_invert_mask_pd(__mmask8 ymask)
 {
     return _mm512_knot(ymask);
 }
 
-static NPY_INLINE __m512
+NPY_FINLINE __m512
 avx512_get_exponent(__m512 x)
 {
     return _mm512_add_ps(_mm512_getexp_ps(x), _mm512_set1_ps(1.0f));
 }
 
-static NPY_INLINE __m512
+NPY_FINLINE __m512
 avx512_get_mantissa(__m512 x)
 {
     return _mm512_getmant_ps(x, _MM_MANT_NORM_p5_1, _MM_MANT_SIGN_src);
 }
 
-static NPY_INLINE __m512
+NPY_FINLINE __m512
 avx512_scalef_ps(__m512 poly, __m512 quadrant)
 {
     return _mm512_scalef_ps(poly, quadrant);
 }
 
-static NPY_INLINE __m512d
+NPY_FINLINE __m512d
 avx512_permute_x4var_pd(__m512d t0,
                         __m512d t1,
                         __m512d t2,
@@ -355,7 +355,7 @@ avx512_permute_x4var_pd(__m512d t0,
     return _mm512_mask_blend_pd(lut_mask, res1, res2);
 }
 
-static NPY_INLINE __m512d
+NPY_FINLINE __m512d
 avx512_permute_x8var_pd(__m512d t0, __m512d t1, __m512d t2, __m512d t3,
                         __m512d t4, __m512d t5, __m512d t6, __m512d t7,
                         __m512i index)
@@ -401,7 +401,7 @@ avx512_permute_x8var_pd(__m512d t0, __m512d t1, __m512d t2, __m512d t3,
  * 3) x* = x - y*c3
  * c1, c2 are exact floating points, c3 = C - c1 - c2 simulates higher precision
  */
-static NPY_INLINE @vtype@
+NPY_FINLINE @vtype@
 simd_range_reduction(@vtype@ x, @vtype@ y, @vtype@ c1, @vtype@ c2, @vtype@ c3)
 {
     @vtype@ reduced_x = @fmadd@(y, c1, x);

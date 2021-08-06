@@ -1,6 +1,8 @@
 import math as math
 from typing import Any, List
 
+from numpy._pytesttester import PytestTester
+
 from numpy import (
     ndenumerate as ndenumerate,
     ndindex as ndindex,
@@ -81,6 +83,12 @@ from numpy.lib.function_base import (
     interp as interp,
     add_newdoc_ufunc as add_newdoc_ufunc,
     quantile as quantile,
+)
+
+from numpy.lib.histograms import (
+    histogram_bin_edges as histogram_bin_edges,
+    histogram as histogram,
+    histogramdd as histogramdd,
 )
 
 from numpy.lib.index_tricks import (
@@ -226,8 +234,13 @@ from numpy.lib.utils import (
     safe_eval as safe_eval,
 )
 
+from numpy.core.multiarray import (
+    tracemalloc_domain as tracemalloc_domain,
+)
+
 __all__: List[str]
+__path__: List[str]
+test: PytestTester
 
 __version__ = version
 emath = scimath
-tracemalloc_domain: int

@@ -1316,7 +1316,6 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
-
 /*
  * Store the information needed for fancy-indexing over an array. The
  * fields are slightly unordered to keep consec, dataptr and subspace
@@ -1888,8 +1887,6 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
     typedef PyArray_DTypeMeta *(common_dtype_function)(
             PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2);
-    typedef PyArray_DTypeMeta *(common_dtype_with_value_function)(
-        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2, PyObject *value);
     typedef PyArray_Descr *(common_instance_function)(
             PyArray_Descr *dtype1, PyArray_Descr *dtyep2);
 
@@ -1912,55 +1909,25 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          * may be a pointer to the *prototype* instance?
          */
         PyArray_Descr *singleton;
-        /*
-         * Is this DType created using the old API? This exists mainly to
-         * allow for assertions in paths specific to wrapping legacy types.
-         */
-        npy_bool legacy;
-        /* The values stored by a parametric datatype depend on its instance */
-        npy_bool parametric;
-        /* whether the DType can be instantiated (i.e. np.dtype cannot) */
-        npy_bool abstract;
+        /* Copy of the legacy DTypes type number, usually invalid. */
+        int type_num;
 
-        /*
-         * The following fields replicate the most important dtype information.
-         * In the legacy implementation most of these are stored in the
-         * PyArray_Descr struct.
-         */
         /* The type object of the scalar instances (may be NULL?) */
         PyTypeObject *scalar_type;
-        /* kind for this type */
-        char kind;
-        /* unique-character representing this type */
-        char type;
-        /* flags describing data type */
-        char flags;
-        /* number representing this type */
-        int type_num;
         /*
-         * Point to the original ArrFuncs.
-         * NOTE: We could make a copy to detect changes to `f`.
+         * DType flags to signal legacy, parametric, or
+         * abstract.  But plenty of space for additional information/flags.
          */
-        PyArray_ArrFuncs *f;
+        npy_uint64 flags;
 
-        /* DType methods, these could be moved into its own struct */
-        discover_descr_from_pyobject_function *discover_descr_from_pyobject;
-        is_known_scalar_type_function *is_known_scalar_type;
-        default_descr_function *default_descr;
-        common_dtype_function *common_dtype;
-        common_dtype_with_value_function *common_dtype_with_value;
-        common_instance_function *common_instance;
         /*
-         * The casting implementation (ArrayMethod) to convert between two
-         * instances of this DType, stored explicitly for fast access:
+         * Use indirection in order to allow a fixed size for this struct.
+         * A stable ABI size makes creating a static DType less painful
+         * while also ensuring flexibility for all opaque API (with one
+         * indirection due the pointer lookup).
          */
-        PyObject *within_dtype_castingimpl;
-        /*
-         * Dictionary of ArrayMethods representing most possible casts
-         * (structured and object are exceptions).
-         * This should potentially become a weak mapping in the future.
-         */
-        PyObject *castingimpls;
+        void *dt_slots;
+        void *reserved[3];
     };
 
 #endif  /* NPY_INTERNAL_BUILD */

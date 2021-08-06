@@ -701,9 +701,11 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
                              join('src', 'common', 'mem_overlap.c'),
-                             join('src', 'common', 'npy_argparse.c')],
+                             join('src', 'common', 'npy_argparse.c'),
+                             join('src', 'common', 'npy_hashtable.c')],
                     depends=[join('src', 'common', 'mem_overlap.h'),
                              join('src', 'common', 'npy_argparse.h'),
+                             join('src', 'common', 'npy_hashtable.h'),
                              join('src', 'common', 'npy_extint128.h')],
                     libraries=['npymath'])
 
@@ -723,6 +725,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_ctypes.h'),
             join('src', 'common', 'npy_extint128.h'),
             join('src', 'common', 'npy_import.h'),
+            join('src', 'common', 'npy_hashtable.h'),
             join('src', 'common', 'npy_longdouble.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
@@ -737,6 +740,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'array_assign.c'),
             join('src', 'common', 'mem_overlap.c'),
             join('src', 'common', 'npy_argparse.c'),
+            join('src', 'common', 'npy_hashtable.c'),
             join('src', 'common', 'npy_longdouble.c'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.c'),
@@ -924,11 +928,15 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h.src'),
             join('src', 'umath', 'clip.c.src'),
+            join('src', 'umath', 'dispatching.c'),
+            join('src', 'umath', 'legacy_array_method.c'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
+            # For testing. Eventually, should use public API and be separate:
+            join('src', 'umath', '_scaled_float_dtype.c'),
             ]
 
     umath_deps = [

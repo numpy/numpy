@@ -4,23 +4,6 @@
 Contributing to NumPy
 #####################
 
-.. TODO: this is hidden because there's a bug in the pydata theme that won't render TOC items under headers
-
-.. toctree::
-   :hidden:
-
-   Git Basics <gitwash/index>
-   development_environment
-   development_gitpod
-   development_workflow
-   development_advanced_debugging
-   ../benchmarking
-   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
-   releasing
-   governance/index
-   howto-docs
-
-
 Not a coder? Not a problem! NumPy is multi-faceted, and we can use a lot of help.
 These are all activities we'd like to get help with (they're all important, so
 we list them in alphabetical order):
@@ -203,7 +186,7 @@ Stylistic Guidelines
   pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
   pyflakes / flake8.
 
-* Use numpy data types instead of strings (``np.uint8`` instead of
+* Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).
 
 * Use the following import conventions::
@@ -246,42 +229,12 @@ Building docs
 -------------
 
 To build docs, run ``make`` from the ``doc`` directory. ``make help`` lists
-all targets. For example, to build the HTML documentation, you can run:
-
-.. code:: sh
+all targets. For example, to build the HTML documentation, you can run::
 
     make html
 
-Then, all the HTML files will be generated in ``doc/build/html/``.
-Since the documentation is based on docstrings, the appropriate version of
-numpy must be installed in the host python used to run sphinx.
-
-Requirements
-~~~~~~~~~~~~
-
-`Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
-the documentation. Matplotlib, SciPy, and IPython are also required.
-
-These additional dependencies for building the documentation are listed in
-``doc_requirements.txt`` and can be conveniently installed with::
-
-    pip install -r doc_requirements.txt
-
-The numpy documentation also depends on the
-`numpydoc <https://numpydoc.readthedocs.io/en/latest/>`__ sphinx extension
-as well as an external sphinx theme.
-These extensions are included as git submodules and must be initialized
-before building the docs.
-From the ``doc/`` directory:
-
-.. code:: sh
-
-    git submodule update --init
-
-The documentation includes mathematical formulae with LaTeX formatting.
-A working LaTeX document production system
-(e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
-proper rendering of the LaTeX math in the documentation.
+To get the appropriate dependencies and other requirements,
+see :ref:`howto-build-docs`.
 
 Fixing Warnings
 ~~~~~~~~~~~~~~~

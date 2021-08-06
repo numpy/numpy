@@ -104,9 +104,12 @@ class AbstractTest:
                 )
 
 is_linux = sys.platform.startswith('linux')
+is_cygwin = sys.platform.startswith('cygwin')
 machine  = platform.machine()
 is_x86   = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
-@pytest.mark.skipif(not is_linux or not is_x86, reason="Only for Linux and x86")
+@pytest.mark.skipif(
+    not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
+)
 class Test_X86_Features(AbstractTest):
     features = [
         "MMX", "SSE", "SSE2", "SSE3", "SSSE3", "SSE41", "POPCNT", "SSE42",

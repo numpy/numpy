@@ -1526,27 +1526,40 @@ def removespaces(expr):
 
 
 def markinnerspaces(line):
-    l = ''
-    f = 0
-    cc = '\''
-    cb = ''
+    """
+    The function replace all spaces in the input variable line which are 
+    surrounded with quotation marks, with the triplet "@_@".
+
+    For instance, for the input "a 'b c'" the function returns "a 'b@_@c'"
+
+    Parameters
+    ----------
+    line : str
+
+    Returns
+    -------
+    str
+
+    """  
+    fragment = ''
+    inside = False
+    current_quote = None
+    escaped = ''
     for c in line:
-        if cb == '\\' and c in ['\\', '\'', '"']:
-            l = l + c
-            cb = c
+        if escaped == '\\' and c in ['\\', '\'', '"']:
+            fragment += c
+            escaped = c
             continue
-        if f == 0 and c in ['\'', '"']:
-            cc = c
-        if c == cc:
-            f = f + 1
-        elif c == cc:
-            f = f - 1
-        elif c == ' ' and f == 1:
-            l = l + '@_@'
+        if not inside and c in ['\'', '"']:
+            current_quote = c
+        if c == current_quote:
+            inside = not inside
+        elif c == ' ' and inside:
+            fragment += '@_@'
             continue
-        l = l + c
-        cb = c
-    return l
+        fragment += c
+        escaped = c  # reset to non-backslash
+    return fragment
 
 
 def updatevars(typespec, selector, attrspec, entitydecl):
@@ -2551,10 +2564,8 @@ def get_parameters(vars, global_params={}):
                 v = ''.join(tt)
 
             elif iscomplex(vars[n]):
-                # FIXME complex numbers may also have exponents
-                if v[0] == '(' and v[-1] == ')':
-                    # FIXME, unused l looks like potential bug
-                    l = markoutercomma(v[1:-1]).split('@,@')
+                outmess(f'get_parameters[TODO]: '
+                        f'implement evaluation of complex expression {v}')
 
             try:
                 params[n] = eval(v, g_params, params)
@@ -2985,7 +2996,7 @@ def expr2name(a, block, args=[]):
 
 def analyzeargs(block):
     setmesstext(block)
-    implicitrules, attrrules = buildimplicitrules(block)
+    implicitrules, _ = buildimplicitrules(block)
     if 'args' not in block:
         block['args'] = []
     args = []

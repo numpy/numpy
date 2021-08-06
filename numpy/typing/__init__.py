@@ -3,6 +3,8 @@
 Typing (:mod:`numpy.typing`)
 ============================
 
+.. versionadded:: 1.20
+
 .. warning::
 
   Some of the types in this module rely on features only present in
@@ -22,32 +24,9 @@ the two below:
 Mypy plugin
 -----------
 
-A mypy_ plugin is distributed in `numpy.typing` for managing a number of
-platform-specific annotations. Its functionality can be split into three
-distinct parts:
+.. versionadded:: 1.21
 
-* Assigning the (platform-dependent) precisions of certain `~numpy.number` subclasses,
-  including the likes of `~numpy.int_`, `~numpy.intp` and `~numpy.longlong`.
-  See the documentation on :ref:`scalar types <arrays.scalars.built-in>` for a
-  comprehensive overview of the affected classes. Without the plugin the
-  precision of all relevant classes will be inferred as `~typing.Any`.
-* Assigning the (platform-dependent) precision of `~numpy.ctypeslib.c_intp`.
-  Without the plugin aforementioned type will default to `ctypes.c_int64`.
-* Removing all extended-precision `~numpy.number` subclasses that are unavailable
-  for the platform in question. Most notably, this includes the likes of
-  `~numpy.float128` and `~numpy.complex256`. Without the plugin *all*
-  extended-precision types will, as far as mypy is concerned, be available
-  to all platforms.
-
-To enable the plugin, one must add it to their mypy `configuration file`_:
-
-.. code-block:: ini
-
-    [mypy]
-    plugins = numpy.typing.mypy_plugin
-
-.. _mypy: http://mypy-lang.org/
-.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+.. automodule:: numpy.typing.mypy_plugin
 
 Differences from the runtime NumPy API
 --------------------------------------
@@ -193,6 +172,7 @@ else:
     # Declare to mypy that `__all__` is a list of strings without assigning
     # an explicit value
     __all__: List[str]
+    __path__: List[str]
 
 
 @final  # Dissallow the creation of arbitrary `NBitBase` subclasses
@@ -204,6 +184,8 @@ class NBitBase:
     represents the base of a hierarchical set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
+
+    .. versionadded:: 1.20
 
     Examples
     --------

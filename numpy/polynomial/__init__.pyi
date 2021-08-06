@@ -1,5 +1,7 @@
 from typing import List
 
+from numpy._pytesttester import PytestTester
+
 from numpy.polynomial import (
     chebyshev as chebyshev,
     hermite as hermite,
@@ -16,5 +18,7 @@ from numpy.polynomial.legendre import Legendre as Legendre
 from numpy.polynomial.polynomial import Polynomial as Polynomial
 
 __all__: List[str]
+__path__: List[str]
+test: PytestTester
 
 def set_default_printstyle(style): ...
