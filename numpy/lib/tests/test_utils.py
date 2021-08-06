@@ -11,6 +11,10 @@ from io import StringIO
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(
+    sys.version_info == (3, 10, 0, "candidate", 1),
+    reason="Broken as of bpo-44524",
+)
 def test_lookfor():
     out = StringIO()
     utils.lookfor('eigenvalue', module='numpy', output=out,
@@ -160,7 +164,7 @@ def test_info_method_heading():
     class WithPublicMethods:
         def first_method():
             pass
-            
+
     def _has_method_heading(cls):
         out = StringIO()
         utils.info(cls, output=out)
