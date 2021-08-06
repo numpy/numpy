@@ -468,8 +468,7 @@ class Array:
         """
         Performs the operation __len__.
         """
-        res = self._array.__len__()
-        return self.__class__._new(res)
+        return self._array.__len__()
 
     def __lshift__(self: Array, other: Union[int, Array], /) -> Array:
         """
