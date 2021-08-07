@@ -621,6 +621,7 @@ def test_astype_copyflag():
     # Simple tests for when a copy is necessary:
     res_false = arr.astype(np.float64, copy=False)
     assert_array_equal(res_false, arr)
-    res_if_needed = arr.astype(np.float64, copy=np.array_api.CopyMode.IF_NEEDED)
+    res_if_needed = arr.astype(np.float64, 
+                               copy=np.array_api.CopyMode.IF_NEEDED)
     assert_array_equal(res_if_needed, arr)
     assert_raises(ValueError, arr.astype, np.float64, copy=np.array_api.CopyMode.NEVER)

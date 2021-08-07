@@ -7861,7 +7861,9 @@ class TestArrayCreationCopyArgument(object):
                         res = np.array(arr, copy=copy, dtype=int2)
                         assert res is arr or res.base is arr
 
-                    res = np.array(arr, copy=np.array_api.CopyMode.NEVER, dtype=int2)
+                    res = np.array(arr,
+                                   copy=np.array_api.CopyMode.NEVER,
+                                   dtype=int2)
                     assert res is arr or res.base is arr
 
                 else:
@@ -7872,7 +7874,8 @@ class TestArrayCreationCopyArgument(object):
                         assert_array_equal(res, arr)
 
                     assert_raises(ValueError, np.array,
-                                  arr, copy=np.array_api.CopyMode.NEVER, dtype=int2)
+                                  arr, copy=np.array_api.CopyMode.NEVER,
+                                  dtype=int2)
 
     def test_buffer_interface(self):
 
@@ -7976,7 +7979,8 @@ class TestArrayCreationCopyArgument(object):
                     if not IS_PYPY:
                         assert res is arr or res.base.obj is arr
 
-                res = np.array(view, copy=np.array_api.CopyMode.NEVER, order=order2)
+                res = np.array(view, copy=np.array_api.CopyMode.NEVER,
+                               order=order2)
                 if not IS_PYPY:
                     assert res is arr or res.base.obj is arr
             else:
