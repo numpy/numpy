@@ -1,7 +1,8 @@
 """
 A NumPy sub-namespace that conforms to the Python array API standard.
 
-This submodule accompanies NEP 47, which proposes its inclusion in NumPy.
+This submodule accompanies NEP 47, which proposes its inclusion in NumPy. It
+is still considered experimental, and will issue a warning when imported.
 
 This is a proof-of-concept namespace that wraps the corresponding NumPy
 functions to give a conforming implementation of the Python array API standard
@@ -38,35 +39,29 @@ A few notes about the current state of this submodule:
   in progress, but the existing tests pass on this module, with a few
   exceptions:
 
-  - Device support is not yet implemented in NumPy
-    (https://data-apis.github.io/array-api/latest/design_topics/device_support.html).
-    As a result, the `device` attribute of the array object is missing, and
-    array creation functions that take the `device` keyword argument will fail
-    with NotImplementedError.
-
   - DLPack support (see https://github.com/data-apis/array-api/pull/106) is
     not included here, as it requires a full implementation in NumPy proper
     first.
 
-  - The linear algebra extension in the spec will be added in a future pull
-request.
-
   The test suite is not yet complete, and even the tests that exist are not
-  guaranteed to give a comprehensive coverage of the spec. Therefore, those
-  reviewing this submodule should refer to the standard documents themselves.
+  guaranteed to give a comprehensive coverage of the spec. Therefore, when
+  reviewing and using this submodule, you should refer to the standard
+  documents themselves. There are some tests in numpy.array_api.tests, but
+  they primarily focus on things that are not tested by the official array API
+  test suite.
 
-- There is a custom array object, numpy.array_api.Array, which is returned
-  by all functions in this module. All functions in the array API namespace
+- There is a custom array object, numpy.array_api.Array, which is returned by
+  all functions in this module. All functions in the array API namespace
   implicitly assume that they will only receive this object as input. The only
   way to create instances of this object is to use one of the array creation
   functions. It does not have a public constructor on the object itself. The
-  object is a small wrapper Python class around numpy.ndarray. The main
-  purpose of it is to restrict the namespace of the array object to only those
-  dtypes and only those methods that are required by the spec, as well as to
-  limit/change certain behavior that differs in the spec. In particular:
+  object is a small wrapper class around numpy.ndarray. The main purpose of it
+  is to restrict the namespace of the array object to only those dtypes and
+  only those methods that are required by the spec, as well as to limit/change
+  certain behavior that differs in the spec. In particular:
 
-  - The array API namespace does not have scalar objects, only 0-d arrays.
-    Operations in on Array that would create a scalar in NumPy create a 0-d
+  - The array API namespace does not have scalar objects, only 0-D arrays.
+    Operations on Array that would create a scalar in NumPy create a 0-D
     array.
 
   - Indexing: Only a subset of indices supported by NumPy are required by the
@@ -76,12 +71,15 @@ request.
     information.
 
   - Type promotion: Some type promotion rules are different in the spec. In
-    particular, the spec does not have any value-based casting. The
-    Array._promote_scalar method promotes Python scalars to arrays,
-    disallowing cross-type promotions like int -> float64 that are not allowed
-    in the spec. Array._normalize_two_args works around some type promotion
-    quirks in NumPy, particularly, value-based casting that occurs when one
-    argument of an operation is a 0-d array.
+    particular, the spec does not have any value-based casting. The spec also
+    does not require cross-kind casting, like integer -> floating-point. Only
+    those promotions that are explicitly required by the array API
+    specification are allowed in this module. See NEP 47 for more info.
+
+  - Functions do not automatically call asarray() on their input, and will not
+    work if the input type is not Array. The exception is array creation
+    functions, and Python operators on the Array object, which accept Python
+    scalars of the same type as the array dtype.
 
 - All functions include type annotations, corresponding to those given in the
   spec (see _typing.py for definitions of some custom types). These do not
@@ -93,25 +91,30 @@ request.
   equality, but it was considered too much extra complexity to create custom
   objects to represent dtypes.
 
-- The wrapper functions in this module do not do any type checking for things
-  that would be impossible without leaving the array_api namespace. For
-  example, since the array API dtype objects are just the NumPy dtype objects,
-  one could pass in a non-spec NumPy dtype into a function.
-
 - All places where the implementations in this submodule are known to deviate
-  from their corresponding functions in NumPy are marked with "# Note"
-  comments. Reviewers should make note of these comments.
+  from their corresponding functions in NumPy are marked with "# Note:"
+  comments.
 
 Still TODO in this module are:
 
-- Device support and DLPack support are not yet implemented. These require
-  support in NumPy itself first.
+- DLPack support for numpy.ndarray is still in progress. See
+  https://github.com/numpy/numpy/pull/19083.
 
-- The a non-default value for the `copy` keyword argument is not yet
-  implemented on asarray. This requires support in numpy.asarray() first.
+- The copy=False keyword argument to asarray() is not yet implemented. This
+  requires support in numpy.asarray() first.
 
 - Some functions are not yet fully tested in the array API test suite, and may
   require updates that are not yet known until the tests are written.
+
+- The spec is still in an RFC phase and may still have minor updates, which
+  will need to be reflected here.
+
+- The linear algebra extension in the spec will be added in a future pull
+  request.
+
+- Complex number support in array API spec is planned but not yet finalized,
+  as are the fft extension and certain linear algebra functions such as eig
+  that require complex dtypes.
 
 """
 
