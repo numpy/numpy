@@ -137,6 +137,7 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
+    "array_api",
     "ctypeslib",
     "distutils",
     "distutils.cpuinfo",
@@ -321,6 +322,7 @@ def is_unexpected(name):
 # These are present in a directory with an __init__.py but cannot be imported
 # code_generators/ isn't installed, but present for an inplace build
 SKIP_LIST = [
+    "numpy.array_api.CopyMode",
     "numpy.core.code_generators",
     "numpy.core.code_generators.genapi",
     "numpy.core.code_generators.generate_umath",

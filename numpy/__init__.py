@@ -111,7 +111,7 @@ import warnings
 
 from ._globals import (
     ModuleDeprecationWarning, VisibleDeprecationWarning,
-    _NoValue, CopyMode
+    _NoValue
 )
 
 # We first need to detect if we're being called as part of the numpy setup
@@ -133,8 +133,7 @@ else:
         raise ImportError(msg) from e
 
     __all__ = ['ModuleDeprecationWarning',
-               'VisibleDeprecationWarning',
-               'CopyMode']
+               'VisibleDeprecationWarning']
 
     # get the version using versioneer
     from ._version import get_versions

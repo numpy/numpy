@@ -20,7 +20,6 @@ from typing import (
 
 from numpy import (
     # Re-exports
-    CopyMode,
     busdaycalendar as busdaycalendar,
     broadcast as broadcast,
     dtype as dtype,
@@ -77,6 +76,10 @@ from numpy.typing import (
     _IntLike_co,
     _FloatLike_co,
     _TD64Like_co,
+)
+
+from  numpy.array_api import (
+    CopyMode
 )
 
 if sys.version_info >= (3, 8):

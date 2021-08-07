@@ -605,22 +605,22 @@ def test_astype_copyflag():
 
     res_true = arr.astype(np.intp, copy=True)
     assert not np.may_share_memory(arr, res_true)
-    res_always = arr.astype(np.intp, copy=np.CopyMode.ALWAYS)
+    res_always = arr.astype(np.intp, copy=np.array_api.CopyMode.ALWAYS)
     assert not np.may_share_memory(arr, res_always)
 
     res_false = arr.astype(np.intp, copy=False)
     # `res_false is arr` currently, but check `may_share_memory`.
     assert np.may_share_memory(arr, res_false)
-    res_if_needed = arr.astype(np.intp, copy=np.CopyMode.IF_NEEDED)
+    res_if_needed = arr.astype(np.intp, copy=np.array_api.CopyMode.IF_NEEDED)
     # `res_if_needed is arr` currently, but check `may_share_memory`.
     assert np.may_share_memory(arr, res_if_needed)
 
-    res_never = arr.astype(np.intp, copy=np.CopyMode.NEVER)
+    res_never = arr.astype(np.intp, copy=np.array_api.CopyMode.NEVER)
     assert np.may_share_memory(arr, res_never)
 
     # Simple tests for when a copy is necessary:
     res_false = arr.astype(np.float64, copy=False)
     assert_array_equal(res_false, arr)
-    res_if_needed = arr.astype(np.float64, copy=np.CopyMode.IF_NEEDED)
+    res_if_needed = arr.astype(np.float64, copy=np.array_api.CopyMode.IF_NEEDED)
     assert_array_equal(res_if_needed, arr)
-    assert_raises(ValueError, arr.astype, np.float64, copy=np.CopyMode.NEVER)
+    assert_raises(ValueError, arr.astype, np.float64, copy=np.array_api.CopyMode.NEVER)
