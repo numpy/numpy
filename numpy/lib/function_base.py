@@ -1869,7 +1869,8 @@ def _parse_gufunc_signature(signature):
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
             'not a valid gufunc signature: {}'.format(signature))
-    return tuple([tuple([dim.strip() for dim in re.findall(_DIMENSION_NAME, arg)])
+    return tuple([tuple([dim.strip() 
+                    for dim in re.findall(_DIMENSION_NAME, arg)])
                   for arg in re.findall(_ARGUMENT, arg_list)]
                  for arg_list in signature.split('->'))
 
