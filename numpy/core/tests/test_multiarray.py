@@ -7988,7 +7988,8 @@ class TestArrayCreationCopyArgument(object):
                     res = np.array(arr, copy=copy, order=order2)
                     assert_array_equal(arr, res)
                 assert_raises(ValueError, np.array,
-                              view, copy=np.array_api.CopyMode.NEVER, order=order2)
+                              view, copy=np.array_api.CopyMode.NEVER,
+                              order=order2)
 
 
 class TestArrayAttributeDeletion:
