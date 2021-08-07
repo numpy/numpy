@@ -1528,6 +1528,20 @@ class TestVectorize:
                      ([('x',)], [('y',), ()]))
         assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
                      ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+        
+        # Test if whitespaces are ignored
+        assert_equal(nfb._parse_gufunc_signature('(x )->()'), ([('x',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('( x , y )->(  )'),
+                     ([('x', 'y')], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x),( y) ->()'),
+                     ([('x',), ('y',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(  x)-> (y )  '),
+                     ([('x',)], [('y',)]))
+        assert_equal(nfb._parse_gufunc_signature(' (x)->( y),( )'),
+                     ([('x',)], [('y',), ()]))
+        assert_equal(nfb._parse_gufunc_signature('(  ), ( a,  b,c )  ,(  d)   ->   (d  ,  e)'),
+                     ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+
         with assert_raises(ValueError):
             nfb._parse_gufunc_signature('(x)(y)->()')
         with assert_raises(ValueError):
