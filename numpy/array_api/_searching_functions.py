@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 
+
 def argmax(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.argmax <numpy.argmax>`.
@@ -14,6 +15,7 @@ def argmax(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
     See its docstring for more information.
     """
     return Array._new(np.asarray(np.argmax(x._array, axis=axis, keepdims=keepdims)))
+
 
 def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -> Array:
     """
@@ -23,6 +25,7 @@ def argmin(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -
     """
     return Array._new(np.asarray(np.argmin(x._array, axis=axis, keepdims=keepdims)))
 
+
 def nonzero(x: Array, /) -> Tuple[Array, ...]:
     """
     Array API compatible wrapper for :py:func:`np.nonzero <numpy.nonzero>`.
@@ -30,6 +33,7 @@ def nonzero(x: Array, /) -> Tuple[Array, ...]:
     See its docstring for more information.
     """
     return tuple(Array._new(i) for i in np.nonzero(x._array))
+
 
 def where(condition: Array, x1: Array, x2: Array, /) -> Array:
     """

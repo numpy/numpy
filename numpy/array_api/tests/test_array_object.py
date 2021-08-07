@@ -2,9 +2,20 @@ from numpy.testing import assert_raises
 import numpy as np
 
 from .. import ones, asarray, result_type
-from .._dtypes import (_all_dtypes, _boolean_dtypes, _floating_dtypes,
-                       _integer_dtypes, _integer_or_boolean_dtypes,
-                       _numeric_dtypes, int8, int16, int32, int64, uint64)
+from .._dtypes import (
+    _all_dtypes,
+    _boolean_dtypes,
+    _floating_dtypes,
+    _integer_dtypes,
+    _integer_or_boolean_dtypes,
+    _numeric_dtypes,
+    int8,
+    int16,
+    int32,
+    int64,
+    uint64,
+)
+
 
 def test_validate_index():
     # The indexing tests in the official array API test suite test that the
@@ -61,28 +72,29 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[None, ...])
     assert_raises(IndexError, lambda: a[..., None])
 
+
 def test_operators():
     # For every operator, we test that it works for the required type
     # combinations and raises TypeError otherwise
-    binary_op_dtypes ={
-        '__add__': 'numeric',
-        '__and__': 'integer_or_boolean',
-        '__eq__': 'all',
-        '__floordiv__': 'numeric',
-        '__ge__': 'numeric',
-        '__gt__': 'numeric',
-        '__le__': 'numeric',
-        '__lshift__': 'integer',
-        '__lt__': 'numeric',
-        '__mod__': 'numeric',
-        '__mul__': 'numeric',
-        '__ne__': 'all',
-        '__or__': 'integer_or_boolean',
-        '__pow__': 'floating',
-        '__rshift__': 'integer',
-        '__sub__': 'numeric',
-        '__truediv__': 'floating',
-        '__xor__': 'integer_or_boolean',
+    binary_op_dtypes = {
+        "__add__": "numeric",
+        "__and__": "integer_or_boolean",
+        "__eq__": "all",
+        "__floordiv__": "numeric",
+        "__ge__": "numeric",
+        "__gt__": "numeric",
+        "__le__": "numeric",
+        "__lshift__": "integer",
+        "__lt__": "numeric",
+        "__mod__": "numeric",
+        "__mul__": "numeric",
+        "__ne__": "all",
+        "__or__": "integer_or_boolean",
+        "__pow__": "floating",
+        "__rshift__": "integer",
+        "__sub__": "numeric",
+        "__truediv__": "floating",
+        "__xor__": "integer_or_boolean",
     }
 
     # Recompute each time because of in-place ops
@@ -92,15 +104,15 @@ def test_operators():
         for d in _boolean_dtypes:
             yield asarray(False, dtype=d)
         for d in _floating_dtypes:
-            yield asarray(1., dtype=d)
+            yield asarray(1.0, dtype=d)
 
     for op, dtypes in binary_op_dtypes.items():
         ops = [op]
-        if op not in ['__eq__', '__ne__', '__le__', '__ge__', '__lt__', '__gt__']:
-            rop = '__r' + op[2:]
-            iop = '__i' + op[2:]
+        if op not in ["__eq__", "__ne__", "__le__", "__ge__", "__lt__", "__gt__"]:
+            rop = "__r" + op[2:]
+            iop = "__i" + op[2:]
             ops += [rop, iop]
-        for s in [1, 1., False]:
+        for s in [1, 1.0, False]:
             for _op in ops:
                 for a in _array_vals():
                     # Test array op scalar. From the spec, the following combinations
@@ -149,7 +161,10 @@ def test_operators():
                                 ):
                                 assert_raises(TypeError, lambda: getattr(x, _op)(y))
                             # Ensure in-place operators only promote to the same dtype as the left operand.
-                            elif _op.startswith('__i') and result_type(x.dtype, y.dtype) != x.dtype:
+                            elif (
+                                _op.startswith("__i")
+                                and result_type(x.dtype, y.dtype) != x.dtype
+                            ):
                                 assert_raises(TypeError, lambda: getattr(x, _op)(y))
                             # Ensure only those dtypes that are required for every operator are allowed.
                             elif (dtypes == "all" and (x.dtype in _boolean_dtypes and y.dtype in _boolean_dtypes
@@ -165,17 +180,20 @@ def test_operators():
                             else:
                                 assert_raises(TypeError, lambda: getattr(x, _op)(y))
 
-    unary_op_dtypes ={
-        '__abs__': 'numeric',
-        '__invert__': 'integer_or_boolean',
-        '__neg__': 'numeric',
-        '__pos__': 'numeric',
+    unary_op_dtypes = {
+        "__abs__": "numeric",
+        "__invert__": "integer_or_boolean",
+        "__neg__": "numeric",
+        "__pos__": "numeric",
     }
     for op, dtypes in unary_op_dtypes.items():
         for a in _array_vals():
-            if (dtypes == "numeric" and a.dtype in _numeric_dtypes
-                or dtypes == "integer_or_boolean" and a.dtype in _integer_or_boolean_dtypes
-                ):
+            if (
+                dtypes == "numeric"
+                and a.dtype in _numeric_dtypes
+                or dtypes == "integer_or_boolean"
+                and a.dtype in _integer_or_boolean_dtypes
+            ):
                 # Only test for no error
                 getattr(a, op)()
             else:
@@ -192,8 +210,8 @@ def test_operators():
             yield ones((4, 4), dtype=d)
 
     # Scalars always error
-    for _op in ['__matmul__', '__rmatmul__', '__imatmul__']:
-        for s in [1, 1., False]:
+    for _op in ["__matmul__", "__rmatmul__", "__imatmul__"]:
+        for s in [1, 1.0, False]:
             for a in _matmul_array_vals():
                 if (type(s) in [float, int] and a.dtype in _floating_dtypes
                     or type(s) == int and a.dtype in _integer_dtypes):
@@ -235,16 +253,17 @@ def test_operators():
                 else:
                     x.__imatmul__(y)
 
+
 def test_python_scalar_construtors():
     a = asarray(False)
     b = asarray(0)
-    c = asarray(0.)
+    c = asarray(0.0)
 
     assert bool(a) == bool(b) == bool(c) == False
     assert int(a) == int(b) == int(c) == 0
-    assert float(a) == float(b) == float(c) == 0.
+    assert float(a) == float(b) == float(c) == 0.0
 
     # bool/int/float should only be allowed on 0-D arrays.
     assert_raises(TypeError, lambda: bool(asarray([False])))
     assert_raises(TypeError, lambda: int(asarray([0])))
-    assert_raises(TypeError, lambda: float(asarray([0.])))
+    assert_raises(TypeError, lambda: float(asarray([0.0])))

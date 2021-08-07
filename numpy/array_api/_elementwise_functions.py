@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from ._dtypes import (_boolean_dtypes, _floating_dtypes,
-                      _integer_dtypes, _integer_or_boolean_dtypes,
-                      _numeric_dtypes, _result_type)
+from ._dtypes import (
+    _boolean_dtypes,
+    _floating_dtypes,
+    _integer_dtypes,
+    _integer_or_boolean_dtypes,
+    _numeric_dtypes,
+    _result_type,
+)
 from ._array_object import Array
 
 import numpy as np
+
 
 def abs(x: Array, /) -> Array:
     """
@@ -14,8 +20,9 @@ def abs(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in abs')
+        raise TypeError("Only numeric dtypes are allowed in abs")
     return Array._new(np.abs(x._array))
+
 
 # Note: the function name is different here
 def acos(x: Array, /) -> Array:
@@ -25,8 +32,9 @@ def acos(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in acos')
+        raise TypeError("Only floating-point dtypes are allowed in acos")
     return Array._new(np.arccos(x._array))
+
 
 # Note: the function name is different here
 def acosh(x: Array, /) -> Array:
@@ -36,8 +44,9 @@ def acosh(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in acosh')
+        raise TypeError("Only floating-point dtypes are allowed in acosh")
     return Array._new(np.arccosh(x._array))
+
 
 def add(x1: Array, x2: Array, /) -> Array:
     """
@@ -46,11 +55,12 @@ def add(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in add')
+        raise TypeError("Only numeric dtypes are allowed in add")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.add(x1._array, x2._array))
+
 
 # Note: the function name is different here
 def asin(x: Array, /) -> Array:
@@ -60,8 +70,9 @@ def asin(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in asin')
+        raise TypeError("Only floating-point dtypes are allowed in asin")
     return Array._new(np.arcsin(x._array))
+
 
 # Note: the function name is different here
 def asinh(x: Array, /) -> Array:
@@ -71,8 +82,9 @@ def asinh(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in asinh')
+        raise TypeError("Only floating-point dtypes are allowed in asinh")
     return Array._new(np.arcsinh(x._array))
+
 
 # Note: the function name is different here
 def atan(x: Array, /) -> Array:
@@ -82,8 +94,9 @@ def atan(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in atan')
+        raise TypeError("Only floating-point dtypes are allowed in atan")
     return Array._new(np.arctan(x._array))
+
 
 # Note: the function name is different here
 def atan2(x1: Array, x2: Array, /) -> Array:
@@ -93,11 +106,12 @@ def atan2(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in atan2')
+        raise TypeError("Only floating-point dtypes are allowed in atan2")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.arctan2(x1._array, x2._array))
+
 
 # Note: the function name is different here
 def atanh(x: Array, /) -> Array:
@@ -107,8 +121,9 @@ def atanh(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in atanh')
+        raise TypeError("Only floating-point dtypes are allowed in atanh")
     return Array._new(np.arctanh(x._array))
+
 
 def bitwise_and(x1: Array, x2: Array, /) -> Array:
     """
@@ -116,12 +131,16 @@ def bitwise_and(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _integer_or_boolean_dtypes or x2.dtype not in _integer_or_boolean_dtypes:
-        raise TypeError('Only integer or boolean dtypes are allowed in bitwise_and')
+    if (
+        x1.dtype not in _integer_or_boolean_dtypes
+        or x2.dtype not in _integer_or_boolean_dtypes
+    ):
+        raise TypeError("Only integer or boolean dtypes are allowed in bitwise_and")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.bitwise_and(x1._array, x2._array))
+
 
 # Note: the function name is different here
 def bitwise_left_shift(x1: Array, x2: Array, /) -> Array:
@@ -131,14 +150,15 @@ def bitwise_left_shift(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
-        raise TypeError('Only integer dtypes are allowed in bitwise_left_shift')
+        raise TypeError("Only integer dtypes are allowed in bitwise_left_shift")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     # Note: bitwise_left_shift is only defined for x2 nonnegative.
     if np.any(x2._array < 0):
-        raise ValueError('bitwise_left_shift(x1, x2) is only defined for x2 >= 0')
+        raise ValueError("bitwise_left_shift(x1, x2) is only defined for x2 >= 0")
     return Array._new(np.left_shift(x1._array, x2._array))
+
 
 # Note: the function name is different here
 def bitwise_invert(x: Array, /) -> Array:
@@ -148,8 +168,9 @@ def bitwise_invert(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _integer_or_boolean_dtypes:
-        raise TypeError('Only integer or boolean dtypes are allowed in bitwise_invert')
+        raise TypeError("Only integer or boolean dtypes are allowed in bitwise_invert")
     return Array._new(np.invert(x._array))
+
 
 def bitwise_or(x1: Array, x2: Array, /) -> Array:
     """
@@ -157,12 +178,16 @@ def bitwise_or(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _integer_or_boolean_dtypes or x2.dtype not in _integer_or_boolean_dtypes:
-        raise TypeError('Only integer or boolean dtypes are allowed in bitwise_or')
+    if (
+        x1.dtype not in _integer_or_boolean_dtypes
+        or x2.dtype not in _integer_or_boolean_dtypes
+    ):
+        raise TypeError("Only integer or boolean dtypes are allowed in bitwise_or")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.bitwise_or(x1._array, x2._array))
+
 
 # Note: the function name is different here
 def bitwise_right_shift(x1: Array, x2: Array, /) -> Array:
@@ -172,14 +197,15 @@ def bitwise_right_shift(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _integer_dtypes or x2.dtype not in _integer_dtypes:
-        raise TypeError('Only integer dtypes are allowed in bitwise_right_shift')
+        raise TypeError("Only integer dtypes are allowed in bitwise_right_shift")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     # Note: bitwise_right_shift is only defined for x2 nonnegative.
     if np.any(x2._array < 0):
-        raise ValueError('bitwise_right_shift(x1, x2) is only defined for x2 >= 0')
+        raise ValueError("bitwise_right_shift(x1, x2) is only defined for x2 >= 0")
     return Array._new(np.right_shift(x1._array, x2._array))
+
 
 def bitwise_xor(x1: Array, x2: Array, /) -> Array:
     """
@@ -187,12 +213,16 @@ def bitwise_xor(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _integer_or_boolean_dtypes or x2.dtype not in _integer_or_boolean_dtypes:
-        raise TypeError('Only integer or boolean dtypes are allowed in bitwise_xor')
+    if (
+        x1.dtype not in _integer_or_boolean_dtypes
+        or x2.dtype not in _integer_or_boolean_dtypes
+    ):
+        raise TypeError("Only integer or boolean dtypes are allowed in bitwise_xor")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.bitwise_xor(x1._array, x2._array))
+
 
 def ceil(x: Array, /) -> Array:
     """
@@ -201,11 +231,12 @@ def ceil(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in ceil')
+        raise TypeError("Only numeric dtypes are allowed in ceil")
     if x.dtype in _integer_dtypes:
         # Note: The return dtype of ceil is the same as the input
         return x
     return Array._new(np.ceil(x._array))
+
 
 def cos(x: Array, /) -> Array:
     """
@@ -214,8 +245,9 @@ def cos(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in cos')
+        raise TypeError("Only floating-point dtypes are allowed in cos")
     return Array._new(np.cos(x._array))
+
 
 def cosh(x: Array, /) -> Array:
     """
@@ -224,8 +256,9 @@ def cosh(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in cosh')
+        raise TypeError("Only floating-point dtypes are allowed in cosh")
     return Array._new(np.cosh(x._array))
+
 
 def divide(x1: Array, x2: Array, /) -> Array:
     """
@@ -234,11 +267,12 @@ def divide(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in divide')
+        raise TypeError("Only floating-point dtypes are allowed in divide")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.divide(x1._array, x2._array))
+
 
 def equal(x1: Array, x2: Array, /) -> Array:
     """
@@ -251,6 +285,7 @@ def equal(x1: Array, x2: Array, /) -> Array:
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.equal(x1._array, x2._array))
 
+
 def exp(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.exp <numpy.exp>`.
@@ -258,8 +293,9 @@ def exp(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in exp')
+        raise TypeError("Only floating-point dtypes are allowed in exp")
     return Array._new(np.exp(x._array))
+
 
 def expm1(x: Array, /) -> Array:
     """
@@ -268,8 +304,9 @@ def expm1(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in expm1')
+        raise TypeError("Only floating-point dtypes are allowed in expm1")
     return Array._new(np.expm1(x._array))
+
 
 def floor(x: Array, /) -> Array:
     """
@@ -278,11 +315,12 @@ def floor(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in floor')
+        raise TypeError("Only numeric dtypes are allowed in floor")
     if x.dtype in _integer_dtypes:
         # Note: The return dtype of floor is the same as the input
         return x
     return Array._new(np.floor(x._array))
+
 
 def floor_divide(x1: Array, x2: Array, /) -> Array:
     """
@@ -291,11 +329,12 @@ def floor_divide(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in floor_divide')
+        raise TypeError("Only numeric dtypes are allowed in floor_divide")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.floor_divide(x1._array, x2._array))
+
 
 def greater(x1: Array, x2: Array, /) -> Array:
     """
@@ -304,11 +343,12 @@ def greater(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in greater')
+        raise TypeError("Only numeric dtypes are allowed in greater")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.greater(x1._array, x2._array))
+
 
 def greater_equal(x1: Array, x2: Array, /) -> Array:
     """
@@ -317,11 +357,12 @@ def greater_equal(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in greater_equal')
+        raise TypeError("Only numeric dtypes are allowed in greater_equal")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.greater_equal(x1._array, x2._array))
+
 
 def isfinite(x: Array, /) -> Array:
     """
@@ -330,8 +371,9 @@ def isfinite(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in isfinite')
+        raise TypeError("Only numeric dtypes are allowed in isfinite")
     return Array._new(np.isfinite(x._array))
+
 
 def isinf(x: Array, /) -> Array:
     """
@@ -340,8 +382,9 @@ def isinf(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in isinf')
+        raise TypeError("Only numeric dtypes are allowed in isinf")
     return Array._new(np.isinf(x._array))
+
 
 def isnan(x: Array, /) -> Array:
     """
@@ -350,8 +393,9 @@ def isnan(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in isnan')
+        raise TypeError("Only numeric dtypes are allowed in isnan")
     return Array._new(np.isnan(x._array))
+
 
 def less(x1: Array, x2: Array, /) -> Array:
     """
@@ -360,11 +404,12 @@ def less(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in less')
+        raise TypeError("Only numeric dtypes are allowed in less")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.less(x1._array, x2._array))
+
 
 def less_equal(x1: Array, x2: Array, /) -> Array:
     """
@@ -373,11 +418,12 @@ def less_equal(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in less_equal')
+        raise TypeError("Only numeric dtypes are allowed in less_equal")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.less_equal(x1._array, x2._array))
+
 
 def log(x: Array, /) -> Array:
     """
@@ -386,8 +432,9 @@ def log(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in log')
+        raise TypeError("Only floating-point dtypes are allowed in log")
     return Array._new(np.log(x._array))
+
 
 def log1p(x: Array, /) -> Array:
     """
@@ -396,8 +443,9 @@ def log1p(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in log1p')
+        raise TypeError("Only floating-point dtypes are allowed in log1p")
     return Array._new(np.log1p(x._array))
+
 
 def log2(x: Array, /) -> Array:
     """
@@ -406,8 +454,9 @@ def log2(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in log2')
+        raise TypeError("Only floating-point dtypes are allowed in log2")
     return Array._new(np.log2(x._array))
+
 
 def log10(x: Array, /) -> Array:
     """
@@ -416,8 +465,9 @@ def log10(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in log10')
+        raise TypeError("Only floating-point dtypes are allowed in log10")
     return Array._new(np.log10(x._array))
+
 
 def logaddexp(x1: Array, x2: Array) -> Array:
     """
@@ -426,11 +476,12 @@ def logaddexp(x1: Array, x2: Array) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in logaddexp')
+        raise TypeError("Only floating-point dtypes are allowed in logaddexp")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.logaddexp(x1._array, x2._array))
+
 
 def logical_and(x1: Array, x2: Array, /) -> Array:
     """
@@ -439,11 +490,12 @@ def logical_and(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _boolean_dtypes or x2.dtype not in _boolean_dtypes:
-        raise TypeError('Only boolean dtypes are allowed in logical_and')
+        raise TypeError("Only boolean dtypes are allowed in logical_and")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.logical_and(x1._array, x2._array))
+
 
 def logical_not(x: Array, /) -> Array:
     """
@@ -452,8 +504,9 @@ def logical_not(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _boolean_dtypes:
-        raise TypeError('Only boolean dtypes are allowed in logical_not')
+        raise TypeError("Only boolean dtypes are allowed in logical_not")
     return Array._new(np.logical_not(x._array))
+
 
 def logical_or(x1: Array, x2: Array, /) -> Array:
     """
@@ -462,11 +515,12 @@ def logical_or(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _boolean_dtypes or x2.dtype not in _boolean_dtypes:
-        raise TypeError('Only boolean dtypes are allowed in logical_or')
+        raise TypeError("Only boolean dtypes are allowed in logical_or")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.logical_or(x1._array, x2._array))
+
 
 def logical_xor(x1: Array, x2: Array, /) -> Array:
     """
@@ -475,11 +529,12 @@ def logical_xor(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _boolean_dtypes or x2.dtype not in _boolean_dtypes:
-        raise TypeError('Only boolean dtypes are allowed in logical_xor')
+        raise TypeError("Only boolean dtypes are allowed in logical_xor")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.logical_xor(x1._array, x2._array))
+
 
 def multiply(x1: Array, x2: Array, /) -> Array:
     """
@@ -488,11 +543,12 @@ def multiply(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in multiply')
+        raise TypeError("Only numeric dtypes are allowed in multiply")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.multiply(x1._array, x2._array))
+
 
 def negative(x: Array, /) -> Array:
     """
@@ -501,8 +557,9 @@ def negative(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in negative')
+        raise TypeError("Only numeric dtypes are allowed in negative")
     return Array._new(np.negative(x._array))
+
 
 def not_equal(x1: Array, x2: Array, /) -> Array:
     """
@@ -515,6 +572,7 @@ def not_equal(x1: Array, x2: Array, /) -> Array:
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.not_equal(x1._array, x2._array))
 
+
 def positive(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.positive <numpy.positive>`.
@@ -522,8 +580,9 @@ def positive(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in positive')
+        raise TypeError("Only numeric dtypes are allowed in positive")
     return Array._new(np.positive(x._array))
+
 
 # Note: the function name is different here
 def pow(x1: Array, x2: Array, /) -> Array:
@@ -533,11 +592,12 @@ def pow(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in pow')
+        raise TypeError("Only floating-point dtypes are allowed in pow")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.power(x1._array, x2._array))
+
 
 def remainder(x1: Array, x2: Array, /) -> Array:
     """
@@ -546,11 +606,12 @@ def remainder(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in remainder')
+        raise TypeError("Only numeric dtypes are allowed in remainder")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.remainder(x1._array, x2._array))
+
 
 def round(x: Array, /) -> Array:
     """
@@ -559,8 +620,9 @@ def round(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in round')
+        raise TypeError("Only numeric dtypes are allowed in round")
     return Array._new(np.round(x._array))
+
 
 def sign(x: Array, /) -> Array:
     """
@@ -569,8 +631,9 @@ def sign(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in sign')
+        raise TypeError("Only numeric dtypes are allowed in sign")
     return Array._new(np.sign(x._array))
+
 
 def sin(x: Array, /) -> Array:
     """
@@ -579,8 +642,9 @@ def sin(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in sin')
+        raise TypeError("Only floating-point dtypes are allowed in sin")
     return Array._new(np.sin(x._array))
+
 
 def sinh(x: Array, /) -> Array:
     """
@@ -589,8 +653,9 @@ def sinh(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in sinh')
+        raise TypeError("Only floating-point dtypes are allowed in sinh")
     return Array._new(np.sinh(x._array))
+
 
 def square(x: Array, /) -> Array:
     """
@@ -599,8 +664,9 @@ def square(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in square')
+        raise TypeError("Only numeric dtypes are allowed in square")
     return Array._new(np.square(x._array))
+
 
 def sqrt(x: Array, /) -> Array:
     """
@@ -609,8 +675,9 @@ def sqrt(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in sqrt')
+        raise TypeError("Only floating-point dtypes are allowed in sqrt")
     return Array._new(np.sqrt(x._array))
+
 
 def subtract(x1: Array, x2: Array, /) -> Array:
     """
@@ -619,11 +686,12 @@ def subtract(x1: Array, x2: Array, /) -> Array:
     See its docstring for more information.
     """
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in subtract')
+        raise TypeError("Only numeric dtypes are allowed in subtract")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.subtract(x1._array, x2._array))
+
 
 def tan(x: Array, /) -> Array:
     """
@@ -632,8 +700,9 @@ def tan(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in tan')
+        raise TypeError("Only floating-point dtypes are allowed in tan")
     return Array._new(np.tan(x._array))
+
 
 def tanh(x: Array, /) -> Array:
     """
@@ -642,8 +711,9 @@ def tanh(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in tanh')
+        raise TypeError("Only floating-point dtypes are allowed in tanh")
     return Array._new(np.tanh(x._array))
+
 
 def trunc(x: Array, /) -> Array:
     """
@@ -652,7 +722,7 @@ def trunc(x: Array, /) -> Array:
     See its docstring for more information.
     """
     if x.dtype not in _numeric_dtypes:
-        raise TypeError('Only numeric dtypes are allowed in trunc')
+        raise TypeError("Only numeric dtypes are allowed in trunc")
     if x.dtype in _integer_dtypes:
         # Note: The return dtype of trunc is the same as the input
         return x

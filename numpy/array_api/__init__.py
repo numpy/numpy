@@ -119,36 +119,221 @@ Still TODO in this module are:
 """
 
 import sys
+
 # numpy.array_api is 3.8+ because it makes extensive use of positional-only
 # arguments.
 if sys.version_info < (3, 8):
     raise ImportError("The numpy.array_api submodule requires Python 3.8 or greater.")
 
 import warnings
-warnings.warn("The numpy.array_api submodule is still experimental. See NEP 47.",
-              stacklevel=2)
+
+warnings.warn(
+    "The numpy.array_api submodule is still experimental. See NEP 47.", stacklevel=2
+)
 
 __all__ = []
 
 from ._constants import e, inf, nan, pi
 
-__all__ += ['e', 'inf', 'nan', 'pi']
+__all__ += ["e", "inf", "nan", "pi"]
 
-from ._creation_functions import asarray, arange, empty, empty_like, eye, from_dlpack, full, full_like, linspace, meshgrid, ones, ones_like, zeros, zeros_like
+from ._creation_functions import (
+    asarray,
+    arange,
+    empty,
+    empty_like,
+    eye,
+    from_dlpack,
+    full,
+    full_like,
+    linspace,
+    meshgrid,
+    ones,
+    ones_like,
+    zeros,
+    zeros_like,
+)
 
-__all__ += ['asarray', 'arange', 'empty', 'empty_like', 'eye', 'from_dlpack', 'full', 'full_like', 'linspace', 'meshgrid', 'ones', 'ones_like', 'zeros', 'zeros_like']
+__all__ += [
+    "asarray",
+    "arange",
+    "empty",
+    "empty_like",
+    "eye",
+    "from_dlpack",
+    "full",
+    "full_like",
+    "linspace",
+    "meshgrid",
+    "ones",
+    "ones_like",
+    "zeros",
+    "zeros_like",
+]
 
-from ._data_type_functions import broadcast_arrays, broadcast_to, can_cast, finfo, iinfo, result_type
+from ._data_type_functions import (
+    broadcast_arrays,
+    broadcast_to,
+    can_cast,
+    finfo,
+    iinfo,
+    result_type,
+)
 
-__all__ += ['broadcast_arrays', 'broadcast_to', 'can_cast', 'finfo', 'iinfo', 'result_type']
+__all__ += [
+    "broadcast_arrays",
+    "broadcast_to",
+    "can_cast",
+    "finfo",
+    "iinfo",
+    "result_type",
+]
 
-from ._dtypes import int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, bool
+from ._dtypes import (
+    int8,
+    int16,
+    int32,
+    int64,
+    uint8,
+    uint16,
+    uint32,
+    uint64,
+    float32,
+    float64,
+    bool,
+)
 
-__all__ += ['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64', 'float32', 'float64', 'bool']
+__all__ += [
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "float32",
+    "float64",
+    "bool",
+]
 
-from ._elementwise_functions import abs, acos, acosh, add, asin, asinh, atan, atan2, atanh, bitwise_and, bitwise_left_shift, bitwise_invert, bitwise_or, bitwise_right_shift, bitwise_xor, ceil, cos, cosh, divide, equal, exp, expm1, floor, floor_divide, greater, greater_equal, isfinite, isinf, isnan, less, less_equal, log, log1p, log2, log10, logaddexp, logical_and, logical_not, logical_or, logical_xor, multiply, negative, not_equal, positive, pow, remainder, round, sign, sin, sinh, square, sqrt, subtract, tan, tanh, trunc
+from ._elementwise_functions import (
+    abs,
+    acos,
+    acosh,
+    add,
+    asin,
+    asinh,
+    atan,
+    atan2,
+    atanh,
+    bitwise_and,
+    bitwise_left_shift,
+    bitwise_invert,
+    bitwise_or,
+    bitwise_right_shift,
+    bitwise_xor,
+    ceil,
+    cos,
+    cosh,
+    divide,
+    equal,
+    exp,
+    expm1,
+    floor,
+    floor_divide,
+    greater,
+    greater_equal,
+    isfinite,
+    isinf,
+    isnan,
+    less,
+    less_equal,
+    log,
+    log1p,
+    log2,
+    log10,
+    logaddexp,
+    logical_and,
+    logical_not,
+    logical_or,
+    logical_xor,
+    multiply,
+    negative,
+    not_equal,
+    positive,
+    pow,
+    remainder,
+    round,
+    sign,
+    sin,
+    sinh,
+    square,
+    sqrt,
+    subtract,
+    tan,
+    tanh,
+    trunc,
+)
 
-__all__ += ['abs', 'acos', 'acosh', 'add', 'asin', 'asinh', 'atan', 'atan2', 'atanh', 'bitwise_and', 'bitwise_left_shift', 'bitwise_invert', 'bitwise_or', 'bitwise_right_shift', 'bitwise_xor', 'ceil', 'cos', 'cosh', 'divide', 'equal', 'exp', 'expm1', 'floor', 'floor_divide', 'greater', 'greater_equal', 'isfinite', 'isinf', 'isnan', 'less', 'less_equal', 'log', 'log1p', 'log2', 'log10', 'logaddexp', 'logical_and', 'logical_not', 'logical_or', 'logical_xor', 'multiply', 'negative', 'not_equal', 'positive', 'pow', 'remainder', 'round', 'sign', 'sin', 'sinh', 'square', 'sqrt', 'subtract', 'tan', 'tanh', 'trunc']
+__all__ += [
+    "abs",
+    "acos",
+    "acosh",
+    "add",
+    "asin",
+    "asinh",
+    "atan",
+    "atan2",
+    "atanh",
+    "bitwise_and",
+    "bitwise_left_shift",
+    "bitwise_invert",
+    "bitwise_or",
+    "bitwise_right_shift",
+    "bitwise_xor",
+    "ceil",
+    "cos",
+    "cosh",
+    "divide",
+    "equal",
+    "exp",
+    "expm1",
+    "floor",
+    "floor_divide",
+    "greater",
+    "greater_equal",
+    "isfinite",
+    "isinf",
+    "isnan",
+    "less",
+    "less_equal",
+    "log",
+    "log1p",
+    "log2",
+    "log10",
+    "logaddexp",
+    "logical_and",
+    "logical_not",
+    "logical_or",
+    "logical_xor",
+    "multiply",
+    "negative",
+    "not_equal",
+    "positive",
+    "pow",
+    "remainder",
+    "round",
+    "sign",
+    "sin",
+    "sinh",
+    "square",
+    "sqrt",
+    "subtract",
+    "tan",
+    "tanh",
+    "trunc",
+]
 
 # einsum is not yet implemented in the array API spec.
 
@@ -157,28 +342,36 @@ __all__ += ['abs', 'acos', 'acosh', 'add', 'asin', 'asinh', 'atan', 'atan2', 'at
 
 from ._linear_algebra_functions import matmul, tensordot, transpose, vecdot
 
-__all__ += ['matmul', 'tensordot', 'transpose', 'vecdot']
+__all__ += ["matmul", "tensordot", "transpose", "vecdot"]
 
-from ._manipulation_functions import concat, expand_dims, flip, reshape, roll, squeeze, stack
+from ._manipulation_functions import (
+    concat,
+    expand_dims,
+    flip,
+    reshape,
+    roll,
+    squeeze,
+    stack,
+)
 
-__all__ += ['concat', 'expand_dims', 'flip', 'reshape', 'roll', 'squeeze', 'stack']
+__all__ += ["concat", "expand_dims", "flip", "reshape", "roll", "squeeze", "stack"]
 
 from ._searching_functions import argmax, argmin, nonzero, where
 
-__all__ += ['argmax', 'argmin', 'nonzero', 'where']
+__all__ += ["argmax", "argmin", "nonzero", "where"]
 
 from ._set_functions import unique
 
-__all__ += ['unique']
+__all__ += ["unique"]
 
 from ._sorting_functions import argsort, sort
 
-__all__ += ['argsort', 'sort']
+__all__ += ["argsort", "sort"]
 
 from ._statistical_functions import max, mean, min, prod, std, sum, var
 
-__all__ += ['max', 'mean', 'min', 'prod', 'std', 'sum', 'var']
+__all__ += ["max", "mean", "min", "prod", "std", "sum", "var"]
 
 from ._utility_functions import all, any
 
-__all__ += ['all', 'any']
+__all__ += ["all", "any"]
