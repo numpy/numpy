@@ -11,7 +11,9 @@
 #include <Python.h>
 
 #include <time.h>
+#if PY_VERSION_HEX < 0x03100000
 #include <pytime.h>
+#endif
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -326,19 +328,35 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
                     tolower(str[2]) == 'w') {
         PyArray_DatetimeMetaData meta;
 
-        int64_t rawtime = _PyTime_GetSystemClock();
+        // initialize the _PyTime_t struct
+        _PyTime_t rawtime = _PyTime_GetSystemClock();
+        _Py_clock_info_t rawtime_info = {" ", 0, 1, 0.0};
+
+        // actual rawtime we use is from here,
+        // along with resolution info
+        _PyTime_GetSystemClockWithInfo(&rawtime, &rawtime_info);
+        double resolution = rawtime_info.resolution;
+
+        // set resolutions to 1/1000 observed
+        // floating point comparisons need to be cleaner
+        if ((resolution < 1.01) && (resolution > 0.0011))  {
+            bestunit = NPY_FR_ms;
+        }
+        else if ((resolution < 1) && (resolution > 0.0009)) {
+            bestunit = NPY_FR_us;
+        }
+        else if ((resolution < 0.001) && (resolution > 0.0000009)) {
+            bestunit = NPY_FR_ns;
+        }
+        else if (resolution < 0.0000000011) {
+            bestunit = NPY_FR_ps;
+        }
 
         /* Set up a dummy metadata for the conversion */
-        meta.base = NPY_FR_ns;
+        meta.base = bestunit;
         meta.num = 1;
 
-        bestunit = NPY_FR_ns;
-
-        /*
-         * Indicate that this was a special value, and
-         * use 'ns' because the _PyTime_GetSystemClock()
-         * function has a resolution of nanoseconds.
-         */
+        // Indicate that this was a special value
         if (out_bestunit != NULL) {
             *out_bestunit = bestunit;
         }
