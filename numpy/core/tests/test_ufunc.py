@@ -388,6 +388,24 @@ class TestUfunc:
         assert_equal(ixs, (0, 0, 0, 1, 2))
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
+    
+    def test_signature9(self):
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            1, 1, "(  3)  -> ( )")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 0))
+        assert_equal(ixs, (0,))
+        assert_equal(flags, (0,))
+        assert_equal(sizes, (3,))
+
+    def test_signature10(self):
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            3, 1, "( 3? ) , (3? ,  3?) ,(n )-> ( 9)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 2, 1, 1))
+        assert_equal(ixs, (0, 0, 0, 1, 2))
+        assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
+        assert_equal(sizes, (3, -1, 9))
 
     def test_signature_failure_extra_parenthesis(self):
         with assert_raises(ValueError):
