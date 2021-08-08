@@ -3082,7 +3082,6 @@ UNICODE_compare(npy_ucs4 *ip1, npy_ucs4 *ip2,
 static int
 VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 {
-    PyDataMem_Handler *mem_handler;
     PyArray_Descr *descr;
     PyObject *names, *key;
     PyObject *tup;
@@ -3094,7 +3093,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
     }
-    mem_handler = PyDataMem_GetHandler(NULL);
+    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler(NULL);
     if (mem_handler == NULL) {
         /* Better fallback to default than goto finish. */
         PyErr_Clear();

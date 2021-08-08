@@ -517,7 +517,7 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
  * the current global policy that ill be used to allocate data
  * for the next PyArrayObject. On failure, set an exception and return NULL.
  */
-NPY_NO_EXPORT PyDataMem_Handler *
+NPY_NO_EXPORT const PyDataMem_Handler *
 PyDataMem_GetHandler(PyArrayObject *obj)
 {
     PyObject *base;
@@ -536,7 +536,8 @@ PyDataMem_GetHandler(PyArrayObject *obj)
          * If the base is an array which owns its own data, return its allocator.
          */
         base = PyArray_BASE(obj);
-        if (base != NULL && PyArray_Check(base) && PyArray_CHKFLAGS(base, NPY_ARRAY_OWNDATA)) {
+        if (base != NULL && PyArray_Check(base) &&
+            PyArray_CHKFLAGS((PyArrayObject *) base, NPY_ARRAY_OWNDATA)) {
             return PyArray_HANDLER(base);
         }
     }

@@ -951,7 +951,6 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(op)->f->copyswapn;
     char *buffer = NULL;
 
-    PyDataMem_Handler *mem_handler;
     PyArrayIterObject *it;
     npy_intp size;
 
@@ -964,7 +963,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         return 0;
     }
 
-    mem_handler = PyDataMem_GetHandler(NULL);
+    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler(NULL);
     if (mem_handler == NULL) {
         return -1;
     }
@@ -1087,7 +1086,6 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     char *valbuffer = NULL;
     npy_intp *idxbuffer = NULL;
 
-    PyDataMem_Handler *mem_handler;
     PyArrayObject *rop;
     npy_intp rstride;
 
@@ -1098,7 +1096,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     NPY_BEGIN_THREADS_DEF;
 
-    mem_handler = PyDataMem_GetHandler(NULL);
+    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler(NULL);
     if (mem_handler == NULL) {
         return NULL;
     }
