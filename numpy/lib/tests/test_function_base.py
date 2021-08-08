@@ -1529,7 +1529,7 @@ class TestVectorize:
         assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
                      ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
         
-        # Test if whitespaces are ignored
+        # Tests to check if whitespaces are ignored
         assert_equal(nfb._parse_gufunc_signature('(x )->()'), ([('x',)], [()]))
         assert_equal(nfb._parse_gufunc_signature('( x , y )->(  )'),
                      ([('x', 'y')], [()]))
