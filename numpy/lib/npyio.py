@@ -1,3 +1,4 @@
+import math
 import os
 import re
 import functools
@@ -719,6 +720,45 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     zipf.close()
 
 
+def _flatten_dtype_to_fields(dt):
+    """
+    Given a dtype (structured or not, nested or not, aligned or not), construct
+    a list of ``(format, offset)`` pairs specifying a structured dtype with
+    only scalar fields and the same layout.  Field names are not conserved.
+    """
+    # stdlib math and list comprehensions are significantly faster than numpy
+    # vectorized ops here.
+    if dt.fields is not None:  # structured dtype.
+        fields = []
+        for subdt, offset, *_ in dt.fields.values():
+            for fmt, suboffset in _flatten_dtype_to_fields(subdt):
+                fields.append((fmt, offset + suboffset))
+        return fields
+    elif dt.subdtype is not None:  # array dtype.
+        base, shape = dt.subdtype
+        return [(fmt, i * base.itemsize + offset)
+                for i in range(math.prod(dt.shape))
+                for fmt, offset in _flatten_dtype_to_fields(base)]
+    else:  # scalar dtype.
+        return [(dt, 0)]
+
+
+def _flatten_dtype(dt):
+    """
+    Given a dtype (structured or not, nested or not, aligned or not), return a
+    structured dtype with only scalar fields and the same layout.  Field names
+    are not conserved.
+    """
+    fields = _flatten_dtype_to_fields(dt)
+    if fields:
+        fmts, offsets = zip(*fields)
+        return np.dtype({
+            "names": [str(i) for i in range(len(fields))],
+            "formats": fmts, "offsets": offsets, "itemsize": dt.itemsize})
+    else:
+        return np.dtype([])
+
+
 def _floatconv(x):
     try:
         return float(x)  # The fastest path.
@@ -755,64 +795,6 @@ def _getconv(dtype):
         if issubclass(dtype.type, base):
             return conv
     return str
-
-
-# _loadtxt_flatten_dtype_internal and _loadtxt_pack_items are loadtxt helpers
-# lifted to the toplevel because recursive inner functions cause either
-# GC-dependent reference loops (because they are closures over loadtxt's
-# internal variables) or large overheads if using a manual trampoline to hide
-# the recursive calls.
-
-
-# not to be confused with the flatten_dtype we import...
-def _loadtxt_flatten_dtype_internal(dt):
-    """Unpack a structured data-type, and produce a packer function."""
-    if dt.names is None:
-        # If the dtype is flattened, return.
-        # If the dtype has a shape, the dtype occurs
-        # in the list more than once.
-        shape = dt.shape
-        if len(shape) == 0:
-            return ([dt.base], None)
-        else:
-            packing = [(shape[-1], list)]
-            if len(shape) > 1:
-                for dim in dt.shape[-2::-1]:
-                    packing = [(dim*packing[0][0], packing*dim)]
-            return ([dt.base] * int(np.prod(dt.shape)),
-                    functools.partial(_loadtxt_pack_items, packing))
-    else:
-        types = []
-        packing = []
-        for field in dt.names:
-            tp, bytes = dt.fields[field]
-            flat_dt, flat_packer = _loadtxt_flatten_dtype_internal(tp)
-            types.extend(flat_dt)
-            flat_packing = flat_packer.args[0] if flat_packer else None
-            # Avoid extra nesting for subarrays
-            if tp.ndim > 0:
-                packing.extend(flat_packing)
-            else:
-                packing.append((len(flat_dt), flat_packing))
-        return (types, functools.partial(_loadtxt_pack_items, packing))
-
-
-def _loadtxt_pack_items(packing, items):
-    """Pack items into nested lists based on re-packing info."""
-    if packing is None:
-        return items[0]
-    elif packing is tuple:
-        return tuple(items)
-    elif packing is list:
-        return list(items)
-    else:
-        start = 0
-        ret = []
-        for length, subpacking in packing:
-            ret.append(
-                _loadtxt_pack_items(subpacking, items[start:start+length]))
-            start += length
-        return tuple(ret)
 
 
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
@@ -1027,12 +1009,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     else:
         usecols_getter = None
 
-    # Make sure we're dealing with a proper dtype
-    dtype = np.dtype(dtype)
-    defconv = _getconv(dtype)
-
-    dtype_types, packer = _loadtxt_flatten_dtype_internal(dtype)
-
     fh_closing_ctx = contextlib.nullcontext()
     try:
         if isinstance(fname, os_PathLike):
@@ -1097,20 +1073,22 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             itemgetter(1),  # item[1] is words; filter skips empty lines.
             enumerate(map(split_line, line_iter), 1 + skiprows))
 
-        # Now that we know ncols, create the default converters list, and
-        # set packing, if necessary.
-        if len(dtype_types) > 1:
-            # We're dealing with a structured array, each field of
-            # the dtype matches a column
-            converters = [_getconv(dt) for dt in dtype_types]
-        else:
-            # All fields have the same dtype; use specialized packers which are
-            # much faster than those using _loadtxt_pack_items.
-            converters = [defconv for i in range(ncols)]
-            if ncols == 1:
-                packer = itemgetter(0)
-            else:
-                def packer(row): return row
+        dtype = np.dtype(dtype)  # Make sure we're dealing with a proper dtype
+        entry_dtype = _flatten_dtype(dtype)
+        nfields = len(entry_dtype.fields)
+        if ncols % nfields != 0:
+            raise ValueError(  # (Previously, trailing fields were cut off.)
+                f"The number of columns ({ncols}) is not a multiple of the "
+                f"number of fields in the requested dtype ({nfields})")
+        row_dtype = _flatten_dtype(
+            np.dtype([("f", entry_dtype, (ncols // nfields,))]))
+
+        infer_dtype_size = (  # issubdtype returns True for structured types(!)
+            np.issubdtype(dtype, np.flexible) and dtype.fields is None)
+
+        # Now that we know ncols, create the default converters list.
+        converters = [
+            _getconv(field[0]) for field in row_dtype.fields.values()]
 
         # By preference, use the converters specified by the user
         for i, conv in (user_converters or {}).items():
@@ -1138,10 +1116,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # `_getconv` returns equal callables (i.e. not local lambdas) on
             # equal dtypes.
             def convert_row(vals, _conv=converters[0]):
-                return [*map(_conv, vals)]
+                return tuple(map(_conv, vals))
         else:
             def convert_row(vals):
-                return [conv(val) for conv, val in zip(converters, vals)]
+                return tuple(conv(val) for conv, val in zip(converters, vals))
 
         # read data in chunks and fill it into an array via resize
         # over-allocating and shrinking the array later may be faster but is
@@ -1157,20 +1135,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 elif len(words) != ncols:
                     raise ValueError(
                         f"Wrong number of columns at line {lineno}")
-                # Convert each value according to its column, then pack it
-                # according to the dtype's nesting, and store it.
-                chunk.append(packer(convert_row(words)))
+                # Convert each value according to its column.
+                chunk.append(convert_row(words))
             if not chunk:  # The islice is empty, i.e. we're done.
                 break
 
             if X is None:
-                X = np.array(chunk, dtype)
+                X = np.array(chunk, dtype if infer_dtype_size else row_dtype)
             else:
                 # If using unsized string or byte dtype, make sure that the
                 # existing array is capable of storing the new data. If not,
                 # change the dtype so it is capable of doing so.
-                if (dtype.type in (np.str_, np.bytes_)
-                        and dtype.itemsize == 0):
+                if infer_dtype_size:
                     chunk = np.array(chunk, dtype)
                     if chunk.dtype.itemsize > X.dtype.itemsize:
                         X = X.astype(chunk.dtype)
@@ -1182,6 +1158,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if X is None:
         X = np.array([], dtype)
+    else:
+        nrows = len(X)
+        if not infer_dtype_size:
+            if dtype.hasobject:
+                # The restriction on views on object dtypes is actually overly
+                # strict here, as we are only relabeling the fields.  See also
+                # issue 8514.
+                X = np.asarray(X, dtype)
+            else:
+                X = X.view(dtype)
+        X = X.reshape((nrows, -1))
 
     # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
@@ -1201,7 +1188,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             X = np.atleast_2d(X).T
 
     if unpack:
-        if len(dtype_types) > 1:
+        if dtype.names:
             # For structured arrays, return an array for each field.
             return [X[field] for field in dtype.names]
         else:
