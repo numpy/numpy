@@ -807,7 +807,10 @@ PyArray_NewFromDescr_int(
 
     if (data == NULL) {
         /* Store the functions in case the global handler is modified */
-        fa->mem_handler = current_handler;
+        fa->mem_handler = PyDataMem_GetHandler(NULL);
+        if (fa->mem_handler == NULL) {
+            goto fail;
+        }
         /*
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure

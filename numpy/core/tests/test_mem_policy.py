@@ -18,7 +18,7 @@ def get_module(tmp_path):
                         "must be called with a numpy scalar or ndarray");
             }
             return PyUnicode_FromString(
-                            PyDataMem_GetHandlerName((PyArrayObject*)args));
+                            PyDataMem_GetHandler((PyArrayObject*)args)->name);
         """
         ),
         ("set_new_policy", "METH_NOARGS",

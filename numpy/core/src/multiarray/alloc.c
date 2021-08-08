@@ -386,7 +386,7 @@ PyDataMem_Handler default_handler = {
     }
 };
 
-PyDataMem_Handler *current_handler = &default_handler;
+PyObject *current_handler;
 
 int uo_index=0;   /* user_override index */
 
@@ -470,50 +470,77 @@ PyDataMem_UserRENEW(void *ptr, size_t size, const PyDataMemAllocator *allocator)
 }
 
 /*NUMPY_API
- * Sets a new allocation policy. If the input value is NULL, will reset
- * the policy to the default. Returns the previous policy. We wrap
- * the user-provided functions so they will still call the python
- * and numpy memory management callback hooks.
+ * Set a new allocation policy. If the input value is NULL, will reset
+ * the policy to the default. Return the previous policy, or set an exception
+ * and return NULL if an error has occurred. We wrap the user-provided
+ * functions so they will still call the python and numpy
+ * memory management callback hooks.
  */
 NPY_NO_EXPORT const PyDataMem_Handler *
 PyDataMem_SetHandler(PyDataMem_Handler *handler)
 {
-    const PyDataMem_Handler *old = current_handler;
+    PyObject *capsule;
+    PyObject *old_capsule;
+    PyDataMem_Handler *old_handler;
+    PyObject *token;
+    if (PyContextVar_Get(current_handler, NULL, &old_capsule)) {
+        return NULL;
+    }
+    old_handler = (PyDataMem_Handler *) PyCapsule_GetPointer(old_capsule, NULL);
+    if (old_handler == NULL) {
+        return NULL;
+    }
     if (handler) {
-        current_handler = handler;
+        capsule = PyCapsule_New(handler, NULL, NULL);
+        if (capsule == NULL) {
+            return NULL;
+        }
     }
     else {
-        current_handler = &default_handler;
+        capsule = PyCapsule_New(&default_handler, NULL, NULL);
+        if (capsule == NULL) {
+            return NULL;
+        }
     }
-    return old;
+    token = PyContextVar_Set(current_handler, capsule);
+    if (token == NULL) {
+        Py_DECREF(capsule);
+        return NULL;
+    }
+    Py_DECREF(old_capsule);
+    Py_DECREF(token);
+    return old_handler;
 }
 
 /*NUMPY_API
- * Return the const char name of the PyDataMem_Handler used by the
- * PyArrayObject or its base. If neither the PyArrayObject owns its own data
- * nor its base is a PyArrayObject which owns its own data return an empty string.
- * If NULL, return the name of the current global policy that
- * will be used to allocate data for the next PyArrayObject.
+ * Return the PyDataMem_Handler used by the PyArrayObject. If NULL, return
+ * the current global policy that ill be used to allocate data
+ * for the next PyArrayObject. On failure, set an exception and return NULL.
  */
-NPY_NO_EXPORT const char *
-PyDataMem_GetHandlerName(PyArrayObject *obj)
+NPY_NO_EXPORT PyDataMem_Handler *
+PyDataMem_GetHandler(PyArrayObject *obj)
 {
-    if (obj == NULL) {
-        return current_handler->name;
-    }
+    PyObject *base;
+    PyObject *capsule;
     PyDataMem_Handler *handler;
-    handler = PyArray_HANDLER(obj);
-    if (handler != NULL) {
-        return handler->name;
+    if (obj == NULL) {
+        if (PyContextVar_Get(current_handler, NULL, &capsule)) {
+            return NULL;
+        }
+        return (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
     }
-    PyObject *base = PyArray_BASE(obj);
-    if (base != NULL && PyArray_Check(base)) {
-        handler = PyArray_HANDLER((PyArrayObject *) base);
-        if (handler != NULL) {
-             return handler->name;
+    /* If there's a handler, the array owns its own datay */
+    handler = PyArray_HANDLER(obj);
+    if (handler == NULL) {
+        /*
+         * If the base is an array which owns its own data, return its allocator.
+         */
+        base = PyArray_BASE(obj);
+        if (base != NULL && PyArray_Check(base) && PyArray_CHKFLAGS(base, NPY_ARRAY_OWNDATA)) {
+            return PyArray_HANDLER(base);
         }
     }
-    return "";
+    return handler;
 }
 
 NPY_NO_EXPORT PyObject *
@@ -527,12 +554,9 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
          PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
          return NULL;
     }
-    const char * name = PyDataMem_GetHandlerName((PyArrayObject *)arr);
-    if (name == NULL) {
+    const PyDataMem_Handler * mem_handler = PyDataMem_GetHandler((PyArrayObject *)arr);
+    if (mem_handler == NULL) {
         return NULL;
     }
-    else if (strlen(name) == 0) {
-        Py_RETURN_NONE;
-    }
-    return PyUnicode_FromString(name);
+    return PyUnicode_FromString(mem_handler->name);
 }

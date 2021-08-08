@@ -3082,6 +3082,7 @@ UNICODE_compare(npy_ucs4 *ip1, npy_ucs4 *ip2,
 static int
 VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 {
+    PyDataMem_Handler *mem_handler;
     PyArray_Descr *descr;
     PyObject *names, *key;
     PyObject *tup;
@@ -3092,6 +3093,12 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
+    }
+    mem_handler = PyDataMem_GetHandler(NULL);
+    if (mem_handler == NULL) {
+        /* Better fallback to default than goto finish. */
+        PyErr_Clear();
+        mem_handler = &default_handler;
     }
     descr = PyArray_DESCR(ap);
     /*
@@ -3119,7 +3126,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip1 = PyDataMem_UserNEW(new->elsize, &current_handler->allocator);
+                nip1 = PyDataMem_UserNEW(new->elsize, &mem_handler->allocator);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -3132,12 +3139,12 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip2 = PyDataMem_UserNEW(new->elsize, &current_handler->allocator);
+                nip2 = PyDataMem_UserNEW(new->elsize, &mem_handler->allocator);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
                         /* destroy temporary buffer */
                         PyDataMem_UserFREE(nip1, new->elsize,
-                                           &current_handler->allocator);
+                                           &mem_handler->allocator);
                     }
                     goto finish;
                 }
@@ -3150,11 +3157,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip1, new->elsize, &current_handler->allocator);
+                PyDataMem_UserFREE(nip1, new->elsize, &mem_handler->allocator);
             }
             if (nip2 != ip2 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip2, new->elsize, &current_handler->allocator);
+                PyDataMem_UserFREE(nip2, new->elsize, &mem_handler->allocator);
             }
         }
         if (res != 0) {
