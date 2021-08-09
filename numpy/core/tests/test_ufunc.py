@@ -2124,6 +2124,16 @@ class TestUfunc:
         assert_array_equal(ufunc(a, c), ufunc([True, True], True))
         assert ufunc.reduce(a) == True
 
+    @pytest.mark.parametrize("ufunc",
+             [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_out_cast_check(self, ufunc):
+        a = np.array('1')
+        c = np.array([1., 2.])
+        out = a.copy()
+        with pytest.raises(TypeError):
+            # It would be safe, but not equiv casting:
+            ufunc(a, c, out=out, casting="equiv")
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.
