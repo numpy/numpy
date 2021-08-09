@@ -3599,7 +3599,9 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         stride_copy[1] = stride1;
         stride_copy[2] = stride0;
 
-        NPY_BEGIN_THREADS_NDITER(iter);
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+        }
 
         do {
             for (i = 0; i < ind_size; ++i) {
