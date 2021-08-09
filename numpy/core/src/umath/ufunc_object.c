@@ -3470,9 +3470,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
     if (need_outer_iterator) {
-        /* indices are already passed in correctly */
-        assert(PyArray_DESCR(op[2])->type_num == NPY_INTP);
-
         PyArray_Descr *op_dtypes[3] = {descrs[0], descrs[1], NULL};
 
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
