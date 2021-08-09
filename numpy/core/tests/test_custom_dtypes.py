@@ -101,6 +101,22 @@ class TestSFloat:
         expected_view = a.view(np.float64) * b.view(np.float64)
         assert_array_equal(res.view(np.float64), expected_view)
 
+    def test_possible_and_impossible_reduce(self):
+        # For reductions to work, the first and last operand must have the
+        # same dtype.  For this parametric DType that is not necessarily true.
+        a = self._get_array(2.)
+        # Addition reductin works (as of writing requires to pass initial
+        # because setting a scaled-float from the default `0` fails).
+        res = np.add.reduce(a, initial=0.)
+        assert res == a.astype(np.float64).sum()
+
+        # But each multiplication changes the factor, so a reduction is not
+        # possible (the relaxed version of the old refusal to handle any
+        # flexible dtype).
+        with pytest.raises(TypeError,
+                match="The resolved dtypes are not compatible"):
+            np.multiply.reduce(a)
+
     def test_basic_multiply_promotion(self):
         float_a = np.array([1., 2., 3.])
         b = self._get_array(2.)
