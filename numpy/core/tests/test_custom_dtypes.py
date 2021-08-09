@@ -101,6 +101,18 @@ class TestSFloat:
         expected_view = a.view(np.float64) * b.view(np.float64)
         assert_array_equal(res.view(np.float64), expected_view)
 
+    def test_basic_multiply_promotion(self):
+        float_a = np.array([1., 2., 3.])
+        b = self._get_array(2.)
+
+        res1 = float_a * b
+        res2 = b * float_a
+        # one factor is one, so we get the factor of b:
+        assert res1.dtype == res2.dtype == b.dtype
+        expected_view = float_a * b.view(np.float64)
+        assert_array_equal(res1.view(np.float64), expected_view)
+        assert_array_equal(res2.view(np.float64), expected_view)
+
     def test_basic_addition(self):
         a = self._get_array(2.)
         b = self._get_array(4.)
