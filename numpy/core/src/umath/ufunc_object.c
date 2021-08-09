@@ -2694,8 +2694,7 @@ static PyArrayMethodObject *
 reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         PyArrayObject *arr, PyArrayObject *out,
         PyArray_DTypeMeta *signature[3],
-        int enforce_uniform_args, PyArray_Descr *out_descrs[3],
-        char *method_type)
+        int enforce_uniform_args, PyArray_Descr *out_descrs[3])
 {
     /*
      * Note that the `ops` is not realy correct.  But legacy resolution
@@ -2712,21 +2711,23 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      */
     PyArray_DTypeMeta *operation_DTypes[3] = {
             NULL, NPY_DTYPE(PyArray_DESCR(arr)), NULL};
+    Py_INCREF(operation_DTypes[1]);
 
     if (out != NULL) {
         operation_DTypes[0] = NPY_DTYPE(PyArray_DESCR(out));
+        Py_INCREF(operation_DTypes[0]);
         operation_DTypes[2] = operation_DTypes[0];
+        Py_INCREF(operation_DTypes[2]);
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE);
+    Py_DECREF(operation_DTypes[1]);
+    if (out != NULL) {
+        Py_DECREF(operation_DTypes[0]);
+        Py_DECREF(operation_DTypes[2]);
+    }
     if (ufuncimpl == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_Format(PyExc_TypeError,
-                    "Could not find a matching loop for %s.reduce.",
-                    method_type);
-            return NULL;
-        }
         return NULL;
     }
 
@@ -2937,7 +2938,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, 0, descrs, "reduce");
+            arr, out, signature, 0, descrs);
     if (ufuncimpl == NULL) {
         Py_DECREF(initial);
         return NULL;
@@ -3001,7 +3002,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, 1, descrs, "accumulate");
+            arr, out, signature, 1, descrs);
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -3414,7 +3415,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, 1, descrs, "accumulate");
+            arr, out, signature, 1, descrs);
     if (ufuncimpl == NULL) {
         return NULL;
     }
