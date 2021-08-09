@@ -518,27 +518,6 @@ class TestUfunc:
         np.add(arr, arr, dtype="m")
         np.maximum(arr, arr, dtype="m")
 
-    def test_forced_dtype_warning(self):
-        # does not warn (test relies on bad pickling behaviour, simply remove
-        # it if the `assert int64 is not int64_2` should start failing.
-        int64 = np.dtype("int64")
-        int64_2 = pickle.loads(pickle.dumps(int64))
-        assert int64 is not int64_2
-        np.add(3, 4, dtype=int64_2)
-
-        arr = np.arange(10, dtype="m8[s]")
-        msg = "The `dtype` and `signature` arguments to ufuncs only select the"
-        with pytest.raises(TypeError, match=msg):
-            np.add(3, 5, dtype=int64.newbyteorder())
-        with pytest.raises(TypeError, match=msg):
-            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
-        with pytest.raises(TypeError, match=msg):
-            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
-        with pytest.raises(TypeError, match=msg):
-            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
-        with pytest.raises(TypeError, match=msg):
-            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
-
     def test_true_divide(self):
         a = np.array(10)
         b = np.array(20)

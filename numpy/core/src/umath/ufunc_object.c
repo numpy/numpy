@@ -4286,7 +4286,8 @@ _get_dtype(PyObject *dtype_obj) {
         else if (NPY_UNLIKELY(out->singleton != descr)) {
             /* This does not warn about `metadata`, but units is important. */
             if (!PyArray_EquivTypes(out->singleton, descr)) {
-                PyErr_Format(PyExc_TypeError,
+                /* Deprecated NumPy 1.21.2 (was an accidental error in 1.21) */
+                if (DEPRECATE(
                         "The `dtype` and `signature` arguments to "
                         "ufuncs only select the general DType and not details "
                         "such as the byte order or time unit (with rare "
@@ -4296,9 +4297,11 @@ _get_dtype(PyObject *dtype_obj) {
                         "In rare cases where the time unit was preserved, "
                         "either cast the inputs or provide an output array. "
                         "In the future NumPy may transition to allow providing "
-                        "`dtype=` to denote the outputs `dtype` as well");
-                Py_DECREF(descr);
-                return NULL;
+                        "`dtype=` to denote the outputs `dtype` as well. "
+                        "(Deprecated NumPy 1.21)") < 0) {
+                    Py_DECREF(descr);
+                    return NULL;
+                }
             }
         }
         Py_INCREF(out);
