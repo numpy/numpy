@@ -1362,6 +1362,14 @@ class TestUfunc:
                            np.array([[2]*i for i in [1, 3, 6, 10]], dtype=object),
                           )
 
+    def test_object_array_accumulate_failure(self):
+        # Typical accumulation on object works as expected:
+        res = np.add.accumulate(np.array([1, 0, 2], dtype=object))
+        assert_array_equal(res, np.array([1, 1, 3], dtype=object))
+        # But errors are propagated from the inner-loop if they occur:
+        with pytest.raises(TypeError):
+            np.add.accumulate([1, None, 2])
+
     def test_object_array_reduceat_inplace(self):
         # Checks that in-place reduceats work, see also gh-7465
         arr = np.empty(4, dtype=object)
@@ -1380,6 +1388,15 @@ class TestUfunc:
         np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
         np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
         assert_array_equal(arr, out)
+
+    def test_object_array_reduceat_failure(self):
+        # Reduceat works as expected when no invalid operation occurs (None is
+        # not involved in an operation here)
+        res = np.add.reduceat(np.array([1, None, 2], dtype=object), [1, 2])
+        assert_array_equal(res, np.array([None, 2], dtype=object))
+        # But errors when None would be involved in an operation:
+        with pytest.raises(TypeError):
+            np.add.reduceat([1, None, 2], [0, 2])
 
     def test_zerosize_reduction(self):
         # Test with default dtype and object dtype
