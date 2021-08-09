@@ -4916,6 +4916,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
     current_handler = PyContextVar_New("current_allocator", c_api);
+    Py_DECREF(c_api);
     if (current_handler == NULL) {
         goto err;
     }

@@ -487,10 +487,11 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
         return NULL;
     }
     old_handler = (PyDataMem_Handler *) PyCapsule_GetPointer(old_capsule, NULL);
+    Py_DECREF(old_capsule);
     if (old_handler == NULL) {
         return NULL;
     }
-    if (handler) {
+    if (handler != NULL) {
         capsule = PyCapsule_New(handler, NULL, NULL);
         if (capsule == NULL) {
             return NULL;
@@ -503,11 +504,10 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
         }
     }
     token = PyContextVar_Set(current_handler, capsule);
+    Py_DECREF(capsule);
     if (token == NULL) {
-        Py_DECREF(capsule);
         return NULL;
     }
-    Py_DECREF(old_capsule);
     Py_DECREF(token);
     return old_handler;
 }
@@ -527,7 +527,9 @@ PyDataMem_GetHandler(PyArrayObject *obj)
         if (PyContextVar_Get(current_handler, NULL, &capsule)) {
             return NULL;
         }
-        return (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
+        handler = (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
+        Py_DECREF(capsule);
+        return handler;
     }
     /* If there's a handler, the array owns its own datay */
     handler = PyArray_HANDLER(obj);
