@@ -45,7 +45,6 @@ def get_module(tmp_path):
         NPY_NO_EXPORT void *
         shift_alloc(void *ctx, size_t sz) {
             SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
-
             char *real = (char *)funcs->malloc(sz + 64);
             if (real == NULL) {
                 return NULL;
@@ -56,7 +55,6 @@ def get_module(tmp_path):
         NPY_NO_EXPORT void *
         shift_zero(void *ctx, size_t sz, size_t cnt) {
             SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
-
             char *real = (char *)funcs->calloc(sz + 64, cnt);
             if (real == NULL) {
                 return NULL;
@@ -68,7 +66,6 @@ def get_module(tmp_path):
         NPY_NO_EXPORT void
         shift_free(void *ctx, void * p, npy_uintp sz) {
             SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
-
             if (p == NULL) {
                 return ;
             }
@@ -96,7 +93,6 @@ def get_module(tmp_path):
         NPY_NO_EXPORT void *
         shift_realloc(void *ctx, void * p, npy_uintp sz) {
             SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
-
             if (p != NULL) {
                 char *real = (char *)p - 64;
                 if (strncmp(real, "originally allocated", 20) != 0) {
