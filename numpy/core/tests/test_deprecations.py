@@ -1174,3 +1174,36 @@ class TestCtypesGetter(_DeprecationTestCase):
     )
     def test_not_deprecated(self, name: str) -> None:
         self.assert_not_deprecated(lambda: getattr(self.ctypes, name))
+
+
+class TestUFuncForcedDTypeWarning(_DeprecationTestCase):
+    message = "The `dtype` and `signature` arguments to ufuncs only select the"
+
+    def test_not_deprecated(self):
+        import pickle
+        # does not warn (test relies on bad pickling behaviour, simply remove
+        # it if the `assert int64 is not int64_2` should start failing.
+        int64 = np.dtype("int64")
+        int64_2 = pickle.loads(pickle.dumps(int64))
+        assert int64 is not int64_2
+        self.assert_not_deprecated(lambda: np.add(3, 4, dtype=int64_2))
+
+    def test_deprecation(self):
+        int64 = np.dtype("int64")
+        self.assert_deprecated(lambda: np.add(3, 5, dtype=int64.newbyteorder()))
+        self.assert_deprecated(lambda: np.add(3, 5, dtype="m8[ns]"))
+
+    def test_behaviour(self):
+        int64 = np.dtype("int64")
+        arr = np.arange(10, dtype="m8[s]")
+
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.add(3, 5, dtype=int64.newbyteorder())
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
