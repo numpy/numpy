@@ -7,7 +7,6 @@ See build_and_import_extensions for usage hints
 import os
 import pathlib
 import sys
-import setuptools  # noqa
 import sysconfig
 from distutils.ccompiler import new_compiler
 from distutils.sysconfig import customize_compiler
