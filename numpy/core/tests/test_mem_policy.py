@@ -12,14 +12,13 @@ def get_module(tmp_path):
     memory manipulation that the prefix exists, to make sure all alloc/realloc/
     free/calloc go via the functions here.
     """
-    functions = [(
-        "set_secret_data_policy", "METH_NOARGS",
-         """
-             PyDataMem_Handler *old = (PyDataMem_Handler *) PyDataMem_SetHandler(&secret_data_handler);
-             return PyCapsule_New(old, NULL, NULL);
+    functions = [
+        ("set_secret_data_policy", "METH_NOARGS", """
+             const PyDataMem_Handler *old =
+                 PyDataMem_SetHandler(&secret_data_handler);
+             return PyCapsule_New((void *) old, NULL, NULL);
          """),
-        ("set_old_policy", "METH_O",
-         """
+        ("set_old_policy", "METH_O", """
              PyDataMem_Handler *old = NULL;
              if (args != NULL && PyCapsule_CheckExact(args)) {
                  old = (PyDataMem_Handler *) PyCapsule_GetPointer(args, NULL);
@@ -27,7 +26,7 @@ def get_module(tmp_path):
              PyDataMem_SetHandler(old);
              Py_RETURN_NONE;
          """),
-        ]
+    ]
     prologue = '''
         #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
         #include <numpy/arrayobject.h>
@@ -136,22 +135,23 @@ def get_module(tmp_path):
     except ImportError:
         pass
     # if it does not exist, build and load it
-    return extbuild.build_and_import_extension(
-        'mem_policy',
-        functions, prologue=prologue, include_dirs=[np.get_include()],
-        build_dir=tmp_path, more_init=more_init
-        )
+    return extbuild.build_and_import_extension('mem_policy',
+                                               functions,
+                                               prologue=prologue,
+                                               include_dirs=[np.get_include()],
+                                               build_dir=tmp_path,
+                                               more_init=more_init)
 
 
 def test_set_policy(get_module):
     orig_policy_name = np.core.multiarray.get_handler_name()
 
-    a = np.arange(10).reshape((2, 5)) # a doesn't own its own data
+    a = np.arange(10).reshape((2, 5))  # a doesn't own its own data
     assert np.core.multiarray.get_handler_name(a) == orig_policy_name
 
     orig_policy = get_module.set_secret_data_policy()
 
-    b = np.arange(10).reshape((2, 5)) # b doesn't own its own data
+    b = np.arange(10).reshape((2, 5))  # b doesn't own its own data
     assert np.core.multiarray.get_handler_name(b) == 'secret_data_allocator'
 
     if orig_policy_name == 'default_allocator':
@@ -188,8 +188,10 @@ async def async_test_context_locality(get_module):
     orig_policy_name = np.core.multiarray.get_handler_name()
 
     event = asyncio.Event()
-    concurrent_task1 = asyncio.create_task(concurrent_context1(get_module, event))
-    concurrent_task2 = asyncio.create_task(concurrent_context2(get_module, orig_policy_name, event))
+    concurrent_task1 = asyncio.create_task(
+        concurrent_context1(get_module, event))
+    concurrent_task2 = asyncio.create_task(
+        concurrent_context2(get_module, orig_policy_name, event))
     await concurrent_task1
     await concurrent_task2
 
@@ -228,8 +230,10 @@ def test_thread_locality(get_module):
     orig_policy_name = np.core.multiarray.get_handler_name()
 
     event = threading.Event()
-    concurrent_task1 = threading.Thread(target=concurrent_thread1, args=(get_module, event))
-    concurrent_task2 = threading.Thread(target=concurrent_thread2, args=(get_module, event))
+    concurrent_task1 = threading.Thread(target=concurrent_thread1,
+                                        args=(get_module, event))
+    concurrent_task2 = threading.Thread(target=concurrent_thread2,
+                                        args=(get_module, event))
     concurrent_task1.start()
     concurrent_task2.start()
     concurrent_task1.join()
