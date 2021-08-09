@@ -88,7 +88,7 @@ reallocate or free the data memory of the instance.
 .. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler(PyArrayObject *obj)
 
    Return the `PyDataMem_Handler` used by the ``PyArrayObject``. If ``NULL``,
-   return the current global policy that ill be used to allocate data for the
+   return the current global policy that will be used to allocate data for the
    next ``PyArrayObject``. On failure, set an exception and return ``NULL``.
 
 For an example of setting up and using the PyDataMem_Handler, see the test in

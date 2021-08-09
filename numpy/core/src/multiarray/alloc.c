@@ -514,7 +514,7 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
 /*NUMPY_API
  * Return the PyDataMem_Handler used by the PyArrayObject. If NULL, return
- * the current global policy that ill be used to allocate data
+ * the current global policy that will be used to allocate data
  * for the next PyArrayObject. On failure, set an exception and return NULL.
  */
 NPY_NO_EXPORT const PyDataMem_Handler *
