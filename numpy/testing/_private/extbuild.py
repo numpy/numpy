@@ -8,8 +8,7 @@ import os
 import pathlib
 import sys
 import sysconfig
-from distutils.ccompiler import new_compiler
-from distutils.sysconfig import customize_compiler
+from numpy.distutils.ccompiler import new_compiler
 from distutils.errors import CompileError
 
 __all__ = ['build_and_import_extension', 'compile_extension_module']
@@ -223,9 +222,8 @@ def build(cfile, outputfilename, compile_extra, link_extra,
           include_dirs, libraries, library_dirs):
     "cd into the directory where the cfile is, use distutils to build"
 
-    compiler = new_compiler(force=1)
-    compiler.verbose = 1
-    customize_compiler(compiler)
+    compiler = new_compiler(force=1, verbose=2)
+    compiler.customize('')
     objects = []
 
     old = os.getcwd()
