@@ -42,7 +42,8 @@ def get_module(tmp_path):
             void (*free)(void *);
         } Allocator;
         NPY_NO_EXPORT void *
-        shift_alloc(Allocator *ctx, size_t sz) {
+        shift_alloc(void *_ctx, size_t sz) {
+            Allocator *ctx = (Allocator*)_ctx;
             char *real = (char *)ctx->malloc(sz + 64);
             if (real == NULL) {
                 return NULL;
@@ -51,7 +52,8 @@ def get_module(tmp_path):
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void *
-        shift_zero(Allocator *ctx, size_t sz, size_t cnt) {
+        shift_zero(void *_ctx, size_t sz, size_t cnt) {
+            Allocator *ctx = (Allocator*)_ctx;
             char *real = (char *)ctx->calloc(sz + 64, cnt);
             if (real == NULL) {
                 return NULL;
@@ -61,7 +63,8 @@ def get_module(tmp_path):
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void
-        shift_free(Allocator *ctx, void * p, npy_uintp sz) {
+        shift_free(void *_ctx, void * p, npy_uintp sz) {
+            Allocator *ctx = (Allocator*)_ctx;
             if (p == NULL) {
                 return ;
             }
@@ -87,7 +90,8 @@ def get_module(tmp_path):
             }
         }
         NPY_NO_EXPORT void *
-        shift_realloc(Allocator *ctx, void * p, npy_uintp sz) {
+        shift_realloc(void *_ctx, void * p, npy_uintp sz) {
+            Allocator *ctx = (Allocator*)_ctx;
             if (p != NULL) {
                 char *real = (char *)p - 64;
                 if (strncmp(real, "originally allocated", 20) != 0) {
