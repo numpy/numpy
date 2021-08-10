@@ -3524,8 +3524,12 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             Py_INCREF(out);
         }
     }
-    /* Allocate the output for when there's no outer iterator */
-    else if (out == NULL) {
+    else {
+        /*
+         * Allocate the output for when there's no outer iterator, we always
+         * use the outer_iteration path when `out` is passed.
+         */
+        assert(out == NULL);
         Py_INCREF(descrs[0]);
         op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
                                     &PyArray_Type, descrs[0],

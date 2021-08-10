@@ -2155,6 +2155,22 @@ class TestUfunc:
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
 
+    @pytest.mark.parametrize("with_cast", [True, False])
+    def test_reduceat_and_accumulate_out_shape_mismatch(self, with_cast):
+        # Should raise an error mentioning "shape" or "size"
+        arr = np.arange(5)
+        out = np.arange(3)  # definitely wrong shape
+        if with_cast:
+            # If a cast is necessary on the output, we can be sure to use
+            # the generic NpyIter (non-fast) path.
+            out = out.astype(np.float64)
+
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.reduceat(arr, [0, 3], out=out)
+
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.accumulate(arr, out=out)
+
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
     @pytest.mark.parametrize('keepdims', [True, False])
