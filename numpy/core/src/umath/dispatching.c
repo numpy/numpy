@@ -254,10 +254,6 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             for (Py_ssize_t i = 0; i < nargs; i++) {
                 int best;
 
-                /* Whether this (normally output) dtype was specified at all */
-                npy_bool is_not_specified = (
-                        op_dtypes[i] == (PyArray_DTypeMeta *)Py_None);
-
                 PyObject *prev_dtype = PyTuple_GET_ITEM(best_dtypes, i);
                 PyObject *new_dtype = PyTuple_GET_ITEM(curr_dtypes, i);
 
@@ -271,7 +267,8 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                  *       the subclass should be considered a better match
                  *       (subclasses are always more specific).
                  */
-                if (is_not_specified) {
+                /* Whether this (normally output) dtype was specified at all */
+                if (op_dtypes[i] == NULL) {
                     /*
                      * When DType is completely unspecified, prefer abstract
                      * over concrete, assuming it will resolve.
