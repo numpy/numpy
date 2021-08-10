@@ -4,6 +4,7 @@ Discrete Fourier Transforms - helper.py
 """
 from numpy.core import integer, empty, arange, asarray, roll
 from numpy.core.overrides import array_function_dispatch, set_module
+import numpy as np
 
 # Created by Pearu Peterson, September 2002
 
@@ -159,6 +160,8 @@ def fftfreq(n, d=1.0):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
+    if np.ndim(d) != 0:
+        raise ValueError("d must be a scalar number")
     val = 1.0 / (n * d)
     results = empty(n, int)
     N = (n-1)//2 + 1
@@ -215,6 +218,8 @@ def rfftfreq(n, d=1.0):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
+    if np.ndim(d) != 0:
+        raise ValueError("d must be a scalar number")
     val = 1.0/(n*d)
     N = n//2 + 1
     results = arange(0, N, dtype=int)
