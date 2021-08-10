@@ -2049,6 +2049,27 @@ class TestUfunc:
             assert_raises(TypeError, f, a, b)
             assert_raises(TypeError, f, c, a)
 
+    @pytest.mark.parametrize("ufunc",
+             [np.logical_and, np.logical_or])  # logical_xor object loop is bad
+    @pytest.mark.parametrize("signature",
+             [(None, None, object), (object, None, None),
+              (None, object, None)])
+    def test_logical_ufuncs_object_signatures(self, ufunc, signature):
+        a = np.array([True, None, False], dtype=object)
+        res = ufunc(a, a, signature=signature)
+        assert res.dtype == object
+
+    @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    @pytest.mark.parametrize("signature",
+                 [(bool, None, object), (object, None, bool),
+                  (None, object, bool)])
+    def test_logical_ufuncs_mixed_object_signatures(self, ufunc, signature):
+        # Most mixed signatures fail (except those with bool out, e.g. `OO->?`)
+        a = np.array([True, None, False])
+        with pytest.raises(TypeError):
+            ufunc(a, a, signature=signature)
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.
