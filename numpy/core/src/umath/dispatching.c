@@ -831,7 +831,12 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    /* If we find any object at all, we currently force to object */
+    /*
+     * If we find any object DType at all, we currently force to object.
+     * However, if the output is specified and not object, there is no point,
+     * it should be just as well to cast the input rather than doing the
+     * unsafe out cast.
+     */
     int force_object = 0;
 
     for (int i = 0; i < 3; i++) {
@@ -852,7 +857,9 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         }
         new_op_dtypes[i] = item;
     }
-    if (!force_object) {
+
+    if (!force_object || (op_dtypes[2] != NULL
+                          && op_dtypes[2]->type_num != NPY_OBJECT)) {
         return 0;
     }
     /* Actually, we have to use the OBJECT loop after all, set all we can
