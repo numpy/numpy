@@ -43,7 +43,7 @@ def get_module(tmp_path):
         } SecretDataAllocatorFuncs;
         NPY_NO_EXPORT void *
         shift_alloc(void *ctx, size_t sz) {
-            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
             char *real = (char *)funcs->malloc(sz + 64);
             if (real == NULL) {
                 return NULL;
@@ -53,7 +53,7 @@ def get_module(tmp_path):
         }
         NPY_NO_EXPORT void *
         shift_zero(void *ctx, size_t sz, size_t cnt) {
-            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
             char *real = (char *)funcs->calloc(sz + 64, cnt);
             if (real == NULL) {
                 return NULL;
@@ -64,7 +64,7 @@ def get_module(tmp_path):
         }
         NPY_NO_EXPORT void
         shift_free(void *ctx, void * p, npy_uintp sz) {
-            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
             if (p == NULL) {
                 return ;
             }
@@ -91,7 +91,7 @@ def get_module(tmp_path):
         }
         NPY_NO_EXPORT void *
         shift_realloc(void *ctx, void * p, npy_uintp sz) {
-            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *) ctx;
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
             if (p != NULL) {
                 char *real = (char *)p - 64;
                 if (strncmp(real, "originally allocated", 20) != 0) {
@@ -155,55 +155,50 @@ def test_set_policy(get_module):
     assert np.core.multiarray.get_handler_name(b) == 'secret_data_allocator'
 
     if orig_policy_name == 'default_allocator':
-        get_module.set_old_policy(None)
-
+        get_module.set_old_policy(None)  # tests PyDataMem_SetHandler(NULL)
         assert np.core.multiarray.get_handler_name() == 'default_allocator'
     else:
         get_module.set_old_policy(orig_policy)
-
         assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
-async def concurrent_context1(get_module, event):
-    get_module.set_secret_data_policy()
-
-    assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
-
+async def concurrent_context1(get_module, orig_policy_name, event):
+    if orig_policy_name == 'default_allocator':
+        get_module.set_secret_data_policy()
+        assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+    else:
+        get_module.set_old_policy(None)
+        assert np.core.multiarray.get_handler_name() == 'default_allocator'
     event.set()
 
 
 async def concurrent_context2(get_module, orig_policy_name, event):
     await event.wait()
-
+    # the policy is not affected by changes in parallel contexts
     assert np.core.multiarray.get_handler_name() == orig_policy_name
-
-
-async def secret_data_context(get_module):
-    assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
-
-    get_module.set_old_policy(None)
+    # change policy in the child context
+    if orig_policy_name == 'default_allocator':
+        get_module.set_secret_data_policy()
+        assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+    else:
+        get_module.set_old_policy(None)
+        assert np.core.multiarray.get_handler_name() == 'default_allocator'
 
 
 async def async_test_context_locality(get_module):
     orig_policy_name = np.core.multiarray.get_handler_name()
 
     event = asyncio.Event()
+    # the child contexts inherit the parent policy
     concurrent_task1 = asyncio.create_task(
-        concurrent_context1(get_module, event))
+        concurrent_context1(get_module, orig_policy_name, event))
     concurrent_task2 = asyncio.create_task(
         concurrent_context2(get_module, orig_policy_name, event))
     await concurrent_task1
     await concurrent_task2
 
+    # the parent context is not affected by child policy changes
     assert np.core.multiarray.get_handler_name() == orig_policy_name
-
-    orig_policy = get_module.set_secret_data_policy()
-
-    await asyncio.create_task(secret_data_context(get_module))
-
-    assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
-
-    get_module.set_old_policy(orig_policy)
 
 
 def test_context_locality(get_module):
@@ -211,25 +206,24 @@ def test_context_locality(get_module):
 
 
 def concurrent_thread1(get_module, event):
-    assert np.core.multiarray.get_handler_name() == 'default_allocator'
-
     get_module.set_secret_data_policy()
-
     assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
-
     event.set()
 
 
 def concurrent_thread2(get_module, event):
     event.wait()
-
+    # the policy is not affected by changes in parallel threads
     assert np.core.multiarray.get_handler_name() == 'default_allocator'
+    # change policy in the child thread
+    get_module.set_secret_data_policy()
 
 
 def test_thread_locality(get_module):
     orig_policy_name = np.core.multiarray.get_handler_name()
 
     event = threading.Event()
+    # the child threads do not inherit the parent policy
     concurrent_task1 = threading.Thread(target=concurrent_thread1,
                                         args=(get_module, event))
     concurrent_task2 = threading.Thread(target=concurrent_thread2,
@@ -239,6 +233,7 @@ def test_thread_locality(get_module):
     concurrent_task1.join()
     concurrent_task2.join()
 
+    # the parent thread is not affected by child policy changes
     assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
