@@ -80,7 +80,7 @@ reallocate or free the data memory of the instance.
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
    Set a new allocation policy. If the input value is ``NULL``, will reset the
-   policy to the default. Return the previous policy, or set an exception and
+   policy to the default. Return the previous policy, or
    return ``NULL`` if an error has occurred. We wrap the user-provided functions
    so they will still call the python and numpy memory management callback
    hooks.
@@ -89,7 +89,7 @@ reallocate or free the data memory of the instance.
 
    Return the `PyDataMem_Handler` used by the ``PyArrayObject``. If ``NULL``,
    return the current global policy that will be used to allocate data for the
-   next ``PyArrayObject``. On failure, set an exception and return ``NULL``.
+   next ``PyArrayObject``. On failure, return ``NULL``.
 
 For an example of setting up and using the PyDataMem_Handler, see the test in
 :file:`numpy/core/tests/test_mem_policy.py`

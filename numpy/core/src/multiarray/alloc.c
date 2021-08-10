@@ -471,8 +471,8 @@ PyDataMem_UserRENEW(void *ptr, size_t size, const PyDataMemAllocator *allocator)
 
 /*NUMPY_API
  * Set a new allocation policy. If the input value is NULL, will reset
- * the policy to the default. Return the previous policy, or set an exception
- * and return NULL if an error has occurred. We wrap the user-provided
+ * the policy to the default. Return the previous policy, or
+ * return NULL if an error has occurred. We wrap the user-provided
  * functions so they will still call the python and numpy
  * memory management callback hooks.
  */
@@ -515,7 +515,7 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
 /*NUMPY_API
  * Return the PyDataMem_Handler used by the PyArrayObject. If NULL, return
  * the current global policy that will be used to allocate data
- * for the next PyArrayObject. On failure, set an exception and return NULL.
+ * for the next PyArrayObject. On failure, return NULL.
  */
 NPY_NO_EXPORT const PyDataMem_Handler *
 PyDataMem_GetHandler(PyArrayObject *obj)
