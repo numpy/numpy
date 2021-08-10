@@ -314,9 +314,6 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
         self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
 
 
-
-
-
 class TestDTypeAttributeIsDTypeDeprecation(_DeprecationTestCase):
     # Deprecated 2021-01-05, NumPy 1.21
     message = r".*`.dtype` attribute"
