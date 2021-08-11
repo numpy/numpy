@@ -1844,9 +1844,9 @@ def disp(mesg, device=None, linefeed=True):
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
-_DIMENSION_NAME = r'\s*\w+\s*'
+_DIMENSION_NAME = r'\w+'
 _CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
-_ARGUMENT = r'\s*\({}\s*\)\s*'.format(_CORE_DIMENSION_LIST)
+_ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
 _ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
 _SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
 
@@ -1866,11 +1866,12 @@ def _parse_gufunc_signature(signature):
     Tuple of input and output core dimensions parsed from the signature, each
     of the form List[Tuple[str, ...]].
     """
+    signature = re.sub(r'\s+', '', signature)
+
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
             'not a valid gufunc signature: {}'.format(signature))
-    return tuple([tuple([dim.strip() 
-                    for dim in re.findall(_DIMENSION_NAME, arg)])
+    return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
                   for arg in re.findall(_ARGUMENT, arg_list)]
                  for arg_list in signature.split('->'))
 
