@@ -38,8 +38,6 @@ details are found in :ref:`reference`.
    ../f2py/index
    ../glossary
    ../dev/underthehood
-   ../docs/index
    ../bugs
    ../release
-   ../doc_conventions
    ../license
