@@ -477,10 +477,17 @@ def build_project(args):
     from distutils.sysconfig import get_python_lib
     py_v_s = sysconfig.get_config_var('py_version_short')
     site_dir_template = sysconfig.get_path('platlib', expand=False)
-    site_dir = site_dir_template.format(platbase=dst_dir, py_version_short=py_v_s)
+    site_dir = site_dir_template.format(platbase=dst_dir,
+                                        py_version_short=py_v_s,
+                                        # Python 3.9+
+                                        platlibdir=getattr(sys, 'platlibdir', ''),
+                                       )
     site_dir_noarch_template = sysconfig.get_path('purelib', expand=False)
     site_dir_noarch = site_dir_noarch_template.format(base=dst_dir,
-                                                      py_version_short=py_v_s)
+                                                      py_version_short=py_v_s,
+                                                      # Python 3.9+
+                                                      platlibdir=getattr(sys, 'platlibdir', ''),
+                                                     )
 
     # easy_install won't install to a path that Python by default cannot see
     # and isn't on the PYTHONPATH.  Plus, it has to exist.
