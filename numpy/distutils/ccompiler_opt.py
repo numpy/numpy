@@ -193,7 +193,12 @@ class _Config:
         clang = dict(
             native = '-march=native',
             opt = "-O3",
-            werror = '-Werror'
+            # One of the following flags needs to be applicable for Clang to
+            # guarantee the sanity of the testing process, however in certain
+            # cases `-Werror` gets skipped during the availability test due to
+            # "unused arguments" warnings.
+            # see https://github.com/numpy/numpy/issues/19624
+            werror = '-Werror-implicit-function-declaration -Werror'
         ),
         icc = dict(
             native = '-xHost',
