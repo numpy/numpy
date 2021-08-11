@@ -351,7 +351,7 @@ multiarray_funcs_api = {
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
     'PyDataMem_SetHandler':                 (304,),
-    'PyDataMem_GetHandlerName':             (305,),
+    'PyDataMem_GetHandler':                 (305,),
     # End 1.21 API
 }
 

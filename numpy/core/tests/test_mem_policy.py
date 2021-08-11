@@ -1,5 +1,7 @@
+import asyncio
 import pytest
 import numpy as np
+import threading
 from numpy.testing import extbuild
 
 
@@ -10,41 +12,39 @@ def get_module(tmp_path):
     memory manipulation that the prefix exists, to make sure all alloc/realloc/
     free/calloc go via the functions here.
     """
-    functions = [(
-        "test_prefix", "METH_O",
-        """
-            if (!PyArray_Check(args)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "must be called with a numpy scalar or ndarray");
-            }
-            return PyUnicode_FromString(
-                            PyDataMem_GetHandlerName((PyArrayObject*)args));
-        """
-        ),
-        ("set_new_policy", "METH_NOARGS",
-         """
-             const PyDataMem_Handler *old = PyDataMem_SetHandler(&new_handler);
-             return PyUnicode_FromString(old->name);
+    functions = [
+        ("set_secret_data_policy", "METH_NOARGS", """
+             const PyDataMem_Handler *old =
+                 PyDataMem_SetHandler(&secret_data_handler);
+             return PyCapsule_New((void *) old, NULL, NULL);
          """),
-        ("set_old_policy", "METH_NOARGS",
-         """
-             const PyDataMem_Handler *old = PyDataMem_SetHandler(NULL);
-             return PyUnicode_FromString(old->name);
+        ("set_old_policy", "METH_O", """
+             PyDataMem_Handler *old = NULL;
+             if (args != NULL && PyCapsule_CheckExact(args)) {
+                 old = (PyDataMem_Handler *) PyCapsule_GetPointer(args, NULL);
+             }
+             PyDataMem_SetHandler(old);
+             Py_RETURN_NONE;
          """),
-        ]
+    ]
     prologue = '''
         #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
         #include <numpy/arrayobject.h>
+        /*
+         * This struct allows the dynamic configuration of the allocator funcs
+         * of the `secret_data_allocator`. It is provided here for
+         * demonstration purposes, as a valid `ctx` use-case scenario.
+         */
         typedef struct {
             void *(*malloc)(size_t);
             void *(*calloc)(size_t, size_t);
             void *(*realloc)(void *, size_t);
             void (*free)(void *);
-        } Allocator;
+        } SecretDataAllocatorFuncs;
         NPY_NO_EXPORT void *
-        shift_alloc(void *_ctx, size_t sz) {
-            Allocator *ctx = (Allocator*)_ctx;
-            char *real = (char *)ctx->malloc(sz + 64);
+        shift_alloc(void *ctx, size_t sz) {
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
+            char *real = (char *)funcs->malloc(sz + 64);
             if (real == NULL) {
                 return NULL;
             }
@@ -52,9 +52,9 @@ def get_module(tmp_path):
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void *
-        shift_zero(void *_ctx, size_t sz, size_t cnt) {
-            Allocator *ctx = (Allocator*)_ctx;
-            char *real = (char *)ctx->calloc(sz + 64, cnt);
+        shift_zero(void *ctx, size_t sz, size_t cnt) {
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
+            char *real = (char *)funcs->calloc(sz + 64, cnt);
             if (real == NULL) {
                 return NULL;
             }
@@ -63,8 +63,8 @@ def get_module(tmp_path):
             return (void *)(real + 64);
         }
         NPY_NO_EXPORT void
-        shift_free(void *_ctx, void * p, npy_uintp sz) {
-            Allocator *ctx = (Allocator*)_ctx;
+        shift_free(void *ctx, void * p, npy_uintp sz) {
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
             if (p == NULL) {
                 return ;
             }
@@ -73,8 +73,8 @@ def get_module(tmp_path):
                 fprintf(stdout, "uh-oh, unmatched shift_free, "
                         "no appropriate prefix\\n");
                 /* Make C runtime crash by calling free on the wrong address */
-                ctx->free((char *)p + 10);
-                /* ctx->free(real); */
+                funcs->free((char *)p + 10);
+                /* funcs->free(real); */
             }
             else {
                 npy_uintp i = (npy_uintp)atoi(real +20);
@@ -82,26 +82,26 @@ def get_module(tmp_path):
                     fprintf(stderr, "uh-oh, unmatched shift_free"
                             "(ptr, %ld) but allocated %ld\\n", sz, i);
                     /* This happens in some places, only print */
-                    ctx->free(real);
+                    funcs->free(real);
                 }
                 else {
-                    ctx->free(real);
+                    funcs->free(real);
                 }
             }
         }
         NPY_NO_EXPORT void *
-        shift_realloc(void *_ctx, void * p, npy_uintp sz) {
-            Allocator *ctx = (Allocator*)_ctx;
+        shift_realloc(void *ctx, void * p, npy_uintp sz) {
+            SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
             if (p != NULL) {
                 char *real = (char *)p - 64;
                 if (strncmp(real, "originally allocated", 20) != 0) {
                     fprintf(stdout, "uh-oh, unmatched shift_realloc\\n");
                     return realloc(p, sz);
                 }
-                return (void *)((char *)ctx->realloc(real, sz + 64) + 64);
+                return (void *)((char *)funcs->realloc(real, sz + 64) + 64);
             }
             else {
-                char *real = (char *)ctx->realloc(p, sz + 64);
+                char *real = (char *)funcs->realloc(p, sz + 64);
                 if (real == NULL) {
                     return NULL;
                 }
@@ -110,20 +110,21 @@ def get_module(tmp_path):
                 return (void *)(real + 64);
             }
         }
-        static Allocator new_handler_ctx = {
+        /* As an example, we use the standard {m|c|re}alloc/free funcs. */
+        static SecretDataAllocatorFuncs secret_data_handler_ctx = {
             malloc,
             calloc,
             realloc,
             free
         };
-        static PyDataMem_Handler new_handler = {
+        static PyDataMem_Handler secret_data_handler = {
             "secret_data_allocator",
             {
-                &new_handler_ctx,
-                shift_alloc,      /* malloc */
-                shift_zero, /* calloc */
-                shift_realloc,      /* realloc */
-                shift_free       /* free */
+                &secret_data_handler_ctx, /* ctx */
+                shift_alloc,              /* malloc */
+                shift_zero,               /* calloc */
+                shift_realloc,            /* realloc */
+                shift_free                /* free */
             }
         };
         '''
@@ -134,33 +135,120 @@ def get_module(tmp_path):
     except ImportError:
         pass
     # if it does not exist, build and load it
-    return extbuild.build_and_import_extension(
-        'mem_policy',
-        functions, prologue=prologue, include_dirs=[np.get_include()],
-        build_dir=tmp_path, more_init=more_init
-        )
+    return extbuild.build_and_import_extension('mem_policy',
+                                               functions,
+                                               prologue=prologue,
+                                               include_dirs=[np.get_include()],
+                                               build_dir=tmp_path,
+                                               more_init=more_init)
 
 
 def test_set_policy(get_module):
-    a = np.arange(10)
-    orig_policy = get_module.test_prefix(a)
-    assert orig_policy == np.core.multiarray.get_handler_name()
-    assert orig_policy == np.core.multiarray.get_handler_name(a)
-    assert get_module.set_new_policy() == orig_policy
-    if orig_policy == 'default_allocator':
-        get_module.set_old_policy()
+    orig_policy_name = np.core.multiarray.get_handler_name()
+
+    a = np.arange(10).reshape((2, 5))  # a doesn't own its own data
+    assert np.core.multiarray.get_handler_name(a) == orig_policy_name
+
+    orig_policy = get_module.set_secret_data_policy()
+
+    b = np.arange(10).reshape((2, 5))  # b doesn't own its own data
+    assert np.core.multiarray.get_handler_name(b) == 'secret_data_allocator'
+
+    if orig_policy_name == 'default_allocator':
+        get_module.set_old_policy(None)  # tests PyDataMem_SetHandler(NULL)
+        assert np.core.multiarray.get_handler_name() == 'default_allocator'
+    else:
+        get_module.set_old_policy(orig_policy)
+        assert np.core.multiarray.get_handler_name() == orig_policy_name
+
+
+async def concurrent_context1(get_module, orig_policy_name, event):
+    if orig_policy_name == 'default_allocator':
+        get_module.set_secret_data_policy()
+        assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+    else:
+        get_module.set_old_policy(None)
+        assert np.core.multiarray.get_handler_name() == 'default_allocator'
+    event.set()
+
+
+async def concurrent_context2(get_module, orig_policy_name, event):
+    await event.wait()
+    # the policy is not affected by changes in parallel contexts
+    assert np.core.multiarray.get_handler_name() == orig_policy_name
+    # change policy in the child context
+    if orig_policy_name == 'default_allocator':
+        get_module.set_secret_data_policy()
+        assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+    else:
+        get_module.set_old_policy(None)
+        assert np.core.multiarray.get_handler_name() == 'default_allocator'
+
+
+async def async_test_context_locality(get_module):
+    orig_policy_name = np.core.multiarray.get_handler_name()
+
+    event = asyncio.Event()
+    # the child contexts inherit the parent policy
+    concurrent_task1 = asyncio.create_task(
+        concurrent_context1(get_module, orig_policy_name, event))
+    concurrent_task2 = asyncio.create_task(
+        concurrent_context2(get_module, orig_policy_name, event))
+    await concurrent_task1
+    await concurrent_task2
+
+    # the parent context is not affected by child policy changes
+    assert np.core.multiarray.get_handler_name() == orig_policy_name
+
+
+def test_context_locality(get_module):
+    asyncio.run(async_test_context_locality(get_module))
+
+
+def concurrent_thread1(get_module, event):
+    get_module.set_secret_data_policy()
+    assert np.core.multiarray.get_handler_name() == 'secret_data_allocator'
+    event.set()
+
+
+def concurrent_thread2(get_module, event):
+    event.wait()
+    # the policy is not affected by changes in parallel threads
+    assert np.core.multiarray.get_handler_name() == 'default_allocator'
+    # change policy in the child thread
+    get_module.set_secret_data_policy()
+
+
+def test_thread_locality(get_module):
+    orig_policy_name = np.core.multiarray.get_handler_name()
+
+    event = threading.Event()
+    # the child threads do not inherit the parent policy
+    concurrent_task1 = threading.Thread(target=concurrent_thread1,
+                                        args=(get_module, event))
+    concurrent_task2 = threading.Thread(target=concurrent_thread2,
+                                        args=(get_module, event))
+    concurrent_task1.start()
+    concurrent_task2.start()
+    concurrent_task1.join()
+    concurrent_task2.join()
+
+    # the parent thread is not affected by child policy changes
+    assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
 @pytest.mark.slow
 def test_new_policy(get_module):
     a = np.arange(10)
-    orig_policy = get_module.test_prefix(a)
-    assert get_module.set_new_policy() == orig_policy
-    b = np.arange(10).reshape((2, 5))
-    assert get_module.test_prefix(b) == 'secret_data_allocator'
+    orig_policy_name = np.core.multiarray.get_handler_name(a)
+
+    orig_policy = get_module.set_secret_data_policy()
+
+    b = np.arange(10)
+    assert np.core.multiarray.get_handler_name(b) == 'secret_data_allocator'
 
     # test array manipulation. This is slow
-    if orig_policy == 'default_allocator':
+    if orig_policy_name == 'default_allocator':
         # when the np.core.test tests recurse into this test, the
         # policy will be set so this "if" will be false, preventing
         # infinite recursion
@@ -168,10 +256,11 @@ def test_new_policy(get_module):
         # if needed, debug this by
         # - running tests with -- -s (to not capture stdout/stderr
         # - setting extra_argv=['-vv'] here
-        np.core.test(verbose=2, extra_argv=['-vv'])
+        assert np.core.test('full', verbose=2, extra_argv=['-vv'])
         # also try the ma tests, the pickling test is quite tricky
-        np.ma.test(verbose=2, extra_argv=['-vv'])
-    get_module.set_old_policy()
-    assert get_module.test_prefix(a) == orig_policy
+        assert np.ma.test('full', verbose=2, extra_argv=['-vv'])
+
+    get_module.set_old_policy(orig_policy)
+
     c = np.arange(10)
-    assert get_module.test_prefix(c) == 'default_allocator'
+    assert np.core.multiarray.get_handler_name(c) == orig_policy_name
