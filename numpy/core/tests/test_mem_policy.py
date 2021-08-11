@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 import threading
 from numpy.testing import extbuild
+import sys
 
 
 @pytest.fixture
@@ -12,6 +13,8 @@ def get_module(tmp_path):
     memory manipulation that the prefix exists, to make sure all alloc/realloc/
     free/calloc go via the functions here.
     """
+    if sys.platform.startswith('cygwin'):
+        pytest.skip('link fails on cygwin')
     functions = [
         ("set_secret_data_policy", "METH_NOARGS", """
              const PyDataMem_Handler *old =
