@@ -137,6 +137,7 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
+    "array_api",
     "ctypeslib",
     "distutils",
     "distutils.cpuinfo",
