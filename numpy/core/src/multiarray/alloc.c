@@ -386,7 +386,9 @@ PyDataMem_Handler default_handler = {
     }
 };
 
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
 PyObject *current_handler;
+#endif
 
 int uo_index=0;   /* user_override index */
 
@@ -482,6 +484,7 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
     PyObject *capsule;
     PyObject *old_capsule;
     PyDataMem_Handler *old_handler;
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     PyObject *token;
     if (PyContextVar_Get(current_handler, NULL, &old_capsule)) {
         return NULL;
@@ -510,6 +513,42 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
     }
     Py_DECREF(token);
     return old_handler;
+#else
+    PyObject *p;
+    p = PyThreadState_GetDict();
+    if (p == NULL) {
+        return NULL;
+    }
+    old_capsule = PyDict_GetItemString(p, "current_allocator");
+    if (old_capsule == NULL) {
+        old_handler = &default_handler;
+    }
+    else {
+        old_handler = (PyDataMem_Handler *) PyCapsule_GetPointer(old_capsule, NULL);
+        Py_DECREF(old_capsule);
+        if (old_handler == NULL) {
+            return NULL;
+        }
+    }
+    if (handler != NULL) {
+        capsule = PyCapsule_New(handler, NULL, NULL);
+        if (capsule == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        capsule = PyCapsule_New(&default_handler, NULL, NULL);
+        if (capsule == NULL) {
+            return NULL;
+        }
+    }
+    const int error = PyDict_SetItemString(p, "current_allocator", capsule);
+    Py_DECREF(capsule);
+    if (error) {
+        return NULL;
+    }
+    return old_handler;
+#endif
 }
 
 /*NUMPY_API
@@ -523,6 +562,7 @@ PyDataMem_GetHandler(PyArrayObject *obj)
     PyObject *base;
     PyObject *capsule;
     PyDataMem_Handler *handler;
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     if (obj == NULL) {
         if (PyContextVar_Get(current_handler, NULL, &capsule)) {
             return NULL;
@@ -531,7 +571,25 @@ PyDataMem_GetHandler(PyArrayObject *obj)
         Py_DECREF(capsule);
         return handler;
     }
-    /* If there's a handler, the array owns its own datay */
+#else
+    PyObject *p;
+    if (obj == NULL) {
+        p = PyThreadState_GetDict();
+        if (p == NULL) {
+            return NULL;
+        }
+        capsule = PyDict_GetItemString(p, "current_allocator");
+        if (capsule == NULL) {
+            handler = &default_handler;
+        }
+        else {
+            handler = (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
+            Py_DECREF(capsule);
+        }
+        return handler;
+    }
+#endif
+    /* If there's a handler, the array owns its own data */
     handler = PyArray_HANDLER(obj);
     if (handler == NULL) {
         /*

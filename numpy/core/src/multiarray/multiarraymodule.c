@@ -4908,6 +4908,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (initumath(m) != 0) {
         goto err;
     }
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     /*
      * Initialize the context-local PyDataMem_Handler capsule.
      */
@@ -4920,6 +4921,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (current_handler == NULL) {
         goto err;
     }
+#endif
     return m;
 
  err:
