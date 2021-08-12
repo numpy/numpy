@@ -60,10 +60,7 @@ class finfo_object:
     eps: float
     max: float
     min: float
-    # Note: smallest_normal is part of the array API spec, but cannot be used
-    # until https://github.com/numpy/numpy/pull/18536 is merged.
-
-    # smallest_normal: float
+    smallest_normal: float
 
 
 @dataclass
@@ -87,8 +84,7 @@ def finfo(type: Union[Dtype, Array], /) -> finfo_object:
         float(fi.eps),
         float(fi.max),
         float(fi.min),
-        # TODO: Uncomment this when #18536 is merged.
-        # float(fi.smallest_normal),
+        float(fi.smallest_normal),
     )
 
 
