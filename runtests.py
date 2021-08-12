@@ -480,6 +480,7 @@ def build_project(args):
     site_dir = site_dir_template.format(platbase=dst_dir,
                                         py_version_short=py_v_s,
                                         platlibdir=platlibdir,
+                                        base=dst_dir,
                                         )
     noarch_template = sysconfig.get_path('purelib', expand=False)
     site_dir_noarch = noarch_template.format(base=dst_dir,
