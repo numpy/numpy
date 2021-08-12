@@ -204,30 +204,16 @@ by plain Sphinx when it encounters NumPy docstring conventions like
 section headers (e.g. ``-------------``) that sphinx does not expect to
 find in docstrings.
 
-Some features described in this document require a recent version of
-``numpydoc``. For example, the **Yields** section was added in
-``numpydoc`` 0.6.
-
 It is available from:
 
 * `numpydoc on PyPI <https://pypi.python.org/pypi/numpydoc>`_
 * `numpydoc on GitHub <https://github.com/numpy/numpydoc/>`_
 
 Note that for documentation within NumPy, it is not necessary to do
-``import numpy as np`` at the beginning of an example.  However, some
-sub-modules, such as ``fft``, are not imported by default, and you have to
-include them explicitly::
+``import numpy as np`` at the beginning of an example.
 
-  import numpy.fft
-
-after which you may use it::
-
-  np.fft.fft2(...)
-
-Please use the ``numpydoc`` `formatting standard`_ as shown in their example_.
-
-.. _`formatting standard`: https://numpydoc.readthedocs.io/en/latest/format.html
-.. _example: https://numpydoc.readthedocs.io/en/latest/example.html
+Please use the ``numpydoc`` :ref:`formatting standard <numpydoc:format>` as
+shown in their :ref:`example <numpydoc:example>`.
 
 
 *********************
