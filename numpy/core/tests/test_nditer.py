@@ -2738,7 +2738,12 @@ def _is_buffered(iterator):
 @pytest.mark.parametrize("a",
         [np.zeros((3,), dtype='f8'),
          np.zeros((9876, 3*5), dtype='f8')[::2, :],
-         np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, :]])
+         np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, :],
+         # Also test with the last dimension strided (so it does not fit if
+         # there is repeated access)
+         np.zeros((9,), dtype='f8')[::3],
+         np.zeros((9876, 3*10), dtype='f8')[::2, ::5],
+         np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, ::-1]])
 def test_iter_writemasked(a):
     # Note, the slicing above is to ensure that nditer cannot combine multiple
     # axes into one.  The repetition is just to make things a bit more
