@@ -647,7 +647,7 @@ class Array:
         ],
         value: Union[int, float, bool, Array],
         /,
-    ) -> Array:
+    ) -> None:
         """
         Performs the operation __setitem__.
         """
