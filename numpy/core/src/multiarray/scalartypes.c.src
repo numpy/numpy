@@ -301,6 +301,11 @@ gentype_format(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    /* if len(format_spec) == 0 this function is equivalent to __str__ */
+    if (PyUnicode_GET_LENGTH(format_spec) == 0)
+        // use the builtin
+        return PyObject_Str(self);
+
     /*
      * Convert to an appropriate Python type and call its format.
      * TODO: For some types, like long double, this isn't right,
