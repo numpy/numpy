@@ -47,6 +47,18 @@ class TestRealScalars:
         check(1e15)
         check(1e16)
 
+    def test_scalar_cast32to64(self):
+        # test that both str, repr and format are the same for np.float32
+        # even though the values are cut off when casted to 64 bits (Python float)
+        def check(v):
+            assert_equal(str(np.float32(v)), str(v))
+            assert_equal(format(np.float32(v)), str(v))
+            assert_equal(repr(np.float32(v)), str(v))
+
+        check(101.1)
+        check(1.01)
+        check(1.3)
+
     def test_py2_float_print(self):
         # gh-10753
         # In python2, the python float type implements an obsolete method
