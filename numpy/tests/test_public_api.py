@@ -52,22 +52,8 @@ def test_numpy_namespace():
         'show_config': 'numpy.__config__.show',
         'who': 'numpy.lib.utils.who',
     }
-    if sys.version_info < (3, 7):
-        # These built-in types are re-exported by numpy.
-        builtins = {
-            'bool': 'builtins.bool',
-            'complex': 'builtins.complex',
-            'float': 'builtins.float',
-            'int': 'builtins.int',
-            'long': 'builtins.int',
-            'object': 'builtins.object',
-            'str': 'builtins.str',
-            'unicode': 'builtins.str',
-        }
-        allowlist = dict(undocumented, **builtins)
-    else:
-        # after 3.7, we override dir to not show these members
-        allowlist = undocumented
+    # We override dir to not show these members
+    allowlist = undocumented
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal
