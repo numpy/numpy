@@ -30,8 +30,9 @@ import re
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
+# This needs to be changed to 3.8 for 1.22 release, but 3.7 is needed for LGTM.
 if sys.version_info[:2] < (3, 7):
-    raise RuntimeError("Python version >= 3.7 required.")
+    raise RuntimeError("Python version >= 3.8 required.")
 
 
 import versioneer
@@ -90,9 +91,9 @@ License :: OSI Approved :: BSD License
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
+Programming Language :: Python :: 3.10
 Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
@@ -405,7 +406,7 @@ def setup_package():
         test_suite='pytest',
         version=versioneer.get_version(),
         cmdclass=cmdclass,
-        python_requires='>=3.7',
+        python_requires='>=3.8',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds
