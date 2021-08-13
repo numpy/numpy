@@ -102,6 +102,11 @@ array_format(PyArrayObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O:__format__", &format_spec))
         return NULL;
 
+    /* if len(format_spec) == 0 this function is equivalent to __str__ */
+    if (PyUnicode_GET_LENGTH(format_spec) == 0)
+        // use the builtin
+        return PyObject_Str((PyObject *)self);
+
     /* 0d arrays - forward to the scalar type */
     if (PyArray_NDIM(self) == 0) {
         PyObject *item = PyArray_ToScalar(PyArray_DATA(self), self);
@@ -115,24 +120,15 @@ array_format(PyArrayObject *self, PyObject *args)
         return res;
     }
 
-    // array_format / _default_array_format
-    if (PyUnicode_GET_LENGTH(format_spec) > 0) {
-        PyObject *format_func = NULL;
+    /* nd arrays - forward to _default_array_format */
+    // ndim > 0
+    PyObject *format_func = NULL;
 
-        npy_cache_import("numpy.core.arrayprint", "_default_array_format", &format_func);
-        if (format_func == NULL) {
-            npy_PyErr_SetStringChained(PyExc_RuntimeError,
-                    "Unable to configure default ndarray.__format__");
-            return NULL;
-        }
-        return PyObject_CallFunctionObjArgs(format_func, self, format_spec, NULL);
+    npy_cache_import("numpy.core.arrayprint", "_default_array_format", &format_func);
+    if (format_func == NULL) {
+        npy_PyErr_SetStringChained(PyExc_RuntimeError,
+                "Unable to configure default ndarray.__format__");
+        return NULL;
     }
-
-    /* Everything else - use the builtin */
-    else {
-        return PyObject_CallMethod(
-            (PyObject *)&PyBaseObject_Type, "__format__", "OO",
-            (PyObject *)self, format_spec
-        );
-    }
+    return PyObject_CallFunctionObjArgs(format_func, self, format_spec, NULL);
 }
