@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.9, 3.10.0-rc.1]
+        python-version: [3.9, 3.10.0-rc.1]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -202,18 +202,18 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  pypy37:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@v2
-      with:
-        python-version: pypy-3.7-v7.3.4
-    - uses: ./.github/actions
+  #pypy37:
+    #needs: [smoke_test]
+    #runs-on: ubuntu-latest
+    #steps:
+    #- uses: actions/checkout@v2
+      #with:
+        #submodules: recursive
+        #fetch-depth: 0
+    #- uses: actions/setup-python@v2
+      #with:
+        #python-version: pypy-3.7-v7.3.4
+    #- uses: ./.github/actions
 
   sdist:
     needs: [smoke_test]
