@@ -72,6 +72,11 @@ def can_link_svml():
     system = platform.system()
     return "x86_64" in machine and system == "Linux"
 
+def check_svml_submodule(svmlpath):
+    if not os.path.exists(svmlpath + "/README.md"):
+        raise RuntimeError("Missing `SVML` submodule! Run `git submodule "
+                           "update --init` to fix this.")
+
 def pythonlib_dir():
     """return path where libpython* is."""
     if sys.platform == 'win32':
@@ -965,10 +970,10 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             ]
 
+    svml_path = "numpy/core/src/umath/svml"
     svml_objs = []
-    if can_link_svml():
-        svml_objs = files = glob.glob("numpy/core/src/umath/svml" +
-                '/**/*.s', recursive=True)
+    if can_link_svml() and check_svml_submodule(svml_path):
+        svml_objs = files = glob.glob(svml_path + '/**/*.s', recursive=True)
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
