@@ -143,6 +143,9 @@ NumPy C-API functions
 
     The consumer of the `PyDataMemAllocator` interface must keep track of ``size`` and make sure it is
     consistent with the parameter passed to the ``(m|c|re)alloc``  functions.
+    NumPy itself will violate this requirement when the shape of the requested
+    array contains a ``0``, so authors of PyDataMemAllocators should relate to
+    the ``size`` parameter as a best-guess.
 
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
@@ -153,12 +156,17 @@ NumPy C-API functions
    hooks. All the function pointers must be filled in, ``NULL`` is not
    accepted.
 
-.. c:function:: const char * PyDataMem_GetHandlerName(PyArrayObject *obj)
+.. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler(PyArrayObject *obj)
 
-   Return the const char name of the ``PyDataMem_Handler`` used by the
+   Return the ``PyDataMem_Handler`` used by the
    ``PyArrayObject``. If ``NULL``, return the name of the current global policy
    that will be used to allocate data for the next ``PyArrayObject``.
 
+``PyDataMem_Handler`` thread safety and lifetime
+================================================
+As an implementation detail, currently the ``Set`` function will store the
+``PyDataMem_Handler`` in a ``PyCapsule`` as a :py:class:`ContextVar
+<contextvars.ContextVar>`.
 
 Sample code
 ===========
@@ -219,7 +227,7 @@ the ``sz`` argument is correct.
             if (i != sz) {
                 fprintf(stderr, "uh-oh, unmatched shift_free"
                         "(ptr, %ld) but allocated %ld\\n", sz, i);
-                /* This happens in some places, only print */
+                /* This happens when the shape has a 0, only print */
                 ctx->free(real);
             }
             else {
@@ -266,7 +274,6 @@ the ``sz`` argument is correct.
             shift_free       /* free */
         }
     };
-    '''
 
 Related Work
 ------------
