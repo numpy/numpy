@@ -164,9 +164,18 @@ NumPy C-API functions
 
 ``PyDataMem_Handler`` thread safety and lifetime
 ================================================
-As an implementation detail, currently the ``Set`` function will store the
-``PyDataMem_Handler`` in a ``PyCapsule`` as a :py:class:`ContextVar
-<contextvars.ContextVar>`.
+The active handler is stored in the current :py:class:`~contextvars.Context`
+via a :py:class:`~contextvars.ContextVar`. This ensures it can be configured both
+per-thread and per-async-coroutine.
+
+There is currently no lifetime management of ``PyDataMem_Handler``.
+The user of `PyDataMem_SetHandler` must ensure that the argument remains alive
+for as long as any objects allocated with it, and while it is the active handler.
+In practice, this means the handler must be immortal.
+
+As an implementation detail, currently this ``ContextVar`` contains a ``PyCapsule``
+object storing a pointer to a ``PyDataMem_Handler`` with no destructor,
+but this should not be relied upon.
 
 Sample code
 ===========
