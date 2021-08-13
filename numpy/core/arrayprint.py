@@ -46,6 +46,7 @@ from .overrides import array_function_dispatch, set_module
 import operator
 import warnings
 import contextlib
+import re
 
 _format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
@@ -1638,6 +1639,12 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
         a, max_line_width, precision, suppress_small)
 
 
+_FORMAT_SPEC_REGEXP = re.compile(
+    r"([ +-])?"        # sign options
+    r"(\.)?([0-9]+)?"  # field precision
+    r"(.)?"            # field type
+)
+
 def _parse_format_spec(fs):
     """
     Parse the format spec and returns a dictionary with options for using it with `array2string`
@@ -1657,41 +1664,26 @@ def _parse_format_spec(fs):
     type        ::=  "f" | "e"
     """
 
+    match = _FORMAT_SPEC_REGEXP.fullmatch(fs)
+    if match is None:
+        raise ValueError("Invalid format specifier")
+
+    sign, period, precision, fmt_code = match.groups()
+
     options = {}
-    fslen = len(fs)
-    pos = 0
 
-    # Parse the sign options
-    if fslen - pos >= 1 and fs[pos] in ["+", "-", " "]:
-        options["sign"] = fs[pos]
+    if sign is not None:
+        options["sign"] = sign
 
-        pos += 1
-
-    # Parse the field precision
-    if fslen - pos >= 1 and fs[pos] == ".":
-        pos += 1
-
-        posi = pos
-        while pos < fslen and str.isdigit(fs[pos]):
-            pos += 1
-
-        if posi == pos:  # Format specifier missing precision
+    if period is not None:
+        if precision is None:
             raise ValueError("Format specifier missing precision")
+        options["precision"] = int(precision)
 
-        options["precision"] = int(fs[posi:pos])
-
-    # Finally, parse the field type
-
-    if fslen - pos > 1:  # more than 1 char remain, invalid format specifier
-        raise ValueError(f"Invalid format specifier '{fs[pos]}'")
-
-    if fslen - pos == 1:
-        if fs[pos] == "f":  # force fixed-point notation
-            options["suppress_small"] = True
-        elif fs[pos] == "e":  # use scientific notation when necessary
-            options["suppress_small"] = False
-        else:
-            raise ValueError(f"Unknown format code '{fs[pos]}'")
+    if fmt_code is not None:
+        if fmt_code not in "fe":
+            raise ValueError(f"Unknown format code {fmt_code}")
+        options["suppress_small"] = fmt_code == "f"
 
     return options
 
@@ -1711,14 +1703,12 @@ def _array_format_implementation(a, format_spec):
     return array2string(a, **options)
 
 
-def _array_format_dispatcher(
-        a, format_spec):
+def _array_format_dispatcher(a, format_spec):
     return (a, format_spec)
 
 
 @array_function_dispatch(_array_format_dispatcher, module='numpy')
 def array_format(a, format_spec):
-    print("[DEBUG] array_format")
 
     return _array_format_implementation(a, format_spec)
 
