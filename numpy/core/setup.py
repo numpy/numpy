@@ -76,6 +76,7 @@ def check_svml_submodule(svmlpath):
     if not os.path.exists(svmlpath + "/README.md"):
         raise RuntimeError("Missing `SVML` submodule! Run `git submodule "
                            "update --init` to fix this.")
+    return True
 
 def pythonlib_dir():
     """return path where libpython* is."""
@@ -970,10 +971,10 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             ]
 
-    svml_path = "numpy/core/src/umath/svml"
+    svml_path = join('numpy', 'core', 'src', 'umath', 'svml')
     svml_objs = []
     if can_link_svml() and check_svml_submodule(svml_path):
-        svml_objs = files = glob.glob(svml_path + '/**/*.s', recursive=True)
+        svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
