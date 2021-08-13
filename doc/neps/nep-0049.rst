@@ -159,7 +159,7 @@ NumPy C-API functions
 .. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler(PyArrayObject *obj)
 
    Return the ``PyDataMem_Handler`` used by the
-   ``PyArrayObject``. If ``NULL``, return the name of the current global policy
+   ``PyArrayObject``. If ``NULL``, return the handler
    that will be used to allocate data for the next ``PyArrayObject``.
 
 ``PyDataMem_Handler`` thread safety and lifetime
