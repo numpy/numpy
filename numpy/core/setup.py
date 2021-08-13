@@ -5,6 +5,7 @@ import copy
 import warnings
 import platform
 import textwrap
+import glob
 from os.path import join
 
 from numpy.distutils import log
@@ -966,9 +967,8 @@ def configuration(parent_package='',top_path=None):
 
     svml_objs = []
     if can_link_svml():
-        for svmlsrc in os.listdir("numpy/core/src/umath/svml"):
-            if svmlsrc.endswith(".s"):
-                svml_objs.append(join('src', 'umath', 'svml', svmlsrc))
+        svml_objs = files = glob.glob("numpy/core/src/umath/svml" +
+                '/**/*.s', recursive=True)
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
