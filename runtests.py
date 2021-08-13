@@ -476,13 +476,17 @@ def build_project(args):
 
     py_v_s = sysconfig.get_config_var('py_version_short')
     platlibdir = getattr(sys, 'platlibdir', '')  # Python3.9+
-    site_dir_template = sysconfig.get_path('platlib', expand=False)
+    site_dir_template = os.path.normpath(sysconfig.get_path(
+        'platlib', expand=False
+    ))
     site_dir = site_dir_template.format(platbase=dst_dir,
                                         py_version_short=py_v_s,
                                         platlibdir=platlibdir,
                                         base=dst_dir,
                                         )
-    noarch_template = sysconfig.get_path('purelib', expand=False)
+    noarch_template = os.path.normpath(sysconfig.get_path(
+        'purelib', expand=False
+    ))
     site_dir_noarch = noarch_template.format(base=dst_dir,
                                              py_version_short=py_v_s,
                                              platlibdir=platlibdir,
