@@ -72,7 +72,6 @@
  * c = (T)(a * ((T)~(T)0/255)) >> (sizeof(T) - 1) * CHAR_BIT;
 */
 
- */
 static const npy_uint8  MAGIC8[]  = {0x55,               0x33,               0x0F,               0x01};
 static const npy_uint16 MAGIC16[] = {0x5555,             0x3333,             0x0F0F,             0x0101};
 static const npy_uint32 MAGIC32[] = {0x55555555,         0x33333333,         0x0F0F0F0F,         0x01010101};
@@ -863,7 +862,10 @@ npy_popcountu@c@(npy_@type@ a)
 #if ((defined(__clang__) || defined(__GNUC__))) && NPY_BITSOF_@STYPE@ >= 32
     return __builtin_popcount@c@(a);
 #elif defined(_MSC_VER) && NPY_BITSOF_@STYPE@ >= 16
-    return TO_BITS_LEN(__popcnt)(a);
+    /* no builtin __popcnt64 for 32 bits, so use our implementation */
+    #if defined(_WIN64) || (defined(_WIN32) && NPY_BITSOF_@STYPE@ != 64)
+        return TO_BITS_LEN(__popcnt)(a);
+    #endif
 #else
     a = a - ((a >> 1) & (npy_@type@) TO_BITS_LEN(MAGIC)[0]);
     a = ((a & (npy_@type@) TO_BITS_LEN(MAGIC)[1])) + ((a >> 2) & (npy_@type@) TO_BITS_LEN(MAGIC)[1]);
