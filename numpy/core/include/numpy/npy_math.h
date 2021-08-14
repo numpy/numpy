@@ -150,6 +150,17 @@ NPY_INPLACE npy_long npy_lshiftl(npy_long a, npy_long b);
 NPY_INPLACE npy_longlong npy_rshiftll(npy_longlong a, npy_longlong b);
 NPY_INPLACE npy_longlong npy_lshiftll(npy_longlong a, npy_longlong b);
 
+NPY_INPLACE npy_ubyte npy_popcountuhh(npy_ubyte a);
+NPY_INPLACE npy_ushort npy_popcountuh(npy_ushort a);
+NPY_INPLACE npy_uint npy_popcountu(npy_uint a);
+NPY_INPLACE npy_ulong npy_popcountul(npy_ulong a);
+NPY_INPLACE npy_ulonglong npy_popcountull(npy_ulonglong a);
+NPY_INPLACE npy_byte npy_popcounthh(npy_byte a);
+NPY_INPLACE npy_short npy_popcounth(npy_short a);
+NPY_INPLACE npy_int npy_popcount(npy_int a);
+NPY_INPLACE npy_long npy_popcountl(npy_long a);
+NPY_INPLACE npy_longlong npy_popcountll(npy_longlong a);
+
 /*
  * C99 double math funcs
  */
