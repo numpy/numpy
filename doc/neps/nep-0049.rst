@@ -144,6 +144,12 @@ NumPy C-API functions
     The consumer of the `PyDataMemAllocator` interface must keep track of ``size`` and make sure it is
     consistent with the parameter passed to the ``(m|c|re)alloc``  functions.
 
+    NumPy itself may violate this requirement when the shape of the requested
+    array contains a ``0``, so authors of PyDataMemAllocators should relate to
+    the ``size`` parameter as a best-guess. Work to fix this is ongoing in PRs
+    15780_ and 15788_ but has not yet been resolved. When it is this NEP should
+    be revisited.
+
 .. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
 
    Sets a new allocation policy. If the input value is ``NULL``, will reset
@@ -323,6 +329,8 @@ References and Footnotes
 .. _`PR 17582`: https://github.com/numpy/numpy/pull/17582
 .. _`PR 5457`: https://github.com/numpy/numpy/pull/5457
 .. _`PR 5470`: https://github.com/numpy/numpy/pull/5470
+.. _`15780`: https://github.com/numpy/numpy/pull/15780
+.. _`15788`: https://github.com/numpy/numpy/pull/15788
 .. _`PR 390`: https://github.com/numpy/numpy/pull/390
 .. _`issue 17467`: https://github.com/numpy/numpy/issues/17467
 .. _`comment in the PR`: https://github.com/numpy/numpy/pull/17582#issuecomment-809145547
