@@ -482,6 +482,7 @@ def build_project(args):
     site_dir = site_dir_template.format(platbase=dst_dir,
                                         py_version_short=py_v_s,
                                         platlibdir=platlibdir,
+                                        base=dst_dir,
                                         )
     noarch_template = os.path.normpath(sysconfig.get_path(
         'purelib', expand=False
