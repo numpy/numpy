@@ -143,24 +143,7 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from typing import TYPE_CHECKING, List, Any
-
-if TYPE_CHECKING:
-    # typing_extensions is always available when type-checking
-    from typing_extensions import Literal as L
-    _HAS_TYPING_EXTENSIONS: L[True]
-else:
-    try:
-        import typing_extensions
-    except ImportError:
-        _HAS_TYPING_EXTENSIONS = False
-    else:
-        _HAS_TYPING_EXTENSIONS = True
-
-if TYPE_CHECKING:
-    from typing_extensions import final
-else:
-    def final(f): return f
+from typing import TYPE_CHECKING, List, Any, final
 
 if not TYPE_CHECKING:
     __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]

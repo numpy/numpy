@@ -1,18 +1,9 @@
-import sys
-from typing import Any, List, Sequence, Tuple, Union, Type, TypeVar, TYPE_CHECKING
+from typing import Any, List, Sequence, Tuple, Union, Type, TypeVar, Protocol, TypedDict
 
 import numpy as np
 
-from . import _HAS_TYPING_EXTENSIONS
 from ._shape import _ShapeLike
 from ._generic_alias import _DType as DType
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol, TypedDict
-elif _HAS_TYPING_EXTENSIONS:
-    from typing_extensions import Protocol, TypedDict
-else:
-    from ._generic_alias import _GenericAlias as GenericAlias
 
 from ._char_codes import (
     _BoolCodes,
@@ -59,30 +50,22 @@ from ._char_codes import (
 _DTypeLikeNested = Any  # TODO: wait for support for recursive types
 _DType_co = TypeVar("_DType_co", covariant=True, bound=DType[Any])
 
-if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
-    # Mandatory keys
-    class _DTypeDictBase(TypedDict):
-        names: Sequence[str]
-        formats: Sequence[_DTypeLikeNested]
+# Mandatory keys
+class _DTypeDictBase(TypedDict):
+    names: Sequence[str]
+    formats: Sequence[_DTypeLikeNested]
 
-    # Mandatory + optional keys
-    class _DTypeDict(_DTypeDictBase, total=False):
-        offsets: Sequence[int]
-        titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
-        itemsize: int
-        aligned: bool
+# Mandatory + optional keys
+class _DTypeDict(_DTypeDictBase, total=False):
+    offsets: Sequence[int]
+    titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
+    itemsize: int
+    aligned: bool
 
-    # A protocol for anything with the dtype attribute
-    class _SupportsDType(Protocol[_DType_co]):
-        @property
-        def dtype(self) -> _DType_co: ...
-
-else:
-    _DTypeDict = Any
-
-    class _SupportsDType: ...
-    _SupportsDType = GenericAlias(_SupportsDType, _DType_co)
-
+# A protocol for anything with the dtype attribute
+class _SupportsDType(Protocol[_DType_co]):
+    @property
+    def dtype(self) -> _DType_co: ...
 
 # Would create a dtype[np.void]
 _VoidDTypeLike = Union[
