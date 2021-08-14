@@ -23,7 +23,7 @@ jobs:
           name: create virtual environment, install dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
+            sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra latexmk texlive-xetex
             python3.8 -m venv venv
             . venv/bin/activate
 
