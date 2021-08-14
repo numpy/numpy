@@ -290,3 +290,19 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         >>> np.{float_name}(3.2).is_integer()
         False
         """))
+
+# XXX Neat way to get all names. Same as TODO above.
+for int_name in ('ubyte', 'ushort', 'uint', 'ulonglong',
+                 'byte', 'short', 'int', 'long', 'longlong'):
+    add_newdoc('numpy.core.numerictypes', int_name, ('bit_count',
+        """
+        {int_name}.bit_count() -> int
+
+        Computes the number of 1-bits in the absolute value of the input.
+        Analogous to the builtin `int.bit_count` or ``popcount`` in C++.
+
+        >>> np.{int_name}(1023).bit_count()
+        10
+        >>> np.{int_name}(-1023).bit_count()
+        10
+        """.format(int_name=int_name)))
