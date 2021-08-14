@@ -1,10 +1,4 @@
-import sys
-from typing import Optional, Union, Callable, Any
-
-if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol, TypedDict
-else:
-    from typing_extensions import Literal, Protocol, TypedDict
+from typing import Optional, Union, Callable, Any, Literal, Protocol, TypedDict
 
 _ErrKind = Literal["ignore", "warn", "raise", "call", "print", "log"]
 _ErrFunc = Callable[[str, int], Any]

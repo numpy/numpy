@@ -164,6 +164,7 @@ from numpy.typing._extended_precision import (
 )
 
 from typing import (
+    Literal as L,
     Any,
     ByteString,
     Callable,
@@ -189,12 +190,10 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    Protocol,
+    SupportsIndex,
+    Final,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal as L, Protocol, SupportsIndex, Final
-else:
-    from typing_extensions import Literal as L, Protocol, SupportsIndex, Final
 
 # Ensures that the stubs are picked up
 from numpy import (
@@ -3163,28 +3162,16 @@ class datetime64(generic):
     __gt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
     __ge__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
 
-# Support for `__index__` was added in python 3.8 (bpo-20092)
-if sys.version_info >= (3, 8):
-    _IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
-    _FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-    _ComplexValue = Union[
-        None,
-        _CharLike_co,
-        SupportsFloat,
-        SupportsComplex,
-        SupportsIndex,
-        complex,  # `complex` is not a subtype of `SupportsComplex`
-    ]
-else:
-    _IntValue = Union[SupportsInt, _CharLike_co]
-    _FloatValue = Union[None, _CharLike_co, SupportsFloat]
-    _ComplexValue = Union[
-        None,
-        _CharLike_co,
-        SupportsFloat,
-        SupportsComplex,
-        complex,
-    ]
+_IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
+_FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
+_ComplexValue = Union[
+    None,
+    _CharLike_co,
+    SupportsFloat,
+    SupportsComplex,
+    SupportsIndex,
+    complex,  # `complex` is not a subtype of `SupportsComplex`
+]
 
 class integer(number[_NBit1]):  # type: ignore
     @property

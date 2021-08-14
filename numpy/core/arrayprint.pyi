@@ -1,6 +1,5 @@
-import sys
 from types import TracebackType
-from typing import Any, Optional, Callable, Union, Type
+from typing import Any, Optional, Callable, Union, Type, Literal, TypedDict, SupportsIndex
 
 # Using a private class is by no means ideal, but it is simply a consquence
 # of a `contextlib.context` returning an instance of aformentioned class
@@ -22,11 +21,6 @@ from numpy import (
     clongdouble,
 )
 from numpy.typing import ArrayLike, _CharLike_co, _FloatLike_co
-
-if sys.version_info > (3, 8):
-    from typing import Literal, TypedDict, SupportsIndex
-else:
-    from typing_extensions import Literal, TypedDict, SupportsIndex
 
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 

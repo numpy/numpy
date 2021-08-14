@@ -1,13 +1,7 @@
-import sys
-from typing import TypeVar, overload, List, Sequence, Any
+from typing import TypeVar, overload, List, Sequence, Any, SupportsIndex
 
 from numpy import generic, dtype
 from numpy.typing import ArrayLike, NDArray, _NestedSequence, _SupportsArray
-
-if sys.version_info >= (3, 8):
-    from typing import SupportsIndex
-else:
-    from typing_extensions import SupportsIndex
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])

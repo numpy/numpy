@@ -1,9 +1,9 @@
 # TODO: Sort out any and all missing functions in this namespace
 
 import os
-import sys
 import datetime as dt
 from typing import (
+    Literal as L,
     Any,
     Callable,
     IO,
@@ -16,6 +16,9 @@ from typing import (
     Union,
     Sequence,
     Tuple,
+    SupportsIndex,
+    final,
+    Final,
 )
 
 from numpy import (
@@ -77,11 +80,6 @@ from numpy.typing import (
     _FloatLike_co,
     _TD64Like_co,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, final, Final, Literal as L
-else:
-    from typing_extensions import SupportsIndex, final, Final, Literal as L
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])

@@ -1,4 +1,3 @@
-import sys
 from typing import (
     Any,
     Optional,
@@ -10,15 +9,11 @@ from typing import (
     overload,
     TypeVar,
     Iterable,
+    Literal,
 )
 
 from numpy import ndarray, generic, dtype, bool_, signedinteger, _OrderKACF, _OrderCF
 from numpy.typing import ArrayLike, DTypeLike, _ShapeLike
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 _T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)

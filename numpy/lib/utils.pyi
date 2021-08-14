@@ -1,4 +1,3 @@
-import sys
 from ast import AST
 from typing import (
     Any,
@@ -11,6 +10,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    Protocol,
 )
 
 from numpy import ndarray, generic
@@ -20,11 +20,6 @@ from numpy.core.numerictypes import (
     issubdtype as issubdtype,
     issubsctype as issubsctype,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _FuncType = TypeVar("_FuncType", bound=Callable[..., Any])

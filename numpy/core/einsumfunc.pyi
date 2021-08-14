@@ -1,5 +1,4 @@
-import sys
-from typing import List, TypeVar, Optional, Any, overload, Union, Tuple, Sequence
+from typing import List, TypeVar, Optional, Any, overload, Union, Tuple, Sequence, Literal
 
 from numpy import (
     ndarray,
@@ -25,11 +24,6 @@ from numpy.typing import (
     _DTypeLikeComplex,
     _DTypeLikeComplex_co,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 _ArrayType = TypeVar(
     "_ArrayType",

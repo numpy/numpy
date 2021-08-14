@@ -1,11 +1,12 @@
-import sys
 from typing import (
+    Literal as L,
     Any,
     Dict,
     List,
     overload,
     Tuple,
     TypeVar,
+    Protocol,
 )
 
 from numpy import ndarray, dtype, generic
@@ -17,11 +18,6 @@ from numpy.typing import (
     _NestedSequence,
     _SupportsArray,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal as L, Protocol
-else:
-    from typing_extensions import Literal as L, Protocol
 
 _SCT = TypeVar("_SCT", bound=generic)
 
