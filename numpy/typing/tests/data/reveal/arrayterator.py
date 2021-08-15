@@ -10,7 +10,7 @@ reveal_type(ar_iter.start)  # E: builtins.list[builtins.int]
 reveal_type(ar_iter.stop)  # E: builtins.list[builtins.int]
 reveal_type(ar_iter.step)  # E: builtins.list[builtins.int]
 reveal_type(ar_iter.shape)  # E: builtins.tuple[builtins.int]
-reveal_type(ar_iter.flat)  # E: 'typing.Generator[{int64}, None, None]
+reveal_type(ar_iter.flat)  # E: typing.Generator[{int64}, None, None]
 
 reveal_type(ar_iter.__array__())  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
 

@@ -39,7 +39,7 @@
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_adds_u16, _mm256_adds_epu16)
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_adds_s16, _mm256_adds_epi16)
 #endif
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Subtraction
@@ -73,7 +73,7 @@
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_subs_u16, _mm256_subs_epu16)
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv_subs_s16, _mm256_subs_epi16)
 #endif
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Multiplication
@@ -104,7 +104,7 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 #define npyv_mul_f64 _mm512_mul_pd
 
 // saturated
-// TODO: after implment Packs intrins
+// TODO: after implement Packs intrins
 
 /***************************
  * Integer Division
@@ -116,12 +116,13 @@ NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
     const __m128i shf1  = _mm512_castsi512_si128(divisor.val[1]);
     const __m128i shf2  = _mm512_castsi512_si128(divisor.val[2]);
 #ifdef NPY_HAVE_AVX512BW
+    const __m512i bmask = _mm512_set1_epi32(0x00FF00FF);
     const __m512i shf1b = _mm512_set1_epi8(0xFFU >> _mm_cvtsi128_si32(shf1));
     const __m512i shf2b = _mm512_set1_epi8(0xFFU >> _mm_cvtsi128_si32(shf2));
     // high part of unsigned multiplication
-    __m512i mulhi_odd   = _mm512_mulhi_epu16(a, divisor.val[0]);
-    __m512i mulhi_even  = _mm512_mulhi_epu16(_mm512_slli_epi16(a, 8), divisor.val[0]);
+    __m512i mulhi_even  = _mm512_mullo_epi16(_mm512_and_si512(a, bmask), divisor.val[0]);
             mulhi_even  = _mm512_srli_epi16(mulhi_even, 8);
+    __m512i mulhi_odd   = _mm512_mullo_epi16(_mm512_srli_epi16(a, 8), divisor.val[0]);
     __m512i mulhi       = _mm512_mask_mov_epi8(mulhi_even, 0xAAAAAAAAAAAAAAAA, mulhi_odd);
     // floor(a/d)       = (mulhi + ((a-mulhi) >> sh1)) >> sh2
     __m512i q           = _mm512_sub_epi8(a, mulhi);
@@ -130,7 +131,7 @@ NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
             q           = _mm512_and_si512(_mm512_srl_epi16(q, shf2), shf2b);
     return  q;
 #else
-    const __m256i bmask = _mm256_set1_epi32(0xFF00FF00);
+    const __m256i bmask = _mm256_set1_epi32(0x00FF00FF);
     const __m256i shf1b = _mm256_set1_epi8(0xFFU >> _mm_cvtsi128_si32(shf1));
     const __m256i shf2b = _mm256_set1_epi8(0xFFU >> _mm_cvtsi128_si32(shf2));
     const __m512i shf2bw= npyv512_combine_si256(shf2b, shf2b);
@@ -138,10 +139,10 @@ NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
     //// lower 256-bit
     __m256i lo_a        = npyv512_lower_si256(a);
     // high part of unsigned multiplication
-    __m256i mulhi_odd   = _mm256_mulhi_epu16(lo_a, mulc);
-    __m256i mulhi_even  = _mm256_mulhi_epu16(_mm256_slli_epi16(lo_a, 8), mulc);
+    __m256i mulhi_even  = _mm256_mullo_epi16(_mm256_and_si256(lo_a, bmask), mulc);
             mulhi_even  = _mm256_srli_epi16(mulhi_even, 8);
-    __m256i mulhi       = _mm256_blendv_epi8(mulhi_even, mulhi_odd, bmask);
+    __m256i mulhi_odd   = _mm256_mullo_epi16(_mm256_srli_epi16(lo_a, 8), mulc);
+    __m256i mulhi       = _mm256_blendv_epi8(mulhi_odd, mulhi_even, bmask);
     // floor(a/d)       = (mulhi + ((a-mulhi) >> sh1)) >> sh2
     __m256i lo_q        = _mm256_sub_epi8(lo_a, mulhi);
             lo_q        = _mm256_and_si256(_mm256_srl_epi16(lo_q, shf1), shf1b);
@@ -151,10 +152,10 @@ NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
     //// higher 256-bit
     __m256i hi_a        = npyv512_higher_si256(a);
     // high part of unsigned multiplication
-            mulhi_odd   = _mm256_mulhi_epu16(hi_a, mulc);
-            mulhi_even  = _mm256_mulhi_epu16(_mm256_slli_epi16(hi_a, 8), mulc);
+            mulhi_even  = _mm256_mullo_epi16(_mm256_and_si256(hi_a, bmask), mulc);
             mulhi_even  = _mm256_srli_epi16(mulhi_even, 8);
-            mulhi       = _mm256_blendv_epi8(mulhi_even, mulhi_odd, bmask);
+            mulhi_odd   = _mm256_mullo_epi16(_mm256_srli_epi16(hi_a, 8), mulc);
+            mulhi       = _mm256_blendv_epi8(mulhi_odd, mulhi_even, bmask);
     // floor(a/d)       = (mulhi + ((a-mulhi) >> sh1)) >> sh2
     __m256i hi_q        = _mm256_sub_epi8(hi_a, mulhi);
             hi_q        = _mm256_and_si256(_mm256_srl_epi16(hi_q, shf1), shf1b);

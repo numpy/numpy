@@ -185,6 +185,29 @@ def test_iter_c_or_f_order():
                 assert_equal([x for x in i],
                                     aview.swapaxes(0, 1).ravel(order='A'))
 
+def test_nditer_multi_index_set():
+    # Test the multi_index set
+    a = np.arange(6).reshape(2, 3)
+    it = np.nditer(a, flags=['multi_index'])
+
+    # Removes the iteration on two first elements of a[0]
+    it.multi_index = (0, 2,)
+
+    assert_equal([i for i in it], [2, 3, 4, 5])
+    
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_nditer_multi_index_set_refcount():
+    # Test if the reference count on index variable is decreased
+    
+    index = 0
+    i = np.nditer(np.array([111, 222, 333, 444]), flags=['multi_index'])
+
+    start_count = sys.getrefcount(index)
+    i.multi_index = (index,)
+    end_count = sys.getrefcount(index)
+    
+    assert_equal(start_count, end_count)
+
 def test_iter_best_order_multi_index_1d():
     # The multi-indices should be correct with any reordering
 
@@ -2715,7 +2738,12 @@ def _is_buffered(iterator):
 @pytest.mark.parametrize("a",
         [np.zeros((3,), dtype='f8'),
          np.zeros((9876, 3*5), dtype='f8')[::2, :],
-         np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, :]])
+         np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, :],
+         # Also test with the last dimension strided (so it does not fit if
+         # there is repeated access)
+         np.zeros((9,), dtype='f8')[::3],
+         np.zeros((9876, 3*10), dtype='f8')[::2, ::5],
+         np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, ::-1]])
 def test_iter_writemasked(a):
     # Note, the slicing above is to ensure that nditer cannot combine multiple
     # axes into one.  The repetition is just to make things a bit more
@@ -2919,6 +2947,25 @@ def test_object_iter_cleanup():
             raise TypeError("Ambiguous")
     assert_raises(TypeError, np.logical_or.reduce, 
                              np.array([T(), T()], dtype='O'))
+
+def test_object_iter_cleanup_reduce():
+    # Similar as above, but a complex reduction case that was previously
+    # missed (see gh-18810).
+    # The following array is special in that it cannot be flattened:
+    arr = np.array([[None, 1], [-1, -1], [None, 2], [-1, -1]])[::2]
+    with pytest.raises(TypeError):
+        np.sum(arr)
+
+@pytest.mark.parametrize("arr", [
+        np.ones((8000, 4, 2), dtype=object)[:, ::2, :],
+        np.ones((8000, 4, 2), dtype=object, order="F")[:, ::2, :],
+        np.ones((8000, 4, 2), dtype=object)[:, ::2, :].copy("F")])
+def test_object_iter_cleanup_large_reduce(arr):
+    # More complicated calls are possible for large arrays:
+    out = np.ones(8000, dtype=np.intp)
+    # force casting with `dtype=object`
+    res = np.sum(arr, axis=(1, 2), dtype=object, out=out)
+    assert_array_equal(res, np.full(8000, 4, dtype=object))
 
 def test_iter_too_large():
     # The total size of the iterator must not exceed the maximum intp due

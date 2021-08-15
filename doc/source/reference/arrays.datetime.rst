@@ -13,16 +13,15 @@ support datetime functionality. The data type is called "datetime64",
 so named because "datetime" is already taken by the datetime library
 included in Python.
 
-.. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
-   in future versions of NumPy.
 
 Basic Datetimes
 ===============
 
-The most basic way to create datetimes is from strings in
-ISO 8601 date or datetime format. The unit for internal storage
-is automatically selected from the form of the string, and can
-be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
+The most basic way to create datetimes is from strings in ISO 8601 date 
+or datetime format. It is also possible to create datetimes from an integer by 
+offset relative to the Unix epoch (00:00:00 UTC on 1 January 1970).
+The unit for internal storage is automatically selected from the 
+form of the string, and can be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
 :ref:`time unit <arrays.dtypes.timeunits>`. The date units are years ('Y'),
 months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
@@ -36,6 +35,11 @@ letters, for a "Not A Time" value.
 
     >>> np.datetime64('2005-02-25')
     numpy.datetime64('2005-02-25')
+    
+    From an integer and a date unit, 1 year since the UNIX epoch:
+
+    >>> np.datetime64(1, 'Y')
+    numpy.datetime64('1971')   
 
     Using months for the unit:
 

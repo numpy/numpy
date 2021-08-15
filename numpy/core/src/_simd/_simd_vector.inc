@@ -33,7 +33,7 @@ static PySequenceMethods simd__vector_as_sequence = {
 };
 
 static PyObject *
-simd__vector_name(PySIMDVectorObject *self)
+simd__vector_name(PySIMDVectorObject *self, void *NPY_UNUSED(ignored))
 {
     return PyUnicode_FromString(simd_data_getinfo(self->dtype)->pyname);
 }
@@ -86,7 +86,22 @@ static PyTypeObject PySIMDVectorType = {
 /************************************
  ** Protected Definitions
  ************************************/
-static PySIMDVectorObject *
+/*
+ * Force inlining the following functions on CYGWIN to avoid spilling vector
+ * registers into the stack to workaround GCC/WIN64 bug that performs
+ * miss-align load variable of 256/512-bit vector from non-aligned
+ * 256/512-bit stack pointer.
+ *
+ * check the following links for more clearification:
+ * https://github.com/numpy/numpy/pull/18330#issuecomment-821539919
+ * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49001
+ */
+#if defined(__CYGWIN__) || (defined(__GNUC__) && defined(_WIN64))
+    #define CYG_FINLINE NPY_FINLINE
+#else
+    #define CYG_FINLINE static
+#endif
+CYG_FINLINE PySIMDVectorObject *
 PySIMDVector_FromData(simd_data data, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
@@ -118,7 +133,7 @@ PySIMDVector_FromData(simd_data data, simd_data_type dtype)
     return vec;
 }
 
-static simd_data
+CYG_FINLINE simd_data
 PySIMDVector_AsData(PySIMDVectorObject *vec, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);

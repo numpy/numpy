@@ -102,8 +102,8 @@ someone else, then create a new branch for the series. If the branch already
 exists skip this::
 
     $ cd ../numpy-wheels
-    $ git co master
-    $ git pull upstream master
+    $ git checkout main
+    $ git pull upstream main
     $ git branch v1.19.x
 
 Checkout the new branch and edit the ``azure-pipelines.yml`` and

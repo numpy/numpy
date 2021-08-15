@@ -79,7 +79,6 @@ Exported symbols include:
      \\-> object_ (not used much)               (kind=O)
 
 """
-import types as _types
 import numbers
 import warnings
 
@@ -512,15 +511,15 @@ cast = _typedict()
 for key in _concrete_types:
     cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
-try:
-    ScalarType = [_types.IntType, _types.FloatType, _types.ComplexType,
-                  _types.LongType, _types.BooleanType,
-                   _types.StringType, _types.UnicodeType, _types.BufferType]
-except AttributeError:
-    # Py3K
-    ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
 
-ScalarType.extend(_concrete_types)
+def _scalar_type_key(typ):
+    """A ``key`` function for `sorted`."""
+    dt = dtype(typ)
+    return (dt.kind.lower(), dt.itemsize)
+
+
+ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
+ScalarType += sorted(_concrete_types, key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 
 

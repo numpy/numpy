@@ -382,13 +382,9 @@ class TestConcatenate:
 
     @pytest.mark.parametrize("axis", [None, 0])
     def test_string_dtype_does_not_inspect(self, axis):
-        # The error here currently depends on NPY_USE_NEW_CASTINGIMPL as
-        # the new version rejects using the "default string length" of 64.
-        # The new behaviour is better, `np.array()` and `arr.astype()` would
-        # have to be used instead. (currently only raises due to unsafe cast)
-        with pytest.raises((ValueError, TypeError)):
+        with pytest.raises(TypeError):
             np.concatenate(([None], [1]), dtype="S", axis=axis)
-        with pytest.raises((ValueError, TypeError)):
+        with pytest.raises(TypeError):
             np.concatenate(([None], [1]), dtype="U", axis=axis)
 
     @pytest.mark.parametrize("axis", [None, 0])

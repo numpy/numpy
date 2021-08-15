@@ -1,4 +1,3 @@
-import sys
 import os
 import re
 import functools
@@ -6,7 +5,7 @@ import itertools
 import warnings
 import weakref
 import contextlib
-from operator import itemgetter, index as opindex
+from operator import itemgetter, index as opindex, methodcaller
 from collections.abc import Mapping
 
 import numpy as np
@@ -15,7 +14,6 @@ from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
 from numpy.core.overrides import set_array_function_like_doc, set_module
-from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -28,18 +26,9 @@ from numpy.compat import (
     )
 
 
-@set_module('numpy')
-def loads(*args, **kwargs):
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.loads is deprecated, use pickle.loads instead",
-        DeprecationWarning, stacklevel=2)
-    return pickle.loads(*args, **kwargs)
-
-
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-    'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+    'savetxt', 'loadtxt', 'genfromtxt',
+    'recfromtxt', 'recfromcsv', 'load', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
     ]
 
@@ -582,9 +571,13 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
-    When saving dictionaries, the dictionary keys become filenames
-    inside the ZIP archive. Therefore, keys should be valid filenames.
-    E.g., avoid keys that begin with ``/`` or contain ``.``.
+    Keys passed in `kwds` are used as filenames inside the ZIP archive.
+    Therefore, keys should be valid filenames; e.g., avoid keys that begin with
+    ``/`` or contain ``.``.
+
+    When naming variables with keyword arguments, it is not possible to name a
+    variable ``file``, as this would cause the ``file`` argument to be defined
+    twice in the call to ``savez``.
 
     Examples
     --------
@@ -726,36 +719,100 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     zipf.close()
 
 
+def _floatconv(x):
+    try:
+        return float(x)  # The fastest path.
+    except ValueError:
+        if '0x' in x:  # Don't accidentally convert "a" ("0xa") to 10.
+            try:
+                return float.fromhex(x)
+            except ValueError:
+                pass
+        raise  # Raise the original exception, which makes more sense.
+
+
+_CONVERTERS = [  # These converters only ever get strs (not bytes) as input.
+    (np.bool_, lambda x: bool(int(x))),
+    (np.uint64, np.uint64),
+    (np.int64, np.int64),
+    (np.integer, lambda x: int(float(x))),
+    (np.longdouble, np.longdouble),
+    (np.floating, _floatconv),
+    (complex, lambda x: complex(x.replace('+-', '-'))),
+    (np.bytes_, methodcaller('encode', 'latin-1')),
+    (np.unicode_, str),
+]
+
+
 def _getconv(dtype):
-    """ Find the correct dtype converter. Adapted from matplotlib """
+    """
+    Find the correct dtype converter. Adapted from matplotlib.
 
-    def floatconv(x):
-        x.lower()
-        if '0x' in x:
-            return float.fromhex(x)
-        return float(x)
+    Even when a lambda is returned, it is defined at the toplevel, to allow
+    testing for equality and enabling optimization for single-type data.
+    """
+    for base, conv in _CONVERTERS:
+        if issubclass(dtype.type, base):
+            return conv
+    return str
 
-    typ = dtype.type
-    if issubclass(typ, np.bool_):
-        return lambda x: bool(int(x))
-    if issubclass(typ, np.uint64):
-        return np.uint64
-    if issubclass(typ, np.int64):
-        return np.int64
-    if issubclass(typ, np.integer):
-        return lambda x: int(float(x))
-    elif issubclass(typ, np.longdouble):
-        return np.longdouble
-    elif issubclass(typ, np.floating):
-        return floatconv
-    elif issubclass(typ, complex):
-        return lambda x: complex(asstr(x).replace('+-', '-'))
-    elif issubclass(typ, np.bytes_):
-        return asbytes
-    elif issubclass(typ, np.unicode_):
-        return asunicode
+
+# _loadtxt_flatten_dtype_internal and _loadtxt_pack_items are loadtxt helpers
+# lifted to the toplevel because recursive inner functions cause either
+# GC-dependent reference loops (because they are closures over loadtxt's
+# internal variables) or large overheads if using a manual trampoline to hide
+# the recursive calls.
+
+
+# not to be confused with the flatten_dtype we import...
+def _loadtxt_flatten_dtype_internal(dt):
+    """Unpack a structured data-type, and produce a packer function."""
+    if dt.names is None:
+        # If the dtype is flattened, return.
+        # If the dtype has a shape, the dtype occurs
+        # in the list more than once.
+        shape = dt.shape
+        if len(shape) == 0:
+            return ([dt.base], None)
+        else:
+            packing = [(shape[-1], list)]
+            if len(shape) > 1:
+                for dim in dt.shape[-2::-1]:
+                    packing = [(dim*packing[0][0], packing*dim)]
+            return ([dt.base] * int(np.prod(dt.shape)),
+                    functools.partial(_loadtxt_pack_items, packing))
     else:
-        return asstr
+        types = []
+        packing = []
+        for field in dt.names:
+            tp, bytes = dt.fields[field]
+            flat_dt, flat_packer = _loadtxt_flatten_dtype_internal(tp)
+            types.extend(flat_dt)
+            flat_packing = flat_packer.args[0] if flat_packer else None
+            # Avoid extra nesting for subarrays
+            if tp.ndim > 0:
+                packing.extend(flat_packing)
+            else:
+                packing.append((len(flat_dt), flat_packing))
+        return (types, functools.partial(_loadtxt_pack_items, packing))
+
+
+def _loadtxt_pack_items(packing, items):
+    """Pack items into nested lists based on re-packing info."""
+    if packing is None:
+        return items[0]
+    elif packing is tuple:
+        return tuple(items)
+    elif packing is list:
+        return list(items)
+    else:
+        start = 0
+        ret = []
+        for length, subpacking in packing:
+            ret.append(
+                _loadtxt_pack_items(subpacking, items[start:start+length]))
+            start += length
+        return tuple(ret)
 
 
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
@@ -780,10 +837,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Parameters
     ----------
-    fname : file, str, or pathlib.Path
-        File, filename, or generator to read.  If the filename extension is
-        ``.gz`` or ``.bz2``, the file is first decompressed. Note that
-        generators should return byte strings.
+    fname : file, str, pathlib.Path, list of str, generator
+        File, filename, list, or generator to read.  If the filename
+        extension is ``.gz`` or ``.bz2``, the file is first decompressed. Note
+        that generators must return bytes or strings. The strings
+        in a list or produced by a generator are treated as lines.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
         structured data-type, the resulting array will be 1-dimensional, and
@@ -912,94 +970,35 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Nested functions used by loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    # not to be confused with the flatten_dtype we import...
-    @recursive
-    def flatten_dtype_internal(self, dt):
-        """Unpack a structured data-type, and produce re-packing info."""
-        if dt.names is None:
-            # If the dtype is flattened, return.
-            # If the dtype has a shape, the dtype occurs
-            # in the list more than once.
-            shape = dt.shape
-            if len(shape) == 0:
-                return ([dt.base], None)
-            else:
-                packing = [(shape[-1], list)]
-                if len(shape) > 1:
-                    for dim in dt.shape[-2::-1]:
-                        packing = [(dim*packing[0][0], packing*dim)]
-                return ([dt.base] * int(np.prod(dt.shape)), packing)
-        else:
-            types = []
-            packing = []
-            for field in dt.names:
-                tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = self(tp)
-                types.extend(flat_dt)
-                # Avoid extra nesting for subarrays
-                if tp.ndim > 0:
-                    packing.extend(flat_packing)
-                else:
-                    packing.append((len(flat_dt), flat_packing))
-            return (types, packing)
-
-    @recursive
-    def pack_items(self, items, packing):
-        """Pack items into nested lists based on re-packing info."""
-        if packing is None:
-            return items[0]
-        elif packing is tuple:
-            return tuple(items)
-        elif packing is list:
-            return list(items)
-        else:
-            start = 0
-            ret = []
-            for length, subpacking in packing:
-                ret.append(self(items[start:start+length], subpacking))
-                start += length
-            return tuple(ret)
-
-    def split_line(line):
-        """Chop off comments, strip, and split at delimiter. """
-        line = _decode_line(line, encoding=encoding)
-
-        if comments is not None:
-            line = regex_comments.split(line, maxsplit=1)[0]
+    def split_line(line: str):
+        """Chop off comments, strip, and split at delimiter."""
+        for comment in comments:  # Much faster than using a single regex.
+            line = line.split(comment, 1)[0]
         line = line.strip('\r\n')
         return line.split(delimiter) if line else []
 
-    def read_data(chunk_size):
-        """Parse each line, including the first.
-
-        The file read, `fh`, is a global defined above.
+    def read_data(lineno_words_iter, chunk_size):
+        """
+        Parse each line, including the first.
 
         Parameters
         ----------
+        lineno_words_iter : Iterator[tuple[int, list[str]]]
+            Iterator returning line numbers and non-empty lines already split
+            into words.
         chunk_size : int
             At most `chunk_size` lines are read at a time, with iteration
             until all lines are read.
-
         """
         X = []
-        line_iter = itertools.chain([first_line], fh)
-        line_iter = itertools.islice(line_iter, max_rows)
-        for i, line in enumerate(line_iter):
-            vals = split_line(line)
-            if len(vals) == 0:
-                continue
+        for lineno, words in lineno_words_iter:
             if usecols:
-                vals = [vals[j] for j in usecols]
-            if len(vals) != N:
-                line_num = i + skiprows + 1
-                raise ValueError("Wrong number of columns at line %d"
-                                 % line_num)
-
-            # Convert each value according to its column and store
-            items = [conv(val) for (conv, val) in zip(converters, vals)]
-
-            # Then pack it according to the dtype's nesting
-            items = pack_items(items, packing)
+                words = [words[j] for j in usecols]
+            if len(words) != ncols:
+                raise ValueError(f"Wrong number of columns at line {lineno}")
+            # Convert each value according to its column, then pack it
+            # according to the dtype's nesting
+            items = packer(convert_row(words))
             X.append(items)
             if len(X) > chunk_size:
                 yield X
@@ -1020,9 +1019,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if isinstance(comments, (str, bytes)):
             comments = [comments]
         comments = [_decode_line(x) for x in comments]
-        # Compile regex for comments beforehand
-        comments = (re.escape(comment) for comment in comments)
-        regex_comments = re.compile('|'.join(comments))
+    else:
+        comments = []
 
     if delimiter is not None:
         delimiter = _decode_line(delimiter)
@@ -1057,7 +1055,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     dtype = np.dtype(dtype)
     defconv = _getconv(dtype)
 
-    dtype_types, packing = flatten_dtype_internal(dtype)
+    dtype_types, packer = _loadtxt_flatten_dtype_internal(dtype)
 
     fown = False
     try:
@@ -1066,14 +1064,28 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if _is_string_like(fname):
             fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
             fencoding = getattr(fh, 'encoding', 'latin1')
-            fh = iter(fh)
+            line_iter = iter(fh)
             fown = True
         else:
-            fh = iter(fname)
+            line_iter = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
+            try:
+                first_line = next(line_iter)
+            except StopIteration:
+                pass  # Nothing matters if line_iter is empty.
+            else:
+                # Put first_line back.
+                line_iter = itertools.chain([first_line], line_iter)
+                if isinstance(first_line, bytes):
+                    # Using latin1 matches _decode_line's behavior.
+                    decoder = methodcaller(
+                        "decode",
+                        encoding if encoding is not None else "latin1")
+                    line_iter = map(decoder, line_iter)
     except TypeError as e:
         raise ValueError(
-            'fname must be a string, file handle, or generator'
+            f"fname must be a string, filehandle, list of strings,\n"
+            f"or generator. Got {type(fname)} instead."
         ) from e
 
     # input may be a python2 io stream
@@ -1088,34 +1100,40 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     try:
         # Skip the first `skiprows` lines
         for i in range(skiprows):
-            next(fh)
+            next(line_iter)
 
-        # Read until we find a line with some values, and use
-        # it to estimate the number of columns, N.
-        first_vals = None
-        try:
-            while not first_vals:
-                first_line = next(fh)
-                first_vals = split_line(first_line)
-        except StopIteration:
-            # End of lines reached
-            first_line = ''
-            first_vals = []
+        # Read until we find a line with some values, and use it to determine
+        # the need for decoding and estimate the number of columns.
+        for first_line in line_iter:
+            ncols = len(usecols or split_line(first_line))
+            if ncols:
+                # Put first_line back.
+                line_iter = itertools.chain([first_line], line_iter)
+                break
+        else:  # End of lines reached
+            ncols = len(usecols or [])
             warnings.warn('loadtxt: Empty input file: "%s"' % fname,
                           stacklevel=2)
-        N = len(usecols or first_vals)
 
-        # Now that we know N, create the default converters list, and
+        line_iter = itertools.islice(line_iter, max_rows)
+        lineno_words_iter = filter(
+            itemgetter(1),  # item[1] is words; filter skips empty lines.
+            enumerate(map(split_line, line_iter), 1 + skiprows))
+
+        # Now that we know ncols, create the default converters list, and
         # set packing, if necessary.
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
             converters = [_getconv(dt) for dt in dtype_types]
         else:
-            # All fields have the same dtype
-            converters = [defconv for i in range(N)]
-            if N > 1:
-                packing = [(N, tuple)]
+            # All fields have the same dtype; use specialized packers which are
+            # much faster than those using _loadtxt_pack_items.
+            converters = [defconv for i in range(ncols)]
+            if ncols == 1:
+                packer = itemgetter(0)
+            else:
+                def packer(row): return row
 
         # By preference, use the converters specified by the user
         for i, conv in (user_converters or {}).items():
@@ -1127,25 +1145,33 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     continue
             if byte_converters:
                 # converters may use decode to workaround numpy's old
-                # behaviour, so encode the string again before passing to
-                # the user converter
-                def tobytes_first(x, conv):
-                    if type(x) is bytes:
-                        return conv(x)
+                # behaviour, so encode the string again (converters are only
+                # called with strings) before passing to the user converter.
+                def tobytes_first(conv, x):
                     return conv(x.encode("latin1"))
-                converters[i] = functools.partial(tobytes_first, conv=conv)
+                converters[i] = functools.partial(tobytes_first, conv)
             else:
                 converters[i] = conv
 
-        converters = [conv if conv is not bytes else
-                      lambda x: x.encode(fencoding) for conv in converters]
+        fencode = methodcaller("encode", fencoding)
+        converters = [conv if conv is not bytes else fencode
+                      for conv in converters]
+        if len(set(converters)) == 1:
+            # Optimize single-type data. Note that this is only reached if
+            # `_getconv` returns equal callables (i.e. not local lambdas) on
+            # equal dtypes.
+            def convert_row(vals, _conv=converters[0]):
+                return [*map(_conv, vals)]
+        else:
+            def convert_row(vals):
+                return [conv(val) for conv, val in zip(converters, vals)]
 
         # read data in chunks and fill it into an array via resize
         # over-allocating and shrinking the array later may be faster but is
         # probably not relevant compared to the cost of actually reading and
         # converting the data
         X = None
-        for x in read_data(_loadtxt_chunksize):
+        for x in read_data(lineno_words_iter, _loadtxt_chunksize):
             if X is None:
                 X = np.array(x, dtype)
             else:
@@ -1578,8 +1604,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     ----------
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
-        extension is `.gz` or `.bz2`, the file is first decompressed. Note
-        that generators must return byte strings. The strings
+        extension is ``.gz`` or ``.bz2``, the file is first decompressed. Note
+        that generators must return bytes or strings. The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
@@ -1587,7 +1613,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column, individually.
     comments : str, optional
         The character used to indicate the start of a comment.
-        All the characters occurring on a line after a comment are discarded
+        All the characters occurring on a line after a comment are discarded.
     delimiter : str, int, or sequence, optional
         The string used to separate values.  By default, any consecutive
         whitespaces act as delimiter.  An integer or sequence of integers
@@ -1614,15 +1640,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines.  This line can optionally be proceeded
+        the first `skip_header` lines. This line can optionally be preceeded
         by a comment delimiter. If `names` is a sequence or a single-string of
         comma-separated names, the names will be used to define the field names
         in a structured dtype. If `names` is None, the names of the dtype
         fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
-        ['return','file','print']. Excluded names are appended an underscore:
-        for example, `file` would become `file_`.
+        ['return','file','print']. Excluded names are appended with an
+        underscore: for example, `file` would become `file_`.
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
         names.
@@ -1631,7 +1657,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     autostrip : bool, optional
         Whether to automatically strip white spaces from the variables.
     replace_space : char, optional
-        Character(s) used in replacement of white spaces in the variables
+        Character(s) used in replacement of white spaces in the variable
         names. By default, use a '_'.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
         If True, field names are case sensitive.
@@ -1798,8 +1824,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
-            "fname must be a string, filehandle, list of strings, "
-            "or generator. Got %s instead." % type(fname)) from e
+            f"fname must be a string, filehandle, list of strings,\n"
+            f"or generator. Got {type(fname)} instead."
+        ) from e
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
@@ -2287,62 +2314,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 _genfromtxt_with_like = array_function_dispatch(
     _genfromtxt_dispatcher
 )(genfromtxt)
-
-
-def ndfromtxt(fname, **kwargs):
-    """
-    Load ASCII data stored in a file and return it as a single array.
-
-    .. deprecated:: 1.17
-        ndfromtxt` is a deprecated alias of `genfromtxt` which
-        overwrites the ``usemask`` argument with `False` even when
-        explicitly called as ``ndfromtxt(..., usemask=True)``.
-        Use `genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function.
-
-    """
-    kwargs['usemask'] = False
-    # Numpy 1.17
-    warnings.warn(
-        "np.ndfromtxt is a deprecated alias of np.genfromtxt, "
-        "prefer the latter.",
-        DeprecationWarning, stacklevel=2)
-    return genfromtxt(fname, **kwargs)
-
-
-def mafromtxt(fname, **kwargs):
-    """
-    Load ASCII data stored in a text file and return a masked array.
-
-    .. deprecated:: 1.17
-        np.mafromtxt is a deprecated alias of `genfromtxt` which
-        overwrites the ``usemask`` argument with `True` even when
-        explicitly called as ``mafromtxt(..., usemask=False)``.
-        Use `genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function to load ASCII data.
-
-    """
-    kwargs['usemask'] = True
-    # Numpy 1.17
-    warnings.warn(
-        "np.mafromtxt is a deprecated alias of np.genfromtxt, "
-        "prefer the latter.",
-        DeprecationWarning, stacklevel=2)
-    return genfromtxt(fname, **kwargs)
 
 
 def recfromtxt(fname, **kwargs):

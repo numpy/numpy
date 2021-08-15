@@ -328,8 +328,8 @@ defdict = {
           docstrings.get('numpy.core.umath.floor_divide'),
           'PyUFunc_DivisionTypeResolver',
           TD(ints, cfunc_alias='divide',
-              dispatch=[('loops_arithmetic', 'BHILQ')]),
-          TD(flts + cmplx),
+              dispatch=[('loops_arithmetic', 'bBhHiIlLqQ')]),
+          TD(flts),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
            TypeDescription('m', FullTypeDescr, 'mm', 'q'),
@@ -489,7 +489,6 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalAnd'),
-          TD(O, f='npy_ObjectLogicalAnd', out='?'),
           ),
 'logical_not':
     Ufunc(1, 1, None,
@@ -497,7 +496,6 @@ defdict = {
           None,
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalNot'),
-          TD(O, f='npy_ObjectLogicalNot', out='?'),
           ),
 'logical_or':
     Ufunc(2, 1, False_,
@@ -505,13 +503,13 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalOr'),
-          TD(O, f='npy_ObjectLogicalOr', out='?'),
           ),
 'logical_xor':
     Ufunc(2, 1, False_,
           docstrings.get('numpy.core.umath.logical_xor'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?'),
+          # TODO: using obj.logical_xor() seems pretty much useless:
           TD(P, f='logical_xor'),
           ),
 'maximum':

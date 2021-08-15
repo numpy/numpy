@@ -342,6 +342,20 @@ class TestScalarDiscovery:
             ass[()] = scalar
             assert_array_equal(ass, cast)
 
+    @pytest.mark.parametrize("pyscalar", [10, 10.32, 10.14j, 10**100])
+    def test_pyscalar_subclasses(self, pyscalar):
+        """NumPy arrays are read/write which means that anything but invariant
+        behaviour is on thin ice.  However, we currently are happy to discover
+        subclasses of Python float, int, complex the same as the base classes.
+        This should potentially be deprecated.
+        """
+        class MyScalar(type(pyscalar)):
+            pass
+
+        res = np.array(MyScalar(pyscalar))
+        expected = np.array(pyscalar)
+        assert_array_equal(res, expected)
+
     @pytest.mark.parametrize("dtype_char", np.typecodes["All"])
     def test_default_dtype_instance(self, dtype_char):
         if dtype_char in "SU":

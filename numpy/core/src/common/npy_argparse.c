@@ -338,7 +338,7 @@ _npy_parse_arguments(const char *funcname,
                 }
             }
 
-             ssize_t param_pos = (
+             Py_ssize_t param_pos = (
                     (name - cache->kw_strings) + cache->npositional_only);
 
             /* There could be an identical positional argument */

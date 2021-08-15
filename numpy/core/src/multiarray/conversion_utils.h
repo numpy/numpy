@@ -39,6 +39,17 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals);
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
+
+static NPY_INLINE PyObject *
+PyArray_PyIntFromIntp(npy_intp const value)
+{
+#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
+    return PyLong_FromLong((long)value);
+#else
+    return PyLong_FromLongLong((npy_longlong)value);
+#endif
+}
+
 NPY_NO_EXPORT PyObject *
 PyArray_IntTupleFromIntp(int len, npy_intp const *vals);
 

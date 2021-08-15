@@ -11,7 +11,7 @@ Indexing
    :ref:`Indexing routines <routines.indexing>`
 
 Array indexing refers to any use of the square brackets ([]) to index
-array values. There are many options to indexing, which give numpy
+array values. There are many options to indexing, which give NumPy
 indexing great power, but with power comes some complexity and the
 potential for confusion. This section is just an overview of the
 various options and issues related to indexing. Aside from single
@@ -39,7 +39,7 @@ and accepts negative indices for indexing from the end of the array. ::
     >>> x[-2]
     8
 
-Unlike lists and tuples, numpy arrays support multidimensional indexing
+Unlike lists and tuples, NumPy arrays support multidimensional indexing
 for multidimensional arrays. That means that it is not necessary to
 separate each dimension's index into its own set of square brackets. ::
 
@@ -285,7 +285,7 @@ with four True elements to select rows from a 3-D array of shape
         [20, 21, 22, 23, 24],
         [25, 26, 27, 28, 29]])
 
-For further details, consult the numpy reference documentation on array indexing.
+For further details, consult the NumPy reference documentation on array indexing.
 
 Combining index arrays with slices
 ==================================

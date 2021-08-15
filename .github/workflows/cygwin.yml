@@ -1,0 +1,67 @@
+name: Test on Cygwin
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  cygwin_build_test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Install Cygwin
+        uses: egor-tensin/setup-cygwin@v3
+        with:
+          platform: x64
+          install-dir: 'C:\tools\cygwin'
+          packages: >
+            python38-devel python38-zipp python38-importlib-metadata
+            python38-cython python38-pip python38-wheel python38-cffi
+            python38-pytz python38-setuptools python38-pytest
+            python38-hypothesis liblapack-devel libopenblas
+            gcc-fortran git dash
+      - name: Set Windows PATH
+        uses: egor-tensin/cleanup-path@v1
+        with:
+          dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
+      - name: Verify that bash is Cygwin bash
+        run: |
+          command bash
+          bash -c "uname -svrmo"
+      - name: Update with Cygwin git
+        # fetch-depth=0 above should make this short.
+        run: |
+          dash -c "which git; /usr/bin/git fetch --all -p"
+      - name: Verify python version
+        # Make sure it's the Cygwin one, not a Windows one
+        run: |
+          dash -c "which python3.8; /usr/bin/python3.8 --version -V"
+      - name: Build NumPy wheel
+        run: |
+          dash -c "/usr/bin/python3.8 -m pip install 'setuptools<49.2.0' pytest pytz cffi pickle5 importlib_metadata typing_extensions"
+          dash -c "/usr/bin/python3.8 -m pip install -r test_requirements.txt"
+          dash -c "/usr/bin/python3.8 setup.py bdist_wheel"
+      - name: Install new NumPy
+        run: |
+          bash -c "/usr/bin/python3.8 -m pip install dist/numpy-*cp38*.whl"
+      - name: Run NumPy test suite
+        run: >-
+          dash -c "/usr/bin/python3.8 runtests.py -n -vv"
+      - name: Upload wheel if tests fail
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: numpy-cygwin-wheel
+          path: dist/numpy-*cp38*.whl
+      - name: On failure check the extension modules
+        if: failure()
+        run: |
+          dash -c "/usr/bin/python3.8 -m pip show numpy"
+          dash -c "/usr/bin/python3.8 -m pip show -f numpy | grep .dll"
+          dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
+          dash "list_dlls_unix.sh"

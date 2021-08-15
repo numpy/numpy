@@ -18,6 +18,7 @@
  *              NPY_CPU_ARCEL
  *              NPY_CPU_ARCEB
  *              NPY_CPU_RISCV64
+ *              NPY_CPU_LOONGARCH
  *              NPY_CPU_WASM
  */
 #ifndef _NPY_CPUARCH_H_
@@ -63,7 +64,8 @@
     #define NPY_CPU_HPPA
 #elif defined(__alpha__)
     #define NPY_CPU_ALPHA
-#elif defined(__arm__) || defined(__aarch64__)
+#elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM64)
+    /* _M_ARM64 is defined in MSVC for ARM64 compilation on Windows */
     #if defined(__ARMEB__) || defined(__AARCH64EB__)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEB_AARCH32
@@ -72,10 +74,10 @@
         #else
             #define NPY_CPU_ARMEB
         #endif
-    #elif defined(__ARMEL__) || defined(__AARCH64EL__)
+    #elif defined(__ARMEL__) || defined(__AARCH64EL__) || defined(_M_ARM64)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEL_AARCH32
-        #elif defined(__ARM_64BIT_STATE)
+        #elif defined(__ARM_64BIT_STATE) || defined(_M_ARM64)
             #define NPY_CPU_ARMEL_AARCH64
         #else
             #define NPY_CPU_ARMEL
@@ -102,6 +104,8 @@
     #define NPY_CPU_ARCEB
 #elif defined(__riscv) && defined(__riscv_xlen) && __riscv_xlen == 64
     #define NPY_CPU_RISCV64
+#elif defined(__loongarch__)
+    #define NPY_CPU_LOONGARCH
 #elif defined(__EMSCRIPTEN__)
     /* __EMSCRIPTEN__ is defined by emscripten: an LLVM-to-Web compiler */
     #define NPY_CPU_WASM

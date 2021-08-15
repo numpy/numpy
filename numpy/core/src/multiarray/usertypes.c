@@ -388,7 +388,7 @@ legacy_userdtype_common_dtype_function(
 {
     int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
 
-    if (!other->legacy) {
+    if (!NPY_DT_is_legacy(other)) {
         /* legacy DTypes can always defer to new style ones */
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
@@ -422,7 +422,7 @@ legacy_userdtype_common_dtype_function(
      */
 
     /* Convert the 'kind' char into a scalar kind */
-    switch (cls->kind) {
+    switch (cls->singleton->kind) {
         case 'b':
             skind1 = NPY_BOOL_SCALAR;
             break;
@@ -439,7 +439,7 @@ legacy_userdtype_common_dtype_function(
             skind1 = NPY_COMPLEX_SCALAR;
             break;
     }
-    switch (other->kind) {
+    switch (other->singleton->kind) {
         case 'b':
             skind2 = NPY_BOOL_SCALAR;
             break;

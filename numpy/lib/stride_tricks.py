@@ -371,8 +371,9 @@ def broadcast_to(array, shape, subok=False):
     ----------
     array : array_like
         The array to broadcast.
-    shape : tuple
-        The shape of the desired array.
+    shape : tuple or int
+        The shape of the desired array. A single integer ``i`` is interpreted
+        as ``(i,)``.
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
         the returned array will be forced to be a base-class array (default).

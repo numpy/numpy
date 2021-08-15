@@ -28,7 +28,7 @@ extern "C" {
 #define RAND_INT_MAX INT64_MAX
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__CYGWIN__)
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR extern

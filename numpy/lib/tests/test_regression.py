@@ -64,8 +64,7 @@ class TestRegression:
     def test_mem_string_concat(self):
         # Ticket #469
         x = np.array([])
-        with pytest.warns(FutureWarning):
-            np.append(x, 'asdasd\tasdasd')
+        np.append(x, 'asdasd\tasdasd')
 
     def test_poly_div(self):
         # Ticket #553

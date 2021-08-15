@@ -25,7 +25,7 @@ nep-0019-rng-policy.html>`_ for context on the updated random Numpy number
 routines. The legacy `RandomState` random number routines are still
 available, but limited to a single BitGenerator. See :ref:`new-or-different` 
 for a complete list of improvements and differences from the legacy
-``Randomstate``.
+``RandomState``.
 
 For convenience and backward compatibility, a single `RandomState`
 instance's methods are imported into the numpy.random namespace, see
@@ -222,6 +222,9 @@ one of three ways:
 * :ref:`independent-streams`
 * :ref:`parallel-jumped`
 
+Users with a very large amount of parallelism will want to consult
+:ref:`upgrading-pcg64`.
+
 Concepts
 --------
 .. toctree::
@@ -230,6 +233,7 @@ Concepts
    generator
    Legacy Generator (RandomState) <legacy>
    BitGenerators, SeedSequences <bit_generators/index>
+   Upgrading PCG64 with PCG64DXSM <upgrading-pcg64>
 
 Features
 --------

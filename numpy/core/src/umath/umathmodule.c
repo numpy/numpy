@@ -224,9 +224,18 @@ NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 static int
 intern_strings(void)
 {
-    if (!(npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__"))) return -1;
-    if (!(npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__"))) return -1;
-    if (!(npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME))) return -1;
+    npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
+    if (npy_um_str_array_prepare == NULL) {
+        return -1;
+    }
+    npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
+    if (npy_um_str_array_wrap == NULL) {
+        return -1;
+    }
+    npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME);
+    if (npy_um_str_pyvals_name == NULL) {
+        return -1;
+    }
     return 0;
 }
 

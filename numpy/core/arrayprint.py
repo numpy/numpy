@@ -420,7 +420,9 @@ def _get_format_function(data, **options):
     dtype_ = data.dtype
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
-    if issubclass(dtypeobj, _nt.bool_):
+    if dtypeobj is None:
+        return formatdict["numpystr"]()
+    elif issubclass(dtypeobj, _nt.bool_):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
         if issubclass(dtypeobj, _nt.timedelta64):
@@ -1408,6 +1410,9 @@ def dtype_short_repr(dtype):
     >>> dt = np.int64([1, 2]).dtype
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
+    if type(dtype).__repr__ != np.dtype.__repr__:
+        # TODO: Custom repr for user DTypes, logic should likely move.
+        return repr(dtype)
     if dtype.names is not None:
         # structured dtypes give a list or tuple repr
         return str(dtype)

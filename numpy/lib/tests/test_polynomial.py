@@ -4,6 +4,12 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose
     )
 
+import pytest
+
+# `poly1d` has some support for `bool_` and `timedelta64`,
+# but it is limited and they are therefore excluded here
+TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
+
 
 class TestPolynomial:
     def test_poly1d_str_and_repr(self):
@@ -57,11 +63,26 @@ class TestPolynomial:
         assert_equal(np.polydiv(np.poly1d([1, 0, -1]), np.poly1d([1, 1])),
                      (np.poly1d([1., -1.]), np.poly1d([0.])))
 
-    def test_poly1d_misc(self):
-        p = np.poly1d([1., 2, 3])
-        assert_equal(np.asarray(p), np.array([1., 2., 3.]))
+    @pytest.mark.parametrize("type_code", TYPE_CODES)
+    def test_poly1d_misc(self, type_code: str) -> None:
+        dtype = np.dtype(type_code)
+        ar = np.array([1, 2, 3], dtype=dtype)
+        p = np.poly1d(ar)
+
+        # `__eq__`
+        assert_equal(np.asarray(p), ar)
+        assert_equal(np.asarray(p).dtype, dtype)
         assert_equal(len(p), 2)
-        assert_equal((p[0], p[1], p[2], p[3]), (3.0, 2.0, 1.0, 0))
+
+        # `__getitem__`
+        comparison_dct = {-1: 0, 0: 3, 1: 2, 2: 1, 3: 0}
+        for index, ref in comparison_dct.items():
+            scalar = p[index]
+            assert_equal(scalar, ref)
+            if dtype == np.object_:
+                assert isinstance(scalar, int)
+            else:
+                assert_equal(scalar.dtype, dtype)
 
     def test_poly1d_variable_arg(self):
         q = np.poly1d([1., 2, 3], variable='y')
@@ -257,7 +278,7 @@ class TestPolynomial:
         assert_equal(q.coeffs.dtype, np.complex128)
         assert_equal(r.coeffs.dtype, np.complex128)
         assert_equal(q*a + r, b)
-        
+
         c = [1, 2, 3]
         d = np.poly1d([1, 2, 3])
         s, t = np.polydiv(c, d)

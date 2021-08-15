@@ -15,6 +15,7 @@
 #include "iterators.h"
 #include "ctors.h"
 #include "common.h"
+#include "conversion_utils.h"
 #include "array_coercion.h"
 
 #define NEWAXIS_INDEX -1
@@ -1062,15 +1063,17 @@ static PyMemberDef iter_members[] = {
         T_OBJECT,
         offsetof(PyArrayIterObject, ao),
         READONLY, NULL},
-    {"index",
-        T_INT,
-        offsetof(PyArrayIterObject, index),
-        READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
 static PyObject *
-iter_coords_get(PyArrayIterObject *self)
+iter_index_get(PyArrayIterObject *self, void *NPY_UNUSED(ignored))
+{
+    return PyArray_PyIntFromIntp(self->index);
+}
+
+static PyObject *
+iter_coords_get(PyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     int nd;
     nd = PyArray_NDIM(self->ao);
@@ -1095,10 +1098,12 @@ iter_coords_get(PyArrayIterObject *self)
 }
 
 static PyGetSetDef iter_getsets[] = {
+    {"index",
+        (getter)iter_index_get,
+        NULL, NULL, NULL},
     {"coords",
         (getter)iter_coords_get,
-        NULL,
-        NULL, NULL},
+        NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
 
@@ -1408,43 +1413,25 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 }
 
 static PyObject *
-arraymultiter_size_get(PyArrayMultiIterObject *self)
+arraymultiter_size_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyLong_FromLong((long) self->size);
-#else
-    if (self->size < NPY_MAX_LONG) {
-        return PyLong_FromLong((long) self->size);
-    }
-    else {
-        return PyLong_FromLongLong((npy_longlong) self->size);
-    }
-#endif
+    return PyArray_PyIntFromIntp(self->size);
 }
 
 static PyObject *
-arraymultiter_index_get(PyArrayMultiIterObject *self)
+arraymultiter_index_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyLong_FromLong((long) self->index);
-#else
-    if (self->size < NPY_MAX_LONG) {
-        return PyLong_FromLong((long) self->index);
-    }
-    else {
-        return PyLong_FromLongLong((npy_longlong) self->index);
-    }
-#endif
+    return PyArray_PyIntFromIntp(self->index);
 }
 
 static PyObject *
-arraymultiter_shape_get(PyArrayMultiIterObject *self)
+arraymultiter_shape_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     return PyArray_IntTupleFromIntp(self->nd, self->dimensions);
 }
 
 static PyObject *
-arraymultiter_iters_get(PyArrayMultiIterObject *self)
+arraymultiter_iters_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *res;
     int i, n;

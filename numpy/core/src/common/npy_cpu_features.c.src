@@ -394,8 +394,30 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_FMA]    = npy__cpu_have[NPY_CPU_FEATURE_FMA3];
 
     // check AVX512 OS support
-    if ((xcr & 0xe6) != 0xe6)
+    int avx512_os = (xcr & 0xe6) == 0xe6;
+#if defined(__APPLE__) && defined(__x86_64__)
+    /**
+     * On darwin, machines with AVX512 support, by default, threads are created with
+     * AVX512 masked off in XCR0 and an AVX-sized savearea is used.
+     * However, AVX512 capabilities are advertised in the commpage and via sysctl.
+     * for more information, check:
+     *  - https://github.com/apple/darwin-xnu/blob/0a798f6738bc1db01281fc08ae024145e84df927/osfmk/i386/fpu.c#L175-L201
+     *  - https://github.com/golang/go/issues/43089
+     *  - https://github.com/numpy/numpy/issues/19319
+     */
+    if (!avx512_os) {
+        npy_uintp commpage64_addr = 0x00007fffffe00000ULL;
+        npy_uint16 commpage64_ver = *((npy_uint16*)(commpage64_addr + 0x01E));
+        // cpu_capabilities64 undefined in versions < 13
+        if (commpage64_ver > 12) {
+            npy_uint64 commpage64_cap = *((npy_uint64*)(commpage64_addr + 0x010));
+            avx512_os = (commpage64_cap & 0x0000004000000000ULL) != 0;
+        }
+    }
+#endif
+    if (!avx512_os) {
         return;
+    }
     npy__cpu_have[NPY_CPU_FEATURE_AVX512F]  = (reg[1] & (1 << 16)) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_AVX512CD] = (reg[1] & (1 << 28)) != 0;
     if (npy__cpu_have[NPY_CPU_FEATURE_AVX512F] && npy__cpu_have[NPY_CPU_FEATURE_AVX512CD]) {

@@ -18,11 +18,7 @@ array_function_like_doc = (
         NumPy arrays. If an array-like passed in as ``like`` supports
         the ``__array_function__`` protocol, the result will be defined
         by it. In this case, it ensures the creation of an array object
-        compatible with that passed in via this argument.
-
-        .. note::
-            The ``like`` keyword is an experimental feature pending on
-            acceptance of :ref:`NEP 35 <NEP35>`."""
+        compatible with that passed in via this argument."""
 )
 
 def set_array_function_like_doc(public_api):

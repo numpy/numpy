@@ -4,6 +4,14 @@ import datetime as dt
 import pytest
 import numpy as np
 
+b =  np.bool_()
+u8 = np.uint64()
+i8 = np.int64()
+f8 = np.float64()
+c16 = np.complex128()
+U = np.str_()
+S = np.bytes_()
+
 
 # Construction
 class D:
@@ -204,3 +212,43 @@ np.cfloat()
 np.clongdouble()
 np.clongfloat()
 np.longcomplex()
+
+b.item()
+i8.item()
+u8.item()
+f8.item()
+c16.item()
+U.item()
+S.item()
+
+b.tolist()
+i8.tolist()
+u8.tolist()
+f8.tolist()
+c16.tolist()
+U.tolist()
+S.tolist()
+
+b.ravel()
+i8.ravel()
+u8.ravel()
+f8.ravel()
+c16.ravel()
+U.ravel()
+S.ravel()
+
+b.flatten()
+i8.flatten()
+u8.flatten()
+f8.flatten()
+c16.flatten()
+U.flatten()
+S.flatten()
+
+b.reshape(1)
+i8.reshape(1)
+u8.reshape(1)
+f8.reshape(1)
+c16.reshape(1)
+U.reshape(1)
+S.reshape(1)

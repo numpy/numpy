@@ -35,8 +35,7 @@ __all__ = [
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
-        '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
-        'break_cycles', 'HAS_LAPACK64'
+        'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64'
         ]
 
 
@@ -49,7 +48,8 @@ KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
-HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
+IS_PYSTON = hasattr(sys, "pyston_version_info")
+HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 
@@ -518,9 +518,9 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     Examples
     --------
-    >>> import numpy.testing as npt
-    >>> npt.assert_almost_equal(2.3333333333333, 2.33333334)
-    >>> npt.assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
+    >>> from numpy.testing import assert_almost_equal
+    >>> assert_almost_equal(2.3333333333333, 2.33333334)
+    >>> assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
     Traceback (most recent call last):
         ...
     AssertionError:
@@ -528,8 +528,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
      ACTUAL: 2.3333333333333
      DESIRED: 2.33333334
 
-    >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
-    ...                         np.array([1.0,2.33333334]), decimal=9)
+    >>> assert_almost_equal(np.array([1.0,2.3333333333333]),
+    ...                     np.array([1.0,2.33333334]), decimal=9)
     Traceback (most recent call last):
         ...
     AssertionError:
@@ -2518,4 +2518,3 @@ def _no_tracing(func):
             finally:
                 sys.settrace(original_trace)
         return wrapper
-

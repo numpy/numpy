@@ -44,7 +44,7 @@ Capabilities
   read most ``.npy`` files that they have been given without much
   documentation.
 
-- Allows memory-mapping of the data. See `open_memmep`.
+- Allows memory-mapping of the data. See `open_memmap`.
 
 - Can be read from a filelike stream object instead of an actual file.
 
@@ -606,7 +606,7 @@ def _read_array_header(fp, version):
     if EXPECTED_KEYS != d.keys():
         keys = sorted(d.keys())
         msg = "Header does not contain the correct keys: {!r}"
-        raise ValueError(msg.format(d.keys()))
+        raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or

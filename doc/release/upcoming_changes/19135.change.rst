@@ -1,0 +1,10 @@
+Removed floor division support for complex types
+------------------------------------------------
+
+Floor division of complex types will now result in a `TypeError`
+
+.. code-block:: python
+
+    >>> a = np.arange(10) + 1j* np.arange(10)
+    >>> a // 1
+    TypeError: ufunc 'floor_divide' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''

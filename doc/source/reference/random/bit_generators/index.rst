@@ -15,10 +15,13 @@ Supported BitGenerators
 
 The included BitGenerators are:
 
-* PCG-64 - The default. A fast generator that supports many parallel streams
-  and can be advanced by an arbitrary amount. See the documentation for
-  :meth:`~.PCG64.advance`. PCG-64 has a period of :math:`2^{128}`. See the `PCG
-  author's page`_ for more details about this class of PRNG.
+* PCG-64 - The default. A fast generator that can be advanced by an arbitrary
+  amount. See the documentation for :meth:`~.PCG64.advance`. PCG-64 has
+  a period of :math:`2^{128}`. See the `PCG author's page`_ for more details
+  about this class of PRNG.
+* PCG-64 DXSM - An upgraded version of PCG-64 with better statistical
+  properties in parallel contexts. See :ref:`upgrading-pcg64` for more
+  information on these improvements.
 * MT19937 - The standard Python BitGenerator. Adds a `MT19937.jumped`
   function that returns a new generator with state as-if :math:`2^{128}` draws have
   been made.
@@ -43,6 +46,7 @@ The included BitGenerators are:
 
     MT19937 <mt19937>
     PCG64 <pcg64>
+    PCG64DXSM <pcg64dxsm>
     Philox <philox>
     SFC64 <sfc64>
 

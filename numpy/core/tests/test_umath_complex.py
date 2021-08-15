@@ -372,11 +372,18 @@ class TestCpow:
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
         y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
         lx = list(range(len(x)))
-        # Compute the values for complex type in python
-        p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
-        # Substitute a result allowed by C99 standard
-        p_r[4] = complex(np.inf, np.nan)
-        # Do the same with numpy complex scalars
+
+        # Hardcode the expected `builtins.complex` values,
+        # as complex exponentiation is broken as of bpo-44698
+        p_r = [
+            1+0j,
+            0.20787957635076193+0j,
+            0.35812203996480685+0.6097119028618724j,
+            0.12659112128185032+0.48847676699581527j,
+            complex(np.inf, np.nan),
+            complex(np.nan, np.nan),
+        ]
+
         n_r = [x[i] ** y[i] for i in lx]
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
@@ -385,11 +392,18 @@ class TestCpow:
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
         y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
         lx = list(range(len(x)))
-        # Compute the values for complex type in python
-        p_r = [complex(x[i]) ** complex(y[i]) for i in lx]
-        # Substitute a result allowed by C99 standard
-        p_r[4] = complex(np.inf, np.nan)
-        # Do the same with numpy arrays
+
+        # Hardcode the expected `builtins.complex` values,
+        # as complex exponentiation is broken as of bpo-44698
+        p_r = [
+            1+0j,
+            0.20787957635076193+0j,
+            0.35812203996480685+0.6097119028618724j,
+            0.12659112128185032+0.48847676699581527j,
+            complex(np.inf, np.nan),
+            complex(np.nan, np.nan),
+        ]
+
         n_r = x ** y
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
@@ -541,7 +555,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
         else:
             assert_almost_equal(f(z1), z2)
 
-class TestSpecialComplexAVX(object):
+class TestSpecialComplexAVX:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     def test_array(self, stride, astype):
@@ -568,7 +582,7 @@ class TestSpecialComplexAVX(object):
         with np.errstate(invalid='ignore'):
             assert_equal(np.square(arr[::stride]), sq_true[::stride])
 
-class TestComplexAbsoluteAVX(object):
+class TestComplexAbsoluteAVX:
     @pytest.mark.parametrize("arraysize", [1,2,3,4,5,6,7,8,9,10,11,13,15,17,18,19])
     @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
@@ -579,11 +593,11 @@ class TestComplexAbsoluteAVX(object):
         assert_equal(np.abs(arr[::stride]), abs_true[::stride])
 
 # Testcase taken as is from https://github.com/numpy/numpy/issues/16660
-class TestComplexAbsoluteMixedDTypes(object):
+class TestComplexAbsoluteMixedDTypes:
     @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     @pytest.mark.parametrize("func", ['abs', 'square', 'conjugate'])
-    
+
     def test_array(self, stride, astype, func):
         dtype = [('template_id', '<i8'), ('bank_chisq','<f4'),
                  ('bank_chisq_dof','<i8'), ('chisq', '<f4'), ('chisq_dof','<i8'),
@@ -602,9 +616,9 @@ class TestComplexAbsoluteMixedDTypes(object):
         myfunc = getattr(np, func)
         a = vec['mycomplex']
         g = myfunc(a[::stride])
-        
+
         b = vec['mycomplex'].copy()
         h = myfunc(b[::stride])
-        
+
         assert_array_max_ulp(h.real, g.real, 1)
         assert_array_max_ulp(h.imag, g.imag, 1)

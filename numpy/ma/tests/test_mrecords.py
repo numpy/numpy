@@ -405,7 +405,7 @@ class TestMRecordsImport:
         for (f, l) in zip(('a', 'b', 'c'), (_a, _b, _c)):
             assert_equal(getattr(mrec, f)._mask, l._mask)
         # One record only
-        _x = ma.array([1, 1.1, 'one'], mask=[1, 0, 0],)
+        _x = ma.array([1, 1.1, 'one'], mask=[1, 0, 0], dtype=object)
         assert_equal_records(fromarrays(_x, dtype=mrec.dtype), mrec[0])
 
     def test_fromrecords(self):

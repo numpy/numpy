@@ -585,7 +585,7 @@ cdef class Generator:
         Examples
         --------
         >>> np.random.default_rng().bytes(10)
-        b'\xfeC\x9b\x86\x17\xf2\xa1\xafcp' # random
+        b'\\xfeC\\x9b\\x86\\x17\\xf2\\xa1\\xafcp' # random
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
@@ -614,11 +614,12 @@ cdef class Generator:
             len(size)``. Default is None, in which case a single value is
             returned.
         replace : bool, optional
-            Whether the sample is with or without replacement
+            Whether the sample is with or without replacement. Default is True,
+            meaning that a value of ``a`` can be selected multiple times.
         p : 1-D array_like, optional
             The probabilities associated with each entry in a.
-            If not given the sample assumes a uniform distribution over all
-            entries in a.
+            If not given, the sample assumes a uniform distribution over all
+            entries in ``a``.
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
@@ -4592,7 +4593,7 @@ def default_rng(seed=None):
     
     Examples
     --------
-    ``default_rng`` is the reccomended constructor for the random number class
+    ``default_rng`` is the recommended constructor for the random number class
     ``Generator``. Here are several ways we can construct a random 
     number generator using ``default_rng`` and the ``Generator`` class. 
     

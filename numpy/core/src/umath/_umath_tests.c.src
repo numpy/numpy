@@ -532,7 +532,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
     if (f->core_dim_ixs != NULL) {
         core_dim_ixs = PyTuple_New(core_num_ixs);
-        if (core_num_dims == NULL) {
+        if (core_dim_ixs == NULL) {
             goto fail;
         }
         for (i = 0; i < core_num_ixs; i++) {

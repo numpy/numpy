@@ -489,16 +489,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (M,), optional
-        Weights to apply to the y-coordinates of the sample points. For
-        gaussian uncertainties, use 1/sigma (not 1/sigma**2).
+        Weights. If not None, the weight ``w[i]`` applies to the unsquared
+        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        same variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
     cov : bool or str, optional
         If given and not `False`, return not just the estimate but also its
         covariance matrix. By default, the covariance are scaled by
-        chi2/dof, where dof = M - (deg + 1), i.e., the weights are presumed 
-        to be unreliable except in a relative sense and everything is scaled 
-        such that the reduced chi2 is unity. This scaling is omitted if 
-        ``cov='unscaled'``, as is relevant for the case that the weights are 
-        1/sigma**2, with sigma known to be a reliable estimate of the 
+        chi2/dof, where dof = M - (deg + 1), i.e., the weights are presumed
+        to be unreliable except in a relative sense and everything is scaled
+        such that the reduced chi2 is unity. This scaling is omitted if
+        ``cov='unscaled'``, as is relevant for the case that the weights are
+        w = 1/sigma, with sigma known to be a reliable estimate of the
         uncertainty.
 
     Returns
@@ -1394,9 +1397,9 @@ class poly1d:
     def __getitem__(self, val):
         ind = self.order - val
         if val > self.order:
-            return 0
+            return self.coeffs.dtype.type(0)
         if val < 0:
-            return 0
+            return self.coeffs.dtype.type(0)
         return self.coeffs[ind]
 
     def __setitem__(self, key, val):

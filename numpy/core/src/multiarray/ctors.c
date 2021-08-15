@@ -665,8 +665,14 @@ PyArray_NewFromDescr_int(
         int allow_emptystring)
 {
     PyArrayObject_fields *fa;
-    int i;
     npy_intp nbytes;
+
+    if (nd > NPY_MAXDIMS || nd < 0) {
+        PyErr_Format(PyExc_ValueError,
+                "number of dimensions must be within [0, %d]", NPY_MAXDIMS);
+        Py_DECREF(descr);
+        return NULL;
+    }
 
     if (descr->subarray) {
         PyObject *ret;
@@ -685,14 +691,6 @@ PyArray_NewFromDescr_int(
                 flags, obj, base,
                 zeroed, allow_emptystring);
         return ret;
-    }
-
-    if ((unsigned int)nd > (unsigned int)NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError,
-                     "number of dimensions must be within [0, %d]",
-                     NPY_MAXDIMS);
-        Py_DECREF(descr);
-        return NULL;
     }
 
     /* Check datatype element size */
@@ -715,39 +713,6 @@ PyArray_NewFromDescr_int(
             else {
                 nbytes = descr->elsize = sizeof(npy_ucs4);
             }
-        }
-    }
-
-    /* Check dimensions and multiply them to nbytes */
-    for (i = 0; i < nd; i++) {
-        npy_intp dim = dims[i];
-
-        if (dim == 0) {
-            /*
-             * Compare to PyArray_OverflowMultiplyList that
-             * returns 0 in this case.
-             */
-            continue;
-        }
-
-        if (dim < 0) {
-            PyErr_SetString(PyExc_ValueError,
-                "negative dimensions are not allowed");
-            Py_DECREF(descr);
-            return NULL;
-        }
-
-        /*
-         * Care needs to be taken to avoid integer overflow when
-         * multiplying the dimensions together to get the total size of the
-         * array.
-         */
-        if (npy_mul_with_overflow_intp(&nbytes, nbytes, dim)) {
-            PyErr_SetString(PyExc_ValueError,
-                "array is too big; `arr.size * arr.dtype.itemsize` "
-                "is larger than the maximum possible size.");
-            Py_DECREF(descr);
-            return NULL;
         }
     }
 
@@ -786,26 +751,57 @@ PyArray_NewFromDescr_int(
             goto fail;
         }
         fa->strides = fa->dimensions + nd;
-        if (nd) {
-            memcpy(fa->dimensions, dims, sizeof(npy_intp)*nd);
+
+        /* Copy dimensions, check them, and find total array size `nbytes` */
+        for (int i = 0; i < nd; i++) {
+            fa->dimensions[i] = dims[i];
+
+            if (fa->dimensions[i] == 0) {
+                /*
+                 * Compare to PyArray_OverflowMultiplyList that
+                 * returns 0 in this case.
+                 */
+                continue;
+            }
+
+            if (fa->dimensions[i] < 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "negative dimensions are not allowed");
+                goto fail;
+            }
+
+            /*
+             * Care needs to be taken to avoid integer overflow when multiplying
+             * the dimensions together to get the total size of the array.
+             */
+            if (npy_mul_with_overflow_intp(&nbytes, nbytes, fa->dimensions[i])) {
+                PyErr_SetString(PyExc_ValueError,
+                        "array is too big; `arr.size * arr.dtype.itemsize` "
+                        "is larger than the maximum possible size.");
+                goto fail;
+            }
         }
-        if (strides == NULL) {  /* fill it in */
+
+        /* Fill the strides (or copy them if they were passed in) */
+        if (strides == NULL) {
+            /* fill the strides and set the contiguity flags */
             _array_fill_strides(fa->strides, dims, nd, descr->elsize,
                                 flags, &(fa->flags));
         }
         else {
-            /*
-             * we allow strides even when we create
-             * the memory, but be careful with this...
-             */
-            if (nd) {
-                memcpy(fa->strides, strides, sizeof(npy_intp)*nd);
+            /* User to provided strides (user is responsible for correctness) */
+            for (int i = 0; i < nd; i++) {
+                fa->strides[i] = strides[i];
             }
+            /* Since the strides were passed in must update contiguity */
+            PyArray_UpdateFlags((PyArrayObject *)fa,
+                    NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
         }
     }
     else {
-        fa->dimensions = fa->strides = NULL;
-        fa->flags |= NPY_ARRAY_F_CONTIGUOUS;
+        fa->dimensions = NULL;
+        fa->strides = NULL;
+        fa->flags |= NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS;
     }
 
     if (data == NULL) {
@@ -844,12 +840,11 @@ PyArray_NewFromDescr_int(
     fa->data = data;
 
     /*
-     * always update the flags to get the right CONTIGUOUS, ALIGN properties
-     * not owned data and input strides may not be aligned and on some
-     * platforms (debian sparc) malloc does not provide enough alignment for
-     * long double types
+     * Always update the aligned flag.  Not owned data or input strides may
+     * not be aligned. Also on some platforms (debian sparc) malloc does not
+     * provide enough alignment for long double types.
      */
-    PyArray_UpdateFlags((PyArrayObject *)fa, NPY_ARRAY_UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)fa, NPY_ARRAY_ALIGNED);
 
     /* Set the base object. It's important to do it here so that
      * __array_finalize__ below receives it
@@ -862,15 +857,20 @@ PyArray_NewFromDescr_int(
     }
 
     /*
-     * call the __array_finalize__
-     * method if a subtype.
-     * If obj is NULL, then call method with Py_None
+     * call the __array_finalize__ method if a subtype was requested.
+     * If obj is NULL use Py_None for the Python callback.
      */
-    if ((subtype != &PyArray_Type)) {
-        PyObject *res, *func, *args;
+    if (subtype != &PyArray_Type) {
+        PyObject *res, *func;
 
         func = PyObject_GetAttr((PyObject *)fa, npy_ma_str_array_finalize);
-        if (func && func != Py_None) {
+        if (func == NULL) {
+            goto fail;
+        }
+        else if (func == Py_None) {
+            Py_DECREF(func);
+        }
+        else {
             if (PyCapsule_CheckExact(func)) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
@@ -884,14 +884,10 @@ PyArray_NewFromDescr_int(
                 }
             }
             else {
-                args = PyTuple_New(1);
                 if (obj == NULL) {
-                    obj=Py_None;
+                    obj = Py_None;
                 }
-                Py_INCREF(obj);
-                PyTuple_SET_ITEM(args, 0, obj);
-                res = PyObject_Call(func, args, NULL);
-                Py_DECREF(args);
+                res = PyObject_CallFunctionObjArgs(func, obj, NULL);
                 Py_DECREF(func);
                 if (res == NULL) {
                     goto fail;
@@ -901,7 +897,6 @@ PyArray_NewFromDescr_int(
                 }
             }
         }
-        else Py_XDECREF(func);
     }
     return (PyObject *)fa;
 
@@ -2105,6 +2100,39 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
     return PyObject_RichCompareBool(typestr, typestr2, Py_EQ);
 }
 
+
+/*
+ * A helper function to transition away from ignoring errors during
+ * special attribute lookups during array coercion.
+ */
+static NPY_INLINE int
+deprecated_lookup_error_clearing(PyTypeObject *type, char *attribute)
+{
+    PyObject *exc_type, *exc_value, *traceback;
+    PyErr_Fetch(&exc_type, &exc_value, &traceback);
+
+    /* DEPRECATED 2021-05-12, NumPy 1.21. */
+    int res = PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+            "An exception was ignored while fetching the attribute `%s` from "
+            "an object of type '%s'.  With the exception of `AttributeError` "
+            "NumPy will always raise this exception in the future.  Raise this "
+            "deprecation warning to see the original exception. "
+            "(Warning added NumPy 1.21)", attribute, type->tp_name);
+
+    if (res < 0) {
+        npy_PyErr_ChainExceptionsCause(exc_type, exc_value, traceback);
+        return -1;
+    }
+    else {
+        /* `PyErr_Fetch` cleared the original error, delete the references */
+        Py_DECREF(exc_type);
+        Py_XDECREF(exc_value);
+        Py_XDECREF(traceback);
+        return 0;
+    }
+}
+
+
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *origin)
@@ -2129,11 +2157,10 @@ PyArray_FromInterface(PyObject *origin)
                 /* RecursionError and MemoryError are considered fatal */
                 return NULL;
             }
-            /*
-             * This probably be deprecated, but at least shapely raised
-             * a NotImplementedError expecting it to be cleared (gh-17965)
-             */
-            PyErr_Clear();
+            if (deprecated_lookup_error_clearing(
+                    Py_TYPE(origin), "__array_interface__") < 0) {
+                return NULL;
+            }
         }
         return Py_NotImplemented;
     }
@@ -2406,8 +2433,10 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
                 /* RecursionError and MemoryError are considered fatal */
                 return NULL;
             }
-            /* This probably be deprecated. */
-            PyErr_Clear();
+            if (deprecated_lookup_error_clearing(
+                    Py_TYPE(op), "__array__") < 0) {
+                return NULL;
+            }
         }
         return Py_NotImplemented;
     }
@@ -3954,8 +3983,8 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
 NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap)
 {
-    PyObject *wrapped = PyObject_CallMethod((PyObject *)arr_of_subclass,
-                                        "__array_wrap__", "O", towrap);
+    PyObject *wrapped = PyObject_CallMethodObjArgs((PyObject *)arr_of_subclass,
+            npy_ma_str_array_wrap, (PyObject *)towrap, NULL);
     if (wrapped == NULL) {
         return NULL;
     }

@@ -307,8 +307,8 @@ class TestModulus:
         # promotes to float which does not fit
         a = np.array([1, 2], np.int64)
         b = np.array([1, 2], np.uint64)
-        pattern = 'could not be coerced to provided output parameter'
-        with assert_raises_regex(TypeError, pattern):
+        with pytest.raises(TypeError,
+                match=r"Cannot cast ufunc 'floor_divide' output from"):
             a //= b
 
 
@@ -670,18 +670,28 @@ class TestAbs:
         x = test_dtype(np.finfo(test_dtype).max)
         assert_equal(absfunc(x), x.real)
 
-        x = test_dtype(np.finfo(test_dtype).tiny)
-        assert_equal(absfunc(x), x.real)
+        with suppress_warnings() as sup:
+            sup.filter(UserWarning)
+            x = test_dtype(np.finfo(test_dtype).tiny)
+            assert_equal(absfunc(x), x.real)
 
         x = test_dtype(np.finfo(test_dtype).min)
         assert_equal(absfunc(x), -x.real)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_builtin_abs(self, dtype):
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(abs, dtype)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_numpy_abs(self, dtype):
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(np.abs, dtype)
 
 class TestBitShifts:
@@ -710,6 +720,40 @@ class TestBitShifts:
                 shift_arr = np.array([shift]*32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)
+
+
+class TestHash:
+    @pytest.mark.parametrize("type_code", np.typecodes['AllInteger'])
+    def test_integer_hashes(self, type_code):
+        scalar = np.dtype(type_code).type
+        for i in range(128):
+            assert hash(i) == hash(scalar(i))
+
+    @pytest.mark.parametrize("type_code", np.typecodes['AllFloat'])
+    def test_float_and_complex_hashes(self, type_code):
+        scalar = np.dtype(type_code).type
+        for val in [np.pi, np.inf, 3, 6.]:
+            numpy_val = scalar(val)
+            # Cast back to Python, in case the NumPy scalar has less precision
+            if numpy_val.dtype.kind == 'c':
+                val = complex(numpy_val)
+            else:
+                val = float(numpy_val)
+            assert val == numpy_val
+            print(repr(numpy_val), repr(val))
+            assert hash(val) == hash(numpy_val)
+
+        if hash(float(np.nan)) != hash(float(np.nan)):
+            # If Python distinguises different NaNs we do so too (gh-18833)
+            assert hash(scalar(np.nan)) != hash(scalar(np.nan))
+
+    @pytest.mark.parametrize("type_code", np.typecodes['Complex'])
+    def test_complex_hashes(self, type_code):
+        # Test some complex valued hashes specifically:
+        scalar = np.dtype(type_code).type
+        for val in [np.pi+1j, np.inf-3j, 3j, 6.+1j]:
+            numpy_val = scalar(val)
+            assert hash(complex(numpy_val)) == hash(numpy_val)
 
 
 @contextlib.contextmanager

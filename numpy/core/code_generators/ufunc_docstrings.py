@@ -4081,7 +4081,7 @@ add_newdoc('numpy.core.umath', 'frexp',
     Decompose the elements of x into mantissa and twos exponent.
 
     Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.
-    The mantissa is lies in the open interval(-1, 1), while the twos
+    The mantissa lies in the open interval(-1, 1), while the twos
     exponent is a signed integer.
 
     Parameters

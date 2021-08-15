@@ -434,7 +434,7 @@ busdaycalendar_dealloc(NpyBusDayCalendar *self)
 }
 
 static PyObject *
-busdaycalendar_weekmask_get(NpyBusDayCalendar *self)
+busdaycalendar_weekmask_get(NpyBusDayCalendar *self, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *ret;
     npy_intp size = 7;
@@ -452,7 +452,7 @@ busdaycalendar_weekmask_get(NpyBusDayCalendar *self)
 }
 
 static PyObject *
-busdaycalendar_holidays_get(NpyBusDayCalendar *self)
+busdaycalendar_holidays_get(NpyBusDayCalendar *self, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *ret;
     PyArray_Descr *date_dtype;

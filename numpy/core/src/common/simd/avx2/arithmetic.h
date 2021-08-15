@@ -26,7 +26,7 @@
 #define npyv_adds_s8  _mm256_adds_epi8
 #define npyv_adds_u16 _mm256_adds_epu16
 #define npyv_adds_s16 _mm256_adds_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Subtraction
@@ -48,7 +48,7 @@
 #define npyv_subs_s8  _mm256_subs_epi8
 #define npyv_subs_u16 _mm256_subs_epu16
 #define npyv_subs_s16 _mm256_subs_epi16
-// TODO: rest, after implment Packs intrins
+// TODO: rest, after implement Packs intrins
 
 /***************************
  * Multiplication
@@ -64,7 +64,7 @@
 #define npyv_mul_f64 _mm256_mul_pd
 
 // saturated
-// TODO: after implment Packs intrins
+// TODO: after implement Packs intrins
 
 /***************************
  * Integer Division
@@ -73,16 +73,16 @@
 // divide each unsigned 8-bit element by a precomputed divisor
 NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
 {
-    const __m256i bmask = _mm256_set1_epi32(0xFF00FF00);
+    const __m256i bmask = _mm256_set1_epi32(0x00FF00FF);
     const __m128i shf1  = _mm256_castsi256_si128(divisor.val[1]);
     const __m128i shf2  = _mm256_castsi256_si128(divisor.val[2]);
     const __m256i shf1b = _mm256_set1_epi8(0xFFU >> _mm_cvtsi128_si32(shf1));
     const __m256i shf2b = _mm256_set1_epi8(0xFFU >> _mm_cvtsi128_si32(shf2));
     // high part of unsigned multiplication
-    __m256i mulhi_odd   = _mm256_mulhi_epu16(a, divisor.val[0]);
-    __m256i mulhi_even  = _mm256_mulhi_epu16(_mm256_slli_epi16(a, 8), divisor.val[0]);
+    __m256i mulhi_even  = _mm256_mullo_epi16(_mm256_and_si256(a, bmask), divisor.val[0]);
             mulhi_even  = _mm256_srli_epi16(mulhi_even, 8);
-    __m256i mulhi       = _mm256_blendv_epi8(mulhi_even, mulhi_odd, bmask);
+    __m256i mulhi_odd   = _mm256_mullo_epi16(_mm256_srli_epi16(a, 8), divisor.val[0]);
+    __m256i mulhi       = _mm256_blendv_epi8(mulhi_odd, mulhi_even, bmask);
     // floor(a/d)       = (mulhi + ((a-mulhi) >> sh1)) >> sh2
     __m256i q           = _mm256_sub_epi8(a, mulhi);
             q           = _mm256_and_si256(_mm256_srl_epi16(q, shf1), shf1b);

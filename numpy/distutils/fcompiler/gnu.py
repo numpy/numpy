@@ -247,7 +247,7 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        if sys.platform == 'win32':
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
             # Linux/Solaris/Unix support RPATH, Windows does not
             raise NotImplementedError
 

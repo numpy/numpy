@@ -1760,6 +1760,7 @@ class TestRandomDist:
     @pytest.mark.parametrize("mu", [-7., -np.pi, -3.1, np.pi, 3.2])
     @pytest.mark.parametrize("kappa", [1e-9, 1e-6, 1, 1e3, 1e15])
     def test_vonmises_large_kappa_range(self, mu, kappa):
+        random = Generator(MT19937(self.seed))
         r = random.vonmises(mu, kappa, 50)
         assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 

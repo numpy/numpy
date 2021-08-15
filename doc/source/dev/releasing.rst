@@ -1,5 +1,5 @@
 ===================
-Releasing a Version
+Releasing a version
 ===================
 
 ------------------------

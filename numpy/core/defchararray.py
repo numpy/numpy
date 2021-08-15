@@ -16,7 +16,6 @@ The preferred alias for `defchararray` is `numpy.char`.
 
 """
 import functools
-import sys
 from .numerictypes import (
     string_, unicode_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, compare_chararrays

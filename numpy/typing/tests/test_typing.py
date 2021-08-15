@@ -8,7 +8,11 @@ from typing import Optional, IO, Dict, List
 
 import pytest
 import numpy as np
-from numpy.typing.mypy_plugin import _PRECISION_DICT, _EXTENDED_PRECISION_LIST
+from numpy.typing.mypy_plugin import (
+    _PRECISION_DICT,
+    _EXTENDED_PRECISION_LIST,
+    _C_INTP,
+)
 
 try:
     from mypy import api
@@ -219,6 +223,9 @@ def _construct_format_dict():
 
         # numpy.typing
         "_NBitInt": dct['_NBitInt'],
+
+        # numpy.ctypeslib
+        "c_intp": f"ctypes.{_C_INTP}"
     }
 
 

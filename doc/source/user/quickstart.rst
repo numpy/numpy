@@ -1482,4 +1482,4 @@ Further reading
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
--  :doc:`tutorial-svd`
+-  :doc:`tutorial-svd <content/tutorial-svd>`

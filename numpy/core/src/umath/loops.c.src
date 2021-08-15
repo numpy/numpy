@@ -843,92 +843,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
-/* Libdivide only supports 32 and 64 bit types
- * We try to pick the best possible one */
-#if NPY_BITSOF_@TYPE@ <= 32
-#define libdivide_@type@_t libdivide_s32_t
-#define libdivide_@type@_gen libdivide_s32_gen
-#define libdivide_@type@_do libdivide_s32_do
-#else
-#define libdivide_@type@_t libdivide_s64_t
-#define libdivide_@type@_gen libdivide_s64_gen
-#define libdivide_@type@_do libdivide_s64_do
-#endif
-
-NPY_NO_EXPORT void
-@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
-        const @type@ in2 = *(@type@ *)ip2;
-
-        /* If divisor is 0, we need not compute anything */
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((@type@ *)op1) = 0;
-            }
-        }
-        else {
-            struct libdivide_@type@_t fast_d = libdivide_@type@_gen(in2);
-            BINARY_LOOP_SLIDING {
-                const @type@ in1 = *(@type@ *)ip1;
-                /*
-                 * FIXME: On x86 at least, dividing the smallest representable integer
-                 * by -1 causes a SIFGPE (division overflow). We treat this case here
-                 * (to avoid a SIGFPE crash at python level), but a good solution would
-                 * be to treat integer division problems separately from FPU exceptions
-                 * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-                 */
-                if (in1 == NPY_MIN_@TYPE@ && in2 == -1) {
-                    npy_set_floatstatus_divbyzero();
-                    *((@type@ *)op1) = 0;
-                }
-                else {
-                    *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d);
-
-                    /* Negative quotients needs to be rounded down */
-                    if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
-                        *((@type@ *)op1) = *((@type@ *)op1) - 1;
-                    }
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            /*
-             * FIXME: On x86 at least, dividing the smallest representable integer
-             * by -1 causes a SIFGPE (division overflow). We treat this case here
-             * (to avoid a SIGFPE crash at python level), but a good solution would
-             * be to treat integer division problems separately from FPU exceptions
-             * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-             */
-            if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-                npy_set_floatstatus_divbyzero();
-                *((@type@ *)op1) = 0;
-            }
-            else {
-                *((@type@ *)op1) = in1/in2;
-
-                /* Negative quotients needs to be rounded down */
-                if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
-                    *((@type@ *)op1) = *((@type@ *)op1) - 1;
-                }
-            }
-        }
-    }
-}
-
 NPY_NO_EXPORT void
 @TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -2501,42 +2415,6 @@ NPY_NO_EXPORT void
     }
 }
 
-
-NPY_NO_EXPORT void
-@TYPE@_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
-        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        const @ftype@ in2r = ((@ftype@ *)ip2)[0];
-        const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-#if defined(__APPLE__) && defined(__aarch64__)
-        // On macos-arm64 without this block of code,
-        // when branch prediction goes wrong, the floating point exception
-        // register does not get cleared and an exception for the
-        // wrong branch is thrown.
-        if (in2i == 0) {
-            ((@ftype@ *)op1)[0] = npy_floor@c@(in1r/in2r);
-            ((@ftype@ *)op1)[1] = 0;
-        }
-        else if (in2r == 0) {
-            ((@ftype@ *)op1)[0] = npy_floor@c@(in1i/in2i);
-            ((@ftype@ *)op1)[1] = 0;
-        }
-        else
-#endif
-        if (npy_fabs@c@(in2r) >= npy_fabs@c@(in2i)) {
-            const @ftype@ rat = in2i/in2r;
-            ((@ftype@ *)op1)[0] = npy_floor@c@((in1r + in1i*rat)/(in2r + in2i*rat));
-            ((@ftype@ *)op1)[1] = 0;
-        }
-        else {
-            const @ftype@ rat = in2r/in2i;
-            ((@ftype@ *)op1)[0] = npy_floor@c@((in1r*rat + in1i)/(in2i + in2r*rat));
-            ((@ftype@ *)op1)[1] = 0;
-        }
-    }
-}
 
 /**begin repeat1
  * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
