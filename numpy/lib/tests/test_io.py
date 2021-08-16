@@ -1229,9 +1229,11 @@ class Testfromregex:
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
         assert_array_equal(x, a)
 
-    def test_record_unicode(self):
+    @pytest.mark.parametrize("path_type", [str, Path])
+    def test_record_unicode(self, path_type):
         utf8 = b'\xcf\x96'
-        with temppath() as path:
+        with temppath() as str_path:
+            path = path_type(str_path)
             with open(path, 'wb') as f:
                 f.write(b'1.312 foo' + utf8 + b' \n1.534 bar\n4.444 qux')
 

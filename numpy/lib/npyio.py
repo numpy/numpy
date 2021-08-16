@@ -1484,8 +1484,11 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Parameters
     ----------
-    file : str or file
+    file : path or file
         Filename or file object to read.
+
+        .. versionchanged:: 1.22.0
+            Now accepts `os.PathLike` implementations.
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
@@ -1535,6 +1538,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     """
     own_fh = False
     if not hasattr(file, "read"):
+        file = os.fspath(file)
         file = np.lib._datasource.open(file, 'rt', encoding=encoding)
         own_fh = True
 

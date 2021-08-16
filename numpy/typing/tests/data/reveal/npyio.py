@@ -56,6 +56,7 @@ reveal_type(np.loadtxt(str_path, ndmin=2))  # E: numpy.ndarray[Any, numpy.dtype[
 reveal_type(np.fromregex(bytes_file, "test", np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.fromregex(str_file, b"test", dtype=float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 reveal_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
+reveal_type(np.fromregex(pathlib_path, "test", np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
 reveal_type(np.genfromtxt(bytes_file))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.genfromtxt(pathlib_path, dtype=np.str_))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
