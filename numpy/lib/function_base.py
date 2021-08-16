@@ -1866,6 +1866,8 @@ def _parse_gufunc_signature(signature):
     Tuple of input and output core dimensions parsed from the signature, each
     of the form List[Tuple[str, ...]].
     """
+    signature = re.sub(r'\s+', '', signature)
+
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
             'not a valid gufunc signature: {}'.format(signature))
