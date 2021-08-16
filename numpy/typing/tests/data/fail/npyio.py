@@ -24,7 +24,6 @@ np.savez_compressed(str_file, AR_i8)  # E: incompatible type
 np.loadtxt(bytes_path)  # E: No overload variant
 
 np.fromregex(bytes_path, ".", np.int64)  # E: No overload variant
-np.fromregex(pathlib_path, ".", np.int64)  # E: No overload variant
 
 np.recfromtxt(bytes_path)  # E: No overload variant
 

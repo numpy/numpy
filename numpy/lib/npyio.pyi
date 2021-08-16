@@ -182,14 +182,14 @@ def savetxt(
 
 @overload
 def fromregex(
-    file: str | IO[Any],
+    file: str | os.PathLike[str] | IO[Any],
     regexp: str | bytes | Pattern[Any],
     dtype: _DTypeLike[_SCT],
     encoding: None | str = ...
 ) -> NDArray[_SCT]: ...
 @overload
 def fromregex(
-    file: str | IO[Any],
+    file: str | os.PathLike[str] | IO[Any],
     regexp: str | bytes | Pattern[Any],
     dtype: DTypeLike,
     encoding: None | str = ...
