@@ -1192,3 +1192,15 @@ class TestUFuncForcedDTypeWarning(_DeprecationTestCase):
             np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
         with pytest.warns(DeprecationWarning, match=self.message):
             np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
+
+
+class TestScalarConversion(_DeprecationTestCase):
+    # 2021-08-17, 1.22.0
+    def test_float_conversion(self):
+        self.assert_deprecated(float, args=(np.array([3.14]),))
+
+    def test_behaviour(self):
+        b = np.array([[3.14]])
+        c = np.zeros(5)
+        with pytest.warns(DeprecationWarning):
+            c[0] = b
