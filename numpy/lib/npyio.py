@@ -1,6 +1,7 @@
 import math
 import os
 import re
+import string
 import functools
 import itertools
 import warnings
@@ -787,9 +788,17 @@ _CONVERTER_DICT = {
 # a str to an array of that dtype will either work as if the conversion was
 # explicitly applied first, or will throw a ValueError (_floatconv and complex
 # accept more inputs), but will not result in the wrong item being stored.
+# Additionally, this property (no incorrectly successful assignment) must also
+# hold if the string is followed by CR/LF or by comments (not including
+# _UNSAFE_COMMENTS).  Whitespace is also included (for simplicity) into
+# _UNSAFE_COMMENTS because when `delimiter` is None ("split on whitespace"), we
+# cannot reconstruct the whitespace in the original line just from the split
+# words.
 _IMPLICIT_CONVERTERS = {
     _CONVERTER_DICT[tp] for tp in [
         np.uint64, np.int64, np.integer, np.longdouble, np.floating, complex]}
+_UNSAFE_COMMENTS = set(
+    string.digits + string.ascii_letters + "+-" + string.whitespace)
 
 
 def _getconv(dtype):
@@ -960,11 +969,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Nested functions used by loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    approx_line_splitting = False
+
     def split_line(line: str):
         """Chop off comments, strip, and split at delimiter."""
-        for comment in comments:  # Much faster than using a single regex.
-            line = line.split(comment, 1)[0]
-        line = line.strip('\r\n')
+        if not approx_line_splitting:
+            for comment in comments:  # Much faster than using a single regex.
+                line = line.split(comment, 1)[0]
+            line = line.strip('\r\n')
         return line.split(delimiter) if line else []
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1130,32 +1142,60 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             def convert_row(vals):
                 return tuple(conv(val) for conv, val in zip(converters, vals))
 
-        if _IMPLICIT_CONVERTERS.issuperset(converters):
+        if (_IMPLICIT_CONVERTERS.issuperset(converters)
+                and not any(map(_UNSAFE_COMMENTS.intersection, comments))):
+
+            # Approximate line splitting also doesn't work with usecols, as
+            # usecols_getter could accidentally fetch a word that looks like a
+            # correct field but is actually behind a comment marker.
+            if not usecols:
+                approx_line_splitting = True
+                joiner = (delimiter or " ").join
 
             X = np.zeros(256, dtype=row_dtype)
-            i = None  # Just in case there's no entry whatsoever.
-            for i, (lineno, words) in enumerate(lineno_words_iter):
+            i = 0
+            for lineno, words in lineno_words_iter:
                 if usecols:
                     words = usecols_getter(words)
                 try:
                     X[i] = tuple(words)  # Try implicit conversion of strs.
+                    i += 1
                     continue  # OK, done.
                 except IndexError:
                     # Resize, and, for simplicity, use explicit converters too.
                     X.resize(2 * len(X), refcheck=False)
                 except ValueError:
-                    # ValueError can be raised either by a length mismatch...
-                    if len(words) != ncols:
-                        raise ValueError(
-                            f"Wrong number of columns at line {lineno}"
-                        ) from None
-                    # Or because the explicit (more lenient) converter (below)
-                    # is needed.
+                    pass
+                # ValueError can be raised because there was actually a comment
+                # string (only if approx_split_line was used), because the
+                # number of fields is wrong, and/or because an explicit (more
+                # lenient) converter was needed.  Handle all possibilities in
+                # succession.
+                if approx_line_splitting:
+                    # Reconstruct the line, but strip the trailing NL.
+                    line = joiner(words).rstrip("\r\n")
+                    # Redo an approximate split, but without the trailing NL.
+                    words = split_line(line)
+                    approx_line_splitting = False
+                    # Compare with an exact split (handling comments).
+                    exact_words = split_line(line)
+                    if exact_words == words:  # Nothing wrong with comments.
+                        approx_line_splitting = True
+                    else:
+                        # There are comments in this file; process this line
+                        # and continue with accurate line splitter.
+                        words = exact_words
+                        if not words:
+                            continue
+                if len(words) != ncols:
+                    raise ValueError(
+                        f"Wrong number of columns at line {lineno}")
                 X[i] = convert_row(words)
-            if i is None:
-                X = None
+                i += 1
+            if i:
+                X.resize(i, refcheck=False)
             else:
-                X.resize(i + 1, refcheck=False)
+                X = None
 
         else:
 
