@@ -771,17 +771,25 @@ def _floatconv(x):
         raise  # Raise the original exception, which makes more sense.
 
 
-_CONVERTERS = [  # These converters only ever get strs (not bytes) as input.
-    (np.bool_, lambda x: bool(int(x))),
-    (np.uint64, np.uint64),
-    (np.int64, np.int64),
-    (np.integer, lambda x: int(float(x))),
-    (np.longdouble, np.longdouble),
-    (np.floating, _floatconv),
-    (complex, lambda x: complex(x.replace('+-', '-'))),
-    (np.bytes_, methodcaller('encode', 'latin-1')),
-    (np.unicode_, str),
-]
+# These converters only ever get str (not bytes) as input.
+_CONVERTER_DICT = {
+    np.bool_: int,  # Implicitly converted to bool.
+    np.uint64: np.uint64,
+    np.int64: np.int64,
+    np.integer: lambda x: int(float(x)),
+    np.longdouble: np.longdouble,
+    np.floating: _floatconv,
+    complex: lambda x: complex(x.replace('+-', '-')),
+    np.bytes_: methodcaller('encode', 'latin-1'),
+    np.unicode_: str,
+}
+# These conversions can be done implicitly at the C-level, i.e., assigning
+# a str to an array of that dtype will either work as if the conversion was
+# explicitly applied first, or will throw a ValueError (_floatconv and complex
+# accept more inputs), but will not result in the wrong item being stored.
+_IMPLICIT_CONVERTERS = {
+    _CONVERTER_DICT[tp] for tp in [
+        np.uint64, np.int64, np.integer, np.longdouble, np.floating, complex]}
 
 
 def _getconv(dtype):
@@ -791,7 +799,7 @@ def _getconv(dtype):
     Even when a lambda is returned, it is defined at the toplevel, to allow
     testing for equality and enabling optimization for single-type data.
     """
-    for base, conv in _CONVERTERS:
+    for base, conv in _CONVERTER_DICT.items():
         if issubclass(dtype.type, base):
             return conv
     return str
@@ -1111,6 +1119,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         fencode = methodcaller("encode", fencoding)
         converters = [conv if conv is not bytes else fencode
                       for conv in converters]
+
         if len(set(converters)) == 1:
             # Optimize single-type data. Note that this is only reached if
             # `_getconv` returns equal callables (i.e. not local lambdas) on
@@ -1121,40 +1130,67 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             def convert_row(vals):
                 return tuple(conv(val) for conv, val in zip(converters, vals))
 
-        # read data in chunks and fill it into an array via resize
-        # over-allocating and shrinking the array later may be faster but is
-        # probably not relevant compared to the cost of actually reading and
-        # converting the data
-        X = None
-        while True:
-            chunk = []
-            for lineno, words in itertools.islice(
-                    lineno_words_iter, _loadtxt_chunksize):
-                if usecols_getter is not None:
+        if _IMPLICIT_CONVERTERS.issuperset(converters):
+
+            X = np.zeros(256, dtype=row_dtype)
+            i = None  # Just in case there's no entry whatsoever.
+            for i, (lineno, words) in enumerate(lineno_words_iter):
+                if usecols:
                     words = usecols_getter(words)
                 elif len(words) != ncols:
                     raise ValueError(
                         f"Wrong number of columns at line {lineno}")
-                # Convert each value according to its column.
-                chunk.append(convert_row(words))
-            if not chunk:  # The islice is empty, i.e. we're done.
-                break
-
-            if X is None:
-                X = np.array(chunk, dtype if infer_dtype_size else row_dtype)
+                try:
+                    X[i] = tuple(words)  # Try implicit conversion of strs.
+                    continue  # OK, done.
+                except IndexError:
+                    # Resize, and, for simplicity, use explicit converters too.
+                    X.resize(2 * len(X), refcheck=False)
+                except ValueError:
+                    # Fallback to explicit converters.
+                    pass
+                X[i] = convert_row(words)
+            if i is None:
+                X = None
             else:
-                # If using unsized string or byte dtype, make sure that the
-                # existing array is capable of storing the new data. If not,
-                # change the dtype so it is capable of doing so.
-                if infer_dtype_size:
-                    chunk = np.array(chunk, dtype)
-                    if chunk.dtype.itemsize > X.dtype.itemsize:
-                        X = X.astype(chunk.dtype)
-                nshape = list(X.shape)
-                pos = nshape[0]
-                nshape[0] += len(chunk)
-                X.resize(nshape, refcheck=False)
-                X[pos:, ...] = chunk
+                X.resize(i + 1, refcheck=False)
+
+        else:
+
+            # read data in chunks and fill it into an array via resize
+            # over-allocating and shrinking the array later may be faster but
+            # is probably not relevant compared to the cost of actually reading
+            # and converting the data
+            X = None
+            while True:
+                chunk = []
+                for lineno, words in itertools.islice(
+                        lineno_words_iter, _loadtxt_chunksize):
+                    if usecols_getter is not None:
+                        words = usecols_getter(words)
+                    elif len(words) != ncols:
+                        raise ValueError(
+                            f"Wrong number of columns at line {lineno}")
+                    # Convert each value according to its column.
+                    chunk.append(convert_row(words))
+                if not chunk:  # The islice is empty, i.e. we're done.
+                    break
+                if X is None:
+                    X = np.array(
+                        chunk, dtype if infer_dtype_size else row_dtype)
+                else:
+                    # If using unsized string or byte dtype, make sure that the
+                    # existing array is capable of storing the new data. If
+                    # not, change the dtype so it is capable of doing so.
+                    if infer_dtype_size:
+                        chunk = np.array(chunk, dtype)
+                        if chunk.dtype.itemsize > X.dtype.itemsize:
+                            X = X.astype(chunk.dtype)
+                    nshape = list(X.shape)
+                    pos = nshape[0]
+                    nshape[0] += len(chunk)
+                    X.resize(nshape, refcheck=False)
+                    X[pos:, ...] = chunk
 
     if X is None:
         X = np.array([], dtype)
@@ -1168,7 +1204,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 X = np.asarray(X, dtype)
             else:
                 X = X.view(dtype)
-        X = X.reshape((nrows, -1))
+        if nrows == 0:
+            X = X.reshape(0)
+        else:
+            X = X.reshape((nrows, -1))
 
     # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
