@@ -484,7 +484,7 @@ check_has_rank_0(PyArrayObject *v)
     }
     /* Remove this if when the deprecation expires */
     if (PyArray_SIZE(v) == 1) {
-        /* Numpy 1.21.3, 2021-08-17 */
+        /* Numpy 1.22.0, 2021-08-17 */
         if (DEPRECATE(
             "Conversion of an array with ndim > 0 to a scalar "
             "is deprecated, and will error in future. "
