@@ -486,7 +486,7 @@ check_has_rank_0(PyArrayObject *v)
     if (PyArray_SIZE(v) == 1) {
         /* Numpy 1.19.0, 2019-12-18 */
         if (DEPRECATE(
-            "Conversion of an array with one element to a scalar "
+            "Conversion of an array with ndim > 0 to a scalar "
             "is deprecated, and will error in future. "
             "Ensure you extract a single element from your array before performing this operation."
         ) < 0) {
@@ -494,7 +494,7 @@ check_has_rank_0(PyArrayObject *v)
         }
         return 0;
     }
-    PyErr_SetString(PyExc_TypeError, "only rank-0 arrays can "
+    PyErr_SetString(PyExc_TypeError, "only ndim-0 arrays can "
                         "be converted to Python scalars");
     return -1;
 }
