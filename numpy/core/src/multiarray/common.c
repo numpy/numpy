@@ -486,10 +486,11 @@ check_has_rank_0(PyArrayObject *v)
     if (PyArray_SIZE(v) == 1) {
         /* Numpy 1.22.0, 2021-08-17 */
         if (DEPRECATE(
-            "Conversion of an array with ndim > 0 to a scalar "
-            "is deprecated, and will error in future. "
-            "Ensure you extract a single element from your array before performing this operation."
-        ) < 0) {
+                "Conversion of an array with ndim > 0 to a scalar "
+                "is deprecated, and will error in future. "
+                "Ensure you extract a single element from your array "
+                "before performing this operation. "
+                "(Deprecated NumPy 1.22.)") < 0) {
             return -1;
         }
         return 0;
