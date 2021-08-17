@@ -1137,9 +1137,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             for i, (lineno, words) in enumerate(lineno_words_iter):
                 if usecols:
                     words = usecols_getter(words)
-                elif len(words) != ncols:
-                    raise ValueError(
-                        f"Wrong number of columns at line {lineno}")
                 try:
                     X[i] = tuple(words)  # Try implicit conversion of strs.
                     continue  # OK, done.
@@ -1147,8 +1144,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     # Resize, and, for simplicity, use explicit converters too.
                     X.resize(2 * len(X), refcheck=False)
                 except ValueError:
-                    # Fallback to explicit converters.
-                    pass
+                    # ValueError can be raised either by a length mismatch...
+                    if len(words) != ncols:
+                        raise ValueError(
+                            f"Wrong number of columns at line {lineno}"
+                        ) from None
+                    # Or because the explicit (more lenient) converter (below)
+                    # is needed.
                 X[i] = convert_row(words)
             if i is None:
                 X = None
