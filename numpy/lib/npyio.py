@@ -977,35 +977,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         line = line.strip('\r\n')
         return line.split(delimiter) if line else []
 
-    def read_data(lineno_words_iter, chunk_size):
-        """
-        Parse each line, including the first.
-
-        Parameters
-        ----------
-        lineno_words_iter : Iterator[tuple[int, list[str]]]
-            Iterator returning line numbers and non-empty lines already split
-            into words.
-        chunk_size : int
-            At most `chunk_size` lines are read at a time, with iteration
-            until all lines are read.
-        """
-        X = []
-        for lineno, words in lineno_words_iter:
-            if usecols:
-                words = [words[j] for j in usecols]
-            if len(words) != ncols:
-                raise ValueError(f"Wrong number of columns at line {lineno}")
-            # Convert each value according to its column, then pack it
-            # according to the dtype's nesting
-            items = packer(convert_row(words))
-            X.append(items)
-            if len(X) > chunk_size:
-                yield X
-                X = []
-        if X:
-            yield X
-
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Main body of loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1171,15 +1142,29 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         # probably not relevant compared to the cost of actually reading and
         # converting the data
         X = None
-        for x in read_data(lineno_words_iter, _loadtxt_chunksize):
+        while True:
+            chunk = []
+            for lineno, words in itertools.islice(
+                    lineno_words_iter, _loadtxt_chunksize):
+                if usecols:
+                    words = [words[j] for j in usecols]
+                if len(words) != ncols:
+                    raise ValueError(
+                        f"Wrong number of columns at line {lineno}")
+                # Convert each value according to its column, then pack it
+                # according to the dtype's nesting, and store it.
+                chunk.append(packer(convert_row(words)))
+            if not chunk:  # The islice is empty, i.e. we're done.
+                break
+
             if X is None:
-                X = np.array(x, dtype)
+                X = np.array(chunk, dtype)
             else:
                 nshape = list(X.shape)
                 pos = nshape[0]
-                nshape[0] += len(x)
+                nshape[0] += len(chunk)
                 X.resize(nshape, refcheck=False)
-                X[pos:, ...] = x
+                X[pos:, ...] = chunk
     finally:
         if fown:
             fh.close()
