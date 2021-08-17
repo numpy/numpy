@@ -495,7 +495,7 @@ check_has_rank_0(PyArrayObject *v)
         }
         return 0;
     }
-    PyErr_SetString(PyExc_TypeError, "only ndim-0 arrays can "
-                        "be converted to Python scalars");
+    PyErr_SetString(PyExc_TypeError,
+            "only 0 dimensional arrays can be converted to Python scalars");
     return -1;
 }
