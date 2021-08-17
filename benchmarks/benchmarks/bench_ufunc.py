@@ -44,7 +44,7 @@ class UFunc(Benchmark):
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError() from None
         self.args = []
         for t, a in get_squares_().items():
             arg = (a,) * self.f.nin
@@ -141,11 +141,11 @@ class CustomScalarFloorDivideInt(Benchmark):
     def setup(self, dtype, divisor):
         if dtype in np.sctypes['uint'] and divisor < 0:
             raise NotImplementedError(
-                    "Skipping test for negative divisor with unsigned type")
+                "Skipping test for negative divisor with unsigned type")
 
         iinfo = np.iinfo(dtype)
         self.x = np.random.randint(
-                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+            iinfo.min, iinfo.max, size=10000, dtype=dtype)
 
     def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
@@ -169,9 +169,11 @@ class Scalar(Benchmark):
 
 class ArgPack:
     __slots__ = ['args', 'kwargs']
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
     def __repr__(self):
         return '({})'.format(', '.join(
             [repr(a) for a in self.args] +
