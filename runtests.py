@@ -43,6 +43,13 @@ Provide target branch name or `uncommitted` to check before committing:
 # framework. Change the following values to adapt to your project:
 #
 
+import glob
+import os
+from argparse import ArgumentParser, REMAINDER
+import time
+import subprocess
+import shutil
+import sys
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
@@ -61,19 +68,13 @@ else:
     __doc__ = __doc__.format(**globals())
 
 
-import sys
-import os, glob
-
 # In case we are run from the source directory, we don't want to import the
 # project from there:
 sys.path.pop(0)
 
-import shutil
-import subprocess
-import time
-from argparse import ArgumentParser, REMAINDER
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+
 
 def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
@@ -166,7 +167,7 @@ def main(argv):
 
     if args.bench_compare:
         args.bench = True
-        args.no_build = True # ASV does the building
+        args.no_build = True  # ASV does the building
 
     if args.lcov_html:
         # generate C code coverage output
@@ -229,7 +230,8 @@ def main(argv):
     if args.ipython:
         # Debugging issues with warnings is much easier if you can see them
         print("Enabling display of all warnings and pre-importing numpy as np")
-        import warnings; warnings.filterwarnings("always")
+        import warnings
+        warnings.filterwarnings("always")
         import IPython
         import numpy as np
         IPython.embed(colors='neutral', user_ns={"np": np})
@@ -244,11 +246,11 @@ def main(argv):
     if args.mypy:
         try:
             import mypy.api
-        except ImportError:
+        except ImportError as e:
             raise RuntimeError(
                 "Mypy not found. Please install it by running "
                 "pip install -r test_requirements.txt from the repo root"
-            )
+            )from e
 
         os.environ['MYPYPATH'] = site_dir
         # By default mypy won't color the output since it isn't being
@@ -308,7 +310,8 @@ def main(argv):
 
         if not args.bench_compare:
             cmd = ['asv', 'run', '-n', '-e', '--python=same'] + bench_args
-            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            ret = subprocess.call(
+                cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
         else:
             commits = [x.strip() for x in args.bench_compare.split(',')]
@@ -348,7 +351,8 @@ def main(argv):
             ]
             cmd = ['asv', 'continuous', '-e', '-f', '1.05',
                    commit_a, commit_b] + asv_cfpath + bench_args
-            ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
+            ret = subprocess.call(
+                cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
 
     if args.build_only:
@@ -363,7 +367,6 @@ def main(argv):
         tests = args.tests
     else:
         tests = None
-
 
     # Run the tests under build/test
 
@@ -397,6 +400,7 @@ def main(argv):
     else:
         sys.exit(1)
 
+
 def build_project(args):
     """
     Build a dev version of the project.
@@ -423,7 +427,8 @@ def build_project(args):
     cmd = [sys.executable, 'setup.py']
 
     # Always use ccache, if installed
-    env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
+    env['PATH'] = os.pathsep.join(
+        EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
     cvars = sysconfig.get_config_vars()
     compiler = env.get('CC') or cvars.get('CC', '')
     if 'gcc' in compiler:
@@ -452,7 +457,8 @@ def build_project(args):
             env['F77'] = 'gfortran --coverage '
             env['F90'] = 'gfortran --coverage '
             env['LDSHARED'] = cvars['LDSHARED'] + ' --coverage'
-            env['LDFLAGS'] = " ".join(cvars['LDSHARED'].split()[1:]) + ' --coverage'
+            env['LDFLAGS'] = " ".join(
+                cvars['LDSHARED'].split()[1:]) + ' --coverage'
 
     cmd += ["build"]
     if args.parallel > 1:
@@ -543,6 +549,7 @@ def build_project(args):
 
     return site_dir, site_dir_noarch
 
+
 def asv_compare_config(bench_path, args, h_commits):
     """
     Fill the required build options through custom variable
@@ -563,23 +570,30 @@ def asv_compare_config(bench_path, args, h_commits):
         build += ["--disable-optimization"]
 
     is_cached = asv_substitute_config(conf_path, nconf_path,
-        numpy_build_options = ' '.join([f'\\"{v}\\"' for v in build]),
-        numpy_global_options= ' '.join([f'--global-option=\\"{v}\\"' for v in ["build"] + build])
-    )
+                                      numpy_build_options=' '.join(
+                                          [f'\\"{v}\\"' for v in build]),
+                                      numpy_global_options=' '.join(
+                                          [f'--global-option=\\"{v}\\"' for v in ["build"] + build])
+                                      )
     if not is_cached:
         asv_clear_cache(bench_path, h_commits)
     return nconf_path
+
 
 def asv_clear_cache(bench_path, h_commits, env_dir="env"):
     """
     Force ASV to clear the cache according to specified commit hashes.
     """
     # FIXME: only clear the cache from the current environment dir
-    asv_build_pattern = os.path.join(bench_path, env_dir, "*", "asv-build-cache")
+    asv_build_pattern = os.path.join(
+        bench_path, env_dir, "*", "asv-build-cache")
     for asv_build_cache in glob.glob(asv_build_pattern, recursive=True):
         for c in h_commits:
-            try: shutil.rmtree(os.path.join(asv_build_cache, c))
-            except OSError: pass
+            try:
+                shutil.rmtree(os.path.join(asv_build_cache, c))
+            except OSError:
+                pass
+
 
 def asv_substitute_config(in_config, out_config, **custom_vars):
     """
@@ -614,7 +628,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
         chash = 0
         for f in factors:
             for char in str(f):
-                chash  = ord(char) + (chash << 6) + (chash << 16) - chash
+                chash = ord(char) + (chash << 6) + (chash << 16) - chash
                 chash &= 0xFFFFFFFF
         return chash
 
@@ -627,7 +641,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
     except IOError:
         pass
 
-    custom_vars = {f'{{{k}}}':v for k, v in custom_vars.items()}
+    custom_vars = {f'{{{k}}}': v for k, v in custom_vars.items()}
     with open(in_config, "r") as rfd, open(out_config, "w") as wfd:
         wfd.write(f"// hash:{vars_hash}\n")
         wfd.write("// This file is automatically generated by runtests.py\n")
@@ -640,6 +654,8 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
 #
 # GCOV support
 #
+
+
 def gcov_reset_counters():
     print("Removing previous GCOV .gcda files...")
     build_dir = os.path.join(ROOT_DIR, 'build')
@@ -653,14 +669,20 @@ def gcov_reset_counters():
 # LCOV support
 #
 
+
 LCOV_OUTPUT_FILE = os.path.join(ROOT_DIR, 'build', 'lcov.out')
 LCOV_HTML_DIR = os.path.join(ROOT_DIR, 'build', 'lcov')
 
+
 def lcov_generate():
-    try: os.unlink(LCOV_OUTPUT_FILE)
-    except OSError: pass
-    try: shutil.rmtree(LCOV_HTML_DIR)
-    except OSError: pass
+    try:
+        os.unlink(LCOV_OUTPUT_FILE)
+    except OSError:
+        pass
+    try:
+        shutil.rmtree(LCOV_HTML_DIR)
+    except OSError:
+        pass
 
     print("Capturing lcov info...")
     subprocess.call(['lcov', '-q', '-c',
@@ -676,6 +698,7 @@ def lcov_generate():
         print("genhtml failed!")
     else:
         print("HTML output generated under build/lcov/")
+
 
 def check_lint(lint_args):
     """
