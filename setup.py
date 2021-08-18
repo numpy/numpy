@@ -28,12 +28,29 @@ import builtins
 import re
 
 
+if sys.version_info < (3, 6):
+    pip_message = 'This may be due to an out of date pip. Make sure you have pip >= 9.0.1.'
+    try:
+        import pip
+        pip_version = tuple([int(x) for x in pip.__version__.split('.')[:3]])
+        if pip_version < (9, 0, 1) :
+            pip_message = 'Your pip version is out of date, please install pip >= 9.0.1. '\
+            'pip {} detected.'.format(pip.__version__)
+        else:
+            # pip is new enough - it must be something else
+            pip_message = ''
+    except Exception:
+        pass
+
+
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
 # This needs to be changed to 3.8 for 1.22 release, but 3.7 is needed for LGTM.
 if sys.version_info[:2] < (3, 7):
     raise RuntimeError("Python version >= 3.8 required.")
 
+    
+    
 
 import versioneer
 
