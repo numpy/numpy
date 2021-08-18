@@ -1044,8 +1044,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             except TypeError as e:
                 raise ValueError(
                     "usecols must be an int or a sequence of ints but "
-                    "it contains at least one element of type %s" %
-                    type(col_idx)) from e
+                    "it contains at least one element of type %s" % type(col_idx)
+                ) from e
         # Fall back to existing code
         usecols = usecols_as_list
 
