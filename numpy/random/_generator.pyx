@@ -3950,7 +3950,7 @@ cdef class Generator:
         try:
             operator.index(nsample)
         except TypeError:
-            raise ValueError('nsample must be an integer')
+            raise ValueError('nsample must be an integer') from None
 
         if nsample < 0:
             raise ValueError("nsample must be nonnegative.")

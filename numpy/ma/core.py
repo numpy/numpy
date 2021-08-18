@@ -280,7 +280,7 @@ def _extremum_fill_value(obj, extremum, extremum_name):
     def _scalar_fill_value(dtype):
         try:
             return extremum[dtype]
-        except KeyError as e:
+        except KeyError:
             raise TypeError(
                 f"Unsuitable type {dtype} for calculating {extremum_name}."
             ) from None
