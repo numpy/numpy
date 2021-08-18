@@ -11,7 +11,7 @@ NumPy is the fundamental package needed for scientific computing with Python.
 - **Report a security vulnerability:** https://tidelift.com/docs/security
 
 It provides:
-
+- Numpy was created by Travis Oliphant in year 2005
 - a powerful N-dimensional array object
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
