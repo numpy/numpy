@@ -746,11 +746,11 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
             pickle_kwargs = {}
         try:
             array = pickle.load(fp, **pickle_kwargs)
-        except UnicodeError as err:
+        except UnicodeError as e:
             # Friendlier error message
             raise UnicodeError("Unpickling a python object failed: %r\n"
                                "You may need to pass the encoding= option "
-                               "to numpy.load" % (err,)) from err
+                               "to numpy.load" % (e,)) from e
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.

@@ -372,7 +372,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # invoke the function on the first item
     try:
         ind0 = next(inds)
-    except StopIteration as e:
+    except StopIteration:
         raise ValueError(
             'Cannot apply_along_axis when any iteration dimensions are 0'
         ) from None

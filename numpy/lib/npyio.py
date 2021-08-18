@@ -1042,12 +1042,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             try:
                 opindex(col_idx)
             except TypeError as e:
-                e.args = (
+                raise ValueError(
                     "usecols must be an int or a sequence of ints but "
                     "it contains at least one element of type %s" %
-                    type(col_idx),
-                    )
-                raise
+                    type(col_idx)) from e
         # Fall back to existing code
         usecols = usecols_as_list
 

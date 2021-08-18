@@ -238,7 +238,7 @@ def parse_string(astr, env, level, line) :
                 envlist = parse_loop_header(head)
             except ValueError as e:
                 msg = "line %d: %s" % (newline, e)
-                raise ValueError(msg)
+                raise ValueError(msg) from None
             for newenv in envlist :
                 newenv.update(env)
                 newcode = parse_string(text, newenv, newlevel, newline)

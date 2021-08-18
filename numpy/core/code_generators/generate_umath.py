@@ -1054,7 +1054,7 @@ def make_arrays(funcdict):
                     raise ValueError(
                         f"Could not handle {name}[{t.type}] "
                         f"with nin={uf.nin}, nout={uf.nout}"
-                    ) from None
+                    ) from e
 
                 astype = ''
                 if not t.astype is None:
