@@ -169,15 +169,15 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
     if (obj == Py_None) {
         PyErr_SetString(PyExc_ValueError,
                         "NoneType copy mode not allowed. Please choose one of " 
-                         "np.array_api.CopyMode.ALWAYS, "
-                         "np.array_api.CopyMode.IF_NEEDED, "
-                         "np.array_api.CopyMode.NEVER.");
+                         "np.array_api._CopyMode.ALWAYS, "
+                         "np.array_api._CopyMode.IF_NEEDED, "
+                         "np.array_api._CopyMode.NEVER.");
         return NPY_FAIL;
     }
 
     int int_copymode = -1;
     PyObject* numpy_CopyMode = NULL;
-    npy_cache_import("numpy.array_api", "CopyMode", &numpy_CopyMode);
+    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
     if (numpy_CopyMode != NULL && PyObject_IsInstance(obj, numpy_CopyMode)) {
         PyObject* mode_value = PyObject_GetAttrString(obj, "value");
@@ -200,8 +200,8 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
         int_copymode != NPY_COPY_NEVER ) {
         PyErr_Format(PyExc_ValueError,
                     "Unrecognized copy mode %d. Please choose one of " 
-                    "np.array_api.CopyMode.ALWAYS, np.array_api.CopyMode.IF_NEEDED, "
-                    "np.array_api.CopyMode.NEVER, "
+                    "np._CopyMode.ALWAYS, np._CopyMode.IF_NEEDED, "
+                    "np._CopyMode.NEVER, "
                     "True/np.True_, False/np.False_", int_copymode);
         return NPY_FAIL;
     }

@@ -15,9 +15,11 @@ That was not the case when the singleton classes were defined in the numpy
 motivated this module.
 
 """
+import enum
+
 __ALL__ = [
     'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-    '_NoValue'
+    '_NoValue', '_CopyMode'
     ]
 
 
@@ -90,3 +92,23 @@ class _NoValueType:
 
 
 _NoValue = _NoValueType()
+
+
+class _CopyMode(enum.Enum):
+
+    ALWAYS = True
+    IF_NEEDED = False
+    NEVER = 2
+
+    def __bool__(self):
+        # For backwards compatiblity
+        if self == _CopyMode.ALWAYS:
+            return True
+
+        if self == _CopyMode.IF_NEEDED:
+            return False
+
+        raise TypeError(f"{self} is neither True nor False.")
+
+
+_CopyMode.__module__ = 'numpy'

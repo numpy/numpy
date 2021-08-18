@@ -1912,7 +1912,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool | CopyMode = ...,
+        copy: bool | _CopyMode = ...,
     ) -> NDArray[_ScalarType]: ...
     @overload
     def astype(
@@ -1921,7 +1921,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool | CopyMode = ...,
+        copy: bool | _CopyMode = ...,
     ) -> NDArray[Any]: ...
 
     @overload
@@ -2928,7 +2928,7 @@ class generic(_ArrayOrScalarCommon):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool | CopyMode = ...,
+        copy: bool | _CopyMode = ...,
     ) -> _ScalarType: ...
     @overload
     def astype(
@@ -2937,7 +2937,7 @@ class generic(_ArrayOrScalarCommon):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool | CopyMode = ...,
+        copy: bool | _CopyMode = ...,
     ) -> Any: ...
 
     # NOTE: `view` will perform a 0D->scalar cast,
@@ -3690,7 +3690,7 @@ trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
 
 abs = absolute
 
-class CopyMode(enum.Enum):
+class _CopyMode(enum.Enum):
 
     ALWAYS: L[1]
     IF_NEEDED: L[0]

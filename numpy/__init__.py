@@ -111,7 +111,7 @@ import warnings
 
 from ._globals import (
     ModuleDeprecationWarning, VisibleDeprecationWarning,
-    _NoValue
+    _NoValue, _CopyMode
 )
 
 # We first need to detect if we're being called as part of the numpy setup

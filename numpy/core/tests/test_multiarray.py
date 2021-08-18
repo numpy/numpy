@@ -7818,8 +7818,8 @@ class TestNewBufferProtocol:
 
 class TestArrayCreationCopyArgument(object):
 
-    true_vals = [True, np.array_api.CopyMode.ALWAYS, np.True_]
-    false_vals = [False, np.array_api.CopyMode.IF_NEEDED, np.False_]
+    true_vals = [True, np._CopyMode.ALWAYS, np.True_]
+    false_vals = [False, np._CopyMode.IF_NEEDED, np.False_]
 
     def test_scalars(self):
         # Test both numpy and python scalars
@@ -7830,9 +7830,9 @@ class TestArrayCreationCopyArgument(object):
 
             # Test never-copy raises error:
             assert_raises(ValueError, np.array, scalar, 
-                            copy=np.array_api.CopyMode.NEVER)
+                            copy=np._CopyMode.NEVER)
             assert_raises(ValueError, np.array, pyscalar, 
-                            copy=np.array_api.CopyMode.NEVER)
+                            copy=np._CopyMode.NEVER)
 
     def test_compatible_cast(self):
 
@@ -7862,7 +7862,7 @@ class TestArrayCreationCopyArgument(object):
                         assert res is arr or res.base is arr
 
                     res = np.array(arr,
-                                   copy=np.array_api.CopyMode.NEVER,
+                                   copy=np._CopyMode.NEVER,
                                    dtype=int2)
                     assert res is arr or res.base is arr
 
@@ -7874,7 +7874,7 @@ class TestArrayCreationCopyArgument(object):
                         assert_array_equal(res, arr)
 
                     assert_raises(ValueError, np.array,
-                                  arr, copy=np.array_api.CopyMode.NEVER,
+                                  arr, copy=np._CopyMode.NEVER,
                                   dtype=int2)
 
     def test_buffer_interface(self):
@@ -7891,7 +7891,7 @@ class TestArrayCreationCopyArgument(object):
         for copy in self.false_vals:
             res = np.array(view, copy=copy)
             assert np.may_share_memory(arr, res)
-        res = np.array(view, copy=np.array_api.CopyMode.NEVER)
+        res = np.array(view, copy=np._CopyMode.NEVER)
         assert np.may_share_memory(arr, res)
 
     def test_array_interfaces(self):
@@ -7903,9 +7903,9 @@ class TestArrayCreationCopyArgument(object):
 
         arr = ArrayLike()
 
-        for copy, val in [(True, None), (np.array_api.CopyMode.ALWAYS, None),
-                          (False, arr), (np.array_api.CopyMode.IF_NEEDED, arr),
-                          (np.array_api.CopyMode.NEVER, arr)]:
+        for copy, val in [(True, None), (np._CopyMode.ALWAYS, None),
+                          (False, arr), (np._CopyMode.IF_NEEDED, arr),
+                          (np._CopyMode.NEVER, arr)]:
             res = np.array(arr, copy=copy)
             assert res.base is val
 
@@ -7933,7 +7933,7 @@ class TestArrayCreationCopyArgument(object):
             assert_array_equal(res, base_arr)
             assert res is base_arr  # numpy trusts the ArrayLike
 
-        assert np.array(arr, copy=np.array_api.CopyMode.NEVER) is base_arr
+        assert np.array(arr, copy=np._CopyMode.NEVER) is base_arr
 
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
@@ -7979,7 +7979,7 @@ class TestArrayCreationCopyArgument(object):
                     if not IS_PYPY:
                         assert res is arr or res.base.obj is arr
 
-                res = np.array(view, copy=np.array_api.CopyMode.NEVER,
+                res = np.array(view, copy=np._CopyMode.NEVER,
                                order=order2)
                 if not IS_PYPY:
                     assert res is arr or res.base.obj is arr
@@ -7988,7 +7988,7 @@ class TestArrayCreationCopyArgument(object):
                     res = np.array(arr, copy=copy, order=order2)
                     assert_array_equal(arr, res)
                 assert_raises(ValueError, np.array,
-                              view, copy=np.array_api.CopyMode.NEVER,
+                              view, copy=np._CopyMode.NEVER,
                               order=order2)
 
 

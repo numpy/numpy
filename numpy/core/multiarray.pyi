@@ -79,7 +79,7 @@ from numpy.typing import (
 )
 
 from  numpy.array_api import (
-    CopyMode
+    _CopyMode
 )
 
 if sys.version_info >= (3, 8):
@@ -181,7 +181,7 @@ def array(
     object: _ArrayType,
     dtype: None = ...,
     *,
-    copy: bool | CopyMode = ...,
+    copy: bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: L[True],
     ndmin: int = ...,
@@ -192,7 +192,7 @@ def array(
     object: _ArrayLike[_SCT],
     dtype: None = ...,
     *,
-    copy: bool | CopyMode = ...,
+    copy: bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -203,7 +203,7 @@ def array(
     object: object,
     dtype: None = ...,
     *,
-    copy: bool | CopyMode = ...,
+    copy: bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -214,7 +214,7 @@ def array(
     object: Any,
     dtype: _DTypeLike[_SCT],
     *,
-    copy: bool | CopyMode = ...,
+    copy: bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -225,7 +225,7 @@ def array(
     object: Any,
     dtype: DTypeLike,
     *,
-    copy: bool | CopyMode = ...,
+    copy: bool | _CopyMode = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
@@ -1005,7 +1005,7 @@ class flagsobj:
     def __getitem__(self, key: _GetItemKeys) -> bool: ...
     def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
 
-class CopyMode(enum.Enum):
+class _CopyMode(enum.Enum):
 
     ALWAYS: L[1]
     IF_NEEDED: L[0]

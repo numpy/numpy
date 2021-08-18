@@ -875,7 +875,7 @@ array_astype(PyArrayObject *self,
     if( forcecopy == NPY_COPY_NEVER ) {
         PyErr_SetString(PyExc_ValueError,
                         "Unable to avoid copy while casting in "
-                        "np.array_api.CopyMode.NEVER");
+                        "np._CopyMode.NEVER");
         Py_DECREF(dtype);
         return NULL;
     }
