@@ -1,12 +1,10 @@
 .. _basics.indexing:
 
-***************
-Indexing basics
-***************
+****************************************
+Indexing on :class:`ndarrays <.ndarray>`
+****************************************
 
 .. seealso::
-
-   :ref:`arrays.indexing`
 
    :ref:`Indexing routines <routines.indexing>`
 
