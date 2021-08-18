@@ -606,9 +606,7 @@ class ABCPolyBase(abc.ABC):
         try:
             quo, rem = self._div(other, self.coef)
         except ZeroDivisionError:
-            raise
-        except Exception:
-            return NotImplemented
+            raise ValueError("Division by zero is not permissible") from e
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
