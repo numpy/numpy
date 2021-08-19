@@ -15,3 +15,4 @@ twine
 # building and notes
 Paver
 towncrier
+pygments>=2.7.4 # not directly required, pinned by Snyk to avoid a vulnerability
