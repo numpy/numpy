@@ -819,6 +819,10 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 #    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
 #  elif @is_double1@
 #    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
+#  elif @is_half1@
+#    define _CONVERT_FN(x) (x)
+#  elif @is_bool1@
+#    define _CONVERT_FN(x) npy_float_to_half((float)(x!=0))
 #  else
 #    define _CONVERT_FN(x) npy_float_to_half((float)x)
 #  endif
