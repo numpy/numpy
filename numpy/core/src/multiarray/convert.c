@@ -296,11 +296,17 @@ NPY_NO_EXPORT PyObject *
 PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 {
     npy_intp numbytes;
-    npy_intp i;
     char *dptr;
     int elsize;
     PyObject *ret;
-    PyArrayIterObject *it;
+
+    int needs_api;
+    NpyIter *iter;
+    NpyIter_IterNextFunc *iternext;
+    char **dataptr;
+    npy_intp *strideptr, *innersizeptr;
+    char *data;
+    npy_intp stride, count;
 
     if (order == NPY_ANYORDER)
         order = PyArray_ISFORTRAN(self);
@@ -318,37 +324,53 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         ret = PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
     }
     else {
-        PyObject *new;
-        if (order == NPY_FORTRANORDER) {
-            /* iterators are always in C-order */
-            new = PyArray_Transpose(self, NULL);
-            if (new == NULL) {
-                return NULL;
-            }
-        }
-        else {
-            Py_INCREF(self);
-            new = (PyObject *)self;
-        }
-        it = (PyArrayIterObject *)PyArray_IterNew(new);
-        Py_DECREF(new);
-        if (it == NULL) {
+        iter = NpyIter_New(self, NPY_ITER_READONLY |
+                                NPY_ITER_GROWINNER |
+                                NPY_ITER_EXTERNAL_LOOP |
+                                NPY_ITER_DONT_NEGATE_STRIDES,
+                           order, NPY_NO_CASTING, NULL);
+        if (iter == NULL) {
             return NULL;
         }
+        NPY_BEGIN_THREADS_DEF;
+        needs_api = NpyIter_IterationNeedsAPI(iter);
+
         ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
         if (ret == NULL) {
-            Py_DECREF(it);
+            NpyIter_Deallocate(iter);
             return NULL;
         }
-        dptr = PyBytes_AS_STRING(ret);
-        i = it->size;
-        elsize = PyArray_DESCR(self)->elsize;
-        while (i--) {
-            memcpy(dptr, it->dataptr, elsize);
-            dptr += elsize;
-            PyArray_ITER_NEXT(it);
+
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            return NULL;
         }
-        Py_DECREF(it);
+
+        NPY_BEGIN_THREADS_NDITER(iter);
+
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+        dptr = PyBytes_AS_STRING(ret);
+        elsize = PyArray_DESCR(self)->elsize;
+        do {
+            data = *dataptr;
+            stride = *strideptr;
+            count = *innersizeptr;
+            while (count--) {
+                memcpy(dptr, data, elsize);
+                if (needs_api && PyErr_Occurred()) {
+                    goto finish;
+                }
+                data += stride;
+                dptr += elsize;
+            }
+        } while(iternext(iter));
+finish:
+        NPY_END_THREADS;
+        NpyIter_Deallocate(iter);
     }
     return ret;
 }
