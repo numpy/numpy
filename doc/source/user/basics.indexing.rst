@@ -46,10 +46,10 @@ and accepts negative indices for indexing from the end of the array. ::
 It is not necessary to
 separate each dimension's index into its own set of square brackets. ::
 
-    >>> x.shape = (2,5) # now x is 2-dimensional
-    >>> x[1,3]
+    >>> x.shape = (2, 5)  # now x is 2-dimensional
+    >>> x[1, 3]
     8
-    >>> x[1,-1]
+    >>> x[1, -1]
     9
 
 Note that if one indexes a multidimensional array with fewer indices
@@ -62,8 +62,9 @@ That is, each index specified selects the array corresponding to the
 rest of the dimensions selected. In the above example, choosing 0
 means that the remaining dimension of length 5 is being left unspecified,
 and that what is returned is an array of that dimensionality and size.
-It must be noted that the returned array is not a copy of the original,
-but points to the same values in memory as does the original array.
+It must be noted that the returned array is a :term:`view`, i.e., it is not a
+copy of the original, but points to the same values in memory as does the
+original array.
 In  this case, the 1-D array at the first position (0) is returned.
 So using a single index on the returned array, results in a single
 element being returned. That is: ::
@@ -71,7 +72,7 @@ element being returned. That is: ::
     >>> x[0][2]
     2
 
-So note that ``x[0,2] = x[0][2]`` though the second case is more
+So note that ``x[0, 2] = x[0][2]`` though the second case is more
 inefficient as a new temporary array is created after the first index
 that is subsequently indexed by 2.
 
@@ -200,7 +201,7 @@ concepts to remember include:
   tuple, acts like repeated application of slicing using a single
   non-``:`` entry, where the non-``:`` entries are successively taken
   (with all other non-``:`` entries replaced by ``:``). Thus,
-  ``x[ind1,...,ind2,:]`` acts like ``x[ind1][...,ind2,:]`` under basic
+  ``x[ind1, ..., ind2,:]`` acts like ``x[ind1][..., ind2, :]`` under basic
   slicing.
 
   .. warning:: The above is **not** true for advanced indexing.
@@ -213,8 +214,8 @@ concepts to remember include:
 - A slicing tuple can always be constructed as *obj*
   and used in the ``x[obj]`` notation. Slice objects can be used in
   the construction in place of the ``[start:stop:step]``
-  notation. For example, ``x[1:10:5,::-1]`` can also be implemented
-  as ``obj = (slice(1,10,5), slice(None,None,-1)); x[obj]`` . This
+  notation. For example, ``x[1:10:5, ::-1]`` can also be implemented
+  as ``obj = (slice(1, 10, 5), slice(None, None, -1)); x[obj]`` . This
   can be useful for constructing generic code that works on arrays
   of arbitrary dimensions. See :ref:`dealing-with-variable-indices`
   for more information.
@@ -233,13 +234,13 @@ length of the expanded selection tuple is ``x.ndim``. There may only be a
 single ellipsis present.
 From the above example::
 
-    >>> x[...,0]
+    >>> x[..., 0]
     array([[1, 2, 3],
           [4, 5, 6]])
 
 This is equivalent to::
 
-    >>> x[:,:,0]
+    >>> x[:, :, 0]
     array([[1, 2, 3],
           [4, 5, 6]])
 
@@ -250,9 +251,9 @@ object in the selection tuple. :const:`newaxis` is an alias for
 'None', and 'None' can be used in place of this with the same result.
 From the above example::
 
-    >>> x[:,np.newaxis,:,:].shape
+    >>> x[:, np.newaxis, :, :].shape
     (2, 1, 3, 1)
-    >>> x[:,None,:,:].shape
+    >>> x[:, None, :, :].shape
     (2, 1, 3, 1)
 
 This can be handy to combine two
@@ -260,7 +261,7 @@ arrays in a way that otherwise would require explicitly reshaping
 operations. For example::
 
     >>> x = np.arange(5)
-    >>> x[:,np.newaxis] + x[np.newaxis,:]
+    >>> x[:, np.newaxis] + x[np.newaxis, :]
     array([[0, 1, 2, 3, 4],
           [1, 2, 3, 4, 5],
           [2, 3, 4, 5, 6],
@@ -286,15 +287,15 @@ basic slicing that returns a :term:`view`).
 
 .. warning::
 
-   The definition of advanced indexing means that ``x[(1,2,3),]`` is
-   fundamentally different than ``x[(1,2,3)]``. The latter is
-   equivalent to ``x[1,2,3]`` which will trigger basic selection while
+   The definition of advanced indexing means that ``x[(1, 2, 3),]`` is
+   fundamentally different than ``x[(1, 2, 3)]``. The latter is
+   equivalent to ``x[1, 2, 3]`` which will trigger basic selection while
    the former will trigger advanced indexing. Be sure to understand
    why this occurs.
 
-   Also recognize that ``x[[1,2,3]]`` will trigger advanced indexing,
+   Also recognize that ``x[[1, 2, 3]]`` will trigger advanced indexing,
    whereas due to the deprecated Numeric compatibility mentioned above,
-   ``x[[1,2,slice(None)]]`` will trigger basic slicing.
+   ``x[[1, 2, slice(None)]]`` will trigger basic slicing.
 
 Integer array indexing
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -394,8 +395,8 @@ The broadcasting mechanism permits index arrays to be combined with
 scalars for other indices. The effect is that the scalar value is used
 for all the corresponding values of the index arrays::
 
-    >>> x = np.arange(35).reshape(5,7)
-    >>> x[np.array([0,2,4]), 1]
+    >>> x = np.arange(35).reshape(5, 7)
+    >>> x[np.array([0, 2, 4]), 1]
     array([ 1, 15, 29])
 
 .. rubric:: Example
@@ -440,7 +441,7 @@ Or wish to add a constant to all negative elements::
     >>> x = np.array([1., -1., -2., 3])
     >>> x[x < 0] += 20
     >>> x
-    array([  1.,  19.,  18.,   3.])
+    array([1., 19., 18., 3.])
 
 In general if an index includes a Boolean array, the result will be
 identical to inserting ``obj.nonzero()`` into the same position
@@ -502,11 +503,11 @@ Or without ``np.ix_`` (compare the integer array examples)::
 
 If x has more dimensions than b then the result will be multi-dimensional::
 
-    >>> x = np.arange(35).reshape(5,7)
-    >>> b = x>20
-    >>> b[:,5]
+    >>> x = np.arange(35).reshape(5, 7)
+    >>> b = x > 20
+    >>> b[:, 5]
     array([False, False, False,  True,  True])
-    >>> x[b[:,5]]
+    >>> x[b[:, 5]]
     array([[21, 22, 23, 24, 25, 26, 27],
           [28, 29, 30, 31, 32, 33, 34]])
 
@@ -515,11 +516,11 @@ combined to make a 2-D array.
 
 .. rubric:: Example
 
-Using a 2-D boolean array of shape (2,3)
+Using a 2-D boolean array of shape (2, 3)
 with four True elements to select rows from a 3-D array of shape
-(2,3,5) results in a 2-D result of shape (4,5)::
+(2, 3, 5) results in a 2-D result of shape (4, 5)::
 
-    >>> x = np.arange(30).reshape(2,3,5)
+    >>> x = np.arange(30).reshape(2, 3, 5)
     >>> x
     array([[[ 0,  1,  2,  3,  4],
             [ 5,  6,  7,  8,  9],
@@ -582,22 +583,22 @@ behave just like slicing).
 
 .. rubric:: Example
 
-Suppose ``x.shape`` is (10,20,30) and ``ind`` is a (2,3,4)-shaped
-indexing :class:`intp` array, then ``result = x[...,ind,:]`` has
-shape (10,2,3,4,30) because the (20,)-shaped subspace has been
-replaced with a (2,3,4)-shaped broadcasted indexing subspace. If
-we let *i, j, k* loop over the (2,3,4)-shaped subspace then
-``result[...,i,j,k,:] = x[...,ind[i,j,k],:]``. This example
+Suppose ``x.shape`` is (10, 20, 30) and ``ind`` is a (2, 3, 4)-shaped
+indexing :class:`intp` array, then ``result = x[..., ind, :]`` has
+shape (10, 2, 3, 4, 30) because the (20,)-shaped subspace has been
+replaced with a (2, 3, 4)-shaped broadcasted indexing subspace. If
+we let *i, j, k* loop over the (2, 3, 4)-shaped subspace then
+``result[..., i, j, k, :] = x[..., ind[i, j, k], :]``. This example
 produces the same result as :meth:`x.take(ind, axis=-2) <ndarray.take>`.
 
 .. rubric:: Example
 
-Let ``x.shape`` be (10,20,30,40,50) and suppose ``ind_1``
-and ``ind_2`` can be broadcast to the shape (2,3,4). Then
-``x[:,ind_1,ind_2]`` has shape (10,2,3,4,40,50) because the
-(20,30)-shaped subspace from X has been replaced with the
-(2,3,4) subspace from the indices.  However,
-``x[:,ind_1,:,ind_2]`` has shape (2,3,4,10,30,50) because there
+Let ``x.shape`` be (10, 20, 30, 40, 50) and suppose ``ind_1``
+and ``ind_2`` can be broadcast to the shape (2, 3, 4). Then
+``x[:, ind_1, ind_2]`` has shape (10, 2, 3, 4, 40, 50) because the
+(20, 30)-shaped subspace from X has been replaced with the
+(2, 3, 4) subspace from the indices. However,
+``x[:, ind_1, :, ind_2]`` has shape (2, 3, 4, 10, 30, 50) because there
 is no unambiguous place to drop in the indexing subspace, thus
 it is tacked-on to the beginning. It is always possible to use
 :meth:`.transpose() <ndarray.transpose>` to move the subspace
@@ -608,7 +609,7 @@ using :func:`take`.
 
 Slicing can be combined with broadcasted boolean indices::
 
-    >>> x = np.arange(35).reshape(5,7)
+    >>> x = np.arange(35).reshape(5, 7)
     >>> b = x > 20
     >>> b
     array([[False, False, False, False, False, False, False],
@@ -616,7 +617,7 @@ Slicing can be combined with broadcasted boolean indices::
           [False, False, False, False, False, False, False],
           [ True,  True,  True,  True,  True,  True,  True],
           [ True,  True,  True,  True,  True,  True,  True]])
-    >>> x[b[:,5],1:3]
+    >>> x[b[:, 5], 1:3]
     array([[22, 23],
           [29, 30]])
 
@@ -640,7 +641,7 @@ only the part of the data in the specified field. Also,
 :ref:`record array <arrays.classes.rec>` scalars can be "indexed" this way.
 
 Indexing into a structured array can also be done with a list of field names,
-e.g. ``x[['field-name1','field-name2']]``. As of NumPy 1.16, this returns a
+e.g. ``x[['field-name1', 'field-name2']]``. As of NumPy 1.16, this returns a
 view containing only those fields. In older versions of NumPy, it returned a
 copy. See the user guide section on :ref:`structured_arrays` for more
 information on multifield indexing.
@@ -649,7 +650,7 @@ If the accessed field is a sub-array, the dimensions of the sub-array
 are appended to the shape of the result.
 For example::
 
-   >>> x = np.zeros((2,2), dtype=[('a', np.int32), ('b', np.float64, (3,3))])
+   >>> x = np.zeros((2, 2), dtype=[('a', np.int32), ('b', np.float64, (3, 3))])
    >>> x['a'].shape
    (2, 2)
    >>> x['a'].dtype
@@ -725,7 +726,7 @@ In fact, it will only be incremented by 1. The reason is that
 a new array is extracted from the original (as a temporary) containing
 the values at 1, 1, 3, 1, then the value 1 is added to the temporary,
 and then the temporary is assigned back to the original array. Thus
-the value of the array at x[1]+1 is assigned to x[1] three times,
+the value of the array at x[1] + 1 is assigned to x[1] three times,
 rather than being incremented 3 times.
 
 .. _dealing-with-variable-indices:
@@ -742,7 +743,7 @@ supplies to the index a tuple, the tuple will be interpreted
 as a list of indices. For example (using the previous definition
 for the array z): ::
 
- >>> indices = (1,1,1,1)
+ >>> indices = (1, 1, 1, 1)
  >>> z[indices]
  40
 
@@ -752,14 +753,14 @@ and then use these within an index.
 Slices can be specified within programs by using the slice() function
 in Python. For example: ::
 
- >>> indices = (1,1,1,slice(0,2)) # same as [1,1,1,0:2]
+ >>> indices = (1, 1, 1, slice(0, 2))  # same as [1, 1, 1, 0:2]
  >>> z[indices]
  array([39, 40])
 
 Likewise, ellipsis can be specified by code by using the Ellipsis
 object: ::
 
- >>> indices = (1, Ellipsis, 1) # same as [1,...,1]
+ >>> indices = (1, Ellipsis, 1)  # same as [1, ..., 1]
  >>> z[indices]
  array([[28, 31, 34],
         [37, 40, 43],
@@ -772,10 +773,10 @@ it always returns a tuple of index arrays.
 Because the special treatment of tuples, they are not automatically
 converted to an array as a list would be. As an example: ::
 
- >>> z[[1,1,1,1]] # produces a large array
+ >>> z[[1, 1, 1, 1]]  # produces a large array
  array([[[[27, 28, 29],
           [30, 31, 32], ...
- >>> z[(1,1,1,1)] # returns a single value
+ >>> z[(1, 1, 1, 1)]  # returns a single value
  40
 
 
