@@ -2345,7 +2345,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     #       possibly be deprecated. See also gh-18286.
     #       timedelta works if `atol` is an integer or also a timedelta.
     #       Although, the default tolerances are unlikely to be useful
-    if y.dtype.kind != "m":
+    if y.dtype.kind != "m" and x.dtype.kind != "M" and y.dtype.kind != "M":
         dt = multiarray.result_type(y, 1.)
         y = asanyarray(y, dtype=dt)
 
