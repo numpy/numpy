@@ -64,3 +64,13 @@ and how to successfully get involved.
 
 
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](https://numfocus.org)
+
+
+
+This branch "new" added a new check for the input datatype of "DateTime64" in order to resolve the following issue:
+np.allclose fails with dtype datetime64 #19267
+![Changes](https://user-images.githubusercontent.com/42384805/130310188-39edd942-403c-45fe-ac61-da5a70950353.png)
+
+
+I have added a condition which would not typecast the dtype into 1. as written in original code for DateTime64 dtype.
+
