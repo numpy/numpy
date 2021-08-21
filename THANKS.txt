@@ -44,7 +44,7 @@ A.M. Archibald for no-copy-reshape code, strided array tricks,
     documentation and bug-fixes.
 Pierre Gerard-Marchant for rewriting masked array functionality.
 Roberto de Almeida for the buffered array iterator.
-Alan McIntyre for updating the NumPy test framework to use nose, improve
+Alan McIntyre for updating the NumPy test framework to use nose, improving
     the test coverage, and enhancing the test system documentation.
 Joe Harrington for administering the 2008 Documentation Sprint.
 Mark Wiebe for the new NumPy iterator, the float16 data type, improved
