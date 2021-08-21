@@ -1028,7 +1028,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     dtype_types, packer = _loadtxt_flatten_dtype_internal(dtype)
 
-    fown = False
+    fh_closing_ctx = contextlib.nullcontext()
     try:
         if isinstance(fname, os_PathLike):
             fname = os_fspath(fname)
@@ -1036,7 +1036,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
             fencoding = getattr(fh, 'encoding', 'latin1')
             line_iter = iter(fh)
-            fown = True
+            fh_closing_ctx = contextlib.closing(fh)
         else:
             line_iter = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
@@ -1059,16 +1059,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             f"or generator. Got {type(fname)} instead."
         ) from e
 
-    # input may be a python2 io stream
-    if encoding is not None:
-        fencoding = encoding
-    # we must assume local encoding
-    # TODO emit portability warning?
-    elif fencoding is None:
-        import locale
-        fencoding = locale.getpreferredencoding()
+    with fh_closing_ctx:
 
-    try:
+        # input may be a python2 io stream
+        if encoding is not None:
+            fencoding = encoding
+        # we must assume local encoding
+        # TODO emit portability warning?
+        elif fencoding is None:
+            import locale
+            fencoding = locale.getpreferredencoding()
+
         # Skip the first `skiprows` lines
         for i in range(skiprows):
             next(line_iter)
@@ -1165,9 +1166,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 nshape[0] += len(chunk)
                 X.resize(nshape, refcheck=False)
                 X[pos:, ...] = chunk
-    finally:
-        if fown:
-            fh.close()
 
     if X is None:
         X = np.array([], dtype)
