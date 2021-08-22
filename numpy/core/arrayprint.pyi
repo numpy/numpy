@@ -59,7 +59,7 @@ class _FormatOptions(TypedDict):
     formatter: Optional[_FormatDict]
     sign: Literal["-", "+", " "]
     floatmode: _FloatMode
-    legacy: Literal[False, "1.13"]
+    legacy: Literal[False, "1.13", "1.21"]
 
 def set_printoptions(
     precision: Optional[SupportsIndex] = ...,
@@ -73,7 +73,7 @@ def set_printoptions(
     sign: Optional[Literal["-", "+", " "]] = ...,
     floatmode: Optional[_FloatMode] = ...,
     *,
-    legacy: Optional[Literal[False, "1.13"]] = ...
+    legacy: Optional[Literal[False, "1.13", "1.21"]] = ...
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
 def array2string(
@@ -93,7 +93,7 @@ def array2string(
     sign: Optional[Literal["-", "+", " "]] = ...,
     floatmode: Optional[_FloatMode] = ...,
     suffix: str = ...,
-    legacy: Optional[Literal[False, "1.13"]] = ...,
+    legacy: Optional[Literal[False, "1.13", "1.21"]] = ...,
 ) -> str: ...
 def format_float_scientific(
     x: _FloatLike_co,
@@ -143,5 +143,5 @@ def printoptions(
     sign: Optional[Literal["-", "+", " "]] = ...,
     floatmode: Optional[_FloatMode] = ...,
     *,
-    legacy: Optional[Literal[False, "1.13"]] = ...
+    legacy: Optional[Literal[False, "1.13", "1.21"]] = ...
 ) -> _GeneratorContextManager[_FormatOptions]: ...

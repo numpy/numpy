@@ -884,6 +884,16 @@ class TestString:
                     " 'offsets': [0, 76800],"
                     " 'itemsize': 80000,"
                     " 'aligned': True}")
+        with np.printoptions(legacy='1.21'):
+            assert_equal(str(dt),
+                        "{'names':['top','bottom'], "
+                         "'formats':[([('tiles', ('>f4', (64, 64)), (1,)), "
+                                      "('rtile', '>f4', (64, 36))], (3,)),"
+                                     "[('bleft', ('>f4', (8, 64)), (1,)), "
+                                      "('bright', '>f4', (8, 36))]], "
+                         "'offsets':[0,76800], "
+                         "'itemsize':80000, "
+                         "'aligned':True}")
         assert_equal(np.dtype(eval(str(dt))), dt)
 
         dt = np.dtype({'names': ['r', 'g', 'b'], 'formats': ['u1', 'u1', 'u1'],

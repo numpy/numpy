@@ -866,7 +866,7 @@ static PyObject *
 {
     npy_@name@ absval;
 
-    if (npy_legacy_print_mode == 113) {
+    if (npy_legacy_print_mode <= 113) {
         return legacy_@name@_format@kind@(val);
     }
 
@@ -892,7 +892,7 @@ c@name@type_@kind@(PyObject *self)
     npy_c@name@ val = PyArrayScalar_VAL(self, C@Name@);
     TrimMode trim = TrimMode_DptZeros;
 
-    if (npy_legacy_print_mode == 113) {
+    if (npy_legacy_print_mode <= 113) {
         return legacy_c@name@_format@kind@(val);
     }
 
@@ -957,7 +957,7 @@ halftype_@kind@(PyObject *self)
     float floatval = npy_half_to_float(val);
     float absval;
 
-    if (npy_legacy_print_mode == 113) {
+    if (npy_legacy_print_mode <= 113) {
         return legacy_float_format@kind@(floatval);
     }
 
