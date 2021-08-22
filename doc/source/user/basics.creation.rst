@@ -59,8 +59,8 @@ in overflow. This feature can often be misunderstood. If you
 perform calculations with mismatching ``dtypes``, you can get unwanted
 results,  for example::
 
-    >>> a = array([2, 3, 4], dtype = np.uint32)
-    >>> b = array([5, 6, 7], dtype = np.uint32)
+    >>> a = np.array([2, 3, 4], dtype=np.uint32)
+    >>> b = np.array([5, 6, 7], dtype=np.uint32)
     >>> c_unsigned32 = a - b
     >>> print('unsigned c:', c_unsigned32, c_unsigned32.dtype)
     unsigned c: [4294967293 4294967293 4294967293] uint32
