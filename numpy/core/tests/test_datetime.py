@@ -137,6 +137,20 @@ class TestDateTime:
         assert_(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
         assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
+        # regression tests related to gh-19631;
+        # test metric prefixes from seconds down to
+        # attoseconds for 1000x conversions
+        assert np.can_cast('M8[7000ms]', 'M8[7s]', casting='safe')
+        assert np.can_cast('M8[2000us]', 'M8[2ms]', casting='safe')
+        assert np.can_cast('M8[1000ns]', 'M8[us]', casting='safe')
+        assert np.can_cast('M8[5000ns]', 'M8[5us]', casting='safe')
+        assert np.can_cast('M8[2000ps]', 'M8[2ns]', casting='safe')
+        assert np.can_cast('M8[9000fs]', 'M8[9ps]', casting='safe')
+        assert np.can_cast('M8[1000as]', 'M8[1fs]', casting='safe')
+        # 10^6 conversions
+        assert np.can_cast('M8[2000000ps]', 'M8[2us]', casting='safe')
+        assert np.can_cast('M8[1000000as]', 'M8[1ps]', casting='safe')
+
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
         assert_(np.datetime64('NaT') !=

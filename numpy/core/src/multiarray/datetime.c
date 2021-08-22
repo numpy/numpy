@@ -3776,7 +3776,15 @@ time_to_time_resolve_descriptors(
     meta2 = get_datetime_metadata_from_dtype(loop_descrs[1]);
     assert(meta2 != NULL);
 
-    if (meta1->base == meta2->base && meta1->num == meta2->num) {
+    if ((meta1->base == meta2->base && meta1->num == meta2->num) ||
+        // handle some common metric prefix conversions
+        // 1000 fold conversions
+        ((meta2->base >= 7) && (meta1->base - meta2->base == 1)
+          && ((meta1->num / meta2->num) == 1000)) ||
+        // 10^6 fold conversions
+        ((meta2->base >= 7) && (meta1->base - meta2->base == 2)
+          && ((meta1->num / meta2->num) == 1000000))
+        )  {
         if (byteorder_may_allow_view) {
             return NPY_NO_CASTING | byteorder_may_allow_view;
         }
