@@ -704,6 +704,15 @@ class TestMa:
         a[c] = 5
         assert_(a[2] is masked)
 
+    def test_assignment_by_condition_2(self):
+        # gh-19721
+        a = masked_array([0, 1], mask=[False, False])
+        b = masked_array([0, 1], mask=[True, True])
+        mask = a < 1
+        b[mask] = a[mask]
+        expected_mask = [False, True]
+        assert_equal(b.mask, expected_mask)
+
 
 class TestUfuncs:
     def setup(self):
