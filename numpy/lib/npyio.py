@@ -1023,7 +1023,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             usecols_getter = itemgetter(*usecols)
         else:
             # Get an iterable back, even if using a single column.
-            def usecols_getter(words, _col=usecols[0]): return [words[_col]]
+            usecols_getter = lambda obj, c=usecols[0]: [obj[c]]
     else:
         usecols_getter = None
 
