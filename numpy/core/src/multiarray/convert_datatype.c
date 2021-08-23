@@ -449,7 +449,7 @@ PyArray_GetCastSafety(
 
 /**
  * Check whether a cast is safe, see also `PyArray_GetCastSafety` for
- * a similiar function.  Unlike GetCastSafety, this function checks the
+ * a similar function.  Unlike GetCastSafety, this function checks the
  * `castingimpl->casting` when available.  This allows for two things:
  *
  * 1. It avoids  calling `resolve_descriptors` in some cases.

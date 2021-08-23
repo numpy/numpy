@@ -57,7 +57,7 @@
  * avoid linking duplications due to the nature of the dispatch-able sources.
  *
  * Example:
- *    @targets baseline avx avx512_skx vsx3 asimdhp // configration statments
+ *    @targets baseline avx avx512_skx vsx3 asimdhp // configuration statements
  *
  *    void NPY_CPU_DISPATCH_CURFX(dispatch_me)(const int *src, int *dst)
  *    {
@@ -180,7 +180,7 @@
  * Macro NPY_CPU_DISPATCH_DECLARE_XB(LEFT, ...)
  *
  * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declaration even
- * if it was provided within the configration statments.
+ * if it was provided within the configuration statements.
  */
 #define NPY_CPU_DISPATCH_DECLARE_XB(...) \
     NPY__CPU_DISPATCH_CALL(NPY_CPU_DISPATCH_DECLARE_CHK_, NPY_CPU_DISPATCH_DECLARE_CB_, __VA_ARGS__)
@@ -196,7 +196,7 @@
  * Example:
  *  Assume we have a dispatch-able source exporting the following function:
  *
- *    @targets baseline avx2 avx512_skx // configration statments
+ *    @targets baseline avx2 avx512_skx // configration statements
  *
  *    void NPY_CPU_DISPATCH_CURFX(dispatch_me)(const int *src, int *dst)
  *    {
@@ -238,7 +238,7 @@
  * Macro NPY_CPU_DISPATCH_CALL_XB(LEFT, ...)
  *
  * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declaration even
- * if it was provided within the configration statements.
+ * if it was provided within the configuration statements.
  * Returns void.
  */
 #define NPY_CPU_DISPATCH_CALL_XB_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
