@@ -152,8 +152,7 @@ class TestDateTime:
                          'M8[2000000ps]',
                          'M8[1000000as]',
                          'M8[2000000000ps]',
-                         'M8[1000000000as]',
-                        ]
+                         'M8[1000000000as]']
         larger_units = ['M8[7s]',
                         'M8[2ms]',
                         'M8[us]',
@@ -164,8 +163,7 @@ class TestDateTime:
                         'M8[2us]',
                         'M8[1ps]',
                         'M8[2ms]',
-                        'M8[1ns]',
-                         ]
+                        'M8[1ns]']
         for larger_unit, smaller_unit in zip(larger_units, smaller_units):
             assert np.can_cast(larger_unit, smaller_unit, casting='safe')
             assert np.can_cast(smaller_unit, larger_unit, casting='safe')
