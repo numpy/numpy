@@ -118,8 +118,6 @@ Still TODO in this module are:
 
 """
 
-import sys
-
 import warnings
 
 warnings.warn(
