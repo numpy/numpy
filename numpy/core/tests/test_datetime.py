@@ -138,22 +138,37 @@ class TestDateTime:
         assert_(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
         assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
+    def test_datetime_prefix_conversions(self):
         # regression tests related to gh-19631;
         # test metric prefixes from seconds down to
-        # attoseconds for 1000x conversions
-        assert np.can_cast('M8[7000ms]', 'M8[7s]', casting='safe')
-        assert np.can_cast('M8[2000us]', 'M8[2ms]', casting='safe')
-        assert np.can_cast('M8[1000ns]', 'M8[us]', casting='safe')
-        assert np.can_cast('M8[5000ns]', 'M8[5us]', casting='safe')
-        assert np.can_cast('M8[2000ps]', 'M8[2ns]', casting='safe')
-        assert np.can_cast('M8[9000fs]', 'M8[9ps]', casting='safe')
-        assert np.can_cast('M8[1000as]', 'M8[1fs]', casting='safe')
-        # 10^6 conversions
-        assert np.can_cast('M8[2000000ps]', 'M8[2us]', casting='safe')
-        assert np.can_cast('M8[1000000as]', 'M8[1ps]', casting='safe')
-        # 10^9 conversions below 32-bit overflow limit
-        assert np.can_cast('M8[2000000000ps]', 'M8[2ms]', casting='safe')
-        assert np.can_cast('M8[1000000000as]', 'M8[1ns]', casting='safe')
+        # attoseconds for bidirectional conversions
+        smaller_units = ['M8[7000ms]',
+                         'M8[2000us]',
+                         'M8[1000ns]',
+                         'M8[5000ns]',
+                         'M8[2000ps]',
+                         'M8[9000fs]',
+                         'M8[1000as]',
+                         'M8[2000000ps]',
+                         'M8[1000000as]',
+                         'M8[2000000000ps]',
+                         'M8[1000000000as]',
+                        ]
+        larger_units = ['M8[7s]',
+                        'M8[2ms]',
+                        'M8[us]',
+                        'M8[5us]',
+                        'M8[2ns]',
+                        'M8[9ps]',
+                        'M8[1fs]',
+                        'M8[2us]',
+                        'M8[1ps]',
+                        'M8[2ms]',
+                        'M8[1ns]',
+                         ]
+        for larger_unit, smaller_unit in zip(larger_units, smaller_units):
+            assert np.can_cast(larger_unit, smaller_unit, casting='safe')
+            assert np.can_cast(smaller_unit, larger_unit, casting='safe')
 
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
