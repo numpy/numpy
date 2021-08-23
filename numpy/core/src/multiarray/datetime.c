@@ -723,9 +723,15 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
 {
     char const *substr = str, *substrend = NULL;
     int den = 1;
+    long int true_meta_num;
 
     /* First comes an optional integer multiplier */
-    out_meta->num = (int)strtol_const(substr, &substrend, 10);
+    true_meta_num = strtol_const(substr, &substrend, 10);
+    // check for 32-bit integer overflow
+    if (true_meta_num > INT_MAX) {
+        goto bad_input;
+    }
+    out_meta->num = (int)true_meta_num;
     if (substr == substrend) {
         out_meta->num = 1;
     }
@@ -3783,7 +3789,10 @@ time_to_time_resolve_descriptors(
           && ((meta1->num / meta2->num) == 1000)) ||
         // 10^6 fold conversions
         ((meta2->base >= 7) && (meta1->base - meta2->base == 2)
-          && ((meta1->num / meta2->num) == 1000000))
+          && ((meta1->num / meta2->num) == 1000000)) ||
+        // 10^9 fold conversions
+        ((meta2->base >= 7) && (meta1->base - meta2->base == 3)
+          && ((meta1->num / meta2->num) == 1000000000))
         )  {
         if (byteorder_may_allow_view) {
             return NPY_NO_CASTING | byteorder_may_allow_view;

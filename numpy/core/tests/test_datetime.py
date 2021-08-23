@@ -63,6 +63,7 @@ class TestDateTime:
         assert_raises(TypeError, np.dtype, 'm7')
         assert_raises(TypeError, np.dtype, 'M16')
         assert_raises(TypeError, np.dtype, 'm16')
+        assert_raises(TypeError, np.dtype, 'M8[3000000000ps]')
 
     def test_datetime_casting_rules(self):
         # Cannot cast safely/same_kind between timedelta and datetime
@@ -150,6 +151,9 @@ class TestDateTime:
         # 10^6 conversions
         assert np.can_cast('M8[2000000ps]', 'M8[2us]', casting='safe')
         assert np.can_cast('M8[1000000as]', 'M8[1ps]', casting='safe')
+        # 10^9 conversions below 32-bit overflow limit
+        assert np.can_cast('M8[2000000000ps]', 'M8[2ms]', casting='safe')
+        assert np.can_cast('M8[1000000000as]', 'M8[1ns]', casting='safe')
 
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
