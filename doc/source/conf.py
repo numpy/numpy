@@ -82,7 +82,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
-    'IPython.sphinxext.ipython_directive',
+    'IPython.sphinxext.ipython_directive',\
     'sphinx.ext.mathjax',
 ]
 
@@ -178,11 +178,6 @@ html_theme_options = {
   "external_links": [
       {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
       ],
-}
-
-
-html_additional_pages = {
-    'index': 'indexcontent.html',
 }
 
 html_title = "%s v%s Manual" % (project, version)
