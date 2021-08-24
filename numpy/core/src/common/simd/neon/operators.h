@@ -240,4 +240,14 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
     { return vceqq_f64(a, a); }
 #endif
 
+// signbit
+NPY_FINLINE npyv_b32 npyv_signbit_f32(npyv_f32 a) {
+    return vreinterpretq_u32_s32(vshrq_n_s32(vreinterpretq_s32_f32(a), 31));
+}
+#if NPY_SIMD_F64
+    NPY_FINLINE npyv_b64 npyv_signbit_f64(npyv_f64 a) {
+        return vreinterpretq_u64_s64(vshrq_n_s64(vreinterpretq_s64_f64(a), 63));
+    }
+#endif
+
 #endif // _NPY_SIMD_NEON_OPERATORS_H

@@ -219,4 +219,12 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
 NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
 { return _mm256_castpd_si256(_mm256_cmp_pd(a, a, _CMP_ORD_Q)); }
 
+// signbit
+NPY_FINLINE npyv_b32 npyv_signbit_f32(npyv_f32 a) {
+    return npyv_shri_s32(_mm256_castps_si256(a), 31);
+}
+NPY_FINLINE npyv_b64 npyv_signbit_f64(npyv_f64 a) {
+    return npyv_shri_s64(_mm256_castpd_si256(a), 63);
+}
+
 #endif // _NPY_SIMD_AVX2_OPERATORS_H

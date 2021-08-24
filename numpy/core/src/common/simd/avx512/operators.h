@@ -5,6 +5,8 @@
 #ifndef _NPY_SIMD_AVX512_OPERATORS_H
 #define _NPY_SIMD_AVX512_OPERATORS_H
 
+#include "conversion.h"
+
 /***************************
  * Shifting
  ***************************/
@@ -320,5 +322,13 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
 { return _mm512_cmp_ps_mask(a, a, _CMP_ORD_Q); }
 NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
 { return _mm512_cmp_pd_mask(a, a, _CMP_ORD_Q); }
+
+// signbit
+NPY_FINLINE npyv_b32 npyv_signbit_f32(npyv_f32 a) {
+    return npyv_cvt_b32_s32(npyv_shri_s32(_mm512_castps_si512(a), 31));
+}
+NPY_FINLINE npyv_b64 npyv_signbit_f64(npyv_f64 a) {
+    return npyv_cvt_b64_s64(npyv_shri_s64(_mm512_castpd_si512(a), 63));
+}
 
 #endif // _NPY_SIMD_AVX512_OPERATORS_H

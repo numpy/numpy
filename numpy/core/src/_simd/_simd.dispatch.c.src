@@ -316,6 +316,10 @@ SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 
 SIMD_IMPL_INTRIN_1(not_@sfx@, v@sfx@, v@sfx@)
 
+#if @fp_only@
+SIMD_IMPL_INTRIN_1(signbit_@sfx@, v@bsfx@, v@sfx@)
+#endif
+
 /**begin repeat1
  * #intrin = cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
  */
@@ -550,6 +554,10 @@ SIMD_INTRIN_DEF(rev64_@sfx@)
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif // shl_imm
+
+#if @fp_only@
+SIMD_INTRIN_DEF(signbit_@sfx@)
+#endif
 
 /**begin repeat1
  * #intrin = and, or, xor, not, cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#

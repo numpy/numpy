@@ -96,6 +96,10 @@ class _Test_Utility:
         v = self.npyv.setall_u32(0x7fc00000)
         return self.npyv.reinterpret_f32_u32(v)[0]
 
+    def _neg_nan(self):
+        v = self.npyv.setall_u32(0xffc00000)
+        return self.npyv.reinterpret_f32_u32(v)[0]
+
     def _cpu_features(self):
         target = self.target_name
         if target == "baseline":
@@ -360,6 +364,28 @@ class _SIMD_FP(_Test_Utility):
                 continue
             _max = self.max(vdata_a, vdata_b)
             assert _max == data_max
+
+    def test_signbit(self):
+        pinf, ninf = self._pinfinity(), self._ninfinity()
+        nan, negnan = self._nan(), self._neg_nan()
+        data = self._data()
+        vdata = self.load(data)
+
+        mask_true = self._true_mask()
+
+        def to_bool(vector):
+            return [lane == mask_true for lane in vector]
+        
+        signbit_cases = ((nan, False), (negnan, True), (pinf, False),
+         (ninf, True))
+        for case, desired in signbit_cases:
+            _data_signbit = [desired]*self.nlanes
+            vsignbit = to_bool(self.signbit(self.setall(case)))
+            assert vsignbit == pytest.approx(_data_signbit, nan_ok=True)
+
+        data_signbit = [a < 0 for a in data]
+        vadata_signbit = to_bool(self.signbit(vdata))
+        assert vadata_signbit == data_signbit
 
     def test_min(self):
         """
