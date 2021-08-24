@@ -4,7 +4,7 @@ import numpy as np
 import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
 from numpy.testing import (
-    assert_, assert_raises, assert_equal,
+    assert_, assert_raises, assert_equal, assert_array_equal
     )
 from numpy.ma import (
     MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
@@ -703,6 +703,15 @@ class TestMa:
         c = a >= 3
         a[c] = 5
         assert_(a[2] is masked)
+    
+    def test_assignment_by_condition_nomask(self):
+        # Test for gh-19721
+        a = masked_array([0, 1], mask=[False, False])
+        b = masked_array([0, 1], mask=[True, True])
+        mask = a < 1
+        b[mask] = a[mask]
+        expected_mask = [False, True]
+        assert_array_equal(b.mask, expected_mask)
 
 
 class TestUfuncs:
