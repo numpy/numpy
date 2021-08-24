@@ -82,7 +82,7 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
                 "(tuple of DTypes or None, ArrayMethod or promoter)");
         return -1;
     }
-    PyObject *DType_tuple = PyTuple_GetItem(info, 0);
+    PyObject *DType_tuple = PyTuple_GET_ITEM(info, 0);
     if (PyTuple_GET_SIZE(DType_tuple) != ufunc->nargs) {
         PyErr_SetString(PyExc_TypeError,
                 "DType tuple length does not match ufunc number of operands");

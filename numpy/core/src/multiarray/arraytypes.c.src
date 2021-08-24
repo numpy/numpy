@@ -898,11 +898,11 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             /* if it's a tuple, copy field-by-field to ap, */
             npy_intp names_size = PyTuple_GET_SIZE(descr->names);
 
-            if (names_size != PyTuple_Size(op)) {
+            if (names_size != PyTuple_GET_SIZE(op)) {
                 errmsg = PyUnicode_FromFormat(
                         "could not assign tuple of length %zd to structure "
                         "with %" NPY_INTP_FMT " fields.",
-                        PyTuple_Size(op), names_size);
+                        PyTuple_GET_SIZE(op), names_size);
                 PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
                 return -1;
@@ -918,7 +918,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                     failed = 1;
                     break;
                 }
-                item = PyTuple_GetItem(op, i);
+                item = PyTuple_GET_ITEM(op, i);
                 if (item == NULL) {
                     failed = 1;
                     break;

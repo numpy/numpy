@@ -2770,7 +2770,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
          * that subarray_shape obtained from subarray[1] is a tuple of integers.
          */
         if (!(PyTuple_Check(subarray) &&
-              PyTuple_Size(subarray) == 2 &&
+              PyTuple_GET_SIZE(subarray) == 2 &&
               PyArray_DescrCheck(PyTuple_GET_ITEM(subarray, 0)))) {
             PyErr_Format(PyExc_ValueError,
                          "incorrect subarray in __setstate__");
@@ -2922,7 +2922,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         PyObject *old_metadata;
         PyArray_DatetimeMetaData temp_dt_data;
 
-        if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
+        if ((! PyTuple_Check(metadata)) || (PyTuple_GET_SIZE(metadata) != 2)) {
             PyErr_Format(PyExc_ValueError,
                     "Invalid datetime dtype (metadata, c_metadata): %R",
                     metadata);

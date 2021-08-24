@@ -1336,7 +1336,7 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
         PyErr_SetString(PyExc_ValueError, "tuple required as first argument");
         return NULL;
     }
-    nop = PyTuple_Size(array_tuple);
+    nop = PyTuple_GET_SIZE(array_tuple);
     if (nop > NPY_MAXARGS) {
         PyErr_SetString(PyExc_ValueError, "tuple must be smaller then maxargs");
         return NULL;

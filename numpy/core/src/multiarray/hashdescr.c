@@ -78,9 +78,12 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
      */
     t = Py_BuildValue("(cccii)", descr->kind, nbyteorder,
             descr->flags, descr->elsize, descr->alignment);
+    if (!t) {
+        return -1;
+    }
 
-    for(i = 0; i < PyTuple_Size(t); ++i) {
-        item = PyTuple_GetItem(t, i);
+    for(i = 0; i < PyTuple_GET_SIZE(t); ++i) {
+        item = PyTuple_GET_ITEM(t, i);
         if (item == NULL) {
             PyErr_SetString(PyExc_SystemError,
                     "(Hash) Error while computing builting hash");
@@ -198,8 +201,8 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
      * Add shape and descr itself to the list of object to hash
      */
     if (PyTuple_Check(adescr->shape)) {
-        for(i = 0; i < PyTuple_Size(adescr->shape); ++i) {
-            item = PyTuple_GetItem(adescr->shape, i);
+        for(i = 0; i < PyTuple_GET_SIZE(adescr->shape); ++i) {
+            item = PyTuple_GET_ITEM(adescr->shape, i);
             if (item == NULL) {
                 PyErr_SetString(PyExc_SystemError,
                         "(Hash) Error while getting shape item of subarray dtype ???");

@@ -224,7 +224,7 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
     if (PyTuple_Size(value) != 3) {
         return 0;
     }
-    title = PyTuple_GetItem(value, 2);
+    title = PyTuple_GET_ITEM(value, 2);
     if (key == title) {
         return 1;
     }

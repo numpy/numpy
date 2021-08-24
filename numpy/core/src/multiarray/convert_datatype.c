@@ -3048,7 +3048,7 @@ structured_to_nonstructured_resolve_descriptors(
             /* Only allow casting a single field */
             return -1;
         }
-        PyObject *key = PyTuple_GetItem(given_descrs[0]->names, 0);
+        PyObject *key = PyTuple_GET_ITEM(given_descrs[0]->names, 0);
         PyObject *base_tup = PyDict_GetItem(given_descrs[0]->fields, key);
         base_descr = (PyArray_Descr *)PyTuple_GET_ITEM(base_tup, 0);
     }

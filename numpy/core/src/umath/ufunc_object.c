@@ -1760,7 +1760,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
          */
         op_axes_tuple = PyList_GET_ITEM(axes, iop);
         if (PyTuple_Check(op_axes_tuple)) {
-            if (PyTuple_Size(op_axes_tuple) != op_ncore) {
+            if (PyTuple_GET_SIZE(op_axes_tuple) != op_ncore) {
                 if (op_ncore == 1) {
                     PyErr_Format(PyExc_ValueError,
                                  "axes item %d should be a tuple with a "
@@ -4056,7 +4056,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         }
     }
     else if (PyTuple_Check(axes_obj)) {
-        naxes = PyTuple_Size(axes_obj);
+        naxes = PyTuple_GET_SIZE(axes_obj);
         if (naxes < 0 || naxes > NPY_MAXDIMS) {
             PyErr_SetString(PyExc_ValueError,
                     "too many values for 'axis'");

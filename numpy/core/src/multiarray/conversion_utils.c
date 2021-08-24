@@ -260,7 +260,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 
         memset(out_axis_flags, 0, ndim);
 
-        naxes = PyTuple_Size(axis_in);
+        naxes = PyTuple_GET_SIZE(axis_in);
         if (naxes < 0) {
             return NPY_FAIL;
         }

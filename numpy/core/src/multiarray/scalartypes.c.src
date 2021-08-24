@@ -2227,7 +2227,7 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
         return NULL;
     }
 
-    return voidtype_subscript(self, PyTuple_GetItem(flist, n));
+    return voidtype_subscript(self, PyTuple_GET_ITEM(flist, n));
 }
 
 /* get field by name or number */
@@ -2287,7 +2287,7 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
         return -1;
     }
 
-    return voidtype_ass_subscript(self, PyTuple_GetItem(flist, n), val);
+    return voidtype_ass_subscript(self, PyTuple_GET_ITEM(flist, n), val);
 }
 
 static int

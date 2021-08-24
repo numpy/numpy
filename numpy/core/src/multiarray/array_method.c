@@ -522,7 +522,7 @@ boundarraymethod__resolve_descripors(
     PyArray_Descr *loop_descrs[NPY_MAXARGS];
 
     if (!PyTuple_CheckExact(descr_tuple) ||
-            PyTuple_Size(descr_tuple) != nin + nout) {
+            PyTuple_GET_SIZE(descr_tuple) != nin + nout) {
         PyErr_Format(PyExc_TypeError,
                 "_resolve_descriptors() takes exactly one tuple with as many "
                 "elements as the method takes arguments (%d+%d).", nin, nout);
@@ -530,7 +530,7 @@ boundarraymethod__resolve_descripors(
     }
 
     for (int i = 0; i < nin + nout; i++) {
-        PyObject *tmp = PyTuple_GetItem(descr_tuple, i);
+        PyObject *tmp = PyTuple_GET_ITEM(descr_tuple, i);
         if (tmp == NULL) {
             return NULL;
         }
@@ -643,7 +643,7 @@ boundarraymethod__simple_strided_call(
     int nout = self->method->nout;
 
     if (!PyTuple_CheckExact(arr_tuple) ||
-            PyTuple_Size(arr_tuple) != nin + nout) {
+            PyTuple_GET_SIZE(arr_tuple) != nin + nout) {
         PyErr_Format(PyExc_TypeError,
                 "_simple_strided_call() takes exactly one tuple with as many "
                 "arrays as the method takes arguments (%d+%d).", nin, nout);
@@ -651,7 +651,7 @@ boundarraymethod__simple_strided_call(
     }
 
     for (int i = 0; i < nin + nout; i++) {
-        PyObject *tmp = PyTuple_GetItem(arr_tuple, i);
+        PyObject *tmp = PyTuple_GET_ITEM(arr_tuple, i);
         if (tmp == NULL) {
             return NULL;
         }
