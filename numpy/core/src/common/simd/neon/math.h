@@ -153,4 +153,20 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
+// ceil
+#ifdef NPY_HAVE_ASIMD
+    #define npyv_ceil_f32 vrndpq_f32
+#else
+   NPY_FINLINE npyv_f32 npyv_ceil_f32(npyv_f32 a)
+   {
+       npyv_f32 conv_trunc = vcvtq_f32_s32(vcvtq_s32_f32(a));
+       npyv_f32 conv_trunc_add_one = npyv_add_f32(conv_trunc, vdupq_n_f32(1.0f));
+       npyv_u32 mask = vcltq_f32(conv_trunc, a);
+       return vbslq_f32(mask, conv_trunc, conv_trunc_add_one);
+   }
+#endif
+#if NPY_SIMD_F64
+    #define npyv_ceil_f64 vrndpq_f64
+#endif // NPY_SIMD_F64
+
 #endif // _NPY_SIMD_NEON_MATH_H

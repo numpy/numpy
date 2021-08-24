@@ -105,4 +105,8 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return _mm256_blendv_epi8(a, b, _mm256_cmpgt_epi64(a, b));
 }
 
+// ceil
+#define npyv_ceil_f32 _mm256_ceil_ps
+#define npyv_ceil_f64 _mm256_ceil_pd
+
 #endif // _NPY_SIMD_AVX2_MATH_H
