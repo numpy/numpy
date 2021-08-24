@@ -3374,7 +3374,7 @@ class MaskedArray(ndarray):
                 _mask[indx] = mval
         elif not self._hardmask:
             # Set the data, then the mask
-            if isinstance(indx, masked_array):
+            if isinstance(indx, masked_array) and not isinstance(value, masked_array):
                 _data[indx.data] = dval
             else:
                 _data[indx] = dval
