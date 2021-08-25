@@ -44,6 +44,7 @@ def get_module(tmp_path):
             void *(*realloc)(void *, size_t);
             void (*free)(void *);
         } SecretDataAllocatorFuncs;
+
         NPY_NO_EXPORT void *
         shift_alloc(void *ctx, size_t sz) {
             SecretDataAllocatorFuncs *funcs = (SecretDataAllocatorFuncs *)ctx;
@@ -205,8 +206,8 @@ async def async_test_context_locality(get_module):
 
 
 def test_context_locality(get_module):
-    if sys.implementation.name == 'pypy' and sys.pypy_version_info[:3] < (7, 3,
-                                                                          6):
+    if (sys.implementation.name == 'pypy'
+            and sys.pypy_version_info[:3] < (7, 3, 6)):
         pytest.skip('no context-locality support in PyPy < 7.3.6')
     asyncio.run(async_test_context_locality(get_module))
 
