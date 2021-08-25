@@ -182,8 +182,8 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
                 implementation, public_api, relevant_args, args, kwargs)
 
         public_api.__code__ = public_api.__code__.replace(
-                                        co_name=implementation.__name__,
-                                        co_filename='<string>')
+                co_name=implementation.__name__,
+                co_filename='<__array_function__ internals>')
         if module is not None:
             public_api.__module__ = module
 
