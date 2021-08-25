@@ -175,8 +175,11 @@ def test_policy_propagation(get_module):
     a = np.arange(10).view(MyArr).reshape((2, 5))  # a doesn't own its own data
     assert np.core.multiarray.get_handler_name(a) == orig_policy_name
 
+    orig_policy = get_module.set_secret_data_policy()
+    secret_policy_name = np.core.multiarray.get_handler_name()
     b = np.arange(10).view(MyArr).reshape((2, 5))  # b doesn't own its own data
-    assert np.core.multiarray.get_handler_name(b) == 'secret_data_allocator'
+    assert np.core.multiarray.get_handler_name(b) == secret_policy_name
+    get_module.set_old_policy(orig_policy)
 
 
 async def concurrent_context1(get_module, orig_policy_name, event):
