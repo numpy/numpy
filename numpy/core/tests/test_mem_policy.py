@@ -166,6 +166,19 @@ def test_set_policy(get_module):
         assert np.core.multiarray.get_handler_name() == orig_policy_name
 
 
+def test_policy_propagation(get_module):
+
+    class MyArr(np.ndarray):
+        pass
+
+    orig_policy_name = np.core.multiarray.get_handler_name()
+    a = np.arange(10).view(MyArr).reshape((2, 5))  # a doesn't own its own data
+    assert np.core.multiarray.get_handler_name(a) == orig_policy_name
+
+    b = np.arange(10).view(MyArr).reshape((2, 5))  # b doesn't own its own data
+    assert np.core.multiarray.get_handler_name(b) == 'secret_data_allocator'
+
+
 async def concurrent_context1(get_module, orig_policy_name, event):
     if orig_policy_name == 'default_allocator':
         get_module.set_secret_data_policy()

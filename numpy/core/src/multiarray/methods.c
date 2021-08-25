@@ -2098,7 +2098,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(rawdata);
                 Py_RETURN_NONE;
             }
-            /* Store the functions in case the global handler is modified */
+            /* Store the handler in case the default is modified */
             fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler(NULL);
             if (fa->mem_handler == NULL) {
                 Py_DECREF(rawdata);
@@ -2156,7 +2156,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (num == 0 || elsize == 0) {
             Py_RETURN_NONE;
         }
-        /* Store the functions in case the global handler is modified */
+        /* Store the functions in case the default handler is modified */
         fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler(NULL);
         if (fa->mem_handler == NULL) {
             return NULL;

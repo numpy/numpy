@@ -559,7 +559,6 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
 NPY_NO_EXPORT const PyDataMem_Handler *
 PyDataMem_GetHandler(PyArrayObject *obj)
 {
-    PyObject *base;
     PyObject *capsule;
     PyDataMem_Handler *handler;
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
@@ -589,17 +588,18 @@ PyDataMem_GetHandler(PyArrayObject *obj)
         return handler;
     }
 #endif
-    /* If there's a handler, the array owns its own data */
+    /* Try to find a handler */
+    PyArrayObject *base = obj;
     handler = PyArray_HANDLER(obj);
-    if (handler == NULL) {
+    while (handler == NULL) {
+        base = (PyArrayObject*)PyArray_BASE(base);
         /*
          * If the base is an array which owns its own data, return its allocator.
          */
-        base = PyArray_BASE(obj);
-        if (base != NULL && PyArray_Check(base) &&
-            PyArray_CHKFLAGS((PyArrayObject *) base, NPY_ARRAY_OWNDATA)) {
-            return PyArray_HANDLER(base);
+        if (base == NULL || ! PyArray_Check(base)) {
+            break;
         }
+        handler = PyArray_HANDLER(base);
     }
     return handler;
 }
