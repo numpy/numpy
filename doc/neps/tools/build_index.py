@@ -2,6 +2,15 @@
 Scan the directory of nep files and extract their metadata.  The
 metadata is passed to Jinja for filling out `index.rst.tmpl`.
 """
+ """
+        Generate a module sample to be able to add in the model
+        in your system for prediction.
+
+        Parameters
+        ----------
+        fname : string (default="module_sample.py")
+            A string containing a path to a output file.
+        """
 
 import os
 import jinja2
@@ -111,3 +120,4 @@ index = render(infile, meta)
 
 with open(outfile, 'w') as f:
     f.write(index)
+    f.close()

@@ -1,4 +1,6 @@
+# The Python (perf) module is a toolkit to write, run and analyze benchmarks
 import perf
+# abc(abstract base class, ABCMeta metaclass provides a method called register method that can be invoked by its instance)
 import abc
 import numpy as np
 
