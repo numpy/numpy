@@ -393,8 +393,14 @@ array_data_set(PyArrayObject *self, PyObject *op, void *NPY_UNUSED(ignored))
             PyArray_Descr *dtype = PyArray_DESCR(self);
             nbytes = dtype->elsize ? dtype->elsize : 1;
         }
-        PyDataMem_UserFREE(PyArray_DATA(self), nbytes,
-                           &PyArray_HANDLER(self)->allocator);
+        PyDataMem_Handler *handler = PyArray_HANDLER(self);
+        if (handler == NULL) {
+            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return -1;
+        }
+        PyDataMem_UserFREE(PyArray_DATA(self), nbytes, &handler->allocator);
     }
     if (PyArray_BASE(self)) {
         if ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) ||

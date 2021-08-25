@@ -843,8 +843,7 @@ PyArray_NewFromDescr_int(
         /* The handlers should never be called in this case */
         fa->mem_handler = NULL;
         /*
-         * If data is passed in, this object won't own it by default.
-         * Caller must arrange for this to be reset if truly desired
+         * If data is passed in, this object won't own it.
          */
         fa->flags &= ~NPY_ARRAY_OWNDATA;
     }
@@ -3412,6 +3411,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         dptr += dtype->elsize;
         if (num < 0 && thisbuf == size) {
             totalbytes += bytes;
+            /* The handler is always valid */
             tmp = PyDataMem_UserRENEW(PyArray_DATA(r), totalbytes,
                                   &PyArray_HANDLER(r)->allocator);
             if (tmp == NULL) {
@@ -3435,6 +3435,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         const size_t nsize = PyArray_MAX(*nread,1)*dtype->elsize;
 
         if (nsize != 0) {
+            /* The handler is always valid */
             tmp = PyDataMem_UserRENEW(PyArray_DATA(r), nsize,
                                   &PyArray_HANDLER(r)->allocator);
             if (tmp == NULL) {
@@ -3541,6 +3542,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         const size_t nsize = PyArray_MAX(nread,1) * dtype->elsize;
         char *tmp;
 
+        /* The handler is always valid */
         if((tmp = PyDataMem_UserRENEW(PyArray_DATA(ret), nsize,
                                      &PyArray_HANDLER(ret)->allocator)) == NULL) {
             Py_DECREF(dtype);
@@ -3826,6 +3828,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
             if (!npy_mul_with_overflow_intp(&nbytes, elcount, elsize)) {
+                /* The handler is always valid */
                 new_data = PyDataMem_UserRENEW(PyArray_DATA(ret), nbytes,
                                   &PyArray_HANDLER(ret)->allocator);
             }
@@ -3868,6 +3871,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         /* The size cannot be zero for realloc. */
         goto done;
     }
+    /* The handler is always valid */
     new_data = PyDataMem_UserRENEW(PyArray_DATA(ret), i * elsize,
                                    &PyArray_HANDLER(ret)->allocator);
     if (new_data == NULL) {

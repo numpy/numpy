@@ -2053,8 +2053,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
          * Allocation will never be 0, see comment in ctors.c
          * line 820
          */
-        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree,
-                           &PyArray_HANDLER(self)->allocator);
+        PyDataMem_Handler *handler = PyArray_HANDLER(self);
+        if (handler == NULL) {
+            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return NULL;
+        }
+        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, &handler->allocator);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));

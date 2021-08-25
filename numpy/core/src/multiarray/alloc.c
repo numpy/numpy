@@ -552,9 +552,10 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
 }
 
 /*NUMPY_API
- * Return the PyDataMem_Handler used by the PyArrayObject. If NULL, return
+ * Return the PyDataMem_Handler used by obj. If obj is NULL, return
  * the current global policy that will be used to allocate data
- * for the next PyArrayObject. On failure, return NULL.
+ * for the next PyArrayObject. On failure, return NULL. Can also return NULL
+ * if obj does not own its memory
  */
 NPY_NO_EXPORT const PyDataMem_Handler *
 PyDataMem_GetHandler(PyArrayObject *obj)
@@ -588,20 +589,7 @@ PyDataMem_GetHandler(PyArrayObject *obj)
         return handler;
     }
 #endif
-    /* Try to find a handler */
-    PyArrayObject *base = obj;
-    handler = PyArray_HANDLER(obj);
-    while (handler == NULL) {
-        base = (PyArrayObject*)PyArray_BASE(base);
-        /*
-         * If the base is an array which owns its own data, return its allocator.
-         */
-        if (base == NULL || ! PyArray_Check(base)) {
-            break;
-        }
-        handler = PyArray_HANDLER(base);
-    }
-    return handler;
+    return PyArray_HANDLER(obj);
 }
 
 NPY_NO_EXPORT PyObject *
@@ -617,7 +605,10 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
     }
     const PyDataMem_Handler * mem_handler = PyDataMem_GetHandler((PyArrayObject *)arr);
     if (mem_handler == NULL) {
-        return NULL;
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
+        Py_RETURN_NONE;
     }
     return PyUnicode_FromString(mem_handler->name);
 }

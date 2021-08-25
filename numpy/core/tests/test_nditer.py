@@ -3149,6 +3149,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
     # Note that resetting does not free references
     del it
     break_cycles()
+    break_cycles()
     assert count == sys.getrefcount(value)
 
     # Repeat the test with `iternext`
@@ -3158,6 +3159,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
         it.iternext()
 
     del it  # should ensure cleanup
+    break_cycles()
     break_cycles()
     assert count == sys.getrefcount(value)
 
