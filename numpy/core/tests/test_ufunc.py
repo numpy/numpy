@@ -539,7 +539,7 @@ class TestUfunc:
     @pytest.mark.parametrize("ufunc", [np.add, np.sqrt])
     def test_cast_safety(self, ufunc):
         """Basic test for the safest casts, because ufuncs inner loops can
-        inidicate a cast-safety as well (which is normally always "no").
+        indicate a cast-safety as well (which is normally always "no").
         """
         def call_ufunc(arr, **kwargs):
             return ufunc(*(arr,) * ufunc.nin, **kwargs)
