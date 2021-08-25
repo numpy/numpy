@@ -536,6 +536,37 @@ class TestUfunc:
         np.add(arr, arr, dtype="m")
         np.maximum(arr, arr, dtype="m")
 
+    @pytest.mark.parametrize("ufunc", [np.add, np.sqrt])
+    def test_cast_safety(self, ufunc):
+        """Basic test for the safest casts, because ufuncs inner loops can
+        indicate a cast-safety as well (which is normally always "no").
+        """
+        def call_ufunc(arr, **kwargs):
+            return ufunc(*(arr,) * ufunc.nin, **kwargs)
+
+        arr = np.array([1., 2., 3.], dtype=np.float32)
+        arr_bs = arr.astype(arr.dtype.newbyteorder())
+        expected = call_ufunc(arr)
+        # Normally, a "no" cast:
+        res = call_ufunc(arr, casting="no")
+        assert_array_equal(expected, res)
+        # Byte-swapping is not allowed with "no" though:
+        with pytest.raises(TypeError):
+            call_ufunc(arr_bs, casting="no")
+
+        # But is allowed with "equiv":
+        res = call_ufunc(arr_bs, casting="equiv")
+        assert_array_equal(expected, res)
+
+        # Casting to float64 is safe, but not equiv:
+        with pytest.raises(TypeError):
+            call_ufunc(arr_bs, dtype=np.float64, casting="equiv")
+
+        # but it is safe cast:
+        res = call_ufunc(arr_bs, dtype=np.float64, casting="safe")
+        expected = call_ufunc(arr.astype(np.float64))  # upcast
+        assert_array_equal(expected, res)
+
     def test_true_divide(self):
         a = np.array(10)
         b = np.array(20)
