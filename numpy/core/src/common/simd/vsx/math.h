@@ -77,4 +77,8 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_trunc_f32 vec_trunc
 #define npyv_trunc_f64 vec_trunc
 
+// floor
+#define npyv_floor_f32 vec_floor
+#define npyv_floor_f64 vec_floor
+
 #endif // _NPY_SIMD_VSX_MATH_H
