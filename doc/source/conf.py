@@ -82,8 +82,9 @@ extensions = [
     'sphinx.ext.ifconfig',
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
-    'IPython.sphinxext.ipython_directive',\
+    'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
+    'sphinx_panels',
 ]
 
 skippable_extensions = [
