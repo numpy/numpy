@@ -391,7 +391,7 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
     union {                                  \
         ctype z;                             \
         type a[2];                           \
-    } z1;;                                   \
+    } z1;                                    \
                                              \
     z1.a[0] = (x);                           \
     z1.a[1] = (y);                           \
