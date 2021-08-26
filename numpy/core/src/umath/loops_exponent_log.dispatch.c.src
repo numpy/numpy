@@ -800,7 +800,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
         q = _mm512_fmadd_pd(q, r, mA2);
         q = _mm512_fmadd_pd(q, r, mA1);
         q = _mm512_mul_pd(q, r);
-        __m512d p = _mm512_fmadd_pd(r, q, r2);;
+        __m512d p = _mm512_fmadd_pd(r, q, r2);
         p = _mm512_add_pd(r1, p);
 
         /* Get 2^(j/32) from lookup table */

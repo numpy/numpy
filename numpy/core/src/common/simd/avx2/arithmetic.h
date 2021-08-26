@@ -284,7 +284,7 @@ NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
 {
     __m256i s0 = _mm256_hadd_epi32(a, a);
             s0 = _mm256_hadd_epi32(s0, s0);
-    __m128i s1 = _mm256_extracti128_si256(s0, 1);;
+    __m128i s1 = _mm256_extracti128_si256(s0, 1);
             s1 = _mm_add_epi32(_mm256_castsi256_si128(s0), s1);
     return _mm_cvtsi128_si32(s1);
 }
