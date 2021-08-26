@@ -963,7 +963,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         return 0;
     }
 
-    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler(NULL);
+    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler();
     if (mem_handler == NULL) {
         return -1;
     }
@@ -1096,7 +1096,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     NPY_BEGIN_THREADS_DEF;
 
-    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler(NULL);
+    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler();
     if (mem_handler == NULL) {
         return NULL;
     }

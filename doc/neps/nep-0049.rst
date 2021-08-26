@@ -105,7 +105,7 @@ on the pointer to the data memory.
 The name of the handler will be exposed on the python level via a
 ``numpy.core.multiarray.get_handler_name(arr)`` function. If called as
 ``numpy.core.multiarray.get_handler_name()`` it will return the name of the
-global handler that will be used to allocate data for the next new `ndarrray`.
+handler that will be used to allocate data for the next new `ndarrray`.
 
 NumPy C-API functions
 =====================
@@ -153,12 +153,10 @@ NumPy C-API functions
    hooks. All the function pointers must be filled in, ``NULL`` is not
    accepted.
 
-.. c:function:: const char * PyDataMem_GetHandlerName(PyArrayObject *obj)
+.. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler()
 
-   Return the const char name of the ``PyDataMem_Handler`` used by the
-   ``PyArrayObject``. If ``NULL``, return the name of the current global policy
-   that will be used to allocate data for the next ``PyArrayObject``.
-
+   Return the current policy that will be used to allocate data for the
+   next ``PyArrayObject``. On failure, return ``NULL``.
 
 Sample code
 ===========

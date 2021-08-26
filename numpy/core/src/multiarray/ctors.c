@@ -807,7 +807,7 @@ PyArray_NewFromDescr_int(
 
     if (data == NULL) {
         /* Store the handler in case the default is modified */
-        fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler(NULL);
+        fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
             goto fail;
         }

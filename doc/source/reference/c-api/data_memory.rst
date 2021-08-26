@@ -85,10 +85,9 @@ reallocate or free the data memory of the instance.
    so they will still call the python and numpy memory management callback
    hooks.
     
-.. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler(PyArrayObject *obj)
+.. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler()
 
-   Return the `PyDataMem_Handler` used by the ``PyArrayObject``. If ``NULL``,
-   return the current global policy that will be used to allocate data for the
+   Return the current policy that will be used to allocate data for the
    next ``PyArrayObject``. On failure, return ``NULL``.
 
 For an example of setting up and using the PyDataMem_Handler, see the test in
@@ -97,8 +96,6 @@ For an example of setting up and using the PyDataMem_Handler, see the test in
 .. c:function:: void PyDataMem_EventHookFunc(void *inp, void *outp, size_t size, void *user_data);
 
     This function will be called during data memory manipulation
-
-
 
 .. c:function:: PyDataMem_EventHookFunc * PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook, void *user_data, void **old_data)
 

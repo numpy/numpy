@@ -552,44 +552,36 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
 }
 
 /*NUMPY_API
- * Return the PyDataMem_Handler used by obj. If obj is NULL, return
- * the current global policy that will be used to allocate data
- * for the next PyArrayObject. On failure, return NULL. Can also return NULL
- * if obj does not own its memory
+ * Return the policy that will be used to allocate data
+ * for the next PyArrayObject. On failure, return NULL.
  */
 NPY_NO_EXPORT const PyDataMem_Handler *
-PyDataMem_GetHandler(PyArrayObject *obj)
+PyDataMem_GetHandler()
 {
     PyObject *capsule;
     PyDataMem_Handler *handler;
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
-    if (obj == NULL) {
-        if (PyContextVar_Get(current_handler, NULL, &capsule)) {
-            return NULL;
-        }
+    if (PyContextVar_Get(current_handler, NULL, &capsule)) {
+        return NULL;
+    }
+    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
+    Py_DECREF(capsule);
+    return handler;
+#else
+    PyObject *p = PyThreadState_GetDict();
+    if (p == NULL) {
+        return NULL;
+    }
+    capsule = PyDict_GetItemString(p, "current_allocator");
+    if (capsule == NULL) {
+        handler = &default_handler;
+    }
+    else {
         handler = (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
         Py_DECREF(capsule);
-        return handler;
     }
-#else
-    PyObject *p;
-    if (obj == NULL) {
-        p = PyThreadState_GetDict();
-        if (p == NULL) {
-            return NULL;
-        }
-        capsule = PyDict_GetItemString(p, "current_allocator");
-        if (capsule == NULL) {
-            handler = &default_handler;
-        }
-        else {
-            handler = (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
-            Py_DECREF(capsule);
-        }
-        return handler;
-    }
+    return handler;
 #endif
-    return PyArray_HANDLER(obj);
 }
 
 NPY_NO_EXPORT PyObject *
@@ -603,7 +595,13 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
          PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
          return NULL;
     }
-    const PyDataMem_Handler * mem_handler = PyDataMem_GetHandler((PyArrayObject *)arr);
+    const PyDataMem_Handler *mem_handler;
+    if (arr != NULL) {
+        mem_handler = PyArray_HANDLER(arr);
+    }
+    else{
+        mem_handler = PyDataMem_GetHandler();
+    }
     if (mem_handler == NULL) {
         if (PyErr_Occurred()) {
             return NULL;

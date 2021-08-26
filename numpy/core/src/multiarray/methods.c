@@ -2105,7 +2105,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_RETURN_NONE;
             }
             /* Store the handler in case the default is modified */
-            fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler(NULL);
+            fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler();
             if (fa->mem_handler == NULL) {
                 Py_DECREF(rawdata);
                 return NULL;
@@ -2163,7 +2163,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_RETURN_NONE;
         }
         /* Store the functions in case the default handler is modified */
-        fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler(NULL);
+        fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
             return NULL;
         }

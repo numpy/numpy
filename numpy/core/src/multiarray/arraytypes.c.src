@@ -3093,7 +3093,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
     }
-    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler(NULL);
+    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler();
     if (mem_handler == NULL) {
         goto finish;
     }
