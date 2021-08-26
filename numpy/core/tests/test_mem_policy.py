@@ -148,42 +148,46 @@ def get_module(tmp_path):
 
 
 def test_set_policy(get_module):
-    orig_policy_name = np.core.multiarray.get_handler_name()
+
+    get_handler_name = np.core.multiarray.get_handler_name
+    orig_policy_name = get_handler_name()
 
     a = np.arange(10).reshape((2, 5))  # a doesn't own its own data
-    assert np.core.multiarray.get_handler_name(a) == None
-    assert np.core.multiarray.get_handler_name(a.base) == orig_policy_name
+    assert get_handler_name(a) is None
+    assert get_handler_name(a.base) == orig_policy_name
 
     orig_policy = get_module.set_secret_data_policy()
 
     b = np.arange(10).reshape((2, 5))  # b doesn't own its own data
-    assert np.core.multiarray.get_handler_name(b) == None
-    assert np.core.multiarray.get_handler_name(b.base) == 'secret_data_allocator'
+    assert get_handler_name(b) is None
+    assert get_handler_name(b.base) == 'secret_data_allocator'
 
     if orig_policy_name == 'default_allocator':
         get_module.set_old_policy(None)  # tests PyDataMem_SetHandler(NULL)
-        assert np.core.multiarray.get_handler_name() == 'default_allocator'
+        assert get_handler_name() == 'default_allocator'
     else:
         get_module.set_old_policy(orig_policy)
-        assert np.core.multiarray.get_handler_name() == orig_policy_name
+        assert get_handler_name() == orig_policy_name
 
 
 def test_policy_propagation(get_module):
+    # The memory policy goes hand-in-hand with flags.owndata
 
     class MyArr(np.ndarray):
         pass
 
-    # The memory policy goes hand-in-hand with flags.owndata
-    orig_policy_name = np.core.multiarray.get_handler_name()
+    get_handler_name = np.core.multiarray.get_handler_name
+    orig_policy_name = get_handler_name()
     a = np.arange(10).view(MyArr).reshape((2, 5))
-    assert np.core.multiarray.get_handler_name(a) == None
-    assert a.flags.owndata == False
+    assert get_handler_name(a) is None
+    assert a.flags.owndata is False
 
-    assert np.core.multiarray.get_handler_name(a.base) == None
-    assert a.base.flags.owndata == False
+    assert get_handler_name(a.base) is None
+    assert a.base.flags.owndata is False
 
-    assert np.core.multiarray.get_handler_name(a.base.base) == orig_policy_name
-    assert a.base.base.flags.owndata == True
+    assert get_handler_name(a.base.base) == orig_policy_name
+    assert a.base.base.flags.owndata is True
+
 
 async def concurrent_context1(get_module, orig_policy_name, event):
     if orig_policy_name == 'default_allocator':
