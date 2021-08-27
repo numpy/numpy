@@ -190,12 +190,6 @@ class TestCasting:
 
         return arr1, arr2, values
 
-    res = np.array([0, 3, -7], dtype=np.int8).view(bool)
-    expected = [0, 1, 1]
-
-    def conversion(self, res, expected):
-        assert_array_equal(res, expected)
-
     def get_data_variation(self, arr1, arr2, aligned=True, contig=True):
         """
         Returns a copy of arr1 that may be non-contiguous or unaligned, and a
@@ -701,6 +695,14 @@ class TestCasting:
             expected = arr_normal.astype(dtype)
         except TypeError:
             with pytest.raises(TypeError):
-                arr_NULLs.astype(dtype)
+                arr_NULLs.astype(dtype),
         else:
             assert_array_equal(expected, arr_NULLs.astype(dtype))
+
+
+    def test_float_to_bool(self):
+        # test case corresponding to gh-19514
+        # simple test for casting bool_ to float16 
+        res = np.array([0, 3, -7], dtype=np.int8).view(bool)
+        expected = [0, 1, 1]
+        assert_array_equal(res, expected)
