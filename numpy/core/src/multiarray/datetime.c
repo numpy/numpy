@@ -723,17 +723,27 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
 {
     char const *substr = str, *substrend = NULL;
     int den = 1;
-    int64_t true_meta_num;
 
     /* First comes an optional integer multiplier */
-    true_meta_num = strtol_const(substr, &substrend, 10);
-    // check for 32-bit integer overflow
-    if (true_meta_num > INT_MAX) {
-        goto bad_input;
-    }
-    out_meta->num = (int)true_meta_num;
+    out_meta->num = (int)strtol_const(substr, &substrend, 10);
     if (substr == substrend) {
         out_meta->num = 1;
+    }
+    else {
+        // check for 32-bit integer overflow
+        char subs_digits[20];
+        strcpy(subs_digits, substr);
+        uint64_t idx;
+        for(idx=0; idx<strlen(substr); idx++) {
+            if(isdigit(substr[idx]) == 0) {
+                break;
+            }
+        }
+        subs_digits[idx] = '\0';
+        PyObject *true_meta_num = PyLong_FromString(subs_digits, NULL, 0);
+        if (PyLong_AsLongLong(true_meta_num) > INT_MAX) {
+            goto bad_input;
+        }
     }
     substr = substrend;
 
