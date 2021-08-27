@@ -17,16 +17,27 @@ def get_module(tmp_path):
         pytest.skip('link fails on cygwin')
     functions = [
         ("set_secret_data_policy", "METH_NOARGS", """
-             const PyDataMem_Handler *old =
-                 PyDataMem_SetHandler(&secret_data_handler);
-             return PyCapsule_New((void *) old, NULL, NULL);
+             PyObject *secret_data =
+                 PyCapsule_New(&secret_data_handler, "mem_handler", NULL);
+             if (secret_data == NULL) {
+                 return NULL;
+             }
+             PyObject *old = PyDataMem_SetHandler(secret_data);
+             Py_DECREF(secret_data);
+             return old;
          """),
         ("set_old_policy", "METH_O", """
-             PyDataMem_Handler *old = NULL;
+             PyObject *old;
              if (args != NULL && PyCapsule_CheckExact(args)) {
-                 old = (PyDataMem_Handler *) PyCapsule_GetPointer(args, NULL);
+                 old = PyDataMem_SetHandler(args);
              }
-             PyDataMem_SetHandler(old);
+             else {
+                 old = PyDataMem_SetHandler(NULL);
+             }
+             if (old == NULL) {
+                 return NULL;
+             }
+             Py_DECREF(old);
              Py_RETURN_NONE;
          """),
     ]

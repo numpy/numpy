@@ -3093,7 +3093,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
     }
-    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler();
+    PyObject *mem_handler = PyDataMem_GetHandler();
     if (mem_handler == NULL) {
         goto finish;
     }
@@ -3123,7 +3123,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip1 = PyDataMem_UserNEW(new->elsize, &mem_handler->allocator);
+                nip1 = PyDataMem_UserNEW(new->elsize, mem_handler);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -3136,12 +3136,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip2 = PyDataMem_UserNEW(new->elsize, &mem_handler->allocator);
+                nip2 = PyDataMem_UserNEW(new->elsize, mem_handler);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
                         /* destroy temporary buffer */
-                        PyDataMem_UserFREE(nip1, new->elsize,
-                                           &mem_handler->allocator);
+                        PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
                     }
                     goto finish;
                 }
@@ -3154,11 +3153,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip1, new->elsize, &mem_handler->allocator);
+                PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
             }
             if (nip2 != ip2 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip2, new->elsize, &mem_handler->allocator);
+                PyDataMem_UserFREE(nip2, new->elsize, mem_handler);
             }
         }
         if (res != 0) {
@@ -3167,6 +3166,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     }
 
 finish:
+    Py_XDECREF(mem_handler);
     return res;
 }
 

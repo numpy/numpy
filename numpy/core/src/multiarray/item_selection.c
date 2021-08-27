@@ -963,18 +963,19 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         return 0;
     }
 
-    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler();
+    PyObject *mem_handler = PyDataMem_GetHandler();
     if (mem_handler == NULL) {
         return -1;
     }
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     if (it == NULL) {
+        Py_DECREF(mem_handler);
         return -1;
     }
     size = it->size;
 
     if (needcopy) {
-        buffer = PyDataMem_UserNEW(N * elsize, &mem_handler->allocator);
+        buffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (buffer == NULL) {
             ret = -1;
             goto fail;
@@ -1059,12 +1060,13 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     /* cleanup internal buffer */
-    PyDataMem_UserFREE(buffer, N * elsize, &mem_handler->allocator);
+    PyDataMem_UserFREE(buffer, N * elsize, mem_handler);
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
     }
     Py_DECREF(it);
+    Py_DECREF(mem_handler);
 
     return ret;
 }
@@ -1096,7 +1098,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     NPY_BEGIN_THREADS_DEF;
 
-    const PyDataMem_Handler *mem_handler = PyDataMem_GetHandler();
+    PyObject *mem_handler = PyDataMem_GetHandler();
     if (mem_handler == NULL) {
         return NULL;
     }
@@ -1105,6 +1107,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
             PyArray_NDIM(op), PyArray_DIMS(op), NULL, NULL,
             0, (PyObject *)op);
     if (rop == NULL) {
+        Py_DECREF(mem_handler);
         return NULL;
     }
     rstride = PyArray_STRIDE(rop, axis);
@@ -1112,6 +1115,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     /* Check if there is any argsorting to do */
     if (N <= 1 || PyArray_SIZE(op) == 0) {
+        Py_DECREF(mem_handler);
         memset(PyArray_DATA(rop), 0, PyArray_NBYTES(rop));
         return (PyObject *)rop;
     }
@@ -1125,7 +1129,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     size = it->size;
 
     if (needcopy) {
-        valbuffer = PyDataMem_UserNEW(N * elsize, &mem_handler->allocator);
+        valbuffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (valbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1134,7 +1138,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     if (needidxbuffer) {
         idxbuffer = (npy_intp *)PyDataMem_UserNEW(N * sizeof(npy_intp),
-                                                  &mem_handler->allocator);
+                                                  mem_handler);
         if (idxbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1224,8 +1228,8 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     /* cleanup internal buffers */
-    PyDataMem_UserFREE(valbuffer, N * elsize, &mem_handler->allocator);
-    PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), &mem_handler->allocator);
+    PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
+    PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
     if (ret < 0) {
         if (!PyErr_Occurred()) {
             /* Out of memory during sorting or buffer creation */
@@ -1236,6 +1240,7 @@ fail:
     }
     Py_XDECREF(it);
     Py_XDECREF(rit);
+    Py_DECREF(mem_handler);
 
     return (PyObject *)rop;
 }

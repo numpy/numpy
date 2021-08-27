@@ -735,7 +735,7 @@ typedef struct tagPyArrayObject_fields {
     /*
      * For malloc/calloc/realloc/free per object
      */
-    PyDataMem_Handler *mem_handler;
+    PyObject *mem_handler;
 } PyArrayObject_fields;
 
 /*
@@ -1675,6 +1675,12 @@ static NPY_INLINE void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
+}
+
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
+PyArray_HANDLER(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->mem_handler;
 }
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)

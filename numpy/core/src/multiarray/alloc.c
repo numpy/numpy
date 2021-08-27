@@ -395,12 +395,16 @@ int uo_index=0;   /* user_override index */
 /* Wrappers for the default or any user-assigned PyDataMem_Handler */
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW(size_t size, const PyDataMemAllocator *allocator)
+PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
 {
     void *result;
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    if (handler == NULL) {
+        return NULL;
+    }
 
     assert(size != 0);
-    result = allocator->malloc(allocator->ctx, size);
+    result = handler->allocator.malloc(handler->allocator.ctx, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -415,10 +419,14 @@ PyDataMem_UserNEW(size_t size, const PyDataMemAllocator *allocator)
 }
 
 NPY_NO_EXPORT void *
-PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, const PyDataMemAllocator *allocator)
+PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
 {
     void *result;
-    result = allocator->calloc(allocator->ctx, nmemb, size);
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    if (handler == NULL) {
+        return NULL;
+    }
+    result = handler->allocator.calloc(handler->allocator.ctx, nmemb, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -433,10 +441,14 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, const PyDataMemAllocator *al
 }
 
 NPY_NO_EXPORT void
-PyDataMem_UserFREE(void *ptr, size_t size, const PyDataMemAllocator *allocator)
+PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
 {
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    if (handler == NULL) {
+        return;
+    }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
-    allocator->free(allocator->ctx, ptr, size);
+    handler->allocator.free(handler->allocator.ctx, ptr, size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
         NPY_ALLOW_C_API
@@ -449,12 +461,16 @@ PyDataMem_UserFREE(void *ptr, size_t size, const PyDataMemAllocator *allocator)
 }
 
 NPY_NO_EXPORT void *
-PyDataMem_UserRENEW(void *ptr, size_t size, const PyDataMemAllocator *allocator)
+PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
 {
     void *result;
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    if (handler == NULL) {
+        return NULL;
+    }
 
     assert(size != 0);
-    result = allocator->realloc(allocator->ctx, ptr, size);
+    result = handler->allocator.realloc(handler->allocator.ctx, ptr, size);
     if (result != ptr) {
         PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     }
@@ -478,37 +494,28 @@ PyDataMem_UserRENEW(void *ptr, size_t size, const PyDataMemAllocator *allocator)
  * functions so they will still call the python and numpy
  * memory management callback hooks.
  */
-NPY_NO_EXPORT const PyDataMem_Handler *
-PyDataMem_SetHandler(PyDataMem_Handler *handler)
+NPY_NO_EXPORT PyObject *
+PyDataMem_SetHandler(PyObject *handler)
 {
-    PyObject *capsule;
-    PyObject *old_capsule;
-    PyDataMem_Handler *old_handler;
+    PyObject *old_handler;
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     PyObject *token;
-    if (PyContextVar_Get(current_handler, NULL, &old_capsule)) {
+    if (PyContextVar_Get(current_handler, NULL, &old_handler)) {
         return NULL;
     }
-    old_handler = (PyDataMem_Handler *) PyCapsule_GetPointer(old_capsule, NULL);
-    Py_DECREF(old_capsule);
-    if (old_handler == NULL) {
-        return NULL;
-    }
-    if (handler != NULL) {
-        capsule = PyCapsule_New(handler, NULL, NULL);
-        if (capsule == NULL) {
+    if (handler == NULL) {
+        handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+        if (handler == NULL) {
             return NULL;
         }
     }
     else {
-        capsule = PyCapsule_New(&default_handler, NULL, NULL);
-        if (capsule == NULL) {
-            return NULL;
-        }
+        Py_INCREF(handler);
     }
-    token = PyContextVar_Set(current_handler, capsule);
-    Py_DECREF(capsule);
+    token = PyContextVar_Set(current_handler, handler);
+    Py_DECREF(handler);
     if (token == NULL) {
+        Py_DECREF(old_handler);
         return NULL;
     }
     Py_DECREF(token);
@@ -519,32 +526,30 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
     if (p == NULL) {
         return NULL;
     }
-    old_capsule = PyDict_GetItemString(p, "current_allocator");
-    if (old_capsule == NULL) {
-        old_handler = &default_handler;
-    }
-    else {
-        old_handler = (PyDataMem_Handler *) PyCapsule_GetPointer(old_capsule, NULL);
-        Py_DECREF(old_capsule);
+    old_handler = PyDict_GetItemString(p, "current_allocator");
+    if (old_handler == NULL) {
+        old_handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
         if (old_handler == NULL) {
             return NULL;
         }
     }
-    if (handler != NULL) {
-        capsule = PyCapsule_New(handler, NULL, NULL);
-        if (capsule == NULL) {
+    else {
+        Py_INCREF(old_handler);
+    }
+    if (handler == NULL) {
+        handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+        if (handler == NULL) {
+            Py_DECREF(old_handler);
             return NULL;
         }
     }
     else {
-        capsule = PyCapsule_New(&default_handler, NULL, NULL);
-        if (capsule == NULL) {
-            return NULL;
-        }
+        Py_INCREF(handler);
     }
-    const int error = PyDict_SetItemString(p, "current_allocator", capsule);
-    Py_DECREF(capsule);
+    const int error = PyDict_SetItemString(p, "current_allocator", handler);
+    Py_DECREF(handler);
     if (error) {
+        Py_DECREF(old_handler);
         return NULL;
     }
     return old_handler;
@@ -555,30 +560,29 @@ PyDataMem_SetHandler(PyDataMem_Handler *handler)
  * Return the policy that will be used to allocate data
  * for the next PyArrayObject. On failure, return NULL.
  */
-NPY_NO_EXPORT const PyDataMem_Handler *
+NPY_NO_EXPORT PyObject *
 PyDataMem_GetHandler()
 {
-    PyObject *capsule;
-    PyDataMem_Handler *handler;
+    PyObject *handler;
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
-    if (PyContextVar_Get(current_handler, NULL, &capsule)) {
+    if (PyContextVar_Get(current_handler, NULL, &handler)) {
         return NULL;
     }
-    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
-    Py_DECREF(capsule);
     return handler;
 #else
     PyObject *p = PyThreadState_GetDict();
     if (p == NULL) {
         return NULL;
     }
-    capsule = PyDict_GetItemString(p, "current_allocator");
-    if (capsule == NULL) {
-        handler = &default_handler;
+    handler = PyDict_GetItemString(p, "current_allocator");
+    if (handler == NULL) {
+        handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+        if (handler == NULL) {
+            return NULL;
+        }
     }
     else {
-        handler = (PyDataMem_Handler *) PyCapsule_GetPointer(capsule, NULL);
-        Py_DECREF(capsule);
+        Py_INCREF(handler);
     }
     return handler;
 #endif
@@ -595,18 +599,28 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
          PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
          return NULL;
     }
-    const PyDataMem_Handler *mem_handler;
+    PyObject *mem_handler;
+    PyDataMem_Handler *handler;
+    PyObject *name;
     if (arr != NULL) {
-        mem_handler = PyArray_HANDLER(arr);
+        mem_handler = PyArray_HANDLER((PyArrayObject *) arr);
+        if (mem_handler == NULL) {
+            Py_RETURN_NONE;
+        }
+        Py_INCREF(mem_handler);
     }
-    else{
+    else {
         mem_handler = PyDataMem_GetHandler();
-    }
-    if (mem_handler == NULL) {
-        if (PyErr_Occurred()) {
+        if (mem_handler == NULL) {
             return NULL;
         }
-        Py_RETURN_NONE;
     }
-    return PyUnicode_FromString(mem_handler->name);
+    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    if (handler == NULL) {
+        Py_DECREF(mem_handler);
+        return NULL;
+    }
+    name = PyUnicode_FromString(handler->name);
+    Py_DECREF(mem_handler);
+    return name;
 }

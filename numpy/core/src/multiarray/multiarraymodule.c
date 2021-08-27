@@ -4912,7 +4912,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /*
      * Initialize the context-local PyDataMem_Handler capsule.
      */
-    c_api = PyCapsule_New(&default_handler, NULL, NULL);
+    c_api = PyCapsule_New(&default_handler, "mem_handler", NULL);
     if (c_api == NULL) {
         goto err;
     }
