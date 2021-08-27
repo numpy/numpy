@@ -699,7 +699,6 @@ class TestCasting:
         else:
             assert_array_equal(expected, arr_NULLs.astype(dtype))
 
-
     def test_float_to_bool(self):
         # test case corresponding to gh-19514
         # simple test for casting bool_ to float16 
