@@ -16,8 +16,8 @@ Indexing on :class:`ndarrays <.ndarray>`
 
 :class:`ndarrays <ndarray>` can be indexed using the standard Python
 ``x[obj]`` syntax, where *x* is the array and *obj* the selection.
-There are four kinds of indexing available depending on *obj*:
-single element indexing, basic slicing, advanced indexing and field access.
+There are different kinds of indexing available depending on *obj*:
+basic slicing, advanced indexing and field access.
 
 Most of the following examples show the use of indexing when
 referencing data in an array. The examples work just as well
@@ -28,10 +28,16 @@ Note that in Python, ``x[(exp1, exp2, ..., expN)]`` is equivalent to
 ``x[exp1, exp2, ..., expN]``; the latter is just syntactic sugar
 for the former.
 
+
+.. _basic-slicing-and-indexing:
+
+Basic slicing and indexing
+--------------------------
+
 .. _single-element-indexing:
 
 Single element indexing
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Single element indexing works
 exactly like that for other standard Python sequences. It is 0-based,
@@ -72,7 +78,7 @@ element being returned. That is: ::
     >>> x[0][2]
     2
 
-So note that ``x[0, 2] = x[0][2]`` though the second case is more
+So note that ``x[0, 2] == x[0][2]`` though the second case is more
 inefficient as a new temporary array is created after the first index
 that is subsequently indexed by 2.
 
@@ -84,10 +90,9 @@ that is subsequently indexed by 2.
     rapidly changing location in memory. This difference represents a
     great potential for confusion.
 
-.. _basic-slicing-and-indexing:
 
-Basic slicing and indexing
---------------------------
+Slicing and striding
+^^^^^^^^^^^^^^^^^^^^
 
 Basic slicing extends Python's basic concept of slicing to N
 dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
@@ -223,8 +228,10 @@ concepts to remember include:
 .. index::
    pair: ndarray; view
 
-Structural indexing tools
-^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Dimensional indexing tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 There are some tools to facilitate the easy matching of array shapes with
 expressions and in assignments.
 
@@ -248,7 +255,7 @@ Each :const:`newaxis` object in the selection tuple serves to expand
 the dimensions of the resulting selection by one unit-length
 dimension.  The added dimension is the position of the :const:`newaxis`
 object in the selection tuple. :const:`newaxis` is an alias for
-'None', and 'None' can be used in place of this with the same result.
+``None``, and ``None`` can be used in place of this with the same result.
 From the above example::
 
     >>> x[:, np.newaxis, :, :].shape
@@ -257,7 +264,7 @@ From the above example::
     (2, 1, 3, 1)
 
 This can be handy to combine two
-arrays in a way that otherwise would require explicitly reshaping
+arrays in a way that otherwise would require explicit reshaping
 operations. For example::
 
     >>> x = np.arange(5)
@@ -273,8 +280,6 @@ operations. For example::
 
 Advanced indexing
 -----------------
-
-.. seealso:: :ref:`basics.broadcasting`
 
 Advanced indexing is triggered when the selection object, *obj*, is a
 non-tuple sequence object, an :class:`ndarray` (of data type integer or bool),
@@ -305,8 +310,17 @@ based on their *N*-dimensional index. Each integer array represents a number
 of indices into that dimension.
 
 Negative values are permitted in the index arrays and work as they do with
-single indices or slices. If the index values are out of bounds then an
-``IndexError`` is thrown::
+single indices or slices::
+
+    >>> x = np.arange(10, 1, -1)
+    >>> x
+    array([10,  9,  8,  7,  6,  5,  4,  3,  2])
+    >>> x[np.array([3, 3, 1, 8])]
+    array([7, 7, 9, 2])
+    >>> x[np.array([3, 3, -3, 8])]
+    array([7, 7, 4, 2])
+
+If the index values are out of bounds then an ``IndexError`` is thrown::
 
     >>> x = np.array([[1, 2], [3, 4], [5, 6]])
     >>> x[np.array([1, -1])]
@@ -315,11 +329,10 @@ single indices or slices. If the index values are out of bounds then an
     >>> x[np.array([3, 4])]
     IndexError: index 3 is out of bounds for axis 0 with size 3
 
-
 When the index consists of as many integer arrays as dimensions of the array
 being indexed, the indexing is straightforward, but different from slicing.
 
-Advanced indices always are :ref:`broadcast<ufuncs.broadcasting>` and
+Advanced indices always are :ref:`broadcast<basics.broadcasting>` and
 iterated as *one*::
 
      result[i_1, ..., i_M] == x[ind_1[i_1, ..., i_M], ind_2[i_1, ..., i_M],
@@ -328,7 +341,63 @@ iterated as *one*::
 Note that the resulting shape is identical to the (broadcast) indexing array
 shapes ``ind_1, ..., ind_N``. If the indices cannot be broadcast to the
 same shape, an exception ``IndexError: shape mismatch: indexing arrays could
-not be broadcast together with shapes...`` is raised.
+not be broadcast together with shapes...`` is raised. 
+
+Indexing with multidimensional index arrays tend
+to be more unusual uses, but they are permitted, and they are useful for some
+problems. We’ll start with the simplest multidimensional case::
+
+    >>> y = np.arange(35).reshape(5, 7)
+    >>> y
+    array([[ 0,  1,  2,  3,  4,  5,  6],
+           [ 7,  8,  9, 10, 11, 12, 13],
+           [14, 15, 16, 17, 18, 19, 20],
+           [21, 22, 23, 24, 25, 26, 27],
+           [28, 29, 30, 31, 32, 33, 34]])
+    >>> y[np.array([0, 2, 4]), np.array([0, 1, 2])]
+    array([ 0, 15, 30])
+
+In this case, if the index arrays have a matching shape, and there is an
+index array for each dimension of the array being indexed, the resultant
+array has the same shape as the index arrays, and the values correspond
+to the index set for each position in the index arrays. In this example,
+the first index value is 0 for both index arrays, and thus the first value
+of the resultant array is ``y[0, 0]``. The next value is ``y[2, 1]``, and
+the last is ``y[4, 2]``.
+
+If the index arrays do not have the same shape, there is an attempt to
+broadcast them to the same shape. If they cannot be broadcast to the same
+shape, an exception is raised::
+
+    >>> y[np.array([0, 2, 4]), np.array([0, 1])]
+    IndexError: shape mismatch: indexing arrays could not be broadcast
+    together with shapes (3,) (2,)
+
+The broadcasting mechanism permits index arrays to be combined with
+scalars for other indices. The effect is that the scalar value is used
+for all the corresponding values of the index arrays::
+
+    >>> y[np.array([0, 2, 4]), 1]
+    array([ 1, 15, 29])
+
+Jumping to the next level of complexity, it is possible to only partially
+index an array with index arrays. It takes a bit of thought to understand
+what happens in such cases. For example if we just use one index array
+with y::
+
+    >>> y[np.array([0, 2, 4])]
+    array([[ 0,  1,  2,  3,  4,  5,  6],
+          [14, 15, 16, 17, 18, 19, 20],
+          [28, 29, 30, 31, 32, 33, 34]])
+
+It results in the construction of a new array where each value of the
+index array selects one row from the array being indexed and the resultant
+array has the resulting shape (number of index elements, size of row).
+
+In general, the shape of the resultant array will be the concatenation of
+the shape of the index array (or the shape that all the index arrays were
+broadcast to) with the shape of any unused dimensions (those not indexed)
+in the array being indexed.
 
 .. rubric:: Example
 
@@ -385,19 +454,13 @@ This broadcasting can also be achieved using the function :func:`ix_`:
            [ 9, 11]])
 
 Note that without the ``np.ix_`` call, only the diagonal elements would
-be selected, as was used in the previous example. This difference is the
-most important thing to remember about indexing with multiple advanced
-indices.
+be selected::
 
-.. rubric:: Example
+    >>> x[rows, columns]
+    array([ 0, 11])
 
-The broadcasting mechanism permits index arrays to be combined with
-scalars for other indices. The effect is that the scalar value is used
-for all the corresponding values of the index arrays::
-
-    >>> x = np.arange(35).reshape(5, 7)
-    >>> x[np.array([0, 2, 4]), 1]
-    array([ 1, 15, 29])
+This difference is the most important thing to remember about
+indexing with multiple advanced indices.
 
 .. rubric:: Example
 
@@ -430,7 +493,7 @@ smaller than *x* it is identical to filling it with :py:data:`False`.
 
 A common use case for this is filtering for desired element values.
 For example, one may wish to select all entries from an array which
-are not NaN::
+are not :const:`NaN`::
 
     >>> x = np.array([[1., 2.], [np.nan, 3.], [np.nan, np.nan]])
     >>> x[~np.isnan(x)]
@@ -450,9 +513,27 @@ and using the integer array indexing mechanism described above.
 ``x[(ind_1,) + boolean_array.nonzero() + (ind_2,)]``.
 
 If there is only one Boolean array and no integer indexing array present,
-this is straight forward. Care must only be taken to make sure that the
+this is straightforward. Care must only be taken to make sure that the
 boolean index has *exactly* as many dimensions as it is supposed to work
 with.
+
+In general, when the boolean array has fewer dimensions than the array being
+indexed, this is equivalent to ``x[b, …]``, which means x is indexed by b
+followed by as many ``:`` as are needed to fill out the rank of x. Thus the
+shape of the result is one dimension containing the number of True elements of
+the boolean array, followed by the remaining dimensions of the array being
+indexed::
+
+    >>> x = np.arange(35).reshape(5, 7)
+    >>> b = x > 20
+    >>> b[:, 5]
+    array([False, False, False,  True,  True])
+    >>> x[b[:, 5]]
+    array([[21, 22, 23, 24, 25, 26, 27],
+          [28, 29, 30, 31, 32, 33, 34]])
+
+Here the 4th and 5th rows are selected from the indexed array and
+combined to make a 2-D array.
 
 .. rubric:: Example
 
@@ -501,22 +582,7 @@ Or without ``np.ix_`` (compare the integer array examples)::
 
 .. rubric:: Example
 
-If x has more dimensions than b then the result will be multi-dimensional::
-
-    >>> x = np.arange(35).reshape(5, 7)
-    >>> b = x > 20
-    >>> b[:, 5]
-    array([False, False, False,  True,  True])
-    >>> x[b[:, 5]]
-    array([[21, 22, 23, 24, 25, 26, 27],
-          [28, 29, 30, 31, 32, 33, 34]])
-
-Here the 4th and 5th rows are selected from the indexed array and
-combined to make a 2-D array.
-
-.. rubric:: Example
-
-Using a 2-D boolean array of shape (2, 3)
+Use a 2-D boolean array of shape (2, 3)
 with four True elements to select rows from a 3-D array of shape
 (2, 3, 5) results in a 2-D result of shape (4, 5)::
 
@@ -546,9 +612,27 @@ in the index (or the array has more dimensions than there are advanced indices),
 then the behaviour can be more complicated. It is like concatenating the
 indexing result for each advanced index element.
 
-In the simplest case, there is only a *single* advanced index. A single
-advanced index can for example replace a slice and the result array will be
-the same, however, it is a copy and may have a different memory layout.
+In the simplest case, there is only a *single* advanced index combined with
+a slice. For example:
+
+    >>> y = np.arange(35).reshape(5,7)
+    >>> y[np.array([0, 2, 4]), 1:3]
+    array([[ 1,  2],
+           [15, 16],
+           [29, 30]])
+
+In effect, the slice and index array operation are independent. The slice
+operation extracts columns with index 1 and 2, (i.e. the 2nd and 3rd columns),
+followed by the index array operation which extracts rows with index 0, 2 and 4
+(i.e the first, third and fifth rows). This is equivalent to::
+
+    >>> y[:, 1:3][np.array([0, 2, 4]), :]
+    array([[ 1,  2],
+           [15, 16],
+           [29, 30]])
+
+A single advanced index can, for example, replace a slice and the result array
+will be the same. However, it is a copy and may have a different memory layout.
 A slice is preferable when it is possible.
 For example::
 
@@ -561,10 +645,10 @@ For example::
     >>> x[1:2, [1, 2]]
     array([[4, 5]])
 
-The easiest way to understand the situation may be to think in
-terms of the resulting shape. There are two parts to the indexing operation,
-the subspace defined by the basic indexing (excluding integers) and the
-subspace from the advanced indexing part. Two cases of index combination
+The easiest way to understand a combination of *multiple* advanced indices may
+be to think in terms of the resulting shape. There are two parts to the indexing
+operation, the subspace defined by the basic indexing (excluding integers) and
+the subspace from the advanced indexing part. Two cases of index combination
 need to be distinguished:
 
 * The advanced indices are separated by a slice, :py:data:`Ellipsis` or
@@ -627,8 +711,7 @@ Slicing can be combined with broadcasted boolean indices::
 Field access
 -------------
 
-.. seealso:: :ref:`arrays.dtypes`, :ref:`arrays.scalars`,
-            :ref:`structured_arrays`
+.. seealso:: :ref:`structured_arrays`
 
 If the :class:`ndarray` object is a structured array the :term:`fields <field>`
 of the array can be accessed by indexing the array with strings,
@@ -726,7 +809,7 @@ In fact, it will only be incremented by 1. The reason is that
 a new array is extracted from the original (as a temporary) containing
 the values at 1, 1, 3, 1, then the value 1 is added to the temporary,
 and then the temporary is assigned back to the original array. Thus
-the value of the array at x[1] + 1 is assigned to x[1] three times,
+the value of the array at ``x[1] + 1`` is assigned to ``x[1]`` three times,
 rather than being incremented 3 times.
 
 .. _dealing-with-variable-indices:
@@ -740,9 +823,9 @@ a function that can handle arguments with various numbers of
 dimensions without having to write special case code for each
 number of possible dimensions, how can that be done? If one
 supplies to the index a tuple, the tuple will be interpreted
-as a list of indices. For example (using the previous definition
-for the array z): ::
+as a list of indices. For example::
 
+ >>> z = np.arange(81).reshape(3, 3, 3, 3)
  >>> indices = (1, 1, 1, 1)
  >>> z[indices]
  40
