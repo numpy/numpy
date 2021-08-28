@@ -1211,7 +1211,7 @@ def polyvander3d(x, y, z, deg):
     return pu._vander_nd_flat((polyvander, polyvander, polyvander), (x, y, z), deg)
 
 
-def polyfit(x, y, deg, rcond=None, full=False, w=None):
+def polyfit(x, y, deg=1, rcond=None, full=False, w=None):
     """
     Least-squares fit of a polynomial to data.
 
