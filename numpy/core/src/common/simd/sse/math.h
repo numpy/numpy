@@ -143,4 +143,14 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return npyv_select_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
+// copysign
+NPY_FINLINE npyv_f32 npyv_copysign_f32(npyv_f32 a, npyv_f32 b)
+{
+    return _mm_or_ps(a, _mm_and_ps(b, _mm_set1_ps(-0.0)));
+}
+NPY_FINLINE npyv_f64 npyv_copysign_f64(npyv_f64 a, npyv_f64 b)
+{
+    return _mm_or_pd(a, _mm_and_pd(b, _mm_set1_pd(-0.0)));
+}
+
 #endif // _NPY_SIMD_SSE_MATH_H

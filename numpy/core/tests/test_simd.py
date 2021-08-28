@@ -415,6 +415,16 @@ class _SIMD_FP(_Test_Utility):
         nnan = self.notnan(self.setall(self._nan()))
         assert nnan == [0]*self.nlanes
 
+    def test_copysign(self):
+        data_a = self._data()
+        data_b = self._data(reverse=True)
+        vdata_a = self.load(data_a)
+        vdata_b = self.load(data_b)
+
+        data_copysign = [math.copysign(a, b) for a, b in zip(data_a, data_b)]
+        vcopysign = self.copysign(vdata_a, vdata_b)
+        assert vcopysign == data_copysign
+
 class _SIMD_ALL(_Test_Utility):
     """
     To test all vector types at once

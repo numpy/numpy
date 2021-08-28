@@ -395,7 +395,7 @@ SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 
 #if @fp_only@
 /**begin repeat1
- * #intrin = maxp, minp#
+ * #intrin = maxp, minp, copysign#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -629,7 +629,7 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 
 #if @fp_only@
 /**begin repeat1
- * #intrin = maxp, minp#
+ * #intrin = maxp, minp, copysign#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/

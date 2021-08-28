@@ -321,4 +321,14 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
 NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
 { return _mm512_cmp_pd_mask(a, a, _CMP_ORD_Q); }
 
+// copysign
+NPY_FINLINE npyv_f32 npyv_copysign_f32(npyv_f32 a, npyv_f32 b)
+{
+    return npyv_or_f32(a, npyv_and_f32(b, _mm512_set1_ps(-0.0)));
+}
+NPY_FINLINE npyv_f64 npyv_copysign_f64(npyv_f64 a, npyv_f64 b)
+{
+    return npyv_or_f64(a, npyv_and_f64(b, _mm512_set1_pd(-0.0)));
+}
+
 #endif // _NPY_SIMD_AVX512_OPERATORS_H

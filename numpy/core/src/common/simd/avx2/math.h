@@ -105,4 +105,14 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return _mm256_blendv_epi8(a, b, _mm256_cmpgt_epi64(a, b));
 }
 
+// copysign
+NPY_FINLINE npyv_f32 npyv_copysign_f32(npyv_f32 a, npyv_f32 b)
+{
+    return _mm256_or_ps(a, _mm256_and_ps(b, _mm256_set1_ps(-0.0)));
+}
+NPY_FINLINE npyv_f64 npyv_copysign_f64(npyv_f64 a, npyv_f64 b)
+{
+    return _mm256_or_pd(a, _mm256_and_pd(b, _mm256_set1_pd(-0.0)));
+}
+
 #endif // _NPY_SIMD_AVX2_MATH_H

@@ -112,6 +112,9 @@ class CustomInplace(Benchmark):
 
     def time_double_add_temp(self):
         1. + self.d + 1.
+    
+    def time_copysign(self):
+        np.copysign(self.d, self.d)
 
 
 class CustomScalar(Benchmark):
@@ -165,7 +168,6 @@ class Scalar(Benchmark):
 
     def time_add_scalar_conv_complex(self):
         (self.y + self.z)
-
 
 class ArgPack:
     __slots__ = ['args', 'kwargs']

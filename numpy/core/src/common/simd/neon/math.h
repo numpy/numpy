@@ -153,4 +153,16 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
+// copysign
+NPY_FINLINE npyv_f32 npyv_copysign_f32(npyv_f32 a, npyv_f32 b)
+{
+    return vreinterpretq_f32_u32(vorrq_u32(vreinterpretq_u32_f32(a), vandq_u32(vreinterpretq_u32_f32(b), vdupq_n_u32(0x80000000))));
+}
+#if NPY_SIMD_F64
+    NPY_FINLINE npyv_f64 npyv_copysign_f64(npyv_f64 a, npyv_f64 b)
+    {
+        return vreinterpretq_f64_u64(vorrq_u64(vreinterpretq_u64_f64(a), vandq_u64(vreinterpretq_u64_f64(b), vdupq_n_u64(0x8000000000000000))));
+    }
+#endif
+
 #endif // _NPY_SIMD_NEON_MATH_H
