@@ -291,9 +291,8 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         False
         """))
 
-# XXX Neat way to get all names. Same as TODO above.
-for int_name in ('ubyte', 'ushort', 'uint', 'ulonglong',
-                 'byte', 'short', 'int', 'long', 'longlong'):
+for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+        'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
     add_newdoc('numpy.core.numerictypes', int_name, ('bit_count',
         """
         {int_name}.bit_count() -> int
