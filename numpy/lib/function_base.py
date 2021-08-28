@@ -697,6 +697,12 @@ def select(condlist, choicelist, default=0):
     condlist = np.broadcast_arrays(*condlist)
     choicelist = np.broadcast_arrays(*choicelist)
 
+    #Convert conditions to BooleanDtype to numpy bool
+    try:
+        condlist = [i.astype(bool) for i in condlist]
+    except :
+        raise TypeError
+
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
     for i, cond in enumerate(condlist):
         if cond.dtype.type is not np.bool_:
