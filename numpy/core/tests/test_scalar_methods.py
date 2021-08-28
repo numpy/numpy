@@ -183,3 +183,21 @@ def test_class_getitem_38(cls: Type[np.number]) -> None:
     match = "Type subscription requires python >= 3.9"
     with pytest.raises(TypeError, match=match):
         cls[Any]
+
+
+class TestBitCount:
+    # derived in part from the cpython test "test_bit_count"
+
+    @pytest.mark.parametrize("itype", np.sctypes['int']+np.sctypes['uint'])
+    def test_small(self, itype):
+        for a in range(max(np.iinfo(itype).min, 0), 128):
+            msg = f"Smoke test for {itype}.bit_count({a})"
+            assert itype(a).bit_count() == bin(a).count("1"), msg
+
+    def test_bit_count(self):
+        for exp in [10, 17, 63]:
+            a = 2**exp
+            assert np.uint64(a).bit_count() == 1
+            assert np.uint64(a - 1).bit_count() == exp
+            assert np.uint64(a ^ 63).bit_count() == 7
+            assert np.uint64((a - 1) ^ 510).bit_count() == exp - 8
