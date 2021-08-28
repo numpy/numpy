@@ -245,7 +245,6 @@ for c in "abcdefghopqrstuvwxyz$_":
     defaultimplicitrules[c] = {'typespec': 'real'}
 for c in "ijklmn":
     defaultimplicitrules[c] = {'typespec': 'integer'}
-del c
 badnames = {}
 invbadnames = {}
 for n in ['int', 'double', 'float', 'char', 'short', 'long', 'void', 'case', 'while',
@@ -3357,7 +3356,8 @@ def crack2fortran(block):
 """
     footer = """
 ! This file was auto-generated with f2py (version:%s).
-! See http://cens.ioc.ee/projects/f2py2e/
+! See:
+! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e
 """ % (f2py_version)
     return header + pyf + footer
 

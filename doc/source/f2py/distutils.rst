@@ -66,12 +66,12 @@ Extensions to ``distutils``
 * When building Python packages containing Fortran sources, one
   can choose different Fortran compilers by using the ``build_ext``
   command option ``--fcompiler=<Vendor>``. Here ``<Vendor>`` can be one of the
-  following names::
+  following names (on ``linux`` systems)::
 
-    absoft sun mips intel intelv intele intelev nag compaq compaqv gnu vast pg hpux
+    absoft compaq fujitsu g95 gnu gnu95 intel intele intelem lahey nag nagfor nv pathf95 pg vast
 
   See ``numpy_distutils/fcompiler.py`` for an up-to-date list of
-  supported compilers or run
+  supported compilers for different platforms, or run
 
   ::
 
