@@ -17,7 +17,7 @@ Indexing on :class:`ndarrays <.ndarray>`
 :class:`ndarrays <ndarray>` can be indexed using the standard Python
 ``x[obj]`` syntax, where *x* is the array and *obj* the selection.
 There are different kinds of indexing available depending on *obj*:
-basic slicing, advanced indexing and field access.
+basic indexing, advanced indexing and field access.
 
 Most of the following examples show the use of indexing when
 referencing data in an array. The examples work just as well
@@ -29,9 +29,9 @@ Note that in Python, ``x[(exp1, exp2, ..., expN)]`` is equivalent to
 for the former.
 
 
-.. _basic-slicing-and-indexing:
+.. _basic-indexing:
 
-Basic slicing and indexing
+Basic indexing
 --------------------------
 
 .. _single-element-indexing:
@@ -518,7 +518,7 @@ boolean index has *exactly* as many dimensions as it is supposed to work
 with.
 
 In general, when the boolean array has fewer dimensions than the array being
-indexed, this is equivalent to ``x[b, …]``, which means x is indexed by b
+indexed, this is equivalent to ``x[b, ...]``, which means x is indexed by b
 followed by as many ``:`` as are needed to fill out the rank of x. Thus the
 shape of the result is one dimension containing the number of True elements of
 the boolean array, followed by the remaining dimensions of the array being
@@ -613,7 +613,7 @@ then the behaviour can be more complicated. It is like concatenating the
 indexing result for each advanced index element.
 
 In the simplest case, there is only a *single* advanced index combined with
-a slice. For example:
+a slice. For example::
 
     >>> y = np.arange(35).reshape(5,7)
     >>> y[np.array([0, 2, 4]), 1:3]
