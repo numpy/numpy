@@ -214,13 +214,15 @@ gentype_multiply(PyObject *m1, PyObject *m2)
  * #type    = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *            npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #c       = hh, uhh, h, uh,, u, l, ul, ll, ull#
+ * #Name    = Byte, UByte, Short, UShort, Int, UInt,
+ *            Long, ULong, LongLong, ULongLong#
  * #convert = Long*8, LongLong*2#
  */
 static PyObject *
 @type@_bit_count(PyObject *self)
 {
-    @type@ scalar = (@type@) PyLong_As@convert@(self);
-    @type@ count = npy_popcount@c@(scalar);
+    @type@ scalar = PyArrayScalar_VAL(self, @Name@);
+    uint8_t count = npy_popcount@c@(scalar);
     PyObject *result = PyLong_From@convert@(count);
 
     return result;

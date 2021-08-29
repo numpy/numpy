@@ -191,7 +191,7 @@ class TestBitCount:
     @pytest.mark.parametrize("itype", np.sctypes['int']+np.sctypes['uint'])
     def test_small(self, itype):
         for a in range(max(np.iinfo(itype).min, 0), 128):
-            msg = f"Smoke test for {itype}.bit_count({a})"
+            msg = f"Smoke test for {itype}({a}).bit_count()"
             assert itype(a).bit_count() == bin(a).count("1"), msg
 
     def test_bit_count(self):

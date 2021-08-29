@@ -856,10 +856,10 @@ npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
 /**end repeat1**/
 #endif
 
-NPY_INPLACE npy_@type@
+NPY_INPLACE uint8_t
 npy_popcountu@c@(npy_@type@ a)
 {
-#if ((defined(__clang__) || defined(__GNUC__))) && NPY_BITSOF_@STYPE@ >= 32
+#if (defined(__clang__) || defined(__GNUC__)) && NPY_BITSOF_@STYPE@ >= 32
     return __builtin_popcount@c@(a);
 #elif defined(_MSC_VER) && NPY_BITSOF_@STYPE@ >= 16
     /* no builtin __popcnt64 for 32 bits, so use our implementation */
@@ -880,7 +880,7 @@ npy_popcountu@c@(npy_@type@ a)
  * #type = byte, short, int, long, longlong#
  * #c    = hh,   h,     ,    l,    ll#
  */
-NPY_INPLACE npy_@type@
+NPY_INPLACE uint8_t
 npy_popcount@c@(npy_@type@ a)
 {
     /* Return popcount of abs(a) */
