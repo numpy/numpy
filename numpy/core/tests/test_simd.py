@@ -415,6 +415,22 @@ class _SIMD_FP(_Test_Utility):
         nnan = self.notnan(self.setall(self._nan()))
         assert nnan == [0]*self.nlanes
 
+    def test_deg2rad(self):
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        data = self._data()
+        vdata = self.load(self._data())
+
+        deg2rad_cases = ((-0.0, -0.0), (0.0, 0.0), (nan, nan), 
+        (pinf, pinf), (ninf, ninf))
+        for case, desired in deg2rad_cases:
+            data_deg2rad = [desired]*self.nlanes
+            deg2rad = self.deg2rad(self.setall(case))
+            assert deg2rad == pytest.approx(data_deg2rad, nan_ok=True)
+
+        data_deg2rad = self.load([x*math.pi/180 for x in data])
+        deg2rad = self.deg2rad(vdata)
+        assert deg2rad == pytest.approx(data_deg2rad, nan_ok=True)
+
 class _SIMD_ALL(_Test_Utility):
     """
     To test all vector types at once

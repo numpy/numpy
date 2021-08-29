@@ -105,4 +105,10 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return _mm256_blendv_epi8(a, b, _mm256_cmpgt_epi64(a, b));
 }
 
+// deg2rad
+NPY_FINLINE npyv_f32 npyv_deg2rad_f32(npyv_f32 a)
+{ return _mm256_div_ps(_mm256_mul_ps(a, _mm256_set1_ps(3.141592653589793238462643383279502884)), _mm256_set1_ps(180)); }
+NPY_FINLINE npyv_f64 npyv_deg2rad_f64(npyv_f64 a)
+{ return _mm256_div_pd(_mm256_mul_pd(a, _mm256_set1_pd(3.141592653589793238462643383279502884)), _mm256_set1_pd(180)); }
+
 #endif // _NPY_SIMD_AVX2_MATH_H

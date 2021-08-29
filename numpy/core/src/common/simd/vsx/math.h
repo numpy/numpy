@@ -69,4 +69,10 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_min_u64 vec_min
 #define npyv_min_s64 vec_min
 
+// deg2rad
+NPY_FINLINE npyv_f32 npyv_deg2rad_f32(npyv_f32 a)
+{ return npyv_div_f32(npyv_mul_f32(a, npyv_setall_f32(3.141592653589793238462643383279502884)), npyv_setall_f32(180)); }
+NPY_FINLINE npyv_f64 npyv_deg2rad_f64(npyv_f64 a)
+{ return npyv_div_f64(npyv_mul_f64(a, npyv_setall_f64(3.141592653589793238462643383279502884)), npyv_setall_f64(180)); }
+
 #endif // _NPY_SIMD_VSX_MATH_H

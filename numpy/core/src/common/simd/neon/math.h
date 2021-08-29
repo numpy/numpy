@@ -153,4 +153,10 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
+// deg2rad
+NPY_FINLINE npyv_f32 npyv_deg2rad_f32(npyv_f32 a)
+{ return npyv_div_f32(npyv_mul_f32(a, vdupq_n_f32(3.141592653589793238462643383279502884)), vdupq_n_f32(180)); }
+NPY_FINLINE npyv_f64 npyv_deg2rad_f64(npyv_f64 a)
+{ return npyv_div_f64(npyv_mul_f64(a, vdupq_n_f64(3.141592653589793238462643383279502884)), vdupq_n_f64(180)); }
+
 #endif // _NPY_SIMD_NEON_MATH_H

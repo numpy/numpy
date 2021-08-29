@@ -112,4 +112,10 @@ NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
 #define npyv_min_u64 _mm512_min_epu64
 #define npyv_min_s64 _mm512_min_epi64
 
+// deg2rad
+NPY_FINLINE npyv_f32 npyv_deg2rad_f32(npyv_f32 a)
+{ return _mm512_div_ps(_mm512_mul_ps(a, _mm512_set1_ps(3.141592653589793238462643383279502884)), _mm512_set1_ps(180)); }
+NPY_FINLINE npyv_f64 npyv_deg2rad_f64(npyv_f64 a)
+{ return _mm512_div_pd(_mm512_mul_pd(a, _mm512_set1_pd(3.141592653589793238462643383279502884)), _mm512_set1_pd(180)); }
+
 #endif // _NPY_SIMD_AVX512_MATH_H
