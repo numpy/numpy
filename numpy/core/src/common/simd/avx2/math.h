@@ -4,6 +4,9 @@
 
 #ifndef _NPY_SIMD_AVX2_MATH_H
 #define _NPY_SIMD_AVX2_MATH_H
+
+#include "operators.h"
+
 /***************************
  * Elementary
  ***************************/
@@ -103,6 +106,20 @@ NPY_FINLINE npyv_u64 npyv_min_u64(npyv_u64 a, npyv_u64 b)
 NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 {
     return _mm256_blendv_epi8(a, b, _mm256_cmpgt_epi64(a, b));
+}
+
+// heaviside
+NPY_FINLINE npyv_f32 npyv_heaviside_f32(npyv_f32 a, npyv_f32 b)
+{
+    npyv_s32 not_a = _mm256_xor_si256(_mm256_castps_si256(a), _mm256_set1_epi32(-1));
+    npyv_f32 not_zero_ret_val = _mm256_castsi256_ps(_mm256_and_si256(npyv_shri_s32(not_a, 8), _mm256_set1_epi32(0x3F800000)));
+    return _mm256_blendv_ps(not_zero_ret_val, b, _mm256_castsi256_ps(npyv_cmpeq_f32(a, npyv_setall_f32(0.0))));
+}
+NPY_FINLINE npyv_f64 npyv_heaviside_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_s64 not_a = _mm256_xor_si256(_mm256_castpd_si256(a), _mm256_set1_epi64x(-1));
+    npyv_f64 not_zero_ret_val = _mm256_castsi256_pd(_mm256_and_si256(npyv_shri_s64(not_a, 11), _mm256_set1_epi64x(0x3FF0000000000000)));
+    return _mm256_blendv_pd(not_zero_ret_val, b, _mm256_castsi256_pd(npyv_cmpeq_f64(a, npyv_setall_f64(0.0))));
 }
 
 #endif // _NPY_SIMD_AVX2_MATH_H

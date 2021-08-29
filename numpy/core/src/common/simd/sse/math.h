@@ -4,6 +4,9 @@
 
 #ifndef _NPY_SIMD_SSE_MATH_H
 #define _NPY_SIMD_SSE_MATH_H
+
+#include "misc.h"
+
 /***************************
  * Elementary
  ***************************/
@@ -141,6 +144,20 @@ NPY_FINLINE npyv_u64 npyv_min_u64(npyv_u64 a, npyv_u64 b)
 NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 {
     return npyv_select_s64(npyv_cmplt_s64(a, b), a, b);
+}
+
+// heaviside
+NPY_FINLINE npyv_f32 npyv_heaviside_f32(npyv_f32 a, npyv_f32 b)
+{
+    npyv_s32 not_a = _mm_xor_si128(_mm_castps_si128(a), _mm_set1_epi32(-1));
+    npyv_f32 not_zero_ret_val = _mm_castsi128_ps(_mm_and_si128(_mm_srai_epi32(not_a, 8), _mm_set1_epi32(0x3F800000)));
+    return npyv_select_f32((npyv_cmpeq_f32(a, _mm_set1_ps(0.0))), b, not_zero_ret_val);
+}
+NPY_FINLINE npyv_f64 npyv_heaviside_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_s64 not_a = _mm_xor_si128(_mm_castpd_si128(a), _mm_set1_epi64x(-1));
+    npyv_f64 not_zero_ret_val = _mm_castsi128_pd(_mm_and_si128(npyv_shri_s64(not_a, 11), _mm_set1_epi64x(0x3FF0000000000000))); 
+    return npyv_select_f64((npyv_cmpeq_f64(a, npyv_setall_f64(0.0))), b, not_zero_ret_val);
 }
 
 #endif // _NPY_SIMD_SSE_MATH_H

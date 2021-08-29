@@ -4,6 +4,9 @@
 
 #ifndef _NPY_SIMD_VSX_MATH_H
 #define _NPY_SIMD_VSX_MATH_H
+
+#include "misc.h"
+
 /***************************
  * Elementary
  ***************************/
@@ -68,5 +71,19 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_min_s32 vec_min
 #define npyv_min_u64 vec_min
 #define npyv_min_s64 vec_min
+
+// heaviside
+NPY_FINLINE npyv_f32 npyv_heaviside_f32(npyv_f32 a, npyv_f32 b)
+{
+    npyv_s32 not_a = (npyv_s32)npyv_not_f32((a));
+    npyv_f32 not_zero_ret_val = (npyv_f32)(vec_and(npyv_shri_s32(not_a, 8), npyv_setall_s32(0x3F800000)));
+    return npyv_select_f32(npyv_cmpeq_f32(a, npyv_setall_f32(0.0)), b, not_zero_ret_val); 
+}
+NPY_FINLINE npyv_f64 npyv_heaviside_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_s64 not_a = (npyv_s64)npyv_not_f64((a));
+    npyv_f64 not_zero_ret_val = (npyv_f64)(vec_and(npyv_shri_s64(not_a, 11), npyv_setall_s64(0x3FF0000000000000)));
+    return npyv_select_f64(npyv_cmpeq_f32(a, npyv_setall_f64(0.0)), b, not_zero_ret_val); 
+}
 
 #endif // _NPY_SIMD_VSX_MATH_H

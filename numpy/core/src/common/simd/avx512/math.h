@@ -5,6 +5,8 @@
 #ifndef _NPY_SIMD_AVX512_MATH_H
 #define _NPY_SIMD_AVX512_MATH_H
 
+#include "operators.h"
+
 /***************************
  * Elementary
  ***************************/
@@ -111,5 +113,19 @@ NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
 #define npyv_min_s32 _mm512_min_epi32
 #define npyv_min_u64 _mm512_min_epu64
 #define npyv_min_s64 _mm512_min_epi64
+
+// heaviside
+NPY_FINLINE npyv_f32 npyv_heaviside_f32(npyv_f32 a, npyv_f32 b)
+{
+    npyv_s32 not_a = npyv_xor_s32(_mm512_castps_si512(a), _mm512_set1_epi32(-1));
+    npyv_f32 not_zero_ret_val = _mm512_castsi512_ps(_mm512_and_si512(npyv_shri_s32(not_a, 8), _mm512_set1_epi32(0x3F800000)));
+    return _mm512_mask_blend_ps(npyv_cmpeq_f32(a, npyv_setall_f32(0.0)), not_zero_ret_val, b); 
+}
+NPY_FINLINE npyv_f64 npyv_heaviside_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_s64 not_a = npyv_xor_s64(_mm512_castpd_si512(a), _mm512_set1_epi64(-1));
+    npyv_f64 not_zero_ret_val = _mm512_castsi512_pd(_mm512_and_si512(npyv_shri_s64(not_a, 11), _mm512_set1_epi64(0x3FF0000000000000)));
+    return _mm512_mask_blend_pd(npyv_cmpeq_f64(a, npyv_setall_f64(0.0)), not_zero_ret_val, b); 
+}
 
 #endif // _NPY_SIMD_AVX512_MATH_H
