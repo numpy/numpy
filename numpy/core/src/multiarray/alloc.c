@@ -440,11 +440,33 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
     return result;
 }
 
+/* Similar to array_dealloc in arrayobject.c */
+static NPY_INLINE void
+WARN_IN_FREE(PyObject* warning, const char * msg) {
+    if (PyErr_WarnEx(warning, msg, 1) < 0) {
+        PyObject * s;
+
+        s = PyUnicode_FromString("PyDataMem_UserFREE");
+        if (s) {
+            PyErr_WriteUnraisable(s);
+            Py_DECREF(s);
+        }
+        else {
+            PyErr_WriteUnraisable(Py_None);
+        }
+    }
+}
+
+
+
 NPY_NO_EXPORT void
 PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
 {
     PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
     if (handler == NULL) {
+        WARN_IN_FREE(PyExc_RuntimeWarning,
+                     "Could not get pointer to 'mem_handler' from PyCapsule");
+        PyErr_Clear();
         return;
     }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
