@@ -134,8 +134,7 @@ class TestClog:
         x = np.array([1+0j, 1+2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        assert_almost_equal(y, y_r)
 
     @platform_skip
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
@@ -365,8 +364,7 @@ class TestCpow:
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = x ** 2
         y = np.power(x, 2)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        assert_almost_equal(y, y_r)
 
     def test_scalar(self):
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
@@ -419,8 +417,7 @@ class TestCabs:
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
         y = np.abs(x)
-        for i in range(len(x)):
-            assert_almost_equal(y[i], y_r[i])
+        assert_almost_equal(y, y_r)
 
     def test_fabs(self):
         # Test that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
@@ -466,9 +463,10 @@ class TestCabs:
             return np.abs(complex(a, b))
 
         xa = np.array(x, dtype=complex)
-        for i in range(len(xa)):
-            ref = g(x[i], y[i])
-            check_real_value(f, x[i], y[i], ref)
+        assert len(xa) == len(x) == len(y)
+        for xi, yi in zip(x, y):
+            ref = g(xi, yi)
+            check_real_value(f, xi, yi, ref)
 
 class TestCarg:
     def test_simple(self):
