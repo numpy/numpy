@@ -2053,14 +2053,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
          * Allocation will never be 0, see comment in ctors.c
          * line 820
          */
-        PyDataMem_Handler *handler = PyArray_HANDLER(self);
+        PyObject *handler = PyArray_HANDLER(self);
         if (handler == NULL) {
             /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
             PyErr_SetString(PyExc_RuntimeError,
                             "no memory handler found but OWNDATA flag set");
             return NULL;
         }
-        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, &handler->allocator);
+        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
@@ -2105,13 +2105,15 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_RETURN_NONE;
             }
             /* Store the handler in case the default is modified */
-            fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler();
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = PyDataMem_GetHandler();
             if (fa->mem_handler == NULL) {
                 Py_DECREF(rawdata);
                 return NULL;
             }
-            fa->data = PyDataMem_UserNEW(num, &PyArray_HANDLER(fa)->allocator);
+            fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
             if (PyArray_DATA(self) == NULL) {
+                Py_DECREF(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -2148,6 +2150,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
         else {
             /* The handlers should never be called in this case */
+            Py_XDECREF(fa->mem_handler);
             fa->mem_handler = NULL;
             fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
@@ -2163,12 +2166,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_RETURN_NONE;
         }
         /* Store the functions in case the default handler is modified */
-        fa->mem_handler = (PyDataMem_Handler *) PyDataMem_GetHandler();
+        Py_XDECREF(fa->mem_handler);
+        fa->mem_handler = PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
             return NULL;
         }
-        fa->data = PyDataMem_UserNEW(num, &PyArray_HANDLER(fa)->allocator);
+        fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
         if (PyArray_DATA(self) == NULL) {
+            Py_DECREF(fa->mem_handler);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2177,6 +2182,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
         fa->base = NULL;
         if (_setlist_pkl(self, rawdata) < 0) {
+            Py_DECREF(fa->mem_handler);
             return NULL;
         }
     }

@@ -77,7 +77,7 @@ reallocate or free the data memory of the instance.
             void (*free) (void *ctx, void *ptr, size_t size);
         } PyDataMemAllocator;
 
-.. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
+.. c:function:: PyObject * PyDataMem_SetHandler(PyObject *handler)
 
    Set a new allocation policy. If the input value is ``NULL``, will reset the
    policy to the default. Return the previous policy, or
@@ -85,7 +85,7 @@ reallocate or free the data memory of the instance.
    so they will still call the python and numpy memory management callback
    hooks.
     
-.. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler()
+.. c:function:: PyObject * PyDataMem_GetHandler()
 
    Return the current policy that will be used to allocate data for the
    next ``PyArrayObject``. On failure, return ``NULL``.

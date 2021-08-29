@@ -501,7 +501,8 @@ array_dealloc(PyArrayObject *self)
         if (nbytes == 0) {
             nbytes = fa->descr->elsize ? fa->descr->elsize : 1;
         }
-        PyDataMem_UserFREE(fa->data, nbytes, &fa->mem_handler->allocator);
+        PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
+        Py_DECREF(fa->mem_handler);
     }
 
     /* must match allocation in PyArray_NewFromDescr */
