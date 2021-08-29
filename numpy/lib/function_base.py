@@ -697,7 +697,7 @@ def select(condlist, choicelist, default=0):
     condlist = np.broadcast_arrays(*condlist)
     choicelist = np.broadcast_arrays(*choicelist)
 
-    #Convert conditions to BooleanDtype to numpy bool
+    #Convert condlist array datatype from BooleanDtype to numpy bool
     try:
         condlist = [i.astype(bool) for i in condlist]
     except :
