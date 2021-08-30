@@ -29,10 +29,8 @@ Note that in Python, ``x[(exp1, exp2, ..., expN)]`` is equivalent to
 for the former.
 
 
-.. _basic-indexing:
-
 Basic indexing
---------------------------
+--------------
 
 .. _single-element-indexing:
 
