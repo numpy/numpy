@@ -12,4 +12,4 @@ cffi
 # - Mypy relies on C API features not present in PyPy
 # - There is no point in installing typing_extensions without mypy
 mypy==0.910; platform_python_implementation != "PyPy"
-typing_extensions==3.10.0.0; platform_python_implementation != "PyPy"
+typing_extensions==3.10.0.1; platform_python_implementation != "PyPy"
