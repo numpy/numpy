@@ -111,15 +111,27 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 // heaviside
 NPY_FINLINE npyv_f32 npyv_heaviside_f32(npyv_f32 a, npyv_f32 b)
 {
-    npyv_s32 not_a = _mm256_xor_si256(_mm256_castps_si256(a), _mm256_set1_epi32(-1));
-    npyv_f32 not_zero_ret_val = _mm256_castsi256_ps(_mm256_and_si256(npyv_shri_s32(not_a, 8), _mm256_set1_epi32(0x3F800000)));
-    return _mm256_blendv_ps(not_zero_ret_val, b, _mm256_castsi256_ps(npyv_cmpeq_f32(a, npyv_setall_f32(0.0))));
+    npyv_f32 zeros = npyv_setall_f32(0.0);
+    npyv_f32 ones = npyv_setall_f32(1.0);
+    npyv_f32 lt_zero = _mm256_cmp_ps(a, zeros, _CMP_LT_OQ);
+    npyv_f32 gt_zero = _mm256_cmp_ps(a, zeros, _CMP_GT_OQ);
+    npyv_f32 eq_zero = _mm256_cmp_ps(a, zeros, _CMP_EQ_OQ);
+    npyv_f32 lt_zero_res = npyv_and_f32(lt_zero, zeros);
+    npyv_f32 gt_zero_res = npyv_and_f32(gt_zero, ones);
+    npyv_f32 eq_zero_res = npyv_and_f32(eq_zero, b);
+    return npyv_or_f32(lt_zero_res, npyv_or_f32(gt_zero_res, eq_zero_res));
 }
 NPY_FINLINE npyv_f64 npyv_heaviside_f64(npyv_f64 a, npyv_f64 b)
 {
-    npyv_s64 not_a = _mm256_xor_si256(_mm256_castpd_si256(a), _mm256_set1_epi64x(-1));
-    npyv_f64 not_zero_ret_val = _mm256_castsi256_pd(_mm256_and_si256(npyv_shri_s64(not_a, 11), _mm256_set1_epi64x(0x3FF0000000000000)));
-    return _mm256_blendv_pd(not_zero_ret_val, b, _mm256_castsi256_pd(npyv_cmpeq_f64(a, npyv_setall_f64(0.0))));
+    npyv_f64 zeros = npyv_setall_f64(0.0);
+    npyv_f64 ones = npyv_setall_f64(1.0);
+    npyv_f64 lt_zero = _mm256_cmp_pd(a, zeros, _CMP_LT_OQ);
+    npyv_f64 gt_zero = _mm256_cmp_pd(a, zeros, _CMP_GT_OQ);
+    npyv_f64 eq_zero = _mm256_cmp_pd(a, zeros, _CMP_EQ_OQ);
+    npyv_f64 lt_zero_res = npyv_and_f64(lt_zero, zeros);
+    npyv_f64 gt_zero_res = npyv_and_f64(gt_zero, ones);
+    npyv_f64 eq_zero_res = npyv_and_f64(eq_zero, b);
+    return npyv_or_f64(lt_zero_res, npyv_or_f64(gt_zero_res, eq_zero_res));
 }
 
 #endif // _NPY_SIMD_AVX2_MATH_H
