@@ -1,13 +1,7 @@
-import sys
-from typing import overload, Tuple, Union, Sequence, Any
+from typing import overload, Tuple, Union, Sequence, Any, SupportsIndex, Literal
 
 from numpy import ndarray
 from numpy.typing import ArrayLike, DTypeLike, _SupportsArray, _NumberLike_co
-
-if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, Literal
-else:
-    from typing_extensions import SupportsIndex, Literal
 
 # TODO: wait for support for recursive types
 _ArrayLikeNested = Sequence[Sequence[Any]]

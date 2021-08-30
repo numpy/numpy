@@ -3,6 +3,7 @@ import sys
 import zipfile
 import types
 from typing import (
+    Literal as L,
     Any,
     Mapping,
     TypeVar,
@@ -16,6 +17,7 @@ from typing import (
     Sequence,
     Callable,
     Pattern,
+    Protocol,
 )
 
 from numpy import (
@@ -35,8 +37,6 @@ from numpy.core.multiarray import (
     packbits as packbits,
     unpackbits as unpackbits,
 )
-
-from typing_extensions import Protocol, Literal as L
 
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)

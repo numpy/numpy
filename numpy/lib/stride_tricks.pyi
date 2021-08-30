@@ -1,5 +1,4 @@
-from typing import Any, List, Dict, Iterable, TypeVar, overload
-from typing_extensions import SupportsIndex
+from typing import Any, List, Dict, Iterable, TypeVar, overload, SupportsIndex
 
 from numpy import dtype, generic
 from numpy.typing import (

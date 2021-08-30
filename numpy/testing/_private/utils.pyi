@@ -6,6 +6,7 @@ import warnings
 import unittest
 import contextlib
 from typing import (
+    Literal as L,
     Any,
     AnyStr,
     Callable,
@@ -23,6 +24,8 @@ from typing import (
     type_check_only,
     TypeVar,
     Union,
+    Final,
+    SupportsIndex,
 )
 
 from numpy import generic, dtype, number, object_, bool_, _FloatValue
@@ -39,11 +42,6 @@ from numpy.typing import (
 from unittest.case import (
     SkipTest as SkipTest,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Final, SupportsIndex, Literal as L
-else:
-    from typing_extensions import Final, SupportsIndex, Literal as L
 
 _T = TypeVar("_T")
 _ET = TypeVar("_ET", bound=BaseException)

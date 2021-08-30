@@ -14,6 +14,8 @@ from typing import (
     overload,
     Tuple,
     TypeVar,
+    Literal,
+    SupportsIndex,
 )
 
 from numpy import ufunc, _CastingKind, _OrderKACF
@@ -23,8 +25,6 @@ from ._shape import _ShapeLike
 from ._scalars import _ScalarLike_co
 from ._array_like import ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co
 from ._dtype_like import DTypeLike
-
-from typing_extensions import Literal, SupportsIndex
 
 _T = TypeVar("_T")
 _2Tuple = Tuple[_T, _T]

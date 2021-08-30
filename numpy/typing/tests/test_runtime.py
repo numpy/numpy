@@ -3,17 +3,11 @@
 from __future__ import annotations
 
 import sys
-from typing import get_type_hints, Union, Tuple, NamedTuple
+from typing import get_type_hints, Union, Tuple, NamedTuple, get_args, get_origin
 
 import pytest
 import numpy as np
 import numpy.typing as npt
-
-try:
-    from typing_extensions import get_args, get_origin
-    SKIP = False
-except ImportError:
-    SKIP = True
 
 
 class TypeTup(NamedTuple):
@@ -36,7 +30,6 @@ TYPES = {
 
 
 @pytest.mark.parametrize("name,tup", TYPES.items(), ids=TYPES.keys())
-@pytest.mark.skipif(SKIP, reason="requires typing-extensions")
 def test_get_args(name: type, tup: TypeTup) -> None:
     """Test `typing.get_args`."""
     typ, ref = tup.typ, tup.args
@@ -45,7 +38,6 @@ def test_get_args(name: type, tup: TypeTup) -> None:
 
 
 @pytest.mark.parametrize("name,tup", TYPES.items(), ids=TYPES.keys())
-@pytest.mark.skipif(SKIP, reason="requires typing-extensions")
 def test_get_origin(name: type, tup: TypeTup) -> None:
     """Test `typing.get_origin`."""
     typ, ref = tup.typ, tup.origin

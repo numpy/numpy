@@ -5,13 +5,6 @@ Typing (:mod:`numpy.typing`)
 
 .. versionadded:: 1.20
 
-.. warning::
-
-  Some of the types in this module rely on features only present in
-  the standard library in Python 3.8 and greater. If you want to use
-  these types in earlier versions of Python, you should install the
-  typing-extensions_ package.
-
 Large parts of the NumPy API have PEP-484-style type annotations. In
 addition a number of type aliases are available to users, most prominently
 the two below:
@@ -143,24 +136,7 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from typing import TYPE_CHECKING, List, Any
-
-if TYPE_CHECKING:
-    # typing_extensions is always available when type-checking
-    from typing_extensions import Literal as L
-    _HAS_TYPING_EXTENSIONS: L[True]
-else:
-    try:
-        import typing_extensions
-    except ImportError:
-        _HAS_TYPING_EXTENSIONS = False
-    else:
-        _HAS_TYPING_EXTENSIONS = True
-
-if TYPE_CHECKING:
-    from typing_extensions import final
-else:
-    def final(f): return f
+from typing import TYPE_CHECKING, List, Any, final
 
 if not TYPE_CHECKING:
     __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
