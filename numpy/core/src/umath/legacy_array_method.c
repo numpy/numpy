@@ -142,7 +142,7 @@ simple_legacy_resolve_descriptors(
         }
     }
 
-    return NPY_SAFE_CASTING;
+    return NPY_NO_CASTING;
 
   fail:
     for (int i = 0; i < nin + nout; i++) {
@@ -244,7 +244,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         .dtypes = signature,
         .flags = flags,
         .slots = slots,
-        .casting = NPY_EQUIV_CASTING,
+        .casting = NPY_NO_CASTING,
     };
 
     PyBoundArrayMethodObject *bound_res = PyArrayMethod_FromSpec_int(&spec, 1);

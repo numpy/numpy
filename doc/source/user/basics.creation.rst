@@ -59,8 +59,8 @@ in overflow. This feature can often be misunderstood. If you
 perform calculations with mismatching ``dtypes``, you can get unwanted
 results,  for example::
 
-    >>> a = array([2, 3, 4], dtype = np.uint32)
-    >>> b = array([5, 6, 7], dtype = np.uint32)
+    >>> a = np.array([2, 3, 4], dtype=np.uint32)
+    >>> b = np.array([5, 6, 7], dtype=np.uint32)
     >>> c_unsigned32 = a - b
     >>> print('unsigned c:', c_unsigned32, c_unsigned32.dtype)
     unsigned c: [4294967293 4294967293 4294967293] uint32
@@ -296,7 +296,7 @@ There are a number of routines to join existing arrays e.g. :func:`numpy.vstack`
 arrays into a 4-by-4 array using ``block``::
 
  >>> A = np.ones((2, 2))
- >>> B = np.eye((2, 2))
+ >>> B = np.eye(2, 2)
  >>> C = np.zeros((2, 2))
  >>> D = np.diag((-3, -4))
  >>> np.block([[A, B], 
