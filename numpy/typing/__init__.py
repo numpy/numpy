@@ -5,13 +5,6 @@ Typing (:mod:`numpy.typing`)
 
 .. versionadded:: 1.20
 
-.. warning::
-
-  Some of the types in this module rely on features only present in
-  the standard library in Python 3.8 and greater. If you want to use
-  these types in earlier versions of Python, you should install the
-  typing-extensions_ package.
-
 Large parts of the NumPy API have PEP-484-style type annotations. In
 addition a number of type aliases are available to users, most prominently
 the two below:
