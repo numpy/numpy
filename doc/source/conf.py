@@ -2,6 +2,13 @@
 import os
 import re
 import sys
+import sphinx.environment
+from docutils.utils import get_source_line
+
+def _warn_node(self, msg, node):
+    if not msg.startswitch(' '):
+        self.warnfun(msg, '%s:%s' % get_source_line(node))
+sphinx.environment.BuildEnvironment.warn_node = warn_node
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '3.2.0'
