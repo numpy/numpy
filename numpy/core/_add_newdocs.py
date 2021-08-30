@@ -6079,6 +6079,36 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 
     """))
 
+if sys.version_info >= (3, 9):
+    add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
+        """
+        __class_getitem__(item, /)
+
+        Return a parametrized wrapper around the `~numpy.dtype` type.
+
+        .. versionadded:: 1.22
+
+        Returns
+        -------
+        alias : types.GenericAlias
+            A parametrized `~numpy.dtype` type.
+
+        Examples
+        --------
+        >>> import numpy as np
+
+        >>> np.dtype[np.int64]
+        numpy.dtype[numpy.int64]
+
+        Note
+        ----
+        This method is only available for python 3.9 and later.
+
+        See Also
+        --------
+        :pep:`585` : Type hinting generics in standard collections.
+
+        """))
 
 ##############################################################################
 #

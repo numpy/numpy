@@ -4,6 +4,8 @@ import pytest
 import ctypes
 import gc
 import warnings
+import types
+from typing import Any
 
 import numpy as np
 from numpy.core._rational_tests import rational
@@ -111,9 +113,9 @@ class TestBuiltin:
     @pytest.mark.parametrize("dtype",
              ['Bool', 'Bytes0', 'Complex32', 'Complex64',
               'Datetime64', 'Float16', 'Float32', 'Float64',
-              'Int8', 'Int16', 'Int32', 'Int64', 
+              'Int8', 'Int16', 'Int32', 'Int64',
               'Object0', 'Str0', 'Timedelta64',
-              'UInt8', 'UInt16', 'Uint32', 'UInt32', 
+              'UInt8', 'UInt16', 'Uint32', 'UInt32',
               'Uint64', 'UInt64', 'Void0',
               "Float128", "Complex128"])
     def test_numeric_style_types_are_invalid(self, dtype):
@@ -1549,3 +1551,18 @@ class TestUserDType:
             # Tests that a dtype must have its type field set up to np.dtype
             # or in this case a builtin instance.
             create_custom_field_dtype(blueprint, mytype, 2)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
+class TestClassGetItem:
+    def test_dtype(self) -> None:
+        alias = np.dtype[Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is np.dtype
+
+    @pytest.mark.parametrize("code", np.typecodes["All"])
+    def test_dtype_subclass(self, code: str) -> None:
+        cls = type(np.dtype(code))
+        alias = cls[Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is cls

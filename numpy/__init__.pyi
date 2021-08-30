@@ -1091,6 +1091,9 @@ class dtype(Generic[_DTypeScalar_co]):
         copy: bool = ...,
     ) -> dtype[object_]: ...
 
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(self, item: Any) -> GenericAlias: ...
+
     @overload
     def __getitem__(self: dtype[void], key: List[str]) -> dtype[void]: ...
     @overload
