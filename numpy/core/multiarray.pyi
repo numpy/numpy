@@ -306,7 +306,8 @@ def ravel_multi_index(
 
 @overload
 def concatenate(  # type: ignore[misc]
-    __arrays: _ArrayLike[_SCT],
+    arrays: _ArrayLike[_SCT],
+    /,
     axis: Optional[SupportsIndex] = ...,
     out: None = ...,
     *,
@@ -315,7 +316,8 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    __arrays: ArrayLike,
+    arrays: ArrayLike,
+    /,
     axis: Optional[SupportsIndex] = ...,
     out: None = ...,
     *,
@@ -324,7 +326,8 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    __arrays: ArrayLike,
+    arrays: ArrayLike,
+    /,
     axis: Optional[SupportsIndex] = ...,
     out: None = ...,
     *,
@@ -333,7 +336,8 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    __arrays: ArrayLike,
+    arrays: ArrayLike,
+    /,
     axis: Optional[SupportsIndex] = ...,
     out: None = ...,
     *,
@@ -342,7 +346,8 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(
-    __arrays: ArrayLike,
+    arrays: ArrayLike,
+    /,
     axis: Optional[SupportsIndex] = ...,
     out: _ArrayType = ...,
     *,
@@ -351,19 +356,22 @@ def concatenate(
 ) -> _ArrayType: ...
 
 def inner(
-    __a: ArrayLike,
-    __b: ArrayLike,
+    a: ArrayLike,
+    b: ArrayLike,
+    /,
 ) -> Any: ...
 
 @overload
 def where(
-    __condition: ArrayLike,
+    condition: ArrayLike,
+    /,
 ) -> Tuple[NDArray[intp], ...]: ...
 @overload
 def where(
-    __condition: ArrayLike,
-    __x: ArrayLike,
-    __y: ArrayLike,
+    condition: ArrayLike,
+    x: ArrayLike,
+    y: ArrayLike,
+    /,
 ) -> NDArray[Any]: ...
 
 def lexsort(
@@ -378,7 +386,7 @@ def can_cast(
 ) -> bool: ...
 
 def min_scalar_type(
-    __a: ArrayLike,
+    a: ArrayLike, /,
 ) -> dtype[Any]: ...
 
 def result_type(
@@ -391,24 +399,25 @@ def dot(a: ArrayLike, b: ArrayLike, out: None = ...) -> Any: ...
 def dot(a: ArrayLike, b: ArrayLike, out: _ArrayType) -> _ArrayType: ...
 
 @overload
-def vdot(__a: _ArrayLikeBool_co, __b: _ArrayLikeBool_co) -> bool_: ...  # type: ignore[misc]
+def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> bool_: ...  # type: ignore[misc]
 @overload
-def vdot(__a: _ArrayLikeUInt_co, __b: _ArrayLikeUInt_co) -> unsignedinteger[Any]: ...  # type: ignore[misc]
+def vdot(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co, /) -> unsignedinteger[Any]: ...  # type: ignore[misc]
 @overload
-def vdot(__a: _ArrayLikeInt_co, __b: _ArrayLikeInt_co) -> signedinteger[Any]: ... # type: ignore[misc]
+def vdot(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /) -> signedinteger[Any]: ... # type: ignore[misc]
 @overload
-def vdot(__a: _ArrayLikeFloat_co, __b: _ArrayLikeFloat_co) -> floating[Any]: ...  # type: ignore[misc]
+def vdot(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, /) -> floating[Any]: ...  # type: ignore[misc]
 @overload
-def vdot(__a: _ArrayLikeComplex_co, __b: _ArrayLikeComplex_co) -> complexfloating[Any, Any]: ...  # type: ignore[misc]
+def vdot(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, /) -> complexfloating[Any, Any]: ...  # type: ignore[misc]
 @overload
-def vdot(__a: _ArrayLikeTD64_co, __b: _ArrayLikeTD64_co) -> timedelta64: ...
+def vdot(a: _ArrayLikeTD64_co, b: _ArrayLikeTD64_co, /) -> timedelta64: ...
 @overload
-def vdot(__a: _ArrayLikeObject_co, __b: Any) -> Any: ...
+def vdot(a: _ArrayLikeObject_co, b: Any, /) -> Any: ...
 @overload
-def vdot(__a: Any, __b: _ArrayLikeObject_co) -> Any: ...
+def vdot(a: Any, b: _ArrayLikeObject_co, /) -> Any: ...
 
 def bincount(
-    __x: ArrayLike,
+    x: ArrayLike,
+    /,
     weights: Optional[ArrayLike] = ...,
     minlength: SupportsIndex = ...,
 ) -> NDArray[intp]: ...
@@ -427,27 +436,31 @@ def putmask(
 ) -> None: ...
 
 def packbits(
-    __a: _ArrayLikeInt_co,
+    a: _ArrayLikeInt_co,
+    /,
     axis: Optional[SupportsIndex] = ...,
     bitorder: L["big", "little"] = ...,
 ) -> NDArray[uint8]: ...
 
 def unpackbits(
-    __a: _ArrayLike[uint8],
+    a: _ArrayLike[uint8],
+    /,
     axis: Optional[SupportsIndex] = ...,
     count: Optional[SupportsIndex] = ...,
     bitorder: L["big", "little"] = ...,
 ) -> NDArray[uint8]: ...
 
 def shares_memory(
-    __a: object,
-    __b: object,
+    a: object,
+    b: object,
+    /,
     max_work: Optional[int] = ...,
 ) -> bool: ...
 
 def may_share_memory(
-    __a: object,
-    __b: object,
+    a: object,
+    b: object,
+    /,
     max_work: Optional[int] = ...,
 ) -> bool: ...
 
@@ -586,7 +599,7 @@ def asfortranarray(
 # In practice `List[Any]` is list with an int, int and a valid
 # `np.seterrcall()` object
 def geterrobj() -> List[Any]: ...
-def seterrobj(__errobj: List[Any]) -> None: ...
+def seterrobj(errobj: List[Any], /) -> None: ...
 
 def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype[Any]: ...
 
@@ -620,7 +633,7 @@ def fromstring(
 ) -> NDArray[Any]: ...
 
 def frompyfunc(
-    __func: Callable[..., Any],
+    func: Callable[..., Any], /,
     nin: SupportsIndex,
     nout: SupportsIndex,
     *,
@@ -705,8 +718,8 @@ def frombuffer(
 
 @overload
 def arange(  # type: ignore[misc]
-    __stop: _IntLike_co,
-    *,
+    stop: _IntLike_co,
+    /, *,
     dtype: None = ...,
     like: ArrayLike = ...,
 ) -> NDArray[signedinteger[Any]]: ...
@@ -721,8 +734,8 @@ def arange(  # type: ignore[misc]
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
-    __stop: _FloatLike_co,
-    *,
+    stop: _FloatLike_co,
+    /, *,
     dtype: None = ...,
     like: ArrayLike = ...,
 ) -> NDArray[floating[Any]]: ...
@@ -737,8 +750,8 @@ def arange(  # type: ignore[misc]
 ) -> NDArray[floating[Any]]: ...
 @overload
 def arange(
-    __stop: _TD64Like_co,
-    *,
+    stop: _TD64Like_co,
+    /, *,
     dtype: None = ...,
     like: ArrayLike = ...,
 ) -> NDArray[timedelta64]: ...
@@ -762,8 +775,8 @@ def arange(  # both start and stop must always be specified for datetime64
 ) -> NDArray[datetime64]: ...
 @overload
 def arange(
-    __stop: Any,
-    *,
+    stop: Any,
+    /, *,
     dtype: _DTypeLike[_SCT],
     like: ArrayLike = ...,
 ) -> NDArray[_SCT]: ...
@@ -778,7 +791,7 @@ def arange(
 ) -> NDArray[_SCT]: ...
 @overload
 def arange(
-    __stop: Any,
+    stop: Any, /,
     *,
     dtype: DTypeLike,
     like: ArrayLike = ...,
@@ -794,7 +807,7 @@ def arange(
 ) -> NDArray[Any]: ...
 
 def datetime_data(
-    __dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64],
+    dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64], /,
 ) -> Tuple[str, int]: ...
 
 # The datetime functions perform unsafe casts to `datetime64[D]`,
@@ -945,7 +958,7 @@ def compare_chararrays(
     rstrip: bool,
 ) -> NDArray[bool_]: ...
 
-def add_docstring(__obj: Callable[..., Any], __docstring: str) -> None: ...
+def add_docstring(obj: Callable[..., Any], docstring: str, /) -> None: ...
 
 _GetItemKeys = L[
     "C", "CONTIGUOUS", "C_CONTIGUOUS",

@@ -26,7 +26,7 @@ _FuncType = TypeVar("_FuncType", bound=Callable[..., Any])
 
 # A file-like object opened in `w` mode
 class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, __s: _T_contra) -> Any: ...
+    def write(self, s: _T_contra, /) -> Any: ...
 
 __all__: List[str]
 
@@ -55,7 +55,8 @@ def deprecate(
 ) -> _Deprecate: ...
 @overload
 def deprecate(
-    __func: _FuncType,
+    func: _FuncType,
+    /,
     old_name: Optional[str] = ...,
     new_name: Optional[str] = ...,
     message: Optional[str] = ...,

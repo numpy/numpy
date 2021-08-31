@@ -24,10 +24,11 @@ _SCT = TypeVar("_SCT", bound=generic)
 class _ModeFunc(Protocol):
     def __call__(
         self,
-        __vector: NDArray[Any],
-        __iaxis_pad_width: Tuple[int, int],
-        __iaxis: int,
-        __kwargs: Dict[str, Any],
+        vector: NDArray[Any],
+        iaxis_pad_width: Tuple[int, int],
+        iaxis: int,
+        kwargs: Dict[str, Any],
+        /,
     ) -> None: ...
 
 _ModeKind = L[

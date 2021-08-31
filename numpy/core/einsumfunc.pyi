@@ -46,7 +46,8 @@ __all__: List[str]
 # Something like `is_scalar = bool(__subscripts.partition("->")[-1])`
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeBool_co,
     out: None = ...,
     dtype: Optional[_DTypeLikeBool] = ...,
@@ -56,7 +57,8 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeUInt_co,
     out: None = ...,
     dtype: Optional[_DTypeLikeUInt] = ...,
@@ -66,7 +68,8 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeInt_co,
     out: None = ...,
     dtype: Optional[_DTypeLikeInt] = ...,
@@ -76,7 +79,8 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeFloat_co,
     out: None = ...,
     dtype: Optional[_DTypeLikeFloat] = ...,
@@ -86,7 +90,8 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeComplex_co,
     out: None = ...,
     dtype: Optional[_DTypeLikeComplex] = ...,
@@ -96,7 +101,8 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: Any,
     casting: _CastingUnsafe,
     dtype: Optional[_DTypeLikeComplex_co] = ...,
@@ -106,7 +112,8 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeComplex_co,
     out: _ArrayType,
     dtype: Optional[_DTypeLikeComplex_co] = ...,
@@ -116,7 +123,8 @@ def einsum(
 ) -> _ArrayType: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: Any,
     out: _ArrayType,
     casting: _CastingUnsafe,
@@ -130,7 +138,8 @@ def einsum(
 # NOTE: In practice the list consists of a `str` (first element)
 # and a variable number of integer tuples.
 def einsum_path(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeComplex_co,
     optimize: _OptimizeKind = ...,
 ) -> Tuple[List[Any], str]: ...

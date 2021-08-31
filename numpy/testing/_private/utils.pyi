@@ -259,8 +259,9 @@ def raises(*args: Type[BaseException]) -> Callable[[_FT], _FT]: ...
 
 @overload
 def assert_raises(  # type: ignore
-    __expected_exception: Type[BaseException] | Tuple[Type[BaseException], ...],
-    __callable: Callable[..., Any],
+    expected_exception: Type[BaseException] | Tuple[Type[BaseException], ...],
+    callable: Callable[..., Any],
+    /,
     *args: Any,
     **kwargs: Any,
 ) -> None: ...
@@ -273,9 +274,10 @@ def assert_raises(
 
 @overload
 def assert_raises_regex(
-    __expected_exception: Type[BaseException] | Tuple[Type[BaseException], ...],
-    __expected_regex: str | bytes | Pattern[Any],
-    __callable: Callable[..., Any],
+    expected_exception: Type[BaseException] | Tuple[Type[BaseException], ...],
+    expected_regex: str | bytes | Pattern[Any],
+    callable: Callable[..., Any],
+    /,
     *args: Any,
     **kwargs: Any,
 ) -> None: ...
@@ -339,8 +341,9 @@ def assert_warns(
 ) -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_warns(
-    __warning_class: Type[Warning],
-    __func: Callable[..., _T],
+    warning_class: Type[Warning],
+    func: Callable[..., _T],
+    /,
     *args: Any,
     **kwargs: Any,
 ) -> _T: ...
@@ -349,7 +352,8 @@ def assert_warns(
 def assert_no_warnings() -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_no_warnings(
-    __func: Callable[..., _T],
+    func: Callable[..., _T],
+    /,
     *args: Any,
     **kwargs: Any,
 ) -> _T: ...
@@ -386,7 +390,8 @@ def temppath(
 def assert_no_gc_cycles() -> contextlib._GeneratorContextManager[None]: ...
 @overload
 def assert_no_gc_cycles(
-    __func: Callable[..., Any],
+    func: Callable[..., Any],
+    /,
     *args: Any,
     **kwargs: Any,
 ) -> None: ...
