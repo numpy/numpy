@@ -178,7 +178,11 @@ html: version-check html-build
 html-build: generate
 	mkdir -p build/html build/doctrees
 	$(PYTHON) preprocess.py
+ifeq (, $(shell which $(DOXYGEN)))
+	@echo "Unable to find 'Doxygen:$(DOXYGEN)', skip generating C/C++ API from comment blocks."
+else
 	$(DOXYGEN) build/doxygen/Doxyfile
+endif
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
 	@echo
