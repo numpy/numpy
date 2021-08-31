@@ -11,6 +11,3 @@ cffi
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 mypy==0.910; platform_python_implementation != "PyPy"
-
-# TODO: Remove once 3.10.0.2 has been released (xref python/typing#865)
-typing_extensions==3.10.0.0; python_version == '3.10'
