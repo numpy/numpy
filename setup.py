@@ -411,7 +411,8 @@ def setup_package():
         python_requires='>=3.8',
         zip_safe=False,
         entry_points={
-            'console_scripts': f2py_cmds
+            'console_scripts': f2py_cmds,
+            'array_api': ['numpy = numpy.array_api'],
         },
     )
 
