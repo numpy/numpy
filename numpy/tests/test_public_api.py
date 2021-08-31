@@ -458,3 +458,19 @@ def test_api_importable():
         raise AssertionError("Modules that are not really public but looked "
                              "public and can not be imported: "
                              "{}".format(module_names))
+
+
+def test_array_api_entry_point():
+    """
+    Entry point for Array API implementation can be found with importlib and
+    returns the numpy.array_api namespace.
+    """
+    from numpy import array_api
+
+    eps = importlib.metadata.entry_points()
+    assert "array_api" in eps.keys()
+    xp_eps = eps["array_api"]
+    assert "numpy" in (ep.name for ep in xp_eps)
+    ep = next(ep for ep in xp_eps if ep.name == "numpy")
+    xp = importlib.import_module(ep.value)
+    assert xp is array_api
