@@ -241,11 +241,15 @@ add_newdoc_for_scalar_type('timedelta64', [],
     """)
 
 add_newdoc('numpy.core.numerictypes', "integer", ('is_integer',
-    f"""
+    """
     integer.is_integer() -> bool
 
     Return ``True`` if the number is finite with integral value.
 
+    .. versionadded:: 1.22
+
+    Examples
+    --------
     >>> np.int64(-2).is_integer()
     True
     >>> np.uint32(5).is_integer()

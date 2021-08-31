@@ -1,8 +1,8 @@
 ``is_integer`` is now available to `numpy.floating` and `numpy.integer`
 -----------------------------------------------------------------------
-Based on its counterpart in `float` and `int, the numpy floating point and
-integer types types now support `~float.is_integer`. Returns ``True`` if the
-floating point number is finite with integral value, and ``False`` otherwise.
+Based on its counterpart in `float` and `int`, the numpy floating point and
+integer types now support `~float.is_integer`. Returns ``True`` if the
+number is finite with integral value, and ``False`` otherwise.
 
 .. code-block:: python
 
