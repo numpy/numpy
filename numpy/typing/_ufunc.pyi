@@ -105,8 +105,9 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
 
     def at(
         self,
-        __a: NDArray[Any],
-        __indices: _ArrayLikeInt_co,
+        a: NDArray[Any],
+        indices: _ArrayLikeInt_co,
+        /,
     ) -> None: ...
 
 class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
@@ -158,9 +159,10 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
 
     def at(
         self,
-        __a: NDArray[Any],
-        __indices: _ArrayLikeInt_co,
-        __b: ArrayLike,
+        a: NDArray[Any],
+        indices: _ArrayLikeInt_co,
+        b: ArrayLike,
+        /,
     ) -> None: ...
 
     def reduce(
@@ -195,9 +197,9 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
     @overload
     def outer(
         self,
-        __A: _ScalarLike_co,
-        __B: _ScalarLike_co,
-        *,
+        A: _ScalarLike_co,
+        B: _ScalarLike_co,
+        /, *,
         out: None = ...,
         where: None | _ArrayLikeBool_co = ...,
         casting: _CastingKind = ...,
@@ -210,9 +212,9 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
     @overload
     def outer(  # type: ignore[misc]
         self,
-        __A: ArrayLike,
-        __B: ArrayLike,
-        *,
+        A: ArrayLike,
+        B: ArrayLike,
+        /, *,
         out: None | NDArray[Any] | Tuple[NDArray[Any]] = ...,
         where: None | _ArrayLikeBool_co = ...,
         casting: _CastingKind = ...,

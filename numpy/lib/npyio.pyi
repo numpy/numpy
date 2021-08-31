@@ -80,9 +80,10 @@ class NpzFile(Mapping[str, NDArray[Any]]):
     def __enter__(self: _T) -> _T: ...
     def __exit__(
         self,
-        __exc_type: None | Type[BaseException],
-        __exc_value: None | BaseException,
-        __traceback: None | types.TracebackType,
+        exc_type: None | Type[BaseException],
+        exc_value: None | BaseException,
+        traceback: None | types.TracebackType,
+        /,
     ) -> None: ...
     def close(self) -> None: ...
     def __del__(self) -> None: ...

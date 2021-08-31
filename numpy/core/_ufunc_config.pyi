@@ -4,7 +4,7 @@ _ErrKind = Literal["ignore", "warn", "raise", "call", "print", "log"]
 _ErrFunc = Callable[[str, int], Any]
 
 class _SupportsWrite(Protocol):
-    def write(self, __msg: str) -> Any: ...
+    def write(self, msg: str, /) -> Any: ...
 
 class _ErrDict(TypedDict):
     divide: _ErrKind
