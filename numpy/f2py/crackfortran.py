@@ -2645,7 +2645,8 @@ def analyzevars(block):
             # initialization expressions.
             n_deps = vars[n].get('depend', [])
             n_checks = []
-            n_is_input = l_or(isintent_in, isintent_inout, isintent_inplace)(vars[n])
+            n_is_input = l_or(isintent_in, isintent_inout,
+                              isintent_inplace)(vars[n])
             if 'dimension' in vars[n]:  # n is array
                 ni = len(vars[n]['dimension'])  # array dimensionality
                 for i, d in enumerate(vars[n]['dimension']):
@@ -2658,9 +2659,9 @@ def analyzevars(block):
                         # may define variables used in dimension
                         # specifications.
                         for v, (solver, deps) in coeffs_and_deps.items():
-                            if (v in n_deps
-                                or '=' in vars[v]
-                                or 'depend' in vars[v]):
+                            if ((v in n_deps
+                                 or '=' in vars[v]
+                                 or 'depend' in vars[v])):
                                 # Skip a variable that
                                 # - n depends on
                                 # - has user-defined initialization expression
