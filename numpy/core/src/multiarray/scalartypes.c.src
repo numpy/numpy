@@ -1937,6 +1937,11 @@ static PyObject *
 }
 /**end repeat**/
 
+static PyObject *
+integer_is_integer(PyObject *self) {
+    Py_RETURN_TRUE;
+}
+
 /*
  * need to fill in doc-strings for these methods on import -- copy from
  * array docstrings
@@ -2195,7 +2200,7 @@ static PyMethodDef @name@type_methods[] = {
 /**end repeat**/
 
 /**begin repeat
- * #name = integer,floating, complexfloating#
+ * #name = floating, complexfloating#
  */
 static PyMethodDef @name@type_methods[] = {
     /* Hook for the round() builtin */
@@ -2205,6 +2210,17 @@ static PyMethodDef @name@type_methods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 /**end repeat**/
+
+static PyMethodDef integertype_methods[] = {
+    /* Hook for the round() builtin */
+    {"__round__",
+        (PyCFunction)integertype_dunder_round,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"is_integer",
+        (PyCFunction)integer_is_integer,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
 
 /**begin repeat
  * #name = half,float,double,longdouble#

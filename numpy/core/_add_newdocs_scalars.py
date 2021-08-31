@@ -240,6 +240,18 @@ add_newdoc_for_scalar_type('timedelta64', [],
     See :ref:`arrays.datetime` for more information.
     """)
 
+add_newdoc('numpy.core.numerictypes', "integer", ('is_integer',
+    f"""
+    integer.is_integer() -> bool
+
+    Return ``True`` if the number is finite with integral value.
+
+    >>> np.int64(-2).is_integer()
+    True
+    >>> np.uint32(5).is_integer()
+    True
+    """))
+
 # TODO: work out how to put this on the base class, np.floating
 for float_name in ('half', 'single', 'double', 'longdouble'):
     add_newdoc('numpy.core.numerictypes', float_name, ('as_integer_ratio',
