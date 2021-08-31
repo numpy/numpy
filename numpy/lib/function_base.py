@@ -11,14 +11,14 @@ from numpy.core.numeric import (
     ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
     ndarray, around, floor, ceil, take, dot, where, intp,
     integer, isscalar, absolute
-    )
+)
 from numpy.core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
     mod, exp, not_equal, subtract
-    )
+)
 from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
-    )
+)
 from numpy.core.numerictypes import typecodes
 from numpy.core.overrides import set_module
 from numpy.core import overrides
@@ -27,7 +27,7 @@ from numpy.lib.twodim_base import diag
 from numpy.core.multiarray import (
     _insert, add_docstring, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
-    )
+)
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 
 import builtins
@@ -49,7 +49,7 @@ __all__ = [
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
     'quantile'
-    ]
+]
 
 
 def _rot90_dispatcher(m, k=None, axes=None):
@@ -124,9 +124,9 @@ def rot90(m, k=1, axes=(0, 1)):
         raise ValueError("Axes must be different.")
 
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
-        or axes[1] >= m.ndim or axes[1] < -m.ndim):
+            or axes[1] >= m.ndim or axes[1] < -m.ndim):
         raise ValueError("Axes={} out of range for array of ndim={}."
-            .format(axes, m.ndim))
+                         .format(axes, m.ndim))
 
     k %= 4
 
@@ -1080,7 +1080,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2. * ax_dx)
+            out[tuple(slice1)] = (f[tuple(slice4)] -
+                                  f[tuple(slice2)]) / (2. * ax_dx)
         else:
             dx1 = ax_dx[0:-1]
             dx2 = ax_dx[1:]
@@ -1092,7 +1093,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             shape[axis] = -1
             a.shape = b.shape = c.shape = shape
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * \
+                f[tuple(slice3)] + c * f[tuple(slice4)]
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
@@ -1127,7 +1129,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * \
+                f[tuple(slice3)] + c * f[tuple(slice4)]
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1144,7 +1147,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * \
+                f[tuple(slice3)] + c * f[tuple(slice4)]
 
         outvals.append(out)
 
@@ -1258,7 +1262,8 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     a = asanyarray(a)
     nd = a.ndim
     if nd == 0:
-        raise ValueError("diff requires input that is at least one dimensional")
+        raise ValueError(
+            "diff requires input that is at least one dimensional")
     axis = normalize_axis_index(axis, nd)
 
     combined = []
@@ -2113,6 +2118,7 @@ class vectorize:
            [0., 0., 0., 1., 2., 1.]])
 
     """
+
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
         self.pyfunc = pyfunc
@@ -3124,7 +3130,7 @@ def hamming(M):
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
 
-## Code from cephes for i0
+# Code from cephes for i0
 
 _i0A = [
     -4.41534164647933937950E-18,
@@ -3157,7 +3163,7 @@ _i0A = [
     1.71620901522208775349E-1,
     -3.04682672343198398683E-1,
     6.76795274409476084995E-1
-    ]
+]
 
 _i0B = [
     -7.23318048787475395456E-18,
@@ -3185,7 +3191,7 @@ _i0B = [
     6.88975834691682398426E-5,
     3.36911647825569408990E-3,
     8.04490411014108831608E-1
-    ]
+]
 
 
 def _chbevl(x, vals):
@@ -3271,7 +3277,7 @@ def i0(x):
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 
-## End of cephes code for i0
+# End of cephes code for i0
 
 
 @set_module('numpy')
@@ -4019,7 +4025,7 @@ def _lerp(a, b, t, out=None):
     diff_b_a = subtract(b, a)
     # asanyarray is a stop-gap until gh-13105
     lerp_interpolation = asanyarray(add(a, diff_b_a*t, out=out))
-    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t>=0.5)
+    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
@@ -4114,7 +4120,8 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             n = np.array(False, dtype=bool)
 
         weights_shape = indices.shape + (1,) * (ap.ndim - 1)
-        weights_above = not_scalar(indices - indices_below).reshape(weights_shape)
+        weights_above = not_scalar(
+            indices - indices_below).reshape(weights_shape)
 
         x_below = take(ap, indices_below, axis=0)
         x_above = take(ap, indices_above, axis=0)
@@ -4385,6 +4392,68 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     return output
 
 
+def rotateMeshgrid(xspan, yspan, angle=0.0, boolRad=True):
+    """Returns a new array which is rotated according to angle given.
+    Parameters
+    ----------
+    xspan : Input_array 
+          range of values of x in unrotated matrix.
+    yspan : Input_array 
+          range of values of y in unrotated matrix.
+    angle : float or int
+          Angle of rotation, positive for clockwise rotation, negative 
+          for anti-clockwise rotation.
+    boolRad : bool 
+            True if given angle is in Radians, False if given angle is 
+            in Degrees.
+
+    Returns
+    -------
+    out : ndarray
+        A new nested array generated by Einstein Summation after rotation is applied.
+
+    Examples
+    --------
+    >>> xspan = np.linspace(-2*np.pi, 2*np.pi, 3)
+    >>> yspan = np.linspace(-2*np.pi, 2*np.pi, 3)
+    >>> arr = np.rotateMeshgrid(xspan,yspan,0.4)
+    >>> arr
+    array([[[-6.32689674, -0.04386455,  6.23916764],
+        [-6.28303219,  0.        ,  6.28303219],
+        [-6.23916764,  0.04386455,  6.32689674]],
+
+       [[-6.23916764, -6.28303219, -6.32689674],
+        [ 0.04386455,  0.        , -0.04386455],
+        [ 6.32689674,  6.28303219,  6.23916764]]])
+
+    >>> arr = np.rotateMeshgrid(xspan,yspan,80,False)
+    >>> arr
+    array([[[ 6.9383701 ,  6.24478659,  5.55120308],
+        [ 0.69358351,  0.        , -0.69358351],
+        [-5.55120308, -6.24478659, -6.9383701 ]],
+
+       [[-5.55120308,  0.69358351,  6.9383701 ],
+        [-6.24478659,  0.        ,  6.24478659],
+        [-6.9383701 , -0.69358351,  5.55120308]]])
+    """
+
+    # Only boolRad and angle type is required to be checked as xspan and yspan
+    # will be checked in meshgrid function itself for any errors.
+    if type(boolRad) is not bool:
+        raise TypeError("Type of argument boolRad is not bool")
+    if (type(angle) is not float) and (type(angle) is not int):
+        raise TypeError("Type of argument angle is not float neither int")
+
+    angle = float(angle)
+    if boolRad == True:
+        angle = np.deg2rad(angle)
+
+    RotMatrix = np.array([[np.cos(angle),  np.sin(angle)],
+                         [-np.sin(angle), np.cos(angle)]])
+    x, y = np.meshgrid(xspan, yspan)
+    return np.einsum('ji, mni -> jmn', RotMatrix, np.dstack([x, y]))
+
+
 def _delete_dispatcher(arr, obj, axis=None):
     return (arr, obj)
 
@@ -4559,7 +4628,7 @@ def delete(arr, obj, axis=None):
             keep = ~obj
         else:
             keep = ones(N, dtype=bool)
-            keep[obj,] = False
+            keep[obj, ] = False
 
         slobj[axis] = keep
         new = arr[tuple(slobj)]
@@ -4700,7 +4769,7 @@ def insert(arr, obj, values, axis=None):
                 "integer", FutureWarning, stacklevel=3)
             indices = indices.astype(intp)
             # Code after warning period:
-            #if obj.ndim != 1:
+            # if obj.ndim != 1:
             #    raise ValueError('boolean array argument obj to insert '
             #                     'must be one dimensional')
             #indices = np.flatnonzero(obj)
