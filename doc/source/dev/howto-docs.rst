@@ -235,26 +235,21 @@ existing non-indexed comment blocks.
 .. note::
    Please see `"Documenting the code" <https://www.doxygen.nl/manual/docblocks.html>`__.
 
-This is what Javadoc style looks like::
+**This is what Javadoc style looks like**:
 
-  /**
-   * Your brief is here.
-   */
-  void function(void);
+.. literalinclude:: examples/doxy_func.h
 
-For line comment, insert a triple forward slash::
+**And here is how it is rendered**:
 
-  /// Your brief is here.
-  void function(void);
+.. doxygenfunction:: doxy_javadoc_example
 
-And for structured data members, just insert triple forward slash and less-than sign::
+**For line comment, you can use a triple forward slash. For example**:
 
-  /// Data type brief description
-  typedef struct {
-      int member_1; ///< Member 1 description.
-      int member_2; ///< Member 2 description.
-  } data_type;
+.. literalinclude:: examples/doxy_class.hpp
 
+**And here is how it is rendered**:
+
+.. doxygenclass:: DoxyLimbo
 
 Common Doxygen Tags:
 ++++++++++++++++++++
@@ -298,11 +293,11 @@ Starts/Ends a block of reST markup.
 
 Example
 ~~~~~~~
-Take a look at the following example:
+**Take a look at the following example**:
 
 .. literalinclude:: examples/doxy_rst.h
 
-And here is how it is rendered:
+**And here is how it is rendered**:
 
 .. doxygenfunction:: doxy_reST_example
 
