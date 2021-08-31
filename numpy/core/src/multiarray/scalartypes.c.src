@@ -1908,6 +1908,34 @@ error:
 }
 /**end repeat**/
 
+/**begin repeat
+ *  #name = half, float, double, longdouble#
+ *  #Name = Half, Float, Double, LongDouble#
+ *  #is_half = 1,0,0,0#
+ *  #c    = f, f, , l#
+ */
+static PyObject *
+@name@_is_integer(PyObject *self)
+{
+#if @is_half@
+    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
+#else
+    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
+#endif
+    PyObject *o;
+
+    if (npy_isnan(val)) {
+        Py_RETURN_FALSE;
+    }
+    if (!npy_isfinite(val)) {
+        Py_RETURN_FALSE;
+    }
+
+    o = (npy_floor@c@(val) == val) ? Py_True : Py_False;
+    Py_INCREF(o);
+    return o;
+}
+/**end repeat**/
 
 /*
  * need to fill in doc-strings for these methods on import -- copy from
@@ -2184,6 +2212,9 @@ static PyMethodDef @name@type_methods[] = {
 static PyMethodDef @name@type_methods[] = {
     {"as_integer_ratio",
         (PyCFunction)@name@_as_integer_ratio,
+        METH_NOARGS, NULL},
+    {"is_integer",
+        (PyCFunction)@name@_is_integer,
         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
