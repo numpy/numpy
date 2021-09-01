@@ -481,7 +481,7 @@ def test_array_api_entry_point():
     except StopIteration:
         raise AssertionError("'numpy' not in array_api entry points") from None
 
-    xp = importlib.import_module(ep.value)
+    xp = ep.load()
     msg = (
         f"numpy entry point value '{ep.value}' "
         "does not point to our Array API implementation"
