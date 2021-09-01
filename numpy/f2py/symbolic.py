@@ -103,7 +103,7 @@ class ExprWarning(UserWarning):
     pass
 
 
-def warn(message):
+def ewarn(message):
     warnings.warn(message, ExprWarning, stacklevel=2)
 
 
@@ -489,7 +489,7 @@ class Expr:
         if not isinstance(index, tuple):
             index = index,
         if len(index) > 1:
-            warn(f'C-index should be a single expression but got `{index}`')
+            ewarn(f'C-index should be a single expression but got `{index}`')
         return Expr(Op.INDEXING, (self,) + index)
 
     def substitute(self, symbols_map):
@@ -525,8 +525,8 @@ class Expr:
                 else:
                     r += term.substitute(symbols_map) * coeff
             if r is None:
-                warn('substitute: empty TERMS expression interpreted as'
-                     ' int-literal 0')
+                ewarn('substitute: empty TERMS expression interpreted as'
+                      ' int-literal 0')
                 return as_number(0)
             return r
         if self.op is Op.FACTORS:
@@ -537,8 +537,8 @@ class Expr:
                 else:
                     r *= base.substitute(symbols_map) ** exponent
             if r is None:
-                warn('substitute: empty FACTORS expression interpreted'
-                     ' as int-literal 1')
+                ewarn('substitute: empty FACTORS expression interpreted'
+                      ' as int-literal 1')
                 return as_number(1)
             return r
         if self.op is Op.APPLY:
@@ -1260,5 +1260,5 @@ def _fromstring_worker(s, dummy=None):
         # f2py special dummy name
         return as_symbol(r)
 
-    warn(f'fromstring: treating {r!r} as symbol')
+    ewarn(f'fromstring: treating {r!r} as symbol')
     return as_symbol(r)
