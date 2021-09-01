@@ -205,6 +205,12 @@ class Expr:
             return self.data < other.data
         return NotImplemented
 
+    def __le__(self, other): return self == other or self < other
+
+    def __gt__(self, other): return not (self <= other)
+
+    def __ge__(self, other): return not (self < other)
+
     def __repr__(self):
         return f'{type(self).__name__}({self.op}, {self.data!r})'
 
@@ -354,7 +360,7 @@ class Expr:
                     return normalize(r)
             if self.op is Op.COMPLEX and other.op in (Op.INTEGER, Op.REAL):
                 return self + as_complex(other)
-            elif self.op is (Op.INTEGER, Op.REAL) and other.op is Op.COMPLEX:
+            elif self.op in (Op.INTEGER, Op.REAL) and other.op is Op.COMPLEX:
                 return as_complex(self) + other
             elif self.op is Op.REAL and other.op is Op.INTEGER:
                 return self + as_real(other, kind=self.data[1])

@@ -2415,7 +2415,8 @@ def _eval_scalar(value, params):
     if _is_kind_number(value):
         value = value.split('_')[0]
     try:
-        value = str(eval(value, {}, params))
+        value = eval(value, {}, params)
+        value = (repr if isinstance(value, str) else str)(value)
     except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
@@ -2614,10 +2615,6 @@ def analyzevars(block):
                     vars[n]['dimension'].append(d)
 
         if 'dimension' in vars[n]:
-            if isintent_c(vars[n]):
-                shape_macro = 'shape'
-            else:
-                shape_macro = 'shape'  # 'fshape'
             if isstringarray(vars[n]):
                 if 'charselector' in vars[n]:
                     d = vars[n]['charselector']
@@ -2647,7 +2644,6 @@ def analyzevars(block):
             n_is_input = l_or(isintent_in, isintent_inout,
                               isintent_inplace)(vars[n])
             if 'dimension' in vars[n]:  # n is array
-                ni = len(vars[n]['dimension'])  # array dimensionality
                 for i, d in enumerate(vars[n]['dimension']):
                     coeffs_and_deps = dimension_exprs.get(d)
                     if coeffs_and_deps is None:
@@ -2721,7 +2717,6 @@ def analyzevars(block):
                             if v_deps:
                                 vars[v]['depend'] = list(set(v_deps))
             elif isstring(vars[n]):
-                length = '1'
                 if 'charselector' in vars[n]:
                     if '*' in vars[n]['charselector']:
                         length = _eval_length(vars[n]['charselector']['*'],
