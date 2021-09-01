@@ -50,7 +50,7 @@ basic statistical operations, random simulation and much more.
     .. link-button:: 
         :type: ref
         :text: To the getting started page
-        :classes: btn-block btn-secondary stretched-link
+        :classes: stretched-link
     
     ---
     :img-top: _static/index_user_guide.svg
@@ -65,8 +65,8 @@ basic statistical operations, random simulation and much more.
 
     .. link-button:: user
             :type: ref
-            :text: To the user guide
-            :classes: btn-block btn-secondary stretched-link
+            :text: 
+            :classes: stretched-link
 
     ---
     :img-top: _static/index_api.svg
@@ -84,7 +84,7 @@ basic statistical operations, random simulation and much more.
     .. link-button:: reference
             :type: ref
             :text: To the reference guide
-            :classes: btn-block btn-secondary stretched-link
+            :classes: stretched-link
 
     ---
     :img-top: _static/index_contribute.svg
@@ -101,7 +101,7 @@ basic statistical operations, random simulation and much more.
     .. link-button:: devindex
             :type: ref
             :text: To the development guide
-            :classes: btn-block btn-secondary stretched-link
+            :classes: stretched-link
 
 .. This is not really the index page, that is found in
    _templates/indexcontent.html The toctree content here will be added to the
