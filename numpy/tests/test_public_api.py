@@ -465,12 +465,18 @@ def test_array_api_entry_point():
     Entry point for Array API implementation can be found with importlib and
     returns the numpy.array_api namespace.
     """
-    from numpy import array_api
-
     eps = importlib.metadata.entry_points()
-    assert "array_api" in eps.keys()
-    xp_eps = eps["array_api"]
+    try:
+        xp_eps = eps.select(group="array_api")
+    except AttributeError:
+        # The select interface for entry_points was introduced in py3.10,
+        # deprecating its dict interface. We fallback to dict keys for finding
+        # Array API entry points so that running this test in <=3.9 will
+        # still work - see https://github.com/numpy/numpy/pull/19800.
+        assert "array_api" in eps.keys()
+        xp_eps = eps["array_api"]
+    assert len(xp_eps) > 0
     assert "numpy" in (ep.name for ep in xp_eps)
     ep = next(ep for ep in xp_eps if ep.name == "numpy")
     xp = importlib.import_module(ep.value)
-    assert xp is array_api
+    assert xp is numpy.array_api
