@@ -99,6 +99,14 @@ def _pairs_add(d, k, v):
             del d[k]
 
 
+class ExprWarning(warnings.UserWarning):
+    pass
+
+
+def warn(message):
+    warnings.warn(message, ExprWarning, stacklevel=2)
+
+
 class Expr:
     """Represents a Fortran expression as a op-data pair.
 
@@ -481,10 +489,7 @@ class Expr:
         if not isinstance(index, tuple):
             index = index,
         if len(index) > 1:
-            warnings.warn(
-                f'C-index should be a single expression but got `{index}`',
-                category=warnings.SyntaxWarning,
-                stacklevel=1)
+            warn(f'C-index should be a single expression but got `{index}`')
         return Expr(Op.INDEXING, (self,) + index)
 
     def substitute(self, symbols_map):
@@ -520,8 +525,8 @@ class Expr:
                 else:
                     r += term.substitute(symbols_map) * coeff
             if r is None:
-                warnings.warn('substitute: empty TERMS expression interpreted'
-                              ' as int-literal 0')
+                warn('substitute: empty TERMS expression interpreted as'
+                     ' int-literal 0')
                 return as_number(0)
             return r
         if self.op is Op.FACTORS:
@@ -532,9 +537,8 @@ class Expr:
                 else:
                     r *= base.substitute(symbols_map) ** exponent
             if r is None:
-                warnings.warn(
-                    'substitute: empty FACTORS expression interpreted'
-                    ' as int-literal 1')
+                warn('substitute: empty FACTORS expression interpreted'
+                     ' as int-literal 1')
                 return as_number(1)
             return r
         if self.op is Op.APPLY:
@@ -1256,5 +1260,5 @@ def _fromstring_worker(s, dummy=None):
         # f2py special dummy name
         return as_symbol(r)
 
-    warnings.warn(f'fromstring: treating {r!r} as symbol')
+    warn(f'fromstring: treating {r!r} as symbol')
     return as_symbol(r)
