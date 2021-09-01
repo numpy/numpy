@@ -473,10 +473,17 @@ def test_array_api_entry_point():
         # deprecating its dict interface. We fallback to dict keys for finding
         # Array API entry points so that running this test in <=3.9 will
         # still work - see https://github.com/numpy/numpy/pull/19800.
-        assert "array_api" in eps.keys()
-        xp_eps = eps["array_api"]
-    assert len(xp_eps) > 0
-    assert "numpy" in (ep.name for ep in xp_eps)
-    ep = next(ep for ep in xp_eps if ep.name == "numpy")
+        xp_eps = eps.get("array_api", [])
+    assert len(xp_eps) > 0, "No entry points for 'array_api' found"
+
+    try:
+        ep = next(ep for ep in xp_eps if ep.name == "numpy")
+    except StopIteration:
+        raise AssertionError("'numpy' not in array_api entry points") from None
+
     xp = importlib.import_module(ep.value)
-    assert xp is numpy.array_api
+    msg = (
+        f"numpy entry point value '{ep.value}' "
+        "does not point to our Array API implementation"
+    )
+    assert xp is numpy.array_api, msg
