@@ -482,7 +482,9 @@ class Expr:
             index = index,
         if len(index) > 1:
             warnings.warn(
-                f'C-index should be a single expression but got `{index}`')
+                f'C-index should be a single expression but got `{index}`',
+                category=warnings.SyntaxWarning,
+                stacklevel=1)
         return Expr(Op.INDEXING, (self,) + index)
 
     def substitute(self, symbols_map):
