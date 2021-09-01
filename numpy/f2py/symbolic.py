@@ -99,7 +99,7 @@ def _pairs_add(d, k, v):
             del d[k]
 
 
-class ExprWarning(warnings.UserWarning):
+class ExprWarning(UserWarning):
     pass
 
 
