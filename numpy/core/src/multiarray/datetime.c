@@ -12,7 +12,12 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "numpy/arrayobject.h"
+#include <time.h>
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#include <numpy/arrayobject.h>
+#include "numpyos.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -723,6 +728,7 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
 {
     char const *substr = str, *substrend = NULL;
     int den = 1;
+    npy_longlong true_meta_val;
 
     /* First comes an optional integer multiplier */
     out_meta->num = (int)strtol_const(substr, &substrend, 10);
@@ -731,17 +737,9 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
     }
     else {
         // check for 32-bit integer overflow
-        char subs_digits[20];
-        strcpy(subs_digits, substr);
-        uint64_t idx;
-        for(idx=0; idx<strlen(substr); idx++) {
-            if(isdigit(substr[idx]) == 0) {
-                break;
-            }
-        }
-        subs_digits[idx] = '\0';
-        PyObject *true_meta_num = PyLong_FromString(subs_digits, NULL, 0);
-        if (PyLong_AsLongLong(true_meta_num) > INT_MAX) {
+        char *endptr = NULL;
+        true_meta_val = NumPyOS_strtoll(substr, &endptr, 10);
+        if (true_meta_val > INT_MAX) {
             goto bad_input;
         }
     }
