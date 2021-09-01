@@ -359,33 +359,34 @@ def buildmodules(lst):
     cfuncs.buildcfuncs()
     outmess('Building modules...\n')
     modules, mnames, isusedby = [], [], {}
-    for i in range(len(lst)):
-        if '__user__' in lst[i]['name']:
-            cb_rules.buildcallbacks(lst[i])
+    for item in lst:
+        if '__user__' in item['name']:
+            cb_rules.buildcallbacks(item)
         else:
-            if 'use' in lst[i]:
-                for u in lst[i]['use'].keys():
+            if 'use' in item:
+                for u in item['use'].keys():
                     if u not in isusedby:
                         isusedby[u] = []
-                    isusedby[u].append(lst[i]['name'])
-            modules.append(lst[i])
-            mnames.append(lst[i]['name'])
+                    isusedby[u].append(item['name'])
+            modules.append(item)
+            mnames.append(item['name'])
     ret = {}
-    for i in range(len(mnames)):
-        if mnames[i] in isusedby:
+    for module, name in zip(modules, mnames):
+        if name in isusedby:
             outmess('\tSkipping module "%s" which is used by %s.\n' % (
-                mnames[i], ','.join(['"%s"' % s for s in isusedby[mnames[i]]])))
+                name, ','.join('"%s"' % s for s in isusedby[name])))
         else:
             um = []
-            if 'use' in modules[i]:
-                for u in modules[i]['use'].keys():
+            if 'use' in module:
+                for u in module['use'].keys():
                     if u in isusedby and u in mnames:
                         um.append(modules[mnames.index(u)])
                     else:
                         outmess(
-                            '\tModule "%s" uses nonexisting "%s" which will be ignored.\n' % (mnames[i], u))
-            ret[mnames[i]] = {}
-            dict_append(ret[mnames[i]], rules.buildmodule(modules[i], um))
+                            f'\tModule "{name}" uses nonexisting "{u}" '
+                            'which will be ignored.\n')
+            ret[name] = {}
+            dict_append(ret[name], rules.buildmodule(module, um))
     return ret
 
 
@@ -429,18 +430,20 @@ def run_main(comline_list):
     capi_maps.load_f2cmap_file(options['f2cmap_file'])
     postlist = callcrackfortran(files, options)
     isusedby = {}
-    for i in range(len(postlist)):
-        if 'use' in postlist[i]:
-            for u in postlist[i]['use'].keys():
+    for plist in postlist:
+        if 'use' in plist:
+            for u in plist['use'].keys():
                 if u not in isusedby:
                     isusedby[u] = []
-                isusedby[u].append(postlist[i]['name'])
-    for i in range(len(postlist)):
-        if postlist[i]['block'] == 'python module' and '__user__' in postlist[i]['name']:
-            if postlist[i]['name'] in isusedby:
+                isusedby[u].append(plist['name'])
+    for plist in postlist:
+        if plist['block'] == 'python module' and '__user__' in plist['name']:
+            if plist['name'] in isusedby:
                 # if not quiet:
-                outmess('Skipping Makefile build for module "%s" which is used by %s\n' % (
-                    postlist[i]['name'], ','.join(['"%s"' % s for s in isusedby[postlist[i]['name']]])))
+                outmess(
+                    f'Skipping Makefile build for module "{plist["name"]}" '
+                    'which is used by {}\n'.format(
+                        ','.join(f'"{s}"' for s in isusedby[plist['name']])))
     if 'signsfile' in options:
         if options['verbose'] > 1:
             outmess(
@@ -448,8 +451,8 @@ def run_main(comline_list):
             outmess('%s %s\n' %
                     (os.path.basename(sys.argv[0]), options['signsfile']))
         return
-    for i in range(len(postlist)):
-        if postlist[i]['block'] != 'python module':
+    for plist in postlist:
+        if plist['block'] != 'python module':
             if 'python module' not in options:
                 errmess(
                     'Tip: If your original code is Fortran source then you must use -m option.\n')
