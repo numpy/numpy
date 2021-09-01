@@ -197,6 +197,7 @@ from typing import (
     Final,
     final,
     ClassVar,
+    Set,
 )
 
 # Ensures that the stubs are picked up
@@ -827,24 +828,6 @@ class poly1d:
     def __iter__(self): ...
     def integ(self, m=..., k=...): ...
     def deriv(self, m=...): ...
-
-class vectorize:
-    pyfunc: Any
-    cache: Any
-    signature: Any
-    otypes: Any
-    excluded: Any
-    __doc__: Any
-    def __init__(
-        self,
-        pyfunc,
-        otypes: Any = ...,
-        doc: Any = ...,
-        excluded: Any = ...,
-        cache: Any = ...,
-        signature: Any = ...,
-    ) -> None: ...
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
 # Some of these are aliases; others are wrappers with an identical signature
 round = around
@@ -3879,3 +3862,21 @@ class memmap(ndarray[_ShapeType, _DType_co]):
     ) -> Any: ...
     def __getitem__(self, index): ...  # TODO
     def flush(self) -> None: ...
+
+class vectorize:
+    pyfunc: Callable[..., Any]
+    cache: bool
+    signature: None | str
+    otypes: None | str
+    excluded: Set[int | str]
+    __doc__: None | str
+    def __init__(
+        self,
+        pyfunc: Callable[..., Any],
+        otypes: None | str | Iterable[DTypeLike] = ...,
+        doc: None | str = ...,
+        excluded: None | Iterable[int | str] = ...,
+        cache: bool = ...,
+        signature: None | str = ...,
+    ) -> None: ...
+    def __call__(self, *args: Any, **kwargs: Any) -> NDArray[Any]: ...
