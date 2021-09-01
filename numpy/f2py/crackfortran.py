@@ -153,7 +153,6 @@ from . import __version__
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
-from .symbolic import Expr, Language
 from . import symbolic
 
 f2py_version = __version__.version
@@ -2578,9 +2577,9 @@ def analyzevars(block):
                     if len(dl) == 1 and dl[0] != star:
                         dl = ['1', dl[0]]
                     if len(dl) == 2:
-                        d1, d2 = map(Expr.parse, dl)
+                        d1, d2 = map(symbolic.Expr.parse, dl)
                         dsize = d2 - d1 + 1
-                        d = dsize.tostring(language=Language.C)
+                        d = dsize.tostring(language=symbolic.Language.C)
                         # find variables v that define d as a linear
                         # function, `d == a * v + b`, and store
                         # coefficients a and b for further analysis.
@@ -2674,7 +2673,8 @@ def analyzevars(block):
                                 is_required = False
                                 init = solver(symbolic.as_symbol(
                                     f'shape({n}, {i})'))
-                                init = init.tostring(language=Language.C)
+                                init = init.tostring(
+                                    language=symbolic.Language.C)
                                 vars[v]['='] = init
                                 # n needs to be initialzed before v. So,
                                 # making v dependent on n and on any
