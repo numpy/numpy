@@ -14,6 +14,12 @@ body:
 - type: textarea
   attributes:
     label: "Error message:"
-    description: "Please include full error message, if any (starting from line Traceback: ...). If you are reporting a segfault please include a GDB traceback, which you can generate by following https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging."
-  validations:
-    required: false
+    description: |
+      Please include full error message, if any (starting from `Traceback: ...`). If you are reporting a segfault please include a GDB traceback,
+      which you can generate by following [these instructions](https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging).
+    render: shell
+
+- type: textarea
+  attributes:
+    label: "Additional information:"
+    description: Please add any additional information that could help us diagnose the problem better.
