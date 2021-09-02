@@ -235,7 +235,7 @@ library. Below, two arrays are created with shapes (2,3) and (2,3,2),
 respectively. The seed is set to 42 so you can reproduce these
 pseudorandom numbers::
 
- >>> import numpy.random.default_rng
+ >>> from numpy.random import default_rng
  >>> default_rng(42).random((2,3))
  array([[0.77395605, 0.43887844, 0.85859792],
         [0.69736803, 0.09417735, 0.97562235]])
