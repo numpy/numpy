@@ -324,10 +324,12 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
 
     Raises
     ------
-    IOError
+    OSError
         If the input file does not exist or cannot be read.
+    UnpicklingError
+        If ``allow_pickle=True``, but the file cannot be loaded as a pickle.
     ValueError
-        The file contains an object array, but allow_pickle=False given.
+        The file contains an object array, but ``allow_pickle=False`` given.
 
     See Also
     --------
@@ -436,8 +438,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except Exception as e:
-                raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file)) from e
+                raise pickle.UnpicklingError(
+                    f"Failed to interpret file {file!r} as a pickle") from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):

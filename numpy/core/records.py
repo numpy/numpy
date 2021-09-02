@@ -939,7 +939,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         _array = recarray(shape, descr)
         nbytesread = fd.readinto(_array.data)
         if nbytesread != nbytes:
-            raise IOError("Didn't read as many bytes as expected")
+            raise OSError("Didn't read as many bytes as expected")
 
     return _array
 
