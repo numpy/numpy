@@ -102,3 +102,29 @@ class TestAsIntegerRatio:
                 pytest.skip("longdouble too small on this platform")
 
             assert_equal(nf / df, f, "{}/{}".format(n, d))
+
+
+class TestIsInteger:
+    @pytest.mark.parametrize("str_value", ["inf", "nan"])
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    def test_special(self, code: str, str_value: str) -> None:
+        cls = np.dtype(code).type
+        value = cls(str_value)
+        assert not value.is_integer()
+
+    @pytest.mark.parametrize(
+        "code", np.typecodes["Float"] + np.typecodes["AllInteger"]
+    )
+    def test_true(self, code: str) -> None:
+        float_array = np.arange(-5, 5).astype(code)
+        for value in float_array:
+            assert value.is_integer()
+
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    def test_false(self, code: str) -> None:
+        float_array = np.arange(-5, 5).astype(code)
+        float_array *= 1.1
+        for value in float_array:
+            if value == 0:
+                continue
+            assert not value.is_integer()
