@@ -16,6 +16,16 @@ npz_file: np.lib.npyio.NpzFile
 AR_i8: npt.NDArray[np.int64]
 AR_LIKE_f8: List[float]
 
+class BytesWriter:
+    def write(self, data: bytes) -> None: ...
+
+class BytesReader:
+    def read(self, n: int = ...) -> bytes: ...
+    def seek(self, offset: int, whence: int = ...) -> int: ...
+
+bytes_writer: BytesWriter
+bytes_reader: BytesReader
+
 reveal_type(bag_obj.a)  # E: int
 reveal_type(bag_obj.b)  # E: int
 
@@ -33,18 +43,22 @@ with npz_file as f:
 reveal_type(np.load(bytes_file))  # E: Any
 reveal_type(np.load(pathlib_path, allow_pickle=True))  # E: Any
 reveal_type(np.load(str_path, encoding="bytes"))  # E: Any
+reveal_type(np.load(bytes_reader))  # E: Any
 
 reveal_type(np.save(bytes_file, AR_LIKE_f8))  # E: None
 reveal_type(np.save(pathlib_path, AR_i8, allow_pickle=True))  # E: None
 reveal_type(np.save(str_path, AR_LIKE_f8))  # E: None
+reveal_type(np.save(bytes_writer, AR_LIKE_f8))  # E: None
 
 reveal_type(np.savez(bytes_file, AR_LIKE_f8))  # E: None
 reveal_type(np.savez(pathlib_path, ar1=AR_i8, ar2=AR_i8))  # E: None
 reveal_type(np.savez(str_path, AR_LIKE_f8, ar1=AR_i8))  # E: None
+reveal_type(np.savez(bytes_writer, AR_LIKE_f8, ar1=AR_i8))  # E: None
 
 reveal_type(np.savez_compressed(bytes_file, AR_LIKE_f8))  # E: None
 reveal_type(np.savez_compressed(pathlib_path, ar1=AR_i8, ar2=AR_i8))  # E: None
 reveal_type(np.savez_compressed(str_path, AR_LIKE_f8, ar1=AR_i8))  # E: None
+reveal_type(np.savez_compressed(bytes_writer, AR_LIKE_f8, ar1=AR_i8))  # E: None
 
 reveal_type(np.loadtxt(bytes_file))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.loadtxt(pathlib_path, dtype=np.str_))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
@@ -52,11 +66,13 @@ reveal_type(np.loadtxt(str_path, dtype=str, skiprows=2))  # E: numpy.ndarray[Any
 reveal_type(np.loadtxt(str_file, comments="test"))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.loadtxt(str_path, delimiter="\n"))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.loadtxt(str_path, ndmin=2))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.loadtxt(["1", "2", "3"]))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
 reveal_type(np.fromregex(bytes_file, "test", np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.fromregex(str_file, b"test", dtype=float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 reveal_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
 reveal_type(np.fromregex(pathlib_path, "test", np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.fromregex(bytes_reader, "test", np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
 reveal_type(np.genfromtxt(bytes_file))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.genfromtxt(pathlib_path, dtype=np.str_))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
@@ -64,9 +80,12 @@ reveal_type(np.genfromtxt(str_path, dtype=str, skiprows=2))  # E: numpy.ndarray[
 reveal_type(np.genfromtxt(str_file, comments="test"))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.genfromtxt(str_path, delimiter="\n"))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.genfromtxt(str_path, ndmin=2))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.genfromtxt(["1", "2", "3"], ndmin=2))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
 reveal_type(np.recfromtxt(bytes_file))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
 reveal_type(np.recfromtxt(pathlib_path, usemask=True))  # E: numpy.ma.mrecords.MaskedRecords[Any, numpy.dtype[numpy.void]]
+reveal_type(np.recfromtxt(["1", "2", "3"]))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
 
 reveal_type(np.recfromcsv(bytes_file))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
 reveal_type(np.recfromcsv(pathlib_path, usemask=True))  # E: numpy.ma.mrecords.MaskedRecords[Any, numpy.dtype[numpy.void]]
+reveal_type(np.recfromcsv(["1", "2", "3"]))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
