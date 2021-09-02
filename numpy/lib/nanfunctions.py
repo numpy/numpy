@@ -23,6 +23,7 @@ Functions
 import functools
 import warnings
 import numpy as np
+from numpy.lib.function_base import _QuantileInterpolation
 from numpy.lib import function_base
 from numpy.core import overrides
 
@@ -1229,8 +1230,15 @@ def _nanpercentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
 
 
 @array_function_dispatch(_nanpercentile_dispatcher)
-def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
-                  interpolation='linear', keepdims=np._NoValue):
+def nanpercentile(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        interpolation="linear",
+        keepdims=np._NoValue,
+):
     """
     Compute the qth percentile of the data along the specified axis,
     while ignoring nan values.
@@ -1259,18 +1267,74 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+    interpolation : str
+        Possible values: 'linear' (default),
+                        'inverted_cdf', 'averaged_inverted_cdf',
+                        'closest_observation', 'interpolated_inverted_cdf',
+                        'hazen', 'weibull',
+                        'median_unbiased', 'normal_unbiased',
+                        'lower', 'higher',
+                        'midpoint', 'nearest'.
         This optional parameter specifies the interpolation method to
-        use when the desired percentile lies between two data points
-        ``i < j``:
-
-        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
-          is the fractional part of the index surrounded by ``i``
-          and ``j``.
-        * 'lower': ``i``.
-        * 'higher': ``j``.
-        * 'nearest': ``i`` or ``j``, whichever is nearest.
-        * 'midpoint': ``(i + j) / 2``.
+        use when the desired quantile lies between two data points ``i < j``.
+        g is the fractional part of the index surrounded by ``i``.
+        alpha and beta are correction constants modifying i and j:
+        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        * inverted_cdf:
+            method 1 of H&F.
+            This method give discontinuous results:
+                if g > 0 ; then take j
+                if g = 0 ; then take i
+        * averaged_inverted_cdf:
+            method 2 of H&F.
+            This method give discontinuous results:
+                if g > 0 ; then take j
+                if g = 0 ; then average between bounds
+        * closest_observation:
+            method 3 of H&F.
+            This method give discontinuous results:
+                if g > 0 ; then take j
+                if g = 0 and index is odd ; then take j
+                if g = 0 and index is even ; then take i
+        * interpolated_inverted_cdf:
+            method 4 of H&F.
+            This method give continuous results using:
+                alpha = 0
+                beta = 1
+        * hazen:
+            method 5 of H&F.
+            This method give continuous results using:
+                alpha = 1/2
+                beta = 1/2
+        * weibull:
+            method 6 of H&F.
+            This method give continuous results using:
+                alpha = 0
+                beta = 0
+        * linear:
+            Default method.
+            method 7 of H&F.
+            This method give continuous results using:
+                alpha = 1
+                beta = 1
+        * median_unbiased:
+            method 8 of H&F.
+            This method is probably the best method if the sample distribution
+            function is unknown (see reference).
+            This method give continuous results using:
+                alpha = 1/3
+                beta = 1/3
+        * normal_unbiased:
+            method 9 of H&F.
+            This method is probably the best method if the sample distribution
+            function is known to be normal.
+            This method give continuous results using:
+                alpha = 3/8
+                beta = 3/8
+        * lower: ``i``.
+        * higher: ``j``.
+        * nearest: ``i`` or ``j``, whichever is nearest.
+        * midpoint: ``(i + j) / 2``.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1342,7 +1406,9 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
 
     """
     a = np.asanyarray(a)
-    q = np.true_divide(q, 100.0)  # handles the asarray for us too
+    q = np.true_divide(q, 100.0)
+    # undo any decay that the ufunc performed (see gh-13105)
+    q = np.asanyarray(q)
     if not function_base._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _nanquantile_unchecked(
@@ -1355,8 +1421,15 @@ def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
 
 
 @array_function_dispatch(_nanquantile_dispatcher)
-def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
-                interpolation='linear', keepdims=np._NoValue):
+def nanquantile(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        interpolation="linear",
+        keepdims=np._NoValue,
+):
     """
     Compute the qth quantile of the data along the specified axis,
     while ignoring nan values.
@@ -1384,19 +1457,74 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+    interpolation : str
+        Possible values: 'linear' (default),
+                        'inverted_cdf', 'averaged_inverted_cdf',
+                        'closest_observation', 'interpolated_inverted_cdf',
+                        'hazen', 'weibull',
+                        'median_unbiased', 'normal_unbiased',
+                        'lower', 'higher',
+                        'midpoint', 'nearest'.
         This optional parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
-        ``i < j``:
-
-        * linear: ``i + (j - i) * fraction``, where ``fraction``
-          is the fractional part of the index surrounded by ``i``
-          and ``j``.
+        use when the desired quantile lies between two data points ``i < j``.
+        g is the fractional part of the index surrounded by ``i``.
+        alpha and beta are correction constants modifying i and j:
+        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        * inverted_cdf:
+            method 1 of H&F.
+            This method give discontinuous results:
+                if g > 0 ; then take j
+                if g = 0 ; then take i
+        * averaged_inverted_cdf:
+            method 2 of H&F.
+            This method give discontinuous results:
+                if g > 0 ; then take j
+                if g = 0 ; then average between bounds
+        * closest_observation:
+            method 3 of H&F.
+            This method give discontinuous results:
+                if g > 0 ; then take j
+                if g = 0 and index is odd ; then take j
+                if g = 0 and index is even ; then take i
+        * interpolated_inverted_cdf:
+            method 4 of H&F.
+            This method give continuous results using:
+                alpha = 0
+                beta = 1
+        * hazen:
+            method 5 of H&F.
+            This method give continuous results using:
+                alpha = 1/2
+                beta = 1/2
+        * weibull:
+            method 6 of H&F.
+            This method give continuous results using:
+                alpha = 0
+                beta = 0
+        * linear:
+            Default method.
+            method 7 of H&F.
+            This method give continuous results using:
+                alpha = 1
+                beta = 1
+        * median_unbiased:
+            method 8 of H&F.
+            This method is probably the best method if the sample distribution
+            function is unknown (see reference).
+            This method give continuous results using:
+                alpha = 1/3
+                beta = 1/3
+        * normal_unbiased:
+            method 9 of H&F.
+            This method is probably the best method if the sample distribution
+            function is known to be normal.
+            This method give continuous results using:
+                alpha = 3/8
+                beta = 3/8
         * lower: ``i``.
         * higher: ``j``.
         * nearest: ``i`` or ``j``, whichever is nearest.
         * midpoint: ``(i + j) / 2``.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1462,26 +1590,39 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
         a, q, axis, out, overwrite_input, interpolation, keepdims)
 
 
-def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
-                           interpolation='linear', keepdims=np._NoValue):
+def _nanquantile_unchecked(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        interpolation="linear",
+        keepdims=np._NoValue,
+):
     """Assumes that q is in [0, 1], and is an ndarray"""
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
-
-    r, k = function_base._ureduce(
-        a, func=_nanquantile_ureduce_func, q=q, axis=axis, out=out,
-        overwrite_input=overwrite_input, interpolation=interpolation
-    )
+    r, k = function_base._ureduce(a,
+                                  func=_nanquantile_ureduce_func,
+                                  q=q,
+                                  axis=axis,
+                                  out=out,
+                                  overwrite_input=overwrite_input,
+                                  interpolation=interpolation)
     if keepdims and keepdims is not np._NoValue:
         return r.reshape(q.shape + k)
     else:
         return r
 
 
-def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                              interpolation='linear'):
+def _nanquantile_ureduce_func(a,
+                              q,
+                              axis=None,
+                              out=None,
+                              overwrite_input=False,
+                              interpolation= "linear"):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -1504,7 +1645,10 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     return result
 
 
-def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation='linear'):
+def _nanquantile_1d(arr1d,
+                    q,
+                    overwrite_input=False,
+                    interpolation= "linear"):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage

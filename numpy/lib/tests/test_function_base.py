@@ -2903,36 +2903,134 @@ class TestPercentile:
                       [1, 1, 1]])
         assert_array_equal(np.percentile(x, 50, axis=0), [1, 1, 1])
 
-    def test_linear(self):
+    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    def test_linear_nan_1D(self, dtype):
+        # METHOD 1 of H&F
+        arr = np.asarray([15.0, np.NAN, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="linear")
+        np.testing.assert_equal(res, np.NAN)
+        np.testing.assert_equal(res.dtype, arr.dtype)
 
+    TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
+
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_inverted_cdf(self, dtype):
+        # METHOD 1 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="inverted_cdf")
+        np.testing.assert_almost_equal(res, 20, 15)
+
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_averaged_inverted_cdf(self, dtype):
+        # METHOD 2 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="averaged_inverted_cdf")
+        np.testing.assert_almost_equal(res, 27.5, 15)
+
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_closest_observation(self, dtype):
+        # METHOD 3 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="closest_observation")
+        np.testing.assert_almost_equal(res, 20, 15)
+
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_interpolated_inverted_cdf(self, dtype):
+        # METHOD 4 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="interpolated_inverted_cdf")
+        np.testing.assert_almost_equal(res, 20, 15)
+
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_hazen(self, dtype):
+        # METHOD 5 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="hazen")
+        np.testing.assert_almost_equal(res, 27.5, 15)
+
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_weibull(self, dtype):
+        # METHOD 6 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="weibull")
+        np.testing.assert_almost_equal(res, 26, 15)
+
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_linear(self, dtype):
+        # METHOD 7 of H&F
         # Test defaults
         assert_equal(np.percentile(range(10), 50), 4.5)
+        # explicit interpolation_method (the default)
+        res = np.percentile([15.0, 20.0, 35.0, 40.0, 50.0],
+                            40,
+                            interpolation="linear")
+        np.testing.assert_almost_equal(res, 29, 15)
 
-        # explicitly specify interpolation_method 'linear' (the default)
-        assert_equal(np.percentile(range(10), 50,
-                                   interpolation='linear'), 4.5)
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_median_unbiased(self, dtype):
+        # METHOD 8 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="median_unbiased")
+        np.testing.assert_almost_equal(res, 27, 14)
 
-    def test_lower_higher(self):
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_linear_normal_unbiased(self, dtype):
+        # METHOD 9 of H&F
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
+        res = np.percentile(
+            arr,
+            40.0,
+            interpolation="normal_unbiased")
+        np.testing.assert_almost_equal(res, 27.125, 15)
 
-        # interpolation_method 'lower'/'higher'
-        assert_equal(np.percentile(range(10), 50,
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_lower_higher(self, dtype):
+        assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
                                    interpolation='lower'), 4)
-        assert_equal(np.percentile(range(10), 50,
+        assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
                                    interpolation='higher'), 5)
 
-    def test_midpoint(self):
-        assert_equal(np.percentile(range(10), 51,
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_midpoint(self, dtype):
+        assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
                                    interpolation='midpoint'), 4.5)
-        assert_equal(np.percentile(range(11), 51,
+        assert_equal(np.percentile(np.arange(9, dtype=dtype) + 1, 50,
+                                   interpolation='midpoint'), 5)
+        assert_equal(np.percentile(np.arange(11, dtype=dtype), 51,
                                    interpolation='midpoint'), 5.5)
-        assert_equal(np.percentile(range(11), 50,
+        assert_equal(np.percentile(np.arange(11, dtype=dtype), 50,
                                    interpolation='midpoint'), 5)
 
-    def test_nearest(self):
-        assert_equal(np.percentile(range(10), 51,
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    def test_nearest(self, dtype):
+        assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
                                    interpolation='nearest'), 5)
-        assert_equal(np.percentile(range(10), 49,
-                                   interpolation='nearest'), 4)
+        assert_equal(np.percentile(np.arange(10, dtype=dtype), 49,
+                                       interpolation='nearest'), 4)
 
     def test_sequence(self):
         x = np.arange(8) * 0.5
@@ -3038,18 +3136,18 @@ class TestPercentile:
         y = np.zeros((3,))
         p = (1, 2, 3)
         np.percentile(x, p, out=y)
-        assert_equal(y, np.percentile(x, p))
+        assert_equal(np.percentile(x, p), y)
 
         x = np.array([[1, 2, 3],
                       [4, 5, 6]])
 
         y = np.zeros((3, 3))
         np.percentile(x, p, axis=0, out=y)
-        assert_equal(y, np.percentile(x, p, axis=0))
+        assert_equal(np.percentile(x, p, axis=0), y)
 
         y = np.zeros((3, 2))
         np.percentile(x, p, axis=1, out=y)
-        assert_equal(y, np.percentile(x, p, axis=1))
+        assert_equal(np.percentile(x, p, axis=1), y)
 
         x = np.arange(12).reshape(3, 4)
         # q.dim > 1, float
@@ -3293,6 +3391,7 @@ class TestPercentile:
         with pytest.raises(ValueError, match="Percentiles must be in"):
             np.percentile([1, 2, 3, 4.0], q)
 
+
 class TestQuantile:
     # most of this is already tested by TestPercentile
 
@@ -3302,6 +3401,7 @@ class TestQuantile:
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
 
+    @pytest.mark.xfail(reason="See gh-19154")
     def test_correct_quantile_value(self):
         a = np.array([True])
         tf_quant = np.quantile(True, False)
@@ -3310,12 +3410,11 @@ class TestQuantile:
         a = np.array([False, True, True])
         quant_res = np.quantile(a, a)
         assert_array_equal(quant_res, a)
-        assert_equal(a.dtype, quant_res.dtype)
+        assert_equal(quant_res.dtype, a.dtype)
 
     def test_fraction(self):
         # fractional input, integral quantile
         x = [Fraction(i, 2) for i in range(8)]
-
         q = np.quantile(x, 0)
         assert_equal(q, 0)
         assert_equal(type(q), Fraction)
@@ -3352,6 +3451,12 @@ class TestQuantile:
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
 
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+    def test_quantile_preserve_int_type(self, dtype):
+        res = np.quantile(np.array([1, 2], dtype=dtype), [0.5],
+                          interpolation="nearest")
+        assert res.dtype == dtype
+
     def test_quantile_monotonic(self):
         # GH 14685
         # test that the return value of quantile is monotonic if p0 is ordered
@@ -3380,9 +3485,9 @@ class TestLerp:
                                     min_value=-1e300, max_value=1e300),
                       b = st.floats(allow_nan=False, allow_infinity=False,
                                     min_value=-1e300, max_value=1e300))
-    def test_lerp_monotonic(self, t0, t1, a, b):
-        l0 = np.lib.function_base._lerp(a, b, t0)
-        l1 = np.lib.function_base._lerp(a, b, t1)
+    def test_linear_interpolation_formula_monotonic(self, t0, t1, a, b):
+        l0 = nfb._linear_interpolation_formula(a, b, t0)
+        l1 = nfb._linear_interpolation_formula(a, b, t1)
         if t0 == t1 or a == b:
             assert l0 == l1  # uninteresting
         elif (t0 < t1) == (a < b):
@@ -3396,11 +3501,11 @@ class TestLerp:
                                   min_value=-1e300, max_value=1e300),
                       b=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=-1e300, max_value=1e300))
-    def test_lerp_bounded(self, t, a, b):
+    def test_linear_interpolation_formula_bounded(self, t, a, b):
         if a <= b:
-            assert a <= np.lib.function_base._lerp(a, b, t) <= b
+            assert a <= nfb._linear_interpolation_formula(a, b, t) <= b
         else:
-            assert b <= np.lib.function_base._lerp(a, b, t) <= a
+            assert b <= nfb._linear_interpolation_formula(a, b, t) <= a
 
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
@@ -3408,17 +3513,17 @@ class TestLerp:
                                   min_value=-1e300, max_value=1e300),
                       b=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=-1e300, max_value=1e300))
-    def test_lerp_symmetric(self, t, a, b):
+    def test_linear_interpolation_formula_symmetric(self, t, a, b):
         # double subtraction is needed to remove the extra precision of t < 0.5
-        left = np.lib.function_base._lerp(a, b, 1 - (1 - t))
-        right = np.lib.function_base._lerp(b, a, 1 - t)
+        left = nfb._linear_interpolation_formula(a, b, 1 - (1 - t))
+        right = nfb._linear_interpolation_formula(b, a, 1 - t)
         assert left == right
 
-    def test_lerp_0d_inputs(self):
+    def test_linear_interpolation_formula_0d_inputs(self):
         a = np.array(2)
         b = np.array(5)
         t = np.array(0.2)
-        assert np.lib.function_base._lerp(a, b, t) == 2.6
+        assert nfb._linear_interpolation_formula(a, b, t) == 2.6
 
 
 class TestMedian:
