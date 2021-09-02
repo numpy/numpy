@@ -15,6 +15,9 @@ numpy/core/include/numpy/libdivide/* linguist-vendored
 # Mark some files as generated
 numpy/linalg/lapack_lite/f2c_*.c linguist-generated
 numpy/linalg/lapack_lite/lapack_lite_names.h linguist-generated
+numpy/_version.py linguist-generated
+
+# versioneer config
 numpy/_version.py export-subst
 
 # Configuration files
