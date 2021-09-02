@@ -381,9 +381,9 @@ def check_mathlib(config_cmd):
             mathlibs = libs
             break
     else:
-        raise EnvironmentError("math library missing; rerun "
-                               "setup.py after setting the "
-                               "MATHLIB env variable")
+        raise RuntimeError(
+            "math library missing; rerun setup.py after setting the "
+            "MATHLIB env variable")
     return mathlibs
 
 def visibility_define(config):

@@ -3414,8 +3414,8 @@ if __name__ == "__main__":
             try:
                 open(l).close()
                 files.append(l)
-            except IOError as detail:
-                errmess('IOError: %s\n' % str(detail))
+            except OSError as detail:
+                errmess(f'OSError: {detail!s}\n')
         else:
             funcs.append(l)
     if not strictf77 and f77modulename and not skipemptyends:

@@ -275,9 +275,8 @@ def scaninputline(inputline):
                 with open(l):
                     pass
                 files.append(l)
-            except IOError as detail:
-                errmess('IOError: %s. Skipping file "%s".\n' %
-                        (str(detail), l))
+            except OSError as detail:
+                errmess(f'OSError: {detail!s}. Skipping file "{l!s}".\n')
         elif f == -1:
             skipfuncs.append(l)
         elif f == 0:

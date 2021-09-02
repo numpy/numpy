@@ -521,7 +521,7 @@ class _Config:
             def rm_temp():
                 try:
                     shutil.rmtree(tmp)
-                except IOError:
+                except OSError:
                     pass
             atexit.register(rm_temp)
             self.conf_tmp_path = tmp
@@ -2500,7 +2500,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
                 last_hash = f.readline().split("cache_hash:")
                 if len(last_hash) == 2 and int(last_hash[1]) == cache_hash:
                     return True
-        except IOError:
+        except OSError:
             pass
 
         self.dist_log("generate dispatched config -> ", config_path)

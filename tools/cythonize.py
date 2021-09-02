@@ -40,12 +40,6 @@ HASH_FILE = 'cythonize.dat'
 DEFAULT_ROOT = 'numpy'
 VENDOR = 'NumPy'
 
-# WindowsError is not defined on unix systems
-try:
-    WindowsError
-except NameError:
-    WindowsError = None
-
 #
 # Rules
 #

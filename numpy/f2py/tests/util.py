@@ -36,7 +36,7 @@ def _cleanup():
             pass
         try:
             shutil.rmtree(_module_dir)
-        except (IOError, OSError):
+        except OSError:
             pass
         _module_dir = None
 

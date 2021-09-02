@@ -624,7 +624,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
             hash_line = wfd.readline().split('hash:')
             if len(hash_line) > 1 and int(hash_line[1]) == vars_hash:
                 return True
-    except IOError:
+    except OSError:
         pass
 
     custom_vars = {f'{{{k}}}':v for k, v in custom_vars.items()}
