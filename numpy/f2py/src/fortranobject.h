@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-#include "Python.h"
+#include <Python.h>
 
 #ifdef FORTRANOBJECT_C
 #define NO_IMPORT_ARRAY

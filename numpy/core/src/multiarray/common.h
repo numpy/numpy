@@ -1,6 +1,6 @@
 #ifndef _NPY_PRIVATE_COMMON_H_
 #define _NPY_PRIVATE_COMMON_H_
-#include "structmember.h"
+#include <structmember.h>
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>

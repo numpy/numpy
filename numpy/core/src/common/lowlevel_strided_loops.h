@@ -1,8 +1,8 @@
 #ifndef __LOWLEVEL_STRIDED_LOOPS_H
 #define __LOWLEVEL_STRIDED_LOOPS_H
 #include "common.h"
-#include <npy_config.h>
-#include <array_method.h>
+#include "npy_config.h"
+#include "array_method.h"
 #include "dtype_transfer.h"
 #include "mem_overlap.h"
 

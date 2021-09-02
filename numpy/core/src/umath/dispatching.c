@@ -34,6 +34,7 @@
  *    into the `signature` so that it is available to the ufunc loop.
  *
  */
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #define _UMATHMODULE

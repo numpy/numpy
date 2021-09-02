@@ -9,7 +9,9 @@ extern "C" {
 #endif
 
 /*********************** See f2py2e/cfuncs.py: includes ***********************/
-#include "Python.h"
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 #include "fortranobject.h"
 #include <math.h>
 

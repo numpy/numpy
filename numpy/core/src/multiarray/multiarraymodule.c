@@ -15,8 +15,8 @@
 /* $Id: multiarraymodule.c,v 1.36 2005/09/14 00:14:00 teoliphant Exp $ */
 
 #define PY_SSIZE_T_CLEAN
-#include "Python.h"
-#include "structmember.h"
+#include <Python.h>
+#include <structmember.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _UMATHMODULE

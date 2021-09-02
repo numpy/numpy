@@ -1,7 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <stdarg.h>
 #include <Python.h>
-#include "structmember.h"
+#include <structmember.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE

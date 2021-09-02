@@ -2,7 +2,7 @@
  * This file defines most of the machinery in order to wrap legacy style
  * ufunc loops into new style arraymethods.
  */
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #define _UMATHMODULE
