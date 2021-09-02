@@ -1922,7 +1922,7 @@ static PyObject *
 #else
     npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
 #endif
-    PyObject *o;
+    PyObject *ret;
 
     if (npy_isnan(val)) {
         Py_RETURN_FALSE;
@@ -1931,9 +1931,9 @@ static PyObject *
         Py_RETURN_FALSE;
     }
 
-    o = (npy_floor@c@(val) == val) ? Py_True : Py_False;
-    Py_INCREF(o);
-    return o;
+    ret = (npy_floor@c@(val) == val) ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
 }
 /**end repeat**/
 
