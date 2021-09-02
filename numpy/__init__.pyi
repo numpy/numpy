@@ -621,6 +621,14 @@ from numpy.matrixlib import (
     bmat as bmat,
 )
 
+# Protocol for representing file-like-objects accepted
+# by `ndarray.tofile` and `fromfile`
+class _IOProtocol(Protocol):
+    def flush(self) -> object: ...
+    def fileno(self) -> int: ...
+    def tell(self) -> SupportsIndex: ...
+    def seek(self, offset: int, whence: int, /) -> object: ...
+
 __all__: List[str]
 __path__: List[str]
 __version__: str
@@ -1225,7 +1233,10 @@ class _ArrayOrScalarCommon:
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
     def tofile(
-        self, fid: Union[IO[bytes], str, bytes, os.PathLike[Any]], sep: str = ..., format: str = ...
+        self,
+        fid: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _IOProtocol,
+        sep: str = ...,
+        format: str = ...,
     ) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...

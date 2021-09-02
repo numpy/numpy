@@ -6,7 +6,6 @@ from typing import (
     Literal as L,
     Any,
     Callable,
-    IO,
     Iterable,
     Optional,
     overload,
@@ -19,6 +18,7 @@ from typing import (
     SupportsIndex,
     final,
     Final,
+    Protocol,
 )
 
 from numpy import (
@@ -50,6 +50,7 @@ from numpy import (
     _CastingKind,
     _ModeKind,
     _SupportsBuffer,
+    _IOProtocol,
 )
 
 from numpy.typing import (
@@ -642,7 +643,7 @@ def frompyfunc(
 
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | IO[Any],
+    file: str | bytes | os.PathLike[Any] | _IOProtocol,
     dtype: None = ...,
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -652,7 +653,7 @@ def fromfile(
 ) -> NDArray[float64]: ...
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | IO[Any],
+    file: str | bytes | os.PathLike[Any] | _IOProtocol,
     dtype: _DTypeLike[_SCT],
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -662,7 +663,7 @@ def fromfile(
 ) -> NDArray[_SCT]: ...
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | IO[Any],
+    file: str | bytes | os.PathLike[Any] | _IOProtocol,
     dtype: DTypeLike,
     count: SupportsIndex = ...,
     sep: str = ...,
