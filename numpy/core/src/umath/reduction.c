@@ -6,15 +6,15 @@
  *
  * See LICENSE.txt for the license.
  */
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include "npy_config.h"
-#include <numpy/arrayobject.h>
+#include "numpy/arrayobject.h"
 
 #include "npy_pycompat.h"
 #include "ctors.h"

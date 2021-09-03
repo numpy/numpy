@@ -9,10 +9,11 @@
  *  Copyright (C) 2004-2018 Max-Planck-Society
  *  \author Martin Reinecke
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"

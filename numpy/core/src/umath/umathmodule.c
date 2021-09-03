@@ -1,26 +1,17 @@
 /* -*- c -*- */
-
-/*
- * vim:syntax=c
- */
-
-/*
- *****************************************************************************
- **                            INCLUDES                                     **
- *****************************************************************************
- */
+/* vim:syntax=c */
 
 /*
  * _UMATHMODULE IS needed in __ufunc_api.h, included from numpy/ufuncobject.h.
  * This is a mess and it would be nice to fix it. It has nothing to do with
  * __ufunc_api.c
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_config.h"
 

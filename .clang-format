@@ -16,7 +16,7 @@ DerivePointerAlignment: false
 IndentWidth: 4
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^[<"](Python|structmember)'
+  - Regex:           '^[<"](Python|structmember|pymem)'
     Priority:        -3
     CaseSensitive:   true
   - Regex:           '^"numpy/'

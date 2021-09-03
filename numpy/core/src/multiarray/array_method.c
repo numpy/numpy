@@ -26,10 +26,9 @@
  *    It is then sufficient for a ufunc (or other owner) to only hold a
  *    weak reference to the input DTypes.
  */
-
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
 #include <npy_pycompat.h>
 #include "arrayobject.h"
 #include "array_method.h"

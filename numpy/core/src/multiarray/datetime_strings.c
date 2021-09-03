@@ -6,15 +6,14 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <time.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
+#include "numpy/arrayobject.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -23,6 +22,8 @@
 #include "convert_datatype.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+
+#include <time.h>
 
 /*
  * Platform-specific time_t typedef. Some platforms use 32 bit, some use 64 bit
