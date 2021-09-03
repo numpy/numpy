@@ -15,7 +15,6 @@ References:
 #
 # TODO: support logical constants (Op.BOOLEAN)
 # TODO: support logical operators (.AND., ...)
-# TODO: support relational operators (<, >, ..., .LT., ...)
 # TODO: support defined operators (.MYOP., ...)
 #
 __all__ = ['Expr']
@@ -50,10 +49,41 @@ class Op(Enum):
     APPLY = 200
     INDEXING = 210
     CONCAT = 220
+    RELATIONAL = 300
     TERMS = 1000
     FACTORS = 2000
     REF = 3000
     DEREF = 3001
+
+
+class RelOp(Enum):
+    """
+    Used in Op.RELATIONAL expression to specify the function part.
+    """
+    EQ = 1
+    NE = 2
+    LT = 3
+    LE = 4
+    GT = 5
+    GE = 6
+
+    @classmethod
+    def fromstring(cls, s, language=Language.C):
+        if language is Language.Fortran:
+            return {'.eq.': RelOp.EQ, '.ne.': RelOp.NE,
+                    '.lt.': RelOp.LT, '.le.': RelOp.LE,
+                    '.gt.': RelOp.GT, '.ge.': RelOp.GE}[s.lower()]
+        return {'==': RelOp.EQ, '!=': RelOp.NE, '<': RelOp.LT,
+                '<=': RelOp.LE, '>': RelOp.GT, '>=': RelOp.GE}[s]
+
+    def tostring(self, language=Language.C):
+        if language is Language.Fortran:
+            return {RelOp.EQ: '.eq.', RelOp.NE: '.ne.',
+                    RelOp.LT: '.lt.', RelOp.LE: '.le.',
+                    RelOp.GT: '.gt.', RelOp.GE: '.ge.'}[self]
+        return {RelOp.EQ: '==', RelOp.NE: '!=',
+                RelOp.LT: '<', RelOp.LE: '<=',
+                RelOp.GT: '>', RelOp.GE: '>='}[self]
 
 
 class ArithOp(Enum):
@@ -77,12 +107,19 @@ class Precedence(Enum):
     """
     Used as Expr.tostring precedence argument.
     """
-    NONE = 0
-    TUPLE = 1
-    SUM = 2
+    ATOM = 0
+    POWER = 1
+    UNARY = 2
     PRODUCT = 3
-    POWER = 4
-    ATOM = 5
+    SUM = 4
+    LT = 6
+    EQ = 7
+    LAND = 11
+    LOR = 12
+    TERNARY = 13
+    ASSIGN = 14
+    TUPLE = 15
+    NONE = 100
 
 
 integer_types = (int,)
@@ -178,6 +215,9 @@ class Expr:
         elif op in (Op.REF, Op.DEREF):
             # data is Expr instance
             assert isinstance(data, Expr)
+        elif op is Op.RELATIONAL:
+            # data is (<relop>, <left>, <right>)
+            assert isinstance(data, tuple) and len(data) == 3
         else:
             raise NotImplementedError(
                 f'unknown op or missing sanity check: {op}')
@@ -341,19 +381,32 @@ class Expr:
                                              language=language)
                                   for a in self.data]
             if language is Language.C:
-                return f'({cond} ? {expr1} : {expr2})'
-            if language is Language.Python:
-                return f'({expr1} if {cond} else {expr2})'
-            if language is Language.Fortran:
-                return f'merge({expr1}, {expr2}, {cond})'
-            raise NotImplementedError(f'tostring for {self.op} and {language}')
+                r = f'({cond} ? {expr1} : {expr2})'
+            elif language is Language.Python:
+                r = f'({expr1} if {cond} else {expr2})'
+            elif language is Language.Fortran:
+                r = f'merge({expr1}, {expr2}, {cond})'
+            else:
+                raise NotImplementedError(
+                    f'tostring for {self.op} and {language}')
+            precedence = Precedence.ATOM
         elif self.op is Op.REF:
-            return '&' + self.data.tostring(language=language)
+            r = '&' + self.data.tostring(Precedence.UNARY, language=language)
+            precedence = Precedence.UNARY
         elif self.op is Op.DEREF:
-            return '*' + self.data.tostring(language=language)
+            r = '*' + self.data.tostring(Precedence.UNARY, language=language)
+            precedence = Precedence.UNARY
+        elif self.op is Op.RELATIONAL:
+            rop, left, right = self.data
+            precedence = (Precedence.EQ if rop in (RelOp.EQ, RelOp.NE)
+                          else Precedence.LT)
+            left = left.tostring(precedence, language=language)
+            right = right.tostring(precedence, language=language)
+            rop = rop.tostring(language=language)
+            r = f'{left} {rop} {right}'
         else:
             raise NotImplementedError(f'tostring for op {self.op}')
-        if parent_precedence.value > precedence.value:
+        if parent_precedence.value < precedence.value:
             # If parent precedence is higher than operand precedence,
             # operand will be enclosed in parenthesis.
             return '(' + r + ')'
@@ -590,7 +643,11 @@ class Expr:
             return normalize(Expr(self.op, operands))
         if self.op in (Op.REF, Op.DEREF):
             return normalize(Expr(self.op, self.data.substitute(symbols_map)))
-
+        if self.op is Op.RELATIONAL:
+            rop, left, right = self.data
+            left = left.substitute(symbols_map)
+            right = right.substitute(symbols_map)
+            return normalize(Expr(self.op, (rop, left, right)))
         raise NotImplementedError(f'substitute method for {self.op}: {self!r}')
 
     def traverse(self, visit, *args, **kwargs):
@@ -642,6 +699,11 @@ class Expr:
         elif self.op in (Op.REF, Op.DEREF):
             return normalize(Expr(self.op,
                                   self.data.traverse(visit, *args, **kwargs)))
+        elif self.op is Op.RELATIONAL:
+            rop, left, right = self.data
+            left = left.traverse(visit, *args, **kwargs)
+            right = right.traverse(visit, *args, **kwargs)
+            return normalize(Expr(self.op, (rop, left, right)))
         raise NotImplementedError(f'traverse method for {self.op}')
 
     def contains(self, other):
@@ -963,6 +1025,30 @@ def as_deref(expr):
     return Expr(Op.DEREF, expr)
 
 
+def as_eq(left, right):
+    return Expr(Op.RELATIONAL, (RelOp.EQ, left, right))
+
+
+def as_ne(left, right):
+    return Expr(Op.RELATIONAL, (RelOp.NE, left, right))
+
+
+def as_lt(left, right):
+    return Expr(Op.RELATIONAL, (RelOp.LT, left, right))
+
+
+def as_le(left, right):
+    return Expr(Op.RELATIONAL, (RelOp.LE, left, right))
+
+
+def as_gt(left, right):
+    return Expr(Op.RELATIONAL, (RelOp.GT, left, right))
+
+
+def as_ge(left, right):
+    return Expr(Op.RELATIONAL, (RelOp.GE, left, right))
+
+
 def as_terms(obj):
     """Return expression as TERMS expression.
     """
@@ -1257,22 +1343,31 @@ class _FromStringWorker:
                     return as_complex(*self.process(operands))
             raise NotImplementedError(
                 f'parsing comma-separated list (context={context}): {r}')
-            return tuple(self.process(restore(r.split(',')), context))
 
         # ternary operation
         m = re.match(r'\A([^?]+)[?]([^:]+)[:](.+)\Z', r)
         if m:
             assert context == 'expr', context
             oper, expr1, expr2 = restore(m.groups())
-            if 0:
-                # TODO: enable this when support for boolean
-                # expressions is fully implemented
-                oper = self.process(oper)
-            else:
-                oper = as_symbol(self.finalize_string(oper))
+            oper = self.process(oper)
             expr1 = self.process(expr1)
             expr2 = self.process(expr2)
             return as_ternary(oper, expr1, expr2)
+
+        # relational expression
+        if self.language is Language.Fortran:
+            m = re.match(
+                r'\A(.+)\s*[.](eq|ne|lt|le|gt|ge)[.]\s*(.+)\Z', r, re.I)
+        else:
+            m = re.match(
+                r'\A(.+)\s*([=][=]|[!][=]|[<][=]|[<]|[>][=]|[>])\s*(.+)\Z', r)
+        if m:
+            left, rop, right = m.groups()
+            if self.language is Language.Fortran:
+                rop = '.' + rop + '.'
+            left, right = self.process(restore((left, right)))
+            rop = RelOp.fromstring(rop, language=self.language)
+            return Expr(Op.RELATIONAL, (rop, left, right))
 
         # keyword argument
         m = re.match(r'\A(\w[\w\d_]*)\s*[=](.*)\Z', r)

@@ -5,7 +5,7 @@ from numpy.f2py.symbolic import (
     as_terms, as_factors, eliminate_quotes, insert_quotes,
     fromstring, as_expr, as_apply,
     as_numer_denom, as_ternary, as_ref, as_deref,
-    normalize
+    normalize, as_eq, as_ne, as_lt, as_gt, as_le, as_ge
     )
 from . import util
 
@@ -100,6 +100,13 @@ class TestSymbolic(util.F2PyTest):
         assert t != u
         assert hash(t) is not None
 
+        e = as_eq(x, y)
+        f = as_lt(x, y)
+        assert e.op == Op.RELATIONAL
+        assert e == e
+        assert e != f
+        assert hash(e) is not None
+
     def test_tostring_fortran(self):
         x = as_symbol('x')
         y = as_symbol('y')
@@ -142,6 +149,12 @@ class TestSymbolic(util.F2PyTest):
         assert str(Expr(Op.INDEXING, ('f', x))) == 'f[x]'
 
         assert str(as_ternary(x, y, z)) == 'merge(y, z, x)'
+        assert str(as_eq(x, y)) == 'x .eq. y'
+        assert str(as_ne(x, y)) == 'x .ne. y'
+        assert str(as_lt(x, y)) == 'x .lt. y'
+        assert str(as_le(x, y)) == 'x .le. y'
+        assert str(as_gt(x, y)) == 'x .gt. y'
+        assert str(as_ge(x, y)) == 'x .ge. y'
 
     def test_tostring_c(self):
         language = Language.C
@@ -166,6 +179,12 @@ class TestSymbolic(util.F2PyTest):
             language=language) == '123 + x + (x - y) / (x + y)'
 
         assert as_ternary(x, y, z).tostring(language=language) == '(x ? y : z)'
+        assert as_eq(x, y).tostring(language=language) == 'x == y'
+        assert as_ne(x, y).tostring(language=language) == 'x != y'
+        assert as_lt(x, y).tostring(language=language) == 'x < y'
+        assert as_le(x, y).tostring(language=language) == 'x <= y'
+        assert as_gt(x, y).tostring(language=language) == 'x > y'
+        assert as_ge(x, y).tostring(language=language) == 'x >= y'
 
     def test_operations(self):
         x = as_symbol('x')
@@ -240,6 +259,8 @@ class TestSymbolic(util.F2PyTest):
 
         assert as_ternary(x, y, z).substitute(
             {x: y + z}) == as_ternary(y + z, y, z)
+        assert as_eq(x, y).substitute(
+            {x: y + z}) == as_eq(y + z, y)
 
     def test_fromstring(self):
 
@@ -319,6 +340,20 @@ class TestSymbolic(util.F2PyTest):
         assert fromstring('*x * *y') == as_deref(x) * as_deref(y)
         assert fromstring('*x**y') == as_deref(x) * as_deref(y)
 
+        assert fromstring('x == y') == as_eq(x, y)
+        assert fromstring('x != y') == as_ne(x, y)
+        assert fromstring('x < y') == as_lt(x, y)
+        assert fromstring('x > y') == as_gt(x, y)
+        assert fromstring('x <= y') == as_le(x, y)
+        assert fromstring('x >= y') == as_ge(x, y)
+
+        assert fromstring('x .eq. y', language=Language.Fortran) == as_eq(x, y)
+        assert fromstring('x .ne. y', language=Language.Fortran) == as_ne(x, y)
+        assert fromstring('x .lt. y', language=Language.Fortran) == as_lt(x, y)
+        assert fromstring('x .gt. y', language=Language.Fortran) == as_gt(x, y)
+        assert fromstring('x .le. y', language=Language.Fortran) == as_le(x, y)
+        assert fromstring('x .ge. y', language=Language.Fortran) == as_ge(x, y)
+
     def test_traverse(self):
         x = as_symbol('x')
         y = as_symbol('y')
@@ -340,6 +375,7 @@ class TestSymbolic(util.F2PyTest):
         assert (x + y + z).traverse(replace_visit) == (2 * z + y)
         assert (x + f(y, x - z)).traverse(
             replace_visit) == (z + f(y, as_number(0)))
+        assert as_eq(x, y).traverse(replace_visit) == as_eq(z, y)
 
         # Use traverse to collect symbols, method 1
         function_symbols = set()

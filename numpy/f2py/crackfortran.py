@@ -2701,11 +2701,6 @@ def analyzevars(block):
                                     'required' if is_required else 'optional')
                             if v_attr:
                                 vars[v]['attrspec'] = v_attr
-                    else:
-                        # n is output or hidden argument, hence it
-                        # will depend on all variables in d
-                        n_deps.extend(coeffs_and_deps)
-
                     if coeffs_and_deps is not None:
                         # extend v dependencies with ones specified in attrspec
                         for v, (solver, deps) in coeffs_and_deps.items():
@@ -2716,6 +2711,8 @@ def analyzevars(block):
                                     v_deps.extend(aa[7:-1].split(','))
                             if v_deps:
                                 vars[v]['depend'] = list(set(v_deps))
+                            if n not in v_deps:
+                                n_deps.append(v)
             elif isstring(vars[n]):
                 if 'charselector' in vars[n]:
                     if '*' in vars[n]['charselector']:
