@@ -83,9 +83,12 @@ If you aren't familiar with this style, it's very easy to understand.
 If you see ``>>>``, you're looking at **input**, or the code that
 you would enter. Everything that doesn't have ``>>>`` in front of it
 is **output**, or the results of running your code. This is the style
-you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
+you see when you run ``python`` on the command line, but if you're using
+IPython, you might see a different style. Note that it is not part of the
+code and will cause an error if typed or pasted into the Python
+shell. It can be safely typed or pasted into the IPython shell; the ``>>>``
+is ignored.
 
-For more information, see :ref:`documentation_conventions`.
 
 What’s the difference between a Python list and a NumPy array?
 --------------------------------------------------------------

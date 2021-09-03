@@ -61,7 +61,7 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      * early exit on no space, other errors will also get found during fwrite
      */
     if (r == -1 && errno == ENOSPC) {
-        PyErr_Format(PyExc_IOError, "Not enough free space to write "
+        PyErr_Format(PyExc_OSError, "Not enough free space to write "
                      "%"NPY_INTP_FMT" bytes", nbytes);
         return -1;
     }
@@ -138,7 +138,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     if (n3 == 0) {
         /* binary data */
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_LIST_PICKLE)) {
-            PyErr_SetString(PyExc_IOError,
+            PyErr_SetString(PyExc_OSError,
                     "cannot write object arrays to a file in binary mode");
             return -1;
         }
@@ -182,7 +182,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 #endif
             NPY_END_ALLOW_THREADS;
             if (n < size) {
-                PyErr_Format(PyExc_IOError,
+                PyErr_Format(PyExc_OSError,
                         "%ld requested and %ld written",
                         (long) size, (long) n);
                 return -1;
@@ -198,7 +198,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                             (size_t) PyArray_DESCR(self)->elsize,
                             1, fp) < 1) {
                     NPY_END_THREADS;
-                    PyErr_Format(PyExc_IOError,
+                    PyErr_Format(PyExc_OSError,
                             "problem writing element %" NPY_INTP_FMT
                             " to file", it->index);
                     Py_DECREF(it);
@@ -266,7 +266,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             NPY_END_ALLOW_THREADS;
             Py_DECREF(byteobj);
             if (n < n2) {
-                PyErr_Format(PyExc_IOError,
+                PyErr_Format(PyExc_OSError,
                         "problem writing element %" NPY_INTP_FMT
                         " to file", it->index);
                 Py_DECREF(strobj);
@@ -276,7 +276,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             /* write separator for all but last one */
             if (it->index != it->size-1) {
                 if (fwrite(sep, 1, n3, fp) < n3) {
-                    PyErr_Format(PyExc_IOError,
+                    PyErr_Format(PyExc_OSError,
                             "problem writing separator to file");
                     Py_DECREF(strobj);
                     Py_DECREF(it);

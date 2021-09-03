@@ -1,5 +1,5 @@
-import sys
 from typing import (
+    Literal as L,
     Any,
     Container,
     Iterable,
@@ -7,6 +7,7 @@ from typing import (
     overload,
     Type,
     TypeVar,
+    Protocol,
 )
 
 from numpy import (
@@ -31,11 +32,6 @@ from numpy.typing import (
     _SupportsArray,
     _DTypeLikeComplex,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol, Literal as L
-else:
-    from typing_extensions import Protocol, Literal as L
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)

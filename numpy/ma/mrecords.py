@@ -658,8 +658,8 @@ def openfile(fname):
     # Try to open the file and guess its type
     try:
         f = open(fname)
-    except IOError as e:
-        raise IOError(f"No such file: '{fname}'") from e
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"No such file: '{fname}'") from e
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f

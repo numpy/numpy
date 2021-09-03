@@ -1,10 +1,4 @@
-import sys
-from typing import Any, List, Set
-
-if sys.version_info >= (3, 8):
-    from typing import Literal, Final
-else:
-    from typing_extensions import Literal, Final
+from typing import Any, List, Set, Literal, Final
 
 __all__: List[str]
 

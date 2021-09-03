@@ -257,6 +257,7 @@ The rest of the story
    Git Basics <gitwash/index>
    development_environment
    development_gitpod
+   howto_build_docs
    development_workflow
    development_advanced_debugging
    reviewer_guidelines

@@ -1,5 +1,4 @@
-from typing import List, Any, Mapping, Tuple
-from typing_extensions import SupportsIndex
+from typing import List, Any, Mapping, Tuple, SupportsIndex
 
 import numpy as np
 import numpy.typing as npt

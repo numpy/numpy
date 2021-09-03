@@ -152,9 +152,8 @@ def poly(seq_of_zeros):
         return 1.0
     dt = seq_of_zeros.dtype
     a = ones((1,), dtype=dt)
-    for k in range(len(seq_of_zeros)):
-        a = NX.convolve(a, array([1, -seq_of_zeros[k]], dtype=dt),
-                        mode='full')
+    for zero in seq_of_zeros:
+        a = NX.convolve(a, array([1, -zero], dtype=dt), mode='full')
 
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
@@ -770,8 +769,8 @@ def polyval(p, x):
     else:
         x = NX.asanyarray(x)
         y = NX.zeros_like(x)
-    for i in range(len(p)):
-        y = y * x + p[i]
+    for pv in p:
+        y = y * x + pv
     return y
 
 
@@ -1273,14 +1272,14 @@ class poly1d:
                 s = s[:-5]
             return s
 
-        for k in range(len(coeffs)):
-            if not iscomplex(coeffs[k]):
-                coefstr = fmt_float(real(coeffs[k]))
-            elif real(coeffs[k]) == 0:
-                coefstr = '%sj' % fmt_float(imag(coeffs[k]))
+        for k, coeff in enumerate(coeffs):
+            if not iscomplex(coeff):
+                coefstr = fmt_float(real(coeff))
+            elif real(coeff) == 0:
+                coefstr = '%sj' % fmt_float(imag(coeff))
             else:
-                coefstr = '(%s + %sj)' % (fmt_float(real(coeffs[k])),
-                                          fmt_float(imag(coeffs[k])))
+                coefstr = '(%s + %sj)' % (fmt_float(real(coeff)),
+                                          fmt_float(imag(coeff)))
 
             power = (N-k)
             if power == 0:

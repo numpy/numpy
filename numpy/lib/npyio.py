@@ -5,7 +5,7 @@ import itertools
 import warnings
 import weakref
 import contextlib
-from operator import itemgetter, index as opindex
+from operator import itemgetter, index as opindex, methodcaller
 from collections.abc import Mapping
 
 import numpy as np
@@ -26,18 +26,9 @@ from numpy.compat import (
     )
 
 
-@set_module('numpy')
-def loads(*args, **kwargs):
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.loads is deprecated, use pickle.loads instead",
-        DeprecationWarning, stacklevel=2)
-    return pickle.loads(*args, **kwargs)
-
-
 __all__ = [
-    'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-    'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+    'savetxt', 'loadtxt', 'genfromtxt',
+    'recfromtxt', 'recfromcsv', 'load', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
     ]
 
@@ -333,10 +324,12 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
 
     Raises
     ------
-    IOError
+    OSError
         If the input file does not exist or cannot be read.
+    UnpicklingError
+        If ``allow_pickle=True``, but the file cannot be loaded as a pickle.
     ValueError
-        The file contains an object array, but allow_pickle=False given.
+        The file contains an object array, but ``allow_pickle=False`` given.
 
     See Also
     --------
@@ -445,8 +438,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except Exception as e:
-                raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file)) from e
+                raise pickle.UnpicklingError(
+                    f"Failed to interpret file {file!r} as a pickle") from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
@@ -728,41 +721,42 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     zipf.close()
 
 
+def _floatconv(x):
+    try:
+        return float(x)  # The fastest path.
+    except ValueError:
+        if '0x' in x:  # Don't accidentally convert "a" ("0xa") to 10.
+            try:
+                return float.fromhex(x)
+            except ValueError:
+                pass
+        raise  # Raise the original exception, which makes more sense.
+
+
+_CONVERTERS = [  # These converters only ever get strs (not bytes) as input.
+    (np.bool_, lambda x: bool(int(x))),
+    (np.uint64, np.uint64),
+    (np.int64, np.int64),
+    (np.integer, lambda x: int(float(x))),
+    (np.longdouble, np.longdouble),
+    (np.floating, _floatconv),
+    (complex, lambda x: complex(x.replace('+-', '-'))),
+    (np.bytes_, methodcaller('encode', 'latin-1')),
+    (np.unicode_, str),
+]
+
+
 def _getconv(dtype):
-    """ Find the correct dtype converter. Adapted from matplotlib """
+    """
+    Find the correct dtype converter. Adapted from matplotlib.
 
-    def floatconv(x):
-        try:
-            return float(x)  # The fastest path.
-        except ValueError:
-            if '0x' in x:  # Don't accidentally convert "a" ("0xa") to 10.
-                try:
-                    return float.fromhex(x)
-                except ValueError:
-                    pass
-            raise  # Raise the original exception, which makes more sense.
-
-    typ = dtype.type
-    if issubclass(typ, np.bool_):
-        return lambda x: bool(int(x))
-    if issubclass(typ, np.uint64):
-        return np.uint64
-    if issubclass(typ, np.int64):
-        return np.int64
-    if issubclass(typ, np.integer):
-        return lambda x: int(float(x))
-    elif issubclass(typ, np.longdouble):
-        return np.longdouble
-    elif issubclass(typ, np.floating):
-        return floatconv
-    elif issubclass(typ, complex):
-        return lambda x: complex(asstr(x).replace('+-', '-'))
-    elif issubclass(typ, np.bytes_):
-        return asbytes
-    elif issubclass(typ, np.unicode_):
-        return asunicode
-    else:
-        return asstr
+    Even when a lambda is returned, it is defined at the toplevel, to allow
+    testing for equality and enabling optimization for single-type data.
+    """
+    for base, conv in _CONVERTERS:
+        if issubclass(dtype.type, base):
+            return conv
+    return str
 
 
 # _loadtxt_flatten_dtype_internal and _loadtxt_pack_items are loadtxt helpers
@@ -978,51 +972,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Nested functions used by loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def split_line(line):
-        """Chop off comments, strip, and split at delimiter. """
-        line = _decode_line(line, encoding=encoding)
+    def split_line(line: str):
+        """Chop off comments, strip, and split at delimiter."""
         for comment in comments:  # Much faster than using a single regex.
             line = line.split(comment, 1)[0]
         line = line.strip('\r\n')
         return line.split(delimiter) if line else []
-
-    def read_data(chunk_size):
-        """Parse each line, including the first.
-
-        The file read, `fh`, is a global defined above.
-
-        Parameters
-        ----------
-        chunk_size : int
-            At most `chunk_size` lines are read at a time, with iteration
-            until all lines are read.
-
-        """
-        X = []
-        line_iter = itertools.chain([first_line], fh)
-        line_iter = itertools.islice(line_iter, max_rows)
-        for i, line in enumerate(line_iter):
-            vals = split_line(line)
-            if len(vals) == 0:
-                continue
-            if usecols:
-                vals = [vals[j] for j in usecols]
-            if len(vals) != ncols:
-                line_num = i + skiprows + 1
-                raise ValueError("Wrong number of columns at line %d"
-                                 % line_num)
-
-            # Convert each value according to its column and store
-            items = [conv(val) for (conv, val) in zip(converters, vals)]
-
-            # Then pack it according to the dtype's nesting
-            items = packer(items)
-            X.append(items)
-            if len(X) > chunk_size:
-                yield X
-                X = []
-        if X:
-            yield X
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Main body of loadtxt.
@@ -1051,14 +1006,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         byte_converters = True
 
     if usecols is not None:
-        # Allow usecols to be a single int or a sequence of ints
+        # Copy usecols, allowing it to be a single int or a sequence of ints.
         try:
-            usecols_as_list = list(usecols)
+            usecols = list(usecols)
         except TypeError:
-            usecols_as_list = [usecols]
-        for col_idx in usecols_as_list:
+            usecols = [usecols]
+        for i, col_idx in enumerate(usecols):
             try:
-                opindex(col_idx)
+                usecols[i] = opindex(col_idx)  # Cast to builtin int now.
             except TypeError as e:
                 e.args = (
                     "usecols must be an int or a sequence of ints but "
@@ -1066,8 +1021,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     type(col_idx),
                     )
                 raise
-        # Fall back to existing code
-        usecols = usecols_as_list
+        if len(usecols) > 1:
+            usecols_getter = itemgetter(*usecols)
+        else:
+            # Get an iterable back, even if using a single column.
+            usecols_getter = lambda obj, c=usecols[0]: [obj[c]]
+    else:
+        usecols_getter = None
 
     # Make sure we're dealing with a proper dtype
     dtype = np.dtype(dtype)
@@ -1075,49 +1035,69 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     dtype_types, packer = _loadtxt_flatten_dtype_internal(dtype)
 
-    fown = False
+    fh_closing_ctx = contextlib.nullcontext()
     try:
         if isinstance(fname, os_PathLike):
             fname = os_fspath(fname)
         if _is_string_like(fname):
             fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
             fencoding = getattr(fh, 'encoding', 'latin1')
-            fh = iter(fh)
-            fown = True
+            line_iter = iter(fh)
+            fh_closing_ctx = contextlib.closing(fh)
         else:
-            fh = iter(fname)
+            line_iter = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
+            try:
+                first_line = next(line_iter)
+            except StopIteration:
+                pass  # Nothing matters if line_iter is empty.
+            else:
+                # Put first_line back.
+                line_iter = itertools.chain([first_line], line_iter)
+                if isinstance(first_line, bytes):
+                    # Using latin1 matches _decode_line's behavior.
+                    decoder = methodcaller(
+                        "decode",
+                        encoding if encoding is not None else "latin1")
+                    line_iter = map(decoder, line_iter)
     except TypeError as e:
         raise ValueError(
             f"fname must be a string, filehandle, list of strings,\n"
             f"or generator. Got {type(fname)} instead."
         ) from e
 
-    # input may be a python2 io stream
-    if encoding is not None:
-        fencoding = encoding
-    # we must assume local encoding
-    # TODO emit portability warning?
-    elif fencoding is None:
-        import locale
-        fencoding = locale.getpreferredencoding()
+    with fh_closing_ctx:
 
-    try:
+        # input may be a python2 io stream
+        if encoding is not None:
+            fencoding = encoding
+        # we must assume local encoding
+        # TODO emit portability warning?
+        elif fencoding is None:
+            import locale
+            fencoding = locale.getpreferredencoding()
+
         # Skip the first `skiprows` lines
         for i in range(skiprows):
-            next(fh)
+            next(line_iter)
 
         # Read until we find a line with some values, and use it to determine
         # the need for decoding and estimate the number of columns.
-        for first_line in fh:
+        for first_line in line_iter:
             ncols = len(usecols or split_line(first_line))
             if ncols:
+                # Put first_line back.
+                line_iter = itertools.chain([first_line], line_iter)
                 break
         else:  # End of lines reached
-            first_line = ''
             ncols = len(usecols or [])
             warnings.warn('loadtxt: Empty input file: "%s"' % fname,
                           stacklevel=2)
+
+        line_iter = itertools.islice(line_iter, max_rows)
+        lineno_words_iter = filter(
+            itemgetter(1),  # item[1] is words; filter skips empty lines.
+            enumerate(map(split_line, line_iter), 1 + skiprows))
 
         # Now that we know ncols, create the default converters list, and
         # set packing, if necessary.
@@ -1144,36 +1124,55 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     continue
             if byte_converters:
                 # converters may use decode to workaround numpy's old
-                # behaviour, so encode the string again before passing to
-                # the user converter
-                def tobytes_first(x, conv):
-                    if type(x) is bytes:
-                        return conv(x)
+                # behaviour, so encode the string again (converters are only
+                # called with strings) before passing to the user converter.
+                def tobytes_first(conv, x):
                     return conv(x.encode("latin1"))
-                converters[i] = functools.partial(tobytes_first, conv=conv)
+                converters[i] = functools.partial(tobytes_first, conv)
             else:
                 converters[i] = conv
 
-        converters = [conv if conv is not bytes else
-                      lambda x: x.encode(fencoding) for conv in converters]
+        fencode = methodcaller("encode", fencoding)
+        converters = [conv if conv is not bytes else fencode
+                      for conv in converters]
+        if len(set(converters)) == 1:
+            # Optimize single-type data. Note that this is only reached if
+            # `_getconv` returns equal callables (i.e. not local lambdas) on
+            # equal dtypes.
+            def convert_row(vals, _conv=converters[0]):
+                return [*map(_conv, vals)]
+        else:
+            def convert_row(vals):
+                return [conv(val) for conv, val in zip(converters, vals)]
 
         # read data in chunks and fill it into an array via resize
         # over-allocating and shrinking the array later may be faster but is
         # probably not relevant compared to the cost of actually reading and
         # converting the data
         X = None
-        for x in read_data(_loadtxt_chunksize):
+        while True:
+            chunk = []
+            for lineno, words in itertools.islice(
+                    lineno_words_iter, _loadtxt_chunksize):
+                if usecols_getter is not None:
+                    words = usecols_getter(words)
+                elif len(words) != ncols:
+                    raise ValueError(
+                        f"Wrong number of columns at line {lineno}")
+                # Convert each value according to its column, then pack it
+                # according to the dtype's nesting, and store it.
+                chunk.append(packer(convert_row(words)))
+            if not chunk:  # The islice is empty, i.e. we're done.
+                break
+
             if X is None:
-                X = np.array(x, dtype)
+                X = np.array(chunk, dtype)
             else:
                 nshape = list(X.shape)
                 pos = nshape[0]
-                nshape[0] += len(x)
+                nshape[0] += len(chunk)
                 X.resize(nshape, refcheck=False)
-                X[pos:, ...] = x
-    finally:
-        if fown:
-            fh.close()
+                X[pos:, ...] = chunk
 
     if X is None:
         X = np.array([], dtype)
@@ -1475,8 +1474,11 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Parameters
     ----------
-    file : str or file
+    file : path or file
         Filename or file object to read.
+
+        .. versionchanged:: 1.22.0
+            Now accepts `os.PathLike` implementations.
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
@@ -1526,6 +1528,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     """
     own_fh = False
     if not hasattr(file, "read"):
+        file = os.fspath(file)
         file = np.lib._datasource.open(file, 'rt', encoding=encoding)
         own_fh = True
 
@@ -1534,9 +1537,9 @@ def fromregex(file, regexp, dtype, encoding=None):
             dtype = np.dtype(dtype)
 
         content = file.read()
-        if isinstance(content, bytes) and isinstance(regexp, np.compat.unicode):
+        if isinstance(content, bytes) and isinstance(regexp, str):
             regexp = asbytes(regexp)
-        elif isinstance(content, np.compat.unicode) and isinstance(regexp, bytes):
+        elif isinstance(content, str) and isinstance(regexp, bytes):
             regexp = asstr(regexp)
 
         if not hasattr(regexp, 'match'):
@@ -2305,62 +2308,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 _genfromtxt_with_like = array_function_dispatch(
     _genfromtxt_dispatcher
 )(genfromtxt)
-
-
-def ndfromtxt(fname, **kwargs):
-    """
-    Load ASCII data stored in a file and return it as a single array.
-
-    .. deprecated:: 1.17
-        ndfromtxt` is a deprecated alias of `genfromtxt` which
-        overwrites the ``usemask`` argument with `False` even when
-        explicitly called as ``ndfromtxt(..., usemask=True)``.
-        Use `genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function.
-
-    """
-    kwargs['usemask'] = False
-    # Numpy 1.17
-    warnings.warn(
-        "np.ndfromtxt is a deprecated alias of np.genfromtxt, "
-        "prefer the latter.",
-        DeprecationWarning, stacklevel=2)
-    return genfromtxt(fname, **kwargs)
-
-
-def mafromtxt(fname, **kwargs):
-    """
-    Load ASCII data stored in a text file and return a masked array.
-
-    .. deprecated:: 1.17
-        np.mafromtxt is a deprecated alias of `genfromtxt` which
-        overwrites the ``usemask`` argument with `True` even when
-        explicitly called as ``mafromtxt(..., usemask=False)``.
-        Use `genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function to load ASCII data.
-
-    """
-    kwargs['usemask'] = True
-    # Numpy 1.17
-    warnings.warn(
-        "np.mafromtxt is a deprecated alias of np.genfromtxt, "
-        "prefer the latter.",
-        DeprecationWarning, stacklevel=2)
-    return genfromtxt(fname, **kwargs)
 
 
 def recfromtxt(fname, **kwargs):

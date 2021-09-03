@@ -388,6 +388,24 @@ class TestUfunc:
         assert_equal(ixs, (0, 0, 0, 1, 2))
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
+    
+    def test_signature9(self):
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            1, 1, "(  3)  -> ( )")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 0))
+        assert_equal(ixs, (0,))
+        assert_equal(flags, (0,))
+        assert_equal(sizes, (3,))
+
+    def test_signature10(self):
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            3, 1, "( 3? ) , (3? ,  3?) ,(n )-> ( 9)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 2, 1, 1))
+        assert_equal(ixs, (0, 0, 0, 1, 2))
+        assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
+        assert_equal(sizes, (3, -1, 9))
 
     def test_signature_failure_extra_parenthesis(self):
         with assert_raises(ValueError):
@@ -518,26 +536,36 @@ class TestUfunc:
         np.add(arr, arr, dtype="m")
         np.maximum(arr, arr, dtype="m")
 
-    def test_forced_dtype_warning(self):
-        # does not warn (test relies on bad pickling behaviour, simply remove
-        # it if the `assert int64 is not int64_2` should start failing.
-        int64 = np.dtype("int64")
-        int64_2 = pickle.loads(pickle.dumps(int64))
-        assert int64 is not int64_2
-        np.add(3, 4, dtype=int64_2)
+    @pytest.mark.parametrize("ufunc", [np.add, np.sqrt])
+    def test_cast_safety(self, ufunc):
+        """Basic test for the safest casts, because ufuncs inner loops can
+        indicate a cast-safety as well (which is normally always "no").
+        """
+        def call_ufunc(arr, **kwargs):
+            return ufunc(*(arr,) * ufunc.nin, **kwargs)
 
-        arr = np.arange(10, dtype="m8[s]")
-        msg = "The `dtype` and `signature` arguments to ufuncs only select the"
-        with pytest.raises(TypeError, match=msg):
-            np.add(3, 5, dtype=int64.newbyteorder())
-        with pytest.raises(TypeError, match=msg):
-            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
-        with pytest.raises(TypeError, match=msg):
-            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
-        with pytest.raises(TypeError, match=msg):
-            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
-        with pytest.raises(TypeError, match=msg):
-            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
+        arr = np.array([1., 2., 3.], dtype=np.float32)
+        arr_bs = arr.astype(arr.dtype.newbyteorder())
+        expected = call_ufunc(arr)
+        # Normally, a "no" cast:
+        res = call_ufunc(arr, casting="no")
+        assert_array_equal(expected, res)
+        # Byte-swapping is not allowed with "no" though:
+        with pytest.raises(TypeError):
+            call_ufunc(arr_bs, casting="no")
+
+        # But is allowed with "equiv":
+        res = call_ufunc(arr_bs, casting="equiv")
+        assert_array_equal(expected, res)
+
+        # Casting to float64 is safe, but not equiv:
+        with pytest.raises(TypeError):
+            call_ufunc(arr_bs, dtype=np.float64, casting="equiv")
+
+        # but it is safe cast:
+        res = call_ufunc(arr_bs, dtype=np.float64, casting="safe")
+        expected = call_ufunc(arr.astype(np.float64))  # upcast
+        assert_array_equal(expected, res)
 
     def test_true_divide(self):
         a = np.array(10)
@@ -2048,6 +2076,27 @@ class TestUfunc:
         for f in binary_funcs:
             assert_raises(TypeError, f, a, b)
             assert_raises(TypeError, f, c, a)
+
+    @pytest.mark.parametrize("ufunc",
+             [np.logical_and, np.logical_or])  # logical_xor object loop is bad
+    @pytest.mark.parametrize("signature",
+             [(None, None, object), (object, None, None),
+              (None, object, None)])
+    def test_logical_ufuncs_object_signatures(self, ufunc, signature):
+        a = np.array([True, None, False], dtype=object)
+        res = ufunc(a, a, signature=signature)
+        assert res.dtype == object
+
+    @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    @pytest.mark.parametrize("signature",
+                 [(bool, None, object), (object, None, bool),
+                  (None, object, bool)])
+    def test_logical_ufuncs_mixed_object_signatures(self, ufunc, signature):
+        # Most mixed signatures fail (except those with bool out, e.g. `OO->?`)
+        a = np.array([True, None, False])
+        with pytest.raises(TypeError):
+            ufunc(a, a, signature=signature)
 
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays

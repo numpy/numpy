@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import sys
-from typing import Any, Sequence, TYPE_CHECKING, Union, TypeVar, Generic
+from typing import Any, Sequence, Protocol, Union, TypeVar
 from numpy import (
     ndarray,
     dtype,
@@ -19,28 +18,19 @@ from numpy import (
     str_,
     bytes_,
 )
-from . import _HAS_TYPING_EXTENSIONS
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-elif _HAS_TYPING_EXTENSIONS:
-    from typing_extensions import Protocol
 
 _T = TypeVar("_T")
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 _DType = TypeVar("_DType", bound="dtype[Any]")
 _DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 
-if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
-    # The `_SupportsArray` protocol only cares about the default dtype
-    # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
-    # array.
-    # Concrete implementations of the protocol are responsible for adding
-    # any and all remaining overloads
-    class _SupportsArray(Protocol[_DType_co]):
-        def __array__(self) -> ndarray[Any, _DType_co]: ...
-else:
-    class _SupportsArray(Generic[_DType_co]): ...
+# The `_SupportsArray` protocol only cares about the default dtype
+# (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
+# array.
+# Concrete implementations of the protocol are responsible for adding
+# any and all remaining overloads
+class _SupportsArray(Protocol[_DType_co]):
+    def __array__(self) -> ndarray[Any, _DType_co]: ...
 
 # TODO: Wait for support for recursive types
 _NestedSequence = Union[

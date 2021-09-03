@@ -1229,9 +1229,11 @@ class Testfromregex:
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
         assert_array_equal(x, a)
 
-    def test_record_unicode(self):
+    @pytest.mark.parametrize("path_type", [str, Path])
+    def test_record_unicode(self, path_type):
         utf8 = b'\xcf\x96'
-        with temppath() as path:
+        with temppath() as str_path:
+            path = path_type(str_path)
             with open(path, 'wb') as f:
                 f.write(b'1.312 foo' + utf8 + b' \n1.534 bar\n4.444 qux')
 
@@ -2502,28 +2504,6 @@ class TestPathUsage:
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
-
-    def test_ndfromtxt(self):
-        # Test outputting a standard ndarray
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1 2\n3 4')
-
-            control = np.array([[1, 2], [3, 4]], dtype=int)
-            test = np.genfromtxt(path, dtype=int)
-            assert_array_equal(test, control)
-
-    def test_mafromtxt(self):
-        # From `test_fancy_dtype_alt` above
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1,2,3.0\n4,5,6.0\n')
-
-            test = np.genfromtxt(path, delimiter=',', usemask=True)
-            control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
-            assert_equal(test, control)
 
     def test_recfromtxt(self):
         with temppath(suffix='.txt') as path:

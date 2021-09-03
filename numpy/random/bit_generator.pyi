@@ -1,5 +1,4 @@
 import abc
-import sys
 from threading import Lock
 from typing import (
     Any,
@@ -16,15 +15,11 @@ from typing import (
     TypeVar,
     Union,
     overload,
+    Literal,
 )
 
 from numpy import dtype, ndarray, uint32, uint64
 from numpy.typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32Codes, _UInt64Codes
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 _T = TypeVar("_T")
 

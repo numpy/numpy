@@ -40,12 +40,6 @@ HASH_FILE = 'cythonize.dat'
 DEFAULT_ROOT = 'numpy'
 VENDOR = 'NumPy'
 
-# WindowsError is not defined on unix systems
-try:
-    WindowsError
-except NameError:
-    WindowsError = None
-
 #
 # Rules
 #
@@ -72,7 +66,8 @@ def process_pyx(fromfile, tofile):
         # other fixes in the 0.29 series that are needed even for earlier
         # Python versions.
         # Note: keep in sync with that in pyproject.toml
-        required_version = LooseVersion('0.29.21')
+        # Update for Python 3.10
+        required_version = LooseVersion('0.29.24')
 
         if LooseVersion(cython_version) < required_version:
             cython_path = Cython.__file__

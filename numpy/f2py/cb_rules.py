@@ -110,6 +110,7 @@ f2py_cb_start_clock();
         capi_tmp = PyObject_GetAttrString(#modulename#_module,\"#argname#_extra_args\");
         if (capi_tmp) {
             capi_arglist = (PyTupleObject *)PySequence_Tuple(capi_tmp);
+            Py_DECREF(capi_tmp);
             if (capi_arglist==NULL) {
                 PyErr_SetString(#modulename#_error,\"Failed to convert #modulename#.#argname#_extra_args to tuple.\\n\");
                 goto capi_fail;

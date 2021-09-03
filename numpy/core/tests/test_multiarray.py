@@ -4885,9 +4885,9 @@ class TestIO:
         # this should probably be supported as a file
         # but for now test for proper errors
         b = io.BytesIO()
-        assert_raises(IOError, np.fromfile, b, np.uint8, 80)
+        assert_raises(OSError, np.fromfile, b, np.uint8, 80)
         d = np.ones(7)
-        assert_raises(IOError, lambda x: x.tofile(b), d)
+        assert_raises(OSError, lambda x: x.tofile(b), d)
 
     def test_bool_fromstring(self):
         v = np.array([True, False, True, False], dtype=np.bool_)
@@ -4970,12 +4970,12 @@ class TestIO:
         x.tofile(tmp_filename)
 
         def fail(*args, **kwargs):
-            raise IOError('Can not tell or seek')
+            raise OSError('Can not tell or seek')
 
         with io.open(tmp_filename, 'rb', buffering=0) as f:
             f.seek = fail
             f.tell = fail
-            assert_raises(IOError, np.fromfile, f, dtype=x.dtype)
+            assert_raises(OSError, np.fromfile, f, dtype=x.dtype)
 
     def test_io_open_unbuffered_fromfile(self, x, tmp_filename):
         # gh-6632
@@ -5284,12 +5284,12 @@ class TestIO:
     def test_tofile_cleanup(self, tmp_filename):
         x = np.zeros((10), dtype=object)
         with open(tmp_filename, 'wb') as f:
-            assert_raises(IOError, lambda: x.tofile(f, sep=''))
+            assert_raises(OSError, lambda: x.tofile(f, sep=''))
         # Dup-ed file handle should be closed or remove will fail on Windows OS
         os.remove(tmp_filename)
 
         # Also make sure that we close the Python handle
-        assert_raises(IOError, lambda: x.tofile(tmp_filename))
+        assert_raises(OSError, lambda: x.tofile(tmp_filename))
         os.remove(tmp_filename)
 
     def test_fromfile_subarray_binary(self, tmp_filename):

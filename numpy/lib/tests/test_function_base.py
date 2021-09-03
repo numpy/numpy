@@ -1528,6 +1528,21 @@ class TestVectorize:
                      ([('x',)], [('y',), ()]))
         assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
                      ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+        
+        # Tests to check if whitespaces are ignored
+        assert_equal(nfb._parse_gufunc_signature('(x )->()'), ([('x',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('( x , y )->(  )'),
+                     ([('x', 'y')], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x),( y) ->()'),
+                     ([('x',), ('y',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(  x)-> (y )  '),
+                     ([('x',)], [('y',)]))
+        assert_equal(nfb._parse_gufunc_signature(' (x)->( y),( )'),
+                     ([('x',)], [('y',), ()]))
+        assert_equal(nfb._parse_gufunc_signature(
+                     '(  ), ( a,  b,c )  ,(  d)   ->   (d  ,  e)'),
+                     ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+
         with assert_raises(ValueError):
             nfb._parse_gufunc_signature('(x)(y)->()')
         with assert_raises(ValueError):
@@ -2755,11 +2770,6 @@ class TestInterp:
         x = np.array(x, order='F').reshape(2, -1)
         y = np.array(y, order='C').reshape(2, -1)
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
-
-
-def compare_results(res, desired):
-    for i in range(len(desired)):
-        assert_array_equal(res[i], desired[i])
 
 
 class TestPercentile:

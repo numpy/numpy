@@ -3320,18 +3320,15 @@ def around(a, decimals=0, out=None):
     ----------
     .. [1] "Lecture Notes on the Status of IEEE 754", William Kahan,
            https://people.eecs.berkeley.edu/~wkahan/ieee754status/IEEE754.PDF
-    .. [2] "How Futile are Mindless Assessments of
-           Roundoff in Floating-Point Computation?", William Kahan,
-           https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
 
     Examples
     --------
     >>> np.around([0.37, 1.64])
-    array([0.,  2.])
+    array([0., 2.])
     >>> np.around([0.37, 1.64], decimals=1)
-    array([0.4,  1.6])
+    array([0.4, 1.6])
     >>> np.around([.5, 1.5, 2.5, 3.5, 4.5]) # rounds to nearest even value
-    array([0.,  2.,  2.,  4.,  4.])
+    array([0., 2., 2., 4., 4.])
     >>> np.around([1,2,3,11], decimals=1) # ndarray of ints is returned
     array([ 1,  2,  3, 11])
     >>> np.around([1,2,3,11], decimals=-1)

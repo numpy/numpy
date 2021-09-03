@@ -1,6 +1,7 @@
 import sys
 import types
 from typing import (
+    Literal as L,
     Type,
     Union,
     Tuple,
@@ -10,6 +11,8 @@ from typing import (
     Dict,
     List,
     Iterable,
+    Protocol,
+    TypedDict,
 )
 
 from numpy import (
@@ -49,11 +52,6 @@ from numpy.core._type_aliases import (
 
 from numpy.typing import DTypeLike, ArrayLike, _SupportsDType
 
-if sys.version_info >= (3, 8):
-    from typing import Literal as L, Protocol, TypedDict
-else:
-    from typing_extensions import Literal as L, Protocol, TypedDict
-
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 
@@ -86,8 +84,8 @@ class _typedict(Dict[Type[generic], _T]):
 if sys.version_info >= (3, 10):
     _TypeTuple = Union[
         Type[Any],
-        types.Union,
-        Tuple[Union[Type[Any], types.Union, Tuple[Any, ...]], ...],
+        types.UnionType,
+        Tuple[Union[Type[Any], types.UnionType, Tuple[Any, ...]], ...],
     ]
 else:
     _TypeTuple = Union[

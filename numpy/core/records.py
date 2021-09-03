@@ -664,17 +664,17 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if nn > 0:
         shape = shape[:-nn]
 
-    for k, obj in enumerate(arrayList):
-        nn = descr[k].ndim
-        testshape = obj.shape[:obj.ndim - nn]
-        if testshape != shape:
-            raise ValueError("array-shape mismatch in array %d" % k)
-
     _array = recarray(shape, descr)
 
     # populate the record array (makes a copy)
-    for i in range(len(arrayList)):
-        _array[_names[i]] = arrayList[i]
+    for k, obj in enumerate(arrayList):
+        nn = descr[k].ndim
+        testshape = obj.shape[:obj.ndim - nn]
+        name = _names[k]
+        if testshape != shape:
+            raise ValueError(f'array-shape mismatch in array {k} ("{name}")')
+
+        _array[name] = obj
 
     return _array
 
@@ -939,7 +939,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         _array = recarray(shape, descr)
         nbytesread = fd.readinto(_array.data)
         if nbytesread != nbytes:
-            raise IOError("Didn't read as many bytes as expected")
+            raise OSError("Didn't read as many bytes as expected")
 
     return _array
 

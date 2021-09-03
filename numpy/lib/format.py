@@ -162,7 +162,6 @@ evolved with time and this document is more current.
 
 """
 import numpy
-import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
@@ -831,7 +830,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     ------
     ValueError
         If the data or the mode is invalid.
-    IOError
+    OSError
         If the file is not found or cannot be opened correctly.
 
     See Also
@@ -909,7 +908,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
             data += r
             if len(r) == 0 or len(data) == size:
                 break
-        except io.BlockingIOError:
+        except BlockingIOError:
             pass
     if len(data) != size:
         msg = "EOF: reading %s, expected %d bytes got %d"

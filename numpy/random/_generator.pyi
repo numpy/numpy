@@ -1,5 +1,4 @@
-import sys
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union, overload, TypeVar
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union, overload, TypeVar, Literal
 
 from numpy import (
     bool_,
@@ -43,11 +42,6 @@ from numpy.typing import (
     _UInt64Codes,
     _UIntCodes,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 

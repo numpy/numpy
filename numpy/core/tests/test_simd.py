@@ -850,7 +850,7 @@ class _SIMD_ALL(_Test_Utility):
             return
 
         safe_neg = lambda x: -x-1 if -x > int_max else -x
-        # test round divison for signed integers
+        # test round division for signed integers
         for x, d in itertools.product(rdata, divisors):
             d_neg = safe_neg(d)
             data = self._data(x)

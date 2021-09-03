@@ -130,7 +130,6 @@ from numpy.lib.npyio import (
     recfromtxt as recfromtxt,
     recfromcsv as recfromcsv,
     load as load,
-    loads as loads,
     save as save,
     savez as savez,
     savez_compressed as savez_compressed,

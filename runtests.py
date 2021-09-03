@@ -474,9 +474,24 @@ def build_project(args):
             '--single-version-externally-managed',
             '--record=' + dst_dir + 'tmp_install_log.txt']
 
-    from distutils.sysconfig import get_python_lib
-    site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
-    site_dir_noarch = get_python_lib(prefix=dst_dir, plat_specific=False)
+    py_v_s = sysconfig.get_config_var('py_version_short')
+    platlibdir = getattr(sys, 'platlibdir', '')  # Python3.9+
+    site_dir_template = os.path.normpath(sysconfig.get_path(
+        'platlib', expand=False
+    ))
+    site_dir = site_dir_template.format(platbase=dst_dir,
+                                        py_version_short=py_v_s,
+                                        platlibdir=platlibdir,
+                                        base=dst_dir,
+                                        )
+    noarch_template = os.path.normpath(sysconfig.get_path(
+        'purelib', expand=False
+    ))
+    site_dir_noarch = noarch_template.format(base=dst_dir,
+                                             py_version_short=py_v_s,
+                                             platlibdir=platlibdir,
+                                             )
+
     # easy_install won't install to a path that Python by default cannot see
     # and isn't on the PYTHONPATH.  Plus, it has to exist.
     if not os.path.exists(site_dir):
@@ -609,7 +624,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
             hash_line = wfd.readline().split('hash:')
             if len(hash_line) > 1 and int(hash_line[1]) == vars_hash:
                 return True
-    except IOError:
+    except OSError:
         pass
 
     custom_vars = {f'{{{k}}}':v for k, v in custom_vars.items()}

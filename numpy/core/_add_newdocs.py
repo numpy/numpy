@@ -3252,7 +3252,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dumps',
     a.dumps()
 
     Returns the pickle of the array as a string.
-    pickle.loads or numpy.loads will convert the string back to an array.
+    pickle.loads will convert the string back to an array.
 
     Parameters
     ----------

@@ -1340,7 +1340,7 @@ TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
                     *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
                 }
                 else {
-                    *((npy_timedelta *)op1) = libdivide_s64_do(in1, &fast_d);;
+                    *((npy_timedelta *)op1) = libdivide_s64_do(in1, &fast_d);
                 }
             }
         }

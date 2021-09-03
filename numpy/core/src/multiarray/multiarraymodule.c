@@ -2284,7 +2284,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
-        PyErr_SetFromErrno(PyExc_IOError);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto cleanup;
     }
     if (type == NULL) {

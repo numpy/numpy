@@ -30,7 +30,6 @@ indentation.
    routines.fft
    routines.functional
    routines.help
-   routines.indexing
    routines.io
    routines.linalg
    routines.logic

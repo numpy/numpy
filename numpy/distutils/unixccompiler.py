@@ -105,7 +105,7 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
             # and recreate.
             # Also, ar on OS X doesn't handle updating universal archives
             os.unlink(output_filename)
-        except (IOError, OSError):
+        except OSError:
             pass
         self.mkpath(os.path.dirname(output_filename))
         tmp_objects = objects + self.objects
