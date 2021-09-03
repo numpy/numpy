@@ -160,6 +160,8 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
         True if `res` can be modified in place, given the constraint on the
         input
     """
+    if arr1d.dtype == object:
+        return arr1d, True
 
     c = np.isnan(arr1d)
     s = np.nonzero(c)[0]
@@ -214,7 +216,11 @@ def _divide_by_count(a, b, out=None):
                 return np.divide(a, b, out=out, casting='unsafe')
         else:
             if out is None:
-                return a.dtype.type(a / b)
+                # Precaution against reduced object arrays
+                try:
+                    return a.dtype.type(a / b)
+                except AttributeError:
+                    return a / b
             else:
                 # This is questionable, but currently a numpy scalar can
                 # be output to a zero dimensional array.
@@ -1551,7 +1557,13 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
 
     # Compute variance.
     var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
-    if var.ndim < cnt.ndim:
+
+    # Precaution against reduced object arrays
+    try:
+        var_ndim = var.ndim
+    except AttributeError:
+        var_ndim = np.ndim(var)
+    if var_ndim < cnt.ndim:
         # Subclasses of ndarray may ignore keepdims, so check here.
         cnt = cnt.squeeze(axis)
     dof = cnt - ddof
@@ -1672,5 +1684,10 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     if isinstance(var, np.ndarray):
         std = np.sqrt(var, out=var)
     else:
-        std = var.dtype.type(np.sqrt(var))
+        # Precaution against reduced object arrays
+        try:
+            std = var.dtype.type(np.sqrt(var))
+        except AttributeError:
+            cls = type(var)
+            std = cls(np.sqrt(var))
     return std
