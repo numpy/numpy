@@ -250,6 +250,7 @@ class TestNanFunctions_NumberTypes:
         np.nancumsum: np.cumsum,
         np.nancumprod: np.cumprod,
         np.nanmean: np.mean,
+        np.nanmedian: np.median,
         np.nanvar: np.var,
         np.nanstd: np.std,
     }
@@ -263,6 +264,22 @@ class TestNanFunctions_NumberTypes:
         mat = self.mat.astype(dtype)
         tgt = func(mat)
         out = nanfunc(mat)
+
+        assert_almost_equal(out, tgt)
+        if dtype == "O":
+            assert type(out) is type(tgt)
+        else:
+            assert out.dtype == tgt.dtype
+
+    @pytest.mark.parametrize(
+        "nanfunc,func",
+        [(np.nanquantile, np.quantile), (np.nanpercentile, np.percentile)],
+        ids=["nanquantile", "nanpercentile"],
+    )
+    def test_nanfunc_q(self, dtype, nanfunc, func):
+        mat = self.mat.astype(dtype)
+        tgt = func(mat, q=1)
+        out = nanfunc(mat, q=1)
 
         assert_almost_equal(out, tgt)
         if dtype == "O":
