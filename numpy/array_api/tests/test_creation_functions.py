@@ -56,12 +56,17 @@ def test_asarray_copy():
     a[0] = 0
     assert all(b[0] == 1)
     assert all(a[0] == 0)
-    # Once copy=False is implemented, replace this with
-    # a = asarray([1])
-    # b = asarray(a, copy=False)
-    # a[0] = 0
-    # assert all(b[0] == 0)
+    a = asarray([1])
+    b = asarray(a, copy=np._CopyMode.ALWAYS)
+    a[0] = 0
+    assert all(b[0] == 1)
+    assert all(a[0] == 0)
+    a = asarray([1])
+    b = asarray(a, copy=np._CopyMode.NEVER)
+    a[0] = 0
+    assert all(b[0] == 0)
     assert_raises(NotImplementedError, lambda: asarray(a, copy=False))
+    assert_raises(NotImplementedError, lambda: asarray(a, copy=np._CopyMode.NEVER))
 
 
 def test_arange_errors():

@@ -43,7 +43,7 @@ def asarray(
     *,
     dtype: Optional[Dtype] = None,
     device: Optional[Device] = None,
-    copy: Optional[bool] = None,
+    copy: Optional[Union[bool | np._CopyMode]] = None,
 ) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.asarray <numpy.asarray>`.
