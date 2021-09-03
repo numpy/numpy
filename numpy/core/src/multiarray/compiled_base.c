@@ -1,7 +1,8 @@
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
-#include <string.h>
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
@@ -14,6 +15,8 @@
 #include "ctors.h"
 #include "common.h"
 #include "simd/simd.h"
+
+#include <string.h>
 
 typedef enum {
     PACK_ORDER_LITTLE = 0,

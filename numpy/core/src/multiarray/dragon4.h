@@ -33,8 +33,8 @@
 #ifndef _NPY_DRAGON4_H_
 #define _NPY_DRAGON4_H_
 
-#include "Python.h"
-#include "structmember.h"
+#include <Python.h>
+#include <structmember.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"

@@ -15,11 +15,12 @@
  * This is a mess and it would be nice to fix it. It has nothing to do with
  * __ufunc_api.c
  */
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
-#include "Python.h"
 
 #include "npy_config.h"
 

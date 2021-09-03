@@ -1,8 +1,9 @@
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
-#include <Python.h>
 
 #include "npy_config.h"
 

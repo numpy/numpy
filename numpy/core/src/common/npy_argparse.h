@@ -1,7 +1,7 @@
 #ifndef _NPY_ARGPARSE_H
 #define _NPY_ARGPARSE_H
 
-#include "Python.h"
+#include <Python.h>
 #include "numpy/ndarraytypes.h"
 
 /*
