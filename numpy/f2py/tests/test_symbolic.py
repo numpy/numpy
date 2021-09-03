@@ -2,34 +2,35 @@ from numpy.testing import assert_raises
 from numpy.f2py.symbolic import (
     Expr, Op, ArithOp, Language,
     as_symbol, as_number, as_string, as_array, as_complex,
-    as_terms, as_factors, fromstring, replace_quotes, as_expr, as_apply,
-    as_numer_denom
+    as_terms, as_factors, eliminate_quotes, insert_quotes,
+    fromstring, as_expr, as_apply,
+    as_numer_denom, as_ternary, as_ref, as_deref,
+    normalize
     )
 from . import util
 
 
 class TestSymbolic(util.F2PyTest):
 
-    def test_replace_quotes(self):
-
+    def test_eliminate_quotes(self):
         def worker(s):
-            r, d = replace_quotes(s)
-            assert '"' not in r, r
-            assert "'" not in r, r
-            # undo replacements:
-            s1 = r
-            for k, v in d.items():
-                s1 = s1.replace(k.data, v.data[0])
+            r, d = eliminate_quotes(s)
+            s1 = insert_quotes(r, d)
             assert s1 == s
 
-        worker('"1234" // "ABCD"')
-        worker('"1234" // \'ABCD\'')
-        worker('"1\\"2\'AB\'34"')
-        worker("'1\\'2\"AB\"34'")
+        for kind in ['', 'mykind_']:
+            worker(kind + '"1234" // "ABCD"')
+            worker(kind + '"1234" // ' + kind + '"ABCD"')
+            worker(kind + '"1234" // \'ABCD\'')
+            worker(kind + '"1234" // ' + kind + '\'ABCD\'')
+            worker(kind + '"1\\"2\'AB\'34"')
+            worker('a = ' + kind + "'1\\'2\"AB\"34'")
 
     def test_sanity(self):
         x = as_symbol('x')
         y = as_symbol('y')
+        z = as_symbol('z')
+
         assert x.op == Op.SYMBOL
         assert repr(x) == "Expr(Op.SYMBOL, 'x')"
         assert x == x
@@ -92,9 +93,17 @@ class TestSymbolic(util.F2PyTest):
         assert w != v
         assert hash(v) is not None
 
+        t = as_ternary(x, y, z)
+        u = as_ternary(x, z, y)
+        assert t.op == Op.TERNARY
+        assert t == t
+        assert t != u
+        assert hash(t) is not None
+
     def test_tostring_fortran(self):
         x = as_symbol('x')
         y = as_symbol('y')
+        z = as_symbol('z')
         n = as_number(123)
         m = as_number(456)
         a = as_array((n, m))
@@ -132,10 +141,13 @@ class TestSymbolic(util.F2PyTest):
         assert str(Expr(Op.APPLY, ('f', (x, y), {}))) == 'f(x, y)'
         assert str(Expr(Op.INDEXING, ('f', x))) == 'f[x]'
 
+        assert str(as_ternary(x, y, z)) == 'merge(y, z, x)'
+
     def test_tostring_c(self):
         language = Language.C
         x = as_symbol('x')
         y = as_symbol('y')
+        z = as_symbol('z')
         n = as_number(123)
 
         assert Expr(Op.FACTORS, {x: 2}).tostring(language=language) == 'x * x'
@@ -152,6 +164,8 @@ class TestSymbolic(util.F2PyTest):
             language=language) == '(x - y) / (x + y)'
         assert (x + (x - y) / (x + y) + n).tostring(
             language=language) == '123 + x + (x - y) / (x + y)'
+
+        assert as_ternary(x, y, z).tostring(language=language) == '(x ? y : z)'
 
     def test_operations(self):
         x = as_symbol('x')
@@ -224,6 +238,9 @@ class TestSymbolic(util.F2PyTest):
         assert x.substitute({x: y + z}) == y + z
         assert a.substitute({x: y + z}) == as_array((y + z, y))
 
+        assert as_ternary(x, y, z).substitute(
+            {x: y + z}) == as_ternary(y + z, y, z)
+
     def test_fromstring(self):
 
         x = as_symbol('x')
@@ -242,16 +259,20 @@ class TestSymbolic(util.F2PyTest):
         assert fromstring('x * y') == x * y
         assert fromstring('x * 2') == x * 2
         assert fromstring('x / y') == x / y
-        assert fromstring('x ** 2') == x ** 2
-        assert fromstring('x ** 2 ** 3') == x ** 2 ** 3
+        assert fromstring('x ** 2',
+                          language=Language.Python) == x ** 2
+        assert fromstring('x ** 2 ** 3',
+                          language=Language.Python) == x ** 2 ** 3
         assert fromstring('(x + y) * z') == (x + y) * z
 
         assert fromstring('f(x)') == f(x)
         assert fromstring('f(x,y)') == f(x, y)
         assert fromstring('f[x]') == f[x]
+        assert fromstring('f[x][y]') == f[x][y]
 
         assert fromstring('"ABC"') == s
-        assert fromstring('"ABC" // "123" ') == s // t
+        assert normalize(fromstring('"ABC" // "123" ',
+                                    language=Language.Fortran)) == s // t
         assert fromstring('f("ABC")') == f(s)
         assert fromstring('MYSTRKIND_"ABC"') == as_string('"ABC"', 'MYSTRKIND')
 
@@ -287,6 +308,16 @@ class TestSymbolic(util.F2PyTest):
                             name=as_string('"John"'),
                             age=as_number(50),
                             shape=as_array((as_number(34), as_number(23)))))
+
+        assert fromstring('x?y:z') == as_ternary(x, y, z)
+
+        assert fromstring('*x') == as_deref(x)
+        assert fromstring('**x') == as_deref(as_deref(x))
+        assert fromstring('&x') == as_ref(x)
+        assert fromstring('(*x) * (*y)') == as_deref(x) * as_deref(y)
+        assert fromstring('(*x) * *y') == as_deref(x) * as_deref(y)
+        assert fromstring('*x * *y') == as_deref(x) * as_deref(y)
+        assert fromstring('*x**y') == as_deref(x) * as_deref(y)
 
     def test_traverse(self):
         x = as_symbol('x')

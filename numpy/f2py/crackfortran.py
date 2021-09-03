@@ -2609,8 +2609,8 @@ def analyzevars(block):
                         # not defined in block['vars']. Here we assume
                         # these correspond to Fortran/C intrinsic
                         # functions or that are defined by other
-                        # means. We'll let the compiler to validate
-                        # the definiteness of such symbols.
+                        # means. We'll let the compiler validate the
+                        # definiteness of such symbols.
                         dimension_exprs[d] = solver_and_deps
                     vars[n]['dimension'].append(d)
 
