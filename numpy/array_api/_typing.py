@@ -37,7 +37,7 @@ NestedSequence = Sequence[Sequence[Any]]
 
 Device = Any
 Dtype = Type[
-    Union[(int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64)]
+    Union[int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64]
 ]
 SupportsDLPack = Any
 SupportsBufferProtocol = Any

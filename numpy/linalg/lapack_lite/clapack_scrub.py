@@ -301,4 +301,3 @@ if __name__ == '__main__':
 
     with open(outfilename, 'w') as writefo:
         writefo.write(source)
-    writefo.close()
