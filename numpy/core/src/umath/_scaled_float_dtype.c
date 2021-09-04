@@ -11,10 +11,10 @@
  * NOTE: The tests were initially written using private API and ABI, ideally
  *       they should be replaced/modified with versions using public API.
  */
-
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
 #include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 

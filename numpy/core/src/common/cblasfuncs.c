@@ -2,12 +2,12 @@
  * This module provides a BLAS optimized matrix multiply,
  * inner product and dot for numpy arrays
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"

@@ -1,7 +1,9 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <numpy/arrayobject.h>
 
 #include "npy_config.h"

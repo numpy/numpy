@@ -11,16 +11,14 @@
   oliphant@ee.byu.edu
   Brigham Young University
 */
-
-/* $Id: multiarraymodule.c,v 1.36 2005/09/14 00:14:00 teoliphant Exp $ */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
