@@ -1,5 +1,5 @@
-#ifndef _NPY_COMMON_H_
-#define _NPY_COMMON_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_
 
 /* need Python.h for npy_intp, npy_uintp */
 #include <Python.h>
@@ -1107,4 +1107,4 @@ typedef npy_int64 npy_datetime;
 
 /* End of typedefs for numarray style bit-width names */
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_ */

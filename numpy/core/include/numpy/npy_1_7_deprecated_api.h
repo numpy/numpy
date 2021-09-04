@@ -1,9 +1,9 @@
-#ifndef _NPY_1_7_DEPRECATED_API_H
-#define _NPY_1_7_DEPRECATED_API_H
-
 #ifndef NPY_DEPRECATED_INCLUDES
 #error "Should never include npy_*_*_deprecated_api directly."
 #endif
+
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
 
 /* Emit a warning if the user did not specifically request the old API */
 #ifndef NPY_NO_DEPRECATED_API
@@ -122,4 +122,4 @@
  */
 #include "old_defines.h"
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_ */

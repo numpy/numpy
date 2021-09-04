@@ -1,5 +1,5 @@
-#ifndef _RANDOMDGEN__DISTRIBUTIONS_H_
-#define _RANDOMDGEN__DISTRIBUTIONS_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_RANDOM_DISTRIBUTIONS_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_RANDOM_DISTRIBUTIONS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -206,4 +206,4 @@ static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
 }
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_RANDOM_DISTRIBUTIONS_H_ */

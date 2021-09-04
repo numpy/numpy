@@ -1,5 +1,5 @@
-#ifndef __NPY_MATH_C99_H_
-#define __NPY_MATH_C99_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -585,4 +585,4 @@ void npy_set_floatstatus_invalid(void);
 #include "npy_math_internal.h"
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_ */
