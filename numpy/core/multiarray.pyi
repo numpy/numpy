@@ -51,6 +51,7 @@ from numpy import (
     _ModeKind,
     _SupportsBuffer,
     _IOProtocol,
+    _CopyMode
 )
 
 from numpy.typing import (
@@ -1012,9 +1013,3 @@ class flagsobj:
     def owndata(self) -> bool: ...
     def __getitem__(self, key: _GetItemKeys) -> bool: ...
     def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
-
-class _CopyMode(enum.Enum):
-
-    ALWAYS: L[1]
-    IF_NEEDED: L[0]
-    NEVER: L[2]

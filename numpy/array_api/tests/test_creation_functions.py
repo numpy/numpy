@@ -67,7 +67,7 @@ def test_asarray_copy():
     assert all(b[0] == 0)
     assert_raises(NotImplementedError, lambda: asarray(a, copy=False))
     assert_raises(NotImplementedError,
-                  lambda: asarray(a, copy=np._CopyMode.NEVER))
+                  lambda: asarray(a, copy=np._CopyMode.IF_NEEDED))
 
 
 def test_arange_errors():

@@ -108,7 +108,7 @@ class _CopyMode(enum.Enum):
         if self == _CopyMode.IF_NEEDED:
             return False
 
-        raise TypeError(f"{self} is neither True nor False.")
+        raise ValueError(f"{self} is neither True nor False.")
 
 
 _CopyMode.__module__ = 'numpy'

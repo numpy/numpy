@@ -3689,7 +3689,6 @@ trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
 abs = absolute
 
 class _CopyMode(enum.Enum):
-
     ALWAYS: L[1]
     IF_NEEDED: L[0]
     NEVER: L[2]
