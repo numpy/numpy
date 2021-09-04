@@ -1,0 +1,154 @@
+/*@targets
+ ** $maxopt baseline
+ ** sse2 avx2 avx512f
+ ** neon
+ ** vsx2
+ **/
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+
+/*************************************************************************
+ ** SIMD intrinsics
+ *************************************************************************/
+#if NPY_SIMD
+NPY_FINLINE npyv_f32
+simd_heaviside_f32(npyv_f32 x, npyv_f32 h)
+{
+    // TODO: your implmentation
+}
+#endif
+
+#if NPY_SIMD_F64
+NPY_FINLINE npyv_f64
+simd_heaviside_f64(npyv_f64 x, npyv_f64 h)
+{
+    // TODO: your implmentation
+}
+#endif
+
+/*************************************************************************
+ ** SIMD kernels
+ *************************************************************************/
+/**begin repeat
+ * #type = float, double#
+ * #sfx  = f32, f64#
+ * #VCHK = NPY_SIMD, NPY_SIMD_F64#
+ */
+#if @VCHK@
+/**begin repeat1
+ * #kind = heaviside#
+ */
+static void
+simd_kernel_@kind@_@sfx@(const @type@ *src0, npy_intp ssrc0,
+                         const @type@ *src1, npy_intp ssrc1,
+                               @type@ *dst,  npy_intp sdst, npy_intp len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    // unroll by x2.
+    const int wstep = vstep*2;
+    //  contig        contig        contig
+    if (ssrc0 == 1 && ssrc1 == 1 && sdst == 1) {
+        for (; len >= wstep; len -= wstep, src0 += wstep,
+                            src1 += wstep,  dst += wstep
+        ) {
+            npyv_@sfx@ a0 = npyv_load_@sfx@(src0);
+            npyv_@sfx@ a1 = npyv_load_@sfx@(src0 + vstep);
+            npyv_@sfx@ b0 = npyv_load_@sfx@(src1);
+            npyv_@sfx@ b1 = npyv_load_@sfx@(src1 + vstep);
+            npyv_@sfx@ r0 = simd_@kind@_@sfx@(a0, b0);
+            npyv_@sfx@ r1 = simd_@kind@_@sfx@(a1, b1);
+            npyv_store_@sfx@(dst, r0);
+            npyv_store_@sfx@(dst + vstep, r1);
+        }
+    }
+    // contig              scalar        contig
+    else if (ssrc0 == 1 && ssrc1 == 0 && sdst == 1) {
+        npyv_@sfx@ scalar = npyv_setall_@sfx@(*src1);
+        for (; len >= wstep; len -= wstep, src0 += wstep, dst += wstep) {
+            npyv_@sfx@ a0 = npyv_load_@sfx@(src0);
+            npyv_@sfx@ a1 = npyv_load_@sfx@(src0 + vstep);
+            npyv_@sfx@ r0 = simd_@kind@_@sfx@(a0, scalar);
+            npyv_@sfx@ r1 = simd_@kind@_@sfx@(a1, scalar);
+            npyv_store_@sfx@(dst, r0);
+            npyv_store_@sfx@(dst + vstep, r1);
+        }
+    }
+    // scalar              contig        contig
+    else if (ssrc0 == 0 && ssrc1 == 1 && sdst == 1) {
+        npyv_@sfx@ scalar = npyv_setall_@sfx@(*src0);
+        for (; len >= wstep; len -= wstep, src1 += wstep, dst += wstep) {
+            npyv_@sfx@ b0 = npyv_load_@sfx@(src1);
+            npyv_@sfx@ b1 = npyv_load_@sfx@(src1 + vstep);
+            npyv_@sfx@ r0 = simd_@kind@_@sfx@(scalar, b0);
+            npyv_@sfx@ r1 = simd_@kind@_@sfx@(scalar, b1);
+            npyv_store_@sfx@(dst, r0);
+            npyv_store_@sfx@(dst + vstep, r1);
+        }
+    }
+    // remaind scalars and non-specialized strides
+    for (; len > 0; len -= vstep, src0 += ssrc0*vstep,
+                    src1 += ssrc1*vstep, dst += sdst*vstep
+    ) {
+        npyv_@sfx@ a = npyv_loadn_tillz_@sfx@(src0, ssrc0, len);
+        npyv_@sfx@ b = npyv_loadn_tillz_@sfx@(src1, ssrc1, len);
+        npyv_@sfx@ r = simd_@kind@_@sfx@(a, b);
+        npyv_storen_till_@sfx@(dst, sdst, len, r);
+    }
+}
+/**end repeat1**/
+#endif
+/**end repeat**/
+
+/********************************************************************
+ ** ufunc inner functions
+ ********************************************************************/
+/**begin repeat
+ * #TYPE = FLOAT, DOUBLE#
+ * #type = float, double#
+ * #sfx  = f32, f64#
+ * #csfx = f,   #
+ * #VCHK = NPY_SIMD, NPY_SIMD_F64#
+ */
+/**begin repeat1
+ * #kind = heaviside#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_heaviside)
+(char **args, npy_intp const *dimensions, npy_intp const *steps,
+                                          void *NPY_UNUSED(func))
+{
+    const char *src0 = args[0]; const char *src1 = args[1];
+          char *dst  = args[2];
+
+    const npy_intp src0_step = steps[0];
+    const npy_intp src1_step = steps[1];
+    const npy_intp dst_step  = steps[2];
+    npy_intp len = dimensions[0];
+#if @VCHK@
+    const int lsize = sizeof(@type@);
+    const npy_intp ssrc0 = src0_step / lsize;
+    const npy_intp ssrc1 = src1_step / lsize;
+    const npy_intp sdst  = dst_step  / lsize;
+    if (!is_mem_overlap(src0, src0_step, dst, dst_step, len) &&
+        !is_mem_overlap(src1, src1_step, dst, dst_step, len) &&
+        npyv_loadable_stride_@sfx@(ssrc0) &&
+        npyv_loadable_stride_@sfx@(ssrc1) &&
+        npyv_storable_stride_@sfx@(sdst)
+    ) {
+        simd_kernel_@kind@_@sfx@((const @type@*)src0, ssrc0,
+                                 (const @type@*)src1, ssrc1,
+                                 (@type@*)dst, sdst, len);
+        return;
+    }
+#endif
+    for (; len > 0; --len, src0 += src0_step, src1 += src1_step,
+                           dst  += dst_step
+    ) {
+        const @type@ s0 = *(@type@*)src0;
+        const @type@ s1 = *(@type@*)src1;
+        *(@type@*)dst = npy_@kind@@csfx@(s0, s1);
+    }
+}
+/**end repeat1**/
+/**end repeat**/
+
