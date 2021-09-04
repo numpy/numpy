@@ -1683,11 +1683,8 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
                  keepdims=keepdims)
     if isinstance(var, np.ndarray):
         std = np.sqrt(var, out=var)
+    elif hasattr(var, 'dtype'):
+        std = var.dtype.type(np.sqrt(var))
     else:
-        # Precaution against reduced object arrays
-        try:
-            std = var.dtype.type(np.sqrt(var))
-        except AttributeError:
-            cls = type(var)
-            std = cls(np.sqrt(var))
+        std = np.sqrt(var)
     return std
