@@ -1,10 +1,11 @@
-#ifndef _NPY_PRIVATE_COMMON_H_
-#define _NPY_PRIVATE_COMMON_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
+
 #include <structmember.h>
-#include <numpy/npy_common.h>
-#include <numpy/ndarraytypes.h>
-#include <limits.h>
+#include "numpy/npy_common.h"
+#include "numpy/ndarraytypes.h"
 #include "npy_import.h"
+#include <limits.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -343,5 +344,4 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
 
-#endif
-
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */

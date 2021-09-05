@@ -29,9 +29,8 @@
  * Ryan Juckett's original code was under the Zlib license; he gave numpy
  * permission to include it under the MIT license instead.
  */
-
-#ifndef _NPY_DRAGON4_H_
-#define _NPY_DRAGON4_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_DRAGON4_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_DRAGON4_H_
 
 #include <Python.h>
 #include <structmember.h>
@@ -136,5 +135,4 @@ Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
                    int min_digits, int sign, TrimMode trim, int pad_left,
                    int exp_digits);
 
-#endif
-
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DRAGON4_H_ */

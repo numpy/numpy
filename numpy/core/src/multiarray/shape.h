@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_SHAPE_H_
-#define _NPY_ARRAY_SHAPE_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_
 
 /*
  * Creates a sorted stride perm matching the KEEPORDER behavior
@@ -21,4 +21,4 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
 NPY_NO_EXPORT PyObject *
 PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_ */
