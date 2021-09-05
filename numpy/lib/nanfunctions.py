@@ -161,9 +161,11 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
         input
     """
     if arr1d.dtype == object:
-        return arr1d, True
+        # object arrays do not support `isnan` (gh-9009), so make a guess
+        c = np.not_equal(arr1d, arr1d, dtype=bool)
+    else:
+        c = np.isnan(arr1d)
 
-    c = np.isnan(arr1d)
     s = np.nonzero(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
