@@ -9,6 +9,9 @@
  * Prototypes for level 1 BLAS functions (complex are recast as routines)
  * ===========================================================================
  */
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CBLAS_BASE_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CBLAS_BASE_H_
+
 float  BLASNAME(cblas_sdsdot)(const BLASINT N, const float alpha, const float *X,
                               const BLASINT incX, const float *Y, const BLASINT incY);
 double BLASNAME(cblas_dsdot)(const BLASINT N, const float *X, const BLASINT incX, const float *Y,
@@ -555,3 +558,5 @@ void BLASNAME(cblas_zher2k)(const enum CBLAS_ORDER Order, const enum CBLAS_UPLO 
                             void *C, const BLASINT ldc);
 
 void BLASNAME(cblas_xerbla)(BLASINT p, const char *rout, const char *form, ...);
+
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CBLAS_BASE_H_ */

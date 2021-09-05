@@ -1,5 +1,5 @@
-#ifndef NPY_CPU_DISPATCH_H_
-#define NPY_CPU_DISPATCH_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_
 /**
  * This file is part of the NumPy CPU dispatcher. Please have a look at doc/reference/simd-optimizations.html
  * To get a better understanding of the mechanism behind it.
@@ -262,4 +262,4 @@
 #define NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_(LEFT, ...) \
     ( LEFT __VA_ARGS__ )
 
-#endif // NPY_CPU_DISPATCH_H_
+#endif  // NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_

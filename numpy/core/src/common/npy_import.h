@@ -1,5 +1,5 @@
-#ifndef NPY_IMPORT_H
-#define NPY_IMPORT_H
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_IMPORT_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_IMPORT_H_
 
 #include <Python.h>
 
@@ -29,4 +29,4 @@ npy_cache_import(const char *module, const char *attr, PyObject **cache)
     }
 }
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_IMPORT_H_ */
