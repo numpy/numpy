@@ -248,6 +248,10 @@ class NpzFile(Mapping):
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
+    def __eq__(self, other):
+        if not isinstance(other, NpzFile):
+            return False
+        return dict(self.items()) == dict(other.items())
 
     # deprecate the python 2 dict apis that we supported by accident in
     # python 3. We forgot to implement itervalues() at all in earlier
