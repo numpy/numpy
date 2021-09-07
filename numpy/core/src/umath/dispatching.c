@@ -862,10 +862,11 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
                           && op_dtypes[2]->type_num != NPY_OBJECT)) {
         return 0;
     }
-    /* Actually, we have to use the OBJECT loop after all, set all we can
-     * to object (that might not work out, but just try).
+    /*
+     * Actually, we have to use the OBJECT loop after all, set all we can
+     * to object (that might not work out, but try).
      *
-     * TODO: Change this to check for `op_dtypes[0] == NULL` to STOP
+     * NOTE: Change this to check for `op_dtypes[0] == NULL` to STOP
      *       returning `object` for `np.logical_and.reduce(obj_arr)`
      *       which will also affect `np.all` and `np.any`!
      */

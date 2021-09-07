@@ -2849,10 +2849,6 @@ reduce_loop(PyArrayMethod_Context *context,
         strides_copy[1] = strides[1];
         strides_copy[2] = strides[0];
         if (masked) {
-            /*
-             * TODO: This code had a broadcasted-mask optimization that may
-             *       make sense in the array-method masked strided loop code.
-             */
             dataptrs_copy[3] = dataptrs[2];
             strides_copy[3] = strides[2];
         }
