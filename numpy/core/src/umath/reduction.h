@@ -20,7 +20,7 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
 
 /*
  * Inner definition of the reduce loop, only used for a static function.
- * At some point around NmPy 1.6, there was probably an intention to make
+ * At some point around NumPy 1.6, there was probably an intention to make
  * the reduce loop customizable at this level (per ufunc?).
  *
  * TODO: This should be refactored/removed.

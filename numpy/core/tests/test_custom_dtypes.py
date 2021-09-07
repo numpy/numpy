@@ -114,7 +114,7 @@ class TestSFloat:
         # possible (the relaxed version of the old refusal to handle any
         # flexible dtype).
         with pytest.raises(TypeError,
-                match="The resolved dtypes are not compatible"):
+                match="the resolved dtypes are not compatible"):
             np.multiply.reduce(a)
 
     def test_basic_multiply_promotion(self):

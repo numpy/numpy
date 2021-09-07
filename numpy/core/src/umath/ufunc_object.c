@@ -2485,9 +2485,9 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
 
     /* Final preparation of the arraymethod call */
     PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = operation_descrs,
+        .caller = (PyObject *)ufunc,
+        .method = ufuncimpl,
+        .descriptors = operation_descrs,
     };
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -2607,9 +2607,9 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
 
     /* Final preparation of the arraymethod call */
     PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = operation_descrs,
+        .caller = (PyObject *)ufunc,
+        .method = ufuncimpl,
+        .descriptors = operation_descrs,
     };
 
     /* Do the ufunc loop */
@@ -2679,13 +2679,17 @@ PyUFunc_GenericFunction(PyUFuncObject *NPY_UNUSED(ufunc),
  * Promote and resolve a reduction like operation.
  *
  * @param ufunc
- * @param arr The operation array (out was never used)
+ * @param arr The operation array
+ * @param out The output array or NULL if not provided.  Note that NumPy always
+ *        used out to mean the same as `dtype=out.dtype` and never passed
+ *        the array itself to the type-resolution.
  * @param signature The DType signature, which may already be set due to the
  *        dtype passed in by the user, or the special cases (add, multiply).
  *        (Contains strong references and may be modified.)
- * @param enforce_uniform_args If `1` fully uniform dtypes/descriptors are
- *        enforced as required for accumulate and (currently) reduceat.
+ * @param enforce_uniform_args If `NPY_TRUE` fully uniform dtypes/descriptors
+ *        are enforced as required for accumulate and (currently) reduceat.
  * @param out_descrs New references to the resolved descriptors (on success).
+ * @param method The ufunc method, "reduce", "reduceat", or "accumulate".
 
  * @returns ufuncimpl The `ArrayMethod` implemention to use. Or NULL if an
  *          error occurred.
@@ -2694,7 +2698,8 @@ static PyArrayMethodObject *
 reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         PyArrayObject *arr, PyArrayObject *out,
         PyArray_DTypeMeta *signature[3],
-        int enforce_uniform_args, PyArray_Descr *out_descrs[3])
+        npy_bool enforce_uniform_args, PyArray_Descr *out_descrs[3],
+        char *method)
 {
     /*
      * Note that the `ops` is not realy correct.  But legacy resolution
@@ -2731,22 +2736,28 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         return NULL;
     }
 
-    /* Find the correct descriptors for the operation */
+    /*
+     * Find the correct descriptors for the operation.  We use unsafe casting
+     * for historic reasons: The logic ufuncs required it to cast everything to
+     * boolean.  However, we now special case the logical ufuncs, so that the
+     * casting safety could in principle be set to the default same-kind.
+     * (although this should possibly happen through a deprecation)
+     */
     if (resolve_descriptors(3, ufunc, ufuncimpl,
             ops, out_descrs, signature, NPY_UNSAFE_CASTING) < 0) {
         return NULL;
     }
 
     /*
-     * The first operand and output be the same array, so they should
+     * The first operand and output should be the same array, so they should
      * be identical.  The second argument can be different for reductions,
      * but is checked to be identical for accumulate and reduceat.
      */
     if (out_descrs[0] != out_descrs[2] || (
             enforce_uniform_args && out_descrs[0] != out_descrs[1])) {
         PyErr_Format(PyExc_TypeError,
-                "The resolved dtypes are not compatible with an accumulate "
-                "or reduceat loop.");
+                "the resolved dtypes are not compatible with %s.%s",
+                ufunc_get_name_cstr(ufunc), method);
         goto fail;
     }
     /* TODO: This really should _not_ be unsafe casting (same above)! */
@@ -2912,7 +2923,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
     }
 
     /* Get the identity */
-    /* TODO: Both of these must be provided by the ArrayMethod! */
+    /* TODO: Both of these should be provided by the ArrayMethod! */
     identity = _get_identity(ufunc, &reorderable);
     if (identity == NULL) {
         return NULL;
@@ -2938,7 +2949,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, 0, descrs);
+            arr, out, signature, NPY_FALSE, descrs, "reduce");
     if (ufuncimpl == NULL) {
         Py_DECREF(initial);
         return NULL;
@@ -3002,7 +3013,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, 1, descrs);
+            arr, out, signature, NPY_TRUE, descrs, "accumulate");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -3019,9 +3030,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
     PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = descrs,
+        .caller = (PyObject *)ufunc,
+        .method = ufuncimpl,
+        .descriptors = descrs,
     };
 
     ndim = PyArray_NDIM(arr);
@@ -3415,7 +3426,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, 1, descrs);
+            arr, out, signature, NPY_TRUE, descrs, "reduceat");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -3432,9 +3443,9 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
     PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = descrs,
+        .caller = (PyObject *)ufunc,
+        .method = ufuncimpl,
+        .descriptors = descrs,
     };
 
     ndim = PyArray_NDIM(arr);
@@ -4100,7 +4111,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     }
     Py_XINCREF(signature[0]);
     signature[2] = signature[0];
-
 
     switch(operation) {
     case UFUNC_REDUCE:
