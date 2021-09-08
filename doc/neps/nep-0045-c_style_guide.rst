@@ -1,7 +1,7 @@
 .. _NEP45:
 
 =================================
-NEP 45 — C Style Guide
+NEP 45 — C style guide
 =================================
 
 :Author: Charles Harris <charlesr.harris@gmail.com>

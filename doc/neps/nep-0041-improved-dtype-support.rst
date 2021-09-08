@@ -1,7 +1,7 @@
 .. _NEP41:
 
 =================================================
-NEP 41 — First step towards a new Datatype System
+NEP 41 — First step towards a new datatype system
 =================================================
 
 :title: First step towards a new Datatype System

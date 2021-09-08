@@ -1,7 +1,7 @@
 .. _NEP35:
 
 ===========================================================
-NEP 35 — Array Creation Dispatching With __array_function__
+NEP 35 — Array creation dispatching with __array_function__
 ===========================================================
 
 :Author: Peter Andreas Entschev <pentschev@nvidia.com>

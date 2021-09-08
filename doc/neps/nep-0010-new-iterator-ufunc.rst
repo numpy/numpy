@@ -1,7 +1,7 @@
 .. _NEP10:
 
 ==============================================
-NEP 10 — Optimizing Iterator/UFunc Performance
+NEP 10 — Optimizing Iterator/UFunc performance
 ==============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
@@ -10,7 +10,7 @@ NEP 10 — Optimizing Iterator/UFunc Performance
 :Status: Final
 
 *****************
-Table of Contents
+Table of contents
 *****************
 
 .. contents::

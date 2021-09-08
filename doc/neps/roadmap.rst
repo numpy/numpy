@@ -1,5 +1,5 @@
 =============
-NumPy Roadmap
+NumPy roadmap
 =============
 
 This is a live snapshot of tasks and features we will be investing resources

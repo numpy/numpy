@@ -1,7 +1,7 @@
 .. _NEP12:
 
 ============================================
-NEP 12 — Missing Data Functionality in NumPy
+NEP 12 — Missing data functionality in NumPy
 ============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>

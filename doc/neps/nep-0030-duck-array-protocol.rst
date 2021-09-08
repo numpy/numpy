@@ -1,14 +1,14 @@
 .. _NEP30:
 
 ======================================================
-NEP 30 — Duck Typing for NumPy Arrays - Implementation
+NEP 30 — Duck typing for NumPy arrays - Implementation
 ======================================================
 
 :Author: Peter Andreas Entschev <pentschev@nvidia.com>
 :Author: Stephan Hoyer <shoyer@google.com>
 :Status: Draft
 :Type: Standards Track
-:Created: 2019-07-31
+:Created:
 :Updated: 2019-07-31
 :Resolution:
 

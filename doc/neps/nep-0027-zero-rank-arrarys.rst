@@ -1,7 +1,7 @@
 .. _NEP27:
 
 =========================
-NEP 27 — Zero Rank Arrays
+NEP 27 — Zero rank arrays
 =========================
 
 :Author: Alexander Belopolsky (sasha), transcribed Matt Picus <matti.picus@gmail.com>

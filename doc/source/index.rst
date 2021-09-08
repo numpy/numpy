@@ -1,7 +1,7 @@
 .. _numpy_docs_mainpage:
 
 ###################
-NumPy Documentation
+NumPy documentation
 ###################
 
 .. toctree::
