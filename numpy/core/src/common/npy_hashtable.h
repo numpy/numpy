@@ -1,5 +1,5 @@
-#ifndef _NPY_NPY_HASHTABLE_H
-#define _NPY_NPY_HASHTABLE_H
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_NPY_HASHTABLE_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_NPY_HASHTABLE_H_
 
 #include <Python.h>
 
@@ -29,4 +29,4 @@ PyArrayIdentityHash_New(int key_len);
 NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb);
 
-#endif  /* _NPY_NPY_HASHTABLE_H */
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_NPY_HASHTABLE_H_ */

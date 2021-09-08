@@ -1,5 +1,5 @@
-#ifndef NPY_EXTINT128_H_
-#define NPY_EXTINT128_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_
 
 
 typedef struct {
@@ -314,4 +314,4 @@ ceildiv_128_64(npy_extint128_t a, npy_int64 b)
     return result;
 }
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_ */
