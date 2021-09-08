@@ -257,10 +257,8 @@ class TestNanFunctions_NumberTypes:
     nanfunc_ids = [i.__name__ for i in nanfuncs]
 
     @pytest.mark.parametrize("nanfunc,func", nanfuncs.items(), ids=nanfunc_ids)
+    @np.errstate(over="ignore")
     def test_nanfunc(self, dtype, nanfunc, func):
-        if nanfunc is np.nanprod and dtype == "e":
-            pytest.xfail(reason="overflow encountered in reduce")
-
         mat = self.mat.astype(dtype)
         tgt = func(mat)
         out = nanfunc(mat)
