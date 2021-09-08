@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_CONVERT_DATATYPE_H_
-#define _NPY_ARRAY_CONVERT_DATATYPE_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_
 
 #include "array_method.h"
 
@@ -99,4 +99,4 @@ simple_cast_resolve_descriptors(
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_ */

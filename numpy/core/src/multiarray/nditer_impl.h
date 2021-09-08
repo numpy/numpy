@@ -4,20 +4,21 @@
  * should use the exposed iterator API.
  */
 #ifndef NPY_ITERATOR_IMPLEMENTATION_CODE
-#error "This header is intended for use ONLY by iterator implementation code."
+#error This header is intended for use ONLY by iterator implementation code.
 #endif
 
-#ifndef _NPY_PRIVATE__NDITER_IMPL_H_
-#define _NPY_PRIVATE__NDITER_IMPL_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
-#include <npy_pycompat.h>
+#include "numpy/arrayobject.h"
+#include "npy_pycompat.h"
 #include "convert_datatype.h"
 
 #include "lowlevel_strided_loops.h"
@@ -355,4 +356,4 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
 NPY_NO_EXPORT void
 npyiter_clear_buffers(NpyIter *iter);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_ */

@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE__DATETIME_H_
-#define _NPY_PRIVATE__DATETIME_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_
+#define NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_
 
 extern NPY_NO_EXPORT char const *_datetime_strings[NPY_DATETIME_NUMUNITS];
 extern NPY_NO_EXPORT int _days_per_month_table[2][12];
@@ -376,4 +376,4 @@ find_object_datetime_type(PyObject *obj, int type_num);
 NPY_NO_EXPORT int
 PyArray_InitializeDatetimeCasts(void);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */
