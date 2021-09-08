@@ -1,7 +1,7 @@
 .. _NEP05:
 
 =======================================
-NEP 5 — Generalized universal functions
+NEP 5 — Generalized Universal Functions
 =======================================
 
 :Status: Final
