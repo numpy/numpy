@@ -808,7 +808,7 @@ unmasked_ufunc_loop_as_masked(
     npy_intp N = dimensions[0];
     /* Process the data as runs of unmasked values */
     do {
-        ssize_t subloopsize;
+        Py_ssize_t subloopsize;
 
         /* Skip masked values */
         mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 1);
