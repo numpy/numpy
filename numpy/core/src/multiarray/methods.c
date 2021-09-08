@@ -1,14 +1,14 @@
-#define PY_SSIZE_T_CLEAN
-#include <stdarg.h>
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
-#include "arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "arrayobject.h"
 #include "arrayfunction_override.h"
 #include "npy_argparse.h"
 #include "npy_config.h"
@@ -29,6 +29,8 @@
 
 #include "methods.h"
 #include "alloc.h"
+
+#include <stdarg.h>
 
 
 /* NpyArg_ParseKeywords

@@ -2,16 +2,18 @@
  * This module provides a BLAS optimized matrix multiply,
  * inner product and dot for numpy arrays
  */
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <assert.h>
-#include <numpy/arrayobject.h>
+
+#include "numpy/arrayobject.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
+
+#include <assert.h>
 
 
 static const double oneD[2] = {1.0, 0.0}, zeroD[2] = {0.0, 0.0};

@@ -9,7 +9,9 @@
 extern "C" {
 #endif
 
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include "fortranobject.h"
 
 static PyObject *foo_error;

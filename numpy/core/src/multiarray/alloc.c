@@ -1,20 +1,18 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
-#include <pymem.h>
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include <numpy/ndarraytypes.h>
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+#include <pymem.h>
+
+#include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
-#include <numpy/npy_common.h>
+#include "numpy/npy_common.h"
 #include "npy_config.h"
 #include "alloc.h"
 
-
 #include <assert.h>
-
 #ifdef NPY_OS_LINUX
 #include <sys/mman.h>
 #ifndef MADV_HUGEPAGE

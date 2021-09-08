@@ -299,6 +299,5 @@ if __name__ == '__main__':
 
     source = scrub_source(source, nsteps, verbose=True)
 
-    writefo = open(outfilename, 'w')
-    writefo.write(source)
-    writefo.close()
+    with open(outfilename, 'w') as writefo:
+        writefo.write(source)

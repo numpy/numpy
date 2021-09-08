@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "Python.h"
+#include <Python.h>
 #include "numpy/npy_common.h"
 #include <stddef.h>
 #include <stdbool.h>

@@ -20,18 +20,17 @@
  *
  * See LICENSE.txt for the license.
  */
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 // printif debug tracing
 #ifndef NPY_UF_DBG_TRACING
     #define NPY_UF_DBG_TRACING 0
 #endif
-
-#include <stdbool.h>
-
-#include "Python.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -47,6 +46,8 @@
 #if defined(HAVE_CBLAS)
 #include "cblasfuncs.h"
 #endif
+
+#include <stdbool.h>
 
 static PyObject *
 npy_casting_to_py_object(NPY_CASTING casting)
