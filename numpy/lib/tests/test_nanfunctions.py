@@ -231,15 +231,20 @@ class TestNanFunctions_ArgminArgmax:
             assert_(res.shape == ())
 
 
+_TEST_ARRAYS = {
+    "0d": np.array(5),
+    "1d": np.array([127, 39, 93, 87, 46])
+}
+for _v in _TEST_ARRAYS.values():
+    _v.setflags(write=False)
+
+
 @pytest.mark.parametrize(
     "dtype",
     np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O",
 )
+@pytest.mark.parametrize("mat", _TEST_ARRAYS.values(), ids=_TEST_ARRAYS.keys())
 class TestNanFunctions_NumberTypes:
-
-    mat = np.array([127, 39, 93, 87, 46])
-    mat.setflags(write=False)
-
     nanfuncs = {
         np.nanmin: np.min,
         np.nanmax: np.max,
@@ -258,8 +263,8 @@ class TestNanFunctions_NumberTypes:
 
     @pytest.mark.parametrize("nanfunc,func", nanfuncs.items(), ids=nanfunc_ids)
     @np.errstate(over="ignore")
-    def test_nanfunc(self, dtype, nanfunc, func):
-        mat = self.mat.astype(dtype)
+    def test_nanfunc(self, mat, dtype, nanfunc, func):
+        mat = mat.astype(dtype)
         tgt = func(mat)
         out = nanfunc(mat)
 
@@ -274,8 +279,8 @@ class TestNanFunctions_NumberTypes:
         [(np.nanquantile, np.quantile), (np.nanpercentile, np.percentile)],
         ids=["nanquantile", "nanpercentile"],
     )
-    def test_nanfunc_q(self, dtype, nanfunc, func):
-        mat = self.mat.astype(dtype)
+    def test_nanfunc_q(self, mat, dtype, nanfunc, func):
+        mat = mat.astype(dtype)
         tgt = func(mat, q=1)
         out = nanfunc(mat, q=1)
 
@@ -290,10 +295,10 @@ class TestNanFunctions_NumberTypes:
         [(np.nanvar, np.var), (np.nanstd, np.std)],
         ids=["nanvar", "nanstd"],
     )
-    def test_nanfunc_ddof(self, dtype, nanfunc, func):
-        mat = self.mat.astype(dtype)
-        tgt = func(mat, ddof=1)
-        out = nanfunc(mat, ddof=1)
+    def test_nanfunc_ddof(self, mat, dtype, nanfunc, func):
+        mat = mat.astype(dtype)
+        tgt = func(mat, ddof=0.5)
+        out = nanfunc(mat, ddof=0.5)
 
         assert_almost_equal(out, tgt)
         if dtype == "O":
