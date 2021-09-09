@@ -136,7 +136,8 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from typing import TYPE_CHECKING, List, Any, final
+from numpy import ufunc
+from typing import TYPE_CHECKING, List, final
 
 if not TYPE_CHECKING:
     __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
@@ -334,14 +335,16 @@ if TYPE_CHECKING:
         _GUFunc_Nin2_Nout1,
     )
 else:
-    _UFunc_Nin1_Nout1 = Any
-    _UFunc_Nin2_Nout1 = Any
-    _UFunc_Nin1_Nout2 = Any
-    _UFunc_Nin2_Nout2 = Any
-    _GUFunc_Nin2_Nout1 = Any
+    # Declare the (type-check-only) ufunc subclasses as ufunc aliases during
+    # runtime; this helps autocompletion tools such as Jedi (numpy/numpy#19834)
+    _UFunc_Nin1_Nout1 = ufunc
+    _UFunc_Nin2_Nout1 = ufunc
+    _UFunc_Nin1_Nout2 = ufunc
+    _UFunc_Nin2_Nout2 = ufunc
+    _GUFunc_Nin2_Nout1 = ufunc
 
 # Clean up the namespace
-del TYPE_CHECKING, final, List, Any
+del TYPE_CHECKING, final, List, ufunc
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings
