@@ -1,9 +1,14 @@
 name: Bug report
 description: Report a bug. For security vulnerabilities see Report a security vulnerability in the templates.
-title: "BUG:"
+title: "BUG: "
 labels: [00 - Bug]
 
 body:
+- type: markdown
+  attributes:
+    value: Thank you for taking the time to file a bug report. Before creating a new issue, please make sure to take a few minutes to check the
+    issue tracker for existing issues about the bug.
+    
 - type: textarea
   attributes: 
     label: "Describe the issue:"
@@ -14,10 +19,9 @@ body:
   attributes:
     label: "Reproduce the code example:"
     description: |
-      A short code example that reproduces the problem/missing feature. It should be self-contained, i.e., possible to run as-is via
-      `python myproblem.py`.
+      A short code example that reproduces the problem/missing feature. It should be self-contained, i.e., can be copy-pasted into the Python
+      interpreter or run as-is via `python myproblem.py`.
     placeholder: |
-      python
       import numpy as np
       << your code here >>
     render: python

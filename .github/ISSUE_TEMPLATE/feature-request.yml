@@ -1,6 +1,6 @@
 name: Feature request
 description: Check instructions for submitting your idea on the mailing list first.
-title: "ENH:"
+title: "ENH: "
 
 body:
 - type: markdown

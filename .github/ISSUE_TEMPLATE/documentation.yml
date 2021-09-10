@@ -1,6 +1,6 @@
 name: Documentation
 description: Report an issue related to the NumPy documentation.
-title: "DOC:"
+title: "DOC: "
 labels: [04 - Documentation]
 
 body:
