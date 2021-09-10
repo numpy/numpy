@@ -1,7 +1,7 @@
 .. _NEP48:
 
 =====================================
-NEP 48 — Spending NumPy Project Funds
+NEP 48 — Spending NumPy project funds
 =====================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>

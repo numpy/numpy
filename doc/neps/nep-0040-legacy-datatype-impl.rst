@@ -1,7 +1,7 @@
 .. _NEP40:
 
 ================================================
-NEP 40 — Legacy Datatype Implementation in NumPy
+NEP 40 — Legacy datatype implementation in NumPy
 ================================================
 
 :title: Legacy Datatype Implementation in NumPy
