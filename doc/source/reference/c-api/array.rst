@@ -727,7 +727,7 @@ From other objects
 .. c:function:: int PyArray_CopyObject(PyArrayObject* dest, PyObject* src)
 
     Assign an object ``src`` to a NumPy array ``dest`` according to
-    array-coercion rules. This is largely basically identical to
+    array-coercion rules. This is basically identical to
     :c:func:`PyArray_FromAny`, but assigns directly to the output array.
     Returns 0 on success and -1 on failures.
 
