@@ -1029,14 +1029,12 @@ def _median_nancheck(data, result, axis, out):
     # masked NaN values are ok
     if np.ma.isMaskedArray(n):
         n = n.filled(False)
-    if result.ndim == 0:
-        if n == True:
-            if out is not None:
-                out[...] = data.dtype.type(np.nan)
-                result = out
-            else:
-                result = data.dtype.type(np.nan)
-    elif np.count_nonzero(n.ravel()) > 0:
+    if np.count_nonzero(n.ravel()) > 0:
+        # Without given output, it is possible that the current result is a
+        # numpy scalar, which is not writeable.  If so, just return nan.
+        if isinstance(result, np.generic):
+            return data.dtype.type(np.nan)
+
         result[n] = np.nan
     return result
 

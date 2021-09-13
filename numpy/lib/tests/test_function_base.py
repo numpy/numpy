@@ -3432,6 +3432,16 @@ class TestMedian:
         a = MySubClass([1, 2, 3])
         assert_equal(np.median(a), -7)
 
+    @pytest.mark.parametrize('arr',
+                             ([1., 2., 3.], [1., np.nan, 3.], np.nan, 0.))
+    def test_subclass2(self, arr):
+        """Check that we return subclasses, even if a NaN scalar."""
+        class MySubclass(np.ndarray):
+            pass
+
+        m = np.median(np.array(arr).view(MySubclass))
+        assert isinstance(m, MySubclass)
+
     def test_out(self):
         o = np.zeros((4,))
         d = np.ones((3, 4))
