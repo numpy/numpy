@@ -465,8 +465,8 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
     @pytest.mark.parametrize("array", [
-        np.full((3, 3), np.nan),
         np.array(np.nan),
+        np.full((3, 3), np.nan)
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
