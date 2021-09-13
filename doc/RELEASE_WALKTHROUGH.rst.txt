@@ -33,14 +33,14 @@ forward ported to the main branch.
 Generate the changelog
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The changelog is generated using the changelog tool:
+The changelog is generated using the changelog tool::
 
     $ python tools/changelog.py $GITHUB v1.20.0..maintenance/1.21.x > doc/changelog/1.21.0-changelog.rst
 
 where ``GITHUB`` contains your GitHub access token. The text will need to be
 checked for non-standard contributor names and dependabot entries removed. It
 is also a good idea to remove any links that may be present in the PR titles
-as they don't translate well to *.md, replace them with monospaced text. The
+as they don't translate well to markdown, replace them with monospaced text. The
 non-standard contributor names should be fixed by updating the ``.mailmap``
 file, which is a lot of work. It is best to make several trial runs before
 reaching this point and ping the malefactors using a GitHub issue to get the
@@ -50,7 +50,7 @@ Finish the release notes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 If this is the first release in a series the release note is generated, see
- the release note in ``doc/release/upcoming_changes/README.rst`` to see how to
+the release note in ``doc/release/upcoming_changes/README.rst`` to see how to
 do this. Generating the release notes will also delete all the news
 fragment files in ``doc/release/upcoming_changes/``.
 
