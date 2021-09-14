@@ -3714,16 +3714,15 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index-1, index+1)
     indexer = tuple(indexer)
 
+    # Use mean in both odd and even case to coerce data type,
+    # using out array if needed.
+    rout = mean(part[indexer], axis=axis, out=out)
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
-        # warn and return nans like mean would
-        rout = mean(part[indexer], axis=axis, out=out)
-        return np.lib.utils._median_nancheck(part, rout, axis, out)
-    else:
-        # if there are no nans
-        # Use mean in odd and even case to coerce data type
-        # and check, use out array.
-        return mean(part[indexer], axis=axis, out=out)
+        # If nans are possible, warn and replace by nans like mean would.
+        rout = np.lib.utils._median_nancheck(part, rout, axis)
+
+    return rout
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
