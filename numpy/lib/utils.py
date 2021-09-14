@@ -1010,7 +1010,7 @@ def _median_nancheck(data, result, axis):
     Parameters
     ----------
     data : array
-        Input data to median function
+        Sorted input data to median function
     result : Array or MaskedArray
         Result of median function.
     axis : int
