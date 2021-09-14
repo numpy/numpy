@@ -1002,7 +1002,7 @@ def safe_eval(source):
     return ast.literal_eval(source)
 
 
-def _median_nancheck(data, result, axis, out):
+def _median_nancheck(data, result, axis):
     """
     Utility function to check median result from data for NaN values at the end
     and return NaN in that case. Input result can also be a MaskedArray.
@@ -1012,16 +1012,16 @@ def _median_nancheck(data, result, axis, out):
     data : array
         Input data to median function
     result : Array or MaskedArray
-        Result of median function
+        Result of median function.
     axis : int
         Axis along which the median was computed.
-    out : ndarray, optional
-        Output array in which to place the result.
 
     Returns
     -------
-    median : scalar or ndarray
-        Median or NaN in axes which contained NaN in the input.
+    result : scalar or ndarray
+        Median or NaN in axes which contained NaN in the input.  If the input
+        was an array, NaN will be inserted in-place.  If a scalar, either the
+        input itself or a scalar NaN.
     """
     if data.size == 0:
         return result
