@@ -1010,6 +1010,12 @@ class Array:
     def device(self) -> Device:
         return "cpu"
 
+    # Note: mT is new in array API spec (see matrix_transpose)
+    @property
+    def mT(self) -> Array:
+        from ._linear_algebra_functions import matrix_transpose
+        return matrix_transpose(self)
+
     @property
     def ndim(self) -> int:
         """
@@ -1044,4 +1050,11 @@ class Array:
 
         See its docstring for more information.
         """
+        # Note: T only works on 2-dimensional arrays. See the corresponding
+        # note in the specification:
+        # https://data-apis.org/array-api/latest/API_specification/array_object.html#t
+        if self.ndim != 2:
+            raise ValueError("x.T requires x to have 2 dimensions. Use x.mT to transpose stacks of matrices.")
+            # TODO: Add note about permute_dims() to the error message once it is
+            # finalized in the spec.
         return self._array.T

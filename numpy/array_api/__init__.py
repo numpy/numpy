@@ -333,9 +333,9 @@ __all__ += [
 # from ._linear_algebra_functions import einsum
 # __all__ += ['einsum']
 
-from ._linear_algebra_functions import matmul, tensordot, transpose, vecdot
+from ._linear_algebra_functions import matmul, tensordot, matrix_transpose, vecdot
 
-__all__ += ["matmul", "tensordot", "transpose", "vecdot"]
+__all__ += ["matmul", "tensordot", "matrix_transpose", "vecdot"]
 
 from ._manipulation_functions import (
     concat,
