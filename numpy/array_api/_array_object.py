@@ -391,6 +391,8 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("bool is only allowed on arrays with 0 dimensions")
+        if self.dtype not in _boolean_dtypes:
+            raise ValueError("bool is only allowed on boolean arrays")
         res = self._array.__bool__()
         return res
 
@@ -429,6 +431,8 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("float is only allowed on arrays with 0 dimensions")
+        if self.dtype not in _floating_dtypes:
+            raise ValueError("float is only allowed on floating-point arrays")
         res = self._array.__float__()
         return res
 
@@ -488,7 +492,16 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("int is only allowed on arrays with 0 dimensions")
+        if self.dtype not in _integer_dtypes:
+            raise ValueError("int is only allowed on integer arrays")
         res = self._array.__int__()
+        return res
+
+    def __index__(self: Array, /) -> int:
+        """
+        Performs the operation __index__.
+        """
+        res = self._array.__index__()
         return res
 
     def __invert__(self: Array, /) -> Array:
