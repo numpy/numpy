@@ -1004,7 +1004,9 @@ def _argsort_dispatcher(a, axis=None, kind=None, order=None):
 @array_function_dispatch(_argsort_dispatcher)
 def argsort(a, axis=-1, kind=None, order=None):
     """
-    Returns the indices that would sort an array.
+    Returns the indices that would sort an array. 
+    The returned indices can then be used as a_sorted = a[returned indices] which will now give us the sorted array 'a'.
+    The zeroth number in [returned indices] is a the index of the smallest number in array 'a'.    
 
     Perform an indirect sort along the given axis using the algorithm specified
     by the `kind` keyword. It returns an array of indices of the same shape as
