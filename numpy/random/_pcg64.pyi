@@ -1,13 +1,7 @@
-import sys
-from typing import Union
+from typing import Union, TypedDict
 
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy.typing import _ArrayLikeInt_co
-
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
 
 class _PCG64Internal(TypedDict):
     state: int

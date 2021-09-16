@@ -1,7 +1,7 @@
 .. _NEP44:
 
 ===================================================
-NEP 44 — Restructuring the NumPy Documentation
+NEP 44 — Restructuring the NumPy documentation
 ===================================================
 
 :Author: Ralf Gommers

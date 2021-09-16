@@ -1,5 +1,5 @@
-#ifndef _NPY_DTYPEMETA_H
-#define _NPY_DTYPEMETA_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
 
 /* DType flags, currently private, since we may just expose functions */
@@ -80,4 +80,4 @@ PyArray_DTypeFromTypeNum(int typenum)
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(PyArray_Descr *dtypem);
 
-#endif  /*_NPY_DTYPEMETA_H */
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */

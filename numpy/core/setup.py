@@ -381,9 +381,9 @@ def check_mathlib(config_cmd):
             mathlibs = libs
             break
     else:
-        raise EnvironmentError("math library missing; rerun "
-                               "setup.py after setting the "
-                               "MATHLIB env variable")
+        raise RuntimeError(
+            "math library missing; rerun setup.py after setting the "
+            "MATHLIB env variable")
     return mathlibs
 
 def visibility_define(config):
@@ -496,7 +496,7 @@ def configuration(parent_package='',top_path=None):
                 # add the guard to make sure config.h is never included directly,
                 # but always through npy_config.h
                 target_f.write(textwrap.dedent("""
-                    #ifndef _NPY_NPY_CONFIG_H_
+                    #ifndef NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
                     #error config.h should never be included directly, include npy_config.h instead
                     #endif
                     """))

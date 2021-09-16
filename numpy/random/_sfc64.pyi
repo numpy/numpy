@@ -1,16 +1,10 @@
-import sys
-from typing import Any, Union
+from typing import Any, Union, TypedDict
 
 from numpy import dtype as dtype
 from numpy import ndarray as ndarray
 from numpy import uint64
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy.typing import _ArrayLikeInt_co
-
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
 
 class _SFC64Internal(TypedDict):
     state: ndarray[Any, dtype[uint64]]

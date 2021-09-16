@@ -1,5 +1,5 @@
-#ifndef __BINOP_OVERRIDE_H
-#define __BINOP_OVERRIDE_H
+#ifndef NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
+#define NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
 
 #include <string.h>
 #include <Python.h>
@@ -212,4 +212,4 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
         }                                                               \
     } while (0)
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_ */

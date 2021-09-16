@@ -1,7 +1,8 @@
-sphinx==4.1.2
+sphinx==4.2.0
 numpydoc==1.1.0
 ipython
 scipy
 matplotlib
 pandas
 pydata-sphinx-theme
+breathe

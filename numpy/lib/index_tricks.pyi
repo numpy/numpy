@@ -1,4 +1,3 @@
-import sys
 from typing import (
     Any,
     Tuple,
@@ -8,6 +7,8 @@ from typing import (
     List,
     Union,
     Sequence,
+    Literal,
+    SupportsIndex,
 )
 
 from numpy import (
@@ -48,11 +49,6 @@ from numpy.core.multiarray import (
     unravel_index as unravel_index,
     ravel_multi_index as ravel_multi_index,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal, SupportsIndex
-else:
-    from typing_extensions import Literal, SupportsIndex
 
 _T = TypeVar("_T")
 _DType = TypeVar("_DType", bound=dtype[Any])

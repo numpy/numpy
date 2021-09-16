@@ -2,12 +2,13 @@
  * This file defines most of the machinery in order to wrap legacy style
  * ufunc loops into new style arraymethods.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/ndarraytypes.h"
 
 #include "convert_datatype.h"
@@ -142,7 +143,7 @@ simple_legacy_resolve_descriptors(
         }
     }
 
-    return NPY_SAFE_CASTING;
+    return NPY_NO_CASTING;
 
   fail:
     for (int i = 0; i < nin + nout; i++) {
@@ -244,7 +245,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         .dtypes = signature,
         .flags = flags,
         .slots = slots,
-        .casting = NPY_EQUIV_CASTING,
+        .casting = NPY_NO_CASTING,
     };
 
     PyBoundArrayMethodObject *bound_res = PyArrayMethod_FromSpec_int(&spec, 1);

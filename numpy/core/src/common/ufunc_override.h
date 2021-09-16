@@ -1,5 +1,5 @@
-#ifndef __UFUNC_OVERRIDE_H
-#define __UFUNC_OVERRIDE_H
+#ifndef NUMPY_CORE_SRC_COMMON_UFUNC_OVERRIDE_H_
+#define NUMPY_CORE_SRC_COMMON_UFUNC_OVERRIDE_H_
 
 #include "npy_config.h"
 
@@ -34,4 +34,5 @@ PyUFunc_HasOverride(PyObject *obj);
  */
 NPY_NO_EXPORT int
 PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject ***out_objs);
-#endif
+
+#endif  /* NUMPY_CORE_SRC_COMMON_UFUNC_OVERRIDE_H_ */

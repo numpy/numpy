@@ -1,5 +1,5 @@
-#ifndef _NPY_CPU_FEATURES_H_
-#define _NPY_CPU_FEATURES_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CPU_FEATURES_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CPU_FEATURES_H_
 
 #include <Python.h> // for PyObject
 #include "numpy/numpyconfig.h" // for NPY_VISIBILITY_HIDDEN
@@ -168,4 +168,4 @@ npy_cpu_dispatch_list(void);
 }
 #endif
 
-#endif // _NPY_CPU_FEATURES_H_
+#endif  // NUMPY_CORE_SRC_COMMON_NPY_CPU_FEATURES_H_

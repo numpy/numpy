@@ -388,6 +388,24 @@ class TestUfunc:
         assert_equal(ixs, (0, 0, 0, 1, 2))
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
+    
+    def test_signature9(self):
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            1, 1, "(  3)  -> ( )")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 0))
+        assert_equal(ixs, (0,))
+        assert_equal(flags, (0,))
+        assert_equal(sizes, (3,))
+
+    def test_signature10(self):
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            3, 1, "( 3? ) , (3? ,  3?) ,(n )-> ( 9)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 2, 1, 1))
+        assert_equal(ixs, (0, 0, 0, 1, 2))
+        assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
+        assert_equal(sizes, (3, -1, 9))
 
     def test_signature_failure_extra_parenthesis(self):
         with assert_raises(ValueError):
@@ -517,6 +535,37 @@ class TestUfunc:
         arr = np.arange(10, dtype="m8[s]")
         np.add(arr, arr, dtype="m")
         np.maximum(arr, arr, dtype="m")
+
+    @pytest.mark.parametrize("ufunc", [np.add, np.sqrt])
+    def test_cast_safety(self, ufunc):
+        """Basic test for the safest casts, because ufuncs inner loops can
+        indicate a cast-safety as well (which is normally always "no").
+        """
+        def call_ufunc(arr, **kwargs):
+            return ufunc(*(arr,) * ufunc.nin, **kwargs)
+
+        arr = np.array([1., 2., 3.], dtype=np.float32)
+        arr_bs = arr.astype(arr.dtype.newbyteorder())
+        expected = call_ufunc(arr)
+        # Normally, a "no" cast:
+        res = call_ufunc(arr, casting="no")
+        assert_array_equal(expected, res)
+        # Byte-swapping is not allowed with "no" though:
+        with pytest.raises(TypeError):
+            call_ufunc(arr_bs, casting="no")
+
+        # But is allowed with "equiv":
+        res = call_ufunc(arr_bs, casting="equiv")
+        assert_array_equal(expected, res)
+
+        # Casting to float64 is safe, but not equiv:
+        with pytest.raises(TypeError):
+            call_ufunc(arr_bs, dtype=np.float64, casting="equiv")
+
+        # but it is safe cast:
+        res = call_ufunc(arr_bs, dtype=np.float64, casting="safe")
+        expected = call_ufunc(arr.astype(np.float64))  # upcast
+        assert_array_equal(expected, res)
 
     def test_true_divide(self):
         a = np.array(10)

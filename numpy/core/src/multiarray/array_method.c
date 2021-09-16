@@ -26,10 +26,9 @@
  *    It is then sufficient for a ufunc (or other owner) to only hold a
  *    weak reference to the input DTypes.
  */
-
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
 #include <npy_pycompat.h>
 #include "arrayobject.h"
 #include "array_method.h"
@@ -806,7 +805,7 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
     /* Process the data as runs of unmasked values */
     do {
-        ssize_t subloopsize;
+        Py_ssize_t subloopsize;
 
         /* Skip masked values */
         mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 1);

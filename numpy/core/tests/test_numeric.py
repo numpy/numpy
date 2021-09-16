@@ -2381,7 +2381,7 @@ class TestClip:
             shape=in_shapes[1], elements={"allow_nan": False}))
 
         # Then calculate our result and expected result and check that they're
-        # equal!  See gh-12519 and gh-19457 for discussion deciding on this 
+        # equal!  See gh-12519 and gh-19457 for discussion deciding on this
         # property and the result_type argument.
         result = np.clip(arr, amin, amax)
         t = np.result_type(arr, amin, amax)
@@ -2637,15 +2637,15 @@ class TestStdVar:
 
     def test_ddof1(self):
         assert_almost_equal(np.var(self.A, ddof=1),
-                            self.real_var*len(self.A)/float(len(self.A)-1))
+                            self.real_var * len(self.A) / (len(self.A) - 1))
         assert_almost_equal(np.std(self.A, ddof=1)**2,
-                            self.real_var*len(self.A)/float(len(self.A)-1))
+                            self.real_var*len(self.A) / (len(self.A) - 1))
 
     def test_ddof2(self):
         assert_almost_equal(np.var(self.A, ddof=2),
-                            self.real_var*len(self.A)/float(len(self.A)-2))
+                            self.real_var * len(self.A) / (len(self.A) - 2))
         assert_almost_equal(np.std(self.A, ddof=2)**2,
-                            self.real_var*len(self.A)/float(len(self.A)-2))
+                            self.real_var * len(self.A) / (len(self.A) - 2))
 
     def test_out_scalar(self):
         d = np.arange(10)

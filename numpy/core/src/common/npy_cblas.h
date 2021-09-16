@@ -3,8 +3,8 @@
  * because not all providers of cblas provide cblas.h. For instance, MKL provides
  * mkl_cblas.h and also typedefs the CBLAS_XXX enums.
  */
-#ifndef _NPY_CBLAS_H_
-#define _NPY_CBLAS_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CBLAS_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CBLAS_H_
 
 #include <stddef.h>
 
@@ -98,4 +98,4 @@ blas_stride(npy_intp stride, unsigned itemsize)
 }
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CBLAS_H_ */

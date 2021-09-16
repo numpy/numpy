@@ -1,7 +1,7 @@
 .. _NEP43:
 
 ==============================================================================
-NEP 43 — Enhancing the Extensibility of UFuncs
+NEP 43 — Enhancing the extensibility of UFuncs
 ==============================================================================
 
 :title: Enhancing the Extensibility of UFuncs

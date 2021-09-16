@@ -87,7 +87,6 @@ round(c8)  # E: No overload variant
 
 c8.__getnewargs__()  # E: Invalid self argument
 f2.__getnewargs__()  # E: Invalid self argument
-f2.is_integer()  # E: Invalid self argument
 f2.hex()  # E: Invalid self argument
 np.float16.fromhex("0x0.0p+0")  # E: Invalid self argument
 f2.__trunc__()  # E: Invalid self argument

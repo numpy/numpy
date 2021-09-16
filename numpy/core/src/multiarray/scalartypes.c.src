@@ -1,7 +1,7 @@
 /* -*- c -*- */
 #define PY_SSIZE_T_CLEAN
-#include "Python.h"
-#include "structmember.h"
+#include <Python.h>
+#include <structmember.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #ifndef _MULTIARRAYMODULE
@@ -1908,6 +1908,39 @@ error:
 }
 /**end repeat**/
 
+/**begin repeat
+ *  #name = half, float, double, longdouble#
+ *  #Name = Half, Float, Double, LongDouble#
+ *  #is_half = 1,0,0,0#
+ *  #c    = f, f, , l#
+ */
+static PyObject *
+@name@_is_integer(PyObject *self)
+{
+#if @is_half@
+    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
+#else
+    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
+#endif
+    PyObject *ret;
+
+    if (npy_isnan(val)) {
+        Py_RETURN_FALSE;
+    }
+    if (!npy_isfinite(val)) {
+        Py_RETURN_FALSE;
+    }
+
+    ret = (npy_floor@c@(val) == val) ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+}
+/**end repeat**/
+
+static PyObject *
+integer_is_integer(PyObject *self) {
+    Py_RETURN_TRUE;
+}
 
 /*
  * need to fill in doc-strings for these methods on import -- copy from
@@ -2167,7 +2200,7 @@ static PyMethodDef @name@type_methods[] = {
 /**end repeat**/
 
 /**begin repeat
- * #name = integer,floating, complexfloating#
+ * #name = floating, complexfloating#
  */
 static PyMethodDef @name@type_methods[] = {
     /* Hook for the round() builtin */
@@ -2178,12 +2211,26 @@ static PyMethodDef @name@type_methods[] = {
 };
 /**end repeat**/
 
+static PyMethodDef integertype_methods[] = {
+    /* Hook for the round() builtin */
+    {"__round__",
+        (PyCFunction)integertype_dunder_round,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"is_integer",
+        (PyCFunction)integer_is_integer,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
 /**begin repeat
  * #name = half,float,double,longdouble#
  */
 static PyMethodDef @name@type_methods[] = {
     {"as_integer_ratio",
         (PyCFunction)@name@_as_integer_ratio,
+        METH_NOARGS, NULL},
+    {"is_integer",
+        (PyCFunction)@name@_is_integer,
         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}
 };

@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE_REFCOUNT_H_
-#define _NPY_PRIVATE_REFCOUNT_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_REFCOUNT_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_REFCOUNT_H_
 
 NPY_NO_EXPORT void
 PyArray_Item_INCREF(char *data, PyArray_Descr *descr);
@@ -16,4 +16,4 @@ PyArray_XDECREF(PyArrayObject *mp);
 NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_REFCOUNT_H_ */

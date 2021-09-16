@@ -1528,6 +1528,21 @@ class TestVectorize:
                      ([('x',)], [('y',), ()]))
         assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
                      ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+        
+        # Tests to check if whitespaces are ignored
+        assert_equal(nfb._parse_gufunc_signature('(x )->()'), ([('x',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('( x , y )->(  )'),
+                     ([('x', 'y')], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(x),( y) ->()'),
+                     ([('x',), ('y',)], [()]))
+        assert_equal(nfb._parse_gufunc_signature('(  x)-> (y )  '),
+                     ([('x',)], [('y',)]))
+        assert_equal(nfb._parse_gufunc_signature(' (x)->( y),( )'),
+                     ([('x',)], [('y',), ()]))
+        assert_equal(nfb._parse_gufunc_signature(
+                     '(  ), ( a,  b,c )  ,(  d)   ->   (d  ,  e)'),
+                     ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
+
         with assert_raises(ValueError):
             nfb._parse_gufunc_signature('(x)(y)->()')
         with assert_raises(ValueError):
@@ -2757,11 +2772,6 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
 
-def compare_results(res, desired):
-    for i in range(len(desired)):
-        assert_array_equal(res[i], desired[i])
-
-
 class TestPercentile:
 
     def test_basic(self):
@@ -3421,6 +3431,16 @@ class TestMedian:
 
         a = MySubClass([1, 2, 3])
         assert_equal(np.median(a), -7)
+
+    @pytest.mark.parametrize('arr',
+                             ([1., 2., 3.], [1., np.nan, 3.], np.nan, 0.))
+    def test_subclass2(self, arr):
+        """Check that we return subclasses, even if a NaN scalar."""
+        class MySubclass(np.ndarray):
+            pass
+
+        m = np.median(np.array(arr).view(MySubclass))
+        assert isinstance(m, MySubclass)
 
     def test_out(self):
         o = np.zeros((4,))

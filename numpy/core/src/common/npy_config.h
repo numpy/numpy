@@ -1,5 +1,5 @@
-#ifndef _NPY_NPY_CONFIG_H_
-#define _NPY_NPY_CONFIG_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 
 #include "config.h"
 #include "npy_cpu_features.h"
@@ -167,9 +167,9 @@
 #undef HAVE_CACOSHF
 #undef HAVE_CACOSHL
 
-#endif /* __GLIBC_PREREQ(2, 18) */
-#endif /* defined(__GLIBC_PREREQ) */
+#endif  /* __GLIBC_PREREQ(2, 18) */
+#endif  /* defined(__GLIBC_PREREQ) */
 
-#endif /* defined(HAVE_FEATURES_H) */
+#endif  /* defined(HAVE_FEATURES_H) */
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_ */

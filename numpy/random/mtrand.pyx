@@ -763,7 +763,7 @@ cdef class RandomState:
         else:
             raise TypeError('Unsupported dtype %r for randint' % _dtype)
 
-        if size is None and dtype in (bool, int, np.compat.long):
+        if size is None and dtype in (bool, int):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret

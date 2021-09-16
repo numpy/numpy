@@ -2,6 +2,7 @@
 import os
 import re
 import sys
+import importlib
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '3.2.0'
@@ -85,6 +86,16 @@ extensions = [
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
 ]
+
+skippable_extensions = [
+    ('breathe', 'skip generating C/C++ API from comment blocks.'),
+]
+for ext, warn in skippable_extensions:
+    ext_exist = importlib.util.find_spec(ext) is not None
+    if ext_exist:
+        extensions.append(ext)
+    else:
+        print(f"Unable to find Sphinx extension '{ext}', {warn}.")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -477,3 +488,11 @@ class NumPyLexer(CLexer):
             inherit,
         ],
     }
+
+
+# -----------------------------------------------------------------------------
+# Breathe & Doxygen
+# -----------------------------------------------------------------------------
+breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_default_project = "numpy"
+breathe_default_members = ("members", "undoc-members", "protected-members")

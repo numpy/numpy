@@ -1,5 +1,4 @@
-from typing import List, TypeVar, Callable, Sequence, Any, overload, Tuple
-from typing_extensions import SupportsIndex, Protocol
+from typing import List, TypeVar, Callable, Sequence, Any, overload, Tuple, SupportsIndex, Protocol
 
 from numpy import (
     generic,
@@ -39,15 +38,17 @@ _ArrayLike = _NestedSequence[_SupportsDType[dtype[_SCT]]]
 class _ArrayWrap(Protocol):
     def __call__(
         self,
-        __array: NDArray[Any],
-        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        array: NDArray[Any],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        /,
     ) -> Any: ...
 
 class _ArrayPrepare(Protocol):
     def __call__(
         self,
-        __array: NDArray[Any],
-        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        array: NDArray[Any],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        /,
     ) -> Any: ...
 
 class _SupportsArrayWrap(Protocol):

@@ -164,6 +164,7 @@ from numpy.typing._extended_precision import (
 )
 
 from typing import (
+    Literal as L,
     Any,
     ByteString,
     Callable,
@@ -189,12 +190,10 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    Protocol,
+    SupportsIndex,
+    Final,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal as L, Protocol, SupportsIndex, Final
-else:
-    from typing_extensions import Literal as L, Protocol, SupportsIndex, Final
 
 # Ensures that the stubs are picked up
 from numpy import (
@@ -621,6 +620,14 @@ from numpy.matrixlib import (
     mat as mat,
     bmat as bmat,
 )
+
+# Protocol for representing file-like-objects accepted
+# by `ndarray.tofile` and `fromfile`
+class _IOProtocol(Protocol):
+    def flush(self) -> object: ...
+    def fileno(self) -> int: ...
+    def tell(self) -> SupportsIndex: ...
+    def seek(self, offset: int, whence: int, /) -> object: ...
 
 __all__: List[str]
 __path__: List[str]
@@ -1185,9 +1192,9 @@ class flatiter(Generic[_NdArraySubClass]):
         self, key: Union[_ArrayLikeInt, slice, ellipsis],
     ) -> _NdArraySubClass: ...
     @overload
-    def __array__(self: flatiter[ndarray[Any, _DType]], __dtype: None = ...) -> ndarray[Any, _DType]: ...
+    def __array__(self: flatiter[ndarray[Any, _DType]], dtype: None = ..., /) -> ndarray[Any, _DType]: ...
     @overload
-    def __array__(self, __dtype: _DType) -> ndarray[Any, _DType]: ...
+    def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
 
 _OrderKACF = Optional[L["K", "A", "C", "F"]]
 _OrderACF = Optional[L["A", "C", "F"]]
@@ -1216,7 +1223,7 @@ class _ArrayOrScalarCommon:
     def __str__(self) -> str: ...
     def __repr__(self) -> str: ...
     def __copy__(self: _ArraySelf) -> _ArraySelf: ...
-    def __deepcopy__(self: _ArraySelf, __memo: Optional[dict] = ...) -> _ArraySelf: ...
+    def __deepcopy__(self: _ArraySelf, memo: None | dict = ..., /) -> _ArraySelf: ...
     def __eq__(self, other): ...
     def __ne__(self, other): ...
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
@@ -1226,7 +1233,10 @@ class _ArrayOrScalarCommon:
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
     def tofile(
-        self, fid: Union[IO[bytes], str, bytes, os.PathLike[Any]], sep: str = ..., format: str = ...
+        self,
+        fid: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _IOProtocol,
+        sep: str = ...,
+        format: str = ...,
     ) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
@@ -1239,7 +1249,7 @@ class _ArrayOrScalarCommon:
     def __array_priority__(self) -> float: ...
     @property
     def __array_struct__(self): ...
-    def __setstate__(self, __state): ...
+    def __setstate__(self, state, /): ...
     # a `bool_` is returned when `keepdims=True` and `self` is a 0d array
 
     @overload
@@ -1649,7 +1659,7 @@ _ArrayNumber_co = NDArray[Union[bool_, number[Any]]]
 _ArrayTD64_co = NDArray[Union[bool_, integer[Any], timedelta64]]
 
 class _SupportsItem(Protocol[_T_co]):
-    def item(self, __args: Any) -> _T_co: ...
+    def item(self, args: Any, /) -> _T_co: ...
 
 class _SupportsReal(Protocol[_T_co]):
     @property
@@ -1688,20 +1698,22 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
     @overload
-    def __array__(self, __dtype: None = ...) -> ndarray[Any, _DType_co]: ...
+    def __array__(self, dtype: None = ..., /) -> ndarray[Any, _DType_co]: ...
     @overload
-    def __array__(self, __dtype: _DType) -> ndarray[Any, _DType]: ...
+    def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
 
     def __array_wrap__(
         self,
-        __array: ndarray[_ShapeType2, _DType],
-        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        array: ndarray[_ShapeType2, _DType],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        /,
     ) -> ndarray[_ShapeType2, _DType]: ...
 
     def __array_prepare__(
         self,
-        __array: ndarray[_ShapeType2, _DType],
-        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        array: ndarray[_ShapeType2, _DType],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        /,
     ) -> ndarray[_ShapeType2, _DType]: ...
 
     @property
@@ -1728,16 +1740,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def item(
         self: ndarray[Any, dtype[_SupportsItem[_T]]],  # type: ignore[type-var]
-        __args: Tuple[SupportsIndex, ...],
+        args: Tuple[SupportsIndex, ...],
+        /,
     ) -> _T: ...
 
     @overload
-    def itemset(self, __value: Any) -> None: ...
+    def itemset(self, value: Any, /) -> None: ...
     @overload
-    def itemset(self, __item: _ShapeLike, __value: Any) -> None: ...
+    def itemset(self, item: _ShapeLike, value: Any, /) -> None: ...
 
     @overload
-    def resize(self, __new_shape: _ShapeLike, *, refcheck: bool = ...) -> None: ...
+    def resize(self, new_shape: _ShapeLike, /, *, refcheck: bool = ...) -> None: ...
     @overload
     def resize(self, *new_shape: SupportsIndex, refcheck: bool = ...) -> None: ...
 
@@ -1757,7 +1770,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     ) -> ndarray[Any, _DType_co]: ...
 
     @overload
-    def transpose(self: _ArraySelf, __axes: _ShapeLike) -> _ArraySelf: ...
+    def transpose(self: _ArraySelf, axes: _ShapeLike, /) -> _ArraySelf: ...
     @overload
     def transpose(self: _ArraySelf, *axes: SupportsIndex) -> _ArraySelf: ...
 
@@ -1896,7 +1909,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     @overload
     def reshape(
-        self, __shape: _ShapeLike, *, order: _OrderACF = ...
+        self, shape: _ShapeLike, /, *, order: _OrderACF = ...
     ) -> ndarray[Any, _DType_co]: ...
     @overload
     def reshape(
@@ -2902,9 +2915,9 @@ class generic(_ArrayOrScalarCommon):
     @abstractmethod
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     @overload
-    def __array__(self: _ScalarType, __dtype: None = ...) -> ndarray[Any, dtype[_ScalarType]]: ...
+    def __array__(self: _ScalarType, dtype: None = ..., /) -> ndarray[Any, dtype[_ScalarType]]: ...
     @overload
-    def __array__(self, __dtype: _DType) -> ndarray[Any, _DType]: ...
+    def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
     @property
     def base(self) -> None: ...
     @property
@@ -2972,8 +2985,7 @@ class generic(_ArrayOrScalarCommon):
     ) -> Any: ...
 
     def item(
-        self,
-        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
+        self, args: L[0] | Tuple[()] | Tuple[L[0]] = ..., /,
     ) -> Any: ...
 
     @overload
@@ -3019,7 +3031,7 @@ class generic(_ArrayOrScalarCommon):
 
     @overload
     def reshape(
-        self: _ScalarType, __shape: _ShapeLike, *, order: _OrderACF = ...
+        self: _ScalarType, shape: _ShapeLike, /, *, order: _OrderACF = ...
     ) -> ndarray[Any, dtype[_ScalarType]]: ...
     @overload
     def reshape(
@@ -3029,7 +3041,7 @@ class generic(_ArrayOrScalarCommon):
     def squeeze(
         self: _ScalarType, axis: Union[L[0], Tuple[()]] = ...
     ) -> _ScalarType: ...
-    def transpose(self: _ScalarType, __axes: Tuple[()] = ...) -> _ScalarType: ...
+    def transpose(self: _ScalarType, axes: Tuple[()] = ..., /) -> _ScalarType: ...
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
     def dtype(self: _ScalarType) -> dtype[_ScalarType]: ...
@@ -3064,10 +3076,9 @@ class number(generic, Generic[_NBit1]):  # type: ignore
     __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
 class bool_(generic):
-    def __init__(self, __value: object = ...) -> None: ...
+    def __init__(self, value: object = ..., /) -> None: ...
     def item(
-        self,
-        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
+        self, args: L[0] | Tuple[()] | Tuple[L[0]] = ..., /,
     ) -> bool: ...
     def tolist(self) -> bool: ...
     @property
@@ -3113,7 +3124,7 @@ class bool_(generic):
 bool8 = bool_
 
 class object_(generic):
-    def __init__(self, __value: object = ...) -> None: ...
+    def __init__(self, value: object = ..., /) -> None: ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
@@ -3142,14 +3153,16 @@ class datetime64(generic):
     @overload
     def __init__(
         self,
-        __value: Union[None, datetime64, _CharLike_co, _DatetimeScalar] = ...,
-        __format: Union[_CharLike_co, Tuple[_CharLike_co, _IntLike_co]] = ...,
+        value: None | datetime64 | _CharLike_co | _DatetimeScalar = ...,
+        format: _CharLike_co | Tuple[_CharLike_co, _IntLike_co] = ...,
+        /,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        __value: int,
-        __format: Union[_CharLike_co, Tuple[_CharLike_co, _IntLike_co]]
+        value: int,
+        format: _CharLike_co | Tuple[_CharLike_co, _IntLike_co],
+        /,
     ) -> None: ...
     def __add__(self, other: _TD64Like_co) -> datetime64: ...
     def __radd__(self, other: _TD64Like_co) -> datetime64: ...
@@ -3163,28 +3176,16 @@ class datetime64(generic):
     __gt__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
     __ge__: _ComparisonOp[datetime64, _ArrayLikeDT64_co]
 
-# Support for `__index__` was added in python 3.8 (bpo-20092)
-if sys.version_info >= (3, 8):
-    _IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
-    _FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
-    _ComplexValue = Union[
-        None,
-        _CharLike_co,
-        SupportsFloat,
-        SupportsComplex,
-        SupportsIndex,
-        complex,  # `complex` is not a subtype of `SupportsComplex`
-    ]
-else:
-    _IntValue = Union[SupportsInt, _CharLike_co]
-    _FloatValue = Union[None, _CharLike_co, SupportsFloat]
-    _ComplexValue = Union[
-        None,
-        _CharLike_co,
-        SupportsFloat,
-        SupportsComplex,
-        complex,
-    ]
+_IntValue = Union[SupportsInt, _CharLike_co, SupportsIndex]
+_FloatValue = Union[None, _CharLike_co, SupportsFloat, SupportsIndex]
+_ComplexValue = Union[
+    None,
+    _CharLike_co,
+    SupportsFloat,
+    SupportsComplex,
+    SupportsIndex,
+    complex,  # `complex` is not a subtype of `SupportsComplex`
+]
 
 class integer(number[_NBit1]):  # type: ignore
     @property
@@ -3199,10 +3200,10 @@ class integer(number[_NBit1]):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
     # sub-classes (`int64`, `uint32`, etc)
     def item(
-        self,
-        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
+        self, args: L[0] | Tuple[()] | Tuple[L[0]] = ..., /,
     ) -> int: ...
     def tolist(self) -> int: ...
+    def is_integer(self) -> L[True]: ...
     def __index__(self) -> int: ...
     __truediv__: _IntTrueDiv[_NBit1]
     __rtruediv__: _IntTrueDiv[_NBit1]
@@ -3222,7 +3223,7 @@ class integer(number[_NBit1]):  # type: ignore
     def __rxor__(self, other: _IntLike_co) -> integer: ...
 
 class signedinteger(integer[_NBit1]):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
+    def __init__(self, value: _IntValue = ..., /) -> None: ...
     __add__: _SignedIntOp[_NBit1]
     __radd__: _SignedIntOp[_NBit1]
     __sub__: _SignedIntOp[_NBit1]
@@ -3266,8 +3267,9 @@ longlong = signedinteger[_NBitLongLong]
 class timedelta64(generic):
     def __init__(
         self,
-        __value: Union[None, int, _CharLike_co, dt.timedelta, timedelta64] = ...,
-        __format: Union[_CharLike_co, Tuple[_CharLike_co, _IntLike_co]] = ...,
+        value: None | int | _CharLike_co | dt.timedelta | timedelta64 = ...,
+        format: _CharLike_co | Tuple[_CharLike_co, _IntLike_co] = ...,
+        /,
     ) -> None: ...
     @property
     def numerator(self: _ScalarType) -> _ScalarType: ...
@@ -3303,7 +3305,7 @@ class timedelta64(generic):
 
 class unsignedinteger(integer[_NBit1]):
     # NOTE: `uint64 + signedinteger -> float64`
-    def __init__(self, __value: _IntValue = ...) -> None: ...
+    def __init__(self, value: _IntValue = ..., /) -> None: ...
     __add__: _UnsignedIntOp[_NBit1]
     __radd__: _UnsignedIntOp[_NBit1]
     __sub__: _UnsignedIntOp[_NBit1]
@@ -3349,23 +3351,23 @@ _IntType = TypeVar("_IntType", bound=integer)
 _FloatType = TypeVar('_FloatType', bound=floating)
 
 class floating(inexact[_NBit1]):
-    def __init__(self, __value: _FloatValue = ...) -> None: ...
+    def __init__(self, value: _FloatValue = ..., /) -> None: ...
     def item(
-        self,
-        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
+        self, args: L[0] | Tuple[()] | Tuple[L[0]] = ...,
+        /,
     ) -> float: ...
     def tolist(self) -> float: ...
-    def is_integer(self: float64) -> bool: ...
+    def is_integer(self) -> bool: ...
     def hex(self: float64) -> str: ...
     @classmethod
-    def fromhex(cls: Type[float64], __string: str) -> float64: ...
+    def fromhex(cls: Type[float64], string: str, /) -> float64: ...
     def as_integer_ratio(self) -> Tuple[int, int]: ...
     if sys.version_info >= (3, 9):
         def __ceil__(self: float64) -> int: ...
         def __floor__(self: float64) -> int: ...
     def __trunc__(self: float64) -> int: ...
     def __getnewargs__(self: float64) -> Tuple[float]: ...
-    def __getformat__(self: float64, __typestr: L["double", "float"]) -> str: ...
+    def __getformat__(self: float64, typestr: L["double", "float"], /) -> str: ...
     @overload
     def __round__(self, ndigits: None = ...) -> int: ...
     @overload
@@ -3403,10 +3405,9 @@ longfloat = floating[_NBitLongDouble]
 # describing the two 64 bit floats representing its real and imaginary component
 
 class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
-    def __init__(self, __value: _ComplexValue = ...) -> None: ...
+    def __init__(self, value: _ComplexValue = ..., /) -> None: ...
     def item(
-        self,
-        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
+        self, args: L[0] | Tuple[()] | Tuple[L[0]] = ..., /,
     ) -> complex: ...
     def tolist(self) -> complex: ...
     @property
@@ -3446,7 +3447,7 @@ class flexible(generic): ...  # type: ignore
 # depending on whether or not it's used as an opaque bytes sequence
 # or a structure
 class void(flexible):
-    def __init__(self, __value: Union[_IntLike_co, bytes]) -> None: ...
+    def __init__(self, value: _IntLike_co | bytes, /) -> None: ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
@@ -3468,14 +3469,13 @@ class character(flexible):  # type: ignore
 
 class bytes_(character, bytes):
     @overload
-    def __init__(self, __value: object = ...) -> None: ...
+    def __init__(self, value: object = ..., /) -> None: ...
     @overload
     def __init__(
-        self, __value: str, encoding: str = ..., errors: str = ...
+        self, value: str, /, encoding: str = ..., errors: str = ...
     ) -> None: ...
     def item(
-        self,
-        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
+        self, args: L[0] | Tuple[()] | Tuple[L[0]] = ..., /,
     ) -> bytes: ...
     def tolist(self) -> bytes: ...
 
@@ -3484,14 +3484,13 @@ bytes0 = bytes_
 
 class str_(character, str):
     @overload
-    def __init__(self, __value: object = ...) -> None: ...
+    def __init__(self, value: object = ..., /) -> None: ...
     @overload
     def __init__(
-        self, __value: bytes, encoding: str = ..., errors: str = ...
+        self, value: bytes, /, encoding: str = ..., errors: str = ...
     ) -> None: ...
     def item(
-        self,
-        __args: Union[L[0], Tuple[()], Tuple[L[0]]] = ...,
+        self, args: L[0] | Tuple[()] | Tuple[L[0]] = ..., /,
     ) -> str: ...
     def tolist(self) -> str: ...
 
@@ -3725,9 +3724,10 @@ class errstate(Generic[_CallType], ContextDecorator):
     def __enter__(self) -> None: ...
     def __exit__(
         self,
-        __exc_type: Optional[Type[BaseException]],
-        __exc_value: Optional[BaseException],
-        __traceback: Optional[TracebackType],
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+        /,
     ) -> None: ...
 
 class ndenumerate(Generic[_ScalarType]):

@@ -25,8 +25,8 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef __NPY_CPUINFO_PARSER_H__
-#define __NPY_CPUINFO_PARSER_H__
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -259,4 +259,4 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
     *hwcap2 |= has_list_item(cpuFeatures, "crc32") ? NPY__HWCAP2_CRC32 : 0;
     return 1;
 }
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_ */

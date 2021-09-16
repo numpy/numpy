@@ -1,4 +1,3 @@
-import sys
 from ast import AST
 from typing import (
     Any,
@@ -11,6 +10,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    Protocol,
 )
 
 from numpy import ndarray, generic
@@ -21,17 +21,12 @@ from numpy.core.numerictypes import (
     issubsctype as issubsctype,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
-
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _FuncType = TypeVar("_FuncType", bound=Callable[..., Any])
 
 # A file-like object opened in `w` mode
 class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, __s: _T_contra) -> Any: ...
+    def write(self, s: _T_contra, /) -> Any: ...
 
 __all__: List[str]
 
@@ -60,7 +55,8 @@ def deprecate(
 ) -> _Deprecate: ...
 @overload
 def deprecate(
-    __func: _FuncType,
+    func: _FuncType,
+    /,
     old_name: Optional[str] = ...,
     new_name: Optional[str] = ...,
     message: Optional[str] = ...,

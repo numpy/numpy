@@ -51,7 +51,7 @@ includes0['math.h'] = '#include <math.h>'
 includes0['string.h'] = '#include <string.h>'
 includes0['setjmp.h'] = '#include <setjmp.h>'
 
-includes['Python.h'] = '#include "Python.h"'
+includes['Python.h'] = '#include <Python.h>'
 needs['arrayobject.h'] = ['Python.h']
 includes['arrayobject.h'] = '''#define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "arrayobject.h"'''
