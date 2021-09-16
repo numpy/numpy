@@ -9,7 +9,6 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 
 """
 
-import sys
 from numpy.core.function_base import add_newdoc
 from numpy.core.overrides import array_function_like_doc
 
@@ -2799,38 +2798,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
     """))
 
 
-if sys.version_info > (3, 9):
-    add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
-        """a.__class_getitem__(item, /)
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
+    """a.__class_getitem__(item, /)
 
-        Return a parametrized wrapper around the `~numpy.ndarray` type.
+    Return a parametrized wrapper around the `~numpy.ndarray` type.
 
-        .. versionadded:: 1.22
+    .. versionadded:: 1.22
 
-        Returns
-        -------
-        alias : types.GenericAlias
-            A parametrized `~numpy.ndarray` type.
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.ndarray` type.
 
-        Examples
-        --------
-        >>> from typing import Any
-        >>> import numpy as np
+    Examples
+    --------
+    >>> from typing import Any
+    >>> import numpy as np
 
-        >>> np.ndarray[Any, np.dtype]
-        numpy.ndarray[typing.Any, numpy.dtype]
+    >>> np.ndarray[Any, np.dtype[Any]]
+    numpy.ndarray[typing.Any, numpy.dtype[Any]]
 
-        Note
-        ----
-        This method is only available for python 3.9 and later.
+    Note
+    ----
+    This method is only available for python 3.9 and later.
 
-        See Also
-        --------
-        :pep:`585` : Type hinting generics in standard collections.
-        numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
-                            w.r.t. its `dtype.type <numpy.dtype.type>`.
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
+    numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
+                        w.r.t. its `dtype.type <numpy.dtype.type>`.
 
-        """))
+    """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
@@ -6079,36 +6077,35 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 
     """))
 
-if sys.version_info >= (3, 9):
-    add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
-        """
-        __class_getitem__(item, /)
+add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
+    """
+    __class_getitem__(item, /)
 
-        Return a parametrized wrapper around the `~numpy.dtype` type.
+    Return a parametrized wrapper around the `~numpy.dtype` type.
 
-        .. versionadded:: 1.22
+    .. versionadded:: 1.22
 
-        Returns
-        -------
-        alias : types.GenericAlias
-            A parametrized `~numpy.dtype` type.
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.dtype` type.
 
-        Examples
-        --------
-        >>> import numpy as np
+    Examples
+    --------
+    >>> import numpy as np
 
-        >>> np.dtype[np.int64]
-        numpy.dtype[numpy.int64]
+    >>> np.dtype[np.int64]
+    numpy.dtype[numpy.int64]
 
-        Note
-        ----
-        This method is only available for python 3.9 and later.
+    Note
+    ----
+    This method is only available for python 3.9 and later.
 
-        See Also
-        --------
-        :pep:`585` : Type hinting generics in standard collections.
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
 
-        """))
+    """))
 
 ##############################################################################
 #
@@ -6530,37 +6527,36 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 add_newdoc('numpy.core.numerictypes', 'generic',
            refer_to_array_attribute('view'))
 
-if sys.version_info >= (3, 9):
-    add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
-        """
-        __class_getitem__(item, /)
+add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
+    """
+    __class_getitem__(item, /)
 
-        Return a parametrized wrapper around the `~numpy.number` type.
+    Return a parametrized wrapper around the `~numpy.number` type.
 
-        .. versionadded:: 1.22
+    .. versionadded:: 1.22
 
-        Returns
-        -------
-        alias : types.GenericAlias
-            A parametrized `~numpy.number` type.
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.number` type.
 
-        Examples
-        --------
-        >>> from typing import Any
-        >>> import numpy as np
+    Examples
+    --------
+    >>> from typing import Any
+    >>> import numpy as np
 
-        >>> np.signedinteger[Any]
-        numpy.signedinteger[typing.Any]
+    >>> np.signedinteger[Any]
+    numpy.signedinteger[typing.Any]
 
-        Note
-        ----
-        This method is only available for python 3.9 and later.
+    Note
+    ----
+    This method is only available for python 3.9 and later.
 
-        See Also
-        --------
-        :pep:`585` : Type hinting generics in standard collections.
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
 
-        """))
+    """))
 
 ##############################################################################
 #

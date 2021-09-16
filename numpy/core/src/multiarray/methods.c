@@ -2699,6 +2699,30 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return c;
 }
 
+static PyObject *
+array_class_getitem(PyObject *cls, PyObject *args)
+{
+    PyObject *generic_alias;
+
+#ifdef Py_GENERICALIASOBJECT_H
+    Py_ssize_t args_len;
+
+    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
+    if (args_len != 2) {
+        return PyErr_Format(PyExc_TypeError,
+                            "Too %s arguments for %s",
+                            args_len > 2 ? "many" : "few",
+                            ((PyTypeObject *)cls)->tp_name);
+    }
+    generic_alias = Py_GenericAlias(cls, args);
+#else
+    PyErr_SetString(PyExc_TypeError,
+                    "Type subscription requires python >= 3.9");
+    generic_alias = NULL;
+#endif
+    return generic_alias;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2757,11 +2781,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
 
     /* for typing; requires python >= 3.9 */
-    #ifdef Py_GENERICALIASOBJECT_H
     {"__class_getitem__",
-        (PyCFunction)Py_GenericAlias,
+        (PyCFunction)array_class_getitem,
         METH_CLASS | METH_O, NULL},
-    #endif
 
     /* Original and Extended methods added 2005 */
     {"all",

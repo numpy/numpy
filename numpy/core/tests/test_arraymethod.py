@@ -62,12 +62,26 @@ class TestSimpleStridedCall:
             self.method._simple_strided_call(*args)
 
 
-@pytest.mark.parametrize(
-    "cls", [np.ndarray, np.recarray, np.chararray, np.matrix, np.memmap]
-)
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
-def test_class_getitem(cls: Type[np.ndarray]) -> None:
-    """Test `ndarray.__class_getitem__`."""
-    alias = cls[Any, Any]
-    assert isinstance(alias, types.GenericAlias)
-    assert alias.__origin__ is cls
+class TestClassGetItem:
+    @pytest.mark.parametrize(
+        "cls", [np.ndarray, np.recarray, np.chararray, np.matrix, np.memmap]
+    )
+    def test_class_getitem(self, cls: Type[np.ndarray]) -> None:
+        """Test `ndarray.__class_getitem__`."""
+        alias = cls[Any, Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is cls
+
+    @pytest.mark.parametrize("arg_len", range(4))
+    def test_subscript_tuple(self, arg_len: int) -> None:
+        arg_tup = (Any,) * arg_len
+        if arg_len == 2:
+            assert np.ndarray[arg_tup]
+        else:
+            with pytest.raises(TypeError):
+                np.ndarray[arg_tup]
+
+    def test_subscript_scalar(self) -> None:
+        with pytest.raises(TypeError):
+            np.ndarray[Any]

@@ -3101,6 +3101,30 @@ arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
     return (PyObject *)PyArray_DescrNewByteorder(self, endian);
 }
 
+static PyObject *
+arraydescr_class_getitem(PyObject *cls, PyObject *args)
+{
+    PyObject *generic_alias;
+
+#ifdef Py_GENERICALIASOBJECT_H
+    Py_ssize_t args_len;
+
+    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
+    if (args_len != 1) {
+        return PyErr_Format(PyExc_TypeError,
+                            "Too %s arguments for %s",
+                            args_len > 1 ? "many" : "few",
+                            ((PyTypeObject *)cls)->tp_name);
+    }
+    generic_alias = Py_GenericAlias(cls, args);
+#else
+    PyErr_SetString(PyExc_TypeError,
+                    "Type subscription requires python >= 3.9");
+    generic_alias = NULL;
+#endif
+    return generic_alias;
+}
+
 static PyMethodDef arraydescr_methods[] = {
     /* for pickling */
     {"__reduce__",
@@ -3112,13 +3136,10 @@ static PyMethodDef arraydescr_methods[] = {
     {"newbyteorder",
         (PyCFunction)arraydescr_newbyteorder,
         METH_VARARGS, NULL},
-
     /* for typing; requires python >= 3.9 */
-    #ifdef Py_GENERICALIASOBJECT_H
     {"__class_getitem__",
-        (PyCFunction)Py_GenericAlias,
+        (PyCFunction)arraydescr_class_getitem,
         METH_CLASS | METH_O, NULL},
-    #endif
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
