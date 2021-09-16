@@ -171,3 +171,11 @@ class TestClassGetItem:
 
     def test_subscript_scalar(self) -> None:
         assert np.number[Any]
+
+
+@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
+@pytest.mark.parametrize("cls", [np.number, np.int64])
+def test_class_getitem_38(cls: Type[np.number]) -> None:
+    match = "Type subscription requires python >= 3.9"
+    with pytest.raises(TypeError, match=match):
+        cls[Any]
