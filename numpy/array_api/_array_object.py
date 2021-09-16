@@ -992,6 +992,11 @@ class Array:
         res = self._array.__rxor__(other._array)
         return self.__class__._new(res)
 
+    def to_device(self: Array, device: Device, /) -> Array:
+        if device == 'cpu':
+            return self
+        raise ValueError(f"Unsupported device {device!r}")
+
     @property
     def dtype(self) -> Dtype:
         """
