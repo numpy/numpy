@@ -12,7 +12,7 @@ jobs:
       # therefore a new base image chose instead to guarantee to
       # have a newer version >= 1.8.10 to avoid warnings
       # that related to the default behaviors or non-exist config options
-      - image: cimg/base:2021.05
+      - image: cimg/base:2021.07
 
     working_directory: ~/repo
 
