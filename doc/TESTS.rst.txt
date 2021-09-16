@@ -16,13 +16,7 @@ Our goal is that every module and package in NumPy
 should have a thorough set of unit
 tests. These tests should exercise the full functionality of a given
 routine as well as its robustness to erroneous or unexpected input
-arguments. Long experience has shown that by far the best time to
-write the tests is before you write or change the code - this is
-`test-driven development
-<https://en.wikipedia.org/wiki/Test-driven_development>`__.  The
-arguments for this can sound rather abstract, but we can assure you
-that you will find that writing the tests first leads to more robust
-and better designed code. Well-designed tests with good coverage make
+arguments. Well-designed tests with good coverage make
 an enormous difference to the ease of refactoring. Whenever a new bug
 is found in a routine, you should write a new test for that specific
 case and add it to the test suite to prevent that bug from creeping
