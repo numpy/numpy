@@ -1020,6 +1020,17 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 
         /* Build the new strides */
         stride = dtype->elsize;
+        if (stride == 0 && PyDataType_ISSTRING(dtype)) {
+            /* Special case for dtype=str or dtype=bytes. */
+            if (dtype->type_num == NPY_STRING) {
+                /* dtype is bytes */
+                stride = 1;
+            }
+            else {
+                /* dtype is str (type_num is NPY_UNICODE) */
+                stride = 4;
+            }
+        }
         for (idim = ndim-1; idim >= 0; --idim) {
             npy_intp i_perm = strideperm[idim].perm;
             strides[i_perm] = stride;
