@@ -6,9 +6,10 @@ labels: [00 - Bug]
 body:
 - type: markdown
   attributes:
-    value: |
-      Thank you for taking the time to file a bug report. Before creating a new issue, please make sure to take a few minutes to check the
-      issue tracker for existing issues about the bug.
+    value: >
+      Thank you for taking the time to file a bug report. Before creating a new
+      issue, please make sure to take a few minutes to check the issue tracker
+      for existing issues about the bug.
     
 - type: textarea
   attributes: 
@@ -19,8 +20,9 @@ body:
 - type: textarea
   attributes:
     label: "Reproduce the code example:"
-    description: |
-      A short code example that reproduces the problem/missing feature. It should be self-contained, i.e., can be copy-pasted into the Python
+    description: >
+      A short code example that reproduces the problem/missing feature. It
+      should be self-contained, i.e., can be copy-pasted into the Python
       interpreter or run as-is via `python myproblem.py`.
     placeholder: |
       import numpy as np
@@ -32,9 +34,11 @@ body:
 - type: textarea
   attributes:
     label: "Error message:"
-    description: |
-      Please include full error message, if any (starting from `Traceback: ...`). If you are reporting a segfault please include a GDB traceback,
-      which you can generate by following [these instructions](https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging).
+    description: >
+      Please include full error message, if any (starting from `Traceback: ...`).
+      If you are reporting a segfault please include a GDB traceback,
+      which you can generate by following
+      [these instructions](https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging).
     render: shell
 
 - type: textarea

@@ -6,17 +6,20 @@ body:
 - type: textarea
   attributes:
     label: "Steps to reproduce:"
-    description: |
-      Please describe the installation method (e.g. building from source, Anaconda, pip), your OS and NumPy/Python version information.
+    description: >
+      Please describe the installation method (e.g. building from source,
+      Anaconda, pip), your OS and NumPy/Python version information.
   validations:
     required: true
 
 - type: textarea
   attributes:
     label: "Error message:"
-    description: |
-      Please include full error message, if any (starting from `Traceback: ...`). If you are reporting a segfault please include a GDB traceback,
-      which you can generate by following [these instructions](https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging).
+    description: >
+      Please include full error message, if any (starting from `Traceback: ...`).
+      If you are reporting a segfault please include a GDB traceback,
+      which you can generate by following
+      [these instructions](https://github.com/numpy/numpy/blob/main/doc/source/dev/development_environment.rst#debugging).
     render: shell
 
 - type: textarea
