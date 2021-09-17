@@ -21,6 +21,8 @@ Mypy plugin
 
 .. automodule:: numpy.typing.mypy_plugin
 
+.. currentmodule:: numpy.typing
+
 Differences from the runtime NumPy API
 --------------------------------------
 
