@@ -37,16 +37,16 @@ reveal_type(np.linalg.qr(AR_i8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[{flo
 reveal_type(np.linalg.qr(AR_f8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]], numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]]
 reveal_type(np.linalg.qr(AR_c16))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]], numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]]
 
-reveal_type(np.linalg.eigvals(AR_i8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.linalg.eigvals(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.linalg.eigvals(AR_i8))  # E: Union[numpy.ndarray[Any, numpy.dtype[{float64}]], numpy.ndarray[Any, numpy.dtype[{complex128}]]]
+reveal_type(np.linalg.eigvals(AR_f8))  # E: Union[numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]], numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]]
 reveal_type(np.linalg.eigvals(AR_c16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
 
 reveal_type(np.linalg.eigvalsh(AR_i8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.linalg.eigvalsh(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
 reveal_type(np.linalg.eigvalsh(AR_c16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
 
-reveal_type(np.linalg.eig(AR_i8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[{float64}]], numpy.ndarray[Any, numpy.dtype[{float64}]]]
-reveal_type(np.linalg.eig(AR_f8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]], numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]]
+reveal_type(np.linalg.eig(AR_i8))  # E: Union[Tuple[numpy.ndarray[Any, numpy.dtype[{float64}]], numpy.ndarray[Any, numpy.dtype[{float64}]]], Tuple[numpy.ndarray[Any, numpy.dtype[{complex128}]], numpy.ndarray[Any, numpy.dtype[{complex128}]]]]
+reveal_type(np.linalg.eig(AR_f8))  # E: Union[Tuple[numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]], numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]], Tuple[numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]], numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]]]
 reveal_type(np.linalg.eig(AR_c16))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]], numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]]
 
 reveal_type(np.linalg.eigh(AR_i8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[{float64}]], numpy.ndarray[Any, numpy.dtype[{float64}]]]

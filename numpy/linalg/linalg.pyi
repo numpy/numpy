@@ -10,7 +10,15 @@ from typing import (
     Tuple,
 )
 
-from numpy import generic, int32, floating, float64, complexfloating
+from numpy import (
+    generic,
+    floating,
+    complexfloating,
+    int32,
+    float64,
+    complex128,
+)
+
 from numpy.typing import (
     NDArray,
     ArrayLike,
@@ -109,9 +117,9 @@ def qr(a: _ArrayLikeFloat_co, mode: _ModeKind = ...) -> _2Tuple[NDArray[floating
 def qr(a: _ArrayLikeComplex_co, mode: _ModeKind = ...) -> _2Tuple[NDArray[complexfloating[Any, Any]]]: ...
 
 @overload
-def eigvals(a: _ArrayLikeInt_co) -> NDArray[float64]: ...
+def eigvals(a: _ArrayLikeInt_co) -> NDArray[float64] | NDArray[complex128]: ...
 @overload
-def eigvals(a: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
+def eigvals(a: _ArrayLikeFloat_co) -> NDArray[floating[Any]] | NDArray[complexfloating[Any, Any]]: ...
 @overload
 def eigvals(a: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
 
@@ -121,9 +129,9 @@ def eigvalsh(a: _ArrayLikeInt_co, UPLO: L["L", "U", "l", "u"] = ...) -> NDArray[
 def eigvalsh(a: _ArrayLikeComplex_co, UPLO: L["L", "U", "l", "u"] = ...) -> NDArray[floating[Any]]: ...
 
 @overload
-def eig(a: _ArrayLikeInt_co) -> _2Tuple[NDArray[float64]]: ...
+def eig(a: _ArrayLikeInt_co) -> _2Tuple[NDArray[float64]] | _2Tuple[NDArray[complex128]]: ...
 @overload
-def eig(a: _ArrayLikeFloat_co) -> _2Tuple[NDArray[floating[Any]]]: ...
+def eig(a: _ArrayLikeFloat_co) -> _2Tuple[NDArray[floating[Any]]] | _2Tuple[NDArray[complexfloating[Any, Any]]]: ...
 @overload
 def eig(a: _ArrayLikeComplex_co) -> _2Tuple[NDArray[complexfloating[Any, Any]]]: ...
 
