@@ -142,12 +142,16 @@ class TestClassGetItem:
         np.unsignedinteger,
         np.signedinteger,
         np.floating,
-        np.complexfloating,
     ])
     def test_abc(self, cls: Type[np.number]) -> None:
         alias = cls[Any]
         assert isinstance(alias, types.GenericAlias)
         assert alias.__origin__ is cls
+
+    def test_abc_complexfloating(self) -> None:
+        alias = np.complexfloating[Any, Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is np.complexfloating
 
     @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])
     def test_abc_non_numeric(self, cls: Type[np.generic]) -> None:
@@ -174,7 +178,7 @@ class TestClassGetItem:
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
-@pytest.mark.parametrize("cls", [np.number, np.int64])
+@pytest.mark.parametrize("cls", [np.number, np.complexfloating, np.int64])
 def test_class_getitem_38(cls: Type[np.number]) -> None:
     match = "Type subscription requires python >= 3.9"
     with pytest.raises(TypeError, match=match):
