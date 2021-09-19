@@ -6,30 +6,34 @@ Wrapping Fortran or C functions to Python using F2PY consists of the
 following steps:
 
 * Creating the so-called signature file that contains descriptions of
-  wrappers to Fortran or C functions, also called as signatures of the
-  functions. In the case of Fortran routines, F2PY can create initial
+  wrappers to Fortran or C functions, also called the signatures of the
+  functions. For Fortran routines, F2PY can create an initial
   signature file by scanning Fortran source codes and
-  catching all relevant information needed to create wrapper
+  tracking all relevant information needed to create wrapper
   functions.
 
   * Optionally, F2PY created signature files can be edited to optimize
-    wrappers functions, make them "smarter" and more "Pythonic".
+    wrapper functions, to make them "smarter" and more "Pythonic".
 
 * F2PY reads a signature file and writes a Python C/API module containing
   Fortran/C/Python bindings.
 * F2PY compiles all sources and builds an extension module containing
-  the wrappers. In building extension modules, F2PY uses
-  ``numpy_distutils`` that supports a number of Fortran 77/90/95
-  compilers, including Gnu, Intel,
-  Sun Fortran, SGI MIPSpro, Absoft, NAG, Compaq etc. compilers.
+  the wrappers.
 
-Depending on a particular situation, these steps can be carried out
-either by just in one command or step-by-step, some steps can be
-omitted or combined with others.
+  * In building the extension modules, F2PY uses ``numpy_distutils`` which
+    supports a number of Fortran 77/90/95 compilers, including Gnu, Intel, Sun
+    Fortran, SGI MIPSpro, Absoft, NAG, Compaq etc.
 
-Below we describe three typical approaches of using F2PY.
+Depending on the situation, these steps can be carried out in a single composite
+command or step-by-step; in which case some steps can be omitted or combined
+with others.
+
+Below we describe three typical approaches of using F2PY. These can be read in
+order of increasing effort, but also cater to different access levels depending
+on whether the Fortran code can be modified freely.
+
 The following example Fortran 77 code will be used for
-illustration, save it as fib1.f:
+illustration, save it as ``fib1.f``:
 
 .. literalinclude:: ./code/fib1.f
    :language: fortran
@@ -38,17 +42,17 @@ illustration, save it as fib1.f:
 The quick way
 ==============
 
-The quickest way to wrap the Fortran subroutine ``FIB`` to Python is
+The quickest way to expose the Fortran subroutine ``FIB`` to Python is
 to run
 
 ::
 
   python -m numpy.f2py -c fib1.f -m fib1
 
-This command builds (see ``-c`` flag, execute ``python -m numpy.f2py`` without
-arguments to see the explanation of command line options) an extension
-module ``fib1.so`` (see ``-m`` flag) to the current directory. Now, in
-Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
+This command builds (see the ``-c`` flag, or execute ``python -m numpy.f2py``
+without arguments to see the explanation of command line options) an extension
+module ``fib1.so`` (see the ``-m`` flag) to the current directory. Now, in Python
+the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
   >>> import numpy as np
   >>> import fib1
@@ -73,7 +77,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
 .. note::
 
-  * Note that F2PY found that the second argument ``n`` is the
+  * Note that F2PY recognized that the second argument ``n`` is the
     dimension of the first array argument ``a``. Since by default all
     arguments are input-only arguments, F2PY concludes that ``n`` can
     be optional with the default value ``len(a)``.
@@ -95,14 +99,14 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
       >>>
 
     F2PY implements basic compatibility checks between related
-    arguments in order to avoid any unexpected crashes.
+    arguments in order to avoid unexpected crashes.
 
-  * When a NumPy array, that is Fortran contiguous and has a dtype
-    corresponding to presumed Fortran type, is used as an input array
+  * When a NumPy array, that is Fortran contiguous and has a ``dtype``
+    corresponding to a presumed Fortran type, is used as an input array
     argument, then its C pointer is directly passed to Fortran.
 
-    Otherwise F2PY makes a contiguous copy (with a proper dtype) of
-    the input array and passes C pointer of the copy to Fortran
+    Otherwise F2PY makes a contiguous copy (with the proper ``dtype``) of
+    the input array and passes a C pointer of the copy to the Fortran
     subroutine. As a result, any possible changes to the (copy of)
     input array have no effect to the original argument, as
     demonstrated below::
@@ -112,81 +116,78 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
       >>> print(a)
       [1 1 1 1 1 1 1 1]
 
-    Clearly, this is not an expected behaviour. The fact that the
-    above example worked with ``dtype=float`` is considered
-    accidental.
+    Clearly, this is not an expected behaviour; especially since Fortran
+    typically passes by reference. The fact that the above example worked with
+    ``dtype=float`` is considered accidental.
 
-    F2PY provides ``intent(inplace)`` attribute that would modify
+    F2PY provides an ``intent(inplace)`` attribute that modifies
     the attributes of an input array so that any changes made by
-    Fortran routine will be effective also in input argument. For example,
-    if one specifies ``intent(inplace) a`` (see below, how), then
-    the example above would read::
+    Fortran routine will be reflected in the input argument. For example,
+    if one specifies the ``intent(inplace) a`` directive (see subsequent
+    sections on how), then the example above would read::
 
       >>> a = np.ones(8, 'i')
       >>> fib1.fib(a)
       >>> print(a)
       [  0.   1.   1.   2.   3.   5.   8.  13.]
 
-    However, the recommended way to get changes made by Fortran
-    subroutine back to Python is to use ``intent(out)`` attribute. It
-    is more efficient and a cleaner solution.
+    However, the recommended way to get changes made by Fortran subroutine
+    propagate to Python is to use ``intent(out)`` attribute. This approach is
+    more efficient and also cleaner.
 
-  * The usage of ``fib1.fib`` in Python is very similar to using
-    ``FIB`` in Fortran. However, using *in situ* output arguments in
-    Python indicates a poor style as there is no safety mechanism
-    in Python with respect to wrong argument types. When using Fortran
-    or C, compilers naturally discover any type mismatches during
-    compile time but in Python the types must be checked in
-    runtime. So, using *in situ* output arguments in Python may cause
-    difficult to find bugs, not to mention that the codes will be less
-    readable when all required type checks are implemented.
+  * The usage of ``fib1.fib`` in Python is very similar to using ``FIB`` in
+    Fortran. However, using *in situ* output arguments in Python indicates a
+    poor style as there are no safety mechanisms in Python to protect against
+    wrong argument types. When using Fortran or C, compilers naturally discover
+    any type mismatches during the compilation process, but in Python the types
+    must be checked at runtime. So, using *in situ* output arguments in Python
+    may give rise to difficult to find bugs, not to mention the fact that the
+    codes will be less readable when all required type checks are implemented.
 
-  Though the demonstrated way of wrapping Fortran routines to Python
-  is very straightforward, it has several drawbacks (see the comments
-  above).  These drawbacks are due to the fact that there is no way
-  that F2PY can determine what is the actual intention of one or the
-  other argument, is it input or output argument, or both, or
-  something else. So, F2PY conservatively assumes that all arguments
-  are input arguments by default.
+  Though the approach to exposing Fortran routines to Python discussed so far is
+  very straightforward, it has several drawbacks (see the comments above).
+  These drawbacks are due to the fact that there is no way for F2PY to determine
+  the actual intention of the arguments; that is there is ambiguity in
+  distinguishing between input, output arguments. So, F2PY conservatively
+  assumes that all arguments are input arguments by default.
 
-  However, there are ways (see below) how to "teach" F2PY about the
-  true intentions (among other things) of function arguments; and then
-  F2PY is able to generate more Pythonic (more explicit, easier to
-  use, and less error prone) wrappers to Fortran functions.
+  However, there are ways (see below) how to remove this ambiguity; essentially
+  by "teaching" F2PY about the true intentions (among other things) of function
+  arguments; subsequently F2PY is then able to generate more Pythonic (more
+  explicit, easier to use, and less error prone) wrappers to Fortran functions.
 
 The smart way
 ==============
 
-Let's apply the steps of wrapping Fortran functions to Python one by
+Let us apply the steps for wrapping Fortran functions to Python one by
 one.
 
-* First, we create a signature file from ``fib1.f`` by running
+* First, we create a signature file from ``fib1.f`` by running:
 
   ::
 
     python -m numpy.f2py fib1.f -m fib2 -h fib1.pyf
 
-  The signature file is saved to ``fib1.pyf`` (see ``-h`` flag) and
-  its contents is shown below.
+  The signature file is saved to ``fib1.pyf`` (see the ``-h`` flag) and
+  its contents are shown below.
 
   .. literalinclude:: ./code/fib1.pyf
      :language: fortran
 
-* Next, we'll teach F2PY that the argument ``n`` is an input argument
-  (use ``intent(in)`` attribute) and that the result, i.e. the
-  contents of ``a`` after calling Fortran function ``FIB``, should be
-  returned to Python (use ``intent(out)`` attribute). In addition, an
-  array ``a`` should be created dynamically using the size given by
-  the input argument ``n`` (use ``depend(n)`` attribute to indicate
-  dependence relation).
+* Next, we'll teach F2PY that the argument ``n`` is an input argument (using the
+  ``intent(in)`` attribute) and that the result, i.e. the contents of ``a``
+  after calling Fortran function ``FIB``, should be returned to Python (using
+  the ``intent(out)`` attribute). In addition, an array ``a`` should be created
+  dynamically using the size determined by the input argument ``n`` (using the
+  ``depend(n)`` attribute to indicate this dependence relation).
 
-  The content of a modified version of ``fib1.pyf`` (saved as
+  The content of a suitably modified version of ``fib1.pyf`` (saved as
   ``fib2.pyf``) is as follows:
 
   .. literalinclude:: ./code/fib2.pyf
      :language: fortran
 
-* And finally, we build the extension module by running
+* Finally, we build the extension module with ``numpy.distutils`` by running:
 
   ::
 
@@ -213,16 +214,15 @@ In Python::
 
 .. note::
 
-  * Clearly, the signature of ``fib2.fib`` now corresponds to the
-    intention of Fortran subroutine ``FIB`` more closely: given the
-    number ``n``, ``fib2.fib`` returns the first ``n`` Fibonacci numbers
-    as a NumPy array. Also, the new Python signature ``fib2.fib``
-    rules out any surprises that we experienced with ``fib1.fib``.
+  * Clearly, the signature of ``fib2.fib`` now more closely corresponds to the
+    intention of Fortran subroutine ``FIB``: given the number ``n``,
+    ``fib2.fib`` returns the first ``n`` Fibonacci numbers as a NumPy array.
+    Also, the new Python signature ``fib2.fib`` rules out the surprises that we
+    experienced with ``fib1.fib``.
 
-  * Note that by default using single ``intent(out)`` also implies
+  * Note that by default using a single ``intent(out)`` also implies
     ``intent(hide)``. Arguments that have the ``intent(hide)`` attribute
-    specified will not be listed in the argument list of a wrapper
-    function.
+    specified will not be listed in the argument list of a wrapper function.
 
 The quick and smart way
 ========================
@@ -232,16 +232,15 @@ suitable for wrapping (e.g. third party) Fortran codes for which
 modifications to their source codes are not desirable nor even
 possible.
 
-However, if editing Fortran codes is acceptable, then the generation
-of an intermediate signature file can be skipped in most
-cases. Namely, F2PY specific attributes can be inserted directly to
-Fortran source codes using the so-called F2PY directive. A F2PY
-directive defines special comment lines (starting with ``Cf2py``, for
-example) which are ignored by Fortran compilers but F2PY interprets
-them as normal lines.
+However, if editing Fortran codes is acceptable, then the generation of an
+intermediate signature file can be skipped in most cases. Namely, F2PY specific
+attributes can be inserted directly to Fortran source codes using the so-called
+F2PY directive. A F2PY directive consists of special comment lines (starting
+with ``Cf2py`` or ``!f2py``, for example) which are ignored by Fortran compilers
+but interpreted by F2PY as normal lines.
 
-Here is shown a modified version of the previous Fortran code, save it
-as ``fib3.f``:
+Consider a modified version of the previous Fortran code with F2PY directives,
+saved as ``fib3.f``:
 
 .. literalinclude:: ./code/fib3.f
    :language: fortran
@@ -250,8 +249,8 @@ Building the extension module can be now carried out in one command::
 
   python -m numpy.f2py -c -m fib3 fib3.f
 
-Notice that the resulting wrapper to ``FIB`` is as "smart" as in
-previous case::
+Notice that the resulting wrapper to ``FIB`` is as "smart" (unambiguous) as in
+the previous case::
 
   >>> import fib3
   >>> print(fib3.fib.__doc__)
