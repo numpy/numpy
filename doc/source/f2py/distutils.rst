@@ -12,8 +12,8 @@ sources, call F2PY to construct extension modules, etc.
 
   Consider the following `setup file`__:
 
-  .. include:: setup_example.py
-    :literal:
+  .. literalinclude:: ./code/setup_example.py
+    :language: python
 
   Running
 

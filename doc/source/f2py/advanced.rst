@@ -10,7 +10,7 @@ signature files using ``usercode`` and ``pymethoddef`` statements
 (they must be used inside the ``python module`` block). For
 example, the following signature file ``spam.pyf``
 
-.. include:: spam.pyf
+.. include:: ./code/spam.pyf
    :literal:
 
 wraps the C library function ``system()``::
@@ -19,7 +19,7 @@ wraps the C library function ``system()``::
 
 In Python:
 
-.. include:: spam_session.dat
+.. include:: ./code/results/spam_session.dat
    :literal:
 
 Modifying the dictionary of a F2PY generated module
@@ -29,7 +29,7 @@ The following example illustrates how to add user-defined
 variables to a F2PY generated extension module. Given the following
 signature file
 
-.. include:: var.pyf
+.. include:: ./code/var.pyf
   :literal:
 
 compile it as ``f2py -c var.pyf``.
@@ -41,7 +41,7 @@ additional details).
 
 In Python:
 
-.. include:: var_session.dat
+.. include:: ./code/results/var_session.dat
   :literal:
 
 

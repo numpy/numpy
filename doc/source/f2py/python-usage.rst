@@ -19,15 +19,15 @@ of a function).
 
 Consider a Fortran 77 file ``ftype.f``:
 
-  .. include:: ftype.f
-     :literal:
+  .. literalinclude:: ./code/ftype.f
+     :language: fortran
 
 and build a wrapper using ``f2py -c ftype.f -m ftype``.
 
 In Python:
 
-  .. include:: ftype_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/ftype_session.dat
+     :language: python
 
 
 Scalar arguments
@@ -50,15 +50,15 @@ arrays with proper type but also other types work.
 
 Consider the following Fortran 77 code:
 
-  .. include:: scalar.f
-     :literal:
+  .. literalinclude:: ./code/scalar.f
+     :language: fortran
 
 and wrap it using ``f2py -c -m scalar scalar.f``.
 
 In Python:
 
-  .. include:: scalar_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/scalar_session.dat
+     :language: python
 
 
 String arguments
@@ -79,15 +79,15 @@ expects an array version of a string in order to have *in situ* changes be effec
 
 Consider the following Fortran 77 code:
 
-  .. include:: string.f
-     :literal:
+  .. literalinclude:: ./code/string.f
+     :language: fortran
 
 and wrap it using ``f2py -c -m mystring string.f``.
 
 Python session:
 
-  .. include:: string_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/string_session.dat
+     :language: python
 
 
 Array arguments
@@ -147,15 +147,15 @@ them to Fortran routines, use the function ``numpy.asfortranarray(<array>)``.
 
 Consider the following Fortran 77 code:
 
-  .. include:: array.f
-     :literal:
+  .. literalinclude:: ./code/array.f
+     :language: fortran
 
 and wrap it using ``f2py -c -m arr array.f -DF2PY_REPORT_ON_ARRAY_COPY=1``.
 
 In Python:
 
-  .. include:: array_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/array_session.dat
+     :language: python
 
 .. _Call-back arguments:
 
@@ -166,15 +166,15 @@ F2PY supports calling Python functions from Fortran or C codes.
 
 Consider the following Fortran 77 code:
 
-  .. include:: callback.f
-     :literal:
+  .. literalinclude:: ./code/callback.f
+     :language: fortran
 
 and wrap it using ``f2py -c -m callback callback.f``.
 
 In Python:
 
-  .. include:: callback_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/callback_session.dat
+     :language: python
 
 In the above example F2PY was able to guess accurately the signature
 of a call-back function. However, sometimes F2PY cannot establish the
@@ -198,7 +198,7 @@ file ``callback2.pyf`` using F2PY::
 
 Then modify it as follows
 
-  .. include:: callback2.pyf
+  .. include:: ./code/callback2.pyf
      :literal:
 
 Finally, build the extension module using ``f2py -c callback2.pyf callback.f``.
@@ -213,8 +213,8 @@ routines so that Python functions could be called from Fortran.
 Consider the following Fortran 77 subroutine that takes an array
 and applies a function ``func`` to its elements.
 
-  .. include:: calculate.f
-     :literal:
+  .. literalinclude:: ./code/calculate.f
+     :language: fortran
 
 It is expected that function ``func`` has been defined
 externally. In order to use a Python function as ``func``, it must
@@ -225,8 +225,8 @@ Finally, build an extension module using ``f2py -c -m foo calculate.f``
 
 In Python:
 
-  .. include:: calculate_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/calculate_session.dat
+     :language: python
 
 The function is included as an argument to the python function call to
 the Fortran subroutine even though it was *not* in the Fortran subroutine argument
@@ -240,15 +240,15 @@ the python callback function is itself called by another Fortran function.
 
 Consider the following Fortran 77 subroutine:
 
-  .. include:: extcallback.f
-     :literal:
+  .. literalinclude:: ./code/extcallback.f
+     :language: fortran
 
 and wrap it using ``f2py -c -m pfromf extcallback.f``.
 
 In Python:
 
-  .. include:: extcallback_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/extcallback_session.dat
+     :language: python
 
 Resolving arguments to call-back functions
 ------------------------------------------
@@ -316,15 +316,15 @@ corresponding array objects.
 
 Consider the following Fortran 77 code:
 
-  .. include:: common.f
-     :literal:
+  .. literalinclude:: ./code/common.f
+     :language: fortran
 
 and wrap it using ``f2py -c -m common common.f``.
 
 In Python:
 
-  .. include:: common_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/common_session.dat
+     :language: python
 
 
 Fortran 90 module data
@@ -335,15 +335,15 @@ common blocks.
 
 Consider the following Fortran 90 code:
 
-  .. include:: moddata.f90
-     :literal:
+  .. literalinclude:: ./code/moddata.f90
+     :language: fortran
 
 and wrap it using ``f2py -c -m moddata moddata.f90``.
 
 In Python:
 
-  .. include:: moddata_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/moddata_session.dat
+     :language: python
 
 
 Allocatable arrays
@@ -353,12 +353,12 @@ F2PY has basic support for Fortran 90 module allocatable arrays.
 
 Consider the following Fortran 90 code:
 
-  .. include:: allocarr.f90
-     :literal:
+  .. literalinclude:: ./code/allocarr.f90
+     :language: fortran
 
 and wrap it using ``f2py -c -m allocarr allocarr.f90``.
 
 In Python:
 
-  .. include:: allocarr_session.dat
-     :literal:
+  .. literalinclude:: ./code/results/allocarr_session.dat
+     :language: python

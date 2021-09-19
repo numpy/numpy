@@ -12,28 +12,27 @@ following steps:
   catching all relevant information needed to create wrapper
   functions.
 
-* Optionally, F2PY created signature files can be edited to optimize
-  wrappers functions, make them "smarter" and more "Pythonic".
+  * Optionally, F2PY created signature files can be edited to optimize
+    wrappers functions, make them "smarter" and more "Pythonic".
 
 * F2PY reads a signature file and writes a Python C/API module containing
   Fortran/C/Python bindings.
-
 * F2PY compiles all sources and builds an extension module containing
   the wrappers. In building extension modules, F2PY uses
   ``numpy_distutils`` that supports a number of Fortran 77/90/95
   compilers, including Gnu, Intel,
-  Sun Fortre, SGI MIPSpro, Absoft, NAG, Compaq etc. compilers.
+  Sun Fortran, SGI MIPSpro, Absoft, NAG, Compaq etc. compilers.
 
 Depending on a particular situation, these steps can be carried out
 either by just in one command or step-by-step, some steps can be
 omitted or combined with others.
 
-Below I'll describe three typical approaches of using F2PY.
+Below we describe three typical approaches of using F2PY.
 The following example Fortran 77 code will be used for
 illustration, save it as fib1.f:
 
-.. include:: fib1.f
-   :literal:
+.. literalinclude:: ./code/fib1.f
+   :language: fortran
 
 
 The quick way
@@ -51,7 +50,7 @@ arguments to see the explanation of command line options) an extension
 module ``fib1.so`` (see ``-m`` flag) to the current directory. Now, in
 Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
-  >>> import numpy
+  >>> import numpy as np
   >>> import fib1
   >>> print(fib1.fib.__doc__)
   fib(a,[n])
@@ -67,7 +66,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
   n : input int, optional
       Default: len(a)
 
-  >>> a = numpy.zeros(8, 'd')
+  >>> a = np.zeros(8, 'd')
   >>> fib1.fib(a)
   >>> print(a)
   [  0.   1.   1.   2.   3.   5.   8.  13.]
@@ -81,7 +80,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
   * One can use different values for optional ``n``::
 
-      >>> a1 = numpy.zeros(8, 'd')
+      >>> a1 = np.zeros(8, 'd')
       >>> fib1.fib(a1, 6)
       >>> print(a1)
       [ 0.  1.  1.  2.  3.  5.  0.  0.]
@@ -108,7 +107,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     input array have no effect to the original argument, as
     demonstrated below::
 
-      >>> a = numpy.ones(8, 'i')
+      >>> a = np.ones(8, 'i')
       >>> fib1.fib(a)
       >>> print(a)
       [1 1 1 1 1 1 1 1]
@@ -123,7 +122,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     if one specifies ``intent(inplace) a`` (see below, how), then
     the example above would read::
 
-      >>> a = numpy.ones(8, 'i')
+      >>> a = np.ones(8, 'i')
       >>> fib1.fib(a)
       >>> print(a)
       [  0.   1.   1.   2.   3.   5.   8.  13.]
@@ -170,8 +169,8 @@ one.
   The signature file is saved to ``fib1.pyf`` (see ``-h`` flag) and
   its contents is shown below.
 
-  .. include:: fib1.pyf
-     :literal:
+  .. literalinclude:: ./code/fib1.pyf
+     :language: fortran
 
 * Next, we'll teach F2PY that the argument ``n`` is an input argument
   (use ``intent(in)`` attribute) and that the result, i.e. the
@@ -184,8 +183,8 @@ one.
   The content of a modified version of ``fib1.pyf`` (saved as
   ``fib2.pyf``) is as follows:
 
-  .. include:: fib2.pyf
-     :literal:
+  .. literalinclude:: ./code/fib2.pyf
+     :language: fortran
 
 * And finally, we build the extension module by running
 
@@ -244,8 +243,8 @@ them as normal lines.
 Here is shown a modified version of the previous Fortran code, save it
 as ``fib3.f``:
 
-.. include:: fib3.f
-   :literal:
+.. literalinclude:: ./code/fib3.f
+   :language: fortran
 
 Building the extension module can be now carried out in one command::
 
