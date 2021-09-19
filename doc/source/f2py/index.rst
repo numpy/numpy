@@ -19,11 +19,11 @@ from Python.
 .. toctree::
    :maxdepth: 2
 
-   f2py.getting-started
-   signature-file
-   python-usage
    usage
+   f2py.getting-started
    distutils
+   python-usage
+   signature-file
    advanced
 
 .. _Python: https://www.python.org/
