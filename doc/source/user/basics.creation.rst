@@ -37,8 +37,7 @@ respectively. Lists and tuples can define ndarray creation:
 
   >>> a1D = np.array([1, 2, 3, 4])
   >>> a2D = np.array([[1, 2], [3, 4]])
-  >>> a3D = np.array([[[1, 2], [3, 4]],
-                      [[5, 6], [7, 8]]])
+  >>> a3D = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
 
 When you use :func:`numpy.array` to define a new array, you should
 consider the :doc:`dtype <basics.types>` of the elements in the array,
@@ -173,11 +172,11 @@ list or tuple,
 routine is helpful in generating linear least squares models, as such::
  
  >>> np.vander(np.linspace(0, 2, 5), 2)
- array([[0.  , 0.  , 1.  ],
-        [0.25, 0.5 , 1.  ],
-        [1.  , 1.  , 1.  ],
-        [2.25, 1.5 , 1.  ],
-        [4.  , 2.  , 1.  ]])
+ array([[0. , 1. ],
+       [0.5, 1. ],
+       [1. , 1. ],
+       [1.5, 1. ],
+       [2. , 1. ]])
  >>> np.vander([1, 2, 3, 4], 2)
  array([[1, 1],
         [2, 1],
@@ -208,7 +207,7 @@ specified shape. The default dtype is ``float64``::
  array([[[0., 0.],
          [0., 0.],
          [0., 0.]],
-
+ <BLANKLINE>        
         [[0., 0.],
          [0., 0.],
          [0., 0.]]])
@@ -223,7 +222,7 @@ specified shape. The default dtype is ``float64``::
  array([[[1., 1.],
          [1., 1.],
          [1., 1.]],
-
+ <BLANKLINE>
         [[1., 1.],
          [1., 1.],
          [1., 1.]]])
@@ -275,7 +274,7 @@ following example::
  >>> b = a[:2]
  >>> b += 1
  >>> print('a =', a, '; b =', b)
- a = [2 3 3 4 5 6]; b = [2 3]
+ a = [2 3 3 4 5 6] ; b = [2 3]
 
 In this example, you did not create a new array. You created a variable,
 ``b`` that viewed the first 2 elements of ``a``. When you added 1 to ``b`` you
@@ -286,7 +285,7 @@ would get the same result by adding 1 to ``a[:2]``. If you want to create a
  >>> b = a[:2].copy()
  >>> b += 1
  >>> print('a = ', a, 'b = ', b)
- a =  [1 2 3 4 5 6] b =  [2 3]
+ a =  [1 2 3 4] b =  [2 3]
 
 For more information and examples look at :ref:`Copies and Views
 <quickstart.copies-and-views>`.
@@ -299,8 +298,7 @@ arrays into a 4-by-4 array using ``block``::
  >>> B = np.eye(2, 2)
  >>> C = np.zeros((2, 2))
  >>> D = np.diag((-3, -4))
- >>> np.block([[A, B], 
-               [C, D]])
+ >>> np.block([[A, B], [C, D]])
  array([[ 1.,  1.,  1.,  0. ],
         [ 1.,  1.,  0.,  1. ],
         [ 0.,  0., -3.,  0. ],
