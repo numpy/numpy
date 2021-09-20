@@ -8159,8 +8159,18 @@ arange = _convert2ma(
     np_ret='arange : ndarray',
     np_ma_ret='arange : MaskedArray',
 )
-clip = np.clip
-diff = np.diff
+clip = _convert2ma(
+    'clip',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='clipped_array : ndarray',
+    np_ma_ret='clipped_array : MaskedArray',
+)
+diff = _convert2ma(
+    'diff',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='diff : ndarray',
+    np_ma_ret='diff : MaskedArray',
+)
 empty = _convert2ma(
     'empty', 
     params=dict(fill_value=None, hardmask=False),
@@ -8188,22 +8198,40 @@ identity = _convert2ma(
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
-indices = np.indices
+indices = _convert2ma(
+    'indices',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='grid : one ndarray or tuple of ndarrays',
+    np_ma_ret='grid : one MaskedArray or tuple of MaskedArrays',
+)
 ones = _convert2ma(
     'ones',
     params=dict(fill_value=None, hardmask=False),
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
-ones_like = np.ones_like
-squeeze = np.squeeze
+ones_like = _convert2ma(
+    'ones_like',
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
+squeeze = _convert2ma(
+    'squeeze',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='squeezed : ndarray',
+    np_ma_ret='squeezed : MaskedArray',
+)
 zeros = _convert2ma(
     'zeros',
     params=dict(fill_value=None, hardmask=False),
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
-zeros_like = np.zeros_like
+zeros_like = _convert2ma(
+    'zeros_like',
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 
 
 def append(a, b, axis=None):
