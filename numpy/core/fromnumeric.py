@@ -3276,7 +3276,8 @@ def around(a, decimals=0, out=None):
     See Also
     --------
     ndarray.round : equivalent method
-
+    numpy.round: equivalent method
+    numpy.round_: equivalent method
     ceil, fix, floor, rint, trunc
 
 
