@@ -33,7 +33,7 @@ from numpy.typing import (
     _SupportsDType,
     ArrayLike,
     NDArray,
-    _NestedSequence,
+    _FiniteNestedSequence,
     _SupportsArray,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
@@ -55,7 +55,7 @@ _DTypeLike = Union[
     dtype[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
-_ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: List[str]
 

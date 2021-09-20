@@ -65,7 +65,7 @@ from numpy.typing import (
     NDArray,
     ArrayLike,
     _SupportsArray,
-    _NestedSequence,
+    _FiniteNestedSequence,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -91,7 +91,7 @@ _DTypeLike = Union[
     Type[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
-_ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 # Valid time units
 _UnitKind = L[

@@ -219,6 +219,8 @@ class _32Bit(_64Bit): ...  # type: ignore[misc]
 class _16Bit(_32Bit): ...  # type: ignore[misc]
 class _8Bit(_16Bit): ...  # type: ignore[misc]
 
+
+from ._nested_sequence import _NestedSequence
 from ._nbit import (
     _NBitByte,
     _NBitShort,
@@ -305,8 +307,7 @@ from ._dtype_like import (
 from ._array_like import (
     ArrayLike as ArrayLike,
     _ArrayLike,
-    _NestedSequence,
-    _RecursiveSequence,
+    _FiniteNestedSequence,
     _SupportsArray,
     _ArrayLikeInt,
     _ArrayLikeBool_co,
