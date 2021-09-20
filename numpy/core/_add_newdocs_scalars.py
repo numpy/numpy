@@ -293,15 +293,19 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
 
 for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
         'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
+    # Add negative examples for signed cases by checking typecode
     add_newdoc('numpy.core.numerictypes', int_name, ('bit_count',
-        """
+        f"""
         {int_name}.bit_count() -> int
 
         Computes the number of 1-bits in the absolute value of the input.
         Analogous to the builtin `int.bit_count` or ``popcount`` in C++.
 
-        >>> np.{int_name}(1023).bit_count()
-        10
-        >>> np.{int_name}(-1023).bit_count()
-        10
-        """.format(int_name=int_name)))
+        Examples
+        --------
+        >>> np.{int_name}(127).bit_count()
+        7""" +
+        (f"""
+        >>> np.{int_name}(-127).bit_count()
+        7
+        """ if dtype(int_name).char.islower() else "")))
