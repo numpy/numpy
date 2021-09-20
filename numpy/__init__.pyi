@@ -197,7 +197,6 @@ from typing import (
 
 # Ensures that the stubs are picked up
 from numpy import (
-    char as char,
     ctypeslib as ctypeslib,
     fft as fft,
     lib as lib,
@@ -210,6 +209,9 @@ from numpy import (
     testing as testing,
     version as version,
 )
+
+from numpy.core import defchararray
+char = defchararray
 
 from numpy.core.function_base import (
     linspace as linspace,
