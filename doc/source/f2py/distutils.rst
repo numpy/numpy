@@ -4,7 +4,7 @@ Using via `numpy.distutils`
 
 .. currentmodule:: numpy.distutils.core
 
-:mod:`numpy.distutils` is part of NumPy; and extends the standard Python
+:mod:`numpy.distutils` is part of NumPy, and extends the standard Python
 ``distutils`` module to deal with Fortran sources and F2PY signature files, e.g.
 compile Fortran sources, call F2PY to construct extension modules, etc.
 
@@ -34,7 +34,7 @@ Extensions to ``distutils``
 
 * :class:`Extension` class argument ``sources`` may contain Fortran source
   files. In addition, the list ``sources`` may contain at most one
-  F2PY signature file; in this case, the name of an Extension module must
+  F2PY signature file, and in this case, the name of an Extension module must
   match with the ``<modulename>`` used in signature file. It is
   assumed that an F2PY signature file contains exactly one ``python
   module`` block.
@@ -52,7 +52,7 @@ Extensions to ``distutils``
   ``config_fc``
     to change Fortran compiler options.
 
-  as well as ``build_ext`` and  ``build_clib`` commands which are also enhanced
+  Additionally, the ``build_ext`` and ``build_clib`` commands are also enhanced
   to support Fortran sources.
 
   Run

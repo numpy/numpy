@@ -33,13 +33,15 @@ Signature file generation
         [ skip: <fortran functions>  : ]]...            \
        [<fortran files> ...]
 
-   Note that a Fortran source file can contain many routines, and it is often
-   not necessary to allow all routines be usable from Python. So, either specify
-   which routines should be wrapped (in the ``only: .. :`` part) or which routines
-   F2PY should ignored (in the ``skip: .. :`` part).
+   .. note::
+
+    A Fortran source file can contain many routines, and it is often
+    not necessary to allow all routines be usable from Python. In such cases,
+    either specify which routines should be wrapped (in the ``only: .. :`` part)
+    or which routines F2PY should ignored (in the ``skip: .. :`` part).
 
    If ``<filename.pyf>`` is specified as ``stdout`` then signatures
-   are emitted to standard output instead of a file.
+   are written to standard output instead of a file.
 
    Among other options (see below), the following can be used
    in this mode:
@@ -68,7 +70,7 @@ Extension module construction
 
    ``--debug-capi``
      Adds debugging hooks to the extension module. When using this extension
-     module, various diagnostic information about the wrapper is printed to
+     module, various diagnostic information about the wrapper is written to
      the standard output, for example, the values of variables, the steps taken,
      etc.
 

@@ -40,9 +40,9 @@ is passed to Fortran routine as a scalar argument.
 
 .. note::
 
-   * When type-casting is required and there is possible loss of
-     information via narrowing (e.g. when type-casting float to integer or complex to
-     float), F2PY *does not* raise an exception.
+   * When type-casting is required and there is possible loss of information via
+     narrowing e.g. when type-casting float to integer or complex to float, F2PY
+     *does not* raise an exception.
 
      * For complex to real type-casting only the real part of a complex number is used.
 
@@ -66,7 +66,7 @@ In Python:
 String arguments
 =================
 
-F2PY generated wrapper functions accept (almost) any Python object as
+F2PY generated wrapper functions accept almost any Python object as
 a string argument, since ``str`` is applied for non-string objects.
 Exceptions are NumPy arrays that must have type code ``'c'`` or
 ``'1'`` when used as string arguments.
@@ -112,12 +112,12 @@ proper type, is used as the array argument.
 
 There are two types of proper-contiguous NumPy arrays:
 
-* Fortran-contiguous arrays refer to when data is stored column-wise,
+* Fortran-contiguous arrays refer to data that is stored columnwise,
   i.e. the indexing of data as stored in memory starts from the lowest
   dimension;
-* C-contiguous or simply contiguous arrays are when data is stored
-  row-wise, i.e. the indexing of data as stored in memory starts from the
-  highest dimension.
+* C-contiguous, or simply contiguous arrays, refer to data that is stored
+  rowwise, i.e. the indexing of data as stored in memory starts from the highest
+  dimension.
 
 For one-dimensional arrays these notions coincide.
 
@@ -220,7 +220,7 @@ and applies a function ``func`` to its elements.
 
 The Fortran code expects that the function ``func`` has been defined externally.
 In order to use a Python function for ``func``, it must have an attribute
-``intent(callback)`` and it must be specified before the ``external`` statement.
+``intent(callback)`` and, it must be specified before the ``external`` statement.
 
 Finally, build an extension module using ``f2py -c -m foo calculate.f``
 
