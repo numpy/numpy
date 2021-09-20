@@ -118,6 +118,7 @@ RST_SKIPLIST = [
     'changelog',
     'doc/release',
     'doc/source/release',
+    'doc/release/upcoming_changes',
     'c-info.ufunc-tutorial.rst',
     'c-info.python-as-glue.rst',
     'f2py.getting-started.rst',
