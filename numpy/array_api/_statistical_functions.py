@@ -5,8 +5,13 @@ from ._dtypes import (
     _numeric_dtypes,
 )
 from ._array_object import Array
+from ._creation_functions import asarray
+from ._dtypes import float32, float64
 
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from ._typing import Dtype
 
 import numpy as np
 
@@ -52,10 +57,15 @@ def prod(
     /,
     *,
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    dtype: Optional[Dtype] = None,
     keepdims: bool = False,
 ) -> Array:
     if x.dtype not in _numeric_dtypes:
         raise TypeError("Only numeric dtypes are allowed in prod")
+    # Note: sum() and prod() always upcast float32 to float64 for dtype=None
+    # We need to do so here before computing the product to avoid overflow
+    if dtype is None and x.dtype == float32:
+        x = asarray(x, dtype=float64)
     return Array._new(np.prod(x._array, axis=axis, keepdims=keepdims))
 
 
@@ -78,10 +88,15 @@ def sum(
     /,
     *,
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    dtype: Optional[Dtype] = None,
     keepdims: bool = False,
 ) -> Array:
     if x.dtype not in _numeric_dtypes:
         raise TypeError("Only numeric dtypes are allowed in sum")
+    # Note: sum() and prod() always upcast float32 to float64 for dtype=None
+    # We need to do so here before summing to avoid overflow
+    if dtype is None and x.dtype == float32:
+        x = asarray(x, dtype=float64)
     return Array._new(np.sum(x._array, axis=axis, keepdims=keepdims))
 
 
