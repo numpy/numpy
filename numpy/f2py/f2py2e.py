@@ -416,8 +416,8 @@ def run_main(comline_list):
 
     Examples
     --------
-    .. include:: run_main_session.dat
-        :literal:
+    .. literalinclude:: code/results/run_main_session.dat
+        :language: python
 
     """
     crackfortran.reset_global_f2py_vars()
