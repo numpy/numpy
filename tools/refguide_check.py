@@ -123,10 +123,8 @@ RST_SKIPLIST = [
     'f2py.getting-started.rst',
     'arrays.nditer.cython.rst',
     # See PR 17222, these should be fixed
-    'basics.broadcasting.rst',
     'basics.byteswapping.rst',
     'basics.creation.rst',
-    'basics.dispatch.rst',
     'basics.indexing.rst',
     'basics.subclassing.rst',
     'basics.types.rst',
