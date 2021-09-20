@@ -19,6 +19,8 @@ from numpy import (
     complex128,
 )
 
+from numpy.linalg import LinAlgError as LinAlgError
+
 from numpy.typing import (
     NDArray,
     ArrayLike,
