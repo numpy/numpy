@@ -262,8 +262,8 @@ def runF2C(fortran_filename, output_dir):
         subprocess.check_call(
             ["f2c"] + F2C_ARGS + ['-d', output_dir, fortran_filename]
         )
-    except subprocess.CalledProcessError as e:
-        raise F2CError from e
+    except subprocess.CalledProcessError:
+        raise F2CError
 
 def scrubF2CSource(c_file):
     with open(c_file) as fo:
