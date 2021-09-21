@@ -8,7 +8,6 @@ ROOT = Path(np.__file__).parents[0]
 FILES = [
     ROOT / "py.typed",
     ROOT / "__init__.pyi",
-    ROOT / "char.pyi",
     ROOT / "ctypeslib.pyi",
     ROOT / "rec.pyi",
     ROOT / "core" / "__init__.pyi",
