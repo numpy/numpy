@@ -433,7 +433,7 @@ writeable). The syntax is
 
         The requirements flag allows specification of what kind of
         array is acceptable. If the object passed in does not satisfy
-        this requirements then a copy is made so that thre returned
+        this requirements then a copy is made so that the returned
         object will satisfy the requirements. these ndarray can use a
         very generic pointer to memory.  This flag allows specification
         of the desired properties of the returned array object. All

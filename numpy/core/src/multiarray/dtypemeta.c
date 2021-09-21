@@ -101,7 +101,7 @@ static PyObject *
 legacy_dtype_default_new(PyArray_DTypeMeta *self,
         PyObject *args, PyObject *kwargs)
 {
-    /* TODO: This should allow endianess and possibly metadata */
+    /* TODO: This should allow endianness and possibly metadata */
     if (NPY_DT_is_parametric(self)) {
         /* reject parametric ones since we would need to get unit, etc. info */
         PyErr_Format(PyExc_TypeError,

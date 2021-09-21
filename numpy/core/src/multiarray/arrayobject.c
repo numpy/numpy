@@ -858,7 +858,7 @@ _uni_release(char *ptr, int nc)
                 relfunc(aptr, N1);                              \
                 return -1;                                      \
             }                                                   \
-            val = compfunc(aptr, bptr, N1, N2);                  \
+            val = compfunc(aptr, bptr, N1, N2);                 \
             *dptr = (val CMP 0);                                \
             PyArray_ITER_NEXT(iself);                           \
             PyArray_ITER_NEXT(iother);                          \
@@ -870,7 +870,7 @@ _uni_release(char *ptr, int nc)
 
 #define _reg_loop(CMP) {                                \
         while(size--) {                                 \
-            val = compfunc((void *)iself->dataptr,       \
+            val = compfunc((void *)iself->dataptr,      \
                           (void *)iother->dataptr,      \
                           N1, N2);                      \
             *dptr = (val CMP 0);                        \

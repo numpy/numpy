@@ -113,7 +113,7 @@ class GnuFCompiler(FCompiler):
             # If MACOSX_DEPLOYMENT_TARGET is set, we simply trust the value
             # and leave it alone.  But, distutils will complain if the
             # environment's value is different from the one in the Python
-            # Makefile used to build Python.  We let disutils handle this
+            # Makefile used to build Python.  We let distutils handle this
             # error checking.
             if not target:
                 # If MACOSX_DEPLOYMENT_TARGET is not set in the environment,

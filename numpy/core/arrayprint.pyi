@@ -1,8 +1,8 @@
 from types import TracebackType
 from typing import Any, Optional, Callable, Union, Type, Literal, TypedDict, SupportsIndex
 
-# Using a private class is by no means ideal, but it is simply a consquence
-# of a `contextlib.context` returning an instance of aformentioned class
+# Using a private class is by no means ideal, but it is simply a consequence
+# of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
 
 from numpy import (

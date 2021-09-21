@@ -102,7 +102,7 @@ knowledge).
 
 We distinguish both tutorials and how-tos from `Explanations`, which are
 deep dives intended to give understanding rather than immediate assistance,
-and `References`, which give complete, autoritative data on some concrete
+and `References`, which give complete, authoritative data on some concrete
 part of NumPy (like its API) but aren't obligated to paint a broader picture.
 
 For more on tutorials, see :doc:`content/tutorial-style-guide`

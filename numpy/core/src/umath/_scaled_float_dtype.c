@@ -733,9 +733,9 @@ NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
 {
     /* Allow calling the function multiple times. */
-    static npy_bool initalized = NPY_FALSE;
+    static npy_bool initialized = NPY_FALSE;
 
-    if (initalized) {
+    if (initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -764,6 +764,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    initalized = NPY_TRUE;
+    initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }

@@ -185,7 +185,7 @@ attribute of the ufunc.  (This list may be missing DTypes not defined
 by NumPy.)
 
 The ``signature`` only specifies the DType class/type.  For example, it
-can specifiy that the operation should be ``datetime64`` or ``float64``
+can specify that the operation should be ``datetime64`` or ``float64``
 operation.  It does not specify the ``datetime64`` time-unit or the
 ``float64`` byte-order.
 

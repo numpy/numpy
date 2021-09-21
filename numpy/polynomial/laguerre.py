@@ -1030,7 +1030,7 @@ def lagval3d(x, y, z, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the multidimension polynomial on points formed with
+        The values of the multidimensional polynomial on points formed with
         triples of corresponding values from `x`, `y`, and `z`.
 
     See Also

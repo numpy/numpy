@@ -1405,7 +1405,7 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
 /*
  * Check whether a reduction is OK based on the flags and the operand being
  * readwrite. This path is deprecated, since usually only specific axes
- * should be reduced. If axes are specified explicitely, the flag is
+ * should be reduced. If axes are specified explicitly, the flag is
  * unnecessary.
  */
 static int

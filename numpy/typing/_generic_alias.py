@@ -51,7 +51,7 @@ def _parse_parameters(args: Iterable[Any]) -> Generator[TypeVar, None, None]:
 
 
 def _reconstruct_alias(alias: _T, parameters: Iterator[TypeVar]) -> _T:
-    """Recursivelly replace all typevars with those from `parameters`.
+    """Recursively replace all typevars with those from `parameters`.
 
     Helper function for `_GenericAlias.__getitem__`.
 

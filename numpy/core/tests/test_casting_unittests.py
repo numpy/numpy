@@ -127,7 +127,7 @@ CAST_TABLE = _get_cancast_table()
 
 class TestChanges:
     """
-    These test cases excercise some behaviour changes
+    These test cases exercise some behaviour changes
     """
     @pytest.mark.parametrize("string", ["S", "U"])
     @pytest.mark.parametrize("floating", ["e", "f", "d", "g"])

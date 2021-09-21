@@ -399,7 +399,7 @@ are also provided.
                complex256
 
    Alias for `numpy.clongdouble`, named after its size in bits.
-   The existance of these aliases depends on the platform.
+   The existence of these aliases depends on the platform.
 
 Other aliases
 ~~~~~~~~~~~~~

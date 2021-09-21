@@ -39,7 +39,7 @@ RUN conda activate ${CONDA_ENV} && \
     ccache -s
 
 # Gitpod will load the repository into /workspace/numpy. We remove the
-# directoy from the image to prevent conflicts
+# directory from the image to prevent conflicts
 RUN rm -rf ${WORKSPACE}
 
 # -----------------------------------------------------------------------------

@@ -68,7 +68,7 @@ _byteorderconv = {'b':'>',
                   'i':'|'}
 
 # formats regular expression
-# allows multidimension spec with a tuple syntax in front
+# allows multidimensional spec with a tuple syntax in front
 # of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  '
 # are equally allowed
 

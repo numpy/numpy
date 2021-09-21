@@ -128,8 +128,8 @@ def quote_args(args):
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
-    splitted = name.split('/')
-    return os.path.join(*splitted)
+    split = name.split('/')
+    return os.path.join(*split)
 
 def rel_path(path, parent_path):
     """Return path relative to parent_path."""

@@ -60,7 +60,7 @@ category, but other rewordings -- even for grammar -- require a judgment call,
 which raises the bar. Test the waters by first presenting the fix as an issue.
 
 Some functions/objects like numpy.ndarray.transpose, numpy.array etc. defined in
-C-extension modules have their docstrings defined seperately in `_add_newdocs.py
+C-extension modules have their docstrings defined separately in `_add_newdocs.py
 <https://github.com/numpy/numpy/blob/main/numpy/core/_add_newdocs.py>`__
 
 **********************
@@ -72,7 +72,7 @@ Your frustrations using our documents are our best guide to what needs fixing.
 If you write a missing doc you join the front line of open source, but it's
 a meaningful contribution just to let us know what's missing. If you want to
 compose a doc, run your thoughts by the `mailing list
-<https://mail.python.org/mailman/listinfo/numpy-discussion>`__ for futher
+<https://mail.python.org/mailman/listinfo/numpy-discussion>`__ for further
 ideas and feedback. If you want to alert us to a gap,
 `open an issue <https://github.com/numpy/numpy/issues>`__. See
 `this issue <https://github.com/numpy/numpy/issues/15760>`__ for an example.

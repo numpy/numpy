@@ -131,9 +131,9 @@ chebtrim = pu.trimcoef
 #
 
 def _cseries_to_zseries(c):
-    """Covert Chebyshev series to z-series.
+    """Convert Chebyshev series to z-series.
 
-    Covert a Chebyshev series to the equivalent z-series. The result is
+    Convert a Chebyshev series to the equivalent z-series. The result is
     never an empty array. The dtype of the return is the same as that of
     the input. No checks are run on the arguments as this routine is for
     internal use.
@@ -156,9 +156,9 @@ def _cseries_to_zseries(c):
 
 
 def _zseries_to_cseries(zs):
-    """Covert z-series to a Chebyshev series.
+    """Convert z-series to a Chebyshev series.
 
-    Covert a z series to the equivalent Chebyshev series. The result is
+    Convert a z series to the equivalent Chebyshev series. The result is
     never an empty array. The dtype of the return is the same as that of
     the input. No checks are run on the arguments as this routine is for
     internal use.

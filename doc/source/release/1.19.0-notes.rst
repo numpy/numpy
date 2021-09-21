@@ -402,7 +402,7 @@ Ability to disable madvise hugepages
 ------------------------------------
 On Linux NumPy has previously added support for madavise hugepages which can
 improve performance for very large arrays.  Unfortunately, on older Kernel
-versions this led to peformance regressions, thus by default the support has
+versions this led to performance regressions, thus by default the support has
 been disabled on kernels before version 4.6. To override the default, you can
 use the environment variable::
 

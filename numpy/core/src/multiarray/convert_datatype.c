@@ -1649,7 +1649,7 @@ PyArray_ResultType(
         }
         Py_INCREF(all_DTypes[i_all]);
         /*
-         * Leave the decriptor empty, if we need it, we will have to go
+         * Leave the descriptor empty, if we need it, we will have to go
          * to more extreme lengths unfortunately.
          */
         all_descriptors[i_all] = NULL;
@@ -2243,7 +2243,7 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
  * Add a new casting implementation using a PyArrayMethod_Spec.
  *
  * @param spec
- * @param private If private, allow slots not publically exposed.
+ * @param private If private, allow slots not publicly exposed.
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int

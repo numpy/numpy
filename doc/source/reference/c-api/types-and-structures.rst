@@ -94,7 +94,7 @@ PyArray_Type and PyArrayObject
           PyArray_Descr *descr;
           int flags;
           PyObject *weakreflist;
-          /* version dependend private members */
+          /* version dependent private members */
       } PyArrayObject;
 
    .. c:macro:: PyObject_HEAD
@@ -178,7 +178,7 @@ PyArray_Type and PyArrayObject
 
    .. note::
 
-      Further members are considered private and version dependend. If the size
+      Further members are considered private and version dependent. If the size
       of the struct is important for your code, special care must be taken.
       A possible use-case when this is relevant is subclassing in C.
       If your code relies on ``sizeof(PyArrayObject)`` to be constant,

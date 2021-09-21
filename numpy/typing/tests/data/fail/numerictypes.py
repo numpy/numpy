@@ -1,6 +1,6 @@
 import numpy as np
 
-# Techincally this works, but probably shouldn't. See
+# Technically this works, but probably shouldn't. See
 #
 # https://github.com/numpy/numpy/issues/16366
 #
