@@ -585,6 +585,7 @@ def _deprecate_shape_0_as_None(shape):
         return shape
 
 
+@set_module("numpy.rec")
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """Create a record array from a (flat) list of arrays
@@ -678,6 +679,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     return _array
 
+
+@set_module("numpy.rec")
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
                 titles=None, aligned=False, byteorder=None):
     """Create a recarray from a list of records in text form.
@@ -762,6 +765,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     return res
 
 
+@set_module("numpy.rec")
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     r"""Create a record array from binary data
@@ -844,6 +848,8 @@ def get_remaining_size(fd):
     finally:
         fd.seek(pos, 0)
 
+
+@set_module("numpy.rec")
 def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
@@ -943,6 +949,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     return _array
 
+
+@set_module("numpy.rec")
 def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
           names=None, titles=None, aligned=False, byteorder=None, copy=True):
     """
