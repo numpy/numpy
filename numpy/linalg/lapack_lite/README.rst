@@ -12,6 +12,9 @@ automatically from a directory of LAPACK source files.
 You'll need `plex 2.0.0dev`_, available from PyPI, installed to do the
 appropriate scrubbing. As of writing, **this is only available for python 2.7**,
 and is unlikely to ever be ported to python 3.
+As a result, all the Python scripts in this directory must remain compatible
+with Python 2.7, even though NumPy itself no longer supports this version,
+until these scripts are rewritten to use something other than ``plex``.
 
 .. _plex 2.0.0dev: https://pypi.python.org/pypi/plex/
 
