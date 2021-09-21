@@ -667,8 +667,9 @@ def openfile(fname):
     raise NotImplementedError("Wow, binary file")
 
 
-def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
-                 varnames=None, vartypes=None):
+def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
+                 varnames=None, vartypes=None,
+                 *, delimitor=np._NoValue):  # backwards compatibility
     """
     Creates a mrecarray from data stored in the file `filename`.
 
@@ -676,7 +677,7 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
     ----------
     fname : {file name/handle}
         Handle of an opened file.
-    delimitor : {None, string}, optional
+    delimiter : {None, string}, optional
         Alphanumeric character used to separate columns in the file.
         If None, any (group of) white spacestring(s) will be used.
     commentchar : {'#', string}, optional
@@ -692,6 +693,17 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
 
 
     Ultra simple: the varnames are in the header, one line"""
+    if delimitor is not np._NoValue:
+        if delimiter is not None:
+            raise TypeError("fromtextfile() got multiple values for argument "
+                            "'delimiter'")
+        # NumPy 1.22.0, 2021-09-23
+        warnings.warn("The 'delimitor' keyword argument of "
+                      "numpy.ma.mrecords.fromtextfile() is deprecated "
+                      "since NumPy 1.22.0, use 'delimiter' instead.",
+                      DeprecationWarning, stacklevel=2)
+        delimiter = delimitor
+
     # Try to open the file.
     ftext = openfile(fname)
 
@@ -699,14 +711,14 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
     while True:
         line = ftext.readline()
         firstline = line[:line.find(commentchar)].strip()
-        _varnames = firstline.split(delimitor)
+        _varnames = firstline.split(delimiter)
         if len(_varnames) > 1:
             break
     if varnames is None:
         varnames = _varnames
 
     # Get the data.
-    _variables = masked_array([line.strip().split(delimitor) for line in ftext
+    _variables = masked_array([line.strip().split(delimiter) for line in ftext
                                if line[0] != commentchar and len(line) > 1])
     (_, nfields) = _variables.shape
     ftext.close()
