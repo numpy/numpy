@@ -289,7 +289,7 @@ struct NpyIter_AxisData_tag {
         1 + \
         /* intp stride[nop+1] AND char* ptr[nop+1] */ \
         2*((nop)+1) \
-        )*NPY_SIZEOF_INTP )
+        )*(size_t)NPY_SIZEOF_INTP)
 
 /*
  * Macro to advance an AXISDATA pointer by a specified count.
