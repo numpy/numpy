@@ -228,15 +228,18 @@ def removeHeader(source):
     return lines.getValue()
 
 def removeSubroutinePrototypes(source):
-    expression = re.compile(
-        r'/\* Subroutine \*/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
-    )
-    lines = LineQueue()
-    for line in UStringIO(source):
-        if not expression.match(line):
-            lines.add(line)
-
-    return lines.getValue()
+    # This function has never worked as advertised by its name:
+    # - "/* Subroutine */" declarations may span multiple lines and
+    #   cannot be matched by a line by line approach.
+    # - The caret in the initial regex would prevent any match, even
+    #   of single line "/* Subroutine */" declarations.
+    #
+    # While we could "fix" this function to do what the name implies
+    # it should do, we have no hint of what it should really do.
+    #
+    # Therefore we keep the existing (non-)functionaity, documenting
+    # this function as doing nothing at all.
+    return source
 
 def removeBuiltinFunctions(source):
     lines = LineQueue()
