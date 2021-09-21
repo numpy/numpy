@@ -39,8 +39,6 @@ if __name__ == "__main__":
     config = configuration(top_path='')
     config = config.todict()
 
-    config['download_url'] = "https://web.archive.org/web/20140822061353/"\
-        "http://cens.ioc.ee/projects/f2py2e/2.x/F2PY-2-latest.tar.gz"
     config['classifiers'] = [
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
