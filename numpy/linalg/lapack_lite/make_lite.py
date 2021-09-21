@@ -21,7 +21,10 @@ import shutil
 import fortran
 import clapack_scrub
 
-from shutil import which
+try:
+    from distutils.spawn import find_executable as which  # Python 2
+except ImportError:
+    from shutil import which  # Python 3
 
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
