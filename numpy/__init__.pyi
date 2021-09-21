@@ -1694,9 +1694,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         cls: Type[_ArraySelf],
         shape: _ShapeLike,
         dtype: DTypeLike = ...,
-        buffer: _SupportsBuffer = ...,
-        offset: int = ...,
-        strides: _ShapeLike = ...,
+        buffer: None | _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: None | _ShapeLike = ...,
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
     @overload
