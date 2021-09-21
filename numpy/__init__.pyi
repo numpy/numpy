@@ -706,16 +706,6 @@ class chararray(ndarray[_ShapeType, _DType_co]):
     def isnumeric(self): ...
     def isdecimal(self): ...
 
-class format_parser:
-    def __init__(
-        self,
-        formats: Any,
-        names: Any,
-        titles: Any,
-        aligned: Any = ...,
-        byteorder: Any = ...,
-    ) -> None: ...
-
 class matrix(ndarray[_ShapeType, _DType_co]):
     def __new__(
         subtype,
@@ -804,7 +794,6 @@ class nditer:
     def __setitem__(self, index: SupportsIndex | slice, value: Any) -> None: ...
     def __delitem__(self, key: SupportsIndex | slice) -> None: ...
 
-
 class poly1d:
     def __init__(
         self,
@@ -862,33 +851,6 @@ class poly1d:
     def __iter__(self): ...
     def integ(self, m=..., k=...): ...
     def deriv(self, m=...): ...
-
-class recarray(ndarray[_ShapeType, _DType_co]):
-    def __new__(
-        subtype,
-        shape: Any,
-        dtype: Any = ...,
-        buf: Any = ...,
-        offset: Any = ...,
-        strides: Any = ...,
-        formats: Any = ...,
-        names: Any = ...,
-        titles: Any = ...,
-        byteorder: Any = ...,
-        aligned: Any = ...,
-        order: Any = ...,
-    ) -> Any: ...
-    def __array_finalize__(self, obj): ...
-    def __getattribute__(self, attr): ...
-    def __setattr__(self, attr, val): ...
-    def __getitem__(self, indx): ...
-    def field(self, attr, val=...): ...
-
-class record(void):
-    def __getattribute__(self, attr): ...
-    def __setattr__(self, attr, val): ...
-    def __getitem__(self, indx): ...
-    def pprint(self): ...
 
 class vectorize:
     pyfunc: Any
@@ -3692,3 +3654,69 @@ class iinfo(Generic[_IntType]):
     def __new__(cls, dtype: int | Type[int]) -> iinfo[int_]: ...
     @overload
     def __new__(cls, dtype: str) -> iinfo[Any]: ...
+
+class format_parser:
+    dtype: dtype[void]
+    def __init__(
+        self,
+        formats: DTypeLike,
+        names: None | str | Sequence[str],
+        titles: None | str | Sequence[str],
+        aligned: bool = ...,
+        byteorder: None | _ByteOrder = ...,
+    ) -> None: ...
+
+# TODO: field-lookup returns either a `recarray` or a `ndarray`
+# depending on the field dtype
+class recarray(ndarray[_ShapeType, _DType_co]):
+    # NOTE: While not strictly mandatory, we're demanding here that arguments
+    # for the `format_parser`- and `dtype`-based dtype constructors are
+    # mutually exclusive
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
+        dtype: None = ...,
+        buf: None | _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: None | _ShapeLike = ...,
+        *,
+        formats: DTypeLike,
+        names: None | str | Sequence[str] = ...,
+        titles: None | str | Sequence[str] = ...,
+        byteorder: None | _ByteOrder = ...,
+        aligned: bool = ...,
+        order: _OrderKACF = ...,
+    ) -> recarray[Any, dtype[record]]: ...
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
+        dtype: DTypeLike,
+        buf: None | _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: None | _ShapeLike = ...,
+        formats: None = ...,
+        names: None = ...,
+        titles: None = ...,
+        byteorder: None = ...,
+        aligned: L[False] = ...,
+        order: _OrderKACF = ...,
+    ) -> recarray[Any, dtype[Any]]: ...
+    def __array_finalize__(self, obj: object) -> None: ...
+    def __getattribute__(self, attr: str) -> Any: ...
+    def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
+    def __getitem__(self, indx): ...  # TODO
+    @overload
+    def field(self, attr: int | str, val: None = ...) -> Any: ...
+    @overload
+    def field(self, attr: int | str, val: ArrayLike) -> None: ...
+
+class record(void):
+    def __getattribute__(self, attr: str) -> Any: ...
+    def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
+    def pprint(self) -> str: ...
+    @overload
+    def __getitem__(self, key: str | SupportsIndex) -> Any: ...
+    @overload
+    def __getitem__(self, key: list[str]) -> record: ...
