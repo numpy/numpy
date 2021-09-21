@@ -115,7 +115,7 @@ examples are shown::
 Note: best practice for :func:`numpy.arange` is to use integer start, end, and
 step values. There are some subtleties regarding ``dtype``. In the second
 example, the ``dtype`` is defined. In the third example, the array is
-``dtype=float`` to accomodate the step size of ``0.1``. Due to roundoff error,
+``dtype=float`` to accommodate the step size of ``0.1``. Due to roundoff error,
 the ``stop`` value is sometimes included. 
 
 :func:`numpy.linspace` will create arrays with a specified number of elements, and

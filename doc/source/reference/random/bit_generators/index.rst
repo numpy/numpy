@@ -4,7 +4,7 @@ Bit Generators
 --------------
 
 The random values produced by :class:`~Generator`
-orignate in a BitGenerator.  The BitGenerators do not directly provide
+originate in a BitGenerator.  The BitGenerators do not directly provide
 random numbers and only contains methods used for seeding, getting or
 setting the state, jumping or advancing the state, and for accessing
 low-level wrappers for consumption by code that can efficiently

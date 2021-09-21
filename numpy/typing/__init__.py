@@ -154,7 +154,7 @@ else:
     __path__: List[str]
 
 
-@final  # Dissallow the creation of arbitrary `NBitBase` subclasses
+@final  # Disallow the creation of arbitrary `NBitBase` subclasses
 class NBitBase:
     """
     An object representing `numpy.number` precision during static type checking.

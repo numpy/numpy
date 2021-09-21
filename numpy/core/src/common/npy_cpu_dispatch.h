@@ -196,7 +196,7 @@
  * Example:
  *  Assume we have a dispatch-able source exporting the following function:
  *
- *    @targets baseline avx2 avx512_skx // configration statements
+ *    @targets baseline avx2 avx512_skx // configuration statements
  *
  *    void NPY_CPU_DISPATCH_CURFX(dispatch_me)(const int *src, int *dst)
  *    {

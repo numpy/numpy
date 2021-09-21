@@ -136,7 +136,7 @@ _prime_global_pytype_to_type_dict(void)
  *
  * This assumes that the DType class is guaranteed to hold on the
  * python type (this assumption is guaranteed).
- * This functionality supercedes ``_typenum_fromtypeobj``.
+ * This functionality supersedes ``_typenum_fromtypeobj``.
  *
  * @param DType DType to map the python type to
  * @param pytype Python type to map from
@@ -1400,7 +1400,7 @@ PyArray_DiscoverDTypeAndShape(
  * These should be largely deprecated, and represent only the DType class
  * for most `dtype` parameters.
  *
- * TODO: This function should eventually recieve a deprecation warning and
+ * TODO: This function should eventually receive a deprecation warning and
  *       be removed.
  *
  * @param descr

@@ -344,7 +344,7 @@ class ABCPolyBase(abc.ABC):
             # Polynomial coefficient
             # The coefficient array can be an object array with elements that
             # will raise a TypeError with >= 0 (e.g. strings or Python
-            # complex). In this case, represent the coeficient as-is.
+            # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
                     next_term = f"+ {coef}"

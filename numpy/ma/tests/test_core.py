@@ -1071,7 +1071,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(z.mask, [[1, 1, 1], [0, 0, 0]])
 
     def test_mixed_arithmetic(self):
-        # Tests mixed arithmetics.
+        # Tests mixed arithmetic.
         na = np.array([1])
         ma = array([1])
         assert_(isinstance(na + ma, MaskedArray))
@@ -1084,7 +1084,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(getmaskarray(2 / a), [1, 0, 1])
 
     def test_masked_singleton_arithmetic(self):
-        # Tests some scalar arithmetics on MaskedArrays.
+        # Tests some scalar arithmetic on MaskedArrays.
         # Masked singleton should remain masked no matter what
         xm = array(0, mask=1)
         assert_((1 / array(0)).mask)
@@ -1804,7 +1804,7 @@ class TestMaskedArrayArithmetic:
             assert_equal(test.mask, [[False, True],
                                      [False, True]])
 
-    def test_numpyarithmetics(self):
+    def test_numpyarithmetic(self):
         # Check that the mask is not back-propagated when using numpy functions
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
         control = masked_array([np.nan, np.nan, 0, np.log(2), -1],
@@ -2479,8 +2479,8 @@ class TestUfuncs:
             # also check that allclose uses ma ufuncs, to avoid warning
             allclose(m, 0.5)
 
-class TestMaskedArrayInPlaceArithmetics:
-    # Test MaskedArray Arithmetics
+class TestMaskedArrayInPlaceArithmetic:
+    # Test MaskedArray Arithmetic
 
     def setup(self):
         x = arange(10)
@@ -3464,7 +3464,7 @@ class TestMaskedArrayMethods:
         # Test sort on dtype with subarray (gh-8069)
         # Just check that the sort does not error, structured array subarrays
         # are treated as byte strings and that leads to differing behavior
-        # depending on endianess and `endwith`.
+        # depending on endianness and `endwith`.
         dt = np.dtype([('v', int, 2)])
         a = a.view(dt)
         test = sort(a)

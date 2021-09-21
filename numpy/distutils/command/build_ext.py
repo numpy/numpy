@@ -602,7 +602,7 @@ class build_ext (old_build_ext):
         # Expand possible fake static libraries to objects;
         # make sure to iterate over a copy of the list as
         # "fake" libraries will be removed as they are
-        # enountered
+        # encountered
         for lib in libraries[:]:
             for libdir in library_dirs:
                 fake_lib = os.path.join(libdir, lib + '.fobjects')

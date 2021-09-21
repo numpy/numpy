@@ -122,7 +122,7 @@ source tree is to use::
 
 
 NumPy uses a series of tests to probe the compiler and libc libraries for
-funtions. The results are stored in ``_numpyconfig.h`` and ``config.h`` files
+functions. The results are stored in ``_numpyconfig.h`` and ``config.h`` files
 using ``HAVE_XXX`` definitions. These tests are run during the ``build_src``
 phase of the ``_multiarray_umath`` module in the ``generate_config_h`` and
 ``generate_numpyconfig_h`` functions. Since the output of these calls includes

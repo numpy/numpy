@@ -97,7 +97,7 @@ def inv(a: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
 @overload
 def inv(a: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
 
-# TODO: The supported input and output dtypes are dependant on the value of `n`.
+# TODO: The supported input and output dtypes are dependent on the value of `n`.
 # For example: `n < 0` always casts integer types to float64
 def matrix_power(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,

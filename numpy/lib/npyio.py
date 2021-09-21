@@ -1634,7 +1634,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines. This line can optionally be preceeded
+        the first `skip_header` lines. This line can optionally be preceded
         by a comment delimiter. If `names` is a sequence or a single-string of
         comma-separated names, the names will be used to define the field names
         in a structured dtype. If `names` is None, the names of the dtype

@@ -487,7 +487,7 @@ STRINGPADN replaces null values with padding values from the right.
 `to` must have size of at least N bytes.
 
 If the `to[N-1]` has null value, then replace it and all the
-preceeding nulls with the given padding.
+preceding, nulls with the given padding.
 
 STRINGPADN(to, N, PADDING, NULLVALUE) is an inverse operation.
 */

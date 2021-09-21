@@ -975,7 +975,7 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     )
 
     if arr1d_parsed.size == 0:
-        # Ensure that a nan-esque scalar of the appropiate type (and unit)
+        # Ensure that a nan-esque scalar of the appropriate type (and unit)
         # is returned for `timedelta64` and `complexfloating`
         return arr1d[-1]
 

@@ -1849,7 +1849,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                         return -1;
                     }
 #else
-                    /* The operand order is reveresed here */
+                    /* The operand order is reversed here */
                     char *args[2] = {subspace_ptrs[1], subspace_ptrs[0]};
                     npy_intp strides[2] = {subspace_strides[1], subspace_strides[0]};
                     if (NPY_UNLIKELY(cast_info.func(&cast_info.context,

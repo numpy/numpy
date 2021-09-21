@@ -1864,7 +1864,7 @@ def matrix_rank(A, tol=None, hermitian=False):
 
     References
     ----------
-    .. [1] MATLAB reference documention, "Rank"
+    .. [1] MATLAB reference documentation, "Rank"
            https://www.mathworks.com/help/techdoc/ref/rank.html
     .. [2] W. H. Press, S. A. Teukolsky, W. T. Vetterling and B. P. Flannery,
            "Numerical Recipes (3rd edition)", Cambridge University Press, 2007,
@@ -2159,7 +2159,7 @@ def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Computes the vector `x` that approximatively solves the equation
+    Computes the vector `x` that approximately solves the equation
     ``a @ x = b``. The equation may be under-, well-, or over-determined
     (i.e., the number of linearly independent rows of `a` can be less than,
     equal to, or greater than its number of linearly independent columns).

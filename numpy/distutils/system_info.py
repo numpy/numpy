@@ -414,7 +414,8 @@ def get_standard_file(fname):
 def _parse_env_order(base_order, env):
     """ Parse an environment variable `env` by splitting with "," and only returning elements from `base_order`
 
-    This method will sequence the environment variable and check for their invidual elements in `base_order`.
+    This method will sequence the environment variable and check for their
+    individual elements in `base_order`.
 
     The items in the environment variable may be negated via '^item' or '!itema,itemb'.
     It must start with ^/! to negate all options.

@@ -3624,7 +3624,7 @@ cdef class Generator:
             from numpy.linalg import cholesky
             l = cholesky(cov)
 
-        # make sure check_valid is ignored whe method == 'cholesky'
+        # make sure check_valid is ignored when method == 'cholesky'
         # since the decomposition will have failed if cov is not valid.
         if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':

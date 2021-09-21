@@ -36,7 +36,7 @@ OUTPUT_MYPY: Dict[str, List[str]] = {}
 
 
 def _key_func(key: str) -> str:
-    """Split at the first occurance of the ``:`` character.
+    """Split at the first occurrence of the ``:`` character.
 
     Windows drive-letters (*e.g.* ``C:``) are ignored herein.
     """
@@ -246,8 +246,8 @@ def _parse_reveals(file: IO[str]) -> List[str]:
     comments_array = np.char.partition(string.split("\n"), sep="  # E: ")[:, 2]
     comments = "/n".join(comments_array)
 
-    # Only search for the `{*}` pattern within comments,
-    # otherwise there is the risk of accidently grabbing dictionaries and sets
+    # Only search for the `{*}` pattern within comments, otherwise
+    # there is the risk of accidentally grabbing dictionaries and sets
     key_set = set(re.findall(r"\{(.*?)\}", comments))
     kwargs = {
         k: FORMAT_DICT.get(k, f"<UNRECOGNIZED FORMAT KEY {k!r}>") for k in key_set

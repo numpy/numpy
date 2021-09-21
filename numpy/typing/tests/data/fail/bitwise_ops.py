@@ -16,5 +16,5 @@ u8 & f8  # E: No overload variant
 ~f8  # E: Unsupported operand type
 
 # mypys' error message for `NoReturn` is unfortunately pretty bad
-# TODO: Reenable this once we add support for numerical precision for `number`s
+# TODO: Re-enable this once we add support for numerical precision for `number`s
 # a = u8 | 0  # E: Need type annotation

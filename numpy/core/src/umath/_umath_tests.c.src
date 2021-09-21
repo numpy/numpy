@@ -586,7 +586,7 @@ fail:
     return NULL;
 }
 
-// Testing the utilites of the CPU dispatcher
+// Testing the utilities of the CPU dispatcher
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "_umath_tests.dispatch.h"
 #endif

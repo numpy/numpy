@@ -103,7 +103,7 @@ NPYV_IMPL_VSX_BIN_B64(or)
 NPYV_IMPL_VSX_BIN_B64(xor)
 
 // NOT
-// note: we implement npyv_not_b*(boolen types) for internal use*/
+// note: we implement npyv_not_b*(boolean types) for internal use*/
 #define NPYV_IMPL_VSX_NOT_INT(VEC_LEN)                                 \
     NPY_FINLINE npyv_u##VEC_LEN npyv_not_u##VEC_LEN(npyv_u##VEC_LEN a) \
     { return vec_nor(a, a); }                                          \

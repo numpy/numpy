@@ -1988,7 +1988,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     # The last overload is for catching recursive objects whose
     # nesting is too deep.
     # The first overload is for catching `bytes` (as they are a subtype of
-    # `Sequence[int]`) and `str`. As `str` is a recusive sequence of
+    # `Sequence[int]`) and `str`. As `str` is a recursive sequence of
     # strings, it will pass through the final overload otherwise
 
     @overload

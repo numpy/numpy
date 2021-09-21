@@ -1230,7 +1230,7 @@ Functions For Iteration
 .. c:function:: npy_intp* NpyIter_GetIndexPtr(NpyIter* iter)
 
     This gives back a pointer to the index being tracked, or NULL
-    if no index is being tracked.  It is only useable if one of
+    if no index is being tracked.  It is only usable if one of
     the flags :c:data:`NPY_ITER_C_INDEX` or :c:data:`NPY_ITER_F_INDEX`
     were specified during construction.
 

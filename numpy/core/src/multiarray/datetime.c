@@ -427,7 +427,7 @@ PyArray_DatetimeStructToDatetime(
 }
 
 /*NUMPY_API
- * Create a timdelta value from a filled timedelta struct and resolution unit.
+ * Create a timedelta value from a filled timedelta struct and resolution unit.
  *
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
