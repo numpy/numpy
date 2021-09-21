@@ -45,6 +45,8 @@ class LineIterator:
         line = line.rstrip()
         return line
 
+    next = __next__
+
 
 class PushbackIterator:
     """PushbackIterator(iterable)
@@ -69,6 +71,8 @@ class PushbackIterator:
 
     def pushback(self, item):
         self.buffer.append(item)
+
+    next = __next__
 
 
 def fortranSourceLines(fo):
