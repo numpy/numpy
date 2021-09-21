@@ -78,7 +78,7 @@ def fromrecords(
 
 def fromtextfile(
     fname,
-    delimiter=...,
+    delimitor=...,
     commentchar=...,
     missingchar=...,
     varnames=...,

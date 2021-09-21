@@ -667,7 +667,7 @@ def openfile(fname):
     raise NotImplementedError("Wow, binary file")
 
 
-def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
+def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
                  varnames=None, vartypes=None):
     """
     Creates a mrecarray from data stored in the file `filename`.
@@ -676,7 +676,7 @@ def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
     ----------
     fname : {file name/handle}
         Handle of an opened file.
-    delimiter : {None, string}, optional
+    delimitor : {None, string}, optional
         Alphanumeric character used to separate columns in the file.
         If None, any (group of) white spacestring(s) will be used.
     commentchar : {'#', string}, optional
@@ -699,14 +699,14 @@ def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
     while True:
         line = ftext.readline()
         firstline = line[:line.find(commentchar)].strip()
-        _varnames = firstline.split(delimiter)
+        _varnames = firstline.split(delimitor)
         if len(_varnames) > 1:
             break
     if varnames is None:
         varnames = _varnames
 
     # Get the data.
-    _variables = masked_array([line.strip().split(delimiter) for line in ftext
+    _variables = masked_array([line.strip().split(delimitor) for line in ftext
                                if line[0] != commentchar and len(line) > 1])
     (_, nfields) = _variables.shape
     ftext.close()
