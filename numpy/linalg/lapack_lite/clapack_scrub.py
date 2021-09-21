@@ -1,11 +1,16 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2.7
+# WARNING! This a Python 2 script. Read README.rst for rationale.
 import os
 import re
 import sys
-from io import StringIO
 
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
 from plex.traditional import re as Re
+
+try:
+    from io import BytesIO as UStringIO  # Python 2
+except ImportError:
+    from io import StringIO as UStringIO  # Python 3
 
 
 class MyScanner(Scanner):
@@ -22,8 +27,8 @@ def sep_seq(sequence, sep):
     return pat
 
 def runScanner(data, scanner_class, lexicon=None):
-    info = StringIO(data)
-    outfo = StringIO()
+    info = UStringIO(data)
+    outfo = UStringIO()
     if lexicon is not None:
         scanner = scanner_class(lexicon, info)
     else:
@@ -190,7 +195,7 @@ def cleanComments(source):
             return SourceLines
 
     state = SourceLines
-    for line in StringIO(source):
+    for line in UStringIO(source):
         state = state(line)
     comments.flushTo(lines)
     return lines.getValue()
@@ -218,7 +223,7 @@ def removeHeader(source):
         return OutOfHeader
 
     state = LookingForHeader
-    for line in StringIO(source):
+    for line in UStringIO(source):
         state = state(line)
     return lines.getValue()
 
@@ -227,7 +232,7 @@ def removeSubroutinePrototypes(source):
         r'/\* Subroutine \*/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
     )
     lines = LineQueue()
-    for line in StringIO(source):
+    for line in UStringIO(source):
         if not expression.match(line):
             lines.add(line)
 
@@ -249,7 +254,7 @@ def removeBuiltinFunctions(source):
             return InBuiltInFunctions
 
     state = LookingForBuiltinFunctions
-    for line in StringIO(source):
+    for line in UStringIO(source):
         state = state(line)
     return lines.getValue()
 
