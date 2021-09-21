@@ -904,7 +904,7 @@ columns or rows using the ``axis`` parameter::
   >>> data.max(axis=0)
   array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4, 6])
+  array([2, 5, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
