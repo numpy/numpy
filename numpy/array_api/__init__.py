@@ -341,13 +341,14 @@ from ._manipulation_functions import (
     concat,
     expand_dims,
     flip,
+    permute_dims,
     reshape,
     roll,
     squeeze,
     stack,
 )
 
-__all__ += ["concat", "expand_dims", "flip", "reshape", "roll", "squeeze", "stack"]
+__all__ += ["concat", "expand_dims", "flip", "permute_dims", "reshape", "roll", "squeeze", "stack"]
 
 from ._searching_functions import argmax, argmin, nonzero, where
 

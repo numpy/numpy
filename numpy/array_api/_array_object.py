@@ -1054,7 +1054,5 @@ class Array:
         # note in the specification:
         # https://data-apis.org/array-api/latest/API_specification/array_object.html#t
         if self.ndim != 2:
-            raise ValueError("x.T requires x to have 2 dimensions. Use x.mT to transpose stacks of matrices.")
-            # TODO: Add note about permute_dims() to the error message once it is
-            # finalized in the spec.
+            raise ValueError("x.T requires x to have 2 dimensions. Use x.mT to transpose stacks of matrices and permute_dims() to permute dimensions.")
         return self._array.T
