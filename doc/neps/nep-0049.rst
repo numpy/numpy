@@ -43,10 +43,10 @@ override ``malloc``.
 
 The long CPython discussion of `BPO 18835`_  began with discussing the need for
 ``PyMem_Alloc32`` and ``PyMem_Alloc64``.  The early conclusion was that the
-cost (of wasted padding) vs. the benifit of aligned memory is best left to the
+cost (of wasted padding) vs. the benefit of aligned memory is best left to the
 user, but then evolves into a discussion of various proposals to deal with
 memory allocations, including `PEP 445`_ `memory interfaces`_ to
-``PyTraceMalloc_Track`` which apparently was explictly added for NumPy.
+``PyTraceMalloc_Track`` which apparently was explicitly added for NumPy.
 
 Allowing users to implement different strategies via the NumPy C-API will
 enable exploration of this rich area of possible optimizations. The intention
