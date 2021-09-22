@@ -43,9 +43,9 @@ from numpy.ma.core import (
     masked_less, masked_less_equal, masked_not_equal, masked_outside,
     masked_print_option, masked_values, masked_where, max, maximum,
     maximum_fill_value, min, minimum, minimum_fill_value, mod, multiply,
-    mvoid, nomask, not_equal, ones, outer, power, product, put, putmask,
-    ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
-    subtract, sum, take, tan, tanh, transpose, where, zeros,
+    mvoid, nomask, not_equal, ones, ones_like, outer, power, product, put,
+    putmask, ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort,
+    sqrt, subtract, sum, take, tan, tanh, transpose, where, zeros, zeros_like,
     )
 from numpy.compat import pickle
 
@@ -3227,6 +3227,50 @@ class TestMaskedArrayMethods:
         b = empty_like(a)
         assert_(not np.may_share_memory(a.mask, b.mask))
         b = a.view(masked_array)
+        assert_(np.may_share_memory(a.mask, b.mask))
+
+    def test_zeros(self):
+        # Tests zeros/like
+        datatype = [('a', int), ('b', float), ('c', '|S8')]
+        a = masked_array([(1, 1.1, '1.1'), (2, 2.2, '2.2'), (3, 3.3, '3.3')],
+                         dtype=datatype)
+        assert_equal(len(a.fill_value.item()), len(datatype))
+
+        b = zeros(len(a), dtype=datatype)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        b = zeros_like(a)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        # check zeros_like mask handling
+        a = masked_array([1, 2, 3], mask=[False, True, False])
+        b = zeros_like(a)
+        assert_(not np.may_share_memory(a.mask, b.mask))
+        b = a.view()
+        assert_(np.may_share_memory(a.mask, b.mask))
+
+    def test_ones(self):
+        # Tests ones/like
+        datatype = [('a', int), ('b', float), ('c', '|S8')]
+        a = masked_array([(1, 1.1, '1.1'), (2, 2.2, '2.2'), (3, 3.3, '3.3')],
+                         dtype=datatype)
+        assert_equal(len(a.fill_value.item()), len(datatype))
+
+        b = ones(len(a), dtype=datatype)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        b = ones_like(a)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        # check ones_like mask handling
+        a = masked_array([1, 2, 3], mask=[False, True, False])
+        b = ones_like(a)
+        assert_(not np.may_share_memory(a.mask, b.mask))
+        b = a.view()
         assert_(np.may_share_memory(a.mask, b.mask))
 
     @suppress_copy_mask_on_assignment
