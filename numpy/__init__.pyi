@@ -205,13 +205,13 @@ from numpy import (
     matrixlib as matrixlib,
     polynomial as polynomial,
     random as random,
-    rec as rec,
     testing as testing,
     version as version,
 )
 
-from numpy.core import defchararray
+from numpy.core import defchararray, records
 char = defchararray
+rec = records
 
 from numpy.core.function_base import (
     linspace as linspace,
