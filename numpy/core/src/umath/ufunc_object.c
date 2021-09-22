@@ -5579,7 +5579,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     cobj = PyDict_GetItemWithError(ufunc->userloops, key);
     if (cobj == NULL && PyErr_Occurred()) {
         Py_DECREF(key);
-        return 0;
+        goto fail;
     }
     /* If it's not there, then make one and return. */
     else if (cobj == NULL) {
