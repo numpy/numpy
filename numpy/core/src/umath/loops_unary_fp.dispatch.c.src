@@ -77,6 +77,25 @@ NPY_FINLINE double c_square_f64(double a)
  */
 #define CONTIG  0
 #define NCONTIG 1
+
+/*
+ * clang has a bug on at least v13 and prior. The bug is present at -O1 or
+ * greater.  When partially loading a NEON register for a reciprocal operation,
+ * the remaining elements are set to 1 to avoid divide-by-zero.  The partial
+ * load is paired with a partial store after the reciprocal operation.  clang
+ * notices that the entire NEON register is not needed for the store and
+ * optimizes out the fill of 1 to the remaining elements.  This causes a
+ * divide-by-zero error that we were trying to avoid by filling.
+ *
+ * Using a dummy variable marked 'volatile' convinces clang not to ignore
+ * the explicit fill of remaining elements.
+ */
+#if defined(__clang__) && defined(__APPLE__) && defined(__arm64__)
+#define WORKAROUND_CLANG_ARM64_RECIPROCAL_BUG 1
+#else
+#define WORKAROUND_CLANG_ARM64_RECIPROCAL_BUG 0
+#endif
+
 /**begin repeat
  * #TYPE = FLOAT, DOUBLE#
  * #sfx  = f32, f64#
@@ -87,6 +106,7 @@ NPY_FINLINE double c_square_f64(double a)
  * #kind     = sqrt, absolute, square, reciprocal#
  * #intr     = sqrt, abs,      square, recip#
  * #repl_0w1 = 0,    0,        0,      1#
+ * #RECIP_WORKAROUND = 0, 0,   0,      WORKAROUND_CLANG_ARM64_RECIPROCAL_BUG#
  */
 /**begin repeat2
  * #STYPE  = CONTIG, NCONTIG, CONTIG,  NCONTIG#
@@ -126,6 +146,7 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
         #endif
         /**end repeat3**/
     }
+
     for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
     #if @STYPE@ == CONTIG
         #if @repl_0w1@
@@ -140,6 +161,17 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
             npyv_@sfx@ v_src0 = npyv_loadn_tillz_@sfx@(src, ssrc, len);
         #endif
     #endif
+        #if @RECIP_WORKAROUND@
+            /*
+             * Workaround clang bug.  We use a dummy variable marked 'volatile'
+             * to convince clang that the entire vector is needed.  We only
+             * want to do this for the last iteration / partial load-store of
+             * the loop since 'volatile' forces a refresh of the contents.
+             */
+            if(len < vstep){
+                volatile npyv_@sfx@ unused_but_workaround_bug = v_src0;
+            }
+        #endif // @RECIP_WORKAROUND@
         npyv_@sfx@ v_unary0 = npyv_@intr@_@sfx@(v_src0);
     #if @DTYPE@ == CONTIG
         npyv_store_till_@sfx@(dst, len, v_unary0);
@@ -153,6 +185,8 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
 /**end repeat1**/
 #endif // @VCHK@
 /**end repeat**/
+
+#undef WORKAROUND_CLANG_ARM64_RECIPROCAL_BUG
 
 /********************************************************************************
  ** Defining ufunc inner functions
