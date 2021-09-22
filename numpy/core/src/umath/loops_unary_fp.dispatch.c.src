@@ -121,6 +121,8 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
 
     const int vstep = npyv_nlanes_@sfx@;
     const int wstep = vstep * @unroll@;
+
+    // unrolled iterations
     for (; len >= wstep; len -= wstep, src += ssrc*wstep, dst += sdst*wstep) {
         /**begin repeat3
          * #N  = 0, 1, 2, 3#
@@ -147,7 +149,23 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
         /**end repeat3**/
     }
 
-    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+    // vector-sized iterations
+    for (; len >= vstep; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+    #if @STYPE@ == CONTIG
+        npyv_@sfx@ v_src0 = npyv_load_@sfx@(src);
+    #else
+        npyv_@sfx@ v_src0 = npyv_loadn_@sfx@(src, ssrc);
+    #endif
+        npyv_@sfx@ v_unary0 = npyv_@intr@_@sfx@(v_src0);
+    #if @DTYPE@ == CONTIG
+        npyv_store_@sfx@(dst, v_unary0);
+    #else
+        npyv_storen_@sfx@(dst, sdst, v_unary0);
+    #endif
+    }
+
+    // last partial iteration, if needed
+    if(len > 0){
     #if @STYPE@ == CONTIG
         #if @repl_0w1@
             npyv_@sfx@ v_src0 = npyv_load_till_@sfx@(src, len, 1);
@@ -168,9 +186,7 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
              * want to do this for the last iteration / partial load-store of
              * the loop since 'volatile' forces a refresh of the contents.
              */
-            if(len < vstep){
-                volatile npyv_@sfx@ unused_but_workaround_bug = v_src0;
-            }
+             volatile npyv_@sfx@ unused_but_workaround_bug = v_src0;
         #endif // @RECIP_WORKAROUND@
         npyv_@sfx@ v_unary0 = npyv_@intr@_@sfx@(v_src0);
     #if @DTYPE@ == CONTIG
@@ -179,6 +195,7 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
         npyv_storen_till_@sfx@(dst, sdst, len, v_unary0);
     #endif
     }
+
     npyv_cleanup();
 }
 /**end repeat2**/
