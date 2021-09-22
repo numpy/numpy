@@ -29,6 +29,7 @@ from numpy import (
     generic,
     float64,
     void,
+    record,
 )
 
 from numpy.ma.mrecords import MaskedRecords
@@ -240,7 +241,7 @@ def recfromtxt(
     *,
     usemask: L[False] = ...,
     **kwargs: Any,
-) -> recarray[Any, dtype[void]]: ...
+) -> recarray[Any, dtype[record]]: ...
 @overload
 def recfromtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],
@@ -255,7 +256,7 @@ def recfromcsv(
     *,
     usemask: L[False] = ...,
     **kwargs: Any,
-) -> recarray[Any, dtype[void]]: ...
+) -> recarray[Any, dtype[record]]: ...
 @overload
 def recfromcsv(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],

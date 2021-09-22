@@ -82,10 +82,10 @@ reveal_type(np.genfromtxt(str_path, delimiter="\n"))  # E: numpy.ndarray[Any, nu
 reveal_type(np.genfromtxt(str_path, ndmin=2))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.genfromtxt(["1", "2", "3"], ndmin=2))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 
-reveal_type(np.recfromtxt(bytes_file))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
+reveal_type(np.recfromtxt(bytes_file))  # E: numpy.recarray[Any, numpy.dtype[numpy.record]]
 reveal_type(np.recfromtxt(pathlib_path, usemask=True))  # E: numpy.ma.mrecords.MaskedRecords[Any, numpy.dtype[numpy.void]]
-reveal_type(np.recfromtxt(["1", "2", "3"]))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
+reveal_type(np.recfromtxt(["1", "2", "3"]))  # E: numpy.recarray[Any, numpy.dtype[numpy.record]]
 
-reveal_type(np.recfromcsv(bytes_file))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
+reveal_type(np.recfromcsv(bytes_file))  # E: numpy.recarray[Any, numpy.dtype[numpy.record]]
 reveal_type(np.recfromcsv(pathlib_path, usemask=True))  # E: numpy.ma.mrecords.MaskedRecords[Any, numpy.dtype[numpy.void]]
-reveal_type(np.recfromcsv(["1", "2", "3"]))  # E: numpy.recarray[Any, numpy.dtype[numpy.void]]
+reveal_type(np.recfromcsv(["1", "2", "3"]))  # E: numpy.recarray[Any, numpy.dtype[numpy.record]]
