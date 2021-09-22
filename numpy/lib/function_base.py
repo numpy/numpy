@@ -4276,7 +4276,13 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
         .. versionadded:: 1.7.0
     sparse : bool, optional
-        If True a sparse grid is returned in order to conserve memory.
+        If True the shape of the returned coordinate array for dimension *i*
+        is reduced from ``(N1, ..., Ni, ... Nn)`` to
+        ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
+        intended to be use with :ref:`basics.broadcasting`.  When all
+        coordinates are used in an expression, broadcasting still leads to a
+        fully-dimensonal result array.
+
         Default is False.
 
         .. versionadded:: 1.7.0
@@ -4347,17 +4353,30 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     array([[0.],
            [1.]])
 
-    `meshgrid` is very useful to evaluate functions on a grid.
+    `meshgrid` is very useful to evaluate functions on a grid.  If the
+    function depends on all coordinates, you can use the parameter
+    ``sparse=True`` to save memory and computation time.
+
+    >>> x = np.linspace(-5, 5, 101)
+    >>> y = np.linspace(-5, 5, 101)
+    >>> # full coorindate arrays
+    >>> xx, yy = np.meshgrid(x, y)
+    >>> zz = np.sqrt(xx**2 + yy**2)
+    >>> xx.shape, yy.shape, zz.shape
+    ((101, 101), (101, 101), (101, 101))
+    >>> # sparse coordinate arrays
+    >>> xs, ys = np.meshgrid(x, y, sparse=True)
+    >>> zs = np.sqrt(xs**2 + ys**2)
+    >>> xs.shape, ys.shape, zs.shape
+    ((1, 101), (101, 1), (101, 101))
+    >>> np.array_equal(zz, zs)
+    True
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(-5, 5, 0.1)
-    >>> y = np.arange(-5, 5, 0.1)
-    >>> xx, yy = np.meshgrid(x, y, sparse=True)
-    >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
-    >>> h = plt.contourf(x, y, z)
+    >>> h = plt.contourf(x, y, zs)
     >>> plt.axis('scaled')
+    >>> plt.colorbar()
     >>> plt.show()
-
     """
     ndim = len(xi)
 
