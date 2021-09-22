@@ -2609,6 +2609,7 @@ class chararray(ndarray):
         return isdecimal(self)
 
 
+@set_module("numpy.char")
 def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     """
     Create a `chararray`.
@@ -2742,6 +2743,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     return val.view(chararray)
 
 
+@set_module("numpy.char")
 def asarray(obj, itemsize=None, unicode=None, order=None):
     """
     Convert the input to a `chararray`, copying the data only if
