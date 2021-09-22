@@ -19,8 +19,6 @@
 
 
 typedef struct{
-    char *name;
-    char *module;
     PyTypeObject *typeobj;    /* type of python scalar or NULL */
     int flags;                /* flags, including parametric and abstract */
     /* NULL terminated cast definitions. Use NULL for the newly created DType */

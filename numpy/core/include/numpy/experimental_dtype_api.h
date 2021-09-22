@@ -16,6 +16,14 @@
  * in your module init.  (A version mismatch will be reported, just update
  * to the correct one, this will alert you of possible changes.)
  *
+ * The two main symbols exported are:
+ *
+ * - PyUFunc_AddLoopFromSpec  (Register a new loop for a ufunc)
+ * - PyArrayInitDTypeMeta_FromSpec  (Create a new DType)
+ *
+ * Please check the in-line documentation for details and do not hesitate to
+ * ask for help.
+ *
  * WARNING
  * =======
  *
@@ -42,8 +50,8 @@
  * exposure of details and functions and is not part of this experimental API.
  */
 
-#ifndef _NPY_EXPERIMENTAL_DTYPE_API_H
-#define _NPY_EXPERIMENTAL_DTYPE_API_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_
 
 #include <Python.h>
 #include "ndarraytypes.h"
@@ -66,7 +74,7 @@ static void **__experimental_dtype_api_table = __uninitialized_table;
 
 /*
  * ******************************************************
- *                  ArrayMethod API
+ *         ArrayMethod API (Casting and UFuncs)
  * ******************************************************
  */
 /*
@@ -111,6 +119,10 @@ typedef struct {
 
 typedef PyObject *_ufunc_addloop_fromspec_func(
         PyObject *ufunc, PyArrayMethod_Spec *spec);
+/*
+ * The main ufunc registration function.  This adds a new implementation/loop
+ * to a ufunc.  It replaces `PyUFunc_RegisterLoopForType`.
+ */
 #define PyUFunc_AddLoopFromSpec \
     (*(_ufunc_addloop_fromspec_func *)(__experimental_dtype_api_table[0]))
 
@@ -118,6 +130,11 @@ typedef PyObject *_ufunc_addloop_fromspec_func(
 /*
  * Additionally to the normal casting levels, NPY_CAST_IS_VIEW indicates
  * that no cast operation is necessary at all (although a copy usually will be)
+ *
+ * NOTE: The most likely modification here is to add an additional
+ *       `view_offset` output to resolve_descriptors.  If set, it would
+ *       indicates both that a view and what offset to use.  This means that
+ *       e.g. `arr.imag` could be implemented by an ArrayMethod.
  */
 #define NPY_CAST_IS_VIEW _NPY_CAST_IS_VIEW
 
@@ -142,7 +159,7 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         /* Exact loop descriptors to use, must not hold references on error */
         PyArray_Descr **loop_descrs);
 
-/* NOT public. Signature is expected to change and not included here */
+/* NOT public yet: Signature needs adapting as external API. */
 #define _NPY_METH_get_loop 2
 
 /*
@@ -175,9 +192,9 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
 
 
 /*
- * *********************************************************************
- *                            DTYPE API
- * *********************************************************************
+ * ****************************
+ *          DTYPE API
+ * ****************************
  */
 
 #define NPY_DT_ABSTRACT 1 << 1
@@ -194,8 +211,6 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
 
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
 typedef struct{
-    char *name;
-    char *module;
     PyTypeObject *typeobj;    /* type of python scalar or NULL */
     int flags;                /* flags, including parametric and abstract */
     /* NULL terminated cast definitions. Use NULL for the newly created DType */
@@ -224,6 +239,8 @@ typedef struct {
 #define PyArrayDTypeMeta_Type \
     (&(PyTypeObject *)__experimental_dtype_api_table[1])
 
+typedef int __dtypemeta_fromspec(
+        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *dtype_spec);
 /*
  * Finalize creation of a DTypeMeta.  You must ensure that the DTypeMeta is
  * a proper subclass.  The DTypeMeta object has additional fields compared to
@@ -232,22 +249,20 @@ typedef struct {
  * inherits `PyArray_DescrType`, sets its type to `PyArrayDTypeMeta_Type` and
  * uses `PyArray_DTypeMeta` defined above as the C-structure.
  */
-typedef int __dtypemeta_fromspec(
-        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *dtype_spec);
 #define PyArrayInitDTypeMeta_FromSpec \
     ((__dtypemeta_fromspec *)(__experimental_dtype_api_table[2]))
 
 
 
 /*
- * *************************************************************************
- *                              Initialization
- * *************************************************************************
+ * ********************************
+ *         Initialization
+ * ********************************
  *
  * Import the experimental API, the version must match the one defined in
  * the header to ensure changes are taken into account. NumPy will further
  * runtime-check this.
- * You must call this function to use the symbols in this file.
+ * You must call this function to use the symbols defined in this file.
  */
 #define __EXPERIMENTAL_DTYPE_VERSION 1
 
@@ -288,4 +303,4 @@ import_experimental_dtype_api(int version)
     return 0;
 }
 
-#endif  /* _NPY_EXPERIMENTAL_DTYPE_API_H */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_ */

@@ -8,11 +8,11 @@
  * NOTE: This file is considered in-flux, exploratory and transitional.
  */
 
-#ifndef _NPY_EXPERIMENTAL_PUBLIC_DTYPE_API_H
-#define _NPY_EXPERIMENTAL_PUBLIC_DTYPE_API_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_EXPERIMENTAL_PUBLIC_DTYPE_API_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_EXPERIMENTAL_PUBLIC_DTYPE_API_H_
 
 NPY_NO_EXPORT PyObject *
 _get_experimental_dtype_api(PyObject *mod, PyObject *arg);
 
 
-#endif  /* _NPY_EXPERIMENTAL_PUBLIC_DTYPE_API_H */
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_EXPERIMENTAL_PUBLIC_DTYPE_API_H_ */
