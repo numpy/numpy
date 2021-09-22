@@ -15,6 +15,7 @@ CONFIG = os.path.join(
 EXCLUDE = (
     "numpy/typing/tests/data/",
     "numpy/__config__.py",
+    "numpy/f2py",
 )
 
 
