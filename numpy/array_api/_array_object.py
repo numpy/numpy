@@ -99,7 +99,10 @@ class Array:
         """
         Performs the operation __repr__.
         """
-        return f"Array({np.array2string(self._array, separator=', ')}, dtype={self.dtype.name})"
+        prefix = "Array("
+        suffix = f", dtype={self.dtype.name})"
+        mid = np.array2string(self._array, separator=', ', prefix=prefix, suffix=suffix)
+        return prefix + mid + suffix
 
     # These are various helper functions to make the array behavior match the
     # spec in places where it either deviates from or is more strict than
