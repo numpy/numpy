@@ -134,9 +134,6 @@ else:
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
 
-    # get the version using versioneer
-    from .version import __version__, git_revision as __git_version__
-
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
 
@@ -403,3 +400,7 @@ else:
     # We do this from python, since the C-module may not be reloaded and
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
+
+
+# get the version using versioneer
+from .version import __version__, git_revision as __git_version__
