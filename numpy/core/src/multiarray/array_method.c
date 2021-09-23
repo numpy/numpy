@@ -466,7 +466,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
 };
 
 
-
 static PyObject *
 boundarraymethod_repr(PyBoundArrayMethodObject *self)
 {
@@ -476,9 +475,11 @@ boundarraymethod_repr(PyBoundArrayMethodObject *self)
     if (dtypes == NULL) {
         return NULL;
     }
-    return PyUnicode_FromFormat(
-            "<np._BoundArrayMethod `%s` for dtypes %S>",
-            self->method->name, dtypes);
+    PyObject *repr = PyUnicode_FromFormat(
+                        "<np._BoundArrayMethod `%s` for dtypes %S>",
+                        self->method->name, dtypes);
+    Py_DECREF(dtypes);
+    return repr;
 }
 
 
