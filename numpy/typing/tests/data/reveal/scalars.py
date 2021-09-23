@@ -10,6 +10,7 @@ c16: np.complex128
 m: np.timedelta64
 U: np.str_
 S: np.bytes_
+V: np.void
 
 reveal_type(c8.real)  # E: {float32}
 reveal_type(c8.imag)  # E: {float32}
@@ -35,6 +36,11 @@ reveal_type(c16.imag)  # E: {float64}
 
 reveal_type(np.unicode_('foo'))  # E: numpy.str_
 reveal_type(np.str0('foo'))  # E: numpy.str_
+
+reveal_type(V[0])  # E: Any
+reveal_type(V["field1"])  # E: Any
+reveal_type(V[["field1", "field2"]])  # E: numpy.void
+V[0] = 5
 
 # Aliases
 reveal_type(np.unicode_())  # E: numpy.str_
