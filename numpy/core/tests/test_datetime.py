@@ -168,6 +168,12 @@ class TestDateTime:
             assert np.can_cast(larger_unit, smaller_unit, casting='safe')
             assert np.can_cast(smaller_unit, larger_unit, casting='safe')
 
+    @pytest.mark.parametrize("unit", [
+        "s", "ms", "us", "ns", "ps", "fs", "as"])
+    def test_prohibit_negative_datetime(self, unit):
+        with assert_raises(TypeError):
+            np.array([1], dtype=f"M8[-1{unit}]")
+
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
         assert_(np.datetime64('NaT') !=

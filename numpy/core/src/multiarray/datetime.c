@@ -735,7 +735,7 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
         // check for 32-bit integer overflow
         char *endptr = NULL;
         true_meta_val = NumPyOS_strtoll(substr, &endptr, 10);
-        if (true_meta_val > INT_MAX) {
+        if (true_meta_val > INT_MAX || true_meta_val < 0) {
             goto bad_input;
         }
     }
