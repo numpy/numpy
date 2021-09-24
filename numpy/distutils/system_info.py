@@ -387,11 +387,10 @@ def get_standard_file(fname):
         f = __file__
     except NameError:
         f = sys.argv[0]
-    else:
-        sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
-                               fname)
-        if os.path.isfile(sysfile):
-            filenames.append(sysfile)
+    sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
+                           fname)
+    if os.path.isfile(sysfile):
+        filenames.append(sysfile)
 
     # Home directory
     # And look for the user config file
