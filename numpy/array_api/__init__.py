@@ -338,9 +338,9 @@ from . import linalg
 
 __all__ += ["linalg"]
 
-from .linalg import matmul, tensordot, transpose, vecdot
+from .linalg import matmul, tensordot, matrix_transpose, vecdot
 
-__all__ += ["matmul", "tensordot", "transpose", "vecdot"]
+__all__ += ["matmul", "tensordot", "matrix_transpose", "vecdot"]
 
 from ._manipulation_functions import (
     concat,

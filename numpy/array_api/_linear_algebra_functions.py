@@ -9,4 +9,4 @@ if TYPE_CHECKING:
 import numpy as np
 
 # These functions are also exposed to the top-level
-from .linalg import einsum, matmul, tensordot, transpose, vecdot
+from .linalg import matmul, tensordot, matrix_transpose, vecdot
