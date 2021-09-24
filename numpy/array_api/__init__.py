@@ -109,9 +109,6 @@ Still TODO in this module are:
 - The spec is still in an RFC phase and may still have minor updates, which
   will need to be reflected here.
 
-- The linear algebra extension in the spec will be added in a future pull
-  request.
-
 - Complex number support in array API spec is planned but not yet finalized,
   as are the fft extension and certain linear algebra functions such as eig
   that require complex dtypes.
