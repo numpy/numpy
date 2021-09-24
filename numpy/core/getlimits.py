@@ -224,9 +224,11 @@ def _register_known_types():
         epsneg_f128 = exp2(ld(-113))
         tiny_f128 = exp2(ld(-16382))
     else:  # valgrind returns nan for anything other than exp2(ld(0))
-        # tiny/huge/min/max come out wrong from MachArLike even if approx values used.
-        # Valgrind has a documented limitation that there is no support for 80 bit arithmetic.
-        # Internally valgrind represents all such long double numbers in 64 bits.
+        # tiny/huge/min/max/smallest_normal/smallest_subnormal come out wrong
+        # from MachArLike even if approximate values are used.
+        # Valgrind has a documented limitation that there is no support for 80
+        # bit arithmetic.
+        # Internally valgrind represents all long double numbers in 64 bits.
         eps_f128 = ld(exp2(f64(-112)))
         epsneg_f128 = ld(exp2(f64(-113)))
         tiny_f128 = ld(exp2(f64(-16382)))
@@ -260,9 +262,11 @@ def _register_known_types():
         epsneg_f80 = exp2(ld(-64))
         tiny_f80 = exp2(ld(-16382))
     else:  # valgrind returns nan for anything other than exp2(ld(0))
-        # tiny/huge/min/max come out wrong from MachArLike even if approx values used.
-        # Valgrind has a documented limitation that there is no support for 80 bit arithmetic.
-        # Internally valgrind represents all such long double numbers in 64 bits.
+        # tiny/huge/min/max/smallest_normal/smallest_subnormal come out wrong
+        # from MachArLike even if approximate values are used.
+        # Valgrind has a documented limitation that there is no support for 80
+        # bit arithmetic.
+        # Internally valgrind represents all long double numbers in 64 bits.
         eps_f80 = ld(exp2(f64(-63)))
         epsneg_f80 = ld(exp2(f64(-64)))
         tiny_f80 = ld(exp2(f64(-16382)))
@@ -289,15 +293,17 @@ def _register_known_types():
 
     # Guessed / known parameters for double double; see:
     # https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
-    # These numbers have the same exponent range as float64, but extended number of
-    # digits in the significand.
+    # These numbers have the same exponent range as float64, but extended
+    # number of digits in the significand.
     if not isnan(exp2(ld(1))):
         eps_dd = exp2(ld(-105))
         epsneg_dd = exp2(ld(-106))
     else:  # valgrind returns nan for anything other than exp2(ld(0))
-        # tiny/huge/min/max come out wrong from MachArLike even if approx values used.
-        # Valgrind has a documented limitation that there is no support for 80 bit arithmetic.
-        # Internally valgrind represents all such long double numbers in 64 bits.
+        # tiny/huge/min/max/smallest_normal/smallest_subnormal come out wrong
+        # from MachArLike even if approximate values are used.
+        # Valgrind has a documented limitation that there is no support for 80
+        # bit arithmetic.
+        # Internally valgrind represents all long double numbers in 64 bits.
         eps_dd = ld(exp2(f64(-105)))
         epsneg_dd = ld(exp2(f64(-106)))
     huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
@@ -366,7 +372,7 @@ def _get_machar(ftype):
         # random garbage.
         ma_like = _KNOWN_TYPES.get(key[:10])
         if ma_like is None:
-            # valgrind appears to get random bits in its mantissa beyond bit 53.
+            # valgrind appears to get random bits in its mantissa past bit 53.
             # Try with 8 bytes of the key (prepending 2 bytes of known type).
             ma_like = _KNOWN_TYPES.get(b'\xcd\xcc' + key[2:10])
     if ma_like is None:
