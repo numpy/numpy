@@ -90,16 +90,6 @@ def diagonal(x: Array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) ->
     """
     return Array._new(np.diagonal(x._array, axis1=axis1, axis2=axis2, offset=offset))
 
-# eig() and eigvals() require complex numbers and will be added in a later
-# version of the array API specification.
-
-# def eig():
-#     """
-#     Array API compatible wrapper for :py:func:`np.eig <numpy.eig>`.
-#
-#     See its docstring for more information.
-#     """
-#     return np.eig()
 
 # Note: the keyword argument name upper is different from np.linalg.eigh
 def eigh(x: Array, /, *, upper: bool = False) -> eighresult:
@@ -117,13 +107,6 @@ def eigh(x: Array, /, *, upper: bool = False) -> eighresult:
     # np.eigh, which only returns a tuple.
     return eighresult(*map(Array._new, np.linalg.eigh(x._array, UPLO='U' if upper else 'L')))
 
-# def eigvals():
-#     """
-#     Array API compatible wrapper for :py:func:`np.eigvalsh <numpy.eigvals>`.
-#
-#     See its docstring for more information.
-#     """
-#     return np.eigvalh()
 
 # Note: the keyword argument name upper is different from np.linalg.eigvalsh
 def eigvalsh(x: Array, /, *, upper: bool = False) -> Array:
@@ -368,9 +351,3 @@ def vecdot(x1: Array, x2: Array, /, *, axis: Optional[int] = None) -> Array:
     return tensordot(x1, x2, axes=((axis,), (axis,)))
 
 __all__ = ['cholesky', 'cross', 'det', 'diagonal', 'eigh', 'eigvalsh', 'inv', 'lstsq', 'matmul', 'matrix_power', 'matrix_rank', 'matrix_transpose', 'norm', 'outer', 'pinv', 'qr', 'slogdet', 'solve', 'svd', 'tensordot', 'svdvals', 'trace', 'vecdot']
-
-# These functions are not yet specified in the spec. eig() and eigvals()
-# require complex dtype support, so will not be included until version 2 of
-# the spec.
-
-# __all__ = ['eig', 'eigvals']
