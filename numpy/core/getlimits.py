@@ -219,8 +219,17 @@ def _register_known_types():
 
     # Known parameters for IEEE 754 128-bit binary float
     ld = ntypes.longdouble
-    epsneg_f128 = exp2(ld(-113))
-    tiny_f128 = exp2(ld(-16382))
+    if not isnan(exp2(ld(1))):
+        eps_f128 = exp2(ld(-112))
+        epsneg_f128 = exp2(ld(-113))
+        tiny_f128 = exp2(ld(-16382))
+    else:  # valgrind returns nan for anything other than exp2(ld(0))
+        # tiny/huge/min/max come out wrong from MachArLike even if approx values used.
+        # Valgrind has a documented limitation that there is no support for 80 bit arithmetic.
+        # Internally valgrind represents all such long double numbers in 64 bits.
+        eps_f128 = ld(exp2(f64(-112)))
+        epsneg_f128 = ld(exp2(f64(-113)))
+        tiny_f128 = ld(exp2(f64(-16382)))
     # Ignore runtime error when this is not f128
     with numeric.errstate(all='ignore'):
         huge_f128 = (ld(1) - epsneg_f128) / tiny_f128 * ld(4)
@@ -234,7 +243,7 @@ def _register_known_types():
                              ibeta=2,
                              irnd=5,
                              ngrd=0,
-                             eps=exp2(ld(-112)),
+                             eps=eps_f128,
                              epsneg=epsneg_f128,
                              huge=huge_f128,
                              tiny=tiny_f128)
@@ -246,8 +255,17 @@ def _register_known_types():
     _float_ma[128] = float128_ma
 
     # Known parameters for float80 (Intel 80-bit extended precision)
-    epsneg_f80 = exp2(ld(-64))
-    tiny_f80 = exp2(ld(-16382))
+    if not isnan(exp2(ld(1))):
+        eps_f80 = exp2(ld(-63))
+        epsneg_f80 = exp2(ld(-64))
+        tiny_f80 = exp2(ld(-16382))
+    else:  # valgrind returns nan for anything other than exp2(ld(0))
+        # tiny/huge/min/max come out wrong from MachArLike even if approx values used.
+        # Valgrind has a documented limitation that there is no support for 80 bit arithmetic.
+        # Internally valgrind represents all such long double numbers in 64 bits.
+        eps_f80 = ld(exp2(f64(-63)))
+        epsneg_f80 = ld(exp2(f64(-64)))
+        tiny_f80 = ld(exp2(f64(-16382)))
     # Ignore runtime error when this is not f80
     with numeric.errstate(all='ignore'):
         huge_f80 = (ld(1) - epsneg_f80) / tiny_f80 * ld(4)
@@ -261,7 +279,7 @@ def _register_known_types():
                             ibeta=2,
                             irnd=5,
                             ngrd=0,
-                            eps=exp2(ld(-63)),
+                            eps=eps_f80,
                             epsneg=epsneg_f80,
                             huge=huge_f80,
                             tiny=tiny_f80)
@@ -273,6 +291,15 @@ def _register_known_types():
     # https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
     # These numbers have the same exponent range as float64, but extended number of
     # digits in the significand.
+    if not isnan(exp2(ld(1))):
+        eps_dd = exp2(ld(-105))
+        epsneg_dd = exp2(ld(-106))
+    else:  # valgrind returns nan for anything other than exp2(ld(0))
+        # tiny/huge/min/max come out wrong from MachArLike even if approx values used.
+        # Valgrind has a documented limitation that there is no support for 80 bit arithmetic.
+        # Internally valgrind represents all such long double numbers in 64 bits.
+        eps_dd = ld(exp2(f64(-105)))
+        epsneg_dd = ld(exp2(f64(-106)))
     huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
     # As the smallest_normal in double double is so hard to calculate we set
     # it to NaN.
@@ -289,8 +316,8 @@ def _register_known_types():
                              ibeta=2,
                              irnd=5,
                              ngrd=0,
-                             eps=exp2(ld(-105)),
-                             epsneg=exp2(ld(-106)),
+                             eps=eps_dd,
+                             epsneg= epsneg_dd,
                              huge=huge_dd,
                              tiny=smallest_normal_dd,
                              smallest_subnormal=smallest_subnormal_dd)
