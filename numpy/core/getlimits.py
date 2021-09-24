@@ -338,6 +338,10 @@ def _get_machar(ftype):
         # Comparing first 10 bytes to pattern first to avoid branching on the
         # random garbage.
         ma_like = _KNOWN_TYPES.get(key[:10])
+        if ma_like is None:
+            # valgrind appears to get random bits in its mantissa beyond bit 53.
+            # Try with 8 bytes of the key (prepending 2 bytes of known type).
+            ma_like = _KNOWN_TYPES.get(b'\xcd\xcc' + key[2:10])
     if ma_like is None:
         ma_like = _KNOWN_TYPES.get(key)
     if ma_like is not None:
