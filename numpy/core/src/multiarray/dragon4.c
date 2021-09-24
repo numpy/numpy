@@ -2206,7 +2206,7 @@ Dragon4_PrintFloat_IEEE_binary16(
         Dragon4_Scratch *scratch, npy_half *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     npy_uint16 val = *value;
@@ -2217,15 +2217,6 @@ Dragon4_PrintFloat_IEEE_binary16(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value */
     floatMantissa = val & bitmask_u32(10);
