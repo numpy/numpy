@@ -1704,6 +1704,25 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
 
+    def __array_ufunc__(
+        self,
+        ufunc: ufunc,
+        method: L["__call__", "reduce", "reduceat", "accumulate", "outer", "inner"],
+        *inputs: Any,
+        **kwargs: Any,
+    ) -> Any: ...
+
+    def __array_function__(
+        self,
+        func: Callable[..., Any],
+        types: Iterable[type],
+        args: Iterable[Any],
+        kwargs: Mapping[str, Any],
+    ) -> Any: ...
+
+    @property
+    def __array_finalize__(self) -> None: ...
+
     def __array_wrap__(
         self,
         array: ndarray[_ShapeType2, _DType],
