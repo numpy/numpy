@@ -546,30 +546,29 @@ def run_compile():
     fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
-    if 1:
-        del_list = []
-        for s in flib_flags:
-            v = '--fcompiler='
-            if s[:len(v)] == v:
-                from numpy.distutils import fcompiler
-                fcompiler.load_all_fcompiler_classes()
-                allowed_keys = list(fcompiler.fcompiler_class.keys())
-                nv = ov = s[len(v):].lower()
-                if ov not in allowed_keys:
-                    vmap = {}  # XXX
-                    try:
-                        nv = vmap[ov]
-                    except KeyError:
-                        if ov not in vmap.values():
-                            print('Unknown vendor: "%s"' % (s[len(v):]))
-                    nv = ov
-                i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv
-                continue
-        for s in del_list:
+    del_list = []
+    for s in flib_flags:
+        v = '--fcompiler='
+        if s[:len(v)] == v:
+            from numpy.distutils import fcompiler
+            fcompiler.load_all_fcompiler_classes()
+            allowed_keys = list(fcompiler.fcompiler_class.keys())
+            nv = ov = s[len(v):].lower()
+            if ov not in allowed_keys:
+                vmap = {}  # XXX
+                try:
+                    nv = vmap[ov]
+                except KeyError:
+                    if ov not in vmap.values():
+                        print('Unknown vendor: "%s"' % (s[len(v):]))
+                nv = ov
             i = flib_flags.index(s)
-            del flib_flags[i]
-        assert len(flib_flags) <= 2, repr(flib_flags)
+            flib_flags[i] = '--fcompiler=' + nv
+            continue
+    for s in del_list:
+        i = flib_flags.index(s)
+        del flib_flags[i]
+    assert len(flib_flags) <= 2, repr(flib_flags)
 
     _reg5 = re.compile(r'--(verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
