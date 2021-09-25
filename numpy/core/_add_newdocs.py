@@ -478,7 +478,7 @@ add_newdoc('numpy.core', 'nditer', ('iternext',
 
 add_newdoc('numpy.core', 'nditer', ('remove_axis',
     """
-    remove_axis(i)
+    remove_axis(i, /)
 
     Removes axis `i` from the iterator. Requires that the flag "multi_index"
     be enabled.
@@ -504,6 +504,8 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
 add_newdoc('numpy.core', 'nested_iters',
     """
+    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None, order="K", casting="safe", buffersize=0)
+
     Create nditers for use in nested loops
 
     Create a tuple of `nditer` objects which iterate in nested loops over
@@ -796,7 +798,7 @@ add_newdoc('numpy.core.multiarray', 'array',
     object : array_like
         An array, any object exposing the array interface, an object whose
         __array__ method returns an array, or any (nested) sequence.
-        If object is a scalar, a 0-dimensional array containing object is 
+        If object is a scalar, a 0-dimensional array containing object is
         returned.
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
