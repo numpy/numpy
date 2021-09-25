@@ -856,21 +856,34 @@ npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
 /**end repeat1**/
 #endif
 
+
 NPY_INPLACE uint8_t
-npy_popcountu@c@(npy_@type@ a)
+npy_popcount_parallel@c@(npy_@type@ a)
 {
-#if (defined(__clang__) || defined(__GNUC__)) && NPY_BITSOF_@STYPE@ >= 32
-    return __builtin_popcount@c@(a);
-#elif defined(_MSC_VER) && NPY_BITSOF_@STYPE@ >= 16
-    /* no builtin __popcnt64 for 32 bits, so use our implementation */
-    #if defined(_WIN64) || (defined(_WIN32) && NPY_BITSOF_@STYPE@ != 64)
-        return TO_BITS_LEN(__popcnt)(a);
-    #endif
-#else
     a = a - ((a >> 1) & (npy_@type@) TO_BITS_LEN(MAGIC)[0]);
     a = ((a & (npy_@type@) TO_BITS_LEN(MAGIC)[1])) + ((a >> 2) & (npy_@type@) TO_BITS_LEN(MAGIC)[1]);
     a = (a + (a >> 4)) & (npy_@type@) TO_BITS_LEN(MAGIC)[2];
     return (npy_@type@) (a * (npy_@type@) TO_BITS_LEN(MAGIC)[3]) >> ((NPY_SIZEOF_@STYPE@ - 1) * CHAR_BIT);
+}
+
+NPY_INPLACE uint8_t
+npy_popcountu@c@(npy_@type@ a)
+{
+/* use built-in popcount if present, else use our implementation */
+#if (defined(__clang__) || defined(__GNUC__)) && NPY_BITSOF_@STYPE@ >= 32
+    return __builtin_popcount@c@(a);
+#elif defined(_MSC_VER) && NPY_BITSOF_@STYPE@ >= 16
+    /* no builtin __popcnt64 for 32 bits */
+    #if defined(_WIN64) || (defined(_WIN32) && NPY_BITSOF_@STYPE@ != 64)
+        return TO_BITS_LEN(__popcnt)(a);
+    /* split 64 bit number into two 32 bit ints and return sum of counts */
+    #elif (defined(_WIN32) && NPY_BITSOF_@STYPE@ == 64)
+        npy_uint32 left  = (npy_uint32) (a>>32);
+        npy_uint32 right = (npy_uint32) a;
+        return __popcnt32(left) + __popcnt32(right);
+    #endif
+#else
+    return npy_popcount_parallel@c@(a);
 #endif
 }
 /**end repeat**/
