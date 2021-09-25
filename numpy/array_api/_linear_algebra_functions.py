@@ -52,13 +52,12 @@ def tensordot(
     return Array._new(np.tensordot(x1._array, x2._array, axes=axes))
 
 
-def transpose(x: Array, /, *, axes: Optional[Tuple[int, ...]] = None) -> Array:
-    """
-    Array API compatible wrapper for :py:func:`np.transpose <numpy.transpose>`.
-
-    See its docstring for more information.
-    """
-    return Array._new(np.transpose(x._array, axes=axes))
+# Note: this function is new in the array API spec. Unlike transpose, it only
+# transposes the last two axes.
+def matrix_transpose(x: Array, /) -> Array:
+    if x.ndim < 2:
+        raise ValueError("x must be at least 2-dimensional for matrix_transpose")
+    return Array._new(np.swapaxes(x._array, -1, -2))
 
 
 # Note: vecdot is not in NumPy

@@ -41,6 +41,17 @@ def flip(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None) -> 
     return Array._new(np.flip(x._array, axis=axis))
 
 
+# Note: The function name is different here (see also matrix_transpose).
+# Unlike transpose(), the axes argument is required.
+def permute_dims(x: Array, /, axes: Tuple[int, ...]) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.transpose <numpy.transpose>`.
+
+    See its docstring for more information.
+    """
+    return Array._new(np.transpose(x._array, axes))
+
+
 def reshape(x: Array, /, shape: Tuple[int, ...]) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.reshape <numpy.reshape>`.
