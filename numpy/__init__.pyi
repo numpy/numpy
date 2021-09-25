@@ -9,6 +9,9 @@ from abc import abstractmethod
 from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
 
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
+
 from numpy._pytesttester import PytestTester
 from numpy.core.multiarray import flagsobj
 from numpy.core._internal import _ctypes
@@ -1052,6 +1055,9 @@ class dtype(Generic[_DTypeScalar_co]):
         copy: bool = ...,
     ) -> dtype[object_]: ...
 
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(self, item: Any) -> GenericAlias: ...
+
     @overload
     def __getitem__(self: dtype[void], key: List[str]) -> dtype[void]: ...
     @overload
@@ -1661,6 +1667,10 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         strides: None | _ShapeLike = ...,
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
+
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(self, item: Any) -> GenericAlias: ...
+
     @overload
     def __array__(self, dtype: None = ..., /) -> ndarray[Any, _DType_co]: ...
     @overload
@@ -2850,6 +2860,8 @@ class number(generic, Generic[_NBit1]):  # type: ignore
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(self, item: Any) -> GenericAlias: ...
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...

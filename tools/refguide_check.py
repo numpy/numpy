@@ -93,18 +93,27 @@ OTHER_MODULE_DOCS = {
 
 # these names are known to fail doctesting and we like to keep it that way
 # e.g. sometimes pseudocode is acceptable etc
-DOCTEST_SKIPLIST = set([
+#
+# Optionally, a subset of methods can be skipped by setting dict-values
+# to a container of method-names
+DOCTEST_SKIPDICT = {
     # cases where NumPy docstrings import things from SciPy:
-    'numpy.lib.vectorize',
-    'numpy.random.standard_gamma',
-    'numpy.random.gamma',
-    'numpy.random.vonmises',
-    'numpy.random.power',
-    'numpy.random.zipf',
+    'numpy.lib.vectorize': None,
+    'numpy.random.standard_gamma': None,
+    'numpy.random.gamma': None,
+    'numpy.random.vonmises': None,
+    'numpy.random.power': None,
+    'numpy.random.zipf': None,
     # remote / local file IO with DataSource is problematic in doctest:
-    'numpy.lib.DataSource',
-    'numpy.lib.Repository',
-])
+    'numpy.lib.DataSource': None,
+    'numpy.lib.Repository': None,
+}
+if sys.version_info < (3, 9):
+    DOCTEST_SKIPDICT.update({
+        "numpy.core.ndarray": {"__class_getitem__"},
+        "numpy.core.dtype": {"__class_getitem__"},
+        "numpy.core.number": {"__class_getitem__"},
+    })
 
 # Skip non-numpy RST files, historical release notes
 # Any single-directory exact match will skip the directory and all subdirs.
@@ -869,8 +878,12 @@ def check_doctests(module, verbose, ns=None,
     for name in get_all_dict(module)[0]:
         full_name = module.__name__ + '.' + name
 
-        if full_name in DOCTEST_SKIPLIST:
-            continue
+        if full_name in DOCTEST_SKIPDICT:
+            skip_methods = DOCTEST_SKIPDICT[full_name]
+            if skip_methods is None:
+                continue
+        else:
+            skip_methods = None
 
         try:
             obj = getattr(module, name)
@@ -890,6 +903,10 @@ def check_doctests(module, verbose, ns=None,
                             "Failed to get doctests!\n" +
                             traceback.format_exc()))
             continue
+
+        if skip_methods is not None:
+            tests = [i for i in tests if
+                     i.name.partition(".")[2] not in skip_methods]
 
         success, output = _run_doctests(tests, full_name, verbose,
                                         doctest_warnings)
@@ -971,7 +988,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
     results = []
 
     _, short_name = os.path.split(fname)
-    if short_name in DOCTEST_SKIPLIST:
+    if short_name in DOCTEST_SKIPDICT:
         return results
 
     full_name = fname

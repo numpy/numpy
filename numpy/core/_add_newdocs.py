@@ -796,7 +796,7 @@ add_newdoc('numpy.core.multiarray', 'array',
     object : array_like
         An array, any object exposing the array interface, an object whose
         __array__ method returns an array, or any (nested) sequence.
-        If object is a scalar, a 0-dimensional array containing object is 
+        If object is a scalar, a 0-dimensional array containing object is
         returned.
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
@@ -2201,8 +2201,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     empty : Create an array, but leave its allocated memory unchanged (i.e.,
             it contains "garbage").
     dtype : Create a data-type.
-    numpy.typing.NDArray : A :term:`generic <generic type>` version
-                           of ndarray.
+    numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
+                           w.r.t. its `dtype.type <numpy.dtype.type>`.
 
     Notes
     -----
@@ -2794,6 +2794,39 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
     Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
 
     Equivalent to ``a.copy(order='K')``.
+
+    """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
+    """a.__class_getitem__(item, /)
+
+    Return a parametrized wrapper around the `~numpy.ndarray` type.
+
+    .. versionadded:: 1.22
+
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.ndarray` type.
+
+    Examples
+    --------
+    >>> from typing import Any
+    >>> import numpy as np
+
+    >>> np.ndarray[Any, np.dtype[Any]]
+    numpy.ndarray[typing.Any, numpy.dtype[Any]]
+
+    Note
+    ----
+    This method is only available for python 3.9 and later.
+
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
+    numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
+                        w.r.t. its `dtype.type <numpy.dtype.type>`.
 
     """))
 
@@ -6044,6 +6077,35 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
+    """
+    __class_getitem__(item, /)
+
+    Return a parametrized wrapper around the `~numpy.dtype` type.
+
+    .. versionadded:: 1.22
+
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.dtype` type.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    >>> np.dtype[np.int64]
+    numpy.dtype[numpy.int64]
+
+    Note
+    ----
+    This method is only available for python 3.9 and later.
+
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
+
+    """))
 
 ##############################################################################
 #
@@ -6465,6 +6527,36 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 add_newdoc('numpy.core.numerictypes', 'generic',
            refer_to_array_attribute('view'))
 
+add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
+    """
+    __class_getitem__(item, /)
+
+    Return a parametrized wrapper around the `~numpy.number` type.
+
+    .. versionadded:: 1.22
+
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.number` type.
+
+    Examples
+    --------
+    >>> from typing import Any
+    >>> import numpy as np
+
+    >>> np.signedinteger[Any]
+    numpy.signedinteger[typing.Any]
+
+    Note
+    ----
+    This method is only available for python 3.9 and later.
+
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
+
+    """))
 
 ##############################################################################
 #
