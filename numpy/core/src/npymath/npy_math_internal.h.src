@@ -72,10 +72,10 @@
  * c = (T)(a * ((T)~(T)0/255)) >> (sizeof(T) - 1) * CHAR_BIT;
 */
 
-static const npy_uint8  MAGIC8[]  = {0x55,               0x33,               0x0F,               0x01};
-static const npy_uint16 MAGIC16[] = {0x5555,             0x3333,             0x0F0F,             0x0101};
-static const npy_uint32 MAGIC32[] = {0x55555555,         0x33333333,         0x0F0F0F0F,         0x01010101};
-static const npy_uint64 MAGIC64[] = {0x5555555555555555, 0x3333333333333333, 0x0F0F0F0F0F0F0F0F, 0x0101010101010101};
+static const npy_uint8  MAGIC8[]  = {0x55u,                 0x33u,                 0x0Fu,                 0x01u};
+static const npy_uint16 MAGIC16[] = {0x5555u,               0x3333u,               0x0F0Fu,               0x0101u};
+static const npy_uint32 MAGIC32[] = {0x55555555ul,          0x33333333ul,          0x0F0F0F0Ful,          0x01010101ul};
+static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ull, 0x0F0F0F0F0F0F0F0Full, 0x0101010101010101ull};
 
 
 /*
