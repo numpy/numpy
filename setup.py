@@ -30,8 +30,7 @@ import re
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
-# This needs to be changed to 3.8 for 1.22 release, but 3.7 is needed for LGTM.
-if sys.version_info[:2] < (3, 7):
+if sys.version_info[:2] < (3, 8):
     raise RuntimeError("Python version >= 3.8 required.")
 
 
