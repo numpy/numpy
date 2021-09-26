@@ -170,7 +170,7 @@ class TestMarkinnerspaces():
 
 
 class TestDimSpec(util.F2PyTest):
-    """This test site tests various expressions that are used as dimension
+    """This test suite tests various expressions that are used as dimension
     specifications.
 
     There exists two usage cases where analyzing dimensions
@@ -183,7 +183,7 @@ class TestDimSpec(util.F2PyTest):
     `lower` and `upper` are arbitrary expressions of input parameters.
     The evaluation is performed in C, so f2py has to translate Fortran
     expressions to valid C expressions (an alternative approach is
-    that a developer specifies the corresponing C expressions in a
+    that a developer specifies the corresponding C expressions in a
     .pyf file).
 
     In the second case, when user provides an input array with a given
