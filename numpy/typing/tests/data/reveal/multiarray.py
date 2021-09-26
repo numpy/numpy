@@ -25,6 +25,8 @@ M: np.datetime64
 b_f8 = np.broadcast(AR_f8)
 b_i8_f8_f8 = np.broadcast(AR_i8, AR_f8, AR_f8)
 
+nditer_obj: np.nditer
+
 def func(a: int) -> bool: ...
 
 reveal_type(next(b_f8))  # E: tuple[Any]
@@ -123,3 +125,8 @@ reveal_type(np.compare_chararrays("a", "b", "!=", rstrip=False))  # E: numpy.nda
 reveal_type(np.compare_chararrays(b"a", b"a", "==", True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
 
 reveal_type(np.add_docstring(func, "test"))  # E: None
+
+reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], flags=["c_index"]))  # E: tuple[numpy.nditer]
+reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_flags=[["readonly", "readonly"]]))  # E: tuple[numpy.nditer]
+reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], op_dtypes=np.int_))  # E: tuple[numpy.nditer]
+reveal_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], order="C", casting="no"))  # E: tuple[numpy.nditer]

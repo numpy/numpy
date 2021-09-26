@@ -13,7 +13,6 @@ if sys.version_info >= (3, 9):
     from types import GenericAlias
 
 from numpy._pytesttester import PytestTester
-from numpy.core.multiarray import flagsobj
 from numpy.core._internal import _ctypes
 from numpy.core.getlimits import MachArLike
 
@@ -196,6 +195,7 @@ from typing import (
     Protocol,
     SupportsIndex,
     Final,
+    final,
 )
 
 # Ensures that the stubs are picked up
@@ -351,6 +351,8 @@ from numpy.core.multiarray import (
     geterrobj as geterrobj,
     fromstring as fromstring,
     frompyfunc as frompyfunc,
+    nested_iters as nested_iters,
+    flagsobj,
 )
 
 from numpy.core.numeric import (
@@ -768,35 +770,6 @@ class memmap(ndarray[_ShapeType, _DType_co]):
     ) -> Any: ...
     def __getattr__(self, key: str) -> Any: ...
 
-class nditer:
-    def __new__(
-        cls,
-        op: Any,
-        flags: Any = ...,
-        op_flags: Any = ...,
-        op_dtypes: Any = ...,
-        order: Any = ...,
-        casting: Any = ...,
-        op_axes: Any = ...,
-        itershape: Any = ...,
-        buffersize: Any = ...,
-    ) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
-    def __enter__(self) -> nditer: ...
-    def __exit__(
-        self,
-        exc_type: None | Type[BaseException],
-        exc_value: None | BaseException,
-        traceback: None | TracebackType,
-    ) -> None: ...
-    def __iter__(self) -> Iterator[Any]: ...
-    def __next__(self) -> Any: ...
-    def __len__(self) -> int: ...
-    def __copy__(self) -> nditer: ...
-    def __getitem__(self, index: SupportsIndex | slice) -> Any: ...
-    def __setitem__(self, index: SupportsIndex | slice, value: Any) -> None: ...
-    def __delitem__(self, key: SupportsIndex | slice) -> None: ...
-
 class poly1d:
     def __init__(
         self,
@@ -884,9 +857,6 @@ sometrue = any
 alltrue = all
 
 def show_config() -> None: ...
-
-# TODO: Sort out which parameters are positional-only
-def nested_iters(*args, **kwargs): ... # TODO: Sort out parameters
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
@@ -3751,3 +3721,110 @@ class record(void):
     def __getitem__(self, key: str | SupportsIndex) -> Any: ...
     @overload
     def __getitem__(self, key: list[str]) -> record: ...
+
+_NDIterFlagsKind = L[
+    "buffered",
+    "c_index",
+    "copy_if_overlap",
+    "common_dtype",
+    "delay_bufalloc",
+    "external_loop",
+    "f_index",
+    "grow_inner", "growinner",
+    "multi_index",
+    "ranged",
+    "refs_ok",
+    "reduce_ok",
+    "zerosize_ok",
+]
+
+_NDIterOpFlagsKind = L[
+    "aligned",
+    "allocate",
+    "arraymask",
+    "copy",
+    "config",
+    "nbo",
+    "no_subtype",
+    "no_broadcast",
+    "overlap_assume_elementwise",
+    "readonly",
+    "readwrite",
+    "updateifcopy",
+    "virtual",
+    "writeonly",
+    "writemasked"
+]
+
+@final
+class nditer:
+    def __new__(
+        cls,
+        op: ArrayLike | Sequence[ArrayLike],
+        flags: None | Sequence[_NDIterFlagsKind] = ...,
+        op_flags: None | Sequence[Sequence[_NDIterOpFlagsKind]] = ...,
+        op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        op_axes: None | Sequence[Sequence[SupportsIndex]] = ...,
+        itershape: None | _ShapeLike = ...,
+        buffersize: SupportsIndex = ...,
+    ) -> nditer: ...
+    def __enter__(self) -> nditer: ...
+    def __exit__(
+        self,
+        exc_type: None | Type[BaseException],
+        exc_value: None | BaseException,
+        traceback: None | TracebackType,
+    ) -> None: ...
+    def __iter__(self) -> nditer: ...
+    def __next__(self) -> Tuple[NDArray[Any], ...]: ...
+    def __len__(self) -> int: ...
+    def __copy__(self) -> nditer: ...
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> NDArray[Any]: ...
+    @overload
+    def __getitem__(self, index: slice) -> Tuple[NDArray[Any], ...]: ...
+    def __setitem__(self, index: slice | SupportsIndex, value: ArrayLike) -> None: ...
+    def close(self) -> None: ...
+    def copy(self) -> nditer: ...
+    def debug_print(self) -> None: ...
+    def enable_external_loop(self) -> None: ...
+    def iternext(self) -> bool: ...
+    def remove_axis(self, i: SupportsIndex, /) -> None: ...
+    def remove_multi_index(self) -> None: ...
+    def reset(self) -> None: ...
+    @property
+    def dtypes(self) -> Tuple[dtype[Any], ...]: ...
+    @property
+    def finished(self) -> bool: ...
+    @property
+    def has_delayed_bufalloc(self) -> bool: ...
+    @property
+    def has_index(self) -> bool: ...
+    @property
+    def has_multi_index(self) -> bool: ...
+    @property
+    def index(self) -> int: ...
+    @property
+    def iterationneedsapi(self) -> bool: ...
+    @property
+    def iterindex(self) -> int: ...
+    @property
+    def iterrange(self) -> Tuple[int, ...]: ...
+    @property
+    def itersize(self) -> int: ...
+    @property
+    def itviews(self) -> Tuple[NDArray[Any], ...]: ...
+    @property
+    def multi_index(self) -> Tuple[int, ...]: ...
+    @property
+    def ndim(self) -> int: ...
+    @property
+    def nop(self) -> int: ...
+    @property
+    def operands(self) -> Tuple[NDArray[Any], ...]: ...
+    @property
+    def shape(self) -> Tuple[int, ...]: ...
+    @property
+    def value(self) -> Tuple[NDArray[Any], ...]: ...
