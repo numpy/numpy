@@ -2818,8 +2818,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
     >>> np.ndarray[Any, np.dtype[Any]]
     numpy.ndarray[typing.Any, numpy.dtype[Any]]
 
-    Note
-    ----
+    Notes
+    -----
     This method is only available for python 3.9 and later.
 
     See Also
@@ -6097,8 +6097,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
     >>> np.dtype[np.int64]
     numpy.dtype[numpy.int64]
 
-    Note
-    ----
+    Notes
+    -----
     This method is only available for python 3.9 and later.
 
     See Also
@@ -6548,8 +6548,8 @@ add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
     >>> np.signedinteger[Any]
     numpy.signedinteger[typing.Any]
 
-    Note
-    ----
+    Notes
+    -----
     This method is only available for python 3.9 and later.
 
     See Also
