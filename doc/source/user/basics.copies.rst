@@ -4,19 +4,26 @@
 Copies and views
 ****************
 
-The NumPy array is a contiguous block of memory consisting of two parts- the
-data buffer with the actual data elements and the metadata which contains
+When operating on a NumPy array, we can sometimes improve performance by using
+:term:`views <view>` instead of copies of the array. However, when handling
+large amounts of important data, it can be risky to directly operate on it and
+it could be safer to use copies. Hence, it is important to know the difference
+between these two terms to correctly determine when to use which one.
+
+The NumPy array is a :term:`contiguous` block of memory consisting of two parts:
+the data buffer with the actual data elements, and the metadata which contains
 information about the data buffer. The metadata includes data type, strides
 and other important information that helps manipulate the :class:`.ndarray`
-easily. See the :ref:`organization-numpy-arrays` section for a detailed look.
+easily. See the :ref:`numpy-internals` section for a detailed look.
 
 View or shallow copy
 ====================
 
-It is possible to perceive the array differently by changing the
-metadata. These new arrays are called views or shallow copies. The data buffer
-remains the same so any changes made to a view reflects in the original
-copy. A view can be forced through the :meth:`.ndarray.view` method. 
+It is possible to access the array differently by just changing the
+metadata and without changing the data buffer. This creates a new way of
+looking at the data and these new arrays are called views or shallow copies.
+The data buffer remains the same so any changes made to a view reflects in the
+original copy. A view can be forced through the :meth:`.ndarray.view` method. 
 
 
 Copy or deep copy
@@ -124,12 +131,14 @@ shape attribute of the array. For example::
            [1., 1.]])
     >>> z = y.view()
     >>> z.shape = 6
-    AttributeError: Incompatible shape for in-place modification.
-    Use `.reshape()` to make a copy with the desired shape.
+    Traceback (most recent call last):
+       ...
+    AttributeError: Incompatible shape for in-place modification. Use
+    `.reshape()` to make a copy with the desired shape.
 
-:func:`.ravel` returns a contiguous flattened view of the array
-wherever possible. On the other hand, :meth:`.ndarray.flatten` always returns
-a flattened copy of the array. However, to guarantee a view in most cases
-``x.reshape(-1)`` may be preferable.
+Taking the example of another operation, :func:`.ravel` returns a contiguous
+flattened view of the array wherever possible. On the other hand,
+:meth:`.ndarray.flatten` always returns a flattened copy of the array.
+However, to guarantee a view in most cases ``x.reshape(-1)`` may be preferable.
 
 
