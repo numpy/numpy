@@ -153,7 +153,7 @@ from . import __version__
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
-
+from . import symbolic
 
 f2py_version = __version__.version
 
@@ -874,10 +874,11 @@ def appenddecl(decl, decl2, force=1):
                 decl[k] = decl2[k]
         elif k == 'note':
             pass
-        elif k in ['intent', 'check', 'dimension', 'optional', 'required']:
+        elif k in ['intent', 'check', 'dimension', 'optional',
+                   'required', 'depend']:
             errmess('appenddecl: "%s" not implemented.\n' % k)
         else:
-            raise Exception('appenddecl: Unknown variable definition key:' +
+            raise Exception('appenddecl: Unknown variable definition key: ' +
                             str(k))
     return decl
 
@@ -2216,188 +2217,6 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
             break
     return None, None, None
 
-_varname_match = re.compile(r'\A[a-z]\w*\Z').match
-
-
-def getarrlen(dl, args, star='*'):
-    """
-    Parameters
-    ----------
-    dl : sequence of two str objects
-        dimensions of the array
-    args : Iterable[str]
-        symbols used in the expression
-    star : Any
-        unused
-
-    Returns
-    -------
-    expr : str
-        Some numeric expression as a string
-    arg : Optional[str]
-        If understood, the argument from `args` present in `expr`
-    expr2 : Optional[str]
-        If understood, an expression fragment that should be used as
-        ``"(%s%s".format(something, expr2)``.
-
-    Examples
-    --------
-    >>> getarrlen(['10*x + 20', '40*x'], {'x'})
-    ('30 * x - 19', 'x', '+19)/(30)')
-    >>> getarrlen(['1', '10*x + 20'], {'x'})
-    ('10 * x + 20', 'x', '-20)/(10)')
-    >>> getarrlen(['10*x + 20', '1'], {'x'})
-    ('-10 * x - 18', 'x', '+18)/(-10)')
-    >>> getarrlen(['20', '1'], {'x'})
-    ('-18', None, None)
-    """
-    edl = []
-    try:
-        edl.append(myeval(dl[0], {}, {}))
-    except Exception:
-        edl.append(dl[0])
-    try:
-        edl.append(myeval(dl[1], {}, {}))
-    except Exception:
-        edl.append(dl[1])
-    if isinstance(edl[0], int):
-        p1 = 1 - edl[0]
-        if p1 == 0:
-            d = str(dl[1])
-        elif p1 < 0:
-            d = '%s-%s' % (dl[1], -p1)
-        else:
-            d = '%s+%s' % (dl[1], p1)
-    elif isinstance(edl[1], int):
-        p1 = 1 + edl[1]
-        if p1 == 0:
-            d = '-(%s)' % (dl[0])
-        else:
-            d = '%s-(%s)' % (p1, dl[0])
-    else:
-        d = '%s-(%s)+1' % (dl[1], dl[0])
-    try:
-        return repr(myeval(d, {}, {})), None, None
-    except Exception:
-        pass
-    d1, d2 = getlincoef(dl[0], args), getlincoef(dl[1], args)
-    if None not in [d1[0], d2[0]]:
-        if (d1[0], d2[0]) == (0, 0):
-            return repr(d2[1] - d1[1] + 1), None, None
-        b = d2[1] - d1[1] + 1
-        d1 = (d1[0], 0, d1[2])
-        d2 = (d2[0], b, d2[2])
-        if d1[0] == 0 and d2[2] in args:
-            if b < 0:
-                return '%s * %s - %s' % (d2[0], d2[2], -b), d2[2], '+%s)/(%s)' % (-b, d2[0])
-            elif b:
-                return '%s * %s + %s' % (d2[0], d2[2], b), d2[2], '-%s)/(%s)' % (b, d2[0])
-            else:
-                return '%s * %s' % (d2[0], d2[2]), d2[2], ')/(%s)' % (d2[0])
-        if d2[0] == 0 and d1[2] in args:
-
-            if b < 0:
-                return '%s * %s - %s' % (-d1[0], d1[2], -b), d1[2], '+%s)/(%s)' % (-b, -d1[0])
-            elif b:
-                return '%s * %s + %s' % (-d1[0], d1[2], b), d1[2], '-%s)/(%s)' % (b, -d1[0])
-            else:
-                return '%s * %s' % (-d1[0], d1[2]), d1[2], ')/(%s)' % (-d1[0])
-        if d1[2] == d2[2] and d1[2] in args:
-            a = d2[0] - d1[0]
-            if not a:
-                return repr(b), None, None
-            if b < 0:
-                return '%s * %s - %s' % (a, d1[2], -b), d2[2], '+%s)/(%s)' % (-b, a)
-            elif b:
-                return '%s * %s + %s' % (a, d1[2], b), d2[2], '-%s)/(%s)' % (b, a)
-            else:
-                return '%s * %s' % (a, d1[2]), d2[2], ')/(%s)' % (a)
-        if d1[0] == d2[0] == 1:
-            c = str(d1[2])
-            if c not in args:
-                if _varname_match(c):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c))
-                c = '(%s)' % c
-            if b == 0:
-                d = '%s-%s' % (d2[2], c)
-            elif b < 0:
-                d = '%s-%s-%s' % (d2[2], c, -b)
-            else:
-                d = '%s-%s+%s' % (d2[2], c, b)
-        elif d1[0] == 0:
-            c2 = str(d2[2])
-            if c2 not in args:
-                if _varname_match(c2):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c2))
-                c2 = '(%s)' % c2
-            if d2[0] == 1:
-                pass
-            elif d2[0] == -1:
-                c2 = '-%s' % c2
-            else:
-                c2 = '%s*%s' % (d2[0], c2)
-
-            if b == 0:
-                d = c2
-            elif b < 0:
-                d = '%s-%s' % (c2, -b)
-            else:
-                d = '%s+%s' % (c2, b)
-        elif d2[0] == 0:
-            c1 = str(d1[2])
-            if c1 not in args:
-                if _varname_match(c1):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c1))
-                c1 = '(%s)' % c1
-            if d1[0] == 1:
-                c1 = '-%s' % c1
-            elif d1[0] == -1:
-                c1 = '+%s' % c1
-            elif d1[0] < 0:
-                c1 = '+%s*%s' % (-d1[0], c1)
-            else:
-                c1 = '-%s*%s' % (d1[0], c1)
-
-            if b == 0:
-                d = c1
-            elif b < 0:
-                d = '%s-%s' % (c1, -b)
-            else:
-                d = '%s+%s' % (c1, b)
-        else:
-            c1 = str(d1[2])
-            if c1 not in args:
-                if _varname_match(c1):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c1))
-                c1 = '(%s)' % c1
-            if d1[0] == 1:
-                c1 = '-%s' % c1
-            elif d1[0] == -1:
-                c1 = '+%s' % c1
-            elif d1[0] < 0:
-                c1 = '+%s*%s' % (-d1[0], c1)
-            else:
-                c1 = '-%s*%s' % (d1[0], c1)
-
-            c2 = str(d2[2])
-            if c2 not in args:
-                if _varname_match(c2):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c2))
-                c2 = '(%s)' % c2
-            if d2[0] == 1:
-                pass
-            elif d2[0] == -1:
-                c2 = '-%s' % c2
-            else:
-                c2 = '%s*%s' % (d2[0], c2)
-
-            if b == 0:
-                d = '%s%s' % (c2, c1)
-            elif b < 0:
-                d = '%s%s-%s' % (c2, c1, -b)
-            else:
-                d = '%s%s+%s' % (c2, c1, b)
-    return d, None, None
 
 word_pattern = re.compile(r'\b[a-z][\w$]*\b', re.I)
 
@@ -2595,7 +2414,8 @@ def _eval_scalar(value, params):
     if _is_kind_number(value):
         value = value.split('_')[0]
     try:
-        value = str(eval(value, {}, params))
+        value = eval(value, {}, params)
+        value = (repr if isinstance(value, str) else str)(value)
     except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
@@ -2682,7 +2502,7 @@ def analyzevars(block):
                     pass
                 vars[n]['kindselector']['kind'] = l
 
-        savelindims = {}
+        dimension_exprs = {}
         if 'attrspec' in vars[n]:
             attr = vars[n]['attrspec']
             attr.reverse()
@@ -2735,18 +2555,18 @@ def analyzevars(block):
             if dim and 'dimension' not in vars[n]:
                 vars[n]['dimension'] = []
                 for d in rmbadname([x.strip() for x in markoutercomma(dim).split('@,@')]):
-                    star = '*'
-                    if d == ':':
-                        star = ':'
+                    star = ':' if d == ':' else '*'
+                    # Evaluate `d` with respect to params
                     if d in params:
                         d = str(params[d])
-                    for p in list(params.keys()):
+                    for p in params:
                         re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
                         m = re_1.match(d)
                         while m:
                             d = m.group('before') + \
                                 str(params[p]) + m.group('after')
                             m = re_1.match(d)
+
                     if d == star:
                         dl = [star]
                     else:
@@ -2754,22 +2574,46 @@ def analyzevars(block):
                     if len(dl) == 2 and '*' in dl:  # e.g. dimension(5:*)
                         dl = ['*']
                         d = '*'
-                    if len(dl) == 1 and not dl[0] == star:
+                    if len(dl) == 1 and dl[0] != star:
                         dl = ['1', dl[0]]
                     if len(dl) == 2:
-                        d, v, di = getarrlen(dl, list(block['vars'].keys()))
-                        if d[:4] == '1 * ':
-                            d = d[4:]
-                        if di and di[-4:] == '/(1)':
-                            di = di[:-4]
-                        if v:
-                            savelindims[d] = v, di
+                        d1, d2 = map(symbolic.Expr.parse, dl)
+                        dsize = d2 - d1 + 1
+                        d = dsize.tostring(language=symbolic.Language.C)
+                        # find variables v that define d as a linear
+                        # function, `d == a * v + b`, and store
+                        # coefficients a and b for further analysis.
+                        solver_and_deps = {}
+                        for v in block['vars']:
+                            s = symbolic.as_symbol(v)
+                            if dsize.contains(s):
+                                try:
+                                    a, b = dsize.linear_solve(s)
+                                    solve_v = lambda s: (s - b) / a
+                                    all_symbols = set(a.symbols())
+                                    all_symbols.update(b.symbols())
+                                except RuntimeError as msg:
+                                    # d is not a linear function of v,
+                                    # however, if v can be determined
+                                    # from d using other means,
+                                    # implement the corresponding
+                                    # solve_v function here.
+                                    solve_v = None
+                                    all_symbols = set(dsize.symbols())
+                                v_deps = set(
+                                    s.data for s in all_symbols
+                                    if s.data in vars)
+                                solver_and_deps[v] = solve_v, list(v_deps)
+                        # Note that dsize may contain symbols that are
+                        # not defined in block['vars']. Here we assume
+                        # these correspond to Fortran/C intrinsic
+                        # functions or that are defined by other
+                        # means. We'll let the compiler validate the
+                        # definiteness of such symbols.
+                        dimension_exprs[d] = solver_and_deps
                     vars[n]['dimension'].append(d)
+
         if 'dimension' in vars[n]:
-            if isintent_c(vars[n]):
-                shape_macro = 'shape'
-            else:
-                shape_macro = 'shape'  # 'fshape'
             if isstringarray(vars[n]):
                 if 'charselector' in vars[n]:
                     d = vars[n]['charselector']
@@ -2788,69 +2632,87 @@ def analyzevars(block):
                     else:
                         errmess(
                             "analyzevars: charselector=%r unhandled." % (d))
+
         if 'check' not in vars[n] and 'args' in block and n in block['args']:
-            flag = 'depend' not in vars[n]
-            if flag:
-                vars[n]['depend'] = []
-            vars[n]['check'] = []
-            if 'dimension' in vars[n]:
-                #/----< no check
-                i = -1
-                ni = len(vars[n]['dimension'])
-                for d in vars[n]['dimension']:
-                    ddeps = []  # dependencies of 'd'
-                    ad = ''
-                    pd = ''
-                    if d not in vars:
-                        if d in savelindims:
-                            pd, ad = '(', savelindims[d][1]
-                            d = savelindims[d][0]
-                        else:
-                            for r in block['args']:
-                                if r not in vars:
-                                    continue
-                                if re.match(r'.*?\b' + r + r'\b', d, re.I):
-                                    ddeps.append(r)
-                    if d in vars:
-                        if 'attrspec' in vars[d]:
-                            for aa in vars[d]['attrspec']:
-                                if aa[:6] == 'depend':
-                                    ddeps += aa[6:].strip()[1:-1].split(',')
-                        if 'depend' in vars[d]:
-                            ddeps = ddeps + vars[d]['depend']
-                    i = i + 1
-                    if d in vars and ('depend' not in vars[d]) \
-                       and ('=' not in vars[d]) and (d not in vars[n]['depend']) \
-                       and l_or(isintent_in, isintent_inout, isintent_inplace)(vars[n]):
-                        vars[d]['depend'] = [n]
-                        if ni > 1:
-                            vars[d]['='] = '%s%s(%s,%s)%s' % (
-                                pd, shape_macro, n, i, ad)
-                        else:
-                            vars[d]['='] = '%slen(%s)%s' % (pd, n, ad)
-                        #  /---< no check
-                        if 1 and 'check' not in vars[d]:
-                            if ni > 1:
-                                vars[d]['check'] = ['%s%s(%s,%i)%s==%s'
-                                                    % (pd, shape_macro, n, i, ad, d)]
+            # n is an argument that has no checks defined. Here we
+            # generate some consistency checks for n, and when n is an
+            # array, generate checks for its dimensions and construct
+            # initialization expressions.
+            n_deps = vars[n].get('depend', [])
+            n_checks = []
+            n_is_input = l_or(isintent_in, isintent_inout,
+                              isintent_inplace)(vars[n])
+            if 'dimension' in vars[n]:  # n is array
+                for i, d in enumerate(vars[n]['dimension']):
+                    coeffs_and_deps = dimension_exprs.get(d)
+                    if coeffs_and_deps is None:
+                        # d is `:` or `*` or a constant expression
+                        pass
+                    elif n_is_input:
+                        # n is an input array argument and its shape
+                        # may define variables used in dimension
+                        # specifications.
+                        for v, (solver, deps) in coeffs_and_deps.items():
+                            if ((v in n_deps
+                                 or '=' in vars[v]
+                                 or 'depend' in vars[v])):
+                                # Skip a variable that
+                                # - n depends on
+                                # - has user-defined initialization expression
+                                # - has user-defined dependecies
+                                continue
+                            if solver is not None:
+                                # v can be solved from d, hence, we
+                                # make it an optional argument with
+                                # initialization expression:
+                                is_required = False
+                                init = solver(symbolic.as_symbol(
+                                    f'shape({n}, {i})'))
+                                init = init.tostring(
+                                    language=symbolic.Language.C)
+                                vars[v]['='] = init
+                                # n needs to be initialzed before v. So,
+                                # making v dependent on n and on any
+                                # variables in solver or d.
+                                vars[v]['depend'] = [n] + deps
+                                if 'check' not in vars[v]:
+                                    # add check only when no
+                                    # user-specified checks exist
+                                    vars[v]['check'] = [
+                                        f'shape({n}, {i}) == {d}']
                             else:
-                                vars[d]['check'] = [
-                                    '%slen(%s)%s>=%s' % (pd, n, ad, d)]
-                        if 'attrspec' not in vars[d]:
-                            vars[d]['attrspec'] = ['optional']
-                        if ('optional' not in vars[d]['attrspec']) and\
-                           ('required' not in vars[d]['attrspec']):
-                            vars[d]['attrspec'].append('optional')
-                    elif d not in ['*', ':']:
-                        #/----< no check
-                        if flag:
-                            if d in vars:
-                                if n not in ddeps:
-                                    vars[n]['depend'].append(d)
-                            else:
-                                vars[n]['depend'] = vars[n]['depend'] + ddeps
+                                # d is a non-linear function on v,
+                                # hence, v must be a required input
+                                # argument that n will depend on
+                                is_required = True
+                                if 'intent' not in vars[v]:
+                                    vars[v]['intent'] = []
+                                if 'in' not in vars[v]['intent']:
+                                    vars[v]['intent'].append('in')
+                                # v needs to be initialized before n
+                                n_deps.append(v)
+                                n_checks.append(
+                                    f'shape({n}, {i}) == {d}')
+                            v_attr = vars[v].get('attrspec', [])
+                            if not ('optional' in v_attr
+                                    or 'required' in v_attr):
+                                v_attr.append(
+                                    'required' if is_required else 'optional')
+                            if v_attr:
+                                vars[v]['attrspec'] = v_attr
+                    if coeffs_and_deps is not None:
+                        # extend v dependencies with ones specified in attrspec
+                        for v, (solver, deps) in coeffs_and_deps.items():
+                            v_deps = vars[v].get('depend', [])
+                            for aa in vars[v].get('attrspec', []):
+                                if aa.startswith('depend'):
+                                    aa = ''.join(aa.split())
+                                    v_deps.extend(aa[7:-1].split(','))
+                            if v_deps:
+                                vars[v]['depend'] = list(set(v_deps))
+                            if n not in v_deps:
+                                n_deps.append(v)
             elif isstring(vars[n]):
-                length = '1'
                 if 'charselector' in vars[n]:
                     if '*' in vars[n]['charselector']:
                         length = _eval_length(vars[n]['charselector']['*'],
@@ -2861,11 +2723,11 @@ def analyzevars(block):
                                               params)
                         del vars[n]['charselector']['len']
                         vars[n]['charselector']['*'] = length
+            if n_checks:
+                vars[n]['check'] = n_checks
+            if n_deps:
+                vars[n]['depend'] = list(set(n_deps))
 
-            if not vars[n]['check']:
-                del vars[n]['check']
-            if flag and not vars[n]['depend']:
-                del vars[n]['depend']
         if '=' in vars[n]:
             if 'attrspec' not in vars[n]:
                 vars[n]['attrspec'] = []
