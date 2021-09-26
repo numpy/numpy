@@ -504,7 +504,8 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
 add_newdoc('numpy.core', 'nested_iters',
     """
-    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None, order="K", casting="safe", buffersize=0)
+    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None, \
+    order="K", casting="safe", buffersize=0)
 
     Create nditers for use in nested loops
 
