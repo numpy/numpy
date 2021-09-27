@@ -1374,9 +1374,9 @@ def searchsorted(array=None, value=None, side='left', sorter=None, a=None, v=Non
     array([0, 5, 1, 2])
 
     """
-    if v is not None:
+    if v is not None and value is None:
         value = v
-    if a is not None:
+    if a is not None and array is None:
         array = a
     
     return _wrapfunc(array, 'searchsorted', value, side=side, sorter=sorter)
