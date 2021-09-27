@@ -13,14 +13,8 @@ import numpy.linalg
 import numpy as np
 
 class eighresult(NamedTuple):
-    u: Array
-    v: Array
-
-class lstsqresult(NamedTuple):
-    x: Array
-    residuals: Array
-    rank: Array
-    s: Array
+    eigenvalues: Array
+    eigenvectors: Array
 
 class qrresult(NamedTuple):
     q: Array
@@ -33,7 +27,7 @@ class slogdetresult(NamedTuple):
 class svdresult(NamedTuple):
     u: Array
     s: Array
-    v: Array
+    vh: Array
 
 # Note: the inclusion of the upper keyword is different from
 # np.linalg.cholesky, which does not have it.
