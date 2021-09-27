@@ -196,6 +196,7 @@ from typing import (
     SupportsIndex,
     Final,
     final,
+    ClassVar,
 )
 
 # Ensures that the stubs are picked up
@@ -636,6 +637,17 @@ class _IOProtocol(Protocol):
     def tell(self) -> SupportsIndex: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
 
+# NOTE: `seek`, `write` and `flush` are technically only required
+# for `readwrite`/`write` modes
+class _MemMapIOProtocol(Protocol):
+    def flush(self) -> object: ...
+    def fileno(self) -> SupportsIndex: ...
+    def tell(self) -> int: ...
+    def seek(self, offset: int, whence: int, /) -> object: ...
+    def write(self, s: bytes, /) -> object: ...
+    @property
+    def read(self) -> object: ...
+
 __all__: List[str]
 __path__: List[str]
 __version__: str
@@ -757,18 +769,6 @@ class matrix(ndarray[_ShapeType, _DType_co]):
     def getA1(self): ...
     def getH(self): ...
     def getI(self): ...
-
-class memmap(ndarray[_ShapeType, _DType_co]):
-    def __new__(
-        subtype,
-        filename: Any,
-        dtype: Any = ...,
-        mode: Any = ...,
-        offset: Any = ...,
-        shape: Any = ...,
-        order: Any = ...,
-    ) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
 
 class poly1d:
     def __init__(
@@ -3828,3 +3828,54 @@ class nditer:
     def shape(self) -> Tuple[int, ...]: ...
     @property
     def value(self) -> Tuple[NDArray[Any], ...]: ...
+
+_MemMapModeKind = L[
+    "readonly", "r",
+    "copyonwrite", "c",
+    "readwrite", "r+",
+    "write", "w+",
+]
+
+class memmap(ndarray[_ShapeType, _DType_co]):
+    __array_priority__: ClassVar[float]
+    filename: str | None
+    offset: int
+    mode: str
+    @overload
+    def __new__(
+        subtype,
+        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        dtype: Type[uint8] = ...,
+        mode: _MemMapModeKind = ...,
+        offset: int = ...,
+        shape: None | int | Tuple[int, ...] = ...,
+        order: _OrderKACF = ...,
+    ) -> memmap[Any, dtype[uint8]]: ...
+    @overload
+    def __new__(
+        subtype,
+        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        dtype: _DTypeLike[_ScalarType],
+        mode: _MemMapModeKind = ...,
+        offset: int = ...,
+        shape: None | int | Tuple[int, ...] = ...,
+        order: _OrderKACF = ...,
+    ) -> memmap[Any, dtype[_ScalarType]]: ...
+    @overload
+    def __new__(
+        subtype,
+        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        dtype: DTypeLike,
+        mode: _MemMapModeKind = ...,
+        offset: int = ...,
+        shape: None | int | Tuple[int, ...] = ...,
+        order: _OrderKACF = ...,
+    ) -> memmap[Any, dtype[Any]]: ...
+    def __array_finalize__(self, obj: memmap[Any, Any]) -> None: ...
+    def __array_wrap__(
+        self,
+        array: memmap[_ShapeType, _DType_co],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+    ) -> Any: ...
+    def __getitem__(self, index): ...  # TODO
+    def flush(self) -> None: ...
