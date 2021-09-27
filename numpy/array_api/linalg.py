@@ -82,17 +82,17 @@ def det(x: Array, /) -> Array:
         raise TypeError('Only floating-point dtypes are allowed in det')
     return Array._new(np.linalg.det(x._array))
 
-def diagonal(x: Array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> Array:
+def diagonal(x: Array, /, *, offset: int = 0) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.diagonal <numpy.diagonal>`.
 
     See its docstring for more information.
     """
-    return Array._new(np.diagonal(x._array, axis1=axis1, axis2=axis2, offset=offset))
+    return Array._new(np.diagonal(x._array, offset=offset))
 
 
 # Note: the keyword argument name upper is different from np.linalg.eigh
-def eigh(x: Array, /, *, upper: bool = False) -> eighresult:
+def eigh(x: Array, /) -> eighresult:
     """
     Array API compatible wrapper for :py:func:`np.eig <numpy.eigh>`.
 
@@ -105,11 +105,11 @@ def eigh(x: Array, /, *, upper: bool = False) -> eighresult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.eigh, which only returns a tuple.
-    return eighresult(*map(Array._new, np.linalg.eigh(x._array, UPLO='U' if upper else 'L')))
+    return eighresult(*map(Array._new, np.linalg.eigh(x._array)))
 
 
 # Note: the keyword argument name upper is different from np.linalg.eigvalsh
-def eigvalsh(x: Array, /, *, upper: bool = False) -> Array:
+def eigvalsh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.eigvalsh <numpy.eigvalsh>`.
 
@@ -120,7 +120,7 @@ def eigvalsh(x: Array, /, *, upper: bool = False) -> Array:
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in eigvalsh')
 
-    return Array._new(np.linalg.eigvalsh(x._array, UPLO='U' if upper else 'L'))
+    return Array._new(np.linalg.eigvalsh(x._array))
 
 def inv(x: Array, /) -> Array:
     """
@@ -135,27 +135,6 @@ def inv(x: Array, /) -> Array:
 
     return Array._new(np.linalg.inv(x._array))
 
-# Note: the keyword argument name rtol is different from np.linalg.lstsq
-def lstsq(x1: Array, x2: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> lstsqresult:
-    """
-    Array API compatible wrapper for :py:func:`np.lstsq <numpy.lstsq>`.
-
-    See its docstring for more information.
-    """
-    # Note: lstsq is supposed to support stacks of matrices, but
-    # np.linalg.lstsq does not yet.
-
-    # Note: the restriction to floating-point dtypes only is different from
-    # np.linalg.lstsq.
-    if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in lstsq')
-
-    # Note: the default value of rtol is the same as the post-deprecation
-    # behavior for np.lstsq() (max(M, N)*eps).
-
-    # Note: the return type here is a namedtuple, which is different from
-    # np.lstsq, which only returns a tuple.
-    return lstsqresult(*map(Array._new, np.linalg.lstsq(x1._array, x2._array, rcond=rtol)))
 
 def matmul(x1: Array, x2: Array, /) -> Array:
     """
@@ -169,6 +148,23 @@ def matmul(x1: Array, x2: Array, /) -> Array:
         raise TypeError('Only numeric dtypes are allowed in matmul')
 
     return Array._new(np.matmul(x1._array, x2._array))
+
+
+# Note: the name here is different from norm(). The array API norm is split
+# into matrix_norm and vector_norm().
+def matrix_norm(x: Array, /, *, axis: Tuple[int, int] = (-2, -1), keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = 'fro') -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
+
+    See its docstring for more information.
+    """
+    # Note: the restriction to floating-point dtypes only is different from
+    # np.linalg.norm.
+    if x.dtype not in _floating_dtypes:
+        raise TypeError('Only floating-point dtypes are allowed in norm')
+
+    return Array._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
+
 
 def matrix_power(x: Array, n: int, /) -> Array:
     """
@@ -213,19 +209,6 @@ def matrix_transpose(x: Array, /) -> Array:
         raise ValueError("x must be at least 2-dimensional for matrix_transpose")
     return Array._new(np.swapaxes(x._array, -1, -2))
 
-def norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = None) -> Array:
-    """
-    Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
-
-    See its docstring for more information.
-    """
-    # Note: the restriction to floating-point dtypes only is different from
-    # np.linalg.norm.
-    if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in norm')
-
-    return Array._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
-
 def outer(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.outer <numpy.outer>`.
@@ -261,7 +244,7 @@ def pinv(x: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> Array:
         rtol = max(x.shape[-2:]) * np.finfo(x.dtype).eps
     return Array._new(np.linalg.pinv(x._array, rcond=rtol))
 
-def qr(x: Array, /, *, mode: str = 'reduced') -> qrresult:
+def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> Tuple[Array, Array]:
     """
     Array API compatible wrapper for :py:func:`np.qr <numpy.qr>`.
 
@@ -336,13 +319,13 @@ def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], 
 
     return Array._new(np.tensordot(x1._array, x2._array, axes=axes))
 
-def trace(x: Array, /, *, axis1: int = 0, axis2: int = 1, offset: int = 0) -> Array:
+def trace(x: Array, /, *, offset: int = 0) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.trace <numpy.trace>`.
 
     See its docstring for more information.
     """
-    return Array._new(np.asarray(np.trace(x._array, axis1=axis1, axis2=axis2, offset=offset)))
+    return Array._new(np.asarray(np.trace(x._array, offset=offset)))
 
 # Note: vecdot is not in NumPy
 def vecdot(x1: Array, x2: Array, /, *, axis: Optional[int] = None) -> Array:
@@ -350,4 +333,20 @@ def vecdot(x1: Array, x2: Array, /, *, axis: Optional[int] = None) -> Array:
         axis = -1
     return tensordot(x1, x2, axes=((axis,), (axis,)))
 
-__all__ = ['cholesky', 'cross', 'det', 'diagonal', 'eigh', 'eigvalsh', 'inv', 'lstsq', 'matmul', 'matrix_power', 'matrix_rank', 'matrix_transpose', 'norm', 'outer', 'pinv', 'qr', 'slogdet', 'solve', 'svd', 'tensordot', 'svdvals', 'trace', 'vecdot']
+
+# Note: the name here is different from norm(). The array API norm is split
+# into matrix_norm and vector_norm().
+def vector_norm(x: Array, /, *, axis: Tuple[int, int] = (-2, -1), keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = 'fro') -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
+
+    See its docstring for more information.
+    """
+    # Note: the restriction to floating-point dtypes only is different from
+    # np.linalg.norm.
+    if x.dtype not in _floating_dtypes:
+        raise TypeError('Only floating-point dtypes are allowed in norm')
+
+    return Array._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
+
+__all__ = ['cholesky', 'cross', 'det', 'diagonal', 'eigh', 'eigvalsh', 'inv', 'matmul', 'matrix_norm', 'matrix_power', 'matrix_rank', 'matrix_transpose', 'outer', 'pinv', 'qr', 'slogdet', 'solve', 'svd', 'svdvals', 'tensordot', 'trace', 'vecdot', 'vector_norm']
