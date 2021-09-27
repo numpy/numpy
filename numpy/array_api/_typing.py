@@ -18,7 +18,7 @@ __all__ = [
 import sys
 from typing import Any, Literal, Sequence, Type, Union, TYPE_CHECKING, TypeVar
 
-from . import Array
+from ._array_object import Array
 from numpy import (
     dtype,
     int8,
