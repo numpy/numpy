@@ -49,7 +49,7 @@ def cholesky(x: Array, /, *, upper: bool = False) -> Array:
         raise TypeError('Only floating-point dtypes are allowed in cholesky')
     L = np.linalg.cholesky(x._array)
     if upper:
-        L = np.moveaxis(L, -1, -2)
+        return Array._new(L).mT
     return Array._new(L)
 
 def cross(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
