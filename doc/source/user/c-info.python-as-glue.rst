@@ -408,11 +408,11 @@ Conclusion
 ----------
 
 The interface definition file (.pyf) is how you can fine-tune the interface
-between Python and Fortran. There is decent documentation for f2py found on the
-NumPy documentation site at https://numpy.org/devdocs/f2py/index.html. There is
-also more information on using f2py (including how to use it to wrap C codes) at
-https://scipy-cookbook.readthedocs.io under the "Interfacing With Other
-Languages" heading.
+between Python and Fortran. There is decent documentation for f2py at
+:ref:`f2py`. There is also more information on using f2py (including how to use
+it to wrap C codes) at the `"Interfacing With Other Languages" heading of the
+SciPy Cookbook.
+<https://scipy-cookbook.readthedocs.io/items/idx_interfacing_with_other_languages.html>`_
 
 The f2py method of linking compiled code is currently the most
 sophisticated and integrated approach. It allows clean separation of
@@ -1099,7 +1099,7 @@ Links to these methods are not included since the most relevant
 can be found using Google or some other search engine, and any links provided
 here would be quickly dated. Do not assume that inclusion in this list means
 that the package deserves attention. Information about these packages are
-collected here because many people have found them useful and I'd like to give
+collected here because many people have found them useful and we'd like to give
 you as many options as possible for tackling the problem of easily integrating
 your code.
 
@@ -1169,7 +1169,7 @@ classes and functions to Python. The amazing part of the Boost.Python
 approach is that it works entirely in pure C++ without introducing a
 new syntax. Many users of C++ report that Boost.Python makes it
 possible to combine the best of both worlds in a seamless fashion. Using Boost
-to wrap simple C-subroutines is usually over-kill. It's primary purpose is to
+to wrap simple C-subroutines is usually over-kill. Its primary purpose is to
 make C++ classes available in Python. So, if you have a set of C++ classes that
 need to be integrated cleanly into Python, consider learning about and using
 Boost.Python.
