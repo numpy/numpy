@@ -1784,16 +1784,18 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def searchsorted(  # type: ignore[misc]
         self,  # >= 1D array
-        v: _ScalarLike_co,  # 0D array-like
+        value: _ScalarLike_co = ...,  # 0D array-like
         side: _SortSide = ...,
         sorter: Optional[_ArrayLikeInt_co] = ...,
+        v: Optional[_ScalarLike_co] = ...,  # 0D array-like
     ) -> intp: ...
     @overload
     def searchsorted(
         self,  # >= 1D array
-        v: ArrayLike,
+        value: ArrayLike = ...,
         side: _SortSide = ...,
         sorter: Optional[_ArrayLikeInt_co] = ...,
+        value: Optional[ArrayLike] = ...,
     ) -> ndarray[Any, dtype[intp]]: ...
 
     def setfield(

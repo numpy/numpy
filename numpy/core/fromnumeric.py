@@ -1302,40 +1302,40 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 
 
-def _searchsorted_dispatcher(a, v, side=None, sorter=None):
-    return (a, v, sorter)
+def _searchsorted_dispatcher(array=None, value=None, side=None, sorter=None, a=None, v=None):
+    return (array, value, sorter, a, v)
 
 
 @array_function_dispatch(_searchsorted_dispatcher)
-def searchsorted(a, v, side='left', sorter=None):
+def searchsorted(array=None, value=None, side='left', sorter=None, a=None, v=None):
     """
     Find indices where elements should be inserted to maintain order.
 
-    Find the indices into a sorted array `a` such that, if the
-    corresponding elements in `v` were inserted before the indices, the
-    order of `a` would be preserved.
+    Find the indices into a sorted array `array` such that, if the
+    corresponding elements in `value` were inserted before the indices, the
+    order of `array` would be preserved.
 
-    Assuming that `a` is sorted:
+    Assuming that `array` is sorted:
 
     ======  ============================
     `side`  returned index `i` satisfies
     ======  ============================
-    left    ``a[i-1] < v <= a[i]``
-    right   ``a[i-1] <= v < a[i]``
+    left    ``array[i-1] < value <= array[i]``
+    right   ``array[i-1] <= value < array[i]``
     ======  ============================
 
     Parameters
     ----------
-    a : 1-D array_like
+    array : 1-D array_like
         Input array. If `sorter` is None, then it must be sorted in
         ascending order, otherwise `sorter` must be an array of indices
         that sort it.
-    v : array_like
-        Values to insert into `a`.
+    value : array_like
+        Values to insert into `array`.
     side : {'left', 'right'}, optional
         If 'left', the index of the first suitable location found is given.
         If 'right', return the last such index.  If there is no suitable
-        index, return either 0 or N (where N is the length of `a`).
+        index, return either 0 or N (where N is the length of `array`).
     sorter : 1-D array_like, optional
         Optional array of integer indices that sort array a into ascending
         order. They are typically the result of argsort.
@@ -1345,8 +1345,8 @@ def searchsorted(a, v, side='left', sorter=None):
     Returns
     -------
     indices : int or array of ints
-        Array of insertion points with the same shape as `v`,
-        or an integer if `v` is a scalar.
+        Array of insertion points with the same shape as `value`,
+        or an integer if `value` is a scalar.
 
     See Also
     --------
@@ -1362,7 +1362,7 @@ def searchsorted(a, v, side='left', sorter=None):
 
     This function uses the same algorithm as the builtin python `bisect.bisect_left`
     (``side='left'``) and `bisect.bisect_right` (``side='right'``) functions,
-    which is also vectorized in the `v` argument.
+    which is also vectorized in the `value` argument.
 
     Examples
     --------
@@ -1374,7 +1374,12 @@ def searchsorted(a, v, side='left', sorter=None):
     array([0, 5, 1, 2])
 
     """
-    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
+    if v is not None:
+        value = v
+    if a is not None:
+        array = a
+    
+    return _wrapfunc(array, 'searchsorted', value, side=side, sorter=sorter)
 
 
 def _resize_dispatcher(a, new_shape):

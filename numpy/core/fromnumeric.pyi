@@ -155,17 +155,21 @@ def argmin(
 
 @overload
 def searchsorted(
-    a: ArrayLike,
-    v: _Scalar,
+    array: ArrayLike = ...,
+    value: _Scalar = ...,
     side: _SortSide = ...,
     sorter: Optional[_ArrayLikeInt_co] = ...,  # 1D int array
+    a: Optional[ArrayLike] = ...,
+    v: Optional[_Scalar] = ...
 ) -> intp: ...
 @overload
 def searchsorted(
-    a: ArrayLike,
-    v: ArrayLike,
+    array: ArrayLike = ...,
+    value: ArrayLike = ...,
     side: _SortSide = ...,
     sorter: Optional[_ArrayLikeInt_co] = ...,  # 1D int array
+    a: Optional[ArrayLike] = ...,
+    v: Optional[ArrayLike] = ...,
 ) -> ndarray: ...
 
 def resize(
