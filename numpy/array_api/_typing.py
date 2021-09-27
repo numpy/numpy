@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 import sys
-from typing import Any, Literal, Sequence, Type, Union, TYPE_CHECKING
+from typing import Any, Literal, Sequence, Type, Union, TYPE_CHECKING, TypeVar
 
 from . import Array
 from numpy import (
@@ -35,7 +35,8 @@ from numpy import (
 
 # This should really be recursive, but that isn't supported yet. See the
 # similar comment in numpy/typing/_array_like.py
-NestedSequence = Sequence[Sequence[Any]]
+_T = TypeVar("_T")
+NestedSequence = Sequence[Sequence[_T]]
 
 Device = Literal["cpu"]
 if TYPE_CHECKING or sys.version_info >= (3, 9):
