@@ -15,10 +15,12 @@ __all__ = [
     "PyCapsule",
 ]
 
-from typing import Any, Literal, Sequence, Type, Union
+import sys
+from typing import Any, Literal, Sequence, Type, Union, TYPE_CHECKING
 
-from . import (
-    Array,
+from . import Array
+from numpy import (
+    dtype,
     int8,
     int16,
     int32,
@@ -36,9 +38,22 @@ from . import (
 NestedSequence = Sequence[Sequence[Any]]
 
 Device = Literal["cpu"]
-Dtype = Type[
-    Union[int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64]
-]
+if TYPE_CHECKING or sys.version_info >= (3, 9):
+    Dtype = dtype[Union[
+        int8,
+        int16,
+        int32,
+        int64,
+        uint8,
+        uint16,
+        uint32,
+        uint64,
+        float32,
+        float64,
+    ]]
+else:
+    Dtype = dtype
+
 SupportsDLPack = Any
 SupportsBufferProtocol = Any
 PyCapsule = Any
