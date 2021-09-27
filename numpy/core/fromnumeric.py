@@ -1302,12 +1302,14 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 
 
-def _searchsorted_dispatcher(array=None, value=None, side=None, sorter=None, a=None, v=None):
+def _searchsorted_dispatcher(array=None, value=None, side=None, sorter=None, 
+                             a=None, v=None):
     return (array, value, sorter, a, v)
 
 
 @array_function_dispatch(_searchsorted_dispatcher)
-def searchsorted(array=None, value=None, side='left', sorter=None, a=None, v=None):
+def searchsorted(array=None, value=None, side='left', sorter=None, 
+                 a=None, v=None):
     """
     Find indices where elements should be inserted to maintain order.
 
@@ -1360,9 +1362,10 @@ def searchsorted(array=None, value=None, side='left', sorter=None, a=None, v=Non
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function uses the same algorithm as the builtin python `bisect.bisect_left`
-    (``side='left'``) and `bisect.bisect_right` (``side='right'``) functions,
-    which is also vectorized in the `value` argument.
+    This function uses the same algorithm as the builtin python 
+    `bisect.bisect_left` (``side='left'``) and `bisect.bisect_right` 
+    (``side='right'``) functions, which is also vectorized in the 
+    `value` argument.
 
     Examples
     --------
