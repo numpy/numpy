@@ -519,34 +519,34 @@ From other objects
 
         :c:data:`NPY_ARRAY_CARRAY`
 
-    .. c:macro:: NPY_ARRAY_IN_ARRAY
+.. c:macro:: NPY_ARRAY_IN_ARRAY
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
     .. c:macro:: NPY_ARRAY_IN_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:macro:: NPY_OUT_ARRAY
+.. c:macro:: NPY_OUT_ARRAY
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED`
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:macro:: NPY_ARRAY_OUT_ARRAY
+.. c:macro:: NPY_ARRAY_OUT_ARRAY
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
-        :c:data:`NPY_ARRAY_WRITEABLE`
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
+    :c:data:`NPY_ARRAY_WRITEABLE`
 
     .. c:macro:: NPY_ARRAY_OUT_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:macro:: NPY_ARRAY_INOUT_ARRAY
+.. c:macro:: NPY_ARRAY_INOUT_ARRAY
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
-        :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`
 
     .. c:macro:: NPY_ARRAY_INOUT_FARRAY
 
@@ -584,26 +584,26 @@ From other objects
     did not have the _ARRAY_ macro namespace in them. That form
     of the constant names is deprecated in 1.7.
 
-    .. c:macro:: NPY_ARRAY_NOTSWAPPED
+.. c:macro:: NPY_ARRAY_NOTSWAPPED
 
-        Make sure the returned array has a data-type descriptor that is in
-        machine byte-order, over-riding any specification in the *dtype*
-        argument. Normally, the byte-order requirement is determined by
-        the *dtype* argument. If this flag is set and the dtype argument
-        does not indicate a machine byte-order descriptor (or is NULL and
-        the object is already an array with a data-type descriptor that is
-        not in machine byte- order), then a new data-type descriptor is
-        created and used with its byte-order field set to native.
+    Make sure the returned array has a data-type descriptor that is in
+    machine byte-order, over-riding any specification in the *dtype*
+    argument. Normally, the byte-order requirement is determined by
+    the *dtype* argument. If this flag is set and the dtype argument
+    does not indicate a machine byte-order descriptor (or is NULL and
+    the object is already an array with a data-type descriptor that is
+    not in machine byte- order), then a new data-type descriptor is
+    created and used with its byte-order field set to native.
 
     .. c:macro:: NPY_ARRAY_BEHAVED_NS
 
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_NOTSWAPPED`
 
-    .. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
+.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
 
-        Make sure the returned array has strides that are multiples of the
-        element size.
+    Make sure the returned array has strides that are multiples of the
+    element size.
 
 .. c:function:: PyObject* PyArray_FromArray( \
         PyArrayObject* op, PyArray_Descr* newtype, int requirements)
