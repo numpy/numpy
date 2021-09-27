@@ -232,7 +232,7 @@ def linspace(
     return Array._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
 
-def meshgrid(*arrays: Sequence[Array], indexing: str = "xy") -> List[Array, ...]:
+def meshgrid(*arrays: Array, indexing: str = "xy") -> List[Array]:
     """
     Array API compatible wrapper for :py:func:`np.meshgrid <numpy.meshgrid>`.
 
