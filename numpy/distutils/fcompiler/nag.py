@@ -15,6 +15,8 @@ class BaseNAGFCompiler(FCompiler):
             return None
 
     def get_flags_linker_so(self):
+        if sys.platform == 'darwin':
+            return ['-unsharedf95', '-Wl,-bundle,-flat_namespace,-undefined,suppress']
         return ["-Wl,-shared"]
     def get_flags_opt(self):
         return ['-O4']
@@ -35,11 +37,6 @@ class NAGFCompiler(BaseNAGFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
-
-    def get_flags_linker_so(self):
-        if sys.platform == 'darwin':
-            return ['-unsharedf95', '-Wl,-bundle,-flat_namespace,-undefined,suppress']
-        return BaseNAGFCompiler.get_flags_linker_so(self)
     def get_flags_arch(self):
         version = self.get_version()
         if version and version < '5.1':
@@ -63,7 +60,6 @@ class NAGFORCompiler(BaseNAGFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
-
     def get_flags_debug(self):
         version = self.get_version()
         if version and version > '6.1':
