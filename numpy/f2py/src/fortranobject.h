@@ -15,24 +15,17 @@ extern "C" {
 
 #ifdef F2PY_REPORT_ATEXIT
 #include <sys/timeb.h>
-extern void
-f2py_start_clock(void);
-extern void
-f2py_stop_clock(void);
-extern void
-f2py_start_call_clock(void);
-extern void
-f2py_stop_call_clock(void);
-extern void
-f2py_cb_start_clock(void);
-extern void
-f2py_cb_stop_clock(void);
-extern void
-f2py_cb_start_call_clock(void);
-extern void
-f2py_cb_stop_call_clock(void);
-extern void
-f2py_report_on_exit(int, void *);
+// clang-format off
+extern void f2py_start_clock(void);
+extern void f2py_stop_clock(void);
+extern void f2py_start_call_clock(void);
+extern void f2py_stop_call_clock(void);
+extern void f2py_cb_start_clock(void);
+extern void f2py_cb_stop_clock(void);
+extern void f2py_cb_start_call_clock(void);
+extern void f2py_cb_stop_call_clock(void);
+extern void f2py_report_on_exit(int, void *);
+// clang-format on
 #endif
 
 #ifdef DMALLOC
