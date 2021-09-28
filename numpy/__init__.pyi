@@ -9,8 +9,10 @@ from abc import abstractmethod
 from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
 
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
+
 from numpy._pytesttester import PytestTester
-from numpy.core.multiarray import flagsobj
 from numpy.core._internal import _ctypes
 from numpy.core.getlimits import MachArLike
 
@@ -193,6 +195,8 @@ from typing import (
     Protocol,
     SupportsIndex,
     Final,
+    final,
+    ClassVar,
 )
 
 # Ensures that the stubs are picked up
@@ -205,13 +209,13 @@ from numpy import (
     matrixlib as matrixlib,
     polynomial as polynomial,
     random as random,
-    rec as rec,
     testing as testing,
     version as version,
 )
 
-from numpy.core import defchararray
+from numpy.core import defchararray, records
 char = defchararray
+rec = records
 
 from numpy.core.function_base import (
     linspace as linspace,
@@ -348,6 +352,8 @@ from numpy.core.multiarray import (
     geterrobj as geterrobj,
     fromstring as fromstring,
     frompyfunc as frompyfunc,
+    nested_iters as nested_iters,
+    flagsobj,
 )
 
 from numpy.core.numeric import (
@@ -631,6 +637,17 @@ class _IOProtocol(Protocol):
     def tell(self) -> SupportsIndex: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
 
+# NOTE: `seek`, `write` and `flush` are technically only required
+# for `readwrite`/`write` modes
+class _MemMapIOProtocol(Protocol):
+    def flush(self) -> object: ...
+    def fileno(self) -> SupportsIndex: ...
+    def tell(self) -> int: ...
+    def seek(self, offset: int, whence: int, /) -> object: ...
+    def write(self, s: bytes, /) -> object: ...
+    @property
+    def read(self) -> object: ...
+
 __all__: List[str]
 __path__: List[str]
 __version__: str
@@ -706,16 +723,6 @@ class chararray(ndarray[_ShapeType, _DType_co]):
     def isnumeric(self): ...
     def isdecimal(self): ...
 
-class format_parser:
-    def __init__(
-        self,
-        formats: Any,
-        names: Any,
-        titles: Any,
-        aligned: Any = ...,
-        byteorder: Any = ...,
-    ) -> None: ...
-
 class matrix(ndarray[_ShapeType, _DType_co]):
     def __new__(
         subtype,
@@ -762,48 +769,6 @@ class matrix(ndarray[_ShapeType, _DType_co]):
     def getA1(self): ...
     def getH(self): ...
     def getI(self): ...
-
-class memmap(ndarray[_ShapeType, _DType_co]):
-    def __new__(
-        subtype,
-        filename: Any,
-        dtype: Any = ...,
-        mode: Any = ...,
-        offset: Any = ...,
-        shape: Any = ...,
-        order: Any = ...,
-    ) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
-
-class nditer:
-    def __new__(
-        cls,
-        op: Any,
-        flags: Any = ...,
-        op_flags: Any = ...,
-        op_dtypes: Any = ...,
-        order: Any = ...,
-        casting: Any = ...,
-        op_axes: Any = ...,
-        itershape: Any = ...,
-        buffersize: Any = ...,
-    ) -> Any: ...
-    def __getattr__(self, key: str) -> Any: ...
-    def __enter__(self) -> nditer: ...
-    def __exit__(
-        self,
-        exc_type: None | Type[BaseException],
-        exc_value: None | BaseException,
-        traceback: None | TracebackType,
-    ) -> None: ...
-    def __iter__(self) -> Iterator[Any]: ...
-    def __next__(self) -> Any: ...
-    def __len__(self) -> int: ...
-    def __copy__(self) -> nditer: ...
-    def __getitem__(self, index: SupportsIndex | slice) -> Any: ...
-    def __setitem__(self, index: SupportsIndex | slice, value: Any) -> None: ...
-    def __delitem__(self, key: SupportsIndex | slice) -> None: ...
-
 
 class poly1d:
     def __init__(
@@ -863,33 +828,6 @@ class poly1d:
     def integ(self, m=..., k=...): ...
     def deriv(self, m=...): ...
 
-class recarray(ndarray[_ShapeType, _DType_co]):
-    def __new__(
-        subtype,
-        shape: Any,
-        dtype: Any = ...,
-        buf: Any = ...,
-        offset: Any = ...,
-        strides: Any = ...,
-        formats: Any = ...,
-        names: Any = ...,
-        titles: Any = ...,
-        byteorder: Any = ...,
-        aligned: Any = ...,
-        order: Any = ...,
-    ) -> Any: ...
-    def __array_finalize__(self, obj): ...
-    def __getattribute__(self, attr): ...
-    def __setattr__(self, attr, val): ...
-    def __getitem__(self, indx): ...
-    def field(self, attr, val=...): ...
-
-class record(void):
-    def __getattribute__(self, attr): ...
-    def __setattr__(self, attr, val): ...
-    def __getitem__(self, indx): ...
-    def pprint(self): ...
-
 class vectorize:
     pyfunc: Any
     cache: Any
@@ -919,9 +857,6 @@ sometrue = any
 alltrue = all
 
 def show_config() -> None: ...
-
-# TODO: Sort out which parameters are positional-only
-def nested_iters(*args, **kwargs): ... # TODO: Sort out parameters
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
@@ -1089,6 +1024,9 @@ class dtype(Generic[_DTypeScalar_co]):
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[object_]: ...
+
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(self, item: Any) -> GenericAlias: ...
 
     @overload
     def __getitem__(self: dtype[void], key: List[str]) -> dtype[void]: ...
@@ -1694,15 +1632,38 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         cls: Type[_ArraySelf],
         shape: _ShapeLike,
         dtype: DTypeLike = ...,
-        buffer: _SupportsBuffer = ...,
-        offset: int = ...,
-        strides: _ShapeLike = ...,
+        buffer: None | _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: None | _ShapeLike = ...,
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
+
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(self, item: Any) -> GenericAlias: ...
+
     @overload
     def __array__(self, dtype: None = ..., /) -> ndarray[Any, _DType_co]: ...
     @overload
     def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
+
+    def __array_ufunc__(
+        self,
+        ufunc: ufunc,
+        method: L["__call__", "reduce", "reduceat", "accumulate", "outer", "inner"],
+        *inputs: Any,
+        **kwargs: Any,
+    ) -> Any: ...
+
+    def __array_function__(
+        self,
+        func: Callable[..., Any],
+        types: Iterable[type],
+        args: Iterable[Any],
+        kwargs: Mapping[str, Any],
+    ) -> Any: ...
+
+    @property
+    def __array_finalize__(self) -> None: ...
 
     def __array_wrap__(
         self,
@@ -2869,6 +2830,8 @@ class number(generic, Generic[_NBit1]):  # type: ignore
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(self, item: Any) -> GenericAlias: ...
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
@@ -3273,8 +3236,15 @@ class void(flexible):
     def setfield(
         self, val: ArrayLike, dtype: DTypeLike, offset: int = ...
     ) -> None: ...
-    def __getitem__(self, key: SupportsIndex) -> Any: ...
-    def __setitem__(self, key: SupportsIndex, value: ArrayLike) -> None: ...
+    @overload
+    def __getitem__(self, key: str | SupportsIndex) -> Any: ...
+    @overload
+    def __getitem__(self, key: list[str]) -> void: ...
+    def __setitem__(
+        self,
+        key: str | List[str] | SupportsIndex,
+        value: ArrayLike,
+    ) -> None: ...
 
 void0 = void
 
@@ -3685,3 +3655,227 @@ class iinfo(Generic[_IntType]):
     def __new__(cls, dtype: int | Type[int]) -> iinfo[int_]: ...
     @overload
     def __new__(cls, dtype: str) -> iinfo[Any]: ...
+
+class format_parser:
+    dtype: dtype[void]
+    def __init__(
+        self,
+        formats: DTypeLike,
+        names: None | str | Sequence[str],
+        titles: None | str | Sequence[str],
+        aligned: bool = ...,
+        byteorder: None | _ByteOrder = ...,
+    ) -> None: ...
+
+# TODO: field-lookup returns either a `recarray` or a `ndarray`
+# depending on the field dtype
+class recarray(ndarray[_ShapeType, _DType_co]):
+    # NOTE: While not strictly mandatory, we're demanding here that arguments
+    # for the `format_parser`- and `dtype`-based dtype constructors are
+    # mutually exclusive
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
+        dtype: None = ...,
+        buf: None | _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: None | _ShapeLike = ...,
+        *,
+        formats: DTypeLike,
+        names: None | str | Sequence[str] = ...,
+        titles: None | str | Sequence[str] = ...,
+        byteorder: None | _ByteOrder = ...,
+        aligned: bool = ...,
+        order: _OrderKACF = ...,
+    ) -> recarray[Any, dtype[record]]: ...
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
+        dtype: DTypeLike,
+        buf: None | _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: None | _ShapeLike = ...,
+        formats: None = ...,
+        names: None = ...,
+        titles: None = ...,
+        byteorder: None = ...,
+        aligned: L[False] = ...,
+        order: _OrderKACF = ...,
+    ) -> recarray[Any, dtype[Any]]: ...
+    def __array_finalize__(self, obj: object) -> None: ...
+    def __getattribute__(self, attr: str) -> Any: ...
+    def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
+    def __getitem__(self, indx): ...  # TODO
+    @overload
+    def field(self, attr: int | str, val: None = ...) -> Any: ...
+    @overload
+    def field(self, attr: int | str, val: ArrayLike) -> None: ...
+
+class record(void):
+    def __getattribute__(self, attr: str) -> Any: ...
+    def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
+    def pprint(self) -> str: ...
+    @overload
+    def __getitem__(self, key: str | SupportsIndex) -> Any: ...
+    @overload
+    def __getitem__(self, key: list[str]) -> record: ...
+
+_NDIterFlagsKind = L[
+    "buffered",
+    "c_index",
+    "copy_if_overlap",
+    "common_dtype",
+    "delay_bufalloc",
+    "external_loop",
+    "f_index",
+    "grow_inner", "growinner",
+    "multi_index",
+    "ranged",
+    "refs_ok",
+    "reduce_ok",
+    "zerosize_ok",
+]
+
+_NDIterOpFlagsKind = L[
+    "aligned",
+    "allocate",
+    "arraymask",
+    "copy",
+    "config",
+    "nbo",
+    "no_subtype",
+    "no_broadcast",
+    "overlap_assume_elementwise",
+    "readonly",
+    "readwrite",
+    "updateifcopy",
+    "virtual",
+    "writeonly",
+    "writemasked"
+]
+
+@final
+class nditer:
+    def __new__(
+        cls,
+        op: ArrayLike | Sequence[ArrayLike],
+        flags: None | Sequence[_NDIterFlagsKind] = ...,
+        op_flags: None | Sequence[Sequence[_NDIterOpFlagsKind]] = ...,
+        op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
+        order: _OrderKACF = ...,
+        casting: _CastingKind = ...,
+        op_axes: None | Sequence[Sequence[SupportsIndex]] = ...,
+        itershape: None | _ShapeLike = ...,
+        buffersize: SupportsIndex = ...,
+    ) -> nditer: ...
+    def __enter__(self) -> nditer: ...
+    def __exit__(
+        self,
+        exc_type: None | Type[BaseException],
+        exc_value: None | BaseException,
+        traceback: None | TracebackType,
+    ) -> None: ...
+    def __iter__(self) -> nditer: ...
+    def __next__(self) -> Tuple[NDArray[Any], ...]: ...
+    def __len__(self) -> int: ...
+    def __copy__(self) -> nditer: ...
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> NDArray[Any]: ...
+    @overload
+    def __getitem__(self, index: slice) -> Tuple[NDArray[Any], ...]: ...
+    def __setitem__(self, index: slice | SupportsIndex, value: ArrayLike) -> None: ...
+    def close(self) -> None: ...
+    def copy(self) -> nditer: ...
+    def debug_print(self) -> None: ...
+    def enable_external_loop(self) -> None: ...
+    def iternext(self) -> bool: ...
+    def remove_axis(self, i: SupportsIndex, /) -> None: ...
+    def remove_multi_index(self) -> None: ...
+    def reset(self) -> None: ...
+    @property
+    def dtypes(self) -> Tuple[dtype[Any], ...]: ...
+    @property
+    def finished(self) -> bool: ...
+    @property
+    def has_delayed_bufalloc(self) -> bool: ...
+    @property
+    def has_index(self) -> bool: ...
+    @property
+    def has_multi_index(self) -> bool: ...
+    @property
+    def index(self) -> int: ...
+    @property
+    def iterationneedsapi(self) -> bool: ...
+    @property
+    def iterindex(self) -> int: ...
+    @property
+    def iterrange(self) -> Tuple[int, ...]: ...
+    @property
+    def itersize(self) -> int: ...
+    @property
+    def itviews(self) -> Tuple[NDArray[Any], ...]: ...
+    @property
+    def multi_index(self) -> Tuple[int, ...]: ...
+    @property
+    def ndim(self) -> int: ...
+    @property
+    def nop(self) -> int: ...
+    @property
+    def operands(self) -> Tuple[NDArray[Any], ...]: ...
+    @property
+    def shape(self) -> Tuple[int, ...]: ...
+    @property
+    def value(self) -> Tuple[NDArray[Any], ...]: ...
+
+_MemMapModeKind = L[
+    "readonly", "r",
+    "copyonwrite", "c",
+    "readwrite", "r+",
+    "write", "w+",
+]
+
+class memmap(ndarray[_ShapeType, _DType_co]):
+    __array_priority__: ClassVar[float]
+    filename: str | None
+    offset: int
+    mode: str
+    @overload
+    def __new__(
+        subtype,
+        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        dtype: Type[uint8] = ...,
+        mode: _MemMapModeKind = ...,
+        offset: int = ...,
+        shape: None | int | Tuple[int, ...] = ...,
+        order: _OrderKACF = ...,
+    ) -> memmap[Any, dtype[uint8]]: ...
+    @overload
+    def __new__(
+        subtype,
+        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        dtype: _DTypeLike[_ScalarType],
+        mode: _MemMapModeKind = ...,
+        offset: int = ...,
+        shape: None | int | Tuple[int, ...] = ...,
+        order: _OrderKACF = ...,
+    ) -> memmap[Any, dtype[_ScalarType]]: ...
+    @overload
+    def __new__(
+        subtype,
+        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        dtype: DTypeLike,
+        mode: _MemMapModeKind = ...,
+        offset: int = ...,
+        shape: None | int | Tuple[int, ...] = ...,
+        order: _OrderKACF = ...,
+    ) -> memmap[Any, dtype[Any]]: ...
+    def __array_finalize__(self, obj: memmap[Any, Any]) -> None: ...
+    def __array_wrap__(
+        self,
+        array: memmap[_ShapeType, _DType_co],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+    ) -> Any: ...
+    def __getitem__(self, index): ...  # TODO
+    def flush(self) -> None: ...

@@ -535,7 +535,6 @@ def _can_target(cmd, arch):
                 os.remove(output)
     finally:
         os.remove(filename)
-    return False
 
 
 if __name__ == '__main__':

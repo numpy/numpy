@@ -131,6 +131,22 @@ If it is known in advance that an operation _will_ perform a
 0D-array -> scalar cast, then one can consider manually remedying the
 situation with either `typing.cast` or a ``# type: ignore`` comment.
 
+Record array dtypes
+~~~~~~~~~~~~~~~~~~~
+
+The dtype of `numpy.recarray`, and the `numpy.rec` functions in general,
+can be specified in one of two ways:
+
+* Directly via the ``dtype`` argument.
+* With up to five helper arguments that operate via `numpy.format_parser`:
+  ``formats``, ``names``, ``titles``, ``aligned`` and ``byteorder``.
+
+These two approaches are currently typed as being mutually exclusive,
+*i.e.* if ``dtype`` is specified than one may not specify ``formats``.
+While this mutual exclusivity is not (strictly) enforced during runtime,
+combining both dtype specifiers can lead to unexpected or even downright
+buggy behavior.
+
 API
 ---
 

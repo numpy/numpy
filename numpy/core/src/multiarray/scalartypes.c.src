@@ -1805,6 +1805,59 @@ gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
     Py_RETURN_NONE;
 }
 
+static PyObject *
+numbertype_class_getitem_abc(PyObject *cls, PyObject *args)
+{
+    PyObject *generic_alias;
+
+#ifdef Py_GENERICALIASOBJECT_H
+    Py_ssize_t args_len;
+    int args_len_expected;
+
+    /* complexfloating should take 2 parameters, all others take 1 */
+    if (PyType_IsSubtype((PyTypeObject *)cls,
+                         &PyComplexFloatingArrType_Type)) {
+        args_len_expected = 2;
+    }
+    else {
+        args_len_expected = 1;
+    }
+
+    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
+    if (args_len != args_len_expected) {
+        return PyErr_Format(PyExc_TypeError,
+                            "Too %s arguments for %s",
+                            args_len > args_len_expected ? "many" : "few",
+                            ((PyTypeObject *)cls)->tp_name);
+    }
+    generic_alias = Py_GenericAlias(cls, args);
+#else
+    PyErr_SetString(PyExc_TypeError,
+                    "Type subscription requires python >= 3.9");
+    generic_alias = NULL;
+#endif
+    return generic_alias;
+}
+
+/*
+ * Use for concrete np.number subclasses, making them act as if they
+ * were subtyped from e.g. np.signedinteger[object], thus lacking any
+ * free subscription parameters. Requires python >= 3.9.
+ */
+static PyObject *
+numbertype_class_getitem(PyObject *cls, PyObject *args)
+{
+#ifdef Py_GENERICALIASOBJECT_H
+    PyErr_Format(PyExc_TypeError,
+                 "There are no type variables left in %s",
+                 ((PyTypeObject *)cls)->tp_name);
+#else
+    PyErr_SetString(PyExc_TypeError,
+                    "Type subscription requires python >= 3.9");
+#endif
+    return NULL;
+}
+
 /*
  * casting complex numbers (that don't inherit from Python complex)
  * to Python complex
@@ -2188,6 +2241,14 @@ static PyGetSetDef inttype_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL}
 };
 
+static PyMethodDef numbertype_methods[] = {
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem_abc,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}  /* sentinel */
+};
+
 /**begin repeat
  * #name = cfloat,clongdouble#
  */
@@ -2195,6 +2256,10 @@ static PyMethodDef @name@type_methods[] = {
     {"__complex__",
         (PyCFunction)@name@_complex,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
@@ -2232,6 +2297,23 @@ static PyMethodDef @name@type_methods[] = {
     {"is_integer",
         (PyCFunction)@name@_is_integer,
         METH_NOARGS, NULL},
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}
+};
+/**end repeat**/
+
+/**begin repeat
+ * #name = byte, short, int, long, longlong, ubyte, ushort,
+ *         uint, ulong, ulonglong, timedelta, cdouble#
+ */
+static PyMethodDef @name@type_methods[] = {
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
@@ -3951,6 +4033,8 @@ initialize_numeric_types(void)
 
     PyIntegerArrType_Type.tp_getset = inttype_getsets;
 
+    PyNumberArrType_Type.tp_methods = numbertype_methods;
+
     /**begin repeat
      * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,
      *        Floating, ComplexFloating, Flexible, Character#
@@ -4010,6 +4094,17 @@ initialize_numeric_types(void)
     /**begin repeat
      * #name = half, float, double, longdouble#
      * #Name = Half, Float, Double, LongDouble#
+     */
+
+    Py@Name@ArrType_Type.tp_methods = @name@type_methods;
+
+    /**end repeat**/
+
+    /**begin repeat
+     * #name = byte, short, int, long, longlong, ubyte, ushort,
+     *         uint, ulong, ulonglong, timedelta, cdouble#
+     * #Name = Byte, Short, Int, Long, LongLong, UByte, UShort,
+     *         UInt, ULong, ULongLong, Timedelta, CDouble#
      */
 
     Py@Name@ArrType_Type.tp_methods = @name@type_methods;

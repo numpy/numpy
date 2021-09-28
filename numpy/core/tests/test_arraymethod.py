@@ -3,6 +3,10 @@ This file tests the generic aspects of ArrayMethod.  At the time of writing
 this is private API, but when added, public API may be added here.
 """
 
+import sys
+import types
+from typing import Any, Type
+
 import pytest
 
 import numpy as np
@@ -56,3 +60,35 @@ class TestSimpleStridedCall:
         # This is private API, which may be modified freely
         with pytest.raises(error):
             self.method._simple_strided_call(*args)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
+class TestClassGetItem:
+    @pytest.mark.parametrize(
+        "cls", [np.ndarray, np.recarray, np.chararray, np.matrix, np.memmap]
+    )
+    def test_class_getitem(self, cls: Type[np.ndarray]) -> None:
+        """Test `ndarray.__class_getitem__`."""
+        alias = cls[Any, Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is cls
+
+    @pytest.mark.parametrize("arg_len", range(4))
+    def test_subscript_tuple(self, arg_len: int) -> None:
+        arg_tup = (Any,) * arg_len
+        if arg_len == 2:
+            assert np.ndarray[arg_tup]
+        else:
+            with pytest.raises(TypeError):
+                np.ndarray[arg_tup]
+
+    def test_subscript_scalar(self) -> None:
+        with pytest.raises(TypeError):
+            np.ndarray[Any]
+
+
+@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
+def test_class_getitem_38() -> None:
+    match = "Type subscription requires python >= 3.9"
+    with pytest.raises(TypeError, match=match):
+        np.ndarray[Any, Any]

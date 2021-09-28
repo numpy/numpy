@@ -1,3 +1,5 @@
+import operator
+
 from numpy.testing import assert_raises
 import numpy as np
 
@@ -255,15 +257,31 @@ def test_operators():
 
 
 def test_python_scalar_construtors():
-    a = asarray(False)
-    b = asarray(0)
-    c = asarray(0.0)
+    b = asarray(False)
+    i = asarray(0)
+    f = asarray(0.0)
 
-    assert bool(a) == bool(b) == bool(c) == False
-    assert int(a) == int(b) == int(c) == 0
-    assert float(a) == float(b) == float(c) == 0.0
+    assert bool(b) == False
+    assert int(i) == 0
+    assert float(f) == 0.0
+    assert operator.index(i) == 0
 
     # bool/int/float should only be allowed on 0-D arrays.
     assert_raises(TypeError, lambda: bool(asarray([False])))
     assert_raises(TypeError, lambda: int(asarray([0])))
     assert_raises(TypeError, lambda: float(asarray([0.0])))
+    assert_raises(TypeError, lambda: operator.index(asarray([0])))
+
+    # bool/int/float should only be allowed on arrays of the corresponding
+    # dtype
+    assert_raises(ValueError, lambda: bool(i))
+    assert_raises(ValueError, lambda: bool(f))
+
+    assert_raises(ValueError, lambda: int(b))
+    assert_raises(ValueError, lambda: int(f))
+
+    assert_raises(ValueError, lambda: float(b))
+    assert_raises(ValueError, lambda: float(i))
+
+    assert_raises(TypeError, lambda: operator.index(b))
+    assert_raises(TypeError, lambda: operator.index(f))

@@ -15,7 +15,7 @@ __all__ = [
     "PyCapsule",
 ]
 
-from typing import Any, Sequence, Type, Union
+from typing import Any, Literal, Sequence, Type, Union
 
 from . import (
     Array,
@@ -35,7 +35,7 @@ from . import (
 # similar comment in numpy/typing/_array_like.py
 NestedSequence = Sequence[Sequence[Any]]
 
-Device = Any
+Device = Literal["cpu"]
 Dtype = Type[
     Union[int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64]
 ]

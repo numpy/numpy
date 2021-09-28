@@ -116,7 +116,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
                 --p;
             }
         }
-        else if (p <= 0) {
+        else {
             if (p < -1-axis) {
                 ++p;
             }

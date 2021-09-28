@@ -196,10 +196,10 @@ Inexact types
    ``f16`` prints as ``0.1`` because it is as close to that value as possible,
    whereas the other types do not as they have more precision and therefore have
    closer values.
-   
+
    Conversely, floating-point scalars of different precisions which approximate
    the same decimal value may compare unequal despite printing identically:
-   
+
        >>> f16 = np.float16("0.1")
        >>> f32 = np.float32("0.1")
        >>> f64 = np.float64("0.1")
@@ -497,6 +497,13 @@ The exceptions to the above rules are given below:
    generic.__reduce__
    generic.__setstate__
    generic.setflags
+
+Utility method for typing:
+
+.. autosummary::
+   :toctree: generated/
+
+   number.__class_getitem__
 
 
 Defining new types
