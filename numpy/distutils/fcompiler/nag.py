@@ -16,7 +16,8 @@ class BaseNAGFCompiler(FCompiler):
 
     def get_flags_linker_so(self):
         if sys.platform == 'darwin':
-            return ['-unsharedf95', '-Wl,-bundle,-flat_namespace,-undefined,suppress']
+            return ['-unsharedf95', 
+                    '-Wl,-bundle,-flat_namespace,-undefined,suppress']
         return ["-Wl,-shared"]
     def get_flags_opt(self):
         return ['-O4']
