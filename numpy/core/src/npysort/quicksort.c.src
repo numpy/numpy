@@ -51,6 +51,8 @@
 
 #include "npy_sort.h"
 #include "npysort_common.h"
+#include "npy_cpu_features.h"
+#include "quicksort-avx512.h"
 #include <stdlib.h>
 
 #define NOT_USED NPY_UNUSED(unused)
@@ -83,11 +85,21 @@
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
  *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
+ * #AVX512 = 0*12, 1, 0*7#
  */
 
 NPY_NO_EXPORT int
 quicksort_@suff@(void *start, npy_intp num, void *NOT_USED)
 {
+#if @AVX512@
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
+    if(NPY_CPU_HAVE(AVX512_SKX)) {
+        avx512_qs_sort_float(start, num);
+        return 0;
+    }
+#endif
+#endif
+
     @type@ vp;
     @type@ *pl = start;
     @type@ *pr = pl + num - 1;
