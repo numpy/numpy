@@ -123,7 +123,9 @@ PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
         return NULL;
     }
     fp->len = 0;
-    while (defs[fp->len].name != NULL) { fp->len++; }
+    while (defs[fp->len].name != NULL) {
+        fp->len++;
+    }
     if (fp->len == 0) {
         goto fail;
     }
@@ -716,7 +718,9 @@ dump_dims(int rank, npy_intp const *dims)
 {
     int i;
     printf("[");
-    for (i = 0; i < rank; ++i) { printf("%3" NPY_INTP_FMT, dims[i]); }
+    for (i = 0; i < rank; ++i) {
+        printf("%3" NPY_INTP_FMT, dims[i]);
+    }
     printf("]\n");
 }
 void
