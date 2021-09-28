@@ -3577,7 +3577,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
         * 'S' - swap dtype from current to opposite endian
         * {'<', 'little'} - little endian
         * {'>', 'big'} - big endian
-        * '=' - native order, equivalent to `sys.byteorder`
+        * {'=', 'native'} - native order, equivalent to `sys.byteorder`
         * {'|', 'I'} - ignore (no change to byte order)
 
         The default value ('S') results in swapping the current
@@ -6037,7 +6037,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
         * 'S' - swap dtype from current to opposite endian
         * {'<', 'little'} - little endian
         * {'>', 'big'} - big endian
-        * '=' - native order
+        * {'=', 'native'} - native order
         * {'|', 'I'} - ignore (no change to byte order)
 
     Returns
@@ -6437,7 +6437,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     * 'S' - swap dtype from current to opposite endian
     * {'<', 'little'} - little endian
     * {'>', 'big'} - big endian
-    * '=' - native order
+    * {'=', 'native'} - native order
     * {'|', 'I'} - ignore (no change to byte order)
 
     Parameters
