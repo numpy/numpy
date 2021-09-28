@@ -37,6 +37,7 @@ class NAGFCompiler(BaseNAGFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+
     def get_flags_arch(self):
         version = self.get_version()
         if version and version < '5.1':
@@ -60,6 +61,7 @@ class NAGFORCompiler(BaseNAGFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+
     def get_flags_debug(self):
         version = self.get_version()
         if version and version > '6.1':
