@@ -3252,7 +3252,7 @@ def i0(x):
            Her Majesty's Stationery Office, 1962.
     .. [2] M. Abramowitz and I. A. Stegun, *Handbook of Mathematical
            Functions*, 10th printing, New York: Dover, 1964, pp. 379.
-           http://www.math.sfu.ca/~cbm/aands/page_379.htm
+           https://personal.math.ubc.ca/~cbm/aands/page_379.htm
     .. [3] https://metacpan.org/pod/distribution/Math-Cephes/lib/Math/Cephes.pod#i0:-Modified-Bessel-function-of-order-zero
 
     Examples
