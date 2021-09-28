@@ -35,3 +35,4 @@ SpacesInParentheses: false
 StatementMacros: [PyObject_HEAD, PyObject_VAR_HEAD, PyObject_HEAD_EXTRA]
 TabWidth: 4
 UseTab: Never
+AllowShortBlocksOnASingleLine: Empty
