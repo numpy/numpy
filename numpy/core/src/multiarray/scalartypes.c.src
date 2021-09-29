@@ -2327,8 +2327,7 @@ static PyMethodDef @name@type_methods[] = {
 /**end repeat**/
 
 /**begin repeat
- * #name = byte, short, int, long, longlong, ubyte, ushort,
- *         uint, ulong, ulonglong, timedelta, cdouble#
+ * #name = timedelta, cdouble#
  */
 static PyMethodDef @name@type_methods[] = {
     /* for typing; requires python >= 3.9 */
@@ -2344,6 +2343,10 @@ static PyMethodDef @name@type_methods[] = {
  *         long, ulong, longlong, ulonglong#
  */
 static PyMethodDef @name@type_methods[] = {
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
     {"bit_count",
         (PyCFunction)npy_@name@_bit_count,
         METH_NOARGS, NULL},
