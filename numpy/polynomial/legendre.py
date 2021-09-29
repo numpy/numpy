@@ -425,7 +425,7 @@ def legmulx(c):
 
     See Also
     --------
-    legadd, legmul, legmul, legdiv, legpow
+    legadd, legmul, legdiv, legpow
 
     Notes
     -----
@@ -604,9 +604,6 @@ def legpow(c, pow, maxpower=16):
     See Also
     --------
     legadd, legsub, legmulx, legmul, legdiv
-
-    Examples
-    --------
 
     """
     return pu._pow(legmul, c, pow, maxpower)
@@ -889,9 +886,6 @@ def legval(x, c, tensor=True):
     Notes
     -----
     The evaluation uses Clenshaw recursion, aka synthetic division.
-
-    Examples
-    --------
 
     """
     c = np.array(c, ndmin=1, copy=False)
@@ -1327,10 +1321,11 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (`M`,), optional
-        Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-        weights are chosen so that the errors of the products ``w[i]*y[i]``
-        all have the same variance.  The default value is None.
+        Weights. If not None, the weight ``w[i]`` applies to the unsquared
+        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        same variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
         .. versionadded:: 1.5.0
 
@@ -1344,12 +1339,12 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         returned `coef`.
 
     [residuals, rank, singular_values, rcond] : list
-        These values are only returned if `full` = True
+        These values are only returned if ``full == True``
 
-        resid -- sum of squared residuals of the least squares fit
-        rank -- the numerical rank of the scaled Vandermonde matrix
-        sv -- singular values of the scaled Vandermonde matrix
-        rcond -- value of `rcond`.
+        - residuals -- sum of squared residuals of the least squares fit
+        - rank -- the numerical rank of the scaled Vandermonde matrix
+        - singular_values -- singular values of the scaled Vandermonde matrix
+        - rcond -- value of `rcond`.
 
         For more details, see `numpy.linalg.lstsq`.
 
@@ -1357,7 +1352,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.  The
+        deficient. The warning is only raised if ``full == False``.  The
         warnings can be turned off by
 
         >>> import warnings

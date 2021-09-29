@@ -1,0 +1,22 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10
+  labels:
+  - 03 - Maintenance
+  ignore:
+  - dependency-name: gitpython
+    versions:
+    - "> 3.1.13, < 3.2"
+  - dependency-name: pydata-sphinx-theme
+    versions:
+    - 0.6.0
+    - 0.6.1
+  - dependency-name: hypothesis
+    versions:
+    - 6.3.0
+  commit-message:
+    prefix: MAINT

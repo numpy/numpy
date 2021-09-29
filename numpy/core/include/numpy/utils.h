@@ -1,5 +1,5 @@
-#ifndef __NUMPY_UTILS_HEADER__
-#define __NUMPY_UTILS_HEADER__
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_UTILS_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_UTILS_H_
 
 #ifndef __COMP_NPY_UNUSED
     #if defined(__GNUC__)
@@ -34,4 +34,4 @@
 #define NPY_CAT_(a, b) NPY_CAT__(a, b)
 #define NPY_CAT(a, b) NPY_CAT_(a, b)
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_UTILS_H_ */

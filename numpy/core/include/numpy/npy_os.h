@@ -1,5 +1,5 @@
-#ifndef _NPY_OS_H_
-#define _NPY_OS_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_OS_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_OS_H_
 
 #if defined(linux) || defined(__linux) || defined(__linux__)
     #define NPY_OS_LINUX
@@ -27,4 +27,4 @@
     #define NPY_OS_UNKNOWN
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_OS_H_ */

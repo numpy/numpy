@@ -33,7 +33,6 @@ from .core import (
 
 import numpy as np
 from numpy import ndarray, array as nxarray
-import numpy.core.umath as umath
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce
@@ -614,7 +613,7 @@ def average(a, axis=None, weights=None, returned=False):
                     "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape, subok=True)
             wgt = wgt.swapaxes(-1, axis)
 
         if m is not nomask:
@@ -744,7 +743,6 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
-        counts = count(asorted)
         idx, odd = divmod(count(asorted), 2)
         mid = asorted[idx + odd - 1:idx + 1]
         if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
@@ -752,7 +750,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             s = mid.sum(out=out)
             if not odd:
                 s = np.true_divide(s, 2., casting='safe', out=out)
-            s = np.lib.utils._median_nancheck(asorted, s, axis, out)
+            s = np.lib.utils._median_nancheck(asorted, s, axis)
         else:
             s = mid.mean(out=out)
 
@@ -792,7 +790,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         s = np.ma.sum(low_high, axis=axis, out=out)
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
 
-        s = np.lib.utils._median_nancheck(asorted, s, axis, out)
+        s = np.lib.utils._median_nancheck(asorted, s, axis)
     else:
         s = np.ma.mean(low_high, axis=axis, out=out)
 
@@ -1217,7 +1215,7 @@ def union1d(ar1, ar2):
 
     The output is always a masked array. See `numpy.union1d` for more details.
 
-    See also
+    See Also
     --------
     numpy.union1d : Equivalent function for ndarrays.
 
@@ -1322,7 +1320,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         observation of all those variables. Also see `rowvar` below.
     y : array_like, optional
         An additional set of variables and observations. `y` has the same
-        form as `x`.
+        shape as `x`.
     rowvar : bool, optional
         If `rowvar` is True (default), then each row represents a
         variable, with observations in the columns. Otherwise, the relationship
@@ -1483,7 +1481,7 @@ class MAxisConcatenator(AxisConcatenator):
         # deprecate that class. In preparation, we use the unmasked version
         # to construct the matrix (with copy=False for backwards compatibility
         # with the .view)
-        data = super(MAxisConcatenator, cls).makemat(arr.data, copy=False)
+        data = super().makemat(arr.data, copy=False)
         return array(data, mask=arr.mask)
 
     def __getitem__(self, key):
@@ -1491,7 +1489,7 @@ class MAxisConcatenator(AxisConcatenator):
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
 
-        return super(MAxisConcatenator, self).__getitem__(key)
+        return super().__getitem__(key)
 
 
 class mr_class(MAxisConcatenator):

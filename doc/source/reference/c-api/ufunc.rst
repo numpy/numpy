@@ -283,20 +283,6 @@ Functions
     signature is an array of data-type numbers indicating the inputs
     followed by the outputs assumed by the 1-d loop.
 
-.. c:function:: int PyUFunc_GenericFunction( \
-        PyUFuncObject* self, PyObject* args, PyObject* kwds, PyArrayObject** mps)
-
-    .. deprecated:: NumPy 1.19
-
-        Unless NumPy is made aware of an issue with this, this function
-        is scheduled for rapid removal without replacement.
-
-    Instead of this function ``PyObject_Call(ufunc, args, kwds)`` should be
-    used. The above function differs from this because it ignores support
-    for non-array, or array subclasses as inputs.
-    To ensure identical behaviour, it may be necessary to convert all inputs
-    using ``PyArray_FromAny(obj, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL)``.
-
 .. c:function:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
 
     A simple interface to the IEEE error-flag checking support. The

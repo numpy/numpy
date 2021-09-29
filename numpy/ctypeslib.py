@@ -4,7 +4,7 @@
 ============================
 
 See Also
----------
+--------
 load_library : Load a C library.
 ndpointer : Array restype/argtype with verification.
 as_ctypes : Create a ctypes array from an ndarray.
@@ -49,11 +49,12 @@ Then, we're ready to call ``foo_func``:
 >>> _lib.foo_func(out, len(out))                #doctest: +SKIP
 
 """
-__all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array']
+__all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
+           'as_ctypes_type']
 
 import os
 from numpy import (
-    integer, ndarray, dtype as _dtype, array, frombuffer
+    integer, ndarray, dtype as _dtype, asarray, frombuffer
 )
 from numpy.core.multiarray import _flagdict, flagsobj
 
@@ -514,7 +515,7 @@ if ctypes is not None:
             p_arr_type = ctypes.POINTER(_ctype_ndarray(obj._type_, shape))
             obj = ctypes.cast(obj, p_arr_type).contents
 
-        return array(obj, copy=False)
+        return asarray(obj)
 
 
     def as_ctypes(obj):

@@ -1,0 +1,4 @@
+The ``ndim`` and ``axis`` attributes have been added to `numpy.AxisError`
+-------------------------------------------------------------------------
+The ``ndim`` and ``axis`` parameters are now also stored as attributes
+within each `numpy.AxisError` instance.

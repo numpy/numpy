@@ -262,6 +262,10 @@ def isreal(x):
     out : ndarray, bool
         Boolean array of same shape as `x`.
 
+    Notes
+    -----
+    `isreal` may behave unexpectedly for string or object arrays (see examples)
+
     See Also
     --------
     iscomplex
@@ -269,8 +273,28 @@ def isreal(x):
 
     Examples
     --------
-    >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
+    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
+    >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
+    
+    The function does not work on string arrays.
+
+    >>> a = np.array([2j, "a"], dtype="U")
+    >>> np.isreal(a)  # Warns about non-elementwise comparison
+    False
+    
+    Returns True for all elements in input array of ``dtype=object`` even if
+    any of the elements is complex.
+
+    >>> a = np.array([1, "2", 3+4j], dtype=object)
+    >>> np.isreal(a)
+    array([ True,  True,  True])
+    
+    isreal should not be used with object arrays
+    
+    >>> a = np.array([1+2j, 2+1j], dtype=object)
+    >>> np.isreal(a)
+    array([ True,  True])
 
     """
     return imag(x) == 0
@@ -339,6 +363,19 @@ def isrealobj(x):
     See Also
     --------
     iscomplexobj, isreal
+
+    Notes
+    -----
+    The function is only meant for arrays with numerical values but it
+    accepts all other objects. Since it assumes array input, the return
+    value of other objects may be True.
+
+    >>> np.isrealobj('A string')
+    True
+    >>> np.isrealobj(False)
+    True
+    >>> np.isrealobj(None)
+    True
 
     Examples
     --------

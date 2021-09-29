@@ -1,8 +1,9 @@
-#ifndef _NPY_ARRAY_ALLOC_H_
-#define _NPY_ARRAY_ALLOC_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include <numpy/ndarraytypes.h>
+#include "numpy/ndarraytypes.h"
 
 #define NPY_TRACE_DOMAIN 389047
 
@@ -36,4 +37,4 @@ npy_free_cache_dim_array(PyArrayObject * arr)
     npy_free_cache_dim(PyArray_DIMS(arr), PyArray_NDIM(arr));
 }
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */

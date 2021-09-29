@@ -50,7 +50,7 @@ and double-backticks for code.
 If you are unsure what pull request type to use, don't hesitate to ask in your
 PR.
 
-You can install ``towncrier`` and run ``towncrier --draft --version 1.18``
+You can install ``towncrier`` and run ``towncrier build --draft --version 1.18``
 if you want to get a preview of how your change will look in the final release
 notes.
 

@@ -14,7 +14,7 @@ written only once. There are three layers:
   written using the maximum set of intrinsics possible.
 - At *compile* time, a distutils command is used to define the minimum and
   maximum features to support, based on user choice and compiler support. The
-  appropriate macros are overlayed with the platform / architecture intrinsics,
+  appropriate macros are overlaid with the platform / architecture intrinsics,
   and the three loops are compiled.
 - At *runtime import*, the CPU is probed for the set of supported intrinsic
   features. A mechanism is used to grab the pointer to the most appropriate
@@ -89,15 +89,15 @@ NOTES
 ~~~~~~~~~~~~~
 - CPU features and other options are case-insensitive.
 
-- The order of the requsted optimizations doesn't matter.
+- The order of the requested optimizations doesn't matter.
 
 - Either commas or spaces can be used as a separator, e.g. ``--cpu-dispatch``\ =
   "avx2 avx512f" or ``--cpu-dispatch``\ = "avx2, avx512f" both work, but the
   arguments must be enclosed in quotes.
 
 - The operand ``+`` is only added for nominal reasons, For example:
-  ``--cpu-basline= "min avx2"`` is equivalent to ``--cpu-basline="min + avx2"``.
-  ``--cpu-basline="min,avx2"`` is equivalent to ``--cpu-basline`="min,+avx2"``
+  ``--cpu-baseline= "min avx2"`` is equivalent to ``--cpu-baseline="min + avx2"``.
+  ``--cpu-baseline="min,avx2"`` is equivalent to ``--cpu-baseline`="min,+avx2"``
 
 - If the CPU feature is not supported by the user platform or
   compiler, it will be skipped rather than raising a fatal error.
@@ -113,7 +113,7 @@ NOTES
   compiler native flag ``-march=native`` or ``-xHost`` or ``QxHost`` is
   enabled through environment variable ``CFLAGS``
 
-- The validation process for the requsted optimizations when it comes to
+- The validation process for the requested optimizations when it comes to
   ``--cpu-baseline`` isn't strict. For example, if the user requested
   ``AVX2`` but the compiler doesn't support it then we just skip it and return
   the maximum optimization that the compiler can handle depending on the
@@ -379,15 +379,15 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
       #include "numpy/utils.h" // NPY_CAT, NPY_TOSTR
 
       #ifndef NPY__CPU_TARGET_CURRENT
-        // wrapping the dispatch-able source only happens to the addtional optimizations
-        // but if the keyword 'baseline' provided within the configuration statments,
+        // wrapping the dispatch-able source only happens to the additional optimizations
+        // but if the keyword 'baseline' provided within the configuration statements,
         // the infrastructure will add extra compiling for the dispatch-able source by
         // passing it as-is to the compiler without any changes.
         #define CURRENT_TARGET(X) X
         #define NPY__CPU_TARGET_CURRENT baseline // for printing only
       #else
         // since we reach to this point, that's mean we're dealing with
-          // the addtional optimizations, so it could be SSE42 or AVX512F
+          // the additional optimizations, so it could be SSE42 or AVX512F
         #define CURRENT_TARGET(X) NPY_CAT(NPY_CAT(X, _), NPY__CPU_TARGET_CURRENT)
       #endif
       // Macro 'CURRENT_TARGET' adding the current target as suffux to the exported symbols,
@@ -418,7 +418,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
       #undef NPY__CPU_DISPATCH_BASELINE_CALL
       #undef NPY__CPU_DISPATCH_CALL
       // nothing strange here, just a normal preprocessor callback
-      // enabled only if 'baseline' spesfied withiin the configration statments
+      // enabled only if 'baseline' specified within the configuration statements
       #define NPY__CPU_DISPATCH_BASELINE_CALL(CB, ...) \
         NPY__CPU_DISPATCH_EXPAND_(CB(__VA_ARGS__))
       // 'NPY__CPU_DISPATCH_CALL' is an abstract macro is used for dispatching
@@ -427,7 +427,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
       // @param CHK, Expected a macro that can be used to detect CPU features
       // in runtime, which takes a CPU feature name without string quotes and
       // returns the testing result in a shape of boolean value.
-      // NumPy already has macro called "NPY_CPU_HAVE", which fit this requirment.
+      // NumPy already has macro called "NPY_CPU_HAVE", which fits this requirement.
       //
       // @param CB, a callback macro that expected to be called multiple times depending
       // on the required optimizations, the callback should receive the following arguments:

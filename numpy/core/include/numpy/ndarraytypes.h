@@ -1,5 +1,5 @@
-#ifndef NDARRAYTYPES_H
-#define NDARRAYTYPES_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
 
 #include "npy_common.h"
 #include "npy_endian.h"
@@ -235,6 +235,12 @@ typedef enum {
         NPY_WRAP=1,
         NPY_RAISE=2
 } NPY_CLIPMODE;
+
+typedef enum {
+        NPY_VALID=0,
+        NPY_SAME=1,
+        NPY_FULL=2
+} NPY_CORRELATEMODE;
 
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
@@ -850,6 +856,17 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_ENSUREARRAY     0x0040
 
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * Dual use of the ENSUREARRAY flag, to indicate that this was converted
+     * from a python float, int, or complex.
+     * An array using this flag must be a temporary array that can never
+     * leave the C internals of NumPy.  Even if it does, ENSUREARRAY is
+     * absolutely safe to abuse, since it already is a base class array :).
+     */
+    #define _NPY_ARRAY_WAS_PYSCALAR   0x0040
+#endif  /* NPY_INTERNAL_BUILD */
+
 /*
  * Make sure that the strides are in units of the element size Needed
  * for some operations with record-arrays.
@@ -1219,6 +1236,8 @@ struct PyArrayIterObject_tag {
                 _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
                 for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
                      __npy_i++) { \
+                        _PyAIT(it)->coordinates[__npy_i] = \
+                                (__npy_ind / _PyAIT(it)->factors[__npy_i]); \
                         _PyAIT(it)->dataptr += \
                                 (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
                                 * _PyAIT(it)->strides[__npy_i]; \
@@ -1288,7 +1307,6 @@ typedef struct {
 
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
-
 
 /*
  * Store the information needed for fancy-indexing over an array. The
@@ -1446,9 +1464,11 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * Include inline implementations - functions defined there are not
  * considered public API
  */
-#define _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
 #include "_neighborhood_iterator_imp.h"
-#undef _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
+
+
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
@@ -1883,49 +1903,25 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          * may be a pointer to the *prototype* instance?
          */
         PyArray_Descr *singleton;
-        /*
-         * Is this DType created using the old API? This exists mainly to
-         * allow for assertions in paths specific to wrapping legacy types.
-         */
-        npy_bool legacy;
-        /* The values stored by a parametric datatype depend on its instance */
-        npy_bool parametric;
-        /* whether the DType can be instantiated (i.e. np.dtype cannot) */
-        npy_bool abstract;
+        /* Copy of the legacy DTypes type number, usually invalid. */
+        int type_num;
 
-        /*
-         * The following fields replicate the most important dtype information.
-         * In the legacy implementation most of these are stored in the
-         * PyArray_Descr struct.
-         */
         /* The type object of the scalar instances (may be NULL?) */
         PyTypeObject *scalar_type;
-        /* kind for this type */
-        char kind;
-        /* unique-character representing this type */
-        char type;
-        /* flags describing data type */
-        char flags;
-        /* number representing this type */
-        int type_num;
         /*
-         * Point to the original ArrFuncs.
-         * NOTE: We could make a copy to detect changes to `f`.
+         * DType flags to signal legacy, parametric, or
+         * abstract.  But plenty of space for additional information/flags.
          */
-        PyArray_ArrFuncs *f;
+        npy_uint64 flags;
 
-        /* DType methods, these could be moved into its own struct */
-        discover_descr_from_pyobject_function *discover_descr_from_pyobject;
-        is_known_scalar_type_function *is_known_scalar_type;
-        default_descr_function *default_descr;
-        common_dtype_function *common_dtype;
-        common_instance_function *common_instance;
         /*
-         * Dictionary of ArrayMethods representing most possible casts
-         * (structured and object are exceptions).
-         * This should potentially become a weak mapping in the future.
+         * Use indirection in order to allow a fixed size for this struct.
+         * A stable ABI size makes creating a static DType less painful
+         * while also ensuring flexibility for all opaque API (with one
+         * indirection due the pointer lookup).
          */
-        PyObject *castingimpls;
+        void *dt_slots;
+        void *reserved[3];
     };
 
 #endif  /* NPY_INTERNAL_BUILD */
@@ -1957,4 +1953,4 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  */
 #undef NPY_DEPRECATED_INCLUDES
 
-#endif /* NPY_ARRAYTYPES_H */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

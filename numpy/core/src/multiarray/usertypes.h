@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE_USERTYPES_H_
-#define _NPY_PRIVATE_USERTYPES_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_USERTYPES_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_USERTYPES_H_
 
 #include "array_method.h"
 
@@ -27,4 +27,4 @@ NPY_NO_EXPORT int
 PyArray_AddLegacyWrapping_CastingImpl(
         PyArray_DTypeMeta *from, PyArray_DTypeMeta *to, NPY_CASTING casting);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_USERTYPES_H_ */

@@ -40,13 +40,11 @@ def test_numpy_namespace():
         'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.<lambda>',
+        'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
         'disp': 'numpy.lib.function_base.disp',
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
         'get_include': 'numpy.lib.utils.get_include',
-        'mafromtxt': 'numpy.lib.npyio.mafromtxt',
-        'ndfromtxt': 'numpy.lib.npyio.ndfromtxt',
         'recfromcsv': 'numpy.lib.npyio.recfromcsv',
         'recfromtxt': 'numpy.lib.npyio.recfromtxt',
         'safe_eval': 'numpy.lib.utils.safe_eval',
@@ -54,22 +52,8 @@ def test_numpy_namespace():
         'show_config': 'numpy.__config__.show',
         'who': 'numpy.lib.utils.who',
     }
-    if sys.version_info < (3, 7):
-        # These built-in types are re-exported by numpy.
-        builtins = {
-            'bool': 'builtins.bool',
-            'complex': 'builtins.complex',
-            'float': 'builtins.float',
-            'int': 'builtins.int',
-            'long': 'builtins.int',
-            'object': 'builtins.object',
-            'str': 'builtins.str',
-            'unicode': 'builtins.str',
-        }
-        allowlist = dict(undocumented, **builtins)
-    else:
-        # after 3.7, we override dir to not show these members
-        allowlist = undocumented
+    # We override dir to not show these members
+    allowlist = undocumented
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal
@@ -137,6 +121,7 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
+    "array_api",
     "ctypeslib",
     "distutils",
     "distutils.cpuinfo",
@@ -154,6 +139,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "lib.mixins",
     "lib.recfunctions",
     "lib.scimath",
+    "lib.stride_tricks",
     "linalg",
     "ma",
     "ma.extras",
@@ -166,10 +152,10 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.laguerre",
     "polynomial.legendre",
     "polynomial.polynomial",
-    "polynomial.polyutils",
     "random",
     "testing",
     "typing",
+    "typing.mypy_plugin",
     "version",
 ]]
 
@@ -243,6 +229,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.fcompiler.nv",
     "distutils.fcompiler.sun",
     "distutils.fcompiler.vast",
+    "distutils.fcompiler.fujitsu",
     "distutils.from_template",
     "distutils.intelccompiler",
     "distutils.lib2def",
@@ -266,6 +253,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.f90mod_rules",
     "f2py.func2subr",
     "f2py.rules",
+    "f2py.symbolic",
     "f2py.use_rules",
     "fft.helper",
     "lib.arraypad",
@@ -278,7 +266,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "lib.npyio",
     "lib.polynomial",
     "lib.shape_base",
-    "lib.stride_tricks",
     "lib.twodim_base",
     "lib.type_check",
     "lib.ufunclike",
@@ -292,6 +279,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "ma.timer_comparison",
     "matrixlib",
     "matrixlib.defmatrix",
+    "polynomial.polyutils",
     "random.mtrand",
     "random.bit_generator",
     "testing.print_coercion_tables",

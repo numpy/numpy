@@ -152,9 +152,8 @@ def poly(seq_of_zeros):
         return 1.0
     dt = seq_of_zeros.dtype
     a = ones((1,), dtype=dt)
-    for k in range(len(seq_of_zeros)):
-        a = NX.convolve(a, array([1, -seq_of_zeros[k]], dtype=dt),
-                        mode='full')
+    for zero in seq_of_zeros:
+        a = NX.convolve(a, array([1, -zero], dtype=dt), mode='full')
 
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
@@ -489,16 +488,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (M,), optional
-        Weights to apply to the y-coordinates of the sample points. For
-        gaussian uncertainties, use 1/sigma (not 1/sigma**2).
+        Weights. If not None, the weight ``w[i]`` applies to the unsquared
+        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        same variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
     cov : bool or str, optional
         If given and not `False`, return not just the estimate but also its
         covariance matrix. By default, the covariance are scaled by
-        chi2/dof, where dof = M - (deg + 1), i.e., the weights are presumed 
-        to be unreliable except in a relative sense and everything is scaled 
-        such that the reduced chi2 is unity. This scaling is omitted if 
-        ``cov='unscaled'``, as is relevant for the case that the weights are 
-        1/sigma**2, with sigma known to be a reliable estimate of the 
+        chi2/dof, where dof = M - (deg + 1), i.e., the weights are presumed
+        to be unreliable except in a relative sense and everything is scaled
+        such that the reduced chi2 is unity. This scaling is omitted if
+        ``cov='unscaled'``, as is relevant for the case that the weights are
+        w = 1/sigma, with sigma known to be a reliable estimate of the
         uncertainty.
 
     Returns
@@ -508,13 +510,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         coefficients for `k`-th data set are in ``p[:,k]``.
 
     residuals, rank, singular_values, rcond
-        Present only if `full` = True.  Residuals is sum of squared residuals
-        of the least-squares fit, the effective rank of the scaled Vandermonde
-        coefficient matrix, its singular values, and the specified value of
-        `rcond`. For more details, see `linalg.lstsq`.
+        These values are only returned if ``full == True``
+
+        - residuals -- sum of squared residuals of the least squares fit
+        - rank -- the effective rank of the scaled Vandermonde
+           coefficient matrix
+        - singular_values -- singular values of the scaled Vandermonde
+           coefficient matrix
+        - rcond -- value of `rcond`.
+
+        For more details, see `numpy.linalg.lstsq`.
 
     V : ndarray, shape (M,M) or (M,M,K)
-        Present only if `full` = False and `cov`=True.  The covariance
+        Present only if ``full == False`` and ``cov == True``.  The covariance
         matrix of the polynomial coefficient estimates.  The diagonal of
         this matrix are the variance estimates for each coefficient.  If y
         is a 2-D array, then the covariance matrix for the `k`-th data set
@@ -525,7 +533,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.
+        deficient. The warning is only raised if ``full == False``.
 
         The warnings can be turned off by
 
@@ -708,8 +716,8 @@ def polyval(p, x):
 
         ``p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]``
 
-    If `x` is a sequence, then `p(x)` is returned for each element of `x`.
-    If `x` is another polynomial then the composite polynomial `p(x(t))`
+    If `x` is a sequence, then ``p(x)`` is returned for each element of ``x``.
+    If `x` is another polynomial then the composite polynomial ``p(x(t))``
     is returned.
 
     Parameters
@@ -767,8 +775,8 @@ def polyval(p, x):
     else:
         x = NX.asanyarray(x)
         y = NX.zeros_like(x)
-    for i in range(len(p)):
-        y = y * x + p[i]
+    for pv in p:
+        y = y * x + pv
     return y
 
 
@@ -1037,7 +1045,7 @@ def polydiv(u, v):
         return poly1d(q), poly1d(r)
     return q, r
 
-_poly_mat = re.compile(r"[*][*]([0-9]*)")
+_poly_mat = re.compile(r"\*\*([0-9]*)")
 def _raise_power(astr, wrap=70):
     n = 0
     line1 = ''
@@ -1270,14 +1278,14 @@ class poly1d:
                 s = s[:-5]
             return s
 
-        for k in range(len(coeffs)):
-            if not iscomplex(coeffs[k]):
-                coefstr = fmt_float(real(coeffs[k]))
-            elif real(coeffs[k]) == 0:
-                coefstr = '%sj' % fmt_float(imag(coeffs[k]))
+        for k, coeff in enumerate(coeffs):
+            if not iscomplex(coeff):
+                coefstr = fmt_float(real(coeff))
+            elif real(coeff) == 0:
+                coefstr = '%sj' % fmt_float(imag(coeff))
             else:
-                coefstr = '(%s + %sj)' % (fmt_float(real(coeffs[k])),
-                                          fmt_float(imag(coeffs[k])))
+                coefstr = '(%s + %sj)' % (fmt_float(real(coeff)),
+                                          fmt_float(imag(coeff)))
 
             power = (N-k)
             if power == 0:
@@ -1394,9 +1402,9 @@ class poly1d:
     def __getitem__(self, val):
         ind = self.order - val
         if val > self.order:
-            return 0
+            return self.coeffs.dtype.type(0)
         if val < 0:
-            return 0
+            return self.coeffs.dtype.type(0)
         return self.coeffs[ind]
 
     def __setitem__(self, key, val):

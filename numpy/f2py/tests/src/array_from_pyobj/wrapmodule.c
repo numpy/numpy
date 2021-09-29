@@ -9,7 +9,9 @@ extern "C" {
 #endif
 
 /*********************** See f2py2e/cfuncs.py: includes ***********************/
-#include "Python.h"
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 #include "fortranobject.h"
 #include <math.h>
 
@@ -93,7 +95,7 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
   PyObject *strides = NULL;
   char s[100];
   int i;
-  memset(s,0,100*sizeof(char));
+  memset(s,0,100);
   if (!PyArg_ParseTuple(capi_args,"O!|:wrap.attrs",
                         &PyArray_Type,&arr_capi))
     return NULL;

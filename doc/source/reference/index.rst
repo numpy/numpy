@@ -1,14 +1,13 @@
 .. _reference:
 
+.. module:: numpy
+
 ###############
 NumPy Reference
 ###############
 
 :Release: |version|
 :Date: |today|
-
-
-.. module:: numpy
 
 This reference manual details functions, modules, and objects
 included in NumPy, describing what they are and what they do.
@@ -27,7 +26,6 @@ For learning how to use NumPy, see the :ref:`complete documentation <numpy_docs_
    distutils
    distutils_guide
    c-api/index
-   internals
    simd/simd-optimizations
    swig
 

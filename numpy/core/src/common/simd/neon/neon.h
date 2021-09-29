@@ -10,6 +10,11 @@
 #else
     #define NPY_SIMD_F64 0
 #endif
+#ifdef NPY_HAVE_NEON_VFPV4
+    #define NPY_SIMD_FMA3 1  // native support
+#else
+    #define NPY_SIMD_FMA3 0  // HW emulated
+#endif
 
 typedef uint8x16_t  npyv_u8;
 typedef int8x16_t   npyv_s8;

@@ -22,8 +22,8 @@ example that has rather narrow utility but illustrates the concepts involved.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 
 Our custom array can be instantiated like:
 
@@ -56,7 +56,7 @@ array([[2., 0., 0., 0., 0.],
 
 Notice that the return type is a standard ``numpy.ndarray``.
 
->>> type(arr)
+>>> type(np.multiply(arr, 2))
 numpy.ndarray
 
 How can we pass our custom array type through this function? Numpy allows a
@@ -84,8 +84,8 @@ For this example we will only handle the method ``__call__``
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
 ...             N = None
@@ -133,8 +133,8 @@ conveniently by inheriting from the mixin
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
 ...             N = None
@@ -171,8 +171,8 @@ functions to our custom variants.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self):
-...         return self._i * np.eye(self._N)
+...     def __array__(self, dtype=None):
+...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
 ...             N = None

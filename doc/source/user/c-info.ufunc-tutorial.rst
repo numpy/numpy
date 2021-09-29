@@ -80,6 +80,7 @@ the module.
 
     .. code-block:: c
 
+        #define PY_SSIZE_T_CLEAN
         #include <Python.h>
         #include <math.h>
 
@@ -252,11 +253,12 @@ the primary thing that must be changed to create your own ufunc.
 
     .. code-block:: c
 
-        #include "Python.h"
-        #include "math.h"
+        #define PY_SSIZE_T_CLEAN
+        #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
         #include "numpy/npy_3kcompat.h"
+        #include <math.h>
 
         /*
          * single_type_logit.c
@@ -427,11 +429,12 @@ the primary thing that must be changed to create your own ufunc.
 
     .. code-block:: c
 
-        #include "Python.h"
-        #include "math.h"
+        #define PY_SSIZE_T_CLEAN
+        #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
         #include "numpy/halffloat.h"
+        #include <math.h>
 
         /*
          * multi_type_logit.c
@@ -696,11 +699,12 @@ as well as all other properties of a ufunc.
 
     .. code-block:: c
 
-        #include "Python.h"
-        #include "math.h"
+        #define PY_SSIZE_T_CLEAN
+        #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
         #include "numpy/halffloat.h"
+        #include <math.h>
 
         /*
          * multi_arg_logit.c
@@ -828,11 +832,12 @@ The C file is given below.
 
     .. code-block:: c
 
-        #include "Python.h"
-        #include "math.h"
+        #define PY_SSIZE_T_CLEAN
+        #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
         #include "numpy/npy_3kcompat.h"
+        #include <math.h>
 
 
         /*

@@ -697,6 +697,22 @@ class TestMa:
         assert_equal(b[0].shape, ())
         assert_equal(b[1].shape, ())
 
+    def test_assignment_by_condition(self):
+        # Test for gh-18951
+        a = array([1, 2, 3, 4], mask=[1, 0, 1, 0])
+        c = a >= 3
+        a[c] = 5
+        assert_(a[2] is masked)
+
+    def test_assignment_by_condition_2(self):
+        # gh-19721
+        a = masked_array([0, 1], mask=[False, False])
+        b = masked_array([0, 1], mask=[True, True])
+        mask = a < 1
+        b[mask] = a[mask]
+        expected_mask = [False, True]
+        assert_equal(b.mask, expected_mask)
+
 
 class TestUfuncs:
     def setup(self):

@@ -34,12 +34,12 @@
 #define npyv_shr_s64(A, C) vshlq_s64(A, npyv_setall_s64(-(C)))
 
 // right by an immediate constant
-#define npyv_shri_u16(VEC, C) ((C) == 0 ? VEC : vshrq_n_u16(VEC, C))
-#define npyv_shri_s16(VEC, C) ((C) == 0 ? VEC : vshrq_n_s16(VEC, C))
-#define npyv_shri_u32(VEC, C) ((C) == 0 ? VEC : vshrq_n_u32(VEC, C))
-#define npyv_shri_s32(VEC, C) ((C) == 0 ? VEC : vshrq_n_s32(VEC, C))
-#define npyv_shri_u64(VEC, C) ((C) == 0 ? VEC : vshrq_n_u64(VEC, C))
-#define npyv_shri_s64(VEC, C) ((C) == 0 ? VEC : vshrq_n_s64(VEC, C))
+#define npyv_shri_u16 vshrq_n_u16
+#define npyv_shri_s16 vshrq_n_s16
+#define npyv_shri_u32 vshrq_n_u32
+#define npyv_shri_s32 vshrq_n_s32
+#define npyv_shri_u64 vshrq_n_u64
+#define npyv_shri_s64 vshrq_n_s64
 
 /***************************
  * Logical
@@ -58,6 +58,10 @@
     vreinterpretq_f32_u8(vandq_u8(vreinterpretq_u8_f32(A), vreinterpretq_u8_f32(B)))
 #define npyv_and_f64(A, B) \
     vreinterpretq_f64_u8(vandq_u8(vreinterpretq_u8_f64(A), vreinterpretq_u8_f64(B)))
+#define npyv_and_b8   vandq_u8
+#define npyv_and_b16  vandq_u16
+#define npyv_and_b32  vandq_u32
+#define npyv_and_b64  vandq_u64
 
 // OR
 #define npyv_or_u8  vorrq_u8
@@ -72,6 +76,11 @@
     vreinterpretq_f32_u8(vorrq_u8(vreinterpretq_u8_f32(A), vreinterpretq_u8_f32(B)))
 #define npyv_or_f64(A, B) \
     vreinterpretq_f64_u8(vorrq_u8(vreinterpretq_u8_f64(A), vreinterpretq_u8_f64(B)))
+#define npyv_or_b8   vorrq_u8
+#define npyv_or_b16  vorrq_u16
+#define npyv_or_b32  vorrq_u32
+#define npyv_or_b64  vorrq_u64
+
 
 // XOR
 #define npyv_xor_u8  veorq_u8
@@ -86,6 +95,10 @@
     vreinterpretq_f32_u8(veorq_u8(vreinterpretq_u8_f32(A), vreinterpretq_u8_f32(B)))
 #define npyv_xor_f64(A, B) \
     vreinterpretq_f64_u8(veorq_u8(vreinterpretq_u8_f64(A), vreinterpretq_u8_f64(B)))
+#define npyv_xor_b8   veorq_u8
+#define npyv_xor_b16  veorq_u16
+#define npyv_xor_b32  veorq_u32
+#define npyv_xor_b64  veorq_u64
 
 // NOT
 #define npyv_not_u8  vmvnq_u8
@@ -98,6 +111,10 @@
 #define npyv_not_s64(A) vreinterpretq_s64_u8(vmvnq_u8(vreinterpretq_u8_s64(A)))
 #define npyv_not_f32(A) vreinterpretq_f32_u8(vmvnq_u8(vreinterpretq_u8_f32(A)))
 #define npyv_not_f64(A) vreinterpretq_f64_u8(vmvnq_u8(vreinterpretq_u8_f64(A)))
+#define npyv_not_b8   vmvnq_u8
+#define npyv_not_b16  vmvnq_u16
+#define npyv_not_b32  vmvnq_u32
+#define npyv_not_b64  npyv_not_u64
 
 /***************************
  * Comparison
@@ -214,5 +231,13 @@
 #define npyv_cmple_s64(A, B) npyv_cmpge_s64(B, A)
 #define npyv_cmple_f32(A, B) npyv_cmpge_f32(B, A)
 #define npyv_cmple_f64(A, B) npyv_cmpge_f64(B, A)
+
+// check special cases
+NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
+{ return vceqq_f32(a, a); }
+#if NPY_SIMD_F64
+    NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
+    { return vceqq_f64(a, a); }
+#endif
 
 #endif // _NPY_SIMD_NEON_OPERATORS_H

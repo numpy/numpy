@@ -160,8 +160,12 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
         True if `res` can be modified in place, given the constraint on the
         input
     """
+    if arr1d.dtype == object:
+        # object arrays do not support `isnan` (gh-9009), so make a guess
+        c = np.not_equal(arr1d, arr1d, dtype=bool)
+    else:
+        c = np.isnan(arr1d)
 
-    c = np.isnan(arr1d)
     s = np.nonzero(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
@@ -214,7 +218,11 @@ def _divide_by_count(a, b, out=None):
                 return np.divide(a, b, out=out, casting='unsafe')
         else:
             if out is None:
-                return a.dtype.type(a / b)
+                # Precaution against reduced object arrays
+                try:
+                    return a.dtype.type(a / b)
+                except AttributeError:
+                    return a / b
             else:
                 # This is questionable, but currently a numpy scalar can
                 # be output to a zero dimensional array.
@@ -613,7 +621,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     --------
     numpy.sum : Sum across array propagating NaNs.
     isnan : Show which elements are NaN.
-    isfinite: Show which elements are not NaN or +/-inf.
+    isfinite : Show which elements are not NaN or +/-inf.
 
     Notes
     -----
@@ -962,12 +970,16 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     Private function for rank 1 arrays. Compute the median ignoring NaNs.
     See nanmedian for parameter usage
     """
-    arr1d, overwrite_input = _remove_nan_1d(arr1d,
-                                            overwrite_input=overwrite_input)
-    if arr1d.size == 0:
-        return np.nan
+    arr1d_parsed, overwrite_input = _remove_nan_1d(
+        arr1d, overwrite_input=overwrite_input,
+    )
 
-    return np.median(arr1d, overwrite_input=overwrite_input)
+    if arr1d_parsed.size == 0:
+        # Ensure that a nan-esque scalar of the appropriate type (and unit)
+        # is returned for `timedelta64` and `complexfloating`
+        return arr1d[-1]
+
+    return np.median(arr1d_parsed, overwrite_input=overwrite_input)
 
 
 def _nanmedian(a, axis=None, out=None, overwrite_input=False):
@@ -1008,10 +1020,12 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     for i in range(np.count_nonzero(m.mask.ravel())):
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
                       stacklevel=4)
+
+    fill_value = np.timedelta64("NaT") if m.dtype.kind == "m" else np.nan
     if out is not None:
-        out[...] = m.filled(np.nan)
+        out[...] = m.filled(fill_value)
         return out
-    return m.filled(np.nan)
+    return m.filled(fill_value)
 
 
 def _nanmedian_dispatcher(
@@ -1407,7 +1421,8 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     arr1d, overwrite_input = _remove_nan_1d(arr1d,
         overwrite_input=overwrite_input)
     if arr1d.size == 0:
-        return np.full(q.shape, np.nan)[()]  # convert to scalar
+        # convert to scalar
+        return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
     return function_base._quantile_unchecked(
         arr1d, q, overwrite_input=overwrite_input, interpolation=interpolation)
@@ -1545,7 +1560,13 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
 
     # Compute variance.
     var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
-    if var.ndim < cnt.ndim:
+
+    # Precaution against reduced object arrays
+    try:
+        var_ndim = var.ndim
+    except AttributeError:
+        var_ndim = np.ndim(var)
+    if var_ndim < cnt.ndim:
         # Subclasses of ndarray may ignore keepdims, so check here.
         cnt = cnt.squeeze(axis)
     dof = cnt - ddof
@@ -1665,6 +1686,8 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
                  keepdims=keepdims)
     if isinstance(var, np.ndarray):
         std = np.sqrt(var, out=var)
-    else:
+    elif hasattr(var, 'dtype'):
         std = var.dtype.type(np.sqrt(var))
+    else:
+        std = np.sqrt(var)
     return std

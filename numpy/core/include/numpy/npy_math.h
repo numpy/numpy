@@ -1,5 +1,5 @@
-#ifndef __NPY_MATH_C99_H_
-#define __NPY_MATH_C99_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -151,15 +151,6 @@ NPY_INPLACE npy_longlong npy_rshiftll(npy_longlong a, npy_longlong b);
 NPY_INPLACE npy_longlong npy_lshiftll(npy_longlong a, npy_longlong b);
 
 /*
- * avx function has a common API for both sin & cos. This enum is used to
- * distinguish between the two
- */
-typedef enum {
-    npy_compute_sin,
-    npy_compute_cos
-} NPY_TRIG_OP;
-
-/*
  * C99 double math funcs
  */
 NPY_INPLACE double npy_sin(double x);
@@ -211,7 +202,7 @@ double npy_spacing(double x);
 
 /* use builtins to avoid function calls in tight loops
  * only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISNAN
+#ifdef HAVE___BUILTIN_ISNAN
     #define npy_isnan(x) __builtin_isnan(x)
 #else
     #ifndef NPY_HAVE_DECL_ISNAN
@@ -227,7 +218,7 @@ double npy_spacing(double x);
 
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISFINITE
+#ifdef HAVE___BUILTIN_ISFINITE
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
     #ifndef NPY_HAVE_DECL_ISFINITE
@@ -242,7 +233,7 @@ double npy_spacing(double x);
 #endif
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISINF
+#ifdef HAVE___BUILTIN_ISINF
     #define npy_isinf(x) __builtin_isinf(x)
 #else
     #ifndef NPY_HAVE_DECL_ISINF
@@ -400,7 +391,7 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
     union {                                  \
         ctype z;                             \
         type a[2];                           \
-    } z1;;                                   \
+    } z1;                                    \
                                              \
     z1.a[0] = (x);                           \
     z1.a[1] = (y);                           \
@@ -594,4 +585,4 @@ void npy_set_floatstatus_invalid(void);
 #include "npy_math_internal.h"
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_ */

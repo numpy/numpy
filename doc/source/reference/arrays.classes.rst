@@ -330,6 +330,8 @@ NumPy provides several hooks that classes can customize:
    returned by :func:`__array__`. This practice will return ``TypeError``.
 
 
+.. _matrix-objects:
+
 Matrix objects
 ==============
 

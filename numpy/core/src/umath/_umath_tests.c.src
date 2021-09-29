@@ -5,9 +5,10 @@
  **                            INCLUDES                                     **
  *****************************************************************************
  */
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
-#include "Python.h"
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"
@@ -532,7 +533,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
     if (f->core_dim_ixs != NULL) {
         core_dim_ixs = PyTuple_New(core_num_ixs);
-        if (core_num_dims == NULL) {
+        if (core_dim_ixs == NULL) {
             goto fail;
         }
         for (i = 0; i < core_num_ixs; i++) {
@@ -585,7 +586,7 @@ fail:
     return NULL;
 }
 
-// Testing the utilites of the CPU dispatcher
+// Testing the utilities of the CPU dispatcher
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "_umath_tests.dispatch.h"
 #endif
@@ -614,12 +615,14 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
     if (item == NULL || PyDict_SetItemString(dict, "@str@", item) < 0) {
         goto err;
     }
+    Py_DECREF(item);
     /**end repeat**/
     item = PyList_New(0);
     if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {
         goto err;
     }
     NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
+    Py_SETREF(item, NULL);
     if (PyErr_Occurred()) {
         goto err;
     }

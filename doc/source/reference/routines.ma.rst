@@ -287,11 +287,11 @@ Filling a masked array
 
 _____
 
-Masked arrays arithmetics
-=========================
+Masked arrays arithmetic
+========================
 
-Arithmetics
-~~~~~~~~~~~
+Arithmetic
+~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
 

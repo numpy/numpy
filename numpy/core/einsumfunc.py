@@ -327,7 +327,7 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
         Set that represents the rhs side of the overall einsum subscript
     idx_dict : dictionary
         Dictionary of index sizes
-    memory_limit_limit : int
+    memory_limit : int
         The maximum number of elements in a temporary array
 
     Returns
@@ -1061,14 +1061,12 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     See Also
     --------
     einsum_path, dot, inner, outer, tensordot, linalg.multi_dot
-
-    einops:
+    einops :
         similar verbose interface is provided by
         `einops <https://github.com/arogozhnikov/einops>`_ package to cover
         additional operations: transpose, reshape/flatten, repeat/tile,
         squeeze/unsqueeze and reductions.
-
-    opt_einsum:
+    opt_einsum :
         `opt_einsum <https://optimized-einsum.readthedocs.io/en/stable/>`_
         optimizes contraction order for einsum-like expressions
         in backend-agnostic manner.

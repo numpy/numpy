@@ -7,8 +7,8 @@
  * strong backwards compatibility guarantees at the moment.
  */
 
-#ifndef _NPY_3KCOMPAT_H_
-#define _NPY_3KCOMPAT_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_3KCOMPAT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_3KCOMPAT_H_
 
 #include <Python.h>
 #include <stdio.h>
@@ -216,6 +216,7 @@ static NPY_INLINE FILE*
 npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 {
     int fd, fd2, unbuf;
+    Py_ssize_t fd2_tmp;
     PyObject *ret, *os, *io, *io_raw;
     npy_off_t pos;
     FILE *handle;
@@ -251,8 +252,17 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     if (ret == NULL) {
         return NULL;
     }
-    fd2 = PyNumber_AsSsize_t(ret, NULL);
+    fd2_tmp = PyNumber_AsSsize_t(ret, PyExc_IOError);
     Py_DECREF(ret);
+    if (fd2_tmp == -1 && PyErr_Occurred()) {
+        return NULL;
+    }
+    if (fd2_tmp < INT_MIN || fd2_tmp > INT_MAX) {
+        PyErr_SetString(PyExc_IOError,
+                        "Getting an 'int' from os.dup() failed");
+        return NULL;
+    }
+    fd2 = (int)fd2_tmp;
 
     /* Convert to FILE* handle */
 #ifdef _WIN32
@@ -582,4 +592,4 @@ NpyCapsule_Check(PyObject *ptr)
 #endif
 
 
-#endif /* _NPY_3KCOMPAT_H_ */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_3KCOMPAT_H_ */

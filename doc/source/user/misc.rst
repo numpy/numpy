@@ -143,17 +143,18 @@ Only a survey of the choices. Little detail on how each works.
  - Plusses:
 
    - part of Python standard library
-   - good for interfacing to existing sharable libraries, particularly
+   - good for interfacing to existing shareable libraries, particularly
      Windows DLLs
    - avoids API/reference counting issues
    - good numpy support: arrays have all these in their ctypes
      attribute: ::
 
-       a.ctypes.data              a.ctypes.get_strides
-       a.ctypes.data_as           a.ctypes.shape
-       a.ctypes.get_as_parameter  a.ctypes.shape_as
-       a.ctypes.get_data          a.ctypes.strides
-       a.ctypes.get_shape         a.ctypes.strides_as
+       a.ctypes.data
+       a.ctypes.data_as
+       a.ctypes.shape
+       a.ctypes.shape_as
+       a.ctypes.strides
+       a.ctypes.strides_as
 
  - Minuses:
 

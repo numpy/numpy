@@ -1,0 +1,2 @@
+* Using the strings ``"Bytes0"``, ``"Datetime64"``, ``"Str0"``, ``"Uint32"``,
+  and ``"Uint64"`` as a dtype will now raise a ``TypeError``.

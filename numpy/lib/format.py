@@ -44,7 +44,7 @@ Capabilities
   read most ``.npy`` files that they have been given without much
   documentation.
 
-- Allows memory-mapping of the data. See `open_memmep`.
+- Allows memory-mapping of the data. See `open_memmap`.
 
 - Can be read from a filelike stream object instead of an actual file.
 
@@ -162,7 +162,6 @@ evolved with time and this document is more current.
 
 """
 import numpy
-import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
@@ -173,6 +172,7 @@ from numpy.compat import (
 __all__ = []
 
 
+EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
@@ -291,7 +291,7 @@ def descr_to_dtype(descr):
     Parameters
     ----------
     descr : object
-        The object retreived by dtype.descr. Can be passed to
+        The object retrieved by dtype.descr. Can be passed to
         `numpy.dtype()` in order to replicate the input dtype.
 
     Returns
@@ -378,7 +378,7 @@ def _wrap_header(header, version):
         header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
     except struct.error:
         msg = "Header length {} too big for version={}".format(hlen, version)
-        raise ValueError(msg)
+        raise ValueError(msg) from None
 
     # Pad the header with spaces and a final newline such that the magic
     # string, the header-length short and the header are aligned on a
@@ -432,7 +432,6 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    header = _filter_header(header)
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
@@ -590,23 +589,27 @@ def _read_array_header(fp, version):
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
-    header = _filter_header(header)
+    # Versions (2, 0) and (1, 0) could have been created by a Python 2
+    # implementation before header filtering was implemented.
+    if version <= (2, 0):
+        header = _filter_header(header)
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: {!r}\nException: {!r}"
-        raise ValueError(msg.format(header, e))
+        msg = "Cannot parse header: {!r}"
+        raise ValueError(msg.format(header)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
         raise ValueError(msg.format(d))
-    keys = sorted(d.keys())
-    if keys != ['descr', 'fortran_order', 'shape']:
+
+    if EXPECTED_KEYS != d.keys():
+        keys = sorted(d.keys())
         msg = "Header does not contain the correct keys: {!r}"
         raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-            not numpy.all([isinstance(x, int) for x in d['shape']])):
+            not all(isinstance(x, int) for x in d['shape'])):
         msg = "shape is not valid: {!r}"
         raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):
@@ -614,9 +617,9 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(d['fortran_order']))
     try:
         dtype = descr_to_dtype(d['descr'])
-    except TypeError:
+    except TypeError as e:
         msg = "descr is not a valid dtype descriptor: {!r}"
-        raise ValueError(msg.format(d['descr']))
+        raise ValueError(msg.format(d['descr'])) from e
 
     return d['shape'], d['fortran_order'], dtype
 
@@ -827,7 +830,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     ------
     ValueError
         If the data or the mode is invalid.
-    IOError
+    OSError
         If the file is not found or cannot be opened correctly.
 
     See Also
@@ -905,7 +908,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
             data += r
             if len(r) == 0 or len(data) == size:
                 break
-        except io.BlockingIOError:
+        except BlockingIOError:
             pass
     if len(data) != size:
         msg = "EOF: reading %s, expected %d bytes got %d"

@@ -62,4 +62,45 @@ NPYV_IMPL_VSX_COMBINE_ZIP(npyv_s64, s64)
 NPYV_IMPL_VSX_COMBINE_ZIP(npyv_f32, f32)
 NPYV_IMPL_VSX_COMBINE_ZIP(npyv_f64, f64)
 
+// Reverse elements of each 64-bit lane
+NPY_FINLINE npyv_u8 npyv_rev64_u8(npyv_u8 a)
+{
+#if defined(NPY_HAVE_VSX3) && ((defined(__GNUC__) && __GNUC__ > 7) || defined(__IBMC__))
+    return (npyv_u8)vec_revb((npyv_u64)a);
+#elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX_ASM)
+    npyv_u8 ret;
+    __asm__ ("xxbrd %x0,%x1" : "=wa" (ret) : "wa" (a));
+    return ret;
+#else
+    const npyv_u8 idx = npyv_set_u8(
+        7, 6, 5, 4, 3, 2, 1, 0,/*64*/15, 14, 13, 12, 11, 10, 9, 8
+    );
+    return vec_perm(a, a, idx);
+#endif
+}
+NPY_FINLINE npyv_s8 npyv_rev64_s8(npyv_s8 a)
+{ return (npyv_s8)npyv_rev64_u8((npyv_u8)a); }
+
+NPY_FINLINE npyv_u16 npyv_rev64_u16(npyv_u16 a)
+{
+    const npyv_u8 idx = npyv_set_u8(
+        6, 7, 4, 5, 2, 3, 0, 1,/*64*/14, 15, 12, 13, 10, 11, 8, 9
+    );
+    return vec_perm(a, a, idx);
+}
+NPY_FINLINE npyv_s16 npyv_rev64_s16(npyv_s16 a)
+{ return (npyv_s16)npyv_rev64_u16((npyv_u16)a); }
+
+NPY_FINLINE npyv_u32 npyv_rev64_u32(npyv_u32 a)
+{
+    const npyv_u8 idx = npyv_set_u8(
+        4, 5, 6, 7, 0, 1, 2, 3,/*64*/12, 13, 14, 15, 8, 9, 10, 11
+    );
+    return vec_perm(a, a, idx);
+}
+NPY_FINLINE npyv_s32 npyv_rev64_s32(npyv_s32 a)
+{ return (npyv_s32)npyv_rev64_u32((npyv_u32)a); }
+NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
+{ return (npyv_f32)npyv_rev64_u32((npyv_u32)a); }
+
 #endif // _NPY_SIMD_VSX_REORDER_H

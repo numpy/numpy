@@ -1,7 +1,7 @@
-#ifndef _NPY_PRIVATE_CONVERSION_UTILS_H_
-#define _NPY_PRIVATE_CONVERSION_UTILS_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_
 
-#include <numpy/ndarraytypes.h>
+#include "numpy/ndarraytypes.h"
 
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
@@ -39,8 +39,22 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals);
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
+
+static NPY_INLINE PyObject *
+PyArray_PyIntFromIntp(npy_intp const value)
+{
+#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
+    return PyLong_FromLong((long)value);
+#else
+    return PyLong_FromLongLong((npy_longlong)value);
+#endif
+}
+
 NPY_NO_EXPORT PyObject *
 PyArray_IntTupleFromIntp(int len, npy_intp const *vals);
+
+NPY_NO_EXPORT int
+PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val);
 
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
@@ -68,4 +82,4 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
  */
 extern NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_ */

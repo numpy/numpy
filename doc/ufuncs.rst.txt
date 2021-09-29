@@ -18,7 +18,7 @@ Some benchmarks show that this results in a significant slow-down
 
 The approach is therefore, to loop over the largest-dimension (just like
 the NO_BUFFER) portion of the code.  All arrays will either have N or
-1 in this last dimension (or their would be a mis-match error). The
+1 in this last dimension (or their would be a mismatch error). The
 buffer size is B.
 
 If N <= B (and only if needed), we copy the entire last-dimension into

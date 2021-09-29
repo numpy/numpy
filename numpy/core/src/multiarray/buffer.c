@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -878,6 +879,7 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
      */
     _buffer_info_t *info = _buffer_get_info(&scalar->_buffer_info, self, flags);
     if (info == NULL) {
+        Py_DECREF(self);
         return -1;
     }
     view->format = info->format;

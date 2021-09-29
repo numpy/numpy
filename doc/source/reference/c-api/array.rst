@@ -22,8 +22,8 @@ Array structure and data access
 
 These macros access the :c:type:`PyArrayObject` structure members and are
 defined in ``ndarraytypes.h``. The input argument, *arr*, can be any
-:c:type:`PyObject *<PyObject>` that is directly interpretable as a
-:c:type:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type`
+:c:expr:`PyObject *` that is directly interpretable as a
+:c:expr:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type`
 and its sub-types).
 
 .. c:function:: int PyArray_NDIM(PyArrayObject *arr)
@@ -150,6 +150,16 @@ and its sub-types).
     at the location pointed to by itemptr. Return ``NULL`` on failure.
 
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
+
+.. c:function:: int PyArray_FinalizeFunc(PyArrayObject* arr, PyObject* obj)
+
+    The function pointed to by the CObject
+    :obj:`~numpy.class.__array_finalize__`.
+    The first argument is the newly created sub-type. The second argument
+    (if not NULL) is the "parent" array (if the array was created using
+    slicing or some other operation where a clearly-distinguishable parent
+    is present). This routine can do anything it wants to. It should
+    return a -1 on error and 0 otherwise.
 
 
 Data access
@@ -574,25 +584,26 @@ From other objects
     did not have the _ARRAY_ macro namespace in them. That form
     of the constant names is deprecated in 1.7.
 
-.. c:macro:: NPY_ARRAY_NOTSWAPPED
+    .. c:macro:: NPY_ARRAY_NOTSWAPPED
 
-    Make sure the returned array has a data-type descriptor that is in
-    machine byte-order, over-riding any specification in the *dtype*
-    argument. Normally, the byte-order requirement is determined by
-    the *dtype* argument. If this flag is set and the dtype argument
-    does not indicate a machine byte-order descriptor (or is NULL and
-    the object is already an array with a data-type descriptor that is
-    not in machine byte- order), then a new data-type descriptor is
-    created and used with its byte-order field set to native.
+        Make sure the returned array has a data-type descriptor that is in
+        machine byte-order, over-riding any specification in the *dtype*
+        argument. Normally, the byte-order requirement is determined by
+        the *dtype* argument. If this flag is set and the dtype argument
+        does not indicate a machine byte-order descriptor (or is NULL and
+        the object is already an array with a data-type descriptor that is
+        not in machine byte- order), then a new data-type descriptor is
+        created and used with its byte-order field set to native.
 
-.. c:macro:: NPY_ARRAY_BEHAVED_NS
+    .. c:macro:: NPY_ARRAY_BEHAVED_NS
 
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \| :c:data:`NPY_ARRAY_NOTSWAPPED`
+        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+        :c:data:`NPY_ARRAY_NOTSWAPPED`
 
-.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
+    .. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
 
-    Make sure the returned array has strides that are multiples of the
-    element size.
+        Make sure the returned array has strides that are multiples of the
+        element size.
 
 .. c:function:: PyObject* PyArray_FromArray( \
         PyArrayObject* op, PyArray_Descr* newtype, int requirements)
@@ -713,6 +724,13 @@ From other objects
     broadcastable to the shape of ``dest``. The data areas of dest
     and src must not overlap.
 
+.. c:function:: int PyArray_CopyObject(PyArrayObject* dest, PyObject* src)
+
+    Assign an object ``src`` to a NumPy array ``dest`` according to
+    array-coercion rules. This is basically identical to
+    :c:func:`PyArray_FromAny`, but assigns directly to the output array.
+    Returns 0 on success and -1 on failures.
+
 .. c:function:: int PyArray_MoveInto(PyArrayObject* dest, PyArrayObject* src)
 
     Move data from the source array, ``src``, into the destination
@@ -825,7 +843,7 @@ General check of Python Type
     Evaluates true if *op* is an instance of (a subclass of)
     :c:data:`PyArray_Type` and has 0 dimensions.
 
-.. c:function:: PyArray_IsScalar(op, cls)
+.. c:macro:: PyArray_IsScalar(op, cls)
 
     Evaluates true if *op* is an instance of ``Py{cls}ArrType_Type``.
 
@@ -864,8 +882,8 @@ Data-type checking
 
 For the typenum macros, the argument is an integer representing an
 enumerated array data type. For the array type checking macros the
-argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpreted as a
-:c:type:`PyArrayObject *`.
+argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
+:c:expr:`PyArrayObject *`.
 
 .. c:function:: int PyTypeNum_ISUNSIGNED(int num)
 
@@ -1022,7 +1040,7 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
 
 .. c:function:: int PyArray_EquivByteorders(int b1, int b2)
 
-    True if byteorder characters ( :c:data:`NPY_LITTLE`,
+    True if byteorder characters *b1* and *b2* ( :c:data:`NPY_LITTLE`,
     :c:data:`NPY_BIG`, :c:data:`NPY_NATIVE`, :c:data:`NPY_IGNORE` ) are
     either equal or equivalent as to their specification of a native
     byte order. Thus, on a little-endian machine :c:data:`NPY_LITTLE`
@@ -1250,8 +1268,8 @@ Converting data types
     function returns :c:data:`NPY_FALSE`.
 
 
-New data types
-^^^^^^^^^^^^^^
+User-defined data types
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. c:function:: void PyArray_InitArrFuncs(PyArray_ArrFuncs* f)
 
@@ -1295,6 +1313,13 @@ New data types
     *descr* can be cast safely to a data-type whose type_number is
     *totype*.
 
+.. c:function:: int PyArray_TypeNumFromName( \
+        char const *str)
+
+   Given a string return the type-number for the data-type with that string as
+   the type-object name.
+   Returns ``NPY_NOTYPE`` without setting an error if no type can be found.
+   Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2647,6 +2672,12 @@ cost of a slight overhead.
     - If the position of iter is changed, any subsequent call to
       PyArrayNeighborhoodIter_Next is undefined behavior, and
       PyArrayNeighborhoodIter_Reset must be called.
+    - If the position of iter is not the beginning of the data and the
+      underlying data for iter is contiguous, the iterator will point to the
+      start of the data instead of position pointed by iter.
+      To avoid this situation, iter should be moved to the required position
+      only after the creation of iterator, and PyArrayNeighborhoodIter_Reset
+      must be called.
 
     .. code-block:: c
 
@@ -2656,7 +2687,7 @@ cost of a slight overhead.
 
        /*For a 3x3 kernel */
        bounds = {-1, 1, -1, 1};
-       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
+       neigh_iter = (PyArrayNeighborhoodIterObject*)PyArray_NeighborhoodIterNew(
             iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
 
        for(i = 0; i < iter->size; ++i) {
@@ -2683,6 +2714,45 @@ cost of a slight overhead.
     After this call, iter->dataptr points to the next point of the
     neighborhood. Calling this function after every point of the
     neighborhood has been visited is undefined.
+
+Array mapping
+-------------
+
+Array mapping is the machinery behind advanced indexing.
+
+.. c:function:: PyObject* PyArray_MapIterArray(PyArrayObject *a, \
+                 PyObject *index)
+
+    Use advanced indexing to iterate an array.
+
+.. c:function:: void PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, \
+                PyArrayObject **ret, int getmap)
+
+    Swap the axes to or from their inserted form. ``MapIter`` always puts the
+    advanced (array) indices first in the iteration. But if they are
+    consecutive, it will insert/transpose them back before returning.
+    This is stored as ``mit->consec != 0`` (the place where they are inserted).
+    For assignments, the opposite happens: the values to be assigned are
+    transposed (``getmap=1`` instead of ``getmap=0``). ``getmap=0`` and
+    ``getmap=1`` undo the other operation.
+
+.. c:function:: void PyArray_MapIterNext(PyArrayMapIterObject *mit)
+
+    This function needs to update the state of the map iterator
+    and point ``mit->dataptr`` to the memory-location of the next object.
+
+    Note that this function never handles an extra operand but provides
+    compatibility for an old (exposed) API.
+
+.. c:function:: PyObject* PyArray_MapIterArrayCopyIfOverlap(PyArrayObject *a, \
+                PyObject *index, int copy_if_overlap, PyArrayObject *extra_op)
+
+    Similar to :c:func:`PyArray_MapIterArray` but with an additional
+    ``copy_if_overlap`` argument. If ``copy_if_overlap != 0``, checks if ``a``
+    has memory overlap with any of the arrays in ``index`` and with
+    ``extra_op``, and make copies as appropriate to avoid problems if the
+    input is modified during the iteration. ``iter->array`` may contain a
+    copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
 
 Array Scalars
 -------------
@@ -2781,14 +2851,14 @@ Data-type descriptors
     Data-type objects must be reference counted so be aware of the
     action on the data-type reference of different C-API calls. The
     standard rule is that when a data-type object is returned it is a
-    new reference.  Functions that take :c:type:`PyArray_Descr *` objects and
+    new reference.  Functions that take :c:expr:`PyArray_Descr *` objects and
     return arrays steal references to the data-type their inputs
     unless otherwise noted. Therefore, you must own a reference to any
     data-type object used as input to such a function.
 
 .. c:function:: int PyArray_DescrCheck(PyObject* obj)
 
-    Evaluates as true if *obj* is a data-type object ( :c:type:`PyArray_Descr *` ).
+    Evaluates as true if *obj* is a data-type object ( :c:expr:`PyArray_Descr *` ).
 
 .. c:function:: PyArray_Descr* PyArray_DescrNew(PyArray_Descr* obj)
 
@@ -2815,12 +2885,14 @@ Data-type descriptors
     (recursively).
 
     The value of *newendian* is one of these macros:
+..
+    dedent the enumeration of flags to avoid missing references sphinx warnings 
 
-    .. c:macro:: NPY_IGNORE
-                 NPY_SWAP
-                 NPY_NATIVE
-                 NPY_LITTLE
-                 NPY_BIG
+.. c:macro:: NPY_IGNORE
+             NPY_SWAP
+             NPY_NATIVE
+             NPY_LITTLE
+             NPY_BIG
 
     If a byteorder of :c:data:`NPY_IGNORE` is encountered it
     is left alone. If newendian is :c:data:`NPY_SWAP`, then all byte-orders
@@ -3485,10 +3557,6 @@ Miscellaneous Macros
 
     Evaluates as True if arrays *a1* and *a2* have the same shape.
 
-.. c:var:: a
-
-.. c:var:: b
-
 .. c:macro:: PyArray_MAX(a,b)
 
     Returns the maximum of *a* and *b*. If (*a*) or (*b*) are
@@ -3547,22 +3615,22 @@ Miscellaneous Macros
 Enumerated Types
 ^^^^^^^^^^^^^^^^
 
-.. c:type:: NPY_SORTKIND
+.. c:enum:: NPY_SORTKIND
 
     A special variable-type which can take on different values to indicate
     the sorting algorithm being used.
 
-    .. c:var:: NPY_QUICKSORT
+    .. c:enumerator:: NPY_QUICKSORT
 
-    .. c:var:: NPY_HEAPSORT
+    .. c:enumerator:: NPY_HEAPSORT
 
-    .. c:var:: NPY_MERGESORT
+    .. c:enumerator:: NPY_MERGESORT
 
-    .. c:var:: NPY_STABLESORT
+    .. c:enumerator:: NPY_STABLESORT
 
         Used as an alias of :c:data:`NPY_MERGESORT` and vica versa.
 
-    .. c:var:: NPY_NSORTS
+    .. c:enumerator:: NPY_NSORTS
 
        Defined to be the number of sorts. It is fixed at three by the need for
        backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
@@ -3570,90 +3638,90 @@ Enumerated Types
        of several stable sorting algorithms depending on the data type.
 
 
-.. c:type:: NPY_SCALARKIND
+.. c:enum:: NPY_SCALARKIND
 
     A special variable type indicating the number of "kinds" of
     scalars distinguished in determining scalar-coercion rules. This
     variable can take on the values:
 
-    .. c:var:: NPY_NOSCALAR
+    .. c:enumerator:: NPY_NOSCALAR
 
-    .. c:var:: NPY_BOOL_SCALAR
+    .. c:enumerator:: NPY_BOOL_SCALAR
 
-    .. c:var:: NPY_INTPOS_SCALAR
+    .. c:enumerator:: NPY_INTPOS_SCALAR
 
-    .. c:var:: NPY_INTNEG_SCALAR
+    .. c:enumerator:: NPY_INTNEG_SCALAR
 
-    .. c:var:: NPY_FLOAT_SCALAR
+    .. c:enumerator:: NPY_FLOAT_SCALAR
 
-    .. c:var:: NPY_COMPLEX_SCALAR
+    .. c:enumerator:: NPY_COMPLEX_SCALAR
 
-    .. c:var:: NPY_OBJECT_SCALAR
+    .. c:enumerator:: NPY_OBJECT_SCALAR
 
-    .. c:var:: NPY_NSCALARKINDS
+    .. c:enumerator:: NPY_NSCALARKINDS
 
        Defined to be the number of scalar kinds
        (not including :c:data:`NPY_NOSCALAR`).
 
-.. c:type:: NPY_ORDER
+.. c:enum:: NPY_ORDER
 
     An enumeration type indicating the element order that an array should be
     interpreted in. When a brand new array is created, generally
     only **NPY_CORDER** and **NPY_FORTRANORDER** are used, whereas
     when one or more inputs are provided, the order can be based on them.
 
-    .. c:var:: NPY_ANYORDER
+    .. c:enumerator:: NPY_ANYORDER
 
         Fortran order if all the inputs are Fortran, C otherwise.
 
-    .. c:var:: NPY_CORDER
+    .. c:enumerator:: NPY_CORDER
 
         C order.
 
-    .. c:var:: NPY_FORTRANORDER
+    .. c:enumerator:: NPY_FORTRANORDER
 
         Fortran order.
 
-    .. c:var:: NPY_KEEPORDER
+    .. c:enumerator:: NPY_KEEPORDER
 
         An order as close to the order of the inputs as possible, even
         if the input is in neither C nor Fortran order.
 
-.. c:type:: NPY_CLIPMODE
+.. c:enum:: NPY_CLIPMODE
 
     A variable type indicating the kind of clipping that should be
     applied in certain functions.
 
-    .. c:var:: NPY_RAISE
+    .. c:enumerator:: NPY_RAISE
 
         The default for most operations, raises an exception if an index
         is out of bounds.
 
-    .. c:var:: NPY_CLIP
+    .. c:enumerator:: NPY_CLIP
 
         Clips an index to the valid range if it is out of bounds.
 
-    .. c:var:: NPY_WRAP
+    .. c:enumerator:: NPY_WRAP
 
         Wraps an index to the valid range if it is out of bounds.
 
-.. c:type:: NPY_SEARCHSIDE
+.. c:enum:: NPY_SEARCHSIDE
 
     A variable type indicating whether the index returned should be that of
     the first suitable location (if :c:data:`NPY_SEARCHLEFT`) or of the last
     (if :c:data:`NPY_SEARCHRIGHT`).
 
-    .. c:var:: NPY_SEARCHLEFT
+    .. c:enumerator:: NPY_SEARCHLEFT
 
-    .. c:var:: NPY_SEARCHRIGHT
+    .. c:enumerator:: NPY_SEARCHRIGHT
 
-.. c:type:: NPY_SELECTKIND
+.. c:enum:: NPY_SELECTKIND
 
     A variable type indicating the selection algorithm being used.
 
-    .. c:var:: NPY_INTROSELECT
+    .. c:enumerator:: NPY_INTROSELECT
 
-.. c:type:: NPY_CASTING
+.. c:enum:: NPY_CASTING
 
     .. versionadded:: 1.6
 
@@ -3661,25 +3729,25 @@ Enumerated Types
     be. This is used by the iterator added in NumPy 1.6, and is intended
     to be used more broadly in a future version.
 
-    .. c:var:: NPY_NO_CASTING
+    .. c:enumerator:: NPY_NO_CASTING
 
         Only allow identical types.
 
-    .. c:var:: NPY_EQUIV_CASTING
+    .. c:enumerator:: NPY_EQUIV_CASTING
 
        Allow identical and casts involving byte swapping.
 
-    .. c:var:: NPY_SAFE_CASTING
+    .. c:enumerator:: NPY_SAFE_CASTING
 
        Only allow casts which will not cause values to be rounded,
        truncated, or otherwise changed.
 
-    .. c:var:: NPY_SAME_KIND_CASTING
+    .. c:enumerator:: NPY_SAME_KIND_CASTING
 
        Allow any safe casts, and casts between types of the same kind.
        For example, float64 -> float32 is permitted with this rule.
 
-    .. c:var:: NPY_UNSAFE_CASTING
+    .. c:enumerator:: NPY_UNSAFE_CASTING
 
        Allow any cast, no matter what kind of data loss may occur.
 

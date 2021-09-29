@@ -193,7 +193,32 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
-deprecate_with_doc = lambda msg: _Deprecate(message=msg)
+
+def deprecate_with_doc(msg):
+    """
+    Deprecates a function and includes the deprecation in its docstring.
+
+    This function is used as a decorator. It returns an object that can be
+    used to issue a DeprecationWarning, by passing the to-be decorated
+    function as argument, this adds warning to the to-be decorated function's
+    docstring and returns the new function object.
+
+    See Also
+    --------
+    deprecate : Decorate a function such that it issues a `DeprecationWarning`
+
+    Parameters
+    ----------
+    msg : str
+        Additional explanation of the deprecation. Displayed in the
+        docstring after the warning.
+
+    Returns
+    -------
+    obj : object
+
+    """
+    return _Deprecate(message=msg)
 
 
 #--------------------------------------------
@@ -326,8 +351,7 @@ def who(vardict=None):
     maxshape = 0
     maxbyte = 0
     totalbytes = 0
-    for k in range(len(sta)):
-        val = sta[k]
+    for val in sta:
         if maxname < len(val[0]):
             maxname = len(val[0])
         if maxshape < len(val[1]):
@@ -344,8 +368,7 @@ def who(vardict=None):
         prval = "Name %s Shape %s Bytes %s Type" % (sp1*' ', sp2*' ', sp3*' ')
         print(prval + "\n" + "="*(len(prval)+5) + "\n")
 
-    for k in range(len(sta)):
-        val = sta[k]
+    for val in sta:
         print("%s %s %s %s %s %s %s" % (val[0], ' '*(sp1-len(val[0])+4),
                                         val[1], ' '*(sp2-len(val[1])+5),
                                         val[2], ' '*(sp3-len(val[2])+5),
@@ -879,7 +902,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                                 sys.stdout = old_stdout
                                 sys.stderr = old_stderr
                         # Catch SystemExit, too
-                        except BaseException:
+                        except (Exception, SystemExit):
                             continue
 
             for n, v in _getmembers(item):
@@ -979,7 +1002,7 @@ def safe_eval(source):
     return ast.literal_eval(source)
 
 
-def _median_nancheck(data, result, axis, out):
+def _median_nancheck(data, result, axis):
     """
     Utility function to check median result from data for NaN values at the end
     and return NaN in that case. Input result can also be a MaskedArray.
@@ -987,34 +1010,58 @@ def _median_nancheck(data, result, axis, out):
     Parameters
     ----------
     data : array
-        Input data to median function
+        Sorted input data to median function
     result : Array or MaskedArray
-        Result of median function
-    axis : {int, sequence of int, None}, optional
-        Axis or axes along which the median was computed.
-    out : ndarray, optional
-        Output array in which to place the result.
+        Result of median function.
+    axis : int
+        Axis along which the median was computed.
+
     Returns
     -------
-    median : scalar or ndarray
-        Median or NaN in axes which contained NaN in the input.
+    result : scalar or ndarray
+        Median or NaN in axes which contained NaN in the input.  If the input
+        was an array, NaN will be inserted in-place.  If a scalar, either the
+        input itself or a scalar NaN.
     """
     if data.size == 0:
         return result
-    data = np.moveaxis(data, axis, -1)
-    n = np.isnan(data[..., -1])
+    n = np.isnan(data.take(-1, axis=axis))
     # masked NaN values are ok
     if np.ma.isMaskedArray(n):
         n = n.filled(False)
-    if result.ndim == 0:
-        if n == True:
-            if out is not None:
-                out[...] = data.dtype.type(np.nan)
-                result = out
-            else:
-                result = data.dtype.type(np.nan)
-    elif np.count_nonzero(n.ravel()) > 0:
+    if np.count_nonzero(n.ravel()) > 0:
+        # Without given output, it is possible that the current result is a
+        # numpy scalar, which is not writeable.  If so, just return nan.
+        if isinstance(result, np.generic):
+            return data.dtype.type(np.nan)
+
         result[n] = np.nan
     return result
 
+def _opt_info():
+    """
+    Returns a string contains the supported CPU features by the current build.
+
+    The string format can be explained as follows:
+        - dispatched features that are supported by the running machine
+          end with `*`.
+        - dispatched features that are "not" supported by the running machine
+          end with `?`.
+        - remained features are representing the baseline.
+    """
+    from numpy.core._multiarray_umath import (
+        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+    )
+
+    if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
+        return ''
+
+    enabled_features = ' '.join(__cpu_baseline__)
+    for feature in __cpu_dispatch__:
+        if __cpu_features__[feature]:
+            enabled_features += f" {feature}*"
+        else:
+            enabled_features += f" {feature}?"
+
+    return enabled_features
 #-----------------------------------------------------------------------------

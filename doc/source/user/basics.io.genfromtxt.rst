@@ -437,7 +437,7 @@ process these missing data.
 
 By default, any empty string is marked as missing.  We can also consider
 more complex strings, such as ``"N/A"`` or ``"???"`` to represent missing
-or invalid data.  The ``missing_values`` argument accepts three kind
+or invalid data.  The ``missing_values`` argument accepts three kinds
 of values:
 
    a string or a comma-separated string

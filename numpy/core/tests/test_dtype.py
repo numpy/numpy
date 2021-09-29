@@ -3,14 +3,19 @@ import operator
 import pytest
 import ctypes
 import gc
+import warnings
+import types
+from typing import Any
 
 import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
+    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
+    IS_PYSTON)
 from numpy.compat import pickle
 from itertools import permutations
+
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -87,10 +92,31 @@ class TestBuiltin:
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+    def test_richcompare_invalid_dtype_equality(self):
+        # Make sure objects that cannot be converted to valid
+        # dtypes results in False/True when compared to valid dtypes.
+        # Here 7 cannot be converted to dtype. No exceptions should be raised
+
+        assert not np.dtype(np.int32) == 7, "dtype richcompare failed for =="
+        assert np.dtype(np.int32) != 7, "dtype richcompare failed for !="
+
+    @pytest.mark.parametrize(
+        'operation',
+        [operator.le, operator.lt, operator.ge, operator.gt])
+    def test_richcompare_invalid_dtype_comparison(self, operation):
+        # Make sure TypeError is raised for comparison operators
+        # for invalid dtypes. Here 7 is an invalid dtype.
+
+        with pytest.raises(TypeError):
+            operation(np.dtype(np.int32), 7)
+
     @pytest.mark.parametrize("dtype",
-             ['Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
-              'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
-              'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0',
+             ['Bool', 'Bytes0', 'Complex32', 'Complex64',
+              'Datetime64', 'Float16', 'Float32', 'Float64',
+              'Int8', 'Int16', 'Int32', 'Int64',
+              'Object0', 'Str0', 'Timedelta64',
+              'UInt8', 'UInt16', 'Uint32', 'UInt32',
+              'Uint64', 'UInt64', 'Void0',
               "Float128", "Complex128"])
     def test_numeric_style_types_are_invalid(self, dtype):
         with assert_raises(TypeError):
@@ -750,8 +776,6 @@ class TestStructuredDtypeSparseFields:
     sparse_dtype = np.dtype([('a', {'names':['ab'], 'formats':['f'],
                                     'offsets':[4]}, (2, 3))])
 
-    @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
-    @pytest.mark.valgrind_error(reason="reads from uninitialized buffers.")
     def test_sparse_field_assignment(self):
         arr = np.zeros(3, self.dtype)
         sparse_arr = arr.view(self.sparse_dtype)
@@ -788,12 +812,14 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_list_recursion(self):
         l = list()
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -801,6 +827,7 @@ class TestMonsterType:
         with pytest.raises(RecursionError):
             np.dtype(d)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_dict_recursion(self):
         d = dict(names=['self'], formats=[None], offsets=[0])
         d['formats'][0] = d
@@ -851,14 +878,24 @@ class TestString:
                                    ('bright', '>f4', (8, 36))])],
                        align=True)
         assert_equal(str(dt),
-                    "{'names':['top','bottom'], "
-                     "'formats':[([('tiles', ('>f4', (64, 64)), (1,)), "
-                                  "('rtile', '>f4', (64, 36))], (3,)),"
-                                 "[('bleft', ('>f4', (8, 64)), (1,)), "
-                                  "('bright', '>f4', (8, 36))]], "
-                     "'offsets':[0,76800], "
-                     "'itemsize':80000, "
-                     "'aligned':True}")
+                    "{'names': ['top', 'bottom'],"
+                    " 'formats': [([('tiles', ('>f4', (64, 64)), (1,)), "
+                                   "('rtile', '>f4', (64, 36))], (3,)), "
+                                  "[('bleft', ('>f4', (8, 64)), (1,)), "
+                                   "('bright', '>f4', (8, 36))]],"
+                    " 'offsets': [0, 76800],"
+                    " 'itemsize': 80000,"
+                    " 'aligned': True}")
+        with np.printoptions(legacy='1.21'):
+            assert_equal(str(dt),
+                        "{'names':['top','bottom'], "
+                         "'formats':[([('tiles', ('>f4', (64, 64)), (1,)), "
+                                      "('rtile', '>f4', (64, 36))], (3,)),"
+                                     "[('bleft', ('>f4', (8, 64)), (1,)), "
+                                      "('bright', '>f4', (8, 36))]], "
+                         "'offsets':[0,76800], "
+                         "'itemsize':80000, "
+                         "'aligned':True}")
         assert_equal(np.dtype(eval(str(dt))), dt)
 
         dt = np.dtype({'names': ['r', 'g', 'b'], 'formats': ['u1', 'u1', 'u1'],
@@ -875,22 +912,22 @@ class TestString:
                        'titles': ['Color', 'Red pixel',
                                   'Green pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "{'names':['rgba','r','g','b'],"
-                    " 'formats':['<u4','u1','u1','u1'],"
-                    " 'offsets':[0,0,1,2],"
-                    " 'titles':['Color','Red pixel',"
-                              "'Green pixel','Blue pixel'],"
-                    " 'itemsize':4}")
+                    "{'names': ['rgba', 'r', 'g', 'b'],"
+                    " 'formats': ['<u4', 'u1', 'u1', 'u1'],"
+                    " 'offsets': [0, 0, 1, 2],"
+                    " 'titles': ['Color', 'Red pixel', "
+                               "'Green pixel', 'Blue pixel'],"
+                    " 'itemsize': 4}")
 
         dt = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
                         'offsets': [0, 2],
                         'titles': ['Red pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "{'names':['r','b'],"
-                    " 'formats':['u1','u1'],"
-                    " 'offsets':[0,2],"
-                    " 'titles':['Red pixel','Blue pixel'],"
-                    " 'itemsize':3}")
+                    "{'names': ['r', 'b'],"
+                    " 'formats': ['u1', 'u1'],"
+                    " 'offsets': [0, 2],"
+                    " 'titles': ['Red pixel', 'Blue pixel'],"
+                    " 'itemsize': 3}")
 
         dt = np.dtype([('a', '<m8[D]'), ('b', '<M8[us]')])
         assert_equal(str(dt),
@@ -923,23 +960,23 @@ class TestString:
                        'titles': ['Color', 'Red pixel',
                                   'Green pixel', 'Blue pixel']}, align=True)
         assert_equal(repr(dt),
-                    "dtype({'names':['rgba','r','g','b'],"
-                    " 'formats':['<u4','u1','u1','u1'],"
-                    " 'offsets':[0,0,1,2],"
-                    " 'titles':['Color','Red pixel',"
-                              "'Green pixel','Blue pixel'],"
-                    " 'itemsize':4}, align=True)")
+                    "dtype({'names': ['rgba', 'r', 'g', 'b'],"
+                    " 'formats': ['<u4', 'u1', 'u1', 'u1'],"
+                    " 'offsets': [0, 0, 1, 2],"
+                    " 'titles': ['Color', 'Red pixel', "
+                                "'Green pixel', 'Blue pixel'],"
+                    " 'itemsize': 4}, align=True)")
 
         dt = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
                         'offsets': [0, 2],
                         'titles': ['Red pixel', 'Blue pixel'],
                         'itemsize': 4})
         assert_equal(repr(dt),
-                    "dtype({'names':['r','b'], "
-                    "'formats':['u1','u1'], "
-                    "'offsets':[0,2], "
-                    "'titles':['Red pixel','Blue pixel'], "
-                    "'itemsize':4})")
+                    "dtype({'names': ['r', 'b'], "
+                    "'formats': ['u1', 'u1'], "
+                    "'offsets': [0, 2], "
+                    "'titles': ['Red pixel', 'Blue pixel'], "
+                    "'itemsize': 4})")
 
     def test_repr_structured_datetime(self):
         dt = np.dtype([('a', '<M8[D]'), ('b', '<m8[us]')])
@@ -1018,7 +1055,12 @@ class TestPickling:
 
     def check_pickling(self, dtype):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
-            pickled = pickle.loads(pickle.dumps(dtype, proto))
+            buf = pickle.dumps(dtype, proto)
+            # The dtype pickling itself pickles `np.dtype` if it is pickled
+            # as a singleton `dtype` should be stored in the buffer:
+            assert b"_DType_reconstruct" not in buf
+            assert b"dtype" in buf
+            pickled = pickle.loads(buf)
             assert_equal(pickled, dtype)
             assert_equal(pickled.descr, dtype.descr)
             if dtype.metadata is not None:
@@ -1074,6 +1116,112 @@ class TestPickling:
         dt = np.dtype(int, metadata={'datum': 1})
         self.check_pickling(dt)
 
+    @pytest.mark.parametrize("DType",
+        [type(np.dtype(t)) for t in np.typecodes['All']] +
+        [np.dtype(rational), np.dtype])
+    def test_pickle_types(self, DType):
+        # Check that DTypes (the classes/types) roundtrip when pickling
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            roundtrip_DType = pickle.loads(pickle.dumps(DType, proto))
+            assert roundtrip_DType is DType
+
+
+class TestPromotion:
+    """Test cases related to more complex DType promotions.  Further promotion
+    tests are defined in `test_numeric.py`
+    """
+    @pytest.mark.parametrize(["other", "expected"],
+            [(2**16-1, np.complex64),
+             (2**32-1, np.complex128),
+             (np.float16(2), np.complex64),
+             (np.float32(2), np.complex64),
+             (np.longdouble(2), np.complex64),
+             # Base of the double value to sidestep any rounding issues:
+             (np.longdouble(np.nextafter(1.7e308, 0.)), np.complex128),
+             # Additionally use "nextafter" so the cast can't round down:
+             (np.longdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
+             # repeat for complex scalars:
+             (np.complex64(2), np.complex64),
+             (np.clongdouble(2), np.complex64),
+             # Base of the double value to sidestep any rounding issues:
+             (np.clongdouble(np.nextafter(1.7e308, 0.) * 1j), np.complex128),
+             # Additionally use "nextafter" so the cast can't round down:
+             (np.clongdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
+             ])
+    def test_complex_other_value_based(self, other, expected):
+        # This would change if we modify the value based promotion
+        min_complex = np.dtype(np.complex64)
+
+        res = np.result_type(other, min_complex)
+        assert res == expected
+        # Check the same for a simple ufunc call that uses the same logic:
+        res = np.minimum(other, np.ones(3, dtype=min_complex)).dtype
+        assert res == expected
+
+    @pytest.mark.parametrize(["other", "expected"],
+                 [(np.bool_, np.complex128),
+                  (np.int64, np.complex128),
+                  (np.float16, np.complex64),
+                  (np.float32, np.complex64),
+                  (np.float64, np.complex128),
+                  (np.longdouble, np.clongdouble),
+                  (np.complex64, np.complex64),
+                  (np.complex128, np.complex128),
+                  (np.clongdouble, np.clongdouble),
+                  ])
+    def test_complex_scalar_value_based(self, other, expected):
+        # This would change if we modify the value based promotion
+        complex_scalar = 1j
+
+        res = np.result_type(other, complex_scalar)
+        assert res == expected
+        # Check the same for a simple ufunc call that uses the same logic:
+        res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
+        assert res == expected
+
+    def test_complex_pyscalar_promote_rational(self):
+        with pytest.raises(TypeError,
+                match=r".* do not have a common DType"):
+            np.result_type(1j, rational)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(1j, rational(1, 2))
+
+    @pytest.mark.parametrize(["other", "expected"],
+            [(1, rational), (1., np.float64)])
+    def test_float_int_pyscalar_promote_rational(self, other, expected):
+        # Note that rationals are a bit akward as they promote with float64
+        # or default ints, but not float16 or uint8/int8 (which looks
+        # inconsistent here)
+        with pytest.raises(TypeError,
+                match=r".* do not have a common DType"):
+            np.result_type(other, rational)
+
+        assert np.result_type(other, rational(1, 2)) == expected
+
+    @pytest.mark.parametrize(["dtypes", "expected"], [
+             # These promotions are not associative/commutative:
+             ([np.uint16, np.int16, np.float16], np.float32),
+             ([np.uint16, np.int8, np.float16], np.float32),
+             ([np.uint8, np.int16, np.float16], np.float32),
+             # The following promotions are not ambiguous, but cover code
+             # paths of abstract promotion (no particular logic being tested)
+             ([1, 1, np.float64], np.float64),
+             ([1, 1., np.complex128], np.complex128),
+             ([1, 1j, np.float64], np.complex128),
+             ([1., 1., np.int64], np.float64),
+             ([1., 1j, np.float64], np.complex128),
+             ([1j, 1j, np.float64], np.complex128),
+             ([1, True, np.bool_], np.int_),
+            ])
+    def test_permutations_do_not_influence_result(self, dtypes, expected):
+        # Tests that most permutations do not influence the result.  In the
+        # above some uint and int combintations promote to a larger integer
+        # type, which would then promote to a larger than necessary float.
+        for perm in permutations(dtypes):
+            assert np.result_type(*perm) == expected
+
 
 def test_rational_dtype():
     # test for bug gh-5719
@@ -1106,11 +1254,12 @@ def test_keyword_argument():
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
-            dtype = "f8"
+            dtype = np.dtype("f8")
 
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_recursion(self):
         class dt:
             pass
@@ -1130,22 +1279,22 @@ class TestFromDTypeAttribute:
             # what this should be useful for. Note that if np.void is used
             # numpy will think we are deallocating a base type [1.17, 2019-02].
             dtype = np.dtype("f,f")
-            pass
 
         np.dtype(dt)
         np.dtype(dt(1))
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_void_subtype_recursion(self):
-        class dt(np.void):
+        class vdt(np.void):
             pass
 
-        dt.dtype = dt
+        vdt.dtype = vdt
 
         with pytest.raises(RecursionError):
-            np.dtype(dt)
+            np.dtype(vdt)
 
         with pytest.raises(RecursionError):
-            np.dtype(dt(1))
+            np.dtype(vdt(1))
 
 
 class TestDTypeClasses:
@@ -1412,3 +1561,37 @@ class TestUserDType:
             # Tests that a dtype must have its type field set up to np.dtype
             # or in this case a builtin instance.
             create_custom_field_dtype(blueprint, mytype, 2)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
+class TestClassGetItem:
+    def test_dtype(self) -> None:
+        alias = np.dtype[Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is np.dtype
+
+    @pytest.mark.parametrize("code", np.typecodes["All"])
+    def test_dtype_subclass(self, code: str) -> None:
+        cls = type(np.dtype(code))
+        alias = cls[Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is cls
+
+    @pytest.mark.parametrize("arg_len", range(4))
+    def test_subscript_tuple(self, arg_len: int) -> None:
+        arg_tup = (Any,) * arg_len
+        if arg_len == 1:
+            assert np.dtype[arg_tup]
+        else:
+            with pytest.raises(TypeError):
+                np.dtype[arg_tup]
+
+    def test_subscript_scalar(self) -> None:
+        assert np.dtype[Any]
+
+
+@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
+def test_class_getitem_38() -> None:
+    match = "Type subscription requires python >= 3.9"
+    with pytest.raises(TypeError, match=match):
+        np.dtype[Any]
