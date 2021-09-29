@@ -82,17 +82,21 @@ NPY_NO_EXPORT int set_matmul_flags(PyObject *d); /* in ufunc_object.c */
 
 /*
  * global variable to determine if legacy printing is enabled, accessible from
- * C. For simplicity the mode is encoded as an integer where '0' means no
- * legacy mode, and '113' means 1.13 legacy mode. We can upgrade this if we
- * have more complex requirements in the future.
+ * C. For simplicity the mode is encoded as an integer where INT_MAX means no
+ * legacy mode, and '113'/'121' means 1.13/1.21 legacy mode; and 0 maps to
+ * INT_MAX. We can upgrade this if we have more complex requirements in the
+ * future.
  */
-int npy_legacy_print_mode = 0;
+int npy_legacy_print_mode = INT_MAX;
 
 static PyObject *
 set_legacy_print_mode(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "i", &npy_legacy_print_mode)) {
         return NULL;
+    }
+    if (!npy_legacy_print_mode) {
+        npy_legacy_print_mode = INT_MAX;
     }
     Py_RETURN_NONE;
 }

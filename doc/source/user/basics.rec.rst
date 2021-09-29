@@ -128,7 +128,7 @@ summary they are:
       ...           'formats': ['i4', 'f4'],
       ...           'offsets': [0, 4],
       ...           'itemsize': 12})
-      dtype({'names':['col1','col2'], 'formats':['<i4','<f4'], 'offsets':[0,4], 'itemsize':12})
+      dtype({'names': ['col1', 'col2'], 'formats': ['<i4', '<f4'], 'offsets': [0, 4], 'itemsize': 12})
 
      Offsets may be chosen such that the fields overlap, though this will mean
      that assigning to one field may clobber any overlapping field's data. As

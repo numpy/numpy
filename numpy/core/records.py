@@ -41,7 +41,7 @@ from . import numeric as sb
 from . import numerictypes as nt
 from numpy.compat import os_fspath
 from numpy.core.overrides import set_module
-from .arrayprint import get_printoptions
+from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype
 __all__ = [
@@ -230,12 +230,12 @@ class record(nt.void):
     __module__ = 'numpy'
 
     def __repr__(self):
-        if get_printoptions()['legacy'] == '1.13':
+        if _get_legacy_print_mode() <= 113:
             return self.__str__()
         return super().__repr__()
 
     def __str__(self):
-        if get_printoptions()['legacy'] == '1.13':
+        if _get_legacy_print_mode() <= 113:
             return str(self.item())
         return super().__str__()
 
@@ -551,7 +551,7 @@ class recarray(ndarray):
             lst = "[], shape=%s" % (repr(self.shape),)
 
         lf = '\n'+' '*len(prefix)
-        if get_printoptions()['legacy'] == '1.13':
+        if _get_legacy_print_mode() <= 113:
             lf = ' ' + lf  # trailing space
         return fmt % (lst, lf, repr_dtype)
 

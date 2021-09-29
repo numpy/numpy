@@ -3949,7 +3949,7 @@ class MaskedArray(ndarray):
 
 
         # 2016-11-19: Demoted to legacy format
-        if np.get_printoptions()['legacy'] == '1.13':
+        if np.core.arrayprint._get_legacy_print_mode() <= 113:
             is_long = self.ndim > 1
             parameters = dict(
                 name=name,
