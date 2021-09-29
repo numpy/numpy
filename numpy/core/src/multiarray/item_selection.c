@@ -1292,7 +1292,14 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp * kth;
     npy_intp nkth, i;
 
-    if !(PyArray_ISINTEGER(ktharray) || PyArray_ISBOOL(ktharray)) {
+    if (PyArray_ISBOOL(ktharray)) {
+        /* 2021-09-29, NumPy 1.22 */
+        if (DEPRECATE(
+                "Passing booleans as partition index is deprecated") < 0) {
+            return NULL;
+        }
+    }
+    else if (!PyArray_ISINTEGER(ktharray)) {
         PyErr_Format(PyExc_TypeError, "Partition index must be integer");
         return NULL;
     }
