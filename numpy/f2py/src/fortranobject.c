@@ -142,7 +142,7 @@ PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
         else if ((fp->defs[i].data) !=
                  NULL) { /* Is Fortran variable or array (not allocatable) */
             if (fp->defs[i].type == NPY_STRING) {
-                int n = fp->defs[i].rank - 1;
+                npy_intp n = fp->defs[i].rank - 1;
                 v = PyArray_New(&PyArray_Type, n, fp->defs[i].dims.d,
                                 NPY_STRING, NULL, fp->defs[i].data,
                                 fp->defs[i].dims.d[n], NPY_ARRAY_FARRAY, NULL);
@@ -195,7 +195,8 @@ static Py_ssize_t
 format_def(char *buf, Py_ssize_t size, FortranDataDef def)
 {
     char *p = buf;
-    int i, n;
+    int i;
+    npy_intp n;
 
     n = PyOS_snprintf(p, size, "array(%" NPY_INTP_FMT, def.dims.d[0]);
     if (n < 0 || n >= size) {

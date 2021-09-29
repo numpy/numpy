@@ -120,6 +120,10 @@ module_rules = {
 extern \"C\" {
 #endif
 
+#ifndef PY_SSIZE_T_CLEAN
+#define PY_SSIZE_T_CLEAN
+#endif /* PY_SSIZE_T_CLEAN */
+
 """ + gentitle("See f2py2e/cfuncs.py: includes") + """
 #includes#
 #includes0#
