@@ -375,8 +375,12 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
             return 1;\\
         }\\
         switch (PyArray_TYPE(arr)) {\\
-                case NPY_CDOUBLE: *(npy_cdouble *)(PyArray_DATA(arr))=(*v).r;*(npy_cdouble *)(PyArray_DATA(arr)+sizeof(npy_cdouble))=(*v).i;break;\\
-                case NPY_CFLOAT: *(npy_cfloat *)(PyArray_DATA(arr))=(*v).r;*(npy_cfloat *)(PyArray_DATA(arr)+sizeof(npy_cfloat))=(*v).i;break;\\
+                case NPY_CDOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r;\\
+                                  *(npy_double *)(PyArray_DATA(arr)+sizeof(npy_double))=(*v).i;\\
+                                  break;\\
+                case NPY_CFLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r;\\
+                                 *(npy_float *)(PyArray_DATA(arr)+sizeof(npy_float))=(*v).i;\\
+                                 break;\\
                 case NPY_DOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_LONG: *(npy_long *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_FLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r; break;\\
@@ -391,7 +395,9 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
                 case NPY_LONGLONG: *(npy_longlong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_CLONGDOUBLE: *(npy_clongdouble *)(PyArray_DATA(arr))=(*v).r;*(npy_clongdouble *)(PyArray_DATA(arr)+sizeof(npy_clongdouble))=(*v).i;break;\\
+                case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;\\
+                                      *(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;\\
+                                      break;\\
                 case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_complex_ ## ctype ## 1((*v))); break;\\
                 default: return -2;\\
         };\\
