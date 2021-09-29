@@ -134,7 +134,7 @@ def eye(
     n_cols: Optional[int] = None,
     /,
     *,
-    k: Optional[int] = 0,
+    k: int = 0,
     dtype: Optional[Dtype] = None,
     device: Optional[Device] = None,
 ) -> Array:
