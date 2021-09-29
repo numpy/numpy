@@ -468,13 +468,10 @@ def extended_choose(indices, choices):
     >>> choices = list(achoices) + list(bchoices)
     >>> indices = [38, 0, 8, 49]
     >>> # np.choose(indices, choices) => ValueError
-    >>> for i in indices:
-    ...     print (i, "::", choices[i])
-    ... 
-    38 :: 130
-    0 :: [0 2 4 6]
-    8 :: [ 8 10 12  9]
-    49 :: 240
+    >>> # choices[38] == 130
+    >>> # choices[0] == [0 2 4 6]
+    >>> # choices[8] == [ 8 10 12  9]
+    >>> # choices[49] == 240
     >>> np.extended_choose(indices, choices)
     array([130,   2,  12, 240])
     """
