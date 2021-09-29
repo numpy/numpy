@@ -961,8 +961,8 @@ PyUFunc_Type and PyUFuncObject
        .. deprecated:: 1.22
 
             Some fallback support for this slot exists, but will be removed
-            eventually.  A univiersal function which relied on this will have
-            eventually have to be ported.
+            eventually.  A universal function that relied on this will
+            have to be ported eventually.
             See ref:`NEP 41 <NEP41>` and ref:`NEP 43 <NEP43>`
 
    .. c:member:: void *reserved2
