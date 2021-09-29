@@ -3548,11 +3548,11 @@ class TestExtendedChoose:
         choices = list(achoices) + list(bchoices)
         indices = [38, 0, 8, 49]
         chosen = np.extended_choose(indices, choices)
-        expected = np.array([130,   2,  12, 240])
+        expected = np.array([130, 2, 12, 240])
         assert_array_equal(chosen, expected)
 
     def naive_choose_for_testing(self, indices, choices):
-        "Naive version of choose for use in testing only.  Not fully general or efficient."
+        "Naive version of choose for use in testing only."
         # find a unified shape and choice dtype
         indices = np.array(indices)
         choices = [np.array(c) for c in choices]
@@ -3579,14 +3579,14 @@ class TestExtendedChoose:
 
     def test_choosers(self):
         base_choice = np.array([
-            [0,2],
-            [1,5]
+            [0, 2],
+            [1, 5]
         ])
         base_indices = np.array([
-            [2,3],
-            [4,0]
+            [2, 3],
+            [4, 0]
         ])
-        for length in range(1,100):
+        for length in range(1, 100):
             choices = [base_choice + (10 * i) for i in range(length)]
             indices = (base_indices * int(length/6 + 1)) % length
             echoose = np.extended_choose(indices, choices)

@@ -440,7 +440,7 @@ def extended_choose(indices, choices):
     contains in the same place.
 
     This implementation supports an arbitrary number of choices, where
-    the underlying `np.choose` only supports up to 31 choices.  This implementation
+    the underlying `np.choose` only supports up to 31 choices.  This function
     does not support the `out` or `mode` parameters accepted by `np.choose`.
 
     Parameters
@@ -467,7 +467,7 @@ def extended_choose(indices, choices):
     >>> bchoices = [i * 10 for i in range(25)]
     >>> choices = list(achoices) + list(bchoices)
     >>> indices = [38, 0, 8, 49]
-    >>> # np.choose(indices, choices) => ValueError: Need at least 0 and at most 32 array objects.
+    >>> # np.choose(indices, choices) => ValueError
     >>> for i in indices:
     ...     print (i, "::", choices[i])
     ... 
