@@ -1276,7 +1276,7 @@ def buildmodule(m, um):
     fn = os.path.join(options['buildpath'], vrd['coutput'])
     ret['csrc'] = fn
     with open(fn, 'w') as f:
-        f.write(ar['modulebody'].replace('    ', 2 * ' '))
+        f.write(ar['modulebody'].replace('\t', 2 * ' '))
     outmess('    Wrote C/API module "%s" to file "%s"\n' % (m['name'], fn))
 
     if options['dorestdoc']:
