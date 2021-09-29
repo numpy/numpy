@@ -97,7 +97,7 @@ cf2py  intent(out) r
         Other Parameters
         ----------------
         fun_extra_args : input tuple, optional
-            Default: ()
+          Default: ()
 
         Returns
         -------
@@ -110,7 +110,7 @@ cf2py  intent(out) r
           def fun(): return a
           Return objects:
             a : int
-        """)
+""")
         assert_equal(self.module.t.__doc__, expected)
 
     def check_function(self, name):
