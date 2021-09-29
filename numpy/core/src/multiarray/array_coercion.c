@@ -555,6 +555,7 @@ npy_new_coercion_cache(
         cache = PyMem_Malloc(sizeof(coercion_cache_obj));
     }
     if (cache == NULL) {
+        Py_DECREF(arr_or_sequence);
         PyErr_NoMemory();
         return -1;
     }
@@ -1089,7 +1090,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     }
     /* The cache takes ownership of the sequence here. */
     if (npy_new_coercion_cache(obj, seq, 1, coercion_cache_tail_ptr, curr_dims) < 0) {
-        Py_DECREF(seq);
         return -1;
     }
 
