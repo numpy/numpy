@@ -24,6 +24,7 @@ __all__ = [
     'ravel', 'repeat', 'reshape', 'resize', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    "extended_choose",
 ]
 
 _gentype = types.GeneratorType
@@ -427,6 +428,77 @@ def choose(a, choices, out=None, mode='raise'):
 
     """
     return _wrapfunc(a, 'choose', choices, out=out, mode=mode)
+
+
+def extended_choose(indices, choices):
+    """
+    Use an index array to construct a new array from a list of choices.
+
+    Given an array of integers and a list of n choice arrays, this method
+    will create a new array that merges each of the choice arrays.  Where a
+    value in `index` is i, the new array will have the value that choices[i]
+    contains in the same place.
+
+    This implementation supports an arbitrary number of choices, where
+    the underlying `np.choose` only supports up to 31 choices.  This implementation
+    does not support the `out` or `mode` parameters accepted by `np.choose`.
+
+    Parameters
+    ----------
+    indices : ndarray of ints
+        This array must contain integers in ``[0, n-1]``, where n is the
+        number of choices.
+    choices : sequence of arrays
+        Choice arrays. The index array and all of the choices should be
+        broadcastable to the same shape.
+
+    Returns
+    -------
+    merged_array : array
+
+    See Also
+    --------
+    choose : similar function which supports only up to 31 choices.
+
+    Examples
+    --------
+    >>> r100 = np.arange(100)
+    >>> achoices = ((r100 % 13) + (r100 % 5)).reshape(25, 4)
+    >>> bchoices = [i * 10 for i in range(25)]
+    >>> choices = list(achoices) + list(bchoices)
+    >>> indices = [38, 0, 8, 49]
+    >>> # np.choose(indices, choices) => ValueError: Need at least 0 and at most 32 array objects.
+    >>> for i in indices:
+    ...     print (i, "::", choices[i])
+    ... 
+    38 :: 130
+    0 :: [0 2 4 6]
+    8 :: [ 8 10 12  9]
+    49 :: 240
+    >>> np.extended_choose(indices, choices)
+    array([130,   2,  12, 240])
+    """
+    indices = np.array(indices)
+    if (indices.max() <= 30) or (len(choices) <= 31):
+        # optimized fallback
+        choices = choices[:31]
+        return np.choose(indices, choices)
+    # choose an arbitrary element of choice type for initial result
+    result = np.array(choices[0]).ravel()[0]
+    while (len(choices) > 0) and not np.all(indices == -1):
+        these_choices = choices[:30]
+        remaining_choices = choices[30:]
+        shifted_indices = indices + 1
+        too_large_indices = (shifted_indices > 30).astype(int)
+        clamped_indices = np.choose(too_large_indices, [shifted_indices, 0])
+        choices_with_default = [result] + list(these_choices)
+        result = np.choose(clamped_indices, choices_with_default)
+        choices = remaining_choices
+        if len(choices) > 0:
+            indices = indices - 30
+            too_small = (indices < -1).astype(int)
+            indices = np.choose(too_small, [indices, -1])
+    return result
 
 
 def _repeat_dispatcher(a, repeats, axis=None):

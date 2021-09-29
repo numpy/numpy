@@ -3538,3 +3538,61 @@ class TestTensordot:
         arr_0d = np.array(1)
         ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
         assert_array_equal(ret, arr_0d)
+
+class TestExtendedChoose:
+
+    def test_choose_doc_example(self):
+        r100 = np.arange(100)
+        achoices = ((r100 % 13) + (r100 % 5)).reshape(25, 4)
+        bchoices = [i * 10 for i in range(25)]
+        choices = list(achoices) + list(bchoices)
+        indices = [38, 0, 8, 49]
+        chosen = np.extended_choose(indices, choices)
+        expected = np.array([130,   2,  12, 240])
+        assert_array_equal(chosen, expected)
+
+    def naive_choose_for_testing(self, indices, choices):
+        "Naive version of choose for use in testing only.  Not fully general or efficient."
+        # find a unified shape and choice dtype
+        indices = np.array(indices)
+        choices = [np.array(c) for c in choices]
+        u = np.zeros(indices.shape, dtype=choices[0].dtype)
+        for c in choices:
+            b = np.zeros(c.shape, dtype=c.dtype)
+            u = np.maximum(u, b)
+        ushape = u.shape
+        ctype = u.dtype
+        # convert arrays to common shape
+        indices = indices + np.zeros(ushape, dtype=indices.dtype)
+        c0 = np.zeros(ushape, dtype=ctype)
+        choices = [c + c0 for c in choices]
+        # flatten the arrays
+        flat_indices = indices.ravel()
+        flat_choices = [c.ravel() for c in choices]
+        flat_result = np.zeros(flat_indices.shape, dtype=ctype)
+        # choose from flattened arrays
+        for (i, index) in enumerate(flat_indices):
+            flat_result[i] = flat_choices[index][i]
+        # unflatten the result
+        result = flat_result.reshape(ushape)
+        return result
+
+    def test_choosers(self):
+        base_choice = np.array([
+            [0,2],
+            [1,5]
+        ])
+        base_indices = np.array([
+            [2,3],
+            [4,0]
+        ])
+        for length in range(1,100):
+            choices = [base_choice + (10 * i) for i in range(length)]
+            indices = (base_indices * int(length/6 + 1)) % length
+            echoose = np.extended_choose(indices, choices)
+            nchoose = self.naive_choose_for_testing(indices, choices)
+            assert_array_equal(echoose, nchoose)
+            if length < 30:
+                dchoose = np.choose(indices, choices)
+                assert_array_equal(dchoose, echoose)
+
