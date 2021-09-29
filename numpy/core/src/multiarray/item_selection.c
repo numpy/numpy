@@ -1295,7 +1295,8 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     if (PyArray_ISBOOL(ktharray)) {
         /* 2021-09-29, NumPy 1.22 */
         if (DEPRECATE(
-                "Passing booleans as partition index is deprecated") < 0) {
+                "Passing booleans as partition index is deprecated"
+                " (warning added in NumPy 1.22)") < 0) {
             return NULL;
         }
     }
