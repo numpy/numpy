@@ -18,7 +18,7 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy=0.902
+  - mypy=0.910
   # For building docs
   - sphinx=4.1.1
   - numpydoc=1.1.0
