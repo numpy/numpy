@@ -1943,6 +1943,27 @@ class TestFilterwindows:
         else:
             assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
+    def test_kaiser(self, dtype: str, M: int) -> None:
+        scalar = np.array(M, dtype=dtype)[()]
+
+        w = kaiser(scalar, 0)
+        if dtype == "O":
+            ref_dtype = np.float64
+        else:
+            ref_dtype = np.result_type(scalar.dtype, np.float64)
+        assert w.dtype == ref_dtype
+
+        # check symmetry
+        assert_equal(w, flipud(w))
+
+        # check known value
+        if scalar < 1:
+            assert_array_equal(w, np.array([]))
+        elif scalar == 1:
+            assert_array_equal(w, np.ones(1))
+        else:
+            assert_almost_equal(np.sum(w, axis=0), 10, 15)
+
 
 class TestTrapz:
 
