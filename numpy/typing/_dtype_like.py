@@ -108,7 +108,7 @@ DTypeLike = Union[
     # default data type (float64)
     None,
     # array-scalar types and generic types
-    Type[Any],  # TODO: enumerate these when we add type hints for numpy scalars
+    Type[Any],  # NOTE: We're stuck with `Type[Any]` due to object dtypes
     # anything with a dtype attribute
     _SupportsDType[DType[Any]],
     # character codes, type strings or comma-separated fields, e.g., 'float64'
