@@ -1164,8 +1164,6 @@ class _ArrayOrScalarCommon:
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
 
-    # TODO: Add proper signatures
-    def __getitem__(self, key) -> Any: ...
     @property
     def __array_interface__(self): ...
     @property
@@ -1661,6 +1659,26 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
         /,
     ) -> ndarray[_ShapeType2, _DType]: ...
+
+    @overload
+    def __getitem__(self, key: Union[
+        SupportsIndex,
+        _ArrayLikeInt_co,
+        Tuple[SupportsIndex | _ArrayLikeInt_co, ...],
+    ]) -> Any: ...
+    @overload
+    def __getitem__(self, key: Union[
+        None,
+        slice,
+        ellipsis,
+        SupportsIndex,
+        _ArrayLikeInt_co,
+        Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...],
+    ]) -> ndarray[Any, _DType_co]: ...
+    @overload
+    def __getitem__(self: NDArray[void], key: str) -> NDArray[Any]: ...
+    @overload
+    def __getitem__(self: NDArray[void], key: list[str]) -> ndarray[_ShapeType, dtype[void]]: ...
 
     @property
     def ctypes(self) -> _ctypes[int]: ...
