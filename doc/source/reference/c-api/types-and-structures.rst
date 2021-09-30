@@ -286,6 +286,9 @@ PyArrayDescr_Type and PyArray_Descr
        array like behavior. Each bit in this member is a flag which are named
        as:
 
+..
+  dedented to allow internal linking, pending a refactoring
+
 .. c:macro:: NPY_ITEM_REFCOUNT
 
     Indicates that items of this data-type must be reference
@@ -294,6 +297,9 @@ PyArrayDescr_Type and PyArray_Descr
        .. c:macro:: NPY_ITEM_HASOBJECT
 
            Same as :c:data:`NPY_ITEM_REFCOUNT`.
+
+..
+  dedented to allow internal linking, pending a refactoring
 
 .. c:macro:: NPY_LIST_PICKLE
 
@@ -988,6 +994,9 @@ PyUFunc_Type and PyUFuncObject
    .. c:member:: npy_uint32 *core_dim_flags
 
        For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
+
+..
+  dedented to allow internal linking, pending a refactoring
 
 .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
 

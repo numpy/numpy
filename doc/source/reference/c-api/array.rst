@@ -519,6 +519,9 @@ From other objects
 
         :c:data:`NPY_ARRAY_CARRAY`
 
+..
+  dedented to allow internal linking, pending a refactoring
+
 .. c:macro:: NPY_ARRAY_IN_ARRAY
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
@@ -541,6 +544,9 @@ From other objects
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED`
+
+..
+  dedented to allow internal linking, pending a refactoring
 
 .. c:macro:: NPY_ARRAY_INOUT_ARRAY
 
@@ -584,6 +590,9 @@ From other objects
     did not have the _ARRAY_ macro namespace in them. That form
     of the constant names is deprecated in 1.7.
 
+..
+  dedented to allow internal linking, pending a refactoring
+
 .. c:macro:: NPY_ARRAY_NOTSWAPPED
 
     Make sure the returned array has a data-type descriptor that is in
@@ -599,6 +608,9 @@ From other objects
 
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_NOTSWAPPED`
+
+..
+  dedented to allow internal linking, pending a refactoring
 
 .. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
 
