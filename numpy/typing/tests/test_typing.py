@@ -98,7 +98,7 @@ def run_mypy() -> None:
 def get_test_cases(directory: str) -> Iterator[ParameterSet]:
     for root, _, files in os.walk(directory):
         for fname in files:
-            if os.path.splitext(fname)[-1] == ".py":
+            if os.path.splitext(fname)[-1] in (".pyi", ".py"):
                 fullpath = os.path.join(root, fname)
                 # Use relative path for nice py.test name
                 relpath = os.path.relpath(fullpath, start=directory)
@@ -375,7 +375,7 @@ LINENO_MAPPING = {
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 def test_extended_precision() -> None:
-    path = os.path.join(MISC_DIR, "extended_precision.py")
+    path = os.path.join(MISC_DIR, "extended_precision.pyi")
     output_mypy = OUTPUT_MYPY
     assert path in output_mypy
 
