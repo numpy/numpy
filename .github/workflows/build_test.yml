@@ -39,7 +39,7 @@ jobs:
         python tools/linter.py --branch origin/${{ github.base_ref }}
 
   smoke_test:
-    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -202,18 +202,18 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  #pypy37:
-    #needs: [smoke_test]
-    #runs-on: ubuntu-latest
-    #steps:
-    #- uses: actions/checkout@v2
-      #with:
-        #submodules: recursive
-        #fetch-depth: 0
-    #- uses: actions/setup-python@v2
-      #with:
-        #python-version: pypy-3.7-v7.3.4
-    #- uses: ./.github/actions
+  pypy38:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: pypy-3.8-v7.3.6rc1
+    - uses: ./.github/actions
 
   sdist:
     needs: [smoke_test]
