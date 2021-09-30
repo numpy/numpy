@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import importlib.util
 import itertools
 import os
 import re
 import shutil
 from collections import defaultdict
-from typing import Optional, IO, Dict, List
+from collections.abc import Iterator
+from typing import IO, TYPE_CHECKING
 
 import pytest
 import numpy as np
@@ -21,6 +24,10 @@ except ImportError:
 else:
     NO_MYPY = False
 
+if TYPE_CHECKING:
+    # We need this as annotation, but it's located in a private namespace.
+    # As a compromise, do *not* import it during runtime
+    from _pytest.mark.structures import ParameterSet
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 PASS_DIR = os.path.join(DATA_DIR, "pass")
@@ -32,7 +39,7 @@ CACHE_DIR = os.path.join(DATA_DIR, ".mypy_cache")
 
 #: A dictionary with file names as keys and lists of the mypy stdout as values.
 #: To-be populated by `run_mypy`.
-OUTPUT_MYPY: Dict[str, List[str]] = {}
+OUTPUT_MYPY: dict[str, list[str]] = {}
 
 
 def _key_func(key: str) -> str:
@@ -62,7 +69,10 @@ def run_mypy() -> None:
 
     NUMPY_TYPING_TEST_CLEAR_CACHE=0 pytest numpy/typing/tests
     """
-    if os.path.isdir(CACHE_DIR) and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True)):
+    if (
+        os.path.isdir(CACHE_DIR)
+        and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True))
+    ):
         shutil.rmtree(CACHE_DIR)
 
     for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR, MISC_DIR):
@@ -85,7 +95,7 @@ def run_mypy() -> None:
         OUTPUT_MYPY.update((k, list(v)) for k, v in iterator if k)
 
 
-def get_test_cases(directory):
+def get_test_cases(directory: str) -> Iterator[ParameterSet]:
     for root, _, files in os.walk(directory):
         for fname in files:
             if os.path.splitext(fname)[-1] == ".py":
@@ -103,7 +113,7 @@ def get_test_cases(directory):
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
-def test_success(path):
+def test_success(path) -> None:
     # Alias `OUTPUT_MYPY` so that it appears in the local namespace
     output_mypy = OUTPUT_MYPY
     if path in output_mypy:
@@ -115,7 +125,7 @@ def test_success(path):
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(FAIL_DIR))
-def test_fail(path):
+def test_fail(path: str) -> None:
     __tracebackhide__ = True
 
     with open(path) as fin:
@@ -138,7 +148,10 @@ def test_fail(path):
 
     for i, line in enumerate(lines):
         lineno = i + 1
-        if line.startswith('#') or (" E:" not in line and lineno not in errors):
+        if (
+            line.startswith('#')
+            or (" E:" not in line and lineno not in errors)
+        ):
             continue
 
         target_line = lines[lineno - 1]
@@ -162,14 +175,19 @@ Observed error: {!r}
 """
 
 
-def _test_fail(path: str, error: str, expected_error: Optional[str], lineno: int) -> None:
+def _test_fail(
+    path: str,
+    error: str,
+    expected_error: None | str,
+    lineno: int,
+) -> None:
     if expected_error is None:
         raise AssertionError(_FAIL_MSG1.format(lineno, error))
     elif error not in expected_error:
         raise AssertionError(_FAIL_MSG2.format(lineno, expected_error, error))
 
 
-def _construct_format_dict():
+def _construct_format_dict() -> dict[str, str]:
     dct = {k.split(".")[-1]: v.replace("numpy", "numpy.typing") for
            k, v in _PRECISION_DICT.items()}
 
@@ -193,12 +211,18 @@ def _construct_format_dict():
         "float96": "numpy.floating[numpy.typing._96Bit]",
         "float128": "numpy.floating[numpy.typing._128Bit]",
         "float256": "numpy.floating[numpy.typing._256Bit]",
-        "complex64": "numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]",
-        "complex128": "numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]",
-        "complex160": "numpy.complexfloating[numpy.typing._80Bit, numpy.typing._80Bit]",
-        "complex192": "numpy.complexfloating[numpy.typing._96Bit, numpy.typing._96Bit]",
-        "complex256": "numpy.complexfloating[numpy.typing._128Bit, numpy.typing._128Bit]",
-        "complex512": "numpy.complexfloating[numpy.typing._256Bit, numpy.typing._256Bit]",
+        "complex64": ("numpy.complexfloating"
+                      "[numpy.typing._32Bit, numpy.typing._32Bit]"),
+        "complex128": ("numpy.complexfloating"
+                       "[numpy.typing._64Bit, numpy.typing._64Bit]"),
+        "complex160": ("numpy.complexfloating"
+                       "[numpy.typing._80Bit, numpy.typing._80Bit]"),
+        "complex192": ("numpy.complexfloating"
+                       "[numpy.typing._96Bit, numpy.typing._96Bit]"),
+        "complex256": ("numpy.complexfloating"
+                       "[numpy.typing._128Bit, numpy.typing._128Bit]"),
+        "complex512": ("numpy.complexfloating"
+                       "[numpy.typing._256Bit, numpy.typing._256Bit]"),
 
         "ubyte": f"numpy.unsignedinteger[{dct['_NBitByte']}]",
         "ushort": f"numpy.unsignedinteger[{dct['_NBitShort']}]",
@@ -217,9 +241,14 @@ def _construct_format_dict():
         "single": f"numpy.floating[{dct['_NBitSingle']}]",
         "double": f"numpy.floating[{dct['_NBitDouble']}]",
         "longdouble": f"numpy.floating[{dct['_NBitLongDouble']}]",
-        "csingle": f"numpy.complexfloating[{dct['_NBitSingle']}, {dct['_NBitSingle']}]",
-        "cdouble": f"numpy.complexfloating[{dct['_NBitDouble']}, {dct['_NBitDouble']}]",
-        "clongdouble": f"numpy.complexfloating[{dct['_NBitLongDouble']}, {dct['_NBitLongDouble']}]",
+        "csingle": ("numpy.complexfloating"
+                    f"[{dct['_NBitSingle']}, {dct['_NBitSingle']}]"),
+        "cdouble": ("numpy.complexfloating"
+                    f"[{dct['_NBitDouble']}, {dct['_NBitDouble']}]"),
+        "clongdouble": (
+            "numpy.complexfloating"
+            f"[{dct['_NBitLongDouble']}, {dct['_NBitLongDouble']}]"
+        ),
 
         # numpy.typing
         "_NBitInt": dct['_NBitInt'],
@@ -231,14 +260,16 @@ def _construct_format_dict():
 
 #: A dictionary with all supported format keys (as keys)
 #: and matching values
-FORMAT_DICT: Dict[str, str] = _construct_format_dict()
+FORMAT_DICT: dict[str, str] = _construct_format_dict()
 
 
-def _parse_reveals(file: IO[str]) -> List[str]:
-    """Extract and parse all ``"  # E: "`` comments from the passed file-like object.
+def _parse_reveals(file: IO[str]) -> list[str]:
+    """Extract and parse all ``"  # E: "`` comments from the passed
+    file-like object.
 
-    All format keys will be substituted for their respective value from `FORMAT_DICT`,
-    *e.g.* ``"{float64}"`` becomes ``"numpy.floating[numpy.typing._64Bit]"``.
+    All format keys will be substituted for their respective value
+    from `FORMAT_DICT`, *e.g.* ``"{float64}"`` becomes
+    ``"numpy.floating[numpy.typing._64Bit]"``.
     """
     string = file.read().replace("*", "")
 
@@ -250,7 +281,8 @@ def _parse_reveals(file: IO[str]) -> List[str]:
     # there is the risk of accidentally grabbing dictionaries and sets
     key_set = set(re.findall(r"\{(.*?)\}", comments))
     kwargs = {
-        k: FORMAT_DICT.get(k, f"<UNRECOGNIZED FORMAT KEY {k!r}>") for k in key_set
+        k: FORMAT_DICT.get(k, f"<UNRECOGNIZED FORMAT KEY {k!r}>") for
+        k in key_set
     }
     fmt_str = comments.format(**kwargs)
 
@@ -260,7 +292,10 @@ def _parse_reveals(file: IO[str]) -> List[str]:
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(REVEAL_DIR))
-def test_reveal(path):
+def test_reveal(path: str) -> None:
+    """Validate that mypy correctly infers the return-types of
+    the expressions in `path`.
+    """
     __tracebackhide__ = True
 
     with open(path) as fin:
@@ -290,18 +325,33 @@ Observed reveal: {!r}
 """
 
 
-def _test_reveal(path: str, reveal: str, expected_reveal: str, lineno: int) -> None:
+def _test_reveal(
+    path: str,
+    reveal: str,
+    expected_reveal: str,
+    lineno: int,
+) -> None:
+    """Error-reporting helper function for `test_reveal`."""
     if reveal not in expected_reveal:
-        raise AssertionError(_REVEAL_MSG.format(lineno, expected_reveal, reveal))
+        raise AssertionError(
+            _REVEAL_MSG.format(lineno, expected_reveal, reveal)
+        )
 
 
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
-def test_code_runs(path):
+def test_code_runs(path: str) -> None:
+    """Validate that the code in `path` properly during runtime."""
     path_without_extension, _ = os.path.splitext(path)
     dirname, filename = path.split(os.sep)[-2:]
-    spec = importlib.util.spec_from_file_location(f"{dirname}.{filename}", path)
+
+    spec = importlib.util.spec_from_file_location(
+        f"{dirname}.{filename}", path
+    )
+    assert spec is not None
+    assert spec.loader is not None
+
     test_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(test_module)
 

@@ -1,4 +1,14 @@
-from typing import Any, List, Sequence, Tuple, Union, Type, TypeVar, Protocol, TypedDict
+from typing import (
+    Any,
+    List,
+    Sequence,
+    Tuple,
+    Union,
+    Type,
+    TypeVar,
+    Protocol,
+    TypedDict,
+)
 
 import numpy as np
 
@@ -55,17 +65,22 @@ class _DTypeDictBase(TypedDict):
     names: Sequence[str]
     formats: Sequence[_DTypeLikeNested]
 
+
 # Mandatory + optional keys
 class _DTypeDict(_DTypeDictBase, total=False):
+    # Only `str` elements are usable as indexing aliases,
+    # but `titles` can in principle accept any object
     offsets: Sequence[int]
-    titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
+    titles: Sequence[Any]
     itemsize: int
     aligned: bool
+
 
 # A protocol for anything with the dtype attribute
 class _SupportsDType(Protocol[_DType_co]):
     @property
     def dtype(self) -> _DType_co: ...
+
 
 # Would create a dtype[np.void]
 _VoidDTypeLike = Union[
