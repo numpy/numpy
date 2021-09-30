@@ -14,6 +14,7 @@ from typing import (
     Protocol,
     SupportsIndex,
     Iterable,
+    SupportsInt,
 )
 
 if sys.version_info >= (3, 10):
@@ -27,6 +28,9 @@ from numpy import (
     generic,
     floating,
     complexfloating,
+    float64,
+    complex128,
+    timedelta64,
     object_,
     _OrderKACF,
 )
@@ -42,7 +46,10 @@ from numpy.typing import (
     _SupportsArray,
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
+    _FloatLike_co,
+    _ComplexLike_co,
 )
 
 from numpy.core.function_base import (
@@ -261,8 +268,24 @@ def diff(
     append: ArrayLike = ...,
 ) -> NDArray[Any]: ...
 
-# TODO
-def interp(x, xp, fp, left=..., right=..., period=...): ...
+@overload
+def interp(
+    x: _ArrayLikeFloat_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeFloat_co,
+    left: None | _FloatLike_co = ...,
+    right: None | _FloatLike_co = ...,
+    period: None | _FloatLike_co = ...,
+) -> NDArray[float64]: ...
+@overload
+def interp(
+    x: _ArrayLikeFloat_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeComplex_co,
+    left: None | _ComplexLike_co = ...,
+    right: None | _ComplexLike_co = ...,
+    period: None | _FloatLike_co = ...,
+) -> NDArray[complex128]: ...
 
 @overload
 def angle(z: _ArrayLikeFloat_co, deg: bool = ...) -> floating[Any]: ...
@@ -308,17 +331,169 @@ def disp(
     linefeed: bool = ...,
 ) -> None: ...
 
-def cov(m, y=..., rowvar=..., bias=..., ddof=..., fweights=..., aweights=..., *, dtype=...): ...
-def corrcoef(x, y=..., rowvar=..., bias = ..., ddof = ..., *, dtype=...): ...
-def blackman(M): ...
-def bartlett(M): ...
-def hanning(M): ...
-def hamming(M): ...
-def i0(x): ...
-def kaiser(M, beta): ...
-def sinc(x): ...
-def msort(a): ...
-def median(a, axis=..., out=..., overwrite_input=..., keepdims=...): ...
+@overload
+def cov(
+    m: _ArrayLikeFloat_co,
+    y: None | _ArrayLikeFloat_co = ...,
+    rowvar: bool = ...,
+    bias: bool = ...,
+    ddof: None | SupportsIndex | SupportsInt = ...,
+    fweights: None | ArrayLike = ...,
+    aweights: None | ArrayLike = ...,
+    *,
+    dtype: None = ...,
+) -> NDArray[floating[Any]]: ...
+@overload
+def cov(
+    m: _ArrayLikeComplex_co,
+    y: None | _ArrayLikeComplex_co = ...,
+    rowvar: bool = ...,
+    bias: bool = ...,
+    ddof: None | SupportsIndex | SupportsInt = ...,
+    fweights: None | ArrayLike = ...,
+    aweights: None | ArrayLike = ...,
+    *,
+    dtype: None = ...,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def cov(
+    m: _ArrayLikeComplex_co,
+    y: None | _ArrayLikeComplex_co = ...,
+    rowvar: bool = ...,
+    bias: bool = ...,
+    ddof: None | SupportsIndex | SupportsInt = ...,
+    fweights: None | ArrayLike = ...,
+    aweights: None | ArrayLike = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+) -> NDArray[_SCT]: ...
+@overload
+def cov(
+    m: _ArrayLikeComplex_co,
+    y: None | _ArrayLikeComplex_co = ...,
+    rowvar: bool = ...,
+    bias: bool = ...,
+    ddof: None | SupportsIndex | SupportsInt = ...,
+    fweights: None | ArrayLike = ...,
+    aweights: None | ArrayLike = ...,
+    *,
+    dtype: DTypeLike,
+) -> NDArray[Any]: ...
+
+# NOTE `bias` and `ddof` have been deprecated
+@overload
+def corrcoef(
+    m: _ArrayLikeFloat_co,
+    y: None | _ArrayLikeFloat_co = ...,
+    rowvar: bool = ...,
+    *,
+    dtype: None = ...,
+) -> NDArray[floating[Any]]: ...
+@overload
+def corrcoef(
+    m: _ArrayLikeComplex_co,
+    y: None | _ArrayLikeComplex_co = ...,
+    rowvar: bool = ...,
+    *,
+    dtype: None = ...,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def corrcoef(
+    m: _ArrayLikeComplex_co,
+    y: None | _ArrayLikeComplex_co = ...,
+    rowvar: bool = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+) -> NDArray[_SCT]: ...
+@overload
+def corrcoef(
+    m: _ArrayLikeComplex_co,
+    y: None | _ArrayLikeComplex_co = ...,
+    rowvar: bool = ...,
+    *,
+    dtype: DTypeLike,
+) -> NDArray[Any]: ...
+
+def blackman(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+
+def bartlett(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+
+def hanning(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+
+def hamming(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+
+def i0(x: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
+
+def kaiser(
+    M: _FloatLike_co,
+    beta: _FloatLike_co,
+) -> NDArray[floating[Any]]: ...
+
+@overload
+def sinc(x: _FloatLike_co) -> floating[Any]: ...
+@overload
+def sinc(x: _ComplexLike_co) -> complexfloating[Any, Any]: ...
+@overload
+def sinc(x: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
+@overload
+def sinc(x: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
+
+@overload
+def msort(a: _ArrayType) -> _ArrayType: ...
+@overload
+def msort(a: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
+@overload
+def msort(a: ArrayLike) -> NDArray[Any]: ...
+
+@overload
+def median(
+    a: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    keepdims: L[False] = ...,
+) -> floating[Any]: ...
+@overload
+def median(
+    a: _ArrayLikeComplex_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    keepdims: L[False] = ...,
+) -> complexfloating[Any, Any]: ...
+@overload
+def median(
+    a: _ArrayLikeTD64_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    keepdims: L[False] = ...,
+) -> timedelta64: ...
+@overload
+def median(
+    a: _ArrayLikeObject_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    keepdims: L[False] = ...,
+) -> Any: ...
+@overload
+def median(
+    a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    axis: None | _ShapeLike = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    keepdims: bool = ...,
+) -> Any: ...
+@overload
+def median(
+    a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    overwrite_input: bool = ...,
+    keepdims: bool = ...,
+) -> _ArrayType: ...
+
 def percentile(a, q, axis=..., out=..., overwrite_input=..., interpolation=..., keepdims=...): ...
 def quantile(a, q, axis=..., out=..., overwrite_input=..., interpolation=..., keepdims=...): ...
 def trapz(y, x=..., dx=..., axis=...): ...
