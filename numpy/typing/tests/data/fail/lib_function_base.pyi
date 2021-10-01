@@ -16,3 +16,4 @@ np.trim_zeros(1)  # E: incompatible type
 np.place(1, [True], 1.5)  # E: incompatible type
 np.vectorize(1)  # E: incompatible type
 np.add_newdoc("__main__", 1.5, "docstring")  # E: incompatible type
+np.place(AR_f8, slice(None), 5)  # E: incompatible type
