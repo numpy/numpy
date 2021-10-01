@@ -60,7 +60,9 @@ def asarray(
     if copy is False:
         # Note: copy=False is not yet implemented in np.asarray
         raise NotImplementedError("copy=False is not yet implemented")
-    if isinstance(obj, Array) and (dtype is None or obj.dtype == dtype):
+    if isinstance(obj, Array):
+        if dtype is not None and obj.dtype != dtype:
+            copy = True
         if copy is True:
             return Array._new(np.array(obj._array, copy=True, dtype=dtype))
         return obj
