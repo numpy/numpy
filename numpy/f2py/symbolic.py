@@ -1098,7 +1098,7 @@ def as_term_coeff(obj):
             if len(obj.data) == 1:
                 (term, coeff), = obj.data.items()
                 return term, coeff
-            # TODO: find common divisior of coefficients
+            # TODO: find common divisor of coefficients
         if obj.op is Op.APPLY and obj.data[0] is ArithOp.DIV:
             t, c = as_term_coeff(obj.data[1][0])
             return as_apply(ArithOp.DIV, t, obj.data[1][1]), c

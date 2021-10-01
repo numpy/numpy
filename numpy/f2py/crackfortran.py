@@ -2671,7 +2671,7 @@ def analyzevars(block):
                                 init = init.tostring(
                                     language=symbolic.Language.C)
                                 vars[v]['='] = init
-                                # n needs to be initialzed before v. So,
+                                # n needs to be initialized before v. So,
                                 # making v dependent on n and on any
                                 # variables in solver or d.
                                 vars[v]['depend'] = [n] + deps
