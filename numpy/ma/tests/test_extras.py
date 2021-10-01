@@ -1552,7 +1552,7 @@ class TestArraySetOps:
         d = np.isin(a, b[~b.mask]) & ~a.mask
         assert_array_equal(c, d)
         # test case in gh-19877
-        a = MaskedArray([[1, 2, 3],[4, 5, 6]],
+        a = MaskedArray([[1, 2, 3], [4, 5, 6]],
                         [[True, False, False],
                          [False, False, False]])
         ta = array([1, 4, 5])
