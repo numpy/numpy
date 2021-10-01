@@ -1203,13 +1203,16 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     # We need this to be a stable sort, so always use 'mergesort'
     # here. The values from the first array should always come before
     # the values from the second array.
-    order = ar.argsort(kind='mergesort')
+    order = ar.data.argsort(kind='mergesort')
     sar = ar[order]
+    m = ~sar.mask
+    usar = sar[m].ravel()
+    flag = ma.empty_like(sar, dtype='bool')
     if invert:
-        bool_ar = (sar[1:] != sar[:-1])
+        bool_ar = (usar[1:] != usar[:-1])
     else:
-        bool_ar = (sar[1:] == sar[:-1])
-    flag = ma.concatenate((bool_ar, [invert]))
+        bool_ar = (usar[1:] == usar[:-1])
+    flag[m] = ma.concatenate((bool_ar, [invert]))
     indx = order.argsort(kind='mergesort')[:len(ar1)]
 
     if assume_unique:
