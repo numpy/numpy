@@ -12,19 +12,19 @@ from typing import NamedTuple
 import numpy.linalg
 import numpy as np
 
-class eighresult(NamedTuple):
+class EIGHResult(NamedTuple):
     eigenvalues: Array
     eigenvectors: Array
 
-class qrresult(NamedTuple):
+class QRResult(NamedTuple):
     q: Array
     r: Array
 
-class slogdetresult(NamedTuple):
+class SLOGDETResult(NamedTuple):
     sign: Array
     logabsdet: Array
 
-class svdresult(NamedTuple):
+class SVDResult(NamedTuple):
     u: Array
     s: Array
     vh: Array
@@ -86,7 +86,7 @@ def diagonal(x: Array, /, *, offset: int = 0) -> Array:
 
 
 # Note: the keyword argument name upper is different from np.linalg.eigh
-def eigh(x: Array, /) -> eighresult:
+def eigh(x: Array, /) -> EIGHResult:
     """
     Array API compatible wrapper for :py:func:`np.eig <numpy.eigh>`.
 
@@ -99,7 +99,7 @@ def eigh(x: Array, /) -> eighresult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.eigh, which only returns a tuple.
-    return eighresult(*map(Array._new, np.linalg.eigh(x._array)))
+    return EIGHResult(*map(Array._new, np.linalg.eigh(x._array)))
 
 
 # Note: the keyword argument name upper is different from np.linalg.eigvalsh
@@ -240,7 +240,7 @@ def pinv(x: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> Array:
         rtol = max(x.shape[-2:]) * np.finfo(x.dtype).eps
     return Array._new(np.linalg.pinv(x._array, rcond=rtol))
 
-def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> Tuple[Array, Array]:
+def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> QRResult:
     """
     Array API compatible wrapper for :py:func:`np.qr <numpy.qr>`.
 
@@ -256,9 +256,9 @@ def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> Tupl
 
     # Note: the return type here is a namedtuple, which is different from
     # np.linalg.qr, which only returns a tuple.
-    return qrresult(*map(Array._new, np.linalg.qr(x._array, mode=mode)))
+    return QRResult(*map(Array._new, np.linalg.qr(x._array, mode=mode)))
 
-def slogdet(x: Array, /) -> slogdetresult:
+def slogdet(x: Array, /) -> SLOGDETResult:
     """
     Array API compatible wrapper for :py:func:`np.slogdet <numpy.slogdet>`.
 
@@ -271,7 +271,7 @@ def slogdet(x: Array, /) -> slogdetresult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.linalg.slogdet, which only returns a tuple.
-    return slogdetresult(*map(Array._new, np.linalg.slogdet(x._array)))
+    return SLOGDETResult(*map(Array._new, np.linalg.slogdet(x._array)))
 
 def solve(x1: Array, x2: Array, /) -> Array:
     """
@@ -286,7 +286,7 @@ def solve(x1: Array, x2: Array, /) -> Array:
 
     return Array._new(np.linalg.solve(x1._array, x2._array))
 
-def svd(x: Array, /, *, full_matrices: bool = True) -> svdresult:
+def svd(x: Array, /, *, full_matrices: bool = True) -> SVDResult:
     """
     Array API compatible wrapper for :py:func:`np.svd <numpy.svd>`.
 
@@ -299,7 +299,7 @@ def svd(x: Array, /, *, full_matrices: bool = True) -> svdresult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.svd, which only returns a tuple.
-    return svdresult(*map(Array._new, np.linalg.svd(x._array, full_matrices=full_matrices)))
+    return SVDResult(*map(Array._new, np.linalg.svd(x._array, full_matrices=full_matrices)))
 
 # Note: svdvals is not in NumPy (but it is in SciPy). It is equivalent to
 # np.linalg.svd(compute_uv=False).
