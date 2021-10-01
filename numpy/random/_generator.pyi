@@ -622,6 +622,17 @@ class Generator:
         *,
         method: Literal["svd", "eigh", "cholesky"] = ...,
     ) -> ndarray[Any, dtype[float64]]: ...
+    def multivariate_t(
+        self,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        df: float,
+        size: Optional[_ShapeLike] = ...,
+        check_valid: Literal["warn", "raise", "ignore"] = ...,
+        tol: float = ...,
+        *,
+        method: Literal["svd", "eigh", "cholesky"] = ...,
+    ) -> ndarray[Any, dtype[float64]]: ...
     def multinomial(
         self, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: Optional[_ShapeLike] = ...
     ) -> ndarray[Any, dtype[int64]]: ...

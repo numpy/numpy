@@ -285,6 +285,55 @@ class TestMultivariateHypergeometric:
         assert_array_equal(sample, expected)
 
 
+class TestMultivariateT:
+
+    def setup(self):
+        self.seed = 8675309
+
+    def test_argument_validation(self):
+        # `df` must be positive
+        with pytest.raises(ValueError, match="df <= 0"):
+            random.multivariate_t([0], [[1]], df=-1)
+
+    def test_size(self):
+        df = 1.
+        assert_equal(random.multivariate_t([0], [[1]], df=df).shape, (1,))
+        assert_equal(random.multivariate_t([0], [[1]], df=df, size=1).shape,
+                     (1, 1))
+        assert_equal(random.multivariate_t([0, 0], [[1, 0], [0, 1]],
+                                           df=df).shape, (2,))
+        assert_equal(random.multivariate_t([0, 0], [[1, 0], [0, 1]],
+                                           df=df, size=1).shape, (1, 2))
+        assert_equal(random.multivariate_t([0, 0], [[1, 0], [0, 1]],
+                                           df=df, size=[2, 2]).shape,
+                     (2, 2, 2))
+
+    def test_limiting_case(self):
+        rng = Generator(MT19937(self.seed))
+        rng2 = Generator(MT19937(self.seed))
+
+        rvs = rng.multivariate_t([0], [[1]], df=np.inf, size=100)
+        rvs_ex = rng2.multivariate_normal([0], [[1]], size=100)
+        assert_equal(rvs, rvs_ex)
+
+    def test_reproducibility(self):
+        rng = Generator(MT19937(self.seed))
+        rng2 = Generator(MT19937(self.seed))
+
+        rvs = rng.multivariate_t([0], [[1]], df=1., size=100)
+        rvs2 = rng2.multivariate_t([0], [[1]], df=1., size=100)
+        assert_equal(rvs, rvs2)
+
+        rng = Generator(MT19937(self.seed))
+        rvs = rng.multivariate_t([0, 0], [[1, 0], [0, 1]], df=1, size=5)
+        rvs_ex = np.array([[0.00990161, 0.06227337],
+                           [-0.87933569, -0.96921587],
+                           [0.97128127, 0.96660057],
+                           [-1.26135999, -0.51913132],
+                           [-0.72377948, 0.40111199]])
+        assert_allclose(rvs, rvs_ex, rtol=5e-7)
+
+
 class TestSetState:
     def setup(self):
         self.seed = 1234567890

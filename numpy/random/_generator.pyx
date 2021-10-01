@@ -1703,6 +1703,11 @@ cdef class Generator:
             a single value is returned if ``df`` is a scalar.  Otherwise,
             ``np.array(df).size`` samples are drawn.
 
+        See Also
+        --------
+        multivariate_t : Draw samples from the multivariate
+                         t distribution.
+
         Returns
         -------
         out : ndarray or scalar
@@ -3654,6 +3659,88 @@ cdef class Generator:
         x = mean + x @ _factor.T
         x.shape = tuple(final_shape)
         return x
+
+    def multivariate_t(self, mean, cov, df, size=None, check_valid='warn',
+                       tol=1e-8, *, method='svd'):
+        """
+        multivariate_t(mean, cov, size=None, check_valid='warn',
+                            tol=1e-8, *, method='svd')
+
+        Draw random samples from a multivariate t distribution.
+
+        The multivariate t distribution is a generalization of the
+        one-dimensional t distribution to higher dimensions. Such a
+        distribution is specified by its mean, covariance matrix (scale),
+        and degrees of freedom (df).
+
+        Parameters
+        ----------
+        mean : 1-D array_like, of length N
+            Mean of the N-dimensional distribution.
+        cov : 2-D array_like, of shape (N, N)
+            Scale of the distribution. It must be symmetric and
+            positive-semidefinite for proper sampling.
+        df : float
+            Degrees of freedom.
+        size : int or tuple of ints, optional
+            Given a shape of, for example, ``(m,n,k)``, ``m*n*k`` samples are
+            generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
+            each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
+            If no shape is specified, a single (`N`-D) sample is returned.
+        check_valid : { 'warn', 'raise', 'ignore' }, optional
+            Behavior when the covariance matrix is not positive semidefinite.
+        tol : float, optional
+            Tolerance when checking the singular values in covariance matrix.
+            cov is cast to double before the check.
+        method : { 'svd', 'eigh', 'cholesky'}, optional
+            The cov input is used to compute a factor matrix A such that
+            ``A @ A.T = cov``. This argument is used to select the method
+            used to compute the factor matrix A. The default method 'svd' is
+            the slowest, while 'cholesky' is the fastest but less robust than
+            the slowest method. The method `eigh` uses eigen decomposition to
+            compute A and is faster than svd but slower than cholesky.
+
+        Returns
+        -------
+        out : ndarray
+            The drawn samples, of shape *size*, if that was provided.  If not,
+            the shape is ``(N,)``.
+
+            In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
+            value drawn from the distribution.
+
+        Examples
+        --------
+        >>> mean = [1, 2]
+        >>> cov = [[1, 0], [0, 1]]
+        >>> rng = np.random.default_rng()
+        >>> x = rng.multivariate_t(mean, cov, df=1, size=(3, 3))
+        >>> x.shape
+        (3, 3, 2)
+
+        We can use a different method other than the default to factorize cov:
+
+        >>> y = rng.multivariate_t(mean, cov, df=1, size=(3, 3), method='cholesky')
+        >>> y.shape
+        (3, 3, 2)
+
+        """
+        # only validate df. mean and cov will be validated by
+        # multivariate_normal.
+        if df <= 0:
+            raise ValueError("df <= 0")
+        if np.isinf(df):
+            shape = [] if size is None else size
+            x = np.ones(shape)
+        else:
+            x = self.chisquare(df, size=size) / df
+        mean = np.asarray(mean)
+        dim = mean.shape[max(0, np.PyArray_NDIM(mean)-1)]
+        z = self.multivariate_normal(np.zeros(dim), cov, size=size,
+                                     check_valid=check_valid, tol=tol,
+                                     method=method)
+        samples = mean + z / np.sqrt(x)[..., np.newaxis]
+        return samples
 
     def multinomial(self, object n, object pvals, size=None):
         """
