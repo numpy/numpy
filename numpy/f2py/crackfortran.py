@@ -2227,7 +2227,9 @@ def _get_depend_dict(name, vars, deps):
 
         if '=' in vars[name] and not isstring(vars[name]):
             for word in word_pattern.findall(vars[name]['=']):
-                if word not in words and word in vars:
+                # The word_pattern may return values that are not
+                # only variables, they can be string content for instance
+                if word not in words and word in vars and word != name:
                     words.append(word)
         for word in words[:]:
             for w in deps.get(word, []) \
