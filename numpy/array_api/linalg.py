@@ -330,7 +330,7 @@ def vecdot(x1: Array, x2: Array, /, *, axis: Optional[int] = None) -> Array:
 
 # Note: the name here is different from norm(). The array API norm is split
 # into matrix_norm and vector_norm().
-def vector_norm(x: Array, /, *, axis: Tuple[int, int] = (-2, -1), keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = 'fro') -> Array:
+def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf]]] = 2) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
 
