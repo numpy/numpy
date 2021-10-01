@@ -157,6 +157,8 @@ def matrix_norm(x: Array, /, *, axis: Tuple[int, int] = (-2, -1), keepdims: bool
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in norm')
 
+    if not isinstance(axis, tuple) or not len(axis) == 2:
+        raise ValueError("axis must be a tuple of 2 integers. Use vector_norm() to compute a vector norm.")
     return Array._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
 
 
@@ -341,6 +343,17 @@ def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = No
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in norm')
 
-    return Array._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
+    a = x._array
+    if axis is None:
+        a = a.flatten()
+        axis = 0
+    elif isinstance(axis, tuple):
+        # Note: The axis argument supports any number of axes, whereas norm()
+        # only supports a single axis for vector norm.
+        rest = tuple(i for i in range(a.ndim) if i not in axis)
+        newshape = axis + rest
+        a = np.transpose(a, newshape).reshape((np.prod(axis), *rest))
+        axis = 0
+    return Array._new(np.linalg.norm(a, axis=axis, keepdims=keepdims, ord=ord))
 
 __all__ = ['cholesky', 'cross', 'det', 'diagonal', 'eigh', 'eigvalsh', 'inv', 'matmul', 'matrix_norm', 'matrix_power', 'matrix_rank', 'matrix_transpose', 'outer', 'pinv', 'qr', 'slogdet', 'solve', 'svd', 'svdvals', 'tensordot', 'trace', 'vecdot', 'vector_norm']
