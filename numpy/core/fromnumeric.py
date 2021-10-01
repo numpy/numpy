@@ -1004,13 +1004,12 @@ def _argsort_dispatcher(a, axis=None, kind=None, order=None):
 @array_function_dispatch(_argsort_dispatcher)
 def argsort(a, axis=-1, kind=None, order=None):
     """
-    Returns the indices that would sort an array. 
-    The returned indices can then be used as a_sorted = a[returned indices] which will now give us the sorted array 'a'.
-    The zeroth number in [returned indices] is the index of the smallest number in array 'a'.    
-
-    Perform an indirect sort along the given axis using the algorithm specified
-    by the `kind` keyword. It returns an array of indices of the same shape as
-    `a` that index data along the given axis in sorted order.
+    Returns an array of indices of same shape that would sort the input array.
+    
+    The indices in the array returned can then be used as follows:
+    a_sorted = a[np.argsort(a)] which will now give us the sorted array 'a'.
+    In other words, the zeroth integer in the returned indices is the index 
+    of the smallest number in array 'a'. 
 
     Parameters
     ----------
