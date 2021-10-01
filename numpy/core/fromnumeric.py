@@ -1007,9 +1007,9 @@ def argsort(a, axis=-1, kind=None, order=None):
     Returns an array of indices of same shape that would sort the input array.
     
     The indices in the array returned can then be used as follows:
-    a_sorted = a[np.argsort(a)] which will now give us the sorted array 'a'.
+    ´´a_sorted = a[np.argsort(a)]´´ which will now give us the sorted array ´´a´´.
     In other words, the zeroth integer in the returned indices is the index 
-    of the smallest number in array 'a'. 
+    of the smallest number in array ´´a´´. 
 
     Parameters
     ----------
@@ -1064,6 +1064,16 @@ def argsort(a, axis=-1, kind=None, order=None):
     >>> x = np.array([3, 1, 2])
     >>> np.argsort(x)
     array([1, 2, 0])
+    
+    Index of the 4th largest element in an unsorted 1D array.
+    
+    >>> x = np.array(1, 2, 0, 3, 4, 5])
+    >>> np.argsort(x)[-4]    
+    
+    Index of the 3rd smallest element in an unsorted 1D array.
+    
+    >>> x = np.array(1, 2, 0, 3, 4, 5])
+    >>> np.argsort(x)[3]   
 
     Two-dimensional array:
 
