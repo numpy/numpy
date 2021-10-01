@@ -108,8 +108,12 @@ def assert_equal_records(a, b):
 def assert_equal(actual, desired, err_msg=''):
     """
     Asserts that two items are equal.
-
     """
+    # Default to ndarray version if nothing masked
+    if not (isinstance(actual, masked_array) or
+            isinstance(desired, masked_array)):
+        return np.testing.assert_equal(actual, desired)
+
     # Case #1: dictionary .....
     if isinstance(desired, dict):
         if not isinstance(actual, dict):
