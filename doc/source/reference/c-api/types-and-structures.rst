@@ -286,48 +286,54 @@ PyArrayDescr_Type and PyArray_Descr
        array like behavior. Each bit in this member is a flag which are named
        as:
 
-       .. c:macro:: NPY_ITEM_REFCOUNT
+..
+  dedented to allow internal linking, pending a refactoring
 
-           Indicates that items of this data-type must be reference
-           counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
+.. c:macro:: NPY_ITEM_REFCOUNT
+
+    Indicates that items of this data-type must be reference
+    counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
 
        .. c:macro:: NPY_ITEM_HASOBJECT
 
            Same as :c:data:`NPY_ITEM_REFCOUNT`.
 
-       .. c:macro:: NPY_LIST_PICKLE
+..
+  dedented to allow internal linking, pending a refactoring
 
-           Indicates arrays of this data-type must be converted to a list
-           before pickling.
+.. c:macro:: NPY_LIST_PICKLE
 
-       .. c:macro:: NPY_ITEM_IS_POINTER
+    Indicates arrays of this data-type must be converted to a list
+    before pickling.
 
-           Indicates the item is a pointer to some other data-type
+.. c:macro:: NPY_ITEM_IS_POINTER
 
-       .. c:macro:: NPY_NEEDS_INIT
+    Indicates the item is a pointer to some other data-type
 
-           Indicates memory for this data-type must be initialized (set
-           to 0) on creation.
+.. c:macro:: NPY_NEEDS_INIT
 
-       .. c:macro:: NPY_NEEDS_PYAPI
+    Indicates memory for this data-type must be initialized (set
+    to 0) on creation.
 
-           Indicates this data-type requires the Python C-API during
-           access (so don't give up the GIL if array access is going to
-           be needed).
+.. c:macro:: NPY_NEEDS_PYAPI
 
-       .. c:macro:: NPY_USE_GETITEM
+    Indicates this data-type requires the Python C-API during
+    access (so don't give up the GIL if array access is going to
+    be needed).
 
-           On array access use the ``f->getitem`` function pointer
-           instead of the standard conversion to an array scalar. Must
-           use if you don't define an array scalar to go along with
-           the data-type.
+.. c:macro:: NPY_USE_GETITEM
 
-       .. c:macro:: NPY_USE_SETITEM
+    On array access use the ``f->getitem`` function pointer
+    instead of the standard conversion to an array scalar. Must
+    use if you don't define an array scalar to go along with
+    the data-type.
 
-           When creating a 0-d array from an array scalar use
-           ``f->setitem`` instead of the standard copy from an array
-           scalar. Must use if you don't define an array scalar to go
-           along with the data-type.
+.. c:macro:: NPY_USE_SETITEM
+
+    When creating a 0-d array from an array scalar use
+    ``f->setitem`` instead of the standard copy from an array
+    scalar. Must use if you don't define an array scalar to go
+    along with the data-type.
 
        .. c:macro:: NPY_FROM_FIELDS
 
@@ -989,14 +995,17 @@ PyUFunc_Type and PyUFuncObject
 
        For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
 
-       .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
+..
+  dedented to allow internal linking, pending a refactoring
 
-           if the dim name ends in ``?``
+.. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
 
-       .. c:macro:: UFUNC_CORE_DIM_SIZE_INFERRED
+    if the dim name ends in ``?``
 
-           if the dim size will be determined from the operands
-           and not from a :ref:`frozen <frozen>` signature
+.. c:macro:: UFUNC_CORE_DIM_SIZE_INFERRED
+
+    if the dim size will be determined from the operands
+    and not from a :ref:`frozen <frozen>` signature
 
    .. c:member:: PyObject *identity_value
 
