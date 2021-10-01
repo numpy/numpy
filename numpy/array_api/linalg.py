@@ -352,7 +352,7 @@ def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = No
         # only supports a single axis for vector norm.
         rest = tuple(i for i in range(a.ndim) if i not in axis)
         newshape = axis + rest
-        a = np.transpose(a, newshape).reshape((np.prod(axis), *rest))
+        a = np.transpose(a, newshape).reshape((np.prod([a.shape[i] for i in axis]), *[a.shape[i] for i in rest]))
         axis = 0
     return Array._new(np.linalg.norm(a, axis=axis, keepdims=keepdims, ord=ord))
 
