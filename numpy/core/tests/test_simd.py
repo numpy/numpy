@@ -415,23 +415,6 @@ class _SIMD_FP(_Test_Utility):
         nnan = self.notnan(self.setall(self._nan()))
         assert nnan == [0]*self.nlanes
 
-    def test_heaviside(self):
-        data_a = self._data()
-        data_b = self._data(self.nlanes)
-        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
-
-        def _heaviside(vector_a, vector_b):
-            if vector_a < 0:
-                return 0
-            elif vector_a == 0:
-                return vector_b
-            elif vector_a > 0:
-                return 1
-
-        data_heaviside = [_heaviside(a, b) for a, b in zip(data_a, data_b)]
-        vheaviside = self.heaviside(vdata_a, vdata_b)
-        assert vheaviside == data_heaviside
-
 class _SIMD_ALL(_Test_Utility):
     """
     To test all vector types at once

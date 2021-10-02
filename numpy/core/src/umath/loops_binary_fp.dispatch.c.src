@@ -15,7 +15,18 @@
 NPY_FINLINE npyv_f32
 simd_heaviside_f32(npyv_f32 x, npyv_f32 h)
 {
-    // TODO: your implmentation
+    npyv_f32 zeros = npyv_setall_f32(0.0);
+    npyv_f32 ones = npyv_setall_f32(1.0);
+    npyv_b32 lt_zero = npyv_cmplt_f32(x, zeros);
+    npyv_b32 gt_zero = npyv_cmpgt_f32(x, zeros);
+    npyv_b32 eq_zero = npyv_cmpeq_f32(x, zeros);
+    npyv_b32 is_nan = npyv_not_b32(npyv_cmpeq_f32(x, x));
+    npyv_f32 lt_zero_res = npyv_and_f32(npyv_cvt_f32_b32(lt_zero), zeros);
+    npyv_f32 gt_zero_res = npyv_and_f32(npyv_cvt_f32_b32(gt_zero), ones);
+    npyv_f32 eq_zero_res = npyv_and_f32(npyv_cvt_f32_b32(eq_zero), h);
+    npyv_f32 is_nan_res = npyv_and_f32(npyv_cvt_f32_b32(is_nan), x);
+
+    return npyv_or_f32(npyv_or_f32(lt_zero_res, npyv_or_f32(gt_zero_res, eq_zero_res)), is_nan_res);
 }
 #endif
 
@@ -23,7 +34,18 @@ simd_heaviside_f32(npyv_f32 x, npyv_f32 h)
 NPY_FINLINE npyv_f64
 simd_heaviside_f64(npyv_f64 x, npyv_f64 h)
 {
-    // TODO: your implmentation
+    npyv_f64 zeros = npyv_setall_f64(0.0);
+    npyv_f64 ones = npyv_setall_f64(1.0);
+    npyv_b64 lt_zero = npyv_cmplt_f64(x, zeros);
+    npyv_b64 gt_zero = npyv_cmpgt_f64(x, zeros);
+    npyv_b64 eq_zero = npyv_cmpeq_f64(x, zeros);
+    npyv_b64 is_nan = npyv_not_b64(npyv_cmpeq_f64(x, x));
+    npyv_f64 lt_zero_res = npyv_and_f64(npyv_cvt_f64_b64(lt_zero), zeros);
+    npyv_f64 gt_zero_res = npyv_and_f64(npyv_cvt_f64_b64(gt_zero), ones);
+    npyv_f64 eq_zero_res = npyv_and_f64(npyv_cvt_f64_b64(eq_zero), h);
+    npyv_f64 is_nan_res = npyv_and_f64(npyv_cvt_f64_b64(is_nan), x);
+
+    return npyv_or_f64(npyv_or_f64(lt_zero_res, npyv_or_f64(gt_zero_res, eq_zero_res)), is_nan_res);
 }
 #endif
 

@@ -4,9 +4,6 @@
 
 #ifndef _NPY_SIMD_SSE_MATH_H
 #define _NPY_SIMD_SSE_MATH_H
-
-#include "misc.h"
-
 /***************************
  * Elementary
  ***************************/
@@ -144,32 +141,6 @@ NPY_FINLINE npyv_u64 npyv_min_u64(npyv_u64 a, npyv_u64 b)
 NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 {
     return npyv_select_s64(npyv_cmplt_s64(a, b), a, b);
-}
-
-// heaviside
-NPY_FINLINE npyv_f32 npyv_heaviside_f32(npyv_f32 a, npyv_f32 b)
-{
-    npyv_f32 zeros = npyv_setall_f32(0.0);
-    npyv_f32 ones = npyv_setall_f32(1.0);
-    npyv_f32 lt_zero = _mm_cmplt_ps(a, zeros);
-    npyv_f32 gt_zero = _mm_cmpgt_ps(a, zeros);
-    npyv_f32 eq_zero = _mm_cmpeq_ps(a, zeros);
-    npyv_f32 lt_zero_res = npyv_and_f32(lt_zero, zeros);
-    npyv_f32 gt_zero_res = npyv_and_f32(gt_zero, ones);
-    npyv_f32 eq_zero_res = npyv_and_f32(eq_zero, b);
-    return npyv_or_f32(lt_zero_res, npyv_or_f32(gt_zero_res, eq_zero_res));
-}
-NPY_FINLINE npyv_f64 npyv_heaviside_f64(npyv_f64 a, npyv_f64 b)
-{
-    npyv_f64 zeros = npyv_setall_f64(0.0);
-    npyv_f64 ones = npyv_setall_f64(1.0);
-    npyv_f64 lt_zero = _mm_cmplt_pd(a, zeros);
-    npyv_f64 gt_zero = _mm_cmpgt_pd(a, zeros);
-    npyv_f64 eq_zero = _mm_cmpeq_pd(a, zeros);
-    npyv_f64 lt_zero_res = npyv_and_f64(lt_zero, zeros);
-    npyv_f64 gt_zero_res = npyv_and_f64(gt_zero, ones);
-    npyv_f64 eq_zero_res = npyv_and_f64(eq_zero, b);
-    return npyv_or_f64(lt_zero_res, npyv_or_f64(gt_zero_res, eq_zero_res));
 }
 
 #endif // _NPY_SIMD_SSE_MATH_H

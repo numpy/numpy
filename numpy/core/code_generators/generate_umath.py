@@ -605,9 +605,9 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.heaviside'),
           None,
-          TD('e', f='heaviside', astype={'e':'f'}),
+          TD('e', f='heaviside', astype={'e': 'f'}),
           TD('fd', dispatch=[('loops_binary_fp', 'fd')]),
-          TD('g', f='heaviside', astype={'e':'f'}),
+          TD('g', f='heaviside', astype={'e': 'f'}),
           ),
 'degrees':
     Ufunc(1, 1, None,
