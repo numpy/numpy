@@ -660,11 +660,11 @@ def select(condlist, choicelist, default=0):
     >>> x = np.arange(6)
     >>> condlist = [x<3, x>3]
     >>> choicelist = [x, x**2]
-    >>> np.select(condlist, choicelist, 55)
-    array([ 0,  1,  2, 55, 16, 25])
+    >>> np.select(condlist, choicelist, 42)
+    array([ 0,  1,  2, 42, 16, 25])
 
     Note that, when multiple conditions are satisfied, the element is drawn
-    from the first element in `choicelist` with a matching condition:
+    from the first array in `choicelist` with a matching condition:
 
     >>> x = np.arange(6)
     >>> condlist = [x<=4, x>3]
