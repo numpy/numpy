@@ -22,9 +22,9 @@ typedef int (is_known_scalar_type_function)(
 
 typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
 typedef PyArray_DTypeMeta *(common_dtype_function)(
-        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2);
+        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
 typedef PyArray_Descr *(common_instance_function)(
-        PyArray_Descr *dtype1, PyArray_Descr *dtyep2);
+        PyArray_Descr *dtype1, PyArray_Descr *dtype2);
 
 /*
  * TODO: These two functions are currently only used for experimental DType

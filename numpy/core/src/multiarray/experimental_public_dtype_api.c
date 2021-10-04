@@ -58,9 +58,10 @@ use_new_as_default(PyArray_DTypeMeta *self)
      *       an abstract DType).
      */
     if (!PyArray_DescrCheck(res)) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_Format(PyExc_RuntimeError,
                 "Instantiating %S did not return a dtype instance, this is "
-                "invalid (especially without a custom `default_descr()`).");
+                "invalid (especially without a custom `default_descr()`).",
+                self);
         Py_DECREF(res);
         return NULL;
     }
@@ -276,7 +277,7 @@ PyArrayInitDTypeMeta_FromSpec(
     if (NPY_DT_SLOTS(DType)->within_dtype_castingimpl == NULL) {
         /*
          * We expect this for now. We should have a default for DType that
-         * only support simple copy (and possibly byte-order when assuming that
+         * only supports simple copy (and possibly byte-order assuming that
          * they swap the full itemsize).
          */
         PyErr_SetString(PyExc_RuntimeError,

@@ -1,13 +1,13 @@
 /*
  * This header exports the new experimental DType API as proposed in
  * NEPs 41 to 43.  For background, please check these NEPs.  Otherwise,
- * this header also serves as documentation at the time being.
+ * this header also serves as documentation for the time being.
  *
  * Please do not hesitate to contact @seberg with questions.  This is
  * developed together with https://github.com/seberg/experimental_user_dtypes
  * and those interested in experimenting are encouraged to contribute there.
  *
- * To use the functions defined in the header call::
+ * To use the functions defined in the header, call::
  *
  *     if (import_experimental_dtype_api(version) < 0) {
  *         return NULL;
@@ -40,7 +40,7 @@
  *
  * Symbols with a leading underscore are likely to not be included in the
  * first public version, if these are central to your use-case, please let
- * us know, so that we can reconsidered.
+ * us know, so that we can reconsider.
  *
  * "Array-like" consumer API not yet under considerations
  * ======================================================
@@ -128,12 +128,12 @@ typedef PyObject *_ufunc_addloop_fromspec_func(
 
 
 /*
- * Additionally to the normal casting levels, NPY_CAST_IS_VIEW indicates
+ * In addition to the normal casting levels, NPY_CAST_IS_VIEW indicates
  * that no cast operation is necessary at all (although a copy usually will be)
  *
  * NOTE: The most likely modification here is to add an additional
  *       `view_offset` output to resolve_descriptors.  If set, it would
- *       indicates both that a view and what offset to use.  This means that
+ *       indicate both that it is a view and what offset to use.  This means that
  *       e.g. `arr.imag` could be implemented by an ArrayMethod.
  */
 #define NPY_CAST_IS_VIEW _NPY_CAST_IS_VIEW
