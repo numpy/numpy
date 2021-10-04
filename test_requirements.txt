@@ -3,7 +3,7 @@ wheel<0.37.1
 setuptools<49.2.0
 hypothesis==6.23.0
 pytest==6.2.5
-pytz==2021.1
+pytz==2021.3
 pytest-cov==2.12.1
 pickle5; python_version == '3.7' and platform_python_implementation != 'PyPy'
 # for numpy.random.test.test_extending
