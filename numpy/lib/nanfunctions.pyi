@@ -1,54 +1,40 @@
 from typing import List
 
+from numpy.core.fromnumeric import (
+    amin,
+    amax,
+    argmin,
+    argmax,
+    sum,
+    prod,
+    cumsum,
+    cumprod,
+    mean,
+    var,
+    std
+)
+
+from numpy.lib.function_base import (
+    median,
+    percentile,
+    quantile,
+)
+
 __all__: List[str]
 
-def nanmin(a, axis=..., out=..., keepdims=...): ...
-def nanmax(a, axis=..., out=..., keepdims=...): ...
-def nanargmin(a, axis=...): ...
-def nanargmax(a, axis=...): ...
-def nansum(a, axis=..., dtype=..., out=..., keepdims=...): ...
-def nanprod(a, axis=..., dtype=..., out=..., keepdims=...): ...
-def nancumsum(a, axis=..., dtype=..., out=...): ...
-def nancumprod(a, axis=..., dtype=..., out=...): ...
-def nanmean(a, axis=..., dtype=..., out=..., keepdims=...): ...
-def nanmedian(
-    a,
-    axis=...,
-    out=...,
-    overwrite_input=...,
-    keepdims=...,
-): ...
-def nanpercentile(
-    a,
-    q,
-    axis=...,
-    out=...,
-    overwrite_input=...,
-    interpolation=...,
-    keepdims=...,
-): ...
-def nanquantile(
-    a,
-    q,
-    axis=...,
-    out=...,
-    overwrite_input=...,
-    interpolation=...,
-    keepdims=...,
-): ...
-def nanvar(
-    a,
-    axis=...,
-    dtype=...,
-    out=...,
-    ddof=...,
-    keepdims=...,
-): ...
-def nanstd(
-    a,
-    axis=...,
-    dtype=...,
-    out=...,
-    ddof=...,
-    keepdims=...,
-): ...
+# NOTE: In reaility these functions are not aliases but distinct functions
+# with identical signatures.
+nanmin = amin
+nanmax = amax
+nanargmin = argmin
+nanargmax = argmax
+nansum = sum
+nanprod = prod
+nancumsum = cumsum
+nancumprod = cumprod
+nanmean = mean
+nanvar = var
+nanstd = std
+nanmedian = median
+nanpercentile = percentile
+nanquantile = quantile
