@@ -3396,7 +3396,7 @@ def kaiser(M, beta):
 
     """
     if M == 1:
-        return np.ones(1, dtype=np.result_type(M, np.float64(0)))
+        return np.ones(1, dtype=np.result_type(M, 0.0))
     n = arange(0, M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
