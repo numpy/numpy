@@ -1144,6 +1144,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
 
+        .. versionadded:: 1.22.0
+
     Returns
     -------
     index_array : ndarray of ints
@@ -1237,6 +1239,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
+
+        .. versionadded:: 1.22.0
 
     Returns
     -------
