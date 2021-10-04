@@ -20,6 +20,7 @@ B: SubClass
 AR_f8: NDArray[np.float64]
 AR_i8: NDArray[np.int64]
 AR_U: NDArray[np.str_]
+AR_V: NDArray[np.void]
 
 ctypes_obj = AR_f8.ctypes
 
@@ -193,3 +194,13 @@ reveal_type(operator.index(AR_i8))  # E: int
 
 reveal_type(AR_f8.__array_prepare__(B))  # E: numpy.ndarray[Any, numpy.dtype[numpy.object_]]
 reveal_type(AR_f8.__array_wrap__(B))  # E: numpy.ndarray[Any, numpy.dtype[numpy.object_]]
+
+reveal_type(AR_V[0])  # E: Any
+reveal_type(AR_V[0, 0])  # E: Any
+reveal_type(AR_V[AR_i8])  # E: Any
+reveal_type(AR_V[AR_i8, AR_i8])  # E: Any
+reveal_type(AR_V[AR_i8, None])  # E: numpy.ndarray[Any, numpy.dtype[numpy.void]]
+reveal_type(AR_V[0, ...])  # E: numpy.ndarray[Any, numpy.dtype[numpy.void]]
+reveal_type(AR_V[:])  # E: numpy.ndarray[Any, numpy.dtype[numpy.void]]
+reveal_type(AR_V["a"])  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(AR_V[["a", "b"]])  # E: numpy.ndarray[Any, numpy.dtype[numpy.void]]

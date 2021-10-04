@@ -35,3 +35,7 @@ AR_M.__int__()  # E: Invalid self argument
 AR_M.__float__()  # E: Invalid self argument
 AR_M.__complex__()  # E: Invalid self argument
 AR_b.__index__()  # E: Invalid self argument
+
+AR_f8[1.5]  # E: No overload variant
+AR_f8["field_a"]  # E: No overload variant
+AR_f8[["field_a", "field_b"]]  # E: Invalid index type

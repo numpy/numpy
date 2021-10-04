@@ -197,6 +197,7 @@ from typing import (
     Final,
     final,
     ClassVar,
+    Set,
 )
 
 # Ensures that the stubs are picked up
@@ -828,24 +829,6 @@ class poly1d:
     def integ(self, m=..., k=...): ...
     def deriv(self, m=...): ...
 
-class vectorize:
-    pyfunc: Any
-    cache: Any
-    signature: Any
-    otypes: Any
-    excluded: Any
-    __doc__: Any
-    def __init__(
-        self,
-        pyfunc,
-        otypes: Any = ...,
-        doc: Any = ...,
-        excluded: Any = ...,
-        cache: Any = ...,
-        signature: Any = ...,
-    ) -> None: ...
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
-
 # Some of these are aliases; others are wrappers with an identical signature
 round = around
 round_ = around
@@ -1181,8 +1164,6 @@ class _ArrayOrScalarCommon:
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
 
-    # TODO: Add proper signatures
-    def __getitem__(self, key) -> Any: ...
     @property
     def __array_interface__(self): ...
     @property
@@ -1678,6 +1659,26 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
         /,
     ) -> ndarray[_ShapeType2, _DType]: ...
+
+    @overload
+    def __getitem__(self, key: Union[
+        SupportsIndex,
+        _ArrayLikeInt_co,
+        Tuple[SupportsIndex | _ArrayLikeInt_co, ...],
+    ]) -> Any: ...
+    @overload
+    def __getitem__(self, key: Union[
+        None,
+        slice,
+        ellipsis,
+        SupportsIndex,
+        _ArrayLikeInt_co,
+        Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...],
+    ]) -> ndarray[Any, _DType_co]: ...
+    @overload
+    def __getitem__(self: NDArray[void], key: str) -> NDArray[Any]: ...
+    @overload
+    def __getitem__(self: NDArray[void], key: list[str]) -> ndarray[_ShapeType, dtype[void]]: ...
 
     @property
     def ctypes(self) -> _ctypes[int]: ...
@@ -3879,3 +3880,21 @@ class memmap(ndarray[_ShapeType, _DType_co]):
     ) -> Any: ...
     def __getitem__(self, index): ...  # TODO
     def flush(self) -> None: ...
+
+class vectorize:
+    pyfunc: Callable[..., Any]
+    cache: bool
+    signature: None | str
+    otypes: None | str
+    excluded: Set[int | str]
+    __doc__: None | str
+    def __init__(
+        self,
+        pyfunc: Callable[..., Any],
+        otypes: None | str | Iterable[DTypeLike] = ...,
+        doc: None | str = ...,
+        excluded: None | Iterable[int | str] = ...,
+        cache: bool = ...,
+        signature: None | str = ...,
+    ) -> None: ...
+    def __call__(self, *args: Any, **kwargs: Any) -> NDArray[Any]: ...
