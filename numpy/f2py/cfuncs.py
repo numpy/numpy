@@ -338,16 +338,16 @@ cppmacros['TRYPYARRAYTEMPLATE'] = """\
         if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
         if (PyArray_DESCR(arr)->type==typecode)  {*(ctype *)(PyArray_DATA(arr))=*v; return 1;}\\
         switch (PyArray_TYPE(arr)) {\\
-                case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_INT: *(int *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_FLOAT: *(float *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_DOUBLE: *(npy_double *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_INT: *(npy_int *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_LONG: *(npy_long *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_FLOAT: *(npy_float *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_CDOUBLE: *(npy_double *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_CFLOAT: *(npy_float *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_BOOL: *(npy_bool *)(PyArray_DATA(arr))=(*v!=0); break;\\
-                case NPY_UBYTE: *(unsigned char *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_BYTE: *(signed char *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_SHORT: *(short *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_UBYTE: *(npy_ubyte *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_BYTE: *(npy_byte *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_SHORT: *(npy_short *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_USHORT: *(npy_ushort *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_UINT: *(npy_uint *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_ULONG: *(npy_ulong *)(PyArray_DATA(arr))=*v; break;\\
@@ -375,15 +375,19 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
             return 1;\\
         }\\
         switch (PyArray_TYPE(arr)) {\\
-                case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r;*(double *)(PyArray_DATA(arr)+sizeof(double))=(*v).i;break;\\
-                case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=(*v).r;*(float *)(PyArray_DATA(arr)+sizeof(float))=(*v).i;break;\\
-                case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_LONG: *(long *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_FLOAT: *(float *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_INT: *(int *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_SHORT: *(short *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_UBYTE: *(unsigned char *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_BYTE: *(signed char *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_CDOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r;\\
+                                  *(npy_double *)(PyArray_DATA(arr)+sizeof(npy_double))=(*v).i;\\
+                                  break;\\
+                case NPY_CFLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r;\\
+                                 *(npy_float *)(PyArray_DATA(arr)+sizeof(npy_float))=(*v).i;\\
+                                 break;\\
+                case NPY_DOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_LONG: *(npy_long *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_FLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_INT: *(npy_int *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_SHORT: *(npy_short *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_UBYTE: *(npy_ubyte *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_BYTE: *(npy_byte *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_BOOL: *(npy_bool *)(PyArray_DATA(arr))=((*v).r!=0 && (*v).i!=0); break;\\
                 case NPY_USHORT: *(npy_ushort *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_UINT: *(npy_uint *)(PyArray_DATA(arr))=(*v).r; break;\\
@@ -391,7 +395,9 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
                 case NPY_LONGLONG: *(npy_longlong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;*(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;break;\\
+                case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;\\
+                                      *(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;\\
+                                      break;\\
                 case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_complex_ ## ctype ## 1((*v))); break;\\
                 default: return -2;\\
         };\\

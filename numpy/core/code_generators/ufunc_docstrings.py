@@ -201,7 +201,8 @@ add_newdoc('numpy.core.umath', 'arccos',
     References
     ----------
     M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-    10th printing, 1964, pp. 79. http://www.math.sfu.ca/~cbm/aands/
+    10th printing, 1964, pp. 79.
+    https://personal.math.ubc.ca/~cbm/aands/page_79.htm
 
     Examples
     --------
@@ -258,7 +259,8 @@ add_newdoc('numpy.core.umath', 'arccosh',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 86.
+           https://personal.math.ubc.ca/~cbm/aands/page_86.htm
     .. [2] Wikipedia, "Inverse hyperbolic function",
            https://en.wikipedia.org/wiki/Arccosh
 
@@ -312,7 +314,7 @@ add_newdoc('numpy.core.umath', 'arcsin',
     ----------
     Abramowitz, M. and Stegun, I. A., *Handbook of Mathematical Functions*,
     10th printing, New York: Dover, 1964, pp. 79ff.
-    http://www.math.sfu.ca/~cbm/aands/
+    https://personal.math.ubc.ca/~cbm/aands/page_79.htm
 
     Examples
     --------
@@ -360,7 +362,8 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 86.
+           https://personal.math.ubc.ca/~cbm/aands/page_86.htm
     .. [2] Wikipedia, "Inverse hyperbolic function",
            https://en.wikipedia.org/wiki/Arcsinh
 
@@ -415,7 +418,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     ----------
     Abramowitz, M. and Stegun, I. A., *Handbook of Mathematical Functions*,
     10th printing, New York: Dover, 1964, pp. 79.
-    http://www.math.sfu.ca/~cbm/aands/
+    https://personal.math.ubc.ca/~cbm/aands/page_79.htm
 
     Examples
     --------
@@ -560,7 +563,8 @@ add_newdoc('numpy.core.umath', 'arctanh',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 86.
+           https://personal.math.ubc.ca/~cbm/aands/page_86.htm
     .. [2] Wikipedia, "Inverse hyperbolic function",
            https://en.wikipedia.org/wiki/Arctanh
 
@@ -1222,7 +1226,7 @@ add_newdoc('numpy.core.umath', 'exp',
            https://en.wikipedia.org/wiki/Exponential_function
     .. [2] M. Abramovitz and I. A. Stegun, "Handbook of Mathematical Functions
            with Formulas, Graphs, and Mathematical Tables," Dover, 1964, p. 69,
-           http://www.math.sfu.ca/~cbm/aands/page_69.htm
+           https://personal.math.ubc.ca/~cbm/aands/page_69.htm
 
     Examples
     --------
@@ -2052,7 +2056,8 @@ add_newdoc('numpy.core.umath', 'log',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 67.
+           https://personal.math.ubc.ca/~cbm/aands/page_67.htm
     .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
@@ -2101,7 +2106,8 @@ add_newdoc('numpy.core.umath', 'log10',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 67.
+           https://personal.math.ubc.ca/~cbm/aands/page_67.htm
     .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
@@ -2289,7 +2295,8 @@ add_newdoc('numpy.core.umath', 'log1p',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 67.
+           https://personal.math.ubc.ca/~cbm/aands/page_67.htm
     .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
@@ -4002,7 +4009,7 @@ add_newdoc('numpy.core.umath', 'tanh',
     ----------
     .. [1] M. Abramowitz and I. A. Stegun, Handbook of Mathematical Functions.
            New York, NY: Dover, 1972, pg. 83.
-           http://www.math.sfu.ca/~cbm/aands/
+           https://personal.math.ubc.ca/~cbm/aands/page_83.htm
 
     .. [2] Wikipedia, "Hyperbolic function",
            https://en.wikipedia.org/wiki/Hyperbolic_function

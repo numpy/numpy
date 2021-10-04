@@ -3577,7 +3577,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
         * 'S' - swap dtype from current to opposite endian
         * {'<', 'little'} - little endian
         * {'>', 'big'} - big endian
-        * '=' - native order, equivalent to `sys.byteorder`
+        * {'=', 'native'} - native order, equivalent to `sys.byteorder`
         * {'|', 'I'} - ignore (no change to byte order)
 
         The default value ('S') results in swapping the current
@@ -4044,6 +4044,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
         The order of all elements in the partitions is undefined.
         If provided with a sequence of kth it will partition all elements
         indexed by kth of them into their sorted position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
@@ -6037,7 +6040,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
         * 'S' - swap dtype from current to opposite endian
         * {'<', 'little'} - little endian
         * {'>', 'big'} - big endian
-        * '=' - native order
+        * {'=', 'native'} - native order
         * {'|', 'I'} - ignore (no change to byte order)
 
     Returns
@@ -6437,7 +6440,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     * 'S' - swap dtype from current to opposite endian
     * {'<', 'little'} - little endian
     * {'>', 'big'} - big endian
-    * '=' - native order
+    * {'=', 'native'} - native order
     * {'|', 'I'} - ignore (no change to byte order)
 
     Parameters

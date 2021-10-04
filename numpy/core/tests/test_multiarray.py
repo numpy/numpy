@@ -2511,27 +2511,19 @@ class TestMethods:
         assert_(not isinstance(a.searchsorted(b, 'left', s), A))
         assert_(not isinstance(a.searchsorted(b, 'right', s), A))
 
-    def test_argpartition_out_of_range(self):
+    @pytest.mark.parametrize("dtype", np.typecodes["All"])
+    def test_argpartition_out_of_range(self, dtype):
         # Test out of range values in kth raise an error, gh-5469
-        d = np.arange(10)
+        d = np.arange(10).astype(dtype=dtype)
         assert_raises(ValueError, d.argpartition, 10)
         assert_raises(ValueError, d.argpartition, -11)
-        # Test also for generic type argpartition, which uses sorting
-        # and used to not bound check kth
-        d_obj = np.arange(10, dtype=object)
-        assert_raises(ValueError, d_obj.argpartition, 10)
-        assert_raises(ValueError, d_obj.argpartition, -11)
 
-    def test_partition_out_of_range(self):
+    @pytest.mark.parametrize("dtype", np.typecodes["All"])
+    def test_partition_out_of_range(self, dtype):
         # Test out of range values in kth raise an error, gh-5469
-        d = np.arange(10)
+        d = np.arange(10).astype(dtype=dtype)
         assert_raises(ValueError, d.partition, 10)
         assert_raises(ValueError, d.partition, -11)
-        # Test also for generic type partition, which uses sorting
-        # and used to not bound check kth
-        d_obj = np.arange(10, dtype=object)
-        assert_raises(ValueError, d_obj.partition, 10)
-        assert_raises(ValueError, d_obj.partition, -11)
 
     def test_argpartition_integer(self):
         # Test non-integer values in kth raise an error/
@@ -2551,26 +2543,30 @@ class TestMethods:
         d_obj = np.arange(10, dtype=object)
         assert_raises(TypeError, d_obj.partition, 9.)
 
-    def test_partition_empty_array(self):
+    @pytest.mark.parametrize("kth_dtype", np.typecodes["AllInteger"])
+    def test_partition_empty_array(self, kth_dtype):
         # check axis handling for multidimensional empty arrays
+        kth = np.array(0, dtype=kth_dtype)[()]
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
             msg = 'test empty array partition with axis={0}'.format(axis)
-            assert_equal(np.partition(a, 0, axis=axis), a, msg)
+            assert_equal(np.partition(a, kth, axis=axis), a, msg)
         msg = 'test empty array partition with axis=None'
-        assert_equal(np.partition(a, 0, axis=None), a.ravel(), msg)
+        assert_equal(np.partition(a, kth, axis=None), a.ravel(), msg)
 
-    def test_argpartition_empty_array(self):
+    @pytest.mark.parametrize("kth_dtype", np.typecodes["AllInteger"])
+    def test_argpartition_empty_array(self, kth_dtype):
         # check axis handling for multidimensional empty arrays
+        kth = np.array(0, dtype=kth_dtype)[()]
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
             msg = 'test empty array argpartition with axis={0}'.format(axis)
-            assert_equal(np.partition(a, 0, axis=axis),
+            assert_equal(np.partition(a, kth, axis=axis),
                          np.zeros_like(a, dtype=np.intp), msg)
         msg = 'test empty array argpartition with axis=None'
-        assert_equal(np.partition(a, 0, axis=None),
+        assert_equal(np.partition(a, kth, axis=None),
                      np.zeros_like(a.ravel(), dtype=np.intp), msg)
 
     def test_partition(self):
@@ -2901,10 +2897,12 @@ class TestMethods:
                 assert_array_equal(np.partition(d, kth)[kth], tgt,
                                    err_msg="data: %r\n kth: %r" % (d, kth))
 
-    def test_argpartition_gh5524(self):
+    @pytest.mark.parametrize("kth_dtype", np.typecodes["AllInteger"])
+    def test_argpartition_gh5524(self, kth_dtype):
         #  A test for functionality of argpartition on lists.
-        d = [6,7,3,2,9,0]
-        p = np.argpartition(d,1)
+        kth = np.array(1, dtype=kth_dtype)[()]
+        d = [6, 7, 3, 2, 9, 0]
+        p = np.argpartition(d, kth)
         self.assert_partitioned(np.array(d)[p],[1])
 
     def test_flatten(self):
@@ -4200,7 +4198,7 @@ class TestArgmaxArgminCommon:
              (3, 4, 1, 2), (4, 1, 2, 3)]
 
     @pytest.mark.parametrize("size, axis", itertools.chain(*[[(size, axis)
-        for axis in list(range(-len(size), len(size))) + [None]] 
+        for axis in list(range(-len(size), len(size))) + [None]]
         for size in sizes]))
     @pytest.mark.parametrize('method', [np.argmax, np.argmin])
     def test_np_argmin_argmax_keepdims(self, size, axis, method):
@@ -4221,7 +4219,7 @@ class TestArgmaxArgminCommon:
         assert_equal(res, res_orig)
         assert_(res.shape == new_shape)
         outarray = np.empty(res.shape, dtype=res.dtype)
-        res1 = method(arr, axis=axis, out=outarray, 
+        res1 = method(arr, axis=axis, out=outarray,
                             keepdims=True)
         assert_(res1 is outarray)
         assert_equal(res, outarray)
@@ -4234,7 +4232,7 @@ class TestArgmaxArgminCommon:
                 wrong_shape[0] = 2
             wrong_outarray = np.empty(wrong_shape, dtype=res.dtype)
             with pytest.raises(ValueError):
-                method(arr.T, axis=axis, 
+                method(arr.T, axis=axis,
                         out=wrong_outarray, keepdims=True)
 
         # non-contiguous arrays
@@ -4252,18 +4250,18 @@ class TestArgmaxArgminCommon:
         assert_(res.shape == new_shape)
         outarray = np.empty(new_shape[::-1], dtype=res.dtype)
         outarray = outarray.T
-        res1 = method(arr.T, axis=axis, out=outarray, 
+        res1 = method(arr.T, axis=axis, out=outarray,
                             keepdims=True)
         assert_(res1 is outarray)
         assert_equal(res, outarray)
 
         if len(size) > 0:
-            # one dimension lesser for non-zero sized 
+            # one dimension lesser for non-zero sized
             # array should raise an error
             with pytest.raises(ValueError):
-                method(arr[0], axis=axis, 
+                method(arr[0], axis=axis,
                         out=outarray, keepdims=True)
-        
+
         if len(size) > 0:
             wrong_shape = list(new_shape)
             if axis is not None:
@@ -4272,7 +4270,7 @@ class TestArgmaxArgminCommon:
                 wrong_shape[0] = 2
             wrong_outarray = np.empty(wrong_shape, dtype=res.dtype)
             with pytest.raises(ValueError):
-                method(arr.T, axis=axis, 
+                method(arr.T, axis=axis,
                         out=wrong_outarray, keepdims=True)
 
     @pytest.mark.parametrize('method', ['max', 'min'])
@@ -4287,7 +4285,7 @@ class TestArgmaxArgminCommon:
             axes.remove(i)
             assert_(np.all(a_maxmin == aarg_maxmin.choose(
                                         *a.transpose(i, *axes))))
-    
+
     @pytest.mark.parametrize('method', ['argmax', 'argmin'])
     def test_output_shape(self, method):
         # see also gh-616
@@ -4330,7 +4328,7 @@ class TestArgmaxArgminCommon:
         [('argmax', np.argmax),
          ('argmin', np.argmin)])
     def test_np_vs_ndarray(self, arr_method, np_method):
-        # make sure both ndarray.argmax/argmin and 
+        # make sure both ndarray.argmax/argmin and
         # numpy.argmax/argmin support out/axis args
         a = np.random.normal(size=(2, 3))
         arg_method = getattr(a, arr_method)
@@ -4344,7 +4342,7 @@ class TestArgmaxArgminCommon:
         # check keyword args
         out1 = np.zeros(3, dtype=int)
         out2 = np.zeros(3, dtype=int)
-        assert_equal(arg_method(out=out1, axis=0), 
+        assert_equal(arg_method(out=out1, axis=0),
                      np_method(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
@@ -4438,7 +4436,7 @@ class TestArgmax:
 
         assert_equal(np.argmax(arr), pos, err_msg="%r" % arr)
         assert_equal(arr[np.argmax(arr)], val, err_msg="%r" % arr)
-    
+
     def test_maximum_signed_integers(self):
 
         a = np.array([1, 2**7 - 1, -2**7], dtype=np.int8)
