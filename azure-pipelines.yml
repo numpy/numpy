@@ -249,6 +249,12 @@ stages:
             TEST_MODE: full
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
+          PyPy38-64bit-fast:
+            PYTHON_VERSION: 'PyPy'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: fast
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
 
     steps:
     - template: azure-steps-windows.yml
