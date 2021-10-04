@@ -3511,6 +3511,12 @@ class TestBroadcast:
 
         assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
 
+    def test_shape_mismatch_error_message(self):
+        with pytest.raises(ValueError, match=r"arg 0 with shape \(1, 3\) and "
+                                             r"arg 2 with shape \(2,\)"):
+            np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
+
+
 class TestKeepdims:
 
     class sub_array(np.ndarray):
