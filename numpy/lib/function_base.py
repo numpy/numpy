@@ -2804,9 +2804,9 @@ def blackman(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
@@ -2913,9 +2913,9 @@ def bartlett(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -3017,9 +3017,9 @@ def hanning(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3117,9 +3117,9 @@ def hamming(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
@@ -3396,7 +3396,7 @@ def kaiser(M, beta):
 
     """
     if M == 1:
-        return np.array([1.])
+        return np.ones(1, dtype=np.result_type(M, 0.0))
     n = arange(0, M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
