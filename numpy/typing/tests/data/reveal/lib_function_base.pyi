@@ -11,6 +11,7 @@ AR_LIKE_f8: list[float]
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
+AR_m: npt.NDArray[np.timedelta64]
 AR_O: npt.NDArray[np.object_]
 AR_b: npt.NDArray[np.bool_]
 AR_U: npt.NDArray[np.str_]
@@ -97,3 +98,37 @@ reveal_type(np.place(AR_f8, mask=AR_i8, vals=5.0))  # E: None
 reveal_type(np.disp(1, linefeed=True))  # E: None
 with open("test", "w") as f:
     reveal_type(np.disp("message", device=f))  # E: None
+
+reveal_type(np.cov(AR_f8, bias=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.cov(AR_f8, AR_c16, ddof=1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+reveal_type(np.cov(AR_f8, aweights=AR_f8, dtype=np.float32))  # E: numpy.ndarray[Any, numpy.dtype[{float32}]]
+reveal_type(np.cov(AR_f8, fweights=AR_f8, dtype=float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+
+reveal_type(np.corrcoef(AR_f8, rowvar=True))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.corrcoef(AR_f8, AR_c16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+reveal_type(np.corrcoef(AR_f8, dtype=np.float32))  # E: numpy.ndarray[Any, numpy.dtype[{float32}]]
+reveal_type(np.corrcoef(AR_f8, dtype=float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+
+reveal_type(np.blackman(5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.bartlett(6))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.hanning(4.5))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.hamming(0))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.i0(AR_i8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.kaiser(4, 5.9))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+
+reveal_type(np.sinc(1.0))  # E: numpy.floating[Any]
+reveal_type(np.sinc(1j))  # E: numpy.complexfloating[Any, Any]
+reveal_type(np.sinc(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.sinc(AR_c16))  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+
+reveal_type(np.msort(CHAR_AR_U))  # E: Any
+reveal_type(np.msort(AR_U))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
+reveal_type(np.msort(AR_LIKE_f8))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+
+reveal_type(np.median(AR_f8, keepdims=False))  # E: numpy.floating[Any]
+reveal_type(np.median(AR_c16, overwrite_input=True))  # E: numpy.complexfloating[Any, Any]
+reveal_type(np.median(AR_m))  # E: numpy.timedelta64
+reveal_type(np.median(AR_O))  # E: Any
+reveal_type(np.median(AR_f8, keepdims=True))  # E: Any
+reveal_type(np.median(AR_c16, axis=0))  # E: Any
+reveal_type(np.median(AR_LIKE_f8, out=AR_c16))  # E: numpy.ndarray[Any, numpy.dtype[{complex128}]]
