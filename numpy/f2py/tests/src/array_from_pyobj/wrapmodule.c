@@ -149,14 +149,12 @@ PyMODINIT_FUNC PyInit_test_array_from_pyobj_ext(void) {
   s = PyUnicode_FromString("This module 'wrap' is auto-generated with f2py (version:2_1330).\nFunctions:\n"
                            "  arr = call(type_num,dims,intent,obj)\n"
                            ".");
-  PyDict_SetItemString(d, "__doc__", s);
+  F2PyDict_SetItemString(d, "__doc__", s);
   wrap_error = PyErr_NewException ("wrap.error", NULL, NULL);
-  Py_DECREF(s);
 
 #define ADDCONST(NAME, CONST)              \
     s = PyLong_FromLong(CONST);             \
-    PyDict_SetItemString(d, NAME, s);      \
-    Py_DECREF(s)
+    F2PyDict_SetItemString(d, NAME, s);      \
 
   ADDCONST("F2PY_INTENT_IN", F2PY_INTENT_IN);
   ADDCONST("F2PY_INTENT_INOUT", F2PY_INTENT_INOUT);
