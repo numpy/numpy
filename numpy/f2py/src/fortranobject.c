@@ -19,15 +19,21 @@ extern "C" {
 int
 F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj)
 {
+    int retval = -1;
     if (obj == NULL) {
         fprintf(stderr, "Error loading %s\n", name);
         if (PyErr_Occurred()) {
             PyErr_Print();
             PyErr_Clear();
         }
+        Py_DECREF(obj);
         return -1;
     }
-    return PyDict_SetItemString(dict, name, obj);
+    else {
+        retval = PyDict_SetItemString(dict, name, obj);
+        Py_XDECREF(obj);  // Cannot be NULL, is OK
+    }
+    return retval;
 }
 
 /*
@@ -136,8 +142,7 @@ PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
             if (v == NULL) {
                 goto fail;
             }
-            PyDict_SetItemString(fp->dict, fp->defs[i].name, v);
-            Py_XDECREF(v);
+            F2PyDict_SetItemString(fp->dict, fp->defs[i].name, v);
         }
         else if ((fp->defs[i].data) !=
                  NULL) { /* Is Fortran variable or array (not allocatable) */
@@ -155,8 +160,7 @@ PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
             if (v == NULL) {
                 goto fail;
             }
-            PyDict_SetItemString(fp->dict, fp->defs[i].name, v);
-            Py_XDECREF(v);
+            F2PyDict_SetItemString(fp->dict, fp->defs[i].name, v);
         }
     }
     return (PyObject *)fp;
@@ -392,15 +396,23 @@ fortran_getattr(PyFortranObject *fp, char *name)
             Py_DECREF(s);
             s = s3;
         }
-        if (PyDict_SetItemString(fp->dict, name, s))
+        if (F2PyDict_SetItemString(fp->dict, name, s)) {
             return NULL;
+        }
+        else {
+            Py_INCREF(s);
+        }
         return s;
     }
     if ((strcmp(name, "_cpointer") == 0) && (fp->len == 1)) {
         PyObject *cobj =
                 F2PyCapsule_FromVoidPtr((void *)(fp->defs[0].data), NULL);
-        if (PyDict_SetItemString(fp->dict, name, cobj))
+        if (F2PyDict_SetItemString(fp->dict, name, cobj)) {
             return NULL;
+        }
+        else {
+            Py_INCREF(cobj);
+        }
         return cobj;
     }
     PyObject *str, *ret;
@@ -477,8 +489,9 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v)
     }
     if (fp->dict == NULL) {
         fp->dict = PyDict_New();
-        if (fp->dict == NULL)
+        if (fp->dict == NULL) {
             return -1;
+        }
     }
     if (v == NULL) {
         int rv = PyDict_DelItemString(fp->dict, name);
@@ -504,12 +517,16 @@ fortran_call(PyFortranObject *fp, PyObject *arg, PyObject *kw)
             return NULL;
         }
         else if (fp->defs[i].data == NULL)
-            /* dummy routine */
+        /* dummy routine */
+        {
             return (*((fortranfunc)(fp->defs[i].func)))((PyObject *)fp, arg,
                                                         kw, NULL);
-        else
-            return (*((fortranfunc)(fp->defs[i].func)))(
-                    (PyObject *)fp, arg, kw, (void *)fp->defs[i].data);
+        }
+        else {
+            return (*((
+                    fortranfunc)(fp->defs[i].func)))((PyObject *)fp, arg, kw,
+                                                     (void *)fp->defs[i].data);
+        }
     }
     PyErr_Format(PyExc_TypeError, "this fortran object is not callable");
     return NULL;
@@ -809,8 +826,9 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
         arr = (PyArrayObject *)PyArray_New(&PyArray_Type, rank, dims, type_num,
                                            NULL, NULL, 1,
                                            !(intent & F2PY_INTENT_C), NULL);
-        if (arr == NULL)
+        if (arr == NULL) {
             return NULL;
+        }
         if (!(intent & F2PY_INTENT_CACHE))
             PyArray_FILLWBYTE(arr, 0);
         return arr;
@@ -910,8 +928,9 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
             retarr = (PyArrayObject *)PyArray_New(
                     &PyArray_Type, PyArray_NDIM(arr), PyArray_DIMS(arr),
                     type_num, NULL, NULL, 1, !(intent & F2PY_INTENT_C), NULL);
-            if (retarr == NULL)
+            if (retarr == NULL) {
                 return NULL;
+            }
             F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
             if (PyArray_CopyInto(retarr, arr)) {
                 Py_DECREF(retarr);
@@ -958,8 +977,9 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
                                           : NPY_ARRAY_FARRAY) |
                         NPY_ARRAY_FORCECAST,
                 NULL);
-        if (arr == NULL)
+        if (arr == NULL) {
             return NULL;
+        }
         if (check_and_fix_dimensions(arr, rank, dims)) {
             return NULL;
         }

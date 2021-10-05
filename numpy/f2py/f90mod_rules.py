@@ -237,7 +237,7 @@ def buildhooks(pymod):
              % (F_FUNC, m['name'], m['name'].upper(), m['name']))
         iadd('}\n')
         ret['f90modhooks'] = ret['f90modhooks'] + chooks + ihooks
-        ret['initf90modhooks'] = ['\tPyDict_SetItemString(d, "%s", PyFortranObject_New(f2py_%s_def,f2py_init_%s));' % (
+        ret['initf90modhooks'] = ['\tF2PyDict_SetItemString(d, "%s", PyFortranObject_New(f2py_%s_def,f2py_init_%s));' % (
             m['name'], m['name'], m['name'])] + ret['initf90modhooks']
         fadd('')
         fadd('subroutine f2pyinit%s(f2pysetupfunc)' % (m['name']))

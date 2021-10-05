@@ -204,26 +204,21 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
         {PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return m;}
     d = PyModule_GetDict(m);
     s = PyUnicode_FromString(\"#f2py_version#\");
-    PyDict_SetItemString(d, \"__version__\", s);
-    Py_DECREF(s);
+    F2PyDict_SetItemString(d, \"__version__\", s);
     s = PyUnicode_FromString(
         \"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
-    PyDict_SetItemString(d, \"__doc__\", s);
-    Py_DECREF(s);
+    F2PyDict_SetItemString(d, \"__doc__\", s);
     s = PyUnicode_FromString(\"""" + numpy_version + """\");
-    PyDict_SetItemString(d, \"__f2py_numpy_version__\", s);
-    Py_DECREF(s);
+    F2PyDict_SetItemString(d, \"__f2py_numpy_version__\", s);
     #modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
     /*
      * Store the error object inside the dict, so that it could get deallocated.
      * (in practice, this is a module, so it likely will not and cannot.)
      */
-    PyDict_SetItemString(d, \"_#modulename#_error\", #modulename#_error);
-    Py_DECREF(#modulename#_error);
+    F2PyDict_SetItemString(d, \"_#modulename#_error\", #modulename#_error);
     for(i=0;f2py_routine_defs[i].name!=NULL;i++) {
         tmp = PyFortranObject_NewAsAttr(&f2py_routine_defs[i]);
-        PyDict_SetItemString(d, f2py_routine_defs[i].name, tmp);
-        Py_DECREF(tmp);
+        F2PyDict_SetItemString(d, f2py_routine_defs[i].name, tmp);
     }
 #initf2pywraphooks#
 #initf90modhooks#

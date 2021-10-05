@@ -122,7 +122,6 @@ def buildhooks(m):
         cadd('}\n')
         iadd('\ttmp = PyFortranObject_New(f2py_%s_def,f2py_init_%s);' % (name, name))
         iadd('\tF2PyDict_SetItemString(d, \"%s\", tmp);' % name)
-        iadd('\tPy_DECREF(tmp);')
         tname = name.replace('_', '\\_')
         dadd('\\subsection{Common block \\texttt{%s}}\n' % (tname))
         dadd('\\begin{description}')
