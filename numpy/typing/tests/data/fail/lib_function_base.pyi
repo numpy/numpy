@@ -9,6 +9,8 @@ AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
 
+def func(a: int) -> None: ...
+
 np.average(AR_m)  # E: incompatible type
 np.select(1, [AR_f8])  # E: incompatible type
 np.angle(AR_m)  # E: incompatible type
@@ -39,3 +41,13 @@ np.hamming(AR_c16)  # E: incompatible type
 np.kaiser(1j, 1)  # E: incompatible type
 np.sinc(AR_O)  # E: incompatible type
 np.median(AR_M)  # E: incompatible type
+
+np.add_newdoc_ufunc(func, "docstring")  # E: incompatible type
+np.percentile(AR_f8, 50j)  # E: No overload variant
+np.percentile(AR_f8, 50, interpolation="bob")  # E: No overload variant
+np.quantile(AR_f8, 0.5j)  # E: No overload variant
+np.quantile(AR_f8, 0.5, interpolation="bob")  # E: No overload variant
+np.meshgrid(AR_f8, AR_f8, indexing="bob")  # E: incompatible type
+np.delete(AR_f8, AR_f8)  # E: incompatible type
+np.insert(AR_f8, AR_f8, 1.5)  # E: incompatible type
+np.digitize(AR_f8, 1j)  # E: No overload variant
