@@ -21,3 +21,4 @@ reveal_type(func(e))  # E: None
 reveal_type(func(f))  # E: None
 reveal_type(func(g))  # E: None
 reveal_type(func(h))  # E: None
+reveal_type(func(range(15)))  # E: None
