@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-argparse front-end to f2py
+argparse+logging front-end to f2py
 
 The concept is based around the idea that F2PY is overloaded in terms of
 functionality:
@@ -16,6 +16,7 @@ implementation in terms of subparsers
 """
 
 import argparse
+import logging
 
 
 parser = argparse.ArgumentParser(
@@ -72,5 +73,7 @@ def process_args(args):
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger("f2py_cli")
+    logger.setLevel(logging.WARNING)
     args = parser.parse_args()
     process_args(args)
