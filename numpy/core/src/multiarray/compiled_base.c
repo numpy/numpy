@@ -1436,8 +1436,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
          * `__text_signature__` to the dict in the future.
          * The dictionary path is only necessary for heaptypes (currently not
          * used) and metaclasses.
-         * If `__doc__` as stored in `to_dict` is None, we assume this was
-         * filled in by `PyType_Read()` and should also be replaced.
+         * If `__doc__` as stored in `tp_dict` is None, we assume this was
+         * filled in by `PyType_Ready()` and should also be replaced.
          */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
