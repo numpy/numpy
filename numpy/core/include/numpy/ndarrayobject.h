@@ -4,6 +4,12 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NDARRAYOBJECT_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYOBJECT_H_
 
+/*
+ * define old header guard for backwards compatibility
+ * with older Cython. This can be removed at some point.
+ */
+#define NPY_NDARRAYOBJECT_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
