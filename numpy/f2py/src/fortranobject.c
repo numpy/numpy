@@ -31,7 +31,7 @@ F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj)
     }
     else {
         retval = PyDict_SetItemString(dict, name, obj);
-        Py_XDECREF(obj);  // Cannot be NULL, is OK
+        Py_DECREF(obj);
     }
     return retval;
 }
