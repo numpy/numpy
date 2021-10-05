@@ -24,13 +24,16 @@ else:
 
 from numpy import (
     vectorize as vectorize,
+    ufunc,
     dtype,
     generic,
     floating,
     complexfloating,
+    intp,
     float64,
     complex128,
     timedelta64,
+    datetime64,
     object_,
     _OrderKACF,
 )
@@ -44,9 +47,11 @@ from numpy.typing import (
     _SupportsDType,
     _FiniteNestedSequence,
     _SupportsArray,
-    _ArrayLikeComplex_co,
+    _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
+    _ArrayLikeDT64_co,
     _ArrayLikeObject_co,
     _FloatLike_co,
     _ComplexLike_co,
@@ -87,7 +92,8 @@ class _SupportsWriteFlush(Protocol):
 
 __all__: List[str]
 
-add_newdoc_ufunc = _add_newdoc_ufunc
+# NOTE: This is in reality a re-export of `np.core.umath._add_newdoc_ufunc`
+def add_newdoc_ufunc(ufunc: ufunc, new_docstring: str, /) -> None: ...
 
 @overload
 def rot90(
@@ -494,11 +500,197 @@ def median(
     keepdims: bool = ...,
 ) -> _ArrayType: ...
 
-def percentile(a, q, axis=..., out=..., overwrite_input=..., interpolation=..., keepdims=...): ...
-def quantile(a, q, axis=..., out=..., overwrite_input=..., interpolation=..., keepdims=...): ...
-def trapz(y, x=..., dx=..., axis=...): ...
-def meshgrid(*xi, copy=..., sparse=..., indexing=...): ...
-def delete(arr, obj, axis=...): ...
-def insert(arr, obj, values, axis=...): ...
-def append(arr, values, axis=...): ...
-def digitize(x, bins, right=...): ...
+_InterpolationKind = L[
+    "lower",
+    "higher",
+    "midpoint",
+    "nearest",
+    "linear",
+]
+
+@overload
+def percentile(
+    a: _ArrayLikeFloat_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> floating[Any]: ...
+@overload
+def percentile(
+    a: _ArrayLikeComplex_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> complexfloating[Any, Any]: ...
+@overload
+def percentile(
+    a: _ArrayLikeTD64_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> timedelta64: ...
+@overload
+def percentile(
+    a: _ArrayLikeDT64_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> datetime64: ...
+@overload
+def percentile(
+    a: _ArrayLikeObject_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> Any: ...
+@overload
+def percentile(
+    a: _ArrayLikeFloat_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> NDArray[floating[Any]]: ...
+@overload
+def percentile(
+    a: _ArrayLikeComplex_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def percentile(
+    a: _ArrayLikeTD64_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> NDArray[timedelta64]: ...
+@overload
+def percentile(
+    a: _ArrayLikeDT64_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> NDArray[datetime64]: ...
+@overload
+def percentile(
+    a: _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: L[False] = ...,
+) -> NDArray[object_]: ...
+@overload
+def percentile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: None | _ShapeLike = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: bool = ...,
+) -> Any: ...
+@overload
+def percentile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    overwrite_input: bool = ...,
+    interpolation: _InterpolationKind = ...,
+    keepdims: bool = ...,
+) -> _ArrayType: ...
+
+# NOTE: Not an alias, but they do have identical signatures
+# (that we can reuse)
+quantile = percentile
+
+# TODO: Returns a scalar for <= 1D array-likes; returns an ndarray otherwise
+def trapz(
+    y: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    x: None | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co = ...,
+    dx: float = ...,
+    axis: SupportsIndex = ...,
+) -> Any: ...
+
+def meshgrid(
+    *xi: ArrayLike,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: L["xy", "ij"] = ...,
+) -> List[NDArray[Any]]: ...
+
+@overload
+def delete(
+    arr: _ArrayLike[_SCT],
+    obj: slice | _ArrayLikeInt_co,
+    axis: None | SupportsIndex = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def delete(
+    arr: ArrayLike,
+    obj: slice | _ArrayLikeInt_co,
+    axis: None | SupportsIndex = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def insert(
+    arr: _ArrayLike[_SCT],
+    obj: slice | _ArrayLikeInt_co,
+    values: ArrayLike,
+    axis: None | SupportsIndex = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def insert(
+    arr: ArrayLike,
+    obj: slice | _ArrayLikeInt_co,
+    values: ArrayLike,
+    axis: None | SupportsIndex = ...,
+) -> NDArray[Any]: ...
+
+def append(
+    arr: ArrayLike,
+    values: ArrayLike,
+    axis: None | SupportsIndex = ...,
+) -> NDArray[Any]: ...
+
+@overload
+def digitize(
+    x: _FloatLike_co,
+    bins: _ArrayLikeFloat_co,
+    right: bool = ...,
+) -> intp: ...
+@overload
+def digitize(
+    x: _ArrayLikeFloat_co,
+    bins: _ArrayLikeFloat_co,
+    right: bool = ...,
+) -> NDArray[intp]: ...
