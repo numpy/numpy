@@ -781,10 +781,13 @@ def copy(a, order='K', subok=False):
 
     Note that, np.copy clears previously set WRITEABLE=False flag.
 
-    >>> a = np.array([1,2,3])
+    >>> a = np.array([1, 2, 3])
     >>> a.flags["WRITEABLE"] = False
     >>> b = np.copy(a)
+    >>> b.flags["WRITEABLE"]
+    True
     >>> b[0] = 3
+    >>> b
     array([3, 2, 3])
     
     Note that np.copy is a shallow copy and will not copy object
