@@ -651,7 +651,6 @@ def generate_manifest(config):
             mi = int((msver - ma) * 10)
             # Write the manifest file
             manxml = msvc_manifest_xml(ma, mi)
-            man = open(manifest_name(config), "w")
-            config.temp_files.append(manifest_name(config))
-            man.write(manxml)
-            man.close()
+            with open(manifest_name(config), "w") as man:
+                config.temp_files.append(manifest_name(config))
+                man.write(manxml)
