@@ -46,6 +46,7 @@ def cholesky(x: Array, /, *, upper: bool = False) -> Array:
         return Array._new(L).mT
     return Array._new(L)
 
+# Note: cross is the numpy top-level namespace, not np.linalg
 def cross(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.cross <numpy.cross>`.
@@ -76,6 +77,7 @@ def det(x: Array, /) -> Array:
         raise TypeError('Only floating-point dtypes are allowed in det')
     return Array._new(np.linalg.det(x._array))
 
+# Note: diagonal is the numpy top-level namespace, not np.linalg
 def diagonal(x: Array, /, *, offset: int = 0) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.diagonal <numpy.diagonal>`.
@@ -130,6 +132,7 @@ def inv(x: Array, /) -> Array:
     return Array._new(np.linalg.inv(x._array))
 
 
+# Note: matmul is the numpy top-level namespace but not in np.linalg
 def matmul(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.matmul <numpy.matmul>`.
@@ -198,6 +201,7 @@ def matrix_rank(x: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> A
         tol = S.max(axis=-1, keepdims=True)*np.asarray(rtol)[..., np.newaxis]
     return Array._new(np.count_nonzero(S > tol, axis=-1))
 
+
 # Note: this function is new in the array API spec. Unlike transpose, it only
 # transposes the last two axes.
 def matrix_transpose(x: Array, /) -> Array:
@@ -205,6 +209,7 @@ def matrix_transpose(x: Array, /) -> Array:
         raise ValueError("x must be at least 2-dimensional for matrix_transpose")
     return Array._new(np.swapaxes(x._array, -1, -2))
 
+# Note: outer is the numpy top-level namespace, not np.linalg
 def outer(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.outer <numpy.outer>`.
@@ -306,6 +311,8 @@ def svd(x: Array, /, *, full_matrices: bool = True) -> SVDResult:
 def svdvals(x: Array, /) -> Union[Array, Tuple[Array, ...]]:
     return Array._new(np.linalg.svd(x._array, compute_uv=False))
 
+# Note: tensordot is the numpy top-level namespace but not in np.linalg
+
 # Note: axes must be a tuple, unlike np.tensordot where it can be an array or array-like.
 def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], Sequence[int]]] = 2) -> Array:
     # Note: the restriction to numeric dtypes only is different from
@@ -315,6 +322,7 @@ def tensordot(x1: Array, x2: Array, /, *, axes: Union[int, Tuple[Sequence[int], 
 
     return Array._new(np.tensordot(x1._array, x2._array, axes=axes))
 
+# Note: trace is the numpy top-level namespace, not np.linalg
 def trace(x: Array, /, *, offset: int = 0) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.trace <numpy.trace>`.
