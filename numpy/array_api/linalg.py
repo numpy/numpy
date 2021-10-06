@@ -84,7 +84,9 @@ def diagonal(x: Array, /, *, offset: int = 0) -> Array:
 
     See its docstring for more information.
     """
-    return Array._new(np.diagonal(x._array, offset=offset))
+    # Note: diagonal always operates on the last two axes, whereas np.diagonal
+    # operates on the first two axes by default
+    return Array._new(np.diagonal(x._array, offset=offset, axis1=-2, axis2=-1))
 
 
 # Note: the keyword argument name upper is different from np.linalg.eigh
@@ -329,7 +331,9 @@ def trace(x: Array, /, *, offset: int = 0) -> Array:
 
     See its docstring for more information.
     """
-    return Array._new(np.asarray(np.trace(x._array, offset=offset)))
+    # Note: trace always operates on the last two axes, whereas np.trace
+    # operates on the first two axes by default
+    return Array._new(np.asarray(np.trace(x._array, offset=offset, axis1=-2, axis2=-1)))
 
 # Note: vecdot is not in NumPy
 def vecdot(x1: Array, x2: Array, /, *, axis: Optional[int] = None) -> Array:
