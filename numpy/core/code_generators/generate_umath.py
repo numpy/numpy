@@ -803,7 +803,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.trunc'),
           None,
-          TD(ints),
+          TD(bints),
           TD('e', f='trunc', astype={'e':'f'}),
           TD(inexactvec, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
           TD('fdg', f='trunc'),

@@ -248,7 +248,7 @@ class TestUfunc:
         n      1     log1p          flts + M
         n      1     sqrt           flts + M         real x < 0 raises error
         n      1     ceil           real + M
-        n      1     trunc          ints + real + M
+        n      1     trunc          bool + nums + M
         n      1     floor          real + M
         n      1     fabs           real + M
         n      1     rint           flts + M
@@ -614,7 +614,7 @@ class TestUfunc:
 
     def test_trunc_expected_dtypes(self):
         # Supported dtypes by trunc.
-        for tc in 'bBhHiIlLqQefdgO':
+        for tc in '?bBhHiIlLqQefdgO':
             a = np.ones((1, 2, 3), dtype=np.dtype(tc))
             out = np.trunc(a)
             assert_(a.dtype == out.dtype)

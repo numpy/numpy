@@ -1,4 +1,4 @@
-np.trunc now preserves input dtype for integer inputs
+np.trunc now preserves input dtype for boolean and integer inputs
 -----------------------------------------------------
 
 Previously
