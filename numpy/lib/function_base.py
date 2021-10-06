@@ -779,6 +779,14 @@ def copy(a, order='K', subok=False):
     >>> x[0] == z[0]
     False
 
+    Note that, np.copy clears previously set WRITEABLE=False flag.
+
+    >>> a = np.array([1,2,3])
+    >>> a.flags["WRITEABLE"] = False
+    >>> b = np.copy(a)
+    >>> b[0] = 3
+    array([3, 2, 3])
+    
     Note that np.copy is a shallow copy and will not copy object
     elements within arrays. This is mainly important for arrays
     containing Python objects. The new array will contain the
