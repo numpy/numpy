@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- encoding:utf-8 -*-
 """
 Script to download NumPy wheels from the Anaconda staging area.
 
