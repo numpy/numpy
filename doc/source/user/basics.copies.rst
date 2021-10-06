@@ -63,8 +63,8 @@ the original array while for a copy it returns ``None``.
 Indexing operations
 ===================
 
-Views are created when elements can be addressed with offsets, strides,
-and counts in the original array. Hence, basic indexing always creates views.
+Views are created when elements can be addressed with offsets and strides
+in the original array. Hence, basic indexing always creates views.
 For example::
 
     >>> x = np.arange(10)
