@@ -1,9 +1,9 @@
-`bit_count` to compute the number of 1-bits in an integer
----------------------------------------------------------
+``bit_count`` to compute the number of 1-bits in an integer
+-----------------------------------------------------------
 
 Computes the number of 1-bits in the absolute value of the input.
 This works on all the numpy integer types. Analogous to the builtin
-`int.bit_count` or `popcount` in C++.
+``int.bit_count`` or ``popcount`` in C++.
 
 .. code-block:: python
 
