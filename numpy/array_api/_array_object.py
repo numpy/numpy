@@ -244,6 +244,9 @@ class Array:
         The following cases are allowed by NumPy, but not specified by the array
         API specification:
 
+        - Multidimensional (tuple) indices must include an index for every
+          axis of the array unless an ellipsis is included.
+
         - The start and stop of a slice may not be out of bounds. In
           particular, for a slice ``i:j:k`` on an axis of size ``n``, only the
           following are allowed:
@@ -322,6 +325,10 @@ class Array:
                 zip(key[:ellipsis_i:-1], shape[:ellipsis_i:-1])
             ):
                 Array._validate_index(idx, (size,))
+            if n_ellipsis == 0 and len(key) < len(shape):
+                raise IndexError(
+                    "Multidimensional indices must either index every axis of the array or use an ellipsis"
+                )
             return key
         elif isinstance(key, bool):
             return key
