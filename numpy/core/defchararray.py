@@ -1850,7 +1850,7 @@ def isnumeric(a):
     For each element, return True if there are only numeric
     characters in the element.
 
-    Calls `unicode.isnumeric` element-wise.
+    Calls `str.isnumeric` element-wise.
 
     Numeric characters include digit characters, and all characters
     that have the Unicode numeric value property, e.g. ``U+2155,
@@ -1868,7 +1868,7 @@ def isnumeric(a):
 
     See Also
     --------
-    unicode.isnumeric
+    str.isnumeric
 
     Examples
     --------
@@ -1887,7 +1887,7 @@ def isdecimal(a):
     For each element, return True if there are only decimal
     characters in the element.
 
-    Calls `unicode.isdecimal` element-wise.
+    Calls `str.isdecimal` element-wise.
 
     Decimal characters include digit characters, and all characters
     that can be used to form decimal-radix numbers,
@@ -1905,7 +1905,7 @@ def isdecimal(a):
 
     See Also
     --------
-    unicode.isdecimal
+    str.isdecimal
 
     Examples
     --------
