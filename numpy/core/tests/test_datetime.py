@@ -719,8 +719,8 @@ class TestDateTime:
         assert_equal(uni_a, uni_b)
 
         # Datetime to long string - gh-9712
-        assert_equal(str_a, dt_a.astype((np.string_, 128)))
-        str_b = np.empty(str_a.shape, dtype=(np.string_, 128))
+        assert_equal(str_a, dt_a.astype((np.bytes_, 128)))
+        str_b = np.empty(str_a.shape, dtype=(np.bytes_, 128))
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 

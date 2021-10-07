@@ -2319,7 +2319,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column_types = [conv.type for conv in converters]
         # Find the columns with strings...
         strcolidx = [i for (i, v) in enumerate(column_types)
-                     if v == np.unicode_]
+                     if v == np.str_]
 
         if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility
