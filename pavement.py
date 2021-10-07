@@ -184,7 +184,7 @@ def write_release_task(options, filename='README'):
     ----------
     options :
         Set by ``task`` decorator.
-    filename : string
+    filename : str
         Filename of the modified notes. The file is written
         in the release directory.
 
