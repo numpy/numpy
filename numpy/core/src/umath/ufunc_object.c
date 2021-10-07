@@ -1325,6 +1325,14 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
 
     NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
+    /*
+     * An error should only be possible if `res != 0` is already set.
+     * But this is not strictly correct for old-style ufuncs (e.g. `power`
+     * released the GIL but manually set an Exception).
+     */
+    if (PyErr_Occurred()) {
+        res = -1;
+    }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
@@ -6162,7 +6170,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         Py_XDECREF(array_operands[i]);
     }
 
-    if (needs_api && PyErr_Occurred()) {
+    /*
+     * An error should only be possible if needs_api is true, but this is not
+     * strictly correct for old-style ufuncs (e.g. `power` released the GIL
+     * but manually set an Exception).
+     */
+    if (PyErr_Occurred()) {
         return NULL;
     }
     else {
