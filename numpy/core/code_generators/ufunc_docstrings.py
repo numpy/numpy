@@ -1091,8 +1091,7 @@ add_newdoc('numpy.core.umath', 'divide',
 
     Behavior on division by zero can be changed using ``seterr``.
 
-    When both ``x1`` and ``x2`` are of an integer type, equivalent
-    to `numpy.true_divide`.
+    Behaves like ``true_divide``.
 
     Examples
     --------
@@ -4016,9 +4015,8 @@ add_newdoc('numpy.core.umath', 'true_divide',
     """
     Returns a true division of the inputs, element-wise.
 
-    Instead of the Python traditional 'floor division', this returns a true
-    division.  True division adjusts the output type to present the best
-    answer, regardless of input types.
+    Unlike 'floor division', true division adjusts the output type
+    to present the best answer, regardless of input types.
 
     Parameters
     ----------
