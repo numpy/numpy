@@ -30,7 +30,7 @@ from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
-from numpy.linalg import lapack_lite, _umath_linalg
+from numpy.linalg import _umath_linalg
 
 
 array_function_dispatch = functools.partial(

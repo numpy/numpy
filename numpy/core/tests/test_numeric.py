@@ -16,7 +16,7 @@ from numpy.testing import (
     )
 from numpy.core._rational_tests import rational
 
-from hypothesis import assume, given, strategies as st
+from hypothesis import given, strategies as st
 from hypothesis.extra import numpy as hynp
 
 

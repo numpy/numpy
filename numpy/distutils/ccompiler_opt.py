@@ -8,7 +8,7 @@ the sources with proper compiler's flags.
 instead only focuses on the compiler side, but it creates abstract C headers
 that can be used later for the final runtime dispatching process."""
 
-import sys, io, os, re, textwrap, pprint, inspect, atexit, subprocess
+import os, re, textwrap, pprint, inspect, atexit, subprocess
 
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
@@ -696,7 +696,6 @@ class _Distutils:
     )
     @staticmethod
     def _dist_test_spawn(cmd, display=None):
-        from distutils.errors import CompileError
         try:
             o = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                         universal_newlines=True)

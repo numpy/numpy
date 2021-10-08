@@ -11,7 +11,6 @@ from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf, NaN
 from .umath import log10, exp2, nextafter, isnan
-from . import umath
 
 
 def _fr0(a):
