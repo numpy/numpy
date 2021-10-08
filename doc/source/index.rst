@@ -12,7 +12,6 @@ NumPy documentation
    API reference <reference/index>
    Development <dev/index>
 
-   NumPy documentation
 
 **Version**: |version|
 
@@ -47,7 +46,7 @@ basic statistical operations, random simulation and much more.
     The user guide provides in-depth information on the key concepts of NumPy
     with useful background information and explanation.
 
-    .. link-button:: 
+    .. link-button:: getting_started
         :type: ref
         :text: To the getting started page
         :classes: stretched-link
