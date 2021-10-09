@@ -2133,7 +2133,9 @@ class Configuration:
         return info_dict
 
 
-def get_cmd(cmdname, _cache={}):
+def get_cmd(cmdname, _cache=None):
+    if _cache is None:
+        _cache = {}
     if cmdname not in _cache:
         import distutils.core
         dist = distutils.core._setup_distribution

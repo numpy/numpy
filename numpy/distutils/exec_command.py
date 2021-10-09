@@ -113,11 +113,13 @@ def get_pythonexe():
         assert os.path.isfile(pythonexe), '%r is not a file' % (pythonexe,)
     return pythonexe
 
-def find_executable(exe, path=None, _cache={}):
+def find_executable(exe, path=None, _cache=None):
     """Return full path of a executable or None.
 
     Symbolic links are not followed.
     """
+    if _cache is None:
+        _cache = {}
     key = exe, path
     try:
         return _cache[key]

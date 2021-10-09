@@ -2317,7 +2317,9 @@ def _selected_real_kind_func(p, r=0, radix=0):
     return -1
 
 
-def get_parameters(vars, global_params={}):
+def get_parameters(vars, global_params=None):
+    if global_params is None:
+        global_params = {}
     params = copy.copy(global_params)
     g_params = copy.copy(global_params)
     for name, func in [('kind', _kind_func),
