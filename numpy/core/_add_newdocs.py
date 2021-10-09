@@ -6113,6 +6113,68 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('__ge__',
+    """
+    __ge__(value, /)
+
+    Return ``self >= value``.
+
+    Equivalent to ``np.can_cast(value, self, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__le__',
+    """
+    __le__(value, /)
+
+    Return ``self <= value``.
+
+    Equivalent to ``np.can_cast(self, value, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__gt__',
+    """
+    __ge__(value, /)
+
+    Return ``self > value``.
+
+    Equivalent to
+    ``self != value and np.can_cast(value, self, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__lt__',
+    """
+    __lt__(value, /)
+
+    Return ``self < value``.
+
+    Equivalent to
+    ``self != value and np.can_cast(self, value, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
 ##############################################################################
 #
 # Datetime-related Methods
