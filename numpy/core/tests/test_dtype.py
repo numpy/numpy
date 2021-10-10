@@ -1590,6 +1590,14 @@ class TestClassGetItem:
         assert np.dtype[Any]
 
 
+def test_result_type_integers_and_unitless_timedelta64():
+    # Regression test for gh-20077.  The following call of `result_type`
+    # would cause a seg. fault.
+    td = np.timedelta64(4)
+    result = np.result_type(0, td)
+    assert_dtype_equal(result, td.dtype)
+
+
 @pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
 def test_class_getitem_38() -> None:
     match = "Type subscription requires python >= 3.9"
