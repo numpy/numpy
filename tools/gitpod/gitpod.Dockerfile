@@ -8,6 +8,7 @@ COPY --chown=gitpod . /tmp/numpy_repo
 
 # the clone should be deep enough for versioneer to work
 RUN git clone --shallow-since=2021-05-22 file:////tmp/numpy_repo /tmp/numpy
+RUN git submodule update --init
 
 # -----------------------------------------------------------------------------
 # Using the numpy-dev Docker image as a base
