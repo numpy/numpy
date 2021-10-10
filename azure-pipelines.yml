@@ -24,6 +24,9 @@ stages:
       vmImage: 'ubuntu-20.04'
     steps:
     - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
+    - script: |
             if ! `gcc 2>/dev/null`; then
                 sudo apt install gcc
             fi
@@ -71,6 +74,9 @@ stages:
     pool:
       vmImage: 'ubuntu-20.04'
     steps:
+    - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
     - script: |
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
@@ -264,6 +270,9 @@ stages:
     pool:
       vmImage: 'ubuntu-20.04'
     steps:
+    - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
     - script: |
             # create and activate conda environment
             conda env create -f environment.yml

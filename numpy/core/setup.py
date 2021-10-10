@@ -5,6 +5,7 @@ import copy
 import warnings
 import platform
 import textwrap
+import glob
 from os.path import join
 
 from numpy.distutils import log
@@ -62,6 +63,20 @@ class CallOnceOnly:
         else:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
+
+def can_link_svml():
+    """SVML library is supported only on x86_64 architecture and currently
+    only on linux
+    """
+    machine = platform.machine()
+    system = platform.system()
+    return "x86_64" in machine and system == "Linux"
+
+def check_svml_submodule(svmlpath):
+    if not os.path.exists(svmlpath + "/README.md"):
+        raise RuntimeError("Missing `SVML` submodule! Run `git submodule "
+                           "update --init` to fix this.")
+    return True
 
 def pythonlib_dir():
     """return path where libpython* is."""
@@ -455,6 +470,9 @@ def configuration(parent_package='',top_path=None):
             # Inline check
             inline = config_cmd.check_inline()
 
+            if can_link_svml():
+                moredefs.append(('NPY_CAN_LINK_SVML', 1))
+
             # Use relaxed stride checking
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
@@ -727,6 +745,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_import.h'),
             join('src', 'common', 'npy_hashtable.h'),
             join('src', 'common', 'npy_longdouble.h'),
+            join('src', 'common', 'npy_svml.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
             join('src', 'common', 'ufunc_override.h'),
@@ -923,6 +942,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_arithmetic.dispatch.c.src'),
             join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
+            join('src', 'umath', 'loops_umath_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
@@ -951,6 +971,11 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             ]
 
+    svml_path = join('numpy', 'core', 'src', 'umath', 'svml')
+    svml_objs = []
+    if can_link_svml() and check_svml_submodule(svml_path):
+        svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
+
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
                                  common_src +
@@ -965,6 +990,7 @@ def configuration(parent_package='',top_path=None):
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
                          libraries=['npymath'],
+                         extra_objects=svml_objs,
                          extra_info=extra_info)
 
     #######################################################################
