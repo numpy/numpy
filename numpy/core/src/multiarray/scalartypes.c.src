@@ -1994,6 +1994,7 @@ error:
 /**begin repeat
  *  #name = half, float, double, longdouble#
  *  #Name = Half, Float, Double, LongDouble#
+ *  #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
  *  #is_half = 1,0,0,0#
  *  #c    = f, f, , l#
  */
@@ -2017,6 +2018,31 @@ static PyObject *
     ret = (npy_floor@c@(val) == val) ? Py_True : Py_False;
     Py_INCREF(ret);
     return ret;
+}
+
+static PyObject *
+@name@_hex(PyObject *self) {
+#if @is_half@
+    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
+#else
+    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
+#endif
+    // xref: https://stackoverflow.com/a/15197157/5671364
+    char buf[
+        1 + // sign, '-' or '+'
+        (NPY_SIZEOF_@NAME@ * CHAR_BIT + 3) / 4 + // mantissa hex digits max
+        1 + // decimal point, '.'
+        1 + // mantissa-exponent separator, 'p'
+        1 + // mantissa sign, '-' or '+'
+        (NPY_SIZEOF_@NAME@ * CHAR_BIT + 2) / 3 + // exponent decimal digits max
+        1 // string terminator, '\0'
+    ];
+
+    if (npy_isnan(val) || !npy_isfinite(val)) {
+        return floattype_str(self);
+    }
+    npy_@name@_hex(val, buf);
+    return PyUnicode_FromString(buf);
 }
 /**end repeat**/
 
@@ -2323,6 +2349,9 @@ static PyMethodDef integertype_methods[] = {
 static PyMethodDef @name@type_methods[] = {
     {"as_integer_ratio",
         (PyCFunction)@name@_as_integer_ratio,
+        METH_NOARGS, NULL},
+    {"hex",
+        (PyCFunction)@name@_hex,
         METH_NOARGS, NULL},
     {"is_integer",
         (PyCFunction)@name@_is_integer,

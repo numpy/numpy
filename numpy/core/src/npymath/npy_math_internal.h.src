@@ -57,6 +57,8 @@
 #ifdef _MSC_VER
 #  include <intrin.h>   // for __popcnt
 #endif
+#include "npy_math_common.h"
+
 
 /* Magic binary numbers used by bit_count
  * For type T, the magic numbers are computed as follows:
@@ -741,3 +743,84 @@ npy_popcount@c@(npy_@type@ a)
 }
 /**end repeat**/
 
+static char
+char_from_hex(int x)
+{
+    assert(0 <= x && x < 16);
+    return "0123456789abcdef"[x];
+}
+
+#define FDBL_MANT_DIG FLT_MANT_DIG
+#define FDBL_MIN_EXP FLT_MIN_EXP
+
+/**begin repeat
+ *  #name = half, float, double, longdouble#
+ *  #is_half = 1,0,0,0#
+ *  #c    = f, f, , l#
+ *  #C    = F, F, , L#
+ */
+
+/* TOHEX_NBITS is DBL_MANT_DIG rounded up to the next integer
+   of the form 4k+1. */
+#define TOHEX_NBITS @C@DBL_MANT_DIG + 3 - (@C@DBL_MANT_DIG+2)%4
+#if @is_half@
+    #define DBL_TYPE npy_double
+#else
+    #define DBL_TYPE npy_@name@
+#endif
+/* Heavily copied from the builtin float.hex */
+NPY_INPLACE void
+npy_@name@_hex(DBL_TYPE x, char *buff) {
+    DBL_TYPE m;
+    int e, shift, i, si, esign;
+    /* Space for 1+(TOHEX_NBITS-1)/4 digits, a decimal point, and the
+       trailing NUL byte. */
+    char s[(TOHEX_NBITS-1)/4+3];
+
+    if (x == 0.0) {
+        if(npy_copysign(1.0, x) == -1.0) {
+            strcpy(buff, "-0x0.0p+0");
+        } else {
+            strcpy(buff, "0x0.0p+0");
+        }
+        return;
+    }
+
+    m = npy_frexp@c@(npy_fabs@c@(x), &e);
+    shift = 1 - Py_MAX(@C@DBL_MIN_EXP - e, 0);
+    m = ldexp(m, shift);
+    e -= shift;
+
+    si = 0;
+    s[si] = char_from_hex((int)m);
+    si++;
+    m -= (int)m;
+    s[si] = '.';
+    si++;
+    for (i=0; i < (TOHEX_NBITS-1)/4; i++) {
+        m *= 16.0;
+        s[si] = char_from_hex((int)m);
+        si++;
+        m -= (int)m;
+    }
+    s[si] = '\0';
+
+    if (e < 0) {
+        esign = (int)'-';
+        e = -e;
+    } else {
+        esign = (int)'+';
+    }
+
+    if (x < 0.0) {
+        sprintf(buff, "-0x%sp%c%d", s, esign, e);
+    } else {
+        sprintf(buff, "0x%sp%c%d", s, esign, e);
+    }
+}
+#undef TOHEX_NBITS
+#undef DBL_TYPE
+/**end repeat**/
+
+#undef FDBL_MANT_DIG
+#undef FDBL_MIN_EXP
