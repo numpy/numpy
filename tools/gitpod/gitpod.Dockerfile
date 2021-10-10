@@ -8,7 +8,6 @@ COPY --chown=gitpod . /tmp/numpy_repo
 
 # the clone should be deep enough for versioneer to work
 RUN git clone --shallow-since=2021-05-22 file:////tmp/numpy_repo /tmp/numpy
-RUN git submodule update --init
 
 # -----------------------------------------------------------------------------
 # Using the numpy-dev Docker image as a base
@@ -35,6 +34,7 @@ COPY --from=clone --chown=gitpod /tmp/numpy ${WORKSPACE}
 WORKDIR ${WORKSPACE}
 
 # Build numpy to populate the cache used by ccache
+RUN git submodule update --init --depth=1 -- numpy/core/src/umath/svml
 RUN conda activate ${CONDA_ENV} && \ 
     python setup.py build_ext --inplace && \
     ccache -s
