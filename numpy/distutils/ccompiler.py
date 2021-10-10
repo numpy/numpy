@@ -258,9 +258,6 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         If compilation fails.
 
     """
-    # This method is effective only with Python >=2.3 distutils.
-    # Any changes here should be applied also to fcompiler.compile
-    # method to support pre Python 2.3 distutils.
     global _job_semaphore
 
     jobs = get_num_build_jobs()
