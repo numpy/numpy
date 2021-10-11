@@ -34,7 +34,7 @@ jobs:
     if: >-
       contains(needs.get_commit_message.outputs.message, '[cd build]') ||
       github.event.name == 'schedule' ||
-      github.event.name == 'workflow_run'
+      github.event.name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
     strategy:
       # Ensure that a wheel builder finishes even if another fails
