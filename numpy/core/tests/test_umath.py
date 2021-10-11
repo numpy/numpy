@@ -973,6 +973,12 @@ class TestLog:
         xf = np.log(x)
         assert_almost_equal(np.log(x, out=x), xf)
 
+        # test log() of max for dtype does not raise
+        for dt in ['f', 'd', 'g']:
+            with np.errstate(all='raise'):
+                x = np.finfo(dt).max
+                np.log(x)
+
     def test_log_strides(self):
         np.random.seed(42)
         strides = np.array([-4,-3,-2,-1,1,2,3,4])
