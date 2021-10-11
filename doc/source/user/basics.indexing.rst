@@ -28,6 +28,7 @@ Note that in Python, ``x[(exp1, exp2, ..., expN)]`` is equivalent to
 ``x[exp1, exp2, ..., expN]``; the latter is just syntactic sugar
 for the former.
 
+.. _basic-indexing:
 
 Basic indexing
 --------------
@@ -88,6 +89,7 @@ that is subsequently indexed by 2.
     rapidly changing location in memory. This difference represents a
     great potential for confusion.
 
+.. _slicing-and-striding:
 
 Slicing and striding
 ^^^^^^^^^^^^^^^^^^^^
@@ -226,6 +228,7 @@ concepts to remember include:
 .. index::
    pair: ndarray; view
 
+.. _dimensional-indexing-tools:
 
 Dimensional indexing tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -470,6 +473,7 @@ such an array with an image with shape (ny, nx) with dtype=np.uint8
 lookup table) will result in an array of shape (ny, nx, 3) where a
 triple of RGB values is associated with each pixel location.
 
+.. _boolean-indexing:
 
 Boolean array indexing
 ^^^^^^^^^^^^^^^^^^^^^^
