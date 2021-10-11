@@ -1553,12 +1553,12 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
  * See that function for the meaning and contents of the parameters.
  */
 static PyArray_Descr *
-get_dtype_from_descr_and_common(
-    npy_intp i,
-    PyArrayObject *arrs[],
-    npy_intp ndtypes,
-    PyArray_Descr *descriptor,
-    PyArray_DTypeMeta *common_dtype)
+get_descr_from_cast_or_value(
+        npy_intp i,
+        PyArrayObject *arrs[],
+        npy_intp ndtypes,
+        PyArray_Descr *descriptor,
+        PyArray_DTypeMeta *common_dtype)
 {
     PyArray_Descr *curr;
     if (NPY_LIKELY(i < ndtypes ||
@@ -1718,14 +1718,14 @@ PyArray_ResultType(
         result = NPY_DT_CALL_default_descr(common_dtype);
     }
     else {
-        result = get_dtype_from_descr_and_common(
+        result = get_descr_from_cast_or_value(
                     0, arrs, ndtypes, all_descriptors[0], common_dtype);
         if (result == NULL) {
             goto error;
         }
 
         for (npy_intp i = 1; i < ndtypes+narrs; i++) {
-            PyArray_Descr *curr = get_dtype_from_descr_and_common(
+            PyArray_Descr *curr = get_descr_from_cast_or_value(
                     i, arrs, ndtypes, all_descriptors[i], common_dtype);
             if (curr == NULL) {
                 goto error;
