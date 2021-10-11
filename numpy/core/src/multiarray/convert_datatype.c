@@ -1549,7 +1549,7 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
 
 
 /*
- * Utility function used in PyArray_ResultType.
+ * Utility function used only in PyArray_ResultType for value-based logic.
  * See that function for the meaning and contents of the parameters.
  */
 static PyArray_Descr *
