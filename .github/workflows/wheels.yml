@@ -48,6 +48,9 @@ jobs:
         - os: ubuntu-latest
           python: "39"
           platform: manylinux_x86_64
+        - os: ubuntu-latest
+          python: "310"
+          platform: manylinux_x86_64
 
         # macos builds
         - os: macos-latest
@@ -55,6 +58,9 @@ jobs:
           platform: macosx_x86_64
         - os: macos-latest
           python: "39"
+          platform: macosx_x86_64
+        - os: macos-latest
+          python: "310"
           platform: macosx_x86_64
 
     steps:
@@ -78,8 +84,10 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: CFLAGS='-std=c99 -fno-strict-aliasing'
                                   OPENBLAS64_=/usr/local
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_BEFORE_BUILD: bash tools/wheels/cibw_before_build.sh {project}
+          CIBW_BEFORE_BUILD: bash {project}/tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST: pip install -r {project}/test_requirements.txt
+          # Installs libffi so that cffi can be built from source if needed
+          CIBW_BEFORE_TEST_LINUX: yum install -y libffi-devel && pip install -r {project}/test_requirements.txt
           CIBW_TEST_COMMAND:  bash {project}/tools/wheels/cibw_test_command.sh {project}
 
       - uses: actions/upload-artifact@v2
