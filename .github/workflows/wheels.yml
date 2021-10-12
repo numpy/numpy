@@ -52,6 +52,7 @@ jobs:
         - os: ubuntu-latest
           python: "310"
           platform: manylinux_x86_64
+          install_libffi_devel: "1"
 
         # macos builds
         - os: macos-latest
@@ -89,7 +90,7 @@ jobs:
           CIBW_BEFORE_TEST: pip install -r {project}/test_requirements.txt
           # Installs libffi so that cffi can be built from source when needed
           CIBW_BEFORE_TEST_LINUX: >
-            yum install -y libffi-devel &&
+            [[ "${{ matrix.install_libffi_devel }}" == "1" ]] && yum install -y libffi-devel;
             pip install -r {project}/test_requirements.txt
           CIBW_TEST_COMMAND:  bash {project}/tools/wheels/cibw_test_command.sh {project}
 
