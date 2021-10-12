@@ -1539,3 +1539,11 @@ class TestUserDType:
             # Tests that a dtype must have its type field set up to np.dtype
             # or in this case a builtin instance.
             create_custom_field_dtype(blueprint, mytype, 2)
+
+
+def test_result_type_integers_and_unitless_timedelta64():
+    # Regression test for gh-20077.  The following call of `result_type`
+    # would cause a seg. fault.
+    td = np.timedelta64(4)
+    result = np.result_type(0, td)
+    assert_dtype_equal(result, td.dtype)
