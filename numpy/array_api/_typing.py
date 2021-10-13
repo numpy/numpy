@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 import sys
-from typing import Any, Literal, Sequence, Type, Union, TYPE_CHECKING, TypeVar
+from typing import Any, Literal, Sequence, Union, TYPE_CHECKING, TypeVar
 
 from ._array_object import Array
 from numpy import (

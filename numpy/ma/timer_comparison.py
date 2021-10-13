@@ -175,7 +175,6 @@ class ModuleTester:
         x3[:] = self.masked_array([1, 2, 3, 4], [0, 1, 1, 0])
         x4[:] = self.masked_array([1, 2, 3, 4], [0, 1, 1, 0])
         x1 = np.arange(5)*1.0
-        x2 = self.masked_values(x1, 3.0)
         x1 = self.array([1, 'hello', 2, 3], object)
         x2 = np.array([1, 'hello', 2, 3], object)
         # check that no error occurs.
