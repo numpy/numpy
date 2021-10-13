@@ -13,13 +13,6 @@ on:
     # Nightly build at 1:42 UTC
     - cron: "42 1 * * *"
   push:
-    branches:
-      - main
-      - maintenance/**
-  pull_request:
-    branches:
-      - main
-      - maintenance/**
   pull_request:
   workflow_dispatch:
 
