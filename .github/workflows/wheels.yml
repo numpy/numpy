@@ -1,11 +1,25 @@
-# Workflow to build and test wheels
+# Workflow to build and test wheels.
+# To work on the wheel building infrastructure on a fork, comment out:
+#
+# if: github.repository == 'numpy/numpy'
+#
+# in the get_commit_message job. Be sure to include [cd build] in your commit
+# message to trigger the build. All files related to wheel building are located
+# at tools/wheels/
 name: Wheel builder
 
 on:
   schedule:
-    # Nightly build at 1:42 A.M.
+    # Nightly build at 1:42 UTC
     - cron: "42 1 * * *"
   push:
+    branches:
+      - main
+      - maintenance/**
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
   pull_request:
   workflow_dispatch:
 
