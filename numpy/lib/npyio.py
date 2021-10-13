@@ -1850,6 +1850,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = ''
             first_values = []
             warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
+            return np.array([])
 
         # Should we take the first values as names ?
         if names is True:
