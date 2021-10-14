@@ -899,12 +899,18 @@ You can aggregate matrices the same way you aggregated vectors::
 .. image:: images/np_matrix_aggregation.png
 
 You can aggregate all the values in a matrix and you can aggregate them across
-columns or rows using the ``axis`` parameter::
+columns or rows using the ``axis`` parameter. To illustrate this point, let's
+look at slightly modified dataset::
 
+  >>> data = np.array([[1, 2], [5, 3], [4, 6]])
+  >>> data
+  array([[1, 2],
+         [5, 3],
+         [4, 6]])
   >>> data.max(axis=0)
   array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4, 6])
+  array([2, 5, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
