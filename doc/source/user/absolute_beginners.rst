@@ -900,7 +900,7 @@ You can aggregate matrices the same way you aggregated vectors::
 
 You can aggregate all the values in a matrix and you can aggregate them across
 columns or rows using the ``axis`` parameter. To illustrate this point, let's
-look at slightly modified dataset::
+look at a slightly modified dataset::
 
   >>> data = np.array([[1, 2], [5, 3], [4, 6]])
   >>> data
