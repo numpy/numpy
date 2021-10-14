@@ -249,7 +249,6 @@ Other attributes
    ndarray.real
    ndarray.imag
    ndarray.flat
-   ndarray.ctypes
 
 
 .. _arrays.ndarray.array-interface:
