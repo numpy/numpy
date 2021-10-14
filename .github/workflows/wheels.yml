@@ -76,7 +76,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-          # The complete history is required for versioneer.py to work
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
 
       - name: Build wheels
