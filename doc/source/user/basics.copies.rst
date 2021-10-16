@@ -4,64 +4,45 @@
 Copies and views
 ****************
 
-When operating on a NumPy array, we can sometimes improve performance by using
-:term:`views <view>` instead of copies of the array. However, when handling
-large amounts of important data, it can be risky to directly operate on it and
-it could be safer to use copies. Hence, it is important to know the difference
-between these two terms to correctly determine when to use which one.
+When operating on NumPy arrays, it is possible to access the internal data
+buffer directly using a :ref:`view <view>` without copying data around. This
+ensures good performance but can also cause unwanted problems if the user is
+not aware of how this works. Hence, it is important to know the difference
+between these two terms and to know which operations return copies and
+which return views.
 
-The NumPy array is a :term:`contiguous` block of memory consisting of two parts:
-the data buffer with the actual data elements, and the metadata which contains
-information about the data buffer. The metadata includes data type, strides
-and other important information that helps manipulate the :class:`.ndarray`
-easily. See the :ref:`numpy-internals` section for a detailed look.
+The NumPy array is a data structure consisting of two parts:
+the :term:`contiguous` data buffer with the actual data elements and the
+metadata that contains information about the data buffer. The metadata
+includes data type, strides, and other important information that helps
+manipulate the :class:`.ndarray` easily. See the :ref:`numpy-internals`
+section for a detailed look.
 
-View or shallow copy
-====================
+.. _view:
 
-It is possible to access the array differently by just changing the
-metadata and without changing the data buffer. This creates a new way of
-looking at the data and these new arrays are called views or shallow copies.
-The data buffer remains the same so any changes made to a view reflects in the
-original copy. A view can be forced through the :meth:`.ndarray.view` method. 
+View
+====
 
+It is possible to access the array differently by just changing certain
+metadata like :term:`stride` and :term:`dtype` without changing the
+data buffer. This creates a new way of looking at the data and these new
+arrays are called views. The data buffer remains the same, so any changes made
+to a view reflects in the original copy. A view can be forced through the
+:meth:`.ndarray.view` method.
 
-Copy or deep copy
-=================
+Copy
+====
 
 When a new array is created by duplicating the data buffer as well as the
-metadata, it is called a copy or a deep copy. Changes made to the copy
-do not reflect on the original array. Making a copy is slower and memory
-consuming but sometimes necessary. A copy can be forced by using
+metadata, it is called a copy. Changes made to the copy
+do not reflect on the original array. Making a copy is slower and
+memory-consuming but sometimes necessary. A copy can be forced by using
 :meth:`.ndarray.copy`.
-
-
-How to tell if the array is a view or a copy
-============================================
-
-The :attr:`base <.ndarray.base>` attribute of the ndarray makes it easy
-to tell if an array is a view or a copy. The base attribute of a view returns
-the original array while for a copy it returns ``None``. 
-
-    >>> x = np.arange(9)
-    >>> x
-    array([0, 1, 2, 3, 4, 5, 6, 7, 8])
-    >>> y = x.reshape(3, 3)
-    >>> y
-    array([[0, 1, 2],
-           [3, 4, 5],
-           [6, 7, 8]])
-    >>> y.base  # .reshape() creates a view
-    array([0, 1, 2, 3, 4, 5, 6, 7, 8])
-    >>> z = y[[2, 1]]
-    >>> z
-    array([[6, 7, 8],
-           [3, 4, 5]])
-    >>> z.base is None  # advanced indexing creates a copy
-    True
 
 Indexing operations
 ===================
+
+.. seealso:: :ref:`basics.indexing`
 
 Views are created when elements can be addressed with offsets and strides
 in the original array. Hence, basic indexing always creates views.
@@ -79,9 +60,10 @@ For example::
     >>> y
     array([10, 11])  
 
-Here ``y`` gets changed when ``x`` is changed because it is a view.
+Here, ``y`` gets changed when ``x`` is changed because it is a view.
 
-Advanced indexing, on the other hand, always creates copies. For example::
+:ref:`advanced-indexing`, on the other hand, always creates copies.
+For example::
 
     >>> x = np.arange(9).reshape(3, 3)
     >>> x
@@ -95,9 +77,9 @@ Advanced indexing, on the other hand, always creates copies. For example::
     >>> y.base is None
     True
 
-Here, ``y`` is a copy as signified by the base attribute. We can also
-confirm this by assigning new values to ``x[[1, 2]]`` which in turn
-will not affect ``y`` at all::
+Here, ``y`` is a copy, as signified by the :attr:`base <.ndarray.base>`
+attribute. We can also confirm this by assigning new values to ``x[[1, 2]]``
+which in turn will not affect ``y`` at all::
 
     >>> x[[1, 2]] = [[10, 11, 12], [13, 14, 15]]
     >>> x
@@ -139,6 +121,28 @@ shape attribute of the array. For example::
 Taking the example of another operation, :func:`.ravel` returns a contiguous
 flattened view of the array wherever possible. On the other hand,
 :meth:`.ndarray.flatten` always returns a flattened copy of the array.
-However, to guarantee a view in most cases ``x.reshape(-1)`` may be preferable.
+However, to guarantee a view in most cases, ``x.reshape(-1)`` may be preferable.
 
+How to tell if the array is a view or a copy
+============================================
 
+The :attr:`base <.ndarray.base>` attribute of the ndarray makes it easy
+to tell if an array is a view or a copy. The base attribute of a view returns
+the original array while it returns ``None`` for a copy. 
+
+    >>> x = np.arange(9)
+    >>> x
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8])
+    >>> y = x.reshape(3, 3)
+    >>> y
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> y.base  # .reshape() creates a view
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8])
+    >>> z = y[[2, 1]]
+    >>> z
+    array([[6, 7, 8],
+           [3, 4, 5]])
+    >>> z.base is None  # advanced indexing creates a copy
+    True
