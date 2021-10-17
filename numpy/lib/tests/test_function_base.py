@@ -885,11 +885,14 @@ class TestDelete:
         with pytest.raises(IndexError):
             np.delete([0, 1, 2], np.array([], dtype=float))
 
-    def test_stride_calculation(self):
-        arr = np.arange(3 * 4 * 5).reshape(3, 4, 5)
-        res = np.delete(arr, [1], 1)
-        assert_equal(res.strides, (60, 20, 4))
- 
+    def test_contiguity(self):
+        a = np.arange(1 * 2 * 3).reshape(1, 2, 3)
+        result = np.delete(a, [1], 1)
+        assert_equal(result.flags['C_CONTIGUOUS'], True)
+        a = np.arange(1 * 2 * 3).reshape(3, 2, 1, order='F')
+        result = np.delete(a, [1], 1)
+        assert_equal(result.flags['F_CONTIGUOUS'], True)
+
 
 class TestGradient:
 
