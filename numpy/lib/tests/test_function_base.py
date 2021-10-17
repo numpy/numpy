@@ -885,6 +885,11 @@ class TestDelete:
         with pytest.raises(IndexError):
             np.delete([0, 1, 2], np.array([], dtype=float))
 
+    def test_stride_calculation(self):
+        arr = np.arange(3 * 4 * 5).reshape(3, 4, 5)
+        res = np.delete(arr, [1], 1)
+        assert_equal(res.strides, (60, 20, 4))
+ 
 
 class TestGradient:
 

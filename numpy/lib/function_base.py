@@ -4423,7 +4423,7 @@ def delete(arr, obj, axis=None):
     """
     Return a new array with sub-arrays along an axis deleted. For a one
     dimensional array, this returns those entries not returned by
-    `arr[obj]`.
+    `arr[obj]`. Preserves contiguity of the input array.
 
     Parameters
     ----------
@@ -4591,7 +4591,7 @@ def delete(arr, obj, axis=None):
             keep[obj,] = False
 
         slobj[axis] = keep
-        new = arr[tuple(slobj)]
+        new = arr[tuple(slobj)].copy(order=arrorder)
 
     if wrap:
         return wrap(new)
