@@ -120,6 +120,9 @@ stages:
             PYTHON_VERSION: '3.8'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
+          Python310:
+            PYTHON_VERSION: '3.10'
+            USE_OPENBLAS: '1'
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
