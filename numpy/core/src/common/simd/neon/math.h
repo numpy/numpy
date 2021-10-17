@@ -31,7 +31,7 @@ NPY_FINLINE npyv_f32 npyv_square_f32(npyv_f32 a)
         const npyv_f32 zero = vdupq_n_f32(0.0f);
         const npyv_u32 pinf = vdupq_n_u32(0x7f800000);
         npyv_u32 is_zero = vceqq_f32(a, zero), is_inf = vceqq_u32(vreinterpretq_u32_f32(a), pinf);
-        // guard agianst floating-point division-by-zero error
+        // guard against floating-point division-by-zero error
         npyv_f32 guard_byz = vbslq_f32(is_zero, vreinterpretq_f32_u32(pinf), a);
         // estimate to (1/√a)
         npyv_f32 rsqrte = vrsqrteq_f32(guard_byz);

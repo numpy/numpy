@@ -519,34 +519,40 @@ From other objects
 
         :c:data:`NPY_ARRAY_CARRAY`
 
-    .. c:macro:: NPY_ARRAY_IN_ARRAY
+..
+  dedented to allow internal linking, pending a refactoring
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
+.. c:macro:: NPY_ARRAY_IN_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
     .. c:macro:: NPY_ARRAY_IN_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:macro:: NPY_OUT_ARRAY
+.. c:macro:: NPY_OUT_ARRAY
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED`
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:macro:: NPY_ARRAY_OUT_ARRAY
+.. c:macro:: NPY_ARRAY_OUT_ARRAY
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
-        :c:data:`NPY_ARRAY_WRITEABLE`
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
+    :c:data:`NPY_ARRAY_WRITEABLE`
 
     .. c:macro:: NPY_ARRAY_OUT_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:macro:: NPY_ARRAY_INOUT_ARRAY
+..
+  dedented to allow internal linking, pending a refactoring
 
-        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
-        :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+.. c:macro:: NPY_ARRAY_INOUT_ARRAY
+
+    :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`
 
     .. c:macro:: NPY_ARRAY_INOUT_FARRAY
 
@@ -584,6 +590,9 @@ From other objects
     did not have the _ARRAY_ macro namespace in them. That form
     of the constant names is deprecated in 1.7.
 
+..
+  dedented to allow internal linking, pending a refactoring
+
 .. c:macro:: NPY_ARRAY_NOTSWAPPED
 
     Make sure the returned array has a data-type descriptor that is in
@@ -595,9 +604,13 @@ From other objects
     not in machine byte- order), then a new data-type descriptor is
     created and used with its byte-order field set to native.
 
-.. c:macro:: NPY_ARRAY_BEHAVED_NS
+    .. c:macro:: NPY_ARRAY_BEHAVED_NS
 
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \| :c:data:`NPY_ARRAY_NOTSWAPPED`
+        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+        :c:data:`NPY_ARRAY_NOTSWAPPED`
+
+..
+  dedented to allow internal linking, pending a refactoring
 
 .. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
 
@@ -722,6 +735,13 @@ From other objects
     error occurs return -1 (otherwise 0). The shape of ``src`` must be
     broadcastable to the shape of ``dest``. The data areas of dest
     and src must not overlap.
+
+.. c:function:: int PyArray_CopyObject(PyArrayObject* dest, PyObject* src)
+
+    Assign an object ``src`` to a NumPy array ``dest`` according to
+    array-coercion rules. This is basically identical to
+    :c:func:`PyArray_FromAny`, but assigns directly to the output array.
+    Returns 0 on success and -1 on failures.
 
 .. c:function:: int PyArray_MoveInto(PyArrayObject* dest, PyArrayObject* src)
 
@@ -2706,6 +2726,45 @@ cost of a slight overhead.
     After this call, iter->dataptr points to the next point of the
     neighborhood. Calling this function after every point of the
     neighborhood has been visited is undefined.
+
+Array mapping
+-------------
+
+Array mapping is the machinery behind advanced indexing.
+
+.. c:function:: PyObject* PyArray_MapIterArray(PyArrayObject *a, \
+                 PyObject *index)
+
+    Use advanced indexing to iterate an array.
+
+.. c:function:: void PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, \
+                PyArrayObject **ret, int getmap)
+
+    Swap the axes to or from their inserted form. ``MapIter`` always puts the
+    advanced (array) indices first in the iteration. But if they are
+    consecutive, it will insert/transpose them back before returning.
+    This is stored as ``mit->consec != 0`` (the place where they are inserted).
+    For assignments, the opposite happens: the values to be assigned are
+    transposed (``getmap=1`` instead of ``getmap=0``). ``getmap=0`` and
+    ``getmap=1`` undo the other operation.
+
+.. c:function:: void PyArray_MapIterNext(PyArrayMapIterObject *mit)
+
+    This function needs to update the state of the map iterator
+    and point ``mit->dataptr`` to the memory-location of the next object.
+
+    Note that this function never handles an extra operand but provides
+    compatibility for an old (exposed) API.
+
+.. c:function:: PyObject* PyArray_MapIterArrayCopyIfOverlap(PyArrayObject *a, \
+                PyObject *index, int copy_if_overlap, PyArrayObject *extra_op)
+
+    Similar to :c:func:`PyArray_MapIterArray` but with an additional
+    ``copy_if_overlap`` argument. If ``copy_if_overlap != 0``, checks if ``a``
+    has memory overlap with any of the arrays in ``index`` and with
+    ``extra_op``, and make copies as appropriate to avoid problems if the
+    input is modified during the iteration. ``iter->array`` may contain a
+    copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
 
 Array Scalars
 -------------

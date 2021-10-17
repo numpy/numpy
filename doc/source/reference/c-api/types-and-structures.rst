@@ -94,7 +94,7 @@ PyArray_Type and PyArrayObject
           PyArray_Descr *descr;
           int flags;
           PyObject *weakreflist;
-          /* version dependend private members */
+          /* version dependent private members */
       } PyArrayObject;
 
    .. c:macro:: PyObject_HEAD
@@ -178,7 +178,7 @@ PyArray_Type and PyArrayObject
 
    .. note::
 
-      Further members are considered private and version dependend. If the size
+      Further members are considered private and version dependent. If the size
       of the struct is important for your code, special care must be taken.
       A possible use-case when this is relevant is subclassing in C.
       If your code relies on ``sizeof(PyArrayObject)`` to be constant,
@@ -286,48 +286,54 @@ PyArrayDescr_Type and PyArray_Descr
        array like behavior. Each bit in this member is a flag which are named
        as:
 
-       .. c:macro:: NPY_ITEM_REFCOUNT
+..
+  dedented to allow internal linking, pending a refactoring
 
-           Indicates that items of this data-type must be reference
-           counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
+.. c:macro:: NPY_ITEM_REFCOUNT
+
+    Indicates that items of this data-type must be reference
+    counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
 
        .. c:macro:: NPY_ITEM_HASOBJECT
 
            Same as :c:data:`NPY_ITEM_REFCOUNT`.
 
-       .. c:macro:: NPY_LIST_PICKLE
+..
+  dedented to allow internal linking, pending a refactoring
 
-           Indicates arrays of this data-type must be converted to a list
-           before pickling.
+.. c:macro:: NPY_LIST_PICKLE
 
-       .. c:macro:: NPY_ITEM_IS_POINTER
+    Indicates arrays of this data-type must be converted to a list
+    before pickling.
 
-           Indicates the item is a pointer to some other data-type
+.. c:macro:: NPY_ITEM_IS_POINTER
 
-       .. c:macro:: NPY_NEEDS_INIT
+    Indicates the item is a pointer to some other data-type
 
-           Indicates memory for this data-type must be initialized (set
-           to 0) on creation.
+.. c:macro:: NPY_NEEDS_INIT
 
-       .. c:macro:: NPY_NEEDS_PYAPI
+    Indicates memory for this data-type must be initialized (set
+    to 0) on creation.
 
-           Indicates this data-type requires the Python C-API during
-           access (so don't give up the GIL if array access is going to
-           be needed).
+.. c:macro:: NPY_NEEDS_PYAPI
 
-       .. c:macro:: NPY_USE_GETITEM
+    Indicates this data-type requires the Python C-API during
+    access (so don't give up the GIL if array access is going to
+    be needed).
 
-           On array access use the ``f->getitem`` function pointer
-           instead of the standard conversion to an array scalar. Must
-           use if you don't define an array scalar to go along with
-           the data-type.
+.. c:macro:: NPY_USE_GETITEM
 
-       .. c:macro:: NPY_USE_SETITEM
+    On array access use the ``f->getitem`` function pointer
+    instead of the standard conversion to an array scalar. Must
+    use if you don't define an array scalar to go along with
+    the data-type.
 
-           When creating a 0-d array from an array scalar use
-           ``f->setitem`` instead of the standard copy from an array
-           scalar. Must use if you don't define an array scalar to go
-           along with the data-type.
+.. c:macro:: NPY_USE_SETITEM
+
+    When creating a 0-d array from an array scalar use
+    ``f->setitem`` instead of the standard copy from an array
+    scalar. Must use if you don't define an array scalar to go
+    along with the data-type.
 
        .. c:macro:: NPY_FROM_FIELDS
 
@@ -961,8 +967,8 @@ PyUFunc_Type and PyUFuncObject
        .. deprecated:: 1.22
 
             Some fallback support for this slot exists, but will be removed
-            eventually.  A univiersal function which relied on this will have
-            eventually have to be ported.
+            eventually.  A universal function that relied on this will
+            have to be ported eventually.
             See ref:`NEP 41 <NEP41>` and ref:`NEP 43 <NEP43>`
 
    .. c:member:: void *reserved2
@@ -989,14 +995,17 @@ PyUFunc_Type and PyUFuncObject
 
        For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
 
-       .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
+..
+  dedented to allow internal linking, pending a refactoring
 
-           if the dim name ends in ``?``
+.. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
 
-       .. c:macro:: UFUNC_CORE_DIM_SIZE_INFERRED
+    if the dim name ends in ``?``
 
-           if the dim size will be determined from the operands
-           and not from a :ref:`frozen <frozen>` signature
+.. c:macro:: UFUNC_CORE_DIM_SIZE_INFERRED
+
+    if the dim size will be determined from the operands
+    and not from a :ref:`frozen <frozen>` signature
 
    .. c:member:: PyObject *identity_value
 

@@ -11,10 +11,10 @@
  * NOTE: The tests were initially written using private API and ABI, ideally
  *       they should be replaced/modified with versions using public API.
  */
-
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
 #include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 
@@ -733,9 +733,9 @@ NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
 {
     /* Allow calling the function multiple times. */
-    static npy_bool initalized = NPY_FALSE;
+    static npy_bool initialized = NPY_FALSE;
 
-    if (initalized) {
+    if (initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -764,6 +764,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    initalized = NPY_TRUE;
+    initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }

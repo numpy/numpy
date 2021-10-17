@@ -1,18 +1,19 @@
-import sys
-from typing import Any, List, Sequence, Tuple, Union, Type, TypeVar, TYPE_CHECKING
+from typing import (
+    Any,
+    List,
+    Sequence,
+    Tuple,
+    Union,
+    Type,
+    TypeVar,
+    Protocol,
+    TypedDict,
+)
 
 import numpy as np
 
-from . import _HAS_TYPING_EXTENSIONS
 from ._shape import _ShapeLike
 from ._generic_alias import _DType as DType
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol, TypedDict
-elif _HAS_TYPING_EXTENSIONS:
-    from typing_extensions import Protocol, TypedDict
-else:
-    from ._generic_alias import _GenericAlias as GenericAlias
 
 from ._char_codes import (
     _BoolCodes,
@@ -59,29 +60,26 @@ from ._char_codes import (
 _DTypeLikeNested = Any  # TODO: wait for support for recursive types
 _DType_co = TypeVar("_DType_co", covariant=True, bound=DType[Any])
 
-if TYPE_CHECKING or _HAS_TYPING_EXTENSIONS or sys.version_info >= (3, 8):
-    # Mandatory keys
-    class _DTypeDictBase(TypedDict):
-        names: Sequence[str]
-        formats: Sequence[_DTypeLikeNested]
+# Mandatory keys
+class _DTypeDictBase(TypedDict):
+    names: Sequence[str]
+    formats: Sequence[_DTypeLikeNested]
 
-    # Mandatory + optional keys
-    class _DTypeDict(_DTypeDictBase, total=False):
-        offsets: Sequence[int]
-        titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
-        itemsize: int
-        aligned: bool
 
-    # A protocol for anything with the dtype attribute
-    class _SupportsDType(Protocol[_DType_co]):
-        @property
-        def dtype(self) -> _DType_co: ...
+# Mandatory + optional keys
+class _DTypeDict(_DTypeDictBase, total=False):
+    # Only `str` elements are usable as indexing aliases,
+    # but `titles` can in principle accept any object
+    offsets: Sequence[int]
+    titles: Sequence[Any]
+    itemsize: int
+    aligned: bool
 
-else:
-    _DTypeDict = Any
 
-    class _SupportsDType: ...
-    _SupportsDType = GenericAlias(_SupportsDType, _DType_co)
+# A protocol for anything with the dtype attribute
+class _SupportsDType(Protocol[_DType_co]):
+    @property
+    def dtype(self) -> _DType_co: ...
 
 
 # Would create a dtype[np.void]
@@ -110,7 +108,7 @@ DTypeLike = Union[
     # default data type (float64)
     None,
     # array-scalar types and generic types
-    Type[Any],  # TODO: enumerate these when we add type hints for numpy scalars
+    Type[Any],  # NOTE: We're stuck with `Type[Any]` due to object dtypes
     # anything with a dtype attribute
     _SupportsDType[DType[Any]],
     # character codes, type strings or comma-separated fields, e.g., 'float64'

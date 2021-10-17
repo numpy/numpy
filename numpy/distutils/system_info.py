@@ -387,11 +387,10 @@ def get_standard_file(fname):
         f = __file__
     except NameError:
         f = sys.argv[0]
-    else:
-        sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
-                               fname)
-        if os.path.isfile(sysfile):
-            filenames.append(sysfile)
+    sysfile = os.path.join(os.path.split(os.path.abspath(f))[0],
+                           fname)
+    if os.path.isfile(sysfile):
+        filenames.append(sysfile)
 
     # Home directory
     # And look for the user config file
@@ -414,7 +413,8 @@ def get_standard_file(fname):
 def _parse_env_order(base_order, env):
     """ Parse an environment variable `env` by splitting with "," and only returning elements from `base_order`
 
-    This method will sequence the environment variable and check for their invidual elements in `base_order`.
+    This method will sequence the environment variable and check for their
+    individual elements in `base_order`.
 
     The items in the environment variable may be negated via '^item' or '!itema,itemb'.
     It must start with ^/! to negate all options.

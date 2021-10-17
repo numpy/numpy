@@ -1,8 +1,9 @@
-#ifndef _NPY_ARRAY_ALLOC_H_
-#define _NPY_ARRAY_ALLOC_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include <numpy/ndarraytypes.h>
+#include "numpy/ndarraytypes.h"
 
 #define NPY_TRACE_DOMAIN 389047
 
@@ -47,4 +48,4 @@ extern PyDataMem_Handler default_handler;
 NPY_NO_EXPORT PyObject *
 get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */

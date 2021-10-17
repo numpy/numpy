@@ -53,6 +53,14 @@ jobs:
        - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 
+    - python: 3.10-dev
+      os: linux
+      arch: arm64
+      virt: vm
+      env:
+       # use OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
+       - ATLAS=None
 
 before_install:
   - ./tools/travis-before-install.sh

@@ -1,9 +1,9 @@
-#ifndef _NPY_INTERNAL_ARRAYOBJECT_H_
-#define _NPY_INTERNAL_ARRAYOBJECT_H_
-
 #ifndef _MULTIARRAYMODULE
 #error You should not include this
 #endif
+
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_
 
 NPY_NO_EXPORT PyObject *
 _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
@@ -26,4 +26,4 @@ array_might_be_written(PyArrayObject *obj);
  */
 static const int NPY_ARRAY_WARN_ON_WRITE = (1 << 31);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_ */

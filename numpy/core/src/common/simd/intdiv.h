@@ -39,7 +39,7 @@
  *    for (; len >= vstep; src += vstep, dst += vstep, len -= vstep) {
  *        npyv_s32 a = npyv_load_s32(*src);       // load s32 vector from memory
  *                 a = npyv_divc_s32(a, divisor); // divide all elements by x
- *        npyv_store_s32(dst, a);                 // store s32 vector into memroy
+ *        npyv_store_s32(dst, a);                 // store s32 vector into memory
  *    }
  *
  ** NOTES:

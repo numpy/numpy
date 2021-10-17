@@ -21,8 +21,8 @@
  *              NPY_CPU_LOONGARCH
  *              NPY_CPU_WASM
  */
-#ifndef _NPY_CPUARCH_H_
-#define _NPY_CPUARCH_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_
 
 #include "numpyconfig.h"
 
@@ -114,7 +114,7 @@
     information about your platform (OS, CPU and compiler)
 #endif
 
-/* 
+/*
  * Except for the following architectures, memory access is limited to the natural
  * alignment of data types otherwise it may lead to bus error or performance regression.
  * For more details about unaligned access, see https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt.
@@ -126,4 +126,4 @@
     #define NPY_ALIGNMENT_REQUIRED 1
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_ */

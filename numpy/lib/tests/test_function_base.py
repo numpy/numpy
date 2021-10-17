@@ -1528,7 +1528,7 @@ class TestVectorize:
                      ([('x',)], [('y',), ()]))
         assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
                      ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
-        
+
         # Tests to check if whitespaces are ignored
         assert_equal(nfb._parse_gufunc_signature('(x )->()'), ([('x',)], [()]))
         assert_equal(nfb._parse_gufunc_signature('( x , y )->(  )'),
@@ -1853,35 +1853,116 @@ class TestUnwrap:
         assert sm_discont.dtype == wrap_uneven.dtype
 
 
+@pytest.mark.parametrize(
+    "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]
+)
+@pytest.mark.parametrize("M", [0, 1, 10])
 class TestFilterwindows:
 
-    def test_hanning(self):
-        # check symmetry
-        w = hanning(10)
-        assert_equal(w, flipud(w))
-        # check known value
-        assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
+    def test_hanning(self, dtype: str, M: int) -> None:
+        scalar = np.array(M, dtype=dtype)[()]
 
-    def test_hamming(self):
-        # check symmetry
-        w = hamming(10)
-        assert_equal(w, flipud(w))
-        # check known value
-        assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
+        w = hanning(scalar)
+        if dtype == "O":
+            ref_dtype = np.float64
+        else:
+            ref_dtype = np.result_type(scalar.dtype, np.float64)
+        assert w.dtype == ref_dtype
 
-    def test_bartlett(self):
         # check symmetry
-        w = bartlett(10)
         assert_equal(w, flipud(w))
-        # check known value
-        assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
 
-    def test_blackman(self):
-        # check symmetry
-        w = blackman(10)
-        assert_equal(w, flipud(w))
         # check known value
-        assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
+        if scalar < 1:
+            assert_array_equal(w, np.array([]))
+        elif scalar == 1:
+            assert_array_equal(w, np.ones(1))
+        else:
+            assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
+
+    def test_hamming(self, dtype: str, M: int) -> None:
+        scalar = np.array(M, dtype=dtype)[()]
+
+        w = hamming(scalar)
+        if dtype == "O":
+            ref_dtype = np.float64
+        else:
+            ref_dtype = np.result_type(scalar.dtype, np.float64)
+        assert w.dtype == ref_dtype
+
+        # check symmetry
+        assert_equal(w, flipud(w))
+
+        # check known value
+        if scalar < 1:
+            assert_array_equal(w, np.array([]))
+        elif scalar == 1:
+            assert_array_equal(w, np.ones(1))
+        else:
+            assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
+
+    def test_bartlett(self, dtype: str, M: int) -> None:
+        scalar = np.array(M, dtype=dtype)[()]
+
+        w = bartlett(scalar)
+        if dtype == "O":
+            ref_dtype = np.float64
+        else:
+            ref_dtype = np.result_type(scalar.dtype, np.float64)
+        assert w.dtype == ref_dtype
+
+        # check symmetry
+        assert_equal(w, flipud(w))
+
+        # check known value
+        if scalar < 1:
+            assert_array_equal(w, np.array([]))
+        elif scalar == 1:
+            assert_array_equal(w, np.ones(1))
+        else:
+            assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
+
+    def test_blackman(self, dtype: str, M: int) -> None:
+        scalar = np.array(M, dtype=dtype)[()]
+
+        w = blackman(scalar)
+        if dtype == "O":
+            ref_dtype = np.float64
+        else:
+            ref_dtype = np.result_type(scalar.dtype, np.float64)
+        assert w.dtype == ref_dtype
+
+        # check symmetry
+        assert_equal(w, flipud(w))
+
+        # check known value
+        if scalar < 1:
+            assert_array_equal(w, np.array([]))
+        elif scalar == 1:
+            assert_array_equal(w, np.ones(1))
+        else:
+            assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
+
+    def test_kaiser(self, dtype: str, M: int) -> None:
+        scalar = np.array(M, dtype=dtype)[()]
+
+        w = kaiser(scalar, 0)
+        if dtype == "O":
+            ref_dtype = np.float64
+        else:
+            ref_dtype = np.result_type(scalar.dtype, np.float64)
+        assert w.dtype == ref_dtype
+
+        # check symmetry
+        assert_equal(w, flipud(w))
+
+        # check known value
+        if scalar < 1:
+            assert_array_equal(w, np.array([]))
+        elif scalar == 1:
+            assert_array_equal(w, np.ones(1))
+        else:
+            assert_almost_equal(np.sum(w, axis=0), 10, 15)
 
 
 class TestTrapz:
@@ -2772,11 +2853,6 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
 
-def compare_results(res, desired):
-    for i in range(len(desired)):
-        assert_array_equal(res[i], desired[i])
-
-
 class TestPercentile:
 
     def test_basic(self):
@@ -3436,6 +3512,16 @@ class TestMedian:
 
         a = MySubClass([1, 2, 3])
         assert_equal(np.median(a), -7)
+
+    @pytest.mark.parametrize('arr',
+                             ([1., 2., 3.], [1., np.nan, 3.], np.nan, 0.))
+    def test_subclass2(self, arr):
+        """Check that we return subclasses, even if a NaN scalar."""
+        class MySubclass(np.ndarray):
+            pass
+
+        m = np.median(np.array(arr).view(MySubclass))
+        assert isinstance(m, MySubclass)
 
     def test_out(self):
         o = np.zeros((4,))

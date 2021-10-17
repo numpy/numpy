@@ -33,7 +33,7 @@ from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 import builtins
 
 # needed in this module for compatibility
-from numpy.lib.histograms import histogram, histogramdd
+from numpy.lib.histograms import histogram, histogramdd  # noqa: F401
 
 
 array_function_dispatch = functools.partial(
@@ -779,6 +779,17 @@ def copy(a, order='K', subok=False):
     >>> x[0] == z[0]
     False
 
+    Note that, np.copy clears previously set WRITEABLE=False flag.
+
+    >>> a = np.array([1, 2, 3])
+    >>> a.flags["WRITEABLE"] = False
+    >>> b = np.copy(a)
+    >>> b.flags["WRITEABLE"]
+    True
+    >>> b[0] = 3
+    >>> b
+    array([3, 2, 3])
+    
     Note that np.copy is a shallow copy and will not copy object
     elements within arrays. This is mainly important for arrays
     containing Python objects. The new array will contain the
@@ -2804,9 +2815,9 @@ def blackman(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
@@ -2913,9 +2924,9 @@ def bartlett(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -3017,9 +3028,9 @@ def hanning(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3117,9 +3128,9 @@ def hamming(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
@@ -3252,7 +3263,7 @@ def i0(x):
            Her Majesty's Stationery Office, 1962.
     .. [2] M. Abramowitz and I. A. Stegun, *Handbook of Mathematical
            Functions*, 10th printing, New York: Dover, 1964, pp. 379.
-           http://www.math.sfu.ca/~cbm/aands/page_379.htm
+           https://personal.math.ubc.ca/~cbm/aands/page_379.htm
     .. [3] https://metacpan.org/pod/distribution/Math-Cephes/lib/Math/Cephes.pod#i0:-Modified-Bessel-function-of-order-zero
 
     Examples
@@ -3396,7 +3407,7 @@ def kaiser(M, beta):
 
     """
     if M == 1:
-        return np.array([1.])
+        return np.ones(1, dtype=np.result_type(M, 0.0))
     n = arange(0, M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
@@ -3714,16 +3725,15 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index-1, index+1)
     indexer = tuple(indexer)
 
+    # Use mean in both odd and even case to coerce data type,
+    # using out array if needed.
+    rout = mean(part[indexer], axis=axis, out=out)
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
-        # warn and return nans like mean would
-        rout = mean(part[indexer], axis=axis, out=out)
-        return np.lib.utils._median_nancheck(part, rout, axis, out)
-    else:
-        # if there are no nans
-        # Use mean in odd and even case to coerce data type
-        # and check, use out array.
-        return mean(part[indexer], axis=axis, out=out)
+        # If nans are possible, warn and replace by nans like mean would.
+        rout = np.lib.utils._median_nancheck(part, rout, axis)
+
+    return rout
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
@@ -4277,7 +4287,13 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
         .. versionadded:: 1.7.0
     sparse : bool, optional
-        If True a sparse grid is returned in order to conserve memory.
+        If True the shape of the returned coordinate array for dimension *i*
+        is reduced from ``(N1, ..., Ni, ... Nn)`` to
+        ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
+        intended to be use with :ref:`basics.broadcasting`.  When all
+        coordinates are used in an expression, broadcasting still leads to a
+        fully-dimensonal result array.
+
         Default is False.
 
         .. versionadded:: 1.7.0
@@ -4348,17 +4364,30 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     array([[0.],
            [1.]])
 
-    `meshgrid` is very useful to evaluate functions on a grid.
+    `meshgrid` is very useful to evaluate functions on a grid.  If the
+    function depends on all coordinates, you can use the parameter
+    ``sparse=True`` to save memory and computation time.
+
+    >>> x = np.linspace(-5, 5, 101)
+    >>> y = np.linspace(-5, 5, 101)
+    >>> # full coorindate arrays
+    >>> xx, yy = np.meshgrid(x, y)
+    >>> zz = np.sqrt(xx**2 + yy**2)
+    >>> xx.shape, yy.shape, zz.shape
+    ((101, 101), (101, 101), (101, 101))
+    >>> # sparse coordinate arrays
+    >>> xs, ys = np.meshgrid(x, y, sparse=True)
+    >>> zs = np.sqrt(xs**2 + ys**2)
+    >>> xs.shape, ys.shape, zs.shape
+    ((1, 101), (101, 1), (101, 101))
+    >>> np.array_equal(zz, zs)
+    True
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(-5, 5, 0.1)
-    >>> y = np.arange(-5, 5, 0.1)
-    >>> xx, yy = np.meshgrid(x, y, sparse=True)
-    >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
-    >>> h = plt.contourf(x, y, z)
+    >>> h = plt.contourf(x, y, zs)
     >>> plt.axis('scaled')
+    >>> plt.colorbar()
     >>> plt.show()
-
     """
     ndim = len(xi)
 

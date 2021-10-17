@@ -2893,6 +2893,21 @@ class TestLikeFuncs:
         self.check_like_function(np.full_like, 123.456, True)
         self.check_like_function(np.full_like, np.inf, True)
 
+    @pytest.mark.parametrize('likefunc', [np.empty_like, np.full_like,
+                                          np.zeros_like, np.ones_like])
+    @pytest.mark.parametrize('dtype', [str, bytes])
+    def test_dtype_str_bytes(self, likefunc, dtype):
+        # Regression test for gh-19860
+        a = np.arange(16).reshape(2, 8)
+        b = a[:, ::2]  # Ensure b is not contiguous.
+        kwargs = {'fill_value': ''} if likefunc == np.full_like else {}
+        result = likefunc(b, dtype=dtype, **kwargs)
+        if dtype == str:
+            assert result.strides == (16, 4)
+        else:
+            # dtype is bytes
+            assert result.strides == (4, 1)
+
 
 class TestCorrelate:
     def _setup(self, dt):
@@ -3495,6 +3510,12 @@ class TestBroadcast:
         assert_(mit.iters[0].base is mit2.iters[0].base)
 
         assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
+
+    def test_shape_mismatch_error_message(self):
+        with pytest.raises(ValueError, match=r"arg 0 with shape \(1, 3\) and "
+                                             r"arg 2 with shape \(2,\)"):
+            np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
+
 
 class TestKeepdims:
 

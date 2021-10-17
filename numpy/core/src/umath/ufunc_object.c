@@ -23,12 +23,14 @@
  * Rick White
  *
  */
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
-#include "Python.h"
-#include "stddef.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#include <stddef.h>
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -1060,8 +1062,8 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
         if (dtypes[i] != PyArray_DESCR(op[i])) {
             NPY_CASTING safety = PyArray_GetCastSafety(
                     PyArray_DESCR(op[i]), dtypes[i], NULL);
-            if (safety < 0) {
-                /* A proper error during a cast check should be rare */
+            if (safety < 0 && PyErr_Occurred()) {
+                /* A proper error during a cast check, should be rare */
                 return -1;
             }
             if (!(safety & _NPY_CAST_IS_VIEW)) {
@@ -1323,6 +1325,14 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
 
     NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
+    /*
+     * An error should only be possible if `res != 0` is already set.
+     * But this is not strictly correct for old-style ufuncs (e.g. `power`
+     * released the GIL but manually set an Exception).
+     */
+    if (PyErr_Occurred()) {
+        res = -1;
+    }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
@@ -5576,8 +5586,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     /* Get entry for this user-defined type*/
     cobj = PyDict_GetItemWithError(ufunc->userloops, key);
     if (cobj == NULL && PyErr_Occurred()) {
-        Py_DECREF(key);
-        return 0;
+        goto fail;
     }
     /* If it's not there, then make one and return. */
     else if (cobj == NULL) {
@@ -6161,7 +6170,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         Py_XDECREF(array_operands[i]);
     }
 
-    if (needs_api && PyErr_Occurred()) {
+    /*
+     * An error should only be possible if needs_api is true, but this is not
+     * strictly correct for old-style ufuncs (e.g. `power` released the GIL
+     * but manually set an Exception).
+     */
+    if (PyErr_Occurred()) {
         return NULL;
     }
     else {

@@ -43,9 +43,9 @@ from numpy.ma.core import (
     masked_less, masked_less_equal, masked_not_equal, masked_outside,
     masked_print_option, masked_values, masked_where, max, maximum,
     maximum_fill_value, min, minimum, minimum_fill_value, mod, multiply,
-    mvoid, nomask, not_equal, ones, outer, power, product, put, putmask,
-    ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
-    subtract, sum, take, tan, tanh, transpose, where, zeros,
+    mvoid, nomask, not_equal, ones, ones_like, outer, power, product, put,
+    putmask, ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort,
+    sqrt, subtract, sum, take, tan, tanh, transpose, where, zeros, zeros_like,
     )
 from numpy.compat import pickle
 
@@ -1071,7 +1071,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(z.mask, [[1, 1, 1], [0, 0, 0]])
 
     def test_mixed_arithmetic(self):
-        # Tests mixed arithmetics.
+        # Tests mixed arithmetic.
         na = np.array([1])
         ma = array([1])
         assert_(isinstance(na + ma, MaskedArray))
@@ -1084,7 +1084,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(getmaskarray(2 / a), [1, 0, 1])
 
     def test_masked_singleton_arithmetic(self):
-        # Tests some scalar arithmetics on MaskedArrays.
+        # Tests some scalar arithmetic on MaskedArrays.
         # Masked singleton should remain masked no matter what
         xm = array(0, mask=1)
         assert_((1 / array(0)).mask)
@@ -1804,7 +1804,7 @@ class TestMaskedArrayArithmetic:
             assert_equal(test.mask, [[False, True],
                                      [False, True]])
 
-    def test_numpyarithmetics(self):
+    def test_numpyarithmetic(self):
         # Check that the mask is not back-propagated when using numpy functions
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
         control = masked_array([np.nan, np.nan, 0, np.log(2), -1],
@@ -2479,8 +2479,8 @@ class TestUfuncs:
             # also check that allclose uses ma ufuncs, to avoid warning
             allclose(m, 0.5)
 
-class TestMaskedArrayInPlaceArithmetics:
-    # Test MaskedArray Arithmetics
+class TestMaskedArrayInPlaceArithmetic:
+    # Test MaskedArray Arithmetic
 
     def setup(self):
         x = arange(10)
@@ -3229,6 +3229,50 @@ class TestMaskedArrayMethods:
         b = a.view(masked_array)
         assert_(np.may_share_memory(a.mask, b.mask))
 
+    def test_zeros(self):
+        # Tests zeros/like
+        datatype = [('a', int), ('b', float), ('c', '|S8')]
+        a = masked_array([(1, 1.1, '1.1'), (2, 2.2, '2.2'), (3, 3.3, '3.3')],
+                         dtype=datatype)
+        assert_equal(len(a.fill_value.item()), len(datatype))
+
+        b = zeros(len(a), dtype=datatype)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        b = zeros_like(a)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        # check zeros_like mask handling
+        a = masked_array([1, 2, 3], mask=[False, True, False])
+        b = zeros_like(a)
+        assert_(not np.may_share_memory(a.mask, b.mask))
+        b = a.view()
+        assert_(np.may_share_memory(a.mask, b.mask))
+
+    def test_ones(self):
+        # Tests ones/like
+        datatype = [('a', int), ('b', float), ('c', '|S8')]
+        a = masked_array([(1, 1.1, '1.1'), (2, 2.2, '2.2'), (3, 3.3, '3.3')],
+                         dtype=datatype)
+        assert_equal(len(a.fill_value.item()), len(datatype))
+
+        b = ones(len(a), dtype=datatype)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        b = ones_like(a)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        # check ones_like mask handling
+        a = masked_array([1, 2, 3], mask=[False, True, False])
+        b = ones_like(a)
+        assert_(not np.may_share_memory(a.mask, b.mask))
+        b = a.view()
+        assert_(np.may_share_memory(a.mask, b.mask))
+
     @suppress_copy_mask_on_assignment
     def test_put(self):
         # Tests put.
@@ -3464,7 +3508,7 @@ class TestMaskedArrayMethods:
         # Test sort on dtype with subarray (gh-8069)
         # Just check that the sort does not error, structured array subarrays
         # are treated as byte strings and that leads to differing behavior
-        # depending on endianess and `endwith`.
+        # depending on endianness and `endwith`.
         dt = np.dtype([('v', int, 2)])
         a = a.view(dt)
         test = sort(a)

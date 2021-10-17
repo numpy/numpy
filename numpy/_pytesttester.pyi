@@ -1,5 +1,4 @@
-from typing import List, Iterable
-from typing_extensions import Literal as L
+from typing import List, Iterable, Literal as L
 
 __all__: List[str]
 

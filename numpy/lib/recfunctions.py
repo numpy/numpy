@@ -819,7 +819,8 @@ def repack_fields(a, align=False, recurse=False):
     ...
     >>> dt = np.dtype('u1, <i8, <f8', align=True)
     >>> dt
-    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i8','<f8'], 'offsets':[0,8,16], 'itemsize':24}, align=True)
+    dtype({'names': ['f0', 'f1', 'f2'], 'formats': ['u1', '<i8', '<f8'], \
+'offsets': [0, 8, 16], 'itemsize': 24}, align=True)
     >>> print_offsets(dt)
     offsets: [0, 8, 16]
     itemsize: 24

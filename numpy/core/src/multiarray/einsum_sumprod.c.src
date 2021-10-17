@@ -80,7 +80,7 @@ static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ *data, npy_intp count)
     /* Use aligned instructions if possible */
     const int is_aligned = EINSUM_IS_ALIGNED(data);
     const int vstep = npyv_nlanes_@sfx@;
-    npyv_@sfx@ vaccum = npyv_zero_@sfx@();
+    npyv_@sfx@ v_accum = npyv_zero_@sfx@();
     const npy_intp vstepx4 = vstep * 4;
 
     /**begin repeat1
@@ -98,15 +98,15 @@ static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ *data, npy_intp count)
             npyv_@sfx@ a01   = npyv_add_@sfx@(a0, a1);
             npyv_@sfx@ a23   = npyv_add_@sfx@(a2, a3);
             npyv_@sfx@ a0123 = npyv_add_@sfx@(a01, a23);
-                      vaccum = npyv_add_@sfx@(a0123, vaccum);
+                     v_accum = npyv_add_@sfx@(a0123, v_accum);
         }
     }
     /**end repeat1**/
     for (; count > 0; count -= vstep, data += vstep) {
         npyv_@sfx@ a = npyv_load_tillz_@sfx@(data, count);
-        vaccum = npyv_add_@sfx@(a, vaccum);
+        v_accum = npyv_add_@sfx@(a, v_accum);
     }
-    accum = npyv_sum_@sfx@(vaccum);
+    accum = npyv_sum_@sfx@(v_accum);
     npyv_cleanup();
 #else
 #ifndef NPY_DISABLE_OPTIMIZATION
@@ -485,7 +485,7 @@ static NPY_GCC_OPT_3 void
     /* Use aligned instructions if possible */
     const int is_aligned = EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1);
     const int vstep = npyv_nlanes_@sfx@;
-    npyv_@sfx@ vaccum = npyv_zero_@sfx@();
+    npyv_@sfx@ v_accum = npyv_zero_@sfx@();
 
     /**begin repeat2
      * #cond = if(is_aligned), else#
@@ -501,19 +501,19 @@ static NPY_GCC_OPT_3 void
             npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data0 + vstep * @i@);
             npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data1 + vstep * @i@);
             /**end repeat3**/
-            npyv_@sfx@ ab3 = npyv_muladd_@sfx@(a3, b3, vaccum);
+            npyv_@sfx@ ab3 = npyv_muladd_@sfx@(a3, b3, v_accum);
             npyv_@sfx@ ab2 = npyv_muladd_@sfx@(a2, b2, ab3);
             npyv_@sfx@ ab1 = npyv_muladd_@sfx@(a1, b1, ab2);
-                    vaccum = npyv_muladd_@sfx@(a0, b0, ab1);
+                   v_accum = npyv_muladd_@sfx@(a0, b0, ab1);
         }
     }
     /**end repeat2**/
     for (; count > 0; count -= vstep, data0 += vstep, data1 += vstep) {
         npyv_@sfx@ a = npyv_load_tillz_@sfx@(data0, count);
         npyv_@sfx@ b = npyv_load_tillz_@sfx@(data1, count);
-        vaccum = npyv_muladd_@sfx@(a, b, vaccum);
+        v_accum = npyv_muladd_@sfx@(a, b, v_accum);
     }
-    accum = npyv_sum_@sfx@(vaccum);
+    accum = npyv_sum_@sfx@(v_accum);
     npyv_cleanup();
 #else
 #ifndef NPY_DISABLE_OPTIMIZATION

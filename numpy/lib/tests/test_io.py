@@ -1196,6 +1196,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
+
 class Testfromregex:
     def test_record(self):
         c = TextIO()
@@ -1254,6 +1255,13 @@ class Testfromregex:
         a = np.array([1, 2, 3], dtype=dt)
         x = np.fromregex(c, regexp, dt)
         assert_array_equal(x, a)
+
+    def test_bad_dtype_not_structured(self):
+        regexp = re.compile(b'(\\d)')
+        c = BytesIO(b'123')
+        with pytest.raises(TypeError, match='structured datatype'):
+            np.fromregex(c, regexp, dtype=np.float64)
+
 
 #####--------------------------------------------------------------------------
 

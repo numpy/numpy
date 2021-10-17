@@ -59,7 +59,7 @@ MAJOR, MINOR, MICRO = re.match(r'(\d+)\.(\d+)\.(\d+)', FULLVERSION).groups()
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
-if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 11):
     fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
         fmt.format(VERSION, *sys.version_info[:2]),

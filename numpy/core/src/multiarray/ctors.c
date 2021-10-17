@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -1030,6 +1031,17 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 
         /* Build the new strides */
         stride = dtype->elsize;
+        if (stride == 0 && PyDataType_ISSTRING(dtype)) {
+            /* Special case for dtype=str or dtype=bytes. */
+            if (dtype->type_num == NPY_STRING) {
+                /* dtype is bytes */
+                stride = 1;
+            }
+            else {
+                /* dtype is str (type_num is NPY_UNICODE) */
+                stride = 4;
+            }
+        }
         for (idim = ndim-1; idim >= 0; --idim) {
             npy_intp i_perm = strideperm[idim].perm;
             strides[i_perm] = stride;
@@ -2716,7 +2728,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         /* If we exhausted the dst block, refresh it */
         if (dst_count == count) {
             res = dst_iternext(dst_iter);
-            if (!res) {
+            if (res == 0) {
                 break;
             }
             dst_count = *dst_countptr;
@@ -2730,7 +2742,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         /* If we exhausted the src block, refresh it */
         if (src_count == count) {
             res = src_iternext(src_iter);
-            if (!res) {
+            if (res == 0) {
                 break;
             }
             src_count = *src_countptr;
@@ -2747,10 +2759,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     NPY_cast_info_xfree(&cast_info);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
-    if (res > 0) {
-        /* The iteration stopped successfully, do not report an error */
-        return 0;
-    }
     return res;
 }
 
@@ -3332,7 +3340,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
             fail = 1;
         }
         if (fail) {
-            PyErr_SetString(PyExc_IOError,
+            PyErr_SetString(PyExc_OSError,
                             "could not seek in file");
             return NULL;
         }

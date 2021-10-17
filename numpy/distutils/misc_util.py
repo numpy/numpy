@@ -42,7 +42,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
+           'get_build_architecture', 'get_info', 'get_pkg_info',
            'get_num_build_jobs']
 
 class InstallableLib:
@@ -110,6 +110,13 @@ def get_num_build_jobs():
         return max(x for x in cmdattr if x is not None)
 
 def quote_args(args):
+    """Quote list of arguments.
+
+    .. deprecated:: 1.22.
+    """
+    import warnings
+    warnings.warn('"quote_args" is deprecated.',
+                  DeprecationWarning, stacklevel=2)
     # don't used _nt_quote_args as it does not check if
     # args items already have quotes or not.
     args = list(args)
@@ -121,8 +128,8 @@ def quote_args(args):
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
-    splitted = name.split('/')
-    return os.path.join(*splitted)
+    split = name.split('/')
+    return os.path.join(*split)
 
 def rel_path(path, parent_path):
     """Return path relative to parent_path."""

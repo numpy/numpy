@@ -170,6 +170,7 @@ An example of broadcasting when a 1-d array is added to a 2-d array::
           [ 31.,  32.,  33.]])
   >>> b = array([1.0, 2.0, 3.0, 4.0])
   >>> a + b 
+  Traceback (most recent call last):
   ValueError: operands could not be broadcast together with shapes (4,3) (4,)
 
 As shown in :ref:`broadcasting.figure-2`, ``b`` is added to each row of ``a``.

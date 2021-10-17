@@ -1,5 +1,5 @@
 """
-Machine arithmetics - determine the parameters of the
+Machine arithmetic - determine the parameters of the
 floating-point arithmetic system
 
 Author: Pearu Peterson, September 2003

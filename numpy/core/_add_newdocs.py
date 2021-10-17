@@ -478,7 +478,7 @@ add_newdoc('numpy.core', 'nditer', ('iternext',
 
 add_newdoc('numpy.core', 'nditer', ('remove_axis',
     """
-    remove_axis(i)
+    remove_axis(i, /)
 
     Removes axis `i` from the iterator. Requires that the flag "multi_index"
     be enabled.
@@ -504,6 +504,9 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
 add_newdoc('numpy.core', 'nested_iters',
     """
+    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None, \
+    order="K", casting="safe", buffersize=0)
+
     Create nditers for use in nested loops
 
     Create a tuple of `nditer` objects which iterate in nested loops over
@@ -796,7 +799,7 @@ add_newdoc('numpy.core.multiarray', 'array',
     object : array_like
         An array, any object exposing the array interface, an object whose
         __array__ method returns an array, or any (nested) sequence.
-        If object is a scalar, a 0-dimensional array containing object is 
+        If object is a scalar, a 0-dimensional array containing object is
         returned.
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
@@ -2201,8 +2204,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     empty : Create an array, but leave its allocated memory unchanged (i.e.,
             it contains "garbage").
     dtype : Create a data-type.
-    numpy.typing.NDArray : A :term:`generic <generic type>` version
-                           of ndarray.
+    numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
+                           w.r.t. its `dtype.type <numpy.dtype.type>`.
 
     Notes
     -----
@@ -2794,6 +2797,39 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
     Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
 
     Equivalent to ``a.copy(order='K')``.
+
+    """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
+    """a.__class_getitem__(item, /)
+
+    Return a parametrized wrapper around the `~numpy.ndarray` type.
+
+    .. versionadded:: 1.22
+
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.ndarray` type.
+
+    Examples
+    --------
+    >>> from typing import Any
+    >>> import numpy as np
+
+    >>> np.ndarray[Any, np.dtype[Any]]
+    numpy.ndarray[typing.Any, numpy.dtype[Any]]
+
+    Notes
+    -----
+    This method is only available for python 3.9 and later.
+
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
+    numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
+                        w.r.t. its `dtype.type <numpy.dtype.type>`.
 
     """))
 
@@ -3541,7 +3577,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
         * 'S' - swap dtype from current to opposite endian
         * {'<', 'little'} - little endian
         * {'>', 'big'} - big endian
-        * '=' - native order, equivalent to `sys.byteorder`
+        * {'=', 'native'} - native order, equivalent to `sys.byteorder`
         * {'|', 'I'} - ignore (no change to byte order)
 
         The default value ('S') results in swapping the current
@@ -4008,6 +4044,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
         The order of all elements in the partitions is undefined.
         If provided with a sequence of kth it will partition all elements
         indexed by kth of them into their sorted position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
@@ -6011,7 +6050,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
         * 'S' - swap dtype from current to opposite endian
         * {'<', 'little'} - little endian
         * {'>', 'big'} - big endian
-        * '=' - native order
+        * {'=', 'native'} - native order
         * {'|', 'I'} - ignore (no change to byte order)
 
     Returns
@@ -6054,6 +6093,97 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
+    """
+    __class_getitem__(item, /)
+
+    Return a parametrized wrapper around the `~numpy.dtype` type.
+
+    .. versionadded:: 1.22
+
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.dtype` type.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    >>> np.dtype[np.int64]
+    numpy.dtype[numpy.int64]
+
+    Notes
+    -----
+    This method is only available for python 3.9 and later.
+
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__ge__',
+    """
+    __ge__(value, /)
+
+    Return ``self >= value``.
+
+    Equivalent to ``np.can_cast(value, self, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__le__',
+    """
+    __le__(value, /)
+
+    Return ``self <= value``.
+
+    Equivalent to ``np.can_cast(self, value, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__gt__',
+    """
+    __ge__(value, /)
+
+    Return ``self > value``.
+
+    Equivalent to
+    ``self != value and np.can_cast(value, self, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__lt__',
+    """
+    __lt__(value, /)
+
+    Return ``self < value``.
+
+    Equivalent to
+    ``self != value and np.can_cast(self, value, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
 
 ##############################################################################
 #
@@ -6382,7 +6512,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     * 'S' - swap dtype from current to opposite endian
     * {'<', 'little'} - little endian
     * {'>', 'big'} - big endian
-    * '=' - native order
+    * {'=', 'native'} - native order
     * {'|', 'I'} - ignore (no change to byte order)
 
     Parameters
@@ -6475,6 +6605,36 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 add_newdoc('numpy.core.numerictypes', 'generic',
            refer_to_array_attribute('view'))
 
+add_newdoc('numpy.core.numerictypes', 'number', ('__class_getitem__',
+    """
+    __class_getitem__(item, /)
+
+    Return a parametrized wrapper around the `~numpy.number` type.
+
+    .. versionadded:: 1.22
+
+    Returns
+    -------
+    alias : types.GenericAlias
+        A parametrized `~numpy.number` type.
+
+    Examples
+    --------
+    >>> from typing import Any
+    >>> import numpy as np
+
+    >>> np.signedinteger[Any]
+    numpy.signedinteger[typing.Any]
+
+    Notes
+    -----
+    This method is only available for python 3.9 and later.
+
+    See Also
+    --------
+    :pep:`585` : Type hinting generics in standard collections.
+
+    """))
 
 ##############################################################################
 #

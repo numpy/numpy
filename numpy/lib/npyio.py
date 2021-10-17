@@ -248,7 +248,6 @@ class NpzFile(Mapping):
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
-
     # deprecate the python 2 dict apis that we supported by accident in
     # python 3. We forgot to implement itervalues() at all in earlier
     # versions of numpy, so no need to deprecated it here.
@@ -324,10 +323,12 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
 
     Raises
     ------
-    IOError
+    OSError
         If the input file does not exist or cannot be read.
+    UnpicklingError
+        If ``allow_pickle=True``, but the file cannot be loaded as a pickle.
     ValueError
-        The file contains an object array, but allow_pickle=False given.
+        The file contains an object array, but ``allow_pickle=False`` given.
 
     See Also
     --------
@@ -436,8 +437,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except Exception as e:
-                raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file)) from e
+                raise pickle.UnpicklingError(
+                    f"Failed to interpret file {file!r} as a pickle") from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
@@ -1463,7 +1464,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
 @set_module('numpy')
 def fromregex(file, regexp, dtype, encoding=None):
-    """
+    r"""
     Construct an array from a text file, using regular expression parsing.
 
     The returned array is always a structured array, and is constructed from
@@ -1481,7 +1482,7 @@ def fromregex(file, regexp, dtype, encoding=None):
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
     dtype : dtype or list of dtypes
-        Dtype for the structured array.
+        Dtype for the structured array; must be a structured datatype.
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply to input streams.
 
@@ -1510,12 +1511,11 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Examples
     --------
-    >>> f = open('test.dat', 'w')
-    >>> _ = f.write("1312 foo\\n1534  bar\\n444   qux")
-    >>> f.close()
+    >>> from io import StringIO
+    >>> text = StringIO("1312 foo\n1534  bar\n444   qux")
 
-    >>> regexp = r"(\\d+)\\s+(...)"  # match [digits, whitespace, anything]
-    >>> output = np.fromregex('test.dat', regexp,
+    >>> regexp = r"(\d+)\s+(...)"  # match [digits, whitespace, anything]
+    >>> output = np.fromregex(text, regexp,
     ...                       [('num', np.int64), ('key', 'S3')])
     >>> output
     array([(1312, b'foo'), (1534, b'bar'), ( 444, b'qux')],
@@ -1533,6 +1533,8 @@ def fromregex(file, regexp, dtype, encoding=None):
     try:
         if not isinstance(dtype, np.dtype):
             dtype = np.dtype(dtype)
+        if dtype.names is None:
+            raise TypeError('dtype must be a structured datatype.')
 
         content = file.read()
         if isinstance(content, bytes) and isinstance(regexp, str):
@@ -1632,7 +1634,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines. This line can optionally be preceeded
+        the first `skip_header` lines. This line can optionally be preceded
         by a comment delimiter. If `names` is a sequence or a single-string of
         comma-separated names, the names will be used to define the field names
         in a structured dtype. If `names` is None, the names of the dtype

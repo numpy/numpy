@@ -51,7 +51,7 @@ def _parse_parameters(args: Iterable[Any]) -> Generator[TypeVar, None, None]:
 
 
 def _reconstruct_alias(alias: _T, parameters: Iterator[TypeVar]) -> _T:
-    """Recursivelly replace all typevars with those from `parameters`.
+    """Recursively replace all typevars with those from `parameters`.
 
     Helper function for `_GenericAlias.__getitem__`.
 
@@ -205,12 +205,9 @@ else:
 
 ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 
-if TYPE_CHECKING:
+if TYPE_CHECKING or sys.version_info >= (3, 9):
     _DType = np.dtype[ScalarType]
     NDArray = np.ndarray[Any, np.dtype[ScalarType]]
-elif sys.version_info >= (3, 9):
-    _DType = types.GenericAlias(np.dtype, (ScalarType,))
-    NDArray = types.GenericAlias(np.ndarray, (Any, _DType))
 else:
     _DType = _GenericAlias(np.dtype, (ScalarType,))
     NDArray = _GenericAlias(np.ndarray, (Any, _DType))

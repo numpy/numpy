@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -1547,6 +1548,40 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
 }
 
 
+/*
+ * Utility function used only in PyArray_ResultType for value-based logic.
+ * See that function for the meaning and contents of the parameters.
+ */
+static PyArray_Descr *
+get_descr_from_cast_or_value(
+        npy_intp i,
+        PyArrayObject *arrs[],
+        npy_intp ndtypes,
+        PyArray_Descr *descriptor,
+        PyArray_DTypeMeta *common_dtype)
+{
+    PyArray_Descr *curr;
+    if (NPY_LIKELY(i < ndtypes ||
+            !(PyArray_FLAGS(arrs[i-ndtypes]) & _NPY_ARRAY_WAS_PYSCALAR))) {
+        curr = PyArray_CastDescrToDType(descriptor, common_dtype);
+    }
+    else {
+        /*
+         * Unlike `PyArray_CastToDTypeAndPromoteDescriptors`, deal with
+         * plain Python values "graciously". This recovers the original
+         * value the long route, but it should almost never happen...
+         */
+        PyObject *tmp = PyArray_GETITEM(arrs[i-ndtypes],
+                                        PyArray_BYTES(arrs[i-ndtypes]));
+        if (tmp == NULL) {
+            return NULL;
+        }
+        curr = NPY_DT_CALL_discover_descr_from_pyobject(common_dtype, tmp);
+        Py_DECREF(tmp);
+    }
+    return curr;
+}
+
 /*NUMPY_API
  *
  * Produces the result type of a bunch of inputs, using the same rules
@@ -1648,7 +1683,7 @@ PyArray_ResultType(
         }
         Py_INCREF(all_DTypes[i_all]);
         /*
-         * Leave the decriptor empty, if we need it, we will have to go
+         * Leave the descriptor empty, if we need it, we will have to go
          * to more extreme lengths unfortunately.
          */
         all_descriptors[i_all] = NULL;
@@ -1683,28 +1718,15 @@ PyArray_ResultType(
         result = NPY_DT_CALL_default_descr(common_dtype);
     }
     else {
-        result = PyArray_CastDescrToDType(all_descriptors[0], common_dtype);
+        result = get_descr_from_cast_or_value(
+                    0, arrs, ndtypes, all_descriptors[0], common_dtype);
+        if (result == NULL) {
+            goto error;
+        }
 
         for (npy_intp i = 1; i < ndtypes+narrs; i++) {
-            PyArray_Descr *curr;
-            if (NPY_LIKELY(i < ndtypes ||
-                    !(PyArray_FLAGS(arrs[i-ndtypes]) & _NPY_ARRAY_WAS_PYSCALAR))) {
-                curr = PyArray_CastDescrToDType(all_descriptors[i], common_dtype);
-            }
-            else {
-                /*
-                 * Unlike `PyArray_CastToDTypeAndPromoteDescriptors` deal with
-                 * plain Python values "graciously". This recovers the original
-                 * value the long route, but it should almost never happen...
-                 */
-                PyObject *tmp = PyArray_GETITEM(
-                        arrs[i-ndtypes], PyArray_BYTES(arrs[i-ndtypes]));
-                if (tmp == NULL) {
-                    goto error;
-                }
-                curr = NPY_DT_CALL_discover_descr_from_pyobject(common_dtype, tmp);
-                Py_DECREF(tmp);
-            }
+            PyArray_Descr *curr = get_descr_from_cast_or_value(
+                    i, arrs, ndtypes, all_descriptors[i], common_dtype);
             if (curr == NULL) {
                 goto error;
             }
@@ -2242,7 +2264,7 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
  * Add a new casting implementation using a PyArrayMethod_Spec.
  *
  * @param spec
- * @param private If private, allow slots not publically exposed.
+ * @param private If private, allow slots not publicly exposed.
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int

@@ -40,12 +40,6 @@ HASH_FILE = 'cythonize.dat'
 DEFAULT_ROOT = 'numpy'
 VENDOR = 'NumPy'
 
-# WindowsError is not defined on unix systems
-try:
-    WindowsError
-except NameError:
-    WindowsError = None
-
 #
 # Rules
 #
@@ -141,7 +135,7 @@ rules = {
 # Hash db
 #
 def load_hashes(filename):
-    # Return { filename : (sha1 of input, sha1 of output) }
+    # Return { filename : (sha256 of input, sha256 of output) }
     if os.path.isfile(filename):
         hashes = {}
         with open(filename, 'r') as f:
@@ -157,8 +151,8 @@ def save_hashes(hash_db, filename):
         for key, value in sorted(hash_db.items()):
             f.write("%s %s %s\n" % (key, value[0], value[1]))
 
-def sha1_of_file(filename):
-    h = hashlib.sha1()
+def sha256_of_file(filename):
+    h = hashlib.sha256()
     with open(filename, "rb") as f:
         h.update(f.read())
     return h.hexdigest()
@@ -174,8 +168,8 @@ def normpath(path):
     return path
 
 def get_hash(frompath, topath):
-    from_hash = sha1_of_file(frompath)
-    to_hash = sha1_of_file(topath) if os.path.exists(topath) else None
+    from_hash = sha256_of_file(frompath)
+    to_hash = sha256_of_file(topath) if os.path.exists(topath) else None
     return (from_hash, to_hash)
 
 def process(path, fromfile, tofile, processor_function, hash_db):

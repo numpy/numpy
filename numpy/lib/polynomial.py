@@ -152,9 +152,8 @@ def poly(seq_of_zeros):
         return 1.0
     dt = seq_of_zeros.dtype
     a = ones((1,), dtype=dt)
-    for k in range(len(seq_of_zeros)):
-        a = NX.convolve(a, array([1, -seq_of_zeros[k]], dtype=dt),
-                        mode='full')
+    for zero in seq_of_zeros:
+        a = NX.convolve(a, array([1, -zero], dtype=dt), mode='full')
 
     if issubclass(a.dtype.type, NX.complexfloating):
         # if complex roots are all complex conjugates, the roots are real.
@@ -511,13 +510,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         coefficients for `k`-th data set are in ``p[:,k]``.
 
     residuals, rank, singular_values, rcond
-        Present only if `full` = True.  Residuals is sum of squared residuals
-        of the least-squares fit, the effective rank of the scaled Vandermonde
-        coefficient matrix, its singular values, and the specified value of
-        `rcond`. For more details, see `linalg.lstsq`.
+        These values are only returned if ``full == True``
+
+        - residuals -- sum of squared residuals of the least squares fit
+        - rank -- the effective rank of the scaled Vandermonde
+           coefficient matrix
+        - singular_values -- singular values of the scaled Vandermonde
+           coefficient matrix
+        - rcond -- value of `rcond`.
+
+        For more details, see `numpy.linalg.lstsq`.
 
     V : ndarray, shape (M,M) or (M,M,K)
-        Present only if `full` = False and `cov`=True.  The covariance
+        Present only if ``full == False`` and ``cov == True``.  The covariance
         matrix of the polynomial coefficient estimates.  The diagonal of
         this matrix are the variance estimates for each coefficient.  If y
         is a 2-D array, then the covariance matrix for the `k`-th data set
@@ -528,7 +533,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.
+        deficient. The warning is only raised if ``full == False``.
 
         The warnings can be turned off by
 
@@ -770,8 +775,8 @@ def polyval(p, x):
     else:
         x = NX.asanyarray(x)
         y = NX.zeros_like(x)
-    for i in range(len(p)):
-        y = y * x + p[i]
+    for pv in p:
+        y = y * x + pv
     return y
 
 
@@ -1273,14 +1278,14 @@ class poly1d:
                 s = s[:-5]
             return s
 
-        for k in range(len(coeffs)):
-            if not iscomplex(coeffs[k]):
-                coefstr = fmt_float(real(coeffs[k]))
-            elif real(coeffs[k]) == 0:
-                coefstr = '%sj' % fmt_float(imag(coeffs[k]))
+        for k, coeff in enumerate(coeffs):
+            if not iscomplex(coeff):
+                coefstr = fmt_float(real(coeff))
+            elif real(coeff) == 0:
+                coefstr = '%sj' % fmt_float(imag(coeff))
             else:
-                coefstr = '(%s + %sj)' % (fmt_float(real(coeffs[k])),
-                                          fmt_float(imag(coeffs[k])))
+                coefstr = '(%s + %sj)' % (fmt_float(real(coeff)),
+                                          fmt_float(imag(coeff)))
 
             power = (N-k)
             if power == 0:

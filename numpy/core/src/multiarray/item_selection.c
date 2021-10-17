@@ -1,9 +1,9 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
@@ -1309,7 +1309,15 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp * kth;
     npy_intp nkth, i;
 
-    if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
+    if (PyArray_ISBOOL(ktharray)) {
+        /* 2021-09-29, NumPy 1.22 */
+        if (DEPRECATE(
+                "Passing booleans as partition index is deprecated"
+                " (warning added in NumPy 1.22)") < 0) {
+            return NULL;
+        }
+    }
+    else if (!PyArray_ISINTEGER(ktharray)) {
         PyErr_Format(PyExc_TypeError, "Partition index must be integer");
         return NULL;
     }

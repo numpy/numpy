@@ -4,10 +4,11 @@ More modifications by Jeff Whitaker
 */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include "numpy/arrayobject.h"
 #include "npy_cblas.h"
-
 
 #define FNAME(name) BLAS_FUNC(name)
 

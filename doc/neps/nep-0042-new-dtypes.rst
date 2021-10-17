@@ -214,7 +214,7 @@ which describes the casting from one DType to another. In
 :ref:`NEP 43 <NEP43>` this ``CastingImpl`` object is used unchanged to
 support universal functions.
 Note that the name ``CastingImpl`` here will be generically called
-``ArrayMethod`` to accomodate both casting and universal functions.
+``ArrayMethod`` to accommodate both casting and universal functions.
 
 
 ******************************************************************************

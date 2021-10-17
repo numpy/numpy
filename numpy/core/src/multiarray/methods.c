@@ -1,14 +1,14 @@
-#define PY_SSIZE_T_CLEAN
-#include <stdarg.h>
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
-#include "arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "arrayobject.h"
 #include "arrayfunction_override.h"
 #include "npy_argparse.h"
 #include "npy_config.h"
@@ -29,6 +29,8 @@
 
 #include "methods.h"
 #include "alloc.h"
+
+#include <stdarg.h>
 
 
 /* NpyArg_ParseKeywords
@@ -2738,6 +2740,30 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return c;
 }
 
+static PyObject *
+array_class_getitem(PyObject *cls, PyObject *args)
+{
+    PyObject *generic_alias;
+
+#ifdef Py_GENERICALIASOBJECT_H
+    Py_ssize_t args_len;
+
+    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
+    if (args_len != 2) {
+        return PyErr_Format(PyExc_TypeError,
+                            "Too %s arguments for %s",
+                            args_len > 2 ? "many" : "few",
+                            ((PyTypeObject *)cls)->tp_name);
+    }
+    generic_alias = Py_GenericAlias(cls, args);
+#else
+    PyErr_SetString(PyExc_TypeError,
+                    "Type subscription requires python >= 3.9");
+    generic_alias = NULL;
+#endif
+    return generic_alias;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2794,6 +2820,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__format__",
         (PyCFunction) array_format,
         METH_VARARGS, NULL},
+
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)array_class_getitem,
+        METH_CLASS | METH_O, NULL},
 
     /* Original and Extended methods added 2005 */
     {"all",

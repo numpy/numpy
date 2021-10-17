@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_METHOD_H
-#define _NPY_ARRAY_METHOD_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAY_METHOD_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ARRAY_METHOD_H_
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -177,4 +177,4 @@ PyArrayMethod_GetMaskedStridedLoop(
 NPY_NO_EXPORT PyBoundArrayMethodObject *
 PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private);
 
-#endif  /*_NPY_ARRAY_METHOD_H*/
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_METHOD_H_ */

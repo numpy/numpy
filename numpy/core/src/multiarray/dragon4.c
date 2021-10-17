@@ -2206,7 +2206,7 @@ Dragon4_PrintFloat_IEEE_binary16(
         Dragon4_Scratch *scratch, npy_half *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     npy_uint16 val = *value;
@@ -2217,15 +2217,6 @@ Dragon4_PrintFloat_IEEE_binary16(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value */
     floatMantissa = val & bitmask_u32(10);
@@ -2303,7 +2294,7 @@ Dragon4_PrintFloat_IEEE_binary32(
         Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     union
@@ -2318,15 +2309,6 @@ Dragon4_PrintFloat_IEEE_binary32(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value */
     floatUnion.floatingPoint = *value;
@@ -2404,7 +2386,7 @@ Dragon4_PrintFloat_IEEE_binary64(
         Dragon4_Scratch *scratch, npy_float64 *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     union
@@ -2421,14 +2403,6 @@ Dragon4_PrintFloat_IEEE_binary64(
     npy_bool hasUnequalMargins;
     char signbit = '\0';
 
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value */
     floatUnion.floatingPoint = *value;
@@ -2527,7 +2501,7 @@ Dragon4_PrintFloat_Intel_extended(
     Dragon4_Scratch *scratch, FloatVal128 value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     npy_uint32 floatExponent, floatSign;
@@ -2538,15 +2512,6 @@ Dragon4_PrintFloat_Intel_extended(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* deconstruct the floating point value (we ignore the intbit) */
     floatMantissa = value.lo & bitmask_u64(63);
@@ -2748,7 +2713,7 @@ Dragon4_PrintFloat_IEEE_binary128(
     Dragon4_Scratch *scratch, FloatVal128 val128, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     npy_uint32 floatExponent, floatSign;
@@ -2758,15 +2723,6 @@ Dragon4_PrintFloat_IEEE_binary128(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     mantissa_hi = val128.hi & bitmask_u64(48);
     mantissa_lo = val128.lo;
@@ -2917,7 +2873,7 @@ Dragon4_PrintFloat_IBM_double_double(
     Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
-    npy_uint32 bufferSize = sizeof(scratch->repr);
+    const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
     FloatVal128 val128;
@@ -2933,15 +2889,6 @@ Dragon4_PrintFloat_IBM_double_double(
     npy_uint32 mantissaBit;
     npy_bool hasUnequalMargins;
     char signbit = '\0';
-
-    if (bufferSize == 0) {
-        return 0;
-    }
-
-    if (bufferSize == 1) {
-        buffer[0] = '\0';
-        return 0;
-    }
 
     /* The high part always comes before the low part, regardless of the
      * endianness of the system. */

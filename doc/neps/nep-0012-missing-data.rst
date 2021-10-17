@@ -1,7 +1,7 @@
 .. _NEP12:
 
 ============================================
-NEP 12 — Missing Data Functionality in NumPy
+NEP 12 — Missing data functionality in NumPy
 ============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
@@ -903,7 +903,7 @@ before it will allow NA-masked arrays to flow through.
 https://docs.scipy.org/doc/numpy/reference/c-api.array.html#NPY_ARRAY_ALLOWNA
 
 Code which does not follow this advice, and instead just calls PyArray_Check() to verify
-its an ndarray and checks some flags, will silently produce incorrect results. This style
+it is an ndarray and checks some flags, will silently produce incorrect results. This style
 of code does not provide any opportunity for numpy to say "hey, this array is special",
 so also is not compatible with future ideas of lazy evaluation, derived dtypes, etc.
 
@@ -963,7 +963,7 @@ The first version to implement is the array masks, because it is
 the more general approach. The mask itself is an array, but since
 it is intended to never be directly accessible from Python, it won't
 be a full ndarray itself. The mask always has the same shape as
-the array it's attached to, so it doesn't need its own shape. For
+the array it is attached to, so it doesn't need its own shape. For
 an array with a struct dtype, however, the mask will have a different
 dtype than just a straight bool, so it does need its own dtype.
 This gives us the following additions to the PyArrayObject::

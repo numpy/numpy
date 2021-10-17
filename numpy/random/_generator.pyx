@@ -3624,7 +3624,7 @@ cdef class Generator:
             from numpy.linalg import cholesky
             l = cholesky(cov)
 
-        # make sure check_valid is ignored whe method == 'cholesky'
+        # make sure check_valid is ignored when method == 'cholesky'
         # since the decomposition will have failed if cov is not valid.
         if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':
@@ -4441,7 +4441,7 @@ cdef class Generator:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>np.PyArray_DATA(x)
+            x_ptr = np.PyArray_BYTES(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -4449,7 +4449,7 @@ cdef class Generator:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
+            buf_ptr = np.PyArray_BYTES(buf)
             if x.dtype.hasobject:
                 with self.lock:
                     _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,

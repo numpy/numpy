@@ -1,5 +1,5 @@
-#ifndef _NPY_NPY_FPMATH_H_
-#define _NPY_NPY_FPMATH_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_NPY_FPMATH_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_NPY_FPMATH_H_
 
 #include "npy_config.h"
 
@@ -27,4 +27,4 @@
     #define HAVE_LDOUBLE_DOUBLE_DOUBLE_BE
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_NPY_FPMATH_H_ */

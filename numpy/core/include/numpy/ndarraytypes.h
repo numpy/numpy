@@ -1,5 +1,5 @@
-#ifndef NDARRAYTYPES_H
-#define NDARRAYTYPES_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
 
 #include "npy_common.h"
 #include "npy_endian.h"
@@ -1484,9 +1484,11 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * Include inline implementations - functions defined there are not
  * considered public API
  */
-#define _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
 #include "_neighborhood_iterator_imp.h"
-#undef _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
+
+
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
@@ -1977,4 +1979,4 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  */
 #undef NPY_DEPRECATED_INCLUDES
 
-#endif /* NPY_ARRAYTYPES_H */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

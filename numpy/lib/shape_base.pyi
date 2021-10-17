@@ -1,5 +1,4 @@
-from typing import List, TypeVar, Callable, Sequence, Any, overload, Tuple
-from typing_extensions import SupportsIndex, Protocol
+from typing import List, TypeVar, Callable, Sequence, Any, overload, Tuple, SupportsIndex, Protocol
 
 from numpy import (
     generic,
@@ -18,7 +17,7 @@ from numpy.typing import (
     ArrayLike,
     NDArray,
     _ShapeLike,
-     _NestedSequence,
+     _FiniteNestedSequence,
      _SupportsDType,
      _ArrayLikeBool_co,
      _ArrayLikeUInt_co,
@@ -32,22 +31,24 @@ from numpy.core.shape_base import vstack
 
 _SCT = TypeVar("_SCT", bound=generic)
 
-_ArrayLike = _NestedSequence[_SupportsDType[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsDType[dtype[_SCT]]]
 
 # The signatures of `__array_wrap__` and `__array_prepare__` are the same;
 # give them unique names for the sake of clarity
 class _ArrayWrap(Protocol):
     def __call__(
         self,
-        __array: NDArray[Any],
-        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        array: NDArray[Any],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        /,
     ) -> Any: ...
 
 class _ArrayPrepare(Protocol):
     def __call__(
         self,
-        __array: NDArray[Any],
-        __context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        array: NDArray[Any],
+        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        /,
     ) -> Any: ...
 
 class _SupportsArrayWrap(Protocol):

@@ -20,13 +20,13 @@ maintainer email:  oliphant.travis@ieee.org
   Space Science Telescope Institute
   (J. Todd Miller, Perry Greenfield, Rick White)
 */
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
-/*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -867,7 +867,7 @@ _uni_release(char *ptr, int nc)
                 relfunc(aptr, N1);                              \
                 return -1;                                      \
             }                                                   \
-            val = compfunc(aptr, bptr, N1, N2);                  \
+            val = compfunc(aptr, bptr, N1, N2);                 \
             *dptr = (val CMP 0);                                \
             PyArray_ITER_NEXT(iself);                           \
             PyArray_ITER_NEXT(iother);                          \
@@ -879,7 +879,7 @@ _uni_release(char *ptr, int nc)
 
 #define _reg_loop(CMP) {                                \
         while(size--) {                                 \
-            val = compfunc((void *)iself->dataptr,       \
+            val = compfunc((void *)iself->dataptr,      \
                           (void *)iother->dataptr,      \
                           N1, N2);                      \
             *dptr = (val CMP 0);                        \

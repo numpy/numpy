@@ -2819,7 +2819,7 @@ def test_iter_writemasked_decref():
     for buf, mask_buf in it:
         buf[...] = (3, singleton)
 
-    del buf, mask_buf, it   # delete everything to ensure corrrect cleanup
+    del buf, mask_buf, it   # delete everything to ensure correct cleanup
 
     if HAS_REFCOUNT:
         # The buffer would have included additional items, they must be
@@ -3206,7 +3206,7 @@ def test_debug_print(capfd):
     Currently uses a subprocess to avoid dealing with the C level `printf`s.
     """
     # the expected output with all addresses and sizes stripped (they vary
-    # and/or are platform dependend).
+    # and/or are platform dependent).
     expected = """
     ------ BEGIN ITERATOR DUMP ------
     | Iterator Address:

@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_CONVERT_DATATYPE_H_
-#define _NPY_ARRAY_CONVERT_DATATYPE_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_
 
 #include "array_method.h"
 
@@ -78,9 +78,9 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta **dtypes,
-        PyArray_Descr **given_descrs,
-        PyArray_Descr **loop_descrs);
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2]);
 
 NPY_NO_EXPORT int
 legacy_cast_get_strided_loop(
@@ -92,11 +92,11 @@ legacy_cast_get_strided_loop(
 NPY_NO_EXPORT NPY_CASTING
 simple_cast_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta **dtypes,
-        PyArray_Descr **input_descrs,
-        PyArray_Descr **loop_descrs);
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *input_descrs[2],
+        PyArray_Descr *loop_descrs[2]);
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_ */

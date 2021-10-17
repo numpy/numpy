@@ -1,12 +1,11 @@
 /* Array Descr Object */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include "structmember.h"
-#include "assert.h"
+#include <structmember.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include <numpy/ndarraytypes.h>
 #include <numpy/arrayscalars.h>
 #include "npy_pycompat.h"
@@ -19,6 +18,7 @@
 #include "convert_datatype.h"
 #include "usertypes.h"
 
+#include <assert.h>
 
 static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
@@ -101,7 +101,7 @@ static PyObject *
 legacy_dtype_default_new(PyArray_DTypeMeta *self,
         PyObject *args, PyObject *kwargs)
 {
-    /* TODO: This should allow endianess and possibly metadata */
+    /* TODO: This should allow endianness and possibly metadata */
     if (NPY_DT_is_parametric(self)) {
         /* reject parametric ones since we would need to get unit, etc. info */
         PyErr_Format(PyExc_TypeError,

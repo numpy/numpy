@@ -1,9 +1,8 @@
-import sys
 from types import TracebackType
-from typing import Any, Optional, Callable, Union, Type
+from typing import Any, Optional, Callable, Union, Type, Literal, TypedDict, SupportsIndex
 
-# Using a private class is by no means ideal, but it is simply a consquence
-# of a `contextlib.context` returning an instance of aformentioned class
+# Using a private class is by no means ideal, but it is simply a consequence
+# of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
 
 from numpy import (
@@ -22,11 +21,6 @@ from numpy import (
     clongdouble,
 )
 from numpy.typing import ArrayLike, _CharLike_co, _FloatLike_co
-
-if sys.version_info > (3, 8):
-    from typing import Literal, TypedDict, SupportsIndex
-else:
-    from typing_extensions import Literal, TypedDict, SupportsIndex
 
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 
@@ -59,7 +53,7 @@ class _FormatOptions(TypedDict):
     formatter: Optional[_FormatDict]
     sign: Literal["-", "+", " "]
     floatmode: _FloatMode
-    legacy: Literal[False, "1.13"]
+    legacy: Literal[False, "1.13", "1.21"]
 
 def set_printoptions(
     precision: Optional[SupportsIndex] = ...,
@@ -73,7 +67,7 @@ def set_printoptions(
     sign: Optional[Literal["-", "+", " "]] = ...,
     floatmode: Optional[_FloatMode] = ...,
     *,
-    legacy: Optional[Literal[False, "1.13"]] = ...
+    legacy: Optional[Literal[False, "1.13", "1.21"]] = ...
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
 def array2string(
@@ -93,7 +87,7 @@ def array2string(
     sign: Optional[Literal["-", "+", " "]] = ...,
     floatmode: Optional[_FloatMode] = ...,
     suffix: str = ...,
-    legacy: Optional[Literal[False, "1.13"]] = ...,
+    legacy: Optional[Literal[False, "1.13", "1.21"]] = ...,
 ) -> str: ...
 def format_float_scientific(
     x: _FloatLike_co,
@@ -143,5 +137,5 @@ def printoptions(
     sign: Optional[Literal["-", "+", " "]] = ...,
     floatmode: Optional[_FloatMode] = ...,
     *,
-    legacy: Optional[Literal[False, "1.13"]] = ...
+    legacy: Optional[Literal[False, "1.13", "1.21"]] = ...
 ) -> _GeneratorContextManager[_FormatOptions]: ...

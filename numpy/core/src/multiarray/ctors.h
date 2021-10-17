@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_CTORS_H_
-#define _NPY_ARRAY_CTORS_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(
@@ -102,4 +102,4 @@ NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */

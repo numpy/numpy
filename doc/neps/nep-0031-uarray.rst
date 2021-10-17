@@ -359,7 +359,7 @@ NEP 18 notes that this may require maintenance of two separate APIs. However,
 this burden may be lessened by, for example, parametrizing all tests over
 ``numpy.overridable`` separately via a fixture. This also has the side-effect
 of thoroughly testing it, unlike ``__array_function__``. We also feel that it
-provides an oppurtunity to separate the NumPy API contract properly from the
+provides an opportunity to separate the NumPy API contract properly from the
 implementation.
 
 Benefits to end-users and mixing backends

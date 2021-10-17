@@ -119,7 +119,7 @@ NaT comparisons
 Consistent with the behavior of NaN, all comparisons other than inequality
 checks with datetime64 or timedelta64 NaT ("not-a-time") values now always
 return ``False``, and inequality checks with NaT now always return ``True``.
-This includes comparisons beteween NaT values. For compatibility with the
+This includes comparisons between NaT values. For compatibility with the
 old behavior, use ``np.isnat`` to explicitly check for NaT or convert
 datetime64/timedelta64 arrays with ``.astype(np.int64)`` before making
 comparisons.
@@ -365,7 +365,7 @@ Alpine Linux (and other musl c library distros) support
 We now default to use `fenv.h` for floating point status error reporting.
 Previously we had a broken default that sometimes would not report underflow,
 overflow, and invalid floating point operations. Now we can support non-glibc
-distrubutions like Alpine Linux as long as they ship `fenv.h`.
+distributions like Alpine Linux as long as they ship `fenv.h`.
 
 Speedup ``np.block`` for large arrays
 -------------------------------------

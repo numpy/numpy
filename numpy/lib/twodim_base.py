@@ -67,7 +67,7 @@ def fliplr(m):
     See Also
     --------
     flipud : Flip array in the up/down direction.
-    flip : Flip array in one or more dimesions.
+    flip : Flip array in one or more dimensions.
     rot90 : Rotate array counterclockwise.
 
     Notes
@@ -120,7 +120,7 @@ def flipud(m):
     See Also
     --------
     fliplr : Flip array in the left/right direction.
-    flip : Flip array in one or more dimesions.
+    flip : Flip array in one or more dimensions.
     rot90 : Rotate array counterclockwise.
 
     Notes

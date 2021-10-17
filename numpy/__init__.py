@@ -134,13 +134,6 @@ else:
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
 
-    # get the version using versioneer
-    from ._version import get_versions
-    vinfo = get_versions()
-    __version__ = vinfo.get("closest-tag", vinfo["version"])
-    __git_version__ = vinfo.get("full-revisionid")
-    del get_versions, vinfo
-
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
 
@@ -408,6 +401,6 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+
+# get the version using versioneer
+from .version import __version__, git_revision as __git_version__

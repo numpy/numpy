@@ -1,5 +1,5 @@
 /**
- * This header is used internaly by all current supported SIMD extention,
+ * This header is used internally by all current supported SIMD extensions,
  * execpt for AVX512.
  */
 #ifndef NPY_SIMD

@@ -33,7 +33,7 @@ hypothesis.settings.register_profile(
     suppress_health_check=hypothesis.HealthCheck.all(),
 )
 # Note that the default profile is chosen based on the presence 
-# of pytest.ini, but can be overriden by passing the 
+# of pytest.ini, but can be overridden by passing the 
 # --hypothesis-profile=NAME argument to pytest.
 _pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
 hypothesis.settings.load_profile(

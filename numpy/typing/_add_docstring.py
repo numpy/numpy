@@ -50,16 +50,17 @@ def _parse_docstrings() -> str:
                 new_lines.append("")
             else:
                 new_lines.append(f"{indent}{line}")
-        s = "\n".join(new_lines)
 
-        # Done.
-        type_list_ret.append(f""".. data:: {name}\n    :value: {value}\n    {s}""")
+        s = "\n".join(new_lines)
+        s_block = f""".. data:: {name}\n    :value: {value}\n    {s}"""
+        type_list_ret.append(s_block)
     return "\n".join(type_list_ret)
 
 
 add_newdoc('ArrayLike', 'typing.Union[...]',
     """
-    A `~typing.Union` representing objects that can be coerced into an `~numpy.ndarray`.
+    A `~typing.Union` representing objects that can be coerced
+    into an `~numpy.ndarray`.
 
     Among others this includes the likes of:
 
@@ -88,7 +89,8 @@ add_newdoc('ArrayLike', 'typing.Union[...]',
 
 add_newdoc('DTypeLike', 'typing.Union[...]',
     """
-    A `~typing.Union` representing objects that can be coerced into a `~numpy.dtype`.
+    A `~typing.Union` representing objects that can be coerced
+    into a `~numpy.dtype`.
 
     Among others this includes the likes of:
 
@@ -101,7 +103,8 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
     See Also
     --------
     :ref:`Specifying and constructing data types <arrays.dtypes.constructing>`
-        A comprehensive overview of all objects that can be coerced into data types.
+        A comprehensive overview of all objects that can be coerced
+        into data types.
 
     Examples
     --------

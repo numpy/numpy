@@ -7,16 +7,16 @@
  * The University of British Columbia
  *
  * See LICENSE.txt for the license.
-
+ *
  */
-
-#define PY_SSIZE_T_CLEAN
-#include "Python.h"
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
+#include "numpy/arrayobject.h"
 
 #include "lowlevel_strided_loops.h"
 #include "npy_pycompat.h"

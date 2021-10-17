@@ -132,7 +132,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
         /* Reset the 1st and 2nd indices to 0 */
         NAD_INDEX(axisdata0) = 0;
         NAD_INDEX(axisdata1) = 0;
-        /* Reset the 1st and 2nd pointers to the value of the 3nd */
+        /* Reset the 1st and 2nd pointers to the value of the 3rd */
         for (istrides = 0; istrides < nstrides; ++istrides) {
             NAD_PTRS(axisdata0)[istrides] = NAD_PTRS(axisdata2)[istrides];
             NAD_PTRS(axisdata1)[istrides] = NAD_PTRS(axisdata2)[istrides];

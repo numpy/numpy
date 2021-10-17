@@ -1,7 +1,7 @@
 .. _NEP41:
 
 =================================================
-NEP 41 — First step towards a new Datatype System
+NEP 41 — First step towards a new datatype system
 =================================================
 
 :title: First step towards a new Datatype System
@@ -284,7 +284,7 @@ in general, it is not safe::
     >>> np.can_cast(np.float64, np.dtype[mp.mpf](dps=4), casting="safe")
     False
 
-since a float64 has a higer precision than the ``mpf`` datatype with
+since a float64 has a higher precision than the ``mpf`` datatype with
 ``dps=4``.
 
 Alternatively, we can say that::
@@ -765,7 +765,7 @@ Discussion
 See :ref:`NEP 40 <NEP40>`
 for a list of previous meetings and discussions.
 
-Additional discussion around this specific NEP has occured on both
+Additional discussion around this specific NEP has occurred on both
 the mailing list and the pull request:
 
 * `Mailing list discussion <https://mail.python.org/pipermail/numpy-discussion/2020-March/080481.html>`_
