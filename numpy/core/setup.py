@@ -946,6 +946,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'common', 'npy_sort.h.src'),
+            join('src', 'npysort', 'qsort-32bit-avx512.h.src'),
             join('src', 'npysort', 'quicksort.c.src'),
             join('src', 'npysort', 'mergesort.c.src'),
             join('src', 'npysort', 'timsort.c.src'),
