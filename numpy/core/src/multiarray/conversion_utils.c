@@ -110,6 +110,30 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_SUCCEED;
     }
 
+    /*
+    * If obj is a scalar we skip all the useless computations and jump to
+    * PyArray_IntpFromScalar as soon as possible.
+    */
+    if (PyLong_CheckExact(obj)) {
+        len = 1;
+
+        seq->ptr = npy_alloc_cache_dim(1);
+        if (seq->ptr == NULL) {
+            PyErr_NoMemory();
+            return NPY_FAIL;
+        }
+        seq->len = len;
+
+        nd = PyArray_IntpFromScalar(obj, (npy_intp *)seq->ptr);
+        if (nd == -1 || nd != len) {
+            npy_free_cache_dim_obj(*seq);
+            seq->ptr = NULL;
+            return NPY_FAIL;
+        }
+
+        return NPY_SUCCEED;
+    }
+
     len = PySequence_Size(obj);
     if (len == -1) {
         /* Check to see if it is an integer number */
@@ -1016,19 +1040,7 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
             PyErr_Clear();
         }
 
-        vals[0] = PyArray_PyIntAsIntp(seq);
-        if(vals[0] == -1) {
-            err = PyErr_Occurred();
-            if (err &&
-                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Maximum allowed dimension exceeded");
-            }
-            if(err != NULL) {
-                return -1;
-            }
-        }
-        nd = 1;
+        nd = PyArray_IntpFromScalar(seq, vals);
     }
     else {
         for (i = 0; i < PyArray_MIN(nd,maxvals); i++) {
@@ -1053,6 +1065,26 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
         }
     }
     return nd;
+}
+
+NPY_NO_EXPORT npy_intp
+PyArray_IntpFromScalar(PyObject *seq, npy_intp *vals)
+{
+    PyObject *err;
+
+    vals[0] = PyArray_PyIntAsIntp(seq);
+    if(vals[0] == -1) {
+        err = PyErr_Occurred();
+        if (err &&
+                PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Maximum allowed dimension exceeded");
+        }
+        if(err != NULL) {
+            return -1;
+        }
+    }
+    return 1;
 }
 
 /*NUMPY_API
