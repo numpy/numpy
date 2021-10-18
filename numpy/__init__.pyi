@@ -657,19 +657,6 @@ test: PytestTester
 
 # TODO: Move placeholders to their respective module once
 # their annotations are properly implemented
-#
-# Placeholders for classes
-# TODO: Remove `__getattr__` once the classes are stubbed out
-class MachAr:
-    def __init__(
-        self,
-        float_conv: Any = ...,
-        int_conv: Any = ...,
-        float_to_float: Any = ...,
-        float_to_str: Any = ...,
-        title: Any = ...,
-    ) -> None: ...
-    def __getattr__(self, key: str) -> Any: ...
 
 class chararray(ndarray[_ShapeType, _DType_co]):
     def __new__(
@@ -3989,3 +3976,60 @@ class matrix(ndarray[_ShapeType, _DType_co]):
     def getA(self) -> ndarray[_ShapeType, _DType_co]: ...
     def getA1(self) -> ndarray[Any, _DType_co]: ...
     def getH(self) -> matrix[Any, _DType_co]: ...
+
+# TODO: Add a bound for something that duck-types as an integer (_T1)
+# and float (_T2)
+_T1 = TypeVar("_T1")
+_T2 = TypeVar("_T2")
+
+class MachAr(Generic[_T1, _T2]):
+    ibeta: _T1
+    it: int
+    negep: int
+    epsneg: _T2
+    machep: int
+    eps: _T2
+    ngrd: int
+    iexp: int
+    minexp: int
+    xmin: _T2
+    maxexp: int
+    xmax: _T2
+    irnd: int
+    title: str
+    epsilon: _T2
+    tiny: _T2
+    huge: _T2
+    smallest_normal: _T2
+    smallest_subnormal: _T2
+    precision: int
+    resolution: _T2
+
+    # TODO: Use typevars with default values (once those actually exist)
+    @overload
+    def __init__(
+        self: MachAr[_T1, _T2],
+        float_conv: Callable[[int], Any],
+        int_conv: Callable[[Any], _T1],
+        float_to_float: Callable[[Any], _T2],
+        float_to_str: Callable[[_T2], str] = ...,
+        title: str = ...,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self: MachAr[int, float],
+        float_conv: Callable[[int], float] = ...,
+        int_conv: Callable[[float], int] = ...,
+        float_to_float: Callable[[float], float] = ...,
+        float_to_str: Callable[[float], str] = ...,
+        title: str = ...,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self: MachAr[Any, Any],
+        float_conv: Callable[[int], Any] = ...,
+        int_conv: Callable[[Any], Any] = ...,
+        float_to_float: Callable[[Any], Any] = ...,
+        float_to_str: Callable[[Any], str] = ...,
+        title: str = ...,
+    ) -> None: ...
