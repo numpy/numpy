@@ -22,6 +22,9 @@ import tempfile
 
 from numpy.version import version as __version__
 
+# F2PY imports
+from . import crackfortran
+from . import rules
 
 ##################
 # Temp Variables #
@@ -596,12 +599,23 @@ def process_args(args):
         parser.print_help()
     elif getattr(args, "Fortran Files"):
         print("BOOM")
+        if args.c:
+            if args.fcompiler:
+                print(f"got {args.fcompiler}")
+            elif args.compiler:
+                print(args.compiler)
+            else:
+                print("Compilation requested without options, using defaults")
     else:
         parser.print_usage()
 
 
-if __name__ == "__main__":
+def main():
     logger = logging.getLogger("f2py_cli")
     logger.setLevel(logging.WARNING)
     args = parser.parse_args()
     process_args(args)
+
+
+if __name__ == "__main__":
+    main()
