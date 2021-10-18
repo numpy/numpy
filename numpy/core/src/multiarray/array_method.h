@@ -170,6 +170,11 @@ PyArrayMethod_GetMaskedStridedLoop(
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 
+
+NPY_NO_EXPORT PyObject *
+PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec);
+
+
 /*
  * TODO: This function is the internal version, and its error paths may
  *       need better tests when a public version is exposed.
