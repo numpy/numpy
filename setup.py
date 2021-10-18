@@ -491,13 +491,13 @@ def setup_package():
     # The f2py scripts that will be installed
     if sys.platform == 'win32':
         f2py_cmds = [
-            'f2py = numpy.f2py.f2py2e:main',
+            'f2py = numpy.f2py.f2pyarg:main',
             ]
     else:
         f2py_cmds = [
-            'f2py = numpy.f2py.f2py2e:main',
-            'f2py%s = numpy.f2py.f2py2e:main' % sys.version_info[:1],
-            'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
+            'f2py = numpy.f2py.f2pyarg:main',
+            'f2py%s = numpy.f2py.f2pyarg:main' % sys.version_info[:1],
+            'f2py%s.%s = numpy.f2py.f2pyarg:main' % sys.version_info[:2],
             ]
 
     metadata = dict(
