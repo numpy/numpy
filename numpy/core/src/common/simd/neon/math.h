@@ -153,4 +153,70 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
+#define npyv_reduce_max_u8 vmaxvq_u8
+#define npyv_reduce_max_s8 vmaxvq_s8
+#define npyv_reduce_max_u16 vmaxvq_u16
+#define npyv_reduce_max_s16 vmaxvq_s16
+#define npyv_reduce_max_u32 vmaxvq_u32
+#define npyv_reduce_max_s32 vmaxvq_s32
+NPY_FINLINE npyv_lanetype_u64 npyv_reduce_max_u64(npyv_u64 v)
+{
+    npyv_lanetype_u64 a = vgetq_lane_u64(v, 0);
+    npyv_lanetype_u64 b = vgetq_lane_u64(v, 1);
+    npyv_lanetype_u64 result = (a > b) ? a : b;
+    return result;
+}
+NPY_FINLINE npyv_lanetype_s64 npyv_reduce_max_s64(npyv_s64 v)
+{
+    npyv_lanetype_s64 a = vgetq_lane_s64(v, 0);
+    npyv_lanetype_s64 b = vgetq_lane_s64(v, 1);
+    npyv_lanetype_s64 result = (a > b) ? a : b;
+    return result;
+}
+#define npyv_reduce_max_f32 vmaxvq_f32
+#if NPY_SIMD_F64
+    #define npyv_reduce_max_f64 vmaxvq_f64
+#endif // NPY_SIMD_F64
+
+// Minimum, supports IEEE floating-point arithmetic (IEC 60559),
+// - If one of the two vectors contains NaN, the equivalent element of the other vector is set
+// - Only if both corresponded elements are NaN, NaN is set. 
+#define npyv_reduce_maxp_f32 vmaxnmvq_f32
+#if NPY_SIMD_F64
+    #define npyv_reduce_maxp_f64 vmaxnmvq_f64
+#endif // NPY_SIMD_F64
+
+#define npyv_reduce_min_u8 vminvq_u8
+#define npyv_reduce_min_s8 vminvq_s8
+#define npyv_reduce_min_u16 vminvq_u16
+#define npyv_reduce_min_s16 vminvq_s16
+#define npyv_reduce_min_u32 vminvq_u32
+#define npyv_reduce_min_s32 vminvq_s32
+NPY_FINLINE npyv_lanetype_u64 npyv_reduce_min_u64(npyv_u64 v)
+{
+    npyv_lanetype_u64 a = vgetq_lane_u64(v, 0);
+    npyv_lanetype_u64 b = vgetq_lane_u64(v, 1);
+    npyv_lanetype_u64 result = (a < b) ? a : b;
+    return result;
+}
+NPY_FINLINE npyv_lanetype_s64 npyv_reduce_min_s64(npyv_s64 v)
+{
+    npyv_lanetype_s64 a = vgetq_lane_s64(v, 0);
+    npyv_lanetype_s64 b = vgetq_lane_s64(v, 1);
+    npyv_lanetype_s64 result = (a < b) ? a : b;
+    return result;
+}
+#define npyv_reduce_min_f32 vminvq_f32
+#if NPY_SIMD_F64
+    #define npyv_reduce_min_f64 vminvq_f64
+#endif // NPY_SIMD_F64
+
+// Minimum, supports IEEE floating-point arithmetic (IEC 60559),
+// - If one of the two vectors contains NaN, the equivalent element of the other vector is set
+// - Only if both corresponded elements are NaN, NaN is set. 
+#define npyv_reduce_minp_f32 vminnmvq_f32
+#if NPY_SIMD_F64
+    #define npyv_reduce_minp_f64 vminnmvq_f64
+#endif // NPY_SIMD_F64
+
 #endif // _NPY_SIMD_NEON_MATH_H

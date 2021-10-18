@@ -13,6 +13,7 @@
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
 #include "lowlevel_strided_loops.h"
+#include "loops.h"
 
 #include "npy_pycompat.h"
 
@@ -550,6 +551,7 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
  *          npy_double, npy_double, npy_double, npy_double#
  * #SIGNED = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
  * #c = hh,uhh,h,uh,,u,l,ul,ll,ull#
+ * #HAVE_NEON_IMPL = 1*8, HAVE_NEON_IMPL_LONGLONG*2#
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
@@ -724,6 +726,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 
 /**end repeat1**/
 
+#if !defined(NPY_HAVE_NEON) || !@HAVE_NEON_IMPL@
 /**begin repeat1
  * #kind = maximum, minimum#
  * #OP =  >, <#
@@ -749,6 +752,7 @@ NPY_NO_EXPORT void
 }
 
 /**end repeat1**/
+#endif // !defined(NPY_HAVE_NEON) || !@HAVE_NEON_IMPL@
 
 NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1593,6 +1597,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  *  #c = f, , l#
  *  #C = F, , L#
+ *  #HAVE_NEON_IMPL = 1*2, HAVE_NEON_IMPL_LONGDOUBLE#
  */
 /**begin repeat1
  * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
@@ -1716,6 +1721,7 @@ NPY_NO_EXPORT void
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
+#if !defined(NPY_HAVE_NEON) || !@HAVE_NEON_IMPL@
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1741,8 +1747,10 @@ NPY_NO_EXPORT void
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
+#endif // !defined(NPY_HAVE_NEON) || !@HAVE_NEON_IMPL@
 /**end repeat1**/
 
+#if !defined(NPY_HAVE_NEON) || !@HAVE_NEON_IMPL@
 /**begin repeat1
  * #kind = fmax, fmin#
  * #OP =  >=, <=#
@@ -1770,6 +1778,7 @@ NPY_NO_EXPORT void
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
+#endif // !defined(NPY_HAVE_NEON) || !@HAVE_NEON_IMPL@
 
 NPY_NO_EXPORT void
 @TYPE@_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))

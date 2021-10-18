@@ -22,13 +22,6 @@
 #define BOOL_fmax BOOL_maximum
 #define BOOL_fmin BOOL_minimum
 
-/*
- * The ARM NEON implementation of min/max for longdouble, longlong, and
- * ulonglong assume that they're all 64-bits.  If that's not true, then we'll
- * use the scalar implementations instead.
- */
-#define HAVE_NEON_IMPL_LONGDOUBLE (NPY_BITSOF_LONGDOUBLE == 64)
-#define HAVE_NEON_IMPL_LONGLONG (NPY_BITSOF_LONGLONG == 64)
 
 /*
  *****************************************************************************
@@ -664,49 +657,6 @@ OBJECT_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 
 NPY_NO_EXPORT void
 PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
-
-/*
- *****************************************************************************
- **                            MIN/MAX LOOPS                                **
- *****************************************************************************
- */
-
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_minmax.dispatch.h"
-#endif
-
-//---------- Integers ----------
-
-/**begin repeat
- * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *         LONG, ULONG, LONGLONG, ULONGLONG#
- * #HAVE_NEON_IMPL = 1*8, HAVE_NEON_IMPL_LONGLONG*2#
- */
-#if defined(NPY_HAVE_NEON) && @HAVE_NEON_IMPL@
-/**begin repeat1
- * #kind = maximum, minimum#
- */
- NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
-   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
-/**end repeat1**/
-#endif // defined(NPY_HAVE_NEON) && @HAVE_NEON_IMPL@
-/**end repeat**/
-
-//---------- Float ----------
-
- /**begin repeat
-  * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
-  * #HAVE_NEON_IMPL = 1, 1, HAVE_NEON_IMPL_LONGDOUBLE#
-  */
- #if defined(NPY_HAVE_NEON) && @HAVE_NEON_IMPL@
-/**begin repeat1
- * #kind = maximum, minimum, fmax, fmin#
- */
- NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
-   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
-/**end repeat1**/
-#endif // defined(NPY_HAVE_NEON) && @HAVE_NEON_IMPL@
-/**end repeat**/
 
 /*
  *****************************************************************************
