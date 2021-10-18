@@ -188,6 +188,36 @@ class BoolAction(argparse.Action):
         setattr(namespace, self.dest, False if option_string.contains("no") else True)
 
 
+# TODO: Generalize or kill this np.distutils specific helper action class
+class NPDLinkHelper(argparse.Action):
+    """A custom action to work with f2py's --link-blah
+
+    This is effectively the same as storing help_link
+
+    """
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        """Initialization of the boolean flag
+
+        Mimics the parent
+        """
+        super(NPDLinkHelper, self).__init__(option_strings, dest, nargs="*", **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """The storage action
+
+        Essentially, split the value on -, store in dest
+
+        """
+        items = getattr(namespace, self.dest) or []
+        outvar = option_string.split("--link-")[1]
+        if outvar in npd_link:
+            # replicate the extend functionality
+            items.extend(outvar)
+        else:
+            raise RuntimeError(f"{outvar} is not in {npd_link}")
+
+
 ##########
 # Parser #
 ##########
@@ -565,6 +595,24 @@ build_helpers.add_argument(
 )
 
 build_helpers.add_argument(
+    "-U",
+    "--undef-macros",
+    type=str,
+    nargs="*",
+    action="extend",
+    help="Undefined macros"
+)
+
+build_helpers.add_argument(
+    "-D",
+    "--def-macros",
+    type=str,
+    nargs="*",
+    action="extend",
+    help="Defined macros"
+)
+
+build_helpers.add_argument(
     "-l",
     "--library_name",
     type=pathlib.Path,
@@ -584,14 +632,90 @@ build_helpers.add_argument(
     help="Include directories"
 )
 
-# TODO: Figure out equivalence
+# TODO: Kill this ASAP
+# Also collect in to REMAINDER and extract from there
+build_helpers.add_argument(
+    '--link-atlas', '--link-atlas_threads', '--link-atlas_blas',
+    '--link-atlas_blas_threads', '--link-lapack_atlas',
+    '--link-lapack_atlas_threads', '--link-atlas_3_10',
+    '--link-atlas_3_10_threads', '--link-atlas_3_10_blas',
+    '--link-atlas_3_10_blas_threadslapack_atlas_3_10',
+    '--link-lapack_atlas_3_10_threads', '--link-flame', '--link-mkl',
+    '--link-openblas', '--link-openblas_lapack', '--link-openblas_clapack',
+    '--link-blis', '--link-lapack_mkl', '--link-blas_mkl', '--link-accelerate',
+    '--link-openblas64_', '--link-openblas64__lapack', '--link-openblas_ilp64',
+    '--link-openblas_ilp64_lapackx11', '--link-fft_opt', '--link-fftw',
+    '--link-fftw2', '--link-fftw3', '--link-dfftw', '--link-sfftw',
+    '--link-fftw_threads', '--link-dfftw_threads', '--link-sfftw_threads',
+    '--link-djbfft', '--link-blas', '--link-lapack', '--link-lapack_src',
+    '--link-blas_src', '--link-numpy', '--link-f2py', '--link-Numeric',
+    '--link-numeric', '--link-numarray', '--link-numerix', '--link-lapack_opt',
+    '--link-lapack_ilp64_opt', '--link-lapack_ilp64_plain_opt',
+    '--link-lapack64__opt', '--link-blas_opt', '--link-blas_ilp64_opt',
+    '--link-blas_ilp64_plain_opt', '--link-blas64__opt', '--link-boost_python',
+    '--link-agg2', '--link-wx', '--link-gdk_pixbuf_xlib_2',
+    '--link-gdk-pixbuf-xlib-2.0', '--link-gdk_pixbuf_2', '--link-gdk-pixbuf-2.0',
+    '--link-gdk', '--link-gdk_2', '--link-gdk-2.0', '--link-gdk_x11_2',
+    '--link-gdk-x11-2.0', '--link-gtkp_x11_2', '--link-gtk+-x11-2.0',
+    '--link-gtkp_2', '--link-gtk+-2.0', '--link-xft', '--link-freetype2',
+    '--link-umfpack', '--link-amd',
+    metavar="--link-<resource>",
+    dest="link_resource",
+    nargs="*",
+    action=NPDLinkHelper,
+    help="The link helpers for numpy distutils"
+)
+
+
+# The rest, only works for files, since we expect:
 #   <filename>.o <filename>.so <filename>.a
-# Also,
-# build_helpers.add_argument(
-#     "-l",
-#     "--link-<resource>"
-#     )
-# )
+parser.add_argument('otherfiles',
+                    type=pathlib.Path,
+                    nargs=argparse.REMAINDER)
+
+##################
+# Parser Actions #
+##################
+
+
+def callcrackfortran(files, options):
+    rules.options = options
+    crackfortran.debug = options['debug']
+    crackfortran.verbose = options['verbose']
+    if 'module' in options:
+        crackfortran.f77modulename = options['module']
+    if 'skipfuncs' in options:
+        crackfortran.skipfuncs = options['skipfuncs']
+    if 'onlyfuncs' in options:
+        crackfortran.onlyfuncs = options['onlyfuncs']
+    crackfortran.include_paths[:] = options['include_paths']
+    crackfortran.dolowercase = options['do-lower']
+    postlist = crackfortran.crackfortran(files)
+    if 'signsfile' in options:
+        outmess('Saving signatures to file "%s"\n' % (options['signsfile']))
+        pyf = crackfortran.crack2fortran(postlist)
+        if options['signsfile'][-6:] == 'stdout':
+            sys.stdout.write(pyf)
+        else:
+            with open(options['signsfile'], 'w') as f:
+                f.write(pyf)
+    if options["coutput"] is None:
+        for mod in postlist:
+            mod["coutput"] = "%smodule.c" % mod["name"]
+    else:
+        for mod in postlist:
+            mod["coutput"] = options["coutput"]
+    if options["f2py_wrapper_output"] is None:
+        for mod in postlist:
+            mod["f2py_wrapper_output"] = "%s-f2pywrappers.f" % mod["name"]
+    else:
+        for mod in postlist:
+            mod["f2py_wrapper_output"] = options["f2py_wrapper_output"]
+    return postlist
+
+################
+# Main Process #
+################
 
 
 def process_args(args):
