@@ -665,17 +665,6 @@ test: PytestTester
 # their annotations are properly implemented
 #
 # Placeholders for classes
-# TODO: Remove `__getattr__` once the classes are stubbed out
-class MachAr:
-    def __init__(
-        self,
-        float_conv: Any = ...,
-        int_conv: Any = ...,
-        float_to_float: Any = ...,
-        float_to_str: Any = ...,
-        title: Any = ...,
-    ) -> None: ...
-    def __getattr__(self, key: str) -> Any: ...
 
 # Some of these are aliases; others are wrappers with an identical signature
 round = around
@@ -4335,3 +4324,6 @@ class chararray(ndarray[_ShapeType, _CharDType]):
     def isupper(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
     def isnumeric(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
     def isdecimal(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+
+# NOTE: Deprecated
+# class MachAr: ...

@@ -109,7 +109,6 @@ __all__ += fromnumeric.__all__
 __all__ += ['record', 'recarray', 'format_parser']
 __all__ += ['chararray']
 __all__ += function_base.__all__
-__all__ += machar.__all__
 __all__ += getlimits.__all__
 __all__ += shape_base.__all__
 __all__ += einsumfunc.__all__
