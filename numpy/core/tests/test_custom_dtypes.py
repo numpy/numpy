@@ -117,17 +117,35 @@ class TestSFloat:
                 match="the resolved dtypes are not compatible"):
             np.multiply.reduce(a)
 
+    def test_basic_ufunc_at(self):
+        float_a = np.array([1., 2., 3.])
+        b = self._get_array(2.)
+
+        float_b = b.view(np.float64).copy()
+        np.multiply.at(float_b, [1, 1, 1], float_a)
+        np.multiply.at(b, [1, 1, 1], float_a)
+
+        assert_array_equal(b.view(np.float64), float_b)
+
     def test_basic_multiply_promotion(self):
         float_a = np.array([1., 2., 3.])
         b = self._get_array(2.)
 
         res1 = float_a * b
         res2 = b * float_a
+
         # one factor is one, so we get the factor of b:
         assert res1.dtype == res2.dtype == b.dtype
         expected_view = float_a * b.view(np.float64)
         assert_array_equal(res1.view(np.float64), expected_view)
         assert_array_equal(res2.view(np.float64), expected_view)
+
+        # Check that promotion works when `out` is used:
+        np.multiply(b, float_a, out=res2)
+        with pytest.raises(TypeError):
+            # The promoter accepts this (maybe it should not), but the SFloat
+            # result cannot be cast to integer:
+            np.multiply(b, float_a, out=np.arange(3))
 
     def test_basic_addition(self):
         a = self._get_array(2.)
