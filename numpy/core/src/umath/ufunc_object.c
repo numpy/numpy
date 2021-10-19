@@ -2542,7 +2542,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
 
     PyArray_free(inner_strides);
     NPY_AUXDATA_FREE(auxdata);
-    if (NpyIter_Deallocate(iter) < 0) {
+    if (!NpyIter_Deallocate(iter)) {
         retval = -1;
     }
 
