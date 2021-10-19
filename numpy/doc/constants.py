@@ -14,7 +14,7 @@ NumPy includes several constants:
 #
 import re
 import textwrap
-
+import time
 # Maintain same format as in numpy.add_newdocs
 constants = []
 def add_newdoc(module, name, doc):
