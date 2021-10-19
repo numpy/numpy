@@ -9280,34 +9280,35 @@ class TestViewDtype:
         assert_array_equal(x.view('<i2'), expected)
 
 
-## Test various array sizes that hit different code paths in quicksort-avx512
-@pytest.mark.parametrize("N", \
-        [8,16,24,32,48,64,96,128,151,191,256,383,512,1023,2047])
+# Test various array sizes that hit different code paths in quicksort-avx512
+@pytest.mark.parametrize("N", [8, 16, 24, 32, 48, 64, 96, 128, 151, 191,
+                               256, 383, 512, 1023, 2047])
 def test_sort_float(N):
-    ## Regular data with nan sprinkled
+    # Regular data with nan sprinkled
     np.random.seed(42)
     arr = -0.5 + np.random.sample(N).astype('f')
     arr[np.random.choice(arr.shape[0], 3)] = np.nan
     assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))
 
-    ## (2) with +INF
+    # (2) with +INF
     infarr = np.inf*np.ones(N, dtype='f')
     infarr[np.random.choice(infarr.shape[0], 5)] = -1.0
     assert_equal(np.sort(infarr, kind='quick'), np.sort(infarr, kind='heap'))
 
-    ## (3) with -INF
+    # (3) with -INF
     neginfarr = -np.inf*np.ones(N, dtype='f')
     neginfarr[np.random.choice(neginfarr.shape[0], 5)] = 1.0
     assert_equal(np.sort(neginfarr, kind='quick'),
                  np.sort(neginfarr, kind='heap'))
 
-    ## (4) with +/-INF
+    # (4) with +/-INF
     infarr = np.inf*np.ones(N, dtype='f')
     infarr[np.random.choice(infarr.shape[0], (int)(N/2))] = -np.inf
     assert_equal(np.sort(infarr, kind='quick'), np.sort(infarr, kind='heap'))
 
+
 def test_sort_int():
-    ## Random data with NPY_MAX_INT32 and NPY_MIN_INT32 sprinkled
+    # Random data with NPY_MAX_INT32 and NPY_MIN_INT32 sprinkled
     np.random.seed(42)
     N = 2047
     minv = np.iinfo(np.int32).min
@@ -9317,8 +9318,9 @@ def test_sort_int():
     arr[np.random.choice(arr.shape[0], 10)] = maxv
     assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))
 
+
 def test_sort_uint():
-    ## Random data with NPY_MAX_UINT32 sprinkled
+    # Random data with NPY_MAX_UINT32 sprinkled
     np.random.seed(42)
     N = 2047
     maxv = np.iinfo(np.uint32).max
