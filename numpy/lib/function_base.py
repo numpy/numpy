@@ -9,8 +9,7 @@ import numpy.core.numeric as _nx
 from numpy.core import transpose
 from numpy.core.numeric import (
     ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
-    ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar, absolute
+    ndarray, take, dot, where, intp, integer, isscalar, absolute
     )
 from numpy.core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -51,7 +50,22 @@ __all__ = [
     'quantile'
     ]
 
-
+# _QuantileInterpolation is a dictionary listing all the supported
+# interpolation methods to compute quantile/percentile.
+#
+# Below virtual_index refer to the index of the element where the percentile
+# would be found in the sorted sample.
+# When the sample contains exactly the percentile wanted, the virtual_index is
+# an integer to the index of this element.
+# When the percentile wanted is in between two elements, the virtual_index
+# is made of a integer part (a.k.a 'i' or 'left') and a fractional part
+# (a.k.a 'g' or 'gamma')
+#
+# Each _QuantileInterpolation have two properties
+# get_virtual_index : Callable
+#   The function used to compute the virtual_index.
+# fix_gamma : Callable
+#   A function used for discret methods to force the index to a specific value.
 _QuantileInterpolation = dict(
     # --- HYNDMAN and FAN methods
     # Discrete methods
@@ -75,33 +89,33 @@ _QuantileInterpolation = dict(
     # Continuous methods
     interpolated_inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles:
-            _virtual_index_formula(n, quantiles, 0, 1),
+        _compute_virtual_index(n, quantiles, 0, 1),
         fix_gamma=lambda gamma, _: gamma,
     ),
     hazen=dict(
         get_virtual_index=lambda n, quantiles:
-            _virtual_index_formula(n, quantiles, 0.5, 0.5),
+        _compute_virtual_index(n, quantiles, 0.5, 0.5),
         fix_gamma=lambda gamma, _: gamma,
     ),
     weibull=dict(
         get_virtual_index=lambda n, quantiles:
-            _virtual_index_formula(n, quantiles, 0, 0),
+        _compute_virtual_index(n, quantiles, 0, 0),
         fix_gamma=lambda gamma, _: gamma,
     ),
     # Default value
     linear=dict(
         get_virtual_index=lambda n, quantiles:
-            _virtual_index_formula(n, quantiles, 1, 1),
+        _compute_virtual_index(n, quantiles, 1, 1),
         fix_gamma=lambda gamma, _: gamma,
     ),
     median_unbiased=dict(
         get_virtual_index=lambda n, quantiles:
-            _virtual_index_formula(n, quantiles, 1 / 3.0, 1 / 3.0),
+        _compute_virtual_index(n, quantiles, 1 / 3.0, 1 / 3.0),
         fix_gamma=lambda gamma, _: gamma,
     ),
     normal_unbiased=dict(
         get_virtual_index=lambda n, quantiles:
-        _virtual_index_formula(n, quantiles, 3 / 8.0, 3 / 8.0),
+        _compute_virtual_index(n, quantiles, 3 / 8.0, 3 / 8.0),
         fix_gamma=lambda gamma, _: gamma,
     ),
     # --- OTHER METHODS fixme add deprecated ?
@@ -3945,6 +3959,12 @@ def percentile(a,
     ``i < j``. If ``g`` is the fractional part of the index surrounded by
     ``i`` and  alpha and beta are correction constants modifying i and j.
 
+    Below, 'q' is the quantile value, 'n' is the samle size and
+    alpha and beta are constants.
+    The following formula gives an interpolation "i + g" of where the quantile
+    would be in the sorted sample.
+    With 'i' being the floor and 'g' the fractional part of the result.
+
     .. math::
         i + g = (q - alpha) / ( n - alpha - beta + 1 )
 
@@ -4353,13 +4373,22 @@ def _quantile_is_valid(q):
     return True
 
 
-def _virtual_index_formula(n: np.array,
-                           quantiles: np.array,
-                           alpha: float,
-                           beta: float) -> np.array:
+def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     """
     Compute the floating point indexes of an array for the linear
     interpolation of quantiles.
+    n : array_like
+        The sample sizes.
+    quantiles : array_like
+        The quantiles values.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
+
+    alpha and beta values depend on the chosen method
+    (see quantile documentation)
+
     Reference:
     Hyndman&Fan paper "Sample Quantiles in Statistical Packages",
     DOI: 10.1080/00031305.1996.10473566
@@ -4369,14 +4398,24 @@ def _virtual_index_formula(n: np.array,
     ) - 1
 
 
-def _get_gamma(virtual_indexes: np.array,
-               previous_indexes: np.array,
-               interpolation: _QuantileInterpolation) -> np.array:
+def _get_gamma(virtual_indexes,
+               previous_indexes,
+               interpolation: _QuantileInterpolation):
     """
-    Compute the gamma (a.k.a 'm' or weight) for the linear interpolation
+    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
-    When gamma == 0 the left bound will be picked,
-    When gamma == 1 the right bound will be.
+
+    virtual_indexes : array_like
+        The indexes where the percentile is supposed to be found in the sorted
+        sample.
+    previous_indexes : array_like
+        The floor values of virtual_indexes.
+    interpolation : _QuantileInterpolation
+        The interpolation method chosen, which may have a specific rule
+        modifying gamma.
+
+    gamma is usually the fractional part of virtual_indexes but can be modified
+    by the interpolation method.
     """
     gamma = np.asanyarray(virtual_indexes - previous_indexes)
     gamma = interpolation["fix_gamma"](gamma, virtual_indexes)
@@ -4387,8 +4426,16 @@ def _lerp(a, b, t, out=None):
     """
     Compute the linear interpolation weighted by gamma on each point of
     two same shape array.
+
+    a : array_like
+        Left bound.
+    b : array_like
+        Right bound.
+    t : array_like
+        The interpolation weight.
+    out : array_like
+        Output array.
     """
-    # Equivalent to gamma * right + (1 - gamma) * left, see gh-14685
     diff_b_a = subtract(b, a)
     # asanyarray is a stop-gap until gh-13105
     lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
