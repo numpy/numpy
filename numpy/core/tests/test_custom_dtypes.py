@@ -101,6 +101,22 @@ class TestSFloat:
         expected_view = a.view(np.float64) * b.view(np.float64)
         assert_array_equal(res.view(np.float64), expected_view)
 
+    def test_possible_and_impossible_reduce(self):
+        # For reductions to work, the first and last operand must have the
+        # same dtype.  For this parametric DType that is not necessarily true.
+        a = self._get_array(2.)
+        # Addition reductin works (as of writing requires to pass initial
+        # because setting a scaled-float from the default `0` fails).
+        res = np.add.reduce(a, initial=0.)
+        assert res == a.astype(np.float64).sum()
+
+        # But each multiplication changes the factor, so a reduction is not
+        # possible (the relaxed version of the old refusal to handle any
+        # flexible dtype).
+        with pytest.raises(TypeError,
+                match="the resolved dtypes are not compatible"):
+            np.multiply.reduce(a)
+
     def test_basic_multiply_promotion(self):
         float_a = np.array([1., 2., 3.])
         b = self._get_array(2.)
@@ -145,3 +161,23 @@ class TestSFloat:
         # Check that casting the output fails also (done by the ufunc here)
         with pytest.raises(TypeError):
             np.add(a, a, out=c, casting="safe")
+
+    @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_casts_to_bool(self, ufunc):
+        a = self._get_array(2.)
+        a[0] = 0.  # make sure first element is considered False.
+
+        float_equiv = a.astype(float)
+        expected = ufunc(float_equiv, float_equiv)
+        res = ufunc(a, a)
+        assert_array_equal(res, expected)
+
+        # also check that the same works for reductions:
+        expected = ufunc.reduce(float_equiv)
+        res = ufunc.reduce(a)
+        assert_array_equal(res, expected)
+
+        # The output casting does not match the bool, bool -> bool loop:
+        with pytest.raises(TypeError):
+            ufunc(a, a, out=np.empty(a.shape, dtype=int), casting="equiv")

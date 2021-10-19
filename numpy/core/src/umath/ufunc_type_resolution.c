@@ -247,6 +247,28 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
 }
 
 
+/*
+ * Same as `PyUFunc_ValidateCasting` but only checks output casting.
+ */
+NPY_NO_EXPORT int
+PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
+        NPY_CASTING casting, PyArrayObject **operands, PyArray_Descr **dtypes)
+{
+    int i, nin = ufunc->nin, nop = nin + ufunc->nout;
+
+    for (i = nin; i < nop; ++i) {
+        if (operands[i] == NULL) {
+            continue;
+        }
+        if (!PyArray_CanCastTypeTo(dtypes[i],
+                PyArray_DESCR(operands[i]), casting)) {
+            return raise_output_casting_error(
+                    ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
+        }
+    }
+    return 0;
+}
+
 /*UFUNC_API
  *
  * This function applies the default type resolution rules
