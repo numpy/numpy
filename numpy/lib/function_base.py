@@ -4591,7 +4591,7 @@ def delete(arr, obj, axis=None):
             keep[obj,] = False
 
         slobj[axis] = keep
-        new = arr[tuple(slobj)].copy(order=arrorder)
+        new = asanyarray(arr[tuple(slobj)],order=arrorder)
 
     if wrap:
         return wrap(new)
