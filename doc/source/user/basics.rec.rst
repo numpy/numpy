@@ -579,7 +579,7 @@ As an optional convenience numpy provides an ndarray subclass,
 attribute instead of only by index.
 Record arrays use a special datatype, :class:`numpy.record`, that allows
 field access by attribute on the structured scalars obtained from the array.
-The :mod:`numpy.rec` module provides functions for creating recarrays from
+The ``numpy.rec`` module provides functions for creating recarrays from
 various objects.
 Additional helper functions for creating and manipulating structured arrays
 can be found in :mod:`numpy.lib.recfunctions`.
@@ -600,14 +600,14 @@ The simplest way to create a record array is with ``numpy.rec.array``::
  >>> recordarr[1].baz
  b'World'
 
-:func:`numpy.rec.array` can convert a wide variety of arguments into record
+``numpy.rec.array`` can convert a wide variety of arguments into record
 arrays, including structured arrays::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...             dtype=[('foo', 'i4'), ('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr = np.rec.array(arr)
 
-The :mod:`numpy.rec` module provides a number of other convenience functions for
+The ``numpy.rec`` module provides a number of other convenience functions for
 creating record arrays, see :ref:`record array creation routines
 <routines.array-creation.rec>`.
 
