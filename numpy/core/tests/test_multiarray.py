@@ -9309,11 +9309,11 @@ def test_sort_float(N):
 
 def test_sort_int():
     # Random data with NPY_MAX_INT32 and NPY_MIN_INT32 sprinkled
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     N = 2047
     minv = np.iinfo(np.int32).min
     maxv = np.iinfo(np.int32).max
-    arr = np.random.randint(low=minv, high=maxv, size=10).astype('int32')
+    arr = rng.integers(low=minv, high=maxv, size=N).astype('int32')
     arr[np.random.choice(arr.shape[0], 10)] = minv
     arr[np.random.choice(arr.shape[0], 10)] = maxv
     assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))
@@ -9321,9 +9321,9 @@ def test_sort_int():
 
 def test_sort_uint():
     # Random data with NPY_MAX_UINT32 sprinkled
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     N = 2047
     maxv = np.iinfo(np.uint32).max
-    arr = np.random.randint(low=0, high=maxv, size=10).astype('uint32')
+    arr = rng.integers(low=0, high=maxv, size=N).astype('uint32')
     arr[np.random.choice(arr.shape[0], 10)] = maxv
     assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))
