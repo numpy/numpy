@@ -75,8 +75,9 @@ __m256i rnd_epu32(__m256i rnd_vec, __m256i bound) {
  * #type_t = npy_int, npy_uint, npy_float#
  * #zmm_t = __m512i, __m512i, __m512#
  * #ymm_t = __m256i, __m256i, __m256#
- * #vsuffix = epi32, epu32, ps#
- * #vsuffix2 = epi32, epi32, ps#
+ * #vsuf1 = epi32, epu32, ps#
+ * #vsuf2 = epi32, epi32, ps#
+ * #vsuf3 = si512, si512, ps#
  * #CMP_GE_OP = _MM_CMPINT_NLT, _MM_CMPINT_NLT, _CMP_GE_OQ#
  * #TYPE_MAX_VAL = NPY_MAX_INT32, NPY_MAX_UINT32, NPY_INFINITYF#
  * #TYPE_MIN_VAL = NPY_MIN_INT32, 0, -NPY_INFINITYF#
@@ -85,22 +86,22 @@ __m256i rnd_epu32(__m256i rnd_vec, __m256i bound) {
 /*
  * COEX == Compare and Exchange two registers by swapping min and max values
  */
-#define COEX_ZMM_@vsuffix@(a, b) {                                          \
-    @zmm_t@ temp = a;                                                       \
-    a = _mm512_min_@vsuffix@(a,b);                                          \
-    b = _mm512_max_@vsuffix@(temp, b);}                                     \
+#define COEX_ZMM_@vsuf1@(a, b) {                                          \
+    @zmm_t@ temp = a;                                                     \
+    a = _mm512_min_@vsuf1@(a,b);                                          \
+    b = _mm512_max_@vsuf1@(temp, b);}                                     \
 
-#define COEX_YMM_@vsuffix@(a, b){                                           \
-    @ymm_t@ temp = a;                                                       \
-    a = _mm256_min_@vsuffix@(a, b);                                         \
-    b = _mm256_max_@vsuffix@(temp, b);}                                     \
+#define COEX_YMM_@vsuf1@(a, b){                                           \
+    @ymm_t@ temp = a;                                                     \
+    a = _mm256_min_@vsuf1@(a, b);                                         \
+    b = _mm256_max_@vsuf1@(temp, b);}                                     \
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-@zmm_t@ cmp_merge_@vsuffix@(@zmm_t@ in1, @zmm_t@ in2, __mmask16 mask)
+@zmm_t@ cmp_merge_@vsuf1@(@zmm_t@ in1, @zmm_t@ in2, __mmask16 mask)
 {
-    @zmm_t@ min = _mm512_min_@vsuffix@(in2, in1);
-    @zmm_t@ max = _mm512_max_@vsuffix@(in2, in1);
-    return _mm512_mask_mov_@vsuffix2@(min, mask, max); // 0 -> min, 1 -> max
+    @zmm_t@ min = _mm512_min_@vsuf1@(in2, in1);
+    @zmm_t@ max = _mm512_max_@vsuf1@(in2, in1);
+    return _mm512_mask_mov_@vsuf2@(min, mask, max); // 0 -> min, 1 -> max
 }
 
 /*
@@ -108,137 +109,137 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-@zmm_t@ sort_zmm_@vsuffix@(@zmm_t@ zmm)
+@zmm_t@ sort_zmm_@vsuf1@(@zmm_t@ zmm)
 {
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(0,1,2,3)), 0xCCCC);
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
-    zmm = cmp_merge_@vsuffix@(zmm, _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK3),zmm), 0xF0F0);
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(1,0,3,2)), 0xCCCC);
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
-    zmm = cmp_merge_@vsuffix@(zmm, _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5),zmm), 0xFF00);
-    zmm = cmp_merge_@vsuffix@(zmm, _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK6),zmm), 0xF0F0);
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(1,0,3,2)), 0xCCCC);
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(0,1,2,3)), 0xCCCC);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
+    zmm = cmp_merge_@vsuf1@(zmm, _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK3),zmm), 0xF0F0);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(1,0,3,2)), 0xCCCC);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
+    zmm = cmp_merge_@vsuf1@(zmm, _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5),zmm), 0xFF00);
+    zmm = cmp_merge_@vsuf1@(zmm, _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK6),zmm), 0xF0F0);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(1,0,3,2)), 0xCCCC);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
     return zmm;
 }
 
 // Assumes zmm is bitonic and performs a recursive half cleaner
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-@zmm_t@ bitonic_merge_zmm_@vsuffix@(@zmm_t@ zmm)
+@zmm_t@ bitonic_merge_zmm_@vsuf1@(@zmm_t@ zmm)
 {
     // 1) half_cleaner[16]: compare 1-9, 2-10, 3-11 etc ..
-    zmm = cmp_merge_@vsuffix@(zmm, _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK7),zmm), 0xFF00);
+    zmm = cmp_merge_@vsuf1@(zmm, _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK7),zmm), 0xFF00);
     // 2) half_cleaner[8]: compare 1-5, 2-6, 3-7 etc ..
-    zmm = cmp_merge_@vsuffix@(zmm, _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK6),zmm), 0xF0F0);
+    zmm = cmp_merge_@vsuf1@(zmm, _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK6),zmm), 0xF0F0);
     // 3) half_cleaner[4]
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(1,0,3,2)), 0xCCCC);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(1,0,3,2)), 0xCCCC);
     // 3) half_cleaner[1]
-    zmm = cmp_merge_@vsuffix@(zmm, SHUFFLE_@vsuffix2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
+    zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
     return zmm;
 }
 
 // Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-void bitonic_merge_two_zmm_@vsuffix@(@zmm_t@* zmm1, @zmm_t@* zmm2)
+void bitonic_merge_two_zmm_@vsuf1@(@zmm_t@* zmm1, @zmm_t@* zmm2)
 {
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
-    *zmm2 = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), *zmm2);
-    @zmm_t@ zmm3 = _mm512_min_@vsuffix@(*zmm1, *zmm2);
-    @zmm_t@ zmm4 = _mm512_max_@vsuffix@(*zmm1, *zmm2);
+    *zmm2 = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), *zmm2);
+    @zmm_t@ zmm3 = _mm512_min_@vsuf1@(*zmm1, *zmm2);
+    @zmm_t@ zmm4 = _mm512_max_@vsuf1@(*zmm1, *zmm2);
     // 2) Recursive half cleaner for each
-    *zmm1 = bitonic_merge_zmm_@vsuffix@(zmm3);
-    *zmm2 = bitonic_merge_zmm_@vsuffix@(zmm4);
+    *zmm1 = bitonic_merge_zmm_@vsuf1@(zmm3);
+    *zmm2 = bitonic_merge_zmm_@vsuf1@(zmm4);
 }
 
 // Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive half cleaner
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-void bitonic_merge_four_zmm_@vsuffix@(@zmm_t@* zmm)
+void bitonic_merge_four_zmm_@vsuf1@(@zmm_t@* zmm)
 {
-    @zmm_t@ zmm2r = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), zmm[2]);
-    @zmm_t@ zmm3r = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), zmm[3]);
-    @zmm_t@ zmm_t1 = _mm512_min_@vsuffix@(zmm[0], zmm3r);
-    @zmm_t@ zmm_t2 = _mm512_min_@vsuffix@(zmm[1], zmm2r);
-    @zmm_t@ zmm_t3 = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuffix@(zmm[1], zmm2r));
-    @zmm_t@ zmm_t4 = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuffix@(zmm[0], zmm3r));
-    @zmm_t@ zmm0 = _mm512_min_@vsuffix@(zmm_t1, zmm_t2);
-    @zmm_t@ zmm1 = _mm512_max_@vsuffix@(zmm_t1, zmm_t2);
-    @zmm_t@ zmm2 = _mm512_min_@vsuffix@(zmm_t3, zmm_t4);
-    @zmm_t@ zmm3 = _mm512_max_@vsuffix@(zmm_t3, zmm_t4);
-    zmm[0] = bitonic_merge_zmm_@vsuffix@(zmm0);
-    zmm[1] = bitonic_merge_zmm_@vsuffix@(zmm1);
-    zmm[2] = bitonic_merge_zmm_@vsuffix@(zmm2);
-    zmm[3] = bitonic_merge_zmm_@vsuffix@(zmm3);
+    @zmm_t@ zmm2r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[2]);
+    @zmm_t@ zmm3r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[3]);
+    @zmm_t@ zmm_t1 = _mm512_min_@vsuf1@(zmm[0], zmm3r);
+    @zmm_t@ zmm_t2 = _mm512_min_@vsuf1@(zmm[1], zmm2r);
+    @zmm_t@ zmm_t3 = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuf1@(zmm[1], zmm2r));
+    @zmm_t@ zmm_t4 = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuf1@(zmm[0], zmm3r));
+    @zmm_t@ zmm0 = _mm512_min_@vsuf1@(zmm_t1, zmm_t2);
+    @zmm_t@ zmm1 = _mm512_max_@vsuf1@(zmm_t1, zmm_t2);
+    @zmm_t@ zmm2 = _mm512_min_@vsuf1@(zmm_t3, zmm_t4);
+    @zmm_t@ zmm3 = _mm512_max_@vsuf1@(zmm_t3, zmm_t4);
+    zmm[0] = bitonic_merge_zmm_@vsuf1@(zmm0);
+    zmm[1] = bitonic_merge_zmm_@vsuf1@(zmm1);
+    zmm[2] = bitonic_merge_zmm_@vsuf1@(zmm2);
+    zmm[3] = bitonic_merge_zmm_@vsuf1@(zmm3);
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-void bitonic_merge_eight_zmm_@vsuffix@(@zmm_t@* zmm)
+void bitonic_merge_eight_zmm_@vsuf1@(@zmm_t@* zmm)
 {
-    @zmm_t@ zmm4r = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), zmm[4]);
-    @zmm_t@ zmm5r = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), zmm[5]);
-    @zmm_t@ zmm6r = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), zmm[6]);
-    @zmm_t@ zmm7r = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), zmm[7]);
-    @zmm_t@ zmm_t1 = _mm512_min_@vsuffix@(zmm[0], zmm7r);
-    @zmm_t@ zmm_t2 = _mm512_min_@vsuffix@(zmm[1], zmm6r);
-    @zmm_t@ zmm_t3 = _mm512_min_@vsuffix@(zmm[2], zmm5r);
-    @zmm_t@ zmm_t4 = _mm512_min_@vsuffix@(zmm[3], zmm4r);
-    @zmm_t@ zmm_t5 = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuffix@(zmm[3], zmm4r));
-    @zmm_t@ zmm_t6 = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuffix@(zmm[2], zmm5r));
-    @zmm_t@ zmm_t7 = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuffix@(zmm[1], zmm6r));
-    @zmm_t@ zmm_t8 = _mm512_permutexvar_@vsuffix2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuffix@(zmm[0], zmm7r));
-    COEX_ZMM_@vsuffix@(zmm_t1, zmm_t3);
-    COEX_ZMM_@vsuffix@(zmm_t2, zmm_t4);
-    COEX_ZMM_@vsuffix@(zmm_t5, zmm_t7);
-    COEX_ZMM_@vsuffix@(zmm_t6, zmm_t8);
-    COEX_ZMM_@vsuffix@(zmm_t1, zmm_t2);
-    COEX_ZMM_@vsuffix@(zmm_t3, zmm_t4);
-    COEX_ZMM_@vsuffix@(zmm_t5, zmm_t6);
-    COEX_ZMM_@vsuffix@(zmm_t7, zmm_t8);
-    zmm[0] = bitonic_merge_zmm_@vsuffix@(zmm_t1);
-    zmm[1] = bitonic_merge_zmm_@vsuffix@(zmm_t2);
-    zmm[2] = bitonic_merge_zmm_@vsuffix@(zmm_t3);
-    zmm[3] = bitonic_merge_zmm_@vsuffix@(zmm_t4);
-    zmm[4] = bitonic_merge_zmm_@vsuffix@(zmm_t5);
-    zmm[5] = bitonic_merge_zmm_@vsuffix@(zmm_t6);
-    zmm[6] = bitonic_merge_zmm_@vsuffix@(zmm_t7);
-    zmm[7] = bitonic_merge_zmm_@vsuffix@(zmm_t8);
+    @zmm_t@ zmm4r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[4]);
+    @zmm_t@ zmm5r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[5]);
+    @zmm_t@ zmm6r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[6]);
+    @zmm_t@ zmm7r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[7]);
+    @zmm_t@ zmm_t1 = _mm512_min_@vsuf1@(zmm[0], zmm7r);
+    @zmm_t@ zmm_t2 = _mm512_min_@vsuf1@(zmm[1], zmm6r);
+    @zmm_t@ zmm_t3 = _mm512_min_@vsuf1@(zmm[2], zmm5r);
+    @zmm_t@ zmm_t4 = _mm512_min_@vsuf1@(zmm[3], zmm4r);
+    @zmm_t@ zmm_t5 = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuf1@(zmm[3], zmm4r));
+    @zmm_t@ zmm_t6 = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuf1@(zmm[2], zmm5r));
+    @zmm_t@ zmm_t7 = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuf1@(zmm[1], zmm6r));
+    @zmm_t@ zmm_t8 = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), _mm512_max_@vsuf1@(zmm[0], zmm7r));
+    COEX_ZMM_@vsuf1@(zmm_t1, zmm_t3);
+    COEX_ZMM_@vsuf1@(zmm_t2, zmm_t4);
+    COEX_ZMM_@vsuf1@(zmm_t5, zmm_t7);
+    COEX_ZMM_@vsuf1@(zmm_t6, zmm_t8);
+    COEX_ZMM_@vsuf1@(zmm_t1, zmm_t2);
+    COEX_ZMM_@vsuf1@(zmm_t3, zmm_t4);
+    COEX_ZMM_@vsuf1@(zmm_t5, zmm_t6);
+    COEX_ZMM_@vsuf1@(zmm_t7, zmm_t8);
+    zmm[0] = bitonic_merge_zmm_@vsuf1@(zmm_t1);
+    zmm[1] = bitonic_merge_zmm_@vsuf1@(zmm_t2);
+    zmm[2] = bitonic_merge_zmm_@vsuf1@(zmm_t3);
+    zmm[3] = bitonic_merge_zmm_@vsuf1@(zmm_t4);
+    zmm[4] = bitonic_merge_zmm_@vsuf1@(zmm_t5);
+    zmm[5] = bitonic_merge_zmm_@vsuf1@(zmm_t6);
+    zmm[6] = bitonic_merge_zmm_@vsuf1@(zmm_t7);
+    zmm[7] = bitonic_merge_zmm_@vsuf1@(zmm_t8);
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-void sort_16_@vsuffix@(@type_t@* arr, npy_int N)
+void sort_16_@vsuf1@(@type_t@* arr, npy_int N)
 {
     __mmask16 load_mask = (0x0001 << N) - 0x0001;
-    @zmm_t@ zmm = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask, arr);
-    _mm512_mask_storeu_@vsuffix2@(arr, load_mask, sort_zmm_@vsuffix@(zmm));
+    @zmm_t@ zmm = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask, arr);
+    _mm512_mask_storeu_@vsuf2@(arr, load_mask, sort_zmm_@vsuf1@(zmm));
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-void sort_32_@vsuffix@(@type_t@* arr, npy_int N)
+void sort_32_@vsuf1@(@type_t@* arr, npy_int N)
 {
     if (N <= 16) {
-        sort_16_@vsuffix@(arr, N);
+        sort_16_@vsuf1@(arr, N);
         return;
     }
-    @zmm_t@ zmm1 = _mm512_loadu_@vsuffix2@(arr);
+    @zmm_t@ zmm1 = _mm512_loadu_@vsuf3@(arr);
     __mmask16 load_mask = (0x0001 << (N-16)) - 0x0001;
-    @zmm_t@ zmm2 = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask, arr + 16);
-    zmm1 = sort_zmm_@vsuffix@(zmm1);
-    zmm2 = sort_zmm_@vsuffix@(zmm2);
-    bitonic_merge_two_zmm_@vsuffix@(&zmm1, &zmm2);
-    _mm512_storeu_@vsuffix2@(arr, zmm1);
-    _mm512_mask_storeu_@vsuffix2@(arr + 16, load_mask, zmm2);
+    @zmm_t@ zmm2 = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask, arr + 16);
+    zmm1 = sort_zmm_@vsuf1@(zmm1);
+    zmm2 = sort_zmm_@vsuf1@(zmm2);
+    bitonic_merge_two_zmm_@vsuf1@(&zmm1, &zmm2);
+    _mm512_storeu_@vsuf3@(arr, zmm1);
+    _mm512_mask_storeu_@vsuf2@(arr + 16, load_mask, zmm2);
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-void sort_64_@vsuffix@(@type_t@* arr, npy_int N)
+void sort_64_@vsuf1@(@type_t@* arr, npy_int N)
 {
     if (N <= 32) {
-        sort_32_@vsuffix@(arr, N);
+        sort_32_@vsuf1@(arr, N);
         return;
     }
     @zmm_t@ zmm[4];
-    zmm[0] = _mm512_loadu_@vsuffix2@(arr);
-    zmm[1] = _mm512_loadu_@vsuffix2@(arr + 16);
+    zmm[0] = _mm512_loadu_@vsuf3@(arr);
+    zmm[1] = _mm512_loadu_@vsuf3@(arr + 16);
     __mmask16 load_mask1 = 0xFFFF, load_mask2 = 0xFFFF;
     if (N < 48) {
         load_mask1 = (0x0001 << (N-32)) - 0x0001;
@@ -247,37 +248,37 @@ void sort_64_@vsuffix@(@type_t@* arr, npy_int N)
     else if (N < 64) {
         load_mask2 = (0x0001 << (N-48)) - 0x0001;
     }
-    zmm[2] = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask1, arr + 32);
-    zmm[3] = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask2, arr + 48);
-    zmm[0] = sort_zmm_@vsuffix@(zmm[0]);
-    zmm[1] = sort_zmm_@vsuffix@(zmm[1]);
-    zmm[2] = sort_zmm_@vsuffix@(zmm[2]);
-    zmm[3] = sort_zmm_@vsuffix@(zmm[3]);
-    bitonic_merge_two_zmm_@vsuffix@(&zmm[0], &zmm[1]);
-    bitonic_merge_two_zmm_@vsuffix@(&zmm[2], &zmm[3]);
-    bitonic_merge_four_zmm_@vsuffix@(zmm);
-    _mm512_storeu_@vsuffix2@(arr, zmm[0]);
-    _mm512_storeu_@vsuffix2@(arr + 16, zmm[1]);
-    _mm512_mask_storeu_@vsuffix2@(arr + 32, load_mask1, zmm[2]);
-    _mm512_mask_storeu_@vsuffix2@(arr + 48, load_mask2, zmm[3]);
+    zmm[2] = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask1, arr + 32);
+    zmm[3] = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask2, arr + 48);
+    zmm[0] = sort_zmm_@vsuf1@(zmm[0]);
+    zmm[1] = sort_zmm_@vsuf1@(zmm[1]);
+    zmm[2] = sort_zmm_@vsuf1@(zmm[2]);
+    zmm[3] = sort_zmm_@vsuf1@(zmm[3]);
+    bitonic_merge_two_zmm_@vsuf1@(&zmm[0], &zmm[1]);
+    bitonic_merge_two_zmm_@vsuf1@(&zmm[2], &zmm[3]);
+    bitonic_merge_four_zmm_@vsuf1@(zmm);
+    _mm512_storeu_@vsuf3@(arr, zmm[0]);
+    _mm512_storeu_@vsuf3@(arr + 16, zmm[1]);
+    _mm512_mask_storeu_@vsuf2@(arr + 32, load_mask1, zmm[2]);
+    _mm512_mask_storeu_@vsuf2@(arr + 48, load_mask2, zmm[3]);
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-void sort_128_@vsuffix@(@type_t@* arr, npy_int N)
+void sort_128_@vsuf1@(@type_t@* arr, npy_int N)
 {
     if (N <= 64) {
-        sort_64_@vsuffix@(arr, N);
+        sort_64_@vsuf1@(arr, N);
         return;
     }
     @zmm_t@ zmm[8];
-    zmm[0] = _mm512_loadu_@vsuffix2@(arr);
-    zmm[1] = _mm512_loadu_@vsuffix2@(arr + 16);
-    zmm[2] = _mm512_loadu_@vsuffix2@(arr + 32);
-    zmm[3] = _mm512_loadu_@vsuffix2@(arr + 48);
-    zmm[0] = sort_zmm_@vsuffix@(zmm[0]);
-    zmm[1] = sort_zmm_@vsuffix@(zmm[1]);
-    zmm[2] = sort_zmm_@vsuffix@(zmm[2]);
-    zmm[3] = sort_zmm_@vsuffix@(zmm[3]);
+    zmm[0] = _mm512_loadu_@vsuf3@(arr);
+    zmm[1] = _mm512_loadu_@vsuf3@(arr + 16);
+    zmm[2] = _mm512_loadu_@vsuf3@(arr + 32);
+    zmm[3] = _mm512_loadu_@vsuf3@(arr + 48);
+    zmm[0] = sort_zmm_@vsuf1@(zmm[0]);
+    zmm[1] = sort_zmm_@vsuf1@(zmm[1]);
+    zmm[2] = sort_zmm_@vsuf1@(zmm[2]);
+    zmm[3] = sort_zmm_@vsuf1@(zmm[3]);
     __mmask16 load_mask1 = 0xFFFF, load_mask2 = 0xFFFF;
     __mmask16 load_mask3 = 0xFFFF, load_mask4 = 0xFFFF;
     if (N < 80) {
@@ -298,29 +299,29 @@ void sort_128_@vsuffix@(@type_t@* arr, npy_int N)
     else {
         load_mask4 = (0x0001 << (N-112)) - 0x0001;
     }
-    zmm[4] = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask1, arr + 64);
-    zmm[5] = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask2, arr + 80);
-    zmm[6] = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask3, arr + 96);
-    zmm[7] = _mm512_mask_loadu_@vsuffix2@(ZMM_MAX_@TYPE@, load_mask4, arr + 112);
-    zmm[4] = sort_zmm_@vsuffix@(zmm[4]);
-    zmm[5] = sort_zmm_@vsuffix@(zmm[5]);
-    zmm[6] = sort_zmm_@vsuffix@(zmm[6]);
-    zmm[7] = sort_zmm_@vsuffix@(zmm[7]);
-    bitonic_merge_two_zmm_@vsuffix@(&zmm[0], &zmm[1]);
-    bitonic_merge_two_zmm_@vsuffix@(&zmm[2], &zmm[3]);
-    bitonic_merge_two_zmm_@vsuffix@(&zmm[4], &zmm[5]);
-    bitonic_merge_two_zmm_@vsuffix@(&zmm[6], &zmm[7]);
-    bitonic_merge_four_zmm_@vsuffix@(zmm);
-    bitonic_merge_four_zmm_@vsuffix@(zmm + 4);
-    bitonic_merge_eight_zmm_@vsuffix@(zmm);
-    _mm512_storeu_@vsuffix2@(arr, zmm[0]);
-    _mm512_storeu_@vsuffix2@(arr + 16, zmm[1]);
-    _mm512_storeu_@vsuffix2@(arr + 32, zmm[2]);
-    _mm512_storeu_@vsuffix2@(arr + 48, zmm[3]);
-    _mm512_mask_storeu_@vsuffix2@(arr + 64, load_mask1, zmm[4]);
-    _mm512_mask_storeu_@vsuffix2@(arr + 80, load_mask2, zmm[5]);
-    _mm512_mask_storeu_@vsuffix2@(arr + 96, load_mask3, zmm[6]);
-    _mm512_mask_storeu_@vsuffix2@(arr + 112, load_mask4, zmm[7]);
+    zmm[4] = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask1, arr + 64);
+    zmm[5] = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask2, arr + 80);
+    zmm[6] = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask3, arr + 96);
+    zmm[7] = _mm512_mask_loadu_@vsuf2@(ZMM_MAX_@TYPE@, load_mask4, arr + 112);
+    zmm[4] = sort_zmm_@vsuf1@(zmm[4]);
+    zmm[5] = sort_zmm_@vsuf1@(zmm[5]);
+    zmm[6] = sort_zmm_@vsuf1@(zmm[6]);
+    zmm[7] = sort_zmm_@vsuf1@(zmm[7]);
+    bitonic_merge_two_zmm_@vsuf1@(&zmm[0], &zmm[1]);
+    bitonic_merge_two_zmm_@vsuf1@(&zmm[2], &zmm[3]);
+    bitonic_merge_two_zmm_@vsuf1@(&zmm[4], &zmm[5]);
+    bitonic_merge_two_zmm_@vsuf1@(&zmm[6], &zmm[7]);
+    bitonic_merge_four_zmm_@vsuf1@(zmm);
+    bitonic_merge_four_zmm_@vsuf1@(zmm + 4);
+    bitonic_merge_eight_zmm_@vsuf1@(zmm);
+    _mm512_storeu_@vsuf3@(arr, zmm[0]);
+    _mm512_storeu_@vsuf3@(arr + 16, zmm[1]);
+    _mm512_storeu_@vsuf3@(arr + 32, zmm[2]);
+    _mm512_storeu_@vsuf3@(arr + 48, zmm[3]);
+    _mm512_mask_storeu_@vsuf2@(arr + 64, load_mask1, zmm[4]);
+    _mm512_mask_storeu_@vsuf2@(arr + 80, load_mask2, zmm[5]);
+    _mm512_mask_storeu_@vsuf2@(arr + 96, load_mask3, zmm[6]);
+    _mm512_mask_storeu_@vsuf2@(arr + 112, load_mask4, zmm[7]);
 }
 
 
@@ -350,7 +351,7 @@ void swap_@TYPE@(@type_t@ *arr, npy_intp ii, npy_intp jj) {
  */
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-@type_t@ get_pivot_@vsuffix@(@type_t@ *arr, const npy_intp left, const npy_intp right) {
+@type_t@ get_pivot_@vsuf1@(@type_t@ *arr, const npy_intp left, const npy_intp right) {
     /* seeds for vectorized random number generator */
     __m256i s0 = _mm256_setr_epi64x(8265987198341093849, 3762817312854612374,
                                     1324281658759788278, 6214952190349879213);
@@ -374,21 +375,21 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
         else 
             indices = _mm512_sub_epi64(right_vec, rand_32); /* indices for arr */
 
-        v[i] = _mm512_i64gather_@vsuffix2@(indices, arr, sizeof(@type_t@));
+        v[i] = _mm512_i64gather_@vsuf2@(indices, arr, sizeof(@type_t@));
     }
 
     /* median network for 9 elements */
-    COEX_YMM_@vsuffix@(v[0], v[1]); COEX_YMM_@vsuffix@(v[2], v[3]);
-    COEX_YMM_@vsuffix@(v[4], v[5]); COEX_YMM_@vsuffix@(v[6], v[7]);
-    COEX_YMM_@vsuffix@(v[0], v[2]); COEX_YMM_@vsuffix@(v[1], v[3]);
-    COEX_YMM_@vsuffix@(v[4], v[6]); COEX_YMM_@vsuffix@(v[5], v[7]);
-    COEX_YMM_@vsuffix@(v[0], v[4]); COEX_YMM_@vsuffix@(v[1], v[2]);
-    COEX_YMM_@vsuffix@(v[5], v[6]); COEX_YMM_@vsuffix@(v[3], v[7]);
-    COEX_YMM_@vsuffix@(v[1], v[5]); COEX_YMM_@vsuffix@(v[2], v[6]);
-    COEX_YMM_@vsuffix@(v[3], v[5]); COEX_YMM_@vsuffix@(v[2], v[4]);
-    COEX_YMM_@vsuffix@(v[3], v[4]);
-    COEX_YMM_@vsuffix@(v[3], v[8]);
-    COEX_YMM_@vsuffix@(v[4], v[8]);
+    COEX_YMM_@vsuf1@(v[0], v[1]); COEX_YMM_@vsuf1@(v[2], v[3]);
+    COEX_YMM_@vsuf1@(v[4], v[5]); COEX_YMM_@vsuf1@(v[6], v[7]);
+    COEX_YMM_@vsuf1@(v[0], v[2]); COEX_YMM_@vsuf1@(v[1], v[3]);
+    COEX_YMM_@vsuf1@(v[4], v[6]); COEX_YMM_@vsuf1@(v[5], v[7]);
+    COEX_YMM_@vsuf1@(v[0], v[4]); COEX_YMM_@vsuf1@(v[1], v[2]);
+    COEX_YMM_@vsuf1@(v[5], v[6]); COEX_YMM_@vsuf1@(v[3], v[7]);
+    COEX_YMM_@vsuf1@(v[1], v[5]); COEX_YMM_@vsuf1@(v[2], v[6]);
+    COEX_YMM_@vsuf1@(v[3], v[5]); COEX_YMM_@vsuf1@(v[2], v[4]);
+    COEX_YMM_@vsuf1@(v[3], v[4]);
+    COEX_YMM_@vsuf1@(v[3], v[8]);
+    COEX_YMM_@vsuf1@(v[4], v[8]);
 
     // technically v[4] needs to be sorted before we pick the correct median,
     // picking the 4th element works just as well for performance
@@ -402,17 +403,17 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
  * last element that is less than equal to the pivot.
  */
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-npy_int partition_vec_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right,
+npy_int partition_vec_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
                                 const @zmm_t@ curr_vec, const @zmm_t@ pivot_vec,
                                 @zmm_t@* smallest_vec, @zmm_t@* biggest_vec)
 {
     /* which elements are larger than the pivot */
-    __mmask16 gt_mask = _mm512_cmp_@vsuffix@_mask(curr_vec, pivot_vec, @CMP_GE_OP@);
+    __mmask16 gt_mask = _mm512_cmp_@vsuf1@_mask(curr_vec, pivot_vec, @CMP_GE_OP@);
     npy_int amount_gt_pivot = _mm_popcnt_u32((npy_int)gt_mask);
-    _mm512_mask_compressstoreu_@vsuffix2@(arr + left, _knot_mask16(gt_mask), curr_vec);
-    _mm512_mask_compressstoreu_@vsuffix2@(arr + right - amount_gt_pivot, gt_mask, curr_vec);
-    *smallest_vec = _mm512_min_@vsuffix@(curr_vec, *smallest_vec);
-    *biggest_vec = _mm512_max_@vsuffix@(curr_vec, *biggest_vec);
+    _mm512_mask_compressstoreu_@vsuf2@(arr + left, _knot_mask16(gt_mask), curr_vec);
+    _mm512_mask_compressstoreu_@vsuf2@(arr + right - amount_gt_pivot, gt_mask, curr_vec);
+    *smallest_vec = _mm512_min_@vsuf1@(curr_vec, *smallest_vec);
+    *biggest_vec = _mm512_max_@vsuf1@(curr_vec, *biggest_vec);
     return amount_gt_pivot;
 }
 
@@ -421,7 +422,7 @@ npy_int partition_vec_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right,
  * last element that is less than equal to the pivot.
  */
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
-npy_intp partition_avx512_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right,
+npy_intp partition_avx512_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
                                     @type_t@ pivot, @type_t@* smallest, @type_t@* biggest)
 {
     /* make array length divisible by 16 , shortening the array */
@@ -439,21 +440,21 @@ npy_intp partition_avx512_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right
     if(left == right)
       return left; /* less than 16 elements in the array */
 
-    @zmm_t@ pivot_vec = _mm512_set1_@vsuffix2@(pivot);
-    @zmm_t@ min_vec = _mm512_set1_@vsuffix2@(*smallest);
-    @zmm_t@ max_vec = _mm512_set1_@vsuffix2@(*biggest);
+    @zmm_t@ pivot_vec = _mm512_set1_@vsuf2@(pivot);
+    @zmm_t@ min_vec = _mm512_set1_@vsuf2@(*smallest);
+    @zmm_t@ max_vec = _mm512_set1_@vsuf2@(*biggest);
 
     if(right - left == 16) {
-        @zmm_t@ vec = _mm512_loadu_@vsuffix2@(arr + left);
-        npy_int amount_gt_pivot = partition_vec_@vsuffix@(arr, left, left + 16, vec, pivot_vec, &min_vec, &max_vec);
-        *smallest = _mm512_reduce_min_@vsuffix@(min_vec);
-        *biggest = _mm512_reduce_max_@vsuffix@(max_vec);
+        @zmm_t@ vec = _mm512_loadu_@vsuf3@(arr + left);
+        npy_int amount_gt_pivot = partition_vec_@vsuf1@(arr, left, left + 16, vec, pivot_vec, &min_vec, &max_vec);
+        *smallest = _mm512_reduce_min_@vsuf1@(min_vec);
+        *biggest = _mm512_reduce_max_@vsuf1@(max_vec);
         return left + (16 - amount_gt_pivot);
     }
 
     // first and last 16 values are partitioned at the end
-    @zmm_t@ vec_left = _mm512_loadu_@vsuffix2@(arr + left);
-    @zmm_t@ vec_right = _mm512_loadu_@vsuffix2@(arr + (right - 16));
+    @zmm_t@ vec_left = _mm512_loadu_@vsuf3@(arr + left);
+    @zmm_t@ vec_right = _mm512_loadu_@vsuf3@(arr + (right - 16));
     // store points of the vectors
     npy_intp r_store = right - 16;
     npy_intp l_store = left;
@@ -469,24 +470,24 @@ npy_intp partition_avx512_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right
          */
         if((r_store + 16) - right < left - l_store) {
             right -= 16;
-            curr_vec = _mm512_loadu_@vsuffix2@(arr + right);
+            curr_vec = _mm512_loadu_@vsuf3@(arr + right);
         }
         else {
-            curr_vec = _mm512_loadu_@vsuffix2@(arr + left);
+            curr_vec = _mm512_loadu_@vsuf3@(arr + left);
             left += 16;
         }
         // partition the current vector and save it on both sides of the array
-        npy_int amount_gt_pivot = partition_vec_@vsuffix@(arr, l_store, r_store + 16, curr_vec, pivot_vec, &min_vec, &max_vec);;
+        npy_int amount_gt_pivot = partition_vec_@vsuf1@(arr, l_store, r_store + 16, curr_vec, pivot_vec, &min_vec, &max_vec);;
         r_store -= amount_gt_pivot; l_store += (16 - amount_gt_pivot);
     }
 
     /* partition and save vec_left and vec_right */
-    npy_int amount_gt_pivot = partition_vec_@vsuffix@(arr, l_store, r_store + 16, vec_left, pivot_vec, &min_vec, &max_vec);
+    npy_int amount_gt_pivot = partition_vec_@vsuf1@(arr, l_store, r_store + 16, vec_left, pivot_vec, &min_vec, &max_vec);
     l_store += (16 - amount_gt_pivot);
-    amount_gt_pivot = partition_vec_@vsuffix@(arr, l_store, l_store + 16, vec_right, pivot_vec, &min_vec, &max_vec);
+    amount_gt_pivot = partition_vec_@vsuf1@(arr, l_store, l_store + 16, vec_right, pivot_vec, &min_vec, &max_vec);
     l_store += (16 - amount_gt_pivot);
-    *smallest = _mm512_reduce_min_@vsuffix@(min_vec);
-    *biggest = _mm512_reduce_max_@vsuffix@(max_vec);
+    *smallest = _mm512_reduce_min_@vsuf1@(min_vec);
+    *biggest = _mm512_reduce_max_@vsuf1@(max_vec);
     return l_store;
 }
 
@@ -504,14 +505,14 @@ void qsort_@type@(@type_t@* arr, npy_intp left, npy_intp right, npy_int max_iter
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 128) {
-        sort_128_@vsuffix@(arr + left, right + 1 -left);
+        sort_128_@vsuf1@(arr + left, right + 1 -left);
         return;
     }
 
-    @type_t@ pivot = get_pivot_@vsuffix@(arr, left, right);
+    @type_t@ pivot = get_pivot_@vsuf1@(arr, left, right);
     @type_t@ smallest = @TYPE_MAX_VAL@;
     @type_t@ biggest = @TYPE_MIN_VAL@;
-    npy_intp pivot_index = partition_avx512_@vsuffix@(arr, left, right+1, pivot, &smallest, &biggest);
+    npy_intp pivot_index = partition_avx512_@vsuf1@(arr, left, right+1, pivot, &smallest, &biggest);
     if (pivot != smallest)
         qsort_@type@(arr, left, pivot_index - 1, max_iters - 1);
     if (pivot != biggest)
