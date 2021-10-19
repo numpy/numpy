@@ -2,6 +2,29 @@
 #include <immintrin.h>
 #include "numpy/npy_math.h"
 
+/*
+ * Quicksort using AVX-512 for int, uint32 and float. The ideas and code are
+ * based on these two research papers:
+ * (1) Fast and Robust Vectorized In-Place Sorting of Primitive Types
+ *     https://drops.dagstuhl.de/opus/volltexte/2021/13775/
+ * (2) A Novel Hybrid Quicksort Algorithm Vectorized using AVX-512 on Intel Skylake
+ *     https://arxiv.org/pdf/1704.08579.pdf
+ *
+ * High level idea: Vectorize the quicksort partitioning using AVX-512
+ * compressstore instructions. The algorithm to pick the pivot is to use median of
+ * 72 elements picked at random. If the array size is < 128, then use
+ * Bitonic sorting network. Good resource for bitonic sorting network:
+ * http://mitp-content-server.mit.edu:18180/books/content/sectbyfn?collid=books_pres_0&fn=Chapter%2027.pdf&id=8030
+ *
+ * Refer to https://github.com/numpy/numpy/pull/20133#issuecomment-958110340 for
+ * potential problems when converting this code to universal intrinsics framework.
+ */
+
+/*
+ * Constants used in sorting 16 elements in a ZMM registers. Based on Bitonic
+ * sorting network (see
+ * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg)
+ */
 #define NETWORK1 14,15,12,13,10,11,8,9,6,7,4,5,2,3,0,1
 #define NETWORK2 12,13,14,15,8,9,10,11,4,5,6,7,0,1,2,3
 #define NETWORK3 8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7
@@ -19,7 +42,12 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-/* vectorized random number generator xoroshiro128+ */
+/*
+ * Vectorized random number generator xoroshiro128+. Broken into 2 parts:
+ * (1) vnext generates 2 64-bit random integers
+ * (2) rnd_epu32 converts this to 4 32-bit random integers and bounds it to
+ *     the length of the array
+ */
 #define VROTL(x, k) /* rotate each uint64_t value in vector */               \
     _mm256_or_si256(_mm256_slli_epi64((x),(k)),_mm256_srli_epi64((x),64-(k)))
 
@@ -54,6 +82,9 @@ __m256i rnd_epu32(__m256i rnd_vec, __m256i bound) {
  * #TYPE_MIN_VAL = NPY_MIN_INT32, 0, -NPY_INFINITYF#
  */
 
+/*
+ * COEX == Compare and Exchange two registers by swapping min and max values
+ */
 #define COEX_ZMM_@vsuffix@(a, b) {                                          \
     @zmm_t@ temp = a;                                                       \
     a = _mm512_min_@vsuffix@(a,b);                                          \
@@ -64,7 +95,6 @@ __m256i rnd_epu32(__m256i rnd_vec, __m256i bound) {
     a = _mm256_min_@vsuffix@(a, b);                                         \
     b = _mm256_max_@vsuffix@(temp, b);}                                     \
 
-
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
 @zmm_t@ cmp_merge_@vsuffix@(@zmm_t@ in1, @zmm_t@ in2, __mmask16 mask)
 {
@@ -73,7 +103,10 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
     return _mm512_mask_mov_@vsuffix2@(min, mask, max); // 0 -> min, 1 -> max
 }
 
-// Assumes zmm is random and performs a full sorting network
+/*
+ * Assumes zmm is random and performs a full sorting network defined in
+ * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
+ */
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
 @zmm_t@ sort_zmm_@vsuffix@(@zmm_t@ zmm)
 {
@@ -312,6 +345,10 @@ void swap_@TYPE@(@type_t@ *arr, npy_intp ii, npy_intp jj) {
 //    //    return right;
 //}
 
+/*
+ * Picking the pivot: Median of 72 array elements chosen at random.
+ */
+
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
 @type_t@ get_pivot_@vsuffix@(@type_t@ *arr, const npy_intp left, const npy_intp right) {
     /* seeds for vectorized random number generator */
@@ -341,23 +378,29 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
     }
 
     /* median network for 9 elements */
-    COEX_YMM_@vsuffix@(v[0], v[1]); COEX_YMM_@vsuffix@(v[2], v[3]); /* step 1 */
+    COEX_YMM_@vsuffix@(v[0], v[1]); COEX_YMM_@vsuffix@(v[2], v[3]);
     COEX_YMM_@vsuffix@(v[4], v[5]); COEX_YMM_@vsuffix@(v[6], v[7]);
-    COEX_YMM_@vsuffix@(v[0], v[2]); COEX_YMM_@vsuffix@(v[1], v[3]); /* step 2 */
+    COEX_YMM_@vsuffix@(v[0], v[2]); COEX_YMM_@vsuffix@(v[1], v[3]);
     COEX_YMM_@vsuffix@(v[4], v[6]); COEX_YMM_@vsuffix@(v[5], v[7]);
-    COEX_YMM_@vsuffix@(v[0], v[4]); COEX_YMM_@vsuffix@(v[1], v[2]); /* step 3 */
+    COEX_YMM_@vsuffix@(v[0], v[4]); COEX_YMM_@vsuffix@(v[1], v[2]);
     COEX_YMM_@vsuffix@(v[5], v[6]); COEX_YMM_@vsuffix@(v[3], v[7]);
-    COEX_YMM_@vsuffix@(v[1], v[5]); COEX_YMM_@vsuffix@(v[2], v[6]); /* step 4 */
-    COEX_YMM_@vsuffix@(v[3], v[5]); COEX_YMM_@vsuffix@(v[2], v[4]); /* step 5 */
-    COEX_YMM_@vsuffix@(v[3], v[4]);                                 /* step 6 */
-    COEX_YMM_@vsuffix@(v[3], v[8]);                                 /* step 7 */
-    COEX_YMM_@vsuffix@(v[4], v[8]);                                 /* step 8 */
+    COEX_YMM_@vsuffix@(v[1], v[5]); COEX_YMM_@vsuffix@(v[2], v[6]);
+    COEX_YMM_@vsuffix@(v[3], v[5]); COEX_YMM_@vsuffix@(v[2], v[4]);
+    COEX_YMM_@vsuffix@(v[3], v[4]);
+    COEX_YMM_@vsuffix@(v[3], v[8]);
+    COEX_YMM_@vsuffix@(v[4], v[8]);
 
+    // technically v[4] needs to be sorted before we pick the correct median,
+    // picking the 4th element works just as well for performance
     @type_t@* temp = (@type_t@*) &v[4];
 
     return temp[4];
 }
 
+/*
+ * Parition one ZMM register based on the pivot and returns the index of the
+ * last element that is less than equal to the pivot.
+ */
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
 npy_int partition_vec_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right,
                                 const @zmm_t@ curr_vec, const @zmm_t@ pivot_vec,
@@ -373,6 +416,10 @@ npy_int partition_vec_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right,
     return amount_gt_pivot;
 }
 
+/*
+ * Parition an array based on the pivot and returns the index of the
+ * last element that is less than equal to the pivot.
+ */
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
 npy_intp partition_avx512_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right,
                                     @type_t@ pivot, @type_t@* smallest, @type_t@* biggest)
@@ -446,10 +493,16 @@ npy_intp partition_avx512_@vsuffix@(@type_t@* arr, npy_intp left, npy_intp right
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512_SKX
 void qsort_@type@(@type_t@* arr, npy_intp left, npy_intp right, npy_int max_iters)
 {
+    /*
+     * Resort to heapsort if quicksort isnt making any progress
+     */
     if (max_iters <= 0) {
         heapsort_@type@((void*)(arr + left), right + 1 - left, NULL);
         return;
     }
+    /*
+     * Base case: use bitonic networks to sort arrays <= 128
+     */
     if (right + 1 - left <= 128) {
         sort_128_@vsuffix@(arr + left, right + 1 -left);
         return;
