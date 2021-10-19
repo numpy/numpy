@@ -3959,7 +3959,7 @@ def percentile(a,
     ``i < j``. If ``g`` is the fractional part of the index surrounded by
     ``i`` and  alpha and beta are correction constants modifying i and j.
 
-    Below, 'q' is the quantile value, 'n' is the samle size and
+    Below, 'q' is the quantile value, 'n' is the sample size and
     alpha and beta are constants.
     The following formula gives an interpolation "i + g" of where the quantile
     would be in the sorted sample.
@@ -4628,7 +4628,7 @@ def _quantile(
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:
             # can't write to a scalar
-            result = np.array(np.nan, dtype=arr.dtype)
+            result = arr.dtype.type(np.nan)
         else:
             result[..., slices_having_nans] = np.nan
     return result

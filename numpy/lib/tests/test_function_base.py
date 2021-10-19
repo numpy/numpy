@@ -3475,6 +3475,12 @@ class TestQuantile:
         quantile = np.quantile(arr, p0)
         assert_equal(np.sort(quantile), quantile)
 
+    def test_quantile_scalar_nan(self):
+        a = np.array([[10., 7., 4.], [3., 2., 1.]])
+        a[0][1] = np.nan
+        actual = np.quantile(a, 0.5)
+        assert np.isscalar(actual)
+        assert_equal(np.quantile(a, 0.5), np.nan)
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
