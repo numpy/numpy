@@ -530,7 +530,7 @@ npy_intp replace_nan_with_inf(npy_float* arr, npy_intp arrsize)
             loadmask = (0x0001 << arrsize) - 0x0001;
         }
         __m512 in_zmm = _mm512_maskz_loadu_ps(loadmask, arr);
-        __mmask16 nanmask = _mm512_cmpunord_ps_mask(in_zmm, in_zmm);
+        __mmask16 nanmask = _mm512_cmp_ps_mask(in_zmm, in_zmm, _CMP_NEQ_UQ);
         nan_count += _mm_popcnt_u32((npy_int) nanmask);
         _mm512_mask_storeu_ps(arr, nanmask, ZMM_MAX_FLOAT);
         arr += 16;
