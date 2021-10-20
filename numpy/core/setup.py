@@ -868,6 +868,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'typeinfo.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
+            join('src', 'multiarray', 'textreading', 'readtext.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -955,6 +956,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'npysort', 'selection.c.src'),
             join('src', 'common', 'npy_binsearch.h'),
             join('src', 'npysort', 'binsearch.cpp'),
+            join('src', 'multiarray', 'textreading', 'conversions.c'),
+            join('src', 'multiarray', 'textreading', 'field_types.c'),
+            join('src', 'multiarray', 'textreading', 'growth.c'),
+            join('src', 'multiarray', 'textreading', 'readtext.c'),
+            join('src', 'multiarray', 'textreading', 'rows.c'),
+            join('src', 'multiarray', 'textreading', 'stream_pyobject.c'),
+            join('src', 'multiarray', 'textreading', 'str_to_int.c'),
+            join('src', 'multiarray', 'textreading', 'tokenize.c.src'),
             ]
 
     #######################################################################

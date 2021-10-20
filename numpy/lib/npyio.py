@@ -5,6 +5,7 @@ import itertools
 import warnings
 import weakref
 import contextlib
+import operator
 from operator import itemgetter, index as opindex, methodcaller
 from collections.abc import Mapping
 
@@ -13,6 +14,7 @@ from . import format
 from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
+from numpy.core._multiarray_umath import _load_from_filelike
 from numpy.core.overrides import set_array_function_like_doc, set_module
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
@@ -721,101 +723,6 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     zipf.close()
 
 
-def _floatconv(x):
-    try:
-        return float(x)  # The fastest path.
-    except ValueError:
-        if '0x' in x:  # Don't accidentally convert "a" ("0xa") to 10.
-            try:
-                return float.fromhex(x)
-            except ValueError:
-                pass
-        raise  # Raise the original exception, which makes more sense.
-
-
-_CONVERTERS = [  # These converters only ever get strs (not bytes) as input.
-    (np.bool_, lambda x: bool(int(x))),
-    (np.uint64, np.uint64),
-    (np.int64, np.int64),
-    (np.integer, lambda x: int(float(x))),
-    (np.longdouble, np.longdouble),
-    (np.floating, _floatconv),
-    (complex, lambda x: complex(x.replace('+-', '-'))),
-    (np.bytes_, methodcaller('encode', 'latin-1')),
-    (np.unicode_, str),
-]
-
-
-def _getconv(dtype):
-    """
-    Find the correct dtype converter. Adapted from matplotlib.
-
-    Even when a lambda is returned, it is defined at the toplevel, to allow
-    testing for equality and enabling optimization for single-type data.
-    """
-    for base, conv in _CONVERTERS:
-        if issubclass(dtype.type, base):
-            return conv
-    return str
-
-
-# _loadtxt_flatten_dtype_internal and _loadtxt_pack_items are loadtxt helpers
-# lifted to the toplevel because recursive inner functions cause either
-# GC-dependent reference loops (because they are closures over loadtxt's
-# internal variables) or large overheads if using a manual trampoline to hide
-# the recursive calls.
-
-
-# not to be confused with the flatten_dtype we import...
-def _loadtxt_flatten_dtype_internal(dt):
-    """Unpack a structured data-type, and produce a packer function."""
-    if dt.names is None:
-        # If the dtype is flattened, return.
-        # If the dtype has a shape, the dtype occurs
-        # in the list more than once.
-        shape = dt.shape
-        if len(shape) == 0:
-            return ([dt.base], None)
-        else:
-            packing = [(shape[-1], list)]
-            if len(shape) > 1:
-                for dim in dt.shape[-2::-1]:
-                    packing = [(dim*packing[0][0], packing*dim)]
-            return ([dt.base] * int(np.prod(dt.shape)),
-                    functools.partial(_loadtxt_pack_items, packing))
-    else:
-        types = []
-        packing = []
-        for field in dt.names:
-            tp, bytes = dt.fields[field]
-            flat_dt, flat_packer = _loadtxt_flatten_dtype_internal(tp)
-            types.extend(flat_dt)
-            flat_packing = flat_packer.args[0] if flat_packer else None
-            # Avoid extra nesting for subarrays
-            if tp.ndim > 0:
-                packing.extend(flat_packing)
-            else:
-                packing.append((len(flat_dt), flat_packing))
-        return (types, functools.partial(_loadtxt_pack_items, packing))
-
-
-def _loadtxt_pack_items(packing, items):
-    """Pack items into nested lists based on re-packing info."""
-    if packing is None:
-        return items[0]
-    elif packing is tuple:
-        return tuple(items)
-    elif packing is list:
-        return list(items)
-    else:
-        start = 0
-        ret = []
-        for length, subpacking in packing:
-            ret.append(
-                _loadtxt_pack_items(subpacking, items[start:start+length]))
-            start += length
-        return tuple(ret)
-
 def _ensure_ndmin_ndarray_check_param(ndmin):
     """Just checks if the param ndmin is supported on
         _ensure_ndmin_ndarray. Is intented to be used as
@@ -857,6 +764,310 @@ def _loadtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
                         converters=None, skiprows=None, usecols=None, unpack=None,
                         ndmin=None, encoding=None, max_rows=None, *, like=None):
     return (like,)
+
+
+def _check_nonneg_int(value, name="argument"):
+    try:
+        operator.index(value)
+    except TypeError:
+        raise TypeError(f"{name} must be an integer") from None
+    if value < 0:
+        raise ValueError(f"{name} must be nonnegative")
+
+
+def _preprocess_comments(iterable, comments, encoding):
+    """
+    Generator that consumes a line iterated iterable and strips out the
+    multiple (or multi-character) comments from lines.
+    This is a pre-processing step to achieve feature parity with loadtxt
+    (we assume that this feature is a nieche feature).
+    """
+    for line in iterable:
+        if isinstance(line, bytes):
+            # Need to handle conversion here, or the splitting would fail
+            line = line.decode(encoding)
+
+        for c in comments:
+            line = line.split(c, 1)[0]
+
+        yield line
+
+
+# The number of rows we read in one go if confronted with a parametric dtype
+_loadtxt_chunksize = 50000
+
+
+def _read(fname, *, delimiter=',', comment='#', quote='"',
+         imaginary_unit='j', usecols=None, skiprows=0,
+         max_rows=None, converters=None, ndmin=None, unpack=False,
+         dtype=np.float64, encoding="bytes"):
+    r"""
+    Read a NumPy array from a text file.
+
+    Parameters
+    ----------
+    fname : str or file object
+        The filename or the file to be read.
+    delimiter : str, optional
+        Field delimiter of the fields in line of the file.
+        Default is a comma, ','.
+    comment : str or sequence of str, optional
+        Character that begins a comment.  All text from the comment
+        character to the end of the line is ignored.
+        Multiple comments or multiple-character comment strings are supported,
+        but may be slower and `quote` must be empty if used.
+    quote : str, optional
+        Character that is used to quote string fields. Default is '"'
+        (a double quote).
+    imaginary_unit : str, optional
+        Character that represent the imaginay unit `sqrt(-1)`.
+        Default is 'j'.
+    usecols : array_like, optional
+        A one-dimensional array of integer column numbers.  These are the
+        columns from the file to be included in the array.  If this value
+        is not given, all the columns are used.
+    skiprows : int, optional
+        Number of lines to skip before interpreting the data in the file.
+    max_rows : int, optional
+        Maximum number of rows of data to read.  Default is to read the
+        entire file.
+    converters : dict, optional
+        A dictionary mapping column number to a function that will parse the
+        column string into the desired value. E.g. if column 0 is a date
+        string: ``converters = {0: datestr2num}``. Converters can also be used
+        to provide a default value for missing data, e.g.
+        ``converters = {3: lambda s: float(s.strip() or 0)}``.
+        Default: None
+    ndmin : int, optional
+        Minimum dimension of the array returned.
+        Allowed values are 0, 1 or 2.  Default is 0.
+    unpack : bool, optional
+        If True, the returned array is transposed, so that arguments may be
+        unpacked using ``x, y, z = read(...)``.  When used with a structured
+        data-type, arrays are returned for each field.  Default is False.
+    dtype : numpy data type
+        A NumPy dtype instance, can be a structured dtype to map to the
+        columns of the file.
+    encoding : str, optional
+        Encoding used to decode the inputfile. The special value 'bytes'
+        (the default) enables backwards-compatible behavior for `converters`,
+        ensuring that inputs to the converter functions are encoded
+        bytes objects. The special value 'bytes' has no additional effect if
+        ``converters=None``. If encoding is ``'bytes'`` or ``None``, the
+        default system encoding is used.
+
+    Returns
+    -------
+    ndarray
+        NumPy array.
+
+    Examples
+    --------
+    First we create a file for the example.
+
+    >>> s1 = '1.0,2.0,3.0\n4.0,5.0,6.0\n'
+    >>> with open('example1.csv', 'w') as f:
+    ...     f.write(s1)
+    >>> a1 = read_from_filename('example1.csv')
+    >>> a1
+    array([[1., 2., 3.],
+           [4., 5., 6.]])
+
+    The second example has columns with different data types, so a
+    one-dimensional array with a structured data type is returned.
+    The tab character is used as the field delimiter.
+
+    >>> s2 = '1.0\t10\talpha\n2.3\t25\tbeta\n4.5\t16\tgamma\n'
+    >>> with open('example2.tsv', 'w') as f:
+    ...     f.write(s2)
+    >>> a2 = read_from_filename('example2.tsv', delimiter='\t')
+    >>> a2
+    array([(1. , 10, b'alpha'), (2.3, 25, b'beta'), (4.5, 16, b'gamma')],
+          dtype=[('f0', '<f8'), ('f1', 'u1'), ('f2', 'S5')])
+    """
+    # Handle special 'bytes' keyword for encoding
+    byte_converters = False
+    if encoding == 'bytes':
+        encoding = None
+        byte_converters = True
+
+    if dtype is None:
+        raise TypeError("a dtype must be provided.")
+    dtype = np.dtype(dtype)
+
+    read_dtype_via_object_chunks = None
+    if dtype.kind in 'SUM' and (
+            dtype == "S0" or dtype == "U0" or  dtype == "M8" or dtype == 'm8'):
+        # This is a legacy "flexible" dtype.  We do not truly support
+        # parametric dtypes currently (no dtype discovery step in the core),
+        # but have to support these for backward compatibility.
+        read_dtype_via_object_chunks = dtype
+        dtype = np.dtype(object)
+
+    if usecols is not None:
+        # Allow usecols to be a single int or a sequence of ints
+        try:
+            usecols_as_list = list(usecols)
+        except TypeError:
+            usecols_as_list = [usecols]
+        for col_idx in usecols_as_list:
+            try:
+                operator.index(col_idx)
+            except TypeError:
+                # Some unit tests for numpy.loadtxt require that the
+                # error message matches this format.
+                raise TypeError(
+                    "usecols must be an int or a sequence of ints but "
+                    "it contains at least one element of type %s" %
+                    type(col_idx),
+                    ) from None
+        # Fall back to existing code
+        usecols = np.array([operator.index(i) for i in usecols_as_list],
+                           dtype=np.int32)
+
+    _ensure_ndmin_ndarray_check_param(ndmin)
+
+    if not isinstance(comment, str):
+        # assume comments are a sequence of strings
+        comments = tuple(comment)
+        comment = ''
+        # If there is only one comment, and that comment has one character,
+        # the normal parsing can deal with it just fine.
+        if len(comments) == 1:
+            if isinstance(comments[0], str) and len(comments[0]) == 1:
+                comment = comments[0]
+                comments = None
+    elif len(comment) > 1:
+        comments = (comment,)
+        comment = ''
+    else:
+        comments = None
+
+    # comment is now either a 1 or 0 character string or a tuple:
+    if comments is not None:
+        assert comment == ''
+        # Note: An earlier version support two character comments (and could
+        #       have been extended to multiple characters, we assume this is
+        #       rare enough to not optimize for.
+        if quote != "":
+            raise ValueError(
+                "when multiple comments or a multi-character comment is given, "
+                "quotes are not supported.  In this case the quote character "
+                "must be set to the empty string: `quote=''`.")
+    else:
+        # No preprocessing necessary
+        assert comments is None
+
+    if len(imaginary_unit) != 1:
+        raise ValueError('len(imaginary_unit) must be 1.')
+
+    _check_nonneg_int(skiprows)
+    if max_rows is not None:
+        _check_nonneg_int(max_rows)
+    else:
+        # Passing -1 to the C code means "read the entire file".
+        max_rows = -1
+
+    fh_closing_ctx = contextlib.nullcontext()
+    filelike = False
+    try:
+        if isinstance(fname, os.PathLike):
+            fname = os.fspath(fname)
+        # TODO: loadtxt actually uses `file + ''` to decide this?!
+        if isinstance(fname, str):
+            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+            if encoding is None:
+                encoding = getattr(fh, 'encoding', 'latin1')
+
+            fh_closing_ctx = contextlib.closing(fh)
+            data = fh
+            filelike = True
+        else:
+            if encoding is None:
+                encoding = getattr(fname, 'encoding', 'latin1')
+            data = iter(fname)
+    except TypeError as e:
+        raise ValueError(
+            f"fname must be a string, filehandle, list of strings,\n"
+            f"or generator. Got {type(fname)} instead.") from e
+
+    with fh_closing_ctx:
+        if comments is not None:
+            if filelike:
+                data = iter(data)
+                filelike = False
+            data = _preprocess_comments(data, comments, encoding)
+
+        if read_dtype_via_object_chunks is None:
+            arr = _load_from_filelike(
+                data, delimiter=delimiter, comment=comment, quote=quote,
+                imaginary_unit=imaginary_unit,
+                usecols=usecols, skiprows=skiprows, max_rows=max_rows,
+                converters=converters, dtype=dtype,
+                encoding=encoding, filelike=filelike,
+                byte_converters=byte_converters)
+
+        else:
+            # This branch reads the file into chunks of object arrays and then
+            # casts them to the desired actual dtype.  This ensures correct
+            # string-length and datetime-unit discovery (as for `arr.astype()`).
+            # Due to chunking, certain error reports are less clear, currently.
+            if filelike:
+                data = iter(data)  # cannot chunk when reading from file
+
+            c_byte_converters = False
+            if read_dtype_via_object_chunks == "S":
+                c_byte_converters = True  # Use latin1 rather than ascii
+
+            chunks = []
+            while max_rows != 0:
+                if max_rows < 0:
+                    chunk_size = _loadtxt_chunksize
+                else:
+                    chunk_size = min(_loadtxt_chunksize, max_rows)
+
+                next_arr = _load_from_filelike(
+                    data, delimiter=delimiter, comment=comment, quote=quote,
+                    imaginary_unit=imaginary_unit,
+                    usecols=usecols, skiprows=skiprows, max_rows=max_rows,
+                    converters=converters, dtype=dtype,
+                    encoding=encoding, filelike=filelike,
+                    byte_converters=byte_converters,
+                    c_byte_converters=c_byte_converters)
+                # Cast here already.  We hope that this is better even for
+                # large files because the storage is more compact.  It could
+                # be adapted (in principle the concatenate could cast).
+                chunks.append(next_arr.astype(read_dtype_via_object_chunks))
+
+                skiprows = 0  # Only have to skip for first chunk
+                if max_rows >= 0:
+                    max_rows -= chunk_size
+                if len(next_arr) < chunk_size:
+                    # There was less data than requested, so we are done.
+                    break
+
+            # Need at least one chunk, but if empty, the last one may have
+            # the wrong shape.
+            if len(chunks) > 1 and len(chunks[-1]) == 0:
+                del chunks[-1]
+            if len(chunks) == 1:
+                arr = chunks[0]
+            else:
+                arr = np.concatenate(chunks, axis=0)
+
+    arr = _ensure_ndmin_ndarray(arr, ndmin=ndmin)
+
+    if unpack:
+        # Handle unpack like np.loadtxt.
+        # XXX Check interaction with ndmin!
+        dt = arr.dtype
+        if dt.names is not None:
+            # For structured arrays, return an array for each field.
+            return [arr[field] for field in dt.names]
+        else:
+            return arr.T
+    else:
+        return arr
 
 
 @set_array_function_like_doc
@@ -1000,228 +1211,29 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             max_rows=max_rows, like=like
         )
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Nested functions used by loadtxt.
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    if delimiter is None:
+        delimiter = ''
+    elif isinstance(delimiter, bytes):
+        delimiter.decode("latin1")
 
-    def split_line(line: str):
-        """Chop off comments, strip, and split at delimiter."""
-        for comment in comments:  # Much faster than using a single regex.
-            line = line.split(comment, 1)[0]
-        line = line.strip('\r\n')
-        return line.split(delimiter) if line else []
+    if dtype is None:
+        dtype = np.float64
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Main body of loadtxt.
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    _ensure_ndmin_ndarray_check_param(ndmin)
-
+    comment = comments
     # Type conversions for Py3 convenience
-    if comments is not None:
-        if isinstance(comments, (str, bytes)):
-            comments = [comments]
-        comments = [_decode_line(x) for x in comments]
+    if comment is None:
+        comment = ''
     else:
-        comments = []
+        if isinstance(comment, (str, bytes)):
+            comment = [comment]
+        comment = [x.decode('latin1') if isinstance(x, bytes) else x for x in comment]
 
-    if delimiter is not None:
-        delimiter = _decode_line(delimiter)
+    arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+                converters=converters, skiprows=skiprows, usecols=usecols,
+                unpack=unpack, ndmin=ndmin, encoding=encoding,
+                max_rows=max_rows, quote='')
 
-    user_converters = converters
-
-    byte_converters = False
-    if encoding == 'bytes':
-        encoding = None
-        byte_converters = True
-
-    if usecols is not None:
-        # Copy usecols, allowing it to be a single int or a sequence of ints.
-        try:
-            usecols = list(usecols)
-        except TypeError:
-            usecols = [usecols]
-        for i, col_idx in enumerate(usecols):
-            try:
-                usecols[i] = opindex(col_idx)  # Cast to builtin int now.
-            except TypeError as e:
-                e.args = (
-                    "usecols must be an int or a sequence of ints but "
-                    "it contains at least one element of type %s" %
-                    type(col_idx),
-                    )
-                raise
-        if len(usecols) > 1:
-            usecols_getter = itemgetter(*usecols)
-        else:
-            # Get an iterable back, even if using a single column.
-            usecols_getter = lambda obj, c=usecols[0]: [obj[c]]
-    else:
-        usecols_getter = None
-
-    # Make sure we're dealing with a proper dtype
-    dtype = np.dtype(dtype)
-    defconv = _getconv(dtype)
-
-    dtype_types, packer = _loadtxt_flatten_dtype_internal(dtype)
-
-    fh_closing_ctx = contextlib.nullcontext()
-    try:
-        if isinstance(fname, os_PathLike):
-            fname = os_fspath(fname)
-        if _is_string_like(fname):
-            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            fencoding = getattr(fh, 'encoding', 'latin1')
-            line_iter = iter(fh)
-            fh_closing_ctx = contextlib.closing(fh)
-        else:
-            line_iter = iter(fname)
-            fencoding = getattr(fname, 'encoding', 'latin1')
-            try:
-                first_line = next(line_iter)
-            except StopIteration:
-                pass  # Nothing matters if line_iter is empty.
-            else:
-                # Put first_line back.
-                line_iter = itertools.chain([first_line], line_iter)
-                if isinstance(first_line, bytes):
-                    # Using latin1 matches _decode_line's behavior.
-                    decoder = methodcaller(
-                        "decode",
-                        encoding if encoding is not None else "latin1")
-                    line_iter = map(decoder, line_iter)
-    except TypeError as e:
-        raise ValueError(
-            f"fname must be a string, filehandle, list of strings,\n"
-            f"or generator. Got {type(fname)} instead."
-        ) from e
-
-    with fh_closing_ctx:
-
-        # input may be a python2 io stream
-        if encoding is not None:
-            fencoding = encoding
-        # we must assume local encoding
-        # TODO emit portability warning?
-        elif fencoding is None:
-            import locale
-            fencoding = locale.getpreferredencoding()
-
-        # Skip the first `skiprows` lines
-        for i in range(skiprows):
-            next(line_iter)
-
-        # Read until we find a line with some values, and use it to determine
-        # the need for decoding and estimate the number of columns.
-        for first_line in line_iter:
-            ncols = len(usecols or split_line(first_line))
-            if ncols:
-                # Put first_line back.
-                line_iter = itertools.chain([first_line], line_iter)
-                break
-        else:  # End of lines reached
-            ncols = len(usecols or [])
-            warnings.warn('loadtxt: Empty input file: "%s"' % fname,
-                          stacklevel=2)
-
-        line_iter = itertools.islice(line_iter, max_rows)
-        lineno_words_iter = filter(
-            itemgetter(1),  # item[1] is words; filter skips empty lines.
-            enumerate(map(split_line, line_iter), 1 + skiprows))
-
-        # Now that we know ncols, create the default converters list, and
-        # set packing, if necessary.
-        if len(dtype_types) > 1:
-            # We're dealing with a structured array, each field of
-            # the dtype matches a column
-            converters = [_getconv(dt) for dt in dtype_types]
-        else:
-            # All fields have the same dtype; use specialized packers which are
-            # much faster than those using _loadtxt_pack_items.
-            converters = [defconv for i in range(ncols)]
-            if ncols == 1:
-                packer = itemgetter(0)
-            else:
-                def packer(row): return row
-
-        # By preference, use the converters specified by the user
-        for i, conv in (user_converters or {}).items():
-            if usecols:
-                try:
-                    i = usecols.index(i)
-                except ValueError:
-                    # Unused converter specified
-                    continue
-            if byte_converters:
-                # converters may use decode to workaround numpy's old
-                # behaviour, so encode the string again (converters are only
-                # called with strings) before passing to the user converter.
-                def tobytes_first(conv, x):
-                    return conv(x.encode("latin1"))
-                converters[i] = functools.partial(tobytes_first, conv)
-            else:
-                converters[i] = conv
-
-        fencode = methodcaller("encode", fencoding)
-        converters = [conv if conv is not bytes else fencode
-                      for conv in converters]
-        if len(set(converters)) == 1:
-            # Optimize single-type data. Note that this is only reached if
-            # `_getconv` returns equal callables (i.e. not local lambdas) on
-            # equal dtypes.
-            def convert_row(vals, _conv=converters[0]):
-                return [*map(_conv, vals)]
-        else:
-            def convert_row(vals):
-                return [conv(val) for conv, val in zip(converters, vals)]
-
-        # read data in chunks and fill it into an array via resize
-        # over-allocating and shrinking the array later may be faster but is
-        # probably not relevant compared to the cost of actually reading and
-        # converting the data
-        X = None
-        while True:
-            chunk = []
-            for lineno, words in itertools.islice(
-                    lineno_words_iter, _loadtxt_chunksize):
-                if usecols_getter is not None:
-                    words = usecols_getter(words)
-                elif len(words) != ncols:
-                    raise ValueError(
-                        f"Wrong number of columns at line {lineno}")
-                # Convert each value according to its column, then pack it
-                # according to the dtype's nesting, and store it.
-                chunk.append(packer(convert_row(words)))
-            if not chunk:  # The islice is empty, i.e. we're done.
-                break
-
-            if X is None:
-                X = np.array(chunk, dtype)
-            else:
-                nshape = list(X.shape)
-                pos = nshape[0]
-                nshape[0] += len(chunk)
-                X.resize(nshape, refcheck=False)
-                X[pos:, ...] = chunk
-
-    if X is None:
-        X = np.array([], dtype)
-
-    # Multicolumn data are returned with shape (1, N, M), i.e.
-    # (1, 1, M) for a single row - remove the singleton dimension there
-    if X.ndim == 3 and X.shape[:2] == (1, 1):
-        X.shape = (1, -1)
-
-    X = _ensure_ndmin_ndarray(X, ndmin=ndmin)
-
-    if unpack:
-        if len(dtype_types) > 1:
-            # For structured arrays, return an array for each field.
-            return [X[field] for field in dtype.names]
-        else:
-            return X.T
-    else:
-        return X
+    return arr
 
 
 _loadtxt_with_like = array_function_dispatch(
