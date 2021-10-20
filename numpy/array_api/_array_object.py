@@ -99,9 +99,13 @@ class Array:
         """
         Performs the operation __repr__.
         """
-        prefix = "Array("
         suffix = f", dtype={self.dtype.name})"
-        mid = np.array2string(self._array, separator=', ', prefix=prefix, suffix=suffix)
+        if 0 in self.shape:
+            prefix = "empty("
+            mid = str(self.shape)
+        else:
+            prefix = "Array("
+            mid = np.array2string(self._array, separator=', ', prefix=prefix, suffix=suffix)
         return prefix + mid + suffix
 
     # These are various helper functions to make the array behavior match the
