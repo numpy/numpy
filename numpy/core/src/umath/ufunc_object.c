@@ -616,9 +616,24 @@ _is_same_name(const char* s1, const char* s2)
 }
 
 /*
- * Sets core_num_dim_ix, core_num_dims, core_dim_ixs, core_offsets,
- * and core_signature in PyUFuncObject "ufunc".  Returns 0 unless an
- * error occurred.
+ * Sets the following fields in the PyUFuncObject 'ufunc':
+ *
+ * Field             Type                     Array Length
+ * core_enabled      int (effectively bool)   N/A
+ * core_num_dim_ix   int                      N/A
+ * core_dim_flags    npy_uint32 *             core_num_dim_ix
+ * core_dim_sizes    npy_intp *               core_num_dim_ix
+ * core_num_dims     int *                    nargs (i.e. nin+nout)
+ * core_offsets      int *                    nargs
+ * core_dim_ixs      int *                    sum(core_num_dims)
+ * core_signature    char *                   strlen(signature) + 1
+ *
+ * The function assumes that the values that are arrays have not
+ * been set already, and sets these pointers to memory allocated
+ * with PyArray_malloc.  These are freed when the ufunc dealloc
+ * method is called.
+ *
+ * Returns 0 unless an error occurred.
  */
 static int
 _parse_signature(PyUFuncObject *ufunc, const char *signature)
