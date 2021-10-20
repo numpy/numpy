@@ -1035,8 +1035,8 @@ cdef class RandomState:
             Upper boundary of the output interval.  All values generated will be
             less than or equal to high.  The high limit is included in the 
             returned array of floats due to floating-point rounding in the 
-            equation ``low + (high-low) * random_sample()``. The default value 
-            of high is 1.0.
+            equation ``low + (high-low) * random_sample()``.  The default value 
+            is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
