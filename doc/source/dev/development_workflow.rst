@@ -202,7 +202,6 @@ fragments in your commit message::
    ``[skip github]``: skip GitHub Actions "build numpy and run tests" jobs
    ``[skip travis]``: skip TravisCI jobs
    ``[skip azurepipelines]``: skip Azure jobs
-   ``[skip appveyor]``: skip Appveyor jobs
 
 *Note: unfortunately not all CI systems implement this feature well, or at all.
 CircleCI supports ``ci skip`` but has no command to skip only CircleCI.
