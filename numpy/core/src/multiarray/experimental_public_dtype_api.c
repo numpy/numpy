@@ -13,9 +13,10 @@
 #include "dtypemeta.h"
 #include "array_coercion.h"
 #include "convert_datatype.h"
+#include "common_dtype.h"
 
 
-#define EXPERIMENTAL_DTYPE_API_VERSION 1
+#define EXPERIMENTAL_DTYPE_API_VERSION 2
 
 
 typedef struct{
@@ -324,13 +325,41 @@ PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
 }
 
 
+static int
+PyUFunc_AddPromoter(
+        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
+{
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc object passed is not a ufunc!");
+        return -1;
+    }
+    if (!PyCapsule_CheckExact(promoter)) {
+        PyErr_SetString(PyExc_TypeError,
+                "promoter must (currently) be a PyCapsule.");
+        return -1;
+    }
+    if (PyCapsule_GetPointer(promoter, "numpy._ufunc_promoter") == NULL) {
+        return -1;
+    }
+    PyObject *info = PyTuple_Pack(2, DType_tuple, promoter);
+    if (info == NULL) {
+        return -1;
+    }
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+
 NPY_NO_EXPORT PyObject *
 _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
     static void *experimental_api_table[] = {
             &PyUFunc_AddLoopFromSpec,
+            &PyUFunc_AddPromoter,
             &PyArrayDTypeMeta_Type,
             &PyArrayInitDTypeMeta_FromSpec,
+            &PyArray_CommonDType,
+            &PyArray_PromoteDTypeSequence,
             NULL,
     };
 
