@@ -2164,6 +2164,10 @@ type_tuple_type_resolver(PyUFuncObject *self,
      * `signature=(None,)*nin + (dtype,)*nout`.  If the signature matches that
      * exactly (could be relaxed but that is not necessary for backcompat),
      * we also try `signature=(dtype,)*(nin+nout)`.
+     * Since reduction pass in `(dtype, None, dtype)` we broaden this to
+     * replacing all unspecified dtypes with the homogeneous output one.
+     * Note that this can (and often will) lead to unsafe casting.  This is
+     * normally rejected (but not currently for reductions!).
      * This used to be the main meaning for `dtype=dtype`, but some calls broke
      * the expectation, and changing it allows for `dtype=dtype` to be useful
      * for ufuncs like `np.ldexp` in the future while also normalizing it to
@@ -2182,13 +2186,12 @@ type_tuple_type_resolver(PyUFuncObject *self,
     if (homogeneous_type != NPY_NOTYPE) {
         for (int i = 0; i < nin; i++) {
             if (specified_types[i] != NPY_NOTYPE) {
-                homogeneous_type = NPY_NOTYPE;
-                break;
+                /* Never replace a specified type! */
+                continue;
             }
             specified_types[i] = homogeneous_type;
         }
-    }
-    if (homogeneous_type != NPY_NOTYPE) {
+
         /* Try again with the homogeneous specified types. */
         res = type_tuple_type_resolver_core(self,
                 op, input_casting, casting, specified_types, any_object,

@@ -2383,8 +2383,9 @@ def test_reduce_casterrors(offset):
     out = np.array(-1, dtype=np.intp)
 
     count = sys.getrefcount(value)
-    with pytest.raises(TypeError):
-        # This is an unsafe cast, but we currently always allow that:
+    with pytest.raises(ValueError, match="invalid literal"):
+        # This is an unsafe cast, but we currently always allow that.
+        # Note that the double loop is picked, but the cast fails.
         np.add.reduce(arr, dtype=np.intp, out=out)
     assert count == sys.getrefcount(value)
     # If an error occurred during casting, the operation is done at most until
