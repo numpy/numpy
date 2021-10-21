@@ -647,10 +647,9 @@ def generate_manifest(config):
     if msver is not None:
         if msver >= 8:
             check_embedded_msvcr_match_linked(msver)
-            ma = int(msver)
-            mi = int((msver - ma) * 10)
+            ma_str, mi_str = str(msver).split('.')
             # Write the manifest file
-            manxml = msvc_manifest_xml(ma, mi)
+            manxml = msvc_manifest_xml(int(ma_str), int(mi_str))
             with open(manifest_name(config), "w") as man:
                 config.temp_files.append(manifest_name(config))
                 man.write(manxml)
