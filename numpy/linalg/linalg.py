@@ -1691,8 +1691,8 @@ def cond(x, p=None):
         -inf   min(sum(abs(x), axis=1))
         1      max(sum(abs(x), axis=0))
         -1     min(sum(abs(x), axis=0))
-        2      2-norm (largest sing. value)
-        -2     smallest singular value
+        2      (largest sing. value)/(smallest sing. value)
+        -2     (smallest sing. value)/(largest sing. value)
         =====  ============================
 
         inf means the numpy.inf object, and the Frobenius norm is
