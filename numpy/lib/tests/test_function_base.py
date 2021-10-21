@@ -3032,6 +3032,15 @@ class TestPercentile:
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 49,
                                        interpolation='nearest'), 4)
 
+    def test_linear_interpolation_extrapolation(self):
+        arr = np.random.rand(5)
+
+        actual = np.percentile(arr, 100)
+        np.testing.assert_equal(actual, arr.max())
+
+        actual = np.percentile(arr, 0)
+        np.testing.assert_equal(actual, arr.min())
+
     def test_sequence(self):
         x = np.arange(8) * 0.5
         assert_equal(np.percentile(x, [0, 100, 50]), [0, 3.5, 1.75])
