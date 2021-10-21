@@ -2914,98 +2914,50 @@ class TestPercentile:
         np.testing.assert_equal(res, np.NAN)
         np.testing.assert_equal(res.dtype, arr.dtype)
 
+    H_F_TYPE_CODES = [(int_type, np.float64)
+                      for int_type in np.typecodes["AllInteger"]
+                      ] + [(np.float16, np.float64),
+                           (np.float32, np.float64),
+                           (np.float64, np.float64),
+                           (np.float128, np.float128),
+                           (np.complex64, np.complex128),
+                           (np.complex128, np.complex128),
+                           (np.complex256, np.complex256),
+                           (np.dtype("O"), np.float64)]
+
+    @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
+    @pytest.mark.parametrize(["interpolation", "expected"],
+                             [("inverted_cdf", 20),
+                              ("averaged_inverted_cdf", 27.5),
+                              ("closest_observation", 20),
+                              ("interpolated_inverted_cdf", 20),
+                              ("hazen", 27.5),
+                              ("weibull", 26),
+                              ("linear", 29),
+                              ("median_unbiased", 27),
+                              ("normal_unbiased", 27.125),
+                              ])
+    def test_linear_interpolation(self,
+                                  interpolation,
+                                  expected,
+                                  input_dtype,
+                                  expected_dtype):
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
+        actual = np.percentile(arr, 40.0, interpolation=interpolation)
+
+        np.testing.assert_almost_equal(actual, expected, 14)
+
+        if interpolation in ["inverted_cdf", "closest_observation"]:
+            if input_dtype == "O":
+                np.testing.assert_equal(np.asarray(actual).dtype, np.float64)
+            else:
+                np.testing.assert_equal(np.asarray(actual).dtype,
+                                        np.dtype(input_dtype))
+        else:
+            np.testing.assert_equal(np.asarray(actual).dtype,
+                                    np.dtype(expected_dtype))
+
     TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_inverted_cdf(self, dtype):
-        # METHOD 1 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="inverted_cdf")
-        np.testing.assert_almost_equal(res, 20, 15)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_averaged_inverted_cdf(self, dtype):
-        # METHOD 2 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="averaged_inverted_cdf")
-        np.testing.assert_almost_equal(res, 27.5, 15)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_closest_observation(self, dtype):
-        # METHOD 3 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="closest_observation")
-        np.testing.assert_almost_equal(res, 20, 15)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_interpolated_inverted_cdf(self, dtype):
-        # METHOD 4 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="interpolated_inverted_cdf")
-        np.testing.assert_almost_equal(res, 20, 15)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_hazen(self, dtype):
-        # METHOD 5 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="hazen")
-        np.testing.assert_almost_equal(res, 27.5, 15)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_weibull(self, dtype):
-        # METHOD 6 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="weibull")
-        np.testing.assert_almost_equal(res, 26, 15)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_linear(self, dtype):
-        # METHOD 7 of H&F
-        # Test defaults
-        assert_equal(np.percentile(range(10), 50), 4.5)
-        # explicit interpolation_method (the default)
-        res = np.percentile([15.0, 20.0, 35.0, 40.0, 50.0],
-                            40,
-                            interpolation="linear")
-        np.testing.assert_almost_equal(res, 29, 15)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_median_unbiased(self, dtype):
-        # METHOD 8 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="median_unbiased")
-        np.testing.assert_almost_equal(res, 27, 14)
-
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
-    def test_linear_normal_unbiased(self, dtype):
-        # METHOD 9 of H&F
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=dtype)
-        res = np.percentile(
-            arr,
-            40.0,
-            interpolation="normal_unbiased")
-        np.testing.assert_almost_equal(res, 27.125, 15)
 
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_lower_higher(self, dtype):
