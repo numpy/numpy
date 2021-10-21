@@ -76,9 +76,6 @@
  *         npy_datetime, npy_timedelta#
  */
 
-#define _NPY_CLIP(x, min, max) \
-    _NPY_@name@_MIN(_NPY_@name@_MAX((x), (min)), (max))
-
 NPY_NO_EXPORT void
 @name@_clip(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -95,25 +92,33 @@ NPY_NO_EXPORT void
         /* contiguous, branch to let the compiler optimize */
         if (is1 == sizeof(@type@) && os1 == sizeof(@type@)) {
             for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                *(@type@ *)op1 = _NPY_CLIP(*(@type@ *)ip1, min_val, max_val);
+                @type@ t = *(@type@ *)ip1;
+                t = _NPY_@name@_MAX(t, min_val);
+                t = _NPY_@name@_MIN(t, max_val);
+                *(@type@ *)op1 = t;
             }
         }
         else {
             for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                *(@type@ *)op1 = _NPY_CLIP(*(@type@ *)ip1, min_val, max_val);
+                @type@ t = *(@type@ *)ip1;
+                t = _NPY_@name@_MAX(t, min_val);
+                t = _NPY_@name@_MIN(t, max_val);
+                *(@type@ *)op1 = t;
             }
         }
     }
     else {
         TERNARY_LOOP {
-            *(@type@ *)op1 = _NPY_CLIP(*(@type@ *)ip1, *(@type@ *)ip2, *(@type@ *)ip3);
+            @type@ t = *(@type@ *)ip1;
+            t = _NPY_@name@_MAX(t, *(@type@ *)ip2);
+            t = _NPY_@name@_MIN(t, *(@type@ *)ip3);
+            *(@type@ *)op1 = t;
         }
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 // clean up the macros we defined above
-#undef _NPY_CLIP
 #undef _NPY_@name@_MAX
 #undef _NPY_@name@_MIN
 
