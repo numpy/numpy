@@ -162,11 +162,12 @@ NPY_FINLINE npy_uint64 npyv__divh128_u64(npy_uint64 high, npy_uint64 divisor)
     npy_uint32 divisor_hi  = divisor >> 32;
     npy_uint32 divisor_lo  = divisor & 0xFFFFFFFF;
     // compute high quotient digit
-    npy_uint32 quotient_hi = (npy_uint32)(high / divisor_hi);
+    npy_uint64 quotient_hi = high / divisor_hi;
     npy_uint64 remainder   = high - divisor_hi * quotient_hi;
     npy_uint64 base32      = 1ULL << 32;
     while (quotient_hi >= base32 || quotient_hi*divisor_lo > base32*remainder) {
-        remainder += --divisor_hi;
+        --quotient_hi;
+        remainder += divisor_hi;
         if (remainder >= base32) {
             break;
         }
