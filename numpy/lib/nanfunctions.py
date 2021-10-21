@@ -1532,7 +1532,7 @@ def nanquantile(
         * (H&F 8): 'median_unbiased'
         * (H&F 9): 'normal_unbiased'
 
-        .. versionadded;: 1.22.0
+        .. versionchanged:: 1.22.0
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
@@ -1729,12 +1729,8 @@ def _nanquantile_unchecked(
         return r
 
 
-def _nanquantile_ureduce_func(a,
-                              q,
-                              axis=None,
-                              out=None,
-                              overwrite_input=False,
-                              interpolation= "linear"):
+def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
+                              interpolation="linear"):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -1757,10 +1753,7 @@ def _nanquantile_ureduce_func(a,
     return result
 
 
-def _nanquantile_1d(arr1d,
-                    q,
-                    overwrite_input=False,
-                    interpolation= "linear"):
+def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation="linear"):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage

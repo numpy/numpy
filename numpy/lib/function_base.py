@@ -3915,7 +3915,7 @@ def percentile(a,
         * (H&F 8): 'median_unbiased'
         * (H&F 9): 'normal_unbiased'
 
-        .. versionadded;: 1.22.0
+        .. versionchanged:: 1.22.0
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
@@ -4439,10 +4439,7 @@ def _lerp(a, b, t, out=None):
     diff_b_a = subtract(b, a)
     # asanyarray is a stop-gap until gh-13105
     lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
-    lerp_interpolation = subtract(b,
-                                  diff_b_a * (1 - t),
-                                  out=lerp_interpolation,
-                                  where=t >= 0.5)
+    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
@@ -4580,7 +4577,7 @@ def _quantile(
     except KeyError:
         raise ValueError(
             f"{interpolation!r} is not a valid interpolation. Use one of: "
-            f"{_QuantileInterpolation.keys()}")
+            f"{_QuantileInterpolation.keys()}") from None
     virtual_indexes = interpolation["get_virtual_index"](values_count,
                                                          quantiles)
     virtual_indexes = np.asanyarray(virtual_indexes)
