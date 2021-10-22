@@ -33,6 +33,8 @@ from numpy.typing import (
     _ArrayLikeTD64_co,
     _ArrayLikeDT64_co,
     _ArrayLikeObject_co,
+    _ArrayLikeStr_co,
+    _ArrayLikeBytes_co,
 
     # DTypes
     DTypeLike,
@@ -670,59 +672,6 @@ class MachAr:
         title: Any = ...,
     ) -> None: ...
     def __getattr__(self, key: str) -> Any: ...
-
-class chararray(ndarray[_ShapeType, _DType_co]):
-    def __new__(
-        subtype,
-        shape: Any,
-        itemsize: Any = ...,
-        unicode: Any = ...,
-        buffer: Any = ...,
-        offset: Any = ...,
-        strides: Any = ...,
-        order: Any = ...,
-    ) -> Any: ...
-    def __array_finalize__(self, obj): ...
-    def argsort(self, axis=..., kind=..., order=...): ...
-    def capitalize(self): ...
-    def center(self, width, fillchar=...): ...
-    def count(self, sub, start=..., end=...): ...
-    def decode(self, encoding=..., errors=...): ...
-    def encode(self, encoding=..., errors=...): ...
-    def endswith(self, suffix, start=..., end=...): ...
-    def expandtabs(self, tabsize=...): ...
-    def find(self, sub, start=..., end=...): ...
-    def index(self, sub, start=..., end=...): ...
-    def isalnum(self): ...
-    def isalpha(self): ...
-    def isdigit(self): ...
-    def islower(self): ...
-    def isspace(self): ...
-    def istitle(self): ...
-    def isupper(self): ...
-    def join(self, seq): ...
-    def ljust(self, width, fillchar=...): ...
-    def lower(self): ...
-    def lstrip(self, chars=...): ...
-    def partition(self, sep): ...
-    def replace(self, old, new, count=...): ...
-    def rfind(self, sub, start=..., end=...): ...
-    def rindex(self, sub, start=..., end=...): ...
-    def rjust(self, width, fillchar=...): ...
-    def rpartition(self, sep): ...
-    def rsplit(self, sep=..., maxsplit=...): ...
-    def rstrip(self, chars=...): ...
-    def split(self, sep=..., maxsplit=...): ...
-    def splitlines(self, keepends=...): ...
-    def startswith(self, prefix, start=..., end=...): ...
-    def strip(self, chars=...): ...
-    def swapcase(self): ...
-    def title(self): ...
-    def translate(self, table, deletechars=...): ...
-    def upper(self): ...
-    def zfill(self, width): ...
-    def isnumeric(self): ...
-    def isdecimal(self): ...
 
 # Some of these are aliases; others are wrappers with an identical signature
 round = around
@@ -3989,3 +3938,423 @@ class matrix(ndarray[_ShapeType, _DType_co]):
     def getA(self) -> ndarray[_ShapeType, _DType_co]: ...
     def getA1(self) -> ndarray[Any, _DType_co]: ...
     def getH(self) -> matrix[Any, _DType_co]: ...
+
+_CharType = TypeVar("_CharType", str_, bytes_)
+_CharDType = TypeVar("_CharDType", dtype[str_], dtype[bytes_])
+_CharArray = chararray[Any, dtype[_CharType]]
+
+class chararray(ndarray[_ShapeType, _CharDType]):
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
+        itemsize: SupportsIndex | SupportsInt = ...,
+        unicode: L[False] = ...,
+        buffer: _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: _ShapeLike = ...,
+        order: _OrderKACF = ...,
+    ) -> chararray[Any, dtype[bytes_]]: ...
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
+        itemsize: SupportsIndex | SupportsInt = ...,
+        unicode: L[True] = ...,
+        buffer: _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: _ShapeLike = ...,
+        order: _OrderKACF = ...,
+    ) -> chararray[Any, dtype[str_]]: ...
+
+    def __array_finalize__(self, obj: NDArray[str_ | bytes_]) -> None: ...
+    def __mul__(self, other: _ArrayLikeInt_co) -> chararray[Any, _CharDType]: ...
+    def __rmul__(self, other: _ArrayLikeInt_co) -> chararray[Any, _CharDType]: ...
+    def __mod__(self, i: Any) -> chararray[Any, _CharDType]: ...
+
+    @overload
+    def __eq__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def __eq__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> NDArray[bool_]: ...
+
+    @overload
+    def __ne__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def __ne__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> NDArray[bool_]: ...
+
+    @overload
+    def __ge__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def __ge__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> NDArray[bool_]: ...
+
+    @overload
+    def __le__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def __le__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> NDArray[bool_]: ...
+
+    @overload
+    def __gt__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def __gt__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> NDArray[bool_]: ...
+
+    @overload
+    def __lt__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def __lt__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> NDArray[bool_]: ...
+
+    @overload
+    def __add__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def __add__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def __radd__(
+        self: _CharArray[str_],
+        other: _ArrayLikeStr_co,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def __radd__(
+        self: _CharArray[bytes_],
+        other: _ArrayLikeBytes_co,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def center(
+        self: _CharArray[str_],
+        width: _ArrayLikeInt_co,
+        fillchar: _ArrayLikeStr_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def center(
+        self: _CharArray[bytes_],
+        width: _ArrayLikeInt_co,
+        fillchar: _ArrayLikeBytes_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def count(
+        self: _CharArray[str_],
+        sub: _ArrayLikeStr_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+    @overload
+    def count(
+        self: _CharArray[bytes_],
+        sub: _ArrayLikeBytes_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+
+    def decode(
+        self: _CharArray[bytes_],
+        encoding: None | str = ...,
+        errors: None | str = ...,
+    ) -> _CharArray[str_]: ...
+
+    def encode(
+        self: _CharArray[str_],
+        encoding: None | str = ...,
+        errors: None | str = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def endswith(
+        self: _CharArray[str_],
+        suffix: _ArrayLikeStr_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def endswith(
+        self: _CharArray[bytes_],
+        suffix: _ArrayLikeBytes_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[bool_]: ...
+
+    def expandtabs(
+        self,
+        tabsize: _ArrayLikeInt_co = ...,
+    ) -> chararray[Any, _CharDType]: ...
+
+    @overload
+    def find(
+        self: _CharArray[str_],
+        sub: _ArrayLikeStr_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+    @overload
+    def find(
+        self: _CharArray[bytes_],
+        sub: _ArrayLikeBytes_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+
+    @overload
+    def index(
+        self: _CharArray[str_],
+        sub: _ArrayLikeStr_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+    @overload
+    def index(
+        self: _CharArray[bytes_],
+        sub: _ArrayLikeBytes_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+
+    @overload
+    def join(
+        self: _CharArray[str_],
+        seq: _ArrayLikeStr_co,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def join(
+        self: _CharArray[bytes_],
+        seq: _ArrayLikeBytes_co,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def ljust(
+        self: _CharArray[str_],
+        width: _ArrayLikeInt_co,
+        fillchar: _ArrayLikeStr_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def ljust(
+        self: _CharArray[bytes_],
+        width: _ArrayLikeInt_co,
+        fillchar: _ArrayLikeBytes_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def lstrip(
+        self: _CharArray[str_],
+        chars: None | _ArrayLikeStr_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def lstrip(
+        self: _CharArray[bytes_],
+        chars: None | _ArrayLikeBytes_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def partition(
+        self: _CharArray[str_],
+        sep: _ArrayLikeStr_co,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def partition(
+        self: _CharArray[bytes_],
+        sep: _ArrayLikeBytes_co,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def replace(
+        self: _CharArray[str_],
+        old: _ArrayLikeStr_co,
+        new: _ArrayLikeStr_co,
+        count: None | _ArrayLikeInt_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def replace(
+        self: _CharArray[bytes_],
+        old: _ArrayLikeBytes_co,
+        new: _ArrayLikeBytes_co,
+        count: None | _ArrayLikeInt_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def rfind(
+        self: _CharArray[str_],
+        sub: _ArrayLikeStr_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+    @overload
+    def rfind(
+        self: _CharArray[bytes_],
+        sub: _ArrayLikeBytes_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+
+    @overload
+    def rindex(
+        self: _CharArray[str_],
+        sub: _ArrayLikeStr_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+    @overload
+    def rindex(
+        self: _CharArray[bytes_],
+        sub: _ArrayLikeBytes_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[int_]: ...
+
+    @overload
+    def rjust(
+        self: _CharArray[str_],
+        width: _ArrayLikeInt_co,
+        fillchar: _ArrayLikeStr_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def rjust(
+        self: _CharArray[bytes_],
+        width: _ArrayLikeInt_co,
+        fillchar: _ArrayLikeBytes_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def rpartition(
+        self: _CharArray[str_],
+        sep: _ArrayLikeStr_co,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def rpartition(
+        self: _CharArray[bytes_],
+        sep: _ArrayLikeBytes_co,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def rsplit(
+        self: _CharArray[str_],
+        sep: None | _ArrayLikeStr_co = ...,
+        maxsplit: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[object_]: ...
+    @overload
+    def rsplit(
+        self: _CharArray[bytes_],
+        sep: None | _ArrayLikeBytes_co = ...,
+        maxsplit: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[object_]: ...
+
+    @overload
+    def rstrip(
+        self: _CharArray[str_],
+        chars: None | _ArrayLikeStr_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def rstrip(
+        self: _CharArray[bytes_],
+        chars: None | _ArrayLikeBytes_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def split(
+        self: _CharArray[str_],
+        sep: None | _ArrayLikeStr_co = ...,
+        maxsplit: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[object_]: ...
+    @overload
+    def split(
+        self: _CharArray[bytes_],
+        sep: None | _ArrayLikeBytes_co = ...,
+        maxsplit: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[object_]: ...
+
+    def splitlines(self, keepends: None | _ArrayLikeBool_co = ...) -> NDArray[object_]: ...
+
+    @overload
+    def startswith(
+        self: _CharArray[str_],
+        prefix: _ArrayLikeStr_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[bool_]: ...
+    @overload
+    def startswith(
+        self: _CharArray[bytes_],
+        prefix: _ArrayLikeBytes_co,
+        start: _ArrayLikeInt_co = ...,
+        end: None | _ArrayLikeInt_co = ...,
+    ) -> NDArray[bool_]: ...
+
+    @overload
+    def strip(
+        self: _CharArray[str_],
+        chars: None | _ArrayLikeStr_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def strip(
+        self: _CharArray[bytes_],
+        chars: None | _ArrayLikeBytes_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    @overload
+    def translate(
+        self: _CharArray[str_],
+        table: _ArrayLikeStr_co,
+        deletechars: None | _ArrayLikeStr_co = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def translate(
+        self: _CharArray[bytes_],
+        table: _ArrayLikeBytes_co,
+        deletechars: None | _ArrayLikeBytes_co = ...,
+    ) -> _CharArray[bytes_]: ...
+
+    def zfill(self, width: _ArrayLikeInt_co) -> chararray[Any, _CharDType]: ...
+    def capitalize(self) -> chararray[_ShapeType, _CharDType]: ...
+    def title(self) -> chararray[_ShapeType, _CharDType]: ...
+    def swapcase(self) -> chararray[_ShapeType, _CharDType]: ...
+    def lower(self) -> chararray[_ShapeType, _CharDType]: ...
+    def upper(self) -> chararray[_ShapeType, _CharDType]: ...
+    def isalnum(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def isalpha(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def isdigit(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def islower(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def isspace(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def istitle(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def isupper(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def isnumeric(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+    def isdecimal(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
