@@ -2919,10 +2919,10 @@ class TestPercentile:
                       ] + [(np.float16, np.float64),
                            (np.float32, np.float64),
                            (np.float64, np.float64),
-                           (np.float128, np.float128),
+                           (np.longdouble, np.longdouble),
                            (np.complex64, np.complex128),
                            (np.complex128, np.complex128),
-                           (np.complex256, np.complex256),
+                           (np.clongdouble, np.clongdouble),
                            (np.dtype("O"), np.float64)]
 
     @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
