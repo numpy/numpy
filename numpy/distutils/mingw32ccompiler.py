@@ -547,8 +547,6 @@ if sys.platform == 'win32':
         # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0
         # on Windows XP:
         _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
-        # Python 3.7 uses 1415, but get_build_version returns 140 ??
-        _MSVCRVER_TO_FULLVER['140'] = "14.15.26726.0"
         crt_ver = getattr(msvcrt, 'CRT_ASSEMBLY_VERSION', None)
         if crt_ver is not None:  # Available at least back to Python 3.3
             maj, min = re.match(r'(\d+)\.(\d)', crt_ver).groups()
