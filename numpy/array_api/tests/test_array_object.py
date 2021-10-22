@@ -39,18 +39,18 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[:-4])
     assert_raises(IndexError, lambda: a[:3:-1])
     assert_raises(IndexError, lambda: a[:-5:-1])
-    assert_raises(IndexError, lambda: a[3:])
+    assert_raises(IndexError, lambda: a[4:])
     assert_raises(IndexError, lambda: a[-4:])
-    assert_raises(IndexError, lambda: a[3::-1])
+    assert_raises(IndexError, lambda: a[4::-1])
     assert_raises(IndexError, lambda: a[-4::-1])
 
     assert_raises(IndexError, lambda: a[...,:5])
     assert_raises(IndexError, lambda: a[...,:-5])
-    assert_raises(IndexError, lambda: a[...,:4:-1])
+    assert_raises(IndexError, lambda: a[...,:5:-1])
     assert_raises(IndexError, lambda: a[...,:-6:-1])
-    assert_raises(IndexError, lambda: a[...,4:])
+    assert_raises(IndexError, lambda: a[...,5:])
     assert_raises(IndexError, lambda: a[...,-5:])
-    assert_raises(IndexError, lambda: a[...,4::-1])
+    assert_raises(IndexError, lambda: a[...,5::-1])
     assert_raises(IndexError, lambda: a[...,-5::-1])
 
     # Boolean indices cannot be part of a larger tuple index

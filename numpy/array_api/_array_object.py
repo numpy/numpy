@@ -284,7 +284,7 @@ class Array:
                     operator.index(key.start)
                 except TypeError:
                     return key
-                if not (-size <= key.start <= max(0, size - 1)):
+                if not (-size <= key.start <= size):
                     raise IndexError(
                         "Slices with out-of-bounds start are not allowed in the array API namespace"
                     )
