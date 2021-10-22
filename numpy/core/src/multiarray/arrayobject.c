@@ -1705,22 +1705,6 @@ array_iter(PyArrayObject *arr)
     return PySeqIter_New((PyObject *)arr);
 }
 
-static PyObject *
-array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
-{
-    /* nitems will always be 0 */
-    PyObject *obj = PyObject_Malloc(type->tp_basicsize);
-    PyObject_Init(obj, type);
-    return obj;
-}
-
-static void
-array_free(PyObject * v)
-{
-    /* avoid same deallocator as PyBaseObject, see gentype_free */
-    PyObject_Free(v);
-}
-
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -1741,7 +1725,5 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_iter = (getiterfunc)array_iter,
     .tp_methods = array_methods,
     .tp_getset = array_getsetlist,
-    .tp_alloc = (allocfunc)array_alloc,
     .tp_new = (newfunc)array_new,
-    .tp_free = (freefunc)array_free,
 };
