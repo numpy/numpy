@@ -549,10 +549,12 @@ if sys.platform == 'win32':
         _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
         # Python 3.7 uses 1415, but get_build_version returns 140 ??
         _MSVCRVER_TO_FULLVER['140'] = "14.15.26726.0"
-        if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
-            major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".", 2)
-            _MSVCRVER_TO_FULLVER[major + minor] = msvcrt.CRT_ASSEMBLY_VERSION
-            del major, minor, rest
+        crt_ver = getattr(msvcrt, 'CRT_ASSEMBLY_VERSION', None)
+        if crt_ver is not None:  # Available at least back to Python 3.3
+            maj, min = re.match(r'(\d+)\.(\d)', crt_ver).groups()
+            _MSVCRVER_TO_FULLVER[maj + min] = crt_ver
+            del maj, min
+        del crt_ver
     except ImportError:
         # If we are here, means python was not built with MSVC. Not sure what
         # to do in that case: manifest building will fail, but it should not be
