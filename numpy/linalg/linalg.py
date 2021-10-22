@@ -1680,7 +1680,7 @@ def cond(x, p=None):
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
-        Order of the norm:
+        Order of the norm used in the condition number computation:
 
         =====  ============================
         p      norm for matrices
@@ -1691,11 +1691,11 @@ def cond(x, p=None):
         -inf   min(sum(abs(x), axis=1))
         1      max(sum(abs(x), axis=0))
         -1     min(sum(abs(x), axis=0))
-        2      (largest sing. value)/(smallest sing. value)
-        -2     (smallest sing. value)/(largest sing. value)
+        2      2-norm (largest sing. value)
+        -2     smallest singular value
         =====  ============================
 
-        inf means the numpy.inf object, and the Frobenius norm is
+        inf means the `numpy.inf` object, and the Frobenius norm is
         the root-of-sum-of-squares norm.
 
     Returns
