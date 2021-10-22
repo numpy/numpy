@@ -231,9 +231,7 @@ When ``dtype=None``, the type of each column is determined iteratively from
 its data.  We start by checking whether a string can be converted to a
 boolean (that is, if the string matches ``true`` or ``false`` in lower
 cases); then whether it can be converted to an integer, then to a float,
-then to a complex and eventually to a string.  This behavior may be changed
-by modifying the default mapper of the
-``numpy.lib._iotools.StringConverter`` class.
+then to a complex and eventually to a string.
 
 The option ``dtype=None`` is provided for convenience.  However, it is
 significantly slower than setting the dtype explicitly.
