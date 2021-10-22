@@ -210,9 +210,8 @@ def get_build_overrides():
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
             if _needs_gcc_c99_flag(self):
-                args = build_info.get('extra_compiler_args') or []
-                args.append('-std=c99')
-                build_info['extra_compiler_args'] = args
+                build_info['extra_cflags'] = ['-std=c99']
+            build_info['extra_cxxflags'] = ['-std=c++11']
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
     class new_build_ext(build_ext):

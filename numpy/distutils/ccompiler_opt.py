@@ -188,7 +188,8 @@ class _Config:
             # native usually works only with x86
             native = '-march=native',
             opt = '-O3',
-            werror = '-Werror'
+            werror = '-Werror',
+            cxx = '-std=c++11',
         ),
         clang = dict(
             native = '-march=native',
@@ -198,22 +199,26 @@ class _Config:
             # cases `-Werror` gets skipped during the availability test due to
             # "unused arguments" warnings.
             # see https://github.com/numpy/numpy/issues/19624
-            werror = '-Werror-implicit-function-declaration -Werror'
+            werror = '-Werror=switch -Werror',
+            cxx = '-std=c++11',
         ),
         icc = dict(
             native = '-xHost',
             opt = '-O3',
-            werror = '-Werror'
+            werror = '-Werror',
+            cxx = '-std=c++11',
         ),
         iccw = dict(
             native = '/QxHost',
             opt = '/O3',
-            werror = '/Werror'
+            werror = '/Werror',
+            cxx = '-std=c++11',
         ),
         msvc = dict(
             native = None,
             opt = '/O2',
-            werror = '/WX'
+            werror = '/WX',
+            cxx = '-std=c++11',
         )
     )
     conf_min_features = dict(
@@ -555,6 +560,7 @@ class _Distutils:
         flags = kwargs.pop("extra_postargs", []) + flags
         if not ccompiler:
             ccompiler = self._ccompiler
+
         return ccompiler.compile(sources, extra_postargs=flags, **kwargs)
 
     def dist_test(self, source, flags, macros=[]):
