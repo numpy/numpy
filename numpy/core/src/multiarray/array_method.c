@@ -54,7 +54,8 @@ default_resolve_descriptors(
         PyArrayMethodObject *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **input_descrs,
-        PyArray_Descr **output_descrs)
+        PyArray_Descr **output_descrs,
+        npy_intp *view_offset)
 {
     int nin = method->nin;
     int nout = method->nout;
@@ -76,6 +77,13 @@ default_resolve_descriptors(
      * abstract ones or unspecified outputs).  We can use the common-dtype
      * operation to provide a default here.
      */
+    if (method->casting == NPY_NO_CASTING) {
+        /*
+         * By (current) definition no-casting should imply viewable.  This
+         * is currently indicated for example for object to object cast.
+         */
+        *view_offset = 0;
+    }
     return method->casting;
 
   fail:
@@ -166,7 +174,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting & ~_NPY_CAST_IS_VIEW) {
+    switch (spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
@@ -551,14 +559,15 @@ boundarraymethod__resolve_descripors(
         }
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, given_descrs, loop_descrs);
+            self->method, self->dtypes, given_descrs, loop_descrs, &view_offset);
 
     if (casting < 0 && PyErr_Occurred()) {
         return NULL;
     }
     else if (casting < 0) {
-        return Py_BuildValue("iO", casting, Py_None);
+        return Py_BuildValue("iO", casting, Py_None, Py_None);
     }
 
     PyObject *result_tuple = PyTuple_New(nin + nout);
@@ -568,6 +577,19 @@ boundarraymethod__resolve_descripors(
     for (int i = 0; i < nin + nout; i++) {
         /* transfer ownership to the tuple. */
         PyTuple_SET_ITEM(result_tuple, i, (PyObject *)loop_descrs[i]);
+    }
+
+    PyObject *view_offset_obj;
+    if (view_offset == NPY_MIN_INTP) {
+        Py_INCREF(Py_None);
+        view_offset_obj = Py_None;
+    }
+    else {
+        view_offset_obj = PyLong_FromSsize_t(view_offset);
+        if (view_offset_obj == NULL) {
+            Py_DECREF(result_tuple);
+            return NULL;
+        }
     }
 
     /*
@@ -584,7 +606,7 @@ boundarraymethod__resolve_descripors(
         }
     }
     if (self->method->casting != -1) {
-        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
+        NPY_CASTING cast = casting;
         if (self->method->casting !=
                 PyArray_MinCastSafety(cast, self->method->casting)) {
             PyErr_Format(PyExc_RuntimeError,
@@ -592,6 +614,7 @@ boundarraymethod__resolve_descripors(
                     "(set level is %d, got %d for method %s)",
                     self->method->casting, cast, self->method->name);
             Py_DECREF(result_tuple);
+            Py_DECREF(view_offset_obj);
             return NULL;
         }
         if (!parametric) {
@@ -608,12 +631,13 @@ boundarraymethod__resolve_descripors(
                         "(set level is %d, got %d for method %s)",
                         self->method->casting, cast, self->method->name);
                 Py_DECREF(result_tuple);
+                Py_DECREF(view_offset_obj);
                 return NULL;
             }
         }
     }
 
-    return Py_BuildValue("iN", casting, result_tuple);
+    return Py_BuildValue("iNN", casting, result_tuple, view_offset_obj);
 }
 
 
@@ -694,8 +718,9 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, descrs, out_descrs);
+            self->method, self->dtypes, descrs, out_descrs, &view_offset);
 
     if (casting < 0) {
         PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;

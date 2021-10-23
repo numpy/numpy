@@ -1077,13 +1077,15 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
         int must_copy = !PyArray_ISALIGNED(op[i]);
 
         if (dtypes[i] != PyArray_DESCR(op[i])) {
+            npy_intp view_offset;
             NPY_CASTING safety = PyArray_GetCastSafety(
-                    PyArray_DESCR(op[i]), dtypes[i], NULL);
+                    PyArray_DESCR(op[i]), dtypes[i], NULL, &view_offset);
             if (safety < 0 && PyErr_Occurred()) {
                 /* A proper error during a cast check, should be rare */
                 return -1;
             }
-            if (!(safety & _NPY_CAST_IS_VIEW)) {
+            if (view_offset != 0) {
+                /* NOTE: Could possibly implement non-zero view offsets */
                 must_copy = 1;
             }
 
@@ -4511,8 +4513,10 @@ resolve_descriptors(int nop,
 
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
         /* The default: use the `ufuncimpl` as nature intended it */
+        npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
+
         NPY_CASTING safety = ufuncimpl->resolve_descriptors(ufuncimpl,
-                signature, original_dtypes, dtypes);
+                signature, original_dtypes, dtypes, &view_offset);
         if (safety < 0) {
             goto finish;
         }

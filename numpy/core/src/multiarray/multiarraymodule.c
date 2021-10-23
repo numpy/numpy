@@ -1482,7 +1482,8 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
      * Do not use PyArray_CanCastTypeTo because it supports legacy flexible
      * dtypes as input.
      */
-    NPY_CASTING safety = PyArray_GetCastSafety(type1, type2, NULL);
+    npy_intp view_offset;
+    NPY_CASTING safety = PyArray_GetCastSafety(type1, type2, NULL, &view_offset);
     if (safety < 0) {
         PyErr_Clear();
         return 0;

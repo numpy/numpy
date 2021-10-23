@@ -1086,20 +1086,18 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
             PyArrayMethodObject *cast = (PyArrayMethodObject *)cast_obj;
 
             /* Pass some information about this cast out! */
-            PyObject *cast_info = Py_BuildValue("{sOsOsisisisisisssi}",
+            PyObject *cast_info = Py_BuildValue("{sOsOsisisisisiss}",
                     "from", from_dtype,
                     "to", to_dtype,
                     "legacy", (cast->name != NULL &&
                                strncmp(cast->name, "legacy_", 7) == 0),
-                    "casting", cast->casting & ~_NPY_CAST_IS_VIEW,
+                    "casting", cast->casting,
                     "requires_pyapi", cast->flags & NPY_METH_REQUIRES_PYAPI,
                     "supports_unaligned",
                         cast->flags & NPY_METH_SUPPORTS_UNALIGNED,
                     "no_floatingpoint_errors",
                         cast->flags & NPY_METH_NO_FLOATINGPOINT_ERRORS,
-                    "name", cast->name,
-                    "cast_is_view",
-                        cast->casting & _NPY_CAST_IS_VIEW);
+                    "name", cast->name);
             if (cast_info == NULL) {
                 goto fail;
             }

@@ -16,7 +16,7 @@
 #include "common_dtype.h"
 
 
-#define EXPERIMENTAL_DTYPE_API_VERSION 2
+#define EXPERIMENTAL_DTYPE_API_VERSION 3
 
 
 typedef struct{
