@@ -201,7 +201,7 @@ NPY_FINLINE npyv_u8x3 npyv_divisor_u8(npy_uint8 d)
     default:
         l   = npyv__bitscan_revnz_u32(d - 1) + 1;  // ceil(log2(d))
         l2  = (npy_uint8)(1 << l);                 // 2^l, overflow to 0 if l = 8
-        m   = ((l2 - d) << 8) / d + 1;             // multiplier
+        m   = ((npy_uint16)((l2 - d) << 8)) / d + 1; // multiplier
         sh1 = 1;  sh2 = l - 1;                     // shift counts
     }
     npyv_u8x3 divisor;
