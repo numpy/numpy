@@ -1,7 +1,7 @@
 from numpy.testing import (assert_, assert_array_equal)
 import numpy as np
 import pytest
-from numpy.random import Generator, MT19937, RandomState
+from numpy.random import Generator, MT19937
 
 mt19937 = Generator(MT19937())
 

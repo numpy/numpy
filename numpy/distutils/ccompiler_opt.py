@@ -8,7 +8,14 @@ the sources with proper compiler's flags.
 instead only focuses on the compiler side, but it creates abstract C headers
 that can be used later for the final runtime dispatching process."""
 
-import sys, io, os, re, textwrap, pprint, inspect, atexit, subprocess
+import atexit
+import inspect
+import os
+import pprint
+import re
+import subprocess
+import textwrap
+
 
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
@@ -521,7 +528,8 @@ class _Config:
 
     def __init__(self):
         if self.conf_tmp_path is None:
-            import tempfile, shutil
+            import shutil
+            import tempfile
             tmp = tempfile.mkdtemp()
             def rm_temp():
                 try:
@@ -702,7 +710,6 @@ class _Distutils:
     )
     @staticmethod
     def _dist_test_spawn(cmd, display=None):
-        from distutils.errors import CompileError
         try:
             o = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                         universal_newlines=True)

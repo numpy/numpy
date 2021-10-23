@@ -1,5 +1,3 @@
-import pytest
-
 import os
 
 import numpy as np
