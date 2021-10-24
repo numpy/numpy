@@ -91,7 +91,6 @@ NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
     Py_ssize_t len;
-    int nd;
 
     seq->ptr = NULL;
     seq->len = 0;
@@ -124,8 +123,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
         seq->len = len;
 
-        nd = PyArray_IntpFromScalar(obj, (npy_intp *)seq->ptr, 0);
-        if (nd == -1 || nd != len) {
+        int rvalue = PyArray_IntpFromScalar(obj, (npy_intp *)seq->ptr, 0);
+        if (rvalue == -1 || rvalue != len) {
             npy_free_cache_dim_obj(*seq);
             seq->ptr = NULL;
             return NPY_FAIL;
@@ -175,7 +174,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
 
     seq->len = len;
-    nd = PyArray_IntpFromIndexSequence(seq_obj, (npy_intp *)seq->ptr, len);
+    int nd = PyArray_IntpFromIndexSequence(seq_obj, (npy_intp *)seq->ptr, len);
     Py_DECREF(seq_obj);
 
     if (nd == -1 || nd != len) {
