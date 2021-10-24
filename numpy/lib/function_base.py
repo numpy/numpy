@@ -663,7 +663,6 @@ def select(condlist, choicelist, default=0):
     >>> np.select(condlist, choicelist, 42)
     array([ 0,  1,  2, 42, 16, 25])
 
-    >>> x = np.arange(6)
     >>> condlist = [x<=4, x>3]
     >>> choicelist = [x, x**2]
     >>> np.select(condlist, choicelist, 55)
