@@ -1,3 +1,5 @@
+.. _f2py-distutils:
+
 =============================
 Using via `numpy.distutils`
 =============================
@@ -10,23 +12,21 @@ compile Fortran sources, call F2PY to construct extension modules, etc.
 
 .. topic:: Example
 
-  Consider the following `setup file`__ for the ``fib`` examples in the previous
-  section:
+  Consider the following ``setup_file.py`` for the ``fib`` and ``scalar``
+  examples from :ref:`f2py-getting-started` section:
 
-  .. literalinclude:: ./code/setup_example.py
+  .. literalinclude:: ./../code/setup_example.py
     :language: python
 
   Running
 
-  ::
+  .. code-block:: bash
 
     python setup_example.py build
 
   will build two extension modules ``scalar`` and ``fib2`` to the
   build directory.
-
-  __ setup_example.py
-
+   
 Extensions to ``distutils``
 ===========================
 
@@ -57,7 +57,7 @@ Extensions to ``distutils``
 
   Run
 
-  ::
+  .. code-block:: bash
 
     python <setup.py file> config_fc build_src build_ext --help
 
@@ -73,6 +73,6 @@ Extensions to ``distutils``
   See ``numpy_distutils/fcompiler.py`` for an up-to-date list of
   supported compilers for different platforms, or run
 
-  ::
+  .. code-block:: bash
 
-     f2py -c --help-fcompiler
+     python -m numpy.f2py -c --help-fcompiler
