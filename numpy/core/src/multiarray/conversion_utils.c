@@ -172,10 +172,11 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_SUCCEED;
     }
 
-    PyObject *seq_obj = PySequence_Fast(obj, "PySequence_Fast");
+    PyObject *seq_obj = PySequence_Fast(obj,
+        "An error occurred during a call to `PySequence_Fast`, an iterable "
+        "object is required. The given object is not a scalar integer nor a "
+        "sequence.");
     if (seq_obj == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "An error occurred during a call to PySequence_Fast");
         return NPY_FAIL;
     }
 
