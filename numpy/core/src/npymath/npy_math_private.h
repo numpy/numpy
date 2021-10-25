@@ -19,7 +19,13 @@
 #define _NPY_MATH_PRIVATE_H_
 
 #include <Python.h>
+#ifdef __cplusplus
+#include <cmath>
+using std::isgreater;
+using std::isless;
+#else
 #include <math.h>
+#endif
 
 #include "npy_config.h"
 #include "npy_fpmath.h"
