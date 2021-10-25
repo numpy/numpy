@@ -406,8 +406,8 @@ class _Config:
             AVX512_ICL = dict(flags="/Qx:ICELAKE-CLIENT")
         )
         if on_x86 and self.cc_is_msvc: return dict(
-            SSE    = dict(flags="/arch:SSE"),
-            SSE2   = dict(flags="/arch:SSE2"),
+            SSE    = dict(flags="/arch:SSE") if self.cc_on_x86 else {},
+            SSE2   = dict(flags="/arch:SSE2") if self.cc_on_x86 else {},
             SSE3   = {},
             SSSE3  = {},
             SSE41  = {},
