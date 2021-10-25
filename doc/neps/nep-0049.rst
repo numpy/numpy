@@ -180,7 +180,6 @@ In practice, this means the handler must be immortal.
 As an implementation detail, currently this ``ContextVar`` contains a ``PyCapsule``
 object storing a pointer to a ``PyDataMem_Handler`` with no destructor,
 but this should not be relied upon.
->>>>>>> main
 
 Sample code
 ===========
