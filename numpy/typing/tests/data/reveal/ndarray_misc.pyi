@@ -204,3 +204,8 @@ reveal_type(AR_V[0, ...])  # E: numpy.ndarray[Any, numpy.dtype[numpy.void]]
 reveal_type(AR_V[:])  # E: numpy.ndarray[Any, numpy.dtype[numpy.void]]
 reveal_type(AR_V["a"])  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 reveal_type(AR_V[["a", "b"]])  # E: numpy.ndarray[Any, numpy.dtype[numpy.void]]
+
+reveal_type(AR_f8.dump("test_file"))  # E: None
+reveal_type(AR_f8.dump(b"test_file"))  # E: None
+with open("test_file", "wb") as f:
+    reveal_type(AR_f8.dump(f))  # E: None
