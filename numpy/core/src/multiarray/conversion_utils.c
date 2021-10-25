@@ -1081,7 +1081,7 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 {
     Py_ssize_t nd;
     Py_ssize_t i;
-    PyObject *op, *err;
+    PyObject *op;
 
     /*
      * Check to see if sequence is a single integer first.
