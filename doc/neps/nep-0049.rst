@@ -93,19 +93,21 @@ High level design
 
 Users who wish to change the NumPy data memory management routines will use
 :c:func:`PyDataMem_SetHandler`, which uses a :c:type:`PyDataMem_Handler`
-structure to hold pointers to functions used to manage the data memory.
+structure to hold pointers to functions used to manage the data memory. In
+order to allow lifetime management of the ``context``, the structure is wrapped
+in a ``PyCapsule``.
 
 Since a call to ``PyDataMem_SetHandler`` will change the default functions, but
 that function may be called during the lifetime of an ``ndarray`` object, each
-``ndarray`` will carry with it the ``PyDataMem_Handler`` struct used at the
-time of its instantiation, and these will be used to reallocate or free the
-data memory of the instance. Internally NumPy may use ``memcpy`` or ``memset``
-on the pointer to the data memory.
+``ndarray`` will carry with it the ``PyDataMem_Handler``-wrapped PyCapsule used
+at the time of its instantiation, and these will be used to reallocate or free
+the data memory of the instance. Internally NumPy may use ``memcpy`` or
+``memset`` on the pointer to the data memory.
 
 The name of the handler will be exposed on the python level via a
 ``numpy.core.multiarray.get_handler_name(arr)`` function. If called as
 ``numpy.core.multiarray.get_handler_name()`` it will return the name of the
-global handler that will be used to allocate data for the next new `ndarrray`.
+handler that will be used to allocate data for the next new `ndarrray`.
 
 NumPy C-API functions
 =====================
@@ -150,20 +152,19 @@ NumPy C-API functions
     15780_ and 15788_ but has not yet been resolved. When it is this NEP should
     be revisited.
 
-.. c:function:: const PyDataMem_Handler * PyDataMem_SetHandler(PyDataMem_Handler *handler)
+.. c:function:: PyObject * PyDataMem_SetHandler(PyObject *handler)
 
    Sets a new allocation policy. If the input value is ``NULL``, will reset
-   the policy to the default. Returns the previous policy, ``NULL`` if the
-   previous policy was the default. We wrap the user-provided functions
+   the policy to the default. Return the previous policy, or
+   return NULL if an error has occurred. We wrap the user-provided
    so they will still call the Python and NumPy memory management callback
    hooks. All the function pointers must be filled in, ``NULL`` is not
    accepted.
 
-.. c:function:: const PyDataMem_Handler * PyDataMem_GetHandler(PyArrayObject *obj)
+.. c:function:: const PyObject * PyDataMem_GetHandler()
 
-   Return the ``PyDataMem_Handler`` used by the
-   ``PyArrayObject``. If ``NULL``, return the handler
-   that will be used to allocate data for the next ``PyArrayObject``.
+   Return the current policy that will be used to allocate data for the
+   next ``PyArrayObject``. On failure, return ``NULL``.
 
 ``PyDataMem_Handler`` thread safety and lifetime
 ================================================

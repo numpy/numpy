@@ -9,7 +9,7 @@ import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
-    HAS_REFCOUNT, suppress_warnings
+    HAS_REFCOUNT, suppress_warnings, break_cycles
     )
 
 
@@ -3150,6 +3150,8 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
 
     # Note that resetting does not free references
     del it
+    break_cycles()
+    break_cycles()
     assert count == sys.getrefcount(value)
 
     # Repeat the test with `iternext`
@@ -3159,6 +3161,8 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
         it.iternext()
 
     del it  # should ensure cleanup
+    break_cycles()
+    break_cycles()
     assert count == sys.getrefcount(value)
 
 

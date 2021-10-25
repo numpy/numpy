@@ -4727,6 +4727,16 @@ add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     and then throwing away the ufunc.
     """)
 
+add_newdoc('numpy.core.multiarray', 'get_handler_name',
+    """
+    get_handler_name(a: ndarray) -> str,None
+
+    Return the name of the memory handler used by `a`. If not provided, return
+    the name of the memory handler that will be used to allocate data for the
+    next `ndarray` in this context. May return None if `a` does not own its
+    memory, in which case you can traverse ``a.base`` for a memory handler.
+    """)
+
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
     """
     _set_madvise_hugepage(enabled: bool) -> bool

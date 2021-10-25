@@ -493,7 +493,25 @@ array_dealloc(PyArrayObject *self)
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
             PyArray_XDECREF(self);
         }
-        npy_free_cache(fa->data, PyArray_NBYTES(self));
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        size_t nbytes = PyArray_NBYTES(self);
+        if (nbytes == 0) {
+            nbytes = fa->descr->elsize ? fa->descr->elsize : 1;
+        }
+        if (fa->mem_handler == NULL) {
+            char const * msg = "Trying to dealloc data, but a memory policy "
+                "is not set. If you take ownership of the data, you must "
+                "also set a memory policy.";
+            WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+            // Guess at malloc/free ???
+            free(fa->data);
+        } else {
+            PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
+            Py_DECREF(fa->mem_handler);
+        }
     }
 
     /* must match allocation in PyArray_NewFromDescr */

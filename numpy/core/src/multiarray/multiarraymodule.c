@@ -4433,6 +4433,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"geterrobj",
         (PyCFunction) ufunc_geterr,
         METH_VARARGS, NULL},
+    {"get_handler_name",
+        (PyCFunction) get_handler_name,
+        METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
@@ -4910,6 +4913,20 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (initumath(m) != 0) {
         goto err;
     }
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
+    /*
+     * Initialize the context-local PyDataMem_Handler capsule.
+     */
+    c_api = PyCapsule_New(&default_handler, "mem_handler", NULL);
+    if (c_api == NULL) {
+        goto err;
+    }
+    current_handler = PyContextVar_New("current_allocator", c_api);
+    Py_DECREF(c_api);
+    if (current_handler == NULL) {
+        goto err;
+    }
+#endif
     return m;
 
  err:
