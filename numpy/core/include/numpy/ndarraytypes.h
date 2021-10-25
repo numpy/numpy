@@ -1858,31 +1858,13 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  */
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /*
-     * The Structures defined in this block are considered private API and
-     * may change without warning!
+     * The Structures defined in this block are currently considered
+     * private API and may change without warning!
+     * Part of this (at least the size) is exepcted to be public API without
+     * further modifications.
      */
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
-
-    typedef struct PyArray_DTypeMeta_tag PyArray_DTypeMeta;
-
-    typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
-            PyArray_DTypeMeta *cls, PyObject *obj);
-
-    /*
-     * Before making this public, we should decide whether it should pass
-     * the type, or allow looking at the object. A possible use-case:
-     * `np.array(np.array([0]), dtype=np.ndarray)`
-     * Could consider arrays that are not `dtype=ndarray` "scalars".
-     */
-    typedef int (is_known_scalar_type_function)(
-            PyArray_DTypeMeta *cls, PyTypeObject *obj);
-
-    typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
-    typedef PyArray_DTypeMeta *(common_dtype_function)(
-            PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2);
-    typedef PyArray_Descr *(common_instance_function)(
-            PyArray_Descr *dtype1, PyArray_Descr *dtyep2);
 
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
@@ -1894,7 +1876,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
      * it is a fairly complex construct which may be better to allow
      * refactoring of.
      */
-    struct PyArray_DTypeMeta_tag {
+    typedef struct {
         PyHeapTypeObject super;
 
         /*
@@ -1922,7 +1904,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          */
         void *dt_slots;
         void *reserved[3];
-    };
+    } PyArray_DTypeMeta;
 
 #endif  /* NPY_INTERNAL_BUILD */
 

@@ -131,9 +131,8 @@ if TYPE_CHECKING or MYPY_EX is None:
         for i, value in enumerate(iterable):
             if getattr(value, "id", None) == id:
                 return i
-        else:
-            raise ValueError("Failed to identify a `ImportFrom` instance "
-                             f"with the following id: {id!r}")
+        raise ValueError("Failed to identify a `ImportFrom` instance "
+                         f"with the following id: {id!r}")
 
     def _override_imports(
         file: MypyFile,

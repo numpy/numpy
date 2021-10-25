@@ -1124,6 +1124,35 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
 
 /** END of Array Iterator **/
 
+
+static int
+set_shape_mismatch_exception(PyArrayMultiIterObject *mit, int i1, int i2)
+{
+    PyObject *shape1, *shape2, *msg;
+
+    shape1 = PyObject_GetAttrString((PyObject *) mit->iters[i1]->ao, "shape");
+    if (shape1 == NULL) {
+        return -1;
+    }
+    shape2 = PyObject_GetAttrString((PyObject *) mit->iters[i2]->ao, "shape");
+    if (shape2 == NULL) {
+        Py_DECREF(shape1);
+        return -1;
+    }
+    msg = PyUnicode_FromFormat("shape mismatch: objects cannot be broadcast "
+                               "to a single shape.  Mismatch is between arg %d "
+                               "with shape %S and arg %d with shape %S.",
+                               i1, shape1, i2, shape2);
+    Py_DECREF(shape1);
+    Py_DECREF(shape2);
+    if (msg == NULL) {
+        return -1;
+    }
+    PyErr_SetObject(PyExc_ValueError, msg);
+    Py_DECREF(msg);
+    return 0;
+}
+
 /* Adjust dimensionality and strides for index object iterators
    --- i.e. broadcast
 */
@@ -1132,6 +1161,7 @@ NPY_NO_EXPORT int
 PyArray_Broadcast(PyArrayMultiIterObject *mit)
 {
     int i, nd, k, j;
+    int src_iter = -1;  /* Initializing avoids a compiler warning. */
     npy_intp tmp;
     PyArrayIterObject *it;
 
@@ -1155,12 +1185,10 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
                 }
                 if (mit->dimensions[i] == 1) {
                     mit->dimensions[i] = tmp;
+                    src_iter = j;
                 }
                 else if (mit->dimensions[i] != tmp) {
-                    PyErr_SetString(PyExc_ValueError,
-                                    "shape mismatch: objects" \
-                                    " cannot be broadcast" \
-                                    " to a single shape");
+                    set_shape_mismatch_exception(mit, src_iter, j);
                     return -1;
                 }
             }

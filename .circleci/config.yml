@@ -24,6 +24,12 @@ jobs:
             if [[ -v CI_PULL_REQUEST ]] ; then git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge" ; fi
 
       - run:
+          name: update submodules
+          command: |
+            git submodule init
+            git submodule update
+
+      - run:
           name: create virtual environment, install dependencies
           command: |
             sudo apt-get update

@@ -44,7 +44,9 @@ Ones and zeros
    ma.masked_all
    ma.masked_all_like
    ma.ones
+   ma.ones_like
    ma.zeros
+   ma.zeros_like
 
 
 _____
@@ -331,6 +333,7 @@ Minimum/maximum
    ma.max
    ma.min
    ma.ptp
+   ma.diff
 
    ma.MaskedArray.argmax
    ma.MaskedArray.argmin

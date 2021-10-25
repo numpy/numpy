@@ -668,7 +668,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
     Examples
     --------
-    The number 13 has the binaray representation ``00001101``. Likewise,
+    The number 13 has the binary representation ``00001101``. Likewise,
     16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
     then ``000111011``, or 29:
 
@@ -1091,9 +1091,7 @@ add_newdoc('numpy.core.umath', 'divide',
 
     Behavior on division by zero can be changed using ``seterr``.
 
-    In Python 2, when both ``x1`` and ``x2`` are of an integer type,
-    ``divide`` will behave like ``floor_divide``. In Python 3, it behaves
-    like ``true_divide``.
+    Behaves like ``true_divide``.
 
     Examples
     --------
@@ -1105,27 +1103,6 @@ add_newdoc('numpy.core.umath', 'divide',
     array([[ NaN,  1. ,  1. ],
            [ Inf,  4. ,  2.5],
            [ Inf,  7. ,  4. ]])
-
-    Note the behavior with integer types (Python 2 only):
-
-    >>> np.divide(2, 4)
-    0
-    >>> np.divide(2, 4.)
-    0.5
-
-    Division by zero always yields zero in integer arithmetic (again,
-    Python 2 only), and does not raise an exception or a warning:
-
-    >>> np.divide(np.array([0, 1], dtype=int), np.array([0, 0], dtype=int))
-    array([0, 0])
-
-    Division by zero can, however, be caught using ``seterr``:
-
-    >>> old_err_state = np.seterr(divide='raise')
-    >>> np.divide(1, 0)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    FloatingPointError: divide by zero encountered in divide
 
     >>> ignored_states = np.seterr(**old_err_state)
     >>> np.divide(1, 0)
@@ -4038,9 +4015,8 @@ add_newdoc('numpy.core.umath', 'true_divide',
     """
     Returns a true division of the inputs, element-wise.
 
-    Instead of the Python traditional 'floor division', this returns a true
-    division.  True division adjusts the output type to present the best
-    answer, regardless of input types.
+    Unlike 'floor division', true division adjusts the output type
+    to present the best answer, regardless of input types.
 
     Parameters
     ----------

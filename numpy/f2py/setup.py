@@ -66,7 +66,6 @@ command line tool (f2py) for generating Python C/API modules for
 wrapping Fortran 77/90/95 subroutines, accessing common blocks from
 Python, and calling Python functions from Fortran (call-backs).
 Interfacing subroutines/data from Fortran 90/95 modules is supported.""",
-          url="https://web.archive.org/web/20140822061353/"\
-          "http://cens.ioc.ee/projects/f2py2e/",
+          url="https://numpy.org/doc/stable/f2py/",
           keywords=['Fortran', 'f2py'],
           **config)

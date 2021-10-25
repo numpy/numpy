@@ -1292,7 +1292,15 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp * kth;
     npy_intp nkth, i;
 
-    if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
+    if (PyArray_ISBOOL(ktharray)) {
+        /* 2021-09-29, NumPy 1.22 */
+        if (DEPRECATE(
+                "Passing booleans as partition index is deprecated"
+                " (warning added in NumPy 1.22)") < 0) {
+            return NULL;
+        }
+    }
+    else if (!PyArray_ISINTEGER(ktharray)) {
         PyErr_Format(PyExc_TypeError, "Partition index must be integer");
         return NULL;
     }
@@ -2390,19 +2398,14 @@ PyArray_CountNonzero(PyArrayObject *self)
     npy_intp *strideptr, *innersizeptr;
     NPY_BEGIN_THREADS_DEF;
 
-    // Special low-overhead version specific to the boolean/int types
     dtype = PyArray_DESCR(self);
-    switch(dtype->kind) {
-        case 'u':
-        case 'i':
-        case 'b':
-            if (dtype->elsize > 8) {
-                break;
-            }
-            return count_nonzero_int(
-                PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
-                PyArray_STRIDES(self), dtype->elsize
-            );
+    /* Special low-overhead version specific to the boolean/int types */
+    if (PyArray_ISALIGNED(self) && (
+            PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype))) {
+        return count_nonzero_int(
+            PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
+            PyArray_STRIDES(self), dtype->elsize
+        );
     }
 
     nonzero = PyArray_DESCR(self)->f->nonzero;

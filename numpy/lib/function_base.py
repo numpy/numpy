@@ -33,7 +33,7 @@ from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 import builtins
 
 # needed in this module for compatibility
-from numpy.lib.histograms import histogram, histogramdd
+from numpy.lib.histograms import histogram, histogramdd  # noqa: F401
 
 
 array_function_dispatch = functools.partial(
@@ -267,6 +267,19 @@ def iterable(y):
     True
     >>> np.iterable(2)
     False
+
+    Notes
+    -----
+    In most cases, the results of ``np.iterable(obj)`` are consistent with
+    ``isinstance(obj, collections.abc.Iterable)``. One notable exception is
+    the treatment of 0-dimensional arrays::
+
+        >>> from collections.abc import Iterable
+        >>> a = np.array(1.0)  # 0-dimensional numpy array
+        >>> isinstance(a, Iterable)
+        True
+        >>> np.iterable(a)
+        False
 
     """
     try:
@@ -784,6 +797,17 @@ def copy(a, order='K', subok=False):
     >>> x[0] == z[0]
     False
 
+    Note that, np.copy clears previously set WRITEABLE=False flag.
+
+    >>> a = np.array([1, 2, 3])
+    >>> a.flags["WRITEABLE"] = False
+    >>> b = np.copy(a)
+    >>> b.flags["WRITEABLE"]
+    True
+    >>> b[0] = 3
+    >>> b
+    array([3, 2, 3])
+    
     Note that np.copy is a shallow copy and will not copy object
     elements within arrays. This is mainly important for arrays
     containing Python objects. The new array will contain the
@@ -2809,9 +2833,9 @@ def blackman(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
@@ -2918,9 +2942,9 @@ def bartlett(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -3022,9 +3046,9 @@ def hanning(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3122,9 +3146,9 @@ def hamming(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
@@ -3401,7 +3425,7 @@ def kaiser(M, beta):
 
     """
     if M == 1:
-        return np.array([1.])
+        return np.ones(1, dtype=np.result_type(M, 0.0))
     n = arange(0, M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
@@ -4734,9 +4758,8 @@ def insert(arr, obj, values, axis=None):
     if indices.size == 1:
         index = indices.item()
         if index < -N or index > N:
-            raise IndexError(
-                "index %i is out of bounds for axis %i with "
-                "size %i" % (obj, axis, N))
+            raise IndexError(f"index {obj} is out of bounds for axis {axis} "
+                             f"with size {N}")
         if (index < 0):
             index += N
 

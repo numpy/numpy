@@ -16,7 +16,7 @@ from numpy.testing import (
     )
 from numpy.core._rational_tests import rational
 
-from hypothesis import assume, given, strategies as st
+from hypothesis import given, strategies as st
 from hypothesis.extra import numpy as hynp
 
 
@@ -931,25 +931,6 @@ class TestTypes:
         assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
         # Promote with object:
         assert_equal(promote_types('O', S+'30'), np.dtype('O'))
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V6"), np.dtype("V10")],
-             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
-             [np.dtype("i8,i8"), np.dtype("i4,i4")],
-            ])
-    def test_invalid_void_promotion(self, dtype1, dtype2):
-        # Mainly test structured void promotion, which currently allows
-        # byte-swapping, but nothing else:
-        with pytest.raises(TypeError):
-            np.promote_types(dtype1, dtype2)
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V10"), np.dtype("V10")],
-             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
-             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
-            ])
-    def test_valid_void_promotion(self, dtype1, dtype2):
-        assert np.promote_types(dtype1, dtype2) is dtype1
 
     @pytest.mark.parametrize("dtype",
            list(np.typecodes["All"]) +
@@ -3510,6 +3491,12 @@ class TestBroadcast:
         assert_(mit.iters[0].base is mit2.iters[0].base)
 
         assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
+
+    def test_shape_mismatch_error_message(self):
+        with pytest.raises(ValueError, match=r"arg 0 with shape \(1, 3\) and "
+                                             r"arg 2 with shape \(2,\)"):
+            np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
+
 
 class TestKeepdims:
 

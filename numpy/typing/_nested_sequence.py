@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from typing import (
     Any,
     Iterator,
@@ -86,8 +85,6 @@ class _NestedSequence(Protocol[_T_co]):
         """Return the number of occurrences of `value`."""
         raise NotImplementedError
 
-    def index(
-        self, value: Any, start: int = 0, stop: int = sys.maxsize, /
-    ) -> int:
+    def index(self, value: Any, /) -> int:
         """Return the first index of `value`."""
         raise NotImplementedError

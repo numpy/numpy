@@ -160,7 +160,9 @@ def test_fail(path: str) -> None:
             expected_error = errors.get(lineno)
             _test_fail(path, marker, expected_error, lineno)
         else:
-            pytest.fail(f"Unexpected mypy output\n\n{errors[lineno]}")
+            pytest.fail(
+                f"Unexpected mypy output at line {lineno}\n\n{errors[lineno]}"
+            )
 
 
 _FAIL_MSG1 = """Extra error at line {}

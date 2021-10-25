@@ -264,6 +264,8 @@ class build_clib(old_build_clib):
         if include_dirs is None:
             include_dirs = []
         extra_postargs = build_info.get('extra_compiler_args') or []
+        extra_cflags = build_info.get('extra_cflags') or []
+        extra_cxxflags = build_info.get('extra_cxxflags') or []
 
         include_dirs.extend(get_numpy_include_dirs())
         # where compiled F90 module files are:
@@ -315,38 +317,45 @@ class build_clib(old_build_clib):
                 macros=macros + copt_macros,
                 include_dirs=include_dirs,
                 debug=self.debug,
-                extra_postargs=extra_postargs,
+                extra_postargs=extra_postargs + extra_cxxflags,
                 ccompiler=cxx_compiler
             )
 
         if copt_c_sources:
             log.info("compiling C dispatch-able sources")
-            objects += self.compiler_opt.try_dispatch(copt_c_sources,
-                                                      output_dir=self.build_temp,
-                                                      src_dir=copt_build_src,
-                                                      macros=macros + copt_macros,
-                                                      include_dirs=include_dirs,
-                                                      debug=self.debug,
-                                                      extra_postargs=extra_postargs)
+            objects += self.compiler_opt.try_dispatch(
+                copt_c_sources,
+                output_dir=self.build_temp,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_postargs + extra_cflags)
 
         if c_sources:
             log.info("compiling C sources")
-            objects += compiler.compile(c_sources,
-                                        output_dir=self.build_temp,
-                                        macros=macros + copt_macros,
-                                        include_dirs=include_dirs,
-                                        debug=self.debug,
-                                        extra_postargs=extra_postargs + copt_baseline_flags)
+            objects += compiler.compile(
+                c_sources,
+                output_dir=self.build_temp,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_postargs +
+                                copt_baseline_flags +
+                                extra_cflags))
 
         if cxx_sources:
             log.info("compiling C++ sources")
             cxx_compiler = compiler.cxx_compiler()
-            cxx_objects = cxx_compiler.compile(cxx_sources,
-                                               output_dir=self.build_temp,
-                                               macros=macros + copt_macros,
-                                               include_dirs=include_dirs,
-                                               debug=self.debug,
-                                               extra_postargs=extra_postargs + copt_baseline_flags)
+            cxx_objects = cxx_compiler.compile(
+                cxx_sources,
+                output_dir=self.build_temp,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_postargs +
+                                copt_baseline_flags +
+                                extra_cxxflags))
             objects.extend(cxx_objects)
 
         if f_sources or fmodule_sources:

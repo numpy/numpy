@@ -2402,9 +2402,9 @@ def break_cycles():
 
     gc.collect()
     if IS_PYPY:
-        # interpreter runs now, to call deleted objects' __del__ methods
+        # a few more, just to make sure all the finalizers are called
         gc.collect()
-        # two more, just to make sure
+        gc.collect()
         gc.collect()
         gc.collect()
 

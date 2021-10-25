@@ -569,3 +569,13 @@ Utility method for typing:
    :toctree: generated/
 
    dtype.__class_getitem__
+
+Comparison operations:
+
+.. autosummary::
+   :toctree: generated/
+
+   dtype.__ge__
+   dtype.__gt__
+   dtype.__le__
+   dtype.__lt__
