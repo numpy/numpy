@@ -1,8 +1,10 @@
 import asyncio
+import gc
 import pytest
 import numpy as np
 import threading
-from numpy.testing import extbuild
+import warnings
+from numpy.testing import extbuild, assert_warns
 import sys
 
 
@@ -39,6 +41,25 @@ def get_module(tmp_path):
              }
              Py_DECREF(old);
              Py_RETURN_NONE;
+         """),
+        ("get_array", "METH_NOARGS", """
+            char *buf = (char *)malloc(20);
+            npy_intp dims[1];
+            dims[0] = 20;
+            PyArray_Descr *descr =  PyArray_DescrNewFromType(NPY_UINT8);
+            return PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, NULL,
+                                        buf, NPY_ARRAY_WRITEABLE, NULL);
+         """),
+        ("set_own", "METH_O", """
+            if (!PyArray_Check(args)) {
+                PyErr_SetString(PyExc_ValueError,
+                             "need an ndarray");
+                return NULL;
+            }
+            PyArray_ENABLEFLAGS((PyArrayObject*)args, NPY_ARRAY_OWNDATA);
+            // Maybe try this too?
+            // PyArray_BASE(PyArrayObject *)args) = NULL;
+            Py_RETURN_NONE;
          """),
     ]
     prologue = '''
@@ -305,3 +326,15 @@ def test_new_policy(get_module):
 
     c = np.arange(10)
     assert np.core.multiarray.get_handler_name(c) == orig_policy_name
+
+def test_switch_owner(get_module):
+    a = get_module.get_array()
+    assert np.core.multiarray.get_handler_name(a) is None
+    get_module.set_own(a)
+    with warnings.catch_warnings():
+        warnings.filterwarnings('always')
+        # The policy should be NULL, so we have to assume we can call "free"
+        with assert_warns(RuntimeWarning) as w:
+            del a
+            gc.collect()
+        print(w)

@@ -501,8 +501,17 @@ array_dealloc(PyArrayObject *self)
         if (nbytes == 0) {
             nbytes = fa->descr->elsize ? fa->descr->elsize : 1;
         }
-        PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-        Py_DECREF(fa->mem_handler);
+        if (fa->mem_handler == NULL) {
+            char const * msg = "Trying to dealloc data, but a memory policy "
+                "is not set. If you take ownership of the data, you must "
+                "also set a memory policy.";
+            WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+            // Guess at malloc/free ???
+            free(fa->data);
+        } else {
+            PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
+            Py_DECREF(fa->mem_handler);
+        }
     }
 
     /* must match allocation in PyArray_NewFromDescr */
