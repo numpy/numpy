@@ -3,7 +3,6 @@ import operator
 import pytest
 import ctypes
 import gc
-import warnings
 import types
 from typing import Any
 

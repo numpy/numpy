@@ -2029,6 +2029,21 @@ class TestDateTime:
         assert_equal(np.maximum.reduce(a),
                      np.timedelta64(7, 's'))
 
+    def test_datetime_no_subtract_reducelike(self):
+        # subtracting two datetime64 works, but we cannot reduce it, since
+        # the result of that subtraction will have a different dtype.
+        arr = np.array(["2021-12-02", "2019-05-12"], dtype="M8[ms]")
+        msg = r"the resolved dtypes are not compatible with subtract\."
+
+        with pytest.raises(TypeError, match=msg + "reduce"):
+            np.subtract.reduce(arr)
+
+        with pytest.raises(TypeError, match=msg + "accumulate"):
+            np.subtract.accumulate(arr)
+
+        with pytest.raises(TypeError, match=msg + "reduceat"):
+            np.subtract.reduceat(arr, [0])
+
     def test_datetime_busday_offset(self):
         # First Monday in June
         assert_equal(

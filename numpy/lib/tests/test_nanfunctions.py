@@ -5,8 +5,8 @@ import inspect
 import numpy as np
 from numpy.lib.nanfunctions import _nan_mask, _replace_nan
 from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_no_warnings,
-    assert_raises, assert_array_equal, suppress_warnings
+    assert_, assert_equal, assert_almost_equal, assert_raises,
+    assert_array_equal, suppress_warnings
     )
 
 

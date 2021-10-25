@@ -27,6 +27,7 @@ dependencies:
   - pandas
   - matplotlib
   - pydata-sphinx-theme
+  - breathe
   # For linting
   - pycodestyle=2.7.0
   - gitpython

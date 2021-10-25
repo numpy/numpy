@@ -15,7 +15,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, assert_warns
+    _gen_alignment_data, assert_array_almost_equal_nulp
     )
 
 def get_glibc_version():
@@ -3886,3 +3886,11 @@ def test_bad_legacy_ufunc_silent_errors():
 
     with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
         ncu_tests.always_error.at(arr, [0, 1, 2], arr)
+
+
+@pytest.mark.parametrize('x1', [np.arange(3.0), [0.0, 1.0, 2.0]])
+def test_bad_legacy_gufunc_silent_errors(x1):
+    # Verify that an exception raised in a gufunc loop propagates correctly.
+    # The signature of always_error_gufunc is '(i),()->()'.
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_gufunc(x1, 0.0)

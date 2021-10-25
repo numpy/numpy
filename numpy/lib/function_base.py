@@ -268,6 +268,19 @@ def iterable(y):
     >>> np.iterable(2)
     False
 
+    Notes
+    -----
+    In most cases, the results of ``np.iterable(obj)`` are consistent with
+    ``isinstance(obj, collections.abc.Iterable)``. One notable exception is
+    the treatment of 0-dimensional arrays::
+
+        >>> from collections.abc import Iterable
+        >>> a = np.array(1.0)  # 0-dimensional numpy array
+        >>> isinstance(a, Iterable)
+        True
+        >>> np.iterable(a)
+        False
+
     """
     try:
         iter(y)
@@ -4740,9 +4753,8 @@ def insert(arr, obj, values, axis=None):
     if indices.size == 1:
         index = indices.item()
         if index < -N or index > N:
-            raise IndexError(
-                "index %i is out of bounds for axis %i with "
-                "size %i" % (obj, axis, N))
+            raise IndexError(f"index {obj} is out of bounds for axis {axis} "
+                             f"with size {N}")
         if (index < 0):
             index += N
 

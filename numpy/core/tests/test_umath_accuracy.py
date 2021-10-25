@@ -1,5 +1,4 @@
 import numpy as np
-import platform
 import os
 from os import path
 import sys
