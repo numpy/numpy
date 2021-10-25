@@ -636,7 +636,7 @@ class _Test_CCompilerOpt:
             x86_gcc="avx512f avx2 sse42 sse41 sse2",
             x86_icc="avx512f avx2 sse42 sse41 sse2",
             x86_iccw="avx512f avx2 sse42 sse41 sse2",
-            x86_msvc="avx512f avx2 sse2",
+            x86_msvc="avx512f avx2 sse2" if self.march() == 'x86' else "avx512f avx2",
             ppc64="vsx3 vsx2",
             armhf="asimddp asimd neon_vfpv4 neon",
             # neon, neon_vfpv4, asimd implies each other
