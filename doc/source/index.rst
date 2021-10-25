@@ -38,7 +38,7 @@ basic statistical operations, random simulation and much more.
     :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 p-2
 
     ---
-    :img-top: ../neps/_static/getting_started.svg
+    :img-top: ../source/_static/index-images/getting_started.svg
 
     Getting Started
     ^^^^^^^^^^^^^^^
@@ -52,7 +52,7 @@ basic statistical operations, random simulation and much more.
         :classes: stretched-link
     
     ---
-    :img-top: ../neps/_static/user_guide.svg
+    :img-top: ../source/_static/index-images/user_guide.svg
 
     User Guide
     ^^^^^^^^^^
@@ -68,7 +68,7 @@ basic statistical operations, random simulation and much more.
             :classes: stretched-link
 
     ---
-    :img-top: ../neps/_static/api.svg
+    :img-top: ../source/_static/index-images/api.svg
 
     API Reference
     ^^^^^^^^^^^^^
@@ -86,7 +86,7 @@ basic statistical operations, random simulation and much more.
             :classes: stretched-link
 
     ---
-    :img-top: ../neps/_static/contributor.svg
+    :img-top: ../source/_static/index-images/contributor.svg
 
     Contributor's Guide
     ^^^^^^^^^^^^^^^
