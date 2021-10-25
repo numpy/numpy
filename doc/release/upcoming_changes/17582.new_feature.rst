@@ -1,0 +1,8 @@
+NEP 49 configurable allocators
+==============================
+As detailed in `NEP 49`_, the function used for allocation of the data segment
+of a ndarray can be changed. The policy can be set globally or in a context.
+For more information see the NEP and the :ref:`data_memory` reference docs.
+
+.. _`NEP 469` /neps/nep-0049.html
+

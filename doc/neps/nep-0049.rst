@@ -3,7 +3,7 @@ NEP 49 — Data allocation strategies
 ===================================
 
 :Author: Matti Picus
-:Status: Draft
+:Status: Final
 :Type: Standards Track
 :Created: 2021-04-18
 :Resolution: http://numpy-discussion.10968.n7.nabble.com/NEP-49-Data-allocation-strategies-tt49185.html
