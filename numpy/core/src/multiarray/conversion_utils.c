@@ -87,7 +87,7 @@ intp_from_scalar(PyObject *ob, npy_intp *vals, int val_idx)
     */
     npy_intp value = PyArray_PyIntAsIntp(ob);
 
-    if (value == -1) {
+    if (error_converting(value)) {
         /*
         * In order to report that an error may have occurred, we set the
         * value of vals to 0, which will be different (in case of error) than
@@ -95,18 +95,15 @@ intp_from_scalar(PyObject *ob, npy_intp *vals, int val_idx)
         */
         vals[val_idx] = 0;
 
-        PyObject *err = PyErr_Occurred();
-        if (err) {
-            if (PyErr_GivenExceptionMatches(err, PyExc_OverflowError))
-                PyErr_SetString(PyExc_ValueError,
-                        "Maximum allowed dimension exceeded");
-            else
-                PyErr_Format(PyExc_TypeError,
-                    "An error occurred while converting the index %d to an "
-                    "integer (actual result is %d)", val_idx, value);
+        if (PyErr_ExceptionMatches(PyExc_OverflowError))
+            PyErr_SetString(PyExc_ValueError,
+                    "Maximum allowed dimension exceeded");
+        else
+            PyErr_Format(PyExc_TypeError,
+                "An error occurred while converting the index %d to an "
+                "integer (actual result is %d)", val_idx, value);
 
-            return value;
-        }
+        return value;
     }
 
     /*
