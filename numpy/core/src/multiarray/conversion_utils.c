@@ -1068,13 +1068,19 @@ PyArray_PyIntAsIntp(PyObject *o)
     return PyArray_PyIntAsIntp_ErrMsg(o, "an integer is required");
 }
 
-
-/*
- * PyArray_IntpFromIndexSequence
- * Returns the number of dimensions or -1 if an error occurred.
- * vals must be large enough to hold maxvals.
- * Opposed to PyArray_IntpFromSequence it uses and returns npy_intp
- * for the number of values.
+/**
+ * Reads values from a sequence of integers and stores them into an array.
+ *
+ * @param  seq      A sequence created using `PySequence_Fast`.
+ * @param  vals     Array used to store dimensions (must be large enough to
+ *                      hold `maxvals` values).
+ * @param  max_vals Maximum number of dimensions that can be written into `vals`.
+ * @return          Number of dimensions or -1 if an error occurred.
+ *
+ * .. note::
+ *
+ *   Opposed to PyArray_IntpFromSequence it uses and returns `npy_intp`
+ *      for the number of values.
  */
 NPY_NO_EXPORT npy_intp
 PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
@@ -1122,7 +1128,28 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
-    return PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
+    if (PyLong_CheckExact(seq) || !PySequence_Check(seq)) {
+        npy_intp rvalue = intp_from_scalar(seq, vals, 0);
+
+        /*
+        * Check if an error occurred.
+        */
+        if (rvalue != vals[0]) {
+            return -1;
+        }
+
+        return 1;
+    }
+
+    PyObject *seq_obj = PySequence_Fast(seq,
+        "An error occurred during a call to `PySequence_Fast`, an iterable "
+        "object is required. The given object is not a scalar integer nor a "
+        "sequence.");
+    if (seq_obj == NULL) {
+        return -1;
+    }
+
+    return PyArray_IntpFromIndexSequence(seq_obj, vals, (npy_intp)maxvals);
 }
 
 
