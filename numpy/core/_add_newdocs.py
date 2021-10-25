@@ -2819,7 +2819,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
     >>> import numpy as np
 
     >>> np.ndarray[Any, np.dtype[Any]]
-    numpy.ndarray[typing.Any, numpy.dtype[Any]]
+    numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
 
     Notes
     -----
