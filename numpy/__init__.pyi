@@ -283,7 +283,6 @@ from numpy.core._ufunc_config import (
     getbufsize as getbufsize,
     seterrcall as seterrcall,
     geterrcall as geterrcall,
-    _SupportsWrite,
     _ErrKind,
     _ErrFunc,
     _ErrDictOptional,
@@ -632,6 +631,8 @@ from numpy.matrixlib import (
     bmat as bmat,
 )
 
+_AnyStr_contra = TypeVar("_AnyStr_contra", str, bytes, contravariant=True)
+
 # Protocol for representing file-like-objects accepted
 # by `ndarray.tofile` and `fromfile`
 class _IOProtocol(Protocol):
@@ -650,6 +651,9 @@ class _MemMapIOProtocol(Protocol):
     def write(self, s: bytes, /) -> object: ...
     @property
     def read(self) -> object: ...
+
+class _SupportsWrite(Protocol[_AnyStr_contra]):
+    def write(self, s: _AnyStr_contra, /) -> object: ...
 
 __all__: List[str]
 __path__: List[str]
@@ -994,7 +998,7 @@ class _ArrayOrScalarCommon:
     def __eq__(self, other): ...
     def __ne__(self, other): ...
     def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
-    def dump(self, file: str) -> None: ...
+    def dump(self, file: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _SupportsWrite[bytes]) -> None: ...
     def dumps(self) -> bytes: ...
     def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
     # NOTE: `tostring()` is deprecated and therefore excluded
@@ -3337,7 +3341,7 @@ class AxisError(ValueError, IndexError):
     @overload
     def __init__(self, axis: int, ndim: int, msg_prefix: None | str = ...) -> None: ...
 
-_CallType = TypeVar("_CallType", bound=Union[_ErrFunc, _SupportsWrite])
+_CallType = TypeVar("_CallType", bound=Union[_ErrFunc, _SupportsWrite[str]])
 
 class errstate(Generic[_CallType], ContextDecorator):
     call: _CallType
