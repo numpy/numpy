@@ -1323,7 +1323,7 @@ User-defined data types
     data-type object, *descr*, of the given *scalar* kind. Use
     *scalar* = :c:data:`NPY_NOSCALAR` to register that an array of data-type
     *descr* can be cast safely to a data-type whose type_number is
-    *totype*.
+    *totype*. The return value is 0 on success or -1 on failure.
 
 .. c:function:: int PyArray_TypeNumFromName( \
         char const *str)
@@ -2778,13 +2778,19 @@ Array Scalars
     whenever 0-dimensional arrays could be returned to Python.
 
 .. c:function:: PyObject* PyArray_Scalar( \
-        void* data, PyArray_Descr* dtype, PyObject* itemsize)
+        void* data, PyArray_Descr* dtype, PyObject* base)
 
-    Return an array scalar object of the given enumerated *typenum*
-    and *itemsize* by **copying** from memory pointed to by *data*
-    . If *swap* is nonzero then this function will byteswap the data
-    if appropriate to the data-type because array scalars are always
-    in correct machine-byte order.
+    Return an array scalar object of the given *dtype* by **copying**
+    from memory pointed to by *data*.  *base* is expected to be the
+    array object that is the owner of the data.  *base* is required
+    if `dtype` is a ``void`` scalar, or if the ``NPY_USE_GETITEM``
+    flag is set and it is known that the ``getitem`` method uses
+    the ``arr`` argument without checking if it is ``NULL``.  Otherwise
+    `base` may be ``NULL``.
+
+    If the data is not in native byte order (as indicated by
+    ``dtype->byteorder``) then this function will byteswap the data,
+    because array scalars are always in correct machine-byte order.
 
 .. c:function:: PyObject* PyArray_ToScalar(void* data, PyArrayObject* arr)
 
