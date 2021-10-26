@@ -613,7 +613,7 @@ How to create an array from existing data
 
 -----
 
-You can easily use create a new array from a section of an existing array.
+You can easily create a new array from a section of an existing array.
 
 Let's say you have this array:
 
