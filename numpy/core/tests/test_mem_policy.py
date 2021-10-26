@@ -1,5 +1,6 @@
 import asyncio
 import gc
+import os
 import pytest
 import numpy as np
 import threading
@@ -331,10 +332,18 @@ def test_switch_owner(get_module):
     a = get_module.get_array()
     assert np.core.multiarray.get_handler_name(a) is None
     get_module.set_own(a)
-    with warnings.catch_warnings():
-        warnings.filterwarnings('always')
-        # The policy should be NULL, so we have to assume we can call "free"
-        with assert_warns(RuntimeWarning) as w:
-            del a
-            gc.collect()
-        print(w)
+    oldval = os.environ.get('NUMPY_WARN_IF_NO_MEM_POLICY', None)
+    os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = "1"
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always')
+            # The policy should be NULL, so we have to assume we can call
+            # "free"
+            with assert_warns(RuntimeWarning) as w:
+                del a
+                gc.collect()
+    finally:
+        if oldval is None:
+            os.environ.pop('NUMPY_WARN_IF_NO_MEM_POLICY')
+        else:
+            os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = oldval

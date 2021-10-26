@@ -502,10 +502,17 @@ array_dealloc(PyArrayObject *self)
             nbytes = fa->descr->elsize ? fa->descr->elsize : 1;
         }
         if (fa->mem_handler == NULL) {
-            char const * msg = "Trying to dealloc data, but a memory policy "
-                "is not set. If you take ownership of the data, you must "
-                "also set a memory policy.";
-            WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+            char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
+            if (env == NULL) {
+                env = "0";
+            }
+            if (strncmp(env, "1", 1) == 0)
+            {
+                char const * msg = "Trying to dealloc data, but a memory policy "
+                    "is not set. If you take ownership of the data, you must "
+                    "also set a memory policy.";
+                WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+            }
             // Guess at malloc/free ???
             free(fa->data);
         } else {
