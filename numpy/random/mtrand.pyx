@@ -1033,7 +1033,7 @@ cdef class RandomState:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than or equal to high.  The high limit is included in the 
+            less than or equal to high.  The high limit may be included in the 
             returned array of floats due to floating-point rounding in the 
             equation ``low + (high-low) * random_sample()``.  The default value 
             is 1.0.

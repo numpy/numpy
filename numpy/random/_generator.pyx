@@ -876,7 +876,7 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The high limit is included in the returned array of 
+            less than high.  The high limit may be included in the returned array of 
             floats due to floating-point rounding in the equation 
             ``low + (high-low) * random_sample()``.  high - low must be 
             non-negative.  The default value is 1.0.
