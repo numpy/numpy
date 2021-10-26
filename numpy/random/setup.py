@@ -73,7 +73,9 @@ def configuration(parent_package='', top_path=None):
         distutils build command, so use this deferred calculation to run when
         we are building the library.
         """
+        # Keep in sync with numpy/core/setup.py
         if build_cmd.compiler.compiler_type == 'msvc':
+            # explicitly disable whole-program optimization
             return ['/GL-']
         return []
 

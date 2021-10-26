@@ -704,6 +704,7 @@ def configuration(parent_package='',top_path=None):
         we are building the library.
         """
         if build_cmd.compiler.compiler_type == 'msvc':
+            # explicitly disable whole-program optimization
             return ['/GL-']
         return []
 
