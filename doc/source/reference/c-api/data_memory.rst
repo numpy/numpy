@@ -1,3 +1,5 @@
+.. _data_memory:
+
 Memory management in NumPy
 ==========================
 
