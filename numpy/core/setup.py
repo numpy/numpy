@@ -696,16 +696,24 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'halffloat.c')
                        ]
 
-    # Must be true for CRT compilers but not MinGW/cygwin. See gh-9977.
-    # Intel and Clang also don't seem happy with /GL
-    is_msvc = (platform.platform().startswith('Windows') and
-               platform.python_compiler().startswith('MS'))
+    def gl_if_msvc(build_cmd):
+        """ Add flag if we are using MSVC compiler
+
+        We can't see this in our scope, because we have not initialized the
+        distutils build command, so use this deferred calculation to run when
+        we are building the library.
+        """
+        if build_cmd.compiler.compiler_type == 'msvc':
+            # explicitly disable whole-program optimization
+            return ['/GL-']
+        return []
+
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
             build_info={
                 'include_dirs' : [],  # empty list required for creating npy_math_internal.h
-                'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+                'extra_compiler_args': [gl_if_msvc],
             })
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
