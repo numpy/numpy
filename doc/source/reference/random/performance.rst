@@ -13,7 +13,7 @@ full-featured, and fast on most platforms, but somewhat slow when compiled for
 parallelism would indicate using `PCG64DXSM`.
 
 `Philox` is fairly slow, but its statistical properties have
-very high quality, and it is easy to get assuredly-independent stream by using
+very high quality, and it is easy to get an assuredly-independent stream by using
 unique keys. If that is the style you wish to use for parallel streams, or you
 are porting from another system that uses that style, then
 `Philox` is your choice.
