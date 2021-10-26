@@ -98,16 +98,10 @@ def run_mypy() -> None:
 def get_test_cases(directory: str) -> Iterator[ParameterSet]:
     for root, _, files in os.walk(directory):
         for fname in files:
-            if os.path.splitext(fname)[-1] in (".pyi", ".py"):
+            short_fname, ext = os.path.splitext(fname)
+            if ext in (".pyi", ".py"):
                 fullpath = os.path.join(root, fname)
-                # Use relative path for nice py.test name
-                relpath = os.path.relpath(fullpath, start=directory)
-
-                yield pytest.param(
-                    fullpath,
-                    # Manually specify a name for the test
-                    id=relpath,
-                )
+                yield pytest.param(fullpath, id=short_fname)
 
 
 @pytest.mark.slow

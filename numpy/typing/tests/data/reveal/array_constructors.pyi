@@ -120,32 +120,41 @@ reveal_type(np.logspace(0, 10))  # E: numpy.ndarray[Any, Any]
 reveal_type(np.geomspace(1, 10))  # E: numpy.ndarray[Any, Any]
 
 reveal_type(np.zeros_like(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.zeros_like(C))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.zeros_like(B))  # E: SubClass
-reveal_type(np.zeros_like(B, dtype=np.int64))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.zeros_like(C))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.zeros_like(A, dtype=float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.zeros_like(B))  # E: SubClass[{float64}]
+reveal_type(np.zeros_like(B, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
 
 reveal_type(np.ones_like(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.ones_like(C))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.ones_like(B))  # E: SubClass
-reveal_type(np.ones_like(B, dtype=np.int64))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.ones_like(C))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.ones_like(A, dtype=float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.ones_like(B))  # E: SubClass[{float64}]
+reveal_type(np.ones_like(B, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
 
 reveal_type(np.full_like(A, i8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.full_like(C, i8))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.full_like(C, i8))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.full_like(A, i8, dtype=int))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 reveal_type(np.full_like(B, i8))  # E: SubClass[{float64}]
-reveal_type(np.full_like(B, i8, dtype=np.int64))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.full_like(B, i8, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
 
-reveal_type(np.ones(1))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.ones([1, 1, 1]))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.ones(1))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.ones([1, 1, 1]))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.ones(5, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(np.ones(5, dtype=int))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 
-reveal_type(np.full(1, i8))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.full([1, 1, 1], i8))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.full(1, i8))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.full([1, 1, 1], i8))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.full(1, i8, dtype=np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.full(1, i8, dtype=float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 
-reveal_type(np.indices([1, 2, 3]))  # E: numpy.ndarray[Any, Any]
-reveal_type(np.indices([1, 2, 3], sparse=True))  # E: tuple[numpy.ndarray[Any, Any]]
+reveal_type(np.indices([1, 2, 3]))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(np.indices([1, 2, 3], sparse=True))  # E: tuple[numpy.ndarray[Any, numpy.dtype[{int_}]]]
 
 reveal_type(np.fromfunction(func, (3, 5)))  # E: SubClass[{float64}]
 
-reveal_type(np.identity(10))  # E: numpy.ndarray[Any, Any]
+reveal_type(np.identity(10))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(np.identity(10, dtype=np.int64))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(np.identity(10, dtype=int))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
 
 reveal_type(np.atleast_1d(A))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
 reveal_type(np.atleast_1d(C))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
