@@ -295,8 +295,7 @@ typedef struct{
 
 
 #define PyArrayDTypeMeta_Type \
-    (&(PyTypeObject *)__experimental_dtype_api_table[2])
-
+    (*(PyTypeObject *)__experimental_dtype_api_table[2])
 typedef int __dtypemeta_fromspec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *dtype_spec);
 /*
