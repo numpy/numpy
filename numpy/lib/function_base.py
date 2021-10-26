@@ -670,11 +670,16 @@ def select(condlist, choicelist, default=0):
 
     Examples
     --------
-    >>> x = np.arange(10)
-    >>> condlist = [x<3, x>5]
+    >>> x = np.arange(6)
+    >>> condlist = [x<3, x>3]
     >>> choicelist = [x, x**2]
-    >>> np.select(condlist, choicelist)
-    array([ 0,  1,  2, ..., 49, 64, 81])
+    >>> np.select(condlist, choicelist, 42)
+    array([ 0,  1,  2, 42, 16, 25])
+
+    >>> condlist = [x<=4, x>3]
+    >>> choicelist = [x, x**2]
+    >>> np.select(condlist, choicelist, 55)
+    array([ 0,  1,  2,  3,  4, 25])
 
     """
     # Check the size of condlist and choicelist are the same, or abort.
