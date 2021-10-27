@@ -2527,7 +2527,7 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            If a < 1.
+            If a <= 0.
 
         See Also
         --------
