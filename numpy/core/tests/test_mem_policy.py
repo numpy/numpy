@@ -62,6 +62,29 @@ def get_module(tmp_path):
             // PyArray_BASE(PyArrayObject *)args) = NULL;
             Py_RETURN_NONE;
          """),
+        ("get_array_with_base", "METH_NOARGS", """
+            char *buf = (char *)malloc(20);
+            npy_intp dims[1];
+            dims[0] = 20;
+            PyArray_Descr *descr =  PyArray_DescrNewFromType(NPY_UINT8);
+            PyObject *arr = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims,
+                                                 NULL, buf,
+                                                 NPY_ARRAY_WRITEABLE, NULL);
+            if (arr == NULL) return NULL;
+            PyObject *obj = PyCapsule_New(buf, "buf capsule",
+                                          (PyCapsule_Destructor)&warn_on_free);
+            if (obj == NULL) {
+                Py_DECREF(arr);
+                return NULL;
+            }
+            if (PyArray_SetBaseObject((PyArrayObject *)arr, obj) == -1) {
+                Py_DECREF(arr);
+                Py_DECREF(obj);
+                return NULL;
+            }
+            return arr;
+
+         """),
     ]
     prologue = '''
         #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -163,6 +186,12 @@ def get_module(tmp_path):
                 shift_realloc,            /* realloc */
                 shift_free                /* free */
             }
+        };
+        void warn_on_free(void *capsule) {
+            PyErr_WarnEx(PyExc_UserWarning, "in warn_on_free", 1);
+            void * obj = PyCapsule_GetPointer(capsule,
+                                              PyCapsule_GetName(capsule));
+            free(obj);
         };
         '''
     more_init = "import_array();"
@@ -335,15 +364,18 @@ def test_switch_owner(get_module):
     oldval = os.environ.get('NUMPY_WARN_IF_NO_MEM_POLICY', None)
     os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = "1"
     try:
-        with warnings.catch_warnings():
-            warnings.filterwarnings('always')
-            # The policy should be NULL, so we have to assume we can call
-            # "free"
-            with assert_warns(RuntimeWarning) as w:
-                del a
-                gc.collect()
+        # The policy should be NULL, so we have to assume we can call
+        # "free"
+        with assert_warns(RuntimeWarning) as w:
+            del a
+            gc.collect()
     finally:
         if oldval is None:
             os.environ.pop('NUMPY_WARN_IF_NO_MEM_POLICY')
         else:
             os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = oldval
+
+    a = get_module.get_array_with_base()
+    with pytest.warns(UserWarning, match='warn_on_free'):
+        del a
+        gc.collect()
