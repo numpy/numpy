@@ -1,6 +1,6 @@
 name: Bug report
 description: Report a bug. For security vulnerabilities see Report a security vulnerability in the templates.
-title: "BUG: "
+title: "BUG: <Please write a comprehensive title here>"
 labels: [00 - Bug]
 
 body:

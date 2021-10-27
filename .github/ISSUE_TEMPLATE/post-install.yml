@@ -1,5 +1,6 @@
 name: Post-install/importing issue
 description: Report an issue if you have trouble importing or using NumPy after installation.
+title: "<Please write a comprehensive title here>"
 labels: [32 - Installation]
 
 body:
