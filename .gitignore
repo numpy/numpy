@@ -220,3 +220,4 @@ numpy/core/src/umath/loops_arithm_fp.dispatch.c
 numpy/core/src/umath/loops_arithmetic.dispatch.c
 numpy/core/src/umath/loops_trigonometric.dispatch.c
 numpy/core/src/umath/loops_exponent_log.dispatch.c
+numpy/core/src/umath/loops_umath_fp.dispatch.c
