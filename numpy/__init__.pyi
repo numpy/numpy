@@ -14,7 +14,6 @@ if sys.version_info >= (3, 9):
 
 from numpy._pytesttester import PytestTester
 from numpy.core._internal import _ctypes
-from numpy.core.getlimits import MachArLike
 
 from numpy.typing import (
     # Arrays
@@ -3384,14 +3383,6 @@ class finfo(Generic[_FloatType]):
     def smallest_normal(self) -> _FloatType: ...
     @property
     def tiny(self) -> _FloatType: ...
-
-    # NOTE: Not technically a property, but this is the only way we can
-    # access the precision of the underlying float
-    @property
-    def machar(self: finfo[floating[_NBit1]]) -> MachArLike[_NBit1]: ...
-    @machar.setter
-    def machar(self: finfo[floating[_NBit1]], value: MachArLike[_NBit1]) -> None: ...
-
     @overload
     def __new__(
         cls, dtype: inexact[_NBit1] | _DTypeLike[inexact[_NBit1]]

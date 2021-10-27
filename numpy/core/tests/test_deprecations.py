@@ -1226,3 +1226,7 @@ class TestMachAr(_DeprecationTestCase):
 
     def test_deprecated_module(self):
         self.assert_deprecated(lambda: getattr(np.core, "machar"))
+
+    def test_deprecated_attr(self):
+        finfo = np.finfo(float)
+        self.assert_deprecated(lambda: getattr(finfo, "machar"))
