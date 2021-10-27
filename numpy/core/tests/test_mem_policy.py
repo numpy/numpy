@@ -77,7 +77,7 @@ def get_module(tmp_path):
                 Py_DECREF(arr);
                 return NULL;
             }
-            if (PyArray_SetBaseObject((PyArrayObject *)arr, obj) == -1) {
+            if (PyArray_SetBaseObject((PyArrayObject *)arr, obj) < 0) {
                 Py_DECREF(arr);
                 Py_DECREF(obj);
                 return NULL;
