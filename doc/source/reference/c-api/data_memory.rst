@@ -119,3 +119,40 @@ For an example of setting up and using the PyDataMem_Handler, see the test in
     operations that might cause new allocation events (such as the
     creation/destruction numpy objects, or creating/destroying Python
     objects which might cause a gc)
+
+What happens when deallocating if there is no policy set
+--------------------------------------------------------
+
+A rare but useful technique is to allocate a buffer outside NumPy, use
+:c:func:`PyArray_NewFromDescr` to wrap the buffer in a ``ndarray``, then switch
+the ``OWNDATA`` flag to true. When the ``ndarray`` is released, the
+appropriate function from the ``ndarray``'s ``PyDataMem_Handler`` should be
+called to free the buffer. But the ``PyDataMem_Handler`` field was never set,
+it will be ``NULL``. For backward compatibility, NumPy will call ``free()`` to
+release the buffer. If ``NUMPY_WARN_IF_NO_MEM_POLICY`` is set to ``1``, a
+warning will be emitted. The current default is not to emit a warning, this may
+change in a future version of NumPy.
+
+A better technique would be to use a ``PyCapsule`` as a base object:
+
+.. code-block:: c
+
+    /* define a PyCapsule_Destructor, using the correct deallocator for buff */
+    void free_wrap(void *capsule){
+        void * obj = PyCapsule_GetPointer(capsule, PyCapsule_GetName(capsule));
+        free(obj); 
+    };
+
+    /* then inside the function that creates arr from buff */
+    ...
+    arr = PyArray_NewFromDescr(... buf, ...);
+    if (arr == NULL) {
+        return NULL;
+    }
+    capsule = PyCapsule_New(buf, "my_wrapped_buffer",
+                            (PyCapsule_Destructor)&free_wrap);
+    if (PyArray_SetBaseObject(arr, capsule) == -1) {
+        Py_DECREF(arr);
+        return NULL;
+    }
+    ...

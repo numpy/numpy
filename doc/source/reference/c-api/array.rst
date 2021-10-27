@@ -325,8 +325,7 @@ From scratch
     should be increased after the pointer is passed in, and the base member
     of the returned ndarray should point to the Python object that owns
     the data. This will ensure that the provided memory is not
-    freed while the returned array is in existence. To free memory as soon
-    as the ndarray is deallocated, set the OWNDATA flag on the returned ndarray.
+    freed while the returned array is in existence.
 
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
         int nd, npy_int const* dims, PyArray_Descr* descr)
@@ -1463,7 +1462,9 @@ of the constant names is deprecated in 1.7.
 
 .. c:macro:: NPY_ARRAY_OWNDATA
 
-    The data area is owned by this array.
+    The data area is owned by this array. Should never be set manually, instead
+    create a ``PyObject`` wrapping the data and set the array's base to that
+    object. For an example, see the test in ``test_mem_policy``.
 
 .. c:macro:: NPY_ARRAY_ALIGNED
 
