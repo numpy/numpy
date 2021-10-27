@@ -506,7 +506,7 @@ array_dealloc(PyArrayObject *self)
             if ((env == NULL) || (strncmp(env, "1", 1) == 0)) {
                 char const * msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
-                    "set a base owning the data (e.g. a PyCapsule)."
+                    "set a base owning the data (e.g. a PyCapsule).";
                 WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             }
             // Guess at malloc/free ???
