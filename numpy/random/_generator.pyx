@@ -2097,7 +2097,7 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            If a < 1.
+            If a <= 0.
 
         Notes
         -----
