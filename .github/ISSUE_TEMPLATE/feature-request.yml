@@ -1,6 +1,6 @@
 name: Feature request
 description: Check instructions for submitting your idea on the mailing list first.
-title: "ENH: <Please write a comprehensive title after the `ENH: ` prefix>"
+title: "ENH: <Please write a comprehensive title after the 'ENH: ' prefix>"
 
 body:
 - type: markdown
