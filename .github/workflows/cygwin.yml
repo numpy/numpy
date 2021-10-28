@@ -49,6 +49,9 @@ jobs:
       - name: Install new NumPy
         run: |
           bash -c "/usr/bin/python3.8 -m pip install dist/numpy-*cp38*.whl"
+      - name: Rebase NumPy compiled extensions
+        run: |
+          bash -c "/usr/bin/rebase --database --oblivious `/bin/dash tools/list_numpy_dlls.sh 3.8`"
       - name: Run NumPy test suite
         run: >-
           dash -c "/usr/bin/python3.8 runtests.py -n -vv"
