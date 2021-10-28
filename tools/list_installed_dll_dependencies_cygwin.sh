@@ -11,7 +11,7 @@
 # Cygwin-specific, but the rest should work on most platforms with
 # /bin/sh
 
-py_ver=3.7
+py_ver=${1}
 site_packages=$(python${py_ver} -m pip show numpy | \
 		    grep Location | cut -d " " -f 2 -);
 dll_list=$(for name in $(python${py_ver} -m pip show -f numpy | \
