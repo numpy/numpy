@@ -24,10 +24,27 @@
 #define npyv_setall_s16(VAL) _mm_set1_epi16((short)(VAL))
 #define npyv_setall_u32(VAL) _mm_set1_epi32((int)(VAL))
 #define npyv_setall_s32(VAL) _mm_set1_epi32((int)(VAL))
-#define npyv_setall_u64(VAL) _mm_set1_epi64x((npy_int64)(VAL))
-#define npyv_setall_s64(VAL) _mm_set1_epi64x((npy_int64)(VAL))
 #define npyv_setall_f32 _mm_set1_ps
 #define npyv_setall_f64 _mm_set1_pd
+
+NPY_FINLINE __m128i npyv__setr_epi64(npy_int64 i0, npy_int64 i1);
+
+NPY_FINLINE npyv_u64 npyv_setall_u64(npy_uint64 a)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return npyv__setr_epi64((npy_int64)a, (npy_int64)a);
+#else
+    return _mm_set1_epi64x((npy_int64)a);
+#endif
+}
+NPY_FINLINE npyv_s64 npyv_setall_s64(npy_int64 a)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return npyv__setr_epi64(a, a);
+#else
+    return _mm_set1_epi64x((npy_int64)a);
+#endif
+}
 
 /**
  * vector with specific values set to each lane and
@@ -53,7 +70,11 @@ NPY_FINLINE __m128i npyv__setr_epi32(int i0, int i1, int i2, int i3)
 }
 NPY_FINLINE __m128i npyv__setr_epi64(npy_int64 i0, npy_int64 i1)
 {
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return _mm_setr_epi32((int)i0, (int)(i0 >> 32), (int)i1, (int)(i1 >> 32));
+#else
     return _mm_set_epi64x(i1, i0);
+#endif
 }
 NPY_FINLINE __m128 npyv__setr_ps(float i0, float i1, float i2, float i3)
 {
