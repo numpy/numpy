@@ -35,7 +35,7 @@ NPY_FINLINE npyv_f64 npyv_abs_f64(npyv_f64 a)
     return _mm512_range_pd(a, a, 8);
 #else
     return npyv_and_f64(
-        a, _mm512_castsi512_pd(_mm512_set1_epi64(0x7fffffffffffffffLL))
+        a, _mm512_castsi512_pd(npyv_setall_s64(0x7fffffffffffffffLL))
     );
 #endif
 }
