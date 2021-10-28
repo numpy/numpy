@@ -1215,3 +1215,18 @@ class TestPartitionBoolIndex(_DeprecationTestCase):
     def test_not_deprecated(self, func):
         self.assert_not_deprecated(lambda: func(1))
         self.assert_not_deprecated(lambda: func([0, 1]))
+
+
+class TestMachAr(_DeprecationTestCase):
+    # Deprecated 2021-10-19, NumPy 1.22
+    warning_cls = DeprecationWarning
+
+    def test_deprecated(self):
+        self.assert_deprecated(lambda: np.MachAr)
+
+    def test_deprecated_module(self):
+        self.assert_deprecated(lambda: getattr(np.core, "machar"))
+
+    def test_deprecated_attr(self):
+        finfo = np.finfo(float)
+        self.assert_deprecated(lambda: getattr(finfo, "machar"))

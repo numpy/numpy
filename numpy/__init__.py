@@ -188,10 +188,17 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
+
+    # NumPy 1.22, 2021-10-20
+    __deprecated_attrs__["MachAr"] = (
+        core._machar.MachAr,
+        "`np.MachAr` is deprecated (NumPy 1.22)."
     )
 
     _msg = (

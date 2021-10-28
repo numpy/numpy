@@ -14,7 +14,6 @@ if sys.version_info >= (3, 9):
 
 from numpy._pytesttester import PytestTester
 from numpy.core._internal import _ctypes
-from numpy.core.getlimits import MachArLike
 
 from numpy.typing import (
     # Arrays
@@ -665,17 +664,6 @@ test: PytestTester
 # their annotations are properly implemented
 #
 # Placeholders for classes
-# TODO: Remove `__getattr__` once the classes are stubbed out
-class MachAr:
-    def __init__(
-        self,
-        float_conv: Any = ...,
-        int_conv: Any = ...,
-        float_to_float: Any = ...,
-        float_to_str: Any = ...,
-        title: Any = ...,
-    ) -> None: ...
-    def __getattr__(self, key: str) -> Any: ...
 
 # Some of these are aliases; others are wrappers with an identical signature
 round = around
@@ -3395,14 +3383,6 @@ class finfo(Generic[_FloatType]):
     def smallest_normal(self) -> _FloatType: ...
     @property
     def tiny(self) -> _FloatType: ...
-
-    # NOTE: Not technically a property, but this is the only way we can
-    # access the precision of the underlying float
-    @property
-    def machar(self: finfo[floating[_NBit1]]) -> MachArLike[_NBit1]: ...
-    @machar.setter
-    def machar(self: finfo[floating[_NBit1]], value: MachArLike[_NBit1]) -> None: ...
-
     @overload
     def __new__(
         cls, dtype: inexact[_NBit1] | _DTypeLike[inexact[_NBit1]]
@@ -4335,3 +4315,6 @@ class chararray(ndarray[_ShapeType, _CharDType]):
     def isupper(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
     def isnumeric(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
     def isdecimal(self) -> ndarray[_ShapeType, dtype[bool_]]: ...
+
+# NOTE: Deprecated
+# class MachAr: ...

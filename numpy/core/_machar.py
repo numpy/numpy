@@ -13,6 +13,7 @@ from numpy.core.overrides import set_module
 
 # Need to speed this up...especially for longfloat
 
+# Deprecated 2021-10-20, NumPy 1.22
 @set_module('numpy')
 class MachAr:
     """
