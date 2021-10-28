@@ -183,7 +183,7 @@ def _c_compile(cfile, outputfilename, include_dirs=[], libraries=[],
                library_dirs=[]):
     if sys.platform == 'win32':
         compile_extra = ["/we4013"]
-        link_extra = ["/LIBPATH:" + os.path.join(sys.exec_prefix, 'libs')]
+        link_extra = ["/LIBPATH:" + os.path.join(sys.base_prefix, 'libs')]
     elif sys.platform.startswith('linux'):
         compile_extra = [
             "-O0", "-g", "-Werror=implicit-function-declaration", "-fPIC"]
