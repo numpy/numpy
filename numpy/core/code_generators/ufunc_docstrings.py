@@ -3065,8 +3065,14 @@ add_newdoc('numpy.core.umath', 'power',
     First array elements raised to powers from second array, element-wise.
 
     Raise each base in `x1` to the positionally-corresponding power in
-    `x2`.  `x1` and `x2` must be broadcastable to the same shape. Note that an
-    integer type raised to a negative integer power will raise a ValueError.
+    `x2`.  `x1` and `x2` must be broadcastable to the same shape.
+
+    An integer type raised to a negative integer power will raise a
+    ``ValueError``.
+
+    Negative values raised to a non-integral value will return ``nan``.
+    To get complex results, cast the input to complex, or specify the
+    ``dtype`` to be ``complex`` (see the example below).
 
     Parameters
     ----------
@@ -3121,6 +3127,21 @@ add_newdoc('numpy.core.umath', 'power',
     >>> x1 ** x2
     array([ 0,  1,  8, 27, 16,  5])
 
+    Negative values raised to a non-integral value will result in ``nan``
+    (and a warning will be generated).
+
+    >>> x3 = np.array([-1.0, -4.0])
+    >>> with np.errstate(invalid='ignore'):
+    ...     p = np.power(x3, 1.5)
+    ...
+    >>> p
+    array([nan, nan])
+
+    To get complex results, give the argument ``dtype=complex``.
+
+    >>> np.power(x3, 1.5, dtype=complex)
+    array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
+
     """)
 
 add_newdoc('numpy.core.umath', 'float_power',
@@ -3133,6 +3154,10 @@ add_newdoc('numpy.core.umath', 'float_power',
     floats with a minimum precision of float64 so that the result is always
     inexact.  The intent is that the function will return a usable result for
     negative powers and seldom overflow for positive powers.
+
+    Negative values raised to a non-integral value will return ``nan``.
+    To get complex results, cast the input to complex, or specify the
+    ``dtype`` to be ``complex`` (see the example below).
 
     .. versionadded:: 1.12.0
 
@@ -3180,6 +3205,21 @@ add_newdoc('numpy.core.umath', 'float_power',
     >>> np.float_power(x1, x2)
     array([[  0.,   1.,   8.,  27.,  16.,   5.],
            [  0.,   1.,   8.,  27.,  16.,   5.]])
+
+    Negative values raised to a non-integral value will result in ``nan``
+    (and a warning will be generated).
+
+    >>> x3 = np.array([-1, -4])
+    >>> with np.errstate(invalid='ignore'):
+    ...     p = np.float_power(x3, 1.5)
+    ...
+    >>> p
+    array([nan, nan])
+
+    To get complex results, give the argument ``dtype=complex``.
+
+    >>> np.float_power(x3, 1.5, dtype=complex)
+    array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
 
