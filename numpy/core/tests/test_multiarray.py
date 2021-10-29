@@ -511,6 +511,23 @@ class TestArrayConstruction:
         else:
             func(a=3)
 
+    def test_scalar_and_wrongtype_intp_converter(self):
+        from numpy.core._multiarray_tests import test_scalar_intp_converter
+
+        assert test_scalar_intp_converter(10) == 10
+        # we also try -1 since it proved to be a problematic value
+        assert test_scalar_intp_converter(-1) == -1
+
+        assert_raises(TypeError, test_scalar_intp_converter, 'foo')
+
+    def test_scalar_and_wrongtype_intp_from_sequence(self):
+        from numpy.core._multiarray_tests import test_scalar_intp_from_sequence
+
+        assert test_scalar_intp_from_sequence(10) == 10
+        assert test_scalar_intp_from_sequence(-1) == -1
+
+        assert_raises(TypeError, test_scalar_intp_from_sequence, 'foo')
+
 class TestAssignment:
     def test_assignment_broadcasting(self):
         a = np.arange(6).reshape(2, 3)

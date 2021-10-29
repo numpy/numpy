@@ -2374,6 +2374,35 @@ npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
     Py_RETURN_NONE;
 }
 
+PyObject *
+test_scalar_intp_converter(PyObject *dummy, PyObject *obj)
+{
+    PyArray_Dims dummy_dims;
+    int output = PyArray_IntpConverter(obj, &dummy_dims);
+    if (output != NPY_SUCCEED) {
+        return NULL;
+    } else {
+        return PyLong_FromLong(dummy_dims.ptr[0]);
+    }
+}
+
+PyObject *
+test_scalar_intp_from_sequence(PyObject *dummy, PyObject *obj)
+{
+    npy_intp vals[1];
+    if (vals == NULL) {
+        PyErr_NoMemory();
+        return NPY_FAIL;
+    }
+
+    int output = PyArray_IntpFromSequence(obj, vals, 1);
+    if (output == -1) {
+        return NULL;
+    } else {
+        return PyLong_FromLong(vals[0]);
+    }
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
@@ -2513,6 +2542,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"getset_numericops",
         getset_numericops,
         METH_NOARGS, NULL},
+    {"test_scalar_intp_converter",
+        test_scalar_intp_converter,
+        METH_O, NULL},
+    {"test_scalar_intp_from_sequence",
+        test_scalar_intp_from_sequence,
+        METH_O, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
