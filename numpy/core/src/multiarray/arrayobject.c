@@ -503,7 +503,7 @@ array_dealloc(PyArrayObject *self)
         }
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
-            if ((env == NULL) || (strncmp(env, "1", 1) == 0)) {
+            if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
                 char const * msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
