@@ -98,12 +98,13 @@ intp_from_scalar(PyObject *ob, npy_intp *vals, int val_idx)
         if (PyErr_ExceptionMatches(PyExc_OverflowError))
             PyErr_SetString(PyExc_ValueError,
                     "Maximum allowed dimension exceeded");
-        else
-            PyErr_Format(PyExc_TypeError,
+        else PyErr_Format(
+                PyExc_TypeError,
                 "An error occurred while converting the index %d to an "
-                "integer (actual result is %d)", val_idx, value);
+                "integer (actual result is %d)",
+                val_idx, value);
 
-        return value;
+        return -1;
     }
 
     /*
@@ -163,7 +164,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         * Check whether the value set by intp_from_scalar is different than
         * the value returned, which means that an error occurred.
         */
-        if (rvalue != *((npy_intp *)seq->ptr)) {
+        if (PyErr_Occurred() != NULL || *((npy_intp *)seq->ptr) != rvalue) {
             npy_free_cache_dim_obj(*seq);
             seq->ptr = NULL;
             return NPY_FAIL;
@@ -1112,7 +1113,7 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
             * If the value returned is different than the value set in vals
             * an error has been detected.
             */
-            if (rvalue != vals[i]) {
+            if (PyErr_Occurred() != NULL || rvalue != vals[i]) {
                 return -1;
             }
         }
@@ -1134,7 +1135,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         /*
         * Check if an error occurred.
         */
-        if (rvalue != vals[0]) {
+        if (PyErr_Occurred() != NULL || rvalue != vals[0]) {
             return -1;
         }
 
