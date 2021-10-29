@@ -152,8 +152,9 @@ def test_fail(path: str) -> None:
         target_line = lines[lineno - 1]
         if "# E:" in target_line:
             expression, _, marker = target_line.partition("  # E: ")
-            expected_error = errors[lineno]
-            _test_fail(path, expression, marker.strip(), expected_error.strip(), lineno)
+            expected_error = errors[lineno].strip()
+            marker = marker.strip()
+            _test_fail(path, expression, marker, expected_error, lineno)
         else:
             pytest.fail(
                 f"Unexpected mypy output at line {lineno}\n\n{errors[lineno]}"
@@ -184,7 +185,9 @@ def _test_fail(
     if expected_error is None:
         raise AssertionError(_FAIL_MSG1.format(lineno, expression, error))
     elif error not in expected_error:
-        raise AssertionError(_FAIL_MSG2.format(lineno, expression, expected_error, error))
+        raise AssertionError(_FAIL_MSG2.format(
+            lineno, expression, expected_error, error
+        ))
 
 
 def _construct_ctypes_dict() -> dict[str, str]:
