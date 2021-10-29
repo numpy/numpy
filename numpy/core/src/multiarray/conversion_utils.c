@@ -174,9 +174,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
 
     PyObject *seq_obj = PySequence_Fast(obj,
-        "An error occurred during a call to `PySequence_Fast`, an iterable "
-        "object is required. The given object is not a scalar integer nor a "
-        "sequence.");
+            "An error occurred during a call to `PySequence_Fast`, an "
+            "iterable object is required. The given object is not a scalar "
+            "integer nor a sequence.");
     if (seq_obj == NULL) {
         Py_DECREF(seq_obj);
         seq->ptr = NULL;
@@ -186,7 +186,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     len = PySequence_Fast_GET_SIZE(seq_obj);
     if (len > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError, "maximum supported dimension for an "
-                    "ndarray is %d, found %d", NPY_MAXDIMS, len);
+                "ndarray is %d, found %d", NPY_MAXDIMS, len);
         Py_DECREF(seq_obj);
         return NPY_FAIL;
     }
@@ -1117,9 +1117,9 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
     }
 
     PyObject *seq_obj = PySequence_Fast(seq,
-        "An error occurred during a call to `PySequence_Fast`, an iterable "
-        "object is required. The given object is not a scalar integer nor a "
-        "sequence.");
+            "An error occurred during a call to `PySequence_Fast`, an "
+            "iterable object is required. The given object is not a scalar "
+            "integer nor a sequence.");
     if (seq_obj == NULL) {
         return -1;
     }
