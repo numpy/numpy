@@ -187,6 +187,38 @@ def _test_fail(
         raise AssertionError(_FAIL_MSG2.format(lineno, expression, expected_error, error))
 
 
+def _construct_ctypes_dict() -> dict[str, str]:
+    dct = {
+        "ubyte": "c_ubyte",
+        "ushort": "c_ushort",
+        "uintc": "c_uint",
+        "uint": "c_ulong",
+        "ulonglong": "c_ulonglong",
+        "byte": "c_byte",
+        "short": "c_short",
+        "intc": "c_int",
+        "int_": "c_long",
+        "longlong": "c_longlong",
+        "single": "c_float",
+        "double": "c_double",
+        "longdouble": "c_longdouble",
+    }
+
+    # Match `ctypes` names to the first ctypes type with a given kind and
+    # precision, e.g. {"c_double": "c_double", "c_longdouble": "c_double"}
+    # if both types represent 64-bit floats.
+    # In this context "first" is defined by the order of `dct`
+    ret = {}
+    visited: dict[tuple[str, int], str] = {}
+    for np_name, ct_name in dct.items():
+        np_scalar = getattr(np, np_name)()
+
+        # Find the first `ctypes` type for a given `kind`/`itemsize` combo
+        key = (np_scalar.dtype.kind, np_scalar.dtype.itemsize)
+        ret[ct_name] = visited.setdefault(key, f"ctypes.{ct_name}")
+    return ret
+
+
 def _construct_format_dict() -> dict[str, str]:
     dct = {k.split(".")[-1]: v.replace("numpy", "numpy.typing") for
            k, v in _PRECISION_DICT.items()}
@@ -261,6 +293,7 @@ def _construct_format_dict() -> dict[str, str]:
 #: A dictionary with all supported format keys (as keys)
 #: and matching values
 FORMAT_DICT: dict[str, str] = _construct_format_dict()
+FORMAT_DICT.update(_construct_ctypes_dict())
 
 
 def _parse_reveals(file: IO[str]) -> tuple[npt.NDArray[np.str_], list[str]]:
