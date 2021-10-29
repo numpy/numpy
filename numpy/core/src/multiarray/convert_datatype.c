@@ -379,6 +379,7 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
                 descrs[0], out_descrs[0], NULL, &from_offset);
         casting = PyArray_MinCastSafety(casting, from_casting);
         if (from_offset != *view_offset) {
+            /* `view_offset` differs: The multi-step cast cannot be a view. */
             *view_offset = NPY_MIN_INTP;
         }
         if (casting < 0) {
@@ -391,6 +392,7 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
                 descrs[1], out_descrs[1], NULL, &from_offset);
         casting = PyArray_MinCastSafety(casting, from_casting);
         if (from_offset != *view_offset) {
+            /* `view_offset` differs: The multi-step cast cannot be a view. */
             *view_offset = NPY_MIN_INTP;
         }
         if (casting < 0) {
@@ -2761,13 +2763,22 @@ string_to_string_resolve_descriptors(
         loop_descrs[1] = given_descrs[1];
     }
 
-    int not_swapped = (PyDataType_ISNOTSWAPPED(loop_descrs[0])
-                       == PyDataType_ISNOTSWAPPED(loop_descrs[1]));
-    if (not_swapped && loop_descrs[0]->elsize >= loop_descrs[1]->elsize) {
-        *view_offset = 0;
+    if (loop_descrs[0]->elsize < loop_descrs[1]->elsize) {
+        /* New string is longer: safe but cannot be a view */
+        return NPY_SAFE_CASTING;
     }
+    else {
+        /* New string fits into old: if the byte-order matches can be a view */
+        int not_swapped = (PyDataType_ISNOTSWAPPED(loop_descrs[0])
+                           == PyDataType_ISNOTSWAPPED(loop_descrs[1]));
+        if (not_swapped) {
+            *view_offset = 0;
+        }
 
-    if (loop_descrs[0]->elsize == loop_descrs[1]->elsize) {
+        if (loop_descrs[0]->elsize > loop_descrs[1]->elsize) {
+            return NPY_SAME_KIND_CASTING;
+        }
+        /* The strings have the same length: */
         if (not_swapped) {
             return NPY_NO_CASTING;
         }
@@ -2775,10 +2786,6 @@ string_to_string_resolve_descriptors(
             return NPY_EQUIV_CASTING;
         }
     }
-    else if (loop_descrs[0]->elsize <= loop_descrs[1]->elsize) {
-        return NPY_SAFE_CASTING;
-    }
-    return NPY_SAME_KIND_CASTING;
 }
 
 
@@ -3395,21 +3402,30 @@ void_to_void_resolve_descriptors(
                 /* Both are subarrays and the shape matches */
                 casting = NPY_NO_CASTING;
                 if (from_sub->base->elsize == to_sub->base->elsize) {
-                    /* this may be a view, TODO: can be refined if size == 1 */
+                    /*
+                     * may be a view if base is a also 0-offset view, the
+                     * itemsizes must match, or the base "stride" would differ.
+                     */
                     *view_offset = 0;
                 }
             }
         }
-
+        /*
+         * TODO: If the subarrays have size 1 (or the one of them) a view is
+         *       in theory possible in some additional cases since the elsize
+         *       requirement above is not strictly required.
+         */
         PyArray_Descr *from_base = (from_sub == NULL) ? given_descrs[0] : from_sub->base;
         PyArray_Descr *to_base = (to_sub == NULL) ? given_descrs[1] : to_sub->base;
-        npy_intp base_off = NPY_MIN_INTP;  /* TODO: could attempt to propagate? */
+        /* An offset for  */
+        npy_intp base_off = NPY_MIN_INTP;
         NPY_CASTING field_casting = PyArray_GetCastSafety(
                 from_base, to_base, NULL, &base_off);
         if (field_casting < 0) {
             return -1;
         }
-        if (base_off != *view_offset) {
+        if (base_off != 0) {
+            /* Only a zero offset can work for multiple contiguous elements */
             *view_offset = NPY_MIN_INTP;
         }
         casting = PyArray_MinCastSafety(casting, field_casting);

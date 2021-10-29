@@ -48,6 +48,11 @@
  *
  * We could allow setting the output descriptors specifically to simplify
  * this step.
+ *
+ * Note that the default version will indicate that the cast can be done
+ * as using `arr.view(new_dtype)` if the default cast-safety is
+ * set to "no-cast".  This default function cannot be used if a view may
+ * be sufficient for casting but the cast is not always "no-cast".
  */
 static NPY_CASTING
 default_resolve_descriptors(

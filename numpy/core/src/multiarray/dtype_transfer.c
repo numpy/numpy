@@ -3073,8 +3073,9 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
  * transfer function from the each casting implementation (ArrayMethod).
  * May set the transfer function to NULL when the cast can be achieved using
  * a view.
- * TODO: The view functionality is only support for 0 view offsets and not
- *       general offsets.
+ * TODO: Expand the view functionality for general offsets, not just 0:
+ *       Partial casts could be skipped also for `view_offset != 0`.
+ *
  * The `out_needs_api` flag must be initialized.
  *
  * NOTE: In theory casting errors here could be slightly misleading in case
@@ -3105,7 +3106,8 @@ define_cast_for_descrs(
     castdata.main.func = NULL;
     castdata.to.func = NULL;
     castdata.from.func = NULL;
-    npy_intp view_offset = NPY_MIN_INTP;  /* unused */
+    /* `view_offset` passed to `init_cast_info` but unused for the main cast */
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = -1;
 
     if (init_cast_info(

@@ -3775,11 +3775,10 @@ time_to_time_resolve_descriptors(
         return NPY_NO_CASTING;
     }
 
-    npy_bool byteorder_may_allow_view = NPY_FALSE;
-    if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
-            PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
-        byteorder_may_allow_view = NPY_TRUE;
-    }
+    npy_bool byteorder_may_allow_view = (
+            PyDataType_ISNOTSWAPPED(loop_descrs[0])
+            == PyDataType_ISNOTSWAPPED(loop_descrs[1]));
+
     PyArray_DatetimeMetaData *meta1, *meta2;
     meta1 = get_datetime_metadata_from_dtype(loop_descrs[0]);
     assert(meta1 != NULL);
