@@ -182,23 +182,6 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
 
     len = PySequence_Fast_GET_SIZE(seq_obj);
-    if (len == -1) {
-        /* Check to see if it is an integer number */
-        if (PyNumber_Check(obj)) {
-            /*
-             * After the deprecation the PyNumber_Check could be replaced
-             * by PyIndex_Check.
-             * FIXME 1.9 ?
-             */
-            len = 1;
-        }
-    }
-    if (len < 0) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected sequence object with len >= 0 or a single integer");
-        Py_DECREF(seq_obj);
-        return NPY_FAIL;
-    }
     if (len > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError, "maximum supported dimension for an "
                     "ndarray is %d, found %d", NPY_MAXDIMS, len);
@@ -1086,36 +1069,25 @@ PyArray_PyIntAsIntp(PyObject *o)
 NPY_NO_EXPORT npy_intp
 PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 {
-    Py_ssize_t nd;
-    Py_ssize_t i;
-    PyObject *op;
-
     /*
-     * Check to see if sequence is a single integer first.
-     * or, can be made into one
+     * First of all, check if sequence is a scalar integer or if it can be
+     * "casted" into a scalar.
      */
-    nd = PySequence_Fast_GET_SIZE(seq);
-    if (nd == -1) {
-        if (PyErr_Occurred()) {
-            PyErr_Clear();
+    Py_ssize_t nd = PySequence_Fast_GET_SIZE(seq);
+    PyObject *op;
+    for (Py_ssize_t i = 0; i < PyArray_MIN(nd,maxvals); i++) {
+        op = PySequence_Fast_GET_ITEM(seq, i);
+        if (op == NULL) {
+            return -1;
         }
-        return -1;
-    }
-    else {
-        for (i = 0; i < PyArray_MIN(nd,maxvals); i++) {
-            op = PySequence_Fast_GET_ITEM(seq, i);
-            if (op == NULL) {
-                return -1;
-            }
 
-            npy_intp rvalue = intp_from_scalar(op, vals, i);
-            /*
-            * If the value returned is different than the value set in vals
-            * an error has been detected.
-            */
-            if (PyErr_Occurred() != NULL || rvalue != vals[i]) {
-                return -1;
-            }
+        npy_intp rvalue = intp_from_scalar(op, vals, i);
+        /*
+        * If the value returned is different than the value set in vals
+        * an error has been detected.
+        */
+        if (PyErr_Occurred() != NULL || rvalue != vals[i]) {
+            return -1;
         }
     }
     return nd;
