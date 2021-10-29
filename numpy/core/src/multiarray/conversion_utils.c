@@ -178,6 +178,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         "object is required. The given object is not a scalar integer nor a "
         "sequence.");
     if (seq_obj == NULL) {
+        Py_DECREF(seq_obj);
+        seq->ptr = NULL;
         return NPY_FAIL;
     }
 
