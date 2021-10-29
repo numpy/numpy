@@ -285,3 +285,8 @@ def test_python_scalar_construtors():
 
     assert_raises(TypeError, lambda: operator.index(b))
     assert_raises(TypeError, lambda: operator.index(f))
+
+
+def test_device_property():
+    a = ones((3, 4))
+    assert a.device == 'cpu'
