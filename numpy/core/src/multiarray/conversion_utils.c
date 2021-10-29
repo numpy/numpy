@@ -79,7 +79,7 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
 }
 
 static npy_intp
-intp_from_scalar(PyObject *ob, npy_intp *vals, int val_idx)
+intp_from_scalar(PyObject *ob)
 {
     /*
     * Convert the given value to an integer. Then store it and check for
@@ -88,30 +88,17 @@ intp_from_scalar(PyObject *ob, npy_intp *vals, int val_idx)
     npy_intp value = PyArray_PyIntAsIntp(ob);
 
     if (error_converting(value)) {
-        /*
-        * In order to report that an error may have occurred, we set the
-        * value of vals to 0, which will be different (in case of error) than
-        * the value returned (which is going to be -1).
-        */
-        vals[val_idx] = 0;
-
         if (PyErr_ExceptionMatches(PyExc_OverflowError))
             PyErr_SetString(PyExc_ValueError,
                     "Maximum allowed dimension exceeded");
-        else PyErr_Format(
-                PyExc_TypeError,
-                "An error occurred while converting the index %d to an "
-                "integer (actual result is %d)",
-                val_idx, value);
-
+        else
+            PyErr_SetString(
+                    PyExc_TypeError,
+                    "Unable to convert the given object to an integer value.");
         return -1;
+    } else {
+        return value;
     }
-
-    /*
-    * Since no error occurred we can set vals to the desired value.
-    */
-    vals[val_idx] = value;
-    return value;
 }
 
 /*NUMPY_API
@@ -159,12 +146,12 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
         seq->len = len;
 
-        npy_intp rvalue = intp_from_scalar(obj, (npy_intp *)seq->ptr, 0);
+        seq->ptr[0] = intp_from_scalar(obj);
         /*
         * Check whether the value set by intp_from_scalar is different than
         * the value returned, which means that an error occurred.
         */
-        if (PyErr_Occurred() != NULL || *((npy_intp *)seq->ptr) != rvalue) {
+        if (PyErr_Occurred() != NULL) {
             npy_free_cache_dim_obj(*seq);
             seq->ptr = NULL;
             return NPY_FAIL;
@@ -1083,12 +1070,12 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
             return -1;
         }
 
-        npy_intp rvalue = intp_from_scalar(op, vals, i);
+        vals[i] = intp_from_scalar(op);
         /*
         * If the value returned is different than the value set in vals
         * an error has been detected.
         */
-        if (PyErr_Occurred() != NULL || rvalue != vals[i]) {
+        if (PyErr_Occurred() != NULL) {
             return -1;
         }
     }
@@ -1104,12 +1091,12 @@ NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     if (PyLong_CheckExact(seq) || !PySequence_Check(seq)) {
-        npy_intp rvalue = intp_from_scalar(seq, vals, 0);
+        vals[0] = intp_from_scalar(seq);
 
         /*
         * Check if an error occurred.
         */
-        if (PyErr_Occurred() != NULL || rvalue != vals[0]) {
+        if (PyErr_Occurred() != NULL) {
             return -1;
         }
 
