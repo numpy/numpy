@@ -161,9 +161,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
 
     PyObject *seq_obj = PySequence_Fast(obj,
-            "An error occurred during a call to `PySequence_Fast`, an "
-            "iterable object is required. The given object is not a scalar "
-            "integer nor a sequence.");
+            "Expected an integer or an iterable/sequence of integers.");
     if (seq_obj == NULL) {
         Py_DECREF(seq_obj);
         seq->ptr = NULL;
@@ -1104,9 +1102,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
     }
 
     PyObject *seq_obj = PySequence_Fast(seq,
-            "An error occurred during a call to `PySequence_Fast`, an "
-            "iterable object is required. The given object is not a scalar "
-            "integer nor a sequence.");
+            "Expected an integer or an iterable/sequence of integers.");
     if (seq_obj == NULL) {
         return -1;
     }
