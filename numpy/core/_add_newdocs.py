@@ -328,7 +328,7 @@ add_newdoc('numpy.core', 'nditer',
     ...     with it:
     ...         for (a, b, c) in it:
     ...             addop(a, b, out=c)
-    ...     return it.operands[2]
+    ...         return it.operands[2]
 
     Here is the same function, but following the C-style pattern:
 
