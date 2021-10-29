@@ -375,7 +375,7 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
     /* The returned descriptors may not match, requiring a second check */
     if (out_descrs[0] != descrs[0]) {
         npy_intp from_offset = NPY_MIN_INTP;
-        NPY_CASTING from_casting = PyArray_GetCastSafety(
+        NPY_CASTING from_casting = PyArray_GetCastInfo(
                 descrs[0], out_descrs[0], NULL, &from_offset);
         casting = PyArray_MinCastSafety(casting, from_casting);
         if (from_offset != *view_offset) {
@@ -388,7 +388,7 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
     }
     if (descrs[1] != NULL && out_descrs[1] != descrs[1]) {
         npy_intp from_offset = NPY_MIN_INTP;
-        NPY_CASTING from_casting = PyArray_GetCastSafety(
+        NPY_CASTING from_casting = PyArray_GetCastInfo(
                 descrs[1], out_descrs[1], NULL, &from_offset);
         casting = PyArray_MinCastSafety(casting, from_casting);
         if (from_offset != *view_offset) {
@@ -438,7 +438,7 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
  * @return NPY_CASTING or -1 on error or if the cast is not possible.
  */
 NPY_NO_EXPORT NPY_CASTING
-PyArray_GetCastSafety(
+PyArray_GetCastInfo(
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
         npy_intp *view_offset)
 {
@@ -465,8 +465,8 @@ PyArray_GetCastSafety(
 
 
 /**
- * Check whether a cast is safe, see also `PyArray_GetCastSafety` for
- * a similar function.  Unlike GetCastSafety, this function checks the
+ * Check whether a cast is safe, see also `PyArray_GetCastInfo` for
+ * a similar function.  Unlike GetCastInfo, this function checks the
  * `castingimpl->casting` when available.  This allows for two things:
  *
  * 1. It avoids  calling `resolve_descriptors` in some cases.
@@ -2943,7 +2943,7 @@ nonstructured_to_structured_resolve_descriptors(
         casting = NPY_SAFE_CASTING;
         npy_intp sub_view_offset = NPY_MIN_INTP;
         /* Subarray dtype */
-        NPY_CASTING base_casting = PyArray_GetCastSafety(
+        NPY_CASTING base_casting = PyArray_GetCastInfo(
                 given_descrs[0], given_descrs[1]->subarray->base, NULL,
                 &sub_view_offset);
         if (base_casting < 0) {
@@ -2965,7 +2965,7 @@ nonstructured_to_structured_resolve_descriptors(
             PyObject *key, *tuple;
             while (PyDict_Next(given_descrs[1]->fields, &pos, &key, &tuple)) {
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
-                NPY_CASTING field_casting = PyArray_GetCastSafety(
+                NPY_CASTING field_casting = PyArray_GetCastInfo(
                         given_descrs[0], field_descr, NULL, view_offset);
                 casting = PyArray_MinCastSafety(casting, field_casting);
                 if (casting < 0) {
@@ -3125,11 +3125,11 @@ structured_to_nonstructured_resolve_descriptors(
     }
 
     /*
-     * The cast is always considered unsafe, so the PyArray_GetCastSafety
+     * The cast is always considered unsafe, so the PyArray_GetCastInfo
      * result currently does not matter.
      */
     npy_intp view_offset;
-    if (base_descr != NULL && PyArray_GetCastSafety(
+    if (base_descr != NULL && PyArray_GetCastInfo(
             base_descr, given_descrs[1], dtypes[1], &view_offset) < 0) {
         return -1;
     }
@@ -3275,7 +3275,7 @@ can_cast_fields_safety(
         }
         PyArray_Descr *to_base = (PyArray_Descr*)PyTuple_GET_ITEM(to_tup, 0);
 
-        NPY_CASTING field_casting = PyArray_GetCastSafety(
+        NPY_CASTING field_casting = PyArray_GetCastInfo(
                 from_base, to_base, NULL, &field_view_off);
         if (field_casting < 0) {
             return -1;
@@ -3419,7 +3419,7 @@ void_to_void_resolve_descriptors(
         PyArray_Descr *to_base = (to_sub == NULL) ? given_descrs[1] : to_sub->base;
         /* An offset for  */
         npy_intp base_off = NPY_MIN_INTP;
-        NPY_CASTING field_casting = PyArray_GetCastSafety(
+        NPY_CASTING field_casting = PyArray_GetCastInfo(
                 from_base, to_base, NULL, &base_off);
         if (field_casting < 0) {
             return -1;

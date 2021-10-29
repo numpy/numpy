@@ -1483,7 +1483,7 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
      * dtypes as input.
      */
     npy_intp view_offset;
-    NPY_CASTING safety = PyArray_GetCastSafety(type1, type2, NULL, &view_offset);
+    NPY_CASTING safety = PyArray_GetCastInfo(type1, type2, NULL, &view_offset);
     if (safety < 0) {
         PyErr_Clear();
         return 0;

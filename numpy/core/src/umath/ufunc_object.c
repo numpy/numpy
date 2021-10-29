@@ -1078,7 +1078,7 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
 
         if (dtypes[i] != PyArray_DESCR(op[i])) {
             npy_intp view_offset;
-            NPY_CASTING safety = PyArray_GetCastSafety(
+            NPY_CASTING safety = PyArray_GetCastInfo(
                     PyArray_DESCR(op[i]), dtypes[i], NULL, &view_offset);
             if (safety < 0 && PyErr_Occurred()) {
                 /* A proper error during a cast check, should be rare */
