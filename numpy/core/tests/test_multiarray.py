@@ -449,6 +449,10 @@ class TestArrayConstruction:
     def test_array_empty(self):
         assert_raises(TypeError, np.array)
 
+    def test_0d_array(self):
+        assert np.array(3) == 3
+        assert np.array(10).shape == ()
+
     def test_array_copy_false(self):
         d = np.array([1, 2, 3])
         e = np.array(d, copy=False)
