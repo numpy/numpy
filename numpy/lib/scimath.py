@@ -243,11 +243,6 @@ def sqrt(x):
     2j
     >>> np.emath.sqrt(complex(-4.0, -0.0))
     -2j
-
-
-
-
-
     """
     x = _fix_real_lt_zero(x)
     return nx.sqrt(x)
