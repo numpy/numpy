@@ -357,6 +357,9 @@ def test_new_policy(get_module):
     c = np.arange(10)
     assert np.core.multiarray.get_handler_name(c) == orig_policy_name
 
+@pytest.mark.xfail(sys.implementation.name == "pypy",
+                   reason=("bad interaction between getenv and "
+                           "os.environ inside pytest"))
 @pytest.mark.parametrize("policy", ["0", "1", None])
 def test_switch_owner(get_module, policy):
     a = get_module.get_array()
