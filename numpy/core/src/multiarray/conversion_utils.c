@@ -113,11 +113,6 @@ intp_from_scalar(PyObject *ob)
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
-    Py_ssize_t len;
-
-    seq->ptr = NULL;
-    seq->len = 0;
-
     /*
      * When the deprecation below expires, remove the `if` statement, and
      * update the comment for PyArray_OptionalIntpConverter.
@@ -132,19 +127,36 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_SUCCEED;
     }
 
+    PyObject *seq_obj = NULL;
+
+    seq->ptr = NULL;
+    seq->len = 0;
+
     /*
     * If obj is a scalar we skip all the useless computations and jump to
     * intp_from_scalar as soon as possible.
     */
-    if (PyLong_CheckExact(obj) || !PySequence_Check(obj)) {
-        len = 1;
+    if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
+        seq_obj = PySequence_Fast(obj,
+               "Expected an integer or an iterable/sequence of integers.");
+        if (seq_obj == NULL) {
+            // we ignore this error since it is managed below
+            PyErr_Clear();
+        }
+    }
+
+    if (seq_obj == NULL) {
+        /*
+        * obj *might* be a scalar (if intp_from_scalar does not fail, at the
+        * moment no check have been performed to verify this hypothesis).
+        */
 
         seq->ptr = npy_alloc_cache_dim(1);
         if (seq->ptr == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
         }
-        seq->len = len;
+        seq->len = 1;
 
         seq->ptr[0] = intp_from_scalar(obj);
         /*
@@ -156,42 +168,37 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
             seq->ptr = NULL;
             return NPY_FAIL;
         }
+    } else {
+        /*
+        * obj has been recognized as an iterable of integer values
+        */
 
-        return NPY_SUCCEED;
-    }
-
-    PyObject *seq_obj = PySequence_Fast(obj,
-            "Expected an integer or an iterable/sequence of integers.");
-    if (seq_obj == NULL) {
-        Py_DECREF(seq_obj);
-        seq->ptr = NULL;
-        return NPY_FAIL;
-    }
-
-    len = PySequence_Fast_GET_SIZE(seq_obj);
-    if (len > NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError, "maximum supported dimension for an "
-                "ndarray is %d, found %d", NPY_MAXDIMS, len);
-        Py_DECREF(seq_obj);
-        return NPY_FAIL;
-    }
-    if (len > 0) {
-        seq->ptr = npy_alloc_cache_dim(len);
-        if (seq->ptr == NULL) {
-            PyErr_NoMemory();
+        Py_ssize_t len = PySequence_Fast_GET_SIZE(seq_obj);
+        if (len > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError, "maximum supported dimension for "
+                    "an ndarray is %d, found %d", NPY_MAXDIMS, len);
             Py_DECREF(seq_obj);
             return NPY_FAIL;
         }
-    }
+        if (len > 0) {
+            seq->ptr = npy_alloc_cache_dim(len);
+            if (seq->ptr == NULL) {
+                PyErr_NoMemory();
+                Py_DECREF(seq_obj);
+                return NPY_FAIL;
+            }
+        }
 
-    seq->len = len;
-    int nd = PyArray_IntpFromIndexSequence(seq_obj, (npy_intp *)seq->ptr, len);
-    Py_DECREF(seq_obj);
+        seq->len = len;
+        int nd = PyArray_IntpFromIndexSequence(seq_obj,
+                (npy_intp *)seq->ptr, len);
+        Py_DECREF(seq_obj);
 
-    if (nd == -1 || nd != len) {
-        npy_free_cache_dim_obj(*seq);
-        seq->ptr = NULL;
-        return NPY_FAIL;
+        if (nd == -1 || nd != len) {
+            npy_free_cache_dim_obj(*seq);
+            seq->ptr = NULL;
+            return NPY_FAIL;
+        }
     }
 
     return NPY_SUCCEED;
@@ -1090,15 +1097,11 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     if (PyLong_CheckExact(seq) || !PySequence_Check(seq)) {
         vals[0] = intp_from_scalar(seq);
-
-        /*
-        * Check if an error occurred.
-        */
         if (PyErr_Occurred() != NULL) {
             return -1;
+        } else {
+            return 1;
         }
-
-        return 1;
     }
 
     PyObject *seq_obj = PySequence_Fast(seq,
