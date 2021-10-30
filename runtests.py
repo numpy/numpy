@@ -156,6 +156,18 @@ def main(argv):
                               "--bench-compare=COMMIT to override HEAD with "
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
+    parser.add_argument("--pdb", action="store_true", default=False,
+                        help=("Start the interactive Python debugger on "
+                              "errors or KeyboardInterrupt."))
+    parser.add_argument(
+        "--pdbcls",
+        action="store",
+        type=str,
+        default=None,
+        metavar="modulename:classname",
+        help=("Start a custom interactive Python debugger on errors. "
+              "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb"),
+    )
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to pytest, asv, mypy, Python "
                              "or shell")
@@ -386,7 +398,9 @@ def main(argv):
                       doctests=args.doctests,
                       coverage=args.coverage,
                       durations=args.durations,
-                      tests=tests)
+                      tests=tests,
+                      pdb=args.pdb,
+                      pdbcls=args.pdbcls)
     finally:
         os.chdir(cwd)
 

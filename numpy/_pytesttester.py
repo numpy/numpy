@@ -79,7 +79,8 @@ class PytestTester:
         self.module_name = module_name
 
     def __call__(self, label='fast', verbose=1, extra_argv=None,
-                 doctests=False, coverage=False, durations=-1, tests=None):
+                 doctests=False, coverage=False, durations=-1, tests=None,
+                 pdb=False, pdbcls=None):
         """
         Run tests for module using pytest.
 
@@ -103,6 +104,12 @@ class PytestTester:
             report the time of the slowest `timer` tests. Default is -1.
         tests : test or list of tests
             Tests to be executed with pytest '--pyargs'
+        pdb : bool
+            Start the interactive Python debugger on errors
+            or KeyboardInterrupt.
+        pdbcls : str, optional
+            start a custom interactive Python debugger on errors. For example:
+            ``--pdbcls=IPython.terminal.debugger:TerminalPd``.
 
         Returns
         -------
@@ -194,6 +201,12 @@ class PytestTester:
 
         if tests is None:
             tests = [self.module_name]
+
+        if pdb:
+            pytest_args += ["--pdb"]
+
+        if pdbcls is not None:
+            pytest_args += [f"--pdbcls={pdbcls}"]
 
         pytest_args += ["--pyargs"] + list(tests)
 

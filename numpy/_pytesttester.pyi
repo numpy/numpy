@@ -14,4 +14,6 @@ class PytestTester:
         coverage: bool = ...,
         durations: int = ...,
         tests: None | Iterable[str] = ...,
+        pdb: bool = ...,
+        pdbcls: None | str = ...,
     ) -> bool: ...
