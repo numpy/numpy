@@ -1420,7 +1420,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
 
 add_newdoc('numpy.core.umath', 'fmod',
     """
-    Return the element-wise remainder of division.
+    Returns the element-wise remainder of division.
 
     This is the NumPy implementation of the C library function fmod, the
     remainder has the same sign as the dividend `x1`. It is equivalent to
@@ -3332,7 +3332,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
 
 add_newdoc('numpy.core.umath', 'remainder',
     """
-    Return element-wise remainder of division.
+    Returns the element-wise remainder of division.
 
     Computes the remainder complementary to the `floor_divide` function.  It is
     equivalent to the Python modulus operator``x1 % x2`` and has the same sign
