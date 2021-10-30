@@ -113,6 +113,9 @@ intp_from_scalar(PyObject *ob)
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
+    seq->ptr = NULL;
+    seq->len = 0;
+
     /*
      * When the deprecation below expires, remove the `if` statement, and
      * update the comment for PyArray_OptionalIntpConverter.
@@ -128,9 +131,6 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
 
     PyObject *seq_obj = NULL;
-
-    seq->ptr = NULL;
-    seq->len = 0;
 
     /*
     * If obj is a scalar we skip all the useless computations and jump to
