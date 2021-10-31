@@ -357,24 +357,39 @@ def test_new_policy(get_module):
     c = np.arange(10)
     assert np.core.multiarray.get_handler_name(c) == orig_policy_name
 
-def test_switch_owner(get_module):
+@pytest.mark.xfail(sys.implementation.name == "pypy",
+                   reason=("bad interaction between getenv and "
+                           "os.environ inside pytest"))
+@pytest.mark.parametrize("policy", ["0", "1", None])
+def test_switch_owner(get_module, policy):
     a = get_module.get_array()
     assert np.core.multiarray.get_handler_name(a) is None
     get_module.set_own(a)
     oldval = os.environ.get('NUMPY_WARN_IF_NO_MEM_POLICY', None)
-    os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = "1"
+    if policy is None:
+        if 'NUMPY_WARN_IF_NO_MEM_POLICY' in os.environ:
+            os.environ.pop('NUMPY_WARN_IF_NO_MEM_POLICY')
+    else:
+        os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = policy
     try:
         # The policy should be NULL, so we have to assume we can call
-        # "free"
-        with assert_warns(RuntimeWarning) as w:
+        # "free".  A warning is given if the policy == "1"
+        if policy == "1":
+            with assert_warns(RuntimeWarning) as w:
+                del a
+                gc.collect()
+        else:
             del a
             gc.collect()
+
     finally:
         if oldval is None:
-            os.environ.pop('NUMPY_WARN_IF_NO_MEM_POLICY')
+            if 'NUMPY_WARN_IF_NO_MEM_POLICY' in os.environ:
+                os.environ.pop('NUMPY_WARN_IF_NO_MEM_POLICY')
         else:
             os.environ['NUMPY_WARN_IF_NO_MEM_POLICY'] = oldval
 
+def test_owner_is_base(get_module):
     a = get_module.get_array_with_base()
     with pytest.warns(UserWarning, match='warn_on_free'):
         del a
