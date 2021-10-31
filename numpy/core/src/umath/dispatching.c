@@ -193,6 +193,10 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                 /* Unspecified out always matches (see below for inputs) */
                 continue;
             }
+            if (resolver_dtype == (PyArray_DTypeMeta *)Py_None) {
+                /* always matches */
+                continue;
+            }
             if (given_dtype == resolver_dtype) {
                 continue;
             }
