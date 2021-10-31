@@ -736,7 +736,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         if axis.shape[0] == 1 and axis[0] in [0, -1] and len(a.shape) == 1:
             axis = None
 
-    if axis is None :
+    if axis is None:
         if isinstance(a, np.ma.core.MaskedArray) and np.all(a.mask):
             m = np.ma.core.MaskedConstant()
         else:
