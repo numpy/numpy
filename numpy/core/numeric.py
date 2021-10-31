@@ -738,7 +738,7 @@ def correlate(a, v, mode='valid'):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    return multiarray.correlate2(a, v, mode)
+    return multiarray.correlate2(v, a, mode)
 
 
 def _convolve_dispatcher(a, v, mode=None):
