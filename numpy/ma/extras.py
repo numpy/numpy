@@ -649,10 +649,11 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         but the type will be cast if necessary.
     overwrite_input : bool, optional
         If True, then allow use of memory of input array (a) for
-        calculations. The input array will be modified by the call to
+        calculations. The input array might be modified by the call to
         median. This will save memory when you do not need to preserve
         the contents of the input array. Treat the input as undefined,
-        but it will probably be fully or partially sorted. Default is
+        but it will probably be fully or partially sorted if the input
+        has no mask, and otherwise might not be modified. Default is
         False. Note that, if `overwrite_input` is True, and the input
         is not already an `ndarray`, an error will be raised.
     keepdims : bool, optional
@@ -705,96 +706,59 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         else:
             return m
 
-    r, k = _ureduce(a, func=_median, axis=axis, out=out,
-                    overwrite_input=overwrite_input)
-    if keepdims:
-        return r.reshape(k)
-    else:
-        return r
+    def median_1d(a):
+        a = np.array(a[~a.mask])
+        if a.shape[0] == 0:
+            return np.nan
+        return np.median(a)
 
-def _median(a, axis=None, out=None, overwrite_input=False):
-    # when an unmasked NaN is present return it, so we need to sort the NaN
-    # values behind the mask
-    if np.issubdtype(a.dtype, np.inexact):
-        fill_value = np.inf
-    else:
-        fill_value = None
-    if overwrite_input:
-        if axis is None:
-            asorted = a.ravel()
-            asorted.sort(fill_value=fill_value)
+    def median_recursive(a, axis):
+        axis = np.array(axis).reshape(-1)
+        if axis.shape[0] == 1:
+            return np.apply_along_axis(median_1d, axis[0], np.ma.array(a))
         else:
-            a.sort(axis=axis, fill_value=fill_value)
-            asorted = a
-    else:
-        asorted = sort(a, axis=axis, fill_value=fill_value)
+            return np.apply_over_axes(median_recursive, np.ma.array(a), axis)
 
-    if axis is None:
-        axis = 0
-    else:
-        axis = normalize_axis_index(axis, asorted.ndim)
-
-    if asorted.shape[axis] == 0:
-        # for empty axis integer indices fail so use slicing to get same result
-        # as median (which is mean of empty slice = nan)
-        indexer = [slice(None)] * asorted.ndim
-        indexer[axis] = slice(0, 0)
-        indexer = tuple(indexer)
-        return np.ma.mean(asorted[indexer], axis=axis, out=out)
-
-    if asorted.ndim == 1:
-        idx, odd = divmod(count(asorted), 2)
-        mid = asorted[idx + odd - 1:idx + 1]
-        if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
-            # avoid inf / x = masked
-            s = mid.sum(out=out)
-            if not odd:
-                s = np.true_divide(s, 2., casting='safe', out=out)
-            s = np.lib.utils._median_nancheck(asorted, s, axis)
+    def return_and_assign(median, out):
+        if out is None:
+            return median
+        if isinstance(out, np.ma.core.MaskedArray):
+            if not len(out.data.shape):
+                out.data.data[...] = median
+            else:
+                out.data[:] = median
         else:
-            s = mid.mean(out=out)
+            out[:] = median
+        return out
 
-        # if result is masked either the input contained enough
-        # minimum_fill_value so that it would be the median or all values
-        # masked
-        if np.ma.is_masked(s) and not np.all(asorted.mask):
-            return np.ma.minimum_fill_value(asorted)
-        return s
+    if axis is not None:
+        axis = np.array(axis).reshape(-1)
+        if axis.shape[0] == 1 and axis[0] in [0, -1] and len(a.shape) == 1:
+            axis = None
 
-    counts = count(asorted, axis=axis, keepdims=True)
-    h = counts // 2
+    if axis is None :
+        if isinstance(a, np.ma.core.MaskedArray) and np.all(a.mask):
+            m = np.ma.core.MaskedConstant()
+        else:
+            m = median_1d(a)
+        return return_and_assign(m, out)
 
-    # duplicate high if odd number of elements so mean does nothing
-    odd = counts % 2 == 1
-    l = np.where(odd, h, h-1)
-
-    lh = np.concatenate([l,h], axis=axis)
-
-    # get low and high median
-    low_high = np.take_along_axis(asorted, lh, axis=axis)
-
-    def replace_masked(s):
-        # Replace masked entries with minimum_full_value unless it all values
-        # are masked. This is required as the sort order of values equal or
-        # larger than the fill value is undefined and a valid value placed
-        # elsewhere, e.g. [4, --, inf].
-        if np.ma.is_masked(s):
-            rep = (~np.all(asorted.mask, axis=axis, keepdims=True)) & s.mask
-            s.data[rep] = np.ma.minimum_fill_value(asorted)
-            s.mask[rep] = False
-
-    replace_masked(low_high)
-
-    if np.issubdtype(asorted.dtype, np.inexact):
-        # avoid inf / x = masked
-        s = np.ma.sum(low_high, axis=axis, out=out)
-        np.true_divide(s.data, 2., casting='unsafe', out=s.data)
-
-        s = np.lib.utils._median_nancheck(asorted, s, axis)
+    is_empty = np.any(np.array(a.shape) == 0)
+    if is_empty:
+        m = np.median(np.array(a), axis)
     else:
-        s = np.ma.mean(low_high, axis=axis, out=out)
+        m = median_recursive(a, axis)
+    m = np.ma.array(m)
+    if np.any(np.isnan(m.data)):
+        m.mask = np.isnan(m.data)
+    if isinstance(a, np.ma.core.MaskedArray):
+        m.fill_value = a.fill_value
 
-    return s
+    if not keepdims:
+        if not (isinstance(a, np.ma.core.MaskedArray) and is_empty):
+            m = m.squeeze()
+
+    return return_and_assign(m, out)
 
 
 def compress_nd(x, axis=None):
