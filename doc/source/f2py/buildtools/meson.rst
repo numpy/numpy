@@ -6,7 +6,8 @@ Using via ``meson``
 
 The key advantage gained by leveraging ``meson`` over the techniques described
 in :ref:`f2py-distutils` is that this feeds into existing systems and larger
-projects with ease.
+projects with ease. ``meson`` has a rather pythonic syntax which makes it more
+comfortable and amenable to extension for ``python`` users.
 
 .. note::
 

@@ -8,12 +8,45 @@ In terms of complexity, ``cmake`` falls between ``make`` and ``meson``. The
 learning curve is steeper since CMake syntax is not pythonic and is closer to
 ``make`` with environment variables.
 
-However, the tradeoff is enhanced flexibility and support for most architectures
+However, the trade-off is enhanced flexibility and support for most architectures
 and compilers. An introduction to the syntax is out of scope for this document,
 but the `official CMake Tutorials`_ are a fantastic resource.
+
+.. note::
+
+   ``cmake`` is very popular for mixed-language systems, however support for
+   ``f2py`` is not particularly native or pleasant; and a more natural approach
+   is to consider :ref:`f2py-skbuild`
 
 Fibonacci Walkthrough
 =======================
 
+Returning to the ``fib``  example from :ref:`f2py-getting-started` section.
+
+.. literalinclude:: ./../code/fib1.f
+    :language: fortran
+
+We do not need to explicitly generate the ``python -m numpy.f2py fib1.f``
+output, which is ``fib1module.c``, which is beneficial. With this; we can now
+initialize a ``CMakeLists.txt`` file as follows:
+
+.. literalinclude:: ./../code/CMakeLists.txt
+    :language: cmake
+
+This then works in the same manner as the other modules, although the naming
+conventions are different and the output library is not automatically prefixed
+with the ``cython`` information.
+
+.. code:: bash
+          ls .
+          # CMakeLists.txt fib1.f
+          mkdir build && cd build
+          cmake ..
+          make
+          python -c "import numpy as np; import fibby; a = np.zeros(9); fibby.fib(a); print (a)"
+          # [ 0.  1.  1.  2.  3.  5.  8. 13. 21.]
+
+This is particularly useful where an existing toolchain already exists and
+``scikit-build`` or other additional ``python`` dependencies are discouraged.
 
 .. _official CMake Tutorials: https://cmake.org/cmake/help/latest/guide/tutorial/index.html

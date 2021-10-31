@@ -23,3 +23,5 @@ Build Systems
 
    distutils
    meson
+   cmake
+   skbuild
