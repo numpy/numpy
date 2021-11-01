@@ -883,6 +883,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'datetime_busday.c'),
             join('src', 'multiarray', 'datetime_busdaycal.c'),
             join('src', 'multiarray', 'descriptor.c'),
+            join('src', 'multiarray', 'dlpack.c'),
             join('src', 'multiarray', 'dtypemeta.c'),
             join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
