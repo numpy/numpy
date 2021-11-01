@@ -23,7 +23,6 @@ Functions
 import functools
 import warnings
 import numpy as np
-from numpy.lib.function_base import _QuantileInterpolation
 from numpy.lib import function_base
 from numpy.core import overrides
 
