@@ -20,13 +20,13 @@ maintainer email:  oliphant.travis@ieee.org
   Space Science Telescope Institute
   (J. Todd Miller, Perry Greenfield, Rick White)
 */
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
-/*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -493,7 +493,28 @@ array_dealloc(PyArrayObject *self)
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
             PyArray_XDECREF(self);
         }
-        npy_free_cache(fa->data, PyArray_NBYTES(self));
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        size_t nbytes = PyArray_NBYTES(self);
+        if (nbytes == 0) {
+            nbytes = fa->descr->elsize ? fa->descr->elsize : 1;
+        }
+        if (fa->mem_handler == NULL) {
+            char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
+            if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
+                char const * msg = "Trying to dealloc data, but a memory policy "
+                    "is not set. If you take ownership of the data, you must "
+                    "set a base owning the data (e.g. a PyCapsule).";
+                WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+            }
+            // Guess at malloc/free ???
+            free(fa->data);
+        } else {
+            PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
+            Py_DECREF(fa->mem_handler);
+        }
     }
 
     /* must match allocation in PyArray_NewFromDescr */
@@ -858,7 +879,7 @@ _uni_release(char *ptr, int nc)
                 relfunc(aptr, N1);                              \
                 return -1;                                      \
             }                                                   \
-            val = compfunc(aptr, bptr, N1, N2);                  \
+            val = compfunc(aptr, bptr, N1, N2);                 \
             *dptr = (val CMP 0);                                \
             PyArray_ITER_NEXT(iself);                           \
             PyArray_ITER_NEXT(iother);                          \
@@ -870,7 +891,7 @@ _uni_release(char *ptr, int nc)
 
 #define _reg_loop(CMP) {                                \
         while(size--) {                                 \
-            val = compfunc((void *)iself->dataptr,       \
+            val = compfunc((void *)iself->dataptr,      \
                           (void *)iother->dataptr,      \
                           N1, N2);                      \
             *dptr = (val CMP 0);                        \
@@ -1705,22 +1726,6 @@ array_iter(PyArrayObject *arr)
     return PySeqIter_New((PyObject *)arr);
 }
 
-static PyObject *
-array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
-{
-    /* nitems will always be 0 */
-    PyObject *obj = PyObject_Malloc(type->tp_basicsize);
-    PyObject_Init(obj, type);
-    return obj;
-}
-
-static void
-array_free(PyObject * v)
-{
-    /* avoid same deallocator as PyBaseObject, see gentype_free */
-    PyObject_Free(v);
-}
-
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -1741,7 +1746,5 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_iter = (getiterfunc)array_iter,
     .tp_methods = array_methods,
     .tp_getset = array_getsetlist,
-    .tp_alloc = (allocfunc)array_alloc,
     .tp_new = (newfunc)array_new,
-    .tp_free = (freefunc)array_free,
 };

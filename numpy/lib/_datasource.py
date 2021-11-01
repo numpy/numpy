@@ -324,7 +324,6 @@ class DataSource:
         # a significant fraction of numpy's total import time.
         import shutil
         from urllib.request import urlopen
-        from urllib.error import URLError
 
         upath = self.abspath(path)
 
@@ -530,7 +529,7 @@ class DataSource:
             return _file_openers[ext](found, mode=mode,
                                       encoding=encoding, newline=newline)
         else:
-            raise IOError("%s not found." % path)
+            raise FileNotFoundError(f"{path} not found.")
 
 
 class Repository (DataSource):

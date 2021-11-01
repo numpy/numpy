@@ -83,9 +83,12 @@ If you aren't familiar with this style, it's very easy to understand.
 If you see ``>>>``, you're looking at **input**, or the code that
 you would enter. Everything that doesn't have ``>>>`` in front of it
 is **output**, or the results of running your code. This is the style
-you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
+you see when you run ``python`` on the command line, but if you're using
+IPython, you might see a different style. Note that it is not part of the
+code and will cause an error if typed or pasted into the Python
+shell. It can be safely typed or pasted into the IPython shell; the ``>>>``
+is ignored.
 
-For more information, see :ref:`documentation_conventions`.
 
 What’s the difference between a Python list and a NumPy array?
 --------------------------------------------------------------
@@ -388,7 +391,7 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> numpy.reshape(a, newshape=(1, 6), order='C')
+  >>> np.reshape(a, newshape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
@@ -610,7 +613,7 @@ How to create an array from existing data
 
 -----
 
-You can easily use create a new array from a section of an existing array.
+You can easily create a new array from a section of an existing array.
 
 Let's say you have this array:
 
@@ -896,12 +899,18 @@ You can aggregate matrices the same way you aggregated vectors::
 .. image:: images/np_matrix_aggregation.png
 
 You can aggregate all the values in a matrix and you can aggregate them across
-columns or rows using the ``axis`` parameter::
+columns or rows using the ``axis`` parameter. To illustrate this point, let's
+look at a slightly modified dataset::
 
+  >>> data = np.array([[1, 2], [5, 3], [4, 6]])
+  >>> data
+  array([[1, 2],
+         [5, 3],
+         [4, 6]])
   >>> data.max(axis=0)
   array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4, 6])
+  array([2, 5, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 

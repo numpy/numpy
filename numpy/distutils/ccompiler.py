@@ -23,7 +23,8 @@ from numpy.distutils.exec_command import (
 )
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       get_num_build_jobs, \
-                                      _commandline_dep_string
+                                      _commandline_dep_string, \
+                                      sanitize_cxx_flags
 
 # globals for parallel build management
 import threading
@@ -258,9 +259,6 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         If compilation fails.
 
     """
-    # This method is effective only with Python >=2.3 distutils.
-    # Any changes here should be applied also to fcompiler.compile
-    # method to support pre Python 2.3 distutils.
     global _job_semaphore
 
     jobs = get_num_build_jobs()
@@ -388,7 +386,8 @@ def CCompiler_customize_cmd(self, cmd, ignore=()):
     if hasattr(self, 'compiler') and 'clang' in self.compiler[0]:
         # clang defaults to a non-strict floating error point model.
         # Since NumPy and most Python libs give warnings for these, override:
-        self.compiler.append('-ffp-exception-behavior=strict')
+        self.compiler.append('-ftrapping-math')
+        self.compiler_so.append('-ftrapping-math')
 
     def allow(attr):
         return getattr(cmd, attr, None) is not None and attr not in ignore
@@ -676,7 +675,9 @@ def CCompiler_cxx_compiler(self):
         return self
 
     cxx = copy(self)
-    cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
+    cxx.compiler_cxx = cxx.compiler_cxx
+    cxx.compiler_so = [cxx.compiler_cxx[0]] + \
+                      sanitize_cxx_flags(cxx.compiler_so[1:])
     if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
         # AIX needs the ld_so_aix script included with Python
         cxx.linker_so = [cxx.linker_so[0], cxx.compiler_cxx[0]] \

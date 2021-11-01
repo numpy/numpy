@@ -1,25 +1,17 @@
 /* -*- c -*- */
-
-/*
- * vim:syntax=c
- */
-
-/*
- *****************************************************************************
- **                            INCLUDES                                     **
- *****************************************************************************
- */
+/* vim:syntax=c */
 
 /*
  * _UMATHMODULE IS needed in __ufunc_api.h, included from numpy/ufuncobject.h.
  * This is a mess and it would be nice to fix it. It has nothing to do with
  * __ufunc_api.c
  */
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 #include "npy_config.h"
 
@@ -30,6 +22,7 @@
 
 #include "numpy/npy_math.h"
 #include "number.h"
+#include "dispatching.h"
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
@@ -313,5 +306,33 @@ int initumath(PyObject *m)
         return -1;
     }
 
+    /*
+     * Set up promoters for logical functions
+     * TODO: This should probably be done at a better place, or even in the
+     *       code generator directly.
+     */
+    s = _PyDict_GetItemStringWithError(d, "logical_and");
+    if (s == NULL) {
+        return -1;
+    }
+    if (install_logical_ufunc_promoter(s) < 0) {
+        return -1;
+    }
+
+    s = _PyDict_GetItemStringWithError(d, "logical_or");
+    if (s == NULL) {
+        return -1;
+    }
+    if (install_logical_ufunc_promoter(s) < 0) {
+        return -1;
+    }
+
+    s = _PyDict_GetItemStringWithError(d, "logical_xor");
+    if (s == NULL) {
+        return -1;
+    }
+    if (install_logical_ufunc_promoter(s) < 0) {
+        return -1;
+    }
     return 0;
 }

@@ -165,7 +165,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   fi
   $PYTHON setup.py build --warn-error build_src --verbose-cfg bdist_wheel
   # Make another virtualenv to install into
-  virtualenv --python=`which $PYTHON` venv-for-wheel
+  $PYTHON -m venv venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
@@ -181,7 +181,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
-  virtualenv --python=`which $PYTHON` venv-for-wheel
+  $PYTHON -m venv venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist

@@ -313,11 +313,11 @@ Linear algebra equivalents
 
    * - ``a(:,find(v > 0.5))``
      - ``a[:,np.nonzero(v > 0.5)[0]]``
-     - extract the columms of ``a`` where vector v > 0.5
+     - extract the columns of ``a`` where vector v > 0.5
 
    * - ``a(:,find(v>0.5))``
      - ``a[:, v.T > 0.5]``
-     - extract the columms of ``a`` where column vector v > 0.5
+     - extract the columns of ``a`` where column vector v > 0.5
 
    * - ``a(a<0.5)=0``
      - ``a[a < 0.5]=0``
@@ -819,6 +819,6 @@ found in the `topical software page <https://scipy.org/topical-software.html>`__
 See
 `List of Python software: scripting
 <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
-for a list of softwares that use Python as a scripting language
+for a list of software that use Python as a scripting language
 
 MATLAB® and SimuLink® are registered trademarks of The MathWorks, Inc.

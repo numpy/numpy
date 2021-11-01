@@ -1,7 +1,7 @@
 .. _NEP46:
 
 =====================================
-NEP 46 — NumPy Sponsorship Guidelines
+NEP 46 — NumPy sponsorship guidelines
 =====================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>

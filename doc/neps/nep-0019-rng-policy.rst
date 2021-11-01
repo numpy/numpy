@@ -1,7 +1,7 @@
 .. _NEP19:
 
 =======================================
-NEP 19 — Random Number Generator Policy
+NEP 19 — Random number generator policy
 =======================================
 
 :Author: Robert Kern <robert.kern@gmail.com>

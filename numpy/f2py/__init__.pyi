@@ -1,7 +1,8 @@
 import os
 import subprocess
-from typing import Any, List, Iterable, Dict, overload
-from typing_extensions import TypedDict, Literal as L
+from typing import Literal as L, Any, List, Iterable, Dict, overload, TypedDict
+
+from numpy._pytesttester import PytestTester
 
 class _F2PyDictBase(TypedDict):
     csrc: List[str]
@@ -13,6 +14,7 @@ class _F2PyDict(_F2PyDictBase, total=False):
 
 __all__: List[str]
 __path__: List[str]
+test: PytestTester
 
 def run_main(comline_list: Iterable[str]) -> Dict[str, _F2PyDict]: ...
 

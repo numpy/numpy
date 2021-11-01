@@ -1,7 +1,7 @@
 .. _NEP11:
 
 ==================================
-NEP 11 — Deferred UFunc Evaluation
+NEP 11 — Deferred UFunc evaluation
 ==================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>

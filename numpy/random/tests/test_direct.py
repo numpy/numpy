@@ -358,6 +358,17 @@ class TestPCG64(Base):
         assert val_neg == val_pos
         assert val_big == val_pos
 
+    def test_advange_large(self):
+        rs = Generator(self.bit_generator(38219308213743))
+        pcg = rs.bit_generator
+        state = pcg.state["state"]
+        initial_state = 287608843259529770491897792873167516365
+        assert state["state"] == initial_state
+        pcg.advance(sum(2**i for i in (96, 64, 32, 16, 8, 4, 2, 1)))
+        state = pcg.state["state"]
+        advanced_state = 135275564607035429730177404003164635391
+        assert state["state"] == advanced_state
+
 
 class TestPCG64DXSM(Base):
     @classmethod
@@ -385,6 +396,17 @@ class TestPCG64DXSM(Base):
         val_big = rs.integers(10)
         assert val_neg == val_pos
         assert val_big == val_pos
+
+    def test_advange_large(self):
+        rs = Generator(self.bit_generator(38219308213743))
+        pcg = rs.bit_generator
+        state = pcg.state
+        initial_state = 287608843259529770491897792873167516365
+        assert state["state"]["state"] == initial_state
+        pcg.advance(sum(2**i for i in (96, 64, 32, 16, 8, 4, 2, 1)))
+        state = pcg.state["state"]
+        advanced_state = 277778083536782149546677086420637664879
+        assert state["state"] == advanced_state
 
 
 class TestMT19937(Base):

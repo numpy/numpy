@@ -2,7 +2,6 @@
 import collections
 import functools
 import os
-import textwrap
 
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
@@ -126,18 +125,6 @@ def set_module(module):
     return decorator
 
 
-
-# Call textwrap.dedent here instead of in the function so as to avoid
-# calling dedent multiple times on the same text
-_wrapped_func_source = textwrap.dedent("""
-    @functools.wraps(implementation)
-    def {name}(*args, **kwargs):
-        relevant_args = dispatcher(*args, **kwargs)
-        return implement_array_function(
-            implementation, {name}, relevant_args, args, kwargs)
-    """)
-
-
 def array_function_dispatch(dispatcher, module=None, verify=True,
                             docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
@@ -187,25 +174,15 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if docs_from_dispatcher:
             add_docstring(implementation, dispatcher.__doc__)
 
-        # Equivalently, we could define this function directly instead of using
-        # exec. This version has the advantage of giving the helper function a
-        # more interpettable name. Otherwise, the original function does not
-        # show up at all in many cases, e.g., if it's written in C or if the
-        # dispatcher gets an invalid keyword argument.
-        source = _wrapped_func_source.format(name=implementation.__name__)
+        @functools.wraps(implementation)
+        def public_api(*args, **kwargs):
+            relevant_args = dispatcher(*args, **kwargs)
+            return implement_array_function(
+                implementation, public_api, relevant_args, args, kwargs)
 
-        source_object = compile(
-            source, filename='<__array_function__ internals>', mode='exec')
-        scope = {
-            'implementation': implementation,
-            'dispatcher': dispatcher,
-            'functools': functools,
-            'implement_array_function': implement_array_function,
-        }
-        exec(source_object, scope)
-
-        public_api = scope[implementation.__name__]
-
+        public_api.__code__ = public_api.__code__.replace(
+                co_name=implementation.__name__,
+                co_filename='<__array_function__ internals>')
         if module is not None:
             public_api.__module__ = module
 

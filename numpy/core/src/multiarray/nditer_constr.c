@@ -11,10 +11,10 @@
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-/* Indicate that this .c file is allowed to include the header */
+/* Allow this .c file to include nditer_impl.h */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
-#include "nditer_impl.h"
 
+#include "nditer_impl.h"
 #include "arrayobject.h"
 #include "array_coercion.h"
 #include "templ_common.h"
@@ -449,6 +449,11 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     /*
      * If REFS_OK was specified, check whether there are any
      * reference arrays and flag it if so.
+     *
+     * NOTE: This really should be unnecessary, but chances are someone relies
+     *       on it.  The iterator itself does not require the API here
+     *       as it only does so for casting/buffering.  But in almost all
+     *       use-cases the API will be required for whatever operation is done.
      */
     if (flags & NPY_ITER_REFS_OK) {
         for (iop = 0; iop < nop; ++iop) {
@@ -1400,7 +1405,7 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
 /*
  * Check whether a reduction is OK based on the flags and the operand being
  * readwrite. This path is deprecated, since usually only specific axes
- * should be reduced. If axes are specified explicitely, the flag is
+ * should be reduced. If axes are specified explicitly, the flag is
  * unnecessary.
  */
 static int

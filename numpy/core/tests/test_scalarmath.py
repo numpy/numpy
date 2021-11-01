@@ -5,14 +5,14 @@ import itertools
 import operator
 import platform
 import pytest
-from hypothesis import given, settings, Verbosity, assume
+from hypothesis import given, settings, Verbosity
 from hypothesis.strategies import sampled_from
 
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns, assert_raises_regex,
+    assert_warns,
     )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -307,8 +307,8 @@ class TestModulus:
         # promotes to float which does not fit
         a = np.array([1, 2], np.int64)
         b = np.array([1, 2], np.uint64)
-        pattern = 'could not be coerced to provided output parameter'
-        with assert_raises_regex(TypeError, pattern):
+        with pytest.raises(TypeError,
+                match=r"Cannot cast ufunc 'floor_divide' output from"):
             a //= b
 
 
@@ -670,18 +670,28 @@ class TestAbs:
         x = test_dtype(np.finfo(test_dtype).max)
         assert_equal(absfunc(x), x.real)
 
-        x = test_dtype(np.finfo(test_dtype).tiny)
-        assert_equal(absfunc(x), x.real)
+        with suppress_warnings() as sup:
+            sup.filter(UserWarning)
+            x = test_dtype(np.finfo(test_dtype).tiny)
+            assert_equal(absfunc(x), x.real)
 
         x = test_dtype(np.finfo(test_dtype).min)
         assert_equal(absfunc(x), -x.real)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_builtin_abs(self, dtype):
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(abs, dtype)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_numpy_abs(self, dtype):
+        if sys.platform == "cygwin" and dtype == np.clongdouble:
+            pytest.xfail(
+                reason="absl is computed in double precision on cygwin"
+            )
         self._test_abs_func(np.abs, dtype)
 
 class TestBitShifts:

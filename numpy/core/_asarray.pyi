@@ -1,13 +1,7 @@
-import sys
-from typing import TypeVar, Union, Iterable, overload
+from typing import TypeVar, Union, Iterable, overload, Literal
 
 from numpy import ndarray
 from numpy.typing import ArrayLike, DTypeLike
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 

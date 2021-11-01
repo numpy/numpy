@@ -30,7 +30,7 @@ from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
-from numpy.linalg import lapack_lite, _umath_linalg
+from numpy.linalg import _umath_linalg
 
 
 array_function_dispatch = functools.partial(
@@ -1680,7 +1680,7 @@ def cond(x, p=None):
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
-        Order of the norm:
+        Order of the norm used in the condition number computation:
 
         =====  ============================
         p      norm for matrices
@@ -1695,7 +1695,7 @@ def cond(x, p=None):
         -2     smallest singular value
         =====  ============================
 
-        inf means the numpy.inf object, and the Frobenius norm is
+        inf means the `numpy.inf` object, and the Frobenius norm is
         the root-of-sum-of-squares norm.
 
     Returns
@@ -1864,7 +1864,7 @@ def matrix_rank(A, tol=None, hermitian=False):
 
     References
     ----------
-    .. [1] MATLAB reference documention, "Rank"
+    .. [1] MATLAB reference documentation, "Rank"
            https://www.mathworks.com/help/techdoc/ref/rank.html
     .. [2] W. H. Press, S. A. Teukolsky, W. T. Vetterling and B. P. Flannery,
            "Numerical Recipes (3rd edition)", Cambridge University Press, 2007,
@@ -2159,7 +2159,7 @@ def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Computes the vector `x` that approximatively solves the equation
+    Computes the vector `x` that approximately solves the equation
     ``a @ x = b``. The equation may be under-, well-, or over-determined
     (i.e., the number of linearly independent rows of `a` can be less than,
     equal to, or greater than its number of linearly independent columns).

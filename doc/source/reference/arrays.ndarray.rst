@@ -249,7 +249,6 @@ Other attributes
    ndarray.real
    ndarray.imag
    ndarray.flat
-   ndarray.ctypes
 
 
 .. _arrays.ndarray.array-interface:
@@ -621,3 +620,10 @@ String representations:
 
    ndarray.__str__
    ndarray.__repr__
+
+Utility method for typing:
+
+.. autosummary::
+   :toctree: generated/
+
+   ndarray.__class_getitem__

@@ -561,7 +561,7 @@ cdef class Generator:
             raise TypeError('Unsupported dtype %r for integers' % _dtype)
 
 
-        if size is None and dtype in (bool, int, np.compat.long):
+        if size is None and dtype in (bool, int):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -876,8 +876,10 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  high - low must be non-negative.  The default value
-            is 1.0.
+            less than high.  The high limit may be included in the returned array of 
+            floats due to floating-point rounding in the equation 
+            ``low + (high-low) * random_sample()``.  high - low must be 
+            non-negative.  The default value is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2095,7 +2097,7 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            If a < 1.
+            If a <= 0.
 
         Notes
         -----
@@ -3624,7 +3626,7 @@ cdef class Generator:
             from numpy.linalg import cholesky
             l = cholesky(cov)
 
-        # make sure check_valid is ignored whe method == 'cholesky'
+        # make sure check_valid is ignored when method == 'cholesky'
         # since the decomposition will have failed if cov is not valid.
         if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':
@@ -4441,7 +4443,7 @@ cdef class Generator:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>np.PyArray_DATA(x)
+            x_ptr = np.PyArray_BYTES(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -4449,7 +4451,7 @@ cdef class Generator:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
+            buf_ptr = np.PyArray_BYTES(buf)
             if x.dtype.hasobject:
                 with self.lock:
                     _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,

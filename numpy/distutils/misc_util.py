@@ -11,6 +11,7 @@ import multiprocessing
 import textwrap
 import importlib.util
 from threading import local as tlocal
+from functools import reduce
 
 import distutils
 from distutils.errors import DistutilsError
@@ -42,8 +43,8 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
-           'get_num_build_jobs']
+           'get_build_architecture', 'get_info', 'get_pkg_info',
+           'get_num_build_jobs', 'sanitize_cxx_flags']
 
 class InstallableLib:
     """
@@ -110,6 +111,13 @@ def get_num_build_jobs():
         return max(x for x in cmdattr if x is not None)
 
 def quote_args(args):
+    """Quote list of arguments.
+
+    .. deprecated:: 1.22.
+    """
+    import warnings
+    warnings.warn('"quote_args" is deprecated.',
+                  DeprecationWarning, stacklevel=2)
     # don't used _nt_quote_args as it does not check if
     # args items already have quotes or not.
     args = list(args)
@@ -121,8 +129,8 @@ def quote_args(args):
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
-    splitted = name.split('/')
-    return os.path.join(*splitted)
+    split = name.split('/')
+    return os.path.join(*split)
 
 def rel_path(path, parent_path):
     """Return path relative to parent_path."""
@@ -376,10 +384,42 @@ def blue_text(s):
 
 #########################
 
-def cyg2win32(path):
-    if sys.platform=='cygwin' and path.startswith('/cygdrive'):
-        path = path[10] + ':' + os.path.normcase(path[11:])
-    return path
+def cyg2win32(path: str) -> str:
+    """Convert a path from Cygwin-native to Windows-native.
+
+    Uses the cygpath utility (part of the Base install) to do the
+    actual conversion.  Falls back to returning the original path if
+    this fails.
+
+    Handles the default ``/cygdrive`` mount prefix as well as the
+    ``/proc/cygdrive`` portable prefix, custom cygdrive prefixes such
+    as ``/`` or ``/mnt``, and absolute paths such as ``/usr/src/`` or
+    ``/home/username``
+
+    Parameters
+    ----------
+    path : str
+       The path to convert
+
+    Returns
+    -------
+    converted_path : str
+        The converted path
+
+    Notes
+    -----
+    Documentation for cygpath utility:
+    https://cygwin.com/cygwin-ug-net/cygpath.html
+    Documentation for the C function it wraps:
+    https://cygwin.com/cygwin-api/func-cygwin-conv-path.html
+
+    """
+    if sys.platform != "cygwin":
+        return path
+    return subprocess.check_output(
+        ["/usr/bin/cygpath", "--windows", path], universal_newlines=True
+    )
+
 
 def mingw32():
     """Return true when using mingw32 environment.
@@ -2344,47 +2384,47 @@ def generate_config_py(target):
 
                 Notes
                 -----
-                Classes specifying the information to be printed are defined
-                in the `numpy.distutils.system_info` module.
+                1. Classes specifying the information to be printed are defined
+                   in the `numpy.distutils.system_info` module.
 
-                Information may include:
+                   Information may include:
 
-                * ``language``: language used to write the libraries (mostly
-                  C or f77)
-                * ``libraries``: names of libraries found in the system
-                * ``library_dirs``: directories containing the libraries
-                * ``include_dirs``: directories containing library header files
-                * ``src_dirs``: directories containing library source files
-                * ``define_macros``: preprocessor macros used by
-                  ``distutils.setup``
-                * ``baseline``: minimum CPU features required
-                * ``found``: dispatched features supported in the system
-                * ``not found``: dispatched features that are not supported
-                  in the system
+                   * ``language``: language used to write the libraries (mostly
+                     C or f77)
+                   * ``libraries``: names of libraries found in the system
+                   * ``library_dirs``: directories containing the libraries
+                   * ``include_dirs``: directories containing library header files
+                   * ``src_dirs``: directories containing library source files
+                   * ``define_macros``: preprocessor macros used by
+                     ``distutils.setup``
+                   * ``baseline``: minimum CPU features required
+                   * ``found``: dispatched features supported in the system
+                   * ``not found``: dispatched features that are not supported
+                     in the system
 
-                NumPy BLAS/LAPACK Installation Notes
-                ------------------------------------
-                Installing a numpy wheel (``pip install numpy`` or force it
-                via ``pip install numpy --only-binary :numpy: numpy``) includes
-                an OpenBLAS implementation of the BLAS and LAPACK linear algebra
-                APIs. In this case, ``library_dirs`` reports the original build
-                time configuration as compiled with gcc/gfortran; at run time
-                the OpenBLAS library is in
-                ``site-packages/numpy.libs/`` (linux), or
-                ``site-packages/numpy/.dylibs/`` (macOS), or
-                ``site-packages/numpy/.libs/`` (windows).
+                2. NumPy BLAS/LAPACK Installation Notes
 
-                Installing numpy from source
-                (``pip install numpy --no-binary numpy``) searches for BLAS and
-                LAPACK dynamic link libraries at build time as influenced by
-                environment variables NPY_BLAS_LIBS, NPY_CBLAS_LIBS, and
-                NPY_LAPACK_LIBS; or NPY_BLAS_ORDER and NPY_LAPACK_ORDER;
-                or the optional file ``~/.numpy-site.cfg``.
-                NumPy remembers those locations and expects to load the same
-                libraries at run-time.
-                In NumPy 1.21+ on macOS, 'accelerate' (Apple's Accelerate BLAS
-                library) is in the default build-time search order after
-                'openblas'.
+                   Installing a numpy wheel (``pip install numpy`` or force it
+                   via ``pip install numpy --only-binary :numpy: numpy``) includes
+                   an OpenBLAS implementation of the BLAS and LAPACK linear algebra
+                   APIs. In this case, ``library_dirs`` reports the original build
+                   time configuration as compiled with gcc/gfortran; at run time
+                   the OpenBLAS library is in
+                   ``site-packages/numpy.libs/`` (linux), or
+                   ``site-packages/numpy/.dylibs/`` (macOS), or
+                   ``site-packages/numpy/.libs/`` (windows).
+
+                   Installing numpy from source
+                   (``pip install numpy --no-binary numpy``) searches for BLAS and
+                   LAPACK dynamic link libraries at build time as influenced by
+                   environment variables NPY_BLAS_LIBS, NPY_CBLAS_LIBS, and
+                   NPY_LAPACK_LIBS; or NPY_BLAS_ORDER and NPY_LAPACK_ORDER;
+                   or the optional file ``~/.numpy-site.cfg``.
+                   NumPy remembers those locations and expects to load the same
+                   libraries at run-time.
+                   In NumPy 1.21+ on macOS, 'accelerate' (Apple's Accelerate BLAS
+                   library) is in the default build-time search order after
+                   'openblas'.
 
                 Examples
                 --------
@@ -2439,3 +2479,15 @@ def get_build_architecture():
     # systems, so delay the import to here.
     from distutils.msvccompiler import get_build_architecture
     return get_build_architecture()
+
+
+_cxx_ignore_flags = {'-Werror=implicit-function-declaration'}
+
+
+def sanitize_cxx_flags(cxxflags):
+    '''
+    Some flags are valid for C but not C++. Prune them.
+    '''
+    return [flag for flag in cxxflags if flag not in _cxx_ignore_flags]
+
+

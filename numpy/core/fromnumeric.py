@@ -689,6 +689,9 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         it. The order of all elements in the partitions is undefined. If
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
@@ -781,6 +784,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         elements in the partitions is undefined. If provided with a
         sequence of k-th it will partition all of them into their sorted
         position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
@@ -1138,6 +1144,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
 
+        .. versionadded:: 1.22.0
+
     Returns
     -------
     index_array : ndarray of ints
@@ -1231,6 +1239,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
+
+        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -3320,18 +3330,15 @@ def around(a, decimals=0, out=None):
     ----------
     .. [1] "Lecture Notes on the Status of IEEE 754", William Kahan,
            https://people.eecs.berkeley.edu/~wkahan/ieee754status/IEEE754.PDF
-    .. [2] "How Futile are Mindless Assessments of
-           Roundoff in Floating-Point Computation?", William Kahan,
-           https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
 
     Examples
     --------
     >>> np.around([0.37, 1.64])
-    array([0.,  2.])
+    array([0., 2.])
     >>> np.around([0.37, 1.64], decimals=1)
-    array([0.4,  1.6])
+    array([0.4, 1.6])
     >>> np.around([.5, 1.5, 2.5, 3.5, 4.5]) # rounds to nearest even value
-    array([0.,  2.,  2.,  4.,  4.])
+    array([0., 2., 2., 4., 4.])
     >>> np.around([1,2,3,11], decimals=1) # ndarray of ints is returned
     array([ 1,  2,  3, 11])
     >>> np.around([1,2,3,11], decimals=-1)

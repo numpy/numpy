@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_COERCION_H
-#define _NPY_ARRAY_COERCION_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_
 
 
 /*
@@ -54,4 +54,4 @@ npy_unlink_coercion_cache(coercion_cache_obj *current);
 NPY_NO_EXPORT int
 PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache);
 
-#endif  /* _NPY_ARRAY_COERCION_H */
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_ */

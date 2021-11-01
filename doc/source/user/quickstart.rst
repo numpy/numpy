@@ -45,10 +45,11 @@ NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
 tuple of non-negative integers. In NumPy dimensions are called *axes*.
 
-For example, the coordinates of a point in 3D space ``[1, 2, 1]`` has
-one axis. That axis has 3 elements in it, so we say it has a length
-of 3. In the example pictured below, the array has 2 axes. The first
-axis has a length of 2, the second axis has a length of 3.
+For example, the array for the coordinates of a point in 3D space,
+``[1, 2, 1]``, has one axis. That axis has 3 elements in it, so we say
+it has a length of 3. In the example pictured below, the array has 2 
+axes. The first axis has a length of 2, the second axis has a length of 
+3.
 
 ::
 
@@ -1482,4 +1483,4 @@ Further reading
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
--  `Linear algebra on n-dimensional arrays (Tutorial) <https://numpy.org/numpy-tutorials/content/tutorial-svd.html>`__
+-  :doc:`tutorial-svd <content/tutorial-svd>`

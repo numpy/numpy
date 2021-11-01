@@ -1,5 +1,5 @@
-#ifndef _NPY_PYCOMPAT_H_
-#define _NPY_PYCOMPAT_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_PYCOMPAT_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_PYCOMPAT_H_
 
 #include "numpy/npy_3kcompat.h"
 
@@ -19,4 +19,4 @@ Npy_HashDouble(PyObject *NPY_UNUSED(identity), double val)
 #endif
 
 
-#endif /* _NPY_COMPAT_H_ */
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_PYCOMPAT_H_ */

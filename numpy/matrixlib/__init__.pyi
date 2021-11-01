@@ -1,11 +1,17 @@
-from typing import Any, List
+from typing import List
+
+from numpy._pytesttester import PytestTester
 
 from numpy import (
     matrix as matrix,
 )
 
-__all__: List[str]
+from numpy.matrixlib.defmatrix import (
+    bmat as bmat,
+    mat as mat,
+    asmatrix as asmatrix,
+)
 
-def bmat(obj, ldict=..., gdict=...): ...
-def asmatrix(data, dtype=...): ...
-mat = asmatrix
+__all__: List[str]
+__path__: List[str]
+test: PytestTester

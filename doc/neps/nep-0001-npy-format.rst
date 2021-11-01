@@ -1,7 +1,7 @@
 .. _NEP01:
 
 =============================================
-NEP 1 — A Simple File Format for NumPy Arrays
+NEP 1 — A simple file format for NumPy arrays
 =============================================
 
 :Author: Robert Kern <robert.kern@gmail.com>

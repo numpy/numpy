@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE_TYPEINFO_H_
-#define _NPY_PRIVATE_TYPEINFO_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TYPEINFO_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TYPEINFO_H_
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -18,4 +18,4 @@ PyArray_typeinforanged(
     char typechar, int typenum, int nbits, int align,
     PyObject *max, PyObject *min, PyTypeObject *type_obj);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TYPEINFO_H_ */

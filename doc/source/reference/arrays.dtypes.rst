@@ -562,3 +562,20 @@ The following methods implement the pickle protocol:
 
    dtype.__reduce__
    dtype.__setstate__
+
+Utility method for typing:
+
+.. autosummary::
+   :toctree: generated/
+
+   dtype.__class_getitem__
+
+Comparison operations:
+
+.. autosummary::
+   :toctree: generated/
+
+   dtype.__ge__
+   dtype.__gt__
+   dtype.__le__
+   dtype.__lt__

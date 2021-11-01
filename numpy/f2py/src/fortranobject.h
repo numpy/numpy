@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-#include "Python.h"
+#include <Python.h>
 
 #ifdef FORTRANOBJECT_C
 #define NO_IMPORT_ARRAY
@@ -13,18 +13,19 @@ extern "C" {
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
 
-
 #ifdef F2PY_REPORT_ATEXIT
 #include <sys/timeb.h>
-  extern void f2py_start_clock(void);
-  extern void f2py_stop_clock(void);
-  extern void f2py_start_call_clock(void);
-  extern void f2py_stop_call_clock(void);
-  extern void f2py_cb_start_clock(void);
-  extern void f2py_cb_stop_clock(void);
-  extern void f2py_cb_start_call_clock(void);
-  extern void f2py_cb_stop_call_clock(void);
-  extern void f2py_report_on_exit(int,void*);
+// clang-format off
+extern void f2py_start_clock(void);
+extern void f2py_stop_clock(void);
+extern void f2py_start_call_clock(void);
+extern void f2py_stop_call_clock(void);
+extern void f2py_cb_start_clock(void);
+extern void f2py_cb_stop_clock(void);
+extern void f2py_cb_start_call_clock(void);
+extern void f2py_cb_stop_call_clock(void);
+extern void f2py_report_on_exit(int, void *);
+// clang-format on
 #endif
 
 #ifdef DMALLOC
@@ -44,50 +45,60 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 
 #define F2PY_MAX_DIMS 40
 
-typedef void (*f2py_set_data_func)(char*,npy_intp*);
+typedef void (*f2py_set_data_func)(char *, npy_intp *);
 typedef void (*f2py_void_func)(void);
-typedef void (*f2py_init_func)(int*,npy_intp*,f2py_set_data_func,int*);
+typedef void (*f2py_init_func)(int *, npy_intp *, f2py_set_data_func, int *);
 
-  /*typedef void* (*f2py_c_func)(void*,...);*/
+/*typedef void* (*f2py_c_func)(void*,...);*/
 
 typedef void *(*f2pycfunc)(void);
 
 typedef struct {
-  char *name;                /* attribute (array||routine) name */
-  int rank;                  /* array rank, 0 for scalar, max is F2PY_MAX_DIMS,
-                                || rank=-1 for Fortran routine */
-  struct {npy_intp d[F2PY_MAX_DIMS];} dims; /* dimensions of the array, || not used */
-  int type;                  /* PyArray_<type> || not used */
-  char *data;                /* pointer to array || Fortran routine */
-  f2py_init_func func;       /* initialization function for
-                                allocatable arrays:
-                                func(&rank,dims,set_ptr_func,name,len(name))
-                                || C/API wrapper for Fortran routine */
-  char *doc;                 /* documentation string; only recommended
-                                for routines. */
+    char *name; /* attribute (array||routine) name */
+    int rank;   /* array rank, 0 for scalar, max is F2PY_MAX_DIMS,
+                   || rank=-1 for Fortran routine */
+    struct {
+        npy_intp d[F2PY_MAX_DIMS];
+    } dims;              /* dimensions of the array, || not used */
+    int type;            /* PyArray_<type> || not used */
+    char *data;          /* pointer to array || Fortran routine */
+    f2py_init_func func; /* initialization function for
+                            allocatable arrays:
+                            func(&rank,dims,set_ptr_func,name,len(name))
+                            || C/API wrapper for Fortran routine */
+    char *doc;           /* documentation string; only recommended
+                            for routines. */
 } FortranDataDef;
 
 typedef struct {
-  PyObject_HEAD
-  int len;                   /* Number of attributes */
-  FortranDataDef *defs;      /* An array of FortranDataDef's */
-  PyObject       *dict;      /* Fortran object attribute dictionary */
+    PyObject_HEAD
+    int len;              /* Number of attributes */
+    FortranDataDef *defs; /* An array of FortranDataDef's */
+    PyObject *dict;       /* Fortran object attribute dictionary */
 } PyFortranObject;
 
 #define PyFortran_Check(op) (Py_TYPE(op) == &PyFortran_Type)
-#define PyFortran_Check1(op) (0==strcmp(Py_TYPE(op)->tp_name,"fortran"))
+#define PyFortran_Check1(op) (0 == strcmp(Py_TYPE(op)->tp_name, "fortran"))
 
-  extern PyTypeObject PyFortran_Type;
-  extern int F2PyDict_SetItemString(PyObject* dict, char *name, PyObject *obj);
-  extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
-  extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
+extern PyTypeObject PyFortran_Type;
+extern int
+F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj);
+extern PyObject *
+PyFortranObject_New(FortranDataDef *defs, f2py_void_func init);
+extern PyObject *
+PyFortranObject_NewAsAttr(FortranDataDef *defs);
 
-PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
-void * F2PyCapsule_AsVoidPtr(PyObject *obj);
-int F2PyCapsule_Check(PyObject *ptr);
+PyObject *
+F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
+void *
+F2PyCapsule_AsVoidPtr(PyObject *obj);
+int
+F2PyCapsule_Check(PyObject *ptr);
 
-extern void *F2PySwapThreadLocalCallbackPtr(char *key, void *ptr);
-extern void *F2PyGetThreadLocalCallbackPtr(char *key);
+extern void *
+F2PySwapThreadLocalCallbackPtr(char *key, void *ptr);
+extern void *
+F2PyGetThreadLocalCallbackPtr(char *key);
 
 #define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_ARRAY_C_CONTIGUOUS)
 #define F2PY_INTENT_IN 1
@@ -109,22 +120,22 @@ extern void *F2PyGetThreadLocalCallbackPtr(char *key);
 #define F2PY_ALIGN16(intent) (intent & F2PY_INTENT_ALIGNED16)
 
 #define F2PY_GET_ALIGNMENT(intent) \
-        (F2PY_ALIGN4(intent) ? 4 : \
-         (F2PY_ALIGN8(intent) ? 8 : \
-          (F2PY_ALIGN16(intent) ? 16 : 1) ))
-#define F2PY_CHECK_ALIGNMENT(arr, intent) ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
+    (F2PY_ALIGN4(intent)           \
+             ? 4                   \
+             : (F2PY_ALIGN8(intent) ? 8 : (F2PY_ALIGN16(intent) ? 16 : 1)))
+#define F2PY_CHECK_ALIGNMENT(arr, intent) \
+    ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
 
-  extern PyArrayObject* array_from_pyobj(const int type_num,
-                                         npy_intp *dims,
-                                         const int rank,
-                                         const int intent,
-                                         PyObject *obj);
-  extern int copy_ND_array(const PyArrayObject *in, PyArrayObject *out);
+extern PyArrayObject *
+array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
+                 const int intent, PyObject *obj);
+extern int
+copy_ND_array(const PyArrayObject *in, PyArrayObject *out);
 
 #ifdef DEBUG_COPY_ND_ARRAY
-  extern void dump_attrs(const PyArrayObject* arr);
+extern void
+dump_attrs(const PyArrayObject *arr);
 #endif
-
 
 #ifdef __cplusplus
 }

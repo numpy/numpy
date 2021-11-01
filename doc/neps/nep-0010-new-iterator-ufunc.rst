@@ -1,7 +1,7 @@
 .. _NEP10:
 
 ==============================================
-NEP 10 — Optimizing Iterator/UFunc Performance
+NEP 10 — Optimizing Iterator/UFunc performance
 ==============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
@@ -10,7 +10,7 @@ NEP 10 — Optimizing Iterator/UFunc Performance
 :Status: Final
 
 *****************
-Table of Contents
+Table of contents
 *****************
 
 .. contents::
@@ -1545,7 +1545,7 @@ Functions For Iteration
 ``npy_intp *NpyIter_GetIndexPtr(NpyIter *iter)``
 
     This gives back a pointer to the index being tracked, or NULL
-    if no index is being tracked.  It is only useable if one of
+    if no index is being tracked.  It is only usable if one of
     the flags ``NPY_ITER_C_INDEX`` or ``NPY_ITER_F_INDEX``
     were specified during construction.
 

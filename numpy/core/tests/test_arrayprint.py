@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 import gc
 from hypothesis import given

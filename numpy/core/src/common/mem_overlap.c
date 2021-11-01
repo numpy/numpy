@@ -181,9 +181,11 @@
   All rights reserved.
   Licensed under 3-clause BSD license, see LICENSE.txt.
 */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/ndarraytypes.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"

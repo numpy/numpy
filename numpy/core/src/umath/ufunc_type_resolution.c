@@ -1,4 +1,16 @@
 /*
+ * NOTE: The type resolution defined in this file is considered legacy.
+ *
+ * The new mechanism separates type resolution and promotion into two
+ * distinct steps, as per NEP 43.
+ * Further, the functions in this file rely on the operands rather than
+ * only the DTypes/descriptors.  They are still called and at this point
+ * vital (NumPy ~1.21), but should hopefully become largely irrelevant very
+ * quickly.
+ *
+ * At that point, this file should be deletable in its entirety.
+ *
+ *
  * This file implements type resolution for NumPy element-wise ufuncs.
  * This mechanism is still backwards-compatible with the pre-existing
  * legacy mechanism, so performs much slower than is necessary.
@@ -8,18 +20,17 @@
  *
  * See LICENSE.txt for the license.
  */
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 // printif debug tracing
 #ifndef NPY_UF_DBG_TRACING
     #define NPY_UF_DBG_TRACING 0
 #endif
-
-#include <stdbool.h>
-
-#include "Python.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -35,6 +46,8 @@
 #if defined(HAVE_CBLAS)
 #include "cblasfuncs.h"
 #endif
+
+#include <stdbool.h>
 
 static PyObject *
 npy_casting_to_py_object(NPY_CASTING casting)
@@ -89,9 +102,9 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
 /** Helper function to raise UFuncNoLoopError
  * Always returns -1 to indicate the exception was raised, for convenience
  */
-static int
+NPY_NO_EXPORT int
 raise_no_loop_found_error(
-        PyUFuncObject *ufunc, PyArray_Descr **dtypes)
+        PyUFuncObject *ufunc, PyObject **dtypes)
 {
     static PyObject *exc_type = NULL;
 
@@ -102,8 +115,7 @@ raise_no_loop_found_error(
         return -1;
     }
 
-    PyObject *dtypes_tup = PyArray_TupleFromItems(
-            ufunc->nargs, (PyObject **)dtypes, 1);
+    PyObject *dtypes_tup = PyArray_TupleFromItems(ufunc->nargs, dtypes, 1);
     if (dtypes_tup == NULL) {
         return -1;
     }
@@ -118,6 +130,7 @@ raise_no_loop_found_error(
 
     return -1;
 }
+
 
 static int
 raise_casting_error(
@@ -234,6 +247,28 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
 }
 
 
+/*
+ * Same as `PyUFunc_ValidateCasting` but only checks output casting.
+ */
+NPY_NO_EXPORT int
+PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
+        NPY_CASTING casting, PyArrayObject **operands, PyArray_Descr **dtypes)
+{
+    int i, nin = ufunc->nin, nop = nin + ufunc->nout;
+
+    for (i = nin; i < nop; ++i) {
+        if (operands[i] == NULL) {
+            continue;
+        }
+        if (!PyArray_CanCastTypeTo(dtypes[i],
+                PyArray_DESCR(operands[i]), casting)) {
+            return raise_output_casting_error(
+                    ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
+        }
+    }
+    return 0;
+}
+
 /*UFUNC_API
  *
  * This function applies the default type resolution rules
@@ -333,22 +368,30 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
         }
         else {
             /* Not doing anything will lead to a loop no found error. */
             out_dtypes[0] = PyArray_DESCR(operands[0]);
             Py_INCREF(out_dtypes[0]);
+            out_dtypes[1] = PyArray_DESCR(operands[1]);
+            Py_INCREF(out_dtypes[1]);
         }
-        out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
     }
     else {
         PyArray_Descr *descr;
         /*
+         * DEPRECATED 2021-03, NumPy 1.20
+         *
          * If the type tuple was originally a single element (probably),
          * issue a deprecation warning, but otherwise accept it.  Since the
          * result dtype is always boolean, this is not actually valid unless it
          * is `object` (but if there is an object input we already deferred).
+         *
+         * TODO: Once this deprecation is gone, the special case for
+         *       `PyUFunc_SimpleBinaryComparisonTypeResolver` in dispatching.c
+         *       can be removed.
          */
         if (PyTuple_Check(type_tup) && PyTuple_GET_SIZE(type_tup) == 3 &&
                 PyTuple_GET_ITEM(type_tup, 0) == Py_None &&
@@ -527,7 +570,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
                 }
-                raise_no_loop_found_error(ufunc, out_dtypes);
+                raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
                 for (iop = 0; iop < ufunc->nin; iop++) {
                     Py_DECREF(out_dtypes[iop]);
                     out_dtypes[iop] = NULL;
@@ -1492,7 +1535,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    return raise_no_loop_found_error(ufunc, dtypes);
+    return raise_no_loop_found_error(ufunc, (PyObject **)dtypes);
 }
 
 
@@ -2121,6 +2164,10 @@ type_tuple_type_resolver(PyUFuncObject *self,
      * `signature=(None,)*nin + (dtype,)*nout`.  If the signature matches that
      * exactly (could be relaxed but that is not necessary for backcompat),
      * we also try `signature=(dtype,)*(nin+nout)`.
+     * Since reduction pass in `(dtype, None, dtype)` we broaden this to
+     * replacing all unspecified dtypes with the homogeneous output one.
+     * Note that this can (and often will) lead to unsafe casting.  This is
+     * normally rejected (but not currently for reductions!).
      * This used to be the main meaning for `dtype=dtype`, but some calls broke
      * the expectation, and changing it allows for `dtype=dtype` to be useful
      * for ufuncs like `np.ldexp` in the future while also normalizing it to
@@ -2139,13 +2186,12 @@ type_tuple_type_resolver(PyUFuncObject *self,
     if (homogeneous_type != NPY_NOTYPE) {
         for (int i = 0; i < nin; i++) {
             if (specified_types[i] != NPY_NOTYPE) {
-                homogeneous_type = NPY_NOTYPE;
-                break;
+                /* Never replace a specified type! */
+                continue;
             }
             specified_types[i] = homogeneous_type;
         }
-    }
-    if (homogeneous_type != NPY_NOTYPE) {
+
         /* Try again with the homogeneous specified types. */
         res = type_tuple_type_resolver_core(self,
                 op, input_casting, casting, specified_types, any_object,

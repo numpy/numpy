@@ -1,7 +1,7 @@
-#ifndef _NPY_ARGPARSE_H
-#define _NPY_ARGPARSE_H
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H
+#define NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H
 
-#include "Python.h"
+#include <Python.h>
 #include "numpy/ndarraytypes.h"
 
 /*
@@ -93,4 +93,4 @@ _npy_parse_arguments(const char *funcname,
         _npy_parse_arguments(funcname, &__argparse_cache,                \
                 args, len_args, kwnames, __VA_ARGS__)
 
-#endif /* _NPY_ARGPARSE_H */
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H */

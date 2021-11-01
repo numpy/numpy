@@ -205,12 +205,12 @@ add_newdoc_for_scalar_type('bytes_', ['string_'],
 add_newdoc_for_scalar_type('void', [],
     r"""
     Either an opaque sequence of bytes, or a structure.
-    
+
     >>> np.void(b'abcd')
     void(b'\x61\x62\x63\x64')
-    
+
     Structured `void` scalars can only be constructed via extraction from :ref:`structured_arrays`:
-    
+
     >>> arr = np.array((1, 2), dtype=[('x', np.int8), ('y', np.int8)])
     >>> arr[()]
     (1, 2)  # looks like a tuple, but is `np.void`
@@ -226,19 +226,35 @@ add_newdoc_for_scalar_type('datetime64', [],
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
     >>> np.datetime64('1980', 'Y')
-    numpy.datetime64('1980')   
+    numpy.datetime64('1980')
     >>> np.datetime64(10, 'D')
     numpy.datetime64('1970-01-11')
-    
+
     See :ref:`arrays.datetime` for more information.
     """)
 
 add_newdoc_for_scalar_type('timedelta64', [],
     """
     A timedelta stored as a 64-bit integer.
-    
+
     See :ref:`arrays.datetime` for more information.
     """)
+
+add_newdoc('numpy.core.numerictypes', "integer", ('is_integer',
+    """
+    integer.is_integer() -> bool
+
+    Return ``True`` if the number is finite with integral value.
+
+    .. versionadded:: 1.22
+
+    Examples
+    --------
+    >>> np.int64(-2).is_integer()
+    True
+    >>> np.uint32(5).is_integer()
+    True
+    """))
 
 # TODO: work out how to put this on the base class, np.floating
 for float_name in ('half', 'single', 'double', 'longdouble'):
@@ -257,3 +273,20 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         >>> np.{ftype}(-.25).as_integer_ratio()
         (-1, 4)
         """.format(ftype=float_name)))
+
+    add_newdoc('numpy.core.numerictypes', float_name, ('is_integer',
+        f"""
+        {float_name}.is_integer() -> bool
+
+        Return ``True`` if the floating point number is finite with integral
+        value, and ``False`` otherwise.
+
+        .. versionadded:: 1.22
+
+        Examples
+        --------
+        >>> np.{float_name}(-2.0).is_integer()
+        True
+        >>> np.{float_name}(3.2).is_integer()
+        False
+        """))

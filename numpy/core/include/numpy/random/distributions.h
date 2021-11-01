@@ -1,11 +1,11 @@
-#ifndef _RANDOMDGEN__DISTRIBUTIONS_H_
-#define _RANDOMDGEN__DISTRIBUTIONS_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_RANDOM_DISTRIBUTIONS_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_RANDOM_DISTRIBUTIONS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "Python.h"
+#include <Python.h>
 #include "numpy/npy_common.h"
 #include <stddef.h>
 #include <stdbool.h>
@@ -28,7 +28,7 @@ extern "C" {
 #define RAND_INT_MAX INT64_MAX
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__CYGWIN__)
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR extern
@@ -206,4 +206,4 @@ static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
 }
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_RANDOM_DISTRIBUTIONS_H_ */

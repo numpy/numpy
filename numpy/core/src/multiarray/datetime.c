@@ -6,16 +6,14 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <datetime.h>
 
-#include <time.h>
-
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
+#include "numpy/arrayobject.h"
+#include "numpyos.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -30,7 +28,11 @@
 #include "usertypes.h"
 
 #include "dtype_transfer.h"
-#include <lowlevel_strided_loops.h>
+#include "lowlevel_strided_loops.h"
+
+#include <datetime.h>
+#include <time.h>
+
 
 /*
  * Computes the python `ret, d = divmod(d, unit)`.
@@ -426,7 +428,7 @@ PyArray_DatetimeStructToDatetime(
 }
 
 /*NUMPY_API
- * Create a timdelta value from a filled timedelta struct and resolution unit.
+ * Create a timedelta value from a filled timedelta struct and resolution unit.
  *
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
@@ -722,11 +724,20 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
 {
     char const *substr = str, *substrend = NULL;
     int den = 1;
+    npy_longlong true_meta_val;
 
     /* First comes an optional integer multiplier */
     out_meta->num = (int)strtol_const(substr, &substrend, 10);
     if (substr == substrend) {
         out_meta->num = 1;
+    }
+    else {
+        // check for 32-bit integer overflow
+        char *endptr = NULL;
+        true_meta_val = NumPyOS_strtoll(substr, &endptr, 10);
+        if (true_meta_val > INT_MAX || true_meta_val < 0) {
+            goto bad_input;
+        }
     }
     substr = substrend;
 
@@ -1159,7 +1170,7 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
     }
 
     /* If something overflowed, make both num and denom 0 */
-    if (denom == 0 || num == 0) {
+    if (num == 0) {
         PyErr_Format(PyExc_OverflowError,
                     "Integer overflow while computing the conversion "
                     "factor between NumPy datetime units %s and %s",
@@ -3775,7 +3786,17 @@ time_to_time_resolve_descriptors(
     meta2 = get_datetime_metadata_from_dtype(loop_descrs[1]);
     assert(meta2 != NULL);
 
-    if (meta1->base == meta2->base && meta1->num == meta2->num) {
+    if ((meta1->base == meta2->base && meta1->num == meta2->num) ||
+            // handle some common metric prefix conversions
+            // 1000 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 1)
+              && ((meta1->num / meta2->num) == 1000)) ||
+            // 10^6 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 2)
+              && ((meta1->num / meta2->num) == 1000000)) ||
+            // 10^9 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 3)
+              && ((meta1->num / meta2->num) == 1000000000))) {
         if (byteorder_may_allow_view) {
             return NPY_NO_CASTING | byteorder_may_allow_view;
         }
@@ -3996,7 +4017,7 @@ string_to_datetime_cast_resolve_descriptors(
 {
     if (given_descrs[1] == NULL) {
         /* NOTE: This doesn't actually work, and will error during the cast */
-        loop_descrs[1] = dtypes[1]->default_descr(dtypes[1]);
+        loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
         }

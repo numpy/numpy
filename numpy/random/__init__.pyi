@@ -1,5 +1,7 @@
 from typing import List
 
+from numpy._pytesttester import PytestTester
+
 from numpy.random._generator import Generator as Generator
 from numpy.random._generator import default_rng as default_rng
 from numpy.random._mt19937 import MT19937 as MT19937
@@ -66,3 +68,5 @@ from numpy.random.mtrand import (
 )
 
 __all__: List[str]
+__path__: List[str]
+test: PytestTester

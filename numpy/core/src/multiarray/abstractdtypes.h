@@ -1,5 +1,5 @@
-#ifndef _NPY_ABSTRACTDTYPES_H
-#define _NPY_ABSTRACTDTYPES_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_
 
 #include "dtypemeta.h"
 
@@ -16,4 +16,4 @@ NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyComplexAbstractDType;
 NPY_NO_EXPORT int
 initialize_and_map_pytypes_to_dtypes(void);
 
-#endif  /*_NPY_ABSTRACTDTYPES_H */
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_ */

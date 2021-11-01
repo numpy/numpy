@@ -36,7 +36,7 @@ def _cleanup():
             pass
         try:
             shutil.rmtree(_module_dir)
-        except (IOError, OSError):
+        except OSError:
             pass
         _module_dir = None
 
@@ -242,9 +242,6 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     Build a module via distutils and import it.
 
     """
-    from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.core import setup
-
     d = get_module_dir()
 
     # Copy files

@@ -1,6 +1,8 @@
 import math as math
 from typing import Any, List
 
+from numpy._pytesttester import PytestTester
+
 from numpy import (
     ndenumerate as ndenumerate,
     ndindex as ndindex,
@@ -83,6 +85,12 @@ from numpy.lib.function_base import (
     quantile as quantile,
 )
 
+from numpy.lib.histograms import (
+    histogram_bin_edges as histogram_bin_edges,
+    histogram as histogram,
+    histogramdd as histogramdd,
+)
+
 from numpy.lib.index_tricks import (
     ravel_multi_index as ravel_multi_index,
     unravel_index as unravel_index,
@@ -122,7 +130,6 @@ from numpy.lib.npyio import (
     recfromtxt as recfromtxt,
     recfromcsv as recfromcsv,
     load as load,
-    loads as loads,
     save as save,
     savez as savez,
     savez_compressed as savez_compressed,
@@ -231,6 +238,8 @@ from numpy.core.multiarray import (
 )
 
 __all__: List[str]
+__path__: List[str]
+test: PytestTester
 
 __version__ = version
 emath = scimath

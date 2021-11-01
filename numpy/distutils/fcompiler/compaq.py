@@ -84,9 +84,9 @@ class CompaqVisualFCompiler(FCompiler):
                 print('Ignoring "%s" (I think it is msvccompiler.py bug)' % (e))
             else:
                 raise
-        except IOError as e:
+        except OSError as e:
             if not "vcvarsall.bat" in str(e):
-                print("Unexpected IOError in", __file__)
+                print("Unexpected OSError in", __file__)
                 raise
         except ValueError as e:
             if not "'path'" in str(e):

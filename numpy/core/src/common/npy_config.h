@@ -1,5 +1,5 @@
-#ifndef _NPY_NPY_CONFIG_H_
-#define _NPY_NPY_CONFIG_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 
 #include "config.h"
 #include "npy_cpu_features.h"
@@ -96,6 +96,51 @@
 #undef HAVE_POWL
 #endif
 
+#ifdef __CYGWIN__
+/* Loss of precision */
+#undef HAVE_CASINHL
+#undef HAVE_CASINH
+#undef HAVE_CASINHF
+
+/* Loss of precision */
+#undef HAVE_CATANHL
+#undef HAVE_CATANH
+#undef HAVE_CATANHF
+
+/* Loss of precision and branch cuts */
+#undef HAVE_CATANL
+#undef HAVE_CATAN
+#undef HAVE_CATANF
+
+/* Branch cuts */
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSH
+
+/* Branch cuts */
+#undef HAVE_CSQRTF
+#undef HAVE_CSQRT
+
+/* Branch cuts and loss of precision */
+#undef HAVE_CASINF
+#undef HAVE_CASIN
+#undef HAVE_CASINL
+
+/* Branch cuts */
+#undef HAVE_CACOSF
+#undef HAVE_CACOS
+
+/* log2(exp2(i)) off by a few eps */
+#undef HAVE_LOG2
+
+/* np.power(..., dtype=np.complex256) doesn't report overflow */
+#undef HAVE_CPOWL
+#undef HAVE_CEXPL
+
+/* Builtin abs reports overflow */
+#undef HAVE_CABSL
+#undef HAVE_HYPOTL
+#endif
+
 /* Disable broken gnu trig functions */
 #if defined(HAVE_FEATURES_H)
 #include <features.h>
@@ -122,9 +167,9 @@
 #undef HAVE_CACOSHF
 #undef HAVE_CACOSHL
 
-#endif /* __GLIBC_PREREQ(2, 18) */
-#endif /* defined(__GLIBC_PREREQ) */
+#endif  /* __GLIBC_PREREQ(2, 18) */
+#endif  /* defined(__GLIBC_PREREQ) */
 
-#endif /* defined(HAVE_FEATURES_H) */
+#endif  /* defined(HAVE_FEATURES_H) */
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_ */

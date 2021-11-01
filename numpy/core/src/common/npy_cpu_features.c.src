@@ -230,7 +230,7 @@ npy__cpu_try_disable_env(void)
             notsupp_cur[flen] = ' '; notsupp_cur += flen + 1;
             goto next;
         }
-        // Finaly we can disable it
+        // Finally we can disable it
         npy__cpu_have[feature_id] = 0;
     next:
         feature = strtok(NULL, delim);

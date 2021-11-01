@@ -243,7 +243,8 @@ class build_ext (old_build_ext):
             if l and l != ext_language and ext.language:
                 log.warn('resetting extension %r language from %r to %r.' %
                          (ext.name, l, ext_language))
-            ext.language = ext_language
+            if not ext.language:
+                ext.language = ext_language
             # global language
             all_languages.update(ext_languages)
 
@@ -376,6 +377,9 @@ class build_ext (old_build_ext):
             log.info("building '%s' extension", ext.name)
 
         extra_args = ext.extra_compile_args or []
+        extra_cflags = ext.extra_c_compile_args or []
+        extra_cxxflags = ext.extra_cxx_compile_args or []
+
         macros = ext.define_macros[:]
         for undef in ext.undef_macros:
             macros.append((undef,))
@@ -462,38 +466,43 @@ class build_ext (old_build_ext):
                 macros=macros + copt_macros,
                 include_dirs=include_dirs,
                 debug=self.debug,
-                extra_postargs=extra_args,
+                extra_postargs=extra_args + extra_cxxflags,
                 ccompiler=cxx_compiler,
                 **kws
             )
         if copt_c_sources:
             log.info("compiling C dispatch-able sources")
-            c_objects += self.compiler_opt.try_dispatch(copt_c_sources,
-                                                        output_dir=output_dir,
-                                                        src_dir=copt_build_src,
-                                                        macros=macros + copt_macros,
-                                                        include_dirs=include_dirs,
-                                                        debug=self.debug,
-                                                        extra_postargs=extra_args,
-                                                        **kws)
+            c_objects += self.compiler_opt.try_dispatch(
+                copt_c_sources,
+                output_dir=output_dir,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_args + extra_cflags,
+                **kws)
         if c_sources:
             log.info("compiling C sources")
-            c_objects += self.compiler.compile(c_sources,
-                                               output_dir=output_dir,
-                                               macros=macros + copt_macros,
-                                               include_dirs=include_dirs,
-                                               debug=self.debug,
-                                               extra_postargs=extra_args + copt_baseline_flags,
-                                               **kws)
+            c_objects += self.compiler.compile(
+                c_sources,
+                output_dir=output_dir,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_args + copt_baseline_flags +
+                                extra_cflags),
+                **kws)
         if cxx_sources:
             log.info("compiling C++ sources")
-            c_objects += cxx_compiler.compile(cxx_sources,
-                                              output_dir=output_dir,
-                                              macros=macros + copt_macros,
-                                              include_dirs=include_dirs,
-                                              debug=self.debug,
-                                              extra_postargs=extra_args + copt_baseline_flags,
-                                              **kws)
+            c_objects += cxx_compiler.compile(
+                cxx_sources,
+                output_dir=output_dir,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_args + copt_baseline_flags +
+                                extra_cxxflags),
+                **kws)
 
         extra_postargs = []
         f_objects = []
@@ -602,7 +611,7 @@ class build_ext (old_build_ext):
         # Expand possible fake static libraries to objects;
         # make sure to iterate over a copy of the list as
         # "fake" libraries will be removed as they are
-        # enountered
+        # encountered
         for lib in libraries[:]:
             for libdir in library_dirs:
                 fake_lib = os.path.join(libdir, lib + '.fobjects')

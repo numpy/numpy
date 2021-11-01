@@ -1,5 +1,5 @@
-#ifndef _NPY_COMMON_H_
-#define _NPY_COMMON_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_
 
 /* need Python.h for npy_intp, npy_uintp */
 #include <Python.h>
@@ -359,12 +359,11 @@ typedef unsigned char npy_bool;
 
 
 #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
-        typedef double npy_longdouble;
         #define NPY_LONGDOUBLE_FMT "g"
 #else
-        typedef long double npy_longdouble;
         #define NPY_LONGDOUBLE_FMT "Lg"
 #endif
+typedef long double npy_longdouble;
 
 #ifndef Py_USING_UNICODE
 #error Must use Python with unicode enabled.
@@ -1107,4 +1106,4 @@ typedef npy_int64 npy_datetime;
 
 /* End of typedefs for numarray style bit-width names */
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_ */

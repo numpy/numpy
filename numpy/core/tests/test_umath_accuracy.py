@@ -1,5 +1,5 @@
 import numpy as np
-import platform
+import os
 from os import path
 import sys
 import pytest
@@ -28,17 +28,15 @@ def convert(s, datatype="np.float32"):
     return fp.contents.value         # dereference the pointer, get the float
 
 str_to_float = np.vectorize(convert)
-files = ['umath-validation-set-exp.csv',
-         'umath-validation-set-log.csv',
-         'umath-validation-set-sin.csv',
-         'umath-validation-set-cos.csv']
 
 class TestAccuracy:
     @platform_skip
     def test_validate_transcendentals(self):
         with np.errstate(all='ignore'):
+            data_dir = path.join(path.dirname(__file__), 'data')
+            files = os.listdir(data_dir)
+            files = list(filter(lambda f: f.endswith('.csv'), files))
             for filename in files:
-                data_dir = path.join(path.dirname(__file__), 'data')
                 filepath = path.join(data_dir, filename)
                 with open(filepath) as fid:
                     file_without_comments = (r for r in fid if not r[0] in ('$', '#'))

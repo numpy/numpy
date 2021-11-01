@@ -1,9 +1,10 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include <numpy/npy_common.h>
+#include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 
 #include "common_dtype.h"
@@ -50,10 +51,10 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
 
     PyArray_DTypeMeta *common_dtype;
 
-    common_dtype = dtype1->common_dtype(dtype1, dtype2);
+    common_dtype = NPY_DT_CALL_common_dtype(dtype1, dtype2);
     if (common_dtype == (PyArray_DTypeMeta *)Py_NotImplemented) {
         Py_DECREF(common_dtype);
-        common_dtype = dtype2->common_dtype(dtype2, dtype1);
+        common_dtype = NPY_DT_CALL_common_dtype(dtype2, dtype1);
     }
     if (common_dtype == NULL) {
         return NULL;
@@ -128,7 +129,7 @@ reduce_dtypes_to_most_knowledgeable(
             Py_XSETREF(res, dtypes[low]);
         }
         else {
-            if (dtypes[high]->abstract) {
+            if (NPY_DT_is_abstract(dtypes[high])) {
                 /*
                  * Priority inversion, start with abstract, because if it
                  * returns `other`, we can let other pass instead.
@@ -138,7 +139,7 @@ reduce_dtypes_to_most_knowledgeable(
                 dtypes[high] = tmp;
             }
 
-            Py_XSETREF(res, dtypes[low]->common_dtype(dtypes[low], dtypes[high]));
+            Py_XSETREF(res, NPY_DT_CALL_common_dtype(dtypes[low], dtypes[high]));
             if (res == NULL) {
                 return NULL;
             }
@@ -270,7 +271,7 @@ PyArray_PromoteDTypeSequence(
          * a higher category). We assume that the result is not in a lower
          * category.
          */
-        PyArray_DTypeMeta *promotion = main_dtype->common_dtype(
+        PyArray_DTypeMeta *promotion = NPY_DT_CALL_common_dtype(
                 main_dtype, dtypes[i]);
         if (promotion == NULL) {
             Py_XSETREF(result, NULL);

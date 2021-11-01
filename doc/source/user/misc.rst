@@ -143,7 +143,7 @@ Only a survey of the choices. Little detail on how each works.
  - Plusses:
 
    - part of Python standard library
-   - good for interfacing to existing sharable libraries, particularly
+   - good for interfacing to existing shareable libraries, particularly
      Windows DLLs
    - avoids API/reference counting issues
    - good numpy support: arrays have all these in their ctypes

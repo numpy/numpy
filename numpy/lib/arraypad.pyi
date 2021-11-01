@@ -1,11 +1,12 @@
-import sys
 from typing import (
+    Literal as L,
     Any,
     Dict,
     List,
     overload,
     Tuple,
     TypeVar,
+    Protocol,
 )
 
 from numpy import ndarray, dtype, generic
@@ -14,24 +15,20 @@ from numpy.typing import (
     ArrayLike,
     NDArray,
     _ArrayLikeInt,
-    _NestedSequence,
+    _FiniteNestedSequence,
     _SupportsArray,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal as L, Protocol
-else:
-    from typing_extensions import Literal as L, Protocol
 
 _SCT = TypeVar("_SCT", bound=generic)
 
 class _ModeFunc(Protocol):
     def __call__(
         self,
-        __vector: NDArray[Any],
-        __iaxis_pad_width: Tuple[int, int],
-        __iaxis: int,
-        __kwargs: Dict[str, Any],
+        vector: NDArray[Any],
+        iaxis_pad_width: Tuple[int, int],
+        iaxis: int,
+        kwargs: Dict[str, Any],
+        /,
     ) -> None: ...
 
 _ModeKind = L[
@@ -48,7 +45,7 @@ _ModeKind = L[
     "empty",
 ]
 
-_ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: List[str]
 

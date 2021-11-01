@@ -1,6 +1,5 @@
-import sys
 import datetime as dt
-from typing import Optional, Union, Sequence, Tuple, Any, overload, TypeVar
+from typing import Optional, Union, Sequence, Tuple, Any, overload, TypeVar, Literal
 
 from numpy import (
     ndarray,
@@ -25,11 +24,6 @@ from numpy.typing import (
     _ArrayLikeInt_co,
     _NumberLike_co,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 # Various annotations for scalars
 

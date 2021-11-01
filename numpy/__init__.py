@@ -134,13 +134,6 @@ else:
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
 
-    # get the version using versioneer
-    from ._version import get_versions
-    vinfo = get_versions()
-    __version__ = vinfo.get("closest-tag", vinfo["version"])
-    __git_version__ = vinfo.get("full-revisionid")
-    del get_versions, vinfo
-
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
 
@@ -195,10 +188,17 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
+
+    # NumPy 1.22, 2021-10-20
+    __deprecated_attrs__["MachAr"] = (
+        core._machar.MachAr,
+        "`np.MachAr` is deprecated (NumPy 1.22)."
     )
 
     _msg = (
@@ -270,69 +270,53 @@ else:
     oldnumeric = 'removed'
     numarray = 'removed'
 
-    if sys.version_info[:2] >= (3, 7):
-        # module level getattr is only supported in 3.7 onwards
-        # https://www.python.org/dev/peps/pep-0562/
-        def __getattr__(attr):
-            # Warn for expired attributes, and return a dummy function
-            # that always raises an exception.
-            try:
-                msg = __expired_functions__[attr]
-            except KeyError:
-                pass
-            else:
-                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    def __getattr__(attr):
+        # Warn for expired attributes, and return a dummy function
+        # that always raises an exception.
+        try:
+            msg = __expired_functions__[attr]
+        except KeyError:
+            pass
+        else:
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-                def _expired(*args, **kwds):
-                    raise RuntimeError(msg)
+            def _expired(*args, **kwds):
+                raise RuntimeError(msg)
 
-                return _expired
+            return _expired
 
-            # Emit warnings for deprecated attributes
-            try:
-                val, msg = __deprecated_attrs__[attr]
-            except KeyError:
-                pass
-            else:
-                warnings.warn(msg, DeprecationWarning, stacklevel=2)
-                return val
+        # Emit warnings for deprecated attributes
+        try:
+            val, msg = __deprecated_attrs__[attr]
+        except KeyError:
+            pass
+        else:
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            return val
 
-            # Importing Tester requires importing all of UnitTest which is not a
-            # cheap import Since it is mainly used in test suits, we lazy import it
-            # here to save on the order of 10 ms of import time for most users
-            #
-            # The previous way Tester was imported also had a side effect of adding
-            # the full `numpy.testing` namespace
-            if attr == 'testing':
-                import numpy.testing as testing
-                return testing
-            elif attr == 'Tester':
-                from .testing import Tester
-                return Tester
+        # Importing Tester requires importing all of UnitTest which is not a
+        # cheap import Since it is mainly used in test suits, we lazy import it
+        # here to save on the order of 10 ms of import time for most users
+        #
+        # The previous way Tester was imported also had a side effect of adding
+        # the full `numpy.testing` namespace
+        if attr == 'testing':
+            import numpy.testing as testing
+            return testing
+        elif attr == 'Tester':
+            from .testing import Tester
+            return Tester
 
-            raise AttributeError("module {!r} has no attribute "
-                                 "{!r}".format(__name__, attr))
+        raise AttributeError("module {!r} has no attribute "
+                             "{!r}".format(__name__, attr))
 
-        def __dir__():
-            return list(globals().keys() | {'Tester', 'testing'})
-
-    else:
-        # We don't actually use this ourselves anymore, but I'm not 100% sure that
-        # no-one else in the world is using it (though I hope not)
-        from .testing import Tester
-
-        # We weren't able to emit a warning about these, so keep them around
-        globals().update({
-            k: v
-            for k, (v, msg) in __deprecated_attrs__.items()
-        })
-
+    def __dir__():
+        return list(globals().keys() | {'Tester', 'testing'})
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
     test = PytestTester(__name__)
     del PytestTester
-
 
     def _sanity_check():
         """
@@ -424,6 +408,6 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+
+# get the version using versioneer
+from .version import __version__, git_revision as __git_version__

@@ -1,9 +1,9 @@
 /*
  * DON'T INCLUDE THIS DIRECTLY.
  */
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NDARRAYOBJECT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYOBJECT_H_
 
-#ifndef NPY_NDARRAYOBJECT_H
-#define NPY_NDARRAYOBJECT_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -265,4 +265,4 @@ PyArray_XDECREF_ERR(PyArrayObject *arr)
 #endif
 
 
-#endif /* NPY_NDARRAYOBJECT_H */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYOBJECT_H_ */

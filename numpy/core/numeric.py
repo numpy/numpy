@@ -1466,11 +1466,6 @@ def moveaxis(a, source, destination):
     return result
 
 
-# fix hack in scipy which imports this function
-def _move_axis_to_0(a, axis):
-    return moveaxis(a, axis, 0)
-
-
 def _cross_dispatcher(a, b, axisa=None, axisb=None, axisc=None, axis=None):
     return (a, b)
 
@@ -2231,6 +2226,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `equal` but not `array_equal`.
 
     `allclose` is not defined for non-numeric data types.
+    `bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------
@@ -2312,6 +2308,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     for `atol` will result in `False` if either `a` or `b` is zero.
 
     `isclose` is not defined for non-numeric data types.
+    `bool` is considered a numeric data-type for this purpose.
 
     Examples
     --------

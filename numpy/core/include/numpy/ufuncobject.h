@@ -1,5 +1,5 @@
-#ifndef Py_UFUNCOBJECT_H
-#define Py_UFUNCOBJECT_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
@@ -211,6 +211,12 @@ typedef struct _tagPyUFuncObject {
         /* Identity for reduction, when identity == PyUFunc_IdentityValue */
         PyObject *identity_value;
 
+        /* New in NPY_API_VERSION 0x0000000F and above */
+
+        /* New private fields related to dispatching */
+        void *_dispatch_cache;
+        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
+        PyObject *_loops;
 } PyUFuncObject;
 
 #include "arrayobject.h"
@@ -343,8 +349,8 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
-
 #ifdef __cplusplus
 }
 #endif
-#endif /* !Py_UFUNCOBJECT_H */
+
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_ */

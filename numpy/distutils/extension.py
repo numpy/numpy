@@ -47,6 +47,8 @@ class Extension(old_Extension):
             language=None,
             f2py_options=None,
             module_dirs=None,
+            extra_c_compile_args=None,
+            extra_cxx_compile_args=None,
             extra_f77_compile_args=None,
             extra_f90_compile_args=None,):
 
@@ -83,6 +85,8 @@ class Extension(old_Extension):
         # numpy_distutils features
         self.f2py_options = f2py_options or []
         self.module_dirs = module_dirs or []
+        self.extra_c_compile_args = extra_c_compile_args or []
+        self.extra_cxx_compile_args = extra_cxx_compile_args or []
         self.extra_f77_compile_args = extra_f77_compile_args or []
         self.extra_f90_compile_args = extra_f90_compile_args or []
 

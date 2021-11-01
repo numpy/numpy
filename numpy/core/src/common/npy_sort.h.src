@@ -49,9 +49,14 @@ NPY_NO_EXPORT int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *
  * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *         longlong, ulonglong#
  */
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 NPY_NO_EXPORT int radixsort_@suff@(void *vec, npy_intp cnt, void *null);
 NPY_NO_EXPORT int aradixsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+#ifdef __cplusplus
+}
+#endif
 
 /**end repeat**/
 

@@ -1,0 +1,5 @@
+`numpy.fromregex` now accepts ``os.PathLike`` implementations
+-------------------------------------------------------------
+
+`numpy.fromregex` now accepts objects implementing the `__fspath__<os.PathLike>`
+protocol, *e.g.* `pathlib.Path`.

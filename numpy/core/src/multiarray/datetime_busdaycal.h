@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE__DATETIME_BUSDAYDEF_H_
-#define _NPY_PRIVATE__DATETIME_BUSDAYDEF_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAYCAL_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAYCAL_H_
 
 /*
  * A list of holidays, which should be sorted, not contain any
@@ -59,4 +59,4 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays);
 
 
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAYCAL_H_ */

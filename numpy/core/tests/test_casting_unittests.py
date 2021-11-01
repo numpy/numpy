@@ -9,7 +9,6 @@ than integration tests.
 import pytest
 import textwrap
 import enum
-import itertools
 import random
 
 import numpy as np
@@ -127,7 +126,7 @@ CAST_TABLE = _get_cancast_table()
 
 class TestChanges:
     """
-    These test cases excercise some behaviour changes
+    These test cases exercise some behaviour changes
     """
     @pytest.mark.parametrize("string", ["S", "U"])
     @pytest.mark.parametrize("floating", ["e", "f", "d", "g"])
@@ -650,6 +649,30 @@ class TestCasting:
                     match="casting from object to the parametric DType"):
             cast._resolve_descriptors((np.dtype("O"), None))
 
+    @pytest.mark.parametrize("dtype", simple_dtype_instances())
+    def test_object_and_simple_resolution(self, dtype):
+        # Simple test to exercise the cast when no instance is specified
+        object_dtype = type(np.dtype(object))
+        cast = get_castingimpl(object_dtype, type(dtype))
+
+        safety, (_, res_dt) = cast._resolve_descriptors((np.dtype("O"), dtype))
+        assert safety == Casting.unsafe
+        assert res_dt is dtype
+
+        safety, (_, res_dt) = cast._resolve_descriptors((np.dtype("O"), None))
+        assert safety == Casting.unsafe
+        assert res_dt == dtype.newbyteorder("=")
+
+    @pytest.mark.parametrize("dtype", simple_dtype_instances())
+    def test_simple_to_object_resolution(self, dtype):
+        # Simple test to exercise the cast when no instance is specified
+        object_dtype = type(np.dtype(object))
+        cast = get_castingimpl(type(dtype), object_dtype)
+
+        safety, (_, res_dt) = cast._resolve_descriptors((dtype, None))
+        assert safety == Casting.safe
+        assert res_dt is np.dtype("O")
+
     @pytest.mark.parametrize("casting", ["no", "unsafe"])
     def test_void_and_structured_with_subarray(self, casting):
         # test case corresponding to gh-19325
@@ -671,6 +694,18 @@ class TestCasting:
             expected = arr_normal.astype(dtype)
         except TypeError:
             with pytest.raises(TypeError):
-                arr_NULLs.astype(dtype)
+                arr_NULLs.astype(dtype),
         else:
             assert_array_equal(expected, arr_NULLs.astype(dtype))
+
+    @pytest.mark.parametrize("dtype",
+            np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+    def test_nonstandard_bool_to_other(self, dtype):
+        # simple test for casting bool_ to numeric types, which should not
+        # expose the detail that NumPy bools can sometimes take values other
+        # than 0 and 1.  See also gh-19514.
+        nonstandard_bools = np.array([0, 3, -7], dtype=np.int8).view(bool)
+        res = nonstandard_bools.astype(dtype)
+        expected = [0, 1, 1]
+        assert_array_equal(res, expected)
+
