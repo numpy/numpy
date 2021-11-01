@@ -719,12 +719,17 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         else:
             return np.apply_over_axes(median_recursive, np.ma.array(a), axis)
 
-    def return_and_assign(median, out):
+    def return_and_assign(median, out, a):
+        if a.dtype != median.dtype:
+            if (not np.issubdtype(a.dtype, np.integer)) or np.issubdtype(
+                a.dtype, np.timedelta64
+            ):
+                median = median.astype(a.dtype, subok=True, copy=False)
         if out is None:
             return median
         if isinstance(out, np.ma.core.MaskedArray):
             if not len(out.data.shape):
-                out.data.data[...] = median
+                out.data[...] = median
             else:
                 out.data[:] = median
         else:
@@ -741,7 +746,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
             m = np.ma.core.MaskedConstant()
         else:
             m = median_1d(a)
-        return return_and_assign(m, out)
+        return return_and_assign(m, out, a)
 
     is_empty = np.any(np.array(a.shape) == 0)
     if is_empty:
@@ -752,13 +757,20 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     if np.any(np.isnan(m.data)):
         m.mask = np.isnan(m.data)
     if isinstance(a, np.ma.core.MaskedArray):
-        m.fill_value = a.fill_value
+        m_is_complex = np.issubdtype(m.fill_value, np.complexfloating)
+        a_is_complex = np.issubdtype(a.fill_value, np.complexfloating)
+        if m_is_complex and not a_is_complex:
+            m.fill_value.real = a.fill_value
+        elif a_is_complex and not m_is_complex:
+            m.fill_value = a.fill_value.real
+        else:
+            m.fill_value = a.fill_value
 
     if not keepdims:
         if not (isinstance(a, np.ma.core.MaskedArray) and is_empty):
             m = m.squeeze()
 
-    return return_and_assign(m, out)
+    return return_and_assign(m, out, a)
 
 
 def compress_nd(x, axis=None):
