@@ -1073,7 +1073,7 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
      */
     Py_ssize_t nd = PySequence_Fast_GET_SIZE(seq);
     PyObject *op;
-    for (Py_ssize_t i = 0; i < PyArray_MIN(nd,maxvals); i++) {
+    for (Py_ssize_t i = 0; i < PyArray_MIN(nd, maxvals); i++) {
         op = PySequence_Fast_GET_ITEM(seq, i);
         if (op == NULL) {
             return -1;
