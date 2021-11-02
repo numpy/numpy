@@ -1398,8 +1398,10 @@ class TestAVXFloat32Transcendental:
         M = np.int_(N/20)
         index = np.random.randint(low=0, high=N, size=M)
         x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=N))
-        # test coverage for elements > 117435.992f for which glibc is used
-        x_f32[index] = np.float32(10E+10*np.random.rand(M))
+        if not glibc_older_than_2_17:
+            # test coverage for elements > 117435.992f for which glibc is used
+            # this is known to be problematic on old glibc, so skip it there
+            x_f32[index] = np.float32(10E+10*np.random.rand(M))
         x_f64 = np.float64(x_f32)
         assert_array_max_ulp(np.sin(x_f32), np.float32(np.sin(x_f64)), maxulp=2)
         assert_array_max_ulp(np.cos(x_f32), np.float32(np.cos(x_f64)), maxulp=2)
