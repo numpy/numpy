@@ -833,7 +833,7 @@ array_astype(PyArrayObject *self,
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyArray_CopyMode forcecopy = 1;
+    _PyArray_CopyMode forcecopy = 1;
     int subok = 1;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("astype", args, len_args, kwnames,
@@ -877,7 +877,7 @@ array_astype(PyArrayObject *self,
     if( forcecopy == NPY_COPY_NEVER ) {
         PyErr_SetString(PyExc_ValueError,
                         "Unable to avoid copy while casting in "
-                        "np._CopyMode.NEVER");
+                        "never copy mode.");
         Py_DECREF(dtype);
         return NULL;
     }

@@ -166,13 +166,10 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
 }
 
 NPY_NO_EXPORT int
-PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
+PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
     if (obj == Py_None) {
         PyErr_SetString(PyExc_ValueError,
-                        "NoneType copy mode not allowed. Please choose one of " 
-                         "np.array_api._CopyMode.ALWAYS, "
-                         "np.array_api._CopyMode.IF_NEEDED, "
-                         "np.array_api._CopyMode.NEVER.");
+                        "NoneType copy mode not allowed.");
         return NPY_FAIL;
     }
 
@@ -180,7 +177,7 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
     PyObject* numpy_CopyMode = NULL;
     npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
-    if (numpy_CopyMode != NULL && PyObject_IsInstance(obj, numpy_CopyMode)) {
+    if (numpy_CopyMode != NULL && PyObject_TypeCheck(obj, numpy_CopyMode)) {
         PyObject* mode_value = PyObject_GetAttrString(obj, "value");
         if (mode_value == NULL) {
             return NPY_FAIL;
@@ -188,7 +185,8 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
         if (!PyArray_PythonPyIntFromInt(mode_value, &int_copymode)) {
             return NPY_FAIL;
         }
-    } else {
+    }
+    else {
         npy_bool bool_copymode;
         if( !PyArray_BoolConverter(obj, &bool_copymode) ) {
             return NPY_FAIL;
@@ -196,18 +194,7 @@ PyArray_CopyConverter(PyObject *obj, PyArray_CopyMode *copymode) {
         int_copymode = (int) bool_copymode;
     }
 
-    if( int_copymode != NPY_COPY_ALWAYS && 
-        int_copymode != NPY_COPY_IF_NEEDED && 
-        int_copymode != NPY_COPY_NEVER ) {
-        PyErr_Format(PyExc_ValueError,
-                    "Unrecognized copy mode %d. Please choose one of " 
-                    "np._CopyMode.ALWAYS, np._CopyMode.IF_NEEDED, "
-                    "np._CopyMode.NEVER, "
-                    "True/np.True_, False/np.False_", int_copymode);
-        return NPY_FAIL;
-    }
-
-    *copymode = (PyArray_CopyMode) int_copymode;
+    *copymode = (_PyArray_CopyMode) int_copymode;
     return NPY_SUCCEED;
 }
 

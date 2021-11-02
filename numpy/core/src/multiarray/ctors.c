@@ -1305,7 +1305,7 @@ _array_from_array_like(PyObject *op,
             PyErr_Clear();
         }
         else {
-            tmp = _array_from_buffer_3118(memoryview); // Assume: never creates a copy
+            tmp = _array_from_buffer_3118(memoryview);
             Py_DECREF(memoryview);
             if (tmp == NULL) {
                 return NULL;
@@ -1347,7 +1347,7 @@ _array_from_array_like(PyObject *op,
      *      this should be changed!
      */
     if (!writeable && tmp == Py_NotImplemented) {
-        tmp = PyArray_FromArrayAttr(op, requested_dtype, context); // Assume: array was copied.
+        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
         if (tmp == NULL) {
             return NULL;
         }
@@ -1738,7 +1738,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* Create a new array and copy the data */
     Py_INCREF(dtype);  /* hold on in case of a subarray that is replaced */
-    if( flags & NPY_ARRAY_ENSURENOCOPY ) {
+    if( flags & _NPY_ARRAY_ENSURENOCOPY ) {
         PyErr_SetString(PyExc_ValueError, 
                         "Unable to avoid copy while creating "
                         "an array from descriptor.");
@@ -1802,7 +1802,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * NPY_ARRAY_ALIGNED,
  * NPY_ARRAY_WRITEABLE,
  * NPY_ARRAY_NOTSWAPPED,
- * NPY_ARRAY_ENSURECOPY,
+ * _NPY_ARRAY_ENSURECOPY,
  * NPY_ARRAY_UPDATEIFCOPY,
  * NPY_ARRAY_WRITEBACKIFCOPY,
  * NPY_ARRAY_FORCECAST,
@@ -1872,7 +1872,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
         !PyArray_ElementStrides(obj)) {
         PyObject *ret;
-        if( requires & NPY_ARRAY_ENSURENOCOPY ) {
+        if( requires & _NPY_ARRAY_ENSURENOCOPY ) {
             PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating a new array.");
             return NULL;
@@ -1952,7 +1952,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
     if (copy) {
 
-        if( flags & NPY_ARRAY_ENSURENOCOPY ) {
+        if( flags & _NPY_ARRAY_ENSURENOCOPY ) {
             PyErr_SetString(PyExc_ValueError,
                             "Unable to avoid copy while creating "
                             "an array from given array.");

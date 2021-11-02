@@ -7816,6 +7816,11 @@ class TestNewBufferProtocol:
 
 class TestArrayCreationCopyArgument(object):
 
+    class RaiseOnBool:
+
+        def __bool__(self):
+            raise ValueError
+
     true_vals = [True, np._CopyMode.ALWAYS, np.True_]
     false_vals = [False, np._CopyMode.IF_NEEDED, np.False_]
 
@@ -7831,6 +7836,10 @@ class TestArrayCreationCopyArgument(object):
                             copy=np._CopyMode.NEVER)
             assert_raises(ValueError, np.array, pyscalar, 
                             copy=np._CopyMode.NEVER)
+            assert_raises(ValueError, np.array, pyscalar,
+                            copy=None)
+            assert_raises(ValueError, np.array, pyscalar,
+                            copy=self.RaiseOnBool())
 
     def test_compatible_cast(self):
 
@@ -7873,6 +7882,9 @@ class TestArrayCreationCopyArgument(object):
 
                     assert_raises(ValueError, np.array,
                                   arr, copy=np._CopyMode.NEVER,
+                                  dtype=int2)
+                    assert_raises(ValueError, np.array,
+                                  arr, copy=None,
                                   dtype=int2)
 
     def test_buffer_interface(self):
@@ -7987,6 +7999,9 @@ class TestArrayCreationCopyArgument(object):
                     assert_array_equal(arr, res)
                 assert_raises(ValueError, np.array,
                               view, copy=np._CopyMode.NEVER,
+                              order=order2)
+                assert_raises(ValueError, np.array,
+                              view, copy=None,
                               order=order2)
 
 

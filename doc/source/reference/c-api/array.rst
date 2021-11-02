@@ -456,11 +456,6 @@ From other objects
 
         Make sure the returned array can be written to.
 
-    .. c:macro:: NPY_ARRAY_ENSURECOPY
-
-        Make sure a copy is made of *op*. If this flag is not
-        present, data is not copied if it can be avoided.
-
     .. c:macro:: NPY_ARRAY_ENSUREARRAY
 
         Make sure the result is a base-class ndarray. By

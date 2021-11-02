@@ -1560,7 +1560,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 
 static NPY_INLINE PyObject *
 _array_fromobject_generic(
-        PyObject *op, PyArray_Descr *type, PyArray_CopyMode copy, NPY_ORDER order,
+        PyObject *op, PyArray_Descr *type, _PyArray_CopyMode copy, NPY_ORDER order,
         npy_bool subok, int ndmin)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
@@ -1623,7 +1623,7 @@ _array_fromobject_generic(
     if (copy == NPY_COPY_ALWAYS) {
         flags = NPY_ARRAY_ENSURECOPY;
     } else if( copy == NPY_COPY_NEVER ) {
-        flags = NPY_ARRAY_ENSURENOCOPY;
+        flags = _NPY_ARRAY_ENSURENOCOPY;
     }
     if (order == NPY_CORDER) {
         flags |= NPY_ARRAY_C_CONTIGUOUS;
@@ -1668,7 +1668,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     npy_bool subok = NPY_FALSE;
-    PyArray_CopyMode copy = NPY_COPY_ALWAYS;
+    _PyArray_CopyMode copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
