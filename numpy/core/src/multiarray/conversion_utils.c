@@ -162,6 +162,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
         seq->ptr[0] = dimension_from_scalar(obj);
         if (error_converting(seq->ptr[0])) {
+            PyErr_SetString(PyExc_TypeError,
+                 "expected a sequence of integers or a single integer");
             npy_free_cache_dim_obj(*seq);
             seq->ptr = NULL;
             return NPY_FAIL;
@@ -1104,7 +1106,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
     }
 
     PyObject *seq_obj = PySequence_Fast(seq,
-            "Expected an integer or an iterable/sequence of integers.");
+            "expected a sequence of integers or a single integer");
     if (seq_obj == NULL) {
         return -1;
     }
