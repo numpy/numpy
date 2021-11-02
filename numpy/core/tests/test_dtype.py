@@ -3,7 +3,8 @@ import operator
 import pytest
 import ctypes
 import gc
-import warnings
+import types
+from typing import Any
 
 import numpy as np
 from numpy.core._rational_tests import rational
@@ -111,9 +112,9 @@ class TestBuiltin:
     @pytest.mark.parametrize("dtype",
              ['Bool', 'Bytes0', 'Complex32', 'Complex64',
               'Datetime64', 'Float16', 'Float32', 'Float64',
-              'Int8', 'Int16', 'Int32', 'Int64', 
+              'Int8', 'Int16', 'Int32', 'Int64',
               'Object0', 'Str0', 'Timedelta64',
-              'UInt8', 'UInt16', 'Uint32', 'UInt32', 
+              'UInt8', 'UInt16', 'Uint32', 'UInt32',
               'Uint64', 'UInt64', 'Void0',
               "Float128", "Complex128"])
     def test_numeric_style_types_are_invalid(self, dtype):
@@ -876,14 +877,24 @@ class TestString:
                                    ('bright', '>f4', (8, 36))])],
                        align=True)
         assert_equal(str(dt),
-                    "{'names':['top','bottom'], "
-                     "'formats':[([('tiles', ('>f4', (64, 64)), (1,)), "
-                                  "('rtile', '>f4', (64, 36))], (3,)),"
-                                 "[('bleft', ('>f4', (8, 64)), (1,)), "
-                                  "('bright', '>f4', (8, 36))]], "
-                     "'offsets':[0,76800], "
-                     "'itemsize':80000, "
-                     "'aligned':True}")
+                    "{'names': ['top', 'bottom'],"
+                    " 'formats': [([('tiles', ('>f4', (64, 64)), (1,)), "
+                                   "('rtile', '>f4', (64, 36))], (3,)), "
+                                  "[('bleft', ('>f4', (8, 64)), (1,)), "
+                                   "('bright', '>f4', (8, 36))]],"
+                    " 'offsets': [0, 76800],"
+                    " 'itemsize': 80000,"
+                    " 'aligned': True}")
+        with np.printoptions(legacy='1.21'):
+            assert_equal(str(dt),
+                        "{'names':['top','bottom'], "
+                         "'formats':[([('tiles', ('>f4', (64, 64)), (1,)), "
+                                      "('rtile', '>f4', (64, 36))], (3,)),"
+                                     "[('bleft', ('>f4', (8, 64)), (1,)), "
+                                      "('bright', '>f4', (8, 36))]], "
+                         "'offsets':[0,76800], "
+                         "'itemsize':80000, "
+                         "'aligned':True}")
         assert_equal(np.dtype(eval(str(dt))), dt)
 
         dt = np.dtype({'names': ['r', 'g', 'b'], 'formats': ['u1', 'u1', 'u1'],
@@ -900,22 +911,22 @@ class TestString:
                        'titles': ['Color', 'Red pixel',
                                   'Green pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "{'names':['rgba','r','g','b'],"
-                    " 'formats':['<u4','u1','u1','u1'],"
-                    " 'offsets':[0,0,1,2],"
-                    " 'titles':['Color','Red pixel',"
-                              "'Green pixel','Blue pixel'],"
-                    " 'itemsize':4}")
+                    "{'names': ['rgba', 'r', 'g', 'b'],"
+                    " 'formats': ['<u4', 'u1', 'u1', 'u1'],"
+                    " 'offsets': [0, 0, 1, 2],"
+                    " 'titles': ['Color', 'Red pixel', "
+                               "'Green pixel', 'Blue pixel'],"
+                    " 'itemsize': 4}")
 
         dt = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
                         'offsets': [0, 2],
                         'titles': ['Red pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "{'names':['r','b'],"
-                    " 'formats':['u1','u1'],"
-                    " 'offsets':[0,2],"
-                    " 'titles':['Red pixel','Blue pixel'],"
-                    " 'itemsize':3}")
+                    "{'names': ['r', 'b'],"
+                    " 'formats': ['u1', 'u1'],"
+                    " 'offsets': [0, 2],"
+                    " 'titles': ['Red pixel', 'Blue pixel'],"
+                    " 'itemsize': 3}")
 
         dt = np.dtype([('a', '<m8[D]'), ('b', '<M8[us]')])
         assert_equal(str(dt),
@@ -948,23 +959,23 @@ class TestString:
                        'titles': ['Color', 'Red pixel',
                                   'Green pixel', 'Blue pixel']}, align=True)
         assert_equal(repr(dt),
-                    "dtype({'names':['rgba','r','g','b'],"
-                    " 'formats':['<u4','u1','u1','u1'],"
-                    " 'offsets':[0,0,1,2],"
-                    " 'titles':['Color','Red pixel',"
-                              "'Green pixel','Blue pixel'],"
-                    " 'itemsize':4}, align=True)")
+                    "dtype({'names': ['rgba', 'r', 'g', 'b'],"
+                    " 'formats': ['<u4', 'u1', 'u1', 'u1'],"
+                    " 'offsets': [0, 0, 1, 2],"
+                    " 'titles': ['Color', 'Red pixel', "
+                                "'Green pixel', 'Blue pixel'],"
+                    " 'itemsize': 4}, align=True)")
 
         dt = np.dtype({'names': ['r', 'b'], 'formats': ['u1', 'u1'],
                         'offsets': [0, 2],
                         'titles': ['Red pixel', 'Blue pixel'],
                         'itemsize': 4})
         assert_equal(repr(dt),
-                    "dtype({'names':['r','b'], "
-                    "'formats':['u1','u1'], "
-                    "'offsets':[0,2], "
-                    "'titles':['Red pixel','Blue pixel'], "
-                    "'itemsize':4})")
+                    "dtype({'names': ['r', 'b'], "
+                    "'formats': ['u1', 'u1'], "
+                    "'offsets': [0, 2], "
+                    "'titles': ['Red pixel', 'Blue pixel'], "
+                    "'itemsize': 4})")
 
     def test_repr_structured_datetime(self):
         dt = np.dtype([('a', '<M8[D]'), ('b', '<m8[us]')])
@@ -1549,3 +1560,45 @@ class TestUserDType:
             # Tests that a dtype must have its type field set up to np.dtype
             # or in this case a builtin instance.
             create_custom_field_dtype(blueprint, mytype, 2)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
+class TestClassGetItem:
+    def test_dtype(self) -> None:
+        alias = np.dtype[Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is np.dtype
+
+    @pytest.mark.parametrize("code", np.typecodes["All"])
+    def test_dtype_subclass(self, code: str) -> None:
+        cls = type(np.dtype(code))
+        alias = cls[Any]
+        assert isinstance(alias, types.GenericAlias)
+        assert alias.__origin__ is cls
+
+    @pytest.mark.parametrize("arg_len", range(4))
+    def test_subscript_tuple(self, arg_len: int) -> None:
+        arg_tup = (Any,) * arg_len
+        if arg_len == 1:
+            assert np.dtype[arg_tup]
+        else:
+            with pytest.raises(TypeError):
+                np.dtype[arg_tup]
+
+    def test_subscript_scalar(self) -> None:
+        assert np.dtype[Any]
+
+
+def test_result_type_integers_and_unitless_timedelta64():
+    # Regression test for gh-20077.  The following call of `result_type`
+    # would cause a seg. fault.
+    td = np.timedelta64(4)
+    result = np.result_type(0, td)
+    assert_dtype_equal(result, td.dtype)
+
+
+@pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
+def test_class_getitem_38() -> None:
+    match = "Type subscription requires python >= 3.9"
+    with pytest.raises(TypeError, match=match):
+        np.dtype[Any]

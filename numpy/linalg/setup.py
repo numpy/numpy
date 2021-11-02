@@ -3,8 +3,7 @@ import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import (
-            get_info, system_info, lapack_opt_info, blas_opt_info)
+    from numpy.distutils.system_info import get_info, system_info
     config = Configuration('linalg', parent_package, top_path)
 
     config.add_subpackage('tests')

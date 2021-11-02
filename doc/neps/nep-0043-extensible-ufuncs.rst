@@ -1,7 +1,7 @@
 .. _NEP43:
 
 ==============================================================================
-NEP 43 — Enhancing the Extensibility of UFuncs
+NEP 43 — Enhancing the extensibility of UFuncs
 ==============================================================================
 
 :title: Enhancing the Extensibility of UFuncs
@@ -571,7 +571,7 @@ This stores all of the constant information that is part of the ``Context``,
 such as:
 
 * the ``DTypes``
-* the number of input and ouput arguments
+* the number of input and output arguments
 * the ufunc signature (specific to generalized ufuncs, compare :ref:`NEP20`).
 
 Fortunately, most users and even ufunc implementers will not have to worry
@@ -1233,7 +1233,7 @@ are the best solution:
    logic fails or is incorrect for a newly-added loop, the loop can add a
    new promoter to refine the logic.
 
-The option of having each loop verify that no upcast occured is probably
+The option of having each loop verify that no upcast occurred is probably
 the best alternative, but does not include the ability to dynamically
 adding new loops.
 

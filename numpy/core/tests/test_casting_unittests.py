@@ -9,7 +9,6 @@ than integration tests.
 import pytest
 import textwrap
 import enum
-import itertools
 import random
 
 import numpy as np
@@ -127,7 +126,7 @@ CAST_TABLE = _get_cancast_table()
 
 class TestChanges:
     """
-    These test cases excercise some behaviour changes
+    These test cases exercise some behaviour changes
     """
     @pytest.mark.parametrize("string", ["S", "U"])
     @pytest.mark.parametrize("floating", ["e", "f", "d", "g"])
@@ -699,9 +698,14 @@ class TestCasting:
         else:
             assert_array_equal(expected, arr_NULLs.astype(dtype))
 
-    def test_float_to_bool(self):
-        # test case corresponding to gh-19514
-        # simple test for casting bool_ to float16 
-        res = np.array([0, 3, -7], dtype=np.int8).view(bool)
+    @pytest.mark.parametrize("dtype",
+            np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+    def test_nonstandard_bool_to_other(self, dtype):
+        # simple test for casting bool_ to numeric types, which should not
+        # expose the detail that NumPy bools can sometimes take values other
+        # than 0 and 1.  See also gh-19514.
+        nonstandard_bools = np.array([0, 3, -7], dtype=np.int8).view(bool)
+        res = nonstandard_bools.astype(dtype)
         expected = [0, 1, 1]
         assert_array_equal(res, expected)
+

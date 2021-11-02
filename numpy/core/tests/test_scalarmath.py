@@ -5,14 +5,14 @@ import itertools
 import operator
 import platform
 import pytest
-from hypothesis import given, settings, Verbosity, assume
+from hypothesis import given, settings, Verbosity
 from hypothesis.strategies import sampled_from
 
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns, assert_raises_regex,
+    assert_warns,
     )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,

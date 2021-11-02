@@ -1,15 +1,15 @@
 /* Fixed size rational numbers exposed to Python */
-
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
-#include <numpy/arrayobject.h>
-#include <numpy/ufuncobject.h>
-#include <numpy/npy_3kcompat.h>
-#include <math.h>
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#include "numpy/arrayobject.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/npy_3kcompat.h"
 #include "common.h"  /* for error_converting */
+
+#include <math.h>
 
 
 /* Relevant arithmetic exceptions */

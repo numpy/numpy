@@ -30,7 +30,6 @@ from numpy import (
     nditer as nditer,
 
     # The rest
-    nditer,
     ufunc,
     str_,
     bool_,
@@ -51,7 +50,9 @@ from numpy import (
     _ModeKind,
     _SupportsBuffer,
     _IOProtocol,
-    _CopyMode
+    _CopyMode,
+    _NDIterFlagsKind,
+    _NDIterOpFlagsKind,
 )
 
 from numpy.typing import (
@@ -66,7 +67,7 @@ from numpy.typing import (
     NDArray,
     ArrayLike,
     _SupportsArray,
-    _NestedSequence,
+    _FiniteNestedSequence,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -92,7 +93,7 @@ _DTypeLike = Union[
     Type[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
-_ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 # Valid time units
 _UnitKind = L[
@@ -1013,3 +1014,14 @@ class flagsobj:
     def owndata(self) -> bool: ...
     def __getitem__(self, key: _GetItemKeys) -> bool: ...
     def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
+
+def nested_iters(
+    op: ArrayLike | Sequence[ArrayLike],
+    axes: Sequence[Sequence[SupportsIndex]],
+    flags: None | Sequence[_NDIterFlagsKind] = ...,
+    op_flags: None | Sequence[Sequence[_NDIterOpFlagsKind]] = ...,
+    op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
+    order: _OrderKACF = ...,
+    casting: _CastingKind = ...,
+    buffersize: SupportsIndex = ...,
+) -> Tuple[nditer, ...]: ...

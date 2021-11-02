@@ -101,17 +101,51 @@ class TestSFloat:
         expected_view = a.view(np.float64) * b.view(np.float64)
         assert_array_equal(res.view(np.float64), expected_view)
 
+    def test_possible_and_impossible_reduce(self):
+        # For reductions to work, the first and last operand must have the
+        # same dtype.  For this parametric DType that is not necessarily true.
+        a = self._get_array(2.)
+        # Addition reductin works (as of writing requires to pass initial
+        # because setting a scaled-float from the default `0` fails).
+        res = np.add.reduce(a, initial=0.)
+        assert res == a.astype(np.float64).sum()
+
+        # But each multiplication changes the factor, so a reduction is not
+        # possible (the relaxed version of the old refusal to handle any
+        # flexible dtype).
+        with pytest.raises(TypeError,
+                match="the resolved dtypes are not compatible"):
+            np.multiply.reduce(a)
+
+    def test_basic_ufunc_at(self):
+        float_a = np.array([1., 2., 3.])
+        b = self._get_array(2.)
+
+        float_b = b.view(np.float64).copy()
+        np.multiply.at(float_b, [1, 1, 1], float_a)
+        np.multiply.at(b, [1, 1, 1], float_a)
+
+        assert_array_equal(b.view(np.float64), float_b)
+
     def test_basic_multiply_promotion(self):
         float_a = np.array([1., 2., 3.])
         b = self._get_array(2.)
 
         res1 = float_a * b
         res2 = b * float_a
+
         # one factor is one, so we get the factor of b:
         assert res1.dtype == res2.dtype == b.dtype
         expected_view = float_a * b.view(np.float64)
         assert_array_equal(res1.view(np.float64), expected_view)
         assert_array_equal(res2.view(np.float64), expected_view)
+
+        # Check that promotion works when `out` is used:
+        np.multiply(b, float_a, out=res2)
+        with pytest.raises(TypeError):
+            # The promoter accepts this (maybe it should not), but the SFloat
+            # result cannot be cast to integer:
+            np.multiply(b, float_a, out=np.arange(3))
 
     def test_basic_addition(self):
         a = self._get_array(2.)
@@ -145,3 +179,23 @@ class TestSFloat:
         # Check that casting the output fails also (done by the ufunc here)
         with pytest.raises(TypeError):
             np.add(a, a, out=c, casting="safe")
+
+    @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_casts_to_bool(self, ufunc):
+        a = self._get_array(2.)
+        a[0] = 0.  # make sure first element is considered False.
+
+        float_equiv = a.astype(float)
+        expected = ufunc(float_equiv, float_equiv)
+        res = ufunc(a, a)
+        assert_array_equal(res, expected)
+
+        # also check that the same works for reductions:
+        expected = ufunc.reduce(float_equiv)
+        res = ufunc.reduce(a)
+        assert_array_equal(res, expected)
+
+        # The output casting does not match the bool, bool -> bool loop:
+        with pytest.raises(TypeError):
+            ufunc(a, a, out=np.empty(a.shape, dtype=int), casting="equiv")

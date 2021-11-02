@@ -1,14 +1,14 @@
-#define PY_SSIZE_T_CLEAN
-#include <stdarg.h>
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
-#include "arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "arrayobject.h"
 #include "arrayfunction_override.h"
 #include "npy_argparse.h"
 #include "npy_config.h"
@@ -29,6 +29,8 @@
 
 #include "methods.h"
 #include "alloc.h"
+
+#include <stdarg.h>
 
 
 /* NpyArg_ParseKeywords
@@ -1983,6 +1985,16 @@ array_setstate(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
+    /*
+     * Reassigning fa->descr messes with the reallocation strategy,
+     * since fa could be a 0-d or scalar, and then
+     * PyDataMem_UserFREE will be confused
+     */
+    size_t n_tofree = PyArray_NBYTES(self);
+    if (n_tofree == 0) {
+        PyArray_Descr *dtype = PyArray_DESCR(self);
+        n_tofree = dtype->elsize ? dtype->elsize : 1;
+    }
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
@@ -2049,7 +2061,18 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        PyDataMem_FREE(PyArray_DATA(self));
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        PyObject *handler = PyArray_HANDLER(self);
+        if (handler == NULL) {
+            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return NULL;
+        }
+        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
@@ -2085,7 +2108,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         int swap = PyArray_ISBYTESWAPPED(self);
-        fa->data = datastr;
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
@@ -2094,8 +2116,16 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(rawdata);
                 Py_RETURN_NONE;
             }
-            fa->data = PyDataMem_NEW(num);
+            /* Store the handler in case the default is modified */
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = PyDataMem_GetHandler();
+            if (fa->mem_handler == NULL) {
+                Py_DECREF(rawdata);
+                return NULL;
+            }
+            fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
             if (PyArray_DATA(self) == NULL) {
+                Py_DECREF(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -2131,7 +2161,12 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_DECREF(rawdata);
         }
         else {
+            /* The handlers should never be called in this case */
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = NULL;
+            fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
+                Py_DECREF(rawdata);
                 return NULL;
             }
         }
@@ -2142,8 +2177,15 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (num == 0 || elsize == 0) {
             Py_RETURN_NONE;
         }
-        fa->data = PyDataMem_NEW(num);
+        /* Store the functions in case the default handler is modified */
+        Py_XDECREF(fa->mem_handler);
+        fa->mem_handler = PyDataMem_GetHandler();
+        if (fa->mem_handler == NULL) {
+            return NULL;
+        }
+        fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
         if (PyArray_DATA(self) == NULL) {
+            Py_DECREF(fa->mem_handler);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2152,6 +2194,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
         fa->base = NULL;
         if (_setlist_pkl(self, rawdata) < 0) {
+            Py_DECREF(fa->mem_handler);
             return NULL;
         }
     }
@@ -2707,6 +2750,30 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return c;
 }
 
+static PyObject *
+array_class_getitem(PyObject *cls, PyObject *args)
+{
+    PyObject *generic_alias;
+
+#ifdef Py_GENERICALIASOBJECT_H
+    Py_ssize_t args_len;
+
+    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
+    if (args_len != 2) {
+        return PyErr_Format(PyExc_TypeError,
+                            "Too %s arguments for %s",
+                            args_len > 2 ? "many" : "few",
+                            ((PyTypeObject *)cls)->tp_name);
+    }
+    generic_alias = Py_GenericAlias(cls, args);
+#else
+    PyErr_SetString(PyExc_TypeError,
+                    "Type subscription requires python >= 3.9");
+    generic_alias = NULL;
+#endif
+    return generic_alias;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2763,6 +2830,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__format__",
         (PyCFunction) array_format,
         METH_VARARGS, NULL},
+
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)array_class_getitem,
+        METH_CLASS | METH_O, NULL},
 
     /* Original and Extended methods added 2005 */
     {"all",

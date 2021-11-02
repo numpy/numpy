@@ -164,7 +164,7 @@ def set_default_printstyle(style):
     1.0 + 2.0 x**1 + 3.0 x**2
     >>> print(c)
     1.0 + 2.0 T_1(x) + 3.0 T_2(x)
-    >>> # Formatting supercedes all class/package-level defaults
+    >>> # Formatting supersedes all class/package-level defaults
     >>> print(f"{p:unicode}")
     1.0 + 2.0·x¹ + 3.0·x²
     """

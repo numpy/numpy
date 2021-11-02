@@ -1,5 +1,5 @@
-#ifndef _NPY_DTYPE_TRANSFER_H
-#define _NPY_DTYPE_TRANSFER_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRANSFER_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRANSFER_H_
 
 #include "array_method.h"
 
@@ -202,4 +202,4 @@ get_wrapped_legacy_cast_function(int aligned,
         int *out_needs_api, int allow_wrapped);
 
 
-#endif  /* _NPY_DTYPE_TRANSFER_H */
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRANSFER_H_  */

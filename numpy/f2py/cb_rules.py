@@ -191,7 +191,7 @@ capi_return_pt:
     'maxnofargs': '#maxnofargs#',
     'nofoptargs': '#nofoptargs#',
     'docstr': """\
-\tdef #argname#(#docsignature#): return #docreturn#\\n\\
+    def #argname#(#docsignature#): return #docreturn#\\n\\
 #docstrsigns#""",
     'latexdocstr': """
 {{}\\verb@def #argname#(#latexdocsignature#): return #docreturn#@{}}
@@ -219,10 +219,10 @@ cb_rout_rules = [
         'noargs': '',
         'setdims': '/*setdims*/',
         'docstrsigns': '', 'latexdocstrsigns': '',
-        'docstrreq': '\tRequired arguments:',
-        'docstropt': '\tOptional arguments:',
-        'docstrout': '\tReturn objects:',
-        'docstrcbs': '\tCall-back functions:',
+        'docstrreq': '    Required arguments:',
+        'docstropt': '    Optional arguments:',
+        'docstrout': '    Return objects:',
+        'docstrcbs': '    Call-back functions:',
         'docreturn': '', 'docsign': '', 'docsignopt': '',
         'latexdocstrreq': '\\noindent Required arguments:',
         'latexdocstropt': '\\noindent Optional arguments:',
@@ -306,7 +306,7 @@ return_value
                  'string.h', 'GETSCALARFROMPYTUPLE', '#ctype#'],
         '_check': iscomplexfunction
     },
-    {'docstrout': '\t\t#pydocsignout#',
+    {'docstrout': '        #pydocsignout#',
      'latexdocstrout': ['\\item[]{{}\\verb@#pydocsignout#@{}}',
                         {hasnote: '--- #note#'}],
      'docreturn': '#rname#,',
@@ -316,9 +316,9 @@ return_value
 
 cb_arg_rules = [
     {  # Doc
-        'docstropt': {l_and(isoptional, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrreq': {l_and(isrequired, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrout': {isintent_out: '\t\t#pydocsignout#'},
+        'docstropt': {l_and(isoptional, isintent_nothide): '        #pydocsign#'},
+        'docstrreq': {l_and(isrequired, isintent_nothide): '        #pydocsign#'},
+        'docstrout': {isintent_out: '        #pydocsignout#'},
         'latexdocstropt': {l_and(isoptional, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
                                                                  {hasnote: '--- #note#'}]},
         'latexdocstrreq': {l_and(isrequired, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
@@ -492,7 +492,7 @@ def buildcallbacks(m):
 def buildcallback(rout, um):
     from . import capi_maps
 
-    outmess('\tConstructing call-back function "cb_%s_in_%s"\n' %
+    outmess('    Constructing call-back function "cb_%s_in_%s"\n' %
             (rout['name'], um))
     args, depargs = getargs(rout)
     capi_maps.depargs = depargs
@@ -612,6 +612,6 @@ def buildcallback(rout, um):
                                       'latexdocstr': ar['latexdocstr'],
                                       'argname': rd['argname']
                                       }
-    outmess('\t  %s\n' % (ar['docstrshort']))
+    outmess('      %s\n' % (ar['docstrshort']))
     return
 ################## Build call-back function #############

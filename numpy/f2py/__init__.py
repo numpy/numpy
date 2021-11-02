@@ -71,8 +71,8 @@ def compile(source,
 
     Examples
     --------
-    .. include:: compile_session.dat
-        :literal:
+    .. literalinclude:: code/results/compile_session.dat
+        :language: python
 
     """
     import tempfile

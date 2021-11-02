@@ -1,5 +1,5 @@
-#ifndef Py_UFUNCOBJECT_H
-#define Py_UFUNCOBJECT_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
@@ -349,8 +349,8 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
-
 #ifdef __cplusplus
 }
 #endif
-#endif /* !Py_UFUNCOBJECT_H */
+
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_ */

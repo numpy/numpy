@@ -11,10 +11,10 @@
  * NOTE: The tests were initially written using private API and ABI, ideally
  *       they should be replaced/modified with versions using public API.
  */
-
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
 #include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 
@@ -398,6 +398,42 @@ float_to_from_sfloat_resolve_descriptors(
 }
 
 
+/*
+ * Cast to boolean (for testing the logical functions a bit better).
+ */
+static int
+cast_sfloat_to_bool(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+    char *out = data[1];
+    for (npy_intp i = 0; i < N; i++) {
+        *(npy_bool *)out = *(double *)in != 0;
+        in += strides[0];
+        out += strides[1];
+    }
+    return 0;
+}
+
+static NPY_CASTING
+sfloat_to_bool_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2])
+{
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    if (loop_descrs[0] == NULL) {
+        return -1;
+    }
+    loop_descrs[1] = PyArray_DescrFromType(NPY_BOOL);  /* cannot fail */
+    return NPY_UNSAFE_CASTING;
+}
+
+
 static int
 init_casts(void)
 {
@@ -448,6 +484,22 @@ init_casts(void)
     spec.name = "sfloat_to_float_cast";
     dtypes[0] = &PyArray_SFloatDType;
     dtypes[1] = double_DType;
+
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 0)) {
+        return -1;
+    }
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &sfloat_to_bool_resolve_descriptors;
+    slots[1].slot = NPY_METH_strided_loop;
+    slots[1].pfunc = &cast_sfloat_to_bool;
+    slots[2].slot = 0;
+    slots[2].pfunc = NULL;
+
+    spec.name = "sfloat_to_bool_cast";
+    dtypes[0] = &PyArray_SFloatDType;
+    dtypes[1] = PyArray_DTypeFromTypeNum(NPY_BOOL);
+    Py_DECREF(dtypes[1]);  /* immortal anyway */
 
     if (PyArray_AddCastingImplementation_FromSpec(&spec, 0)) {
         return -1;
@@ -733,9 +785,9 @@ NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
 {
     /* Allow calling the function multiple times. */
-    static npy_bool initalized = NPY_FALSE;
+    static npy_bool initialized = NPY_FALSE;
 
-    if (initalized) {
+    if (initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -764,6 +816,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    initalized = NPY_TRUE;
+    initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }

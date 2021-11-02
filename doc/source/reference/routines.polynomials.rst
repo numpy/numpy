@@ -22,7 +22,7 @@ Therefore :mod:`numpy.polynomial` is recommended for new coding.
    the polynomial functions prefixed with *poly* accessible from the `numpy`
    namespace (e.g. `numpy.polyadd`, `numpy.polyval`, `numpy.polyfit`, etc.).
 
-   The term *polynomial package* refers to the new API definied in 
+   The term *polynomial package* refers to the new API defined in 
    `numpy.polynomial`, which includes the convenience classes for the
    different kinds of polynomials (`numpy.polynomial.Polynomial`,
    `numpy.polynomial.Chebyshev`, etc.).
@@ -110,7 +110,7 @@ See the documentation for the
 `convenience classes <routines.polynomials.classes>`_ for further details on
 the ``domain`` and ``window`` attributes.
 
-Another major difference bewteen the legacy polynomial module and the
+Another major difference between the legacy polynomial module and the
 polynomial package is polynomial fitting. In the old module, fitting was
 done via the `~numpy.polyfit` function. In the polynomial package, the
 `~numpy.polynomial.polynomial.Polynomial.fit` class method is preferred. For

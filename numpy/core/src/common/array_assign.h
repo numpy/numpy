@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE__ARRAY_ASSIGN_H_
-#define _NPY_PRIVATE__ARRAY_ASSIGN_H_
+#ifndef NUMPY_CORE_SRC_COMMON_ARRAY_ASSIGN_H_
+#define NUMPY_CORE_SRC_COMMON_ARRAY_ASSIGN_H_
 
 /*
  * An array assignment function for copying arrays, treating the
@@ -115,4 +115,4 @@ NPY_NO_EXPORT int
 arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2);
 
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_ARRAY_ASSIGN_H_ */

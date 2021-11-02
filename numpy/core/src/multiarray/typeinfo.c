@@ -3,6 +3,10 @@
  * Unfortunately, we need two different types to cover the cases where min/max
  * do and do not appear in the tuple.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
+#include "npy_pycompat.h"
 #include "typeinfo.h"
 
 #if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM <= 0x07030000))
@@ -10,9 +14,6 @@
 #include <structseq.h>
 #endif
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
-#include "npy_pycompat.h"
 
 
 static PyTypeObject PyArray_typeinfoType;

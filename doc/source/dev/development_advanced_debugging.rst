@@ -3,8 +3,8 @@ Advanced debugging tools
 ========================
 
 If you reached here, you want to dive into, or use, more advanced tooling.
-This is usually not necessary for first time contributers and most
-day-to-day developement.
+This is usually not necessary for first time contributors and most
+day-to-day development.
 These are used more rarely, for example close to a new NumPy release,
 or when a large or particular complex change was made.
 
@@ -25,7 +25,7 @@ narrow down.
 We do not expect any of these tools to be run by most contributors.
 However, you can ensure that we can track down such issues more easily easier:
 
-* Tests should cover all code paths, incluing error paths.
+* Tests should cover all code paths, including error paths.
 * Try to write short and simple tests. If you have a very complicated test
   consider creating an additional simpler test as well.
   This can be helpful, because often it is only easy to find which test
@@ -112,7 +112,7 @@ where ``PYTHONMALLOC=malloc`` is necessary to avoid false positives from python
 itself.
 Depending on the system and valgrind version, you may see more false positives.
 ``valgrind`` supports "suppressions" to ignore some of these, and Python does
-have a supression file (and even a compile time option) which may help if you
+have a suppression file (and even a compile time option) which may help if you
 find it necessary.
 
 Valgrind helps:

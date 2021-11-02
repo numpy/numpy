@@ -1,7 +1,6 @@
 """ Test functions for linalg module
 
 """
-from numpy.core.fromnumeric import shape
 import os
 import sys
 import itertools
@@ -22,7 +21,6 @@ from numpy.testing import (
     assert_almost_equal, assert_allclose, suppress_warnings,
     assert_raises_regex, HAS_LAPACK64,
     )
-from numpy.testing._private.utils import requires_memory
 
 
 def consistent_subclass(out, in_):
@@ -1072,7 +1070,6 @@ class TestMatrixPower:
         assert_raises(LinAlgError, matrix_power, mat, -1)
 
 
-
 class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
     def do(self, a, b, tags):
@@ -1956,8 +1953,8 @@ class TestMultiDot:
         assert_almost_equal(multi_dot([A, B]), A.dot(B))
         assert_almost_equal(multi_dot([A, B]), np.dot(A, B))
 
-    def test_basic_function_with_dynamic_programing_optimization(self):
-        # multi_dot with four or more arguments uses the dynamic programing
+    def test_basic_function_with_dynamic_programming_optimization(self):
+        # multi_dot with four or more arguments uses the dynamic programming
         # optimization and therefore deserve a separate
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))
@@ -2018,8 +2015,8 @@ class TestMultiDot:
         assert_almost_equal(out, A.dot(B))
         assert_almost_equal(out, np.dot(A, B))
 
-    def test_dynamic_programing_optimization_and_out(self):
-        # multi_dot with four or more arguments uses the dynamic programing
+    def test_dynamic_programming_optimization_and_out(self):
+        # multi_dot with four or more arguments uses the dynamic programming
         # optimization and therefore deserve a separate test
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))

@@ -116,9 +116,8 @@ run_binary_avx512f_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_in
 #endif
     return 0;
 }
-
-
 /**end repeat1**/
+
 /**end repeat**/
 
 /**begin repeat
@@ -1152,6 +1151,7 @@ NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
  * #is_finite = 0, 1, 0, 0#
  * #is_signbit = 0, 0, 0, 1#
  */
+
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
 AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, const npy_intp steps)

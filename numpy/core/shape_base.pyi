@@ -1,12 +1,12 @@
 from typing import TypeVar, overload, List, Sequence, Any, SupportsIndex
 
 from numpy import generic, dtype
-from numpy.typing import ArrayLike, NDArray, _NestedSequence, _SupportsArray
+from numpy.typing import ArrayLike, NDArray, _FiniteNestedSequence, _SupportsArray
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_ArrayLike = _NestedSequence[_SupportsArray[dtype[_SCT]]]
+_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: List[str]
 

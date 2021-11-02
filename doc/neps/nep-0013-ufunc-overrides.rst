@@ -1,7 +1,7 @@
 .. _NEP13:
 
 ==========================================
-NEP 13 — A Mechanism for Overriding Ufuncs
+NEP 13 — A mechanism for overriding Ufuncs
 ==========================================
 
 .. currentmodule:: numpy

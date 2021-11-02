@@ -58,17 +58,27 @@ new virtual environment is recommended.
 Dependencies
 ^^^^^^^^^^^^
 
-All of the necessary dependencies for building the NumPy docs can be installed
-with::
+All of the necessary dependencies for building the NumPy docs except for
+Doxygen_ can be installed with::
 
     pip install -r doc_requirements.txt
 
-We currently use Sphinx_ for generating the API and reference
-documentation for NumPy. In addition, building the documentation requires
-the Sphinx extension `plot_directive`, which is shipped with
+We currently use Sphinx_ along with Doxygen_ for generating the API and
+reference documentation for NumPy. In addition, building the documentation
+requires the Sphinx extension `plot_directive`, which is shipped with
 :doc:`Matplotlib <matplotlib:index>`. We also use numpydoc_ to render docstrings in
 the generated API documentation. :doc:`SciPy <scipy:index>`
 is installed since some parts of the documentation require SciPy functions.
+
+For installing Doxygen_, please check the official
+`download <https://www.doxygen.nl/download.html#srcbin>`_ and
+`installation <https://www.doxygen.nl/manual/install.html>`_ pages, or if you
+are using Linux then you can install it through your distribution package manager.
+
+.. note::
+
+   Try to install a newer version of Doxygen_ > 1.8.10 otherwise you may get some
+   warnings during the build.
 
 Submodules
 ^^^^^^^^^^
@@ -80,6 +90,7 @@ additional parts required for building the documentation::
 
 .. _Sphinx: http://www.sphinx-doc.org/
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/index.html
+.. _Doxygen: https://www.doxygen.nl/index.html
 
 Instructions
 ------------

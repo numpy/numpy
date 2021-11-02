@@ -1362,6 +1362,14 @@ class TestUfunc:
                            np.array([[2]*i for i in [1, 3, 6, 10]], dtype=object),
                           )
 
+    def test_object_array_accumulate_failure(self):
+        # Typical accumulation on object works as expected:
+        res = np.add.accumulate(np.array([1, 0, 2], dtype=object))
+        assert_array_equal(res, np.array([1, 1, 3], dtype=object))
+        # But errors are propagated from the inner-loop if they occur:
+        with pytest.raises(TypeError):
+            np.add.accumulate([1, None, 2])
+
     def test_object_array_reduceat_inplace(self):
         # Checks that in-place reduceats work, see also gh-7465
         arr = np.empty(4, dtype=object)
@@ -1380,6 +1388,15 @@ class TestUfunc:
         np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
         np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
         assert_array_equal(arr, out)
+
+    def test_object_array_reduceat_failure(self):
+        # Reduceat works as expected when no invalid operation occurs (None is
+        # not involved in an operation here)
+        res = np.add.reduceat(np.array([1, None, 2], dtype=object), [1, 2])
+        assert_array_equal(res, np.array([None, 2], dtype=object))
+        # But errors when None would be involved in an operation:
+        with pytest.raises(TypeError):
+            np.add.reduceat([1, None, 2], [0, 2])
 
     def test_zerosize_reduction(self):
         # Test with default dtype and object dtype
@@ -2098,6 +2115,25 @@ class TestUfunc:
         with pytest.raises(TypeError):
             ufunc(a, a, signature=signature)
 
+    @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_support_anything(self, ufunc):
+        # The logical ufuncs support even input that can't be promoted:
+        a = np.array('1')
+        c = np.array([1., 2.])
+        assert_array_equal(ufunc(a, c), ufunc([True, True], True))
+        assert ufunc.reduce(a) == True
+
+    @pytest.mark.parametrize("ufunc",
+             [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_out_cast_check(self, ufunc):
+        a = np.array('1')
+        c = np.array([1., 2.])
+        out = a.copy()
+        with pytest.raises(TypeError):
+            # It would be safe, but not equiv casting:
+            ufunc(a, c, out=out, casting="equiv")
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.
@@ -2118,6 +2154,22 @@ class TestUfunc:
         assert_equal(r0, r1)
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
+
+    @pytest.mark.parametrize("with_cast", [True, False])
+    def test_reduceat_and_accumulate_out_shape_mismatch(self, with_cast):
+        # Should raise an error mentioning "shape" or "size"
+        arr = np.arange(5)
+        out = np.arange(3)  # definitely wrong shape
+        if with_cast:
+            # If a cast is necessary on the output, we can be sure to use
+            # the generic NpyIter (non-fast) path.
+            out = out.astype(np.float64)
+
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.reduceat(arr, [0, 3], out=out)
+
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.accumulate(arr, out=out)
 
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
@@ -2308,6 +2360,14 @@ def test_ufunc_casterrors():
     assert out[-1] == 1
 
 
+def test_trivial_loop_invalid_cast():
+    # This tests the fast-path "invalid cast", see gh-19904.
+    with pytest.raises(TypeError,
+            match="cast ufunc 'add' input 0"):
+        # the void dtype definitely cannot cast to double:
+        np.add(np.array(1, "i,i"), 3, signature="dd->d")
+
+
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.parametrize("offset",
         [0, np.BUFSIZE//2, int(1.5*np.BUFSIZE)])
@@ -2323,8 +2383,9 @@ def test_reduce_casterrors(offset):
     out = np.array(-1, dtype=np.intp)
 
     count = sys.getrefcount(value)
-    with pytest.raises(ValueError):
-        # This is an unsafe cast, but we currently always allow that:
+    with pytest.raises(ValueError, match="invalid literal"):
+        # This is an unsafe cast, but we currently always allow that.
+        # Note that the double loop is picked, but the cast fails.
         np.add.reduce(arr, dtype=np.intp, out=out)
     assert count == sys.getrefcount(value)
     # If an error occurred during casting, the operation is done at most until
@@ -2332,3 +2393,20 @@ def test_reduce_casterrors(offset):
     # if the error happened immediately.
     # This does not define behaviour, the output is invalid and thus undefined
     assert out[()] < value * offset
+
+
+@pytest.mark.parametrize("method",
+        [np.add.accumulate, np.add.reduce,
+         pytest.param(lambda x: np.add.reduceat(x, [0]), id="reduceat"),
+         pytest.param(lambda x: np.log.at(x, [2]), id="at")])
+def test_ufunc_methods_floaterrors(method):
+    # adding inf and -inf (or log(-inf) creates an invalid float and warns
+    arr = np.array([np.inf, 0, -np.inf])
+    with np.errstate(all="warn"):
+        with pytest.warns(RuntimeWarning, match="invalid value"):
+            method(arr)
+
+    arr = np.array([np.inf, 0, -np.inf])
+    with np.errstate(all="raise"):
+        with pytest.raises(FloatingPointError):
+            method(arr)

@@ -40,7 +40,7 @@ class TestArrayMemoryError:
         # 1023.9999 Mib should round to 1 GiB
         assert f(int(Ki*Ki*Ki*0.9999)) == '1.00 GiB'
         assert f(Ki*Ki*Ki*Ki*Ki*Ki) == '1.00 EiB'
-        # larger than sys.maxsize, adding larger prefices isn't going to help
+        # larger than sys.maxsize, adding larger prefixes isn't going to help
         # anyway.
         assert f(Ki*Ki*Ki*Ki*Ki*Ki*123456) == '123456. EiB'
 

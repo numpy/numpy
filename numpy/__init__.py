@@ -135,13 +135,6 @@ else:
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
 
-    # get the version using versioneer
-    from ._version import get_versions
-    vinfo = get_versions()
-    __version__ = vinfo.get("closest-tag", vinfo["version"])
-    __git_version__ = vinfo.get("full-revisionid")
-    del get_versions, vinfo
-
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
 
@@ -196,10 +189,17 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
+
+    # NumPy 1.22, 2021-10-20
+    __deprecated_attrs__["MachAr"] = (
+        core._machar.MachAr,
+        "`np.MachAr` is deprecated (NumPy 1.22)."
     )
 
     _msg = (
@@ -409,6 +409,6 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+
+# get the version using versioneer
+from .version import __version__, git_revision as __git_version__

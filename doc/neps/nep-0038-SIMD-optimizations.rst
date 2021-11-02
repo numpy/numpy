@@ -64,7 +64,7 @@ mechanism for NumPy. There are three stages to using the mechanism:
 - Infrastructure is provided in the code for abstract intrinsics. The ufunc
   machinery will be extended using sets of these abstract intrinsics, so that
   a single ufunc will be expressed as a set of loops, going from a minimal to
-  a maximal set of possibly availabe intrinsics.
+  a maximal set of possibly available intrinsics.
 - At compile time, compiler macros and CPU detection are used to turn the
   abstract intrinsics into concrete intrinsic calls. Any intrinsics not
   available on the platform, either because the CPU does not support them
@@ -183,7 +183,7 @@ yet supported as a universal intrinsic, then:
 1. It should be added as a universal intrinsic for all platforms
 2. If it does not have an equivalent instruction on other platforms (e.g.
    ``_mm512_mask_i32gather_ps`` in ``AVX512``), then no universal intrinsic
-   should be added and a platform-specific ``ufunc`` or a short helper fuction
+   should be added and a platform-specific ``ufunc`` or a short helper function
    should be written instead. If such a helper function is used, it must be
    wrapped with the feature macros, and a reasonable non-intrinsic fallback to
    be used by default.
@@ -289,7 +289,7 @@ implementing and maintaining that platform's loop code.
 Discussion
 ----------
 
-Most of the discussion took place on the PR `gh-15228`_ to accecpt this NEP.
+Most of the discussion took place on the PR `gh-15228`_ to accept this NEP.
 Discussion on the mailing list mentioned `VOLK`_ which was added to
 the section on related work. The question of maintainability also was raised
 both on the mailing list and in `gh-15228`_ and resolved as follows:

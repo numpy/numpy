@@ -7,8 +7,8 @@
  * strong backwards compatibility guarantees at the moment.
  */
 
-#ifndef _NPY_3KCOMPAT_H_
-#define _NPY_3KCOMPAT_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_3KCOMPAT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_3KCOMPAT_H_
 
 #include <Python.h>
 #include <stdio.h>
@@ -592,4 +592,4 @@ NpyCapsule_Check(PyObject *ptr)
 #endif
 
 
-#endif /* _NPY_3KCOMPAT_H_ */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_3KCOMPAT_H_ */

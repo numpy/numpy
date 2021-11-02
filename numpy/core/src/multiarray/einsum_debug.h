@@ -6,8 +6,8 @@
  *
  * See LICENSE.txt for the license.
  */
-#ifndef _NPY_MULTIARRAY_EINSUM_DEBUG_H
-#define _NPY_MULTIARRAY_EINSUM_DEBUG_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_EINSUM_DEBUG_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_EINSUM_DEBUG_H_
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_EINSUM_DBG_TRACING 0
@@ -25,4 +25,4 @@
 #define NPY_EINSUM_DBG_PRINT3(s, p1, p2, p3)
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_EINSUM_DEBUG_H_ */

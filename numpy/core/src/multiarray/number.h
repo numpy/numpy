@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_NUMBER_H_
-#define _NPY_ARRAY_NUMBER_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_
 
 typedef struct {
     PyObject *add;
@@ -69,4 +69,4 @@ NPY_NO_EXPORT PyObject *
 PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
                                   int rtype, PyArrayObject *out);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_ */

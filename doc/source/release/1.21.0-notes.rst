@@ -522,7 +522,7 @@ either of these distributions are produced.
 Placeholder annotations have been improved
 ------------------------------------------
 All placeholder annotations, that were previously annotated as ``typing.Any``,
-have been improved. Where appropiate they have been replaced with explicit
+have been improved. Where appropriate they have been replaced with explicit
 function definitions, classes or other miscellaneous objects.
 
 (`gh-18934 <https://github.com/numpy/numpy/pull/18934>`__)

@@ -80,12 +80,10 @@ Exported symbols include:
 
 """
 import numbers
-import warnings
 
 from numpy.core.multiarray import (
-        typeinfo, ndarray, array, empty, dtype, datetime_data,
-        datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
+        ndarray, array, dtype, datetime_data, datetime_as_string,
+        busday_offset, busday_count, is_busday, busdaycalendar
         )
 from numpy.core.overrides import set_module
 

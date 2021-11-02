@@ -689,6 +689,9 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         it. The order of all elements in the partitions is undefined. If
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
@@ -781,6 +784,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         elements in the partitions is undefined. If provided with a
         sequence of k-th it will partition all of them into their sorted
         position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
@@ -1138,6 +1144,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
 
+        .. versionadded:: 1.22.0
+
     Returns
     -------
     index_array : ndarray of ints
@@ -1231,6 +1239,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
+
+        .. versionadded:: 1.22.0
 
     Returns
     -------

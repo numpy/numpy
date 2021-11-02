@@ -1,7 +1,7 @@
 .. _NEP17:
 
 ================================
-NEP 17 — Split Out Masked Arrays
+NEP 17 — Split out masked arrays
 ================================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>

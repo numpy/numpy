@@ -1033,7 +1033,10 @@ cdef class RandomState:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than or equal to high.  The default value is 1.0.
+            less than or equal to high.  The high limit may be included in the 
+            returned array of floats due to floating-point rounding in the 
+            equation ``low + (high-low) * random_sample()``.  The default value 
+            is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2524,7 +2527,7 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            If a < 1.
+            If a <= 0.
 
         See Also
         --------
@@ -4472,7 +4475,7 @@ cdef class RandomState:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>np.PyArray_DATA(x)
+            x_ptr = np.PyArray_BYTES(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -4480,7 +4483,7 @@ cdef class RandomState:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
+            buf_ptr = np.PyArray_BYTES(buf)
             with self.lock:
                 # We trick gcc into providing a specialized implementation for
                 # the most common case, yielding a ~33% performance improvement.

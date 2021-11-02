@@ -68,13 +68,13 @@ __all__ = [
     'masked_singleton', 'masked_values', 'masked_where', 'max', 'maximum',
     'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
     'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
-    'not_equal', 'ones', 'outer', 'outerproduct', 'power', 'prod',
+    'not_equal', 'ones', 'ones_like', 'outer', 'outerproduct', 'power', 'prod',
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
     'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
     'swapaxes', 'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
-    'var', 'where', 'zeros',
+    'var', 'where', 'zeros', 'zeros_like',
     ]
 
 MaskType = np.bool_
@@ -1065,7 +1065,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
             tr = self.f.reduce(t, axis)
             mr = nomask
         else:
-            tr = self.f.reduce(t, axis, dtype=dtype or t.dtype)
+            tr = self.f.reduce(t, axis, dtype=dtype)
             mr = umath.logical_and.reduce(m, axis)
 
         if not tr.shape:
@@ -3949,7 +3949,7 @@ class MaskedArray(ndarray):
 
 
         # 2016-11-19: Demoted to legacy format
-        if np.get_printoptions()['legacy'] == '1.13':
+        if np.core.arrayprint._get_legacy_print_mode() <= 113:
             is_long = self.ndim > 1
             parameters = dict(
                 name=name,
@@ -8159,8 +8159,18 @@ arange = _convert2ma(
     np_ret='arange : ndarray',
     np_ma_ret='arange : MaskedArray',
 )
-clip = np.clip
-diff = np.diff
+clip = _convert2ma(
+    'clip',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='clipped_array : ndarray',
+    np_ma_ret='clipped_array : MaskedArray',
+)
+diff = _convert2ma(
+    'diff',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='diff : ndarray',
+    np_ma_ret='diff : MaskedArray',
+)
 empty = _convert2ma(
     'empty', 
     params=dict(fill_value=None, hardmask=False),
@@ -8188,22 +8198,40 @@ identity = _convert2ma(
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
-indices = np.indices
+indices = _convert2ma(
+    'indices',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='grid : one ndarray or tuple of ndarrays',
+    np_ma_ret='grid : one MaskedArray or tuple of MaskedArrays',
+)
 ones = _convert2ma(
     'ones',
     params=dict(fill_value=None, hardmask=False),
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
-ones_like = np.ones_like
-squeeze = np.squeeze
+ones_like = _convert2ma(
+    'ones_like',
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
+squeeze = _convert2ma(
+    'squeeze',
+    params=dict(fill_value=None, hardmask=False),
+    np_ret='squeezed : ndarray',
+    np_ma_ret='squeezed : MaskedArray',
+)
 zeros = _convert2ma(
     'zeros',
     params=dict(fill_value=None, hardmask=False),
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
-zeros_like = np.zeros_like
+zeros_like = _convert2ma(
+    'zeros_like',
+    np_ret='out : ndarray',
+    np_ma_ret='out : MaskedArray',
+)
 
 
 def append(a, b, axis=None):

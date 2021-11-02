@@ -5,7 +5,6 @@ import pytest
 import threading
 import traceback
 import time
-import random
 
 import numpy as np
 from numpy.testing import assert_, assert_equal, IS_PYPY
@@ -107,9 +106,9 @@ cf2py  intent(out) r
         -----
         Call-back functions::
 
-          def fun(): return a
-          Return objects:
-            a : int
+            def fun(): return a
+            Return objects:
+                a : int
         """)
         assert_equal(self.module.t.__doc__, expected)
 

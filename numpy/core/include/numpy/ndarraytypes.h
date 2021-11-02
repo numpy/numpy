@@ -1,5 +1,5 @@
-#ifndef NDARRAYTYPES_H
-#define NDARRAYTYPES_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
 
 #include "npy_common.h"
 #include "npy_endian.h"
@@ -355,12 +355,10 @@ struct NpyAuxData_tag {
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
-  /*
-   * Macros to define how array, and dimension/strides data is
-   * allocated.
-   */
-
-  /* Data buffer - PyDataMem_NEW/FREE/RENEW are in multiarraymodule.c */
+/*
+* Macros to define how array, and dimension/strides data is
+* allocated. These should be made private
+*/
 
 #define NPY_USE_PYMEM 1
 
@@ -673,6 +671,24 @@ typedef struct _arr_descr {
 } PyArray_ArrayDescr;
 
 /*
+ * Memory handler structure for array data.
+ */
+/* The declaration of free differs from PyMemAllocatorEx */
+typedef struct {
+    void *ctx;
+    void* (*malloc) (void *ctx, size_t size);
+    void* (*calloc) (void *ctx, size_t nelem, size_t elsize);
+    void* (*realloc) (void *ctx, void *ptr, size_t new_size);
+    void (*free) (void *ctx, void *ptr, size_t size);
+} PyDataMemAllocator;
+
+typedef struct {
+    char name[128];  /* multiple of 64 to keep the struct aligned */
+    PyDataMemAllocator allocator;
+} PyDataMem_Handler;
+
+
+/*
  * The main array object structure.
  *
  * It has been recommended to use the inline functions defined below
@@ -722,6 +738,10 @@ typedef struct tagPyArrayObject_fields {
     /* For weak references */
     PyObject *weakreflist;
     void *_buffer_info;  /* private buffer info, tagged to allow warning */
+    /*
+     * For malloc/calloc/realloc/free per object
+     */
+    PyObject *mem_handler;
 } PyArrayObject_fields;
 
 /*
@@ -1472,9 +1492,11 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * Include inline implementations - functions defined there are not
  * considered public API
  */
-#define _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
 #include "_neighborhood_iterator_imp.h"
-#undef _NPY_INCLUDE_NEIGHBORHOOD_IMP
+#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
+
+
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
@@ -1663,6 +1685,12 @@ static NPY_INLINE void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
+}
+
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
+PyArray_HANDLER(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->mem_handler;
 }
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
@@ -1864,31 +1892,13 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  */
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /*
-     * The Structures defined in this block are considered private API and
-     * may change without warning!
+     * The Structures defined in this block are currently considered
+     * private API and may change without warning!
+     * Part of this (at least the size) is exepcted to be public API without
+     * further modifications.
      */
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
-
-    typedef struct PyArray_DTypeMeta_tag PyArray_DTypeMeta;
-
-    typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
-            PyArray_DTypeMeta *cls, PyObject *obj);
-
-    /*
-     * Before making this public, we should decide whether it should pass
-     * the type, or allow looking at the object. A possible use-case:
-     * `np.array(np.array([0]), dtype=np.ndarray)`
-     * Could consider arrays that are not `dtype=ndarray` "scalars".
-     */
-    typedef int (is_known_scalar_type_function)(
-            PyArray_DTypeMeta *cls, PyTypeObject *obj);
-
-    typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
-    typedef PyArray_DTypeMeta *(common_dtype_function)(
-            PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2);
-    typedef PyArray_Descr *(common_instance_function)(
-            PyArray_Descr *dtype1, PyArray_Descr *dtyep2);
 
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
@@ -1900,7 +1910,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
      * it is a fairly complex construct which may be better to allow
      * refactoring of.
      */
-    struct PyArray_DTypeMeta_tag {
+    typedef struct {
         PyHeapTypeObject super;
 
         /*
@@ -1928,7 +1938,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          */
         void *dt_slots;
         void *reserved[3];
-    };
+    } PyArray_DTypeMeta;
 
 #endif  /* NPY_INTERNAL_BUILD */
 
@@ -1959,4 +1969,4 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  */
 #undef NPY_DEPRECATED_INCLUDES
 
-#endif /* NPY_ARRAYTYPES_H */
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

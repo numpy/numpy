@@ -1,7 +1,7 @@
-#ifndef _NPY_PRIVATE_CONVERSION_UTILS_H_
-#define _NPY_PRIVATE_CONVERSION_UTILS_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_
 
-#include <numpy/ndarraytypes.h>
+#include "numpy/ndarraytypes.h"
 
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
@@ -85,4 +85,4 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
  */
 extern NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_ */

@@ -1025,7 +1025,7 @@ class TestEinsumPath:
         self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
 
     def test_path_type_input(self):
-        # Test explicit path handeling
+        # Test explicit path handling
         path_test = self.build_operands('dcc,fce,ea,dbf->ab')
 
         path, path_str = np.einsum_path(*path_test, optimize=False)
