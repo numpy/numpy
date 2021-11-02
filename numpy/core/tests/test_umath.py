@@ -28,9 +28,7 @@ def get_glibc_version():
 
 
 glibcver = get_glibc_version()
-glibc_newerthan_2_17 = pytest.mark.xfail(
-        glibcver != '0.0' and glibcver < '2.17',
-        reason="Older glibc versions may not raise appropriate FP exceptions")
+glibc_older_than_2_17 = (glibcver != '0.0' and glibcver < '2.17')
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -1024,7 +1022,10 @@ class TestSpecialFloats:
 
     # Older version of glibc may not raise the correct FP exceptions
     # See: https://github.com/numpy/numpy/issues/19192
-    @glibc_newerthan_2_17
+    @pytest.mark.xfail(
+        glibc_older_than_2_17,
+        reason="Older glibc versions may not raise appropriate FP exceptions"
+    )
     def test_exp_exceptions(self):
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
