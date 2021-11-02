@@ -449,9 +449,8 @@ class TestArrayConstruction:
     def test_array_empty(self):
         assert_raises(TypeError, np.array)
 
-    def test_0d_array(self):
-        assert np.array(3) == 3
-        assert np.array(10).shape == ()
+    def test_0d_array_shape(self):
+        assert np.ones(np.array(3)).shape == (3,)
 
     def test_array_copy_false(self):
         d = np.array([1, 2, 3])
@@ -521,6 +520,9 @@ class TestArrayConstruction:
         assert test_scalar_intp_converter(10) == (10,)
         # we also try -1 since it proved to be a problematic value
         assert test_scalar_intp_converter(-1) == (-1,)
+
+        assert np.array(3) == 3
+        assert np.array(10).shape == ()
 
         assert_raises(TypeError, test_scalar_intp_converter, 'foo')
 
