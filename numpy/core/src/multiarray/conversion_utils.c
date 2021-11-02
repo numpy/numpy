@@ -150,8 +150,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
     if (seq_obj == NULL) {
         /*
-         * obj *might* be a scalar (if dimension_from_scalar does not fail, at the
-         * moment no check have been performed to verify this hypothesis).
+         * obj *might* be a scalar (if dimension_from_scalar does not fail, at
+         * the moment no check have been performed to verify this hypothesis).
          */
         seq->ptr = npy_alloc_cache_dim(1);
         if (seq->ptr == NULL) {
@@ -1107,23 +1107,31 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
-    if (PyLong_CheckExact(seq) || !PySequence_Check(seq)) {
+    PyObject *seq_obj = NULL;
+    if (!PyLong_CheckExact(seq) && PySequence_Check(seq)) {
+        seq_obj = PySequence_Fast(seq,
+            "expected a sequence of integers or a single integer");
+        if (seq_obj == NULL) {
+            // we ignore this error since it is managed below
+            PyErr_Clear();
+        }
+    }
+
+    if (seq_obj == NULL) {
         vals[0] = dimension_from_scalar(seq);
         if (error_converting(vals[0])) {
+            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+                PyErr_SetString(
+                        PyExc_TypeError,
+                        "expected a sequence of integers or a single integer");
+            }
             return -1;
         }
-        else {
-            return 1;
-        }
+        return 1;
+    } else {
+        return PyArray_IntpFromIndexSequence(seq_obj, vals, (npy_intp)maxvals);
     }
-
-    PyObject *seq_obj = PySequence_Fast(seq,
-            "expected a sequence of integers or a single integer");
-    if (seq_obj == NULL) {
-        return -1;
-    }
-
-    return PyArray_IntpFromIndexSequence(seq_obj, vals, (npy_intp)maxvals);
 }
 
 

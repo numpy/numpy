@@ -525,6 +525,7 @@ class TestArrayConstruction:
         assert np.array(10).shape == ()
 
         assert_raises(TypeError, test_scalar_intp_converter, 'foo')
+        assert_raises(ValueError, test_scalar_intp_converter, 2**64)
 
     def test_scalar_and_wrongtype_intp_from_sequence(self):
         from numpy.core._multiarray_tests import test_scalar_intp_from_sequence
@@ -533,6 +534,8 @@ class TestArrayConstruction:
         assert test_scalar_intp_from_sequence(-1) == -1
 
         assert_raises(TypeError, test_scalar_intp_from_sequence, 'foo')
+        # overflow
+        assert_raises(ValueError, test_scalar_intp_from_sequence, 2**64)
 
 class TestAssignment:
     def test_assignment_broadcasting(self):
