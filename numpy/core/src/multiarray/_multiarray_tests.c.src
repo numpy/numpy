@@ -2378,12 +2378,14 @@ PyObject *
 test_scalar_intp_converter(PyObject *dummy, PyObject *obj)
 {
     PyArray_Dims dummy_dims;
-    int output = PyArray_IntpConverter(obj, &dummy_dims);
-    if (output != NPY_SUCCEED) {
+    if (!PyArray_IntpConverter(obj, &dummy_dims)) {
         return NULL;
     }
     else {
-        return PyLong_FromLong(dummy_dims.ptr[0]);
+        PyObject *result = PyArray_IntTupleFromIntp(dummy_dims.len,
+                dummy_dims.ptr);
+        free(dummy_dims.ptr);
+        return result;
     }
 }
 

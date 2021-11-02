@@ -518,9 +518,9 @@ class TestArrayConstruction:
     def test_scalar_and_wrongtype_intp_converter(self):
         from numpy.core._multiarray_tests import test_scalar_intp_converter
 
-        assert test_scalar_intp_converter(10) == 10
+        assert test_scalar_intp_converter(10) == (10,)
         # we also try -1 since it proved to be a problematic value
-        assert test_scalar_intp_converter(-1) == -1
+        assert test_scalar_intp_converter(-1) == (-1,)
 
         assert_raises(TypeError, test_scalar_intp_converter, 'foo')
 
