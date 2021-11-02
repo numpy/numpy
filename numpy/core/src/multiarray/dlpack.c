@@ -211,7 +211,6 @@ array_dlpack(PyArrayObject *self,
     managed->dl_tensor.device = device;
     managed->dl_tensor.dtype = managed_dtype;
 
-
     int64_t *managed_shape_strides = PyMem_Malloc(sizeof(int64_t) * ndim * 2);
     if (managed_shape_strides == NULL) {
         PyErr_NoMemory();
@@ -307,7 +306,7 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     int typenum = -1;
     const uint8_t bits = managed->dl_tensor.dtype.bits;
     const npy_intp itemsize = bits / 8;
-    switch(managed->dl_tensor.dtype.code) {
+    switch (managed->dl_tensor.dtype.code) {
     case kDLInt:
         switch (bits)
         {
@@ -356,8 +355,7 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     for (int i = 0; i < ndim; ++i) {
         shape[i] = managed->dl_tensor.shape[i];
         // DLPack has elements as stride units, NumPy has bytes.
-        if (managed->dl_tensor.strides != NULL)
-        {
+        if (managed->dl_tensor.strides != NULL) {
             strides[i] = managed->dl_tensor.strides[i] * itemsize;
         }
     }
