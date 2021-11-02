@@ -162,11 +162,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         seq->len = 1;
 
         seq->ptr[0] = dimension_from_scalar(obj);
-        /*
-        * Check whether the value set by dimension_from_scalar is different than
-        * the value returned, which means that an error occurred.
-        */
-        if (PyErr_Occurred() != NULL) {
+        if (error_converting(seq->ptr[0])) {
             npy_free_cache_dim_obj(*seq);
             seq->ptr = NULL;
             return NPY_FAIL;
