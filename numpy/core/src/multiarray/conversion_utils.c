@@ -79,7 +79,7 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
 }
 
 static npy_intp
-intp_from_scalar(PyObject *ob)
+dimension_from_scalar(PyObject *ob)
 {
     /*
      * Convert the given value to an integer. Then store it and check for
@@ -137,7 +137,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
     /*
     * If obj is a scalar we skip all the useless computations and jump to
-    * intp_from_scalar as soon as possible.
+    * dimension_from_scalar as soon as possible.
     */
     if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
         seq_obj = PySequence_Fast(obj,
@@ -150,7 +150,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
     if (seq_obj == NULL) {
         /*
-        * obj *might* be a scalar (if intp_from_scalar does not fail, at the
+        * obj *might* be a scalar (if dimension_from_scalar does not fail, at the
         * moment no check have been performed to verify this hypothesis).
         */
 
@@ -161,9 +161,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
         seq->len = 1;
 
-        seq->ptr[0] = intp_from_scalar(obj);
+        seq->ptr[0] = dimension_from_scalar(obj);
         /*
-        * Check whether the value set by intp_from_scalar is different than
+        * Check whether the value set by dimension_from_scalar is different than
         * the value returned, which means that an error occurred.
         */
         if (PyErr_Occurred() != NULL) {
@@ -1079,7 +1079,7 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
             return -1;
         }
 
-        vals[i] = intp_from_scalar(op);
+        vals[i] = dimension_from_scalar(op);
         /*
         * If the value returned is different than the value set in vals
         * an error has been detected.
@@ -1100,7 +1100,7 @@ NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     if (PyLong_CheckExact(seq) || !PySequence_Check(seq)) {
-        vals[0] = intp_from_scalar(seq);
+        vals[0] = dimension_from_scalar(seq);
         if (error_converting(vals[0])) {
             return -1;
         }
