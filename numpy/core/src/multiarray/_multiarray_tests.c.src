@@ -2391,10 +2391,6 @@ PyObject *
 test_scalar_intp_from_sequence(PyObject *dummy, PyObject *obj)
 {
     npy_intp vals[1];
-    if (vals == NULL) {
-        PyErr_NoMemory();
-        return NPY_FAIL;
-    }
 
     int output = PyArray_IntpFromSequence(obj, vals, 1);
     if (output == -1) {
