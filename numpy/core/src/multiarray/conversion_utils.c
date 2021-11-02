@@ -82,9 +82,9 @@ static npy_intp
 intp_from_scalar(PyObject *ob)
 {
     /*
-    * Convert the given value to an integer. Then store it and check for
-    * errors.
-    */
+     * Convert the given value to an integer. Then store it and check for
+     * errors.
+     */
     npy_intp value = PyArray_PyIntAsIntp(ob);
 
     if (error_converting(value)) {
