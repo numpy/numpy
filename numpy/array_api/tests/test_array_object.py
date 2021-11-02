@@ -290,3 +290,9 @@ def test_python_scalar_construtors():
 def test_device_property():
     a = ones((3, 4))
     assert a.device == 'cpu'
+
+    assert np.array_equal(a.to_device('cpu'), a)
+    assert_raises(ValueError, lambda: a.to_device('gpu'))
+
+    assert np.array_equal(asarray(a, device='cpu'), a)
+    assert_raises(ValueError, lambda: asarray(a, device='gpu'))
