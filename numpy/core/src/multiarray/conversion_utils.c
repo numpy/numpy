@@ -1097,7 +1097,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     if (PyLong_CheckExact(seq) || !PySequence_Check(seq)) {
         vals[0] = intp_from_scalar(seq);
-        if (PyErr_Occurred() != NULL) {
+        if (error_converting(vals[0])) {
             return -1;
         } else {
             return 1;
