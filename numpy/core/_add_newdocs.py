@@ -1573,9 +1573,9 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         array_function_like_doc,
     ))
 
-add_newdoc('numpy.core.multiarray', 'from_dlpack',
+add_newdoc('numpy.core.multiarray', '_from_dlpack',
     """
-    from_dlpack(x, /)
+    _from_dlpack(x, /)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
     protocol.
