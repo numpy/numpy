@@ -1,4 +1,5 @@
 import sys
+import sysconfig
 import subprocess
 import pkgutil
 import types
@@ -460,6 +461,14 @@ def test_api_importable():
                              "{}".format(module_names))
 
 
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_DEBUG") is not None,
+    reason=(
+        "NumPy possibly built with `USE_DEBUG=True ./tools/travis-test.sh`, "
+        "which does not expose the `array_api` entry point. "
+        "See https://github.com/numpy/numpy/pull/19800"
+    ),
+)
 def test_array_api_entry_point():
     """
     Entry point for Array API implementation can be found with importlib and
