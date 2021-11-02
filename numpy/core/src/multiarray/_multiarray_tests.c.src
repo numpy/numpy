@@ -2381,7 +2381,8 @@ test_scalar_intp_converter(PyObject *dummy, PyObject *obj)
     int output = PyArray_IntpConverter(obj, &dummy_dims);
     if (output != NPY_SUCCEED) {
         return NULL;
-    } else {
+    }
+    else {
         return PyLong_FromLong(dummy_dims.ptr[0]);
     }
 }
@@ -2398,7 +2399,8 @@ test_scalar_intp_from_sequence(PyObject *dummy, PyObject *obj)
     int output = PyArray_IntpFromSequence(obj, vals, 1);
     if (output == -1) {
         return NULL;
-    } else {
+    }
+    else {
         return PyLong_FromLong(vals[0]);
     }
 }

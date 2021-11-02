@@ -88,15 +88,18 @@ intp_from_scalar(PyObject *ob)
     npy_intp value = PyArray_PyIntAsIntp(ob);
 
     if (error_converting(value)) {
-        if (PyErr_ExceptionMatches(PyExc_OverflowError))
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
             PyErr_SetString(PyExc_ValueError,
                     "Maximum allowed dimension exceeded");
-        else
+        }
+        else {
             PyErr_SetString(
                     PyExc_TypeError,
                     "Unable to convert the given object to an integer value.");
+        }
         return -1;
-    } else {
+    }
+    else {
         return value;
     }
 }
@@ -168,7 +171,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
             seq->ptr = NULL;
             return NPY_FAIL;
         }
-    } else {
+    }
+    else {
         /*
         * obj has been recognized as an iterable of integer values
         */
@@ -1099,7 +1103,8 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         vals[0] = intp_from_scalar(seq);
         if (error_converting(vals[0])) {
             return -1;
-        } else {
+        }
+        else {
             return 1;
         }
     }
