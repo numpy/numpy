@@ -158,27 +158,31 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
             PyErr_NoMemory();
             return NPY_FAIL;
         }
-        seq->len = 1;
+        else {
+            seq->len = 1;
 
-        seq->ptr[0] = dimension_from_scalar(obj);
-        if (error_converting(seq->ptr[0])) {
-            /*
-             * If the error occurred is a type error (cannot convert the value
-             * to an integer) we change the error label to communicate that
-             * we expected a sequence or an integer from the user. Otherwise
-             * we leave the error unchanged (may be an overflow error, which
-             * should be represented by a ValueError in NumPy API, check
-             * test_conversion_utils.TestIntpConverter.test_too_large).
-             */
-            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_Clear();
-                PyErr_SetString(
-                        PyExc_TypeError,
-                        "expected a sequence of integers or a single integer");
+            seq->ptr[0] = dimension_from_scalar(obj);
+            if (error_converting(seq->ptr[0])) {
+                /*
+                 * If the error occurred is a type error (cannot convert the
+                 * value to an integer) we change the error label to
+                 * communicate that we expected a sequence or an integer from
+                 * the user. Otherwise we leave the error unchanged (may be an
+                 * overflow error, which should be represented by a ValueError
+                 * in NumPy API, check
+                 * test_conversion_utils.TestIntpConverter.test_too_large).
+                */
+                if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                    PyErr_Clear();
+                    PyErr_SetString(
+                            PyExc_TypeError,
+                            "expected a sequence of integers or a single "
+                            "integer");
+                }
+                npy_free_cache_dim_obj(*seq);
+                seq->ptr = NULL;
+                return NPY_FAIL;
             }
-            npy_free_cache_dim_obj(*seq);
-            seq->ptr = NULL;
-            return NPY_FAIL;
         }
     }
     else {
@@ -1086,14 +1090,15 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
         if (op == NULL) {
             return -1;
         }
-
-        vals[i] = dimension_from_scalar(op);
-        /*
-        * If the value returned is different than the value set in vals
-        * an error has been detected.
-        */
-        if (PyErr_Occurred() != NULL) {
-            return -1;
+        else {
+            vals[i] = dimension_from_scalar(op);
+            /*
+             * If the value returned is different than the value set in vals
+             * an error has been detected.
+             */
+            if (PyErr_Occurred() != NULL) {
+                return -1;
+            }
         }
     }
     return nd;

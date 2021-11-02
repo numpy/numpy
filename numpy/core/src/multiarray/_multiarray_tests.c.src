@@ -15,6 +15,7 @@
 #include "array_method.h"
 #include "npy_hashtable.h"
 #include "dtypemeta.h"
+#include "alloc.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -2384,7 +2385,9 @@ test_scalar_intp_converter(PyObject *dummy, PyObject *obj)
     else {
         PyObject *result = PyArray_IntTupleFromIntp(dummy_dims.len,
                 dummy_dims.ptr);
-        free(dummy_dims.ptr);
+        if (dummy_dims.ptr != NULL) {
+            free(dummy_dims.ptr);
+        }
         return result;
     }
 }
@@ -2398,9 +2401,7 @@ test_scalar_intp_from_sequence(PyObject *dummy, PyObject *obj)
     if (output == -1) {
         return NULL;
     }
-    else {
-        return PyLong_FromLong(vals[0]);
-    }
+    return PyLong_FromLong(vals[0]);
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {
