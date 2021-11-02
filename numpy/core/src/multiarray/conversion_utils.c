@@ -177,7 +177,7 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
     PyObject* numpy_CopyMode = NULL;
     npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
-    if (numpy_CopyMode != NULL && PyObject_TypeCheck(obj, numpy_CopyMode)) {
+    if (numpy_CopyMode != NULL && PyObject_Type(obj) == numpy_CopyMode) {
         PyObject* mode_value = PyObject_GetAttrString(obj, "value");
         if (mode_value == NULL) {
             return NPY_FAIL;
