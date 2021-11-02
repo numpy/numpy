@@ -136,9 +136,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     PyObject *seq_obj = NULL;
 
     /*
-    * If obj is a scalar we skip all the useless computations and jump to
-    * dimension_from_scalar as soon as possible.
-    */
+     * If obj is a scalar we skip all the useless computations and jump to
+     * dimension_from_scalar as soon as possible.
+     */
     if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
         seq_obj = PySequence_Fast(obj,
                "Expected an integer or an iterable/sequence of integers.");
@@ -150,10 +150,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
     if (seq_obj == NULL) {
         /*
-        * obj *might* be a scalar (if dimension_from_scalar does not fail, at the
-        * moment no check have been performed to verify this hypothesis).
-        */
-
+         * obj *might* be a scalar (if dimension_from_scalar does not fail, at the
+         * moment no check have been performed to verify this hypothesis).
+         */
         seq->ptr = npy_alloc_cache_dim(1);
         if (seq->ptr == NULL) {
             PyErr_NoMemory();
@@ -170,9 +169,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
     else {
         /*
-        * obj has been recognized as an iterable of integer values
-        */
-
+         * obj has been recognized as an iterable of integer values
+         */
         Py_ssize_t len = PySequence_Fast_GET_SIZE(seq_obj);
         if (len > NPY_MAXDIMS) {
             PyErr_Format(PyExc_ValueError, "maximum supported dimension for "
