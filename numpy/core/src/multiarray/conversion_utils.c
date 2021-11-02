@@ -162,8 +162,20 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
         seq->ptr[0] = dimension_from_scalar(obj);
         if (error_converting(seq->ptr[0])) {
-            PyErr_SetString(PyExc_TypeError,
-                 "expected a sequence of integers or a single integer");
+            /*
+             * If the error occurred is a type error (cannot convert the value
+             * to an integer) we change the error label to communicate that
+             * we expected a sequence or an integer from the user. Otherwise
+             * we leave the error unchanged (may be an overflow error, which
+             * should be represented by a ValueError in NumPy API, check
+             * test_conversion_utils.TestIntpConverter.test_too_large).
+             */
+            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+                PyErr_SetString(
+                        PyExc_TypeError,
+                        "expected a sequence of integers or a single integer");
+            }
             npy_free_cache_dim_obj(*seq);
             seq->ptr = NULL;
             return NPY_FAIL;
