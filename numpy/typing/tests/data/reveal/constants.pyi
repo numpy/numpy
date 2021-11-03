@@ -43,8 +43,8 @@ reveal_type(np.WRAP)  # E: Literal[1]
 reveal_type(np.tracemalloc_domain)  # E: Literal[389047]
 
 reveal_type(np.little_endian)  # E: bool
-reveal_type(np.True_)  # E: numpy.bool_
-reveal_type(np.False_)  # E: numpy.bool_
+reveal_type(np.True_)  # E: bool_
+reveal_type(np.False_)  # E: bool_
 
 reveal_type(np.UFUNC_PYVALS_NAME)  # E: Literal['UFUNC_PYVALS']
 
