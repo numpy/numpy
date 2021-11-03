@@ -330,12 +330,12 @@ def mapdomain(x, old, new):
     -----
     Effectively, this implements:
 
-    .. math ::
+    .. math::
         x\\_out = new[0] + m(x - old[0])
 
     where
 
-    .. math ::
+    .. math::
         m = \\frac{new[1]-new[0]}{old[1]-old[0]}
 
     Examples
