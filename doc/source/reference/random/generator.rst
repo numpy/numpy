@@ -12,6 +12,9 @@ random values from useful distributions. The default BitGenerator used by
 can be changed by passing an instantized BitGenerator to ``Generator``.
 
 
+.. for doctest:
+    >>> import numpy as np
+
 .. autofunction:: default_rng
 
 .. autoclass:: Generator
@@ -71,7 +74,7 @@ By default, `Generator.permuted` returns a copy.  To operate in-place with
 `Generator.permuted`, pass the same array as the first argument *and* as
 the value of the ``out`` parameter.  For example,
 
-    >>> rng = np.random.default_rng()
+    >>> rng = np.random.default_rng(12345)
     >>> x = np.arange(0, 15).reshape(3, 5)
     >>> x
     array([[ 0,  1,  2,  3,  4],
@@ -79,9 +82,9 @@ the value of the ``out`` parameter.  For example,
            [10, 11, 12, 13, 14]])
     >>> y = rng.permuted(x, axis=1, out=x)
     >>> x
-    array([[ 1,  0,  2,  4,  3],  # random
-           [ 6,  7,  8,  9,  5],
-           [10, 14, 11, 13, 12]])
+    array([[ 4,  3,  0,  2,  1],
+           [ 9,  7,  6,  8,  5],
+           [10, 12, 13, 11, 14]])
 
 Note that when ``out`` is given, the return value is ``out``:
 
@@ -97,16 +100,16 @@ which dimension of the input array to use as the sequence. In the case of a
 two-dimensional array, ``axis=0`` will, in effect, rearrange the rows of the
 array, and  ``axis=1`` will rearrange the columns.  For example
 
-    >>> rng = np.random.default_rng()
+    >>> rng = np.random.default_rng(2345)
     >>> x = np.arange(0, 15).reshape(3, 5)
     >>> x
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14]])
     >>> rng.permutation(x, axis=1)
-    array([[ 1,  3,  2,  0,  4],  # random
-           [ 6,  8,  7,  5,  9],
-           [11, 13, 12, 10, 14]])
+    array([[ 4,  2,  1,  3,  0],
+           [ 9,  7,  6,  8,  5],
+           [14, 12, 11, 13, 10]])
 
 Note that the columns have been rearranged "in bulk": the values within
 each column have not changed.
@@ -117,9 +120,9 @@ independently of the others.  Compare the following example of the use of
 `Generator.permuted` to the above example of `Generator.permutation`:
 
     >>> rng.permuted(x, axis=1)
-    array([[ 1,  0,  2,  4,  3],  # random
-           [ 5,  7,  6,  9,  8],
-           [10, 14, 12, 13, 11]])
+    array([[ 1,  2,  0,  3,  4],
+           [ 7,  9,  8,  6,  5],
+           [13, 11, 10, 14, 12]])
 
 In this example, the values within each row (i.e. the values along
 ``axis=1``) have been shuffled independently.  This is not a "bulk"
@@ -131,11 +134,11 @@ Shuffling non-NumPy sequences
 a sequence that is not a NumPy array, it shuffles that sequence in-place.
 For example,
 
-    >>> rng = np.random.default_rng()
+    >>> rng = np.random.default_rng(3456)
     >>> a = ['A', 'B', 'C', 'D', 'E']
     >>> rng.shuffle(a)  # shuffle the list in-place
     >>> a
-    ['B', 'D', 'A', 'E', 'C']  # random
+    ['B', 'E', 'A', 'D', 'C']
 
 Distributions
 =============

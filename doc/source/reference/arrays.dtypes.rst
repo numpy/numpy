@@ -1,5 +1,8 @@
 .. currentmodule:: numpy
 
+.. for doctest:
+    >>> import numpy as np
+
 .. _arrays.dtypes:
 
 **********************************

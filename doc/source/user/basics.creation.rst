@@ -1,5 +1,8 @@
 .. _arrays.creation:
 
+.. for doctest:
+   >>> import numpy as np
+
 **************
 Array creation
 **************
@@ -108,9 +111,9 @@ examples are shown::
  >>> np.arange(10)
  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
  >>> np.arange(2, 10, dtype=float)
- array([ 2., 3., 4., 5., 6., 7., 8., 9.])
+ array([2., 3., 4., 5., 6., 7., 8., 9.])
  >>> np.arange(2, 3, 0.1)
- array([ 2. , 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
+ array([2. , 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
 
 Note: best practice for :func:`numpy.arange` is to use integer start, end, and
 step values. There are some subtleties regarding ``dtype``. In the second
@@ -123,7 +126,7 @@ spaced equally between the specified beginning and end values. For
 example: ::
 
  >>> np.linspace(1., 4., 6)
- array([ 1. ,  1.6,  2.2,  2.8,  3.4,  4. ])
+ array([1. ,  1.6,  2.2,  2.8,  3.4,  4. ])
 
 The advantage of this creation function is that you guarantee the
 number of elements and the starting and end point. The previous
@@ -216,8 +219,8 @@ specified shape. The default dtype is ``float64``::
 ``zeros`` in all other respects as such::
 
  >>> np.ones((2, 3))
- array([[ 1., 1., 1.], 
-        [ 1., 1., 1.]])
+ array([[1., 1., 1.], 
+        [1., 1., 1.]])
  >>> np.ones((2, 3, 2))
  array([[[1., 1.],
          [1., 1.],
@@ -299,10 +302,10 @@ arrays into a 4-by-4 array using ``block``::
  >>> C = np.zeros((2, 2))
  >>> D = np.diag((-3, -4))
  >>> np.block([[A, B], [C, D]])
- array([[ 1.,  1.,  1.,  0. ],
-        [ 1.,  1.,  0.,  1. ],
-        [ 0.,  0., -3.,  0. ],
-        [ 0.,  0.,  0., -4. ]])
+ array([[ 1.,  1.,  1.,  0.],
+        [ 1.,  1.,  0.,  1.],
+        [ 0.,  0., -3.,  0.],
+        [ 0.,  0.,  0., -4.]])
 
 Other routines use similar syntax to join ndarrays. Check the
 routine's documentation for further examples and syntax. 

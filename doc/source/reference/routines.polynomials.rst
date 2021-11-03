@@ -1,5 +1,8 @@
 .. _routines.polynomial:
 
+.. for doctest:
+   >>> import numpy as np
+
 Polynomials
 ***********
 

@@ -2,6 +2,9 @@
 
 .. _arrays.datetime:
 
+.. for doctest:
+    >>> import numpy as np
+
 ************************
 Datetimes and Timedeltas
 ************************

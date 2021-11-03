@@ -433,7 +433,7 @@ and entries of the output masked array are masked wherever the corresponding
 input fall outside the validity domain::
 
    >>> x = ma.array([-1, 1, 0, 2, 3], mask=[0, 0, 0, 0, 1])
-   >>> np.log(x)
+   >>> np.log(x) # doctest: +SKIP
    masked_array(data=[--, 0.0, --, 0.6931471805599453, --],
                 mask=[ True, False,  True, False,  True],
           fill_value=1e+20)
@@ -467,7 +467,7 @@ Suppose now that we wish to print that same data, but with the missing values
 replaced by the average value.
 
    >>> print(mx.filled(mx.mean()))
-   [ 0.  1.  2.  3.  4.]
+   [0.  1.  2.  3.  4.]
 
 
 Numerical operations

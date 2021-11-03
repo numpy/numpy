@@ -1,5 +1,8 @@
 .. _basics.copies-and-views:
 
+.. for doctest:
+   >>> import numpy as np
+
 ****************
 Copies and views
 ****************
