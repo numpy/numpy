@@ -187,7 +187,7 @@ NPY_NO_EXPORT void
  *  #TYPE = FLOAT, DOUBLE#
  */
 /**begin repeat1
- * #kind = sqrt, absolute, square, reciprocal#
+ * #kind = ceil, sqrt, absolute, square, reciprocal#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
@@ -228,7 +228,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
 /**end repeat**/
 
 /**begin repeat
- * #func = sin, cos# 
+ * #func = sin, cos#
  */
 
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void DOUBLE_@func@,
@@ -275,7 +275,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
 /**end repeat**/
 
 /**begin repeat
- *  #func = rint, ceil, floor, trunc#
+ *  #func = rint, floor, trunc#
  */
 
 /**begin repeat1
