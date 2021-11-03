@@ -58,6 +58,11 @@ def _strip_filename(msg: str) -> str:
     return tail.split(":", 1)[-1]
 
 
+def strip_func(match: re.Match[str]) -> str:
+    """`re.sub` helper function for stripping module names."""
+    return match.groups()[1]
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.fixture(scope="module", autouse=True)
@@ -373,9 +378,12 @@ def _test_reveal(
     lineno: int,
 ) -> None:
     """Error-reporting helper function for `test_reveal`."""
-    if reveal not in expected_reveal:
+    strip_pattern = re.pattern(r"(\w+\.)+(\w+)")
+    stripped_reveal = strip_pattern.sub(strip_func, reveal)
+    stripped_expected_reveal = strip_pattern.sub(strip_func, expected_reveal)
+    if stripped_reveal not in stripped_expected_reveal:
         raise AssertionError(
-            _REVEAL_MSG.format(lineno, expression, expected_reveal, reveal)
+            _REVEAL_MSG.format(lineno, expression, stripped_expected_reveal, stripped_reveal)
         )
 
 
