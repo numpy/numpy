@@ -383,7 +383,10 @@ def _test_reveal(
     stripped_expected_reveal = strip_pattern.sub(strip_func, expected_reveal)
     if stripped_reveal not in stripped_expected_reveal:
         raise AssertionError(
-            _REVEAL_MSG.format(lineno, expression, stripped_expected_reveal, stripped_reveal)
+            _REVEAL_MSG.format(lineno,
+                               expression,
+                               stripped_expected_reveal,
+                               stripped_reveal)
         )
 
 
