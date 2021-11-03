@@ -84,7 +84,7 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
  * to `PyArray_PyIntAsIntp`.  Exists mainly to retain old behaviour of
  * `PyArray_IntpConverter` and `PyArray_IntpFromSequence`
  */
-static npy_intp
+static NPY_INLINE npy_intp
 dimension_from_scalar(PyObject *ob)
 {
     npy_intp value = PyArray_PyIntAsIntp(ob);
@@ -93,10 +93,6 @@ dimension_from_scalar(PyObject *ob)
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
             PyErr_SetString(PyExc_ValueError,
                     "Maximum allowed dimension exceeded");
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                    "Unable to convert the given object to an integer value.");
         }
         return -1;
     }
@@ -140,9 +136,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
      */
     if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
         seq_obj = PySequence_Fast(obj,
-               "Expected an integer or an iterable/sequence of integers.");
+               "expected a sequence of integers or a single integer.");
         if (seq_obj == NULL) {
-            // ignore the error and attempt to interpret `obj` as an integer.
+            /* continue attempting to parse as a single integer. */
             PyErr_Clear();
         }
     }
@@ -168,9 +164,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
                  * or an integer from the user.
                  */
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                    PyErr_SetString(PyExc_TypeError,
+                    PyErr_Format(PyExc_TypeError,
                             "expected a sequence of integers or a single "
-                            "integer");
+                            "integer, got '%.100R'", obj);
                 }
                 npy_free_cache_dim_obj(*seq);
                 seq->ptr = NULL;
@@ -1103,7 +1099,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         seq_obj = PySequence_Fast(seq,
             "expected a sequence of integers or a single integer");
         if (seq_obj == NULL) {
-            // we ignore this error since it is managed below
+            /* continue attempting to parse as a single integer. */
             PyErr_Clear();
         }
     }
@@ -1112,8 +1108,9 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         vals[0] = dimension_from_scalar(seq);
         if (error_converting(vals[0])) {
             if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_SetString(PyExc_TypeError,
-                        "expected a sequence of integers or a single integer");
+                PyErr_Format(PyExc_TypeError,
+                        "expected a sequence of integers or a single "
+                        "integer, got '%.100R'", seq);
             }
             return -1;
         }

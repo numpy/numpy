@@ -514,28 +514,6 @@ class TestArrayConstruction:
         else:
             func(a=3)
 
-    def test_scalar_and_wrongtype_intp_converter(self):
-        from numpy.core._multiarray_tests import run_scalar_intp_converter
-
-        assert run_scalar_intp_converter(10) == (10,)
-        # we also try -1 since it proved to be a problematic value
-        assert run_scalar_intp_converter(-1) == (-1,)
-
-        assert np.array(3) == 3
-        assert np.array(10).shape == ()
-
-        assert_raises(TypeError, run_scalar_intp_converter, 'foo')
-        assert_raises(ValueError, run_scalar_intp_converter, 2**64)
-
-    def test_scalar_and_wrongtype_intp_from_sequence(self):
-        from numpy.core._multiarray_tests import run_scalar_intp_from_sequence
-
-        assert run_scalar_intp_from_sequence(10) == 10
-        assert run_scalar_intp_from_sequence(-1) == -1
-
-        assert_raises(TypeError, run_scalar_intp_from_sequence, 'foo')
-        # overflow
-        assert_raises(ValueError, run_scalar_intp_from_sequence, 2**64)
 
 class TestAssignment:
     def test_assignment_broadcasting(self):
@@ -3975,6 +3953,39 @@ class TestCAPI:
         assert_(IsPythonScalar(2**80))
         assert_(IsPythonScalar(2.))
         assert_(IsPythonScalar("a"))
+
+    @pytest.mark.parametrize("converter",
+             [_multiarray_tests.run_scalar_intp_converter,
+              _multiarray_tests.run_scalar_intp_from_sequence])
+    def test_intp_sequence_converters(self, converter):
+        # Test simple values (-1 is special for error return paths)
+        assert converter(10) == (10,)
+        assert converter(-1) == (-1,)
+        # A 0-D array looks a bit like a sequence but must take the integer
+        # path:
+        assert converter(np.array(123)) == (123,)
+        # Test simple sequences (intp_from_sequence only supports length 1):
+        assert converter((10,)) == (10,)
+        assert converter(np.array([11])) == (11,)
+
+    @pytest.mark.parametrize("converter",
+             [_multiarray_tests.run_scalar_intp_converter,
+              _multiarray_tests.run_scalar_intp_from_sequence])
+    def test_intp_sequence_converters_errors(self, converter):
+        with pytest.raises(TypeError,
+                match="expected a sequence of integers or a single integer, "):
+            converter(object())
+        with pytest.raises(TypeError,
+                match="expected a sequence of integers or a single integer, "
+                      "got '32.0'"):
+            converter(32.)
+        with pytest.raises(TypeError,
+                match="'float' object cannot be interpreted as an integer"):
+            converter([32.])
+        with pytest.raises(ValueError,
+                match="Maximum allowed dimension"):
+            # These converters currently convert overflows to a ValueError
+            converter(2**64)
 
 
 class TestSubscripting:

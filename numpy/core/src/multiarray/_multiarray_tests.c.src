@@ -15,7 +15,6 @@
 #include "array_method.h"
 #include "npy_hashtable.h"
 #include "dtypemeta.h"
-#include "alloc.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -2398,7 +2397,7 @@ run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
     if (output == -1) {
         return NULL;
     }
-    return PyLong_FromLongLong(vals[0]);
+    return PyArray_IntTupleFromIntp(1, vals);
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {
