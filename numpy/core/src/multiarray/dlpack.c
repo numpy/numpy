@@ -131,6 +131,12 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
+    if ( !(PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE)) {
+        PyErr_SetString(PyExc_TypeError, "NumPy currently only supports "
+                "dlpack for writeable arrays");
+        return NULL;
+    }
+
     npy_intp itemsize = PyArray_ITEMSIZE(self);
     int ndim = PyArray_NDIM(self);
     npy_intp *strides = PyArray_STRIDES(self);

@@ -78,7 +78,7 @@ class TestDLPack:
         y4 = x[1]
         assert_array_equal(y4, np._from_dlpack(y4))
 
-        y5 = np.diagonal(x)
+        y5 = np.diagonal(x).copy()
         assert_array_equal(y5, np._from_dlpack(y5))
 
     @pytest.mark.parametrize("ndim", range(33))
@@ -101,3 +101,9 @@ class TestDLPack:
     def test_dlpack_destructor_exception(self):
         with pytest.raises(RuntimeError):
             self.dlpack_deleter_exception()
+
+    def test_readonly(self):
+        x = np.arange(5)
+        x.flags.writeable = False
+        with pytest.raises(TypeError):
+            x.__dlpack__()
