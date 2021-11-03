@@ -1678,7 +1678,7 @@ add_newdoc('numpy.core.umath', 'invert',
 
 add_newdoc('numpy.core.umath', 'isfinite',
     """
-    Test element-wise for finiteness (not infinity or not Not a Number).
+    Test element-wise for finiteness (not infinity and not Not a Number).
 
     The result is returned as a boolean array.
 
