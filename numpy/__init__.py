@@ -233,6 +233,10 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
+    # Remove one of the two occurrences of `issubdtype`, which is exposed as
+    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
+    __all__.remove('issubdtype')
+
     # These are exported by np.core, but are replaced by the builtins below
     # remove them to ensure that we don't end up with `np.long == np.int_`,
     # which would be a breaking change.

@@ -106,7 +106,6 @@ from . import _methods
 
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
-__all__ += fromnumeric.__all__
 __all__ += ['record', 'recarray', 'format_parser']
 __all__ += ['chararray']
 __all__ += function_base.__all__
