@@ -29,27 +29,27 @@ reveal_type(c8.squeeze())  # E: {complex64}
 reveal_type(c8.byteswap())  # E: {complex64}
 reveal_type(c8.transpose())  # E: {complex64}
 
-reveal_type(c8.dtype)  # E: numpy.dtype[{complex64}]
+reveal_type(c8.dtype)  # E: dtype[{complex64}]
 
 reveal_type(c8.real)  # E: {float32}
 reveal_type(c16.imag)  # E: {float64}
 
-reveal_type(np.unicode_('foo'))  # E: numpy.str_
-reveal_type(np.str0('foo'))  # E: numpy.str_
+reveal_type(np.unicode_('foo'))  # E: str_
+reveal_type(np.str0('foo'))  # E: str_
 
 reveal_type(V[0])  # E: Any
 reveal_type(V["field1"])  # E: Any
-reveal_type(V[["field1", "field2"]])  # E: numpy.void
+reveal_type(V[["field1", "field2"]])  # E: void
 V[0] = 5
 
 # Aliases
-reveal_type(np.unicode_())  # E: numpy.str_
-reveal_type(np.str0())  # E: numpy.str_
-reveal_type(np.bool8())  # E: numpy.bool_
-reveal_type(np.bytes0())  # E: numpy.bytes_
-reveal_type(np.string_())  # E: numpy.bytes_
-reveal_type(np.object0())  # E: numpy.object_
-reveal_type(np.void0(0))  # E: numpy.void
+reveal_type(np.unicode_())  # E: str_
+reveal_type(np.str0())  # E: str_
+reveal_type(np.bool8())  # E: bool_
+reveal_type(np.bytes0())  # E: bytes_
+reveal_type(np.string_())  # E: bytes_
+reveal_type(np.object0())  # E: object_
+reveal_type(np.void0(0))  # E: void
 
 reveal_type(np.byte())  # E: {byte}
 reveal_type(np.short())  # E: {short}
@@ -99,29 +99,29 @@ reveal_type(c16.tolist())  # E: complex
 reveal_type(U.tolist())  # E: str
 reveal_type(S.tolist())  # E: bytes
 
-reveal_type(b.ravel())  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
-reveal_type(i8.ravel())  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
-reveal_type(u8.ravel())  # E: numpy.ndarray[Any, numpy.dtype[{uint64}]]
-reveal_type(f8.ravel())  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(c16.ravel())  # E: numpy.ndarray[Any, numpy.dtype[{complex128}]]
-reveal_type(U.ravel())  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
-reveal_type(S.ravel())  # E: numpy.ndarray[Any, numpy.dtype[numpy.bytes_]]
+reveal_type(b.ravel())  # E: ndarray[Any, dtype[bool_]]
+reveal_type(i8.ravel())  # E: ndarray[Any, dtype[{int64}]]
+reveal_type(u8.ravel())  # E: ndarray[Any, dtype[{uint64}]]
+reveal_type(f8.ravel())  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(c16.ravel())  # E: ndarray[Any, dtype[{complex128}]]
+reveal_type(U.ravel())  # E: ndarray[Any, dtype[str_]]
+reveal_type(S.ravel())  # E: ndarray[Any, dtype[bytes_]]
 
-reveal_type(b.flatten())  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
-reveal_type(i8.flatten())  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
-reveal_type(u8.flatten())  # E: numpy.ndarray[Any, numpy.dtype[{uint64}]]
-reveal_type(f8.flatten())  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(c16.flatten())  # E: numpy.ndarray[Any, numpy.dtype[{complex128}]]
-reveal_type(U.flatten())  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
-reveal_type(S.flatten())  # E: numpy.ndarray[Any, numpy.dtype[numpy.bytes_]]
+reveal_type(b.flatten())  # E: ndarray[Any, dtype[bool_]]
+reveal_type(i8.flatten())  # E: ndarray[Any, dtype[{int64}]]
+reveal_type(u8.flatten())  # E: ndarray[Any, dtype[{uint64}]]
+reveal_type(f8.flatten())  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(c16.flatten())  # E: ndarray[Any, dtype[{complex128}]]
+reveal_type(U.flatten())  # E: ndarray[Any, dtype[str_]]
+reveal_type(S.flatten())  # E: ndarray[Any, dtype[bytes_]]
 
-reveal_type(b.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
-reveal_type(i8.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
-reveal_type(u8.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{uint64}]]
-reveal_type(f8.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(c16.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[{complex128}]]
-reveal_type(U.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.str_]]
-reveal_type(S.reshape(1))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bytes_]]
+reveal_type(b.reshape(1))  # E: ndarray[Any, dtype[bool_]]
+reveal_type(i8.reshape(1))  # E: ndarray[Any, dtype[{int64}]]
+reveal_type(u8.reshape(1))  # E: ndarray[Any, dtype[{uint64}]]
+reveal_type(f8.reshape(1))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(c16.reshape(1))  # E: ndarray[Any, dtype[{complex128}]]
+reveal_type(U.reshape(1))  # E: ndarray[Any, dtype[str_]]
+reveal_type(S.reshape(1))  # E: ndarray[Any, dtype[bytes_]]
 
 reveal_type(i8.astype(float))  # E: Any
 reveal_type(i8.astype(np.float64))  # E: {float64}
@@ -149,7 +149,7 @@ reveal_type(i8.numerator)  # E: {int64}
 reveal_type(i8.denominator)  # E: Literal[1]
 reveal_type(u8.numerator)  # E: {uint64}
 reveal_type(u8.denominator)  # E: Literal[1]
-reveal_type(m.numerator)  # E: numpy.timedelta64
+reveal_type(m.numerator)  # E: timedelta64
 reveal_type(m.denominator)  # E: Literal[1]
 
 reveal_type(round(i8))  # E: int

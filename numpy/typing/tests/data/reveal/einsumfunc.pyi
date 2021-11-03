@@ -18,8 +18,8 @@ reveal_type(np.einsum("i,i->i", AR_LIKE_c, AR_LIKE_c))  # E: Any
 reveal_type(np.einsum("i,i->i", AR_LIKE_b, AR_LIKE_i))  # E: Any
 reveal_type(np.einsum("i,i,i,i->i", AR_LIKE_b, AR_LIKE_u, AR_LIKE_i, AR_LIKE_c))  # E: Any
 
-reveal_type(np.einsum("i,i->i", AR_LIKE_c, AR_LIKE_c, out=OUT_f))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]
-reveal_type(np.einsum("i,i->i", AR_LIKE_U, AR_LIKE_U, dtype=bool, casting="unsafe", out=OUT_f))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]
+reveal_type(np.einsum("i,i->i", AR_LIKE_c, AR_LIKE_c, out=OUT_f))  # E: ndarray[Any, dtype[{float64}]
+reveal_type(np.einsum("i,i->i", AR_LIKE_U, AR_LIKE_U, dtype=bool, casting="unsafe", out=OUT_f))  # E: ndarray[Any, dtype[{float64}]
 reveal_type(np.einsum("i,i->i", AR_LIKE_f, AR_LIKE_f, dtype="c16"))  # E: Any
 reveal_type(np.einsum("i,i->i", AR_LIKE_U, AR_LIKE_U, dtype=bool, casting="unsafe"))  # E: Any
 

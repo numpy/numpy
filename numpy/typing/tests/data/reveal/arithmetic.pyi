@@ -45,104 +45,104 @@ AR_LIKE_O: List[np.object_]
 
 # Array subtraction
 
-reveal_type(AR_b - AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_b - AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_b - AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_b - AR_LIKE_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_b - AR_LIKE_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_b - AR_LIKE_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_b - AR_LIKE_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_b - AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_b - AR_LIKE_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_b - AR_LIKE_m)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_b - AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_u - AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_LIKE_i - AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_f - AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_c - AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_LIKE_m - AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_LIKE_M - AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
+reveal_type(AR_LIKE_u - AR_b)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_LIKE_i - AR_b)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_f - AR_b)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_c - AR_b)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_m - AR_b)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_LIKE_M - AR_b)  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(AR_LIKE_O - AR_b)  # E: Any
 
-reveal_type(AR_u - AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_u - AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_u - AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_u - AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_u - AR_LIKE_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_u - AR_LIKE_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_u - AR_LIKE_b)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_u - AR_LIKE_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_u - AR_LIKE_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_u - AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_u - AR_LIKE_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_u - AR_LIKE_m)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_u - AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b - AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_LIKE_u - AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_LIKE_i - AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_f - AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_c - AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_LIKE_m - AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_LIKE_M - AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
+reveal_type(AR_LIKE_b - AR_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_LIKE_u - AR_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_LIKE_i - AR_u)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_f - AR_u)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_c - AR_u)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_m - AR_u)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_LIKE_M - AR_u)  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(AR_LIKE_O - AR_u)  # E: Any
 
-reveal_type(AR_i - AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_i - AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_i - AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_i - AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_i - AR_LIKE_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_i - AR_LIKE_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_i - AR_LIKE_b)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_i - AR_LIKE_u)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_i - AR_LIKE_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_i - AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_i - AR_LIKE_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_i - AR_LIKE_m)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_i - AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b - AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_u - AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_i - AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_f - AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_c - AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_LIKE_m - AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_LIKE_M - AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
+reveal_type(AR_LIKE_b - AR_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_u - AR_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_i - AR_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_f - AR_i)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_c - AR_i)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_m - AR_i)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_LIKE_M - AR_i)  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(AR_LIKE_O - AR_i)  # E: Any
 
-reveal_type(AR_f - AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_f - AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_f - AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_f - AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_f - AR_LIKE_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+reveal_type(AR_f - AR_LIKE_b)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_f - AR_LIKE_u)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_f - AR_LIKE_i)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_f - AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_f - AR_LIKE_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(AR_f - AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b - AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_u - AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_i - AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_f - AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_c - AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_b - AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_u - AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_i - AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_f - AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_c - AR_f)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(AR_LIKE_O - AR_f)  # E: Any
 
-reveal_type(AR_c - AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_c - AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_c - AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_c - AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_c - AR_LIKE_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+reveal_type(AR_c - AR_LIKE_b)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_c - AR_LIKE_u)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_c - AR_LIKE_i)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_c - AR_LIKE_f)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_c - AR_LIKE_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(AR_c - AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b - AR_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_LIKE_u - AR_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_LIKE_i - AR_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_LIKE_f - AR_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(AR_LIKE_c - AR_c)  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_b - AR_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_u - AR_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_i - AR_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_f - AR_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(AR_LIKE_c - AR_c)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(AR_LIKE_O - AR_c)  # E: Any
 
-reveal_type(AR_m - AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_m - AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_m - AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_m - AR_LIKE_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_m - AR_LIKE_b)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_m - AR_LIKE_u)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_m - AR_LIKE_i)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_m - AR_LIKE_m)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_m - AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b - AR_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_LIKE_u - AR_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_LIKE_i - AR_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_LIKE_m - AR_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_LIKE_M - AR_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
+reveal_type(AR_LIKE_b - AR_m)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_LIKE_u - AR_m)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_LIKE_i - AR_m)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_LIKE_m - AR_m)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_LIKE_M - AR_m)  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(AR_LIKE_O - AR_m)  # E: Any
 
-reveal_type(AR_M - AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
-reveal_type(AR_M - AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
-reveal_type(AR_M - AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
-reveal_type(AR_M - AR_LIKE_m)  # E: numpy.ndarray[Any, numpy.dtype[numpy.datetime64]]
-reveal_type(AR_M - AR_LIKE_M)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_M - AR_LIKE_b)  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(AR_M - AR_LIKE_u)  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(AR_M - AR_LIKE_i)  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(AR_M - AR_LIKE_m)  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(AR_M - AR_LIKE_M)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_M - AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_M - AR_M)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_LIKE_M - AR_M)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_LIKE_O - AR_M)  # E: Any
 
 reveal_type(AR_O - AR_LIKE_b)  # E: Any
@@ -165,64 +165,64 @@ reveal_type(AR_LIKE_O - AR_O)  # E: Any
 
 # Array floor division
 
-reveal_type(AR_b // AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[{int8}]]
-reveal_type(AR_b // AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_b // AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_b // AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(AR_b // AR_LIKE_b)  # E: ndarray[Any, dtype[{int8}]]
+reveal_type(AR_b // AR_LIKE_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_b // AR_LIKE_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_b // AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(AR_b // AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b // AR_b)  # E: numpy.ndarray[Any, numpy.dtype[{int8}]]
-reveal_type(AR_LIKE_u // AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_LIKE_i // AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_f // AR_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(AR_LIKE_b // AR_b)  # E: ndarray[Any, dtype[{int8}]]
+reveal_type(AR_LIKE_u // AR_b)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_LIKE_i // AR_b)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_f // AR_b)  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(AR_LIKE_O // AR_b)  # E: Any
 
-reveal_type(AR_u // AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_u // AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_u // AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_u // AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(AR_u // AR_LIKE_b)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_u // AR_LIKE_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_u // AR_LIKE_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_u // AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(AR_u // AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b // AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_LIKE_u // AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.unsignedinteger[Any]]]
-reveal_type(AR_LIKE_i // AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_f // AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_m // AR_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_LIKE_b // AR_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_LIKE_u // AR_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
+reveal_type(AR_LIKE_i // AR_u)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_f // AR_u)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_m // AR_u)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_LIKE_O // AR_u)  # E: Any
 
-reveal_type(AR_i // AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_i // AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_i // AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_i // AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(AR_i // AR_LIKE_b)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_i // AR_LIKE_u)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_i // AR_LIKE_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_i // AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(AR_i // AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b // AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_u // AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_i // AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.signedinteger[Any]]]
-reveal_type(AR_LIKE_f // AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_m // AR_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_LIKE_b // AR_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_u // AR_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_i // AR_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(AR_LIKE_f // AR_i)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_m // AR_i)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_LIKE_O // AR_i)  # E: Any
 
-reveal_type(AR_f // AR_LIKE_b)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_f // AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_f // AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_f // AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(AR_f // AR_LIKE_b)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_f // AR_LIKE_u)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_f // AR_LIKE_i)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_f // AR_LIKE_f)  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(AR_f // AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_b // AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_u // AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_i // AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_f // AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
-reveal_type(AR_LIKE_m // AR_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
+reveal_type(AR_LIKE_b // AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_u // AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_i // AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_f // AR_f)  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(AR_LIKE_m // AR_f)  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(AR_LIKE_O // AR_f)  # E: Any
 
-reveal_type(AR_m // AR_LIKE_u)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_m // AR_LIKE_i)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_m // AR_LIKE_f)  # E: numpy.ndarray[Any, numpy.dtype[numpy.timedelta64]]
-reveal_type(AR_m // AR_LIKE_m)  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(AR_m // AR_LIKE_u)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_m // AR_LIKE_i)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_m // AR_LIKE_f)  # E: ndarray[Any, dtype[timedelta64]]
+reveal_type(AR_m // AR_LIKE_m)  # E: ndarray[Any, dtype[{int64}]]
 reveal_type(AR_m // AR_LIKE_O)  # E: Any
 
-reveal_type(AR_LIKE_m // AR_m)  # E: numpy.ndarray[Any, numpy.dtype[{int64}]]
+reveal_type(AR_LIKE_m // AR_m)  # E: ndarray[Any, dtype[{int64}]]
 reveal_type(AR_LIKE_O // AR_m)  # E: Any
 
 reveal_type(AR_O // AR_LIKE_b)  # E: Any
@@ -252,7 +252,7 @@ reveal_type(-i8)  # E: {int64}
 reveal_type(-i4)  # E: {int32}
 reveal_type(-u8)  # E: {uint64}
 reveal_type(-u4)  # E: {uint32}
-reveal_type(-td)  # E: numpy.timedelta64
+reveal_type(-td)  # E: timedelta64
 reveal_type(-AR_f)  # E: Any
 
 reveal_type(+f16)  # E: {float128}
@@ -264,7 +264,7 @@ reveal_type(+i8)  # E: {int64}
 reveal_type(+i4)  # E: {int32}
 reveal_type(+u8)  # E: {uint64}
 reveal_type(+u4)  # E: {uint32}
-reveal_type(+td)  # E: numpy.timedelta64
+reveal_type(+td)  # E: timedelta64
 reveal_type(+AR_f)  # E: Any
 
 reveal_type(abs(f16))  # E: {float128}
@@ -276,32 +276,32 @@ reveal_type(abs(i8))  # E: {int64}
 reveal_type(abs(i4))  # E: {int32}
 reveal_type(abs(u8))  # E: {uint64}
 reveal_type(abs(u4))  # E: {uint32}
-reveal_type(abs(td))  # E: numpy.timedelta64
-reveal_type(abs(b_))  # E: numpy.bool_
+reveal_type(abs(td))  # E: timedelta64
+reveal_type(abs(b_))  # E: bool_
 reveal_type(abs(AR_f))  # E: Any
 
 # Time structures
 
-reveal_type(dt + td)  # E: numpy.datetime64
-reveal_type(dt + i)  # E: numpy.datetime64
-reveal_type(dt + i4)  # E: numpy.datetime64
-reveal_type(dt + i8)  # E: numpy.datetime64
-reveal_type(dt - dt)  # E: numpy.timedelta64
-reveal_type(dt - i)  # E: numpy.datetime64
-reveal_type(dt - i4)  # E: numpy.datetime64
-reveal_type(dt - i8)  # E: numpy.datetime64
+reveal_type(dt + td)  # E: datetime64
+reveal_type(dt + i)  # E: datetime64
+reveal_type(dt + i4)  # E: datetime64
+reveal_type(dt + i8)  # E: datetime64
+reveal_type(dt - dt)  # E: timedelta64
+reveal_type(dt - i)  # E: datetime64
+reveal_type(dt - i4)  # E: datetime64
+reveal_type(dt - i8)  # E: datetime64
 
-reveal_type(td + td)  # E: numpy.timedelta64
-reveal_type(td + i)  # E: numpy.timedelta64
-reveal_type(td + i4)  # E: numpy.timedelta64
-reveal_type(td + i8)  # E: numpy.timedelta64
-reveal_type(td - td)  # E: numpy.timedelta64
-reveal_type(td - i)  # E: numpy.timedelta64
-reveal_type(td - i4)  # E: numpy.timedelta64
-reveal_type(td - i8)  # E: numpy.timedelta64
-reveal_type(td / f)  # E: numpy.timedelta64
-reveal_type(td / f4)  # E: numpy.timedelta64
-reveal_type(td / f8)  # E: numpy.timedelta64
+reveal_type(td + td)  # E: timedelta64
+reveal_type(td + i)  # E: timedelta64
+reveal_type(td + i4)  # E: timedelta64
+reveal_type(td + i8)  # E: timedelta64
+reveal_type(td - td)  # E: timedelta64
+reveal_type(td - i)  # E: timedelta64
+reveal_type(td - i4)  # E: timedelta64
+reveal_type(td - i8)  # E: timedelta64
+reveal_type(td / f)  # E: timedelta64
+reveal_type(td / f4)  # E: timedelta64
+reveal_type(td / f8)  # E: timedelta64
 reveal_type(td / td)  # E: {float64}
 reveal_type(td // td)  # E: {int64}
 
@@ -378,7 +378,7 @@ reveal_type(c8 + b_)  # E: {complex64}
 reveal_type(c8 + b)  # E: {complex64}
 reveal_type(c8 + c)  # E: {complex128}
 reveal_type(c8 + f)  # E: {complex128}
-reveal_type(c8 + i)  # E: numpy.complexfloating[{_NBitInt}, {_NBitInt}]
+reveal_type(c8 + i)  # E: complexfloating[{_NBitInt}, {_NBitInt}]
 reveal_type(c8 + AR_f)  # E: Any
 
 reveal_type(f16 + c8)  # E: {complex256}
@@ -392,7 +392,7 @@ reveal_type(b_ + c8)  # E: {complex64}
 reveal_type(b + c8)  # E: {complex64}
 reveal_type(c + c8)  # E: {complex128}
 reveal_type(f + c8)  # E: {complex128}
-reveal_type(i + c8)  # E: numpy.complexfloating[{_NBitInt}, {_NBitInt}]
+reveal_type(i + c8)  # E: complexfloating[{_NBitInt}, {_NBitInt}]
 reveal_type(AR_f + c8)  # E: Any
 
 # Float
@@ -430,7 +430,7 @@ reveal_type(f4 + b_)  # E: {float32}
 reveal_type(f4 + b)  # E: {float32}
 reveal_type(f4 + c)  # E: {complex128}
 reveal_type(f4 + f)  # E: {float64}
-reveal_type(f4 + i)  # E: numpy.floating[{_NBitInt}]
+reveal_type(f4 + i)  # E: floating[{_NBitInt}]
 reveal_type(f4 + AR_f)  # E: Any
 
 reveal_type(f16 + f4)  # E: {float128}
@@ -442,7 +442,7 @@ reveal_type(b_ + f4)  # E: {float32}
 reveal_type(b + f4)  # E: {float32}
 reveal_type(c + f4)  # E: {complex128}
 reveal_type(f + f4)  # E: {float64}
-reveal_type(i + f4)  # E: numpy.floating[{_NBitInt}]
+reveal_type(i + f4)  # E: floating[{_NBitInt}]
 reveal_type(AR_f + f4)  # E: Any
 
 # Int

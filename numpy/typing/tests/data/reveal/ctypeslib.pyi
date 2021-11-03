@@ -24,12 +24,12 @@ pointer: ctypes.pointer[Any]
 
 reveal_type(np.ctypeslib.c_intp())  # E: {c_intp}
 
-reveal_type(np.ctypeslib.ndpointer())  # E: Type[numpy.ctypeslib._ndptr[None]]
-reveal_type(np.ctypeslib.ndpointer(dtype=np.float64))  # E: Type[numpy.ctypeslib._ndptr[numpy.dtype[{float64}]]]
-reveal_type(np.ctypeslib.ndpointer(dtype=float))  # E: Type[numpy.ctypeslib._ndptr[numpy.dtype[Any]]]
-reveal_type(np.ctypeslib.ndpointer(shape=(10, 3)))  # E: Type[numpy.ctypeslib._ndptr[None]]
-reveal_type(np.ctypeslib.ndpointer(np.int64, shape=(10, 3)))  # E: Type[numpy.ctypeslib._concrete_ndptr[numpy.dtype[{int64}]]]
-reveal_type(np.ctypeslib.ndpointer(int, shape=(1,)))  # E: Type[numpy.ctypeslib._concrete_ndptr[numpy.dtype[Any]]]
+reveal_type(np.ctypeslib.ndpointer())  # E: Type[ctypeslib._ndptr[None]]
+reveal_type(np.ctypeslib.ndpointer(dtype=np.float64))  # E: Type[ctypeslib._ndptr[dtype[{float64}]]]
+reveal_type(np.ctypeslib.ndpointer(dtype=float))  # E: Type[ctypeslib._ndptr[dtype[Any]]]
+reveal_type(np.ctypeslib.ndpointer(shape=(10, 3)))  # E: Type[ctypeslib._ndptr[None]]
+reveal_type(np.ctypeslib.ndpointer(np.int64, shape=(10, 3)))  # E: Type[ctypeslib._concrete_ndptr[dtype[{int64}]]]
+reveal_type(np.ctypeslib.ndpointer(int, shape=(1,)))  # E: Type[ctypeslib._concrete_ndptr[dtype[Any]]]
 
 reveal_type(np.ctypeslib.as_ctypes_type(np.bool_))  # E: Type[ctypes.c_bool]
 reveal_type(np.ctypeslib.as_ctypes_type(np.ubyte))  # E: Type[{c_ubyte}]
@@ -82,6 +82,6 @@ reveal_type(np.ctypeslib.as_ctypes(AR_double))  # E: ctypes.Array[{c_double}]
 reveal_type(np.ctypeslib.as_ctypes(AR_longdouble))  # E: ctypes.Array[{c_longdouble}]
 reveal_type(np.ctypeslib.as_ctypes(AR_void))  # E: ctypes.Array[Any]
 
-reveal_type(np.ctypeslib.as_array(AR_ubyte))  # E: numpy.ndarray[Any, numpy.dtype[{ubyte}]]
-reveal_type(np.ctypeslib.as_array(1))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
-reveal_type(np.ctypeslib.as_array(pointer))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.ctypeslib.as_array(AR_ubyte))  # E: ndarray[Any, dtype[{ubyte}]]
+reveal_type(np.ctypeslib.as_array(1))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.ctypeslib.as_array(pointer))  # E: ndarray[Any, dtype[Any]]
