@@ -515,27 +515,27 @@ class TestArrayConstruction:
             func(a=3)
 
     def test_scalar_and_wrongtype_intp_converter(self):
-        from numpy.core._multiarray_tests import test_scalar_intp_converter
+        from numpy.core._multiarray_tests import run_scalar_intp_converter
 
-        assert test_scalar_intp_converter(10) == (10,)
+        assert run_scalar_intp_converter(10) == (10,)
         # we also try -1 since it proved to be a problematic value
-        assert test_scalar_intp_converter(-1) == (-1,)
+        assert run_scalar_intp_converter(-1) == (-1,)
 
         assert np.array(3) == 3
         assert np.array(10).shape == ()
 
-        assert_raises(TypeError, test_scalar_intp_converter, 'foo')
-        assert_raises(ValueError, test_scalar_intp_converter, 2**64)
+        assert_raises(TypeError, run_scalar_intp_converter, 'foo')
+        assert_raises(ValueError, run_scalar_intp_converter, 2**64)
 
     def test_scalar_and_wrongtype_intp_from_sequence(self):
-        from numpy.core._multiarray_tests import test_scalar_intp_from_sequence
+        from numpy.core._multiarray_tests import run_scalar_intp_from_sequence
 
-        assert test_scalar_intp_from_sequence(10) == 10
-        assert test_scalar_intp_from_sequence(-1) == -1
+        assert run_scalar_intp_from_sequence(10) == 10
+        assert run_scalar_intp_from_sequence(-1) == -1
 
-        assert_raises(TypeError, test_scalar_intp_from_sequence, 'foo')
+        assert_raises(TypeError, run_scalar_intp_from_sequence, 'foo')
         # overflow
-        assert_raises(ValueError, test_scalar_intp_from_sequence, 2**64)
+        assert_raises(ValueError, run_scalar_intp_from_sequence, 2**64)
 
 class TestAssignment:
     def test_assignment_broadcasting(self):

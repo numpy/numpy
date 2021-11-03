@@ -2376,24 +2376,21 @@ npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
 }
 
 PyObject *
-test_scalar_intp_converter(PyObject *dummy, PyObject *obj)
+run_scalar_intp_converter(PyObject *NPY_UNUSED(self), PyObject *obj)
 {
-    PyArray_Dims dummy_dims;
-    if (!PyArray_IntpConverter(obj, &dummy_dims)) {
+    PyArray_Dims dims;
+    if (!PyArray_IntpConverter(obj, &dims)) {
         return NULL;
     }
     else {
-        PyObject *result = PyArray_IntTupleFromIntp(dummy_dims.len,
-                dummy_dims.ptr);
-        if (dummy_dims.ptr != NULL) {
-            free(dummy_dims.ptr);
-        }
+        PyObject *result = PyArray_IntTupleFromIntp(dims.len, dims.ptr);
+        PyDimMem_FREE(dims.ptr);
         return result;
     }
 }
 
 PyObject *
-test_scalar_intp_from_sequence(PyObject *dummy, PyObject *obj)
+run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
 {
     npy_intp vals[1];
 
@@ -2401,7 +2398,7 @@ test_scalar_intp_from_sequence(PyObject *dummy, PyObject *obj)
     if (output == -1) {
         return NULL;
     }
-    return PyLong_FromLong(vals[0]);
+    return PyLong_FromLongLong(vals[0]);
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {
@@ -2543,12 +2540,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"getset_numericops",
         getset_numericops,
         METH_NOARGS, NULL},
-    {"test_scalar_intp_converter",
-        test_scalar_intp_converter,
-        METH_O, NULL},
-    {"test_scalar_intp_from_sequence",
-        test_scalar_intp_from_sequence,
-        METH_O, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
@@ -2603,6 +2594,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"run_casting_converter",
         run_casting_converter,
         METH_VARARGS, NULL},
+    {"run_scalar_intp_converter",
+        run_scalar_intp_converter,
+        METH_O, NULL},
+    {"run_scalar_intp_from_sequence",
+        run_scalar_intp_from_sequence,
+        METH_O, NULL},
     {"run_intp_converter",
         run_intp_converter,
         METH_VARARGS, NULL},
