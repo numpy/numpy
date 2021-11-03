@@ -378,7 +378,7 @@ def _test_reveal(
     lineno: int,
 ) -> None:
     """Error-reporting helper function for `test_reveal`."""
-    strip_pattern = re.pattern(r"(\w+\.)+(\w+)")
+    strip_pattern = re.compile(r"(\w+\.)+(\w+)")
     stripped_reveal = strip_pattern.sub(strip_func, reveal)
     stripped_expected_reveal = strip_pattern.sub(strip_func, expected_reveal)
     if stripped_reveal not in stripped_expected_reveal:
