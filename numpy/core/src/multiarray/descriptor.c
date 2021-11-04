@@ -2305,8 +2305,9 @@ arraydescr_new(PyTypeObject *subtype,
 {
     if (subtype != &PyArrayDescr_Type) {
         if (Py_TYPE(subtype) == &PyArrayDTypeMeta_Type &&
-                !(PyType_GetFlags(Py_TYPE(subtype)) & Py_TPFLAGS_HEAPTYPE) &&
-                (NPY_DT_SLOTS((PyArray_DTypeMeta *)subtype)) != NULL) {
+                (NPY_DT_SLOTS((PyArray_DTypeMeta *)subtype)) != NULL &&
+                !NPY_DT_is_legacy((PyArray_DTypeMeta *)subtype) &&
+                subtype->tp_new != PyArrayDescr_Type.tp_new) {
             /*
              * Appears to be a properly initialized user DType. Allocate
              * it and initialize the main part as best we can.
@@ -2333,7 +2334,9 @@ arraydescr_new(PyTypeObject *subtype,
         }
         /* The DTypeMeta class should prevent this from happening. */
         PyErr_Format(PyExc_SystemError,
-                "'%S' must not inherit np.dtype.__new__().", subtype);
+                "'%S' must not inherit np.dtype.__new__(). User DTypes should "
+                "currently call `PyArrayDescr_Type.tp_new` from their new.",
+                subtype);
         return NULL;
     }
 
