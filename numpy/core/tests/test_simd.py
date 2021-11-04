@@ -329,7 +329,7 @@ class _SIMD_FP(_Test_Utility):
         data_square = [x*x for x in data]
         square = self.square(vdata)
         assert square == data_square
-        
+
     def test_max(self):
         """
         Test intrinsics:
@@ -818,6 +818,7 @@ class _SIMD_ALL(_Test_Utility):
         if self._is_fp():
             return
 
+        int_min = self._int_min()
         def trunc_div(a, d):
             """
             Divide towards zero works with large integers > 2^53,
@@ -830,56 +831,30 @@ class _SIMD_ALL(_Test_Utility):
                 return a // d
             return (a + sign_d - sign_a) // d + 1
 
-        int_min = self._int_min() if self._is_signed() else 1
-        int_max = self._int_max()
-        rdata = (
-            0, 1, self.nlanes, int_max-self.nlanes,
-            int_min, int_min//2 + 1
-        )
-        divisors = (1, 2, 9, 13, self.nlanes, int_min, int_max, int_max//2)
-
-        for x, d in itertools.product(rdata, divisors):
-            data = self._data(x)
-            vdata = self.load(data)
-            data_divc = [trunc_div(a, d) for a in data]
-            divisor = self.divisor(d)
-            divc = self.divc(vdata, divisor)
+        data = [1, -int_min]  # to test overflow
+        data += range(0, 2**8, 2**5)
+        data += range(0, 2**8, 2**5-1)
+        bsize = self._scalar_size()
+        if bsize > 8:
+            data += range(2**8, 2**16, 2**13)
+            data += range(2**8, 2**16, 2**13-1)
+        if bsize > 16:
+            data += range(2**16, 2**32, 2**29)
+            data += range(2**16, 2**32, 2**29-1)
+        if bsize > 32:
+            data += range(2**32, 2**64, 2**61)
+            data += range(2**32, 2**64, 2**61-1)
+        # negate
+        data += [-x for x in data]
+        for dividend, divisor in itertools.product(data, data):
+            divisor = self.setall(divisor)[0]  # cast
+            if divisor == 0:
+                continue
+            dividend = self.load(self._data(dividend))
+            data_divc = [trunc_div(a, divisor) for a in dividend]
+            divisor_parms = self.divisor(divisor)
+            divc = self.divc(dividend, divisor_parms)
             assert divc == data_divc
-
-        if not self._is_signed():
-            return
-
-        safe_neg = lambda x: -x-1 if -x > int_max else -x
-        # test round divison for signed integers
-        for x, d in itertools.product(rdata, divisors):
-            d_neg = safe_neg(d)
-            data = self._data(x)
-            data_neg = [safe_neg(a) for a in data]
-            vdata = self.load(data)
-            vdata_neg = self.load(data_neg)
-            divisor = self.divisor(d)
-            divisor_neg = self.divisor(d_neg)
-
-            # round towards zero
-            data_divc = [trunc_div(a, d_neg) for a in data]
-            divc = self.divc(vdata, divisor_neg)
-            assert divc == data_divc
-            data_divc = [trunc_div(a, d) for a in data_neg]
-            divc = self.divc(vdata_neg, divisor)
-            assert divc == data_divc
-
-        # test truncate sign if the dividend is zero
-        vzero = self.zero()
-        for d in (-1, -10, -100, int_min//2, int_min):
-            divisor = self.divisor(d)
-            divc = self.divc(vzero, divisor)
-            assert divc == vzero
-
-        # test overflow
-        vmin = self.setall(int_min)
-        divisor = self.divisor(-1)
-        divc = self.divc(vmin, divisor)
-        assert divc == vmin
 
     def test_arithmetic_reduce_sum(self):
         """

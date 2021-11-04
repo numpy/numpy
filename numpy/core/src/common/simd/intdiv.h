@@ -162,11 +162,12 @@ NPY_FINLINE npy_uint64 npyv__divh128_u64(npy_uint64 high, npy_uint64 divisor)
     npy_uint32 divisor_hi  = divisor >> 32;
     npy_uint32 divisor_lo  = divisor & 0xFFFFFFFF;
     // compute high quotient digit
-    npy_uint32 quotient_hi = (npy_uint32)(high / divisor_hi);
+    npy_uint64 quotient_hi = high / divisor_hi;
     npy_uint64 remainder   = high - divisor_hi * quotient_hi;
     npy_uint64 base32      = 1ULL << 32;
     while (quotient_hi >= base32 || quotient_hi*divisor_lo > base32*remainder) {
-        remainder += --divisor_hi;
+        --quotient_hi;
+        remainder += divisor_hi;
         if (remainder >= base32) {
             break;
         }
@@ -200,7 +201,7 @@ NPY_FINLINE npyv_u8x3 npyv_divisor_u8(npy_uint8 d)
     default:
         l   = npyv__bitscan_revnz_u32(d - 1) + 1;  // ceil(log2(d))
         l2  = (npy_uint8)(1 << l);                 // 2^l, overflow to 0 if l = 8
-        m   = ((l2 - d) << 8) / d + 1;             // multiplier
+        m   = ((npy_uint16)((l2 - d) << 8)) / d + 1; // multiplier
         sh1 = 1;  sh2 = l - 1;                     // shift counts
     }
     npyv_u8x3 divisor;
