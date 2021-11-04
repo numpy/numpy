@@ -131,6 +131,14 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
+    if (((PyTypeObject *)DType)->tp_repr == PyArrayDescr_Type.tp_repr
+            || ((PyTypeObject *)DType)->tp_str == PyArrayDescr_Type.tp_str) {
+        PyErr_SetString(PyExc_TypeError,
+                "A custom DType must implement `__repr__` and `__str__` since "
+                "the default inherited version (currently) fails.");
+        return -1;
+    }
+
     if (spec->typeobj == NULL || !PyType_Check(spec->typeobj)) {
         PyErr_SetString(PyExc_TypeError,
                 "Not giving a type object is currently not supported, but "
