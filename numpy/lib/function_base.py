@@ -3893,7 +3893,7 @@ def percentile(a,
         `a` after this function completes is undefined.
     interpolation : str, optional
         This parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
+        use when the desired percentile lies between two data points
         There are many different methods, some unique to NumPy. See the
         notes for explanation. Options
 

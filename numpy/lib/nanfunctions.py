@@ -1269,7 +1269,7 @@ def nanpercentile(
         undefined.
     interpolation : str, optional
         This parameter specifies the interpolation method to use when the
-        desired quantile lies between two data points There are many
+        desired percentile lies between two data points There are many
         different methods, some unique to NumPy. See the notes for
         explanation. Options:
 
@@ -1325,100 +1325,7 @@ def nanpercentile(
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th percentile of ``V``
-    is the value ``q/100`` of the way from the minimum to the maximum in a
-    sorted copy of ``V``. The values and distances of the two nearest
-    neighbors as well as the `interpolation` parameter will determine the
-    percentile if the normalized ranking does not match the location of
-    ``q`` exactly. This function is the same as the median if ``q=50``, the
-    same as the minimum if ``q=0`` and the same as the maximum if
-    ``q=100``.
-
-    This optional `interpolation` parameter specifies the interpolation
-    method to use when the desired quantile lies between two data points
-    ``i < j``. If ``g`` is the fractional part of the index surrounded by
-    ``i`` and  alpha and beta are correction constants modifying i and j.
-
-    .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
-
-    The different interpolation methods then work as follows
-
-    inverted_cdf:
-        method 1 of H&F [1]_.
-        This method gives discontinuous results:
-        * if g > 0 ; then take j
-        * if g = 0 ; then take i
-
-    averaged_inverted_cdf:
-        method 2 of H&F [1]_.
-        This method give discontinuous results:
-        * if g > 0 ; then take j
-        * if g = 0 ; then average between bounds
-
-    closest_observation:
-        method 3 of H&F [1]_.
-        This method give discontinuous results:
-        * if g > 0 ; then take j
-        * if g = 0 and index is odd ; then take j
-        * if g = 0 and index is even ; then take i
-
-    interpolated_inverted_cdf:
-        method 4 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 0
-        * beta = 1
-
-    hazen:
-        method 5 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 1/2
-        * beta = 1/2
-
-    weibull:
-        method 6 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 0
-        * beta = 0
-
-    inclusive:
-        Default method, aliased with "linear".
-        method 7 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 1
-        * beta = 1
-
-    median_unbiased:
-        method 8 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is unknown (see reference).
-        This method give continuous results using:
-        * alpha = 1/3
-        * beta = 1/3
-
-    normal_unbiased:
-        method 9 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is known to be normal.
-        This method give continuous results using:
-        * alpha = 3/8
-        * beta = 3/8
-
-    lower:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` as the interpolation point.
-
-    higher:
-        NumPy method kept for backwards compatibility.
-        Takes ``j`` as the interpolation point.
-
-    nearest:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` or ``j``, whichever is nearest.
-
-    midpoint:
-        NumPy method kept for backwards compatibility.
-        Uses ``(i + j) / 2``.
+    For more information please see `numpy.percentile`
 
     Examples
     --------
@@ -1447,12 +1354,6 @@ def nanpercentile(
     >>> np.nanpercentile(b, 50, axis=1, overwrite_input=True)
     array([7., 2.])
     >>> assert not np.all(a==b)
-
-    References
-    ----------
-    .. [1] R. J. Hyndman and Y. Fan,
-       "Sample quantiles in statistical packages,"
-       The American Statistician, 50(4), pp. 361-365, 1996
 
     """
     a = np.asanyarray(a)
@@ -1565,99 +1466,7 @@ def nanquantile(
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th quantile of ``V`` is the
-    value ``q`` of the way from the minimum to the maximum in a sorted copy of
-    ``V``. The values and distances of the two nearest neighbors as well as the
-    `interpolation` parameter will determine the quantile if the normalized
-    ranking does not match the location of ``q`` exactly. This function is the
-    same as the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and
-    the same as the maximum if ``q=1.0``.
-
-    This optional `interpolation` parameter specifies the interpolation method
-    to use when the desired quantile lies between two data points ``i < j``. If
-    ``g`` is the fractional part of the index surrounded by ``i`` and  alpha
-    and beta are correction constants modifying i and j.
-
-    .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
-
-    The different interpolation methods then work as follows
-
-    inverted_cdf:
-        method 1 of H&F [1]_.
-        This method gives discontinuous results:
-        * if g > 0 ; then take j
-        * if g = 0 ; then take i
-
-    averaged_inverted_cdf:
-        method 2 of H&F [1]_.
-        This method give discontinuous results:
-        * if g > 0 ; then take j
-        * if g = 0 ; then average between bounds
-
-    closest_observation:
-        method 3 of H&F [1]_.
-        This method give discontinuous results:
-        * if g > 0 ; then take j
-        * if g = 0 and index is odd ; then take j
-        * if g = 0 and index is even ; then take i
-
-    interpolated_inverted_cdf:
-        method 4 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 0
-        * beta = 1
-
-    hazen:
-        method 5 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 1/2
-        * beta = 1/2
-
-    weibull:
-        method 6 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 0
-        * beta = 0
-
-    inclusive:
-        Default method, aliased with "linear".
-        method 7 of H&F [1]_.
-        This method give continuous results using:
-        * alpha = 1
-        * beta = 1
-
-    median_unbiased:
-        method 8 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is unknown (see reference).
-        This method give continuous results using:
-        * alpha = 1/3
-        * beta = 1/3
-
-    normal_unbiased:
-        method 9 of H&F [1]_.
-        This method is probably the best method if the sample
-        distribution function is known to be normal.
-        This method give continuous results using:
-        * alpha = 3/8
-        * beta = 3/8
-
-    lower:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` as the interpolation point.
-
-    higher:
-        NumPy method kept for backwards compatibility.
-        Takes ``j`` as the interpolation point.
-
-    nearest:
-        NumPy method kept for backwards compatibility.
-        Takes ``i`` or ``j``, whichever is nearest.
-
-    midpoint:
-        NumPy method kept for backwards compatibility.
-        Uses ``(i + j) / 2``.
+    For more information please see `numpy.quantile`
 
     Examples
     --------
@@ -1685,12 +1494,6 @@ def nanquantile(
     >>> np.nanquantile(b, 0.5, axis=1, overwrite_input=True)
     array([7., 2.])
     >>> assert not np.all(a==b)
-
-    References
-    ----------
-    .. [1] R. J. Hyndman and Y. Fan,
-       "Sample quantiles in statistical packages,"
-       The American Statistician, 50(4), pp. 361-365, 1996
 
     """
     a = np.asanyarray(a)
