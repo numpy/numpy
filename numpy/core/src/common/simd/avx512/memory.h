@@ -110,7 +110,7 @@ NPY_FINLINE npyv_f32 npyv_loadn_f32(const float *ptr, npy_intp stride)
 //// 64
 NPY_FINLINE npyv_u64 npyv_loadn_u64(const npy_uint64 *ptr, npy_intp stride)
 {
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
@@ -140,7 +140,7 @@ NPY_FINLINE void npyv_storen_f32(float *ptr, npy_intp stride, npyv_f32 a)
 //// 64
 NPY_FINLINE void npyv_storen_u64(npy_uint64 *ptr, npy_intp stride, npyv_u64 a)
 {
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
@@ -173,7 +173,7 @@ NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
 NPY_FINLINE npyv_s64 npyv_load_till_s64(const npy_int64 *ptr, npy_uintp nlane, npy_int64 fill)
 {
     assert(nlane > 0);
-    const __m512i vfill = _mm512_set1_epi64(fill);
+    const __m512i vfill = npyv_setall_s64(fill);
     const __mmask8 mask = nlane > 31 ? -1 : (1 << nlane) - 1;
     return _mm512_mask_loadu_epi64(vfill, mask, (const __m512i*)ptr);
 }
@@ -210,11 +210,11 @@ NPY_FINLINE npyv_s64
 npyv_loadn_till_s64(const npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npy_int64 fill)
 {
     assert(nlane > 0);
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
-    const __m512i vfill = _mm512_set1_epi64(fill);
+    const __m512i vfill = npyv_setall_s64(fill);
     const __mmask8 mask = nlane > 31 ? -1 : (1 << nlane) - 1;
     return _mm512_mask_i64gather_epi64(vfill, mask, idx, (const __m512i*)ptr, 8);
 }
@@ -258,7 +258,7 @@ NPY_FINLINE void npyv_storen_till_s32(npy_int32 *ptr, npy_intp stride, npy_uintp
 NPY_FINLINE void npyv_storen_till_s64(npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npyv_s64 a)
 {
     assert(nlane > 0);
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
