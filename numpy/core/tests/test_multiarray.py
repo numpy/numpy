@@ -7837,9 +7837,9 @@ class TestArrayCreationCopyArgument(object):
             assert_raises(ValueError, np.array, pyscalar, 
                             copy=np._CopyMode.NEVER)
             assert_raises(ValueError, np.array, pyscalar,
-                            copy=None)
-            assert_raises(ValueError, np.array, pyscalar,
                             copy=self.RaiseOnBool())
+            assert_raises(ValueError, _multiarray_tests.npy_ensurenocopy,
+                            [1])
 
     def test_compatible_cast(self):
 
@@ -8003,6 +8003,15 @@ class TestArrayCreationCopyArgument(object):
                 assert_raises(ValueError, np.array,
                               view, copy=None,
                               order=order2)
+
+    def test_striding_not_ok(self):
+        arr = np.array([[1, 2, 4], [3, 4, 5]])
+        assert_raises(ValueError, np.array,
+                      arr.T, copy=np._CopyMode.NEVER,
+                      order='C')
+        assert_raises(ValueError, np.array,
+                      arr, copy=np._CopyMode.NEVER,
+                      order='F')
 
 
 class TestArrayAttributeDeletion:

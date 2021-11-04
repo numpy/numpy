@@ -18,8 +18,6 @@
 #include "alloc.h"
 #include "npy_buffer.h"
 
-#include "npy_argparse.h"
-
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
 static npy_intp
@@ -182,7 +180,9 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
         if (mode_value == NULL) {
             return NPY_FAIL;
         }
-        if (!PyArray_PythonPyIntFromInt(mode_value, &int_copymode)) {
+
+        int_copymode = PyLong_AsLong(mode_value);
+        if (int_copymode < 0 || PyErr_Occurred()) {
             return NPY_FAIL;
         }
     }

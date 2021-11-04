@@ -95,6 +95,18 @@ _NoValue = _NoValueType()
 
 
 class _CopyMode(enum.Enum):
+    """
+    An enumeration for the copy modes supported
+    by numpy. The following three modes are supported,
+
+    - ALWAYS: This means that a deep copy of the input
+              array will always be taken.
+    - IF_NEEDED: This means that a deep copy of the input
+                 array will be taken only if necessary.
+    - NEVER: This means that the deep copy will never be taken.
+             If a copy cannot be avoided then a `ValueError` will be
+             raised.
+    """
 
     ALWAYS = True
     IF_NEEDED = False

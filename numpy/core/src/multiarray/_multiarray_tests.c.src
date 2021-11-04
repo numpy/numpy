@@ -2363,6 +2363,17 @@ run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     return tup;
 }
 
+/* used to test _NPY_ARRAY_ENSURENOCOPY raises ValueError */
+static PyObject*
+npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
+{
+    int flags = _NPY_ARRAY_ENSURENOCOPY;
+    if (!PyArray_CheckFromAny(args, NULL, 0, 0, flags, NULL)) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
@@ -2423,6 +2434,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_O, NULL},
     {"npy_discard",
         npy_discard,
+        METH_O, NULL},
+    {"npy_ensurenocopy",
+        npy_ensurenocopy,
         METH_O, NULL},
     {"get_buffer_info",
         get_buffer_info,
