@@ -2390,19 +2390,14 @@ PyArray_CountNonzero(PyArrayObject *self)
     npy_intp *strideptr, *innersizeptr;
     NPY_BEGIN_THREADS_DEF;
 
-    // Special low-overhead version specific to the boolean/int types
     dtype = PyArray_DESCR(self);
-    switch(dtype->kind) {
-        case 'u':
-        case 'i':
-        case 'b':
-            if (dtype->elsize > 8) {
-                break;
-            }
-            return count_nonzero_int(
-                PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
-                PyArray_STRIDES(self), dtype->elsize
-            );
+    /* Special low-overhead version specific to the boolean/int types */
+    if (PyArray_ISALIGNED(self) && (
+            PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype))) {
+        return count_nonzero_int(
+            PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
+            PyArray_STRIDES(self), dtype->elsize
+        );
     }
 
     nonzero = PyArray_DESCR(self)->f->nonzero;
