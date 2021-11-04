@@ -1497,6 +1497,18 @@ class TestNonzero:
         a = np.array([[False], [TrueThenFalse()]])
         assert_raises(RuntimeError, np.nonzero, a)
 
+    def test_nonzero_sideffects_structured_void(self):
+        # Checks that structured void does not mutate alignment flag of
+        # original array.
+        arr = np.zeros(5, dtype="i1,i8,i8")  # `ones` may short-circuit
+        assert arr.flags.aligned  # structs are considered "aligned"
+        assert not arr["f2"].flags.aligned
+        # make sure that nonzero/count_nonzero do not flip the flag:
+        np.nonzero(arr)
+        assert arr.flags.aligned
+        np.count_nonzero(arr)
+        assert arr.flags.aligned
+
     def test_nonzero_exception_safe(self):
         # gh-13930
 

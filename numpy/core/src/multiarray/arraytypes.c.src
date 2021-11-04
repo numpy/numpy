@@ -2759,10 +2759,10 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             dummy_fields.descr = new;
             if ((new->alignment > 1) && !__ALIGNED(ip + offset,
                         new->alignment)) {
-                PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
+                PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             else {
-                PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
+                PyArray_ENABLEFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             if (new->f->nonzero(ip+offset, dummy_arr)) {
                 nonz = NPY_TRUE;
