@@ -3662,6 +3662,8 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     middle value of a sorted copy of ``V``, ``V_sorted`` - i
     e., ``V_sorted[(N-1)/2]``, when ``N`` is odd, and the average of the
     two middle values of ``V_sorted`` when ``N`` is even.
+    ``median`` ignores mask of the MaskedArray. For MaskedArray use
+    ``ma.median`` instead.
 
     Examples
     --------
@@ -3691,6 +3693,11 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
 
     """
+    if isinstance(a, np.ma.MaskedArray):
+        a = a.data
+        warnings.warn("'median' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=2)
+
     r, k = _ureduce(a, func=_median, axis=axis, out=out,
                     overwrite_input=overwrite_input)
     if keepdims:
@@ -3840,6 +3847,7 @@ def percentile(a, q, axis=None, out=None,
     match the location of ``q`` exactly. This function is the same as
     the median if ``q=50``, the same as the minimum if ``q=0`` and the
     same as the maximum if ``q=100``.
+    ``percentile`` ignores mask of the MaskedArray.
 
     Examples
     --------
@@ -3898,6 +3906,11 @@ def percentile(a, q, axis=None, out=None,
         plt.show()
 
     """
+    if isinstance(a, np.ma.MaskedArray):
+        a = a.data
+        warnings.warn("'percentile' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=2)
+
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
@@ -3984,6 +3997,7 @@ def quantile(a, q, axis=None, out=None,
     match the location of ``q`` exactly. This function is the same as
     the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
     same as the maximum if ``q=1.0``.
+    ``quantile`` ignores mask of the MaskedArray.
 
     Examples
     --------
@@ -4011,6 +4025,11 @@ def quantile(a, q, axis=None, out=None,
     array([7.,  2.])
     >>> assert not np.all(a == b)
     """
+    if isinstance(a, np.ma.MaskedArray):
+        a = a.data
+        warnings.warn("'quantile' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=2)
+
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
