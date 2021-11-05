@@ -9,7 +9,6 @@ if TYPE_CHECKING:
         Device,
         Dtype,
         NestedSequence,
-        SupportsDLPack,
         SupportsBufferProtocol,
     )
     from collections.abc import Sequence
@@ -36,7 +35,6 @@ def asarray(
         int,
         float,
         NestedSequence[bool | int | float],
-        SupportsDLPack,
         SupportsBufferProtocol,
     ],
     /,

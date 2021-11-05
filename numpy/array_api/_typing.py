@@ -55,6 +55,5 @@ if TYPE_CHECKING or sys.version_info >= (3, 9):
 else:
     Dtype = dtype
 
-SupportsDLPack = Any
 SupportsBufferProtocol = Any
 PyCapsule = Any
