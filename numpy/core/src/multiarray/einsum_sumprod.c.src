@@ -337,13 +337,13 @@ static NPY_GCC_OPT_3 void
         /**begin repeat2
          * #i = 0, 1, 2, 3#
          */
-        const @type@ b@i@ = @from@(data[@i@]);
-        const @type@ c@i@ = @from@(data_out[@i@]);
+        const @temptype@ b@i@ = @from@(data[@i@]);
+        const @temptype@ c@i@ = @from@(data_out[@i@]);
         /**end repeat2**/
         /**begin repeat2
          * #i = 0, 1, 2, 3#
          */
-        const @type@ abc@i@ = scalar * b@i@ + c@i@;
+        const @temptype@ abc@i@ = scalar * b@i@ + c@i@;
         /**end repeat2**/
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -353,8 +353,8 @@ static NPY_GCC_OPT_3 void
     }
 #endif // !NPY_DISABLE_OPTIMIZATION
     for (; count > 0; --count, ++data, ++data_out) {
-        const @type@ b = @from@(*data);
-        const @type@ c = @from@(*data_out);
+        const @temptype@ b = @from@(*data);
+        const @temptype@ c = @from@(*data_out);
         *data_out = @to@(scalar * b + c);
     }
 #endif // NPYV check for @type@
@@ -417,14 +417,14 @@ static void
         /**begin repeat2
          * #i = 0, 1, 2, 3#
          */
-        const @type@ a@i@ = @from@(data0[@i@]);
-        const @type@ b@i@ = @from@(data1[@i@]);
-        const @type@ c@i@ = @from@(data_out[@i@]);
+        const @temptype@ a@i@ = @from@(data0[@i@]);
+        const @temptype@ b@i@ = @from@(data1[@i@]);
+        const @temptype@ c@i@ = @from@(data_out[@i@]);
         /**end repeat2**/
         /**begin repeat2
          * #i = 0, 1, 2, 3#
          */
-        const @type@ abc@i@ = a@i@ * b@i@ + c@i@;
+        const @temptype@ abc@i@ = a@i@ * b@i@ + c@i@;
         /**end repeat2**/
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -434,9 +434,9 @@ static void
     }
 #endif // !NPY_DISABLE_OPTIMIZATION
     for (; count > 0; --count, ++data0, ++data1, ++data_out) {
-        const @type@ a = @from@(*data0);
-        const @type@ b = @from@(*data1);
-        const @type@ c = @from@(*data_out);
+        const @temptype@ a = @from@(*data0);
+        const @temptype@ b = @from@(*data1);
+        const @temptype@ c = @from@(*data_out);
         *data_out = @to@(a * b + c);
     }
 #endif // NPYV check for @type@
@@ -521,14 +521,14 @@ static NPY_GCC_OPT_3 void
         /**begin repeat2
          * #i = 0, 1, 2, 3#
          */
-        const @type@ ab@i@ = @from@(data0[@i@]) * @from@(data1[@i@]);
+        const @temptype@ ab@i@ = @from@(data0[@i@]) * @from@(data1[@i@]);
         /**end repeat2**/
         accum += ab0 + ab1 + ab2 + ab3;
     }
 #endif // !NPY_DISABLE_OPTIMIZATION
     for (; count > 0; --count, ++data0, ++data1) {
-        const @type@ a = @from@(*data0);
-        const @type@ b = @from@(*data1);
+        const @temptype@ a = @from@(*data0);
+        const @temptype@ b = @from@(*data1);
         accum += a * b;
     }
 #endif // NPYV check for @type@
