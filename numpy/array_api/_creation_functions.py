@@ -242,6 +242,12 @@ def meshgrid(*arrays: Array, indexing: str = "xy") -> List[Array]:
     """
     from ._array_object import Array
 
+    # Note: unlike np.meshgrid, only inputs with all the same dtype are
+    # allowed
+
+    if len({a.dtype for a in arrays}) > 1:
+        raise ValueError("meshgrid inputs must all have the same dtype")
+
     return [
         Array._new(array)
         for array in np.meshgrid(*[a._array for a in arrays], indexing=indexing)

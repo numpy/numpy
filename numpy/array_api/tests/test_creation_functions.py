@@ -31,6 +31,8 @@ from .._dtypes import (
     int32,
     int64,
     uint64,
+    float32,
+    float64
 )
 
 
@@ -139,3 +141,11 @@ def test_zeros_like_errors():
     assert_raises(ValueError, lambda: zeros_like(asarray(1), device="gpu"))
     assert_raises(ValueError, lambda: zeros_like(asarray(1), dtype=int))
     assert_raises(ValueError, lambda: zeros_like(asarray(1), dtype="i"))
+
+def test_meshgrid_dtype_errors():
+    # Doesn't raise
+    meshgrid()
+    meshgrid(asarray([1.], dtype=float32))
+    meshgrid(asarray([1.], dtype=float32), asarray([1.], dtype=float32))
+
+    assert_raises(ValueError, lambda: meshgrid(asarray([1.], dtype=float32), asarray([1.], dtype=float64)))
