@@ -538,13 +538,6 @@ class Array:
         res = self._array.__le__(other._array)
         return self.__class__._new(res)
 
-    # Note: __len__ may end up being removed from the array API spec.
-    def __len__(self, /) -> int:
-        """
-        Performs the operation __len__.
-        """
-        return self._array.__len__()
-
     def __lshift__(self: Array, other: Union[int, Array], /) -> Array:
         """
         Performs the operation __lshift__.
