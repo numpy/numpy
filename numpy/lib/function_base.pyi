@@ -514,6 +514,7 @@ _InterpolationKind = L[
     "higher",
     "midpoint",
     "nearest",
+    "inclusive",
 ]
 
 @overload
