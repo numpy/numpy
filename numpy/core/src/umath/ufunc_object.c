@@ -4926,65 +4926,6 @@ fail:
 
 
 /*
- * TODO: The implementation below can be replaced with PyVectorcall_Call
- *       when available (should be Python 3.8+).
- */
-static PyObject *
-ufunc_generic_call(
-        PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
-{
-    Py_ssize_t len_args = PyTuple_GET_SIZE(args);
-    /*
-     * Wrapper for tp_call to tp_fastcall, to support both on older versions
-     * of Python. (and generally simplifying support of both versions in the
-     * same codebase.
-     */
-    if (kwds == NULL) {
-        return ufunc_generic_fastcall(ufunc,
-                PySequence_Fast_ITEMS(args), len_args, NULL, NPY_FALSE);
-    }
-
-    PyObject *new_args[NPY_MAXARGS];
-    Py_ssize_t len_kwds = PyDict_Size(kwds);
-
-    if (NPY_UNLIKELY(len_args + len_kwds > NPY_MAXARGS)) {
-        /*
-         * We do not have enough scratch-space, so we have to abort;
-         * In practice this error should not be seen by users.
-         */
-        PyErr_Format(PyExc_ValueError,
-                "%s() takes from %d to %d positional arguments but "
-                "%zd were given",
-                ufunc_get_name_cstr(ufunc) , ufunc->nin, ufunc->nargs, len_args);
-        return NULL;
-    }
-
-    /* Copy args into the scratch space */
-    for (Py_ssize_t i = 0; i < len_args; i++) {
-        new_args[i] = PyTuple_GET_ITEM(args, i);
-    }
-
-    PyObject *kwnames = PyTuple_New(len_kwds);
-
-    PyObject *key, *value;
-    Py_ssize_t pos = 0;
-    Py_ssize_t i = 0;
-    while (PyDict_Next(kwds, &pos, &key, &value)) {
-        Py_INCREF(key);
-        PyTuple_SET_ITEM(kwnames, i, key);
-        new_args[i + len_args] = value;
-        i++;
-    }
-
-    PyObject *res = ufunc_generic_fastcall(ufunc,
-            new_args, len_args, kwnames, NPY_FALSE);
-    Py_DECREF(kwnames);
-    return res;
-}
-
-
-#if PY_VERSION_HEX >= 0x03080000
-/*
  * Implement vectorcallfunc which should be defined with Python 3.8+.
  * In principle this could be backported, but the speed gain seems moderate
  * since ufunc calls often do not have keyword arguments and always have
@@ -5001,7 +4942,6 @@ ufunc_generic_vectorcall(PyObject *ufunc,
     return ufunc_generic_fastcall((PyUFuncObject *)ufunc,
             args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE);
 }
-#endif  /* PY_VERSION_HEX >= 0x03080000 */
 
 
 NPY_NO_EXPORT PyObject *
@@ -5178,11 +5118,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->core_dim_flags = NULL;
     ufunc->userloops = NULL;
     ufunc->ptr = NULL;
-#if PY_VERSION_HEX >= 0x03080000
     ufunc->vectorcall = &ufunc_generic_vectorcall;
-#else
-    ufunc->reserved2 = NULL;
-#endif
     ufunc->reserved1 = 0;
     ufunc->iter_flags = 0;
 
@@ -6437,19 +6373,15 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_basicsize = sizeof(PyUFuncObject),
     .tp_dealloc = (destructor)ufunc_dealloc,
     .tp_repr = (reprfunc)ufunc_repr,
-    .tp_call = (ternaryfunc)ufunc_generic_call,
+    .tp_call = &PyVectorcall_Call,
     .tp_str = (reprfunc)ufunc_repr,
     .tp_flags = Py_TPFLAGS_DEFAULT |
-#if PY_VERSION_HEX >= 0x03080000
         _Py_TPFLAGS_HAVE_VECTORCALL |
-#endif
         Py_TPFLAGS_HAVE_GC,
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
     .tp_getset = ufunc_getset,
-#if PY_VERSION_HEX >= 0x03080000
     .tp_vectorcall_offset = offsetof(PyUFuncObject, vectorcall),
-#endif
 };
 
 /* End of code for ufunc objects */
