@@ -17,7 +17,7 @@ static NPY_INLINE uint64_t next_uint64(bitgen_t *bitgen_state) {
 }
 
 static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
-  return (next_uint32(bitgen_state) >> 9) * (1.0f / 8388608.0f);
+  return (next_uint32(bitgen_state) >> 8) * (1.0f / 16777216.0f);
 }
 
 /* Random generators for external use */
