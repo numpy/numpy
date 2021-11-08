@@ -30,7 +30,7 @@ class UniqueInverseResult(NamedTuple):
     inverse_indices: Array
 
 
-def unique_all(x: Array, /) -> Tuple[Array, Array, Array, Array]:
+def unique_all(x: Array, /) -> UniqueAllResult:
     """
     Array API compatible wrapper for :py:func:`np.unique <numpy.unique>`.
 
@@ -46,7 +46,7 @@ def unique_all(x: Array, /) -> Tuple[Array, Array, Array, Array]:
     return UniqueAllResult(*[Array._new(i) for i in res])
 
 
-def unique_inverse(x: Array, /) -> Tuple[Array, Array]:
+def unique_inverse(x: Array, /) -> UniqueInverseResult:
     """
     Array API compatible wrapper for :py:func:`np.unique <numpy.unique>`.
 
