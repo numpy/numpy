@@ -2867,7 +2867,7 @@ class TestPercentile:
         assert_equal(np.percentile(x, 50), 1.75)
         x[1] = np.nan
         assert_equal(np.percentile(x, 0), np.nan)
-        assert_equal(np.percentile(x, 0, interpolation='nearest'), np.nan)
+        assert_equal(np.percentile(x, 0, method='nearest'), np.nan)
 
     def test_fraction(self):
         x = [Fraction(i, 2) for i in range(8)]
@@ -2910,7 +2910,7 @@ class TestPercentile:
         res = np.percentile(
             arr,
             40.0,
-            interpolation="linear")
+            method="linear")
         np.testing.assert_equal(res, np.NAN)
         np.testing.assert_equal(res.dtype, arr.dtype)
 
@@ -2926,7 +2926,7 @@ class TestPercentile:
                            (np.dtype("O"), np.float64)]
 
     @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
-    @pytest.mark.parametrize(["interpolation", "expected"],
+    @pytest.mark.parametrize(["method", "expected"],
                              [("inverted_cdf", 20),
                               ("averaged_inverted_cdf", 27.5),
                               ("closest_observation", 20),
@@ -2938,16 +2938,16 @@ class TestPercentile:
                               ("normal_unbiased", 27.125),
                               ])
     def test_linear_interpolation(self,
-                                  interpolation,
+                                  method,
                                   expected,
                                   input_dtype,
                                   expected_dtype):
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
-        actual = np.percentile(arr, 40.0, interpolation=interpolation)
+        actual = np.percentile(arr, 40.0, method=method)
 
         np.testing.assert_almost_equal(actual, expected, 14)
 
-        if interpolation in ["inverted_cdf", "closest_observation"]:
+        if method in ["inverted_cdf", "closest_observation"]:
             if input_dtype == "O":
                 np.testing.assert_equal(np.asarray(actual).dtype, np.float64)
             else:
@@ -2962,27 +2962,27 @@ class TestPercentile:
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_lower_higher(self, dtype):
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
-                                   interpolation='lower'), 4)
+                                   method='lower'), 4)
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
-                                   interpolation='higher'), 5)
+                                   method='higher'), 5)
 
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_midpoint(self, dtype):
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
-                                   interpolation='midpoint'), 4.5)
+                                   method='midpoint'), 4.5)
         assert_equal(np.percentile(np.arange(9, dtype=dtype) + 1, 50,
-                                   interpolation='midpoint'), 5)
+                                   method='midpoint'), 5)
         assert_equal(np.percentile(np.arange(11, dtype=dtype), 51,
-                                   interpolation='midpoint'), 5.5)
+                                   method='midpoint'), 5.5)
         assert_equal(np.percentile(np.arange(11, dtype=dtype), 50,
-                                   interpolation='midpoint'), 5)
+                                   method='midpoint'), 5)
 
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_nearest(self, dtype):
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
-                                   interpolation='nearest'), 5)
+                                   method='nearest'), 5)
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 49,
-                                       interpolation='nearest'), 4)
+                                   method='nearest'), 4)
 
     def test_linear_interpolation_extrapolation(self):
         arr = np.random.rand(5)
@@ -3019,19 +3019,19 @@ class TestPercentile:
         assert_equal(
             np.percentile(x, (25, 50, 75), axis=1).shape, (3, 3, 5, 6))
         assert_equal(np.percentile(x, (25, 50),
-                                   interpolation="higher").shape, (2,))
+                                   method="higher").shape, (2,))
         assert_equal(np.percentile(x, (25, 50, 75),
-                                   interpolation="higher").shape, (3,))
+                                   method="higher").shape, (3,))
         assert_equal(np.percentile(x, (25, 50), axis=0,
-                                   interpolation="higher").shape, (2, 4, 5, 6))
+                                   method="higher").shape, (2, 4, 5, 6))
         assert_equal(np.percentile(x, (25, 50), axis=1,
-                                   interpolation="higher").shape, (2, 3, 5, 6))
+                                   method="higher").shape, (2, 3, 5, 6))
         assert_equal(np.percentile(x, (25, 50), axis=2,
-                                   interpolation="higher").shape, (2, 3, 4, 6))
+                                   method="higher").shape, (2, 3, 4, 6))
         assert_equal(np.percentile(x, (25, 50), axis=3,
-                                   interpolation="higher").shape, (2, 3, 4, 5))
+                                   method="higher").shape, (2, 3, 4, 5))
         assert_equal(np.percentile(x, (25, 50, 75), axis=1,
-                                   interpolation="higher").shape, (3, 3, 5, 6))
+                                   method="higher").shape, (3, 3, 5, 6))
 
     def test_scalar_q(self):
         # test for no empty dimensions for compatibility with old percentile
@@ -3057,33 +3057,33 @@ class TestPercentile:
 
         # test for no empty dimensions for compatibility with old percentile
         x = np.arange(12).reshape(3, 4)
-        assert_equal(np.percentile(x, 50, interpolation='lower'), 5.)
+        assert_equal(np.percentile(x, 50, method='lower'), 5.)
         assert_(np.isscalar(np.percentile(x, 50)))
         r0 = np.array([4.,  5.,  6.,  7.])
-        c0 = np.percentile(x, 50, interpolation='lower', axis=0)
+        c0 = np.percentile(x, 50, method='lower', axis=0)
         assert_equal(c0, r0)
         assert_equal(c0.shape, r0.shape)
         r1 = np.array([1.,  5.,  9.])
-        c1 = np.percentile(x, 50, interpolation='lower', axis=1)
+        c1 = np.percentile(x, 50, method='lower', axis=1)
         assert_almost_equal(c1, r1)
         assert_equal(c1.shape, r1.shape)
 
         out = np.empty((), dtype=x.dtype)
-        c = np.percentile(x, 50, interpolation='lower', out=out)
+        c = np.percentile(x, 50, method='lower', out=out)
         assert_equal(c, 5)
         assert_equal(out, 5)
         out = np.empty(4, dtype=x.dtype)
-        c = np.percentile(x, 50, interpolation='lower', axis=0, out=out)
+        c = np.percentile(x, 50, method='lower', axis=0, out=out)
         assert_equal(c, r0)
         assert_equal(out, r0)
         out = np.empty(3, dtype=x.dtype)
-        c = np.percentile(x, 50, interpolation='lower', axis=1, out=out)
+        c = np.percentile(x, 50, method='lower', axis=1, out=out)
         assert_equal(c, r1)
         assert_equal(out, r1)
 
     def test_exception(self):
         assert_raises(ValueError, np.percentile, [1, 2], 56,
-                      interpolation='foobar')
+                      method='foobar')
         assert_raises(ValueError, np.percentile, [1], 101)
         assert_raises(ValueError, np.percentile, [1], -1)
         assert_raises(ValueError, np.percentile, [1], list(range(50)) + [101])
@@ -3124,12 +3124,12 @@ class TestPercentile:
         # q.dim > 1, int
         r0 = np.array([[0,  1,  2, 3], [4, 5, 6, 7]])
         out = np.empty((2, 4), dtype=x.dtype)
-        c = np.percentile(x, (25, 50), interpolation='lower', axis=0, out=out)
+        c = np.percentile(x, (25, 50), method='lower', axis=0, out=out)
         assert_equal(c, r0)
         assert_equal(out, r0)
         r1 = np.array([[0,  4,  8], [1,  5,  9]])
         out = np.empty((2, 3), dtype=x.dtype)
-        c = np.percentile(x, (25, 50), interpolation='lower', axis=1, out=out)
+        c = np.percentile(x, (25, 50), method='lower', axis=1, out=out)
         assert_equal(c, r1)
         assert_equal(out, r1)
 
@@ -3146,10 +3146,10 @@ class TestPercentile:
         assert_array_equal(np.percentile(d, 50, axis=-4).shape, (1, 2, 1))
 
         assert_array_equal(np.percentile(d, 50, axis=2,
-                                         interpolation='midpoint').shape,
+                                         method='midpoint').shape,
                            (11, 1, 1))
         assert_array_equal(np.percentile(d, 50, axis=-2,
-                                         interpolation='midpoint').shape,
+                                         method='midpoint').shape,
                            (11, 1, 1))
 
         assert_array_equal(np.array(np.percentile(d, [10, 50], axis=0)).shape,
@@ -3172,10 +3172,10 @@ class TestPercentile:
 
     def test_no_p_overwrite(self):
         p = np.linspace(0., 100., num=5)
-        np.percentile(np.arange(100.), p, interpolation="midpoint")
+        np.percentile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, np.linspace(0., 100., num=5))
         p = np.linspace(0., 100., num=5).tolist()
-        np.percentile(np.arange(100.), p, interpolation="midpoint")
+        np.percentile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, np.linspace(0., 100., num=5).tolist())
 
     def test_percentile_overwrite(self):
@@ -3253,14 +3253,14 @@ class TestPercentile:
         o = np.zeros((4,))
         d = np.ones((3, 4))
         assert_equal(np.percentile(d, 0, 0, out=o), o)
-        assert_equal(np.percentile(d, 0, 0, interpolation='nearest', out=o), o)
+        assert_equal(np.percentile(d, 0, 0, method='nearest', out=o), o)
         o = np.zeros((3,))
         assert_equal(np.percentile(d, 1, 1, out=o), o)
-        assert_equal(np.percentile(d, 1, 1, interpolation='nearest', out=o), o)
+        assert_equal(np.percentile(d, 1, 1, method='nearest', out=o), o)
 
         o = np.zeros(())
         assert_equal(np.percentile(d, 2, out=o), o)
-        assert_equal(np.percentile(d, 2, interpolation='nearest', out=o), o)
+        assert_equal(np.percentile(d, 2, method='nearest', out=o), o)
 
     def test_out_nan(self):
         with warnings.catch_warnings(record=True):
@@ -3270,15 +3270,15 @@ class TestPercentile:
             d[2, 1] = np.nan
             assert_equal(np.percentile(d, 0, 0, out=o), o)
             assert_equal(
-                np.percentile(d, 0, 0, interpolation='nearest', out=o), o)
+                np.percentile(d, 0, 0, method='nearest', out=o), o)
             o = np.zeros((3,))
             assert_equal(np.percentile(d, 1, 1, out=o), o)
             assert_equal(
-                np.percentile(d, 1, 1, interpolation='nearest', out=o), o)
+                np.percentile(d, 1, 1, method='nearest', out=o), o)
             o = np.zeros(())
             assert_equal(np.percentile(d, 1, out=o), o)
             assert_equal(
-                np.percentile(d, 1, interpolation='nearest', out=o), o)
+                np.percentile(d, 1, method='nearest', out=o), o)
 
     def test_nan_behavior(self):
         a = np.arange(24, dtype=float)
@@ -3333,13 +3333,13 @@ class TestPercentile:
         b[:, 1] = np.nan
         b[:, 2] = np.nan
         assert_equal(np.percentile(a, [0.3, 0.6], (0, 2)), b)
-        # axis02 not zerod with nearest interpolation
+        # axis02 not zerod with method='nearest'
         b = np.percentile(np.arange(24, dtype=float).reshape(2, 3, 4),
-                          [0.3, 0.6], (0, 2), interpolation='nearest')
+                          [0.3, 0.6], (0, 2), method='nearest')
         b[:, 1] = np.nan
         b[:, 2] = np.nan
         assert_equal(np.percentile(
-            a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
+            a, [0.3, 0.6], (0, 2), method='nearest'), b)
 
     def test_nan_q(self):
         # GH18830
@@ -3412,18 +3412,18 @@ class TestQuantile:
         # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
         p = p0.copy()
-        np.quantile(np.arange(100.), p, interpolation="midpoint")
+        np.quantile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, p0)
 
         p0 = p0.tolist()
         p = p.tolist()
-        np.quantile(np.arange(100.), p, interpolation="midpoint")
+        np.quantile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, p0)
 
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_quantile_preserve_int_type(self, dtype):
         res = np.quantile(np.array([1, 2], dtype=dtype), [0.5],
-                          interpolation="nearest")
+                          method="nearest")
         assert res.dtype == dtype
 
     def test_quantile_monotonic(self):
