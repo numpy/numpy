@@ -11,8 +11,8 @@ How to index :class:`ndarrays <.ndarray>`
 This page tackles common examples. For an in-depth look into indexing, refer
 to :ref:`basics.indexing`.
 
-Access specific/random rows and columns
-=======================================
+Access specific/arbitary rows and columns
+=========================================
 
 Use :ref:`basic-indexing` features like :ref:`slicing-and-striding`, and
 :ref:`dimensional-indexing-tools`.
@@ -28,12 +28,13 @@ Use :ref:`basic-indexing` features like :ref:`slicing-and-striding`, and
             [25, 26, 27, 28, 29]]])
     >>> a[0, 2, :]
     array([10, 11, 12, 13, 14])
-    >>> a[0, : ,3]
+    >>> a[0, :, 3]
     array([ 3,  8, 13])
-
-Note that the dimensions are not preserved in the above example. To add the
-required dimensions, :func:`newaxis` is used here. To use other such tools
-refer to :ref:`dimensional-indexing-tools`.
+    
+Note that the output from indexing operations can have different shape as the
+original object. To preserve the original dimensions after indexing, you can
+use :func:`newaxis`. To use other such tools, refer to
+:ref:`dimensional-indexing-tools`.
 
     >>> a[0, :, 3].shape
     (3,)
@@ -73,12 +74,26 @@ Index columns
 Use :ref:`dimensional-indexing-tools` to avoid shape mismatches::
 
     >>> arr = np.arange(3*4).reshape(3, 4)
+    >>> arr
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11]])
     >>> column_indices = [[1, 3], [0, 2], [2, 2]]
-    >>> np.arange(arr.shape[0])[:, np.newaxis]
+    >>> np.arange(arr.shape[0])
+    array([0, 1, 2])
+
+Adding the second dimension to index the second dimension of the array::
+
+    >>> shape_indices = np.arange(arr.shape[0])[:, np.newaxis]
+	>>> shape_indices
     array([[0],
            [1],
            [2]])
-    >>> arr[np.arange(arr.shape[0])[:, np.newaxis], column_indices]
+
+Using the ``shape_indices`` and ``column_indices`` for advanced
+indexing::
+
+    >>> arr[shape_indices, column_indices]
     array([[ 1,  3],
            [ 4,  6],
            [10, 10]])
@@ -176,6 +191,7 @@ Fetch indices of max/min values
 
 Use :meth:`argmax` and :meth:`argmin`::
 
+    >>> a = np.arange(30).reshape(2, 3, 5)
     >>> np.argmax(a)
     29
     >>> np.argmin(a)
@@ -224,4 +240,36 @@ Index the same ndarray multiple times efficiently
 It must be kept in mind that basic indexing produces :term:`views <view>`
 and advanced indexing produces :term:`copies <copy>`, which takes
 more time. Hence, you should take care to use basic indexing wherever
-possible instead of advanced indexing. 
+possible instead of advanced indexing.
+
+Further reading
+===============
+
+Nicolas Rougier's `100 NumPy exercises <https://github.com/rougier/numpy-100>`_
+provide a good insight into how indexing is combined with other operations.
+Exercises `6`_, `8`_, `10`_, `15`_, `16`_, `19`_, `20`_, `45`_, `59`_,
+`64`_, `65`_, `70`_, `71`_, `72`_, `76`_, `80`_, `81`_, `84`_, `87`_, `90`_,
+`93`_, `94`_ are specially focused on indexing. 
+
+.. _6: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#6-create-a-null-vector-of-size-10-but-the-fifth-value-which-is-1-
+.. _8: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#8-reverse-a-vector-first-element-becomes-last-
+.. _10: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#10-find-indices-of-non-zero-elements-from-120040-
+.. _15: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#15-create-a-2d-array-with-1-on-the-border-and-0-inside-
+.. _16: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#16-how-to-add-a-border-filled-with-0s-around-an-existing-array-
+.. _19: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#19-create-a-8x8-matrix-and-fill-it-with-a-checkerboard-pattern-
+.. _20: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#20-consider-a-678-shape-array-what-is-the-index-xyz-of-the-100th-element-
+.. _45: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#45-create-random-vector-of-size-10-and-replace-the-maximum-value-by-0-
+.. _59: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#59-how-to-sort-an-array-by-the-nth-column-
+.. _64: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#64-consider-a-given-vector-how-to-add-1-to-each-element-indexed-by-a-second-vector-be-careful-with-repeated-indices-
+.. _65: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#65-how-to-accumulate-elements-of-a-vector-x-to-an-array-f-based-on-an-index-list-i-
+.. _70: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#70-consider-the-vector-1-2-3-4-5-how-to-build-a-new-vector-with-3-consecutive-zeros-interleaved-between-each-value-
+.. _71: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#71-consider-an-array-of-dimension-553-how-to-mulitply-it-by-an-array-with-dimensions-55-
+.. _72: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#72-how-to-swap-two-rows-of-an-array-
+.. _76: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#76-consider-a-one-dimensional-array-z-build-a-two-dimensional-array-whose-first-row-is-z0z1z2-and-each-subsequent-row-is--shifted-by-1-last-row-should-be-z-3z-2z-1-
+.. _80: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#80-consider-an-arbitrary-array-write-a-function-that-extract-a-subpart-with-a-fixed-shape-and-centered-on-a-given-element-pad-with-a-fill-value-when-necessary-
+.. _81: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#81-consider-an-array-z--1234567891011121314-how-to-generate-an-array-r--1234-2345-3456--11121314-
+.. _84: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#84-extract-all-the-contiguous-3x3-blocks-from-a-random-10x10-matrix-
+.. _87: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#87-consider-a-16x16-array-how-to-get-the-block-sum-block-size-is-4x4-
+.. _90: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#90-given-an-arbitrary-number-of-vectors-build-the-cartesian-product-every-combinations-of-every-item-
+.. _93: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#93-consider-two-arrays-a-and-b-of-shape-83-and-22-how-to-find-rows-of-a-that-contain-elements-of-each-row-of-b-regardless-of-the-order-of-the-elements-in-b-
+.. _94: https://github.com/rougier/numpy-100/blob/master/100_Numpy_exercises_with_solutions.md#94-considering-a-10x3-matrix-extract-rows-with-unequal-values-eg-223-
