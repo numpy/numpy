@@ -360,9 +360,9 @@ from ._searching_functions import argmax, argmin, nonzero, where
 
 __all__ += ["argmax", "argmin", "nonzero", "where"]
 
-from ._set_functions import unique_all, unique_inverse, unique_values
+from ._set_functions import unique_all, unique_counts, unique_inverse, unique_values
 
-__all__ += ["unique_all", "unique_inverse", "unique_values"]
+__all__ += ["unique_all", "unique_counts", "unique_inverse", "unique_values"]
 
 from ._sorting_functions import argsort, sort
 

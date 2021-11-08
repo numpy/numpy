@@ -6,9 +6,9 @@ from typing import Tuple, Union, NamedTuple
 
 import numpy as np
 
-# Note: np.unique() is split into three functions in the array API:
-# unique_all, unique_inverse, and unique_values (this is done to remove
-# polymorphic return types).
+# Note: np.unique() is split into fout functions in the array API:
+# unique_all, unique_counts, unique_inverse, and unique_values (this is done
+# to remove polymorphic return types).
 
 # Note: The various unique() functions are supposed to return multiple NaNs.
 # This does not match the NumPy behavior, however, this is currently left as a
@@ -22,6 +22,11 @@ class UniqueAllResult(NamedTuple):
     values: Array
     indices: Array
     inverse_indices: Array
+    counts: Array
+
+
+class UniqueCountsResult(NamedTuple):
+    values: Array
     counts: Array
 
 
@@ -44,6 +49,17 @@ def unique_all(x: Array, /) -> UniqueAllResult:
     )
 
     return UniqueAllResult(*[Array._new(i) for i in res])
+
+
+def unique_counts(x: Array, /) -> UniqueCountsResult:
+    res = np.unique(
+        x._array,
+        return_counts=True,
+        return_index=False,
+        return_inverse=False,
+    )
+
+    return UniqueCountsResult(*[Array._new(i) for i in res])
 
 
 def unique_inverse(x: Array, /) -> UniqueInverseResult:
