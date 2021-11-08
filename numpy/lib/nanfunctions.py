@@ -1277,7 +1277,7 @@ def nanpercentile(
         * (NPY 2): 'higher',
         * (NPY 3): 'midpoint'
         * (NPY 4): 'nearest'
-        * (NPY 5): 'linear', aliased with 'inclusive'  (default)
+        * (NPY 5): 'linear'  (default)
 
         New options:
 
@@ -1287,7 +1287,7 @@ def nanpercentile(
         * (H&F 4): 'interpolated_inverted_cdf'
         * (H&F 5): 'hazen'
         * (H&F 6): 'weibull'
-        * (H&F 7): 'inclusive',  aliased with 'linear'  (default)
+        * (H&F 7): 'linear'  (default)
         * (H&F 8): 'median_unbiased'
         * (H&F 9): 'normal_unbiased'
 
@@ -1418,7 +1418,7 @@ def nanquantile(
         * (NPY 2): 'higher',
         * (NPY 3): 'midpoint'
         * (NPY 4): 'nearest'
-        * (NPY 5): 'linear', aliased with 'inclusive'  (default)
+        * (NPY 5): 'linear'  (default)
 
         New options:
 
@@ -1428,7 +1428,7 @@ def nanquantile(
         * (H&F 4): 'interpolated_inverted_cdf'
         * (H&F 5): 'hazen'
         * (H&F 6): 'weibull'
-        * (H&F 7): 'inclusive',  aliased with 'linear'  (default)
+        * (H&F 7): 'linear'  (default)
         * (H&F 8): 'median_unbiased'
         * (H&F 9): 'normal_unbiased'
 
