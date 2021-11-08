@@ -13,6 +13,13 @@ if TYPE_CHECKING:
 import numpy as np
 
 
+# Note: astype is a function, not an array method as in NumPy.
+def astype(x: Array, dtype: Dtype, /, *, copy: bool = True) -> Array:
+    if not copy and dtype == x.dtype:
+        return x
+    return Array._new(x._array.astype(dtype=dtype, copy=copy))
+
+
 def broadcast_arrays(*arrays: Array) -> List[Array]:
     """
     Array API compatible wrapper for :py:func:`np.broadcast_arrays <numpy.broadcast_arrays>`.

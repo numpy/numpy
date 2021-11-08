@@ -169,6 +169,7 @@ __all__ += [
 ]
 
 from ._data_type_functions import (
+    astype,
     broadcast_arrays,
     broadcast_to,
     can_cast,
@@ -178,6 +179,7 @@ from ._data_type_functions import (
 )
 
 __all__ += [
+    "astype",
     "broadcast_arrays",
     "broadcast_to",
     "can_cast",
