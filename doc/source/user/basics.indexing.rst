@@ -855,7 +855,7 @@ For this reason, it is possible to use the output from the
 :meth:`np.nonzero() <ndarray.nonzero>` function directly as an index since
 it always returns a tuple of index arrays.
 
-Because the special treatment of tuples, they are not automatically
+Because of the special treatment of tuples, they are not automatically
 converted to an array as a list would be. As an example: ::
 
  >>> z[[1, 1, 1, 1]]  # produces a large array

@@ -49,6 +49,9 @@ Variables can also be used to index::
     >>> a[y, :, y+3]
     array([ 3,  8, 13])
 
+Refer to :ref:`dealing-with-variable-indices` to see how to use
+:term:`python:slice` and :py:data:`Ellipsis` in your index variables.
+
 Index along a specific axis
 ---------------------------
 
@@ -81,19 +84,16 @@ Use :ref:`dimensional-indexing-tools` to avoid shape mismatches::
     >>> column_indices = [[1, 3], [0, 2], [2, 2]]
     >>> np.arange(arr.shape[0])
     array([0, 1, 2])
-
-Adding the second dimension to index the second dimension of the array::
-
-    >>> shape_indices = np.arange(arr.shape[0])[:, np.newaxis]
-	>>> shape_indices
+    >>> row_indices = np.arange(arr.shape[0])[:, np.newaxis]
+    >>> row_indices
     array([[0],
            [1],
            [2]])
 
-Using the ``shape_indices`` and ``column_indices`` for advanced
+Use the ``row_indices`` and ``column_indices`` for advanced
 indexing::
 
-    >>> arr[shape_indices, column_indices]
+    >>> arr[row_indices, column_indices]
     array([[ 1,  3],
            [ 4,  6],
            [10, 10]])
@@ -101,43 +101,92 @@ indexing::
 Create subsets of larger matrices
 =================================
 
-Use :ref:`slicing-and-striding` to access chunks of an array.
-But if you want to access multiple scattered elements to create
-complicated subsets, you have to use :ref:`advanced-indexing`. Use
-:func:`ix_` to quickly contruct index arrays::
+Use :ref:`slicing-and-striding` to access chunks of a large array::
 
-    >>> indices = np.ix_([0, 1], [0, 2], [2, 4])
+    >>> a = np.arange(100).reshape(10, 10)
+    >>> a
+    array([[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9],
+            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+            [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
+            [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+            [50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
+            [60, 61, 62, 63, 64, 65, 66, 67, 68, 69],
+            [70, 71, 72, 73, 74, 75, 76, 77, 78, 79],
+            [80, 81, 82, 83, 84, 85, 86, 87, 88, 89],
+            [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]])
+    >>> a[2:5, 2:5]
+    array([[22, 23, 24],
+           [32, 33, 34],
+           [42, 43, 44]])
+    >>> a[2:5, 1:3]
+    array([[21, 22],
+           [31, 32],
+           [41, 42]])
+    >>> a[:5, :5]
+    array([[ 0,  1,  2,  3,  4],
+           [10, 11, 12, 13, 14],
+           [20, 21, 22, 23, 24],
+           [30, 31, 32, 33, 34],
+           [40, 41, 42, 43, 44]])
+
+The same thing can be done with advanced indexing in a slightly complex
+way. Remember that advanced indexing creates a copy::
+
+    >>> a[np.arange(5)[:,None], np.arange(5)[None,:]]
+    array([[ 0,  1,  2,  3,  4],
+           [10, 11, 12, 13, 14],
+           [20, 21, 22, 23, 24],
+           [30, 31, 32, 33, 34],
+           [40, 41, 42, 43, 44]])
+
+You can also use :meth:`mgrid` to generate indices::
+
+    >>> indices = np.mgrid[0:6:2]
     >>> indices
-    (array([[[0]],
-    <BLANKLINE>
-           [[1]]]), 
-    array([[[0],
-            [2]]]), 
-    array([[[2, 4]]]))
-    >>> a[indices]
-    array([[[ 2,  4],
-            [12, 14]],
-    <BLANKLINE>
-            [[17, 19],
-            [27, 29]]])
-    >>> indices = np.ix_([0, 1], [0, 1])
-    >>> indices
-    (array([[0],
-           [1]]),
-    array([[0, 1]]))
-    >>> a[indices]
-    array([[[ 0,  1,  2,  3,  4],
-            [ 5,  6,  7,  8,  9]],
-    <BLANKLINE>
-            [[15, 16, 17, 18, 19],
-            [20, 21, 22, 23, 24]]])
+    array([0, 2, 4])
+    >>> a[:, indices]
+    array([[ 0,  2,  4],
+           [10, 12, 14],
+           [20, 22, 24],
+           [30, 32, 34],
+           [40, 42, 44],
+           [50, 52, 54],
+           [60, 62, 64],
+           [70, 72, 74],
+           [80, 82, 84],
+           [90, 92, 94]])
 
 Filter values
 =============
 
+Non-zero elements
+-----------------
+
+Use :meth:`nonzero` to get a tuple of array indices of non-zero elements 
+corresponding to every dimension::
+
+	>>> z = np.eye(3)
+	>>> z
+	array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
+	>>> np.nonzero(z)
+	(array([0, 1, 2]), array([0, 1, 2]))
+
+Use :meth:`flatnonzero` to fetch indices of elements that are non-zero in
+the flattened version of the ndarray::
+
+	>>> np.flatnonzero(z)
+	array([0, 4, 8])
+
+Arbitary conditions
+-------------------
+
 Use :meth:`where` to generate indices based on conditions and then
 use :ref:`advanced-indexing`.
 
+    >>> a = np.arange(30).reshape(2, 3, 5)
     >>> indices = np.where(a % 2 == 0)
     >>> indices
     (array([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]), 
@@ -159,8 +208,8 @@ Or, use :ref:`boolean-indexing`::
     >>> a[a > 14]
     array([15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
 
-Replace values
---------------
+Replace values after filtering
+------------------------------
 
 Use assignment with filtering to replace desired values::
 
