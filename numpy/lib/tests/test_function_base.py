@@ -3426,12 +3426,22 @@ class TestQuantile:
                           method="nearest")
         assert res.dtype == dtype
 
-    def test_quantile_monotonic(self):
+    @pytest.mark.parametrize("method",
+             ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+              'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+              'median_unbiased', 'normal_unbiased',
+              'nearest', 'lower', 'higher', 'midpoint'])
+    def test_quantile_monotonic(self, method):
         # GH 14685
         # test that the return value of quantile is monotonic if p0 is ordered
-        p0 = np.arange(0, 1, 0.01)
+        # Also tests that the boundary values are not mishandled.
+        p0 = np.linspace(0, 1, 101)
         quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9,
-                                         8, 8, 7]) * 0.1, p0)
+                                         8, 8, 7]) * 0.1, p0, method=method)
+        assert_equal(np.sort(quantile), quantile)
+
+        # Also test one where the number of data points is clearly divisible:
+        quantile = np.quantile([0., 1., 2., 3.], p0, method=method)
         assert_equal(np.sort(quantile), quantile)
 
     @hypothesis.given(

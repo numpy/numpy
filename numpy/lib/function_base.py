@@ -4487,7 +4487,7 @@ def _lerp(a, b, t, out=None):
 
 def _get_gamma_mask(shape, default_value, conditioned_value, where):
     out = np.full(shape, default_value)
-    out[where] = conditioned_value
+    np.copyto(out, conditioned_value, where=where, casting="unsafe")
     return out
 
 
@@ -4495,11 +4495,14 @@ def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
     previous = np.floor(index)
     next = previous + 1
     gamma = index - previous
-    return _get_gamma_mask(shape=index.shape,
-                           default_value=next,
-                           conditioned_value=previous,
-                           where=gamma_condition_fun(gamma, index)
-                           ).astype(np.intp)
+    res = _get_gamma_mask(shape=index.shape,
+                          default_value=next,
+                          conditioned_value=previous,
+                          where=gamma_condition_fun(gamma, index)
+                          ).astype(np.intp)
+    # Some methods can lead to out-of-bound integers, clip them:
+    res[res < 0] = 0
+    return res
 
 
 def _closest_observation(n, quantiles):
