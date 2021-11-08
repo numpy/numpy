@@ -32,7 +32,7 @@ from ._dtypes import (
 from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 if TYPE_CHECKING:
-    from ._typing import PyCapsule, Device, Dtype
+    from ._typing import Any, PyCapsule, Device, Dtype
 
 import numpy as np
 
@@ -999,7 +999,9 @@ class Array:
         res = self._array.__rxor__(other._array)
         return self.__class__._new(res)
 
-    def to_device(self: Array, device: Device, /) -> Array:
+    def to_device(self: Array, device: Device, /, stream: Optional[Union[int, Any]] = None) -> Array:
+        if stream is not None:
+            raise ValueError("The stream argument to to_device() is not supported")
         if device == 'cpu':
             return self
         raise ValueError(f"Unsupported device {device!r}")
