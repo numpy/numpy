@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ._array_object import Array
 
-from typing import Tuple, Union, NamedTuple
+from typing import NamedTuple
 
 import numpy as np
 
