@@ -1872,15 +1872,17 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 
     if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
         !PyArray_ElementStrides(obj)) {
-        PyObject *ret;
-        if( requires & NPY_ARRAY_ENSURENOCOPY ) {
-            PyErr_SetString(PyExc_ValueError,
-                            "Unable to avoid copy while creating a new array.");
-            return NULL;
-        }
-        ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
-        Py_DECREF(obj);
-        obj = ret;
+        // Testing if this code can be ever hit by existing tests
+        PyErr_SetString(PyExc_RuntimeError, "Not Implemented");
+        // PyObject *ret;
+        // if( requires & NPY_ARRAY_ENSURENOCOPY ) {
+        //     PyErr_SetString(PyExc_ValueError,
+        //                     "Unable to avoid copy while creating a new array.");
+        //     return NULL;
+        // }
+        // ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
+        // Py_DECREF(obj);
+        // obj = ret;
     }
     return obj;
 }
