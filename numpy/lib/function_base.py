@@ -4418,7 +4418,7 @@ def _check_interpolation_as_method(method, interpolation, fname):
         # sanity check, we assume this basically never happens
         raise TypeError(
             "You shall not pass both `method` and `interpolation`!\n"
-            "(`interpolation` is Deprecated in favor of method)")
+            "(`interpolation` is Deprecated in favor of `method`)")
     return interpolation
 
 
