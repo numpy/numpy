@@ -3899,7 +3899,7 @@ def percentile(a,
         This parameter specifies the method to use for estimating the
         percentile.  There are many different methods, some unique to NumPy.
         See the notes for explanation.  The options aligning with the R types
-        and the H&F paper [1]_ are:
+        and the H&F paper are:
 
         * (H&F 1): 'inverted_cdf'
         * (H&F 2): 'averaged_inverted_cdf'
@@ -4178,7 +4178,7 @@ def quantile(a,
         This parameter specifies the method to use for estimating the
         quantile.  There are many different methods, some unique to NumPy.
         See the notes for explanation.  The options aligning with the R types
-        and the H&F paper [1]_ are:
+        and the H&F paper are:
 
         * (H&F 1): 'inverted_cdf'
         * (H&F 2): 'averaged_inverted_cdf'
