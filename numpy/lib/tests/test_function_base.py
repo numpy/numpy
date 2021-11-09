@@ -3356,6 +3356,14 @@ class TestPercentile:
 class TestQuantile:
     # most of this is already tested by TestPercentile
 
+    def test_max_ulp(self):
+        x = [0.0, 0.2, 0.4]
+        a = np.quantile(x, 0.45)
+        # The default linear method would result in 0 + 0.2 * (0.45/2) = 0.18.
+        # 0.18 is not exactly representable and the formula leads to a 1 ULP
+        # different result. Ensure it is this exact within 1 ULP, see gh-20331.
+        np.testing.assert_array_max_ulp(a, 0.18, maxulp=1)
+
     def test_basic(self):
         x = np.arange(8) * 0.5
         assert_equal(np.quantile(x, 0), 0.)
