@@ -66,8 +66,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # get_versions methods regex
         if self.gcc_version is None:
             try:
-                out_string  = subprocess.check_output(['gcc', '-dumpversion'])
-            except (OSError, CalledProcessError):
+                out_string = subprocess.check_output(
+                    ['gcc', '-dumpversion'],
+                    text=True)
+            except (OSError, subprocess.CalledProcessError):
                 out_string = ""  # ignore failures to match old behavior
             result = re.search(r'(\d+\.\d+)', out_string)
             if result:
