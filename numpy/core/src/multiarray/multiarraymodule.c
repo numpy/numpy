@@ -1623,7 +1623,7 @@ _array_fromobject_generic(
     if (copy == NPY_COPY_ALWAYS) {
         flags = NPY_ARRAY_ENSURECOPY;
     } else if( copy == NPY_COPY_NEVER ) {
-        flags = _NPY_ARRAY_ENSURENOCOPY;
+        flags = NPY_ARRAY_ENSURENOCOPY;
     }
     if (order == NPY_CORDER) {
         flags |= NPY_ARRAY_C_CONTIGUOUS;

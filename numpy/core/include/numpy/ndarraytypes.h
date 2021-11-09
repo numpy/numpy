@@ -938,7 +938,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_UPDATEIFCOPY    0x1000 /* Deprecated in 1.14 */
 #define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
 
-#define _NPY_ARRAY_ENSURENOCOPY 0x4000
+#define NPY_ARRAY_ENSURENOCOPY 0x4000
 
 /*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,

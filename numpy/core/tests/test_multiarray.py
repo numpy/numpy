@@ -8010,8 +8010,14 @@ class TestArrayCreationCopyArgument(object):
                       arr.T, copy=np._CopyMode.NEVER,
                       order='C')
         assert_raises(ValueError, np.array,
+                      arr.T, copy=np._CopyMode.NEVER,
+                      order='C', dtype=np.int64)
+        assert_raises(ValueError, np.array,
                       arr, copy=np._CopyMode.NEVER,
                       order='F')
+        assert_raises(ValueError, np.array,
+                      arr, copy=np._CopyMode.NEVER,
+                      order='F', dtype=np.int64)
 
 
 class TestArrayAttributeDeletion:

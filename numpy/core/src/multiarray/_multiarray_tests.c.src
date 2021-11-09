@@ -2363,11 +2363,11 @@ run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     return tup;
 }
 
-/* used to test _NPY_ARRAY_ENSURENOCOPY raises ValueError */
+/* used to test NPY_ARRAY_ENSURENOCOPY raises ValueError */
 static PyObject*
 npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
 {
-    int flags = _NPY_ARRAY_ENSURENOCOPY;
+    int flags = NPY_ARRAY_ENSURENOCOPY;
     if (!PyArray_CheckFromAny(args, NULL, 0, 0, flags, NULL)) {
         return NULL;
     }
