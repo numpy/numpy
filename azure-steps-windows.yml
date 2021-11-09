@@ -37,6 +37,11 @@ steps:
   condition: eq(variables['BITS'], 32)
 
 - powershell: |
+    choco install -y llvm --force --version=12.0.1
+  displayName: 'Install LLVM for Clang-CL builds'
+  condition: eq(variables['CLANG_CL'], 1)
+
+- powershell: |
     $ErrorActionPreference = "Stop"
     # Download and get the path to "openblas.a". We cannot copy it
     # to $PYTHON_EXE's directory since that is on a different drive which
@@ -47,11 +52,6 @@ steps:
     echo "Copying $target to openblas/"
     cp $target openblas/
   displayName: 'Download / Install OpenBLAS'
-
-- powershell: |
-    choco install -y llvm --force --version=12.0.1
-  displayName: 'Install LLVM for Clang-CL builds'
-  condition: eq(variables['CLANG_CL'], 1)
 
 # NOTE: for Windows builds it seems much more tractable to use runtests.py
 # vs. manual setup.py and then runtests.py for testing only
@@ -78,7 +78,13 @@ steps:
   condition: ne(variables['CLANG_CL'], 1)
 
 - powershell: |
+    ls openblas
     $env:Path="$env:Path;C:\Program Files\LLVM\bin"
+    If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
+        $env:OPENBLAS64_ = "openblas"
+    } else {
+        $env:OPENBLAS = "openblas"
+    }
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
     python setup.py config --compiler=clang-cl bdist_wheel
 
@@ -87,6 +93,7 @@ steps:
     }
   displayName: 'Build NumPy (clang-cl)'
   condition: eq(variables['CLANG_CL'], 1)
+
 - bash: |
     pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
     python -m pip download -d destination --only-binary :all: --no-deps numpy==1.14
