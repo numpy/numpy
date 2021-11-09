@@ -4675,14 +4675,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyObject *m, *d, *s;
     PyObject *c_api;
 
-    /* Initialize CPU features */
-    if (npy_cpu_init() < 0) {
-        goto err;
-    }
-
     /* Create the module and add the functions */
     m = PyModule_Create(&moduledef);
     if (!m) {
+        return NULL;
+    }
+
+    /* Initialize CPU features */
+    if (npy_cpu_init() < 0) {
         goto err;
     }
 
@@ -4934,5 +4934,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
+    Py_DECREF(m);
     return NULL;
 }

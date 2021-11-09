@@ -555,6 +555,7 @@ npy_new_coercion_cache(
         cache = PyMem_Malloc(sizeof(coercion_cache_obj));
     }
     if (cache == NULL) {
+        Py_DECREF(arr_or_sequence);
         PyErr_NoMemory();
         return -1;
     }
