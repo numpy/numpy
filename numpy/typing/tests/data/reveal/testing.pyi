@@ -147,8 +147,8 @@ reveal_type(np.testing.assert_allclose(AR_i8, AR_f8, verbose=False))  # E: None
 
 reveal_type(np.testing.assert_array_almost_equal_nulp(AR_i8, AR_f8, nulp=2))  # E: None
 
-reveal_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=2))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
-reveal_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, dtype=np.float32))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=2))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, dtype=np.float32))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.testing.assert_warns(RuntimeWarning))  # E: _GeneratorContextManager[None]
 reveal_type(np.testing.assert_warns(RuntimeWarning, func3, 5))  # E: bool

@@ -8,7 +8,6 @@ from .._creation_functions import (
     empty,
     empty_like,
     eye,
-    from_dlpack,
     full,
     full_like,
     linspace,
@@ -18,22 +17,8 @@ from .._creation_functions import (
     zeros,
     zeros_like,
 )
+from .._dtypes import float32, float64
 from .._array_object import Array
-from .._dtypes import (
-    _all_dtypes,
-    _boolean_dtypes,
-    _floating_dtypes,
-    _integer_dtypes,
-    _integer_or_boolean_dtypes,
-    _numeric_dtypes,
-    int8,
-    int16,
-    int32,
-    int64,
-    uint64,
-    float32,
-    float64
-)
 
 
 def test_asarray_errors():

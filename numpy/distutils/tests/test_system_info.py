@@ -254,6 +254,10 @@ class TestSystemInfoReading:
         finally:
             os.chdir(previousDir)
 
+    HAS_MKL = "mkl_rt" in mkl_info().calc_libraries_info().get("libraries", [])
+
+    @pytest.mark.xfail(HAS_MKL, reason=("`[DEFAULT]` override doesn't work if "
+                                        "numpy is built with MKL support"))
     def test_overrides(self):
         previousDir = os.getcwd()
         cfg = os.path.join(self._dir1, 'site.cfg')

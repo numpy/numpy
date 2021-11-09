@@ -12,6 +12,7 @@ dependencies:
   - compilers
   - openblas
   - nomkl
+  - setuptools=58.4
   # For testing
   - pytest
   - pytest-cov
@@ -27,6 +28,7 @@ dependencies:
   - pandas
   - matplotlib
   - pydata-sphinx-theme
+  - breathe
   # For linting
   - pycodestyle=2.7.0
   - gitpython

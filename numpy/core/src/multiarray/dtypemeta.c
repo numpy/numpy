@@ -290,7 +290,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     return descr1;
 }
 
-static int
+NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
 {

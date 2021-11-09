@@ -359,12 +359,11 @@ typedef unsigned char npy_bool;
 
 
 #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
-        typedef double npy_longdouble;
         #define NPY_LONGDOUBLE_FMT "g"
 #else
-        typedef long double npy_longdouble;
         #define NPY_LONGDOUBLE_FMT "Lg"
 #endif
+typedef long double npy_longdouble;
 
 #ifndef Py_USING_UNICODE
 #error Must use Python with unicode enabled.

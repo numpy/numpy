@@ -34,6 +34,16 @@
 
 #include "binop_override.h"
 
+/*
+ * used for allocating a single scalar, so use the default numpy
+ * memory allocators instead of the (maybe) user overrides
+ */
+NPY_NO_EXPORT void *
+npy_alloc_cache_zero(size_t nmemb, size_t size);
+
+NPY_NO_EXPORT void
+npy_free_cache(void * p, npy_uintp sz);
+
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
@@ -207,6 +217,27 @@ gentype_multiply(PyObject *m1, PyObject *m2)
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_multiply, gentype_multiply);
     return PyArray_Type.tp_as_number->nb_multiply(m1, m2);
 }
+
+/**begin repeat
+ * #TYPE    = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *            LONG, ULONG, LONGLONG, ULONGLONG#
+ * #type    = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *            npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ * #c       = hh, uhh, h, uh,, u, l, ul, ll, ull#
+ * #Name    = Byte, UByte, Short, UShort, Int, UInt,
+ *            Long, ULong, LongLong, ULongLong#
+ * #convert = Long*8, LongLong*2#
+ */
+static PyObject *
+@type@_bit_count(PyObject *self)
+{
+    @type@ scalar = PyArrayScalar_VAL(self, @Name@);
+    uint8_t count = npy_popcount@c@(scalar);
+    PyObject *result = PyLong_From@convert@(count);
+
+    return result;
+}
+/**end repeat**/
 
 /**begin repeat
  *
@@ -1321,7 +1352,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
         int elsize;
         typecode = PyArray_DescrFromScalar(self);
         elsize = typecode->elsize;
-        temp = npy_alloc_cache_zero(elsize);
+        temp = npy_alloc_cache_zero(1, elsize);
         ret = PyArray_Scalar(temp, typecode, NULL);
         npy_free_cache(temp, elsize);
     }
@@ -2306,8 +2337,7 @@ static PyMethodDef @name@type_methods[] = {
 /**end repeat**/
 
 /**begin repeat
- * #name = byte, short, int, long, longlong, ubyte, ushort,
- *         uint, ulong, ulonglong, timedelta, cdouble#
+ * #name = timedelta, cdouble#
  */
 static PyMethodDef @name@type_methods[] = {
     /* for typing; requires python >= 3.9 */
@@ -2317,6 +2347,23 @@ static PyMethodDef @name@type_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
+
+/**begin repeat
+ * #name = byte, ubyte, short, ushort, int, uint,
+ *         long, ulong, longlong, ulonglong#
+ */
+static PyMethodDef @name@type_methods[] = {
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_@name@_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+/**end repeat**/
+
 
 /************* As_mapping functions for void array scalar ************/
 
@@ -3151,7 +3198,10 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                     (int) NPY_MAX_INT);
             return NULL;
         }
-        destptr = npy_alloc_cache_zero(memu);
+        if (memu == 0) {
+            memu = 1;
+        }
+        destptr = npy_alloc_cache_zero(memu, 1);
         if (destptr == NULL) {
             return PyErr_NoMemory();
         }
@@ -4088,6 +4138,17 @@ initialize_numeric_types(void)
      */
 
     Py@NAME@ArrType_Type.tp_methods = @name@type_methods;
+
+    /**end repeat**/
+
+    /**begin repeat
+     * #name = byte, short, int, long, longlong,
+     *         ubyte, ushort, uint, ulong, ulonglong#
+     * #Name = Byte, Short, Int, Long, LongLong,
+     *         UByte, UShort, UInt, ULong, ULongLong#
+     */
+
+    Py@Name@ArrType_Type.tp_methods = @name@type_methods;
 
     /**end repeat**/
 

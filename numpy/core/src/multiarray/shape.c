@@ -121,8 +121,16 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         /* Reallocate space if needed - allocating 0 is forbidden */
-        new_data = PyDataMem_RENEW(
-            PyArray_DATA(self), newnbytes == 0 ? elsize : newnbytes);
+        PyObject *handler = PyArray_HANDLER(self);
+        if (handler == NULL) {
+            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return NULL;
+        }
+        new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
+                                       newnbytes == 0 ? elsize : newnbytes,
+                                       handler);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");

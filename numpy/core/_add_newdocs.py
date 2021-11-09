@@ -328,7 +328,7 @@ add_newdoc('numpy.core', 'nditer',
     ...     with it:
     ...         for (a, b, c) in it:
     ...             addop(a, b, out=c)
-    ...     return it.operands[2]
+    ...         return it.operands[2]
 
     Here is the same function, but following the C-style pattern:
 
@@ -2819,7 +2819,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
     >>> import numpy as np
 
     >>> np.ndarray[Any, np.dtype[Any]]
-    numpy.ndarray[typing.Any, numpy.dtype[Any]]
+    numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
 
     Notes
     -----
@@ -4044,6 +4044,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
         The order of all elements in the partitions is undefined.
         If provided with a sequence of kth it will partition all elements
         indexed by kth of them into their sorted position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
@@ -4722,6 +4725,16 @@ add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     be a problem if the user is repeatedly creating ufuncs with
     no documentation, adding documentation via add_newdoc_ufunc,
     and then throwing away the ufunc.
+    """)
+
+add_newdoc('numpy.core.multiarray', 'get_handler_name',
+    """
+    get_handler_name(a: ndarray) -> str,None
+
+    Return the name of the memory handler used by `a`. If not provided, return
+    the name of the memory handler that will be used to allocate data for the
+    next `ndarray` in this context. May return None if `a` does not own its
+    memory, in which case you can traverse ``a.base`` for a memory handler.
     """)
 
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
@@ -6107,6 +6120,68 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('__class_getitem__',
     See Also
     --------
     :pep:`585` : Type hinting generics in standard collections.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__ge__',
+    """
+    __ge__(value, /)
+
+    Return ``self >= value``.
+
+    Equivalent to ``np.can_cast(value, self, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__le__',
+    """
+    __le__(value, /)
+
+    Return ``self <= value``.
+
+    Equivalent to ``np.can_cast(self, value, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__gt__',
+    """
+    __ge__(value, /)
+
+    Return ``self > value``.
+
+    Equivalent to
+    ``self != value and np.can_cast(value, self, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('__lt__',
+    """
+    __lt__(value, /)
+
+    Return ``self < value``.
+
+    Equivalent to
+    ``self != value and np.can_cast(self, value, casting="safe")``.
+
+    See Also
+    --------
+    can_cast : Returns True if cast between data types can occur according to
+               the casting rule.
 
     """))
 

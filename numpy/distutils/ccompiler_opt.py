@@ -8,7 +8,14 @@ the sources with proper compiler's flags.
 instead only focuses on the compiler side, but it creates abstract C headers
 that can be used later for the final runtime dispatching process."""
 
-import sys, io, os, re, textwrap, pprint, inspect, atexit, subprocess
+import atexit
+import inspect
+import os
+import pprint
+import re
+import subprocess
+import textwrap
+
 
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
@@ -188,7 +195,8 @@ class _Config:
             # native usually works only with x86
             native = '-march=native',
             opt = '-O3',
-            werror = '-Werror'
+            werror = '-Werror',
+            cxx = '-std=c++11',
         ),
         clang = dict(
             native = '-march=native',
@@ -198,22 +206,26 @@ class _Config:
             # cases `-Werror` gets skipped during the availability test due to
             # "unused arguments" warnings.
             # see https://github.com/numpy/numpy/issues/19624
-            werror = '-Werror-implicit-function-declaration -Werror'
+            werror = '-Werror=switch -Werror',
+            cxx = '-std=c++11',
         ),
         icc = dict(
             native = '-xHost',
             opt = '-O3',
-            werror = '-Werror'
+            werror = '-Werror',
+            cxx = '-std=c++11',
         ),
         iccw = dict(
             native = '/QxHost',
             opt = '/O3',
-            werror = '/Werror'
+            werror = '/Werror',
+            cxx = '-std=c++11',
         ),
         msvc = dict(
             native = None,
             opt = '/O2',
-            werror = '/WX'
+            werror = '/WX',
+            cxx = '-std=c++11',
         )
     )
     conf_min_features = dict(
@@ -406,8 +418,8 @@ class _Config:
             AVX512_ICL = dict(flags="/Qx:ICELAKE-CLIENT")
         )
         if on_x86 and self.cc_is_msvc: return dict(
-            SSE    = dict(flags="/arch:SSE"),
-            SSE2   = dict(flags="/arch:SSE2"),
+            SSE = dict(flags="/arch:SSE") if self.cc_on_x86 else {},
+            SSE2 = dict(flags="/arch:SSE2") if self.cc_on_x86 else {},
             SSE3   = {},
             SSSE3  = {},
             SSE41  = {},
@@ -516,7 +528,8 @@ class _Config:
 
     def __init__(self):
         if self.conf_tmp_path is None:
-            import tempfile, shutil
+            import shutil
+            import tempfile
             tmp = tempfile.mkdtemp()
             def rm_temp():
                 try:
@@ -555,6 +568,7 @@ class _Distutils:
         flags = kwargs.pop("extra_postargs", []) + flags
         if not ccompiler:
             ccompiler = self._ccompiler
+
         return ccompiler.compile(sources, extra_postargs=flags, **kwargs)
 
     def dist_test(self, source, flags, macros=[]):
@@ -696,7 +710,6 @@ class _Distutils:
     )
     @staticmethod
     def _dist_test_spawn(cmd, display=None):
-        from distutils.errors import CompileError
         try:
             o = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                         universal_newlines=True)

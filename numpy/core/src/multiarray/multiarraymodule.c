@@ -68,6 +68,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "typeinfo.h"
 
 #include "get_attr_string.h"
+#include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
 
 /*
  *****************************************************************************
@@ -4419,7 +4420,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
-     METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_get_experimental_dtype_api", (PyCFunction)_get_experimental_dtype_api,
+        METH_O, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -4429,6 +4432,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"geterrobj",
         (PyCFunction) ufunc_geterr,
+        METH_VARARGS, NULL},
+    {"get_handler_name",
+        (PyCFunction) get_handler_name,
         METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
@@ -4907,6 +4913,20 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (initumath(m) != 0) {
         goto err;
     }
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
+    /*
+     * Initialize the context-local PyDataMem_Handler capsule.
+     */
+    c_api = PyCapsule_New(&default_handler, "mem_handler", NULL);
+    if (c_api == NULL) {
+        goto err;
+    }
+    current_handler = PyContextVar_New("current_allocator", c_api);
+    Py_DECREF(c_api);
+    if (current_handler == NULL) {
+        goto err;
+    }
+#endif
     return m;
 
  err:

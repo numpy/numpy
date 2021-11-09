@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 from ._version import get_versions
 
 __ALL__ = ['version', '__version__', 'full_version', 'git_revision', 'release']
 
-vinfo = get_versions()
-version: str = vinfo["version"]
+vinfo: dict[str, str] = get_versions()
+version = vinfo["version"]
 __version__ = vinfo.get("closest-tag", vinfo["version"])
-full_version: str = vinfo['version']
-git_revision: str = vinfo['full-revisionid']
+full_version = vinfo['version']
+git_revision = vinfo['full-revisionid']
 release = 'dev0' not in version and '+' not in version
-short_version: str = vinfo['version'].split("+")[0]
+short_version = vinfo['version'].split("+")[0]
 
 del get_versions, vinfo

@@ -65,12 +65,26 @@ def configuration(parent_package='', top_path=None):
         'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
+
+    def gl_if_msvc(build_cmd):
+        """ Add flag if we are using MSVC compiler
+
+        We can't see this in our scope, because we have not initialized the
+        distutils build command, so use this deferred calculation to run when
+        we are building the library.
+        """
+        # Keep in sync with numpy/core/setup.py
+        if build_cmd.compiler.compiler_type == 'msvc':
+            # explicitly disable whole-program optimization
+            return ['/GL-']
+        return []
+
     config.add_installed_library('npyrandom',
         sources=npyrandom_sources,
         install_dir='lib',
         build_info={
             'include_dirs' : [],  # empty list required for creating npyrandom.h
-            'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+            'extra_compiler_args': [gl_if_msvc],
         })
 
     for gen in ['mt19937']:

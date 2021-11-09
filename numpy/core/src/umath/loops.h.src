@@ -187,7 +187,7 @@ NPY_NO_EXPORT void
  *  #TYPE = FLOAT, DOUBLE#
  */
 /**begin repeat1
- * #kind = sqrt, absolute, square, reciprocal#
+ * #kind = ceil, sqrt, absolute, square, reciprocal#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
@@ -208,6 +208,32 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 /**end repeat1**/
+/**end repeat**/
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_umath_fp.dispatch.h"
+#endif
+
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
+/**begin repeat1
+ * #func = tanh, exp2, log2, log10, expm1, log1p, cbrt, tan, arcsin, arccos, arctan, sinh, cosh, arcsinh, arccosh, arctanh#
+ */
+
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #func = sin, cos#
+ */
+
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void DOUBLE_@func@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+
 /**end repeat**/
 
 /**begin repeat
@@ -249,7 +275,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
 /**end repeat**/
 
 /**begin repeat
- *  #func = rint, ceil, floor, trunc#
+ *  #func = rint, floor, trunc#
  */
 
 /**begin repeat1

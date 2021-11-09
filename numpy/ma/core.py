@@ -1065,7 +1065,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
             tr = self.f.reduce(t, axis)
             mr = nomask
         else:
-            tr = self.f.reduce(t, axis, dtype=dtype or t.dtype)
+            tr = self.f.reduce(t, axis, dtype=dtype)
             mr = umath.logical_and.reduce(m, axis)
 
         if not tr.shape:

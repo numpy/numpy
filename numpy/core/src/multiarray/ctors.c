@@ -726,6 +726,7 @@ PyArray_NewFromDescr_int(
     fa->nd = nd;
     fa->dimensions = NULL;
     fa->data = NULL;
+    fa->mem_handler = NULL;
 
     if (data == NULL) {
         fa->flags = NPY_ARRAY_DEFAULT;
@@ -805,12 +806,19 @@ PyArray_NewFromDescr_int(
         fa->flags |= NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS;
     }
 
+
     if (data == NULL) {
+        /* Store the handler in case the default is modified */
+        fa->mem_handler = PyDataMem_GetHandler();
+        if (fa->mem_handler == NULL) {
+            goto fail;
+        }
         /*
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure
          * (a.data) doesn't work as it should.
          * Could probably just allocate a few bytes here. -- Chuck
+         * Note: always sync this with calls to PyDataMem_UserFREE
          */
         if (nbytes == 0) {
             nbytes = descr->elsize ? descr->elsize : 1;
@@ -820,21 +828,23 @@ PyArray_NewFromDescr_int(
          * which could also be sub-fields of a VOID array
          */
         if (zeroed || PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
-            data = npy_alloc_cache_zero(nbytes);
+            data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
         }
         else {
-            data = npy_alloc_cache(nbytes);
+            data = PyDataMem_UserNEW(nbytes, fa->mem_handler);
         }
         if (data == NULL) {
             raise_memory_error(fa->nd, fa->dimensions, descr);
             goto fail;
         }
+
         fa->flags |= NPY_ARRAY_OWNDATA;
     }
     else {
+        /* The handlers should never be called in this case */
+        fa->mem_handler = NULL;
         /*
-         * If data is passed in, this object won't own it by default.
-         * Caller must arrange for this to be reset if truly desired
+         * If data is passed in, this object won't own it.
          */
         fa->flags &= ~NPY_ARRAY_OWNDATA;
     }
@@ -902,6 +912,7 @@ PyArray_NewFromDescr_int(
     return (PyObject *)fa;
 
  fail:
+    Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
 }
@@ -3409,7 +3420,9 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         dptr += dtype->elsize;
         if (num < 0 && thisbuf == size) {
             totalbytes += bytes;
-            tmp = PyDataMem_RENEW(PyArray_DATA(r), totalbytes);
+            /* The handler is always valid */
+            tmp = PyDataMem_UserRENEW(PyArray_DATA(r), totalbytes,
+                                  PyArray_HANDLER(r));
             if (tmp == NULL) {
                 err = 1;
                 break;
@@ -3431,7 +3444,9 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         const size_t nsize = PyArray_MAX(*nread,1)*dtype->elsize;
 
         if (nsize != 0) {
-            tmp = PyDataMem_RENEW(PyArray_DATA(r), nsize);
+            /* The handler is always valid */
+            tmp = PyDataMem_UserRENEW(PyArray_DATA(r), nsize,
+                                  PyArray_HANDLER(r));
             if (tmp == NULL) {
                 err = 1;
             }
@@ -3536,7 +3551,9 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         const size_t nsize = PyArray_MAX(nread,1) * dtype->elsize;
         char *tmp;
 
-        if ((tmp = PyDataMem_RENEW(PyArray_DATA(ret), nsize)) == NULL) {
+        /* The handler is always valid */
+        if((tmp = PyDataMem_UserRENEW(PyArray_DATA(ret), nsize,
+                                     PyArray_HANDLER(ret))) == NULL) {
             Py_DECREF(dtype);
             Py_DECREF(ret);
             return PyErr_NoMemory();
@@ -3820,7 +3837,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
             if (!npy_mul_with_overflow_intp(&nbytes, elcount, elsize)) {
-                new_data = PyDataMem_RENEW(PyArray_DATA(ret), nbytes);
+                /* The handler is always valid */
+                new_data = PyDataMem_UserRENEW(PyArray_DATA(ret), nbytes,
+                                  PyArray_HANDLER(ret));
             }
             else {
                 new_data = NULL;
@@ -3858,10 +3877,12 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
      * (assuming realloc is reasonably good about reusing space...)
      */
     if (i == 0 || elsize == 0) {
-        /* The size cannot be zero for PyDataMem_RENEW. */
+        /* The size cannot be zero for realloc. */
         goto done;
     }
-    new_data = PyDataMem_RENEW(PyArray_DATA(ret), i * elsize);
+    /* The handler is always valid */
+    new_data = PyDataMem_UserRENEW(PyArray_DATA(ret), i * elsize,
+                                   PyArray_HANDLER(ret));
     if (new_data == NULL) {
         PyErr_SetString(PyExc_MemoryError,
                 "cannot allocate array memory");

@@ -17,7 +17,7 @@ reveal_type(np.absolute.nout)  # E: Literal[1]
 reveal_type(np.absolute.nargs)  # E: Literal[2]
 reveal_type(np.absolute.signature)  # E: None
 reveal_type(np.absolute(f8))  # E: Any
-reveal_type(np.absolute(AR_f8))  # E: numpy.ndarray
+reveal_type(np.absolute(AR_f8))  # E: ndarray
 reveal_type(np.absolute.at(AR_f8, AR_i8))  # E: None
 
 reveal_type(np.add.__name__)  # E: Literal['add']
@@ -28,13 +28,13 @@ reveal_type(np.add.nout)  # E: Literal[1]
 reveal_type(np.add.nargs)  # E: Literal[3]
 reveal_type(np.add.signature)  # E: None
 reveal_type(np.add(f8, f8))  # E: Any
-reveal_type(np.add(AR_f8, f8))  # E: numpy.ndarray
+reveal_type(np.add(AR_f8, f8))  # E: ndarray
 reveal_type(np.add.at(AR_f8, AR_i8, f8))  # E: None
 reveal_type(np.add.reduce(AR_f8, axis=0))  # E: Any
-reveal_type(np.add.accumulate(AR_f8))  # E: numpy.ndarray
-reveal_type(np.add.reduceat(AR_f8, AR_i8))  # E: numpy.ndarray
+reveal_type(np.add.accumulate(AR_f8))  # E: ndarray
+reveal_type(np.add.reduceat(AR_f8, AR_i8))  # E: ndarray
 reveal_type(np.add.outer(f8, f8))  # E: Any
-reveal_type(np.add.outer(AR_f8, f8))  # E: numpy.ndarray
+reveal_type(np.add.outer(AR_f8, f8))  # E: ndarray
 
 reveal_type(np.frexp.__name__)  # E: Literal['frexp']
 reveal_type(np.frexp.ntypes)  # E: Literal[4]
@@ -44,7 +44,7 @@ reveal_type(np.frexp.nout)  # E: Literal[2]
 reveal_type(np.frexp.nargs)  # E: Literal[3]
 reveal_type(np.frexp.signature)  # E: None
 reveal_type(np.frexp(f8))  # E: Tuple[Any, Any]
-reveal_type(np.frexp(AR_f8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[Any]], numpy.ndarray[Any, numpy.dtype[Any]]]
+reveal_type(np.frexp(AR_f8))  # E: Tuple[ndarray[Any, dtype[Any]], ndarray[Any, dtype[Any]]]
 
 reveal_type(np.divmod.__name__)  # E: Literal['divmod']
 reveal_type(np.divmod.ntypes)  # E: Literal[15]
@@ -54,7 +54,7 @@ reveal_type(np.divmod.nout)  # E: Literal[2]
 reveal_type(np.divmod.nargs)  # E: Literal[4]
 reveal_type(np.divmod.signature)  # E: None
 reveal_type(np.divmod(f8, f8))  # E: Tuple[Any, Any]
-reveal_type(np.divmod(AR_f8, f8))  # E: Tuple[numpy.ndarray[Any, numpy.dtype[Any]], numpy.ndarray[Any, numpy.dtype[Any]]]
+reveal_type(np.divmod(AR_f8, f8))  # E: Tuple[ndarray[Any, dtype[Any]], ndarray[Any, dtype[Any]]]
 
 reveal_type(np.matmul.__name__)  # E: Literal['matmul']
 reveal_type(np.matmul.ntypes)  # E: Literal[19]

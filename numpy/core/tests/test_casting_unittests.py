@@ -9,7 +9,6 @@ than integration tests.
 import pytest
 import textwrap
 import enum
-import itertools
 import random
 
 import numpy as np

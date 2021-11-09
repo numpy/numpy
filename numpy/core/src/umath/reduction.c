@@ -145,14 +145,12 @@ PyArray_CopyInitialReduceValues(
  * boilerplate code, just calling the appropriate inner loop function where
  * necessary.
  *
+ * context     : The ArrayMethod context (with ufunc, method, and descriptors).
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
  * wheremask   : NOT YET SUPPORTED, but this parameter is placed here
  *               so that support can be added in the future without breaking
  *               API compatibility. Pass in NULL.
- * operand_dtype : The dtype the inner loop expects for the operand.
- * result_dtype : The dtype the inner loop expects for the result.
- * casting     : The casting rule to apply to the operands.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
  * reorderable : If True, the reduction being done is reorderable, which
  *               means specifying multiple axes of reduction at once is ok,
@@ -182,10 +180,8 @@ PyArray_CopyInitialReduceValues(
  * generalized ufuncs!)
  */
 NPY_NO_EXPORT PyArrayObject *
-PyUFunc_ReduceWrapper(
+PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
-        PyArray_Descr *operand_dtype, PyArray_Descr *result_dtype,
-        NPY_CASTING casting,
         npy_bool *axis_flags, int reorderable, int keepdims,
         PyObject *identity, PyArray_ReduceLoopFunc *loop,
         void *data, npy_intp buffersize, const char *funcname, int errormask)
@@ -199,6 +195,8 @@ PyUFunc_ReduceWrapper(
     PyArrayObject *op[3];
     PyArray_Descr *op_dtypes[3];
     npy_uint32 it_flags, op_flags[3];
+    /* Loop auxdata (must be freed on error) */
+    NpyAuxData *auxdata = NULL;
 
     /* More than one axis means multiple orders are possible */
     if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
@@ -221,8 +219,8 @@ PyUFunc_ReduceWrapper(
     /* Set up the iterator */
     op[0] = out;
     op[1] = operand;
-    op_dtypes[0] = result_dtype;
-    op_dtypes[1] = operand_dtype;
+    op_dtypes[0] = context->descriptors[0];
+    op_dtypes[1] = context->descriptors[1];
 
     it_flags = NPY_ITER_BUFFERED |
             NPY_ITER_EXTERNAL_LOOP |
@@ -291,7 +289,7 @@ PyUFunc_ReduceWrapper(
     }
 
     iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, it_flags,
-                               NPY_KEEPORDER, casting,
+                               NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                op_flags,
                                op_dtypes,
                                PyArray_NDIM(operand), op_axes, NULL, buffersize);
@@ -301,9 +299,29 @@ PyUFunc_ReduceWrapper(
 
     result = NpyIter_GetOperandArray(iter)[0];
 
-    int needs_api = NpyIter_IterationNeedsAPI(iter);
-    /* Start with the floating-point exception flags cleared */
-    npy_clear_floatstatus_barrier((char*)&iter);
+    PyArrayMethod_StridedLoop *strided_loop;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    npy_intp fixed_strides[3];
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    if (wheremask != NULL) {
+        if (PyArrayMethod_GetMaskedStridedLoop(context,
+                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        if (context->method->get_strided_loop(context,
+                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    needs_api |= NpyIter_IterationNeedsAPI(iter);
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* Start with the floating-point exception flags cleared */
+        npy_clear_floatstatus_barrier((char*)&iter);
+    }
 
     /*
      * Initialize the result to the reduction unit if possible,
@@ -345,16 +363,18 @@ PyUFunc_ReduceWrapper(
         strideptr = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        if (loop(iter, dataptr, strideptr, countptr,
-                        iternext, needs_api, skip_first_count, data) < 0) {
+        if (loop(context, strided_loop, auxdata,
+                iter, dataptr, strideptr, countptr, iternext,
+                needs_api, skip_first_count) < 0) {
             goto fail;
         }
     }
 
-    /* Check whether any errors occurred during the loop */
-    if (PyErr_Occurred() ||
-            _check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
-        goto fail;
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* NOTE: We could check float errors even on error */
+        if (_check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
+            goto fail;
+        }
     }
 
     if (out != NULL) {
@@ -369,6 +389,7 @@ PyUFunc_ReduceWrapper(
     return result;
 
 fail:
+    NPY_AUXDATA_FREE(auxdata);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
     }

@@ -1821,22 +1821,8 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 
     descr = PyArray_DESCR(self);
 
-    /* if the python version is below 3.8, the pickle module does not provide
-     * built-in support for protocol 5. We try importing the pickle5
-     * backport instead */
-#if PY_VERSION_HEX >= 0x03080000
     /* we expect protocol 5 to be available in Python 3.8 */
     pickle_module = PyImport_ImportModule("pickle");
-#else
-    pickle_module = PyImport_ImportModule("pickle5");
-    if (pickle_module == NULL) {
-        /* for protocol 5, raise a clear ImportError if pickle5 is not found
-         */
-        PyErr_SetString(PyExc_ImportError, "Using pickle protocol 5 "
-                "requires the pickle5 module for Python >=3.6 and <3.8");
-        return NULL;
-    }
-#endif
     if (pickle_module == NULL){
         return NULL;
     }
@@ -1975,6 +1961,16 @@ array_setstate(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
+    /*
+     * Reassigning fa->descr messes with the reallocation strategy,
+     * since fa could be a 0-d or scalar, and then
+     * PyDataMem_UserFREE will be confused
+     */
+    size_t n_tofree = PyArray_NBYTES(self);
+    if (n_tofree == 0) {
+        PyArray_Descr *dtype = PyArray_DESCR(self);
+        n_tofree = dtype->elsize ? dtype->elsize : 1;
+    }
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
@@ -2041,7 +2037,18 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        PyDataMem_FREE(PyArray_DATA(self));
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        PyObject *handler = PyArray_HANDLER(self);
+        if (handler == NULL) {
+            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return NULL;
+        }
+        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
@@ -2077,7 +2084,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         int swap = PyArray_ISBYTESWAPPED(self);
-        fa->data = datastr;
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
@@ -2086,8 +2092,16 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(rawdata);
                 Py_RETURN_NONE;
             }
-            fa->data = PyDataMem_NEW(num);
+            /* Store the handler in case the default is modified */
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = PyDataMem_GetHandler();
+            if (fa->mem_handler == NULL) {
+                Py_DECREF(rawdata);
+                return NULL;
+            }
+            fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
             if (PyArray_DATA(self) == NULL) {
+                Py_DECREF(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -2123,7 +2137,12 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_DECREF(rawdata);
         }
         else {
+            /* The handlers should never be called in this case */
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = NULL;
+            fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
+                Py_DECREF(rawdata);
                 return NULL;
             }
         }
@@ -2134,8 +2153,15 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (num == 0 || elsize == 0) {
             Py_RETURN_NONE;
         }
-        fa->data = PyDataMem_NEW(num);
+        /* Store the functions in case the default handler is modified */
+        Py_XDECREF(fa->mem_handler);
+        fa->mem_handler = PyDataMem_GetHandler();
+        if (fa->mem_handler == NULL) {
+            return NULL;
+        }
+        fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
         if (PyArray_DATA(self) == NULL) {
+            Py_DECREF(fa->mem_handler);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2144,6 +2170,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
         fa->base = NULL;
         if (_setlist_pkl(self, rawdata) < 0) {
+            Py_DECREF(fa->mem_handler);
             return NULL;
         }
     }

@@ -1532,8 +1532,8 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  */
 
 /**begin repeat
- *  #func = rint, ceil, floor, trunc#
- *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
+ *  #func = rint, floor, trunc#
+ *  #scalarf = npy_rint, npy_floor, npy_trunc#
  */
 
 /**begin repeat1
@@ -1568,8 +1568,8 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
  */
 
 /**begin repeat2
- *  #func = rint, ceil, floor, trunc#
- *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
+ *  #func = rint, floor, trunc#
+ *  #scalarf = npy_rint, npy_floor, npy_trunc#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void

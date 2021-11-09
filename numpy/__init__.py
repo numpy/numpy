@@ -188,10 +188,17 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
+
+    # NumPy 1.22, 2021-10-20
+    __deprecated_attrs__["MachAr"] = (
+        core._machar.MachAr,
+        "`np.MachAr` is deprecated (NumPy 1.22)."
     )
 
     _msg = (
@@ -225,6 +232,10 @@ else:
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    # Remove one of the two occurrences of `issubdtype`, which is exposed as
+    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
+    __all__.remove('issubdtype')
 
     # These are exported by np.core, but are replaced by the builtins below
     # remove them to ensure that we don't end up with `np.long == np.int_`,

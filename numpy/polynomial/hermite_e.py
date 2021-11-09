@@ -414,7 +414,7 @@ def hermemulx(c):
 
     .. math::
 
-    xP_i(x) = (P_{i + 1}(x) + iP_{i - 1}(x)))
+        xP_i(x) = (P_{i + 1}(x) + iP_{i - 1}(x)))
 
     Examples
     --------

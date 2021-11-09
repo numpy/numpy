@@ -414,7 +414,7 @@ def lagmulx(c):
 
     .. math::
 
-    xP_i(x) = (-(i + 1)*P_{i + 1}(x) + (2i + 1)P_{i}(x) - iP_{i - 1}(x))
+        xP_i(x) = (-(i + 1)*P_{i + 1}(x) + (2i + 1)P_{i}(x) - iP_{i - 1}(x))
 
     Examples
     --------

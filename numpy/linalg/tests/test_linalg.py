@@ -1,7 +1,6 @@
 """ Test functions for linalg module
 
 """
-from numpy.core.fromnumeric import shape
 import os
 import sys
 import itertools
@@ -22,7 +21,6 @@ from numpy.testing import (
     assert_almost_equal, assert_allclose, suppress_warnings,
     assert_raises_regex, HAS_LAPACK64,
     )
-from numpy.testing._private.utils import requires_memory
 
 
 def consistent_subclass(out, in_):
@@ -1070,7 +1068,6 @@ class TestMatrixPower:
             return
         mat = self.noninv.astype(dt)
         assert_raises(LinAlgError, matrix_power, mat, -1)
-
 
 
 class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
