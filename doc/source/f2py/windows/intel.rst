@@ -30,21 +30,16 @@ For ``cmd.exe`` fans, using the Intel oneAPI command prompt is the easiest appro
 it loads the required environment for both ``ifort`` and ``msvc``. Helper batch
 scripts are also provided.
 
-.. code:: bash
+.. code-block:: bat
 
    # cmd.exe
    "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
    python -m numpy.f2py -c fib1.f -m fib1
    python -c "import fib1; import numpy as np; a=np.zeros(8); fib1.fib(a); print(a)"
 
-Powershell usage is a little less pleasant.
+Powershell usage is a little less pleasant, and this configuration now works with MSVC as:
 
-.. code:: bash
-
-   
-This configuration now works with MSVC as:
-
-.. code:: bash
+.. code-block:: powershell
 
    # Powershell
    python -m numpy.f2py -c fib1.f -m fib1 --f77exec='C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\intel64\ifort.exe' --f90exec='C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\intel64\ifort.exe' -L'C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\compiler\lib\ia32'

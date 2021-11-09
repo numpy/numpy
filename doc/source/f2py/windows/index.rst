@@ -15,6 +15,7 @@ runtime library for building Python-C extensions.
 
 The focus of this section is to establish a guideline for developing and
 extending Fortran modules for Python natively, via F2PY on Windows. 
+
 For this document we will asume the following basic tools:
 
 - The IDE being considered is the community supported `Microsoft Visual Studio Code`_
@@ -49,11 +50,19 @@ matrix as follows:
   | Anaconda GFortran    | Anaconda GCC       | exe        |
   +----------------------+--------------------+------------+
 
+From the point of view of a standard end-user, the most favored approach is the
+Intel Fortran and MSVC toolchain; however licensing restrictions still apply, as
+described further in the `f2py-win-intel`_.
+
 `This MSYS2 document`_ covers details of differences between MSYS2 and Cygwin.
 Broadly speaking, MSYS2 is geared towards building native Windows, while Cygwin
 is closer to providing a `more complete POSIX environment`_. Since MSVC is a
 core component of the Windows setup, its installation and the setup for the
 Powershell environment are described below.
+
+For an understanding of the key issues motivating the need for such a matrix
+`Pauli Virtanen's in-depth post on wheels with Fortran for Windows`_ is an
+excellent resource.
 
 Powershell and MSVC
 ====================
@@ -84,6 +93,12 @@ the compiler toolchain could look like:
 It is also possible to check that the environment has been updated correctly
 with ``$ENV:PATH``.
 
+.. toctree::
+   :maxdepth: 2
+
+   intel
+
+
 .. _the Microsoft Store: https://www.microsoft.com/en-us/p/python-39/9p7qfqmjrfp7?activetab=pivot:overviewtab
 .. _Microsoft Visual Studio Code: https://code.visualstudio.com/Download
 .. _more complete POSIX environment: https://www.cygwin.com/
@@ -92,8 +107,4 @@ with ``$ENV:PATH``.
 .. _Powershell 7.x: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.1
 .. _standard command prompt: https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-160#developer_command_file_locations
 .. _Powershell module like VCVars: https://github.com/bruxisma/VCVars
-
-.. toctree::
-   :maxdepth: 2
-
-   intel
+.. _Pauli Virtanen's in-depth post on wheels with Fortran for Windows: https://pav.iki.fi/blog/2017-10-08/pywingfortran.html#building-python-wheels-with-fortran-for-windows
