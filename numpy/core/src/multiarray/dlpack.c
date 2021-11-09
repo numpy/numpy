@@ -3,6 +3,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <dlpack/dlpack.h>
 
 #include "numpy/arrayobject.h"
 #include "common/npy_argparse.h"
@@ -100,19 +101,6 @@ array_get_dl_device(PyArrayObject *self) {
     return ret;
 }
 
-static char *
-array_get_dl_data(PyArrayObject *self) {
-    PyObject *base = PyArray_BASE(self);
-    if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
-        DLManagedTensor *managed = PyCapsule_GetPointer(
-                base, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
-        if (managed == NULL) {
-            return NULL;
-        }
-        return managed->dl_tensor.data;
-    }
-    return PyArray_DATA(self);
-}
 
 PyObject *
 array_dlpack(PyArrayObject *self,
@@ -202,16 +190,6 @@ array_dlpack(PyArrayObject *self,
     if (PyErr_Occurred()) {
         return NULL;
     }
-    char *data = array_get_dl_data(self);
-    if (data == NULL) {
-        return NULL;
-    }
-    if ((char *)PyArray_DATA(self) - data != 0) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Offsets not clearly supported by this "
-                        "version of DLPack.");
-        return NULL;
-    }
 
     DLManagedTensor *managed = PyMem_Malloc(sizeof(DLManagedTensor));
     if (managed == NULL) {
@@ -219,7 +197,21 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
-    managed->dl_tensor.data = data;
+    /*
+     * Note: the `dlpack.h` header suggests/standardizes that `data` must be
+     * 256-byte aligned.  We ignore this intentionally, because `__dlpack__`
+     * standardizes that `byte_offset` must be 0 (for now) to not break pytorch:
+     * https://github.com/data-apis/array-api/issues/293#issuecomment-964111413
+     *
+     * We further assume that exporting fully unaligned data is OK even without
+     * `byte_offset` since the standard does not reject it.
+     * Presumably, pytorch will support importing `byte_offset != 0` and NumPy
+     * can choose to use it starting about 2023.  At that point, it may be
+     * that NumPy MUST use `byte_offset` to adhere to the standard (as
+     * specified in the header)!
+     */
+    managed->dl_tensor.data = PyArray_DATA(self);
+    managed->dl_tensor.byte_offset = 0;
     managed->dl_tensor.device = device;
     managed->dl_tensor.dtype = managed_dtype;
 
