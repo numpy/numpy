@@ -1003,6 +1003,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
             join('src', 'umath', 'loops_umath_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
+            join('src', 'umath', 'loops_hyperbolic.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
@@ -1033,8 +1034,17 @@ def configuration(parent_package='',top_path=None):
 
     svml_path = join('numpy', 'core', 'src', 'umath', 'svml')
     svml_objs = []
+    # we have converted the following into universal intrinsics
+    # so we can bring the benefits of performance for all platforms
+    # not just for avx512 on linux without performance/accuracy regression,
+    # actually the other way around, better performance and
+    # after all maintainable code.
+    svml_filter = (
+        'svml_z0_tanh_d_la.s', 'svml_z0_tanh_s_la.s'
+    )
     if can_link_svml() and check_svml_submodule(svml_path):
         svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
+        svml_objs = [o for o in svml_objs if not o.endswith(svml_filter)]
 
     config.add_extension('_multiarray_umath',
                          # Forcing C language even though we have C++ sources.

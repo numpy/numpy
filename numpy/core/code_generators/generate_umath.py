@@ -745,7 +745,7 @@ defdict = {
           docstrings.get('numpy.core.umath.tanh'),
           None,
           TD('e', f='tanh', astype={'e': 'f'}),
-          TD('fd', dispatch=[('loops_umath_fp', 'fd')]),
+          TD('fd', dispatch=[('loops_hyperbolic', 'fd')]),
           TD(inexact, f='tanh', astype={'e': 'f'}),
           TD(P, f='tanh'),
           ),
