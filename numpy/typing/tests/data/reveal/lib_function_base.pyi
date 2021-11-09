@@ -144,7 +144,7 @@ reveal_type(np.percentile(AR_O, 50))  # E: Any
 reveal_type(np.percentile(AR_f8, [50]))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.percentile(AR_c16, [50]))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.percentile(AR_m, [50]))  # E: ndarray[Any, dtype[timedelta64]]
-reveal_type(np.percentile(AR_M, [50], interpolation="nearest"))  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(np.percentile(AR_M, [50], method="nearest"))  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(np.percentile(AR_O, [50]))  # E: ndarray[Any, dtype[object_]]
 reveal_type(np.percentile(AR_f8, [50], keepdims=True))  # E: Any
 reveal_type(np.percentile(AR_f8, [50], axis=[1]))  # E: Any
@@ -158,7 +158,7 @@ reveal_type(np.quantile(AR_O, 0.5))  # E: Any
 reveal_type(np.quantile(AR_f8, [0.5]))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.quantile(AR_c16, [0.5]))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.quantile(AR_m, [0.5]))  # E: ndarray[Any, dtype[timedelta64]]
-reveal_type(np.quantile(AR_M, [0.5], interpolation="nearest"))  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(np.quantile(AR_M, [0.5], method="nearest"))  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(np.quantile(AR_O, [0.5]))  # E: ndarray[Any, dtype[object_]]
 reveal_type(np.quantile(AR_f8, [0.5], keepdims=True))  # E: Any
 reveal_type(np.quantile(AR_f8, [0.5], axis=[1]))  # E: Any
