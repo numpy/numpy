@@ -1413,6 +1413,7 @@ _SupportsBuffer = Union[
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
+_T_contra = TypeVar("_T_contra", contravariant=True)
 _2Tuple = Tuple[_T, _T]
 _CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
@@ -1431,6 +1432,10 @@ _ArrayTD64_co = NDArray[Union[bool_, integer[Any], timedelta64]]
 
 # Introduce an alias for `dtype` to avoid naming conflicts.
 _dtype = dtype
+
+# `builtins.PyCapsule` unfortunately lacks annotations as of the moment;
+# use `Any` as a stopgap measure
+_PyCapsule = Any
 
 class _SupportsItem(Protocol[_T_co]):
     def item(self, args: Any, /) -> _T_co: ...
@@ -2439,6 +2444,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __ior__(self: NDArray[signedinteger[_NBit1]], other: _ArrayLikeInt_co) -> NDArray[signedinteger[_NBit1]]: ...
     @overload
     def __ior__(self: NDArray[object_], other: Any) -> NDArray[object_]: ...
+    @overload
+    def __ior__(self: NDArray[_ScalarType], other: _RecursiveSequence) -> NDArray[_ScalarType]: ...
+    @overload
+    def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
+    @overload
+    def __dlpack_device__(self) -> Tuple[int, L[0]]: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
@@ -4320,3 +4331,9 @@ class chararray(ndarray[_ShapeType, _CharDType]):
 
 # NOTE: Deprecated
 # class MachAr: ...
+
+class _SupportsDLPack(Protocol[_T_contra]):
+    def __dlpack__(self, *, stream: None | _T_contra = ...) -> _PyCapsule: ...
+
+def _from_dlpack(__obj: _SupportsDLPack[None]) -> NDArray[Any]: ...
+
