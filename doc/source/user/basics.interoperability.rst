@@ -3,9 +3,9 @@
 Interoperability with NumPy
 ***************************
 
-NumPy’s ndarray objects provide both a high-level API for operations on
+NumPy's ndarray objects provide both a high-level API for operations on
 array-structured data and a concrete implementation of the API based on
-`strided in-RAM storage <https://numpy.org/doc/stable/reference/arrays.html>`__.
+:ref:`strided in-RAM storage <arrays>`.
 While this API is powerful and fairly general, its concrete implementation has
 limitations. As datasets grow and NumPy becomes used in a variety of new
 environments and architectures, there are cases where the strided in-RAM storage
@@ -29,44 +29,39 @@ Using arbitrary objects in NumPy
 
 When NumPy functions encounter a foreign object, they will try (in order):
 
-1. The buffer protocol, described `in the Python C-API documentation
-   <https://docs.python.org/3/c-api/buffer.html>`__.
+1. The buffer protocol, described :py:doc:`in the Python C-API documentation
+   <c-api/buffer>`.
 2. The ``__array_interface__`` protocol, described
-   :ref:`in this page <arrays.interface>`. A precursor to Python’s buffer
+   :ref:`in this page <arrays.interface>`. A precursor to Python's buffer
    protocol, it defines a way to access the contents of a NumPy array from other
    C extensions.
-3. The ``__array__`` protocol, which asks an arbitrary object to convert itself
-   into an array.
+3. The ``__array__()`` method, which asks an arbitrary object to convert
+   itself into an array.
 
 For both the buffer and the ``__array_interface__`` protocols, the object
 describes its memory layout and NumPy does everything else (zero-copy if
-possible). If that’s not possible, the object itself is responsible for
+possible). If that's not possible, the object itself is responsible for
 returning a ``ndarray`` from ``__array__()``.
 
-The array interface
-~~~~~~~~~~~~~~~~~~~
+The array interface protocol
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :ref:`array interface <arrays.interface>` defines a protocol for array-like
-objects to re-use each other’s data buffers. Its implementation relies on the
-existence of the following attributes or methods:
+The :ref:`array interface protocol <arrays.interface>` defines a way for
+array-like objects to re-use each other's data buffers. Its implementation
+relies on the existence of the following attributes or methods:
 
 -  ``__array_interface__``: a Python dictionary containing the shape, the
    element type, and optionally, the data buffer address and the strides of an
    array-like object;
 -  ``__array__()``: a method returning the NumPy ndarray view of an array-like
    object;
--  ``__array_struct__``: a ``PyCapsule`` containing a pointer to a
-   ``PyArrayInterface`` C-structure.
 
-The ``__array_interface__`` and ``__array_struct__`` attributes can be inspected
-directly:
+The ``__array_interface__`` attribute can be inspected directly:
 
  >>> import numpy as np
  >>> x = np.array([1, 2, 5.0, 8])
  >>> x.__array_interface__
  {'data': (94708397920832, False), 'strides': None, 'descr': [('', '<f8')], 'typestr': '<f8', 'shape': (4,), 'version': 3}
- >>> x.__array_struct__
- <capsule object NULL at 0x7f798800be40>
 
 The ``__array_interface__`` attribute can also be used to manipulate the object
 data in place:
@@ -96,21 +91,20 @@ We can check that ``arr`` and ``new_arr`` share the same data buffer:
  array([1000, 2, 3, 4])
 
 
-The ``__array__`` protocol
+The ``__array__()`` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``__array__`` protocol acts as a dispatch mechanism and ensures that any
-NumPy-like object (an array, any object exposing the array interface, an object
-whose ``__array__`` method returns an array or any nested sequence) that
-implements it can be used as a NumPy array. If possible, this will mean using
-``__array__`` to create a NumPy ndarray view of the array-like object.
-Otherwise, this copies the data into a new ndarray object. This is not optimal,
-as coercing arrays into ndarrays may cause performance problems or create the
-need for copies and loss of metadata.
+The ``__array__()`` method ensures that any NumPy-like object (an array, any
+object exposing the array interface, an object whose ``__array__()`` method
+returns an array or any nested sequence) that implements it can be used as a
+NumPy array. If possible, this will mean using ``__array__()`` to create a NumPy
+ndarray view of the array-like object. Otherwise, this copies the data into a
+new ndarray object. This is not optimal, as coercing arrays into ndarrays may
+cause performance problems or create the need for copies and loss of metadata,
+as the original object and any attributes/behavior it may have had, is lost.
 
-To see an example of a custom array implementation including the use of the
-``__array__`` protocol, see `Writing custom array containers
-<https://numpy.org/devdocs/user/basics.dispatch.html>`__.
+To see an example of a custom array implementation including the use of
+``__array__()``, see :ref:`basics.dispatch`.
 
 Operating on foreign objects without converting
 -----------------------------------------------
@@ -121,7 +115,11 @@ Consider the following function.
  >>> def f(x):
  ...     return np.mean(np.exp(x))
 
-We can apply it to a NumPy ndarray object directly:
+Note that `np.exp` is a :ref:`ufunc <ufuncs-basics>`, which means that it
+operates on ndarrays in an element-by-element fashion. On the other hand,
+`np.mean` operates along one of the array's axes.
+
+We can apply ``f`` to a NumPy ndarray object directly:
 
  >>> x = np.array([1, 2, 3, 4])
  >>> f(x)
@@ -149,9 +147,13 @@ The ``__array_ufunc__`` protocol
 A :ref:`universal function (or ufunc for short) <ufuncs-basics>` is a
 “vectorized” wrapper for a function that takes a fixed number of specific inputs
 and produces a fixed number of specific outputs. The output of the ufunc (and
-its methods) is not necessarily an ndarray, if all input arguments are not
+its methods) is not necessarily an ndarray, if not all input arguments are
 ndarrays. Indeed, if any input defines an ``__array_ufunc__`` method, control
-will be passed completely to that function, i.e., the ufunc is overridden.
+will be passed completely to that function, i.e., the ufunc is overridden. The
+``__array_ufunc__`` method defined on that (non-ndarray) object has access to
+the NumPy ufunc. Because ufuncs have a well-defined structure, the foreign
+``__array_ufunc__`` method may rely on ufunc attributes like ``.at()``,
+``.reduce()``, and others.
 
 A subclass can override what happens when executing NumPy ufuncs on it by
 overriding the default ``ndarray.__array_ufunc__`` method. This method is
@@ -169,9 +171,7 @@ is safe and consistent across projects.
 
 The semantics of ``__array_function__`` are very similar to ``__array_ufunc__``,
 except the operation is specified by an arbitrary callable object rather than a
-ufunc instance and method. For more details, see `NEP 18
-<https://numpy.org/neps/nep-0018-array-function-protocol.html>`__.
-
+ufunc instance and method. For more details, see :ref:`NEP18`.
 
 Interoperability examples
 -------------------------
@@ -223,7 +223,7 @@ Example: PyTorch tensors
 
 `PyTorch <https://pytorch.org/>`__ is an optimized tensor library for deep
 learning using GPUs and CPUs. PyTorch arrays are commonly called *tensors*.
-Tensors are similar to NumPy’s ndarrays, except that tensors can run on GPUs or
+Tensors are similar to NumPy's ndarrays, except that tensors can run on GPUs or
 other hardware accelerators. In fact, tensors and NumPy arrays can often share
 the same underlying memory, eliminating the need to copy data.
 
@@ -251,13 +251,22 @@ explicit conversion:
 Also, note that the return type of this function is compatible with the initial
 data type.
 
-**Note** PyTorch does not implement ``__array_function__`` or
-``__array_ufunc__``. Under the hood, the ``Tensor.__array__()`` method returns a
-NumPy ndarray as a view of the tensor data buffer. See `this issue
-<https://github.com/pytorch/pytorch/issues/24015>`__ and the
-`__torch_function__ implementation
-<https://github.com/pytorch/pytorch/blob/master/torch/overrides.py>`__
-for details.
+.. admonition:: Warning
+
+   While this mixing of ndarrays and tensors may be convenient, it is not
+   recommended. It will not work for non-CPU tensors, and will have unexpected
+   behavior in corner cases. Users should prefer explicitly converting the
+   ndarray to a tensor.
+
+.. note::
+
+   PyTorch does not implement ``__array_function__`` or ``__array_ufunc__``.
+   Under the hood, the ``Tensor.__array__()`` method returns a NumPy ndarray as
+   a view of the tensor data buffer. See `this issue
+   <https://github.com/pytorch/pytorch/issues/24015>`__ and the
+   `__torch_function__ implementation
+   <https://github.com/pytorch/pytorch/blob/master/torch/overrides.py>`__
+   for details.
 
 Example: CuPy arrays
 ~~~~~~~~~~~~~~~~~~~~
@@ -271,7 +280,8 @@ with Python. CuPy implements a subset of the NumPy interface by implementing
  >>> x_gpu = cp.array([1, 2, 3, 4])
 
 The ``cupy.ndarray`` object implements the ``__array_ufunc__`` interface. This
-enables NumPy ufuncs to be directly operated on CuPy arrays:
+enables NumPy ufuncs to be applied to CuPy arrays (this will defer operation to
+the matching CuPy CUDA/ROCm implementation of the ufunc):
 
  >>> np.mean(np.exp(x_gpu))
  array(21.19775622)
@@ -307,8 +317,7 @@ implements a subset of the NumPy ndarray interface using blocked algorithms,
 cutting up the large array into many small arrays. This allows computations on
 larger-than-memory arrays using multiple cores. 
 
-Dask supports array protocols like ``__array__`` and
-``__array_ufunc__``.
+Dask supports ``__array__()`` and ``__array_ufunc__``.
 
  >>> import dask.array as da
  >>> x = da.random.normal(1, 0.1, size=(20, 20), chunks=(10, 10))
@@ -317,8 +326,10 @@ Dask supports array protocols like ``__array__`` and
  >>> np.mean(np.exp(x)).compute()
  5.090097550553843
 
-**Note** Dask is lazily evaluated, and the result from a computation isn’t
-computed until you ask for it by invoking ``compute()``.
+.. note::
+
+   Dask is lazily evaluated, and the result from a computation isn't computed
+   until you ask for it by invoking ``compute()``.
 
 See `the Dask array documentation
 <https://docs.dask.org/en/stable/array.html>`__
@@ -328,13 +339,10 @@ and the `scope of Dask arrays interoperability with NumPy arrays
 Further reading
 ---------------
 
--  `The Array interface
-   <https://numpy.org/doc/stable/reference/arrays.interface.html>`__
--  `Writing custom array containers
-   <https://numpy.org/devdocs/user/basics.dispatch.html>`__.
--  `Special array attributes
-   <https://numpy.org/devdocs/reference/arrays.classes.html#special-attributes-and-methods>`__
-   (details on the ``__array_ufunc__`` and ``__array_function__`` protocols)
+-  :ref:`arrays.interface`
+-  :ref:`basics.dispatch`
+-  :ref:`special-attributes-and-methods` (details on the ``__array_ufunc__`` and
+   ``__array_function__`` protocols)
 -  `NumPy roadmap: interoperability
    <https://numpy.org/neps/roadmap.html#interoperability>`__
 -  `PyTorch documentation on the Bridge with NumPy
