@@ -206,6 +206,12 @@ array_dlpack(PyArrayObject *self,
     if (data == NULL) {
         return NULL;
     }
+    if ((char *)PyArray_DATA(self) - data != 0) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Offsets not clearly supported by this "
+                        "version of DLPack.");
+        return NULL;
+    }
 
     DLManagedTensor *managed = PyMem_Malloc(sizeof(DLManagedTensor));
     if (managed == NULL) {
@@ -238,7 +244,7 @@ array_dlpack(PyArrayObject *self,
     if (PyArray_SIZE(self) != 1 && !PyArray_IS_C_CONTIGUOUS(self)) {
         managed->dl_tensor.strides = managed_strides;
     }
-    managed->dl_tensor.byte_offset = (char *)PyArray_DATA(self) - data;
+    managed->dl_tensor.byte_offset = 0;
     managed->manager_ctx = self;
     managed->deleter = array_dlpack_deleter;
 
