@@ -248,8 +248,9 @@ class Array:
         The following cases are allowed by NumPy, but not specified by the array
         API specification:
 
-        - Multidimensional (tuple) indices must include an index for every
-          axis of the array unless an ellipsis is included.
+        - Indices to not include an implicit ellipsis at the end. That is,
+          every axis of an array must be explicitly indexed or an ellipsis
+          included.
 
         - The start and stop of a slice may not be out of bounds. In
           particular, for a slice ``i:j:k`` on an axis of size ``n``, only the
@@ -277,6 +278,10 @@ class Array:
                 return key
             if shape == ():
                 return key
+            if len(shape) > 1:
+                raise IndexError(
+                    "Multidimensional arrays must include an index for every axis or use an ellipsis"
+                )
             size = shape[0]
             # Ensure invalid slice entries are passed through.
             if key.start is not None:
@@ -331,7 +336,7 @@ class Array:
                 Array._validate_index(idx, (size,))
             if n_ellipsis == 0 and len(key) < len(shape):
                 raise IndexError(
-                    "Multidimensional indices must either index every axis of the array or use an ellipsis"
+                    "Multidimensional arrays must include an index for every axis or use an ellipsis"
                 )
             return key
         elif isinstance(key, bool):
@@ -350,7 +355,12 @@ class Array:
                 "newaxis indices are not allowed in the array API namespace"
             )
         try:
-            return operator.index(key)
+            key = operator.index(key)
+            if shape is not None and len(shape) > 1:
+                raise IndexError(
+                    "Multidimensional arrays must include an index for every axis or use an ellipsis"
+                )
+            return key
         except TypeError:
             # Note: This also omits boolean arrays that are not already in
             # Array() form, like a list of booleans.

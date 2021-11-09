@@ -77,6 +77,8 @@ def test_validate_index():
     # Multiaxis indices must contain exactly as many indices as dimensions
     assert_raises(IndexError, lambda: a[()])
     assert_raises(IndexError, lambda: a[0,])
+    assert_raises(IndexError, lambda: a[0])
+    assert_raises(IndexError, lambda: a[:])
 
 def test_operators():
     # For every operator, we test that it works for the required type
