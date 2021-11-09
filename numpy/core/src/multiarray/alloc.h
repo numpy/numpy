@@ -47,5 +47,7 @@ extern PyDataMem_Handler default_handler;
 
 NPY_NO_EXPORT PyObject *
 get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);
+NPY_NO_EXPORT PyObject *
+get_handler_version(PyObject *NPY_UNUSED(self), PyObject *obj);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */
