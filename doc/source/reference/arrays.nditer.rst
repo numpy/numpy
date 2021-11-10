@@ -1,10 +1,5 @@
 .. currentmodule:: numpy
 
-.. for doctests
-   The last section on Cython is 'included' at the end of this file. The tests
-   for that section are disabled.
-   >>> import numpy as np
-
 .. _arrays.nditer:
 
 *********************

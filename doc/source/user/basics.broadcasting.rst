@@ -1,9 +1,6 @@
 .. _basics.broadcasting:
 .. _array-broadcasting-in-numpy:
 
-.. for doctest:
-   >>> import numpy as np
-
 ************
 Broadcasting
 ************

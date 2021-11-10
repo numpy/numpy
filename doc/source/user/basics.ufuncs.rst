@@ -2,9 +2,6 @@
 
 .. _ufuncs-basics:
 
-.. for doctest:
-   >>> import numpy as np
-
 ********************************************
 Universal functions (:class:`.ufunc`) basics
 ********************************************

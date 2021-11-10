@@ -1,6 +1,3 @@
-.. for doctest:
-    >>> import numpy as np
-
 Putting the Inner Loop in Cython
 ================================
 

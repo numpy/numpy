@@ -1,8 +1,5 @@
 .. _basics.indexing:
 
-.. for doctest:
-   >>> import numpy as np
-
 ****************************************
 Indexing on :class:`ndarrays <.ndarray>`
 ****************************************

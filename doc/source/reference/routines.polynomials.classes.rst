@@ -1,6 +1,3 @@
-.. for doctest:
-    >>> import numpy as np
-
 Using the Convenience Classes
 =============================
 

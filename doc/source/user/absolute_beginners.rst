@@ -5,10 +5,6 @@ NumPy: the absolute basics for beginners
 
 .. currentmodule:: numpy
 
-.. for doctest:
-   >>> import numpy
-   >>> import numpy as np
-
 Welcome to the absolute beginner's guide to NumPy! If you have comments or
 suggestions, please don’t hesitate to `reach out
 <https://numpy.org/community/>`_!

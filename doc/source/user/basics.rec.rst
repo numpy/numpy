@@ -1,8 +1,5 @@
 .. _structured_arrays:
 
-.. for doctest:
-   >>> import numpy as np
-
 *****************
 Structured arrays 
 *****************

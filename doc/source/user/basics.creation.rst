@@ -1,8 +1,5 @@
 .. _arrays.creation:
 
-.. for doctest:
-   >>> import numpy as np
-
 **************
 Array creation
 **************
