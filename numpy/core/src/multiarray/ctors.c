@@ -1747,7 +1747,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* Create a new array and copy the data */
     Py_INCREF(dtype);  /* hold on in case of a subarray that is replaced */
-    if( flags & NPY_ARRAY_ENSURENOCOPY ) {
+    if (flags & NPY_ARRAY_ENSURENOCOPY ) {
         PyErr_SetString(PyExc_ValueError, 
                         "Unable to avoid copy while creating "
                         "an array from descriptor.");
@@ -1953,11 +1953,9 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
            !PyArray_EquivTypes(oldtype, newtype);
 
     if (copy) {
-
-        if( flags & NPY_ARRAY_ENSURENOCOPY ) {
+        if (flags & NPY_ARRAY_ENSURENOCOPY ) {
             PyErr_SetString(PyExc_ValueError,
-                            "Unable to avoid copy while creating "
-                            "an array from given array.");
+                    "Unable to avoid copy while creating an array from given array.");
             return NULL;
         }
 
