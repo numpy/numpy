@@ -1,6 +1,0 @@
-Calling `__array__` raises `ValueError` in never copy mode
-----------------------------------------------------------
-
-Since `__array__` lacks a copy keyword argument, currently
-never copy (speficied by `np._CopyMode.NEVER`) will raise
-a `ValueError` if `__array__` is called.
