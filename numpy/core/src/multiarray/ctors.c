@@ -1284,7 +1284,7 @@ fail:
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
  * @param context Unused parameter, must be NULL (should be removed later).
- * @param do_copy Specifies if a copy is to be made during array creation.
+ * @param allow_copy Specifies if a copy is allowed during array creation.
  *
  * @returns The array object, Py_NotImplemented if op is not array-like,
  *          or NULL with an error set. (A new reference to Py_NotImplemented
@@ -1293,7 +1293,7 @@ fail:
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
         PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
-        int do_copy) {
+        int allow_copy) {
     PyObject* tmp;
 
     /*
@@ -1351,7 +1351,7 @@ _array_from_array_like(PyObject *op,
     if (!writeable && tmp == Py_NotImplemented) {
         PyObject* array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
         int has_get = array_meth && PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__");
-        if (array_meth != NULL && !has_get && do_copy) {
+        if (array_meth != NULL && !has_get && allow_copy) {
             PyErr_SetString(PyExc_ValueError, "Calling __array__ in never copy mode is not allowed.");
             return NULL;
         }
