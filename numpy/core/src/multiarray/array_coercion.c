@@ -857,6 +857,7 @@ PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
  *        (Initially it is a pointer to the user-provided head pointer).
  * @param fixed_DType User provided fixed DType class
  * @param flags Discovery flags (reporting and behaviour flags, see def.)
+ * @param do_copy Specifies if a copy is to be made during array creation.
  * @return The updated number of maximum dimensions (i.e. scalars will set
  *         this to the current dimensions).
  */

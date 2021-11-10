@@ -1349,7 +1349,7 @@ _array_from_array_like(PyObject *op,
      */
     if (!writeable && tmp == Py_NotImplemented) {
         PyObject* array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
-        PyObject* has_get = array_meth && PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__");
+        int has_get = array_meth && PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__");
         if (array_meth != NULL && !has_get && do_copy) {
             PyErr_SetString(PyExc_ValueError, "Calling __array__ in never copy mode is not allowed.");
             return NULL;
