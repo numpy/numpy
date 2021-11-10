@@ -379,7 +379,7 @@ PyDataMem_Handler default_handler = {
     }
 };
 /* singleton capsule of the default handler */
-PyObject *default_handler_capsule;
+PyObject *PyDataMem_DefaultHandler;
 
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
 PyObject *current_handler;
@@ -521,7 +521,7 @@ PyDataMem_SetHandler(PyObject *handler)
         return NULL;
     }
     if (handler == NULL) {
-        handler = default_handler_capsule;
+        handler = PyDataMem_DefaultHandler;
     }
     token = PyContextVar_Set(current_handler, handler);
     if (token == NULL) {
@@ -538,11 +538,11 @@ PyDataMem_SetHandler(PyObject *handler)
     }
     old_handler = PyDict_GetItemString(p, "current_allocator");
     if (old_handler == NULL) {
-        old_handler = default_handler_capsule
+        old_handler = PyDataMem_DefaultHandler
     }
     Py_INCREF(old_handler);
     if (handler == NULL) {
-        handler = default_handler_capsule;
+        handler = PyDataMem_DefaultHandler;
     }
     const int error = PyDict_SetItemString(p, "current_allocator", handler);
     if (error) {

@@ -4919,8 +4919,8 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.
      */
-    default_handler_capsule = PyCapsule_New(&default_handler, "mem_handler", NULL);
-    if (default_handler_capsule == NULL) {
+    PyDataMem_DefaultHandler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+    if (PyDataMem_DefaultHandler == NULL) {
         goto err;
     }
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
@@ -4928,7 +4928,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.
     */
-    current_handler = PyContextVar_New("current_allocator", default_handler_capsule);
+    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
     if (current_handler == NULL) {
         goto err;
     }

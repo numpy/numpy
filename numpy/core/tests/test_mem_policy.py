@@ -19,6 +19,10 @@ def get_module(tmp_path):
     if sys.platform.startswith('cygwin'):
         pytest.skip('link fails on cygwin')
     functions = [
+        ("get_default_policy", "METH_NOARGS", """
+             Py_INCREF(PyDataMem_DefaultHandler);
+             return PyDataMem_DefaultHandler;
+         """),
         ("set_secret_data_policy", "METH_NOARGS", """
              PyObject *secret_data =
                  PyCapsule_New(&secret_data_handler, "mem_handler", NULL);
@@ -237,16 +241,16 @@ def test_default_policy_singleton(get_module):
     assert get_handler_name() == 'default_allocator'
 
     # re-set the policy to default
-    default_policy_1 = get_module.set_old_policy(None)
+    def_policy_1 = get_module.set_old_policy(None)
 
     assert get_handler_name() == 'default_allocator'
 
-    # set the policy to orig
-    default_policy_2 = get_module.set_old_policy(orig_policy)
+    # set the policy to original
+    def_policy_2 = get_module.set_old_policy(orig_policy)
 
     # since default policy is a singleton,
     # these should be the same object
-    assert default_policy_1 is default_policy_2
+    assert def_policy_1 is def_policy_2 is get_module.get_default_policy()
 
 
 def test_policy_propagation(get_module):

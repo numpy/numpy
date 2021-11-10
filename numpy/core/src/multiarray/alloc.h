@@ -41,7 +41,6 @@ npy_free_cache_dim_array(PyArrayObject * arr)
 }
 
 extern PyDataMem_Handler default_handler;
-extern PyObject *default_handler_capsule;
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
 extern PyObject *current_handler; /* PyContextVar/PyCapsule */
 #endif
