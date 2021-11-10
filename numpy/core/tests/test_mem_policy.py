@@ -37,11 +37,7 @@ def get_module(tmp_path):
              else {
                  old = PyDataMem_SetHandler(NULL);
              }
-             if (old == NULL) {
-                 return NULL;
-             }
-             Py_DECREF(old);
-             Py_RETURN_NONE;
+             return old;
          """),
         ("get_array", "METH_NOARGS", """
             char *buf = (char *)malloc(20);
@@ -230,6 +226,27 @@ def test_set_policy(get_module):
     else:
         get_module.set_old_policy(orig_policy)
         assert get_handler_name() == orig_policy_name
+
+
+def test_default_policy_singleton(get_module):
+    get_handler_name = np.core.multiarray.get_handler_name
+
+    # set the policy to default
+    orig_policy = get_module.set_old_policy(None)
+
+    assert get_handler_name() == 'default_allocator'
+
+    # re-set the policy to default
+    default_policy_1 = get_module.set_old_policy(None)
+
+    assert get_handler_name() == 'default_allocator'
+
+    # set the policy to orig
+    default_policy_2 = get_module.set_old_policy(orig_policy)
+
+    # since default policy is a singleton,
+    # these should be the same object
+    assert default_policy_1 is default_policy_2
 
 
 def test_policy_propagation(get_module):

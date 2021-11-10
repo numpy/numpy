@@ -378,6 +378,8 @@ PyDataMem_Handler default_handler = {
         default_free     /* free */
     }
 };
+/* singleton capsule of the default handler */
+PyObject *default_handler_capsule;
 
 #if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
 PyObject *current_handler;
@@ -519,16 +521,9 @@ PyDataMem_SetHandler(PyObject *handler)
         return NULL;
     }
     if (handler == NULL) {
-        handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
-        if (handler == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        Py_INCREF(handler);
+        handler = default_handler_capsule;
     }
     token = PyContextVar_Set(current_handler, handler);
-    Py_DECREF(handler);
     if (token == NULL) {
         Py_DECREF(old_handler);
         return NULL;
@@ -543,26 +538,13 @@ PyDataMem_SetHandler(PyObject *handler)
     }
     old_handler = PyDict_GetItemString(p, "current_allocator");
     if (old_handler == NULL) {
-        old_handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
-        if (old_handler == NULL) {
-            return NULL;
-        }
+        old_handler = default_handler_capsule
     }
-    else {
-        Py_INCREF(old_handler);
-    }
+    Py_INCREF(old_handler);
     if (handler == NULL) {
-        handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
-        if (handler == NULL) {
-            Py_DECREF(old_handler);
-            return NULL;
-        }
-    }
-    else {
-        Py_INCREF(handler);
+        handler = default_handler_capsule;
     }
     const int error = PyDict_SetItemString(p, "current_allocator", handler);
-    Py_DECREF(handler);
     if (error) {
         Py_DECREF(old_handler);
         return NULL;
