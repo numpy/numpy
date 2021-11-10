@@ -1291,7 +1291,8 @@ fail:
  */
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context) {
+        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
+        int do_copy) {
     PyObject* tmp;
 
     /*
@@ -1347,6 +1348,12 @@ _array_from_array_like(PyObject *op,
      *      this should be changed!
      */
     if (!writeable && tmp == Py_NotImplemented) {
+        PyObject* array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
+        PyObject* has_get = array_meth && PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__");
+        if (array_meth != NULL && !has_get && do_copy) {
+            PyErr_SetString(PyExc_ValueError, "Calling __array__ in never copy mode is not allowed.");
+            return NULL;
+        }
         tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
         if (tmp == NULL) {
             return NULL;
@@ -1447,7 +1454,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     }
 
     /* Try __array__ before using s as a sequence */
-    PyObject *tmp = _array_from_array_like(s, NULL, 0, NULL);
+    PyObject *tmp = _array_from_array_like(s, NULL, 0, NULL, 0);
     if (tmp == NULL) {
         goto fail;
     }
@@ -1575,7 +1582,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     Py_XDECREF(newtype);
 
     ndim = PyArray_DiscoverDTypeAndShape(op,
-            NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype);
+            NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype,
+            flags & NPY_ARRAY_ENSURENOCOPY);
 
     Py_XDECREF(fixed_descriptor);
     Py_XDECREF(fixed_DType);

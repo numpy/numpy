@@ -7943,7 +7943,8 @@ class TestArrayCreationCopyArgument(object):
             assert_array_equal(res, base_arr)
             assert res is base_arr  # numpy trusts the ArrayLike
 
-        assert np.array(arr, copy=np._CopyMode.NEVER) is base_arr
+        with pytest.raises(ValueError):
+            np.array(arr, copy=np._CopyMode.NEVER)
 
     @pytest.mark.parametrize(
             "arr", [np.ones(()), np.arange(81).reshape((9, 9))])

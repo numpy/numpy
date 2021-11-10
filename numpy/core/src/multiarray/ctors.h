@@ -32,7 +32,8 @@ PyArray_New(
 
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context);
+        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
+        int do_copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
