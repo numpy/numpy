@@ -33,14 +33,14 @@ __all__ = [
     'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring',
-    'get_handler_name', 'inner', 'interp', 'interp_complex', 'is_busday',
-    'lexsort', 'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray',
-    'nditer', 'nested_iters', 'normalize_axis_index', 'packbits',
-    'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
-    'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
-    'set_string_function', 'set_typeDict', 'shares_memory',
-    'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
-    'where', 'zeros']
+    'get_handler_name', 'get_handler_version', 'inner', 'interp',
+    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'may_share_memory',
+    'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
+    'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
+    'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
+    'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
+    'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'

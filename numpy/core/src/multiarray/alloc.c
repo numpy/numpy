@@ -370,6 +370,7 @@ default_free(void *NPY_UNUSED(ctx), void *ptr, size_t size)
 /* Memory handler global default */
 PyDataMem_Handler default_handler = {
     "default_allocator",
+    1,
     {
         NULL,            /* ctx */
         default_malloc,  /* malloc */
@@ -395,7 +396,6 @@ PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
     if (handler == NULL) {
         return NULL;
     }
-
     assert(size != 0);
     result = handler->allocator.malloc(handler->allocator.ctx, size);
     if (_PyDataMem_eventhook != NULL) {
@@ -638,4 +638,41 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
     name = PyUnicode_FromString(handler->name);
     Py_DECREF(mem_handler);
     return name;
+}
+
+NPY_NO_EXPORT PyObject *
+get_handler_version(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *arr=NULL;
+    if (!PyArg_ParseTuple(args, "|O:get_handler_version", &arr)) {
+        return NULL;
+    }
+    if (arr != NULL && !PyArray_Check(arr)) {
+         PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
+         return NULL;
+    }
+    PyObject *mem_handler;
+    PyDataMem_Handler *handler;
+    PyObject *version;
+    if (arr != NULL) {
+        mem_handler = PyArray_HANDLER((PyArrayObject *) arr);
+        if (mem_handler == NULL) {
+            Py_RETURN_NONE;
+        }
+        Py_INCREF(mem_handler);
+    }
+    else {
+        mem_handler = PyDataMem_GetHandler();
+        if (mem_handler == NULL) {
+            return NULL;
+        }
+    }
+    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    if (handler == NULL) {
+        Py_DECREF(mem_handler);
+        return NULL;
+    }
+    version = PyLong_FromLong(handler->version);
+    Py_DECREF(mem_handler);
+    return version;
 }

@@ -674,10 +674,15 @@ typedef struct {
     void* (*calloc) (void *ctx, size_t nelem, size_t elsize);
     void* (*realloc) (void *ctx, void *ptr, size_t new_size);
     void (*free) (void *ctx, void *ptr, size_t size);
+    /*
+     * This is the end of the version=1 struct. Only add new fields after
+     * this line
+     */
 } PyDataMemAllocator;
 
 typedef struct {
-    char name[128];  /* multiple of 64 to keep the struct aligned */
+    char name[127];  /* multiple of 64 to keep the struct aligned */
+    uint8_t version; /* currently 1 */
     PyDataMemAllocator allocator;
 } PyDataMem_Handler;
 

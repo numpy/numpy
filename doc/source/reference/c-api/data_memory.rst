@@ -62,7 +62,8 @@ reallocate or free the data memory of the instance.
     .. code-block:: c
 
         typedef struct {
-            char name[128];  /* multiple of 64 to keep the struct aligned */
+            char name[127];  /* multiple of 64 to keep the struct aligned */
+            uint8_t version; /* currently 1 */
             PyDataMemAllocator allocator;
         } PyDataMem_Handler;
 

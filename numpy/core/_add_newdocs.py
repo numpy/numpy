@@ -4759,6 +4759,16 @@ add_newdoc('numpy.core.multiarray', 'get_handler_name',
     memory, in which case you can traverse ``a.base`` for a memory handler.
     """)
 
+add_newdoc('numpy.core.multiarray', 'get_handler_version',
+    """
+    get_handler_version(a: ndarray) -> int,None
+
+    Return the version of the memory handler used by `a`. If not provided,
+    return the version of the memory handler that will be used to allocate data
+    for the next `ndarray` in this context. May return None if `a` does not own
+    its memory, in which case you can traverse ``a.base`` for a memory handler.
+    """)
+
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
     """
     _set_madvise_hugepage(enabled: bool) -> bool
