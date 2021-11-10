@@ -859,16 +859,16 @@ array_astype(PyArrayObject *self,
      * can skip the copy.
      */
     if (forcecopy != NPY_COPY_ALWAYS && 
-        (order == NPY_KEEPORDER ||
-        (order == NPY_ANYORDER &&
-            (PyArray_IS_C_CONTIGUOUS(self) ||
-            PyArray_IS_F_CONTIGUOUS(self))) ||
-        (order == NPY_CORDER &&
-            PyArray_IS_C_CONTIGUOUS(self)) ||
-        (order == NPY_FORTRANORDER &&
-            PyArray_IS_F_CONTIGUOUS(self))) &&
-    (subok || PyArray_CheckExact(self)) &&
-    PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
+                    (order == NPY_KEEPORDER ||
+                    (order == NPY_ANYORDER &&
+                        (PyArray_IS_C_CONTIGUOUS(self) ||
+                        PyArray_IS_F_CONTIGUOUS(self))) ||
+                    (order == NPY_CORDER &&
+                        PyArray_IS_C_CONTIGUOUS(self)) ||
+                    (order == NPY_FORTRANORDER &&
+                        PyArray_IS_F_CONTIGUOUS(self))) &&
+                (subok || PyArray_CheckExact(self)) &&
+                PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
         Py_DECREF(dtype);
         Py_INCREF(self);
         return (PyObject *)self;
