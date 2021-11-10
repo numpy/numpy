@@ -196,7 +196,6 @@ class _Config:
             native = '-march=native',
             opt = '-O3',
             werror = '-Werror',
-            cxx = '-std=c++11',
         ),
         clang = dict(
             native = '-march=native',
@@ -207,25 +206,21 @@ class _Config:
             # "unused arguments" warnings.
             # see https://github.com/numpy/numpy/issues/19624
             werror = '-Werror=switch -Werror',
-            cxx = '-std=c++11',
         ),
         icc = dict(
             native = '-xHost',
             opt = '-O3',
             werror = '-Werror',
-            cxx = '-std=c++11',
         ),
         iccw = dict(
             native = '/QxHost',
             opt = '/O3',
             werror = '/Werror',
-            cxx = '-std=c++11',
         ),
         msvc = dict(
             native = None,
             opt = '/O2',
             werror = '/WX',
-            cxx = '-std=c++11',
         )
     )
     conf_min_features = dict(
