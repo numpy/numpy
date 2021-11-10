@@ -182,7 +182,7 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
         }
 
         int_copymode = PyLong_AsLong(mode_value);
-        if (int_copymode < 0 || PyErr_Occurred()) {
+        if (error_converting(int_copymode)) {
             return NPY_FAIL;
         }
     }

@@ -1622,7 +1622,8 @@ _array_fromobject_generic(
 
     if (copy == NPY_COPY_ALWAYS) {
         flags = NPY_ARRAY_ENSURECOPY;
-    } else if( copy == NPY_COPY_NEVER ) {
+    }
+    else if (copy == NPY_COPY_NEVER ) {
         flags = NPY_ARRAY_ENSURENOCOPY;
     }
     if (order == NPY_CORDER) {
