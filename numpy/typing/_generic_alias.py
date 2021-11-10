@@ -178,6 +178,8 @@ class _GenericAlias:
         "__mro_entries__",
         "__reduce__",
         "__reduce_ex__",
+        "__copy__",
+        "__deepcopy__",
     })
 
     def __getattribute__(self, name: str) -> Any:
