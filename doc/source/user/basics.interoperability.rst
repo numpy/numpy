@@ -5,29 +5,41 @@ Interoperability with NumPy
 
 NumPy's ndarray objects provide both a high-level API for operations on
 array-structured data and a concrete implementation of the API based on
-:ref:`strided in-RAM storage <arrays>`.
-While this API is powerful and fairly general, its concrete implementation has
-limitations. As datasets grow and NumPy becomes used in a variety of new
-environments and architectures, there are cases where the strided in-RAM storage
-strategy is inappropriate, which has caused different libraries to reimplement
-this API for their own uses. This includes GPU arrays (CuPy_), Sparse arrays
-(`scipy.sparse`, `PyData/Sparse <Sparse_>`_) and parallel arrays (Dask_ arrays)
-as well as various NumPy-like implementations in deep learning frameworks, like
-TensorFlow_ and PyTorch_. Similarly, there are many projects that build on top
-of the NumPy API for labeled and indexed arrays (XArray_), automatic
-differentiation (JAX_), masked arrays (`numpy.ma`), physical units
-(astropy.units_, pint_, unyt_), among others that add additional functionality
-on top of the NumPy API.
+:ref:`strided in-RAM storage <arrays>`. While this API is powerful and fairly
+general, its concrete implementation has limitations. As datasets grow and NumPy
+becomes used in a variety of new environments and architectures, there are cases
+where the strided in-RAM storage strategy is inappropriate, which has caused
+different libraries to reimplement this API for their own uses. This includes
+GPU arrays (CuPy_), Sparse arrays (`scipy.sparse`, `PyData/Sparse <Sparse_>`_)
+and parallel arrays (Dask_ arrays) as well as various NumPy-like implementations
+in deep learning frameworks, like TensorFlow_ and PyTorch_. Similarly, there are
+many projects that build on top of the NumPy API for labeled and indexed arrays
+(XArray_), automatic differentiation (JAX_), masked arrays (`numpy.ma`),
+physical units (astropy.units_, pint_, unyt_), among others that add additional
+functionality on top of the NumPy API.
 
 Yet, users still want to work with these arrays using the familiar NumPy API and
 re-use existing code with minimal (ideally zero) porting overhead. With this
 goal in mind, various protocols are defined for implementations of
-multi-dimensional arrays with high-level APIs matching NumPy.
+multi-dimensional arrays with high-level APIs matching NumPy. 
 
-Using arbitrary objects in NumPy
---------------------------------
+Broadly speaking, there are three groups of features used for interoperability
+with NumPy:
 
-When NumPy functions encounter a foreign object, they will try (in order):
+1. Methods of turning a foreign object into an ndarray;
+2. Methods of deferring execution from a NumPy function to another array
+   library;
+3. Methods that use NumPy functions and return an instance of a foreign object.
+
+We describe these features below.
+
+
+1. Using arbitrary objects in NumPy
+-----------------------------------
+
+The first set of interoperability features from the NumPy API allows foreign
+objects to be treated as NumPy arrays whenever possible. When NumPy functions
+encounter a foreign object, they will try (in order):
 
 1. The buffer protocol, described :py:doc:`in the Python C-API documentation
    <c-api/buffer>`.
@@ -106,8 +118,12 @@ as the original object and any attributes/behavior it may have had, is lost.
 To see an example of a custom array implementation including the use of
 ``__array__()``, see :ref:`basics.dispatch`.
 
-Operating on foreign objects without converting
------------------------------------------------
+
+2. Operating on foreign objects without converting
+--------------------------------------------------
+
+A second set of methods defined by the NumPy API allows us to defer the
+execution from a NumPy function to another array library.
 
 Consider the following function.
 
@@ -115,9 +131,9 @@ Consider the following function.
  >>> def f(x):
  ...     return np.mean(np.exp(x))
 
-Note that `np.exp` is a :ref:`ufunc <ufuncs-basics>`, which means that it
-operates on ndarrays in an element-by-element fashion. On the other hand,
-`np.mean` operates along one of the array's axes.
+Note that `np.exp <numpy.exp>` is a :ref:`ufunc <ufuncs-basics>`, which means
+that it operates on ndarrays in an element-by-element fashion. On the other
+hand, `np.mean <numpy.mean>` operates along one of the array's axes.
 
 We can apply ``f`` to a NumPy ndarray object directly:
 
@@ -126,8 +142,7 @@ We can apply ``f`` to a NumPy ndarray object directly:
  21.1977562209304
 
 We would like this function to work equally well with any NumPy-like array
-object. Some of this is possible today with various protocol mechanisms within
-NumPy.
+object. 
 
 NumPy allows a class to indicate that it would like to handle computations in a
 custom-defined way through the following interfaces:
@@ -139,7 +154,7 @@ custom-defined way through the following interfaces:
 
 As long as foreign objects implement the ``__array_ufunc__`` or
 ``__array_function__`` protocols, it is possible to operate on them without the
-need for explicit conversion.
+need for explicit conversion. 
 
 The ``__array_ufunc__`` protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,7 +162,7 @@ The ``__array_ufunc__`` protocol
 A :ref:`universal function (or ufunc for short) <ufuncs-basics>` is a
 “vectorized” wrapper for a function that takes a fixed number of specific inputs
 and produces a fixed number of specific outputs. The output of the ufunc (and
-its methods) is not necessarily an ndarray, if not all input arguments are
+its methods) is not necessarily a ndarray, if not all input arguments are
 ndarrays. Indeed, if any input defines an ``__array_ufunc__`` method, control
 will be passed completely to that function, i.e., the ufunc is overridden. The
 ``__array_ufunc__`` method defined on that (non-ndarray) object has access to
@@ -172,6 +187,36 @@ is safe and consistent across projects.
 The semantics of ``__array_function__`` are very similar to ``__array_ufunc__``,
 except the operation is specified by an arbitrary callable object rather than a
 ufunc instance and method. For more details, see :ref:`NEP18`.
+
+
+3. Returning foreign objects
+----------------------------
+
+A third type of feature set is meant to use the NumPy function implementation
+and then convert the return value back into an instance of the foreign object.
+The ``__array_finalize__`` and ``__array_wrap__`` methods act behind the scenes
+to ensure that the return type of a NumPy function can be specified as needed.
+
+The ``__array_finalize__`` method is the mechanism that NumPy provides to allow
+subclasses to handle the various ways that new instances get created. This
+method is called whenever the system internally allocates a new array from an
+object which is a subclass (subtype) of the ndarray. It can be used to change
+attributes after construction, or to update meta-information from the “parent.”
+
+The ``__array_wrap__`` method “wraps up the action” in the sense of allowing a
+subclass to set the type of the return value and update attributes and metadata.
+This can be seen as the opposite of the ``__array__`` method. At the end of
+every ufunc, this method is called on the input object with the
+highest *array priority*, or the output object if one was specified. The
+``__array_priority__`` attribute is used to determine what type of object to
+return in situations where there is more than one possibility for the Python
+type of the returned object. Subclasses may opt to use this method to transform
+the output array into an instance of the subclass and update metadata before
+returning the array to the user.
+
+For more information on these methods, see :ref:`basics.subclassing` and
+:ref:`specific-array-subtyping`.
+
 
 Interoperability examples
 -------------------------
@@ -217,6 +262,7 @@ We can even do operations with other ndarrays:
  >>> result = ser.__array__()
  >>> type(result)
  numpy.ndarray
+
 
 Example: PyTorch tensors
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -343,8 +389,11 @@ Further reading
 -  :ref:`basics.dispatch`
 -  :ref:`special-attributes-and-methods` (details on the ``__array_ufunc__`` and
    ``__array_function__`` protocols)
--  `NumPy roadmap: interoperability
-   <https://numpy.org/neps/roadmap.html#interoperability>`__
+-  :ref:`basics.subclassing` (details on the ``__array_wrap__`` and
+   ``__array_finalize__`` methods)
+-  :ref:`specific-array-subtyping` (more details on the implementation of
+   ``__array_finalize__``, ``__array_wrap__`` and ``__array_priority__``)
+-  :doc:`NumPy roadmap: interoperability <neps:roadmap>`
 -  `PyTorch documentation on the Bridge with NumPy
    <https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#bridge-to-np-label>`__
 
