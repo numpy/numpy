@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-# Note: np.unique() is split into fout functions in the array API:
+# Note: np.unique() is split into four functions in the array API:
 # unique_all, unique_counts, unique_inverse, and unique_values (this is done
 # to remove polymorphic return types).
 
