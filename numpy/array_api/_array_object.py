@@ -1009,7 +1009,7 @@ class Array:
         res = self._array.__rxor__(other._array)
         return self.__class__._new(res)
 
-    def to_device(self: Array, device: Device, /, stream: Optional[Union[int, Any]] = None) -> Array:
+    def to_device(self: Array, device: Device, /, stream: None = None) -> Array:
         if stream is not None:
             raise ValueError("The stream argument to to_device() is not supported")
         if device == 'cpu':
