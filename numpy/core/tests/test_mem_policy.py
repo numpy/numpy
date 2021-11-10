@@ -179,6 +179,7 @@ def get_module(tmp_path):
         };
         static PyDataMem_Handler secret_data_handler = {
             "secret_data_allocator",
+            1,
             {
                 &secret_data_handler_ctx, /* ctx */
                 shift_alloc,              /* malloc */
@@ -212,17 +213,22 @@ def get_module(tmp_path):
 def test_set_policy(get_module):
 
     get_handler_name = np.core.multiarray.get_handler_name
+    get_handler_version = np.core.multiarray.get_handler_version
     orig_policy_name = get_handler_name()
 
     a = np.arange(10).reshape((2, 5))  # a doesn't own its own data
     assert get_handler_name(a) is None
+    assert get_handler_version(a) is None
     assert get_handler_name(a.base) == orig_policy_name
+    assert get_handler_version(a.base) == 1
 
     orig_policy = get_module.set_secret_data_policy()
 
     b = np.arange(10).reshape((2, 5))  # b doesn't own its own data
     assert get_handler_name(b) is None
+    assert get_handler_version(b) is None
     assert get_handler_name(b.base) == 'secret_data_allocator'
+    assert get_handler_version(b.base) == 1
 
     if orig_policy_name == 'default_allocator':
         get_module.set_old_policy(None)  # tests PyDataMem_SetHandler(NULL)

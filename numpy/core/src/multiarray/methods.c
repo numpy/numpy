@@ -26,6 +26,7 @@
 #include "shape.h"
 #include "strfuncs.h"
 #include "array_assign.h"
+#include "npy_dlpack.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -2975,5 +2976,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"view",
         (PyCFunction)array_view,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    // For data interchange between libraries
+    {"__dlpack__",
+        (PyCFunction)array_dlpack,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+
+    {"__dlpack_device__",
+        (PyCFunction)array_dlpack_device,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };

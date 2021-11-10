@@ -67,7 +67,7 @@ __all__ = [
 # fix_gamma : Callable
 #   A function used for discret methods to force the index to a specific value.
 _QuantileInterpolation = dict(
-    # --- HYNDMAN and FAN methods
+    # --- HYNDMAN AND FAN METHODS
     # Discrete methods
     inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles: _inverted_cdf(n, quantiles),
@@ -102,10 +102,12 @@ _QuantileInterpolation = dict(
         _compute_virtual_index(n, quantiles, 0, 0),
         fix_gamma=lambda gamma, _: gamma,
     ),
-    # Default value
+    # Default method.
+    # To avoid some rounding issues, `(n-1) * quantiles` is preferred to
+    # `_compute_virtual_index(n, quantiles, 1, 1)`.
+    # They are mathematically equivalent.
     linear=dict(
-        get_virtual_index=lambda n, quantiles:
-        _compute_virtual_index(n, quantiles, 1, 1),
+        get_virtual_index=lambda n, quantiles: (n - 1) * quantiles,
         fix_gamma=lambda gamma, _: gamma,
     ),
     median_unbiased=dict(
@@ -118,7 +120,7 @@ _QuantileInterpolation = dict(
         _compute_virtual_index(n, quantiles, 3 / 8.0, 3 / 8.0),
         fix_gamma=lambda gamma, _: gamma,
     ),
-    # --- OTHER METHODS fixme add deprecated ?
+    # --- OTHER METHODS
     lower=dict(
         get_virtual_index=lambda n, quantiles: np.floor(
             (n - 1) * quantiles).astype(np.intp),
