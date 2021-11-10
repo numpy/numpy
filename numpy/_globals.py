@@ -97,7 +97,7 @@ _NoValue = _NoValueType()
 class _CopyMode(enum.Enum):
     """
     An enumeration for the copy modes supported
-    by numpy. The following three modes are supported,
+    by numpy.copy() and numpy.array(). The following three modes are supported,
 
     - ALWAYS: This means that a deep copy of the input
               array will always be taken.
