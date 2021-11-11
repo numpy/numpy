@@ -3695,10 +3695,10 @@ cdef class Generator:
             ``m * n * k`` samples are drawn each with ``p`` elements. Default
             is None where the output size is determined by the broadcast shape
             of ``n`` and all by the final dimension of ``pvals``, which is
-            denoted as ``b=(b0, b1, ..., bq)`` be this size. If size is not None,
-            then it must be compatible with the broadcast shape ``b``.
-            Specifically, size must have ``q`` or more elements and
-            size[-(q-j):] must equal ``bj``.
+            denoted as ``b=(b0, b1, ..., bq)``. If size is not None, then it
+            must be compatible with the broadcast shape ``b``. Specifically,
+            size must have ``q`` or more elements and size[-(q-j):] must equal
+            ``bj``.
 
         Returns
         -------
@@ -3815,7 +3815,10 @@ cdef class Generator:
         ndim = parr.ndim
         d = parr.shape[ndim - 1] if ndim >= 1 else 0
         if d == 0:
-            raise ValueError("pvals must have at least 1 dimension with shape[-1] > 0.")
+            raise ValueError(
+                "pvals must have at least 1 dimension and the last dimension "
+                "of pvals must be greater than 0."
+            )
 
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         pix = <double*>np.PyArray_DATA(parr)

@@ -2366,14 +2366,17 @@ class TestBroadcast:
         random = Generator(MT19937(self.seed))
         pvals = np.array([1 / 4] * 4)
         actual = random.multinomial(n, pvals)
-        assert actual.shape == np.broadcast(n, 1).shape + (4,)
+        n_shape = tuple() if isinstance(n, int) else n.shape
+        expected_shape = n_shape + (4,)
+        assert actual.shape == expected_shape
         pvals = np.vstack([pvals, pvals])
         actual = random.multinomial(n, pvals)
-        assert actual.shape == np.broadcast(n, np.ones(2)).shape + (4,)
+        expected_shape = np.broadcast_shapes(n_shape, pvals.shape[:-1]) + (4,)
+        assert actual.shape == expected_shape
 
         pvals = np.vstack([[pvals], [pvals]])
         actual = random.multinomial(n, pvals)
-        expected_shape = np.broadcast(n, np.ones((2, 2))).shape
+        expected_shape = np.broadcast_shapes(n_shape, pvals.shape[:-1])
         assert actual.shape == expected_shape + (4,)
         actual = random.multinomial(n, pvals, size=(3, 2) + expected_shape)
         assert actual.shape == (3, 2) + expected_shape + (4,)
