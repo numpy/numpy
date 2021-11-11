@@ -17,17 +17,17 @@ class EIGHResult(NamedTuple):
     eigenvectors: Array
 
 class QRResult(NamedTuple):
-    q: Array
-    r: Array
+    Q: Array
+    R: Array
 
 class SLOGDETResult(NamedTuple):
     sign: Array
     logabsdet: Array
 
 class SVDResult(NamedTuple):
-    u: Array
-    s: Array
-    vh: Array
+    U: Array
+    S: Array
+    Vh: Array
 
 # Note: the inclusion of the upper keyword is different from
 # np.linalg.cholesky, which does not have it.
