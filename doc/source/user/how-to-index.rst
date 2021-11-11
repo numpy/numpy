@@ -11,8 +11,8 @@ How to index :class:`ndarrays <.ndarray>`
 This page tackles common examples. For an in-depth look into indexing, refer
 to :ref:`basics.indexing`.
 
-Access specific/arbitary rows and columns
-=========================================
+Access specific/arbitrary rows and columns
+==========================================
 
 Use :ref:`basic-indexing` features like :ref:`slicing-and-striding`, and
 :ref:`dimensional-indexing-tools`.
@@ -31,7 +31,7 @@ Use :ref:`basic-indexing` features like :ref:`slicing-and-striding`, and
     >>> a[0, :, 3]
     array([ 3,  8, 13])
     
-Note that the output from indexing operations can have different shape as the
+Note that the output from indexing operations can have different shape from the
 original object. To preserve the original dimensions after indexing, you can
 use :func:`newaxis`. To use other such tools, refer to
 :ref:`dimensional-indexing-tools`.
@@ -52,29 +52,27 @@ Variables can also be used to index::
 Refer to :ref:`dealing-with-variable-indices` to see how to use
 :term:`python:slice` and :py:data:`Ellipsis` in your index variables.
 
-Index along a specific axis
----------------------------
-
-Use :meth:`take`. See also :meth:`take_along_axis` and
-:meth:`put_along_axis`.
-
-    >>> np.take(a, [2, 3], axis=2)
-    array([[[ 2,  3],
-            [ 7,  8],
-            [12, 13]],
-    <BLANKLINE>
-            [[17, 18],
-            [22, 23],
-            [27, 28]]])
-    >>> np.take(a, [2], axis=1)
-    array([[[10, 11, 12, 13, 14]],
-    <BLANKLINE>
-            [[25, 26, 27, 28, 29]]])
-
 Index columns
 -------------
 
-Use :ref:`dimensional-indexing-tools` to avoid shape mismatches::
+To index columns, you have to index the last axis. Use
+:ref:`dimensional-indexing-tools` to get the desired number of dimensions::
+
+    >>> a = np.arange(24).reshape(2, 3, 4)
+    >>> a
+    array([[[ 0,  1,  2,  3],
+            [ 4,  5,  6,  7],
+            [ 8,  9, 10, 11]],
+    <BLANKLINE>
+           [[12, 13, 14, 15],
+            [16, 17, 18, 19],
+            [20, 21, 22, 23]]])
+    >>> a[..., 3]
+    array([[ 3,  7, 11],
+           [15, 19, 23]])
+
+To index specific elements in each column, make use of :ref:`advanced-indexing`
+as below::
 
     >>> arr = np.arange(3*4).reshape(3, 4)
     >>> arr
@@ -97,6 +95,34 @@ indexing::
     array([[ 1,  3],
            [ 4,  6],
            [10, 10]])
+
+Index along a specific axis
+---------------------------
+
+Use :meth:`take`. See also :meth:`take_along_axis` and
+:meth:`put_along_axis`.
+
+    >>> a = np.arange(30).reshape(2, 3, 5)
+    >>> a
+    array([[[ 0,  1,  2,  3,  4],
+            [ 5,  6,  7,  8,  9],
+            [10, 11, 12, 13, 14]],
+    <BLANKLINE>
+            [[15, 16, 17, 18, 19],
+            [20, 21, 22, 23, 24],
+            [25, 26, 27, 28, 29]]])
+    >>> np.take(a, [2, 3], axis=2)
+    array([[[ 2,  3],
+            [ 7,  8],
+            [12, 13]],
+    <BLANKLINE>
+            [[17, 18],
+            [22, 23],
+            [27, 28]]])
+    >>> np.take(a, [2], axis=1)
+    array([[[10, 11, 12, 13, 14]],
+    <BLANKLINE>
+            [[25, 26, 27, 28, 29]]])
 
 Create subsets of larger matrices
 =================================
@@ -130,10 +156,11 @@ Use :ref:`slicing-and-striding` to access chunks of a large array::
            [30, 31, 32, 33, 34],
            [40, 41, 42, 43, 44]])
 
-The same thing can be done with advanced indexing in a slightly complex
-way. Remember that advanced indexing creates a copy::
+The same thing can be done with advanced indexing in a slightly more complex
+way. Remember that
+:ref:`advanced indexing creates a copy <indexing-operations>`::
 
-    >>> a[np.arange(5)[:,None], np.arange(5)[None,:]]
+    >>> a[np.arange(5)[:, None], np.arange(5)[None, :]]
     array([[ 0,  1,  2,  3,  4],
            [10, 11, 12, 13, 14],
            [20, 21, 22, 23, 24],
@@ -166,22 +193,22 @@ Non-zero elements
 Use :meth:`nonzero` to get a tuple of array indices of non-zero elements 
 corresponding to every dimension::
 
-	>>> z = np.eye(3)
-	>>> z
-	array([[1., 0., 0.],
-           [0., 1., 0.],
-           [0., 0., 1.]])
-	>>> np.nonzero(z)
-	(array([0, 1, 2]), array([0, 1, 2]))
+	>>> z = np.array([[1, 2, 3, 0], [0, 0, 5, 3], [4, 6, 0, 0]])
+       >>> z
+       array([[1, 2, 3, 0],
+              [0, 0, 5, 3],
+              [4, 6, 0, 0]])
+       >>> np.nonzero(z)
+       (array([0, 0, 0, 1, 1, 2, 2]), array([0, 1, 2, 2, 3, 0, 1]))
 
 Use :meth:`flatnonzero` to fetch indices of elements that are non-zero in
 the flattened version of the ndarray::
 
 	>>> np.flatnonzero(z)
-	array([0, 4, 8])
+	array([0, 1, 2, 6, 7, 8, 9])
 
-Arbitary conditions
--------------------
+Arbitrary conditions
+--------------------
 
 Use :meth:`where` to generate indices based on conditions and then
 use :ref:`advanced-indexing`.
@@ -287,9 +314,9 @@ Index the same ndarray multiple times efficiently
 =================================================
 
 It must be kept in mind that basic indexing produces :term:`views <view>`
-and advanced indexing produces :term:`copies <copy>`, which takes
-more time. Hence, you should take care to use basic indexing wherever
-possible instead of advanced indexing.
+and advanced indexing produces :term:`copies <copy>`, which are
+computationally less efficient. Hence, you should take care to use basic
+indexing wherever possible instead of advanced indexing.
 
 Further reading
 ===============
