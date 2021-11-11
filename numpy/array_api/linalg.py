@@ -278,6 +278,42 @@ def slogdet(x: Array, /) -> SLOGDETResult:
     # np.linalg.slogdet, which only returns a tuple.
     return SLOGDETResult(*map(Array._new, np.linalg.slogdet(x._array)))
 
+# Note: unlike np.linalg.solve, the array API solve() only accepts x2 as a
+# vector when it is exactly 1-dimensional. All other cases treat x2 as a stack
+# of matrices. The np.linalg.solve behavior of allowing stacks of both
+# matrices and vectors is ambiguous c.f.
+# https://github.com/numpy/numpy/issues/15349 and
+# https://github.com/data-apis/array-api/issues/285.
+
+# To workaround this, the below is the code from np.linalg.solve except
+# only calling solve1 in the exactly 1D case.
+def _solve(a, b):
+    from ..linalg.linalg import (_makearray, _assert_stacked_2d,
+                                 _assert_stacked_square, _commonType,
+                                 isComplexType, get_linalg_error_extobj,
+                                 _raise_linalgerror_singular)
+    from ..linalg import _umath_linalg
+
+    a, _ = _makearray(a)
+    _assert_stacked_2d(a)
+    _assert_stacked_square(a)
+    b, wrap = _makearray(b)
+    t, result_t = _commonType(a, b)
+
+    # This part is different from np.linalg.solve
+    if b.ndim == 1:
+        gufunc = _umath_linalg.solve1
+    else:
+        gufunc = _umath_linalg.solve
+
+    # This does nothing currently but is left in because it will be relevant
+    # when complex dtype support is added to the spec in 2022.
+    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
+    r = gufunc(a, b, signature=signature, extobj=extobj)
+
+    return wrap(r.astype(result_t, copy=False))
+
 def solve(x1: Array, x2: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.solve <numpy.linalg.solve>`.
@@ -289,7 +325,7 @@ def solve(x1: Array, x2: Array, /) -> Array:
     if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in solve')
 
-    return Array._new(np.linalg.solve(x1._array, x2._array))
+    return Array._new(_solve(x1._array, x2._array))
 
 def svd(x: Array, /, *, full_matrices: bool = True) -> SVDResult:
     """
