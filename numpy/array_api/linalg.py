@@ -336,9 +336,7 @@ def trace(x: Array, /, *, offset: int = 0) -> Array:
     return Array._new(np.asarray(np.trace(x._array, offset=offset, axis1=-2, axis2=-1)))
 
 # Note: vecdot is not in NumPy
-def vecdot(x1: Array, x2: Array, /, *, axis: Optional[int] = None) -> Array:
-    if axis is None:
-        axis = -1
+def vecdot(x1: Array, x2: Array, /, *, axis: int = None) -> Array:
     return tensordot(x1, x2, axes=((axis,), (axis,)))
 
 
