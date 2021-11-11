@@ -151,7 +151,11 @@ def matmul(x1: Array, x2: Array, /) -> Array:
 
 # Note: the name here is different from norm(). The array API norm is split
 # into matrix_norm and vector_norm().
-def matrix_norm(x: Array, /, *, keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = 'fro') -> Array:
+
+# The type for ord should be Optional[Union[int, float, Literal[np.inf,
+# -np.inf, 'fro', 'nuc']]], but Literal does not support floating-point
+# literals.
+def matrix_norm(x: Array, /, *, keepdims: bool = False, ord: Optional[Union[int, float, Literal['fro', 'nuc']]] = 'fro') -> Array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
 
@@ -376,7 +380,10 @@ def vecdot(x1: Array, x2: Array, /, *, axis: int = None) -> Array:
 
 # Note: the name here is different from norm(). The array API norm is split
 # into matrix_norm and vector_norm().
-def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf]]] = 2) -> Array:
+
+# The type for ord should be Optional[Union[int, float, Literal[np.inf,
+# -np.inf]]] but Literal does not support floating-point literals.
+def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = None, keepdims: bool = False, ord: Optional[Union[int, float]] = 2) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
 
