@@ -3107,7 +3107,7 @@ cdef class Generator:
         `a` > 1.
 
         The Zipf distribution (also known as the zeta distribution) is a
-        continuous probability distribution that satisfies Zipf's law: the
+        discrete probability distribution that satisfies Zipf's law: the
         frequency of an item is inversely proportional to its rank in a
         frequency table.
 
@@ -3135,9 +3135,10 @@ cdef class Generator:
         -----
         The probability density for the Zipf distribution is
 
-        .. math:: p(x) = \\frac{x^{-a}}{\\zeta(a)},
+        .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
-        where :math:`\\zeta` is the Riemann Zeta function.
+        for integers ``k`` >= 1, where :math:`\\zeta` is the Riemann Zeta
+        function.
 
         It is named for the American linguist George Kingsley Zipf, who noted
         that the frequency of any word in a sample of a language is inversely
@@ -3167,10 +3168,10 @@ cdef class Generator:
         `bincount` provides a fast histogram for small integers.
 
         >>> count = np.bincount(s)
-        >>> x = np.arange(1, s.max() + 1)
+        >>> k = np.arange(1, s.max() + 1)
 
-        >>> plt.bar(x, count[1:], alpha=0.5, label='sample count')
-        >>> plt.plot(x, n*(x**-a)/zeta(a), 'k.-', alpha=0.5,
+        >>> plt.bar(k, count[1:], alpha=0.5, label='sample count')
+        >>> plt.plot(k, n*(k**-a)/zeta(a), 'k.-', alpha=0.5,
         ...          label='expected count')   # doctest: +SKIP
         >>> plt.semilogy()
         >>> plt.grid(alpha=0.4)
