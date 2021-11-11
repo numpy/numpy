@@ -107,6 +107,11 @@ steps:
 
 - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
   displayName: 'Run NumPy Test Suite'
+  condition: ne(variables['CLANG_CL'], 1)
+
+- script: python runtests.py -n --show-build-log --compiler=clang-cl --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+  displayName: 'Run NumPy Test Suite'
+  condition: eq(variables['CLANG_CL'], 1)
 
 - task: PublishTestResults@2
   condition: succeededOrFailed()

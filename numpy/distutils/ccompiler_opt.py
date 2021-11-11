@@ -513,51 +513,53 @@ class _Config:
 
             return partial
 
-
-        if self.cc_on_aarch64 and is_gcc_or_clang: return dict(
-            NEON = dict(
-                implies="NEON_FP16 NEON_VFPV4 ASIMD", autovec=True
-            ),
-            NEON_FP16 = dict(
-                implies="NEON NEON_VFPV4 ASIMD", autovec=True
-            ),
-            NEON_VFPV4 = dict(
-                implies="NEON NEON_FP16 ASIMD", autovec=True
-            ),
-            ASIMD = dict(
-                implies="NEON NEON_FP16 NEON_VFPV4", autovec=True
-            ),
-            ASIMDHP = dict(
-                flags="-march=armv8.2-a+fp16"
-            ),
-            ASIMDDP = dict(
-                flags="-march=armv8.2-a+dotprod"
-            ),
-            ASIMDFHM = dict(
-                flags="-march=armv8.2-a+fp16fml"
-            ),
-        )
-        if self.cc_on_armhf and is_gcc_or_clang: return dict(
-            NEON = dict(
-                flags="-mfpu=neon"
-            ),
-            NEON_FP16 = dict(
-                flags="-mfpu=neon-fp16 -mfp16-format=ieee"
-            ),
-            NEON_VFPV4 = dict(
-                flags="-mfpu=neon-vfpv4",
-            ),
-            ASIMD = dict(
-                flags="-mfpu=neon-fp-armv8 -march=armv8-a+simd",
-            ),
-            ASIMDHP = dict(
-                flags="-march=armv8.2-a+fp16"
-            ),
-            ASIMDDP = dict(
-                flags="-march=armv8.2-a+dotprod",
-            ),
-            ASIMDFHM = dict(
-                flags="-march=armv8.2-a+fp16fml"
+        if self.cc_on_aarch64 and is_gcc_or_clang:
+            return dict(
+                NEON=dict(
+                    implies="NEON_FP16 NEON_VFPV4 ASIMD", autovec=True
+                ),
+                NEON_FP16=dict(
+                    implies="NEON NEON_VFPV4 ASIMD", autovec=True
+                ),
+                NEON_VFPV4=dict(
+                    implies="NEON NEON_FP16 ASIMD", autovec=True
+                ),
+                ASIMD=dict(
+                    implies="NEON NEON_FP16 NEON_VFPV4", autovec=True
+                ),
+                ASIMDHP=dict(
+                    flags="-march=armv8.2-a+fp16"
+                ),
+                ASIMDDP=dict(
+                    flags="-march=armv8.2-a+dotprod"
+                ),
+                ASIMDFHM=dict(
+                    flags="-march=armv8.2-a+fp16fml"
+                ),
+            )
+        if self.cc_on_armhf and is_gcc_or_clang:
+            return dict(
+                NEON=dict(
+                    flags="-mfpu=neon"
+                ),
+                NEON_FP16=dict(
+                    flags="-mfpu=neon-fp16 -mfp16-format=ieee"
+                ),
+                NEON_VFPV4=dict(
+                    flags="-mfpu=neon-vfpv4",
+                ),
+                ASIMD=dict(
+                    flags="-mfpu=neon-fp-armv8 -march=armv8-a+simd",
+                ),
+                ASIMDHP=dict(
+                    flags="-march=armv8.2-a+fp16"
+                ),
+                ASIMDDP=dict(
+                    flags="-march=armv8.2-a+dotprod",
+                ),
+                ASIMDFHM=dict(
+                    flags="-march=armv8.2-a+fp16fml"
+                )
             )
         # TODO: ARM MSVC
         return {}
