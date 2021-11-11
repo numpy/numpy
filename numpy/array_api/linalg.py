@@ -92,7 +92,7 @@ def diagonal(x: Array, /, *, offset: int = 0) -> Array:
 # Note: the keyword argument name upper is different from np.linalg.eigh
 def eigh(x: Array, /) -> EIGHResult:
     """
-    Array API compatible wrapper for :py:func:`np.eig <numpy.eigh>`.
+    Array API compatible wrapper for :py:func:`np.linalg.eigh <numpy.linalg.eigh>`.
 
     See its docstring for more information.
     """
@@ -109,7 +109,7 @@ def eigh(x: Array, /) -> EIGHResult:
 # Note: the keyword argument name upper is different from np.linalg.eigvalsh
 def eigvalsh(x: Array, /) -> Array:
     """
-    Array API compatible wrapper for :py:func:`np.eigvalsh <numpy.eigvalsh>`.
+    Array API compatible wrapper for :py:func:`np.linalg.eigvalsh <numpy.linalg.eigvalsh>`.
 
     See its docstring for more information.
     """
@@ -160,7 +160,7 @@ def matrix_norm(x: Array, /, *, axis: Tuple[int, int] = (-2, -1), keepdims: bool
     # Note: the restriction to floating-point dtypes only is different from
     # np.linalg.norm.
     if x.dtype not in _floating_dtypes:
-        raise TypeError('Only floating-point dtypes are allowed in norm')
+        raise TypeError('Only floating-point dtypes are allowed in matrix_norm')
 
     if not isinstance(axis, tuple) or not len(axis) == 2:
         raise ValueError("axis must be a tuple of 2 integers. Use vector_norm() to compute a vector norm.")
@@ -232,7 +232,7 @@ def outer(x1: Array, x2: Array, /) -> Array:
 # Note: the keyword argument name rtol is different from np.linalg.pinv
 def pinv(x: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> Array:
     """
-    Array API compatible wrapper for :py:func:`np.pinv <numpy.pinv>`.
+    Array API compatible wrapper for :py:func:`np.linalg.pinv <numpy.linalg.pinv>`.
 
     See its docstring for more information.
     """
@@ -249,7 +249,7 @@ def pinv(x: Array, /, *, rtol: Optional[Union[float, Array]] = None) -> Array:
 
 def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> QRResult:
     """
-    Array API compatible wrapper for :py:func:`np.qr <numpy.qr>`.
+    Array API compatible wrapper for :py:func:`np.linalg.qr <numpy.linalg.qr>`.
 
     See its docstring for more information.
     """
@@ -267,7 +267,7 @@ def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> QRRe
 
 def slogdet(x: Array, /) -> SLOGDETResult:
     """
-    Array API compatible wrapper for :py:func:`np.slogdet <numpy.slogdet>`.
+    Array API compatible wrapper for :py:func:`np.linalg.slogdet <numpy.linalg.slogdet>`.
 
     See its docstring for more information.
     """
@@ -282,7 +282,7 @@ def slogdet(x: Array, /) -> SLOGDETResult:
 
 def solve(x1: Array, x2: Array, /) -> Array:
     """
-    Array API compatible wrapper for :py:func:`np.solve <numpy.solve>`.
+    Array API compatible wrapper for :py:func:`np.linalg.solve <numpy.linalg.solve>`.
 
     See its docstring for more information.
     """
@@ -295,7 +295,7 @@ def solve(x1: Array, x2: Array, /) -> Array:
 
 def svd(x: Array, /, *, full_matrices: bool = True) -> SVDResult:
     """
-    Array API compatible wrapper for :py:func:`np.svd <numpy.svd>`.
+    Array API compatible wrapper for :py:func:`np.linalg.svd <numpy.linalg.svd>`.
 
     See its docstring for more information.
     """
