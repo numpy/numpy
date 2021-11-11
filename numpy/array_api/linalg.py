@@ -151,7 +151,7 @@ def matmul(x1: Array, x2: Array, /) -> Array:
 
 # Note: the name here is different from norm(). The array API norm is split
 # into matrix_norm and vector_norm().
-def matrix_norm(x: Array, /, *, axis: Tuple[int, int] = (-2, -1), keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = 'fro') -> Array:
+def matrix_norm(x: Array, /, *, keepdims: bool = False, ord: Optional[Union[int, float, Literal[np.inf, -np.inf, 'fro', 'nuc']]] = 'fro') -> Array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.norm <numpy.linalg.norm>`.
 
@@ -162,9 +162,7 @@ def matrix_norm(x: Array, /, *, axis: Tuple[int, int] = (-2, -1), keepdims: bool
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in matrix_norm')
 
-    if not isinstance(axis, tuple) or not len(axis) == 2:
-        raise ValueError("axis must be a tuple of 2 integers. Use vector_norm() to compute a vector norm.")
-    return Array._new(np.linalg.norm(x._array, axis=axis, keepdims=keepdims, ord=ord))
+    return Array._new(np.linalg.norm(x._array, axis=(-2, -1), keepdims=keepdims, ord=ord))
 
 
 def matrix_power(x: Array, n: int, /) -> Array:
