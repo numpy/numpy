@@ -151,9 +151,10 @@ def eye(
     return Array._new(np.eye(n_rows, M=n_cols, k=k, dtype=dtype))
 
 
-def _from_dlpack(x: object, /) -> Array:
-    # Note: dlpack support is not yet implemented on Array
-    raise NotImplementedError("DLPack support is not yet implemented")
+def from_dlpack(x: object, /) -> Array:
+    from ._array_object import Array
+
+    return Array._new(np._from_dlpack(x))
 
 
 def full(

@@ -424,16 +424,14 @@ class Array:
         """
         Performs the operation __dlpack__.
         """
-        res = self._array.__dlpack__(stream=stream)
-        return self.__class__._new(res)
+        return self._array.__dlpack__(stream=stream)
 
     def __dlpack_device__(self: Array, /) -> Tuple[IntEnum, int]:
         """
         Performs the operation __dlpack_device__.
         """
         # Note: device support is required for this
-        res = self._array.__dlpack_device__()
-        return self.__class__._new(res)
+        return self._array.__dlpack_device__()
 
     def __eq__(self: Array, other: Union[int, float, bool, Array], /) -> Array:
         """
