@@ -3137,7 +3137,7 @@ cdef class Generator:
 
         .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
-        for integers ``k`` >= 1, where :math:`\\zeta` is the Riemann Zeta
+        for integers :math:`k \geq 1`, where :math:`\\zeta` is the Riemann Zeta
         function.
 
         It is named for the American linguist George Kingsley Zipf, who noted
