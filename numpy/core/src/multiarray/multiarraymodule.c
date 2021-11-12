@@ -1579,16 +1579,15 @@ _array_fromobject_generic(
     if (PyArray_CheckExact(op) || (subok && PyArray_Check(op))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if ((copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER) && 
-                STRIDING_OK(oparr, order)) {
+            if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 ret = oparr;
                 Py_INCREF(ret);
                 goto finish;
             }
             else {
-                if( copy == NPY_COPY_NEVER ) {
+                if (copy == NPY_COPY_NEVER) {
                     PyErr_SetString(PyExc_ValueError,
-                                    "Unable to avoid copy while creating a new array.");
+                            "Unable to avoid copy while creating a new array.");
                     return NULL;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
@@ -1598,16 +1597,15 @@ _array_fromobject_generic(
         /* One more chance */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
-            if ((copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER) && 
-                STRIDING_OK(oparr, order)) {
+            if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
                 ret = oparr;
                 goto finish;
             }
             else {
-                if( copy == NPY_COPY_NEVER ) {
+                if (copy == NPY_COPY_NEVER) {
                     PyErr_SetString(PyExc_ValueError,
-                                    "Unable to avoid copy while creating a new array.");
+                            "Unable to avoid copy while creating a new array.");
                     return NULL;
                 }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);

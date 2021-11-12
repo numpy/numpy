@@ -1879,13 +1879,12 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         return NULL;
     }
 
-    if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
-        !PyArray_ElementStrides(obj)) {
+    if ((requires & NPY_ARRAY_ELEMENTSTRIDES)
+            && !PyArray_ElementStrides(obj)) {
         PyObject *ret;
         if (requires & NPY_ARRAY_ENSURENOCOPY) {
             PyErr_SetString(PyExc_ValueError,
-                            "Unable to avoid copy "
-                            "while creating a new array.");
+                    "Unable to avoid copy while creating a new array.");
             return NULL;
         }
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);

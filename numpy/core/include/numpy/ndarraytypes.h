@@ -450,9 +450,9 @@ typedef struct {
 } PyArray_Dims;
 
 typedef enum {
-        NPY_COPY_IF_NEEDED, 
-        NPY_COPY_ALWAYS, 
-        NPY_COPY_NEVER
+        NPY_COPY_IF_NEEDED = 0,
+        NPY_COPY_ALWAYS = 1,
+        NPY_COPY_NEVER = 2,
 } _PyArray_CopyMode;
 
 typedef struct {

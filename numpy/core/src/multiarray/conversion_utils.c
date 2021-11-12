@@ -171,30 +171,30 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
         return NPY_FAIL;
     }
 
-    int int_copymode = -1;
+    int int_copymode;
     PyObject* numpy_CopyMode = NULL;
     npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
-    if (numpy_CopyMode != NULL && PyObject_Type(obj) == numpy_CopyMode) {
+    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
         PyObject* mode_value = PyObject_GetAttrString(obj, "value");
         if (mode_value == NULL) {
             return NPY_FAIL;
         }
 
-        int_copymode = PyLong_AsLong(mode_value);
+        int_copymode = (int)PyLong_AsLong(mode_value);
         if (error_converting(int_copymode)) {
             return NPY_FAIL;
         }
     }
     else {
         npy_bool bool_copymode;
-        if( !PyArray_BoolConverter(obj, &bool_copymode) ) {
+        if (!PyArray_BoolConverter(obj, &bool_copymode)) {
             return NPY_FAIL;
         }
-        int_copymode = (int) bool_copymode;
+        int_copymode = (int)bool_copymode;
     }
 
-    *copymode = (_PyArray_CopyMode) int_copymode;
+    *copymode = (_PyArray_CopyMode)int_copymode;
     return NPY_SUCCEED;
 }
 
