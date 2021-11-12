@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import copy
 import types
 import pickle
 import weakref
@@ -71,6 +72,21 @@ class TestGenericAlias:
         value = func(NDArray)
 
         if sys.version_info >= (3, 9):
+            value_ref = func(NDArray_ref)
+            assert value == value_ref
+
+    @pytest.mark.parametrize("name,func", [
+        ("__copy__", lambda n: n == copy.copy(n)),
+        ("__deepcopy__", lambda n: n == copy.deepcopy(n)),
+    ])
+    def test_copy(self, name: str, func: FuncType) -> None:
+        value = func(NDArray)
+
+        # xref bpo-45167
+        GE_398 = (
+            sys.version_info[:2] == (3, 9) and sys.version_info >= (3, 9, 8)
+        )
+        if GE_398 or sys.version_info >= (3, 10, 1):
             value_ref = func(NDArray_ref)
             assert value == value_ref
 
