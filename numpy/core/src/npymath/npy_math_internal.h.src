@@ -477,10 +477,16 @@ NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 
 /**begin repeat
  * #type = npy_longdouble, npy_double, npy_float#
+ * #TYPE = LONGDOUBLE, DOUBLE, FLOAT#
  * #c = l,,f#
  * #C = L,,F#
  */
-
+#undef NPY__FP_SFX
+#if NPY_SIZEOF_@TYPE@ == NPY_SIZEOF_DOUBLE
+    #define NPY__FP_SFX(X) X
+#else
+    #define NPY__FP_SFX(X) NPY_CAT(X, @c@)
+#endif
 /*
  * On arm64 macOS, there's a bug with sin, cos, and tan where they don't
  * raise "invalid" when given INFINITY as input.
@@ -506,7 +512,7 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
         return (x - x);
     }
 #endif
-    return @kind@@c@(x);
+    return NPY__FP_SFX(@kind@)(x);
 }
 #endif
 
@@ -521,7 +527,7 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
-    return @kind@@c@(x, y);
+    return NPY__FP_SFX(@kind@)(x, y);
 }
 #endif
 /**end repeat1**/
@@ -529,21 +535,21 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 #ifdef HAVE_MODF@C@
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
-    return modf@c@(x, iptr);
+    return NPY__FP_SFX(modf)(x, iptr);
 }
 #endif
 
 #ifdef HAVE_LDEXP@C@
 NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
 {
-    return ldexp@c@(x, exp);
+    return NPY__FP_SFX(ldexp)(x, exp);
 }
 #endif
 
 #ifdef HAVE_FREXP@C@
 NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 {
-    return frexp@c@(x, exp);
+    return NPY__FP_SFX(frexp)(x, exp);
 }
 #endif
 
@@ -566,10 +572,10 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 #else
 NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
-    return cbrt@c@(x);
+    return NPY__FP_SFX(cbrt)(x);
 }
 #endif
-
+#undef NPY__FP_SFX
 /**end repeat**/
 
 
@@ -579,10 +585,16 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 
 /**begin repeat
  * #type = npy_float, npy_double, npy_longdouble#
+ * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  * #c = f, ,l#
  * #C = F, ,L#
  */
-
+#undef NPY__FP_SFX
+#if NPY_SIZEOF_@TYPE@ == NPY_SIZEOF_DOUBLE
+    #define NPY__FP_SFX(X) X
+#else
+    #define NPY__FP_SFX(X) NPY_CAT(X, @c@)
+#endif
 @type@ npy_heaviside@c@(@type@ x, @type@ h0)
 {
     if (npy_isnan(x)) {
@@ -599,10 +611,10 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
     }
 }
 
-#define LOGE2    NPY_LOGE2@c@
-#define LOG2E    NPY_LOG2E@c@
-#define RAD2DEG  (180.0@c@/NPY_PI@c@)
-#define DEG2RAD  (NPY_PI@c@/180.0@c@)
+#define LOGE2    NPY__FP_SFX(NPY_LOGE2)
+#define LOG2E    NPY__FP_SFX(NPY_LOG2E)
+#define RAD2DEG  (NPY__FP_SFX(180.0)/NPY__FP_SFX(NPY_PI))
+#define DEG2RAD  (NPY__FP_SFX(NPY_PI)/NPY__FP_SFX(180.0))
 
 NPY_INPLACE @type@ npy_rad2deg@c@(@type@ x)
 {
@@ -756,7 +768,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 #undef LOG2E
 #undef RAD2DEG
 #undef DEG2RAD
-
+#undef NPY__FP_SFX
 /**end repeat**/
 
 /**begin repeat
