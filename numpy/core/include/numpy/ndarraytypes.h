@@ -449,12 +449,6 @@ typedef struct {
         int len;
 } PyArray_Dims;
 
-typedef enum {
-        NPY_COPY_IF_NEEDED = 0,
-        NPY_COPY_ALWAYS = 1,
-        NPY_COPY_NEVER = 2,
-} _PyArray_CopyMode;
-
 typedef struct {
         /*
          * Functions to cast to most other standard types
