@@ -1349,13 +1349,7 @@ _array_from_array_like(PyObject *op,
      *      this should be changed!
      */
     if (!writeable && tmp == Py_NotImplemented) {
-        PyObject* array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
-        int has_get = array_meth && PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__");
-        if (array_meth != NULL && !has_get && allow_copy) {
-            PyErr_SetString(PyExc_ValueError, "Calling __array__ in never copy mode is not allowed.");
-            return NULL;
-        }
-        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
+        tmp = PyArray_FromArrayAttr_int(op, requested_dtype, allow_copy);
         if (tmp == NULL) {
             return NULL;
         }
@@ -2463,18 +2457,30 @@ PyArray_FromInterface(PyObject *origin)
     return NULL;
 }
 
-/*NUMPY_API
+
+/**
+ * Check for an __array__ attribute and call it when it exists.
+ *
+ *  .. warning:
+ *      If returned, `NotImplemented` is borrowed and must not be Decref'd
+ *
+ * @param op The Python object to convert to an array.
+ * @param descr The desired `arr.dtype`, passed into the `__array__` call,
+ *        as information but is not checked/enforced!
+ * @param never_copy Indicator that a copy is not allowed.
+ *        NOTE: Currently, this means an error is raised instead of calling
+ *        `op.__array__()`.  In the future we could call for example call
+ *        `op.__array__(never_copy=True)` instead.
+ * @returns NotImplemented if `__array__` is not defined or a NumPy array
+ *          (or subclass).  On error, return NULL.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
+PyArray_FromArrayAttr_int(
+        PyObject *op, PyArray_Descr *descr, int never_copy)
 {
     PyObject *new;
     PyObject *array_meth;
 
-    if (context != NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
-        return NULL;
-    }
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
@@ -2490,6 +2496,16 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
         }
         return Py_NotImplemented;
     }
+    if (never_copy) {
+        /* Currently, we must always assume that `__array__` returns a copy */
+        PyErr_SetString(PyExc_ValueError,
+                "Unable to avoid copy while converting from an object "
+                "implementing the `__array__` protocol.  NumPy cannot ensure "
+                "that no copy will be made.");
+        Py_DECREF(array_meth);
+        return NULL;
+    }
+
     if (PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__")) {
         /*
          * If the input is a class `array_meth` may be a property-like object.
@@ -2500,11 +2516,11 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
         Py_DECREF(array_meth);
         return Py_NotImplemented;
     }
-    if (typecode == NULL) {
+    if (descr == NULL) {
         new = PyObject_CallFunction(array_meth, NULL);
     }
     else {
-        new = PyObject_CallFunction(array_meth, "O", typecode);
+        new = PyObject_CallFunction(array_meth, "O", descr);
     }
     Py_DECREF(array_meth);
     if (new == NULL) {
@@ -2519,6 +2535,21 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     }
     return new;
 }
+
+
+/*NUMPY_API
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
+{
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        return NULL;
+    }
+
+    return PyArray_FromArrayAttr_int(op, typecode, 0);
+}
+
 
 /*NUMPY_API
 * new reference -- accepts NULL for mintype

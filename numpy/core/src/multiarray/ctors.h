@@ -53,6 +53,10 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *input);
 
 NPY_NO_EXPORT PyObject *
+PyArray_FromArrayAttr_int(
+        PyObject *op, PyArray_Descr *descr, int never_copy);
+
+NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode,
                       PyObject *context);
 
