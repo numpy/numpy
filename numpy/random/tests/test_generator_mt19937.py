@@ -774,6 +774,18 @@ class TestRandomDist:
         desired = 0.0969992
         assert_array_almost_equal(actual, desired, decimal=7)
 
+    @pytest.mark.parametrize('dtype, uint_view_type',
+                             [(np.float32, np.uint32),
+                              (np.float64, np.uint64)])
+    def test_random_distribution_of_lsb(self, dtype, uint_view_type):
+        random = Generator(MT19937(self.seed))
+        sample = random.random(100000, dtype=dtype)
+        num_ones_in_lsb = np.count_nonzero(sample.view(uint_view_type) & 1)
+        # The probability of a 1 in the least significant bit is 0.25.
+        # With a sample size of 100000, the probability that num_ones_in_lsb
+        # is outside the following range is less than 5e-11.
+        assert 24100 < num_ones_in_lsb < 25900
+
     def test_random_unsupported_type(self):
         assert_raises(TypeError, random.random, dtype='int32')
 
