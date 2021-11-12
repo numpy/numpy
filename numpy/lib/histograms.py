@@ -359,14 +359,15 @@ def _unsigned_subtract(a, b):
 
 def _get_bin_edges(a, bins, range, weights):
     """
-    Computes the bins used internally by `histogram`.
+    Computes the bins used internally by `histogram` and `histogramdd`.
 
     Parameters
     ==========
     a : ndarray
         Ravelled data array
     bins, range
-        Forwarded arguments from `histogram`.
+        Forwarded arguments from `histogram` or passed from `histogramdd` for
+        current dimension.
     weights : ndarray, optional
         Ravelled weights array, or None
 
@@ -960,13 +961,17 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
 
         The first form should be preferred.
 
-    bins : sequence or int, optional
+    bins : sequence or int or str, optional
         The bin specification:
 
         * A sequence of arrays describing the monotonically increasing bin
           edges along each dimension.
         * The number of bins for each dimension (nx, ny, ... =bins)
         * The number of bins for all dimensions (nx=ny=...=bins).
+        * A sequence of strings defining the method to calculate the optimal
+          bin width for each dimension as defined by `histogram_bin_edges`.
+        * A string defining the method to calculate the optimal bin width for
+          all dimensions as defined by `histogram_bin_edges`.
 
     range : sequence, optional
         A sequence of length D, each an optional (lower, upper) tuple giving
