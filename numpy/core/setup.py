@@ -654,16 +654,29 @@ def configuration(parent_package='',top_path=None):
         # but we cannot use add_installed_pkg_config here either, so we only
         # update the substitution dictionary during npymath build
         config_cmd = config.get_config_cmd()
-
         # Check that the toolchain works, to fail early if it doesn't
         # (avoid late errors with MATHLIB which are confusing if the
         # compiler does not work).
-        st = config_cmd.try_link('int main(void) { return 0;}')
-        if not st:
-            # rerun the failing command in verbose mode
-            config_cmd.compiler.verbose = True
-            config_cmd.try_link('int main(void) { return 0;}')
-            raise RuntimeError("Broken toolchain: cannot link a simple C program")
+        for lang, test_code, note in (
+            ('c', 'int main(void) { return 0;}', ''),
+            ('c++', (
+                    'int main(void)'
+                    '{ auto x = 0.0; return static_cast<int>(x); }'
+                ), (
+                    'note: A compiler with support for C++11 language '
+                    'features is required.'
+                )
+             ),
+        ):
+            st = config_cmd.try_link(test_code, lang=lang)
+            if not st:
+                # rerun the failing command in verbose mode
+                config_cmd.compiler.verbose = True
+                config_cmd.try_link(test_code, lang=lang)
+                raise RuntimeError(
+                    f"Broken toolchain: cannot link a simple {lang.upper()} "
+                    f"program. {note}"
+                )
         mlibs = check_mathlib(config_cmd)
 
         posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
