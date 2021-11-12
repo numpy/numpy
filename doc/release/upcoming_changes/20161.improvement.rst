@@ -1,0 +1,7 @@
+Uniform messaging convention for numpy arrays under np.testing
+--------------------------------------------------------------
+
+The enhancement takes care of the metadata overwrite
+from ``x`` to ``ACTUAL`` and ``y`` to ``DESIRED``
+for clear debugging purposes.
+
