@@ -10,7 +10,7 @@ reveal_type(memmap_obj.offset)  # E: int
 reveal_type(memmap_obj.mode)  # E: str
 reveal_type(memmap_obj.flush())  # E: None
 
-reveal_type(np.memmap("file.txt", offset=5))  # E: numpy.memmap[Any, numpy.dtype[{uint8}]]
-reveal_type(np.memmap(b"file.txt", dtype=np.float64, shape=(10, 3)))  # E: numpy.memmap[Any, numpy.dtype[{float64}]]
+reveal_type(np.memmap("file.txt", offset=5))  # E: memmap[Any, dtype[{uint8}]]
+reveal_type(np.memmap(b"file.txt", dtype=np.float64, shape=(10, 3)))  # E: memmap[Any, dtype[{float64}]]
 with open("file.txt", "rb") as f:
-    reveal_type(np.memmap(f, dtype=float, order="K"))  # E: numpy.memmap[Any, numpy.dtype[Any]]
+    reveal_type(np.memmap(f, dtype=float, order="K"))  # E: memmap[Any, dtype[Any]]

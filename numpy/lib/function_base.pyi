@@ -501,11 +501,19 @@ def median(
 ) -> _ArrayType: ...
 
 _InterpolationKind = L[
+    "inverted_cdf",
+    "averaged_inverted_cdf",
+    "closest_observation",
+    "interpolated_inverted_cdf",
+    "hazen",
+    "weibull",
+    "linear",
+    "median_unbiased",
+    "normal_unbiased",
     "lower",
     "higher",
     "midpoint",
     "nearest",
-    "linear",
 ]
 
 @overload

@@ -133,6 +133,7 @@ class suppress_warnings:
 
 verbose: int
 IS_PYPY: Final[bool]
+IS_PYSTON: Final[bool]
 HAS_REFCOUNT: Final[bool]
 HAS_LAPACK64: Final[bool]
 

@@ -109,6 +109,15 @@ The name of the handler will be exposed on the python level via a
 ``numpy.core.multiarray.get_handler_name()`` it will return the name of the
 handler that will be used to allocate data for the next new `ndarrray`.
 
+The version of the handler will be exposed on the python level via a
+``numpy.core.multiarray.get_handler_version(arr)`` function. If called as
+``numpy.core.multiarray.get_handler_version()`` it will return the version of the
+handler that will be used to allocate data for the next new `ndarrray`.
+
+The version, currently 1, allows for future enhancements to the
+``PyDataMemAllocator``. If fields are added, they must be added to the end.
+
+
 NumPy C-API functions
 =====================
 
@@ -119,7 +128,8 @@ NumPy C-API functions
     .. code-block:: c
 
         typedef struct {
-            char name[128];  /* multiple of 64 to keep the struct aligned */
+            char name[127];  /* multiple of 64 to keep the struct aligned */
+            uint8_t version; /* currently 1 */
             PyDataMemAllocator allocator;
         } PyDataMem_Handler;
 
@@ -279,6 +289,7 @@ the ``sz`` argument is correct.
 
     static PyDataMem_Handler new_handler = {
         "secret_data_allocator",
+        1,
         {
             &new_handler_ctx,
             shift_alloc,      /* malloc */

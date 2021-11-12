@@ -26,6 +26,7 @@
 #include "shape.h"
 #include "strfuncs.h"
 #include "array_assign.h"
+#include "npy_dlpack.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -1831,22 +1832,8 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 
     descr = PyArray_DESCR(self);
 
-    /* if the python version is below 3.8, the pickle module does not provide
-     * built-in support for protocol 5. We try importing the pickle5
-     * backport instead */
-#if PY_VERSION_HEX >= 0x03080000
     /* we expect protocol 5 to be available in Python 3.8 */
     pickle_module = PyImport_ImportModule("pickle");
-#else
-    pickle_module = PyImport_ImportModule("pickle5");
-    if (pickle_module == NULL) {
-        /* for protocol 5, raise a clear ImportError if pickle5 is not found
-         */
-        PyErr_SetString(PyExc_ImportError, "Using pickle protocol 5 "
-                "requires the pickle5 module for Python >=3.6 and <3.8");
-        return NULL;
-    }
-#endif
     if (pickle_module == NULL){
         return NULL;
     }
@@ -2999,5 +2986,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"view",
         (PyCFunction)array_view,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    // For data interchange between libraries
+    {"__dlpack__",
+        (PyCFunction)array_dlpack,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+
+    {"__dlpack_device__",
+        (PyCFunction)array_dlpack_device,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };

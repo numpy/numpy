@@ -112,4 +112,8 @@ NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
 #define npyv_min_u64 _mm512_min_epu64
 #define npyv_min_s64 _mm512_min_epi64
 
+// ceil
+#define npyv_ceil_f32(A) _mm512_roundscale_ps(A, _MM_FROUND_TO_POS_INF)
+#define npyv_ceil_f64(A) _mm512_roundscale_pd(A, _MM_FROUND_TO_POS_INF)
+
 #endif // _NPY_SIMD_AVX512_MATH_H

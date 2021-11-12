@@ -70,6 +70,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "get_attr_string.h"
 #include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
 
+#include "npy_dlpack.h"
+
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
@@ -4246,7 +4248,6 @@ _reload_guard(PyObject *NPY_UNUSED(self)) {
     Py_RETURN_NONE;
 }
 
-
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4451,6 +4452,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"get_handler_name",
         (PyCFunction) get_handler_name,
         METH_VARARGS, NULL},
+    {"get_handler_version",
+        (PyCFunction) get_handler_version,
+        METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
@@ -4460,6 +4464,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
+    {"_from_dlpack", (PyCFunction)_from_dlpack,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4690,14 +4696,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyObject *m, *d, *s;
     PyObject *c_api;
 
-    /* Initialize CPU features */
-    if (npy_cpu_init() < 0) {
-        goto err;
-    }
-
     /* Create the module and add the functions */
     m = PyModule_Create(&moduledef);
     if (!m) {
+        return NULL;
+    }
+
+    /* Initialize CPU features */
+    if (npy_cpu_init() < 0) {
         goto err;
     }
 
@@ -4949,5 +4955,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
+    Py_DECREF(m);
     return NULL;
 }

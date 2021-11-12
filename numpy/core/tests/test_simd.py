@@ -330,6 +330,33 @@ class _SIMD_FP(_Test_Utility):
         square = self.square(vdata)
         assert square == data_square
 
+    @pytest.mark.parametrize("intrin, func", [("self.ceil", math.ceil)])
+    def test_rounding(self, intrin, func):
+        """
+        Test intrinsics:
+            npyv_ceil_##SFX
+        """
+        intrin = eval(intrin)
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        # special cases
+        round_cases = ((nan, nan), (pinf, pinf), (ninf, ninf))
+        for case, desired in round_cases:
+            data_round = [desired]*self.nlanes
+            _round = intrin(self.setall(case))
+            assert _round == pytest.approx(data_round, nan_ok=True)
+        for x in range(0, 2**20, 256**2):
+            for w in (-1.05, -1.10, -1.15, 1.05, 1.10, 1.15):
+                data = [x*w+a for a in range(self.nlanes)]
+                vdata = self.load(data)
+                data_round = [func(x) for x in data]
+                _round = intrin(vdata)
+                assert _round == data_round
+        # signed zero
+        for w in (-0.25, -0.30, -0.45):
+            _round = self._to_unsigned(intrin(self.setall(w)))
+            data_round = self._to_unsigned(self.setall(-0.0))
+            assert _round == data_round
+
     def test_max(self):
         """
         Test intrinsics:

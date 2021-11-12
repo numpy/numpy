@@ -1,4 +1,5 @@
 import sys
+import sysconfig
 import subprocess
 import pkgutil
 import types
@@ -458,3 +459,40 @@ def test_api_importable():
         raise AssertionError("Modules that are not really public but looked "
                              "public and can not be imported: "
                              "{}".format(module_names))
+
+
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_DEBUG") is not None,
+    reason=(
+        "NumPy possibly built with `USE_DEBUG=True ./tools/travis-test.sh`, "
+        "which does not expose the `array_api` entry point. "
+        "See https://github.com/numpy/numpy/pull/19800"
+    ),
+)
+def test_array_api_entry_point():
+    """
+    Entry point for Array API implementation can be found with importlib and
+    returns the numpy.array_api namespace.
+    """
+    eps = importlib.metadata.entry_points()
+    try:
+        xp_eps = eps.select(group="array_api")
+    except AttributeError:
+        # The select interface for entry_points was introduced in py3.10,
+        # deprecating its dict interface. We fallback to dict keys for finding
+        # Array API entry points so that running this test in <=3.9 will
+        # still work - see https://github.com/numpy/numpy/pull/19800.
+        xp_eps = eps.get("array_api", [])
+    assert len(xp_eps) > 0, "No entry points for 'array_api' found"
+
+    try:
+        ep = next(ep for ep in xp_eps if ep.name == "numpy")
+    except StopIteration:
+        raise AssertionError("'numpy' not in array_api entry points") from None
+
+    xp = ep.load()
+    msg = (
+        f"numpy entry point value '{ep.value}' "
+        "does not point to our Array API implementation"
+    )
+    assert xp is numpy.array_api, msg

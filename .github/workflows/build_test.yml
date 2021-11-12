@@ -277,3 +277,35 @@ jobs:
         docker run --rm --interactive -v $(pwd):/numpy the_build /bin/bash -c "
           cd /numpy && python3 runtests.py -n -v -- -k test_simd
         "
+
+  sde_simd_avx512_test:
+    # Intel Software Development Emulator (SDE) is used to run a given program
+    # on a specific instruction set architecture and capture various performance details.
+    # see https://www.intel.com/content/www/us/en/developer/articles/tool/software-development-emulator.html
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.bz2 https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.bz2 -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+    - name: Install dependencies
+      run: python -m pip install -r test_requirements.txt
+    - name: Build
+      run: python setup.py build
+           --simd-test="\$werror AVX512F AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
+           install
+    # KNM implies KNL
+    - name: Run SIMD tests (Xeon PHI)
+      run: sde -knm -- python runtests.py -n -v -- -k test_simd
+    # ICL implies SKX, CLX and CNL
+    - name: Run SIMD tests (Ice Lake)
+      run: sde -icl -- python runtests.py -n -v -- -k test_simd

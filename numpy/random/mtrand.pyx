@@ -3609,7 +3609,7 @@ cdef class RandomState:
         `a` > 1.
 
         The Zipf distribution (also known as the zeta distribution) is a
-        continuous probability distribution that satisfies Zipf's law: the
+        discrete probability distribution that satisfies Zipf's law: the
         frequency of an item is inversely proportional to its rank in a
         frequency table.
 
@@ -3642,9 +3642,10 @@ cdef class RandomState:
         -----
         The probability density for the Zipf distribution is
 
-        .. math:: p(x) = \\frac{x^{-a}}{\\zeta(a)},
+        .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
-        where :math:`\\zeta` is the Riemann Zeta function.
+        for integers :math:`k \geq 1`, where :math:`\\zeta` is the Riemann Zeta
+        function.
 
         It is named for the American linguist George Kingsley Zipf, who noted
         that the frequency of any word in a sample of a language is inversely
@@ -3660,21 +3661,29 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> a = 2. # parameter
-        >>> s = np.random.zipf(a, 1000)
+        >>> a = 4.0
+        >>> n = 20000
+        >>> s = np.random.zipf(a, n)
 
         Display the histogram of the samples, along with
-        the probability density function:
+        the expected histogram based on the probability
+        density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import special  # doctest: +SKIP
+        >>> from scipy.special import zeta  # doctest: +SKIP
 
-        Truncate s values at 50 so plot is interesting:
+        `bincount` provides a fast histogram for small integers.
 
-        >>> count, bins, ignored = plt.hist(s[s<50], 50, density=True)
-        >>> x = np.arange(1., 50.)
-        >>> y = x**(-a) / special.zetac(a)  # doctest: +SKIP
-        >>> plt.plot(x, y/max(y), linewidth=2, color='r')  # doctest: +SKIP
+        >>> count = np.bincount(s)
+        >>> k = np.arange(1, s.max() + 1)
+
+        >>> plt.bar(k, count[1:], alpha=0.5, label='sample count')
+        >>> plt.plot(k, n*(k**-a)/zeta(a), 'k.-', alpha=0.5,
+        ...          label='expected count')   # doctest: +SKIP
+        >>> plt.semilogy()
+        >>> plt.grid(alpha=0.4)
+        >>> plt.legend()
+        >>> plt.title(f'Zipf sample, a={a}, size={n}')
         >>> plt.show()
 
         """
