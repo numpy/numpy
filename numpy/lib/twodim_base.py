@@ -808,10 +808,13 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     if len(x) != len(y):
         raise ValueError('x and y must have the same length.')
 
-    try:
-        N = len(bins)
-    except TypeError:
+    if isinstance(bins, str):
         N = 1
+    else:
+        try:
+            N = len(bins)
+        except TypeError:
+            N = 1
 
     if N != 1 and N != 2:
         xedges = yedges = asarray(bins)
