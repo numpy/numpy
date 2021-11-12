@@ -106,6 +106,9 @@ class _CopyMode(enum.Enum):
     - NEVER: This means that the deep copy will never be taken.
              If a copy cannot be avoided then a `ValueError` will be
              raised.
+
+    Note that the buffer-protocol could in theory do copies.  NumPy currently
+    assumes an object exporting the buffer protocol will never do this.
     """
 
     ALWAYS = True
