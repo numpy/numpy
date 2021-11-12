@@ -1703,7 +1703,17 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 ((PyVoidScalarObject *)op)->flags,
                 NULL, op);
     }
-    else if (cache == 0 && newtype != NULL &&
+    /*
+     * If we got this far, we definitely have to create a copy, since we are
+     * converting either from a scalar (cache == NULL) or a (nested) sequence.
+     */
+    if (flags & NPY_ARRAY_ENSURENOCOPY ) {
+        PyErr_SetString(PyExc_ValueError,
+                "Unable to avoid copy while creating an array.");
+        return NULL;
+    }
+
+    if (cache == 0 && newtype != NULL &&
             PyDataType_ISSIGNED(newtype) && PyArray_IsScalar(op, Generic)) {
         assert(ndim == 0);
         /*
@@ -1741,12 +1751,6 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* Create a new array and copy the data */
     Py_INCREF(dtype);  /* hold on in case of a subarray that is replaced */
-    if (flags & NPY_ARRAY_ENSURENOCOPY ) {
-        PyErr_SetString(PyExc_ValueError, 
-                        "Unable to avoid copy while creating "
-                        "an array from descriptor.");
-        return NULL;
-    }
     ret = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, dtype, ndim, dims, NULL, NULL,
             flags&NPY_ARRAY_F_CONTIGUOUS, NULL);

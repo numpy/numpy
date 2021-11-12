@@ -7840,6 +7840,9 @@ class TestArrayCreationCopyArgument(object):
                             copy=self.RaiseOnBool())
             assert_raises(ValueError, _multiarray_tests.npy_ensurenocopy,
                             [1])
+            # Casting with a dtype (to unsigned integers) can be special:
+            with pytest.raises(ValueError):
+                np.array(pyscalar, dtype=np.int64, copy=np._CopyMode.NEVER)
 
     def test_compatible_cast(self):
 
